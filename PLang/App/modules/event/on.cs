@@ -10,16 +10,16 @@ namespace App.modules.@event;
 /// Consolidates all event types (BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction)
 /// into a single action with a Type parameter. Returns the binding ID for later removal.
 /// </summary>
-[Example("before step, call LogStep, on goal pattern 'Api/*'", "Type=BeforeStep, GoalToCall=LogStep, GoalPattern=Api/*")]
-[Example("after goal, call Cleanup", "Type=AfterGoal, GoalToCall=Cleanup")]
-[Example("before action, call MockHttp, on action pattern 'http.*'", "Type=BeforeAction, GoalToCall=MockHttp, ActionPattern=http.*")]
-[Example("on before goal, call AuthCheck, on goal pattern '^Admin', is regex", "Type=BeforeGoal, GoalToCall=AuthCheck, GoalPattern=^Admin, IsRegex=true")]
+[ModuleDescription("Lifecycle event hooks: register callbacks that run before or after goals, steps, or actions")]
+[System.ComponentModel.Description("Register a goal callback to fire at a lifecycle event (BeforeGoal, AfterStep, BeforeAction, etc.)")]
+[Example("before step, call LogStep, on goal pattern 'Api/*'",
+    "event.on Type([eventtype] BeforeStep), GoalToCall([goal.call] LogStep), GoalPattern([string] Api/*)")]
 [Action("on", Cacheable = false)]
 public partial class On : IContext
 {
     /// <summary>Event type: BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction.</summary>
     [IsNotNull]
-    public partial Data.@this<string> Type { get; init; }
+    public partial Data.@this<EventType> Type { get; init; }
     /// <summary>Goal to execute when the event fires.</summary>
     public partial Data.@this<GoalCall> GoalToCall { get; init; }
     /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>
@@ -40,10 +40,6 @@ public partial class On : IContext
 
     public Task<Data.@this> Run()
     {
-        if (!Enum.TryParse<EventType>(Type.Value!, ignoreCase: true, out var eventType))
-            return Task.FromResult(Error(
-                new Errors.ValidationError($"Unknown event type: '{Type.Value}'", "InvalidEventType", 400)));
-
         // Resolve target actor — default to current context's actor
         var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
 
@@ -52,7 +48,7 @@ public partial class On : IContext
             async (ctx, _, _) => await ctx.App!.RunGoalAsync(goalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(
-            eventType,
+            Type.Value,
             handler,
             goalNamePattern: GoalPattern?.Value,
             stepPattern: StepPattern?.Value,

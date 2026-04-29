@@ -23,11 +23,22 @@ public sealed class @this : IAsyncDisposable
     public const string StdOut = "stdout";
     public const string StdErr = "stderr";
 
+    /// <summary>Standard channel for diagnostic output. Pre-registered to stderr; gated by app.Debug.IsEnabled at the call site.</summary>
+    public const string Debug = "debug";
+
     public @this(App.@this app, Serializers.@this? serializers = null)
     {
         _app = app;
         Serializers = serializers ?? new Serializers.@this();
         Register(new Channel.@this(Default, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
+            { ContentType = "text/plain" });
+        Register(new Channel.@this(StdOut, Console.OpenStandardOutput(), ChannelDirection.Output, ownsStream: false)
+            { ContentType = "text/plain" });
+        Register(new Channel.@this(StdErr, Console.OpenStandardError(), ChannelDirection.Output, ownsStream: false)
+            { ContentType = "text/plain" });
+        // Diagnostic-only sink; default points at stderr so unconfigured installs see output.
+        // Users can swap by re-Register-ing "debug" with their own stream / goal-backed channel.
+        Register(new Channel.@this(Debug, Console.OpenStandardError(), ChannelDirection.Output, ownsStream: false)
             { ContentType = "text/plain" });
     }
 

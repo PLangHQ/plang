@@ -37,7 +37,7 @@ namespace PLang
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
 			var engine = new App.@this(fileSystem);
-			engine.SystemDirectory = fileSystem.SystemDirectory;
+			engine.OsDirectory = fileSystem.OsDirectory;
 
 			var userVars = engine.User.Context.Variables;
 
@@ -73,15 +73,15 @@ namespace PLang
 			// Build mode
 			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
 			{
-				engine.Building.IsEnabled = true;
+				engine.Build.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
 
 				if (buildValue is IDictionary<string, object?> buildDict)
-					TypeMapping.Populate(engine.Building, buildDict);
+					TypeMapping.Populate(engine.Build, buildDict);
 
 				// Sync cache flag to %!build.cache% for Build.goal
-				userVars.Set("!build.cache", engine.Building.Cache);
+				userVars.Set("!build.cache", engine.Build.Cache);
 			}
 
 			// Set the goal file on system context — Start() reads it

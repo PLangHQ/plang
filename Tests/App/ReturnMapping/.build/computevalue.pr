@@ -1,0 +1,57 @@
+{
+  "name": "ComputeValue",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %answer% = 42",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%answer%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 42,
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/App/ReturnMapping/ComputeValue.goal",
+  "prPath": "/App/ReturnMapping/.build/computevalue.pr",
+  "hash": "69ab581ca8309df99afd9d72cbe4b93526cec25221fecaecc8095955c3450d9b",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

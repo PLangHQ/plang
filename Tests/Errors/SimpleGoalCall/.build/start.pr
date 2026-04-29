@@ -1,0 +1,106 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call DoStuff name=World",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "DoStuff",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "name",
+                    "value": "World",
+                    "type": "string"
+                  }
+                ],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "The step is a goal invocation: \u0060call DoStuff name=World\u0060. Compile to goal.call with a single string parameter \u0060name\u0060.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "DoStuff",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \u0022Hello %name%\u0022",
+          "lineNumber": 12,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "Hello %name%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "The step \u0027write out ...\u0027 produces output to the actor\u0027s output channel. Use output.write with the literal string containing the %name% placeholder.",
+          "level": "high",
+          "confidence": 99,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Errors/SimpleGoalCall/Start.goal",
+      "prPath": "/Errors/SimpleGoalCall/.build/start.pr",
+      "hash": "0efbc27facb410ba2d73362dc02741a245fd3aec666a63592642711c071cfcf5",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Errors/SimpleGoalCall/Start.goal",
+  "prPath": "/Errors/SimpleGoalCall/.build/start.pr",
+  "hash": "88f667c6fe57d8675b268c7f722354effe2544f3e0c4c79c10c871b26869d946",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

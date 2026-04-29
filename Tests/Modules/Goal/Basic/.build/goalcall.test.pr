@@ -1,0 +1,172 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call goal Greet name=\u0022world\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: call goal with parameters and return value",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Greet",
+                "parameters": [
+                  {
+                    "name": "name",
+                    "value": "world",
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor(user|service|system)"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %greeting% equals \u0022hello world\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello world",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%greeting%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "call goal Greet name=\u0022plang\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Test: call goal with different parameter",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Greet",
+                "parameters": [
+                  {
+                    "name": "name",
+                    "value": "plang",
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor(user|service|system)"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %greeting% equals \u0022hello plang\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello plang",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%greeting%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/GoalCall.test.goal",
+  "prPath": "/.build/goalcall.test.pr",
+  "hash": "c887b7562c22131bfe3944e7d52a5e852586bc05c82451610fecbe4f8c0717c3",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

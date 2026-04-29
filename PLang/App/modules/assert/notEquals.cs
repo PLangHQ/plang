@@ -3,8 +3,7 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %result% not equals 0", "Expected=0, Actual=%result%")]
-[Example("assert %status% not equals 'error'", "Expected=error, Actual=%status%")]
+[System.ComponentModel.Description("Assert that Expected does not equal Actual; fails with an error if they match")]
 [Action("notEquals")]
 public partial class NotEquals : IContext
 {

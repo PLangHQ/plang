@@ -4,8 +4,9 @@ using App.modules.file.providers;
 
 namespace App.modules.file;
 
-[Example("check if file.txt exists, write to %fileInfo%", "Path=file.txt")]
-[Example("does %path% exist, write to %result%", "Path=%path%")]
+[System.ComponentModel.Description("Check whether a file or directory exists at Path and return file info")]
+[Example("check if file.txt exists, write to %fileInfo%",
+    "file.exists Path([path] file.txt) | variable.set Name([string] %fileInfo%), Value([object] %__data__%)")]
 [Action("exists")]
 public partial class Exists : IContext
 {

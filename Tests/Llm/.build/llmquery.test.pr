@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Runs an LLM system\u002Buser query, writes the response to %result%, then asserts the result is not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -54,6 +54,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -78,15 +83,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: ensure %result% is not null. Map to assert.isNotNull.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/LlmQuery.test.goal",
-  "prPath": "/.build/llmquery.test.pr",
+  "path": "/Llm/LlmQuery.test.goal",
+  "prPath": "/Llm/.build/llmquery.test.pr",
   "hash": "f11c540d089de04a68ed7e629c194f6d38f0885fc58e6044eca4d6ccb258f64b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

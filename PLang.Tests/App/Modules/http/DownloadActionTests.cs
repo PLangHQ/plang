@@ -61,7 +61,7 @@ public class DownloadActionTests
     }
 
     [Test]
-    public async Task Download_HappyPath_SavesFile()
+    public async Task Download_HappyPath_ReturnsBytes()
     {
         _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -72,105 +72,15 @@ public class DownloadActionTests
         {
             Context = Ctx,
             Url = "https://example.com/file.txt",
-            SaveTo = "file.txt",
             Unsigned = true
         };
 
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var savedPath = System.IO.Path.Combine(_tempDir, "file.txt");
-        await Assert.That(System.IO.File.Exists(savedPath)).IsTrue();
-        var content = await System.IO.File.ReadAllTextAsync(savedPath);
-        await Assert.That(content).IsEqualTo("downloaded data");
-    }
-
-    [Test]
-    public async Task Download_FileExistsError_ReturnsError()
-    {
-        var existingPath = System.IO.Path.Combine(_tempDir, "existing.txt");
-        await System.IO.File.WriteAllTextAsync(existingPath, "old content");
-
-        var action = new download
-        {
-            Context = Ctx,
-            Url = "https://example.com/file.txt",
-            SaveTo = "existing.txt",
-            IfExists = FileExists.Error,
-            Unsigned = true
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("FileExists");
-    }
-
-    [Test]
-    public async Task Download_FileExistsSkip_ReturnsSavePath()
-    {
-        var existingPath = System.IO.Path.Combine(_tempDir, "skip.txt");
-        await System.IO.File.WriteAllTextAsync(existingPath, "keep this");
-
-        var action = new download
-        {
-            Context = Ctx,
-            Url = "https://example.com/file.txt",
-            SaveTo = "skip.txt",
-            IfExists = FileExists.Skip,
-            Unsigned = true
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        var content = await System.IO.File.ReadAllTextAsync(existingPath);
-        await Assert.That(content).IsEqualTo("keep this");
-    }
-
-    [Test]
-    public async Task Download_FileExistsOverwrite_ReplacesFile()
-    {
-        var existingPath = System.IO.Path.Combine(_tempDir, "overwrite.txt");
-        await System.IO.File.WriteAllTextAsync(existingPath, "old");
-
-        _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new System.Net.Http.StringContent("new", Encoding.UTF8, "text/plain")
-        });
-
-        var action = new download
-        {
-            Context = Ctx,
-            Url = "https://example.com/file.txt",
-            SaveTo = "overwrite.txt",
-            IfExists = FileExists.Overwrite,
-            Unsigned = true
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        var content = await System.IO.File.ReadAllTextAsync(existingPath);
-        await Assert.That(content).IsEqualTo("new");
-    }
-
-    [Test]
-    public async Task Download_CreatesParentDirectories()
-    {
-        var action = new download
-        {
-            Context = Ctx,
-            Url = "https://example.com/file.txt",
-            SaveTo = "deep/nested/file.txt",
-            Unsigned = true
-        };
-
-        var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        var savedPath = System.IO.Path.Combine(_tempDir, "deep", "nested", "file.txt");
-        await Assert.That(System.IO.File.Exists(savedPath)).IsTrue();
+        var bytes = result.Value as byte[];
+        await Assert.That(bytes).IsNotNull();
+        await Assert.That(Encoding.UTF8.GetString(bytes!)).IsEqualTo("downloaded data");
     }
 
     [Test]
@@ -185,7 +95,6 @@ public class DownloadActionTests
         {
             Context = Ctx,
             Url = "https://example.com/missing.txt",
-            SaveTo = "nope.txt",
             Unsigned = true
         };
 

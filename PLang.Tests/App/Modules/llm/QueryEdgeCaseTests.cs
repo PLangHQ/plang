@@ -83,9 +83,9 @@ public class QueryEdgeCaseTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "ToolA", Description = "A" },
-                new GoalCall { Name = "ToolB", Description = "B" },
-                new GoalCall { Name = "ToolC", Description = "C" }
+                new GoalCall { Name = "ToolA" },
+                new GoalCall { Name = "ToolB" },
+                new GoalCall { Name = "ToolC" }
             },
             MaxToolCalls = 5
         };
@@ -128,7 +128,7 @@ public class QueryEdgeCaseTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "NoArgTool", Description = "no args needed" }
+                new GoalCall { Name = "NoArgTool" }
             }
         };
         var result = await action.Run();

@@ -228,28 +228,22 @@ public sealed partial class @this : modules.IDataWrappable
 
     /// <summary>
     /// Merges LLM-derived fields from an existing built goal onto this freshly-parsed goal.
-    /// Matches steps by Text, delegates to Step.Merge for each match.
+    /// Delegates to Steps.MergeFrom for this goal's steps, then recurses into sub-goals
+    /// matched by Name so every sub-goal's steps also get their prior Actions + PriorText
+    /// back. Without the recursion, @known / keep:true only fire for the top-level goal
+    /// of a multi-goal .goal file.
     /// </summary>
     public void MergeFrom(@this? existing)
     {
         if (existing == null) return;
+        Steps.MergeFrom(existing.Steps);
 
-        if (existing.Steps.Count > 0)
+        if (existing.Goals.Count == 0) return;
+        foreach (var subGoal in Goals)
         {
-            var consumed = new HashSet<int>();
-            foreach (var step in Steps)
-            {
-                for (int i = 0; i < existing.Steps.Count; i++)
-                {
-                    if (consumed.Contains(i)) continue;
-                    if (existing.Steps[i].Text == step.Text)
-                    {
-                        step.Merge(existing.Steps[i]);
-                        consumed.Add(i);
-                        break;
-                    }
-                }
-            }
+            var priorSub = existing.Goals.FirstOrDefault(g =>
+                string.Equals(g.Name, subGoal.Name, StringComparison.OrdinalIgnoreCase));
+            if (priorSub != null) subGoal.MergeFrom(priorSub);
         }
 
     }
@@ -309,6 +303,19 @@ public sealed partial class @this : modules.IDataWrappable
             data.Context = context;
             return data;
         });
+    }
+
+    /// <summary>
+    /// Groups modifier actions onto their preceding executable action for this goal's
+    /// steps and every sub-goal recursively. Called before .pr serialization so saved
+    /// files have modifiers correctly nested. Without recursion sub-goal steps keep
+    /// modifiers flat and fail at runtime (flat modifiers' no-op Run wipes %__data__%).
+    /// </summary>
+    public void GroupModifiersRecursive(App.Modules.@this modules)
+    {
+        Steps.GroupAllModifiers(modules);
+        foreach (var subGoal in Goals)
+            subGoal.GroupModifiersRecursive(modules);
     }
 
     public static @this NotFound(string name) => new()

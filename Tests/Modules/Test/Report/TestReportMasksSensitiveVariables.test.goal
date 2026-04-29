@@ -1,0 +1,16 @@
+TestReportMasksSensitiveVariables
+/ Regression test for security finding #3: proves test.report routes assertion
+/ failure content through DiagnosticOutput so [Sensitive] properties are masked.
+/ The fixture fails with an Identity (carrying a Sensitive PrivateKey) in
+/ AssertionError.Actual + the Variables snapshot. We then check the written
+/ report content has the key name preserved ('privateKey') but the value
+/ redacted ('******'), while the non-sensitive 'publicKey' still serializes.
+/ A regression that drops the DiagnosticOutput modifier — or falls back to
+/ value.ToString() — would fail the '******' assertion.
+- test.discover tests in '_fixtures_sensitive', pattern='*.fixture.goal', recursive, write to %tests%
+- test.run tests %tests%, write to %results%
+- test.report results %results%, write to %report%
+- assert %report.summaryFail% equals 1
+- assert %report.content% contains 'privateKey'
+- assert %report.content% contains '******'
+- assert %report.content% contains 'publicKey'

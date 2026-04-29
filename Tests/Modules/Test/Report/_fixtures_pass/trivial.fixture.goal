@@ -1,0 +1,4 @@
+TrivialPass
+/ Exercises one action path (output.write) so test.run records something
+/ into the Coverage and Results the Report tests can inspect.
+- write out 'hello'

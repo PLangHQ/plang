@@ -2,6 +2,7 @@ using App.Variables;
 
 namespace App.modules.list;
 
+[System.ComponentModel.Description("Split a string into a list using a separator (default comma), optionally removing empty entries")]
 [Action("split")]
 public partial class Split : IContext
 {

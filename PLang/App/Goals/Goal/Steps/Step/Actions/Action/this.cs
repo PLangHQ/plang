@@ -94,6 +94,32 @@ public sealed partial class @this : modules.IDataWrappable
     public List<Data.@this> Examples { get; init; } = new();
 
     /// <summary>
+    /// One-sentence description of what this action does, sourced from
+    /// [System.ComponentModel.Description] on the action class.
+    /// Populated by Modules.Describe(); null when no description attribute is present.
+    /// </summary>
+    [JsonIgnore]
+    public string? Description { get; init; }
+
+    /// <summary>
+    /// One-sentence description of the module this action belongs to, sourced from
+    /// [ModuleDescription] on the first action class in the module namespace.
+    /// Populated by Modules.Describe(); null when no attribute is present.
+    /// </summary>
+    [JsonIgnore]
+    public string? ModuleDescription { get; init; }
+
+    /// <summary>
+    /// True when this action is declared as a modifier via [Modifier] on its class.
+    /// Modifier actions wrap the preceding action rather than standing on their own
+    /// (e.g. cache.wrap, error.handle, timeout.after). The catalog renders modifier
+    /// actions in their own section. Per-action, so a module can carry a mix —
+    /// e.g. error.throw (action) and error.handle (modifier) share the error module.
+    /// </summary>
+    [JsonIgnore]
+    public bool IsModifier { get; init; }
+
+    /// <summary>
     /// Runs this action: lifecycle events → dispatch → return mapping.
     /// Context travels as parameter — actions are shared objects, not per-request.
     /// </summary>
@@ -103,15 +129,31 @@ public sealed partial class @this : modules.IDataWrappable
 
         var beforeResult = await lifecycle.Before.Run(context, App.Events.EventType.BeforeAction);
         if (!beforeResult.Success) return beforeResult;
-        if (beforeResult.Handled) return beforeResult;
 
-        Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context);
-        var result = await Modifiers.RunAsync(dispatch, context);
+        Data.@this result;
+        if (beforeResult.Handled)
+        {
+            // Override path: the BeforeAction binding supplied this action's result
+            // (mock.intercept, event.skipAction). Clear Handled so the outer step
+            // loop doesn't misread "dispatch was short-circuited" as "stop the step" —
+            // the next action in the chain still needs to run on this result.
+            result = beforeResult;
+            result.Handled = false;
+        }
+        else
+        {
+            Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context);
+            result = await Modifiers.RunAsync(dispatch, context);
+        }
 
         if (result.Success)
         {
-            result.Name = "__data__";
-            context.Variables.Put(result);
+            // Alias the result as %__data__% — Variables.Set stores Data references as-is
+            // (no clone, no rename). Same object is reachable via both %__data__% and
+            // whatever name the producing handler owns (e.g., variable.set's stored entry).
+            // Override path (beforeResult.Handled) flows through the same write so
+            // mocks and event.skipAction feed the next action like any real result.
+            context.Variables.Set("__data__", result);
         }
 
         var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction, this, result);

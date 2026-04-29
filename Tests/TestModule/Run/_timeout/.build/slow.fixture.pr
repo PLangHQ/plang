@@ -1,6 +1,6 @@
 {
   "name": "Slow",
-  "description": "Sleep for 5000ms, then attempt to write output that should not be reached (no explicit control-flow provided).",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -25,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -49,15 +54,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Run/_timeout/slow.fixture.goal",
-  "prPath": "/Run/_timeout/.build/slow.fixture.pr",
+  "path": "/TestModule/Run/_timeout/slow.fixture.goal",
+  "prPath": "/TestModule/Run/_timeout/.build/slow.fixture.pr",
   "hash": "9682a9791f742a7d824d627884e29bc544707a3f97b23c9ace6e9d5a9e198e83",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

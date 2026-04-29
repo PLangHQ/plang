@@ -7,6 +7,7 @@ namespace App.modules.identity;
 /// Lists all non-archived identities.
 /// PLang: get identities, write to %identities%
 /// </summary>
+[System.ComponentModel.Description("List all active (non-archived) identities in the store")]
 [Action("list")]
 public partial class list : IContext
 {

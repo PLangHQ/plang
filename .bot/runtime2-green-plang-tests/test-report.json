@@ -1,0 +1,122 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-green-plang-tests",
+  "timestamp": "2026-04-21T17:45:00Z",
+  "tested_version": "v2",
+  "tested_commits": ["ce0de138", "0cbbeb1f"],
+  "test_run": {
+    "csharp": { "total": 2274, "passed": 2273, "failed": 1, "skipped": 0, "flakes": ["Query_ToolCall_LlmRequestsToolAndHandlesError (pre-existing LLM integration flake, unrelated to coder v1)"] },
+    "plang": { "total": 168, "passed": 128, "failed": 35, "stale": 5 }
+  },
+  "delta_vs_v1_baseline": {
+    "regressions": 0,
+    "fail_to_pass": 14,
+    "stale_to_pass": 4,
+    "new_tests_added": 6,
+    "net_wins": 18
+  },
+  "coverage": {
+    "scope": "coder v1 modified C# files only — see v2/coverage.json for per-file detail",
+    "changed_files_covered": 14,
+    "changed_files_total": 14,
+    "changed_files_above_80pct": 11,
+    "uncovered_files": [],
+    "low_coverage_files": [
+      { "file": "PLang/App/Debug/this.cs", "pct": 49.2, "note": "Put→Set migration site; uncovered areas pre-existing" },
+      { "file": "PLang/App/Errors/Error.cs", "pct": 64.4, "note": "Pre-existing gaps" },
+      { "file": "PLang/App/this.cs", "pct": 67.6, "note": "Pre-existing gaps" }
+    ]
+  },
+  "findings": [
+    {
+      "id": "F4c-1",
+      "severity": "critical",
+      "type": "missing-coverage",
+      "wave": "W4c",
+      "test_file": "system/builder/llm/BuildGoal.llm",
+      "code_file": "system/builder/llm/BuildGoal.llm",
+      "issue": "The five new builder prompt rules (arithmetic-on-set-RHS, download+save split, wait/sleep, modifier shape, enum event types) are code-landed but have zero observable effect on the test suite. Coder reverted the full Tests/ rebuild after it regressed 38 tests, so all .pr files still encode the pre-W4 patterns the rules were written to prevent.",
+      "impact": "Tests that the prompt rules were meant to unblock (Loop.test.goal, ForeachDictionary.test.goal, ConditionCompound, SigningExpired, SigningTimedOut) all still fail. Claim 'Wave 4 done' overstates the state. Any future prompt regression on these rules is undetectable by running the suite.",
+      "suggestion": "Coder-or-architect call: either (a) accept W4c as landed-but-dormant, next step is a surgical per-goal rebuild with human review of each .pr; or (b) add .goal→.pr fixture tests that compile specific goals under the new prompt and assert the resulting action list shape."
+    },
+    {
+      "id": "F3-1",
+      "severity": "major",
+      "type": "weak-assertion",
+      "wave": "W3",
+      "test_file": "PLang.Tests/App/Modules/variable/settests.cs:39",
+      "code_file": "PLang/App/modules/variable/set.cs:57",
+      "issue": "Set_ReturnsOk never asserts result.Value. The W3 contract change (variable.set returns the stored Data instead of empty Data.Ok()) is only guarded by PLang integration tests (ReturnMapping.test.goal, GoalCallReturn.test.goal). Reverting variable.set to return Data() passes all C# tests.",
+      "impact": "A future refactor that drops the variable.set return value would not be caught by C# tests. Localized regression detection is lost; the integration signal arrives via end-to-end PLang failure only.",
+      "suggestion": "Add `await Assert.That(result.Value).IsEqualTo(\"testValue\");` to Set_ReturnsOk. Same pattern needed for Set_AsDefault_DoesNotOverwriteExisting (line 62-76) — should assert result.Value equals \"original\" in addition to the memory check."
+    },
+    {
+      "id": "F3-2",
+      "severity": "major",
+      "type": "missing-coverage",
+      "wave": "W3",
+      "test_file": "none",
+      "code_file": "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs:113",
+      "issue": "Action.RunAsync no-rename-mutation contract is uncovered. Old code (`result.Name = \"__data__\"; Variables.Put(result)`) silently mutated shared Data references, corrupting aliased producers. New code (`Variables.Set(\"__data__\", result)`) aliases without rename. Coder's summary calls this 'the key insight' — yet no test asserts the non-mutation.",
+      "impact": "A future refactor reintroducing the `result.Name = \"__data__\"` assignment would silently corrupt Data references aliased under other names and no C# test would catch it. Reverting line 113 makes all tests still pass.",
+      "suggestion": "Add a test that creates Data{Name=\"foo\", Value=42}, runs an action returning it, then asserts Ctx.Variables.Get(\"__data__\").Name == \"foo\" (not \"__data__\") and that it's the same reference as the handler-returned Data. Place in ActionTests or similar."
+    },
+    {
+      "id": "F3-3",
+      "severity": "major",
+      "type": "missing-coverage",
+      "wave": "W3",
+      "test_file": "none (no matching assertions in VariablesTests.cs)",
+      "code_file": "PLang/App/Variables/this.cs:67-80",
+      "issue": "Variables.Set aliasing-without-clone semantics are uncovered. New Set docstring: 'Data value → aliased under name as-is. No clone, no rename.' Old Set cloned if names differed. Grep for ReferenceEquals|alias|no clone|no rename in VariablesTests.cs returns zero matches on Set behavior. Reverting to the old clone-if-name-differs branch passes all C# tests.",
+      "impact": "Variables.Set is load-bearing infrastructure for Wave 3. Without a guard on the new aliasing semantics, a future refactor could reintroduce cloning (silently, because 'it still works for same-name case') — breaking the %__data__% aliasing assumptions that Action.RunAsync now relies on.",
+      "suggestion": "Add Set_DataWithDifferentName_StoresByKeyAsAlias: create Data(\"originalName\", 42), call Set(\"alias\", data), then assert ReferenceEquals(Get(\"alias\"), original) and Get(\"alias\").Name == \"originalName\"."
+    },
+    {
+      "id": "F2-1",
+      "severity": "minor",
+      "type": "missing-coverage",
+      "wave": "W2",
+      "test_file": "PLang.Tests/App/Modules/event/EventHandlerTests.cs:94 (removed On_InvalidType_ReturnsError)",
+      "code_file": "PLang/App/modules/event/on.cs:22",
+      "issue": "Compile-time enforcement claim is only true for direct C# instantiation. In the production path (LLM → .pr → Data<EventType> → __ResolveData.As<EventType>), enum resolution happens at runtime via TypeMapping.TryConvertTo with an EnumParseFailed error path (TypeMapping.cs:499-508). No C# test exercises this runtime path for event.on.Type.",
+      "impact": "If the builder LLM emits '\"type\": \"NonExistentType\"' in a .pr, the handler fails at resolve time with EnumParseFailed — but no test guards that behavior or its error message.",
+      "suggestion": "Re-add a test that constructs a Data<EventType> from an invalid string and asserts Error.Key == 'EnumParseFailed'. Or document that W2's correctness hinges on TypeMapping.TryConvertTo enum handling (which has its own coverage elsewhere)."
+    },
+    {
+      "id": "F3-4",
+      "severity": "minor",
+      "type": "weak-assertion",
+      "wave": "W3",
+      "test_file": "PLang.Tests/App/Modules/ui/RenderTests.cs",
+      "code_file": "PLang/App/modules/ui/providers/FluidProvider.cs:87",
+      "issue": "FluidProvider changed from `data.Name` to `kvp.Key` for Fluid variable names. All existing Render_* tests only call Set(new Data(\"x\", ...)) where key equals Data.Name — the gap between them isn't exercised. Reverting line 87 to kvp.Value.Name passes all tests.",
+      "impact": "After W3's aliasing change, it's now possible to Set(\"alias\", dataWithDifferentInternalName). FluidProvider's behavior on this gap is unguarded. Low likelihood of being hit in practice, but the contract is real and documented.",
+      "suggestion": "Add one RenderTests case: Set(\"display\", new Data(\"internal\", \"World\")); render template {{ display }}; assert 'Hello World'. Deletion test: reverting FluidProvider:87 would render 'Hello ' (empty)."
+    },
+    {
+      "id": "F4b-1",
+      "severity": "minor",
+      "type": "missing-coverage",
+      "wave": "W4b",
+      "test_file": "PLang.Tests/App/Modules/http/DownloadActionTests.cs",
+      "code_file": "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+      "issue": "No test for MaxDownloadSize limit path, OnProgress callback invocation, or signed (Unsigned=false) download path.",
+      "impact": "Pre-existing — not introduced by W4b. Flagged for completeness.",
+      "suggestion": "Out of scope for this review."
+    }
+  ],
+  "regression_check": {
+    "v1_pass_set_size": 109,
+    "v1_fail_set_size": 48,
+    "v1_stale_set_size": 4,
+    "flipped_pass_to_fail": 0,
+    "flipped_fail_to_pass": 14,
+    "flipped_stale_to_pass": 4,
+    "still_failing": 35,
+    "new_tests_added": 6,
+    "tests_removed": 0
+  },
+  "verdict": "needs-fixes",
+  "summary": "Coder v1 Waves 1-4 delivered +18 test wins with zero regressions (C# 2273/2274 same pre-existing flake; PLang 128/35/5). W1 (per-test in-memory System db) and W4b (http.download bytes split) have strong C# test coverage. W2 (event enum) has a minor gap from removing On_InvalidType_ReturnsError. W3 (Variables unification + variable.set return + Action.RunAsync no-mutation) has THREE major gaps: F3-1 variable.set return value not asserted, F3-2 no-mutation contract untested, F3-3 aliasing-without-clone semantics untested. W4c (builder prompt rules) are code-landed but dormant — coder's full rebuild was reverted, so none of the .pr files exercise the new rules; tests the rules target still fail. Hand back to coder for F3-1/2/3, then architect's call on F4c-1 before moving on."
+}

@@ -1,0 +1,199 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %flag% = false",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: falsy value triggers else branch (GoalIfFalse)",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%flag%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %flag%, call HandleTrue, else call HandleFalse",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%flag%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "HandleTrue",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/handletrue.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%flag%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Negate",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "HandleFalse",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/handlefalse.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "if %flag%, call HandleTrue, else call HandleFalse compiles to two condition.if checks: first for flag == true (then-branch), and a second condition.if for the else-branch (negated). Each branch calls the corresponding goal.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \u0022false-branch\u0022, \u0022GoalIfFalse should have been called\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "false-branch",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "GoalIfFalse should have been called",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ConditionFalsy.test.goal",
+  "prPath": "/.build/conditionfalsy.test.pr",
+  "hash": "dc5a504602162b53b08ccae42a594e1cb8bcac00e9b7b91321f6229bf1868c4e",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

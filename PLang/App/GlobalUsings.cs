@@ -52,9 +52,11 @@ global using CallFrame = App.CallStack.CallFrame;
 global using Debugging = App.Debug.@this;
 global using Testing = App.Test.@this;
 
-// Building: can't be global alias — v1 PLang.Building namespace conflict
-// Inside App.*: use Build.@this (child namespace resolves naturally)
-// Outside App.*: use App.Build.@this or per-file alias
+// Build: can't be global alias — v1 PLang.Build namespace conflict.
+// Inside App.@this: the `Build` property shadows the `Build` namespace, so
+// type references must be fully qualified (global::App.Build.@this).
+// Inside other App.*: Build.@this resolves naturally.
+// Outside App.*: use App.Build.@this or a per-file alias.
 
 // App: can't be global alias — App.@this IS the app root
 // Inside App.*: use App.@this (parent namespace resolves naturally)

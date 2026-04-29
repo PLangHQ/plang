@@ -1,6 +1,6 @@
 {
   "name": "TestReportMasksSensitiveVariablesJunit",
-  "description": "Discovers fixture tests, runs them, generates a JUnit report, asserts summary counts and that the JUnit XML content masks sensitive private keys, then saves the masked snapshot to disk.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,11 +48,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Discover fixture goals under _fixtures_sensitive matching *.fixture.goal recursively, then store the resulting test descriptors in %tests%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -69,7 +80,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             }
           ],
           "defaults": null,
@@ -90,11 +101,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Run the discovered tests list and capture the aggregated results into %results%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -111,7 +133,7 @@
             {
               "name": "Results",
               "value": "%results%",
-              "type": "object"
+              "type": "results"
             },
             {
               "name": "Format",
@@ -137,11 +159,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Generate a JUnit report from %results% and capture the report object into %report%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -171,6 +204,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report summaryFail count equals 1.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -186,12 +224,12 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "\u003Ctestsuites",
+              "value": "%report.content%",
               "type": "string"
             },
             {
               "name": "Container",
-              "value": "%report.content%",
+              "value": "\u003Ctestsuites",
               "type": "object"
             }
           ],
@@ -200,6 +238,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report content contains the JUnit XML root marker \u0027\u003Ctestsuites\u0027.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -215,13 +258,18 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "privateKey",
+              "value": "%report.content%",
               "type": "string"
             },
             {
               "name": "Container",
-              "value": "%report.content%",
+              "value": "privateKey",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected report content to contain \u0027privateKey\u0027.",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -229,6 +277,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report content contains the literal \u0027privateKey\u0027 (ensuring the masking test is exercising the sensitive-key path).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -244,13 +297,18 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "******",
+              "value": "%report.content%",
               "type": "string"
             },
             {
               "name": "Container",
-              "value": "%report.content%",
-              "type": "object"
+              "value": "******",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "Assert the report content contains the masking placeholder \u0027******\u0027.",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -258,6 +316,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report content contains the masking placeholder \u0027******\u0027.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -273,13 +336,18 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "publicKey",
+              "value": "%report.content%",
               "type": "string"
             },
             {
               "name": "Container",
-              "value": "%report.content%",
+              "value": "publicKey",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected report content to contain literal \u0027publicKey\u0027.",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -287,6 +355,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert the report content contains the literal \u0027publicKey\u0027.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -316,15 +389,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Save the masked JUnit XML snapshot to the committed path using %report.content% as the file content.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
-  "prPath": "/Report/.build/testreportmaskssensitivevariablesjunit.test.pr",
+  "path": "/TestModule/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
+  "prPath": "/TestModule/Report/.build/testreportmaskssensitivevariablesjunit.test.pr",
   "hash": "26f282c2eed41a2eceeb5b3d05ba1bbbe8a9648aee1425cb7ad316f828bc8f7b",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

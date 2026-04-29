@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Calls llm.query with system/user messages and a JSON schema, writes the parsed response to %result%, then asserts %result% and %result.sentiment% are not null.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -20,23 +20,61 @@
                 {
                   "role": "system",
                   "content": "You analyze sentiment. Respond in JSON only.",
-                  "images": []
+                  "images": [],
+                  "toolCallId": null,
+                  "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "Analyze: I love sunny days",
-                  "images": []
+                  "images": [],
+                  "toolCallId": null,
+                  "toolCalls": null
                 }
               ],
               "type": "list\u003Cllmmessage\u003E"
             },
             {
               "name": "Schema",
-              "value": "{\u0022sentiment\u0022:\u0022string\u0022,\u0022score\u0022:\u0022number\u0022}",
-              "type": "string"
+              "value": {
+                "sentiment": "string",
+                "score": "number"
+              },
+              "type": "list\u003Ckeyvaluepair\u003E"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "continuepreviousconversation",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -54,11 +92,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "llm.query with Messages built from system\u002Buser. The step text says \u0027scheme\u0027 with sentiment:string and score:number; map this to Schema as a JSON-shaped object. Then store the parsed response into %result% via variable.set.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -88,6 +137,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -117,15 +171,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/LlmSchema.test.goal",
-  "prPath": "/.build/llmschema.test.pr",
+  "path": "/Llm/LlmSchema.test.goal",
+  "prPath": "/Llm/.build/llmschema.test.pr",
   "hash": "57b6e9dc25ee4a37ebd54ad85cf6fb41fd0ae25e07784ca813a0088d059a06c4",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

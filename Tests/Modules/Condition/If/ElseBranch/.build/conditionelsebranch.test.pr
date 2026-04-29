@@ -1,0 +1,199 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 2",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: else branch \u2014 false condition calls GoalIfFalse",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %x% \u003E 100, call WhenBig, else call WhenSmall",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": 100,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Step",
+              "value": "this",
+              "type": "step"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenBig",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/whenbig.pr"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "user",
+              "type": "actor"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "else",
+          "parameters": [
+            {
+              "name": "Step",
+              "value": "this",
+              "type": "step"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenSmall",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/whensmall.pr"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "user",
+              "type": "actor"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use condition.if to evaluate %x% \u003E 100. The step includes an else branch, so emit condition.if first, then condition.else, each followed by the corresponding goal.call. Actor is user as specified in the known mapping.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \u0022small\u0022, \u0022else branch should execute when condition is false\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "small",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "else branch should execute when condition is false",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ConditionElseBranch.test.goal",
+  "prPath": "/.build/conditionelsebranch.test.pr",
+  "hash": "1e47a3ea8ece27ced425e78c62abeb15ec688a4e4e4b3cef98ab293a43b3efa7",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

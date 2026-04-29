@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "BuildingGuard regression (8 C# tests, missed by 4 codeanalyzer rounds), 25 PLang test failures + 4 stale, both v4 carryovers (locale-format asymmetry, promoteGroups 0%) confirmed, three coder-handover gaps under-tested."
+}

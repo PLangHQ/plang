@@ -1,0 +1,479 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "mock intercept \u0022file.read\u0022, return \u0022mocked content\u0022, write to %mockRead%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "mock",
+          "action": "intercept",
+          "parameters": [
+            {
+              "name": "ActionPattern",
+              "value": "file.read",
+              "type": "string"
+            },
+            {
+              "name": "ReturnValue",
+              "value": "mocked content",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%mockRead%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %mockRead.callCount% equals 0, \u0022mock should start with 0 calls\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.callCount%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "mock should start with 0 calls",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %mockRead.actionPattern% equals \u0022file.read\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "file.read",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.actionPattern%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Assert the intercepted action pattern stored on the mock handle equals \u0022file.read\u0022.",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %mockRead.isSpy% equals false",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.isSpy%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Assert the mock is not a spy initially.",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "mock intercept \u0022output.write\u0022, write to %spyWrite%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "mock",
+          "action": "intercept",
+          "parameters": [
+            {
+              "name": "ActionPattern",
+              "value": "output.write",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%spyWrite%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %spyWrite.isSpy% equals true",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%spyWrite.isSpy%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Assert the output.write mock is a spy.",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "read file \u0027test_output.txt\u0027, write to %mockResult%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": "exercise the mock \u2014 call intercepted action, verify callCount",
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "test_output.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%mockResult%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Exercise the mocked file.read by reading test_output.txt; mock intercept should return mocked content and assign it to %mockResult%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "assert %mockRead.callCount% equals 1, \u0022callCount should increment after mock intercept\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 1,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.callCount%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "callCount should increment after mock intercept",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "mock verify %mockRead% was called 1 time",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": "verify",
+      "actions": [
+        {
+          "module": "mock",
+          "action": "verify",
+          "parameters": [
+            {
+              "name": "Mock",
+              "value": "%mockRead%",
+              "type": "mockhandle"
+            },
+            {
+              "name": "ExpectedCount",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Verify the file.read mock handle was called exactly once.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "mock reset %mockRead%",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": "reset",
+      "actions": [
+        {
+          "module": "mock",
+          "action": "reset",
+          "parameters": [
+            {
+              "name": "Mock",
+              "value": "%mockRead%",
+              "type": "mockhandle"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "assert %mockRead.callCount% equals 0, \u0022reset should clear callCount\u0022",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%mockRead.callCount%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "reset should clear callCount",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Modules/Mock/Mock.test.goal",
+  "prPath": "/Modules/Mock/.build/mock.test.pr",
+  "hash": "f1cf4d4b7f07539b7158e8373bae9c4eb7a2e4f483e6c13cc31ab3407db8c7f3",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

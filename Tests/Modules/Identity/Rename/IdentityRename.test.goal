@@ -1,0 +1,8 @@
+Start
+/ Test: rename an identity, verify %MyIdentity.Name% equals new name
+- archive identity 'TestRenameOld', force, on error ignore, force
+- archive identity 'TestRenameNew', force, on error ignore, force
+- create identity 'TestRenameOld', set as default
+- rename identity 'TestRenameOld' to 'TestRenameNew'
+- assert %MyIdentity.Name% equals 'TestRenameNew'
+- archive identity 'TestRenameNew', force

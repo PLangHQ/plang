@@ -2,6 +2,7 @@ using App.Variables;
 
 namespace App.modules.math;
 
+[System.ComponentModel.Description("Return the square root of Value; fails for negative inputs")]
 [Action("sqrt")]
 public partial class Sqrt : IContext
 {

@@ -1,0 +1,7 @@
+Start
+/ Multi-step goal where only one step has error handling.
+/ Verifies the modifier attaches to the right action and doesn't bleed into peer steps.
+
+- read 'config.json', on error 404, write out "no config"
+- read 'data.txt', write to %content%
+- write out %content%

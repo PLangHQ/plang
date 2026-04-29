@@ -1,0 +1,57 @@
+{
+  "name": "CatchError",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %caughtMessage% = %!error.Message%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%caughtMessage%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%!error.Message%",
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/CatchError.goal",
+  "prPath": "/.build/catcherror.pr",
+  "hash": "e0c6c59c2f69f86595162877a2a5796ede74af5a3074201db9a8dd56c0c7fa4d",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

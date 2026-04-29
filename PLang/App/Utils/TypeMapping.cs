@@ -11,9 +11,11 @@ namespace App.Utils;
 /// </summary>
 public static class TypeMapping
 {
-    private static readonly Dictionary<string, Type> NameToType = new(StringComparer.OrdinalIgnoreCase)
+    // Primitive names only. Domain types declare their name via [PlangType] on the
+    // class itself — see PlangTypeIndex.ResolveName / ResolveType for the lookup.
+    private static readonly Dictionary<string, Type> Primitives = new(StringComparer.OrdinalIgnoreCase)
     {
-        // Primitives
+        // Scalars
         ["string"] = typeof(string),
         ["text"] = typeof(string),
         ["int"] = typeof(int),
@@ -41,14 +43,8 @@ public static class TypeMapping
         ["object"] = typeof(object),
         ["dynamic"] = typeof(object),
         ["json"] = typeof(JsonNode),
-        ["json[]"] = typeof(JsonArray),
-        ["actor"] = typeof(App.Actor.@this),
-        ["goal.call"] = typeof(App.Goals.Goal.GoalCall),
-        ["tstring"] = typeof(App.Data.TString),
-        ["translatable"] = typeof(App.Data.TString),
-        ["path"] = typeof(App.FileSystem.Path),
 
-        // Nullable types
+        // Nullable scalars
         ["int?"] = typeof(int?),
         ["long?"] = typeof(long?),
         ["double?"] = typeof(double?),
@@ -57,7 +53,8 @@ public static class TypeMapping
         ["guid?"] = typeof(Guid?),
     };
 
-    private static readonly Dictionary<Type, string> TypeToName = new()
+    // Reverse map — primitives only. Domain types go through PlangTypeIndex.
+    private static readonly Dictionary<Type, string> PrimitiveNames = new()
     {
         [typeof(string)] = "string",
         [typeof(int)] = "int",
@@ -72,18 +69,16 @@ public static class TypeMapping
         [typeof(byte)] = "byte",
         [typeof(byte[])] = "bytes",
         [typeof(object)] = "object",
-        [typeof(App.Goals.Goal.GoalCall)] = "goal.call",
-        [typeof(App.Data.TString)] = "tstring",
-        [typeof(App.FileSystem.Path)] = "path",
     };
 
     /// <summary>
     /// Registers a domain type for deserialization and type resolution.
+    /// Prefer declaring [PlangType(name)] on the class itself — that's the single
+    /// source of truth. This API remains for test harnesses that synthesize types.
     /// </summary>
     public static void Register(string plangName, Type clrType)
     {
-        NameToType[plangName.ToLowerInvariant()] = clrType;
-        TypeToName[clrType] = plangName.ToLowerInvariant();
+        PlangTypeIndex.RegisterRuntime(plangName, clrType);
     }
 
     private const int MaxGenericDepth = 20;
@@ -127,64 +122,24 @@ public static class TypeMapping
             }
         }
 
-        if (NameToType.TryGetValue(typeName, out var type))
+        if (Primitives.TryGetValue(typeName, out var type))
             return type;
 
-        // MIME type resolution
-        if (typeName.Contains('/'))
-        {
-            if (typeName.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
-                return typeof(string);
-            if (typeName.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ||
-                typeName.StartsWith("audio/", StringComparison.OrdinalIgnoreCase) ||
-                typeName.StartsWith("video/", StringComparison.OrdinalIgnoreCase))
-                return typeof(byte[]);
-            if (typeName.Equals("application/json", StringComparison.OrdinalIgnoreCase))
-                return typeof(object);
-            if (typeName.Equals("application/plang-goal", StringComparison.OrdinalIgnoreCase))
-                return typeof(App.Goals.Goal.@this);
-            if (typeName.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
-                return typeof(byte[]);
-        }
+        // Domain types: declared via [PlangType] on the class, or discovered via
+        // the @this convention (last namespace segment). PlangTypeIndex owns the
+        // bidirectional map.
+        var domainType = PlangTypeIndex.ResolveType(typeName);
+        if (domainType != null) return domainType;
+
+        // MIME families (text/..., image/..., etc.) live in MimeTypes.
+        var mimeType = MimeTypes.TryGetClrType(typeName);
+        if (mimeType != null) return mimeType;
 
         return null;
     }
 
-    /// <summary>
-    /// Gets the MIME type for a file extension.
-    /// </summary>
-    public static string GetMimeType(string extension)
-    {
-        if (string.IsNullOrWhiteSpace(extension))
-            return "application/octet-stream";
-
-        return extension.ToLowerInvariant().TrimStart('.') switch
-        {
-            "md" => "text/markdown",
-            "json" => "application/json",
-            "xml" => "text/xml",
-            "html" or "htm" => "text/html",
-            "css" => "text/css",
-            "js" => "text/javascript",
-            "csv" => "text/csv",
-            "yaml" or "yml" => "text/yaml",
-            "txt" => "text/plain",
-            "llm" => "text/plain",
-            "goal" => "text/plain",
-            "pr" => "application/plang-goal",
-            "png" => "image/png",
-            "jpg" or "jpeg" => "image/jpeg",
-            "gif" => "image/gif",
-            "svg" => "image/svg+xml",
-            "webp" => "image/webp",
-            "mp3" => "audio/mpeg",
-            "wav" => "audio/wav",
-            "mp4" => "video/mp4",
-            "pdf" => "application/pdf",
-            "zip" => "application/zip",
-            _ => "application/octet-stream"
-        };
-    }
+    /// <summary>Forwards to <see cref="MimeTypes.GetMimeType"/>. Prefer MimeTypes directly.</summary>
+    public static string GetMimeType(string extension) => MimeTypes.GetMimeType(extension);
 
     /// <summary>
     /// Gets the PLang type name for a .NET Type.
@@ -207,11 +162,22 @@ public static class TypeMapping
             var generic = type.GetGenericTypeDefinition();
             if (generic == typeof(Data.@this<>))
                 return GetTypeName(type.GetGenericArguments()[0]);
-            if (generic == typeof(List<>) || generic == typeof(IList<>))
+            if (generic == typeof(List<>) || generic == typeof(IList<>)
+                || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
+                || generic == typeof(IReadOnlyCollection<>) || generic == typeof(IReadOnlyList<>)
+                || generic == typeof(HashSet<>)
+                || (generic.FullName != null && (
+                    generic.FullName.StartsWith("System.Collections.Immutable.ImmutableList`", StringComparison.Ordinal)
+                    || generic.FullName.StartsWith("System.Collections.Generic.ISet`", StringComparison.Ordinal))))
             {
                 return $"list<{GetTypeName(type.GetGenericArguments()[0])}>";
             }
-            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>))
+            if (generic == typeof(Dictionary<,>) || generic == typeof(IDictionary<,>)
+                || (generic.FullName != null && (
+                    generic.FullName.StartsWith("System.Collections.Concurrent.ConcurrentDictionary`", StringComparison.Ordinal)
+                    || generic.FullName.StartsWith("System.Collections.ObjectModel.ReadOnlyDictionary`", StringComparison.Ordinal)
+                    || generic.FullName.StartsWith("System.Collections.Generic.SortedDictionary`", StringComparison.Ordinal)
+                    || generic.FullName.StartsWith("System.Collections.Immutable.ImmutableDictionary`", StringComparison.Ordinal))))
             {
                 var args = type.GetGenericArguments();
                 return $"dict<{GetTypeName(args[0])},{GetTypeName(args[1])}>";
@@ -231,8 +197,21 @@ public static class TypeMapping
             return $"list<{GetTypeName(elementType)}>";
         }
 
-        if (TypeToName.TryGetValue(type, out var name))
+        if (PrimitiveNames.TryGetValue(type, out var name))
             return name;
+
+        // Custom classes that IMPLEMENT IList<T> (e.g. Actions : IList<Action>) render
+        // as list<T>, mirroring the treatment of List<T>/IList<T>. Keeps the catalog
+        // honest: Actions isn't a separate opaque type, it's a list of actions.
+        var listIface = type.GetInterfaces().FirstOrDefault(i =>
+            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+        if (listIface != null)
+            return $"list<{GetTypeName(listIface.GetGenericArguments()[0])}>";
+
+        // Domain types: [PlangType] on the class, or the @this convention. Both are
+        // resolved by PlangTypeIndex — no separate reflection walk here.
+        var declared = PlangTypeIndex.ResolveName(type);
+        if (declared != null) return declared;
 
         // Check for ValidValues static property (convention for constrained types)
         // Return the lowercased type name — callers use GetValidValues() for the values
@@ -251,6 +230,10 @@ public static class TypeMapping
         var idx = name.IndexOf('`');
         return idx >= 0 ? name[..idx] : name;
     }
+
+    // Previously: a private _obpThisCache + ResolveObpThisType helper duplicated
+    // the forward/backward @this walk. That moved into PlangTypeIndex which owns
+    // the full [PlangType] + @this resolution for domain types.
 
     /// <summary>
     /// Gets the valid values for a constrained type (e.g. Actor → ["user","service","system"]).
@@ -281,6 +264,41 @@ public static class TypeMapping
     /// <summary>
     /// Determines if a type is considered a primitive type in PLang.
     /// </summary>
+    /// <summary>
+    /// True for [PlangType] domain types whose wire form is a primitive (typically string).
+    /// Recognizes any of:
+    ///   - public static <c>Resolve(input, Context)</c> constructor (the source-generator convention — Path)
+    ///   - <c>[PlangType(Shape = "...")]</c> declaration
+    ///   - <c>[PlangType]</c> with no <c>[LlmBuilder]</c> properties (a wrapped primitive — TString)
+    /// Used by NormalizeParameterTypes (skip TryConvertTo so the .pr keeps the primitive)
+    /// and validateResponse (reject record-shape values for these params).
+    /// </summary>
+    public static bool IsScalarPlangType(Type type)
+    {
+        var hasPlangType = type
+            .GetCustomAttributes(typeof(App.Attributes.PlangTypeAttribute), inherit: false)
+            .Length > 0;
+        if (!hasPlangType) return false;
+
+        if (type.GetMethod("Resolve",
+                BindingFlags.Public | BindingFlags.Static) != null)
+            return true;
+
+        if (type.GetCustomAttributes(typeof(App.Attributes.PlangTypeAttribute), inherit: false)
+            .Cast<App.Attributes.PlangTypeAttribute>()
+            .Any(a => a.Shape != null))
+            return true;
+
+        // Final fallback: a [PlangType] type with no [LlmBuilder] properties is, by
+        // convention, a wrapped primitive (TString). The catalog renders it as a string.
+        foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (System.Attribute.IsDefined(prop, typeof(LlmBuilderAttribute)))
+                return false;
+        }
+        return true;
+    }
+
     public static bool IsPrimitive(Type type)
     {
         var underlying = Nullable.GetUnderlyingType(type) ?? type;
@@ -293,408 +311,66 @@ public static class TypeMapping
             || underlying == typeof(Guid);
     }
 
-    /// <summary>
-    /// Attempts to convert a value to the specified type. Generic convenience overload.
-    /// </summary>
-    public static T? ConvertTo<T>(object? value) => (T?)ConvertTo(value, typeof(T));
+    // --- Conversion — moved to App.Utils.TypeConverter ---
+    // Thin forwards below let existing callers keep working; prefer TypeConverter directly.
 
-    /// <summary>
-    /// Attempts to convert a value to the specified type.
-    /// Returns null on failure — use TryConvertTo for error details.
-    /// </summary>
-    public static object? ConvertTo(object? value, Type targetType)
-    {
-        var (result, _) = TryConvertTo(value, targetType);
-        return result;
-    }
+    /// <summary>Forwards to <see cref="TypeConverter.ConvertTo{T}"/>.</summary>
+    public static T? ConvertTo<T>(object? value) => TypeConverter.ConvertTo<T>(value);
 
-    /// <summary>
-    /// Populates an object's public writable properties from a dictionary.
-    /// Keys are matched case-insensitively to property names. Values are converted via ConvertTo.
-    /// </summary>
-    public static void Populate(object target, IDictionary<string, object?> values)
-    {
-        foreach (var kvp in values)
-        {
-            var prop = target.GetType().GetProperty(kvp.Key,
-                BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-            if (prop?.CanWrite != true) continue;
-            var converted = ConvertTo(kvp.Value, prop.PropertyType);
-            if (converted != null) prop.SetValue(target, converted);
-        }
-    }
+    /// <summary>Forwards to <see cref="TypeConverter.ConvertTo"/>.</summary>
+    public static object? ConvertTo(object? value, Type targetType) => TypeConverter.ConvertTo(value, targetType);
 
-    /// <summary>
-    /// Attempts to convert a value to the specified type.
-    /// Returns the converted value and null error on success,
-    /// or null value and an Error describing what went wrong.
-    /// </summary>
-    public static (object? Value, Errors.Error? Error) TryConvertTo(object? value, Type targetType,
-        Actor.Context.@this? context = null)
-    {
-        if (value == null)
-            return (targetType.IsValueType ? Activator.CreateInstance(targetType) : null, null);
+    /// <summary>Forwards to <see cref="TypeConverter.Populate"/>.</summary>
+    public static void Populate(object target, IDictionary<string, object?> values) => TypeConverter.Populate(target, values);
 
-        var sourceType = value.GetType();
-        if (targetType.IsAssignableFrom(sourceType))
-            return (value, null);
+    /// <summary>Forwards to <see cref="TypeConverter.TryConvertTo"/>.</summary>
+    public static (object? Value, Errors.Error? Error) TryConvertTo(object? value, Type targetType, Actor.Context.@this? context = null)
+        => TypeConverter.TryConvertTo(value, targetType, context);
 
-        // Data.@this is the universal value wrapper — any value can become Data
-        if (targetType == typeof(Data.@this) && value is not Data.@this)
-            return (new Data.@this("", value), null);
-
-        // Handle nullable target types
-        var underlying = Nullable.GetUnderlyingType(targetType);
-        if (underlying != null)
-            return TryConvertTo(value, underlying);
-
-        // String → JsonNode: use ToJson() extension with fix-and-retry
-        if (targetType == typeof(System.Text.Json.Nodes.JsonNode) && value is string jsonNodeStr)
-        {
-            var (node, jsonError) = jsonNodeStr.ToJson();
-            if (jsonError is Errors.Error err) return (null, err);
-            return (node, null);
-        }
-
-        // String → complex type: try JSON deserialization before list handling
-        // (e.g., file.read of .pr returns JSON string → Goal)
-        if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
-        {
-            try
-            {
-                var jsonResult = System.Text.Json.JsonSerializer.Deserialize(jsonStr, targetType, Json.CaseInsensitiveRead);
-                if (jsonResult != null) return (jsonResult, null);
-            }
-            catch
-            {
-                // If target is a single object but JSON is an array, try deserializing as List<T> and take first
-                if (jsonStr.TrimStart().StartsWith('['))
-                {
-                    try
-                    {
-                        var listType = typeof(List<>).MakeGenericType(targetType);
-                        var listResult = System.Text.Json.JsonSerializer.Deserialize(jsonStr, listType, Json.CaseInsensitiveRead)
-                            as System.Collections.IList;
-                        if (listResult != null && listResult.Count > 0)
-                            return (listResult[0], null);
-                    }
-                    catch (System.Text.Json.JsonException) { }
-                }
-            }
-        }
-
-        // List-like target: List<T> or types inheriting List<T>
-        var listElementType = GetListElementType(targetType);
-        if (listElementType != null)
-        {
-            // If source is already a list/collection, convert each element
-            if (value is System.Collections.IList sourceList)
-            {
-                var targetList = (System.Collections.IList)Activator.CreateInstance(targetType)!;
-                var errors = new List<Errors.Error>();
-                for (int i = 0; i < sourceList.Count; i++)
-                {
-                    var (convertedItem, itemError) = TryConvertTo(sourceList[i], listElementType);
-                    if (itemError != null)
-                    {
-                        itemError = new Errors.Error(
-                            $"[{i}]: {itemError.Message}", "ElementConversionFailed", 400)
-                            { FixSuggestion = itemError.FixSuggestion };
-                        errors.Add(itemError);
-                        continue;
-                    }
-                    if (convertedItem != null)
-                        targetList.Add(convertedItem);
-                }
-                if (errors.Count > 0)
-                {
-                    var error = new Errors.Error(
-                        $"Failed converting {errors.Count}/{sourceList.Count} elements from {sourceType.Name} to {targetType.Name}",
-                        "ListConversionFailed", 400)
-                        { FixSuggestion = $"Element type: {listElementType.Name}" };
-                    foreach (var e in errors) error.ErrorChain.Add(e);
-                    return (targetList.Count > 0 ? targetList : null, error);
-                }
-                return (targetList, null);
-            }
-
-            // Single value → wrap into list
-            if (listElementType.IsAssignableFrom(sourceType))
-            {
-                var list = (System.Collections.IList)Activator.CreateInstance(targetType)!;
-                list.Add(value);
-                return (list, null);
-            }
-            var (converted, convError) = TryConvertTo(value, listElementType);
-            if (converted != null && listElementType.IsAssignableFrom(converted.GetType()))
-            {
-                var list = (System.Collections.IList)Activator.CreateInstance(targetType)!;
-                list.Add(converted);
-                return (list, null);
-            }
-            if (convError != null)
-                return (null, convError);
-        }
-
-        // Handle IObject types — validated value types with string constructors
-        if (typeof(App.modules.IObject).IsAssignableFrom(targetType))
-        {
-            var strVal = value is string sv ? sv : value?.ToString();
-            if (strVal == null)
-                return (null, new Errors.Error(
-                    $"Cannot convert null to {targetType.Name}",
-                    "IObjectConversionFailed", 400));
-            var ctor = targetType.GetConstructor([typeof(string)]);
-            if (ctor == null)
-                return (null, new Errors.Error(
-                    $"{targetType.Name} has no string constructor",
-                    "IObjectConversionFailed", 400));
-            try
-            {
-                return (ctor.Invoke([strVal]), null);
-            }
-            catch (Exception ex)
-            {
-                var inner = ex.InnerException ?? ex;
-                var validValues = GetValidValues(targetType);
-                return (null, new Errors.Error(
-                    inner.Message,
-                    "IObjectConversionFailed", 400)
-                    { FixSuggestion = validValues != null
-                        ? $"Valid values: {string.Join(", ", validValues)}"
-                        : null });
-            }
-        }
-
-        // Types with a constructor that accepts a single string (may have optional params)
-        if (value is string ctorStr)
-        {
-            var ctor = targetType.GetConstructors()
-                .FirstOrDefault(c =>
-                {
-                    var ps = c.GetParameters();
-                    return ps.Length >= 1
-                        && ps[0].ParameterType == typeof(string)
-                        && ps.Skip(1).All(p => p.IsOptional);
-                });
-            if (ctor != null)
-            {
-                try
-                {
-                    var ps = ctor.GetParameters();
-                    var args = new object?[ps.Length];
-                    args[0] = ctorStr;
-                    for (int ci = 1; ci < ps.Length; ci++)
-                        args[ci] = ps[ci].DefaultValue;
-                    return (ctor.Invoke(args), null);
-                }
-                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-                {
-                    return (null, new Errors.Error(ex.InnerException?.Message ?? ex.Message, "ConstructorFailed", 400));
-                }
-            }
-        }
-
-        // Handle enum types
-        if (targetType.IsEnum)
-        {
-            if (value is string s)
-            {
-                if (Enum.TryParse(targetType, s, ignoreCase: true, out var parsed))
-                    return (parsed, null);
-                return (null, new Errors.Error(
-                    $"Cannot parse '{s}' as {targetType.Name}",
-                    "EnumParseFailed", 400)
-                    { FixSuggestion = $"Valid values: {string.Join(", ", Enum.GetNames(targetType))}" });
-            }
-            if (value.GetType().IsEnum)
-                return (value, null);
-            try { return (Enum.ToObject(targetType, value), null); }
-            catch (ArgumentException) { return (null, new Errors.Error(
-                $"Cannot convert {sourceType.Name} to enum {targetType.Name}",
-                "EnumConversionFailed", 400)); }
-        }
-
-        // GoalCall: convert from string, JsonElement, or Dictionary (UnwrapJsonElement output)
-        if (targetType == typeof(App.Goals.Goal.GoalCall))
-        {
-
-            if (value is string goalName)
-                return (new App.Goals.Goal.GoalCall { Name = goalName }, null);
-            if (value is System.Text.Json.JsonElement je)
-            {
-                try
-                {
-                    return (System.Text.Json.JsonSerializer.Deserialize<App.Goals.Goal.GoalCall>(
-                        je.GetRawText(),
-                        Json.CaseInsensitiveRead), null);
-                }
-                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-                {
-                    return (null, new Errors.Error(
-                        $"Failed to deserialize GoalCall from JSON: {ex.Message}",
-                        "GoalCallDeserializationFailed", 400));
-                }
-            }
-            if (value is IDictionary<string, object?> dict)
-            {
-                var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-                var prPath = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
-                List<Data.@this>? parameters = null;
-                if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
-                {
-                    parameters = pList
-                        .OfType<IDictionary<string, object?>>()
-                        .Select(d => new Data.@this(
-                            d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
-                            d.TryGetValue("value", out var dv) ? dv : null))
-                        .ToList();
-                }
-                return (new App.Goals.Goal.GoalCall { Name = name, PrPath = prPath, Parameters = parameters }, null);
-            }
-        }
-
-        // Use Convert for basic types
-        if (IsPrimitive(targetType))
-        {
-            try
-            {
-                return (Convert.ChangeType(value, targetType), null);
-            }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-            {
-                return (null, new Errors.Error(
-                    $"Cannot convert '{value}' ({sourceType.Name}) to {targetType.Name}: {ex.Message}",
-                    "PrimitiveConversionFailed", 400));
-            }
-        }
-
-        // (String → JSON moved above list handling)
-
-        // Complex types: dict/JsonElement/list → serialize to JSON → deserialize to target type
-        if (value is IDictionary<string, object?> or System.Text.Json.JsonElement or System.Collections.IList)
-        {
-            string json = "";
-            try
-            {
-                json = System.Text.Json.JsonSerializer.Serialize(value);
-                var result = System.Text.Json.JsonSerializer.Deserialize(json, targetType, Json.CaseInsensitiveRead);
-                return (result, null);
-            }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-            {
-                // Extract byte position from error message and show JSON around it
-                string jsonPreview;
-                var posMatch = System.Text.RegularExpressions.Regex.Match(ex.Message, @"BytePositionInLine: (\d+)");
-                if (posMatch.Success && int.TryParse(posMatch.Groups[1].Value, out var bytePos) && bytePos < json.Length)
-                {
-                    var start = Math.Max(0, bytePos - 100);
-                    var end = Math.Min(json.Length, bytePos + 100);
-                    jsonPreview = $"...{json[start..end]}...";
-                }
-                else
-                {
-                    var maxLen = context?.App?.Debug?.MaxLength ?? 500;
-                    jsonPreview = json.Length > maxLen ? json[..maxLen] + $"... ({json.Length} chars)" : json;
-                }
-                return (null, new Errors.Error(
-                    $"Failed to deserialize {sourceType.Name} to {targetType.Name}: {ex.Message}",
-                    "DeserializationFailed", 400)
-                    { FixSuggestion = $"JSON around error: {jsonPreview}" });
-            }
-        }
-
-        // Last resort: type mismatch
-        if (!targetType.IsAssignableFrom(sourceType))
-        {
-            return (null, new Errors.Error(
-                $"Cannot convert {sourceType.Name} to {targetType.Name}",
-                "TypeMismatch", 400)
-                { FixSuggestion = $"Source: {sourceType.FullName}, Target: {targetType.FullName}" });
-        }
-
-        return (value, null);
-    }
-
-    /// <summary>
-    /// Finds the element type if targetType is List&lt;T&gt; or inherits from it.
-    /// Returns null if not a list type.
-    /// </summary>
-    private static Type? GetListElementType(Type targetType)
-    {
-        // Direct List<T>
-        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
-            return targetType.GetGenericArguments()[0];
-
-        // Inherits from List<T> (e.g., Actions : List<Action>)
-        var baseType = targetType.BaseType;
-        while (baseType != null)
-        {
-            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(List<>))
-                return baseType.GetGenericArguments()[0];
-            baseType = baseType.BaseType;
-        }
-
-        return null;
-    }
 
 
     /// <summary>
-    /// Returns canonical builder type names (excludes aliases like "text"→"string").
-    /// Keeps shortest name per CLR type, skips nullable variants.
+    /// Returns the primitive type names exposed to the builder (excludes aliases like
+    /// "text"→"string" and all nullable variants). Domain types are surfaced through
+    /// the schemas block via [PlangType] declarations, not listed here.
     /// </summary>
     public static List<string> GetBuilderTypeNames()
     {
         var seen = new HashSet<Type>();
         var names = new List<string>();
-        foreach (var kvp in NameToType)
+        foreach (var kvp in Primitives)
         {
             if (kvp.Key.EndsWith("?")) continue;
             if (seen.Contains(kvp.Value)) continue;
             seen.Add(kvp.Value);
-
-            var validValues = GetValidValues(kvp.Value);
-            if (validValues != null)
-                names.Add($"{kvp.Key}({string.Join("|", validValues)})");
-            else
-                names.Add(kvp.Key);
+            names.Add(kvp.Key);
         }
         return names;
     }
 
     /// <summary>
-    /// Returns schemas for complex types based on [LlmBuilder] attributes.
-    /// Includes types registered in NameToType only. Use the overload with AppModules
-    /// to auto-discover types from action parameters.
+    /// Walks action parameter types and returns structured catalog entries.
+    /// Discovery is transitive: every type referenced in a schema is itself surfaced.
+    ///   - Enum (or ValidValues) → TypeEntry with Values populated.
+    ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
+    ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
-    public static Dictionary<string, string> GetComplexTypeSchemas()
+    public static List<App.Catalog.TypeEntry> BuildTypeEntries(App.Modules.@this? modules)
     {
-        return GetComplexTypeSchemas(null);
-    }
-
-    /// <summary>
-    /// Returns schemas for complex types based on [LlmBuilder] attributes.
-    /// When modules is provided, also discovers complex types used in action parameters
-    /// (e.g., List&lt;LlmMessage&gt; → LlmMessage schema). No manual registration needed.
-    /// </summary>
-    public static Dictionary<string, string> GetComplexTypeSchemas(App.Modules.@this? modules)
-    {
-        var schemas = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var entries = new List<App.Catalog.TypeEntry>();
         var seen = new HashSet<System.Type>();
+        var queue = new Queue<System.Type>();
 
-        // 1. Registered types from NameToType
-        foreach (var kvp in NameToType)
+        void Enqueue(System.Type? t)
         {
-            var name = kvp.Key;
-            var type = kvp.Value;
-            if (name.EndsWith("?") || IsPrimitive(type) || type == typeof(object)) continue;
-            if (type.IsArray || type.IsGenericType) continue;
-            if (GetValidValues(type) != null) continue;
-
-            TryAddSchema(schemas, seen, type, name);
+            if (t == null || seen.Contains(t)) return;
+            if (IsPrimitive(t) || t == typeof(object)) return;
+            if (t.IsArray || t.IsGenericType) return;
+            queue.Enqueue(t);
         }
 
-        // 2. Discover types from action parameters
+        // Seed from action parameter types. Domain types declare themselves via
+        // [PlangType] — reached transitively from the seed set below.
         if (modules != null)
         {
             foreach (var ns in modules.Names)
@@ -707,18 +383,138 @@ public static class TypeMapping
                     foreach (var prop in actionType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                     {
                         if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
-                        var paramType = UnwrapType(prop.PropertyType);
-                        if (paramType == null || IsPrimitive(paramType) || paramType == typeof(object)) continue;
-                        if (seen.Contains(paramType)) continue;
-
-                        var typeName = GetTypeName(paramType);
-                        TryAddSchema(schemas, seen, paramType, typeName);
+                        Enqueue(UnwrapType(prop.PropertyType));
                     }
                 }
             }
         }
+        else
+        {
+            // No modules — seed from every type declared via [PlangType] / @this so the
+            // result still represents the full catalog vocabulary (used by standalone
+            // schema dumps / docs).
+            foreach (var t in PlangTypeIndex.KnownTypes())
+                Enqueue(t);
+        }
 
-        return schemas;
+        // Process transitively — every property type in a record we emit also enters
+        // the queue, so schemas form a closed world (goal.visibility → visibility enum).
+        while (queue.Count > 0)
+        {
+            var type = queue.Dequeue();
+            if (!seen.Add(type)) continue;
+
+            var typeName = GetTypeName(type);
+
+            // Pull self-declared LLM teaching from [PlangType] (Shape/Example/Description).
+            // The first attribute carrying any of these wins — multiple [PlangType] aliases
+            // are allowed but only one carries the teaching.
+            var plangAttr = type.GetCustomAttributes<App.Attributes.PlangTypeAttribute>()
+                .FirstOrDefault(a => a.Shape != null || a.Description != null || a.Example != null);
+
+            // Enum / constrained-value type
+            var values = GetValidValues(type);
+            if (values != null)
+            {
+                entries.Add(new App.Catalog.TypeEntry
+                {
+                    Name = typeName,
+                    Kind = App.Catalog.TypeKind.Enum,
+                    Values = values,
+                    Description = plangAttr?.Description,
+                    Example = plangAttr?.Example,
+                    ClrType = type,
+                });
+                continue;
+            }
+
+            // Resolve-method convention: a static `Resolve(input, Context)` method declares
+            // the construction signature for a domain type. Source generator already uses
+            // it to auto-wrap string parameters; the catalog uses the same method to teach
+            // the LLM what input to emit (e.g. `path: constructor(rawPath: string)`). When
+            // present, the type is a Scalar and the LlmBuilder-tagged read-only props
+            // become its navigation properties (what `%var.Property%` can reach).
+            var resolveMethod = type.GetMethod("Resolve",
+                BindingFlags.Public | BindingFlags.Static);
+            string? constructorSignature = null;
+            string? derivedShape = null;
+            if (resolveMethod != null)
+            {
+                var resolveParams = resolveMethod.GetParameters();
+                if (resolveParams.Length >= 1)
+                {
+                    var first = resolveParams[0];
+                    derivedShape = GetTypeName(first.ParameterType);
+                    constructorSignature = $"{first.Name}: {derivedShape}";
+                }
+            }
+
+            // Read-only navigation properties — surfaced for both Scalar and Record types
+            // that opt-in via [LlmBuilder]. Used by the LLM to write %var.Property% paths.
+            var llmProps = new List<App.Catalog.Field>();
+            foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (!prop.CanRead || prop.Name == "EqualityContract") continue;
+                if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
+                if (Attribute.IsDefined(prop, typeof(JsonIgnoreAttribute))) continue;
+
+                llmProps.Add(new App.Catalog.Field
+                {
+                    Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
+                    TypeName = GetTypeName(prop.PropertyType),
+                });
+                Enqueue(UnwrapType(prop.PropertyType));
+            }
+
+            // Default rule: any [PlangType]-declared class is a Scalar/string at the wire
+            // level unless it explicitly opts into being a Record by tagging properties
+            // with [LlmBuilder]. This kills the "must add Shape to every domain type"
+            // whack-a-mole — opaque-looking types like TString stop hallucinating into
+            // {value, key} records because the catalog now teaches them as plain strings.
+            // Resolve-derived constructorSignature still wins when present (gives a
+            // typed input name), and explicit [PlangType(Shape=...)] overrides the default.
+            var hasPlangType = type.GetCustomAttributes<App.Attributes.PlangTypeAttribute>().Any();
+            bool isScalar = constructorSignature != null
+                || plangAttr?.Shape != null
+                || (hasPlangType && llmProps.Count == 0);
+
+            if (isScalar)
+            {
+                entries.Add(new App.Catalog.TypeEntry
+                {
+                    Name = typeName,
+                    Kind = App.Catalog.TypeKind.Scalar,
+                    Shape = derivedShape ?? plangAttr?.Shape ?? "string",
+                    ConstructorSignature = constructorSignature,
+                    Properties = llmProps.Count > 0 ? llmProps : null,
+                    Description = plangAttr?.Description,
+                    Example = plangAttr?.Example,
+                    ClrType = type,
+                });
+                continue;
+            }
+
+            // Record — [LlmBuilder] props on a non-[PlangType] type, or [PlangType] type
+            // that didn't qualify as Scalar (shouldn't happen given the rule above, but
+            // we keep the fallback for safety).
+            if (llmProps.Count > 0)
+            {
+                entries.Add(new App.Catalog.TypeEntry
+                {
+                    Name = typeName,
+                    Kind = App.Catalog.TypeKind.Record,
+                    Fields = llmProps,
+                    Description = plangAttr?.Description,
+                    Example = plangAttr?.Example,
+                    ClrType = type,
+                });
+            }
+            // Types with no [LlmBuilder] props, no Resolve, and no [PlangType] stay opaque —
+            // their name is still valid (resolver knows it via @this convention) but they
+            // carry no schema in the catalog.
+        }
+
+        return entries;
     }
 
     /// <summary>
@@ -740,6 +536,14 @@ public static class TypeMapping
                 return null; // dict values are too generic
         }
 
+        // Custom classes that IMPLEMENT IList<T> (e.g. Actions : IList<Action>) unwrap
+        // to their element type — same as List<T>. Without this, the catalog hides
+        // the element type behind an opaque collection name.
+        var listIface = type.GetInterfaces().FirstOrDefault(i =>
+            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+        if (listIface != null)
+            return UnwrapType(listIface.GetGenericArguments()[0]);
+
         if (type.IsArray)
             return UnwrapType(type.GetElementType()!);
 
@@ -747,18 +551,4 @@ public static class TypeMapping
         return type;
     }
 
-    private static void TryAddSchema(Dictionary<string, string> schemas, HashSet<System.Type> seen, System.Type type, string name)
-    {
-        if (!seen.Add(type)) return;
-
-        var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.Name != "EqualityContract")
-            .Where(p => Attribute.IsDefined(p, typeof(LlmBuilderAttribute)))
-            .Where(p => !Attribute.IsDefined(p, typeof(JsonIgnoreAttribute)))
-            .Select(p => $"{char.ToLower(p.Name[0]) + p.Name[1..]}: {GetTypeName(p.PropertyType)}");
-
-        var propList = props.ToList();
-        if (propList.Count > 0)
-            schemas[name] = $"{{ {string.Join(", ", propList)} }}";
-    }
 }

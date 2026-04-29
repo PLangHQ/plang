@@ -1,0 +1,84 @@
+{
+  "name": "ThrowWithBadHandler",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call ThrowOriginal, on error call BadHandler",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "calls a goal that throws, handler also throws",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowOriginal"
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "this",
+              "type": "actor(user|service|system)"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "Name": "BadHandler"
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ThrowWithBadHandler.goal",
+  "prPath": "/.build/throwwithbadhandler.pr",
+  "hash": "010dce8d9abce373be533dc95dd11a5dabefdaf8f05787372c28dd8580f1cee7",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

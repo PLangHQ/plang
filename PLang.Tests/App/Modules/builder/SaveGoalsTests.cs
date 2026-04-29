@@ -22,7 +22,7 @@ public class SaveGoalsTests
             "plang_test_builder_savegoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        _app.Building.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     [After(Test)]
@@ -40,14 +40,13 @@ public class SaveGoalsTests
     [Test]
     public async Task SaveGoal_SerializesToPrPath()
     {
+        var step = new Step { Text = "write hello", Index = 0 };
+        step.Actions.Add(new PrAction { Module = "output", ActionName = "write" });
         var goal = new Goal
         {
             Name = "Start",
             Path = "/Start.goal",
-            Steps = new GoalSteps
-            {
-                new Step { Text = "write hello", Index = 0 }
-            }
+            Steps = new GoalSteps { step }
         };
 
         var action = new goalsSave { Context = _app.Context, Goal = goal };

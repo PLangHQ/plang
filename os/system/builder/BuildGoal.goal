@@ -1,0 +1,83 @@
+BuildGoal
+/ Builds a single .goal file: the public goal + every sub-goal.
+/ Owns the trace file — one file per .goal source, containing parent + sub-goal passes.
+
+- write out "Building goal: %goal.Name%"
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "pass1": null, "subGoals": [], "detailPasses": [], "durationMs": 0}, type=json
+- call BuildGoalCore, on error HandleBuildGoalFailure
+- set %trace.pass1% = %currentPass%
+- set %goal.BuilderVersion% = "0.2.2"
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal item=%subGoal%
+- set %goal% = %parentGoal%
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+- save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'
+- add %trace.goal.name% to %traceGoals%
+- call SaveGoal %goal%
+
+
+BuildGoalCore
+/ Core LLM build pass — shared by top-level goals and sub-goals.
+/ Writes pass result into %currentPass%; the parent BuildGoal owns the trace file.
+
+- set %passStart% = %Now.Ticks%
+- builder.actions, write to %actions%
+- builder.types, write to %typeInfo%
+- render template "/system/actions/v2/summary.md", write to %actionSummary%
+- render template "/system/builder/templates/v2/goalFormatForLlm.template", write to %goalForLlm%
+- render template "/system/builder/llm/BuildGoal.llm", write to %buildGoalPrompt%
+- set %messages% = [{"Role":"system", "Content":"%buildGoalPrompt%"}, {"Role":"user", "Content":"%goalForLlm%"}], type=json
+- llm.query Messages=%messages%, Schema={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, keep?: bool, guidance?: string, formal?: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level?: string, confidence?: int}]}, cache=%!build.cache%, write to %stepResults%
+- builder.validateResponse stepResults=%stepResults%, goal=%goal%, on error call LlmFixer
+- builder.enrichResponse stepResults=%stepResults%, goal=%goal%, write to %stepResults%
+- set %currentPass% = {}, type=json
+- set %currentPass.goal% = %goal%
+- set %currentPass.system% = %buildGoalPrompt%
+- set %currentPass.user% = %goalForLlm%
+- set %currentPass.response% = %stepResults%
+- math.subtract A=%Now.Ticks%, B=%passStart%, write to %passElapsedTicks%
+- math.divide A=%passElapsedTicks%, B=10000, write to %passDurationMs%
+- set %currentPass.durationMs% = %passDurationMs%
+- group %stepResults.steps% by "level", write to %groupedSteps%
+- loop.foreach %groupedSteps%, goal.call ProcessGroup item=%group%
+
+
+BuildSubGoal
+/ Builds a single sub-goal — no version, no sub-goal recursion, no save.
+/ Adds its pass data to the parent's %trace.subGoals%.
+- set %goal% = %subGoal%
+- write out "  Building sub-goal: %goal.Name%"
+- call BuildGoalCore, on error HandleBuildGoalFailure
+- add %currentPass% to %trace.subGoals%
+
+
+ProcessGroup
+/ Process a group of steps with the same confidence level
+- if %group.steps[0].level% is "low" or "medium"
+    - foreach %group.steps%, call BuildStep item=%stepResult%
+- foreach %group.steps%, call ApplyStep item=%stepResult%
+
+
+LlmFixer
+/ LLM produced invalid output — retry with error context
+- write out "  Validation failed: %!error.Message% — retrying..."
+- set %fixerMessages% = [{"Role":"system", "Content":"%buildGoalPrompt%"}, {"Role":"user", "Content":"Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response."}], type=json
+- llm.query Messages=%fixerMessages%, Schema={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, keep?: bool, guidance?: string, formal?: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level?: string, confidence?: int}]}, cache=%!build.cache%, write to %stepResults%
+- call ValidateBuildResponse
+
+
+HandleBuildGoalFailure
+/ Capture error into the parent trace and save it. Parent's %trace% is in
+/ scope because BuildGoal created it before calling BuildGoalCore.
+/ The error is tagged on the failing pass itself so the viewer can tie the
+/ buildError to the specific goal (parent vs. specific sub-goal).
+- write out "  Build error: %!error.Message%"
+- set %currentPass.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "statusCode": %!error.StatusCode%, "details": %!error.Details%}, type=json
+- set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "statusCode": %!error.StatusCode%, "details": %!error.Details%}, type=json
+- if %trace.pass1% is null, set %trace.pass1% = %currentPass%
+- if %trace.pass1% is not null, add %currentPass% to %trace.subGoals%
+- save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'
+- throw %!error%

@@ -1,0 +1,139 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "save \u0022TestGoal\\n- step one\\n- step two\u0022 to file \u0027parse_test/Test.goal\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test that builder.getGoals parses a .goal file and returns Runtime2 Goal objects",
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "parse_test/Test.goal",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "TestGoal\n- step one\n- step two",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "file.save to create the test .goal file with the provided content.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "builder.goals from \u0027parse_test/\u0027, write to %goals%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "builder",
+          "action": "goals",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "parse_test/",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goals%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "builder.goals to load all goal files from the directory and write the resulting list to %goals%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %goals% is not empty, \u0022getGoals should return parsed goals from .goal file\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%goals%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "getGoals should return parsed goals from .goal file",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "assert.isNotNull to ensure %goals% is not null/empty. The step text says \u0027is not empty\u0027, so we use isNotNull as the closest available invariant check.",
+      "level": "medium",
+      "confidence": 60,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/BuilderParseGoal.test.goal",
+  "prPath": "/.build/builderparsegoal.test.pr",
+  "hash": "ef77b8fde4b53eee3626c8953cb1e619e392aa6c784d5cabb2fa55bf5a549a22",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

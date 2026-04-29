@@ -1,6 +1,6 @@
 {
   "name": "TestTagAccumulatesUserTagsOnRun",
-  "description": "Tags this test twice, captures accumulated UserTags into %tags%, then verifies count and presence of \u0027http\u0027, \u0027fast\u0027, and \u0027slow\u0027 via list.contains checks.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -42,6 +42,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -93,6 +98,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -135,6 +145,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -164,6 +179,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -211,6 +231,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -240,6 +265,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -287,6 +317,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -316,6 +351,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -363,6 +403,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -392,15 +437,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.test.goal",
-  "prPath": "/Tests/TestModule/Tag/.build/testtagaccumulatesusertagsonrun.test.pr",
+  "path": "/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.test.goal",
+  "prPath": "/TestModule/Tag/.build/testtagaccumulatesusertagsonrun.test.pr",
   "hash": "8c1946d4479b68d6874fc61ef7d2cefbfb715158b2da482fc531cdd1ec4bb1fe",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -3,6 +3,7 @@ using App.modules.builder.providers;
 
 namespace App.modules.builder;
 
+[System.ComponentModel.Description("Load the app-level build context from a directory path")]
 [Action("app")]
 public partial class app : IContext
 {

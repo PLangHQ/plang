@@ -3,8 +3,7 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %text% does not contain 'hello'", "Value=%text%, Container=hello")]
-[Example("assert %list% does not contain 42", "Value=%list%, Container=42")]
+[System.ComponentModel.Description("Assert that Value does not contain Container; fails with an error if it does")]
 [Action("notContains")]
 public partial class NotContains : IContext
 {

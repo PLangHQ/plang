@@ -3,8 +3,7 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %elapsed% less than 1000", "A=%elapsed%, B=1000")]
-[Example("assert %retries% less than 5, 'Too many retries'", "A=%retries%, B=5, Message=Too many retries")]
+[System.ComponentModel.Description("Assert that A is less than B; fails with an error if not")]
 [Action("lessThan")]
 public partial class LessThan : IContext
 {

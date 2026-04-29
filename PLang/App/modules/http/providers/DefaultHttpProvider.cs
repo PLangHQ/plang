@@ -133,30 +133,12 @@ public sealed class DefaultHttpProvider : IHttpProvider
     {
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
-        var fs = app.FileSystem;
 
         var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
         var urlResult = ResolveUrl(action.Url.Value!, config);
         if (!urlResult.Success) return urlResult;
         var resolvedUrl = urlResult.Value!;
-
-        var savePath = fs.ValidatePath(action.SaveTo.Value!);
-
-        // File existence check
-        if (fs.File.Exists(savePath))
-        {
-            switch (action.IfExists.Value)
-            {
-                case FileExists.Error:
-                    return App.Data.@this.FromError(new ServiceError(
-                        $"File already exists: {action.SaveTo.Value}", "FileExists", 409));
-                case FileExists.Skip:
-                    return App.Data.@this.Ok(action.SaveTo.Value);
-                case FileExists.Overwrite:
-                    break;
-            }
-        }
 
         var headers = MergeHeaders(action.Headers?.Value, config);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
@@ -180,19 +162,15 @@ public sealed class DefaultHttpProvider : IHttpProvider
             return err;
         }
 
-        var dir = fs.Path.GetDirectoryName(savePath);
-        if (!string.IsNullOrEmpty(dir) && !fs.Directory.Exists(dir))
-            fs.Directory.CreateDirectory(dir);
-
         var totalBytes = response.Content.Headers.ContentLength;
         var maxDownloadSize = config.Resolve("MaxDownloadSize", DefaultMaxResponseSize);
         using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
-        using var fileStream = fs.File.Create(savePath);
+        using var buffer = new MemoryStream();
 
         await StreamWithProgressAsync(
-            responseStream, fileStream, totalBytes, maxDownloadSize, action.OnProgress?.Value, app, action.Context, cts.Token);
+            responseStream, buffer, totalBytes, maxDownloadSize, action.OnProgress?.Value, app, action.Context, cts.Token);
 
-        return App.Data.@this.Ok(action.SaveTo.Value);
+        return App.Data.@this.Ok(buffer.ToArray());
     });
 
     public Task<Data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>

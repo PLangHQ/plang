@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Concurrent;
+using App.Attributes;
 
 namespace App.Test;
 
@@ -7,12 +8,13 @@ namespace App.Test;
 /// Run-wide collection of TestRun entries. Per-test Apps add their TestRun here
 /// concurrently during parallel execution — thread-safety is required.
 /// </summary>
+[PlangType("results")]
 public sealed class Results : IEnumerable<TestRun>
 {
     private readonly ConcurrentQueue<TestRun> _items = new();
 
     /// <summary>Number of TestRun entries recorded.</summary>
-    public int Count => _items.Count;
+    [LlmBuilder] public int Count => _items.Count;
 
     /// <summary>Appends a TestRun. Safe to call from multiple threads.</summary>
     public void Add(TestRun run) => _items.Enqueue(run);

@@ -3,8 +3,10 @@ using App.modules.condition.providers;
 
 namespace App.modules.condition;
 
-[Example("compare %a% > %b%, write to %isGreater%", "Left=%a%, Operator=>, Right=%b%")]
-[Example("compare %status% == 'active', write to %isActive%", "Left=%status%, Operator===, Right=active")]
+[ModuleDescription("Conditional branching: evaluate comparisons and branch execution with if/elseif/else")]
+[System.ComponentModel.Description("Compare two values with an operator and write the boolean result to a variable")]
+[Example("compare %a% > %b%, write to %isGreater%",
+    "condition.compare Left([object] %a%), Operator([operator] >), Right([object] %b%) | variable.set Name([string] %isGreater%), Value([object] %__data__%)")]
 [Action("compare")]
 public partial class Compare : IContext
 {

@@ -3,8 +3,7 @@ using App.modules.file.providers;
 
 namespace App.modules.file;
 
-[Example("move file.txt to archive/file.txt", "Source=file.txt, Destination=archive/file.txt")]
-[Example("move %source% to %dest%, overwrite", "Source=%source%, Destination=%dest%, Overwrite=true")]
+[System.ComponentModel.Description("Move or rename a file from Source to Destination, optionally overwriting the target")]
 [Action("move", Cacheable = false)]
 public partial class Move : IContext
 {

@@ -73,6 +73,48 @@ public sealed class @this : IList<Step.@this>, IContext
     }
 
     /// <summary>
+    /// Groups modifier actions onto their preceding executable action for every step
+    /// in this collection. Delegates per-step grouping to Actions.GroupModifiers —
+    /// Steps owns the iteration (OBP rule 5).
+    /// </summary>
+    public void GroupAllModifiers(Modules.@this modules)
+    {
+        foreach (var step in _items)
+            step.Actions.GroupModifiers(modules);
+    }
+
+    /// <summary>
+    /// Merges LLM-derived fields from a prior Steps collection onto this one.
+    /// Exact-text match only — robust to reorder/insert/delete without pairing unrelated
+    /// steps. A text change drops the prior mapping; the LLM rebuilds that step fresh.
+    /// Earlier positional fallback was dropped because it silently paired structurally
+    /// unrelated steps (e.g. refactored goal where NEW step 0 has different intent from
+    /// OLD step 0) and fed the builder wrong @known hints.
+    /// Sets PriorText on each merged step so the builder template can emit @known.
+    /// </summary>
+    public void MergeFrom(@this priorSteps)
+    {
+        if (priorSteps == null || priorSteps.Count == 0) return;
+
+        var consumed = new HashSet<int>();
+        for (int cur = 0; cur < _items.Count; cur++)
+        {
+            var step = _items[cur];
+            for (int i = 0; i < priorSteps.Count; i++)
+            {
+                if (consumed.Contains(i)) continue;
+                if (priorSteps[i].Text == step.Text)
+                {
+                    step.Merge(priorSteps[i]);
+                    step.PriorText = priorSteps[i].Text;
+                    consumed.Add(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Marks indented children of the given parent step as disabled / enabled.
     /// Walks forward from parent.Index until a sibling-or-lower-indent step is found.
     /// Used by condition.if to gate its sub-steps on the evaluation result.

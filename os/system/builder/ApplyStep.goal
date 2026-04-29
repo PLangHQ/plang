@@ -1,0 +1,25 @@
+ApplyStep
+/ Validates and applies step result
+/ keep:true → reuse prior .pr actions, no merge, no detail pass
+/ otherwise level=high → use as-is, medium/low → run BuildStep with guidance
+- if %stepResult.keep% is true, call ApplyKeptStep
+- if %stepResult.keep% is not true, call ApplyBuiltStep
+
+
+ApplyKeptStep
+/ keep:true short-circuit — prior actions are already on the step from MergeFrom
+/ Nothing to validate, nothing to merge. The step is ready as-is.
+- write out "  Kept prior mapping for step %stepResult.index%"
+
+
+ApplyBuiltStep
+/ Standard apply path for fresh-build or refined steps
+- builder.validate actions=%stepResult.actions%, on error call HandleValidationError
+- builder.merge step=%goal.Steps[stepResult.index]%, stepFromLlm=%stepResult%, write to %goal.Steps[stepResult.index]%
+- if %stepResult.level% != "high", call BuildStep
+
+
+HandleValidationError
+- write out "  Validation error: %!error.Message%"
+- set %goal.Steps[stepResult.index].validationError% = %!error%
+- call BuildStep

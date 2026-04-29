@@ -1,0 +1,86 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "assert %!app% is not null",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "system variables available",
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!app%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "%!app% must not be null",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition invariant: assert that %!app% is not null. This should fail the step if the variable is missing/unset or null.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %!callStack% is not null",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!callStack%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "%!callStack% must not be null",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition invariant: assert that %!callStack% is not null. This should fail the step if the variable is missing/unset or null.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/App/Actors/Context/ActorContext.test.goal",
+  "prPath": "/App/Actors/Context/.build/actorcontext.test.pr",
+  "hash": "64d8150128d9d49909ce0aaea22f0e11b04668d793ac3d31311383d2bb355f61",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

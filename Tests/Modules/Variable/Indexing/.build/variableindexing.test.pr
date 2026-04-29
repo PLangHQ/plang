@@ -1,0 +1,324 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": [
+                "a",
+                "b",
+                "c"
+              ],
+              "type": "list"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %idx% = 1",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%idx%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %items[idx]% equals \u0022b\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Index",
+              "value": "%idx%",
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "b",
+              "type": "object?"
+            },
+            {
+              "name": "Actual",
+              "value": "%__data__%",
+              "type": "object?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %i% = 0",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%i%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "set %j% = 2",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%j%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %items[i]% equals \u0022a\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Index",
+              "value": "%i%",
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "a",
+              "type": "object?"
+            },
+            {
+              "name": "Actual",
+              "value": "%__data__%",
+              "type": "object?"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %items[i]% to equal \u0022a\u0022",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "list.get to fetch %items[i]% then assert.equals to verify it equals \u0022a\u0022. The Message clause is included in the assertion.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert %items[j]% equals \u0022c\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "get",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Index",
+              "value": "%j%",
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "c",
+              "type": "object?"
+            },
+            {
+              "name": "Actual",
+              "value": "%__data__%",
+              "type": "object?"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %items[j]% to equal \u0022c\u0022",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "list.get to fetch %items[j]% then assert.equals to verify it equals \u0022c\u0022. The Message clause is included in the assertion.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/VariableIndexing.test.goal",
+  "prPath": "/.build/variableindexing.test.pr",
+  "hash": "df6a35c2c73a17ab3d107574ff2e64ce3a95146ae40b43751ec3ce71ea830483",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

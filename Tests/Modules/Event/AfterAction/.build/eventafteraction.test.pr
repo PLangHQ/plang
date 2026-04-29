@@ -1,0 +1,159 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %actionFired% = false",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "after action captures that action fired",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%actionFired%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "after action output.write call CaptureWrite",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "CaptureWrite",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/capturewrite.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "The step text says \u0027after action output.write call CaptureWrite\u0027. This maps to a goal.call of CaptureWrite (the @known mapping indicates the builder already resolved the exact goal name and pr path).",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write out \u0022hello world\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello world",
+              "type": "tstring"
+            },
+            {
+              "name": "Channels",
+              "value": "this",
+              "type": "channels"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Writes the literal text \u0027hello world\u0027 to output. The @known mapping indicates output.write with Data as a tstring and Channels set to \u0027this\u0027.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %actionFired% equals true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%actionFired%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: %actionFired% must equal true. Map to assert.equals with Expected=true and Actual=%actionFired%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/EventAfterAction.test.goal",
+  "prPath": "/.build/eventafteraction.test.pr",
+  "hash": "318f15a4a1a1834bc5ac96a70ab0c1bacd7c13c7e815934b8aa612fe13535290",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

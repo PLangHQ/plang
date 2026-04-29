@@ -366,9 +366,11 @@ public sealed class @this
     public List<string> BuilderNames() => Utils.TypeMapping.GetBuilderTypeNames();
 
     /// <summary>
-    /// Returns schemas for complex types. Delegates to TypeMapping.GetComplexTypeSchemas().
+    /// Returns the catalog's record/enum entries, keyed by name. Thin wrapper
+    /// around Catalog.Build(modules) for callers that want a dictionary view.
     /// </summary>
-    public Dictionary<string, string> ComplexSchemas() => Utils.TypeMapping.GetComplexTypeSchemas();
+    public Dictionary<string, App.Catalog.TypeEntry> ComplexSchemas() =>
+        Utils.TypeMapping.BuildTypeEntries(null).ToDictionary(e => e.Name, e => e);
 
     /// <summary>
     /// Gets valid values for a constrained type. Delegates to TypeMapping.GetValidValues().

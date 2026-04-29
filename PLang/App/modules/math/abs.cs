@@ -2,6 +2,8 @@ using App.Variables;
 
 namespace App.modules.math;
 
+[ModuleDescription("Arithmetic operations on numeric values: add, subtract, multiply, divide, round, and more")]
+[System.ComponentModel.Description("Return the absolute (non-negative) value of a number")]
 [Action("abs")]
 public partial class Abs : IContext
 {

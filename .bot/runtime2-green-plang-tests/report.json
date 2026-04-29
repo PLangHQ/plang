@@ -1,0 +1,418 @@
+{
+  "branch": "runtime2-green-plang-tests",
+  "sessions": [
+    {
+      "id": "f1e9a3b7-4d2c-48e0-a1c5-9b3f2e7a8d10",
+      "bot": "tester",
+      "timestamp_start": "2026-04-21T12:40:00Z",
+      "timestamp_end": "2026-04-21T13:45:00Z",
+      "intent": "Execute architect's Phase 0 (build) + pre-baseline + Phase 1 (Tests/ restructure) + Phase 2 (baseline).",
+      "before": {
+        "assumptions": "Build compiles on .NET 10. 162 .test.goal files. Large Stale cohort expected. Per-bucket git mv preserves history; plang --build regenerates .pr at new paths. User approved pre-baseline AND per-bucket commits.",
+        "risk": "Restructure could cascade builder regressions if path resolution is brittle. Without pre-baseline we couldn't distinguish move-caused fails from pre-existing fails — pre-baseline mitigates."
+      },
+      "plan": "See tester/v1/plan.md. Phase 0 dotnet build + plang smoke. Pre-baseline: full plang --build + plang --test JUnit output, list of pass/fail paths (no triage). Phase 1: delete Tests/Runtime2/, create Tests/Modules|App|Builder/, git mv each of ~34 old buckets per architect's folder_structure.md. Condition regrouping and Loop/Foreach merge. Phase 2: baseline.md with architect's categorized table (Pass/Fail-assertion/Fail-runtime/Timeout/Stale/BuildFailure) + raw data for each fail. Stop before triage. Mid-run amendments: user told me FromJson obsolete (delete, not move); user permitted batching, so Phase 1 landed in one commit instead of per-bucket; monolithic plang build aborts on first error so I switched to per-folder build loop for both pre-baseline and Phase 2.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-green-plang-tests/tester/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester plan for architect's Phases 0+1+2. User approved pre-baseline and per-bucket commits."
+        },
+        {
+          "paths": ["Tests/FromJson/", "Tests/Runtime2/"],
+          "type": "delete",
+          "category": "test",
+          "confidence": "high",
+          "context": "FromJson removed per user (runtime handles JSON conversion; json module gone). Runtime2 was orphan (only test_output.txt stray)."
+        },
+        {
+          "paths": ["Tests/Modules/", "Tests/App/", "Tests/Builder/"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Phase 1 — created new top-level buckets per architect/v1/folder_structure.md. Tests/Builder/.gitkeep keeps the reserved-empty dir in git."
+        },
+        {
+          "paths": ["Tests/**"],
+          "type": "move",
+          "category": "test",
+          "confidence": "high",
+          "context": "1309 renames via git mv — every old bucket to Modules/App/Builder per architect's layout. Preserved subfolders 1:1 (did not flatten folders-with-helpers to files). Condition regrouped into If/Compound/Operators/Files. Loop+Foreach merged. ContextVars under Variable. Committed as 58cf7f77."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/tester/v1/pre-baseline.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Pre-restructure baseline snapshot: 162 tests, 96 pass / 48 fail / 18 stale."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/tester/v1/baseline.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Phase 2 post-restructure baseline: 161 tests, 109 pass / 48 fail / 4 stale, 6 build-failure folders classified for Phase 4 triage."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/test-report.json", ".bot/runtime2-green-plang-tests/tester/v1/verdict.json", ".bot/runtime2-green-plang-tests/tester/v1/summary.md", ".bot/runtime2-green-plang-tests/tester/summary.md", ".bot/runtime2-green-plang-tests/tester/v1/changes.patch"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Deliverables: shared test-report.json (verdict=needs-fixes), verdict.json, v1 summary, light cross-session summary, diff patch."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "needs-fixes",
+        "notes": "Phases 0/1/2 done. Restructure delivered +13 passes with no regressions (162→161 after FromJson removal). 6 build-failure folders split across 3 root-cause classes (missing text module, builder modifier double-suffix, chronic LLM JsonParseError). 48 test fails unchanged from pre-baseline — architect Phase 4 to triage, coder Phase 5 to fix. Also surfaced cross-test state leakage in 9 signing tests (testSigner identity)."
+      }
+    },
+    {
+      "id": "c9d4a8e2-7f3b-4a21-9f1e-1b5a7d3c8e42",
+      "bot": "architect",
+      "timestamp_start": "2026-04-21T00:00:00Z",
+      "timestamp_end": null,
+      "intent": "Plan the work to drive all PLang *.test.goal files to green on runtime2.",
+      "before": {
+        "assumptions": "Base branch runtime2 just absorbed action modifiers and the testing module. 162 .test.goal files in Tests/ tree. No current baseline — runtime not yet built locally, no recent test run artefacts. Stale .pr cohort expected after the two big merges.",
+        "risk": "Fixing tests one-at-a-time would be 162 fixes for what is likely a small number of root causes (builder prompt regressions, stale hashes, a handful of handler bugs). Need baseline before prescribing fixes."
+      },
+      "plan": "See v1/plan.md. Phased approach: Phase 0 build prereqs, Phase 1 baseline (plang --build then --test with JUnit format, categorise results), Phase 2 drain Stale via rebuild, Phase 3 triage remaining Fails into builder-prompt / runtime-handler / test-authoring / environmental buckets, Phase 4 dispatch fixes by bucket (prompt changes batched, handler fixes clustered by module, test re-authoring by tester, tagging for env deps), Phase 5 final clean run. Open questions: scope of 'tests', timeout budget, network/llm credentials, delegation style, single-PR vs phased PRs.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-green-plang-tests/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Planning document. Awaiting user approval before any execution or delegation."
+        }
+      ],
+      "after": null
+    },
+    {
+      "id": "8a4f1c7d-2e9b-4d6a-bc12-77a3f8e4d9b1",
+      "bot": "architect",
+      "timestamp_start": "2026-04-21T18:30:00Z",
+      "timestamp_end": "2026-04-21T20:15:00Z",
+      "intent": "Phase 4 triage — classify tester's 48 fails + 6 build-failures + 4 stale into dispatch waves for coder, collecting design decisions from Ingi to shape the fix strategy.",
+      "before": {
+        "assumptions": "Tester's baseline is accurate; clusters can be identified by reading representative .pr files, handler code, and goal text without running the suite myself; most failures trace to a small number of root causes.",
+        "risk": "If I classify without verifying, coder will get dispatched on surface symptoms instead of real root causes. Also risk: miss design decisions that should be user-confirmed (e.g. enum vs string, split vs consolidated action, handler magic vs prompt rules)."
+      },
+      "plan": "Read tester's baseline + test-report.json. Verify failure hypotheses on representative exemplars across clusters (Signing state leak, Loop arithmetic, Event type, ReturnMapping, SetupGoal, Condition/Compound, ListOps2, Http/DownloadFile). Present clusters to Ingi as narrative; collect design decisions. Write triage.md with: preamble of design decisions, per-wave dispatch specs with draft prompt edits, per-test classification table, coder order-of-operations. Waves 1–4 bundled for coder; wave 5 parked; wave 6 re-triage after re-baseline. Close v1 with summary.md (session) + architect/summary.md (rollup). Commit + push.",
+      "actions": [
+        {
+          "paths": ["Tests/Modules/Signing/Expired/SigningExpired.test.goal", "Tests/Modules/Signing/Expired/.build/signingexpired.test.pr", "Tests/Modules/Loop/Loop.test.goal", "Tests/Modules/Loop/CountItem.goal", "Tests/Modules/Loop/.build/countitem.pr", "Tests/Modules/Event/Basic/Events.test.goal", "Tests/Modules/Event/Basic/.build/events.test.pr", "Tests/App/ReturnMapping/ReturnMapping.test.goal", "Tests/App/ReturnMapping/ComputeValue.goal", "Tests/App/ReturnMapping/.build/returnmapping.test.pr", "Tests/App/SetupGoal/Start.test.goal", "Tests/App/SetupGoal/Setup.goal", "Tests/Modules/Condition/Compound/And/ConditionCompoundAnd.test.goal", "Tests/Modules/Condition/Compound/And/DoThing.goal", "Tests/Modules/Condition/Compound/And/.build/conditioncompoundand.test.pr", "Tests/Modules/List/ListOps2.test.goal", "Tests/Modules/Http/DownloadFile/DownloadFile.test.goal", "PLang/App/modules/event/on.cs", "PLang/App/Events/EventType.cs", "PLang/App/modules/identity/archive.cs", "PLang/App/modules/identity/create.cs", "PLang/App/modules/identity/providers/DefaultIdentityProvider.cs", "PLang/App/modules/timeout/after.cs", "PLang/App/modules/timer/", "PLang/App/modules/http/download.cs", "PLang/App/modules/file/save.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified failure hypotheses across representative exemplars by reading .pr files, handler sources, and test goal text. Confirmed: modifier double-suffix is builder emitting module=timeout.after; foreach is variable.set storing arithmetic as string; Event type is string field vulnerable to LLM hallucination; Identity create doesn't filter archived (but D1 supersedes handler fix); http.download currently takes SaveTo (D5 splits it)."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/architect/v1/triage.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Phase 4 output. D1–D6 design decisions, four dispatch waves with concrete specs (including draft BuildGoal.llm prompt edits for Wave 4), per-test classification table covering 48 fails + 6 build-failures + 4 stale, coder's order-of-operations. Waves 1–4 bundled per Ingi; wave 5 parked (SetupGoal — Setup semantics undefined); wave 6 re-triage after tester re-baselines."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/architect/v1/summary.md", ".bot/runtime2-green-plang-tests/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 session summary (full detail) + bot-root cross-session rollup. v1 covers both the plan+restructure work landed earlier in v1 commits and this Phase 4 triage work."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/architect/v1/plan.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi overrode D3 candidate option C (handler-level arithmetic evaluation) in favor of option A (builder prompt rule). Cites PLang determinism law — no string evaluation at runtime. Overrode D4 candidate (test-authoring explicit-return) in favor of runtime change (auto-return last %__data__%). Overrode D5 candidate (prompt-only fix for text.write misroute) in favor of splitting http.download API to remove SaveTo. These reshape triage ownership from tester+architect-prompt to coder+architect-prompt."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "dispatched",
+        "notes": "Triage complete. Waves 1–4 dispatched to coder as a single bundle. Wave 5 (SetupGoal) parked pending Setup semantics spec. Wave 6 (tail ~12 items) returns after coder lands and tester re-baselines. Projected post-coder state: ~135/161 pass (85% green, up from 68%). No open blockers at handoff — all coder-relevant decisions are in triage.md D1–D6. Coder is instructed to stop-and-ask Ingi on ambiguity (especially D4 side-effect-last-step semantics and D5 SaveTo-audit for non-Tests goals)."
+      }
+    },
+    {
+      "id": "3e5f1b4c-8a62-4d9e-b0f7-5c1a8d4e9f20",
+      "bot": "coder",
+      "timestamp_start": "2026-04-21T21:00:00Z",
+      "timestamp_end": null,
+      "intent": "Implement architect v1 dispatch waves 1-4 (per-test system-db isolation, event enum, variable.set returns Data, http.download split + builder prompt edits).",
+      "before": {
+        "assumptions": "Architect triage.md is accurate. Wave 1 fixes 18 Identity/Signing failures; Wave 2 fixes 3 Event; Wave 3 depends on variable.set returning the Data it set (Q1 to Ingi — confirmed); Wave 4 splits download + 5 prompt rules + full Tests/ rebuild. Q2 confirmed: skip os/* (Installer not used in code). SqliteSettingsStore.InMemory uses shared cache so actor-name-only DataSource shares dbs across Apps — latent bug, fix at same time.",
+        "risk": "Wave 3 change cascades: every variable.set Step now 'returns' Value — tests that currently pass with a trailing set followed by Ok() may break if some handler relies on Ok success Data type. Wave 4 prompt edits are non-deterministic — rebuild may surface new quirks. http.download callers outside Tests/: only os/apps/Installer — parked per user. Wave 1 flipping System to in-memory during Testing.IsEnabled means parent runner loses its own System — verified OK because test/run.cs doesn't persist runner-level state."
+      },
+      "plan": "See coder/v1/plan.md. Four waves in order: W1 Actor/this.cs CreateSettingsStore — all actors in-memory when Testing.IsEnabled, DataSource names scoped by App.Id so shared-cache doesn't merge dbs across App instances; W2 event/on.cs — Data.@this<string> Type → Data.@this<EventType>, remove Enum.TryParse; W3 variable/set.cs — return Task.FromResult(Value) instead of Task.FromResult(Data()); W4a diagnose List/Math LLM JsonParseError with --debug=BuildGoal, W4b remove SaveTo/IfExists from download.cs + DefaultHttpProvider.DownloadAsync returns bytes in Data, W4c append 5 new rules to BuildGoal.llm (modifier shape, wait/sleep, arithmetic on set, download+save, event enum), W4d per-folder rebuild of Tests/ tree. One commit per wave. After W4 hand to tester.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-green-plang-tests/coder/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Detailed plan. Flagged Q1 (D4 semantics — variable.set return) and Q2 (os/* scope) to user. User confirmed Option A (return Data object) and park os/*."
+        },
+        {
+          "paths": ["PLang/App/Actor/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wave 1 — per-test in-memory sqlite for System; scoped by App.Id so SQLite shared-cache doesn't merge across App instances. Used reference equality (this != App.System) instead of string compare per Ingi feedback."
+        },
+        {
+          "paths": ["PLang/App/modules/event/on.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wave 2 — Type parameter from Data<string> to Data<EventType>. Removed runtime Enum.TryParse and InvalidEventType error path. Source generator handles Data<Enum> via __ResolveData().As<T>()."
+        },
+        {
+          "paths": ["PLang/App/modules/variable/set.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wave 3 — variable.set returns the stored Data instead of empty Data.Ok(). Enables goal auto-return via %__data__%."
+        },
+        {
+          "paths": ["PLang/App/Variables/this.cs", "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs", "PLang/App/modules/ui/providers/FluidProvider.cs", "PLang/App/modules/cache/wrap.cs", "PLang/App/modules/loop/foreach.cs", "PLang/App/Actor/Context/this.cs", "PLang/App/Debug/this.cs", "PLang/App/Errors/Error.cs", "PLang/App/this.cs", "PLang/App/Actor/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Unified Variables.Put/Set/PutAs to single Set with Set(Data) convenience overload. Data values alias as-is (no clone, no rename). Per Ingi feedback on W3 clone workaround: the right fix is that Action.RunAsync stops mutating result.Name — use Variables.Set('__data__', result) which now aliases. GetAll returns IEnumerable<KeyValuePair<string,Data>> so callers use dict key, not Data.Name (advisory). FluidProvider fixed to use kvp.Key. Error.cs and tests updated for the new GetAll signature."
+        },
+        {
+          "paths": ["PLang/App/modules/http/download.cs", "PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wave 4b — split http.download. Removed SaveTo and IfExists parameters. DownloadAsync streams into MemoryStream and returns bytes in Data. Callers chain file.save. OBP — one concern per action."
+        },
+        {
+          "paths": ["system/builder/llm/BuildGoal.llm"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Wave 4c — five new prompt rules: modifier shape (no dotted module paths), wait/sleep intent (timer.sleep), arithmetic on set RHS (math chain + variable.set), download + save (two actions, no text.write), event types are enum-valued."
+        },
+        {
+          "paths": ["PLang.Tests/App/Context/ActorSettingsStoreTests.cs", "PLang.Tests/App/Context/ContextVariableTests.cs", "PLang.Tests/App/Memory/VariablesTests.cs", "PLang.Tests/App/Modules/condition/IfHandlerTests.cs", "PLang.Tests/App/Modules/event/EventHandlerTests.cs", "PLang.Tests/App/Modules/http/DownloadActionTests.cs", "PLang.Tests/App/Modules/ui/RenderTests.cs", "PLang.Tests/App/PlangRuntimeTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# tests updated: SystemActor_DuringTesting test inverted (now asserts isolation, not persistence). DownloadActionTests rewritten for bytes API (5 old SaveTo tests removed, 2 new bytes tests added). EventHandlerTests use EventType enum; On_InvalidType test removed (compile-time enforcement). GetAll() KVP signature. Put → Set migration."
+        },
+        {
+          "paths": ["Documentation/v0.2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Two todos captured: (1) LLM error messages should reuse --debug's maxLength/grep options, (2) builder bug — LLM emits dotted module paths periodically; builder should auto-split or re-prompt instead of propagating ActionNotFound as a build failure."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/coder/v1/summary.md", ".bot/runtime2-green-plang-tests/coder/summary.md", ".bot/runtime2-green-plang-tests/coder/v1/changes.patch"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session summaries and diff patch per workflow."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "green",
+        "timestamp_end": "2026-04-21T16:30:00Z",
+        "notes": "Waves 1-4 C# changes landed. Final state: 161 tests — 122 pass / 35 fail / 4 stale (baseline was 109/48/18; +13 passes, -13 fails). C# suite: 2273/2274 passing (1 LLM integration flake). Full Tests/ rebuild attempted and reverted — LLM non-determinism regressed 38 tests so targeted rebuilds produced mixed results. Commit ce0de138 has just the C# changes; no .pr file churn. 35 tail fails flagged for W6 re-triage — includes LLM dotted-path bugs (logged for builder fix), real Signing bugs now visible after W1 unblocked them, and W6-flagged items (Builder needs --building, bcrypt, UI render regressions). Architect projected ~135 post-waves; we reached 122 due to the non-determinism. C# changes are correct and provide the foundation — further wins require builder determinism fixes (logged in todos.md)."
+      }
+    },
+    {
+      "id": "8a2e5c17-6b4f-4d3a-8e2c-9f1a7b5d3e84",
+      "bot": "tester",
+      "timestamp_start": "2026-04-21T17:00:00Z",
+      "timestamp_end": "2026-04-21T17:55:00Z",
+      "intent": "Re-baseline + quality review of coder v1 (Waves 1-4, commits ce0de138 + 0cbbeb1f).",
+      "before": {
+        "assumptions": "Coder reports 122/35/4 PLang + 2273/2274 C# after W1-W4. W4 full rebuild reverted — .pr files still encode pre-W4 contracts. Quality-review scope: W1 per-test in-memory System db, W2 event.on.Type enum, W3 Variables.Set unification + variable.set return, W4b http.download bytes-only, W4c 5 builder prompt rules.",
+        "risk": "W3 is riskiest (three methods collapsed + Action.RunAsync no-mutation). W4c prompt rules are dormant without rebuild. Need to hunt false-greens, not just confirm pass counts."
+      },
+      "plan": "See tester/v2/plan.md. Fresh dotnet build, run full C# + PLang suites, scoped coverage on 14 modified files, per-wave deletion-test quality analysis, PLang .test.goal gap check, verdict + test-report.json.",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-green-plang-tests/tester/v2/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v2 plan written first, read back for user approval. Plan scoped: re-baseline + per-wave quality review via deletion test, no code correctness review."
+        },
+        {
+          "paths": ["PLang.Tests", "Tests/**/*.test.goal"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran dotnet run --project PLang.Tests (2273/2274 same pre-existing LLM flake) + plang --test (168 total: 128 pass / 35 fail / 5 stale). Diff vs tester v1 baseline: 0 regressions, 14 fail→pass, 4 stale→pass."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/tester/v2/coverage.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "TUnit --coverage cobertura; scoped to the 14 C# files coder v1 modified. 11/14 above 80%. Critical W1/W3 paths line-covered; quality gaps are about what's asserted, not line coverage."
+        },
+        {
+          "paths": [
+            "PLang/App/Actor/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/modules/event/on.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/http/download.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs",
+            "system/builder/llm/BuildGoal.llm",
+            "PLang.Tests/App/Context/ActorSettingsStoreTests.cs",
+            "PLang.Tests/App/Memory/VariablesTests.cs",
+            "PLang.Tests/App/Modules/variable/settests.cs",
+            "PLang.Tests/App/Modules/event/EventHandlerTests.cs",
+            "PLang.Tests/App/Modules/http/DownloadActionTests.cs",
+            "PLang.Tests/App/Modules/ui/RenderTests.cs",
+            "PLang.Tests/App/Modules/modifier/CacheWrapTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Per-wave deletion-test analysis. W1 strong (4 tests guard the Testing×Building×System×User matrix; deletion of App.Id scoping fails SystemActor_DuringTesting_IsolatedPerEngineInstance). W4b strong (bytes contract asserted). W2 minor gap (removed On_InvalidType_ReturnsError leaves builder-path enum resolution untested). W3 three major gaps: variable.set return value unasserted (F3-1), Action.RunAsync no-mutation untested (F3-2), Variables.Set aliasing-without-clone untested (F3-3). W4c dormant — prompt rules landed but 0 .pr files rebuilt."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-green-plang-tests/tester/v2/result.md",
+            ".bot/runtime2-green-plang-tests/tester/v2/summary.md",
+            ".bot/runtime2-green-plang-tests/tester/v2/verdict.json",
+            ".bot/runtime2-green-plang-tests/tester/summary.md",
+            ".bot/runtime2-green-plang-tests/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Deliverables: v2/result.md (per-wave quality detail with deletion-test rationale), v2/summary.md (session summary), verdict.json=fail, test-report.json at branch root with 7 findings (1 critical, 3 major, 3 minor). Cross-session summary updated."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "needs-fixes",
+        "notes": "Coder v1 Waves 1-4: zero regressions, +18 test wins (PLang 128/35/5; C# 2273/2274 with pre-existing LLM flake only). W1 and W4b strong. W3 has three major gaps that fail the deletion test — all reverts pass C# tests. W4c prompt rules dormant (coder-surfaced, I codified). Verdict: needs-fixes → route to coder for F3-1/2/3. F4c-1 is architect's call. No codeanalyzer this wave per user instruction."
+      }
+    },
+    {
+      "id": "c2d4e6f8-0a1b-4c2d-8e3f-5a6b7c8d9e0f",
+      "bot": "coder",
+      "timestamp_start": "2026-04-21T17:10:00Z",
+      "timestamp_end": "",
+      "intent": "Close the three major W3 C# test gaps flagged in tester v2 (F3-1 variable.set return value, F3-2 Action.RunAsync no-mutation, F3-3 Variables.Set aliasing-without-clone).",
+      "before": {
+        "assumptions": "No runtime code changes needed — v1 semantic changes are correct; what's missing is the test anchors. Architect's dispatch: 'Coder takes F3-1, F3-2, F3-3' — F4c-1 and minor findings out of scope. Existing tests in settests.cs and VariablesTests.cs follow a stable pattern (_app.@this for handler-level, new Variables() for Variables-level).",
+        "risk": "F3-2 test uses action.RunAsync (not _app.Run) — easy to confuse paths. _app.Run bypasses Action.RunAsync so wouldn't exercise the %__data__% aliasing. Must use action.RunAsync(Ctx) directly."
+      },
+      "plan": "Three test additions, no runtime changes. (1) F3-1: add result.Value assertions to Set_ReturnsOk and Set_AsDefault_DoesNotOverwriteExisting in settests.cs. (2) F3-2: new test ActionRunAsync_AliasesResultUnderData_DoesNotMutateName in settests.cs that runs action.RunAsync for variable.set and asserts ReferenceEquals between %__data__%, %myVar%, and the returned result; plus result.Name != '__data__'. (3) F3-3: new test Set_DataWithDifferentName_AliasesByKey_NoClone_NoRename in VariablesTests.cs asserting ReferenceEquals(retrieved, original) and retrieved.Name == 'originalName' after Set('alias', original). Deletion-tests for each as proof. One commit. Run dotnet run --project PLang.Tests to verify. No PLang rebuild.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-green-plang-tests/coder/v2/plan.md",
+            ".bot/runtime2-green-plang-tests/coder/v2/v1_review_summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 plan + review summary of tester v2 findings. Scope: F3-1/2/3 only per user dispatch. Plan approved by Ingi before implementation."
+        },
+        {
+          "paths": ["PLang.Tests/App/Modules/variable/settests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "F3-1: added result.Value assertions to Set_ReturnsOk and Set_AsDefault_DoesNotOverwriteExisting. F3-2: added ActionRunAsync_AliasesResultUnderData_DoesNotMutateName — uses action.RunAsync (not _app.Run) to exercise the %__data__% aliasing path; asserts ReferenceEquals against dataVar and myVar, plus result.Name != '__data__'. Deletion tests confirmed in plan."
+        },
+        {
+          "paths": ["PLang.Tests/App/Memory/VariablesTests.cs"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "F3-3: added Set_DataWithDifferentName_AliasesByKey_NoClone_NoRename — asserts ReferenceEquals(retrieved, original) and retrieved.Name == 'originalName' after Set('alias', original). Reverting Variables.Set to old ShallowClone+rename behavior fails both asserts."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-green-plang-tests/coder/v2/summary.md",
+            ".bot/runtime2-green-plang-tests/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 session summary + root coder summary updated with v2 entry. Cross-session progression: v1 shipped waves 1–4 and reached 122/35; v2 closes the three major W3 coverage gaps without touching runtime."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "green",
+        "notes": "F3-1/2/3 all addressed as pure test additions. C# suite 2275/2276 (pre-existing LLM flake unchanged). No runtime modifications; no PLang rebuild needed. Hand off to tester for verification, then architect for F4c-1 conversation."
+      }
+    },
+    {
+      "id": "b7d4e9a2-3c81-4f5a-9d67-1a8e4b2c6d73",
+      "bot": "architect",
+      "timestamp_start": "2026-04-21T21:30:00Z",
+      "timestamp_end": "2026-04-21T22:20:00Z",
+      "intent": "Address tester v2's F4c-1 (critical, architect-owned): the five BuildGoal.llm prompt rules landed in coder v1 are dormant — full Tests/ rebuild regressed 38 tests and was reverted. Decide path forward and produce a coder dispatch.",
+      "before": {
+        "assumptions": "Rules are semantically correct (read the prompt diff); 38-regression is LLM variance on cache miss, not bad rules. Coder v2's F3 test anchors are in place so the ground is stable for rebuilds. User trusts coder's F3 report without tester v3 interlock.",
+        "risk": "A re-run of full Tests/ rebuild would repeat the 38-regression. If I edit the prompt speculatively without seeing per-folder LLM output, I'm guessing. Surgical rebuild with hand-review keeps blast radius bounded but relies on coder following the hand-review criteria literally."
+      },
+      "plan": "Accept tester v2's option (a) — surgical per-folder rebuild with hand review. Defer option (b) golden-eval infrastructure as a separate follow-up task. Produce a coder dispatch: 11 currently-failing Tests/ folders grouped by which of the five rules should apply (modifier-shape, arithmetic-on-set, download+save, enum events, plus diagnose-first on Math/List JsonParseError). Per folder: expected .pr shape coder can compare against literally. Commit only what passes hand-review; git checkout -- to restore any drift. Stop conditions: any regression, >3 folders drifting, >1 retry per folder. No speculative prompt edits during rebuild — if rules drift, coder logs it, architect drafts edits later with full data. Invocation pattern: from Tests/ as root, plang build '--build={\"files\":[\"<path>\"]}'. os/apps/* naturally out of scope.",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-green-plang-tests/architect/v2/v1_review_summary.md",
+            ".bot/runtime2-green-plang-tests/architect/v2/plan.md",
+            ".bot/runtime2-green-plang-tests/architect/v2/summary.md",
+            ".bot/runtime2-green-plang-tests/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 deliverables: v1_review_summary.md captures tester v2's F4c-1 framing + architect+Ingi's decision (accept option a); plan.md is the coder dispatch with per-folder expected-rule-outcome tables + hand-review procedure + stop conditions; summary.md is the session rollup; bot-root summary updated with v2 entry."
+        },
+        {
+          "paths": ["system/builder/llm/BuildGoal.llm"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the coder v1 diff (ce0de138) confirming the five added rules are semantically correct. Not editing; this was to verify the 38-regression is variance, not bad rules."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-green-plang-tests/tester/v2/result.md",
+            ".bot/runtime2-green-plang-tests/tester/v2/summary.md",
+            ".bot/runtime2-green-plang-tests/coder/v2/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingested tester v2's 7 findings and coder v2's F3-1/2/3 closures before drafting the dispatch."
+        },
+        {
+          "paths": [".bot/runtime2-green-plang-tests/architect/v2/plan.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Scope correction mid-session: I started to run dotnet build myself. Ingi corrected — architect specifies, coder builds, tester tests. Revised the plan from 'I execute' to 'coder dispatch' accordingly. Documented the clarification in the plan's 'Architect's role' section. This sticks to the pipeline and keeps me from duplicating coder's work."
+        }
+      ],
+      "after": {
+        "status": "completed",
+        "health": "dispatched",
+        "notes": "F4c-1 dispatched to coder as a surgical rebuild of 11 folders with per-folder expected rule outcomes and hand-review criteria. Bounded scope — worst case a folder stays failing. Stop conditions define when coder pauses and asks rather than pushing. No speculative prompt edits in this session; any rule iteration happens after coder logs drift data. Golden-eval infrastructure (tester's option b) deferred as a separate follow-up task. Ready for coder v3."
+      }
+    }
+  ]
+}

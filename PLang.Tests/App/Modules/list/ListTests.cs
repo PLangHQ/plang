@@ -16,6 +16,12 @@ public class ListTests
 
     // --- Add ---
 
+    // list.add stores the WHOLE Data — lists carry Data objects, not raw values,
+    // so each element keeps its name/type/context. Readers (ListNavigator,
+    // EnumerateItems) unwrap on access; low-level tests look at the Data wrapper.
+    private static object? Unwrap(object? slot) =>
+        slot is global::App.Data.@this d ? d.Value : slot;
+
     [Test]
     public async Task Add_CreatesNewList()
     {
@@ -28,7 +34,7 @@ public class ListTests
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(1);
-        await Assert.That(list[0]).IsEqualTo("first");
+        await Assert.That(Unwrap(list[0])).IsEqualTo("first");
     }
 
     [Test]
@@ -43,7 +49,7 @@ public class ListTests
         await Assert.That(result.Success).IsTrue();
         var list = memory.GetValue("myList") as List<object?>;
         await Assert.That(list!.Count).IsEqualTo(3);
-        await Assert.That(list[2]).IsEqualTo("c");
+        await Assert.That(Unwrap(list[2])).IsEqualTo("c");
     }
 
     [Test]
@@ -57,7 +63,7 @@ public class ListTests
 
         await Assert.That(result.Success).IsTrue();
         var list = memory.GetValue("myList") as List<object?>;
-        await Assert.That(list![1]).IsEqualTo("b");
+        await Assert.That(Unwrap(list![1])).IsEqualTo("b");
     }
 
     // --- Remove ---
@@ -115,6 +121,8 @@ public class ListTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ValidationError");
+        await Assert.That(result.Error!.Message).Contains("out of range");
     }
 
     // --- Count ---

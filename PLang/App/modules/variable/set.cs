@@ -7,10 +7,11 @@ namespace App.modules.variable;
 /// Sets a variable in the current context's variable store.
 /// When AsDefault is true, only sets if the variable doesn't already exist.
 /// </summary>
+[System.ComponentModel.Description("Assign a value to a named variable, optionally coercing to a type or setting only when unset")]
 [Action("set", Cacheable = false)]
 [Example(
     "set %data% = {\"name\": \"%user%\", \"age\": 30}, type=json",
-    "{\"module\":\"variable\",\"action\":\"set\",\"parameters\":[{\"name\":\"Name\",\"value\":\"%data%\",\"type\":\"string\"},{\"name\":\"Value\",\"value\":{\"name\":\"%user%\",\"age\":30},\"type\":\"json\"}]}")]
+    "variable.set Name([string] %data%), Value([json] {\"name\":\"%user%\",\"age\":30}), Type([string] json)")]
 public partial class Set : IContext, IBuildValidatable
 {
     public static string? ValidateBuild(List<Data.@this> parameters)
@@ -48,12 +49,12 @@ public partial class Set : IContext, IBuildValidatable
         {
             var existing = Context.Variables.Get(Name);
             if (existing.IsInitialized)
-                return Task.FromResult(Data());
+                return Task.FromResult(existing);
         }
 
-        Context.Variables.Set(Name, Value,
+        var stored = Context.Variables.Set(Name, Value,
             Type?.Value != null ? App.Data.Type.FromName(Type.Value) : null);
 
-        return Task.FromResult(Data());
+        return Task.FromResult(stored);
     }
 }

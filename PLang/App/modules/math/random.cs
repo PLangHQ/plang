@@ -2,6 +2,7 @@ using App.Variables;
 
 namespace App.modules.math;
 
+[System.ComponentModel.Description("Return a random integer between Min and Max inclusive (defaults 0–100)")]
 [Action("random")]
 public partial class Random : IContext
 {

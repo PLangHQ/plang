@@ -27,14 +27,14 @@ public class ActorSettingsStoreTests
         // First engine — write to System settings store
         await using (var engine = new global::App.@this(_testDir))
         {
-            engine.Building.IsEnabled = true;
+            engine.Build.IsEnabled = true;
             await engine.System.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
         // Second engine — System should still have the data (on-disk)
         await using (var engine2 = new global::App.@this(_testDir))
         {
-            engine2.Building.IsEnabled = true;
+            engine2.Build.IsEnabled = true;
             var result = await engine2.System.SettingsStore.Get("LlmCache", "testkey");
             await Assert.That(result.Value).IsNotNull();
             await Assert.That(result.Value!.ToString()).IsEqualTo("cached_response");
@@ -47,22 +47,25 @@ public class ActorSettingsStoreTests
         // First engine — write to User settings store
         await using (var engine = new global::App.@this(_testDir))
         {
-            engine.Building.IsEnabled = true;
+            engine.Build.IsEnabled = true;
             await engine.User.SettingsStore.Set("TestTable", "key1", Data.Ok("temporary"));
         }
 
         // Second engine — User data should be gone (in-memory)
         await using (var engine2 = new global::App.@this(_testDir))
         {
-            engine2.Building.IsEnabled = true;
+            engine2.Build.IsEnabled = true;
             var result = await engine2.User.SettingsStore.Get("TestTable", "key1");
             await Assert.That(result.Value).IsNull();
         }
     }
 
     [Test]
-    public async Task SystemActor_DuringTesting_PersistsCacheAcrossEngineInstances()
+    public async Task SystemActor_DuringTesting_IsolatedPerEngineInstance()
     {
+        // During testing, every actor — including System — gets a fresh in-memory
+        // store scoped by App.Id so tests don't inherit state from prior runs.
+        // (Wave 1: per-test isolation replaces the old shared-file System store.)
         await using (var engine = new global::App.@this(_testDir))
         {
             engine.Testing.IsEnabled = true;
@@ -73,8 +76,7 @@ public class ActorSettingsStoreTests
         {
             engine2.Testing.IsEnabled = true;
             var result = await engine2.System.SettingsStore.Get("LlmCache", "testkey");
-            await Assert.That(result.Value).IsNotNull();
-            await Assert.That(result.Value!.ToString()).IsEqualTo("cached_response");
+            await Assert.That(result.Value).IsNull();
         }
     }
 

@@ -1,5 +1,6 @@
 namespace App.modules.list;
 
+[System.ComponentModel.Description("Return true if the list contains an item equal to Value")]
 [Action("contains")]
 public partial class Contains : IContext
 {

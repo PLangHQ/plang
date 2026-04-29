@@ -1,6 +1,6 @@
 {
   "name": "TestDiscoverHandlesIcelandicGoalNames",
-  "description": "Discovers fixture goals recursively, counts discovered entries, and asserts that an Icelandic-named goal (\u0022Pr\u00F3f\u0022) is found with EntryGoalName preserved.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -48,11 +48,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Use test.discover to walk the _fixtures directory recursively and match *.fixture.goal files. Store the discovered test descriptors into %tests% via variable.set.",
+      "level": "high",
+      "confidence": 100,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -90,11 +101,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Count the number of discovered entries in %tests% using list.count, then store into %count%.",
+      "level": "high",
+      "confidence": 100,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -124,6 +146,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %count% equals 1 to ensure discovery found exactly one fixture goal.",
+      "level": "high",
+      "confidence": 100,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -150,7 +177,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
@@ -176,11 +203,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Check whether any discovered entry has EntryGoalName equal to the Icelandic goal name \u0022Pr\u00F3f\u0022. Store boolean result into %hasProf%.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -210,15 +248,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %hasProf% is true, confirming the discovered entry preserved the Icelandic goal name.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
-  "prPath": "/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
+  "path": "/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
+  "prPath": "/TestModule/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
   "hash": "4eb9339dcc4e580542741bb08757300a5d7caba273b5c183dfa668153e3e1efe",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

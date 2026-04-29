@@ -1,6 +1,6 @@
 {
   "name": "Pr\u00F3f",
-  "description": "Writes the output text \u0027\u00EDslenska prufa\u0027 and then attempts to apply a \u0027\u003C= null\u0027 modifier, which is not a valid engine action/modifier in the provided action set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -30,15 +30,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/EdgeCase/_fixtures/Pr\u00F3f.fixture.goal",
-  "prPath": "/EdgeCase/_fixtures/.build/pr\u00F3f.fixture.pr",
+  "path": "/TestModule/EdgeCase/_fixtures/Pr\u00F3f.fixture.goal",
+  "prPath": "/TestModule/EdgeCase/_fixtures/.build/pr\u00F3f.fixture.pr",
   "hash": "08016fab4c0b2199257802e215c4f218c1621064823f3e14b8bc1618dce4d99e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

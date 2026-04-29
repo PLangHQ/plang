@@ -16,15 +16,16 @@ namespace App.modules.test;
 /// Returns the run-wide Results collection as Data so MetaTests can propagate explicitly
 /// via `write to %results%`; child TestRuns do NOT auto-bubble to the parent runner.
 /// </summary>
+[System.ComponentModel.Description("Execute a list of discovered TestFiles in parallel and accumulate results")]
 [Example("run tests %tests%, write to %results%",
-    "Tests=%tests%")]
+    "test.run Tests([object] %tests%) | variable.set Name([string] %results%), Value([object] %__data__%)")]
 [Action("run", Cacheable = false)]
 public partial class run : IContext
 {
     // Test hook: fires once per child App after it's constructed and configured
-    // (SystemDirectory inherited, Testing.IsEnabled=true, CurrentTest assigned),
+    // (OsDirectory inherited, Testing.IsEnabled=true, CurrentTest assigned),
     // before the test's entry goal runs. Tests attach probes here to snapshot
-    // observable child-App state (parallel count, SystemDirectory, IsEnabled).
+    // observable child-App state (parallel count, OsDirectory, IsEnabled).
     // Subscribers must be thread-safe — parallel tests fire this concurrently.
     internal static event Action<App.@this>? ChildAppCreated;
 
@@ -73,7 +74,7 @@ public partial class run : IContext
         }
 
         await using var childApp = new App.@this(test.Directory);
-        childApp.SystemDirectory = parentApp.SystemDirectory;
+        childApp.OsDirectory = parentApp.OsDirectory;
         childApp.Testing.IsEnabled = true;
         var testRun = new TestRun(test);
         childApp.Testing.CurrentTest = testRun;

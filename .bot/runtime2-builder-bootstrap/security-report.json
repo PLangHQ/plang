@@ -1,0 +1,147 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-builder-bootstrap",
+  "timestamp": "2026-04-29T09:30:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "param-snapshot-on-error",
+      "exposure": "Source-generated __SnapshotParams() in LazyParamsGenerator captures every property's PrValue and FinalValue when a handler returns an error. The snapshot is attached to Error.Params and rendered by Error.cs FormatVerboseValue in stderr/log output.",
+      "trust_boundary": "Handler boundary — any [Sensitive]-marked property carries cleartext (api keys, identity privates, settings secrets) at this point.",
+      "mitigations": ["Test report (test/report.cs) uses Json.DiagnosticOutput which masks [Sensitive] — but only at the typed-property level, not for ParamSnapshot.PrValue/FinalValue which are typed `object?`."],
+      "gaps": ["LazyParamsGenerator emits PrValue/FinalValue with no [Sensitive] check.", "Error.cs FormatVerboseValue uses unfiltered JsonSerializer.Serialize for dict/list and value.ToString() for everything else — no mask."]
+    },
+    {
+      "area": "variables-snapshot-and-getall",
+      "exposure": "Variables.Snapshot() (used by AssertionError) and Variables.GetAll() (used by Error verbose dump) return raw Data values keyed by name. No [Sensitive] filter at the dictionary-entry level.",
+      "trust_boundary": "Dict/list entries are not properties — SensitivePropertyFilter (which acts on JsonTypeInfo properties) does not see them.",
+      "mitigations": ["test/report.cs uses Json.DiagnosticOutput, which masks [Sensitive] inside typed POCO values nested under the dict. So a typed Identity record with [Sensitive] PrivateKey *is* masked when nested.", "But a top-level secret stored as a string (e.g. %apiKey% = 'sk-...') has no [Sensitive] hook — the var name doesn't carry the attribute."],
+      "gaps": ["Standing finding — confirmed unchanged on this branch."]
+    },
+    {
+      "area": "variables.set deep-clone fallback",
+      "exposure": "Variables.Set on a dot/bracket path that targets a dict/list now JSON-roundtrips the source to break aliasing. On JsonException/NotSupportedException it falls back to the raw alias and only writes a debug line.",
+      "trust_boundary": "Same-process aliasing — not a confidentiality boundary, but a known mutation-bug repro path.",
+      "mitigations": ["Debug-channel log line surfaces the failure when Debug is enabled."],
+      "gaps": ["Silent in production (Debug.IsEnabled false). The comment acknowledges 'alias risk' as an explicit choice."]
+    },
+    {
+      "area": "type-converter-string-to-anything",
+      "exposure": "TypeConverter.TryConvertTo deserializes any string into any non-primitive target type via System.Text.Json. Value source can be external (file/http/llm output). Target type bounded by handler parameter declarations.",
+      "trust_boundary": "Action-parameter slot — schema-defined types only. STJ doesn't honor $type, so polymorphic gadgets are not directly triggerable.",
+      "mitigations": ["STJ refuses unknown polymorphism by default.", "Capability properties (Context, Step, …) filtered from emit by Modules.Describe.", "JsonIgnore on Path.Context, Step.Goal, etc. prevents cycles being injected."],
+      "gaps": ["ConvertTo recurses into nullable underlying types and list element types with no explicit depth guard. Bounded by source-string size in practice; not a usable attacker primitive but worth a depth guard."]
+    },
+    {
+      "area": "builder-action-runtime-callable",
+      "exposure": "DefaultBuilderProvider removed BuildingGuard from every action (Goals, GoalsSave, Validate, Merge, App, AppSave, PromoteGroups, EnrichResponse). Any signed .pr can now invoke `builder.goalsSave` at runtime, which writes a .pr file to disk via fs.File.WriteAllTextAsync.",
+      "trust_boundary": "Signed .pr file. The user authorized the goal; the action surface widens what an authorized goal can do.",
+      "mitigations": ["File operations still go through IPLangFileSystem (the user-controlled sandboxed filesystem)."],
+      "gaps": ["A signed third-party .goal that the user installed could now silently rebuild .pr artefacts at runtime, not just at build time. The prior guard was a privilege boundary between build mode and run mode; that boundary is gone (intentionally per commit 4633674c). Worth flagging so it is revisited."]
+    },
+    {
+      "area": "fluid-formal-filter-and-unwrap-fluid",
+      "exposure": "New `formal` filter renders any value into the LLM's formal syntax. UnwrapFluid recurses through IFluidIndexable / IEnumerable.",
+      "trust_boundary": "Template runs after Variables resolution — sees user variables. SSTI surface (already accepted risk per memory).",
+      "mitigations": ["UnwrapFluid only handles dicts (via key enumeration) and IEnumerable. Strings short-circuit, dicts short-circuit at non-IFluidIndexable."],
+      "gaps": ["UnwrapFluid has no recursion depth guard — a self-referential dict (key whose value points back to the parent) would StackOverflow. Hard to construct in practice (Fluid-wrapped dicts are built fresh from source data) but trivial to add a depth limit."]
+    },
+    {
+      "area": "debug-llm-trace-output",
+      "exposure": "When Llm.* flags are enabled, OnAfterResponse / OnBeforeRequest write the full LLM system prompt, user message, schema, and raw response to either stderr or .build/traces/{traceId}/llm/{goalName}_{stepKey}.txt.",
+      "trust_boundary": "User opt-in via --debug={\"llm\":{...}}. Debug.IsEnabled gates Write().",
+      "mitigations": ["File-mode writes through IPLangFileSystem.", "Filename parts are sanitized via SanitizeFilenamePart using fs.Path.GetInvalidFileNameChars."],
+      "gaps": ["traceId from context.Trace.Id is NOT sanitized when included in the path. Today Trace.Id is internally generated (Guid) and safe; if a future code path lets external data set Trace.Id, this becomes a directory-traversal vector. Add belt-and-braces sanitization.", "EmitLlmBlock writes raw blocks via AppendAllText — no [Sensitive] filter. By design (full untruncated content for debugging). Worth documenting as 'enabling llm.output=file produces files containing every byte sent to the LLM, including any settings/secrets the prompt resolved'."]
+    },
+    {
+      "area": "pr-deserialization (no change)",
+      "exposure": "Same as runtime2 — .pr files JSON-deserialize into Goal/Step/Action with case-insensitive matching.",
+      "trust_boundary": "Cryptographic signature on the .pr is the boundary.",
+      "mitigations": ["Json.CaseInsensitiveRead, no $type polymorphism."],
+      "gaps": ["Unchanged on this branch."]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "ParamSnapshot.PrValue / FinalValue are populated for every handler property, including those marked [Sensitive] (e.g. identity.PrivateKey, settings api-key parameters). On any handler error the source-generated ExecuteAsync attaches the snapshot to Error.Params. Error.cs:215,220 then renders both fields via FormatVerboseValue, which does NOT apply SensitivePropertyFilter — strings print verbatim, dicts/lists JSON-serialize without the mask. Error text reaches stderr, the debug channel, log files, and (depending on the consumer) trace artefacts.",
+      "preconditions": "A handler with at least one [Sensitive] parameter returns an error during execution. Standard error handling renders the formatted error string anywhere errors normally surface.",
+      "impact": "Cleartext secret (api key, private key, password) leaks into log output / error console / debug stream. Crosses confidentiality boundary.",
+      "affected_files": [
+        "PLang.Generators/LazyParamsGenerator.cs",
+        "PLang/App/Errors/ParamSnapshot.cs",
+        "PLang/App/Errors/Error.cs"
+      ],
+      "exploit_sketch": "1. Author a goal that calls a signing/identity/llm action with a [Sensitive] parameter. 2. Force the handler to error (e.g. malformed input). 3. Inspect the resulting error string in stderr or in the debug channel — PrValue/FinalValue line shows the secret in cleartext.",
+      "proposed_fix": "In LazyParamsGenerator's __SnapshotParams emit a [Sensitive]-aware mask: when the property has the attribute, set PrValue/FinalValue to the literal `\"******\"` (or null + a HasSensitive flag). Cheaper alternative: keep capture but make ParamSnapshot serialize through a [Sensitive]-aware filter and route Error.cs FormatVerboseValue for ParamSnapshot through Json.FormatForDiagnostic instead of the unfiltered path.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "Variables.Snapshot() (used by AssertSnapshot.WithVariables) and Variables.GetAll() (used by Error verbose dump at Error.cs:230-250) return raw Dictionary<string, object?> values without [Sensitive] filtering. Top-level user variables holding secrets (e.g. %apiKey% = 'sk-...' loaded from settings) leak into AssertionError.Variables and into the verbose-error variable dump.",
+      "preconditions": "A goal stores a secret in a top-level variable (common pattern: load from settings, then pass to a handler). An assertion fails, OR the user runs with --debug={\"verbose\":true}.",
+      "impact": "Cleartext secret in test results.json (Json.DiagnosticOutput's mask only acts on typed-property metadata, not on dict-entry string values), in stderr, and in the error chain that bubbles through events.",
+      "affected_files": [
+        "PLang/App/Variables/this.cs",
+        "PLang/App/modules/assert/AssertSnapshot.cs",
+        "PLang/App/Errors/Error.cs"
+      ],
+      "exploit_sketch": "set %apiKey% = %settings.OpenAiKey%; (later) assert %something% equals %wrong%. results.json now contains 'apiKey': 'sk-...' under variables.",
+      "proposed_fix": "Add an out-of-band naming-convention filter on Variables.Snapshot/GetAll so vars matching a sensitivity pattern (e.g. starting with `_`, configured per app, or — better — when the Data carries a Sensitive flag) are masked. Long-term: extend Data.@this with a Sensitive flag honored by every snapshot/serialization path, not just typed properties.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "Variables.Set's new dict/list deep-clone path does System.Text.Json.JsonSerializer.Serialize then Deserialize<object?>. Without depth limit on either pass, a deeply nested dict (cyclic or just very deep) can OOM during serialization or hit JsonException at depth 64 (default). The catch falls back to alias and only logs to Debug — when Debug is disabled the log line drops on the floor.",
+      "preconditions": "External-channel data lands in a typed parent's mutable dict/list slot, with depth >64 or with cycles.",
+      "impact": "Silent fallback to alias means the snapshot-clone safety the code claims to provide is bypassed. The acknowledged 'alias risk' line moves from debug-only-visible to invisible in production.",
+      "affected_files": ["PLang/App/Variables/this.cs"],
+      "exploit_sketch": "POST a JSON object with 65 levels of nesting to an http endpoint that lands the body in a typed Step.Custom dict. JSON serialize fails on default MaxDepth, fallback aliases the source — subsequent set %src.x% = ... mutates the target.",
+      "proposed_fix": "On the JSON-clone path use Json.CamelCaseIndented options with explicit MaxDepth or, simpler, return the mutation-failure as a structured error instead of silently falling back. At minimum log to stderr (not just the debug channel) so the failure is visible in production.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "FluidProvider.UnwrapFluid recurses through IFluidIndexable.Keys and IEnumerable items with no depth guard. A cycle in the underlying data graph would StackOverflow.",
+      "preconditions": "User-controlled dict/list value with self-reference reaches the `formal` filter via a template that calls it.",
+      "impact": "Process crash via uncatchable StackOverflowException.",
+      "affected_files": ["PLang/App/modules/ui/providers/FluidProvider.cs"],
+      "exploit_sketch": "Hard to construct in practice — Fluid wrappers are built fresh from source data each render. Mostly defense-in-depth.",
+      "proposed_fix": "Add `int depth = 0, int maxDepth = 32` to UnwrapFluid and bail to v.ToString() at the limit.",
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "path-traversal",
+      "vector": "Debug.ResolveLlmFilePath builds the path .build/traces/{traceId}/llm/{safeGoal}_{stepKey}.txt. goalName and stepKey are sanitized via SanitizeFilenamePart, but traceId (from context.Trace.Id) is NOT sanitized. Today Trace.Id is internally generated (Guid) and safe.",
+      "preconditions": "A future code path (or test fixture) sets Trace.Id from external data — at that moment a `..` in Trace.Id traverses out of .build/traces.",
+      "impact": "Hypothetical today (Trace.Id is internal). Tripwire so a future regression doesn't slip through.",
+      "affected_files": ["PLang/App/Debug/this.cs"],
+      "exploit_sketch": "If Trace.Id ever becomes settable from a user-supplied value: traceId='../../etc' would write llm/{goal}_{step}.txt outside the build dir.",
+      "proposed_fix": "Run traceId through SanitizeFilenamePart in ResolveLlmFilePath before Path.Combine.",
+      "status": "open"
+    },
+    {
+      "id": 6,
+      "severity": "low",
+      "category": "code-execution",
+      "vector": "DefaultBuilderProvider removed BuildingGuard from every builder action. builder.goalsSave / builder.appSave / builder.merge are now callable at runtime (not just build mode). A signed .goal can rebuild and overwrite arbitrary .pr files inside the user's app.",
+      "preconditions": "User installs a signed third-party .goal that calls a builder action at runtime.",
+      "impact": "A 'pr-rewrite' attack: the goal regenerates a security-relevant .pr at runtime, then resigns nothing (signature stays as the original installed signature, but content shifts). Whether the runtime re-verifies post-write determines if this is exploitable. Documented as intentional (commit 4633674c, BuildingGuardTests removed) so flagging for awareness, not as a bug.",
+      "affected_files": ["PLang/App/modules/builder/providers/DefaultBuilderProvider.cs"],
+      "exploit_sketch": "Goal calls builder.goalsSave on a target Goal it constructed in-memory, replacing .build/<target>.pr at runtime. If the runtime caches Goal objects from .pr load and doesn't re-verify, subsequent calls load attacker-chosen .pr content under the original signature.",
+      "proposed_fix": "Confirm with the architect that runtime invocation of builder.goalsSave is intentional. If yes — document the new threat model around .pr re-verification. If no — restore BuildingGuard or move .pr-mutating actions behind a [BuilderOnly] capability check.",
+      "status": "open"
+    }
+  ],
+  "summary": "Branch posture is solid for the architectural changes (Catalog, TypeConverter, ParamSnapshot, Trace) — STJ defaults block direct deserialization gadgets, capability properties are filtered from the LLM catalog, file ops go through IPLangFileSystem. Two confidentiality issues stand out: (1) the new ParamSnapshot bypasses [Sensitive] when capturing PrValue/FinalValue and rendering them via FormatVerboseValue — same root cause as the standing Variables.Snapshot finding, both leak through error/log paths. (2) The standing GetAll/Snapshot finding remains uncloched. Three low-severity items are tripwires (UnwrapFluid recursion, JSON-clone fallback, traceId path component) worth fixing before they become real. The BuildingGuard removal is intentional but expands what a signed .pr can do at runtime — flagged for awareness."
+}

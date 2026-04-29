@@ -1,0 +1,69 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-builder-bootstrap",
+  "timestamp": "2026-04-29T11:30:00Z",
+  "reviewed_version": "v1",
+  "summary": "Audited the cross-cutting integrity of the branch after codeanalyzer v4 (CLEAN), tester v4 (approved, 2309/2309 C#, +21 unit tests, 4 mutation tests bit), and security v1 (PASS, 2 medium info-disclosure, 4 low). Verdict: pass with 3 minor findings + 2 nits. Three reviewers each made the right call on their slice; the auditor's contribution is (1) verifying that codeanalyzer v4's escalated locale-format carryover is actually closed by commit cc8e638d (verified, all three sites use InvariantCulture), (2) noting the BuildingGuard removal commit's rationale is inaccurate (one of the four 'lower-layer guards' doesn't exist for the .pr Save path), (3) categorizing the 23 PLang F4 reds — ~6 are foundation-shaped (Foreach, ForeachDictionary, ConditionCompound, ContextVars, SetupGoal, ErrorTypes), the rest are module-domain, (4) confirming security F2's Variables.GetAll leak path was incompletely enumerated (FluidProvider:94 not listed), (5) confirming the Debug.Apply idempotency guard has zero test coverage. None block the audit. The original 3 gaps from coder/v1/report.md (variable.set AsDefault, file.read ResolveVariables with skipInfrastructure security improvement, single→list auto-wrap) are all implemented and tested.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — v1+v3 surfaced 18 findings across 167 files, v2/v4 verified 13 of 14 closures behaviorally, escalated carryover (locale format-side asymmetry) was closed by commit cc8e638d after v4. Solid file-level work.",
+    "tester": "agree — v4 mutation-tested 4 representative regressions, all 4 bit; coverage gap on IsCatalogDescription went 0/9 → 9/9 lines. F4 carryover triage is fair but auditor adds: ~6 of 23 reds are foundation-shaped (Foreach/Condition/ContextVars/SetupGoal/ErrorTypes) and deserve higher-priority follow-up than the module-domain rest.",
+    "security": "partial — F1/F3/F4/F5 enumeration is sound. F2 leak surface listed AssertionError.Variables and Error.cs verbose dump but missed FluidProvider:94 — UI templates expose Variables.GetAll() to template rendering, the broadest production surface. F6 BuildingGuard removal accepted as 'intentional, documented' but the commit message's documentation cites a 'file provider .pr write guard' that doesn't exist (DefaultFileProvider.Save has no Build.IsEnabled gate)."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "architectural",
+      "file": "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+      "line": 80,
+      "issue": "Commit 4633674c removed BuildingGuard with the rationale 'Build.IsEnabled is enforced at the file provider .pr write guard'. That guard does not exist. DefaultFileProvider.Save (line 80-112) writes any file the caller hands it, with no Build.IsEnabled or .pr-extension check. Build.IsEnabled is checked on the Read path (lines 21, 56, snapshot logic) but not on Save. So a signed runtime goal that invokes builder.goalsSave (which calls file.Save with a .pr Path) can rewrite arbitrary sibling .pr files at runtime — the architectural decision is fine (user is sovereign per threat model), but the documented rationale is factually wrong, which makes the recorded threat-model statement misleading.",
+      "missed_by": "codeanalyzer",
+      "impact": "Documentation/threat-model accuracy. The actual posture — 'a signed goal can rewrite siblings; signatures apply to install-time content, not current on-disk content' — is what security accepted, but the rationale stamped in version-control history is misleading. A future contributor reading the commit will look for a .pr write guard that doesn't exist.",
+      "suggestion": "Either (a) update the commit/threat-model docs to state 'no per-action guard, no extension-specific guard at the file provider; signed goals can mutate sibling .pr — this is on the user via signature trust', OR (b) add an explicit guard in DefaultFileProvider.Save: if (path.Extension == \".pr\" && !action.Context.App.Build.IsEnabled) return Data.@this.FromError(new ServiceError(\"Cannot write .pr files outside build mode\", \"BuildOnlyWrite\", 403)); — this matches the documented intent."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "PLang/App/Goals/Goal/Steps/Step/this.cs",
+      "line": 183,
+      "issue": "Step.Clone() at line 183-216 does not propagate 7 properties added on this branch: PriorText, Guidance, Level, Confidence, Formal, Source, Keep. Codeanalyzer v3 flagged this; coder explicitly deferred to keep the method around for future use. The auditor's escalation: the only test (PLang.Tests/App/Modules/modifier/ModifierRegistryTests.cs:78) asserts modifier-copy behavior only — adding a new caller that relies on the LLM metadata would silently lose those 7 fields without test failure. Production callers today: zero (verified by grep). So today's behavior is correct (because nothing calls it from production), but the method is a landmine for future contributors.",
+      "missed_by": "tester",
+      "impact": "Latent. Activates the moment any production code (or any new test) calls Step.Clone() expecting the LLM metadata to round-trip. The 'no test bites' situation makes the regression invisible until a user reports missing Guidance/Level/Confidence on a cloned step.",
+      "suggestion": "Pick one: (a) delete Step.Clone() outright — zero production callers, drop 30 lines + the modifier test; (b) fix Step.Clone() to copy all 18 properties + add a reflection-based test that fails when a new property is missed (same shape as the standing clone-family memory pattern); (c) explicitly mark the method [Obsolete] with a message pointing to either deletion or full propagation. Today's middle ground (deferred, partial) is the worst of all options."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "Tests/Modules/Loop/Foreach/Dictionary/ForeachDictionary.test.goal",
+      "line": null,
+      "issue": "F4 cluster (23 PLang reds + 4 stale) was carried over by tester v1-v4 as a single 'scope-out, separate-branch work' bucket. Categorizing the 23 by failure shape: ~6 are foundation-shaped — Tests/Builder/ForeachCallsGoalPerItem (3→2), Tests/Modules/Loop/Foreach/Dictionary/ForeachDictionary (3→1), Tests/Modules/Condition/Compound/Mixed/ConditionCompound (got null), Tests/Modules/Variable/ContextVars/Basic/ContextVars ('engine name should be set' → null), Tests/App/SetupGoal/Start (got null), Tests/Modules/Error/Types/ErrorTypes ('TestKey' → null). The other ~17 are module-domain (Signing 8, Identity 2, Crypto 1, Ui 2, Event 3, Test/Discover 1) and many are 'File not found .build/sign.pr' → likely missing-rebuild artifacts. The foundation reds suggest real iteration/condition/context regressions from the v2 builder squash, not just missing rebuilds.",
+      "missed_by": "tester",
+      "impact": "Risk of treating 'carryover' as homogeneous. The module-domain reds will likely auto-fix when those modules' .pr are rebuilt; the foundation reds may need code investigation. Without categorization, the follow-up branch may rebuild modules and call it done while the iteration/condition regressions persist.",
+      "suggestion": "Split F4 into two buckets when handing over: (i) 6 foundation reds that need code investigation (Foreach call counts, Foreach over Dictionary, Condition Compound, ContextVars, SetupGoal initialization, Error Type round-trip); (ii) 17 module reds, most of which are likely '.pr file missing — needs rebuild', verifiable by checking if `.build/sign.pr` etc. exist before debugging. Bucket (i) carries higher priority."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "category": "review-gap",
+      "file": "PLang/App/modules/ui/providers/FluidProvider.cs",
+      "line": 94,
+      "issue": "Security F2 enumerated leak surfaces for Variables.GetAll() as 'AssertionError.Variables (assert/AssertSnapshot.cs)' and 'Error.cs verbose dump'. It missed a third — and the broadest in production: FluidProvider:94 iterates Variables.GetAll() and feeds every variable into the Fluid template context. A user template like `<pre>{{ apiKey }}</pre>` (where apiKey was loaded from settings) renders the cleartext secret to the response. Standing behavior, not introduced by this branch, so not a regression; but the threat-model description in security-report.json should enumerate it.",
+      "missed_by": "security",
+      "impact": "Marginal — adds completeness to security's leak-path enumeration. UI rendering is far more common in production than verbose error dumps, so the documented exposure surface is understated. The proposed fix (Sensitive flag on Data, honored by every snapshot/serialization path) would close all three paths uniformly.",
+      "suggestion": "Add FluidProvider:94 to the F2 affected_files list and explicitly note in the security-report.json that the proposed Data.Sensitive flag must be honored by Fluid template rendering, not just JSON-serialization paths."
+    },
+    {
+      "id": 5,
+      "severity": "nit",
+      "category": "contract",
+      "file": "PLang/App/Debug/this.cs",
+      "line": 80,
+      "issue": "Debug.Apply has a new `_applied` idempotency guard (codeanalyzer v3 #6 fix). Codeanalyzer v4 noted 'no current test bites'; auditor confirms — DebugSmokeTests.cs calls Apply() once, the guard's removal would not surface as a test failure. Defensible because there's a single caller today (Executor.cs:53) and the guard protects future re-callers — but the guard's purpose is to prevent the 'double subscription' regression, and a future contributor adding the second caller could miss adding the test that pins the guarantee.",
+      "missed_by": "none",
+      "impact": "Latent. If a second Apply() caller is added without testing idempotency, the guard could be removed in a future cleanup pass with no test failure.",
+      "suggestion": "Either add a deletion-test (`Apply_CalledTwice_DoesNotDoubleSubscribe` — call Apply twice, fire one event, assert handler runs exactly once), OR mark the field with a comment that's findable by grep: `// MUST stay — see Debug.Apply idempotency guard. Remove only if every caller is verified single-shot.`"
+    }
+  ]
+}

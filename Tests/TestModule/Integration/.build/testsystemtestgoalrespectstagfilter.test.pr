@@ -1,6 +1,6 @@
 {
   "name": "TestSystemTestGoalRespectsTagFilter",
-  "description": "Reads /system/test.goal into %goalText% and asserts the content contains \u0027test.discover\u0027, verifying the system runner routes through test.discover to respect tag filters.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -43,11 +43,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Read the referenced system goal file content into %goalText% (no variable resolution needed).",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -74,7 +85,7 @@
             {
               "name": "Message",
               "value": null,
-              "type": "string?"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -82,15 +93,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: ensure the loaded goal text contains \u0027test.discover\u0027.",
+      "level": "high",
+      "confidence": 97,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Integration/TestSystemTestGoalRespectsTagFilter.test.goal",
-  "prPath": "/Integration/.build/testsystemtestgoalrespectstagfilter.test.pr",
+  "path": "/TestModule/Integration/TestSystemTestGoalRespectsTagFilter.test.goal",
+  "prPath": "/TestModule/Integration/.build/testsystemtestgoalrespectstagfilter.test.pr",
   "hash": "d9a0f8c2ad206cd89d5c8998479251d58329d66fde01b3e8dadb485cb6ffd084",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

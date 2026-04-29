@@ -6,6 +6,8 @@ namespace App.modules.timer;
 /// <see cref="App.Errors.ValidationError"/> if no timer has been started or the
 /// named timer is unknown.
 /// </summary>
+[ModuleDescription("Named stopwatch timers for measuring elapsed time across steps")]
+[System.ComponentModel.Description("Stop a named timer and return the elapsed TimeSpan since it was started")]
 [Action("end", Cacheable = false)]
 public partial class End : IContext, IStatic
 {

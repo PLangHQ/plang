@@ -421,7 +421,7 @@ PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"tem
 
 `IBuilderProvider` follows the same provider pattern as other module providers. Owns all build-time logic — action records are thin one-line delegates. The default `DefaultBuilderProvider` handles goal parsing, `.pr` file merging, action validation, and persistence.
 
-**BuildingGuard**: Static `BuildingGuard(IContext)` method on the provider. Checks `action.Context.App.Building.IsEnabled` — returns `ActionError("BuildingDisabled", 400)` if false. Called first in every provider method. This is the authorization gate that prevents builder actions from running at application runtime.
+**No per-action BuildingGuard.** Earlier revisions had a static `BuildingGuard(IContext)` called first in every provider method to gate builder actions on `App.Build.IsEnabled`. That guard was deliberately removed (commit `4633674c`) — builder actions are callable at runtime as well as build time. The trust boundary is the goal signature: a signed `.pr` may legitimately invoke `builder.goals.save` and rewrite sibling `.pr` files, and the user is sovereign over which signatures to trust. `App.Build.IsEnabled` is still consulted by `DefaultFileProvider` on the read path for snapshot logic, but no per-action guard exists on the write path. If you are reasoning about the threat model, the docs file [`docs/modules/builder.md`](../../docs/modules/builder.md) summarises the same posture.
 
 **Goal.Parse() + MergeFrom()**: The builder module adds two key methods to the Goal entity:
 - `Goal.Parse(text, path)` — line-by-line parser for `.goal` text format. Produces `List<Goal>` with structural data (Name, Steps with Text/Index/Indent, Visibility, Comments). Supports multi-goal files, `/` and `/* */` comments, `\` escape, continuation lines.
@@ -562,3 +562,10 @@ Shared goals often tag themselves so they carry auto-tags when reused in tests (
 
 ### `Variables.Snapshot()` honors exclusions, not sensitivity
 The snapshot taken on assertion failure (`PLang/App/Variables/this.cs:Snapshot`) excludes `!`-prefixed infrastructure vars, `DynamicData` (Now/GUID), and `SettingsVariable`. It does **not** honour `[Sensitive]` — that filter applies at JSON *serialization* via `Json.DiagnosticOutput` when the snapshot is rendered into the report. Result: ordinary user variables carrying secrets flow through the snapshot but are only masked if their carrier type has `[Sensitive]` on the relevant property. See security-report.json finding #3 on this branch.
+
+### Teach LLM mappings via `ExamplesForLlm()`, never via runtime parsers
+When a step like `set %count% = %count% + 1` produces the wrong action chain, the temptation is to add an arithmetic evaluator inside `Variables.Resolve` so the runtime "just handles" the `+`. Don't. The compile path already has a `math` module (`add` / `subtract` / `multiply` / `divide` / `power`); the LLM just doesn't know to translate the RHS-arithmetic shorthand. Adding `ExamplesForLlm()` to each math action with both forms (natural — `"add 5 and 3, write to %sum%"` — and RHS — `"set %count% = %count% + 1"`) mapping to `math.<op> | variable.set Value=%__data__%` is enough; the LLM follows the example.
+
+The pattern: `static ExampleSpec[] ExamplesForLlm() => new[] { Example("step text", Action("module.action", new() { ["Param"] = ... }), Action(...)) }` — multi-action chains pass multiple `Action(...)` args to one `Example`. Helpers live in `App.Catalog.ExampleHelpers`.
+
+This keeps three things clean: (1) variables stay dumb (regex `%var%` substitution only, no hidden eval); (2) the action graph is explicit — math operations show up as `math.*` actions in the `.pr`, not as inline strings; (3) the catalog is the single source of truth for what the LLM should produce. Stamping the same intent in two places (catalog examples + runtime evaluator) creates drift and is rejected.

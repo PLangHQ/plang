@@ -8,6 +8,7 @@ namespace App.modules.identity;
 /// If the renamed identity is the default, updates %MyIdentity%.
 /// PLang: rename identity 'alice' to 'alice-prod'
 /// </summary>
+[System.ComponentModel.Description("Rename an identity from Name to NewName, preserving its key pair")]
 [Action("rename", Cacheable = false)]
 public partial class Rename : IContext
 {

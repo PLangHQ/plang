@@ -1,0 +1,252 @@
+{
+  "global": {
+    "line_rate": 0.3651430613198472,
+    "branch_rate": 0.20950418021365536,
+    "lines_covered": 13285,
+    "lines_valid": 36383,
+    "branches_covered": 7217,
+    "branches_valid": 34448
+  },
+  "changed_files": {
+    "App/Utils/TypeConverter.cs": {
+      "lines": 536,
+      "hit": 270,
+      "line_pct": 50.4
+    },
+    "App/Utils/TypeMapping.cs": {
+      "lines": 678,
+      "hit": 670,
+      "line_pct": 98.8
+    },
+    "App/Utils/PlangTypeIndex.cs": {
+      "lines": 197,
+      "hit": 157,
+      "line_pct": 79.7
+    },
+    "App/Utils/MimeTypes.cs": {
+      "lines": 92,
+      "hit": 54,
+      "line_pct": 58.7
+    },
+    "App/Catalog/ExampleRenderer.cs": {
+      "lines": 230,
+      "hit": 196,
+      "line_pct": 85.2
+    },
+    "App/Catalog/this.cs": {
+      "lines": 136,
+      "hit": 130,
+      "line_pct": 95.6
+    },
+    "App/Catalog/ActionSpec.cs": {
+      "lines": 14,
+      "hit": 10,
+      "line_pct": 71.4
+    },
+    "App/Catalog/TypeEntry.cs": {
+      "lines": 39,
+      "hit": 38,
+      "line_pct": 97.4
+    },
+    "App/Catalog/ExampleHelpers.cs": {
+      "lines": 26,
+      "hit": 20,
+      "line_pct": 76.9
+    },
+    "App/modules/builder/providers/DefaultBuilderProvider.cs": {
+      "lines": 986,
+      "hit": 627,
+      "line_pct": 63.6
+    },
+    "App/modules/builder/validateResponse.cs": {
+      "lines": 230,
+      "hit": 226,
+      "line_pct": 98.3
+    },
+    "App/modules/builder/enrichResponse.cs": {
+      "lines": 2,
+      "hit": 0,
+      "line_pct": 0.0
+    },
+    "App/modules/builder/promoteGroups.cs": {
+      "lines": 2,
+      "hit": 0,
+      "line_pct": 0.0
+    },
+    "App/modules/builder/types.cs": {
+      "lines": 2,
+      "hit": 2,
+      "line_pct": 100.0
+    },
+    "App/modules/builder/validate.cs": {
+      "lines": 2,
+      "hit": 2,
+      "line_pct": 100.0
+    },
+    "App/modules/builder/goals.cs": {
+      "lines": 2,
+      "hit": 2,
+      "line_pct": 100.0
+    },
+    "App/modules/builder/goalsSave.cs": {
+      "lines": 2,
+      "hit": 2,
+      "line_pct": 100.0
+    },
+    "App/modules/builder/app.cs": {
+      "lines": 2,
+      "hit": 2,
+      "line_pct": 100.0
+    },
+    "App/modules/builder/appSave.cs": {
+      "lines": 2,
+      "hit": 2,
+      "line_pct": 100.0
+    },
+    "App/modules/builder/merge.cs": {
+      "lines": 2,
+      "hit": 2,
+      "line_pct": 100.0
+    },
+    "App/modules/builder/actions.cs": {
+      "lines": 2,
+      "hit": 2,
+      "line_pct": 100.0
+    },
+    "App/modules/builder/BuildResponse.cs": {
+      "lines": 13,
+      "hit": 4,
+      "line_pct": 30.8
+    },
+    "App/modules/ui/providers/FluidProvider.cs": {
+      "lines": 385,
+      "hit": 282,
+      "line_pct": 73.2
+    },
+    "App/modules/error/handle.cs": {
+      "lines": 250,
+      "hit": 248,
+      "line_pct": 99.2
+    },
+    "App/modules/file/read.cs": {
+      "lines": 16,
+      "hit": 10,
+      "line_pct": 62.5
+    },
+    "App/modules/variable/set.cs": {
+      "lines": 58,
+      "hit": 56,
+      "line_pct": 96.6
+    },
+    "App/modules/list/add.cs": {
+      "lines": 92,
+      "hit": 46,
+      "line_pct": 50.0
+    },
+    "App/modules/test/discover.cs": {
+      "lines": 396,
+      "hit": 340,
+      "line_pct": 85.9
+    },
+    "App/modules/test/run.cs": {
+      "lines": 188,
+      "hit": 170,
+      "line_pct": 90.4
+    },
+    "App/modules/test/report.cs": {
+      "lines": 488,
+      "hit": 432,
+      "line_pct": 88.5
+    },
+    "App/modules/test/tag.cs": {
+      "lines": 26,
+      "hit": 26,
+      "line_pct": 100.0
+    },
+    "App/Goals/Goal/Steps/Step/this.cs": {
+      "lines": 268,
+      "hit": 239,
+      "line_pct": 89.2
+    },
+    "App/Goals/Goal/Steps/this.cs": {
+      "lines": 193,
+      "hit": 166,
+      "line_pct": 86.0
+    },
+    "App/Goals/Goal/Steps/Step/Actions/Action/this.cs": {
+      "lines": 147,
+      "hit": 123,
+      "line_pct": 83.7
+    },
+    "App/Goals/Goal/this.cs": {
+      "lines": 614,
+      "hit": 534,
+      "line_pct": 87.0
+    },
+    "App/Errors/Error.cs": {
+      "lines": 413,
+      "hit": 242,
+      "line_pct": 58.6
+    },
+    "App/Errors/ParamSnapshot.cs": {
+      "lines": 18,
+      "hit": 12,
+      "line_pct": 66.7
+    },
+    "App/Variables/this.cs": {
+      "lines": 844,
+      "hit": 776,
+      "line_pct": 91.9
+    },
+    "App/Modules/this.cs": {
+      "lines": 509,
+      "hit": 489,
+      "line_pct": 96.1
+    },
+    "App/Data/this.cs": {
+      "lines": 676,
+      "hit": 556,
+      "line_pct": 82.2
+    },
+    "App/Actor/Context/Trace/this.cs": {
+      "lines": 14,
+      "hit": 12,
+      "line_pct": 85.7
+    },
+    "App/Actor/Context/this.cs": {
+      "lines": 449,
+      "hit": 381,
+      "line_pct": 84.9
+    },
+    "App/Debug/this.cs": {
+      "lines": 943,
+      "hit": 380,
+      "line_pct": 40.3
+    },
+    "App/Build/this.cs": {
+      "lines": 33,
+      "hit": 31,
+      "line_pct": 93.9
+    },
+    "App/this.cs": {
+      "lines": 457,
+      "hit": 309,
+      "line_pct": 67.6
+    },
+    "App/Attributes/PlangTypeAttribute.cs": {
+      "lines": 15,
+      "hit": 11,
+      "line_pct": 73.3
+    },
+    "App/FileSystem/Default/PLangFileSystem.cs": {
+      "lines": 410,
+      "hit": 263,
+      "line_pct": 64.1
+    },
+    "App/FileSystem/Path.cs": {
+      "lines": 166,
+      "hit": 140,
+      "line_pct": 84.3
+    }
+  }
+}

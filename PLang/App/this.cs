@@ -69,11 +69,11 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     public string AbsolutePath { get; }
 
     /// <summary>
-    /// The OS absolute path to the system/ folder (next to the plang executable).
-    /// System goals (builder, events, etc.) are resolved from here.
-    /// Null when no system directory is configured.
+    /// The OS absolute path to the os/ folder (next to the plang executable).
+    /// System goals (builder, events, etc.) are resolved from os/system/... here.
+    /// Null when no os directory is configured.
     /// </summary>
-    public string? SystemDirectory { get; set; }
+    public string? OsDirectory { get; set; }
 
     /// <summary>
     /// Environment name (e.g., "production", "development").
@@ -177,7 +177,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// <summary>
     /// Builder mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
-    public Build.@this Building { get; }
+    public global::App.Build.@this Build { get; }
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
@@ -284,7 +284,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         Events = new AppEvents();
         Debug = new Debugging(this);
         Testing = new Testing(this);
-        Building = new Build.@this(this);
+        Build = new global::App.Build.@this(this);
         Types = new Types.@this();
         Config = new Config.@this();
         SettingsVariable = new SettingsVariable(this);
@@ -393,8 +393,8 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         context ??= System.Context;
         CurrentActor = System;
 
-        // Building → PLang builder (runs as User — user is building their code)
-        if (Building.IsEnabled)
+        // Build → PLang builder (runs as User — user is building their code)
+        if (Build.IsEnabled)
         {
             // Safety check: confirm new app creation if no app.pr exists.
             // --app={"create":true} skips the prompt. Headless/CI defaults to "no".
@@ -447,7 +447,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         // but goals found in memory (app.Goals.Get) need parameters too
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
-                context.Variables.Put(param);
+                context.Variables.Set(param.Name, param);
 
         return await ((Goal)goalResult.Value!).RunAsync(context);
     }

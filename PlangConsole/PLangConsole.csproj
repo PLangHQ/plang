@@ -37,4 +37,20 @@
 		<BundleResource Include="Info.plist" />
 	</ItemGroup>
 
+	<!--
+		Symlink <OutDir>/os → <repo>/os so PLangFileSystem.OsDirectory
+		(AppContext.BaseDirectory + "os") resolves /system/* paths to the
+		live os/system tree during dev. Skipped if the link already exists.
+	-->
+	<Target Name="LinkOsDirectory" AfterTargets="Build">
+		<PropertyGroup>
+			<OsSourceDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\os'))</OsSourceDir>
+			<OsLinkPath>$(OutDir)os</OsLinkPath>
+		</PropertyGroup>
+		<Exec Condition="!Exists('$(OsLinkPath)') And '$(OS)' != 'Windows_NT'"
+		      Command="ln -s &quot;$(OsSourceDir)&quot; &quot;$(OsLinkPath.TrimEnd('\/'))&quot;" />
+		<Exec Condition="!Exists('$(OsLinkPath)') And '$(OS)' == 'Windows_NT'"
+		      Command="cmd /c mklink /D &quot;$(OsLinkPath.TrimEnd('\/'))&quot; &quot;$(OsSourceDir)&quot;" />
+	</Target>
+
 </Project>

@@ -41,7 +41,7 @@ public class RenderTests : IDisposable
     public async Task Render_InlineTemplate_SubstitutesVariables()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("name", "World"));
+        ctx.Variables.Set(new Data("name", "World"));
         var action = new Render { Context = ctx, Template = "Hello {{ name }}", IsFile = false };
 
         var result = await _provider.Render(action);
@@ -55,7 +55,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("greeting.html", "Hello {{ name }}!");
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("name", "PLang"));
+        ctx.Variables.Set(new Data("name", "PLang"));
         var action = new Render { Context = ctx, Template = "greeting.html", IsFile = true };
 
         var result = await _provider.Render(action);
@@ -121,8 +121,8 @@ public class RenderTests : IDisposable
     public async Task Render_VariablesVariables_AccessibleInTemplate()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("greeting", "Hello"));
-        ctx.Variables.Put(new Data("target", "World"));
+        ctx.Variables.Set(new Data("greeting", "Hello"));
+        ctx.Variables.Set(new Data("target", "World"));
         var action = new Render { Context = ctx, Template = "{{ greeting }} {{ target }}", IsFile = false };
 
         var result = await _provider.Render(action);
@@ -135,7 +135,7 @@ public class RenderTests : IDisposable
     public async Task Render_ExplicitParams_OverrideVariables()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("name", "MemoryValue"));
+        ctx.Variables.Set(new Data("name", "MemoryValue"));
         var overrideParam = new Data("name", "ParamValue");
         var action = new Render
         {
@@ -174,8 +174,8 @@ public class RenderTests : IDisposable
     public async Task Render_ScopedVars_SkippedFromVariables()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("visible", "yes"));
-        ctx.Variables.Put(new Data("!hidden", "secret"));
+        ctx.Variables.Set(new Data("visible", "yes"));
+        ctx.Variables.Set(new Data("!hidden", "secret"));
         var action = new Render
         {
             Context = ctx,
@@ -275,7 +275,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("greet.html", "Hello {{ name }}");
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("name", "World"));
+        ctx.Variables.Set(new Data("name", "World"));
         var action = new Render
         {
             Context = ctx,
@@ -341,7 +341,7 @@ public class RenderTests : IDisposable
     {
         var ctx = _app.Context;
         var user = new { name = "Alice", age = 30 };
-        ctx.Variables.Put(new Data("user", user));
+        ctx.Variables.Set(new Data("user", user));
         var action = new Render
         {
             Context = ctx,
@@ -359,7 +359,7 @@ public class RenderTests : IDisposable
     public async Task Render_ListIteration_WorksInForLoop()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("items", new List<string> { "a", "b", "c" }));
+        ctx.Variables.Set(new Data("items", new List<string> { "a", "b", "c" }));
         var action = new Render
         {
             Context = ctx,
@@ -377,7 +377,7 @@ public class RenderTests : IDisposable
     public async Task Render_NullVariable_RendersEmpty()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("name", null));
+        ctx.Variables.Set(new Data("name", null));
         var action = new Render
         {
             Context = ctx,
@@ -414,7 +414,7 @@ public class RenderTests : IDisposable
         var ctx = _app.Context;
         // Data wraps a complex object — template should navigate the inner object, not Data properties
         var user = new { name = "Alice", age = 30 };
-        ctx.Variables.Put(new Data("user", user));
+        ctx.Variables.Set(new Data("user", user));
         var action = new Render
         {
             Context = ctx,
@@ -434,7 +434,7 @@ public class RenderTests : IDisposable
     public async Task Render_NullDotNavigation_NoException()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("user", null));
+        ctx.Variables.Set(new Data("user", null));
         var action = new Render
         {
             Context = ctx,
@@ -482,7 +482,7 @@ public class RenderTests : IDisposable
         _app.Goals.Add(goal);
 
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("goalName", "DynamicGoal"));
+        ctx.Variables.Set(new Data("goalName", "DynamicGoal"));
         var action = new Render
         {
             Context = ctx,
@@ -581,7 +581,7 @@ public class RenderTests : IDisposable
     public async Task Render_HtmlInVariable_IsNotEscaped()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("name", "<script>alert(1)</script>"));
+        ctx.Variables.Set(new Data("name", "<script>alert(1)</script>"));
         var action = new Render
         {
             Context = ctx,
@@ -603,7 +603,7 @@ public class RenderTests : IDisposable
     public async Task Render_IsFileNull_InlineWithLiquidSyntax_TreatedAsInline()
     {
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("name", "World"));
+        ctx.Variables.Set(new Data("name", "World"));
         // IsFile=null + template contains {{ — auto-detect should treat as inline
         var action = new Render
         {
@@ -623,7 +623,7 @@ public class RenderTests : IDisposable
     {
         WriteTemplateFile("auto.html", "Auto-detected {{ greeting }}");
         var ctx = _app.Context;
-        ctx.Variables.Put(new Data("greeting", "Hi"));
+        ctx.Variables.Set(new Data("greeting", "Hi"));
         // IsFile=null + template looks like a file path (has extension, no Liquid syntax)
         var action = new Render
         {

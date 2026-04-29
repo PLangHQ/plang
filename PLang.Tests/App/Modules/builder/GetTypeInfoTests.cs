@@ -21,7 +21,7 @@ public class GetTypeInfoTests
             "plang_test_builder_typeinfo_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        _app.Building.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     [After(Test)]
@@ -43,7 +43,7 @@ public class GetTypeInfoTests
         var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        var info = result.Value as BuilderTypeInfo;
+        var info = result.Value as global::App.Catalog.@this;
         await Assert.That(info).IsNotNull();
         await Assert.That(info!.TypeNames).Contains("string");
         await Assert.That(info.TypeNames).Contains("int");
@@ -57,7 +57,7 @@ public class GetTypeInfoTests
         var result = await _app.RunAction(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        var info = result.Value as BuilderTypeInfo;
+        var info = result.Value as global::App.Catalog.@this;
         await Assert.That(info).IsNotNull();
         await Assert.That(info!.TypeSchemas).Contains("goal.call");
     }

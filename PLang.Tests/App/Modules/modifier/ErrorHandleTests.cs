@@ -43,6 +43,19 @@ public class ErrorHandleTests
         };
     }
 
+    /// <summary>Single-action recovery list that calls <paramref name="goalName"/>.</summary>
+    private static List<PrAction> CallGoal(string goalName) => new()
+    {
+        new PrAction
+        {
+            Module = "goal", ActionName = "call",
+            Parameters = new List<global::App.Data.@this>
+            {
+                new("goalname", new Dictionary<string, object?> { ["name"] = goalName })
+            }
+        }
+    };
+
     [Test]
     public async Task Handle_ActionSucceeds_PassesThrough()
     {
@@ -174,45 +187,69 @@ public class ErrorHandleTests
     [Test]
     public async Task Handle_RetryFirst_NoGoal_ExhaustsRetriesAndFails()
     {
-        // error.throw always fails. With RetryCount=2 + no goal, retries exhaust and error propagates.
-        var action = Throw("persistent failure",
-            modifiers: new ActionModifiers
-            {
-                ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))
-            });
+        // RetryCount=2, no goal, persistent failure → retries exhaust, error propagates.
+        // Stateful lambda counts calls so a regression in the retry loop fails this test.
+        int callCount = 0;
+        Func<Task<global::App.Data.@this>> persistentlyFailing = () =>
+        {
+            callCount++;
+            return Task.FromResult(global::App.Data.@this.FromError(
+                new global::App.Errors.ServiceError("persistent failure", "TransientError", 503)));
+        };
 
-        var result = await action.RunAsync(Ctx);
+        var modifiers = new ActionModifiers
+        {
+            ErrorHandler(("retryCount", 2), ("order", "RetryFirst"))
+        };
+
+        var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).IsEqualTo("persistent failure");
+        await Assert.That(callCount).IsEqualTo(3); // 1 initial + 2 retries
     }
 
     [Test]
     public async Task Handle_GoalFirst_NoGoal_ExhaustsRetriesAndFails()
     {
-        // Order="GoalFirst" parses as the enum. No goal + retries fail → error propagates.
-        var action = Throw("failure",
-            modifiers: new ActionModifiers
-            {
-                ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))
-            });
+        // Order=GoalFirst, no goal + retryCount=1, persistent failure → 1 initial + 1 retry.
+        int callCount = 0;
+        Func<Task<global::App.Data.@this>> persistentlyFailing = () =>
+        {
+            callCount++;
+            return Task.FromResult(global::App.Data.@this.FromError(
+                new global::App.Errors.ServiceError("failure", "TransientError", 503)));
+        };
 
-        var result = await action.RunAsync(Ctx);
+        var modifiers = new ActionModifiers
+        {
+            ErrorHandler(("retryCount", 1), ("order", "GoalFirst"))
+        };
+
+        var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(callCount).IsEqualTo(2); // 1 initial + 1 retry
     }
 
     [Test]
     public async Task Handle_RetryFirst_PersistentFailure_AllRetriesFail()
     {
-        // error.throw is deterministic — always fails. This verifies that with
-        // RetryCount > 0 and persistent failure, the final result is still failure.
-        var action = Throw("always fails",
-            modifiers: new ActionModifiers { ErrorHandler(("retryCount", 3)) });
+        // RetryCount=3, persistent failure → 1 initial + 3 retries = 4 calls total.
+        int callCount = 0;
+        Func<Task<global::App.Data.@this>> persistentlyFailing = () =>
+        {
+            callCount++;
+            return Task.FromResult(global::App.Data.@this.FromError(
+                new global::App.Errors.ServiceError("always fails", "TransientError", 503)));
+        };
 
-        var result = await action.RunAsync(Ctx);
+        var modifiers = new ActionModifiers { ErrorHandler(("retryCount", 3)) };
+
+        var result = await modifiers.RunAsync(persistentlyFailing, Ctx);
 
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(callCount).IsEqualTo(4); // 1 initial + 3 retries
     }
 
     [Test]
@@ -267,11 +304,10 @@ public class ErrorHandleTests
     {
         RegisterGoal("SuccessGoal", "variable", "set", ("name", "%marker%"), ("value", "handled"));
 
-        var goalCall = new GoalCall { Name = "SuccessGoal" };
         var action = Throw("boom",
             modifiers: new ActionModifiers
             {
-                ErrorHandler(("goal", goalCall), ("order", "GoalFirst"))
+                ErrorHandler(("actions", CallGoal("SuccessGoal")), ("order", "GoalFirst"))
             });
 
         var result = await action.RunAsync(Ctx);
@@ -284,11 +320,10 @@ public class ErrorHandleTests
     {
         RegisterGoal("FailGoal", "error", "throw", ("message", "goal failed"));
 
-        var goalCall = new GoalCall { Name = "FailGoal" };
         var action = Throw("original error",
             modifiers: new ActionModifiers
             {
-                ErrorHandler(("goal", goalCall), ("order", "GoalFirst"))
+                ErrorHandler(("actions", CallGoal("FailGoal")), ("order", "GoalFirst"))
             });
 
         var result = await action.RunAsync(Ctx);
@@ -303,11 +338,10 @@ public class ErrorHandleTests
     {
         RegisterGoal("SuccessGoal2", "variable", "set", ("name", "%marker2%"), ("value", "ok"));
 
-        var goalCall = new GoalCall { Name = "SuccessGoal2" };
         var action = Throw("persistent",
             modifiers: new ActionModifiers
             {
-                ErrorHandler(("goal", goalCall), ("order", "RetryFirst"))
+                ErrorHandler(("actions", CallGoal("SuccessGoal2")), ("order", "RetryFirst"))
             });
 
         var result = await action.RunAsync(Ctx);
@@ -320,11 +354,10 @@ public class ErrorHandleTests
     {
         RegisterGoal("FailGoal2", "error", "throw", ("message", "goal also failed"));
 
-        var goalCall = new GoalCall { Name = "FailGoal2" };
         var action = Throw("persistent",
             modifiers: new ActionModifiers
             {
-                ErrorHandler(("goal", goalCall), ("order", "RetryFirst"))
+                ErrorHandler(("actions", CallGoal("FailGoal2")), ("order", "RetryFirst"))
             });
 
         var result = await action.RunAsync(Ctx);
@@ -332,46 +365,5 @@ public class ErrorHandleTests
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.ErrorChain.Count).IsGreaterThan(0);
         await Assert.That(result.Error.ErrorChain[0].Message).IsEqualTo("goal also failed");
-    }
-
-    [Test]
-    public async Task Handle_CallErrorGoal_InjectsErrorParameter()
-    {
-        RegisterGoal("InspectGoal", "variable", "set", ("name", "%marker3%"), ("value", "inspected"));
-
-        var goalCall = new GoalCall { Name = "InspectGoal" };
-        var action = Throw("injected error",
-            modifiers: new ActionModifiers
-            {
-                ErrorHandler(("goal", goalCall), ("order", "GoalFirst"))
-            });
-
-        var result = await action.RunAsync(Ctx);
-
-        await Assert.That(result.Success).IsTrue();
-        // CallErrorGoal injects !error into the goalCall parameters, which RunGoalAsync puts into Variables
-        var errorParam = Ctx.Variables.GetValue("!error");
-        await Assert.That(errorParam).IsNotNull();
-    }
-
-    [Test]
-    public async Task Handle_CallErrorGoal_DoesNotMutateOriginalParameters()
-    {
-        RegisterGoal("ParamGoal", "variable", "set", ("name", "%marker4%"), ("value", "param-test"));
-
-        var originalParams = new List<global::App.Data.@this> { new("extra", "val") };
-        var goalCall = new GoalCall { Name = "ParamGoal", Parameters = originalParams };
-        var action = Throw("mutation test",
-            modifiers: new ActionModifiers
-            {
-                ErrorHandler(("goal", goalCall), ("order", "GoalFirst"))
-            });
-
-        await action.RunAsync(Ctx);
-
-        // The fix creates a new list via LINQ instead of mutating the original.
-        // However, goalCall.Parameters is reassigned — so we check the original list reference is intact.
-        await Assert.That(originalParams.Count).IsEqualTo(1);
-        await Assert.That(originalParams[0].Name).IsEqualTo("extra");
     }
 }

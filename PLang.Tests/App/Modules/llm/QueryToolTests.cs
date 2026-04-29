@@ -71,7 +71,7 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "GetWeather", Description = "Gets weather", Parameters = new List<Data> { new Data("city", null, global::App.Data.Type.String) } }
+                new GoalCall { Name = "GetWeather", Parameters = new List<Data> { new Data("city", null, global::App.Data.Type.String) } }
             }
         };
         var result = await action.Run();
@@ -110,8 +110,8 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "ToolA", Description = "Tool A", Parallel = false },
-                new GoalCall { Name = "ToolB", Description = "Tool B", Parallel = false }
+                new GoalCall { Name = "ToolA", Parallel = false },
+                new GoalCall { Name = "ToolB", Parallel = false }
             }
         };
         var result = await action.Run();
@@ -147,8 +147,8 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "ToolA", Description = "Tool A", Parallel = true },
-                new GoalCall { Name = "ToolB", Description = "Tool B", Parallel = true }
+                new GoalCall { Name = "ToolA", Parallel = true },
+                new GoalCall { Name = "ToolB", Parallel = true }
             }
         };
         var result = await action.Run();
@@ -184,8 +184,8 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "ToolA", Description = "Tool A", Parallel = true },
-                new GoalCall { Name = "ToolB", Description = "Tool B", Parallel = false }
+                new GoalCall { Name = "ToolA", Parallel = true },
+                new GoalCall { Name = "ToolB", Parallel = false }
             }
         };
         var result = await action.Run();
@@ -222,7 +222,7 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "FailTool", Description = "A tool that will fail" }
+                new GoalCall { Name = "FailTool" }
             }
         };
         var result = await action.Run();
@@ -258,7 +258,7 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "KnownTool", Description = "a tool" }
+                new GoalCall { Name = "KnownTool" }
             }
         };
         var result = await action.Run();
@@ -288,7 +288,7 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "InfiniteTool", Description = "loops" }
+                new GoalCall { Name = "InfiniteTool" }
             },
             MaxToolCalls = 3
         };
@@ -331,7 +331,6 @@ public class QueryToolTests
                 new GoalCall
                 {
                     Name = "TestTool",
-                    Description = "test",
                     Parameters = new List<Data>
                     {
                         new Data("city", null, global::App.Data.Type.String),     // required (no default)
@@ -366,7 +365,6 @@ public class QueryToolTests
                 new GoalCall
                 {
                     Name = "TestTool",
-                    Description = "test",
                     Parameters = new List<Data>
                     {
                         new Data("query", null, global::App.Data.Type.String)
@@ -399,7 +397,6 @@ public class QueryToolTests
                 new GoalCall
                 {
                     Name = "NoParamTool",
-                    Description = "no params",
                     Parameters = new List<Data>()
                 }
             }
@@ -444,7 +441,6 @@ public class QueryToolTests
                 new GoalCall
                 {
                     Name = "GetWeather",
-                    Description = "Gets weather for a city",
                     Parameters = new List<Data>
                     {
                         new Data("city", null, global::App.Data.Type.String),       // required
@@ -486,7 +482,6 @@ public class QueryToolTests
                 new GoalCall
                 {
                     Name = "TypedTool",
-                    Description = "tool with mixed types",
                     Parameters = new List<Data>
                     {
                         new Data("name", null, global::App.Data.Type.String),
@@ -540,7 +535,7 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "MixedTool", Description = "tool with mixed arg types" }
+                new GoalCall { Name = "MixedTool" }
             }
         };
         var result = await action.Run();
@@ -583,8 +578,8 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "ToolA", Description = "A", Parallel = true },
-                new GoalCall { Name = "ToolB", Description = "B", Parallel = true }
+                new GoalCall { Name = "ToolA", Parallel = true },
+                new GoalCall { Name = "ToolB", Parallel = true }
             }
         };
         var result = await action.Run();

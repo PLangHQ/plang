@@ -55,7 +55,7 @@ public class VariablesTests
         var stack = new Variables();
         var ov = new Data("test", "value");
 
-        stack.Put(ov);
+        stack.Set(ov);
 
         var retrieved = stack.Get("test");
         await Assert.That(retrieved).IsEqualTo(ov);
@@ -117,6 +117,24 @@ public class VariablesTests
         stack.Set("%name%", "John");
 
         await Assert.That(stack.Contains("name")).IsTrue();
+    }
+
+    [Test]
+    public async Task Set_DataWithDifferentName_AliasesByKey_NoClone_NoRename()
+    {
+        // F3-3: when the value is a Data whose Name differs from the storage key,
+        // Variables.Set aliases the SAME reference under the key — no clone, no
+        // rename. Dictionary key is authoritative for lookup; Data.Name stays
+        // advisory (its "original name at creation"). Reverting this branch to
+        // the old ShallowClone + rename-to-key behavior would fail both asserts.
+        var stack = new Variables();
+        var original = new Data("originalName", 42);
+
+        stack.Set("alias", original);
+
+        var retrieved = stack.Get("alias");
+        await Assert.That(object.ReferenceEquals(retrieved, original)).IsTrue();
+        await Assert.That(retrieved.Name).IsEqualTo("originalName");
     }
 
     [Test]
@@ -601,7 +619,7 @@ public class VariablesTests
         stack.Set("age", 30);
 
         var all = stack.GetAll().ToList();
-        var names = all.Select(ov => ov.Name).ToList();
+        var names = all.Select(kvp => kvp.Key).ToList();
 
         await Assert.That(names).Contains("name");
         await Assert.That(names).Contains("age");
@@ -617,8 +635,8 @@ public class VariablesTests
 
         var all = stack.GetAll().ToList();
 
-        await Assert.That(all[0].Name).IsEqualTo("second");
-        await Assert.That(all[1].Name).IsEqualTo("first");
+        await Assert.That(all[0].Key).IsEqualTo("second");
+        await Assert.That(all[1].Key).IsEqualTo("first");
     }
 
     [Test]
@@ -755,7 +773,7 @@ public class VariablesTests
         var context = new global::App.Actor.Context.@this(engine);
 
         var data = new Data("test", "hello");
-        context.Variables.Put(data);
+        context.Variables.Set(data);
 
         await Assert.That(data.Context).IsEqualTo(context);
     }

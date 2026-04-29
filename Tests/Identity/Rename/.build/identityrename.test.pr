@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives two identities (ignoring errors), creates the old identity as default, renames it to the new name, asserts the identity name matches, then archives the new identity.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -87,6 +92,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -113,9 +123,38 @@
           ],
           "defaults": null,
           "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%MyIdentity%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Create identity \u0027TestRenameOld\u0027 and set it as default. Then store the created identity object into %MyIdentity% via variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -145,6 +184,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Rename identity from \u0027TestRenameOld\u0027 to \u0027TestRenameNew\u0027.",
+      "level": "high",
+      "confidence": 97,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -174,6 +218,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %MyIdentity.Name% equals \u0027TestRenameNew\u0027.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -203,15 +252,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive the renamed identity \u0027TestRenameNew\u0027 with force.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/IdentityRename.test.goal",
-  "prPath": "/.build/identityrename.test.pr",
+  "path": "/Identity/Rename/IdentityRename.test.goal",
+  "prPath": "/Identity/Rename/.build/identityrename.test.pr",
   "hash": "66c4243ac1f1cba0369638c94312b07722ff908760c88e9afe0c19363a53e9c1",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

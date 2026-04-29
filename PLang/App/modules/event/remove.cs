@@ -2,7 +2,7 @@ using App.Variables;
 
 namespace App.modules.@event;
 
-[Example("remove event %eventId%", "EventId=%eventId%")]
+[System.ComponentModel.Description("Unregister a previously registered lifecycle event binding by its ID")]
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {

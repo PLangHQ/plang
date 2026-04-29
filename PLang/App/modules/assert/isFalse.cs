@@ -3,8 +3,7 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %isDeleted% is false", "Value=%isDeleted%")]
-[Example("assert %error% is false", "Value=%error%")]
+[System.ComponentModel.Description("Assert that Value is falsy (false, 0, null, or empty); fails with an error if truthy")]
 [Action("isFalse")]
 public partial class IsFalse : IContext
 {

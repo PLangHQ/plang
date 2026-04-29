@@ -1,0 +1,237 @@
+{
+  "name": "TestConditionIfRecordsBranchIndexElseBranch",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 0",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Verifies condition.if publishes branchIndex=2 when else branch fires.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %x% \u003E 10 set %a% = 1, else if %x% \u003E 5 set %b% = 2, else set %c% = 3",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%a%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "elseif",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": 5,
+              "type": "int"
+            },
+            {
+              "name": "Negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%b%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 2,
+              "type": "int"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "else",
+          "parameters": [],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%c%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": 3,
+              "type": "int"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Chained conditional: compile the first condition as condition.if, then include the elseif and else bodies as additional actions in the same step. The step text sets %a%, %b%, or %c% depending on which branch runs.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %__data__.branchIndex% equals 2",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 2,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%__data__.branchIndex%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
+  "prPath": "/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
+  "hash": "8c811da5c5241ac00a53ca66d71b3b03a2f48c2fd075acb31312f47cf0c59d49",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

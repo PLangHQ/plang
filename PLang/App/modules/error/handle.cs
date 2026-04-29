@@ -1,22 +1,73 @@
 using App.Errors;
 using App.Variables;
+using static App.Catalog.ExampleHelpers;
+using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace App.modules.error;
 
 /// <summary>
-/// Modifier: wraps an action with error matching, retry, and error goal handling.
+/// Modifier: wraps an action with error matching, retry, and an on-error action chain.
 /// On success, passes through untouched. On failure, applies filters (StatusCode, Key,
-/// Message); if matched, either ignores, retries, or calls an error goal — ordered by
-/// Order (RetryFirst default, GoalFirst calls the error goal before retry).
+/// Message); if matched, either ignores, retries, or runs Actions — ordered by
+/// Order (RetryFirst default, GoalFirst runs Actions before retry).
 /// </summary>
+[ModuleDescription("Error handling: throw errors from a step, or wrap the preceding action with retry/handle-actions/ignore semantics")]
+[System.ComponentModel.Description("Intercept errors from the preceding action; optionally retry, run a recovery action chain, or suppress the error")]
 [Action("handle", Cacheable = false)]
 [Modifier(Order = 3)]
 public partial class Handle : IContext, IModifier
 {
+    public static App.Catalog.ExampleSpec[] ExamplesForLlm() => new[]
+    {
+        // Numeric error codes go to StatusCode (an int), regardless of whether
+        // the source uses "on error 404" or "on error key 404" — `404` is
+        // always a status code, not a string identifier.
+        Example(
+            "read %path%, on error 404, write out \"missing\", read fallback.txt, write to %content%",
+            Action("file.read", new() { ["Path"] = "%path%" },
+                modifiers: new[]
+                {
+                    Action("error.handle", new()
+                    {
+                        ["StatusCode"] = 404,
+                        ["Actions"] = new[]
+                        {
+                            Action("output.write", new() { ["Data"] = "missing" }),
+                            Action("file.read",    new() { ["Path"] = "fallback.txt" }),
+                            Action("variable.set", new() { ["Name"]  = "%content%",
+                                                            ["Value"] = "%__data__%" }),
+                        }
+                    })
+                })
+        ),
+        // Named error keys (non-numeric identifiers) go to Key.
+        Example(
+            "save %doc%, on error key Conflict, write out \"already exists\"",
+            Action("file.write", new() { ["Path"] = "%doc%" },
+                modifiers: new[]
+                {
+                    Action("error.handle", new()
+                    {
+                        ["Key"] = "Conflict",
+                        ["Actions"] = new[]
+                        {
+                            Action("output.write", new() { ["Data"] = "already exists" }),
+                        }
+                    })
+                })
+        )
+    };
+
     public partial global::App.Data.@this<int>? StatusCode { get; init; }
     public partial global::App.Data.@this<string>? Key { get; init; }
     public partial global::App.Data.@this<string>? Message { get; init; }
-    public partial global::App.Data.@this<GoalCall>? Goal { get; init; }
+    /// <summary>
+    /// Action chain to run when the error matches. Preferred over Goal — lets a
+    /// developer express "on error, log + fall back + notify" inline without
+    /// wrapping it in a goal. Actions execute in order; %__data__% flows between
+    /// them just like the main step chain.
+    /// </summary>
+    public partial global::App.Data.@this<List<ActionEntity>>? Actions { get; init; }
     public partial global::App.Data.@this<int>? RetryCount { get; init; }
     public partial global::App.Data.@this<int>? RetryOverMs { get; init; }
     public partial global::App.Data.@this<ErrorOrder>? Order { get; init; }
@@ -34,16 +85,16 @@ public partial class Handle : IContext, IModifier
             if (!MatchesError(result.Error)) return result;
 
             var order = Order?.Value ?? ErrorOrder.RetryFirst;
-            var goal = Goal?.Value;
+            var actions = Actions?.Value;
+            bool hasRecovery = actions != null && actions.Count > 0;
 
             if (order == ErrorOrder.GoalFirst)
             {
-                if (goal != null)
+                if (hasRecovery)
                 {
-                    var goalResult = await CallErrorGoal(goal, result, context);
-                    if (goalResult.Success) return goalResult;
-                    // Goal itself failed — chain its error onto the original
-                    result.Error!.ErrorChain.Add(goalResult.Error!);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
+                    if (recoveryResult.Success) return recoveryResult;
+                    result.Error!.ErrorChain.Add(recoveryResult.Error!);
                 }
                 var retryResult = await Retry(next, context);
                 if (retryResult?.Success == true) return retryResult;
@@ -52,20 +103,64 @@ public partial class Handle : IContext, IModifier
             {
                 var retryResult = await Retry(next, context);
                 if (retryResult?.Success == true) return retryResult;
-                if (goal != null)
+                if (hasRecovery)
                 {
-                    var goalResult = await CallErrorGoal(goal, result, context);
-                    if (goalResult.Success) return global::App.Data.@this.Ok();
-                    // Goal itself failed — chain its error onto the original
-                    result.Error!.ErrorChain.Add(goalResult.Error!);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
+                    if (recoveryResult.Success) return recoveryResult;
+                    result.Error!.ErrorChain.Add(recoveryResult.Error!);
                 }
             }
 
-            // IgnoreError is the final fallback — after retry and goal are exhausted
+            // IgnoreError is the final fallback — after retry and recovery are exhausted
             if (IgnoreError.Value) return global::App.Data.@this.Ok();
 
             return result;
         };
+    }
+
+    /// <summary>
+    /// Runs recovery with <c>%!error%</c> populated to the caught error for the
+    /// duration of the recovery chain, restoring the previous value after.
+    /// Wraps RunRecovery so nested error.handle scopes see their own error
+    /// (the previous outer error is still on the stack via the prevError local).
+    /// </summary>
+    private static async Task<global::App.Data.@this> RunRecoveryWithErrorScope(
+        List<ActionEntity> actions,
+        Actor.Context.@this context,
+        App.Errors.IError caughtError)
+    {
+        var prevError = context.Error;
+        context.Error = caughtError;
+        try
+        {
+            return await RunRecovery(actions, context);
+        }
+        finally
+        {
+            context.Error = prevError;
+        }
+    }
+
+    /// <summary>
+    /// Runs the on-error recovery action chain.
+    /// </summary>
+    private static async Task<global::App.Data.@this> RunRecovery(
+        List<ActionEntity> actions,
+        Actor.Context.@this context)
+    {
+        // Nested actions live as parameter values with no Step reference of their own.
+        // Stamp the enclosing step so navigation — goal.call → GetGoalAsync → sibling
+        // sub-goals — works the same as for actions placed directly in a step.
+        var enclosingStep = context.Step;
+        global::App.Data.@this last = global::App.Data.@this.Ok();
+        foreach (var action in actions)
+        {
+            if (action.Step == null && enclosingStep != null)
+                action.Step = enclosingStep;
+            last = await action.RunAsync(context);
+            if (!last.Success) return last;
+        }
+        return last;
     }
 
     /// <summary>
@@ -103,34 +198,4 @@ public partial class Handle : IContext, IModifier
         return null;
     }
 
-    private async Task<global::App.Data.@this> CallErrorGoal(GoalCall goalCall, global::App.Data.@this failedResult,
-        Actor.Context.@this context)
-    {
-        var parameters = (goalCall.Parameters ?? new())
-            .Where(p => p.Name != "!error")
-            .Append(new global::App.Data.@this("!error", failedResult.Error))
-            .ToList();
-
-        // Clone — never mutate the shared deserialized GoalCall singleton
-        var call = new GoalCall
-        {
-            Name = goalCall.Name,
-            Description = goalCall.Description,
-            Parallel = goalCall.Parallel,
-            Parameters = parameters,
-            PrPath = goalCall.PrPath,
-            Action = context.Step?.Actions.FirstOrDefault() ?? goalCall.Action
-        };
-
-        // Record error on the callstack for history
-        var callStack = context.CallStack;
-        if (callStack != null)
-        {
-            var action = context.Step?.Actions.FirstOrDefault();
-            if (action != null && failedResult.Error != null)
-                callStack.PushError(action, failedResult.Error, context.Variables);
-        }
-
-        return await context.App!.RunGoalAsync(call, context);
-    }
 }

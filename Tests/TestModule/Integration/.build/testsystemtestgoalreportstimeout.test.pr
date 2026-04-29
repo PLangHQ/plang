@@ -1,6 +1,6 @@
 {
   "name": "TestSystemTestGoalReportsTimeout",
-  "description": "Reads /system/test.goal into %goalText% and asserts that it contains the substring \u0027test.run\u0027.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -43,6 +43,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -72,15 +77,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Integration/TestSystemTestGoalReportsTimeout.test.goal",
-  "prPath": "/Integration/.build/testsystemtestgoalreportstimeout.test.pr",
+  "path": "/TestModule/Integration/TestSystemTestGoalReportsTimeout.test.goal",
+  "prPath": "/TestModule/Integration/.build/testsystemtestgoalreportstimeout.test.pr",
   "hash": "d1905c13646e503d4ccf4c74cda722305a98010c52ef6b86eb76a3f3324ef0de",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

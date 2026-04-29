@@ -1,0 +1,193 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "[llm] system: \u0027You analyze sentiment. Respond in JSON only.\u0027\nuser: \u0027Analyze: I love sunny days\u0027\nscheme: {sentiment:string, score:number}\nwrite to %result%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Query with JSON schema \u2014 verify response is parsed and dot-navigable",
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You analyze sentiment. Respond in JSON only.",
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
+                },
+                {
+                  "role": "user",
+                  "content": "Analyze: I love sunny days",
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "Schema",
+              "value": {
+                "sentiment": "string",
+                "score": "number"
+              },
+              "type": "list\u003Ckeyvaluepair\u003E"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "continuepreviousconversation",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use llm.query with Messages built from the provided system/user prompts and a JSON Schema. Then store the parsed response into %result% via variable.set.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %result% is not null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %result% to be not null",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: ensure %result% is not null. This is an assert.* action.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %result.sentiment% is not null",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%result.sentiment%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %result.sentiment% to be not null",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: ensure %result.sentiment% is not null. This is an assert.* action.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Modules/Llm/LlmSchema.test.goal",
+  "prPath": "/Modules/Llm/.build/llmschema.test.pr",
+  "hash": "57b6e9dc25ee4a37ebd54ad85cf6fb41fd0ae25e07784ca813a0088d059a06c4",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

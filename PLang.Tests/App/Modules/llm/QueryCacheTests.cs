@@ -115,7 +115,7 @@ public class QueryCacheTests
             Cache = true,
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "TestTool", Description = "a test tool" }
+                new GoalCall { Name = "TestTool" }
             }
         };
 

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "description": "Archives an identity, recreates it as default, exports it to %exported%, asserts the export is not null, then archives it again. The first archive step ignores errors.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -44,6 +44,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -73,6 +78,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Create identity named \u0027TestExportId\u0027 and set it as the default identity.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -110,11 +120,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Export the identity \u0027TestExportId\u0027 and assign the exported key material to %exported%.",
+      "level": "high",
+      "confidence": 97,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -139,6 +160,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Assert that %exported% is not null.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -168,15 +194,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Archive identity \u0027TestExportId\u0027 with force=true.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/IdentityExport.test.goal",
-  "prPath": "/.build/identityexport.test.pr",
+  "path": "/Identity/Export/IdentityExport.test.goal",
+  "prPath": "/Identity/Export/.build/identityexport.test.pr",
   "hash": "3771ce1ad11b8481a981e672b30e3fd6f5a52a2f007f4a1845d640674c9a2636",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

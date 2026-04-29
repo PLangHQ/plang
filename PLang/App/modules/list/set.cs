@@ -2,6 +2,7 @@ using App.Variables;
 
 namespace App.modules.list;
 
+[System.ComponentModel.Description("Replace the item at a zero-based Index in the list with Value")]
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {

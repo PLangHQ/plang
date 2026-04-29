@@ -1,0 +1,1317 @@
+{
+  "PLang/App/Actor/Context/Trace/this.cs": {
+    "covered": 6,
+    "pct": 85.7,
+    "total": 7
+  },
+  "PLang/App/Actor/Context/this.cs": {
+    "covered": 181,
+    "pct": 85.8,
+    "total": 211
+  },
+  "PLang/App/Actor/this.cs": {
+    "covered": 50,
+    "pct": 89.3,
+    "total": 56
+  },
+  "PLang/App/Attributes/Attributes.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 17
+  },
+  "PLang/App/Attributes/ExampleAttribute.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/Attributes/IsBuiltParameter.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 2
+  },
+  "PLang/App/Attributes/MethodSettingsAttribute.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 13
+  },
+  "PLang/App/Attributes/PlangTypeAttribute.cs": {
+    "covered": 5,
+    "pct": 83.3,
+    "total": 6
+  },
+  "PLang/App/Attributes/RequiresCapabilityAttribute.cs": {
+    "covered": 5,
+    "pct": 100.0,
+    "total": 5
+  },
+  "PLang/App/Build/this.cs": {
+    "covered": 14,
+    "pct": 100.0,
+    "total": 14
+  },
+  "PLang/App/Cache/MemoryStepCache.cs": {
+    "covered": 17,
+    "pct": 77.3,
+    "total": 22
+  },
+  "PLang/App/CallStack/CallFrame.cs": {
+    "covered": 71,
+    "pct": 88.8,
+    "total": 80
+  },
+  "PLang/App/CallStack/SerializableCallStack.cs": {
+    "covered": 13,
+    "pct": 100.0,
+    "total": 13
+  },
+  "PLang/App/CallStack/this.cs": {
+    "covered": 64,
+    "pct": 100.0,
+    "total": 64
+  },
+  "PLang/App/Catalog/ActionSpec.cs": {
+    "covered": 5,
+    "pct": 100.0,
+    "total": 5
+  },
+  "PLang/App/Catalog/ExampleHelpers.cs": {
+    "covered": 10,
+    "pct": 76.9,
+    "total": 13
+  },
+  "PLang/App/Catalog/ExampleRenderer.cs": {
+    "covered": 98,
+    "pct": 85.2,
+    "total": 115
+  },
+  "PLang/App/Catalog/ExampleSpec.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/Catalog/TypeEntry.cs": {
+    "covered": 12,
+    "pct": 100.0,
+    "total": 12
+  },
+  "PLang/App/Catalog/this.cs": {
+    "covered": 63,
+    "pct": 95.5,
+    "total": 66
+  },
+  "PLang/App/Channels/Channel/this.cs": {
+    "covered": 56,
+    "pct": 94.9,
+    "total": 59
+  },
+  "PLang/App/Channels/Serializers/SensitivePropertyFilter.cs": {
+    "covered": 27,
+    "pct": 100.0,
+    "total": 27
+  },
+  "PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs": {
+    "covered": 73,
+    "pct": 97.3,
+    "total": 75
+  },
+  "PLang/App/Channels/Serializers/Serializer/PlangSerializer.cs": {
+    "covered": 36,
+    "pct": 65.5,
+    "total": 55
+  },
+  "PLang/App/Channels/Serializers/Serializer/TextStreamSerializer.cs": {
+    "covered": 65,
+    "pct": 100.0,
+    "total": 65
+  },
+  "PLang/App/Channels/Serializers/TransportPropertyFilter.cs": {
+    "covered": 23,
+    "pct": 100.0,
+    "total": 23
+  },
+  "PLang/App/Channels/Serializers/TypeJsonConverter.cs": {
+    "covered": 9,
+    "pct": 81.8,
+    "total": 11
+  },
+  "PLang/App/Channels/Serializers/ViewPropertyFilter.cs": {
+    "covered": 49,
+    "pct": 96.1,
+    "total": 51
+  },
+  "PLang/App/Channels/Serializers/this.cs": {
+    "covered": 71,
+    "pct": 93.4,
+    "total": 76
+  },
+  "PLang/App/Channels/this.cs": {
+    "covered": 105,
+    "pct": 85.4,
+    "total": 123
+  },
+  "PLang/App/Config/ModuleView.cs": {
+    "covered": 10,
+    "pct": 100.0,
+    "total": 10
+  },
+  "PLang/App/Config/Scope.cs": {
+    "covered": 20,
+    "pct": 100.0,
+    "total": 20
+  },
+  "PLang/App/Config/this.cs": {
+    "covered": 56,
+    "pct": 100.0,
+    "total": 56
+  },
+  "PLang/App/Data/Navigators/DictionaryNavigator.cs": {
+    "covered": 13,
+    "pct": 52.0,
+    "total": 25
+  },
+  "PLang/App/Data/Navigators/JsonStringNavigator.cs": {
+    "covered": 7,
+    "pct": 12.7,
+    "total": 55
+  },
+  "PLang/App/Data/Navigators/ListNavigator.cs": {
+    "covered": 39,
+    "pct": 90.7,
+    "total": 43
+  },
+  "PLang/App/Data/Navigators/ObjectNavigator.cs": {
+    "covered": 15,
+    "pct": 75.0,
+    "total": 20
+  },
+  "PLang/App/Data/Navigators/ValueNavigators.cs": {
+    "covered": 14,
+    "pct": 93.3,
+    "total": 15
+  },
+  "PLang/App/Data/Navigators/this.cs": {
+    "covered": 27,
+    "pct": 87.1,
+    "total": 31
+  },
+  "PLang/App/Data/PlangTypeConverter.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 12
+  },
+  "PLang/App/Data/Properties.cs": {
+    "covered": 72,
+    "pct": 97.3,
+    "total": 74
+  },
+  "PLang/App/Data/Providers/DefaultGrepProvider.cs": {
+    "covered": 2,
+    "pct": 3.2,
+    "total": 63
+  },
+  "PLang/App/Data/TString.cs": {
+    "covered": 52,
+    "pct": 98.1,
+    "total": 53
+  },
+  "PLang/App/Data/this.Compare.cs": {
+    "covered": 118,
+    "pct": 80.8,
+    "total": 146
+  },
+  "PLang/App/Data/this.Envelope.cs": {
+    "covered": 109,
+    "pct": 95.6,
+    "total": 114
+  },
+  "PLang/App/Data/this.Navigation.cs": {
+    "covered": 80,
+    "pct": 44.0,
+    "total": 182
+  },
+  "PLang/App/Data/this.Result.cs": {
+    "covered": 24,
+    "pct": 92.3,
+    "total": 26
+  },
+  "PLang/App/Data/this.cs": {
+    "covered": 275,
+    "pct": 82.1,
+    "total": 335
+  },
+  "PLang/App/Debug/this.cs": {
+    "covered": 188,
+    "pct": 40.8,
+    "total": 461
+  },
+  "PLang/App/Errors/ActionError.cs": {
+    "covered": 19,
+    "pct": 70.4,
+    "total": 27
+  },
+  "PLang/App/Errors/AskError.cs": {
+    "covered": 8,
+    "pct": 88.9,
+    "total": 9
+  },
+  "PLang/App/Errors/AssertionError.cs": {
+    "covered": 19,
+    "pct": 79.2,
+    "total": 24
+  },
+  "PLang/App/Errors/Error.cs": {
+    "covered": 116,
+    "pct": 58.0,
+    "total": 200
+  },
+  "PLang/App/Errors/Exceptions.cs": {
+    "covered": 50,
+    "pct": 90.9,
+    "total": 55
+  },
+  "PLang/App/Errors/GoalError.cs": {
+    "covered": 4,
+    "pct": 30.8,
+    "total": 13
+  },
+  "PLang/App/Errors/ParamSnapshot.cs": {
+    "covered": 6,
+    "pct": 100.0,
+    "total": 6
+  },
+  "PLang/App/Errors/ProgramError.cs": {
+    "covered": 1,
+    "pct": 6.7,
+    "total": 15
+  },
+  "PLang/App/Errors/ServiceError.cs": {
+    "covered": 9,
+    "pct": 52.9,
+    "total": 17
+  },
+  "PLang/App/Errors/SettingsError.cs": {
+    "covered": 27,
+    "pct": 77.1,
+    "total": 35
+  },
+  "PLang/App/Errors/StepError.cs": {
+    "covered": 9,
+    "pct": 90.0,
+    "total": 10
+  },
+  "PLang/App/Errors/ValidationError.cs": {
+    "covered": 3,
+    "pct": 37.5,
+    "total": 8
+  },
+  "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs": {
+    "covered": 82,
+    "pct": 90.1,
+    "total": 91
+  },
+  "PLang/App/Events/Lifecycle/Bindings/this.cs": {
+    "covered": 15,
+    "pct": 78.9,
+    "total": 19
+  },
+  "PLang/App/Events/Lifecycle/this.cs": {
+    "covered": 2,
+    "pct": 100.0,
+    "total": 2
+  },
+  "PLang/App/Events/this.cs": {
+    "covered": 56,
+    "pct": 83.6,
+    "total": 67
+  },
+  "PLang/App/FileSystem/Default/PLangDirectoryInfoFactory.cs": {
+    "covered": 4,
+    "pct": 21.1,
+    "total": 19
+  },
+  "PLang/App/FileSystem/Default/PLangDirectoryWrapper.cs": {
+    "covered": 43,
+    "pct": 25.3,
+    "total": 170
+  },
+  "PLang/App/FileSystem/Default/PLangDriveInfoFactory.cs": {
+    "covered": 4,
+    "pct": 13.3,
+    "total": 30
+  },
+  "PLang/App/FileSystem/Default/PLangFile.cs": {
+    "covered": 54,
+    "pct": 15.3,
+    "total": 354
+  },
+  "PLang/App/FileSystem/Default/PLangFileInfo.cs": {
+    "covered": 9,
+    "pct": 47.4,
+    "total": 19
+  },
+  "PLang/App/FileSystem/Default/PLangFileStreamFactory.cs": {
+    "covered": 4,
+    "pct": 5.9,
+    "total": 68
+  },
+  "PLang/App/FileSystem/Default/PLangFileStreamWrapper.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 18
+  },
+  "PLang/App/FileSystem/Default/PLangFileSystem.cs": {
+    "covered": 129,
+    "pct": 65.5,
+    "total": 197
+  },
+  "PLang/App/FileSystem/Default/PLangFileSystemWatcherFactory.cs": {
+    "covered": 4,
+    "pct": 23.5,
+    "total": 17
+  },
+  "PLang/App/FileSystem/Default/PLangPath.cs": {
+    "covered": 4,
+    "pct": 50.0,
+    "total": 8
+  },
+  "PLang/App/FileSystem/Path.cs": {
+    "covered": 68,
+    "pct": 84.0,
+    "total": 81
+  },
+  "PLang/App/Goals/Goal/GoalCall.cs": {
+    "covered": 57,
+    "pct": 81.4,
+    "total": 70
+  },
+  "PLang/App/Goals/Goal/Methods.cs": {
+    "covered": 39,
+    "pct": 44.3,
+    "total": 88
+  },
+  "PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs": {
+    "covered": 27,
+    "pct": 79.4,
+    "total": 34
+  },
+  "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs": {
+    "covered": 50,
+    "pct": 80.6,
+    "total": 62
+  },
+  "PLang/App/Goals/Goal/Steps/Step/Actions/this.cs": {
+    "covered": 97,
+    "pct": 89.8,
+    "total": 108
+  },
+  "PLang/App/Goals/Goal/Steps/Step/CacheSettings.cs": {
+    "covered": 2,
+    "pct": 50.0,
+    "total": 4
+  },
+  "PLang/App/Goals/Goal/Steps/Step/this.cs": {
+    "covered": 109,
+    "pct": 88.6,
+    "total": 123
+  },
+  "PLang/App/Goals/Goal/Steps/this.cs": {
+    "covered": 81,
+    "pct": 86.2,
+    "total": 94
+  },
+  "PLang/App/Goals/Goal/this.cs": {
+    "covered": 257,
+    "pct": 86.5,
+    "total": 297
+  },
+  "PLang/App/Goals/Setup/this.cs": {
+    "covered": 68,
+    "pct": 94.4,
+    "total": 72
+  },
+  "PLang/App/Goals/this.cs": {
+    "covered": 148,
+    "pct": 67.9,
+    "total": 218
+  },
+  "PLang/App/Info.cs": {
+    "covered": 2,
+    "pct": 100.0,
+    "total": 2
+  },
+  "PLang/App/Modules/this.cs": {
+    "covered": 243,
+    "pct": 96.4,
+    "total": 252
+  },
+  "PLang/App/Providers/this.cs": {
+    "covered": 103,
+    "pct": 91.2,
+    "total": 113
+  },
+  "PLang/App/Settings/ISettingsStore.cs": {
+    "covered": 6,
+    "pct": 85.7,
+    "total": 7
+  },
+  "PLang/App/Settings/SettingsVariable.cs": {
+    "covered": 35,
+    "pct": 100.0,
+    "total": 35
+  },
+  "PLang/App/Settings/SqliteSettingsStore.cs": {
+    "covered": 164,
+    "pct": 74.2,
+    "total": 221
+  },
+  "PLang/App/Test/Coverage.cs": {
+    "covered": 58,
+    "pct": 100.0,
+    "total": 58
+  },
+  "PLang/App/Test/Results.cs": {
+    "covered": 12,
+    "pct": 92.3,
+    "total": 13
+  },
+  "PLang/App/Test/TestFile.cs": {
+    "covered": 10,
+    "pct": 100.0,
+    "total": 10
+  },
+  "PLang/App/Test/TestRun.cs": {
+    "covered": 22,
+    "pct": 100.0,
+    "total": 22
+  },
+  "PLang/App/Test/this.cs": {
+    "covered": 63,
+    "pct": 84.0,
+    "total": 75
+  },
+  "PLang/App/Types/this.cs": {
+    "covered": 376,
+    "pct": 99.5,
+    "total": 378
+  },
+  "PLang/App/Utils/CommandLineParser.cs": {
+    "covered": 71,
+    "pct": 81.6,
+    "total": 87
+  },
+  "PLang/App/Utils/Json.cs": {
+    "covered": 61,
+    "pct": 52.6,
+    "total": 116
+  },
+  "PLang/App/Utils/MimeTypes.cs": {
+    "covered": 27,
+    "pct": 58.7,
+    "total": 46
+  },
+  "PLang/App/Utils/PathExtension.cs": {
+    "covered": 11,
+    "pct": 39.3,
+    "total": 28
+  },
+  "PLang/App/Utils/PlangTypeIndex.cs": {
+    "covered": 78,
+    "pct": 79.6,
+    "total": 98
+  },
+  "PLang/App/Utils/RegisterStartupParameters.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 76
+  },
+  "PLang/App/Utils/ReservedKeywords.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 62
+  },
+  "PLang/App/Utils/StringDistance.cs": {
+    "covered": 23,
+    "pct": 100.0,
+    "total": 23
+  },
+  "PLang/App/Utils/TypeConverter.cs": {
+    "covered": 147,
+    "pct": 54.9,
+    "total": 268
+  },
+  "PLang/App/Utils/TypeMapping.cs": {
+    "covered": 335,
+    "pct": 98.8,
+    "total": 339
+  },
+  "PLang/App/Variables/this.cs": {
+    "covered": 388,
+    "pct": 91.9,
+    "total": 422
+  },
+  "PLang/App/modules/Attributes.cs": {
+    "covered": 14,
+    "pct": 82.4,
+    "total": 17
+  },
+  "PLang/App/modules/Events.cs": {
+    "covered": 26,
+    "pct": 100.0,
+    "total": 26
+  },
+  "PLang/App/modules/IEvent.cs": {
+    "covered": 2,
+    "pct": 100.0,
+    "total": 2
+  },
+  "PLang/App/modules/ModifierAttribute.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/app/run.cs": {
+    "covered": 9,
+    "pct": 90.0,
+    "total": 10
+  },
+  "PLang/App/modules/assert/AssertSnapshot.cs": {
+    "covered": 6,
+    "pct": 100.0,
+    "total": 6
+  },
+  "PLang/App/modules/assert/contains.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/equals.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/greaterThan.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/isFalse.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/isNotNull.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/isNull.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/isTrue.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/lessThan.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/notContains.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/notEquals.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/assert/providers/DefaultAssertProvider.cs": {
+    "covered": 93,
+    "pct": 86.9,
+    "total": 107
+  },
+  "PLang/App/modules/builder/BuildResponse.cs": {
+    "covered": 1,
+    "pct": 25.0,
+    "total": 4
+  },
+  "PLang/App/modules/builder/actions.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/app.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/appSave.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/enrichResponse.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/goals.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/goalsSave.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/merge.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/promoteGroups.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs": {
+    "covered": 299,
+    "pct": 60.8,
+    "total": 492
+  },
+  "PLang/App/modules/builder/types.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/validate.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/builder/validateResponse.cs": {
+    "covered": 113,
+    "pct": 98.3,
+    "total": 115
+  },
+  "PLang/App/modules/cache/wrap.cs": {
+    "covered": 30,
+    "pct": 100.0,
+    "total": 30
+  },
+  "PLang/App/modules/condition/Operator.cs": {
+    "covered": 122,
+    "pct": 91.7,
+    "total": 133
+  },
+  "PLang/App/modules/condition/compare.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/condition/else.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/modules/condition/elseif.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 7
+  },
+  "PLang/App/modules/condition/if.cs": {
+    "covered": 69,
+    "pct": 92.0,
+    "total": 75
+  },
+  "PLang/App/modules/condition/providers/DefaultEvaluator.cs": {
+    "covered": 29,
+    "pct": 78.4,
+    "total": 37
+  },
+  "PLang/App/modules/crypto/hash.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/crypto/providers/DefaultProvider.cs": {
+    "covered": 23,
+    "pct": 100.0,
+    "total": 23
+  },
+  "PLang/App/modules/crypto/verify.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/error/handle.cs": {
+    "covered": 124,
+    "pct": 99.2,
+    "total": 125
+  },
+  "PLang/App/modules/error/throw.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/event/on.cs": {
+    "covered": 17,
+    "pct": 100.0,
+    "total": 17
+  },
+  "PLang/App/modules/event/remove.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/event/skipAction.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/file/copy.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/file/delete.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/file/exists.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/file/list.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/file/move.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/file/providers/DefaultFileProvider.cs": {
+    "covered": 163,
+    "pct": 92.6,
+    "total": 176
+  },
+  "PLang/App/modules/file/read.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/file/save.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/goal/call.cs": {
+    "covered": 7,
+    "pct": 100.0,
+    "total": 7
+  },
+  "PLang/App/modules/goal/return.cs": {
+    "covered": 6,
+    "pct": 100.0,
+    "total": 6
+  },
+  "PLang/App/modules/http/Config.cs": {
+    "covered": 10,
+    "pct": 100.0,
+    "total": 10
+  },
+  "PLang/App/modules/http/configure.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/http/download.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/http/providers/DefaultHttpProvider.cs": {
+    "covered": 641,
+    "pct": 84.9,
+    "total": 755
+  },
+  "PLang/App/modules/http/request.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/http/types.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 3
+  },
+  "PLang/App/modules/http/upload.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/identity/archive.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/identity/create.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/identity/export.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/identity/get.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/identity/list.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/identity/providers/DefaultIdentityProvider.cs": {
+    "covered": 216,
+    "pct": 96.0,
+    "total": 225
+  },
+  "PLang/App/modules/identity/rename.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/identity/setDefault.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/identity/types.cs": {
+    "covered": 9,
+    "pct": 100.0,
+    "total": 9
+  },
+  "PLang/App/modules/identity/unarchive.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/list/add.cs": {
+    "covered": 23,
+    "pct": 50.0,
+    "total": 46
+  },
+  "PLang/App/modules/list/any.cs": {
+    "covered": 12,
+    "pct": 100.0,
+    "total": 12
+  },
+  "PLang/App/modules/list/contains.cs": {
+    "covered": 10,
+    "pct": 100.0,
+    "total": 10
+  },
+  "PLang/App/modules/list/count.cs": {
+    "covered": 6,
+    "pct": 66.7,
+    "total": 9
+  },
+  "PLang/App/modules/list/first.cs": {
+    "covered": 5,
+    "pct": 100.0,
+    "total": 5
+  },
+  "PLang/App/modules/list/flatten.cs": {
+    "covered": 15,
+    "pct": 88.2,
+    "total": 17
+  },
+  "PLang/App/modules/list/get.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/list/group.cs": {
+    "covered": 27,
+    "pct": 100.0,
+    "total": 27
+  },
+  "PLang/App/modules/list/indexof.cs": {
+    "covered": 9,
+    "pct": 90.0,
+    "total": 10
+  },
+  "PLang/App/modules/list/join.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/list/last.cs": {
+    "covered": 8,
+    "pct": 80.0,
+    "total": 10
+  },
+  "PLang/App/modules/list/range.cs": {
+    "covered": 10,
+    "pct": 62.5,
+    "total": 16
+  },
+  "PLang/App/modules/list/remove.cs": {
+    "covered": 13,
+    "pct": 86.7,
+    "total": 15
+  },
+  "PLang/App/modules/list/reverse.cs": {
+    "covered": 6,
+    "pct": 75.0,
+    "total": 8
+  },
+  "PLang/App/modules/list/set.cs": {
+    "covered": 11,
+    "pct": 100.0,
+    "total": 11
+  },
+  "PLang/App/modules/list/sort.cs": {
+    "covered": 8,
+    "pct": 66.7,
+    "total": 12
+  },
+  "PLang/App/modules/list/split.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/list/types.cs": {
+    "covered": 2,
+    "pct": 100.0,
+    "total": 2
+  },
+  "PLang/App/modules/list/unique.cs": {
+    "covered": 6,
+    "pct": 75.0,
+    "total": 8
+  },
+  "PLang/App/modules/llm/LlmMessage.cs": {
+    "covered": 5,
+    "pct": 100.0,
+    "total": 5
+  },
+  "PLang/App/modules/llm/ToolCall.cs": {
+    "covered": 3,
+    "pct": 100.0,
+    "total": 3
+  },
+  "PLang/App/modules/llm/providers/OpenAiProvider.cs": {
+    "covered": 627,
+    "pct": 87.7,
+    "total": 715
+  },
+  "PLang/App/modules/llm/query.cs": {
+    "covered": 1,
+    "pct": 6.2,
+    "total": 16
+  },
+  "PLang/App/modules/loop/foreach.cs": {
+    "covered": 39,
+    "pct": 97.5,
+    "total": 40
+  },
+  "PLang/App/modules/loop/types.cs": {
+    "covered": 2,
+    "pct": 100.0,
+    "total": 2
+  },
+  "PLang/App/modules/math/MathHelper.cs": {
+    "covered": 24,
+    "pct": 82.8,
+    "total": 29
+  },
+  "PLang/App/modules/math/abs.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/add.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/ceiling.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/divide.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/math/floor.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/max.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/min.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/modulo.cs": {
+    "covered": 6,
+    "pct": 75.0,
+    "total": 8
+  },
+  "PLang/App/modules/math/multiply.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/power.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/random.cs": {
+    "covered": 5,
+    "pct": 100.0,
+    "total": 5
+  },
+  "PLang/App/modules/math/round.cs": {
+    "covered": 5,
+    "pct": 83.3,
+    "total": 6
+  },
+  "PLang/App/modules/math/sqrt.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/math/subtract.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/math/types.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/modules/mock/action.cs": {
+    "covered": 69,
+    "pct": 57.0,
+    "total": 121
+  },
+  "PLang/App/modules/mock/reset.cs": {
+    "covered": 18,
+    "pct": 100.0,
+    "total": 18
+  },
+  "PLang/App/modules/mock/types.cs": {
+    "covered": 15,
+    "pct": 100.0,
+    "total": 15
+  },
+  "PLang/App/modules/mock/verify.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/module/add.cs": {
+    "covered": 12,
+    "pct": 100.0,
+    "total": 12
+  },
+  "PLang/App/modules/module/remove.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/module/types.cs": {
+    "covered": 2,
+    "pct": 100.0,
+    "total": 2
+  },
+  "PLang/App/modules/output/types.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 2
+  },
+  "PLang/App/modules/output/write.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/provider/list.cs": {
+    "covered": 8,
+    "pct": 100.0,
+    "total": 8
+  },
+  "PLang/App/modules/provider/load.cs": {
+    "covered": 34,
+    "pct": 100.0,
+    "total": 34
+  },
+  "PLang/App/modules/provider/remove.cs": {
+    "covered": 6,
+    "pct": 100.0,
+    "total": 6
+  },
+  "PLang/App/modules/provider/setDefault.cs": {
+    "covered": 6,
+    "pct": 100.0,
+    "total": 6
+  },
+  "PLang/App/modules/settings/get.cs": {
+    "covered": 10,
+    "pct": 90.9,
+    "total": 11
+  },
+  "PLang/App/modules/settings/remove.cs": {
+    "covered": 6,
+    "pct": 85.7,
+    "total": 7
+  },
+  "PLang/App/modules/settings/set.cs": {
+    "covered": 6,
+    "pct": 85.7,
+    "total": 7
+  },
+  "PLang/App/modules/settings/types.cs": {
+    "covered": 2,
+    "pct": 100.0,
+    "total": 2
+  },
+  "PLang/App/modules/signing/Config.cs": {
+    "covered": 2,
+    "pct": 100.0,
+    "total": 2
+  },
+  "PLang/App/modules/signing/SignedData.cs": {
+    "covered": 55,
+    "pct": 100.0,
+    "total": 55
+  },
+  "PLang/App/modules/signing/providers/Ed25519Provider.cs": {
+    "covered": 127,
+    "pct": 93.4,
+    "total": 136
+  },
+  "PLang/App/modules/signing/providers/KeyPair.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/signing/sign.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/signing/verify.cs": {
+    "covered": 1,
+    "pct": 100.0,
+    "total": 1
+  },
+  "PLang/App/modules/test/discover.cs": {
+    "covered": 170,
+    "pct": 85.9,
+    "total": 198
+  },
+  "PLang/App/modules/test/report.cs": {
+    "covered": 215,
+    "pct": 88.5,
+    "total": 243
+  },
+  "PLang/App/modules/test/run.cs": {
+    "covered": 85,
+    "pct": 90.4,
+    "total": 94
+  },
+  "PLang/App/modules/test/tag.cs": {
+    "covered": 13,
+    "pct": 100.0,
+    "total": 13
+  },
+  "PLang/App/modules/timeout/after.cs": {
+    "covered": 41,
+    "pct": 100.0,
+    "total": 41
+  },
+  "PLang/App/modules/timer/end.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 16
+  },
+  "PLang/App/modules/timer/sleep.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/timer/start.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 8
+  },
+  "PLang/App/modules/ui/providers/FluidProvider.cs": {
+    "covered": 141,
+    "pct": 73.4,
+    "total": 192
+  },
+  "PLang/App/modules/ui/render.cs": {
+    "covered": 0,
+    "pct": 0.0,
+    "total": 1
+  },
+  "PLang/App/modules/variable/clear.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/variable/exists.cs": {
+    "covered": 3,
+    "pct": 100.0,
+    "total": 3
+  },
+  "PLang/App/modules/variable/get.cs": {
+    "covered": 3,
+    "pct": 100.0,
+    "total": 3
+  },
+  "PLang/App/modules/variable/remove.cs": {
+    "covered": 4,
+    "pct": 100.0,
+    "total": 4
+  },
+  "PLang/App/modules/variable/set.cs": {
+    "covered": 28,
+    "pct": 96.6,
+    "total": 29
+  },
+  "PLang/App/this.cs": {
+    "covered": 148,
+    "pct": 67.3,
+    "total": 220
+  },
+  "PLang/Executor.cs": {
+    "covered": 52,
+    "pct": 94.5,
+    "total": 55
+  }
+}

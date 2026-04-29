@@ -2,6 +2,7 @@ using App.Variables;
 
 namespace App.modules.variable;
 
+[System.ComponentModel.Description("Return true if a named variable exists and has been initialized in the current scope")]
 [Action("exists")]
 public partial class Exists : IContext
 {

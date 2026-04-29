@@ -1,0 +1,58 @@
+{
+  "name": "Build",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call goal /builder/Build",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "/builder/Build",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "GoalName",
+                    "value": "[goal.call]",
+                    "type": "string"
+                  }
+                ],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "The step text is a direct goal invocation: \u0060call goal /builder/Build\u0060. The @known annotation indicates the prior mapping is authoritative, so we must emit the keep:true form only.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/system/Build.goal",
+  "prPath": "/system/.build/build.pr",
+  "hash": "c73e799da0870eabbaaaabffa1683b9e654da2b41f5984db5efda0d76f46d30c",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null
+}

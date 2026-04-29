@@ -1,4 +1,5 @@
 using App;
+using App.Attributes;
 
 namespace App.modules.llm;
 
@@ -7,6 +8,7 @@ namespace App.modules.llm;
 /// ToolCallId and ToolCalls are internal — used by the provider during tool conversations,
 /// never set by the builder.
 /// </summary>
+[PlangType("llmmessage")]
 public class LlmMessage
 {
     [Store, LlmBuilder]

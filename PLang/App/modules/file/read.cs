@@ -7,9 +7,9 @@ namespace App.modules.file;
 /// Reads a file and returns its content as Data.
 /// When ResolveVariables is true, %var% patterns in the content are resolved (with infrastructure variables blocked for security).
 /// </summary>
-[Example("read file.txt, write to %content%", "Path=file.txt")]
-[Example("read %path%, write to %data%", "Path=%path%")]
-[Example("read file.txt, load vars, write to %content%", "Path=file.txt, ResolveVariables=true")]
+[System.ComponentModel.Description("Read a file's content; optionally resolve %var% patterns in the text before returning")]
+[Example("read file.txt, write to %content%",
+    "file.read Path([path] file.txt) | variable.set Name([string] %content%), Value([object] %__data__%)")]
 [Action("read")]
 public partial class Read : IContext
 {

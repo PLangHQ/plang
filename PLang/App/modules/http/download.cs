@@ -7,22 +7,17 @@ using App.modules.signing;
 namespace App.modules.http;
 
 /// <summary>
-/// Downloads a file from a URL and saves it to the local file system.
-/// Reports progress via an optional callback goal. Returns the saved file path.
+/// Downloads bytes from a URL. Returns the raw bytes in Data — chain with file.save
+/// to persist to disk. One-concern-per-action (OBP): download fetches, save writes.
+/// Reports progress via an optional callback goal.
 /// </summary>
+[System.ComponentModel.Description("Download bytes from a URL and return them in Data; chain with file.save to write to disk")]
 [Action("download", Cacheable = false)]
 [RequiresCapability("network")]
 public partial class download : IContext
 {
     /// <summary>URL to download from. Relative URLs resolve against Config.BaseUrl.</summary>
     public partial Data.@this<string> Url { get; init; }
-
-    /// <summary>Local file path to save the downloaded content to.</summary>
-    public partial Data.@this<string> SaveTo { get; init; }
-
-    /// <summary>Behavior when the target file already exists. Default: Error.</summary>
-    [Default(FileExists.Error)]
-    public partial Data.@this<FileExists> IfExists { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
     public partial Data.@this<Dictionary<string, object>>? Headers { get; init; }

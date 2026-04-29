@@ -85,6 +85,7 @@ public partial class @this
 {
     private object? _value;
     private object? _rawValue; // preserved pre-resolution value for re-resolution
+    private bool _resolved;    // true once _value holds the resolved copy — don't re-resolve
     private Func<object?>? _valueFactory;
     private Type? _type;
     private Actor.Context.@this? _context;
@@ -126,6 +127,18 @@ public partial class @this
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public bool NeedsResolution { get; set; }
+
+    /// <summary>
+    /// Clears the resolution cache. Call when the Data represents an action
+    /// parameter whose value contains %var% references — each execution must
+    /// re-resolve against the current variable store, not reuse the snapshot
+    /// captured by the first access.
+    /// </summary>
+    public void ResetResolution()
+    {
+        if (_rawValue != null) _value = _rawValue;
+        _resolved = false;
+    }
 
     [JsonPropertyName("name")]
     public string Name { get; set; }
@@ -204,12 +217,18 @@ public partial class @this
                 _value = _valueFactory();
                 _valueFactory = null;
             }
-            if (NeedsResolution && _value != null && _context?.Variables != null
-                && (_value is System.Collections.IList || _value is System.Collections.IDictionary))
+            if (NeedsResolution && !_resolved && _value != null && _context?.Variables != null
+                && (_value is System.Collections.IList || _value is System.Collections.IDictionary)
+                && !IsDeferredActionTemplate(_type))
             {
-                // Preserve raw value so ResetResolution can re-resolve on subsequent calls.
+                // Resolve once. The returned container is a resolved copy (ResolveDeep clones
+                // lists/dicts), stable across future accesses. Subsequent in-place mutations
+                // (list.add, dict writes) survive because we never re-resolve into a fresh
+                // container. _rawValue preserves the pre-resolution snapshot in case
+                // ResetResolution() is ever wanted.
                 _rawValue ??= _value;
                 _value = _context.Variables.ResolveDeep(_rawValue);
+                _resolved = true;
             }
             return _value;
         }
@@ -217,6 +236,7 @@ public partial class @this
         {
             _value = UnwrapJsonElement(value);
             _rawValue = null; // new raw value — clear preserved copy
+            _resolved = false; // new value — re-evaluate resolution on next access
             _valueFactory = null;
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
@@ -492,6 +512,21 @@ public partial class @this
 
     public override string ToString() =>
         Success ? _value?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
+
+    /// Action templates (e.g. error.handle's Actions list, modifier sub-actions) hold raw
+    /// "%var%" references in their parameter values that must resolve when each nested action
+    /// runs, with the variable scope available at that point. Eager ResolveDeep would walk the
+    /// template now — before those vars exist — and replace each "%content%" with null,
+    /// destroying the deferred resolution. Recognized via CLR type identity (not the PLang
+    /// type-name string) so a user [PlangType("action")] alias can't collide.
+    private static bool IsDeferredActionTemplate(Type? type)
+    {
+        var clr = type?.ClrType;
+        if (clr == null) return false;
+        var actionType = typeof(App.Goals.Goal.Steps.Step.Actions.Action.@this);
+        if (clr == actionType) return true;
+        return typeof(IEnumerable<App.Goals.Goal.Steps.Step.Actions.Action.@this>).IsAssignableFrom(clr);
+    }
 
     private const int MaxJsonDepth = 128;
 

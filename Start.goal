@@ -1,0 +1,6 @@
+Start
+- write out "hello plang world"
+- call goal Risky, on error write out "recovered"
+
+Risky
+- throw error 'boom'

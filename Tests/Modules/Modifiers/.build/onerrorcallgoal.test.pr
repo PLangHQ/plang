@@ -1,0 +1,242 @@
+{
+  "name": "TestOnErrorCallGoal",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call FailWithDetails\non error call CaptureError",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Verifies error.handle modifier calls error goal and provides error details",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "FailWithDetails",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "Name": "CaptureError"
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "call FailWithDetails, then on error call CaptureError via error.handle recovery chain. The @known mapping indicates the prior .pr is authoritative; emit keep:true only.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %capturedMessage% equals \u0027specific failure\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "specific failure",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%capturedMessage%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assert that the captured message equals the expected string \u0027specific failure\u0027.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "FailWithDetails",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "throw error \u0027specific failure\u0027, key \u0027TestKey\u0027, status code 422",
+          "lineNumber": 8,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "error",
+              "action": "throw",
+              "parameters": [
+                {
+                  "name": "Message",
+                  "value": "specific failure",
+                  "type": "tstring"
+                },
+                {
+                  "name": "StatusCode",
+                  "value": 422,
+                  "type": "int"
+                },
+                {
+                  "name": "Key",
+                  "value": "TestKey",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Modules/Modifiers/OnErrorCallGoal.test.goal",
+      "prPath": "/Modules/Modifiers/.build/onerrorcallgoal.test.pr",
+      "hash": "338001a9c075dc285801b3fa0a015902e8dab94b32ae00ecb3f4ca06251cafb8",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    },
+    {
+      "name": "CaptureError",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %capturedMessage% = %!error.Message%",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%capturedMessage%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "%!error.Message%",
+                  "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": null,
+                  "type": "string?"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Modules/Modifiers/OnErrorCallGoal.test.goal",
+      "prPath": "/Modules/Modifiers/.build/onerrorcallgoal.test.pr",
+      "hash": "3f1120ef6abe6d0531dfe996721d7da38b4074802b546af1f6d3b069b46f650d",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Modules/Modifiers/OnErrorCallGoal.test.goal",
+  "prPath": "/Modules/Modifiers/.build/onerrorcallgoal.test.pr",
+  "hash": "854dd6d3bbba46634f5b170e4c7480fcc20f76e5f7fcc2c122089308448ea03e",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

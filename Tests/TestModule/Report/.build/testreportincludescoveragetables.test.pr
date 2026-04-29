@@ -1,6 +1,6 @@
 {
   "name": "TestReportIncludesCoverageTables",
-  "description": "Discovers passing fixtures, runs them, reports results in JSON, then asserts the report content includes branchCoverage and that summaryPass is 1. Also verifies the report file exists.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -95,6 +100,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -142,6 +152,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -157,12 +172,12 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "branchCoverage",
+              "value": "%report.content%",
               "type": "object"
             },
             {
               "name": "Container",
-              "value": "%report.content%",
+              "value": "branchCoverage",
               "type": "object"
             }
           ],
@@ -171,6 +186,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: verify the produced report content contains the substring \u0027branchCoverage\u0027. Uses assert.contains with Value=%report.content% and Container=\u0027branchCoverage\u0027.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -200,6 +220,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: summaryPass should equal 1. Uses assert.equals with Expected=1 and Actual=%report.summaryPass%.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -237,11 +262,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Check whether the report file exists at %report.reportPath%. file.exists returns file info; store it in %exists%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -266,15 +302,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion: %exists% should be true.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportIncludesCoverageTables.test.goal",
-  "prPath": "/Report/.build/testreportincludescoveragetables.test.pr",
+  "path": "/TestModule/Report/TestReportIncludesCoverageTables.test.goal",
+  "prPath": "/TestModule/Report/.build/testreportincludescoveragetables.test.pr",
   "hash": "87128b082985dc6a0b01437b05b745a604d4d5c9a6ccba0268851162c7792b4e",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,0 +1,57 @@
+{
+  "name": "ThrowCustomError",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022bad thing\u0022 key=\u0022CustomKey\u0022 statusCode=422",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "bad thing",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "CustomKey",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 422,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ThrowCustomError.goal",
+  "prPath": "/.build/throwcustomerror.pr",
+  "hash": "8e10bd9f6f672d9297e03b262e092f9742b07097098c01f7ea73cd6c11e48d99",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -22,7 +22,7 @@ public class ValidateActionsTests
             "plang_test_builder_validate_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        _app.Building.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
 
     [After(Test)]
@@ -87,10 +87,11 @@ public class ValidateActionsTests
 
         var actions = new StepActions
         {
+            // goal.call.call carries the GoalCall directly — no condition wrapper noise.
             new Action
             {
-                Module = "condition",
-                ActionName = "if",
+                Module = "goal",
+                ActionName = "call",
                 Parameters = new List<Data> { goalCallData }
             }
         };
@@ -115,8 +116,8 @@ public class ValidateActionsTests
         {
             new Action
             {
-                Module = "condition",
-                ActionName = "if",
+                Module = "goal",
+                ActionName = "call",
                 Parameters = new List<Data> { goalCallData }
             }
         };

@@ -3,8 +3,7 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %result% equals 42", "Expected=42, Actual=%result%")]
-[Example("assert %name% equals 'Alice', 'Name mismatch'", "Expected=Alice, Actual=%name%, Message=Name mismatch")]
+[System.ComponentModel.Description("Assert that Expected equals Actual; fails with an error if they differ")]
 [Action("equals")]
 public partial class Equals : IContext
 {

@@ -3,6 +3,7 @@ using App.Variables;
 
 namespace App.modules.mock;
 
+[System.ComponentModel.Description("Assert that a mock was called exactly ExpectedCount times; fails the step if the count differs")]
 [Action("verify", Cacheable = false)]
 public partial class Verify : IContext
 {

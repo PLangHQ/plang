@@ -1,5 +1,6 @@
 namespace App.modules.list;
 
+[System.ComponentModel.Description("Return the zero-based index of the first item equal to Value, or -1 if not found")]
 [Action("indexof")]
 public partial class IndexOf : IContext
 {

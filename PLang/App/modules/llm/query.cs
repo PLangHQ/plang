@@ -9,10 +9,10 @@ namespace App.modules.llm;
 /// Sends a query to an LLM provider. Supports tools, streaming, validation,
 /// conversation continuity, caching, and structured output (JSON/code block extraction).
 /// </summary>
-[Example("system: analyze sentiment\n  user: %comment%\n  schema: {sentiment: string}\n  write to %result%",
-    "Messages=[{Role=system, Content=analyze sentiment}, {Role=user, Content=%comment%}], Schema={sentiment: string}")]
-[Example("system: you are a helpful assistant\n  user: %question%\n  tools:\n    GetWeather, gets weather for a city, %city%(string), parallel\n  write to %answer%",
-    "Messages=[{Role=system, Content=you are a helpful assistant}, {Role=user, Content=%question%}], Tools=[{Name=GetWeather, Description=gets weather for a city, Parameters=[{Name=city, Type=string}], Parallel=true}]")]
+[ModuleDescription("Send prompts to an LLM and receive structured or streamed responses, with optional tool use")]
+[System.ComponentModel.Description("Send a conversation (system + user messages) to an LLM and return the response, with optional schema or tool use")]
+[Example("system: analyze sentiment, user: %comment%, schema: {sentiment: string}, write to %result%",
+    "llm.query Messages([list<LlmMessage>] [{\"Role\":\"system\",\"Content\":\"analyze sentiment\"},{\"Role\":\"user\",\"Content\":\"%comment%\"}]), Schema([string] {sentiment: string}) | variable.set Name([string] %result%), Value([object] %__data__%)")]
 [Action("query")]
 [RequiresCapability("llm")]
 public partial class query : IContext, IBuildValidatable
@@ -59,7 +59,15 @@ public partial class query : IContext, IBuildValidatable
     public partial Data.@this<GoalCall>? OnStream { get; init; }
 
     /// <summary>JSON schema string the LLM must conform to. When set, format defaults to "json".</summary>
-    public partial Data.@this<string>? Schema { get; init; }
+    /// <summary>
+    /// Optional schema describing the expected response shape. Accepts any value the
+    /// developer wrote in .goal source — the builder LLM normalizes it into a
+    /// structured form (typically a JSON object Dictionary), but free-form strings,
+    /// YAML/XML descriptions, etc. are also valid. The provider serializes to text
+    /// before sending to the LLM (JSON via System.Text.Json for structured shapes,
+    /// pass-through for strings).
+    /// </summary>
+    public partial Data.@this<object>? Schema { get; init; }
 
     /// <summary>Response format: "json", "python", "md", etc. Non-json formats extract from code blocks.</summary>
     public partial Data.@this<string>? Format { get; init; }
@@ -79,7 +87,7 @@ public partial class query : IContext, IBuildValidatable
     public partial Data.@this<double>? TopP { get; init; }
 
     /// <summary>Maximum tokens in the response.</summary>
-    [Default(4000)]
+    [Default(16000)]
     public partial Data.@this<int> MaxTokens { get; init; }
 
     /// <summary>Maximum total individual tool calls before stopping the loop.</summary>

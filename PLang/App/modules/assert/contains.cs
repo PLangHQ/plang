@@ -3,8 +3,8 @@ using App.modules.assert.providers;
 
 namespace App.modules.assert;
 
-[Example("assert %text% contains 'hello'", "Value=%text%, Container=hello")]
-[Example("assert %list% contains 42", "Value=%list%, Container=42")]
+[ModuleDescription("Test assertions that fail the step with a descriptive error when the condition is not met")]
+[System.ComponentModel.Description("Assert that Value contains Container; fails with an error if not")]
 [Action("contains")]
 public partial class Contains : IContext
 {

@@ -14,15 +14,31 @@ Read a file's contents.
 
 / Read a text file
 - read file.txt into %content%
+
+/ Read a template and resolve %var% references in the content
+- read 'greeting.txt', load vars, write to %greeting%
 ```
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Path | string | yes | Path to the file |
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| Path | string | yes | — | Path to the file |
+| ResolveVariables | bool | no | false | Resolve `%var%` references inside the file content before returning |
 
 **Returns:** The file contents. JSON files are parsed into objects automatically.
+
+#### Resolving variables in file content
+
+Setting `ResolveVariables` (natural form: `load vars`) treats the file as a small template — any `%name%` token in the content is replaced with the variable's current value before the result is returned:
+
+```plang
+- set %name% = 'World'
+- read 'greeting.txt', load vars, write to %greeting%
+/ greeting.txt = "Hello, %name%!" → %greeting% becomes "Hello, World!"
+```
+
+**Security:** infrastructure variables (the `%!app%`, `%!fileSystem%`, `%!callStack%`, `%!trace%` family — anything starting with `!`) are deliberately **not** resolved when reading file content, because the file contents may be untrusted. Only ordinary user variables resolve. If you need to expand `%!` variables in a string, build the string explicitly in `.goal` code rather than reading it from disk.
 
 ### save
 

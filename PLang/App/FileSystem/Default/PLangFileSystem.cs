@@ -22,17 +22,12 @@ namespace App.FileSystem.Default
 
 		public bool IsRootApp { get; private set; }
 		public string RelativeAppPath { get; set; }
-		public string SystemDirectory
-		{
-			get
-			{
-				return System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "system"));
-			}
-		}
 		public string OsDirectory
 		{
 			get
 			{
+				// The os symlink at the binary dir maps to /workspace/plang/os in dev,
+				// /<install>/os in prod. PLang resolves /os/X paths against this directory.
 				return System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "os"));
 			}
 		}
@@ -78,7 +73,7 @@ namespace App.FileSystem.Default
 
 
 			this.fileAccesses = new List<FileAccessControl>();
-			fileAccesses.Add(new FileAccessControl(RootDirectory, SystemDirectory, ProcessId: Id));
+			fileAccesses.Add(new FileAccessControl(RootDirectory, OsDirectory, ProcessId: Id));
 
 			this.IsRootApp = (relativeAppPath == Path.DirectorySeparatorChar.ToString());
 			if (AppContext.GetData("sharedPath") != null)
@@ -135,7 +130,7 @@ namespace App.FileSystem.Default
 
 		public void ClearFileAccess()
 		{
-			this.fileAccesses.RemoveAll(p => p.path != this.SystemDirectory);
+			this.fileAccesses.RemoveAll(p => p.path != this.OsDirectory);
 		}
 
 		public bool IsPlangRooted(string? path)
@@ -182,20 +177,22 @@ namespace App.FileSystem.Default
 			if (IsPlangRooted(path))
 			{
 				if (!path.StartsWith(RootDirectory)
-					&& !path.StartsWith(SystemDirectory))
+					&& !path.StartsWith(OsDirectory))
 				{
 					var resolved = Path.GetFullPath(Path.Join(RootDirectory, path));
 
-					// When path starts with /system/, fall back to SystemDirectory if not found in RootDirectory
+					// When path starts with /system/, fall back to <OsDirectory>/system/ if not
+					// found in RootDirectory. The system folder lives under os/, but path strings
+					// keep the /system/ form — the rename is a disk-layout change, not a syntax change.
 					var sysPrefix = Path.DirectorySeparatorChar + "system" + Path.DirectorySeparatorChar;
 					if (path.AdjustPathToOs().StartsWith(sysPrefix, StringComparison.OrdinalIgnoreCase)
 						&& !System.IO.File.Exists(resolved) && !System.IO.Directory.Exists(resolved))
 					{
 						var afterPrefix = path.AdjustPathToOs().Substring(sysPrefix.Length);
-						var systemResolved = Path.GetFullPath(Path.Join(SystemDirectory, afterPrefix));
-						if (System.IO.File.Exists(systemResolved) || System.IO.Directory.Exists(systemResolved))
+						var osResolved = Path.GetFullPath(Path.Join(OsDirectory, "system", afterPrefix));
+						if (System.IO.File.Exists(osResolved) || System.IO.Directory.Exists(osResolved))
 						{
-							resolved = systemResolved;
+							resolved = osResolved;
 						}
 					}
 
@@ -268,16 +265,16 @@ Your answer:
 				}
 			}
 
-			// Fall back to SystemDirectory for paths under RootDirectory/system/ that don't exist
+			// Fall back to <OsDirectory>/system/ for paths under RootDirectory/system/ that don't exist
 			var rootSystemDir = RootDirectory + Path.DirectorySeparatorChar + "system" + Path.DirectorySeparatorChar;
 			if (path.StartsWith(rootSystemDir, StringComparison.OrdinalIgnoreCase)
 				&& !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
 			{
 				var afterSystem = path.Substring(rootSystemDir.Length);
-				var systemFallback = Path.GetFullPath(Path.Join(SystemDirectory, afterSystem));
-				if (System.IO.File.Exists(systemFallback) || System.IO.Directory.Exists(systemFallback))
+				var osFallback = Path.GetFullPath(Path.Join(OsDirectory, "system", afterSystem));
+				if (System.IO.File.Exists(osFallback) || System.IO.Directory.Exists(osFallback))
 				{
-					path = systemFallback;
+					path = osFallback;
 				}
 			}
 

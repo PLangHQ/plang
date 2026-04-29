@@ -24,26 +24,37 @@ public sealed class ListNavigator : INavigator
             return new Data.@this(key, list.Count, parent: data);
 
         if (string.Equals(key, "first", StringComparison.OrdinalIgnoreCase))
-            return new Data.@this(key, list[0], parent: data);
+            return Element(list[0], key, data);
 
         if (string.Equals(key, "last", StringComparison.OrdinalIgnoreCase))
-            return new Data.@this(key, list[list.Count - 1], parent: data);
+            return Element(list[list.Count - 1], key, data);
 
         if (string.Equals(key, "random", StringComparison.OrdinalIgnoreCase))
-            return new Data.@this(key, list[Random.Shared.Next(list.Count)], parent: data);
+            return Element(list[Random.Shared.Next(list.Count)], key, data);
 
         // Index access
         if (int.TryParse(key, out var index))
         {
             if (index >= 0 && index < list.Count)
-                return new Data.@this(key, list[index], parent: data);
+                return Element(list[index], key, data);
             return Data.@this.NotFound(key);
         }
 
         // Implicit first: delegate to first element's navigator
         // e.g. %addresses.street% → addresses[0].street
-        var firstElement = new Data.@this("0", list[0], parent: data);
+        var firstElement = Element(list[0], "0", data);
         return ValueNavigators.Navigate(firstElement, key);
+    }
+
+    /// <summary>
+    /// Returns a list element as Data. If the raw slot is already a Data (list.add stores
+    /// the whole Data), return it as-is — don't double-wrap — so callers get the
+    /// element's original type, context, and metadata intact.
+    /// </summary>
+    private static Data.@this Element(object? raw, string key, Data.@this parent)
+    {
+        if (raw is Data.@this inner) return inner;
+        return new Data.@this(key, raw, parent: parent);
     }
 
     private static bool IsGenericList(object? value)

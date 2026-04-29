@@ -1,0 +1,253 @@
+{
+  "name": "TestForeachCallsGoalPerItem",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022]",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "Narrow repro of the \u0022only step 0 applies\u0022 class: iterate a 3-item list,\ncall AddProcessed per item, verify all three calls happened.\nSame shape as builder\u0027s BuildGoalCore \u2192 ProcessGroup \u2192 ApplyStep chain,\nwithout the Building/LLM machinery. If this fails, the regression is in\nthe loop.foreach \u002B goal.call dispatch, not in ApplyStep.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "abc",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %processed% = []",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%processed%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "foreach %items%, call AddProcessed item=%x%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%items%",
+              "type": "string"
+            },
+            {
+              "name": "ItemName",
+              "value": "x",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "Name": "AddProcessed",
+                "Description": null,
+                "Parallel": false,
+                "Parameters": null,
+                "PrPath": null
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": null,
+              "type": "actor"
+            },
+            {
+              "name": "item",
+              "value": "%x%",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %processed.Count% equals 3",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 3,
+              "type": "int"
+            },
+            {
+              "name": "Actual",
+              "value": "%processed.Count%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: verify the processed list count equals 3. This uses assert.equals with Expected=3 and Actual=%processed.Count%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "AddProcessed",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "add \u0022x\u0022 to %processed%",
+          "lineNumber": 15,
+          "indent": 0,
+          "comment": "Shared-state mutation via list.add proves AddProcessed fired per iteration",
+          "actions": [
+            {
+              "module": "list",
+              "action": "add",
+              "parameters": [
+                {
+                  "name": "ListName",
+                  "value": "%processed%",
+                  "type": "string"
+                },
+                {
+                  "name": "Value",
+                  "value": "x",
+                  "type": "string"
+                },
+                {
+                  "name": "AtIndex",
+                  "value": -1,
+                  "type": "int"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Builder/ForeachCallsGoalPerItem.test.goal",
+      "prPath": "/Builder/.build/foreachcallsgoalperitem.test.pr",
+      "hash": "9685da6d1b5cc3cb89aadd55c630ea0194a0e8b2e1cd75117a61d4834c6d9810",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Builder/ForeachCallsGoalPerItem.test.goal",
+  "prPath": "/Builder/.build/foreachcallsgoalperitem.test.pr",
+  "hash": "043dc09284500a85c7ec567e51ac62c737ef6dacd4b36b7033e154060c89f1de",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

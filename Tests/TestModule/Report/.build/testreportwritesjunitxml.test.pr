@@ -1,6 +1,6 @@
 {
   "name": "TestReportWritesJunitXml",
-  "description": "Discovers passing fixtures, runs them, generates a JUnit-formatted report, asserts the XML root is present, checks summaryPass, verifies the report file path, and confirms the file exists on disk.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -53,6 +53,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -95,6 +100,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -142,6 +152,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -176,6 +191,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that the generated report content includes the JUnit XML root tag \u0027\u003Ctestsuites\u0027. Uses assert.contains with %report.content% as Value and the literal tag as Container.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -210,6 +230,11 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that the report summaryPass equals 1. Uses assert.equals with Expected=1 and Actual=%report.summaryPass%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -247,11 +272,22 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": "Check that the report file at %report.reportPath% exists, writing the boolean result to %exists%.",
+      "level": "high",
+      "confidence": 97,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -281,15 +317,20 @@
         }
       ],
       "intent": null,
+      "guidance": "Post-condition assertion that the file existence flag %exists% is true.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportWritesJunitXml.test.goal",
-  "prPath": "/Report/.build/testreportwritesjunitxml.test.pr",
+  "path": "/TestModule/Report/TestReportWritesJunitXml.test.goal",
+  "prPath": "/TestModule/Report/.build/testreportwritesjunitxml.test.pr",
   "hash": "ebbd2c30032f7282dbbd208efd557578ab21b33141284d8b06d8527140e5f0b6",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

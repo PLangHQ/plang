@@ -1,5 +1,6 @@
 namespace App.modules.list;
 
+[System.ComponentModel.Description("Return the item at a zero-based Index from the list")]
 [Action("get")]
 public partial class Get : IContext
 {

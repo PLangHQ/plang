@@ -17,10 +17,9 @@ namespace App.modules.test;
 /// branch-index coverage for condition.if. The .test/ directory lives at the app root
 /// (users scope a run with Testing.Include/Exclude — output location stays predictable).
 /// </summary>
-[Example("write test report %results%",
-    "Results=%results%")]
-[Example("write test report %results% format='junit'",
-    "Results=%results%, Format=\"junit\"")]
+[System.ComponentModel.Description("Write test results to the console and emit a JSON or JUnit report artefact")]
+[Example("write test report %results% format='junit', write to %report%",
+    "test.report Results([object] %results%), Format([string] junit) | variable.set Name([string] %report%), Value([object] %__data__%)")]
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {

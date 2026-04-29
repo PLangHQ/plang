@@ -1,0 +1,1 @@
+# changes.patch dropped — git diff runtime2..HEAD against this branch is 63 MB, over GitHub's 50 MB push limit. Same situation codeanalyzer v4 hit (commit 84a9d399). Regenerate locally with: git diff runtime2..HEAD -- ':(exclude).bot'

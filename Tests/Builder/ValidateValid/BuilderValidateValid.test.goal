@@ -1,5 +1,0 @@
-Start
-/ Test that builder.validateActions accepts known valid module.action pairs
-- get all actions, write to %actions%
-- validate actions %actions%, write to %result%
-- assert %result% is true, "validateActions should pass for known actions"

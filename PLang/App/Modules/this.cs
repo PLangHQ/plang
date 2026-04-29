@@ -167,10 +167,25 @@ public sealed class @this
     /// Describes all registered actions with parameter metadata for the LLM builder prompt.
     /// AppModules owns this because it knows its own types.
     /// </summary>
+    // Capability interfaces — their declared properties are wired by the source generator
+    // from the execution context (Step, Channels, Event, Static, Context) and are NOT
+    // user-supplied parameters. Describe() filters them so the catalog doesn't teach the
+    // LLM to emit fields it must never emit.
+    private static readonly System.Type[] CapabilityInterfaces =
+    {
+        typeof(modules.IContext),
+        typeof(modules.IStep),
+        typeof(modules.IChannel),
+        typeof(modules.IEvent),
+        typeof(modules.IStatic),
+    };
+
     public Goals.Goal.Steps.Step.Actions.@this Describe()
     {
         var result = new Goals.Goal.Steps.Step.Actions.@this();
         var nCtx = new NullabilityInfoContext();
+        // Cache module descriptions by namespace — populated on first encounter per namespace
+        var moduleDescriptionCache = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var ns in Names)
         {
@@ -179,11 +194,20 @@ public sealed class @this
                 var parameterType = GetActionType(ns, actionName);
                 if (parameterType == null) continue;
 
+                // Collect the property names contributed by any capability interfaces this
+                // action implements. They'll be filtered out of the exposed catalog below.
+                var capabilityProps = new HashSet<string>(
+                    CapabilityInterfaces
+                        .Where(iface => iface.IsAssignableFrom(parameterType))
+                        .SelectMany(iface => iface.GetProperties().Select(p => p.Name)),
+                    StringComparer.OrdinalIgnoreCase);
+
                 var parameters = new List<Data.@this>();
 
                 foreach (var prop in parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
-                    if (prop.Name == "EqualityContract" || prop.Name == "Context") continue;
+                    if (prop.Name == "EqualityContract") continue;
+                    if (capabilityProps.Contains(prop.Name)) continue;
                     if (prop.GetCustomAttribute<modules.ProviderAttribute>() != null) continue;
 
                     var typeName = Utils.TypeMapping.GetTypeName(prop.PropertyType);
@@ -194,9 +218,10 @@ public sealed class @this
                     if (isNullable && !typeName.EndsWith("?"))
                         typeName += "?";
 
-                    var validValues = Utils.TypeMapping.GetValidValues(prop.PropertyType);
-                    if (validValues != null)
-                        typeName += $"({string.Join("|", validValues)})";
+                    // Enum valid-values (operator, httpmethod, eventtype, ...) are NOT inlined
+                    // on each parameter any more — they're declared once in Type Information
+                    // so repeating them here would just bloat the prompt. The type name alone
+                    // (e.g. "operator") points the LLM to the Type Information entry.
 
                     var hasVar = prop.GetCustomAttribute<modules.VariableNameAttribute>() != null;
                     var defaultAttr = prop.GetCustomAttribute<modules.DefaultAttribute>();
@@ -213,11 +238,56 @@ public sealed class @this
                 if (actionAttr != null)
                     cacheable = actionAttr.Cacheable;
 
-                var examples = parameterType.GetCustomAttributes<modules.ExampleAttribute>()
-                    .Select(e => new Data.@this(e.Plang, e.Mapping))
-                    .ToList();
+                // Prefer structured ExamplesForLlm() when the action class declares one.
+                // The static method returns ExampleSpec[]; the renderer derives type tags
+                // and nested-action JSON from reflection so authors only write meaning
+                // (which action, which parameter, what value) — never raw type tags or
+                // hand-built JSON. Falls back to [Example] attributes for not-yet-migrated
+                // actions; the two coexist during transition.
+                List<Data.@this> examples;
+                var examplesForLlm = parameterType.GetMethod("ExamplesForLlm",
+                    BindingFlags.Public | BindingFlags.Static, binder: null,
+                    types: System.Type.EmptyTypes, modifiers: null);
+                if (examplesForLlm != null
+                    && typeof(App.Catalog.ExampleSpec[]).IsAssignableFrom(examplesForLlm.ReturnType))
+                {
+                    var specs = (App.Catalog.ExampleSpec[]?)examplesForLlm.Invoke(null, null)
+                        ?? System.Array.Empty<App.Catalog.ExampleSpec>();
+                    examples = specs
+                        .Select(s => new Data.@this(s.UserIntent, App.Catalog.ExampleRenderer.Render(s, this)))
+                        .ToList();
+                }
+                else
+                {
+                    examples = parameterType.GetCustomAttributes<modules.ExampleAttribute>()
+                        .Select(e => new Data.@this(e.Plang, e.Mapping))
+                        .ToList();
+                }
 
                 var returnType = DescribeReturnType(parameterType);
+
+                // Action-level description from [System.ComponentModel.Description]
+                var descAttr = parameterType.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>();
+                var actionDescription = descAttr?.Description;
+
+                // Module-level description: cache per namespace, search all types in namespace on first miss
+                if (!moduleDescriptionCache.TryGetValue(ns, out var moduleDescription))
+                {
+                    moduleDescription = null;
+                    foreach (var type in GetAllTypesInNamespace(ns))
+                    {
+                        var modDesc = type.GetCustomAttribute<modules.ModuleDescriptionAttribute>();
+                        if (modDesc != null)
+                        {
+                            moduleDescription = modDesc.Description;
+                            break;
+                        }
+                    }
+                    moduleDescriptionCache[ns] = moduleDescription;
+                }
+
+                // Per-action modifier classification from [Modifier] on the class
+                bool isModifier = parameterType.GetCustomAttribute<modules.ModifierAttribute>() != null;
 
                 result.Add(new Goals.Goal.Steps.Step.Actions.Action.@this
                 {
@@ -227,12 +297,31 @@ public sealed class @this
                     Parameters = parameters,
                     Cacheable = cacheable,
                     Examples = examples,
-                    ReturnType = returnType
+                    ReturnType = returnType,
+                    Description = actionDescription,
+                    ModuleDescription = moduleDescription,
+                    IsModifier = isModifier
                 });
             }
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Returns all registered action types within a given module namespace.
+    /// Used to search for [ModuleDescription] on any type in the namespace.
+    /// </summary>
+    private IEnumerable<System.Type> GetAllTypesInNamespace(string ns)
+    {
+        if (!_modules.TryGetValue(ns, out var actions))
+            yield break;
+        foreach (var entry in actions.Values)
+        {
+            var t = entry.Type ?? entry.Instance?.GetType();
+            if (t != null)
+                yield return t;
+        }
     }
 
     /// <summary>

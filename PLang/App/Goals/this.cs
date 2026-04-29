@@ -136,10 +136,11 @@ public sealed class @this
 
     /// <summary>
     /// Tries to load a .pr file from {root}/{dir}/.build/{file}.pr first,
-    /// then from {SystemDirectory}/{stripped}/.build/{file}.pr for system goals.
-    /// SystemDirectory points to the system/ folder. Paths starting with system/
-    /// get the prefix stripped when resolving against SystemDirectory.
-    /// A user can override a specific system goal by placing the file at {root}/system/...
+    /// then from {OsDirectory}/system/{stripped}/.build/{file}.pr for system goals.
+    /// OsDirectory points to the os/ folder; the system tree lives at os/system.
+    /// Paths starting with system/ get the prefix stripped when resolving against
+    /// OsDirectory + "system". A user can override a specific system goal by
+    /// placing the file at {root}/system/...
     /// </summary>
     private async Task<Goal.@this?> TryLoadPr(string dir, string file, string name, CancellationToken ct)
     {
@@ -160,19 +161,19 @@ public sealed class @this
             }
         }
 
-        // 2. Try system directory — only for paths under system/
-        if (!string.IsNullOrEmpty(App.SystemDirectory))
+        // 2. Try os directory — only for paths under system/
+        if (!string.IsNullOrEmpty(App.OsDirectory))
         {
             var normalized = dir.Replace('\\', '/');
             if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
                 || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
             {
-                // Strip the "system/" prefix — SystemDirectory IS the system folder
+                // Strip the "system/" prefix — system tree lives at <OsDirectory>/system
                 var withinSystem = normalized.Length > 7 ? normalized[7..] : "";
-                var systemPath = App.FileSystem.Path.Combine(App.SystemDirectory, withinSystem, ".build", prFile);
-                if (App.FileSystem.File.Exists(systemPath))
+                var osPath = App.FileSystem.Path.Combine(App.OsDirectory, "system", withinSystem, ".build", prFile);
+                if (App.FileSystem.File.Exists(osPath))
                 {
-                    var result = await LoadFromFileAsync(App, systemPath, cancellationToken: ct);
+                    var result = await LoadFromFileAsync(App, osPath, cancellationToken: ct);
                     if (result.Success)
                     {
                         var goal = result.Value as Goal.@this;

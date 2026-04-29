@@ -64,15 +64,6 @@ public class LlmTypeTests
     #region GoalCall Changes
 
     [Test]
-    public async Task GoalCall_Description_SerializesViaJson()
-    {
-        var gc = new GoalCall { Name = "Test", Description = "Does testing things" };
-        var json = JsonSerializer.Serialize(gc);
-        var deserialized = JsonSerializer.Deserialize<GoalCall>(json)!;
-        await Assert.That(deserialized.Description).IsEqualTo("Does testing things");
-    }
-
-    [Test]
     public async Task GoalCall_Parallel_DefaultsFalse()
     {
         var gc = new GoalCall();
@@ -94,7 +85,6 @@ public class LlmTypeTests
         var gc = new GoalCall
         {
             Name = "MyGoal",
-            Description = "description here",
             Parallel = true,
             Parameters = new List<Data> { new Data("param1", "value1") },
             PrPath = "/test/.build/mygoal.pr"
@@ -104,7 +94,6 @@ public class LlmTypeTests
         var deserialized = JsonSerializer.Deserialize<GoalCall>(json)!;
 
         await Assert.That(deserialized.Name).IsEqualTo("MyGoal");
-        await Assert.That(deserialized.Description).IsEqualTo("description here");
         await Assert.That(deserialized.Parallel).IsTrue();
         await Assert.That(deserialized.PrPath).IsEqualTo("/test/.build/mygoal.pr");
         await Assert.That(deserialized.Parameters).IsNotNull();

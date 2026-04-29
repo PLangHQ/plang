@@ -82,6 +82,20 @@ public interface IBuildValidatable
 }
 
 /// <summary>
+/// Describes the module as a whole. Apply to exactly one class per module namespace
+/// (the alphabetically first action by convention). Rendered as a module-level heading
+/// in the builder action catalog so the LLM understands the module's purpose.
+/// Individual action classes declare themselves modifiers via [Modifier] — the catalog
+/// renders modifier actions in their own section per-action, not per-module.
+/// </summary>
+[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+public sealed class ModuleDescriptionAttribute : Attribute
+{
+    public string Description { get; }
+    public ModuleDescriptionAttribute(string description) => Description = description;
+}
+
+/// <summary>
 /// Provides a PLang step example and its expected parameter mapping for the builder.
 /// Multiple examples per action help the LLM map natural language to the correct parameters.
 /// </summary>

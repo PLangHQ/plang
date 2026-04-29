@@ -71,7 +71,7 @@ public class QueryCallbackTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "TestTool", Description = "test" }
+                new GoalCall { Name = "TestTool" }
             },
             OnToolCall = new GoalCall { Name = "LogToolCall" }
         };
@@ -111,7 +111,7 @@ public class QueryCallbackTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "GetData", Description = "gets data" }
+                new GoalCall { Name = "GetData" }
             },
             OnToolCall = new GoalCall { Name = "ToolCallHandler" }
         };
@@ -229,7 +229,7 @@ public class QueryCallbackTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "TestTool", Description = "test" }
+                new GoalCall { Name = "TestTool" }
             },
             OnValidateResponse = new GoalCall { Name = "Validator" },
             MaxValidationRetries = 1

@@ -14,7 +14,7 @@ Piece 6: template          ← DONE (branch: runtime2-builder-v2-template)
 Piece 7: llm               ← DONE (branch: runtime2-builder-v2-llm)
 Piece 8: error extensions  ← engine-level
 Piece 9: build module      ← DONE (branch: runtime2-builder-module)
-Piece 10: builder v2 integration
+Piece 10: builder v2 integration ← DONE (branch: runtime2-builder-bootstrap, 2026-04-29)
 ```
 
 ## Revision to Piece 1: Identity becomes opaque key vault

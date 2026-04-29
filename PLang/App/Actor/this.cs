@@ -91,14 +91,14 @@ public sealed class @this : IAsyncDisposable
 
         // Register shared SettingsVariable — same object for all actors.
         // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
-        Context.Variables.Put(app.SettingsVariable);
+        Context.Variables.Set(app.SettingsVariable.Name, app.SettingsVariable);
 
         // Register %!app% — navigates the App object graph (e.g., %!app.Testing.IsEnabled%)
-        Context.Variables.Put(new Data.DynamicData("!app", () => app));
+        Context.Variables.Set("!app", new Data.DynamicData("!app", () => app));
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
-        Context.Variables.Put(new Data.DynamicData("MyIdentity", () =>
+        Context.Variables.Set("MyIdentity", new Data.DynamicData("MyIdentity", () =>
         {
             var provider = app.Providers.Get<IIdentityProvider>();
             if (!provider.Success) return null;
@@ -109,12 +109,16 @@ public sealed class @this : IAsyncDisposable
 
     private ISettingsStore CreateSettingsStore()
     {
-        // System actor always uses on-disk — it holds the LLM cache and other
-        // persistent system data that must survive across app instances.
-        // User/Service actors use in-memory during building/testing for isolation.
-        if ((App.Testing.IsEnabled || App.Building.IsEnabled)
-            && !Name.Equals("System", StringComparison.OrdinalIgnoreCase))
-            return SqliteSettingsStore.InMemory(Name.ToLowerInvariant());
+        // Testing: every actor (including System) gets an in-memory db scoped by App.Id
+        // so per-test Apps never share state. SQLite's shared-cache merges in-memory dbs
+        // with identical DataSource names, so the App.Id scoping is load-bearing.
+        if (App.Testing.IsEnabled)
+            return SqliteSettingsStore.InMemory($"{Name.ToLowerInvariant()}-{App.Id}");
+
+        // Building: User/Service in-memory (isolation); System on-disk so the LLM cache
+        // and other persistent system data survive across build invocations.
+        if (App.Build.IsEnabled && this != App.System)
+            return SqliteSettingsStore.InMemory($"{Name.ToLowerInvariant()}-{App.Id}");
 
         var dbDir = App.FileSystem.Path.Combine(App.AbsolutePath, ".db");
         var dbPath = App.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");

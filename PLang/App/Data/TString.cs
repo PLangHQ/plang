@@ -1,4 +1,5 @@
 using System.Text;
+using App.Attributes;
 
 namespace App.Data;
 
@@ -7,6 +8,9 @@ namespace App.Data;
 /// Resolves %var% placeholders via a resolver function.
 /// Translation lookup is deferred to Phase 6+.
 /// </summary>
+[PlangType("tstring",
+    Example = "Hello %name%")]
+[PlangType("translatable")]
 public sealed class TString
 {
     /// <summary>The raw template string with %var% placeholders.</summary>

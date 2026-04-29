@@ -1,0 +1,252 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "configure http, base url https://httpbin.org",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: Configure base URL, then relative path request",
+      "actions": [
+        {
+          "module": "http",
+          "action": "configure",
+          "parameters": [
+            {
+              "name": "BaseUrl",
+              "value": "https://httpbin.org",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "get /get, unsigned, write to %response%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "http",
+          "action": "request",
+          "parameters": [
+            {
+              "name": "Url",
+              "value": "/get",
+              "type": "string"
+            },
+            {
+              "name": "Method",
+              "value": "GET",
+              "type": "string"
+            },
+            {
+              "name": "Unsigned",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "if %response% is not empty then",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%response%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "isempty",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Conditional check: if %response% is not empty, run the indented body. Map \u0027is not empty\u0027 to condition.if using isempty negation.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "write out \u0027Relative URL with base URL worked\u0027",
+      "lineNumber": 6,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Relative URL with base URL worked",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Writes a success message to output. Uses tstring as the step text is a translatable literal.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "if %response.StatusCode% equals 200 then",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%response.StatusCode%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": 200,
+              "type": "int"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Conditional check: if %response.StatusCode% equals 200, run the indented body.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "write out \u0027Status code is 200\u0027",
+      "lineNumber": 8,
+      "indent": 1,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Status code is 200",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Writes a status-code success message to output. Uses tstring as the step text is a translatable literal.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ConfigBaseUrl.test.goal",
+  "prPath": "/.build/configbaseurl.test.pr",
+  "hash": "01dc137ea19f5d3c1b5db93b973fbe773de24f7bea80089d8d558bf792d295d9",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

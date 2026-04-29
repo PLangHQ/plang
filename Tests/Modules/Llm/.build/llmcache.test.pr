@@ -1,0 +1,202 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "[llm] system: \u0027You are a helpful assistant\u0027\nuser: \u0027What is the capital of Iceland?\u0027\ncache: true\nwrite to %first%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Cache hit \u2014 same query twice, verify second returns cached result",
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
+                },
+                {
+                  "role": "user",
+                  "content": "What is the capital of Iceland?",
+                  "images": []
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "Cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%first%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "[llm] system: \u0027You are a helpful assistant\u0027\nuser: \u0027What is the capital of Iceland?\u0027\ncache: true\nwrite to %second%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "You are a helpful assistant",
+                  "images": []
+                },
+                {
+                  "role": "user",
+                  "content": "What is the capital of Iceland?",
+                  "images": []
+                }
+              ],
+              "type": "list\u003Cllmmessage\u003E"
+            },
+            {
+              "name": "Cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%second%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %first% is not null",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%first%",
+              "type": "object?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %second% is not null",
+      "lineNumber": 12,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%second%",
+              "type": "object?"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Modules/Llm/LlmCache.test.goal",
+  "prPath": "/Modules/Llm/.build/llmcache.test.pr",
+  "hash": "c6cd977022448f7eee0b74dd55759c005e87f335a40599b886bb96a81cc7bc4b",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

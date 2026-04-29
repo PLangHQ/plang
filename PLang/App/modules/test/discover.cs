@@ -18,10 +18,10 @@ namespace App.modules.test;
 /// are returned with Status=Skipped; tests with hash mismatch or missing .pr are
 /// Status=Stale. Returns a List&lt;TestFile&gt; that test.run consumes.
 /// </summary>
-[Example("discover tests in '.' recursive, write to %tests%",
-    "Path=., Recursive=true")]
-[Example("discover tests in 'Tests/Foo' recursive=false",
-    "Path=Tests/Foo, Recursive=false")]
+[ModuleDescription("Discover, run, and report on PLang test goals with tag filtering and coverage tracking")]
+[System.ComponentModel.Description("Walk a directory for *.test.goal files and return a filtered list of TestFile descriptors")]
+[Example("discover tests in 'Tests/Foo' recursive=false, write to %tests%",
+    "test.discover Path([string] Tests/Foo), Recursive([bool] false) | variable.set Name([string] %tests%), Value([object] %__data__%)")]
 [Action("discover")]
 public partial class discover : IContext
 {
@@ -45,9 +45,10 @@ public partial class discover : IContext
 
         string absRoot;
         try { absRoot = fs.ValidatePath(Path.Value); }
-        catch
+        catch (UnauthorizedAccessException)
         {
             // Traversal outside the app root → return empty list, don't throw.
+            // Other ValidatePath failures (empty path, fs not initialized) propagate.
             return Task.FromResult(empty);
         }
 

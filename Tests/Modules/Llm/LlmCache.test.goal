@@ -1,0 +1,12 @@
+Start
+/ Cache hit — same query twice, verify second returns cached result
+- [llm] system: 'You are a helpful assistant'
+    user: 'What is the capital of Iceland?'
+    cache: true
+    write to %first%
+- [llm] system: 'You are a helpful assistant'
+    user: 'What is the capital of Iceland?'
+    cache: true
+    write to %second%
+- assert %first% is not null
+- assert %second% is not null

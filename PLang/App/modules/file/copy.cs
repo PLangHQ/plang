@@ -3,8 +3,8 @@ using App.modules.file.providers;
 
 namespace App.modules.file;
 
-[Example("copy file.txt to backup/file.txt", "Source=file.txt, Destination=backup/file.txt")]
-[Example("copy %source% to %dest%, overwrite", "Source=%source%, Destination=%dest%, Overwrite=true")]
+[ModuleDescription("Read, write, copy, move, delete, and list files through the configured filesystem abstraction")]
+[System.ComponentModel.Description("Copy a file or folder from Source to Destination, optionally overwriting and including subfolders")]
 [Action("copy", Cacheable = false)]
 public partial class Copy : IContext
 {

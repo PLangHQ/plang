@@ -1,6 +1,7 @@
 using App.FileSystem;
 using App.Variables;
 using App.Actor.Context;
+using App.Attributes;
 
 namespace App.Goals.Goal;
 
@@ -8,6 +9,7 @@ namespace App.Goals.Goal;
 /// Strongly-typed reference to a goal, carrying name, parameters, and optional pre-resolved PrPath.
 /// PrPath is nullable because dynamic goal names (containing %variable%) can't resolve at build time.
 /// </summary>
+[PlangType("goal.call")]
 public sealed class GoalCall : modules.IEvent
 {
     /// <summary>Event context — set by Events.Stamp when this GoalCall is an event binding.</summary>
@@ -17,9 +19,6 @@ public sealed class GoalCall : modules.IEvent
     /// <summary>Goal name to call (e.g., "ProcessData", "Setup/Init").</summary>
     [Store, LlmBuilder]
     public string Name { get; init; } = "";
-    /// <summary>Description of what this goal does — used when GoalCall is a tool definition for an LLM.</summary>
-    [Store, LlmBuilder]
-    public string? Description { get; init; }
 
     /// <summary>Whether this tool is safe for concurrent execution. Default false.</summary>
     [Store, LlmBuilder]
@@ -43,7 +42,6 @@ public sealed class GoalCall : modules.IEvent
     /// </summary>
     public async Task<Data.@this> GetGoalAsync(App.@this app, Actor.Context.@this context)
     {
-        // PrPath is authoritative — load from file, no name-based search
         // PrPath is authoritative — load from file, no name-based search
         if (!string.IsNullOrEmpty(PrPath))
             return await LoadFromFile(PrPath, app, context);

@@ -1,0 +1,7 @@
+Start
+/ Multiple nested recovery actions — the case that was breaking last session.
+/ The error.handle.Actions list must carry three nested action records:
+/   output.write, file.read (with [path] type), variable.set.
+/ This is the shape last session's LLM kept mangling.
+
+- read 'data.txt', on error 404, write out "primary missing", read 'fallback.txt', write to %content%

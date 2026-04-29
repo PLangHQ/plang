@@ -2,6 +2,7 @@ using App.Variables;
 
 namespace App.modules.list;
 
+[System.ComponentModel.Description("Remove an item from the list by value or by zero-based index")]
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {

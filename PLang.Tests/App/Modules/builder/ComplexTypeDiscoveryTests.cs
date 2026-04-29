@@ -21,8 +21,16 @@ public class ComplexTypeDiscoveryTests
             "plang_test_typediscovery_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        _app.Building.IsEnabled = true;
+        _app.Build.IsEnabled = true;
     }
+
+    private static string RenderEntry(global::App.Catalog.TypeEntry e) => e.Kind switch
+    {
+        global::App.Catalog.TypeKind.Enum => string.Join(" | ", e.Values!),
+        global::App.Catalog.TypeKind.Scalar => e.Shape ?? "",
+        _ => "{ " + string.Join(", ", (e.Fields ?? Array.Empty<global::App.Catalog.Field>())
+            .Select(f => f.Name + ": " + f.TypeName)) + " }"
+    };
 
     [After(Test)]
     public async Task Cleanup()
@@ -41,7 +49,8 @@ public class ComplexTypeDiscoveryTests
     {
         // llm.query has Messages parameter of type List<LlmMessage>
         // LlmMessage should be auto-discovered and its schema included
-        var schemas = TypeMapping.GetComplexTypeSchemas(_app.Modules);
+        var schemas = TypeMapping.BuildTypeEntries(_app.Modules)
+            .ToDictionary(e => e.Name, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("llmmessage")).IsTrue();
     }
@@ -49,7 +58,8 @@ public class ComplexTypeDiscoveryTests
     [Test]
     public async Task LlmMessage_SchemaIncludesRoleAndContent()
     {
-        var schemas = TypeMapping.GetComplexTypeSchemas(_app.Modules);
+        var schemas = TypeMapping.BuildTypeEntries(_app.Modules)
+            .ToDictionary(e => e.Name, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("llmmessage")).IsTrue();
         var schema = schemas["llmmessage"];
@@ -61,7 +71,8 @@ public class ComplexTypeDiscoveryTests
     public async Task GoalCall_StillIncluded()
     {
         // goal.call was already in TypeMapping — should still be discovered
-        var schemas = TypeMapping.GetComplexTypeSchemas(_app.Modules);
+        var schemas = TypeMapping.BuildTypeEntries(_app.Modules)
+            .ToDictionary(e => e.Name, e => RenderEntry(e));
 
         await Assert.That(schemas.ContainsKey("goal.call")).IsTrue();
     }
@@ -70,7 +81,8 @@ public class ComplexTypeDiscoveryTests
     public async Task PrimitiveTypes_NotInSchemas()
     {
         // Primitive types (string, int, etc.) should not appear in complex schemas
-        var schemas = TypeMapping.GetComplexTypeSchemas(_app.Modules);
+        var schemas = TypeMapping.BuildTypeEntries(_app.Modules)
+            .ToDictionary(e => e.Name, e => e.Kind);
 
         await Assert.That(schemas.ContainsKey("string")).IsFalse();
         await Assert.That(schemas.ContainsKey("int")).IsFalse();

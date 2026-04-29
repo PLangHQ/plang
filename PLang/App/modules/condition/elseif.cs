@@ -4,7 +4,9 @@ using App.modules.condition.providers;
 
 namespace App.modules.condition;
 
-[Example("if %a% > 10 write 'big'\n, else if %a% > 5 write 'mid'", "Left=%a%, Operator=>, Right=5")]
+[System.ComponentModel.Description("Additional condition branch evaluated when the preceding if condition is false")]
+[Example("else if %a% > 5, write 'mid'",
+    "condition.elseif Left([object] %a%), Operator([operator] >), Right([int] 5)")]
 [Action("elseif")]
 public partial class Elseif : IContext, IStep
 {

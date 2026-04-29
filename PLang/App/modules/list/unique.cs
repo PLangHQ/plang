@@ -2,6 +2,7 @@ using App.Variables;
 
 namespace App.modules.list;
 
+[System.ComponentModel.Description("Remove duplicate items from the list and return the deduplicated result")]
 [Action("unique")]
 public partial class Unique : IContext
 {

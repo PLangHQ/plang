@@ -24,8 +24,11 @@ public sealed class OpenAiProvider : ILlmProvider
     public string Name { get; init; } = "OpenAi";
     public bool IsDefault { get; set; }
 
-    /// <summary>Fired before each LLM API call with the resolved messages. Debug subscribes to this.</summary>
-    public event Action<List<LlmMessage>>? OnBeforeRequest;
+    /// <summary>Fired before each LLM API call with resolved messages and the schema string (if any). Debug subscribes to this.</summary>
+    public event Action<List<LlmMessage>, string?>? OnBeforeRequest;
+
+    /// <summary>Fired with the raw LLM response string after each successful API call. Debug subscribes to this.</summary>
+    public event Action<string>? OnAfterResponse;
 
     private const string ConversationKey = "__llm_conversation__";
     private const string SchemaKey = "__llm_schema__";
@@ -65,17 +68,31 @@ public sealed class OpenAiProvider : ILlmProvider
         var messages = CloneMessages(action.Messages.Value!);
         string? schema;
 
+        // Serialize Schema at the LLM boundary. Schema is `Data<object>?` because the
+        // builder LLM may store it as a structured value (Dictionary/List from a JSON
+        // literal in .goal source) or as a free-form string (YAML/XML/prose). The LLM
+        // expects text — JSON-serialize structured values, pass strings through as-is.
+        static string? SerializeSchema(object? raw)
+        {
+            return raw switch
+            {
+                null => null,
+                string s => s,
+                _ => System.Text.Json.JsonSerializer.Serialize(raw)
+            };
+        }
+
         if (action.ContinuePreviousConversation.Value)
         {
             var prev = context.Get<List<LlmMessage>>(ConversationKey);
             if (prev != null)
                 messages.InsertRange(0, prev);
 
-            schema = action.Schema?.Value ?? context.Get<string>(SchemaKey);
+            schema = SerializeSchema(action.Schema?.Value) ?? context.Get<string>(SchemaKey);
         }
         else
         {
-            schema = action.Schema?.Value;
+            schema = SerializeSchema(action.Schema?.Value);
             context.Set<List<LlmMessage>>(ConversationKey, null!);
             context.Set<string>(SchemaKey, null!);
         }
@@ -94,7 +111,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 messages.Insert(0, new LlmMessage { Role = "system", Content = formatInstruction });
         }
 
-        OnBeforeRequest?.Invoke(messages);
+        OnBeforeRequest?.Invoke(messages, schema);
 
         // --- Cache check ---
         string? cacheKey = null;
@@ -118,7 +135,7 @@ public sealed class OpenAiProvider : ILlmProvider
                 ["function"] = new Dictionary<string, object?>
                 {
                     ["name"] = t.Name,
-                    ["description"] = t.Description ?? "",
+                    ["description"] = "",
                     ["parameters"] = BuildParamSchema(t.Parameters)
                 }
             }).ToList();
@@ -207,6 +224,44 @@ public sealed class OpenAiProvider : ILlmProvider
             var content = message.TryGetProperty("content", out var contentProp) && contentProp.ValueKind != JsonValueKind.Null
                 ? contentProp.GetString() : null;
 
+            // Check finish_reason BEFORE parsing content — a truncated response
+            // is not a JSON bug, it's the model running out of output budget. The
+            // same goes for content_filter (model refused) and other non-"stop"
+            // terminations. Surface these as dedicated errors so callers don't
+            // waste time parsing incomplete JSON.
+            var finishReason = choice.TryGetProperty("finish_reason", out var frProp)
+                && frProp.ValueKind == JsonValueKind.String
+                ? frProp.GetString() : null;
+            var isTerminal = finishReason != null
+                && finishReason != "stop"
+                && finishReason != "tool_calls";
+            if (isTerminal)
+            {
+                var key = finishReason switch
+                {
+                    "length" => "ResponseTruncated",
+                    "content_filter" => "ResponseFiltered",
+                    _ => "ResponseIncomplete"
+                };
+                var msg = finishReason == "length"
+                    ? $"LLM output hit the max-tokens limit before finishing ({totalCompletionTokens} completion tokens). Raise MaxTokens or shorten the prompt."
+                    : finishReason == "content_filter"
+                    ? "LLM refused the request via content filter."
+                    : $"LLM response ended abnormally (finish_reason={finishReason}).";
+                return App.Data.@this.FromError(new ActionError(msg, key, 400)
+                {
+                    Details = new Dictionary<string, object?>
+                    {
+                        ["FinishReason"] = finishReason,
+                        ["RawResponse"] = content,
+                        ["Model"] = model,
+                        ["PromptTokens"] = totalPromptTokens,
+                        ["CompletionTokens"] = totalCompletionTokens,
+                        ["MaxTokens"] = action.MaxTokens?.Value
+                    }
+                });
+            }
+
             // --- Tool calls? ---
             if (message.TryGetProperty("tool_calls", out var toolCallsProp) && toolCallsProp.GetArrayLength() > 0)
             {
@@ -284,7 +339,15 @@ public sealed class OpenAiProvider : ILlmProvider
 
                     if (parsed == null)
                         return App.Data.@this.FromError(new ActionError(
-                            "Response is not valid JSON", "JsonParseError", 400));
+                            "Response is not valid JSON", "JsonParseError", 400)
+                        {
+                            Details = new Dictionary<string, object?>
+                            {
+                                ["RawResponse"] = rawResponse,
+                                ["Model"] = model,
+                                ["Schema"] = schema
+                            }
+                        });
 
                     extracted = fromBlock!;
                 }
@@ -330,6 +393,8 @@ public sealed class OpenAiProvider : ILlmProvider
             originalMessages.Add(new LlmMessage { Role = "assistant", Content = rawResponse });
             context.Set(ConversationKey, originalMessages);
             context.Set(SchemaKey, schema);
+
+            OnAfterResponse?.Invoke(rawResponse);
 
             // --- Build result ---
             object? resultValue = effectiveFormat == "json" ? TryParseJson(extracted) : (object?)extracted;

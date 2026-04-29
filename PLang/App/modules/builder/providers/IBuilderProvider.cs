@@ -19,6 +19,7 @@ public interface IBuilderProvider : IProvider
     Task<Data.@this> Validate(validate action);
     Data.@this Merge(merge action);
     Data.@this PromoteGroups(promoteGroups action);
+    Data.@this EnrichResponse(enrichResponse action);
     Task<Data.@this> App(app action);
     Task<Data.@this> AppSave(appSave action);
 }

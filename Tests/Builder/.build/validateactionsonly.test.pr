@@ -1,0 +1,177 @@
+{
+  "name": "TestValidateActionsOnly",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = []",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Isolated sanity check: does the LLM map \u0060builder.validate actions=%x%, on error \u2026\u0060\nwith the correct Actions parameter (a list\u003Caction\u003E variable reference), now that\nthe catalog names the type \u0060actions\u0060 instead of the bare \u0060this?\u0060 it showed before?",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "string"
+            },
+            {
+              "name": "Value",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "list",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set variable %x% to an empty list. The @known mapping indicates the prior step is authoritative; emit keep:true only.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "builder.validate actions=%x%, on error call HandleErr",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "builder",
+          "action": "validate",
+          "parameters": [
+            {
+              "name": "Actions",
+              "value": "%x%",
+              "type": "list\u003Caction\u003E"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "HandleErr",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Map \u0060builder.validate actions=%x%\u0060 to \u0060builder.validate\u0060 with parameter \u0060Actions\u0060 typed as \u0060list\u003Caction\u003E\u0060 and value \u0060%x%\u0060. The \u0060on error call HandleErr\u0060 clause becomes an \u0060error.handle\u0060 modifier wrapping the preceding \u0060builder.validate\u0060 action, with \u0060Actions\u0060 set to a list containing a single \u0060goal.call\u0060 to the goal named \u0060HandleErr\u0060.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleErr",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out %!error.Message%",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "%!error.Message%",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/Builder/ValidateActionsOnly.test.goal",
+      "prPath": "/Builder/.build/validateactionsonly.test.pr",
+      "hash": "9804d49d07ca6f43dfe60e4d41fcced49055b5882135c7ad03f0a997390191c8",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/Builder/ValidateActionsOnly.test.goal",
+  "prPath": "/Builder/.build/validateactionsonly.test.pr",
+  "hash": "70a76bb47608662ec2e4a94d6d720ef2428b6ae353bff173acbee50c27659690",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
