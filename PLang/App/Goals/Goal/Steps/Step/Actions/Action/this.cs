@@ -120,6 +120,23 @@ public sealed partial class @this : modules.IDataWrappable
     public bool IsModifier { get; init; }
 
     /// <summary>
+    /// Looks up a parameter by name. Walks Parameters first, falls back to Defaults,
+    /// returns Data.NotFound when missing. Pure lookup — no resolution side effects.
+    /// Resolution happens later via Data.As&lt;T&gt;(context). Context is part of the
+    /// contract for symmetry with As&lt;T&gt;(context); kept as a hook even though
+    /// today's lookup is context-free.
+    /// </summary>
+    public Data.@this GetParameter(string name, Actor.Context.@this context)
+    {
+        var data = Parameters?.FirstOrDefault(p =>
+            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (data != null) return data;
+        data = Defaults?.FirstOrDefault(p =>
+            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        return data ?? Data.@this.NotFound(name);
+    }
+
+    /// <summary>
     /// Runs this action: lifecycle events → dispatch → return mapping.
     /// Context travels as parameter — actions are shared objects, not per-request.
     /// </summary>
