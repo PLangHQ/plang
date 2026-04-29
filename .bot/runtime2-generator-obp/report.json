@@ -53,6 +53,29 @@
           "context": "v2 supersedes v1. Fresh-eyes review surfaced three concerns: (1) thirteen @this folders looked cosmetic in a non-navigated project — resolved when Ingi confirmed directory-as-API is a project-wide commitment for LLM maintenance; (2) v1 was the second-most-impactful work because round 2's contract simplification would partially dismantle round 1's structure; (3) per-property logic splits across 5+ iteration sites in GenerateActionCode, not 3 as v1 implied. Concerns 2 and 3 argued for combining the rounds. v2 builds the property hierarchy in its final small shape (records carrying IsMatch + BuildResolveCall + optional emission slots), moves all helpers to App/modules/ActionBase/this.cs, introduces ParamKind enum to drive runtime dispatch, and shrinks per-class generated code from ~200 to ~50 lines. Regression contract: runtime test matrix (15–20 minimal action handlers covering every ParamKind × variant), not byte-for-byte golden files."
         }
       ]
+    },
+    {
+      "id": "5e3a8c1d-9b14-4f72-8e45-2c1d9a6f3b87",
+      "bot": "architect",
+      "timestamp_start": "2026-04-29T00:00:00Z",
+      "intent": "Re-review v2 in conversation; supersede with v3 that drops ActionBase, drops ParamKind dispatch, moves resolution onto Data, puts lookup/scaffolding on Action.@this, collapses property hierarchy to two leaves, enforces Data<T>-only handler properties at build time.",
+      "before": {
+        "assumptions": "Action.Parameters is List<Data> (verified). Data<T> inherits Data; Data is essentially Data<object> for routing. Data.As<T>(Context) already exists as the typed-view primitive (line 389 of App/Data/this.cs). NeedsResolution flag exists on Data. Variables.ResolveDeep does the recursive walk today, with a discarded-return-value bug on the typed-list branch. llm.query handler uses Data<List<LlmMessage>> with %var% nested inside Content — verified the deep-resolution case is real.",
+        "risk": "Bigger contract change than v2 (which still kept ParamKind). Behavior shift in Data.Value getter (now does work lazily) could affect debugger/audit paths that read .Value for inspection. Cycle risk: Data.Value → Variables.Get → returns Data → reads its Value (mitigated by NeedsResolution=false on already-resolved Variable Data). Migration: any handler with non-Data<T> property must convert (likely small scope based on read.cs and llm/query.cs samples)."
+      },
+      "plan": ".bot/runtime2-generator-obp/architect/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/architect/v3/v2_review_summary.md",
+            ".bot/runtime2-generator-obp/architect/v3/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 supersedes v2 after substantive design conversation. Three architectural shifts: (1) ActionBase dropped — helpers belong on Action.@this (the data owner); handlers stay flat with no synthetic base class. (2) Resolution moves to Data.@this — Data.Value lazy getter does the variable lookup and recursive %var% substitution; Variables.ResolveDeep evaporates. (3) Property dispatch dissolves entirely — every Data<T> property emits one uniform line: __action.GetParameter(name, Context).As<T>(Context). Hierarchy collapses from 10 leaves to 2 (DataProperty, ProviderProperty). Build-time validation enforces Data<T>-only properties; runtime trusts the .pr. Regression contract stays: runtime test matrix (~22-25 handlers covering kind × type-shape × resolution combinations). Plan walks llm.query end-to-end as the grounding example — including deep-nested %var% inside List<LlmMessage>."
+        }
+      ]
     }
   ]
 }
