@@ -76,6 +76,42 @@
           "context": "v3 supersedes v2 after substantive design conversation. Three architectural shifts: (1) ActionBase dropped — helpers belong on Action.@this (the data owner); handlers stay flat with no synthetic base class. (2) Resolution moves to Data.@this — Data.Value lazy getter does the variable lookup and recursive %var% substitution; Variables.ResolveDeep evaporates. (3) Property dispatch dissolves entirely — every Data<T> property emits one uniform line: __action.GetParameter(name, Context).As<T>(Context). Hierarchy collapses from 10 leaves to 2 (DataProperty, ProviderProperty). Build-time validation enforces Data<T>-only properties; runtime trusts the .pr. Regression contract stays: runtime test matrix (~22-25 handlers covering kind × type-shape × resolution combinations). Plan walks llm.query end-to-end as the grounding example — including deep-nested %var% inside List<LlmMessage>."
         }
       ]
+    },
+    {
+      "id": "f1c8a26d-3b91-4e7a-9d24-8e6b5f0c2a14",
+      "bot": "architect",
+      "timestamp_start": "2026-04-29T17:00:00Z",
+      "timestamp_end": "2026-04-29T17:45:00Z",
+      "intent": "Pull runtime2 (Builder V2 + ~50 commits since branch split), assess v3 plan against the new state, and revise. Outcome: v4 supersedes v3 with one architectural sharpening — resolution moves from Data.Value getter to Data.As<T>(context); Data becomes stateless w.r.t. resolution.",
+      "before": {
+        "assumptions": "v3 plan structurally approved but not yet implemented. runtime2 had moved forward substantially during the gap — Builder V2 merged plus heavy iteration on Data caching (_resolved flag, _rawValue, ResetResolution, IsDeferredActionTemplate carve-out) and on the generator (per-action callstack/save-restore scaffolding, __SnapshotParams, ParamSnapshot diagnostic).",
+        "risk": "Initial pull surfaced a build break on origin/runtime2 (duplicate finally in generator emission, duplicate Goal.RunAsync/AsData) — Ingi pushed a fix commit (00fd25e3) before I revised. Real risk: v3's choice to put resolution on Data.Value's getter is the same architectural decision the runtime2 patches were plastering over (commit chain f9008255 → 4c22c895 → b0014c91 → fedd44e6). v3 would inherit the same wound."
+      },
+      "plan": ".bot/runtime2-generator-obp/architect/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/architect/v4/v3_review_summary.md",
+            ".bot/runtime2-generator-obp/architect/v4/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v4 supersedes v3 after pulling runtime2's accumulated work. Walked the recent runtime2 patches around resolution (Data._resolved, _rawValue, ResetResolution, IsDeferredActionTemplate, generator-emitted data.ResetResolution() at every dispatch) and recognized them as a four-step retreat around one bad decision: putting resolution as a side effect on Data.Value's getter. v3 was about to repeat the same decision in different clothes (Phase 2: 'move ResolveDeep into Data.Value lazy getter'). The sharpening: resolution lives in Data.As<T>(context) — fresh walk + substitute + convert per call, returning Data<T>. The handler's __backing field caches the result for the call; ExecuteAsync resets backing fields per call. Data is stateless w.r.t. resolution. This dissolves the entire caching cluster on Data. On the open question (callers that read .Value on parameter Data expecting resolved form), Ingi's stance: 'if it is, then it's not valid implementation. Let it break and find out.' v4 plan: same structural skeleton as v3 (Action.GetParameter, App.Run scaffolding, generator hierarchy) but Phase 2 simplifies dramatically (write As<T>, delete plaster), Phase 3 emits no ResetResolution, Phase 4 grows by EmitSnapshotEntry on ActionProperty, Phase 6 confirms-deletion instead of slim-As<T>. Risks section shrinks (Data.Value side-effect risk and cycle risk are designed out). Matrix grows by 3 cases: DataWrappedActionList (verifies As<T> doesn't walk into Action), ConcurrentHandlers (verifies stateless Data), ReResolveAcrossCalls (verifies backing-field reset gets fresh resolution)."
+        },
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Merge runtime2 into local branch (committed locally, not pushed). Build green after Ingi's 00fd25e3 fix. No code modified beyond the merge itself; v4 design lives only in .bot/."
+        }
+      ],
+      "after": {
+        "status": "v4 plan written, awaiting Ingi's read-back and approval before implementation handoff",
+        "health": "no code touched beyond the merge of origin/runtime2 (no conflicts, build green); design-only session",
+        "notes": "Architect role ends here. Recommended next bot: test-designer to flesh out the matrix (~25-28 handlers with the three new cases), then coder for Phase 1 onwards. Phase 0 review point still recommended after matrix lands."
+      }
     }
   ]
 }
