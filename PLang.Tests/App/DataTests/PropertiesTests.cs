@@ -1,7 +1,7 @@
 using global::App.Variables;
 using Type = global::App.Data.Type;
 
-namespace PLang.Tests.App.Memory;
+namespace PLang.Tests.App.DataTests;
 
 public class PropertiesTests
 {

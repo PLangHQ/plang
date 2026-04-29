@@ -1,4 +1,4 @@
-namespace PLang.Tests.App.Memory;
+namespace PLang.Tests.App.DataTests;
 
 public class DataCompareTests
 {

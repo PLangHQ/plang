@@ -1,4 +1,4 @@
-namespace PLang.Tests.App.Memory;
+namespace PLang.Tests.App.DataTests;
 
 // REWRITTEN FOR v4 (was: snapshot-once .Value semantics).
 // v4 contract: resolution lives in Data.As<T>(context), not Data.Value's getter.

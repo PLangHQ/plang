@@ -1,4 +1,4 @@
-namespace PLang.Tests.App.Memory;
+namespace PLang.Tests.App.DataTests;
 
 // Contract tests for Data.As<T>(context) — the new resolution entry point in v4 Phase 2.
 // v4 contract: As<T> walks _value, substitutes %var% via context.Variables.Get/Resolve, converts to T via TypeMapping,

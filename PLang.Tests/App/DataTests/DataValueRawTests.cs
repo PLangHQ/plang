@@ -1,4 +1,4 @@
-namespace PLang.Tests.App.Memory;
+namespace PLang.Tests.App.DataTests;
 
 // Contract tests for v4's central architectural sharpening:
 // Data.Value is RAW — read-only post-construction, no side effects, no resolution, no caching.

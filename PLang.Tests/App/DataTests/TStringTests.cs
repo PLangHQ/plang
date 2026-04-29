@@ -1,6 +1,6 @@
 using global::App.Utils;
 
-namespace PLang.Tests.App.Memory;
+namespace PLang.Tests.App.DataTests;
 
 using R2 = global::App.Data;
 
