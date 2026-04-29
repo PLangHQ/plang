@@ -314,8 +314,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
             }
             else if (prop.TypeName.Contains("App.Data.@this") && !prop.TypeName.Contains("<"))
             {
-                // Plain Data.@this — use __ResolveData which returns Data directly (preserves null Value)
-                resolveExpr = $"__ResolveData(\"{paramName}\")";
+                // Plain Data.@this — equivalent to Data<object> per v4 contract:
+                // resolves via As<object>(Context) so %var% references in scalar/list/dict
+                // values flow through the same walk that Data<T> properties use.
+                resolveExpr = $"__ResolveData(\"{paramName}\").As<object>(Context)";
                 sb.AppendLine($"    public partial {prop.TypeName} {prop.Name}");
                 sb.AppendLine("    {");
                 sb.AppendLine($"        get {{ if (!{setFlag}) {{ {backingField} = {resolveExpr}; {setFlag} = true; }} return {backingField}!; }}");
@@ -557,78 +559,41 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("    }");
         sb.AppendLine();
 
-        // __Resolve<T> helper
+        // __Resolve<T> — raw-scalar resolution helper. Delegates to data.As<T>(Context),
+        // which is the v4 resolution entry point (full match, interpolation, deep walk,
+        // TypeMapping convert — all handled centrally on Data).
         sb.AppendLine("    private T? __Resolve<T>(string name)");
         sb.AppendLine("    {");
         sb.AppendLine("        var data = __action?.Parameters?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine("        data ??= __action?.Defaults?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine("        if (data?.Value is string str && str.Contains('%'))");
+        sb.AppendLine("        if (data == null) return default;");
+        sb.AppendLine("        var typed = data.As<T>(Context);");
+        sb.AppendLine("        __paramData?[name] = typed;");
+        sb.AppendLine("        if (!typed.Success)");
         sb.AppendLine("        {");
-        sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
-        sb.AppendLine("            if (fullMatch.Success)");
-        sb.AppendLine("            {");
-        sb.AppendLine("                var __resolved = __variables!.Get(fullMatch.Groups[1].Value);");
-        sb.AppendLine("                __paramData?[name] = __resolved;");
-        sb.AppendLine("                if (__resolved != null && !__resolved.Success)");
-        sb.AppendLine("                {");
-        sb.AppendLine("                    __resolutionError = __resolved;");
-        sb.AppendLine("                    return default;");
-        sb.AppendLine("                }");
-        sb.AppendLine("                if (__resolved is T __asT) return __asT;");
-        sb.AppendLine("                return __TryConvert<T>(__resolved?.Value, name);");
-        sb.AppendLine("            }");
-        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
-        sb.AppendLine("                var __r = __variables!.Get(m.Groups[1].Value);");
-        sb.AppendLine("                // Error Data passes through — format the error instead of aborting");
-        sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
-        sb.AppendLine("                return __FormatValue(__r?.Value);");
-        sb.AppendLine("            });");
-        sb.AppendLine("            return __TryConvert<T>(interpolated, name);");
+        sb.AppendLine("            __resolutionError = typed;");
+        sb.AppendLine("            return default;");
         sb.AppendLine("        }");
-        sb.AppendLine("        if (data?.Value is System.Collections.IList || data?.Value is System.Collections.IDictionary)");
-        sb.AppendLine("        {");
-        sb.AppendLine("            var __deepResolved = __variables!.ResolveDeep(data.Value);");
-        sb.AppendLine("            __paramData?[name] = data;");
-        sb.AppendLine("            return __TryConvert<T>(__deepResolved, name);");
-        sb.AppendLine("        }");
-        sb.AppendLine("        __paramData?[name] = data;");
-        sb.AppendLine("        return data != null");
-        sb.AppendLine("            ? __TryConvert<T>(data.Value, name)");
-        sb.AppendLine("            : default;");
+        sb.AppendLine("        var __value = typed.Value;");
+        // GoalCall navigation: stamp the GoalCall with the dispatching action so goal resolution
+        // can navigate action → step → goal. Was inside __TryConvert; moved here under v4 because
+        // As<T> is the conversion entry.
+        sb.AppendLine("        if (__value is global::App.Goals.Goal.GoalCall __gc && __gc.Action == null)");
+        sb.AppendLine("            __gc.Action = __action;");
+        sb.AppendLine("        return __value;");
         sb.AppendLine("    }");
         sb.AppendLine();
 
-        // __ResolveData — returns Data directly for Data<T> properties
+        // __ResolveData — returns the raw Parameter Data for Data<T> properties.
+        // The property's getter calls .As<T>(Context) on the result, which is where
+        // resolution actually happens under v4.
         sb.AppendLine("    private global::App.Data.@this __ResolveData(string name)");
         sb.AppendLine("    {");
-        sb.AppendLine("        var data = __action?.Parameters?.FirstOrDefault(");
-        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine("        data ??= __action?.Defaults?.FirstOrDefault(");
-        sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
+        sb.AppendLine("        var data = __action?.GetParameter(name, Context!);");
         sb.AppendLine("        if (data == null) return global::App.Data.@this.NotFound(name);");
-        sb.AppendLine("        if (data.Value is string str && str.Contains('%'))");
-        sb.AppendLine("        {");
-        sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
-        sb.AppendLine("            if (fullMatch.Success)");
-        sb.AppendLine("                return __variables!.Get(fullMatch.Groups[1].Value);");
-        sb.AppendLine("            var interpolated = Regex.Replace(str, @\"%([^%]+)%\", m => {");
-        sb.AppendLine("                var __r = __variables!.Get(m.Groups[1].Value);");
-        sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
-        sb.AppendLine("                return __FormatValue(__r?.Value);");
-        sb.AppendLine("            });");
-        sb.AppendLine("            return new global::App.Data.@this(name, interpolated, data.Type);");
-        sb.AppendLine("        }");
         sb.AppendLine("        data.Context = Context;");
-        sb.AppendLine("        data.NeedsResolution = true;");
-        // The pr's Parameter Data is shared across action executions. Its
-        // resolution cache (set on first .Value access) must be cleared each
-        // call so %var% references re-resolve against the current variables.
-        // Without this, e.g. llm.query's Messages[content=\"%goalForLlm%\"]
-        // kept the first resolution forever — sub-goal builds got the parent's
-        // rendered prompt.
-        sb.AppendLine("        data.ResetResolution();");
         sb.AppendLine("        return data;");
         sb.AppendLine("    }");
         sb.AppendLine();

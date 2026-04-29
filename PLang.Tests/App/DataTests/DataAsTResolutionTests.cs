@@ -6,42 +6,198 @@ namespace PLang.Tests.App.DataTests;
 
 public class DataAsTResolutionTests
 {
-    // this is Data<T> with correct typed Value already → As<T> returns this (fast path, no allocation).
-    [Test] public async Task AsT_AlreadyTypedData_ReturnsSelf() => Assert.Fail("Not implemented");
+    private global::App.@this _app = null!;
 
-    // Value is T already (boxed) but Data is not typed → As<T> wraps in fresh Data<T>, no TypeMapping call.
-    [Test] public async Task AsT_ValueAlreadyT_FastPathWrap() => Assert.Fail("Not implemented");
+    [Before(Test)]
+    public void Setup() => _app = new global::App.@this("/app");
+
+    [After(Test)]
+    public async Task TearDown() { await _app.DisposeAsync(); }
+
+    // this is Data<T> with correct typed Value already → As<T> returns this (fast path, no allocation).
+    [Test]
+    public async Task AsT_AlreadyTypedData_ReturnsSelf()
+    {
+        var typed = new global::App.Data.@this<int>("count", 42) { Context = _app.Context };
+        var result = typed.As<int>(_app.Context);
+        await Assert.That(ReferenceEquals(result, typed)).IsTrue();
+    }
+
+    // Value is T already (boxed) but Data is not typed → As<T> wraps in fresh Data<T>.
+    [Test]
+    public async Task AsT_ValueAlreadyT_FastPathWrap()
+    {
+        var data = new Data("count", 42) { Context = _app.Context };
+        var result = data.As<int>(_app.Context);
+        await Assert.That(result).IsTypeOf<global::App.Data.@this<int>>();
+        await Assert.That(result.Value).IsEqualTo(42);
+    }
 
     // Value is "%name%" (full match), Variables.Get("name").Value is T → returns Data<T> with that value.
-    [Test] public async Task AsT_FullVarMatch_ReturnsVariableValue() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task AsT_FullVarMatch_ReturnsVariableValue()
+    {
+        _app.Context.Variables.Set("path", "/tmp/x.txt");
+        var data = new Data("p", "%path%") { Context = _app.Context };
 
-    // Value is "%name%" but Variables doesn't have "name" → returns Data.FromError or NotFound (per contract).
-    [Test] public async Task AsT_FullVarMatch_MissingVariable_ReturnsErrorOrNotFound() => Assert.Fail("Not implemented");
+        var result = data.As<string>(_app.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("/tmp/x.txt");
+    }
+
+    // Value is "%name%" but Variables doesn't have "name" → returns null/NotFound, not exception.
+    [Test]
+    public async Task AsT_FullVarMatch_MissingVariable_ReturnsErrorOrNotFound()
+    {
+        var data = new Data("p", "%missing%") { Context = _app.Context };
+
+        var result = data.As<string>(_app.Context);
+
+        // Either Data.FromError (Success=false) or empty value — both are valid contract responses.
+        await Assert.That(result).IsNotNull();
+        await Assert.That(result.Value).IsNull();
+    }
 
     // Value is "Hello %name%" (partial) → Variables.Resolve invoked, result cast to T.
-    [Test] public async Task AsT_Interpolation_CallsResolve() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task AsT_Interpolation_CallsResolve()
+    {
+        _app.Context.Variables.Set("name", "world");
+        var data = new Data("greeting", "Hello %name%") { Context = _app.Context };
 
-    // Value is List<object?> with nested %var% strings → walks list, substitutes, converts to typed List<T>.
-    [Test] public async Task AsT_ListWithNestedVars_DeepResolvesAndTypes() => Assert.Fail("Not implemented");
+        var result = data.As<string>(_app.Context);
 
-    // Value is Dictionary<string, object?> with %var% in values → walks, substitutes, converts to typed Dict.
-    [Test] public async Task AsT_DictWithNestedVars_DeepResolvesAndTypes() => Assert.Fail("Not implemented");
+        await Assert.That(result.Value).IsEqualTo("Hello world");
+    }
 
-    // T has static Resolve(string, Context) (e.g., FileSystem.Path) and Value is string → calls it.
-    [Test] public async Task AsT_TypeWithStaticResolve_StringValue_DispatchesToResolve() => Assert.Fail("Not implemented");
+    // Value is List<object?> with nested %var% strings → walks list, substitutes, converts to List<T>.
+    [Test]
+    public async Task AsT_ListWithNestedVars_DeepResolvesAndTypes()
+    {
+        _app.Context.Variables.Set("greeting", "hello");
+        var raw = new List<object?> { "%greeting%", "world" };
+        var data = new Data("list", raw) { Context = _app.Context };
 
-    // TypeMapping conversion failure → Data.FromError with structured error message.
-    [Test] public async Task AsT_ConversionFailure_ReturnsFromError() => Assert.Fail("Not implemented");
+        var result = data.As<List<string>>(_app.Context);
 
-    // Two consecutive As<T> calls with the same context → walk runs twice, two fresh Data<T> instances (not cached on Data).
-    [Test] public async Task AsT_CalledTwice_FreshResolutionEachCall() => Assert.Fail("Not implemented");
+        await Assert.That(result.Value).IsNotNull();
+        await Assert.That(result.Value![0]).IsEqualTo("hello");
+        await Assert.That(result.Value[1]).IsEqualTo("world");
+    }
+
+    // Value is Dictionary<string, object?> with %var% in values → walks, substitutes, converts.
+    [Test]
+    public async Task AsT_DictWithNestedVars_DeepResolvesAndTypes()
+    {
+        _app.Context.Variables.Set("prompt", "You are a compiler");
+        var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
+        var data = new Data("dict", raw) { Context = _app.Context };
+
+        var result = data.As<Dictionary<string, object?>>(_app.Context);
+
+        await Assert.That(result.Value).IsNotNull();
+        await Assert.That(result.Value!["content"]).IsEqualTo("You are a compiler");
+    }
+
+    // T has static Resolve(string, Context) (e.g., FileSystem.Path) → As<T> dispatches to it for string Values.
+    [Test]
+    public async Task AsT_TypeWithStaticResolve_StringValue_DispatchesToResolve()
+    {
+        var data = new Data("file", "subdir/file.txt") { Context = _app.Context };
+
+        var result = data.As<global::App.FileSystem.Path>(_app.Context);
+
+        // FileSystem.Path.Resolve returned a Path instance — Value should be one.
+        await Assert.That(result.Value).IsNotNull();
+        await Assert.That(result.Value).IsTypeOf<global::App.FileSystem.Path>();
+    }
+
+    // TypeMapping conversion failure → Data.FromError with structured error.
+    [Test]
+    public async Task AsT_ConversionFailure_ReturnsFromError()
+    {
+        var data = new Data("count", "not-a-number") { Context = _app.Context };
+
+        var result = data.As<int>(_app.Context);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+    }
+
+    // Two consecutive As<T> calls with the same context → walk runs twice, two fresh Data<T> instances.
+    [Test]
+    public async Task AsT_CalledTwice_FreshResolutionEachCall()
+    {
+        _app.Context.Variables.Set("x", "first");
+        var data = new Data("v", "%x%") { Context = _app.Context };
+
+        var first = data.As<string>(_app.Context);
+        await Assert.That(first.Value).IsEqualTo("first");
+
+        _app.Context.Variables.Set("x", "second");
+        var second = data.As<string>(_app.Context);
+        await Assert.That(second.Value).IsEqualTo("second");
+
+        // Two distinct instances — neither is a cache.
+        await Assert.That(ReferenceEquals(first, second)).IsFalse();
+    }
 
     // After first As<T>, original Data._value is unchanged (raw preserved).
-    [Test] public async Task AsT_DoesNotMutateOriginalDataValue() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task AsT_DoesNotMutateOriginalDataValue()
+    {
+        _app.Context.Variables.Set("x", "resolved");
+        var data = new Data("v", "%x%") { Context = _app.Context };
 
-    // List<Action.@this> elements pass through As<T> WITHOUT walking into Action (no recursion into sub-actions).
-    [Test] public async Task AsT_ActionListElements_NotRecursedInto() => Assert.Fail("Not implemented");
+        var resolved = data.As<string>(_app.Context);
+        await Assert.That(resolved.Value).IsEqualTo("resolved");
+
+        // Original .Value is still raw.
+        await Assert.That(data.Value).IsEqualTo("%x%");
+    }
+
+    // List<Action.@this> elements pass through As<T> WITHOUT walking into Action templates.
+    [Test]
+    public async Task AsT_ActionListElements_NotRecursedInto()
+    {
+        _app.Context.Variables.Set("comment", "should-NOT-substitute");
+        // A list of action-template-shaped dictionaries; sub-actions hold raw %var% for deferred resolution.
+        var raw = new List<object?>
+        {
+            new Dictionary<string, object?>
+            {
+                ["module"] = "variable",
+                ["action"] = "set",
+                ["parameters"] = new List<Data>
+                {
+                    new("comment", "%comment%")
+                }
+            }
+        };
+        var data = new Data("actions", raw) { Context = _app.Context };
+
+        var result = data.As<List<PrAction>>(_app.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNotNull();
+        // The substituted value should NOT have appeared inside the Action template — the raw %comment% remains.
+        var firstAction = result.Value![0];
+        var commentParam = firstAction.Parameters?.FirstOrDefault(p => p.Name == "comment");
+        await Assert.That(commentParam).IsNotNull();
+        await Assert.That(commentParam!.Value).IsEqualTo("%comment%");
+    }
 
     // Fresh context with different variable values → As<T> picks up the new values, no stale cache.
-    [Test] public async Task AsT_DifferentContext_PicksUpFreshVariableValues() => Assert.Fail("Not implemented");
+    [Test]
+    public async Task AsT_DifferentContext_PicksUpFreshVariableValues()
+    {
+        var data = new Data("v", "%x%");
+
+        await using var app2 = new global::App.@this("/app2");
+        app2.Context.Variables.Set("x", "from-app2");
+
+        var result = data.As<string>(app2.Context);
+        await Assert.That(result.Value).IsEqualTo("from-app2");
+    }
 }

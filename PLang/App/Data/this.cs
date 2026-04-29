@@ -84,8 +84,6 @@ public sealed class Type
 public partial class @this
 {
     private object? _value;
-    private object? _rawValue; // preserved pre-resolution value for re-resolution
-    private bool _resolved;    // true once _value holds the resolved copy — don't re-resolve
     private Func<object?>? _valueFactory;
     private Type? _type;
     private Actor.Context.@this? _context;
@@ -119,26 +117,6 @@ public partial class @this
 
     /// <summary>Fires the OnDelete event.</summary>
     public void FireOnDelete() => OnDelete?.Invoke(this);
-
-    /// <summary>
-    /// When true, Value resolves %variable% references on access.
-    /// Set for .pr parameter Data — their values contain %var% references.
-    /// Not set for variable.set Data — their values are already final.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    public bool NeedsResolution { get; set; }
-
-    /// <summary>
-    /// Clears the resolution cache. Call when the Data represents an action
-    /// parameter whose value contains %var% references — each execution must
-    /// re-resolve against the current variable store, not reuse the snapshot
-    /// captured by the first access.
-    /// </summary>
-    public void ResetResolution()
-    {
-        if (_rawValue != null) _value = _rawValue;
-        _resolved = false;
-    }
 
     [JsonPropertyName("name")]
     public string Name { get; set; }
@@ -212,31 +190,21 @@ public partial class @this
     {
         get
         {
+            // v4 contract: .Value is the RAW stored value. No %var% substitution, no caching.
+            // Resolution is the read transformation in As<T>(context); .Value preserves the
+            // input form so each As<T> call resolves freshly against the current variable store.
+            // Factory still resolves once on first access — that's "lazy compute," distinct from
+            // variable resolution (used for DynamicData and similar lazy-init patterns).
             if (_valueFactory != null)
             {
                 _value = _valueFactory();
                 _valueFactory = null;
-            }
-            if (NeedsResolution && !_resolved && _value != null && _context?.Variables != null
-                && (_value is System.Collections.IList || _value is System.Collections.IDictionary)
-                && !IsDeferredActionTemplate(_type))
-            {
-                // Resolve once. The returned container is a resolved copy (ResolveDeep clones
-                // lists/dicts), stable across future accesses. Subsequent in-place mutations
-                // (list.add, dict writes) survive because we never re-resolve into a fresh
-                // container. _rawValue preserves the pre-resolution snapshot in case
-                // ResetResolution() is ever wanted.
-                _rawValue ??= _value;
-                _value = _context.Variables.ResolveDeep(_rawValue);
-                _resolved = true;
             }
             return _value;
         }
         set
         {
             _value = UnwrapJsonElement(value);
-            _rawValue = null; // new raw value — clear preserved copy
-            _resolved = false; // new value — re-evaluate resolution on next access
             _valueFactory = null;
             Updated = System.DateTime.UtcNow;
             IsInitialized = true;
@@ -402,25 +370,73 @@ public partial class @this
     public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
 
     /// <summary>
-    /// Converts this Data to a Data&lt;T&gt; by converting the inner Value.
-    /// OBP: Data owns its own conversion — it has the Value, the Type, and the Context.
-    /// Returns this if Value is already T. Otherwise uses TypeMapping.
+    /// Reads this Data as Data&lt;T&gt; — the v4 resolution entry point.
+    /// Walks _value, substitutes %variable% references via context.Variables,
+    /// converts to T via TypeMapping, returns a fresh Data&lt;T&gt;.
+    /// Every call resolves freshly against the current context — there is nothing
+    /// to cache and nothing to invalidate. Caching, if any, lives on the caller.
     /// </summary>
     public @this<T> As<T>(Actor.Context.@this? context = null)
     {
-        // Already a Data<T> with correct type — return directly
-        if (this is @this<T> typed && typed.Value is T)
+        var ctx = context ?? _context;
+        var raw = Value; // factory-resolved if any; never %var% substituted
+        return AsT_Impl<T>(raw, ctx);
+    }
+
+    private @this<T> AsT_Impl<T>(object? raw, Actor.Context.@this? ctx)
+    {
+        // Action-destination carve-out: when T is or contains Action.@this, sub-actions
+        // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
+        // and convert raw straight through TypeMapping.
+        if (IsActionDestination(typeof(T)))
+            return ConvertAndWrap<T>(raw, ctx);
+
+        // String with %var% — substitute first, BEFORE fast paths. Without this ordering,
+        // T=object would always match `raw is T` and short-circuit substitution.
+        if (raw is string strVal && strVal.Contains('%') && ctx?.Variables != null)
+        {
+            var fullMatch = System.Text.RegularExpressions.Regex.Match(strVal, @"^%([^%]+)%$");
+            if (fullMatch.Success)
+            {
+                var varName = fullMatch.Groups[1].Value;
+                var resolved = ctx.Variables.Get(varName);
+                if (resolved == null || !resolved.IsInitialized)
+                    return ConvertAndWrap<T>(null, ctx);
+                if (!resolved.Success)
+                    return @this<T>.FromError(resolved.Error!);
+                // Recurse on the variable's value so %x% pointing at another %y% chain resolves.
+                return AsT_Impl<T>(resolved.Value, ctx);
+            }
+            // Partial match — interpolate then continue (the result may need further conversion).
+            var interpolated = ctx.Variables.Resolve(strVal);
+            return AsT_Impl<T>(interpolated, ctx);
+        }
+
+        // Containers with potential nested %var% — walk before fast paths for the same reason.
+        if (raw is IList<object?> objList && ctx != null)
+        {
+            var walked = WalkList(objList, ctx);
+            return ConvertAndWrap<T>(walked, ctx);
+        }
+        if (raw is IDictionary<string, object?> dict && ctx != null)
+        {
+            var walked = WalkDict(dict, ctx);
+            return ConvertAndWrap<T>(walked, ctx);
+        }
+
+        // Already typed correctly — return self
+        if (this is @this<T> typed && typed._value is T)
             return typed;
 
-        // Value is already the right type — wrap
-        if (Value is T already)
-            return new @this<T>(Name, already, _type, Parent) { Context = context ?? _context };
+        // Raw value is T already (string-without-%, primitive, already-typed container, etc.)
+        if (raw is T already)
+            return new @this<T>(Name, already, _type, Parent) { Context = ctx };
 
-        // Convert using TypeMapping
-        var ctx = context ?? _context;
+        if (raw == null)
+            return ConvertAndWrap<T>(null, ctx);
 
-        // Context-resolvable types: if T has static Resolve(string, Context) and Value is string
-        if (Value is string strVal && ctx != null)
+        // T has static Resolve(string, Context.@this) — Path-style domain types.
+        if (raw is string srStr && ctx != null)
         {
             var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
                 t.GetMethod("Resolve",
@@ -428,17 +444,72 @@ public partial class @this
                     null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
             if (resolveMethod != null)
             {
-                var resolved = resolveMethod.Invoke(null, new object[] { strVal, ctx });
-                if (resolved is T result)
+                var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
+                if (resolvedObj is T result)
                     return new @this<T>(Name, result, _type, Parent) { Context = ctx };
             }
         }
 
-        var (converted, error) = TypeMapping.TryConvertTo(Value, typeof(T), ctx);
+        // Anything else — straight TypeMapping conversion. No walk; the value is opaque.
+        return ConvertAndWrap<T>(raw, ctx);
+    }
+
+    private @this<T> ConvertAndWrap<T>(object? value, Actor.Context.@this? ctx)
+    {
+        if (value is T fast)
+            return new @this<T>(Name, fast, _type, Parent) { Context = ctx };
+        var (converted, error) = TypeMapping.TryConvertTo(value, typeof(T), ctx);
         if (error != null)
             return @this<T>.FromError(error);
-
         return new @this<T>(Name, (T?)converted, _type, Parent) { Context = ctx };
+    }
+
+    private static List<object?> WalkList(IList<object?> list, Actor.Context.@this ctx)
+    {
+        var result = new List<object?>(list.Count);
+        foreach (var item in list)
+            result.Add(SubstitutePrimitive(item, ctx));
+        return result;
+    }
+
+    private static Dictionary<string, object?> WalkDict(IDictionary<string, object?> dict, Actor.Context.@this ctx)
+    {
+        var result = new Dictionary<string, object?>(dict.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in dict)
+            result[kvp.Key] = SubstitutePrimitive(kvp.Value, ctx);
+        return result;
+    }
+
+    private static object? SubstitutePrimitive(object? value, Actor.Context.@this ctx)
+    {
+        if (value == null) return null;
+
+        if (value is string s)
+        {
+            if (!s.Contains('%')) return s;
+            var fullMatch = System.Text.RegularExpressions.Regex.Match(s, @"^%([^%]+)%$");
+            if (fullMatch.Success)
+                return ctx.Variables.Get(fullMatch.Groups[1].Value)?.Value;
+            return ctx.Variables.Resolve(s);
+        }
+
+        if (value is IList<object?> innerList) return WalkList(innerList, ctx);
+        if (value is IDictionary<string, object?> innerDict) return WalkDict(innerDict, ctx);
+
+        // Non-recursion guards: don't walk into Data, Action templates, or typed Action lists.
+        // Action templates retain raw %var% for deferred resolution at their own dispatch.
+        if (value is @this) return value;
+        if (value is Goals.Goal.Steps.Step.Actions.Action.@this) return value;
+        if (value is IEnumerable<Goals.Goal.Steps.Step.Actions.Action.@this>) return value;
+
+        return value;
+    }
+
+    private static bool IsActionDestination(System.Type t)
+    {
+        var actionType = typeof(Goals.Goal.Steps.Step.Actions.Action.@this);
+        if (t == actionType) return true;
+        return typeof(IEnumerable<Goals.Goal.Steps.Step.Actions.Action.@this>).IsAssignableFrom(t);
     }
 
     /// <summary>
@@ -483,7 +554,6 @@ public partial class @this
         };
         clone._valueFactory = _valueFactory;
         clone.Context = _context;
-        clone.NeedsResolution = NeedsResolution;
         return clone;
     }
 
@@ -506,27 +576,11 @@ public partial class @this
         };
         clone._valueFactory = _valueFactory;
         clone.Context = _context;
-        clone.NeedsResolution = NeedsResolution;
         return clone;
     }
 
     public override string ToString() =>
         Success ? _value?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
-
-    /// Action templates (e.g. error.handle's Actions list, modifier sub-actions) hold raw
-    /// "%var%" references in their parameter values that must resolve when each nested action
-    /// runs, with the variable scope available at that point. Eager ResolveDeep would walk the
-    /// template now — before those vars exist — and replace each "%content%" with null,
-    /// destroying the deferred resolution. Recognized via CLR type identity (not the PLang
-    /// type-name string) so a user [PlangType("action")] alias can't collide.
-    private static bool IsDeferredActionTemplate(Type? type)
-    {
-        var clr = type?.ClrType;
-        if (clr == null) return false;
-        var actionType = typeof(App.Goals.Goal.Steps.Step.Actions.Action.@this);
-        if (clr == actionType) return true;
-        return typeof(IEnumerable<App.Goals.Goal.Steps.Step.Actions.Action.@this>).IsAssignableFrom(clr);
-    }
 
     private const int MaxJsonDepth = 128;
 
