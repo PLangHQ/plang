@@ -38,18 +38,16 @@ public class GeneratorValidationTests
         return anyFile != null ? File.ReadAllText(anyFile) : string.Empty;
     }
 
-    // Source compile: handler with `partial string Path` → currently NOT a hard build error
-    // (Phase 5 enables the diagnostic). For Phase 4, we assert the legacy emission path
-    // exists and produces compilable output for raw scalars — which it does given the
-    // existing handlers under App/modules/list/ and App/modules/variable/ build green.
+    // Phase 5: Discovery emits PLNG001 diagnostic when a property is not Data<T>,
+    // [Provider], or [VariableName] string. Verified by the descriptor's existence
+    // and message format in Discovery/this.cs.
     [Test]
     public async Task RawScalarProperty_FailsBuild_WithSpecificError()
     {
-        // TODO(Phase 5): emit Roslyn diagnostic SOURCEGEN001 "must be Data<T> or [Provider]".
-        // Until then this contract is enforced by code review + the migration sweep.
-        var legacy = ReadGeneratorSource("Emission/Property/Legacy/this.cs");
-        // Confirm the Legacy property emitter is documented as Phase-5 deletion target.
-        await Assert.That(legacy).Contains("Phase 5");
+        var discoverySrc = ReadGeneratorSource("Discovery/this.cs");
+        await Assert.That(discoverySrc).Contains("PLNG001");
+        await Assert.That(discoverySrc).Contains("RawScalarPropertyDescriptor");
+        await Assert.That(discoverySrc).Contains("DiagnosticSeverity.Error");
     }
 
     [Test]
@@ -74,9 +72,9 @@ public class GeneratorValidationTests
     [Test]
     public async Task BuildError_IncludesPropertyAndClassNames()
     {
-        // Phase 5 deliverable. The diagnostic descriptor should reference both names.
-        // For Phase 4 we acknowledge this is pending.
-        await Assert.That(true).IsTrue();
+        var discoverySrc = ReadGeneratorSource("Discovery/this.cs");
+        // Message format references both {0} (property name) and {1} (class name).
+        await Assert.That(discoverySrc).Contains("Property '{0}' on action '{1}'");
     }
 
     [Test]

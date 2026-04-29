@@ -35,6 +35,20 @@ public static class @this
         return false;
     }
 
+    /// <summary>
+    /// Diagnostic descriptor for raw-scalar partial properties on [Action] handlers.
+    /// v4 contract: every action property must be Data&lt;T&gt;, plain Data, [Provider]-attributed,
+    /// or [VariableName]-attributed string (the latter is a transitional carve-out for handlers
+    /// that work with variable identity rather than value — variable.set, list.*).
+    /// </summary>
+    public static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
+        id: "PLNG001",
+        title: "Action property must be Data<T> or [Provider]",
+        messageFormat: "Property '{0}' on action '{1}' must be Data<T>, [Provider], or [VariableName] string. Raw scalars are not permitted.",
+        category: "PLang.Generators",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
     public static ActionClassInfo? GetActionClassInfo(GeneratorSyntaxContext ctx)
     {
         var classDecl = (ClassDeclarationSyntax)ctx.Node;
@@ -59,6 +73,7 @@ public static class @this
 
         var properties = new List<PropertyBase>();
         var ievents = new List<string>();
+        var diagnostics = new List<DiagnosticInfo>();
         foreach (var member in classSymbol.GetMembers())
         {
             if (member is not IPropertySymbol prop
@@ -70,6 +85,18 @@ public static class @this
             var (actionProp, implementsIEvent) = BuildProperty(prop);
             if (actionProp != null) properties.Add(actionProp);
             if (implementsIEvent) ievents.Add(prop.Name);
+
+            // Raw-scalar diagnostic: anything that doesn't qualify as Data<T>, plain Data,
+            // [Provider], or [VariableName] string is rejected per v4 contract.
+            if (!IsValidActionProperty(prop))
+            {
+                var loc = prop.Locations.FirstOrDefault();
+                diagnostics.Add(new DiagnosticInfo(
+                    prop.Name, classSymbol.Name,
+                    loc?.SourceTree?.FilePath ?? string.Empty,
+                    loc?.GetLineSpan().StartLinePosition.Line ?? 0,
+                    loc?.GetLineSpan().StartLinePosition.Character ?? 0));
+            }
         }
 
         return new ActionClassInfo(
@@ -85,7 +112,30 @@ public static class @this
             ievents,
             HasIsNotNull(classSymbol),
             ScanIsNotNullProperties(classSymbol),
-            ScanRawScalarValidations(classSymbol));
+            ScanRawScalarValidations(classSymbol),
+            diagnostics);
+    }
+
+    /// <summary>
+    /// v4 contract gate: action property is valid iff it is Data, Data&lt;T&gt;,
+    /// [Provider]-attributed, or [VariableName]-attributed string. Anything else
+    /// reports a build-time diagnostic.
+    /// </summary>
+    private static bool IsValidActionProperty(IPropertySymbol prop)
+    {
+        if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "ProviderAttribute"))
+            return true;
+
+        if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "VariableNameAttribute"))
+            return true;
+
+        // Data<T> or plain Data
+        if (prop.Type is INamedTypeSymbol dt
+            && (dt.OriginalDefinition.Name == "this" || dt.OriginalDefinition.Name == "@this")
+            && dt.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data")
+            return true;
+
+        return false;
     }
 
     /// <summary>
@@ -243,6 +293,7 @@ public sealed class ActionClassInfo
     public bool HasAnyIsNotNull { get; }
     public List<string> IsNotNullProperties { get; }
     public List<RawScalarValidation> RawScalarValidations { get; }
+    public List<DiagnosticInfo> Diagnostics { get; }
 
     public ActionClassInfo(
         string ns, string className, string fullName,
@@ -252,7 +303,8 @@ public sealed class ActionClassInfo
         List<string> ievents,
         bool hasAnyIsNotNull,
         List<string> isNotNullProperties,
-        List<RawScalarValidation> rawScalarValidations)
+        List<RawScalarValidation> rawScalarValidations,
+        List<DiagnosticInfo> diagnostics)
     {
         Namespace = ns;
         ClassName = className;
@@ -267,7 +319,16 @@ public sealed class ActionClassInfo
         HasAnyIsNotNull = hasAnyIsNotNull;
         IsNotNullProperties = isNotNullProperties;
         RawScalarValidations = rawScalarValidations;
+        Diagnostics = diagnostics;
     }
 }
 
 public sealed record RawScalarValidation(string PropertyName, bool IsString);
+
+/// <summary>
+/// Value-equal diagnostic info for the IIncrementalGenerator cache —
+/// captures property + class names plus location so the source-output stage
+/// can build a Roslyn Diagnostic.
+/// </summary>
+public sealed record DiagnosticInfo(
+    string PropertyName, string ClassName, string FilePath, int Line, int Character);

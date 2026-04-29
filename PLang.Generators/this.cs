@@ -24,6 +24,23 @@ public class LazyParamsGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(actionDeclarations, static (spc, info) =>
         {
             if (info is null) return;
+
+            // Emit any v4-contract diagnostics first (raw-scalar non-Data<T> properties).
+            foreach (var d in info.Diagnostics)
+            {
+                var location = !string.IsNullOrEmpty(d.FilePath)
+                    ? Location.Create(d.FilePath,
+                        Microsoft.CodeAnalysis.Text.TextSpan.FromBounds(0, 0),
+                        new Microsoft.CodeAnalysis.Text.LinePositionSpan(
+                            new Microsoft.CodeAnalysis.Text.LinePosition(d.Line, d.Character),
+                            new Microsoft.CodeAnalysis.Text.LinePosition(d.Line, d.Character + 1)))
+                    : Location.None;
+                spc.ReportDiagnostic(Diagnostic.Create(
+                    Discovery.@this.RawScalarPropertyDescriptor,
+                    location,
+                    d.PropertyName, d.ClassName));
+            }
+
             var source = ActionEmitter.Emit(info);
             spc.AddSource(SanitizeHintName($"{info.FullName}.Action.g.cs"), source);
         });

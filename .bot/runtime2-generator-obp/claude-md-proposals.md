@@ -21,3 +21,20 @@ Convention: when a test folder needs to mirror `PLang/App/Data/` or `PLang/App/V
 
 The same applies to any future global alias whose name is also a directory under `PLang/App/` (e.g., `Channel`, `Step`, `Goal`).
 ```
+
+## coder — v1 — 2026-04-29
+**Target:** /PLang/App/CLAUDE.md
+**Why:** v4 plan called for deleting `[VariableName]`, but the variable.set / list.* handlers need the variable's *name* (not its value) — a first-class concept distinct from value lookup. After As<T>(Context), the resulting Data carries the parameter property's Name (e.g., "list"), not the variable name (e.g., "products"). [VariableName] remains the cleanest expression of "I want the name, not the value." Phase 5 enabled the build-time gate (PLNG001) but kept [VariableName] as a recognized exemption alongside Data<T>/[Provider]. Future work could fold this into As<T> by preserving the variable name on full-match resolution, but it's a contract change that needs design.
+**Proposed change:**
+Add to "Module conventions" or similar:
+
+```markdown
+## Property kinds (v4)
+
+Action handler properties must be one of:
+- `Data<T>` (or plain `Data`) — the standard form. Resolution flows through `As<T>(Context)`.
+- `[Provider]` — eagerly injected from `App.Providers`.
+- `[VariableName] string` — the variable's *name* with `%` markers stripped. Used by handlers that work with variable identity rather than value (variable.set, list.*).
+
+Anything else fails the build with PLNG001.
+```
