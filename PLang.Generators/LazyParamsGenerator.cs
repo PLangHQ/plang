@@ -200,34 +200,34 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine();
         sb.AppendLine($"namespace {info.Namespace};");
         sb.AppendLine();
-        sb.AppendLine($"partial class {info.ClassName} : App.modules.ICodeGenerated");
+        sb.AppendLine($"partial class {info.ClassName} : global::App.modules.ICodeGenerated");
         sb.AppendLine("{");
 
         // IContext auto-provision
         if (info.ImplementsIContext)
         {
-            sb.AppendLine("    public App.Actor.Context.@this Context { get; set; } = null!;");
+            sb.AppendLine("    public global::App.Actor.Context.@this Context { get; set; } = null!;");
             sb.AppendLine();
         }
 
         // IChannel auto-provision
         if (info.ImplementsIChannel)
         {
-            sb.AppendLine("    public App.Channels.@this Channels { get; set; } = null!;");
+            sb.AppendLine("    public global::App.Channels.@this Channels { get; set; } = null!;");
             sb.AppendLine();
         }
 
         // IAction auto-provision
         if (info.ImplementsIAction)
         {
-            sb.AppendLine("    public App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;");
+            sb.AppendLine("    public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;");
             sb.AppendLine();
         }
 
         // IStep auto-provision
         if (info.ImplementsIStep)
         {
-            sb.AppendLine("    public App.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;");
+            sb.AppendLine("    public global::App.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;");
             sb.AppendLine();
         }
 
@@ -239,10 +239,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
 
         // Resolution state
-        sb.AppendLine("    private App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
-        sb.AppendLine("    private App.Variables.@this? __variables;");
-        sb.AppendLine("    private App.@this? __app;");
-        sb.AppendLine("    private App.Data.@this? __resolutionError;");
+        sb.AppendLine("    private global::App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
+        sb.AppendLine("    private global::App.Variables.@this? __variables;");
+        sb.AppendLine("    private global::App.@this? __app;");
+        sb.AppendLine("    private global::App.Data.@this? __resolutionError;");
         sb.AppendLine();
 
         // Partial property implementations
@@ -300,7 +300,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 else if (prop.DefaultValue != null)
                 {
                     // Non-nullable Data<T> with [Default] — use default when not found
-                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ var __d = __ResolveData(\"{paramName}\"); {backingField} = __d.IsEmpty ? new App.Data.@this<{innerType}>(\"{paramName}\", ({innerType}){prop.DefaultValue}) : __d.As<{innerType}>(Context); }} return {backingField}!; }}");
+                    sb.AppendLine($"        get {{ if ({backingField} == null) {{ var __d = __ResolveData(\"{paramName}\"); {backingField} = __d.IsEmpty ? new global::App.Data.@this<{innerType}>(\"{paramName}\", ({innerType}){prop.DefaultValue}) : __d.As<{innerType}>(Context); }} return {backingField}!; }}");
                 }
                 else
                 {
@@ -370,8 +370,8 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         // ParamData() accessor — gives handler access to the underlying Data for any parameter
         // Usage: ParamData(nameof(Size))?.Error, ParamData(nameof(FilePath))?.Success
-        sb.AppendLine("    private System.Collections.Generic.Dictionary<string, App.Data.@this?>? __paramData;");
-        sb.AppendLine("    protected App.Data.@this? ParamData(string paramName)");
+        sb.AppendLine("    private System.Collections.Generic.Dictionary<string, global::App.Data.@this?>? __paramData;");
+        sb.AppendLine("    protected global::App.Data.@this? ParamData(string paramName)");
         sb.AppendLine("        => __paramData != null && __paramData.TryGetValue(paramName, out var d) ? d : null;");
         sb.AppendLine();
 
@@ -380,22 +380,22 @@ public class LazyParamsGenerator : IIncrementalGenerator
         var hasDataProperty = info.Properties.Any(p => p.Name == "Data");
         if (!hasDataProperty)
         {
-            sb.AppendLine("    protected static App.Data.@this Data() => App.Data.@this.Ok();");
-            sb.AppendLine("    protected static App.Data.@this Data(object? value) => App.Data.@this.Ok(value);");
-            sb.AppendLine("    protected static App.Data.@this Data(object? value, App.Data.Type? type) => App.Data.@this.Ok(value, type);");
+            sb.AppendLine("    protected static global::App.Data.@this Data() => global::App.Data.@this.Ok();");
+            sb.AppendLine("    protected static global::App.Data.@this Data(object? value) => global::App.Data.@this.Ok(value);");
+            sb.AppendLine("    protected static global::App.Data.@this Data(object? value, global::App.Data.Type? type) => global::App.Data.@this.Ok(value, type);");
         }
         var hasErrorProperty = info.Properties.Any(p => p.Name == "Error");
         if (!hasErrorProperty)
         {
-            sb.AppendLine("    protected static App.Data.@this Error(App.Errors.IError error) => App.Data.@this.FromError(error);");
+            sb.AppendLine("    protected static global::App.Data.@this Error(global::App.Errors.IError error) => global::App.Data.@this.FromError(error);");
         }
         sb.AppendLine();
 
         // ExecuteAsync
         // __action is set by App.Run (from ICodeGenerated), __action removed
         sb.AppendLine();
-        sb.AppendLine("    public async System.Threading.Tasks.Task<App.Data.@this> ExecuteAsync(");
-        sb.AppendLine("        App.Goals.Goal.Steps.Step.Actions.Action.@this action, App.Actor.Context.@this context)");
+        sb.AppendLine("    public async System.Threading.Tasks.Task<global::App.Data.@this> ExecuteAsync(");
+        sb.AppendLine("        global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.Actor.Context.@this context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __action = action;");
         sb.AppendLine("        __variables = context.Variables;");
@@ -414,7 +414,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         }
         sb.AppendLine("        }");
         sb.AppendLine("        var __step = __action?.Step;");
-        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<App.CallStack.CallFrame>)System.Array.Empty<App.CallStack.CallFrame>();");
+        sb.AppendLine("        var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<global::App.CallStack.CallFrame>)System.Array.Empty<global::App.CallStack.CallFrame>();");
 
         if (info.ImplementsIContext)
         {
@@ -502,10 +502,10 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 sb.AppendLine($"                var __prValue = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{prop.Name}\", System.StringComparison.OrdinalIgnoreCase))?.Value?.ToString() ?? \"(unknown)\";");
                 sb.AppendLine($"                var __stepText = __step?.Text ?? \"(unknown step)\";");
                 sb.AppendLine($"                if (__stepText.Length > 80) __stepText = __stepText[..80] + \"...\";");
-                sb.AppendLine($"                var __err = new App.Errors.ServiceError(");
+                sb.AppendLine($"                var __err = new global::App.Errors.ServiceError(");
                 sb.AppendLine($"                    $\"'{{__prValue}}' is empty — nothing to use as '{prop.Name.ToLowerInvariant()}' in step: {{__stepText}}\", __step, __callFrames, \"MissingParameter\", 400);");
                 sb.AppendLine($"                __err.Context = context;");
-                sb.AppendLine($"                return App.Data.@this.FromError(__err);");
+                sb.AppendLine($"                return global::App.Data.@this.FromError(__err);");
                 sb.AppendLine("            }");
             }
         }
@@ -522,7 +522,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
                 {
                     var paramName = prop.Name.ToLowerInvariant();
                     sb.AppendLine($"            if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, \"{paramName}\", StringComparison.OrdinalIgnoreCase))?.Value == null)");
-                    sb.AppendLine($"                return App.Data.@this.FromError(new App.Errors.ServiceError(");
+                    sb.AppendLine($"                return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(");
                     sb.AppendLine($"                    \"'{paramName}' must have a value\", __step, __callFrames, \"ValueRequired\", 400));");
                 }
             }
@@ -535,16 +535,16 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("        try");
         sb.AppendLine("        {");
         sb.AppendLine("            var __runResult = await Run();");
-        sb.AppendLine("            if (!__runResult.Success && __runResult.Error is App.Errors.Error __runErr && __runErr.Params == null)");
+        sb.AppendLine("            if (!__runResult.Success && __runResult.Error is global::App.Errors.Error __runErr && __runErr.Params == null)");
         sb.AppendLine("                __runErr.Params = __SnapshotParams();");
         sb.AppendLine("            return __runResult;");
         sb.AppendLine("        }");
         sb.AppendLine("        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))");
         sb.AppendLine("        {");
-        sb.AppendLine("            var __exErr = new App.Errors.ServiceError(");
+        sb.AppendLine("            var __exErr = new global::App.Errors.ServiceError(");
         sb.AppendLine("                ex.Message, __step, __callFrames, \"ServiceError\", 400) { Exception = ex };");
         sb.AppendLine("            __exErr.Params = __SnapshotParams();");
-        sb.AppendLine("            return App.Data.@this.FromError(__exErr);");
+        sb.AppendLine("            return global::App.Data.@this.FromError(__exErr);");
         sb.AppendLine("        }");
         sb.AppendLine("        finally");
         sb.AppendLine("        {");
@@ -601,13 +601,13 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine();
 
         // __ResolveData — returns Data directly for Data<T> properties
-        sb.AppendLine("    private App.Data.@this __ResolveData(string name)");
+        sb.AppendLine("    private global::App.Data.@this __ResolveData(string name)");
         sb.AppendLine("    {");
         sb.AppendLine("        var data = __action?.Parameters?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine("        data ??= __action?.Defaults?.FirstOrDefault(");
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
-        sb.AppendLine("        if (data == null) return App.Data.@this.NotFound(name);");
+        sb.AppendLine("        if (data == null) return global::App.Data.@this.NotFound(name);");
         sb.AppendLine("        if (data.Value is string str && str.Contains('%'))");
         sb.AppendLine("        {");
         sb.AppendLine("            var fullMatch = Regex.Match(str, @\"^%([^%]+)%$\");");
@@ -618,7 +618,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
         sb.AppendLine("                if (__r != null && !__r.Success) return __r.ToString();");
         sb.AppendLine("                return __FormatValue(__r?.Value);");
         sb.AppendLine("            });");
-        sb.AppendLine("            return new App.Data.@this(name, interpolated, data.Type);");
+        sb.AppendLine("            return new global::App.Data.@this(name, interpolated, data.Type);");
         sb.AppendLine("        }");
         sb.AppendLine("        data.Context = Context;");
         sb.AppendLine("        data.NeedsResolution = true;");
@@ -635,18 +635,18 @@ public class LazyParamsGenerator : IIncrementalGenerator
 
         sb.AppendLine("    private T? __TryConvert<T>(object? value, string paramName)");
         sb.AppendLine("    {");
-        sb.AppendLine("        var (__result, __error) = App.Utils.TypeMapping.TryConvertTo(value, typeof(T), Context);");
+        sb.AppendLine("        var (__result, __error) = global::App.Utils.TypeMapping.TryConvertTo(value, typeof(T), Context);");
         sb.AppendLine("        if (__error != null)");
         sb.AppendLine("        {");
-        sb.AppendLine("            __resolutionError = App.Data.@this.FromError(");
-        sb.AppendLine("                new App.Errors.ActionError(");
+        sb.AppendLine("            __resolutionError = global::App.Data.@this.FromError(");
+        sb.AppendLine("                new global::App.Errors.ActionError(");
         sb.AppendLine("                    $\"Parameter '{paramName}': {__error.Message}\",");
         sb.AppendLine("                    \"ConversionError\", __error.StatusCode)");
         sb.AppendLine("                    { FixSuggestion = __error.FixSuggestion });");
         sb.AppendLine("            return default;");
         sb.AppendLine("        }");
         sb.AppendLine("        // Stamp GoalCalls with the action so goal resolution can navigate action → step → goal");
-        sb.AppendLine("        if (__result is App.Goals.Goal.GoalCall __gc && __gc.Action == null)");
+        sb.AppendLine("        if (__result is global::App.Goals.Goal.GoalCall __gc && __gc.Action == null)");
         sb.AppendLine("            __gc.Action = __action;");
         sb.AppendLine("        return (T?)__result;");
         sb.AppendLine("    }");
@@ -681,9 +681,9 @@ public class LazyParamsGenerator : IIncrementalGenerator
         // __SnapshotParams: per-property snapshot of pr-side and final-resolved values.
         // Called from ExecuteAsync's error paths so the resulting Error carries enough
         // context to diagnose "param X arrived as Y" without re-running with a flag.
-        sb.AppendLine("    private System.Collections.Generic.List<App.Errors.ParamSnapshot> __SnapshotParams()");
+        sb.AppendLine("    private System.Collections.Generic.List<global::App.Errors.ParamSnapshot> __SnapshotParams()");
         sb.AppendLine("    {");
-        sb.AppendLine("        var __list = new System.Collections.Generic.List<App.Errors.ParamSnapshot>();");
+        sb.AppendLine("        var __list = new System.Collections.Generic.List<global::App.Errors.ParamSnapshot>();");
         foreach (var prop in info.Properties)
         {
             if (prop.IsProvider) continue;
@@ -695,7 +695,7 @@ public class LazyParamsGenerator : IIncrementalGenerator
             sb.AppendLine($"        {{");
             sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{prop.Name}\", System.StringComparison.OrdinalIgnoreCase));");
             sb.AppendLine($"            __pr ??= __action?.Defaults?.FirstOrDefault(p => string.Equals(p.Name, \"{prop.Name}\", System.StringComparison.OrdinalIgnoreCase));");
-            sb.AppendLine($"            __list.Add(new App.Errors.ParamSnapshot {{");
+            sb.AppendLine($"            __list.Add(new global::App.Errors.ParamSnapshot {{");
             sb.AppendLine($"                Name = \"{prop.Name}\",");
             sb.AppendLine($"                DeclaredType = \"{declaredType}\",");
             sb.AppendLine($"                PrValue = __pr?.Value,");

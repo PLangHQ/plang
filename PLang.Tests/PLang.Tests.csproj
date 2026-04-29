@@ -14,5 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PLang\PLang.csproj" />
+    <ProjectReference Include="..\PLang.Generators\PLang.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

@@ -193,6 +193,17 @@
         "health": "All test bodies are Assert.Fail('Not implemented'); coder fills bodies as v4 phases land. Tests are designed to flip from failing → passing in phase order (Phase 1 flips GetParameterTests; Phase 2 flips DataValueRawTests + DataAsTResolutionTests + matrix Resolution/*; Phase 3 flips AppRunScaffoldingTests + matrix shape; etc.).",
         "notes": "Did NOT write matrix handler stubs (need PLang.Generators analyzer reference on PLang.Tests.csproj — coder wires it). Did NOT write fixture/test helpers (architect's plan defers to coder). Mid-stream message from Ingi reframed the goal as 'Data flows through, no unwrapping, source gen simpler' — incorporated into DataValueRawTests, DataAsTResolutionTests fast paths, GeneratorValidationTests uniform-shape assertions. Recommended next bot: coder for Phase 1 (Action.GetParameter) then Phase 2."
       }
+    },
+    {
+      "id": "d2f8b915-4a73-4e2d-9c6f-3b8a1c5e7d40",
+      "bot": "coder",
+      "timestamp_start": "2026-04-29T21:42:00Z",
+      "intent": "Execute architect's v4 plan + fill in test-designer's 139 stub tests. Sequence: Phase 0 matrix handlers + fixture, Phase 1 Action.GetParameter, Phase 2 Data.As<T> + delete _resolved/ResetResolution cluster + ResolveDeep, Phase 3 App.Run scaffolding + new generator shape, Phase 4 generator hierarchy collapse, Phase 5 [VariableName] sweep + build-time validation, Phase 6 cleanup audit.",
+      "before": {
+        "assumptions": "Branch up to date with origin. Test suite (139 methods) all Assert.Fail. PLang.Generators not wired to PLang.Tests.csproj. Migration sweep is small (22 [VariableName] string properties; 250+ already Data<T>). Generator is single 779-line file with 11-arm property dispatch.",
+        "risk": "Phase 2 is the contract change — code that reads .Value expecting resolution will break. Architect's gate: pause if >10 sites need fixing. ResolveDeep deletion may break OnResolveTrace subscribers (need to grep). Phase 3 scaffolding move from generated ExecuteAsync to App.Run requires interface tweak for __SnapshotParams handoff."
+      },
+      "plan": ".bot/runtime2-generator-obp/coder/v1/plan.md"
     }
   ]
 }
