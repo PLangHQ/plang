@@ -649,6 +649,88 @@
         "health": "C# 2456/2456 green (was 2444; +12 new tests). plang --test 169 pass / 48 fail / 5 stale (was 165/42/5 in v2). The 6 additional fails are pre-existing infrastructure (signing, identity, fixtures, test reports) — none tied to v3 production changes (cycle depth bound, tracking names, diagnostic location). Spot-checked failing test names; none in the cycle/depth/diagnostic family.",
         "notes": "Two small production additions: (1) WithTrackingName(...) on the generator pipeline + 2 const tracking-name strings, makes the cache-hit assertion direct. (2) ResolveDepthLimit = 32 on Data — well above any legitimate variable chain (existing AsT_DeepChain_5Levels test still passes). Recommend codeanalyzer round 3 to verify the test toothlessness gap is genuinely closed and the new production additions (tracking names, depth bound, span widening) hold up. Tester pass on plang --test fails is still worthwhile — they were 100% pre-existing as of v2 and remain so in v3."
       }
+    },
+    {
+      "id": "b1f0a4d2-7e2c-4d18-9c45-6f3a8b9d4e51",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-30T03:00:00Z",
+      "intent": "Verify coder v3 honestly closes codeanalyzer v2's 7 findings — the toothless tests are now real, the new production deltas (depth bound, tracking names, span widening) hold up.",
+      "before": {
+        "assumptions": "Coder v3 commit c9314c5e claims to close all 7 v2 findings. C# tests 2456/2456 green. plang --test 169/48/5 (6 more fails than v2 — claimed all pre-existing infra, none tied to v3 production). 4 test files modified + 3 production files modified + 0 deferred.",
+        "risk": "(1) The new heuristic in NoDeadEmissionTests must arithmetic-correctly catch __variables and __paramData shapes; risk of off-by-one or wrong-pattern that gives illusion of closure. (2) IncrementalCacheTests must drive the actual pipeline, not just exercise records again. (3) Depth bound must increment/decrement under try/finally; off-by-one on the limit, or counter not bounded, would let real cycles slip. (4) DiagnosticInfo widening must produce a span >1 char; the test could pass vacuously if `path` parameter is wrong (orchestrator falls back to Location.None). (5) Step.RunAsync OCE test must drive the right code path (line 152 ThrowIfCancellationRequested, not handler-thrown OCE)."
+      },
+      "plan": ".bot/runtime2-generator-obp/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/codeanalyzer/v3/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 review plan: finding-by-finding verification of all 7 v2 findings + 5-pass on the new production deltas (depth bound, tracking names, span widening). Approach is to simulate test arithmetic on regression shapes, trace code paths, and run the deletion test on every new line of production code."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/NoDeadEmissionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified Findings #40/#44. Simulated the new heuristic on __variables shape (reads=2-1-1=0, flagged), __paramData shape (in-file reads=4-2-1=1 not flagged → Pattern B cross-file scan finds ParamData() orphan). The 5 heuristic regression tests pin pattern detection independent of live generated tree. Convention pin (__ prefix) prevents drift. =(?!=) correctly excludes == comparisons. Cross-file scan exemption list (ExecuteAsync, SnapshotParams) is defensive — those have textual callers in App/this.cs. Findings closed honestly."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/IncrementalCacheTests.cs",
+            "PLang.Generators/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Verified Finding #39. PipelineCache_RerunWithUnchangedSyntax_StepOutputsAreCachedOrUnchanged drives CSharpGeneratorDriver with trackIncrementalGeneratorSteps:true and inspects TrackedSteps[ActionInfoFilteredTrackingName] for Cached/Unchanged on the second run. Negative-space test (PipelineCache_ActionClassChanged_StepOutputIsModified) catches always-Cached vacuous passes. Generator pipeline now has WithTrackingName calls at the right stages. The MinimalSource bootstrap brings up just enough App namespace skeleton for the predicate to fire. Finding closed honestly."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang.Tests/App/DataTests/DataAsTResolutionTests.cs",
+            "PLang.Tests/App/AppRunScaffoldingTests.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified Findings #41/#42/#43/#45. ResolveDepthLimit=32 + Count>Limit clause closes expanding cycles; isCycleRoot-clears-set on root finally is load-bearing under the early-return path (verified the unwind logic). StepRunAsync_CancellationTokenCancelled traces lines 152→157 of Step/this.cs. 3 cycle tests upgraded from IsNotNull to specific value assertions; expanding-cycle test correctly stays at Contains('%') because the stop string at depth 32 is not predictable. DiagnosticInfo widened with Start/End Line/Character; orchestrator builds real LinePositionSpan; test pins spanWidth>1 with load-bearing path:'BadHandler.cs' arg. All four findings closed honestly."
+        },
+        {
+          "paths": [
+            "PLang.Generators/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "5-pass on new production deltas. Found one NIT-level dead code: ActionInfoTrackingName (unfiltered) constant + its WithTrackingName call have no test reader. ActionInfoFilteredTrackingName is used by both pipeline tests; the unfiltered one would deletion-test as removable. Documented as Finding 46. Either delete or upgrade into a pre-filter cache assertion. ResolveDepthLimit, DiagnosticInfo widening, and Microsoft.CodeAnalysis.CSharp PackageReference all earn their place by deletion test."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/codeanalyzer/v3/result.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v3/summary.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v3/verdict.json",
+            ".bot/runtime2-generator-obp/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 review output: result.md (per-finding verification), summary.md (this version), verdict.json (pass), bot-root summary updated with v3 entry."
+        }
+      ],
+      "timestamp_end": "2026-04-30T03:40:00Z",
+      "after": {
+        "status": "review complete — verdict CLEAN. All 7 v2 findings honestly closed, one NIT raised.",
+        "health": "Production code on v3 deltas is clean. Test-gap concern from v1 genuinely closed: NoDeadEmissionTests can now catch __variables and __paramData regressions; IncrementalCacheTests drives the actual pipeline. C# tests 2456/2456 green (locally re-run).",
+        "notes": "Verdict: pass. One NIT (Finding 46): ActionInfoTrackingName (unfiltered) constant + WithTrackingName call earn no test — either delete or upgrade into a pre-filter cache assertion. Recommend tester next pass for the 48 plang --test failures (claimed pre-existing infrastructure). Production code is cleared to ship."
+      }
     }
   ]
 }
