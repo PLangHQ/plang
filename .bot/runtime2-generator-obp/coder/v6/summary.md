@@ -91,6 +91,10 @@ return __runResult;
 
 `dotnet run --project PLang.Tests` → 2471 / 2471 green (+3 from v5's 2468).
 
+`plang --test` → 145 / 56 / 4 (down from v5's 152 / 49 / 4). Net 7 tests went from pass→fail; ALL with `"Cannot convert String to this"`. Decided per Ingi: **leave as failed** — these are not v6 regressions in the harmful sense. They are v6 correctly surfacing real type-conversion errors that pre-v6 was silently swallowing. The .pr files for these tests pass the literal string `"this"` (with type tag `actor(user|service|system)`) into handlers that declare `Data<Actor.@this>?` parameters. `TypeConverter` has no string→`Actor.@this` rule, so the conversion produces a FromError-Data. Pre-v6 the FromError lived harmlessly on the backing field; the handlers' `Actor?.Value ?? Context.Actor` fallback masked the real error. v6 surfaces it correctly. The .pr files are wrong (likely a builder issue around the Actor sentinel "this") — fix lives elsewhere, not in this branch.
+
+Affected tests: `Modules/Builder/ValidateValid`, `Modules/Error/Call`, `Modules/Error/RetryOnly`, `Modules/Event/{BeforeStep,Multiple,Wildcard}`, `Modules/Goal/Basic/GoalCall`.
+
 ## Open / deferred
 
 - **Auditor nit #4** — `SensitiveAttribute` matched by short name in Discovery. No current namespace collision; auditor said don't fix in isolation.
