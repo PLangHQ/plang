@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "4 findings (1 medium, 3 low). Generator __SnapshotParams ignores [Sensitive] — recurring info-disclosure pattern, dormant until first sensitive prop. No critical/high open."
+}

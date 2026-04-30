@@ -847,7 +847,7 @@
       "id": "8b033076-8b1e-4a18-9bf8-ab29f0c37dd8",
       "bot": "tester",
       "timestamp_start": "2026-04-30T09:04:13Z",
-      "intent": "Verify coder v4 closes the 5 findings from tester v3 — hunt for false greens in the new tests, especially the MAJOR toothlessness fix (Pattern B widened to public|protected).",
+      "intent": "Verify coder v4 closes the 5 findings from tester v3 \u2014 hunt for false greens in the new tests, especially the MAJOR toothlessness fix (Pattern B widened to public|protected).",
       "before": {
         "assumptions": "Coder v4 added 10 tests across NoDeadEmissionTests.cs and IncrementalCacheTests.cs: 3 IsOrphanMethod synthetic, 3 strip tests, 3 regex assertions, 1 unfiltered-step cache-hit test. Plus comment-block caveat for --coverage. No production code changed. Coder claims 2466/2466 green and ran 2 empirical deletion tests in-session.",
         "risk": "v3 toothlessness was a regex-pattern-matches-its-own-docstring trap. v4's fix could repeat the same shape if (a) the regex assertions don't actually pin protected matching, (b) IsOrphanMethod is pinned but the integration into the live test bypasses it, (c) StripCommentsAndStrings is pinned but LoadAllCallableSources stops calling it without any test failing, (d) the new unfiltered cache-hit test passes vacuously because TrackedSteps is empty rather than because outputs are Cached/Unchanged."
@@ -863,7 +863,7 @@
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Pass 1 inspection of all 10 v4 tests for structural toothlessness; all honest. Pass 2 ran 4 empirical deletion tests. (A) Narrowed regex to public-only → PublicOrProtectedMethodDecl_MatchesProtectedDeclaration failed. (B) Made IsOrphanMethod always return false → Heuristic_OrphanProtectedMethod_IsFlagged plus 3 Strip_* tests failed. (C) Made StripCommentsAndStrings identity → 3 Strip_* tests + Heuristic_OrphanProtectedMethod_IsFlagged failed (the latter because input contains ParamData() in a comment). (D) Swapped WithTrackingName(ActionInfoTrackingName) for literal disagreeing string → unfiltered cache-hit test failed with KeyNotFound on ActionInfo. All mutations reverted; final 2466/2466 green."
+          "context": "Pass 1 inspection of all 10 v4 tests for structural toothlessness; all honest. Pass 2 ran 4 empirical deletion tests. (A) Narrowed regex to public-only \u2192 PublicOrProtectedMethodDecl_MatchesProtectedDeclaration failed. (B) Made IsOrphanMethod always return false \u2192 Heuristic_OrphanProtectedMethod_IsFlagged plus 3 Strip_* tests failed. (C) Made StripCommentsAndStrings identity \u2192 3 Strip_* tests + Heuristic_OrphanProtectedMethod_IsFlagged failed (the latter because input contains ParamData() in a comment). (D) Swapped WithTrackingName(ActionInfoTrackingName) for literal disagreeing string \u2192 unfiltered cache-hit test failed with KeyNotFound on ActionInfo. All mutations reverted; final 2466/2466 green."
         },
         {
           "paths": [
@@ -892,11 +892,69 @@
         }
       ],
       "after": {
-        "status": "approved — all 5 v3 findings honestly closed; 4 deletion tests confirm contracts pinned.",
-        "health": "green — 2466/2466 C# tests; +10 new v4 tests beyond v3 baseline.",
+        "status": "approved \u2014 all 5 v3 findings honestly closed; 4 deletion tests confirm contracts pinned.",
+        "health": "green \u2014 2466/2466 C# tests; +10 new v4 tests beyond v3 baseline.",
         "notes": "One observation logged but not filed as finding: integration of StripCommentsAndStrings into LoadAllCallableSources is not directly pinned (Pattern A has the same architecture gap so precedent-aligned). Recommend running security analyst next."
       },
       "timestamp_end": "2026-04-30T09:35:00Z"
+    },
+    {
+      "id": "4446187f-00d3-4938-b055-f23949550235",
+      "bot": "security",
+      "timestamp_start": "2026-04-30T00:00:00Z",
+      "timestamp_end": "2026-04-30T00:30:00Z",
+      "intent": "Red-team the v4 generator-OBP refactor: Data.As<T> resolution path, source-generator emission, App.Run catch filter, JSON ingestion. Goal: pass/fail verdict.",
+      "before": {
+        "assumptions": "Tester approved v4 (2466/2466 green). Coder went 4 rounds; codeanalyzer cleared v3. The architectural shift (resolution as read-transformation in Data.As<T>(context) rather than Data.Value side-effect getter) eliminates the previous caching/reset cluster \u2014 that's a security simplification, not a regression.",
+        "risk": "Variable resolution recursion is a classic DoS vector (cycle, expanding bomb). Source generator interpolates identifiers \u2014 but trust boundary is dev source, not user input."
+      },
+      "plan": ".bot/runtime2-generator-obp/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/this.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Errors/ParamSnapshot.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified cycle protection in AsT_Impl (HashSet + ResolveDepthLimit=32 + ThreadStatic, leak-free). Confirmed App.Run catch filter excludes NRE/OOM/SOE. Confirmed MaxJsonDepth=128 in UnwrapJsonElement. Action.GetParameter is pure lookup, no side effects."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Property/Legacy/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Source-generator emission uses identifier interpolation but trust boundary is dev source. PLNG001 build-time gate narrows action property surface to Data<T>/[Provider]/[VariableName] \u2014 net security improvement. Found __SnapshotParams ignores [Sensitive] (Finding 1, medium, both Data and Legacy emitters)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/security/v1/plan.md",
+            ".bot/runtime2-generator-obp/security/v1/summary.md",
+            ".bot/runtime2-generator-obp/security/v1/verdict.json",
+            ".bot/runtime2-generator-obp/security-report.json",
+            ".bot/runtime2-generator-obp/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard v1 artefacts. security-report.json carries 4 findings (1 medium info-disclosure on __SnapshotParams + [Sensitive], 3 low: skipInfrastructure default, silent depth-trip, FormatVerboseValue truncation). Verdict pass."
+        }
+      ],
+      "after": {
+        "status": "v1 pass",
+        "health": "branch is security-clean; one recurring info-disclosure pattern (medium) flagged for tracking \u2014 same shape as the standing Variables.Snapshot() finding",
+        "notes": "Recommended auditor next. If reviewer wants finding 1 fixed first, send to coder \u2014 fix is localised (Discovery.BuildProperty plumbing IsSensitive into DataProperty/LegacyProperty records, branch in EmitSnapshotEntry)."
+      }
     }
   ]
 }
