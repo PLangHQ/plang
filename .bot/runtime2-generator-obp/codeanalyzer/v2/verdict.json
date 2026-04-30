@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "Production fixes are sound (cycle detection, record + EquatableArray, dead emission removal, OCE/non-generic comments, raw-string emission, F2/3/6/9/21 cleanups) — but 2 MAJOR new findings: IncrementalCacheTests doesn't drive Roslyn (just unit equality), NoDeadEmissionTests cannot catch the __variables/__paramData regressions it was named after. Ingi's v1 test-gap concern is not actually closed."
+}

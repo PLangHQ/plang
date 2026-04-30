@@ -485,6 +485,89 @@
         "notes": "Discovered mid-session that Finding 27 was actively crashing plang --test, not theoretical. Phase A unblocked the suite first. Recommend codeanalyzer round 2 for the new contract code (cycle protection, EquatableArray, raw-string emission). The 42 plang --test failures are now visible for the first time (suite couldn't complete pre-Phase A); worth a tester pass to triage which were broken before vs. structural failures the suite is now surfacing for the first time."
       },
       "timestamp_end": "2026-04-30T00:29:26Z"
+    },
+    {
+      "id": "6655c718-3de8-46de-833f-d696d64f205a",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-04-30T00:36:24Z",
+      "timestamp_end": "2026-04-30T00:47:48Z",
+      "intent": "Verify coder v2 response to v1 review across 5 phases (cycle detection, ActionClassInfo record + EquatableArray, dead-emission deletion, OCE/non-generic comments, trivial cleanups, raw-string-literal emission refactor) and confirm new tests honestly close v1 gaps.",
+      "before": {
+        "assumptions": "Coder v2 commits 01aa150c..4018f26b address subset of v1 findings: 1, 2, 3, 6, 9, 11, 12, 19, 21, 27, 28, 33. Other 26 findings deferred with logged rationale. Tests: 2444/2444 passing; plang test 165/42/5 (was crashing pre-A).",
+        "risk": "Cycle key (raw %-containing string) could be wrong granularity. EquatableArray<T> wrapper is new code with hand-rolled hash. Raw-string refactor admitted 5 blank-line drift \u2014 could mask semantic change. NoDeadEmissionTests is regex-based \u2014 false positives/negatives possible. IncrementalCacheTests may not actually drive Roslyn (was the v1 gap)."
+      },
+      "plan": ".bot/runtime2-generator-obp/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/codeanalyzer/v2/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verification plan for coder v2 across 5 phases (cycle detection, record+EquatableArray, dead-emission deletion, OCE/non-generic comments, raw-string emission). Identified specific verification questions per phase and the test-gap risk."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/this.cs",
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified Phase A cycle detection: thread-static _resolvingValues HashSet keyed on raw %-string with try/finally cleanup. Direct cycles correctly detected. Pass-throughs to ConvertAndWrap return raw string on cycle hit. Verified Phase C OCE comment + non-generic comment placement and content."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/EquatableArray.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified Phase B record conversion and EquatableArray<T> implementation (SequenceEqual, GetHashCode walk, default-instance handling). Verified Phase B dead emission removal (__variables, __paramData, ParamData() absent from Emission and from a sampled generated handler). Verified Phase D cleanups (F2/3/6/9/21). Phase E raw-string-literal refactor reads cleaner. Finding 7 (synthetic 1-char diagnostic span) noted as still standing - not in coder's not-taken list."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/IncrementalCacheTests.cs",
+            "PLang.Tests/Generator/NoDeadEmissionTests.cs",
+            "PLang.Tests/App/DataTests/DataAsTResolutionTests.cs",
+            "PLang.Tests/App/AppRunScaffoldingTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Critical findings: (1) IncrementalCacheTests is 9 unit-equality tests on records, NOT a CSharpGeneratorDriver-driven cache-hit test as promised. The pipeline cache contract is not exercised. (2) NoDeadEmissionTests's reads<=0 heuristic empirically cannot catch __variables (decl+1 assignment, reads=1) or __paramData (decl+2 LHS+1 internal accessor body, reads=2). Verified via Python regex simulation. The author noted the right heuristic in their own comment but adopted the wrong one. (3) Cycle tests assert only IsNotNull - no value contract. (4) OCE asymmetry test only pins App.Run side; the paired Step.RunAsync test promised in plan was not delivered."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/codeanalyzer/v2/result.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "7 v2-specific findings: 2 MAJOR (test toothlessness for IncrementalCacheTests and NoDeadEmissionTests), 3 MINOR (expanding-cycle gap, OCE asymmetry half-fix, weak cycle test assertions), 2 NIT (regex __-prefix restriction, Finding 7 silently dropped). Verdict: NEEDS WORK - production code passes but test-gap concern from v1 not actually closed."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/codeanalyzer/v2/summary.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-generator-obp/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 summary, verdict.json (status=fail), root summary updated with v2 entry. Recommended next steps for coder v3: real CSharpGeneratorDriver test, fix NoDeadEmissionTests heuristic + cross-file scan, add Step.RunAsync OCE test, tighten cycle test assertions, optionally harden cycle protection for expanding case, address Finding 7."
+        }
+      ],
+      "after": {
+        "status": "review complete",
+        "health": "production code: clean. Test code: 2 MAJOR findings on toothless tests. plang.exe and PLang.Tests build cleanly; full TUnit suite 2444/2444 green.",
+        "notes": "Verdict: NEEDS WORK. The fixes for v1 production findings (1, 2, 3, 6, 9, 11, 12, 19, 21, 27, 28, 33) are all correct and verified. plang test no longer crashes (was 100% StackOverflow pre-Phase A). However, the test-gap concern Ingi raised in v1 is not actually closed: IncrementalCacheTests doesn't drive Roslyn (just unit equality on records), and NoDeadEmissionTests cannot catch __variables/__paramData regressions empirically. Recommend coder v3 hardens the regression-prevention layer or Ingi accepts the gap explicitly. Finding 7 (synthetic 1-char diagnostic location) was silently dropped from coder's not-taken list."
+      }
     }
   ]
 }
