@@ -395,7 +395,96 @@
         "risk": "ActionClassInfo conversion to record + EquatableArray may surface latent ordering bugs in the IIncrementalGenerator pipeline if any field's hash depended on identity. Mitigated by: (a) value-equal element types already exist (records); (b) new IncrementalCacheTests proves the cache hits. Cycle-detection fix is local \u2014 adds a thread-static visited-set."
       },
       "plan": ".bot/runtime2-generator-obp/coder/v2/plan.md",
-      "actions": []
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang.Tests/App/DataTests/DataAsTResolutionTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase A: cycle detection in AsT_Impl via thread-static visited-set keyed on raw %-containing string. Protects both full-match (variable's value recurse) and partial-match (Resolve returns string still containing %) paths. 4 new cycle tests. Unblocked plang --test from 100% StackOverflowException crash."
+        },
+        {
+          "paths": [
+            "PLang.Generators/EquatableArray.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs",
+            "PLang.Tests/Generator/NoDeadEmissionTests.cs",
+            "PLang.Tests/PLang.Tests.csproj"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase B: ActionClassInfo class->record + EquatableArray<T> for value-equal collections (fixes incremental cache, Finding 1). Delete __variables (Finding 11) and __paramData/ParamData() accessor (Finding 12). 9 cache tests + 1 no-dead-emission contract test. Added non-analyzer ProjectReference so tests can compile-time-import generator types."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Emission/Action/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase E (added at Ingi's request mid-session): rewrote sb.AppendLine cascades using C# 11+ raw string literals ($$\"\"\"...\"\"\"). Output drift: 5 trivial blank-line differences across sampled handler. No semantic changes."
+        },
+        {
+          "paths": [
+            "PLang/App/this.cs",
+            "PLang/App/Data/this.cs",
+            "PLang.Tests/App/AppRunScaffoldingTests.cs",
+            "PLang.Tests/App/DataTests/DataAsTResolutionTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase C: documented App.Run's deliberate OCE catch (Finding 33) + behavioral test pinning the contract; documented Data.SubstitutePrimitive's typed-generic-only shape contract (Finding 28) + 2 non-generic ArrayList/Hashtable pass-through tests."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/this.cs",
+            "PLang.Tests/Generator/SnapshotParamsTests.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs",
+            "PLang.Tests/Generator/NoDeadEmissionTests.cs",
+            "PLang.Tests/App/Modules/settings/SettingsDataTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase D: trivial cleanup (Findings 2, 3, 6, 9, 21). Most notable: renamed LazyParamsGenerator class to @this per OBP convention; generated folder moves from PLang.Generators.LazyParamsGenerator to PLang.Generators.this; updated 3 test paths."
+        },
+        {
+          "paths": [
+            ".gitignore",
+            "Tests/Modules/Cache/DynamicKey/",
+            "Tests/Modules/Cache/Sliding/"
+          ],
+          "type": "modify",
+          "category": "config",
+          "confidence": "high",
+          "context": "Housekeeping: gitignore Tests/Modules/Cache/**/%*%/ runtime artifacts created by plang test when %path% directories aren't substituted at file-creation time."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/coder/v2/plan.md",
+            ".bot/runtime2-generator-obp/coder/v2/v1_review_summary.md",
+            ".bot/runtime2-generator-obp/coder/v2/summary.md",
+            ".bot/runtime2-generator-obp/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 session docs: review summary of codeanalyzer/v1 + Ingi's test-gap concern; plan with 5 phases; final summary with deferred-findings list."
+        }
+      ],
+      "after": {
+        "status": "complete \u2014 codeanalyzer top-3 (1, 11, 12) fixed, cycle bug (27) fixed, OCE comment (33) added, non-generic comment (28) added, raw-string refactor (19) done at Ingi's request, trivial cleanup (2, 3, 6, 9, 21) done. 22 of 38 findings deferred (transitional or pre-existing) and listed in v2/summary.md.",
+        "health": "C# 2444/2444 green (was 2427); plang --test runs to completion 165/42/5 (was 100% StackOverflow). Generator output byte-equivalent within 5 blank-line differences. No behavioral regressions across the five phases.",
+        "notes": "Discovered mid-session that Finding 27 was actively crashing plang --test, not theoretical. Phase A unblocked the suite first. Recommend codeanalyzer round 2 for the new contract code (cycle protection, EquatableArray, raw-string emission). The 42 plang --test failures are now visible for the first time (suite couldn't complete pre-Phase A); worth a tester pass to triage which were broken before vs. structural failures the suite is now surfacing for the first time."
+      },
+      "timestamp_end": "2026-04-30T00:29:26Z"
     }
   ]
 }
