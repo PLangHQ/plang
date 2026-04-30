@@ -4,15 +4,30 @@ using System.Text.RegularExpressions;
 
 namespace PLang.Tests.Generator;
 
-// Contract test for "no dead private fields in generated handlers".
-// Codeanalyzer Finding 11/12: __variables and __paramData were declared, assigned,
-// and never read. The v1 test set had no scan that would catch dead emission. This
-// fixture parses every *.Action.g.cs and asserts every private field has at least
-// one read elsewhere in the same file.
+// Contract tests for "no dead emission in generated handlers".
+//
+// The v1 regression set:
+//  - __variables — declared, assigned, never read.
+//  - __paramData + ParamData() — __paramData was read in-file (by ParamData()), but
+//    ParamData() itself had zero callers anywhere in the source tree. Both dead.
+//
+// codeanalyzer/v2 (#40) flagged that the v2 incarnation of this fixture was
+// structurally incapable of catching either regression: its `reads<=0` heuristic
+// gave reads=1 for the __variables shape (decl + 1 LHS = 2 occurrences − 1 LHS = 1)
+// and reads=2 for the __paramData shape (decl + 2 LHS + 1 internal read = 4 − 2 = 2).
+//
+// v3 fixes this by splitting into two contracts:
+//   Pattern A — every declared private field has at least one read in the same file
+//     (heuristic: reads = total_occurrences − assignments − decl_line_occurrences).
+//     Catches the __variables shape.
+//   Pattern B — every public method declared in a generated handler has at least
+//     one caller across the source tree (excluding the generated tree itself).
+//     Catches the __paramData/ParamData() shape.
+// And a third assertion (#44) pinning the `__`-prefix convention.
 
 public class NoDeadEmissionTests
 {
-    private static string GeneratedDir
+    private static string RepoRoot
     {
         get
         {
@@ -24,16 +39,20 @@ public class NoDeadEmissionTests
                 if (parent == null) break;
                 dir = parent.FullName;
             }
-            return Path.Combine(dir!, "PLang.Tests", "obj", "Debug", "net10.0",
-                "generated", "PLang.Generators", "PLang.Generators.this");
+            return dir!;
         }
     }
 
-    // Names that the generator emits but only the legacy raw-scalar / __Resolve pipeline reads.
-    // Phase 5 deletes the legacy family; remove these exemptions when that lands.
-    private static readonly HashSet<string> _phase5LegacyExemptions = new()
+    private static string GeneratedDir => Path.Combine(RepoRoot,
+        "PLang.Tests", "obj", "Debug", "net10.0",
+        "generated", "PLang.Generators", "PLang.Generators.this");
+
+    // Names whose call site is the framework (interface dispatch, reflection-style wiring).
+    // ExecuteAsync / SnapshotParams are required by ICodeGenerated and called by App.Run.
+    private static readonly HashSet<string> _publicMethodCallerExemptions = new()
     {
-        "__resolutionError", // assigned by __Resolve<T>; read by ExecuteAsync's guard. v4-shape handlers without legacy props never reassign it.
+        "ExecuteAsync",
+        "SnapshotParams",
     };
 
     [Test]
@@ -42,41 +61,179 @@ public class NoDeadEmissionTests
         var files = Directory.Exists(GeneratedDir)
             ? Directory.GetFiles(GeneratedDir, "*.Action.g.cs")
             : Array.Empty<string>();
-
         await Assert.That(files).IsNotEmpty();
 
-        var fieldDecl = new Regex(@"^\s*private\s+[\w\.<>\?,\s:@]+?\s+(__\w+)\s*[;=]",
-            RegexOptions.Multiline);
-
-        var dead = new System.Collections.Generic.List<string>();
+        var dead = new List<string>();
         foreach (var path in files)
         {
             var src = File.ReadAllText(path);
-            foreach (Match m in fieldDecl.Matches(src))
+            foreach (Match m in PrivateFieldDecl.Matches(src))
             {
                 var fieldName = m.Groups[1].Value;
-                if (_phase5LegacyExemptions.Contains(fieldName)) continue;
-
-                // Count occurrences of the identifier elsewhere (anywhere it appears).
-                // Subtract 1 for the declaration line. A field with only the declaration
-                // (count == 1) and an assignment on the same identifier is still "set, not read";
-                // distinguish read by counting non-LHS occurrences.
-                var allOccurrences = Regex.Matches(src, @"\b" + Regex.Escape(fieldName) + @"\b").Count;
-                // Assignments where the field is on the LHS: `fieldName = ...` or `fieldName[x] = ...` or `fieldName?[x] = ...`
-                var assignments = Regex.Matches(src,
-                    @"\b" + Regex.Escape(fieldName) + @"\b\s*(\??\[[^\]]*\])?\s*=").Count;
-                var reads = allOccurrences - assignments;
-
-                // The declaration itself counts as a "use" by the regex above (just the bare name)
-                // but isn't a read — adjust by subtracting 1 if the line has no `=`.
-                // Simpler heuristic: a field is dead if reads <= 0.
-                if (reads <= 0)
-                {
+                if (!HasReadOf(src, fieldName))
                     dead.Add($"{Path.GetFileName(path)}:{fieldName}");
-                }
             }
         }
-
         await Assert.That(dead).IsEmpty();
+    }
+
+    [Test]
+    public async Task EveryGeneratedPrivateFieldUsesDoubleUnderscorePrefix()
+    {
+        // Pin the convention. Every private field the generator emits must start with `__`.
+        // Without this assertion, a future generator change could drop the prefix and the
+        // dead-field test (which scans `__\w+`-prefixed names) would silently miss those.
+        var files = Directory.Exists(GeneratedDir)
+            ? Directory.GetFiles(GeneratedDir, "*.Action.g.cs")
+            : Array.Empty<string>();
+        await Assert.That(files).IsNotEmpty();
+
+        var violations = new List<string>();
+        foreach (var path in files)
+        {
+            var src = File.ReadAllText(path);
+            foreach (Match m in PrivateFieldDecl.Matches(src))
+            {
+                var fieldName = m.Groups[1].Value;
+                if (!fieldName.StartsWith("__"))
+                    violations.Add($"{Path.GetFileName(path)}:{fieldName}");
+            }
+        }
+        await Assert.That(violations).IsEmpty();
+    }
+
+    [Test]
+    public async Task NoGeneratedHandlerExposesUnusedPublicMethod()
+    {
+        // Pattern B: cross-file scan for orphan public methods.
+        // A generated handler that emits `public Foo() { return __field; }` with no
+        // callers anywhere is a __paramData-class regression: __field looks alive in-file
+        // but the chain Foo → __field is dead end-to-end.
+        var files = Directory.Exists(GeneratedDir)
+            ? Directory.GetFiles(GeneratedDir, "*.Action.g.cs")
+            : Array.Empty<string>();
+        await Assert.That(files).IsNotEmpty();
+
+        var allCallableSources = LoadAllCallableSources();
+
+        var orphans = new List<string>();
+        foreach (var path in files)
+        {
+            var src = File.ReadAllText(path);
+            foreach (Match m in PublicMethodDecl.Matches(src))
+            {
+                var name = m.Groups[1].Value;
+                if (_publicMethodCallerExemptions.Contains(name)) continue;
+
+                var callerPattern = new Regex(@"\b" + Regex.Escape(name) + @"\s*\(");
+                if (!callerPattern.IsMatch(allCallableSources))
+                    orphans.Add($"{Path.GetFileName(path)}:{name}");
+            }
+        }
+        await Assert.That(orphans).IsEmpty();
+    }
+
+    private static readonly Regex PrivateFieldDecl = new(
+        @"^\s*private\s+(?:static\s+|readonly\s+|const\s+)*[\w\.<>\?,\s:@\[\]]+?\s+(\w+)\s*[;=]",
+        RegexOptions.Multiline);
+
+    private static readonly Regex PublicMethodDecl = new(
+        @"^\s*public\s+(?:async\s+|partial\s+|static\s+)*[\w\.<>\?,\s:@\[\]]+?\s+(\w+)\s*\(",
+        RegexOptions.Multiline);
+
+    internal static bool HasReadOf(string src, string fieldName)
+    {
+        // total_occurrences − assignments − decl_line_occurrences
+        // Subtracts the declaration line so a decl-only field (count == 1) registers as 0 reads.
+        // Uses `=(?!=)` to exclude `==` / `!=` comparisons from the assignment count.
+        var totalOccurrences = Regex.Matches(src, @"\b" + Regex.Escape(fieldName) + @"\b").Count;
+        var assignments = Regex.Matches(src,
+            @"\b" + Regex.Escape(fieldName) + @"\b\s*(\??\[[^\]]*\])?\s*=(?!=)").Count;
+        var declOccurrences = Regex.Matches(src,
+            @"^\s*private\s+(?:static\s+|readonly\s+|const\s+)*[\w\.<>\?,\s:@\[\]]+?\s+\b"
+            + Regex.Escape(fieldName) + @"\b\s*[;=]",
+            RegexOptions.Multiline).Count;
+        return totalOccurrences - assignments - declOccurrences > 0;
+    }
+
+    // Heuristic regression tests — synthetic source mirrors the v1 regression shapes so the
+    // assertion is pinned independently of whether the live generated tree happens to be clean.
+
+    [Test]
+    public async Task Heuristic_VariablesShape_DeclAndOneLhs_NoRead_IsDead()
+    {
+        var src = """
+            partial class H {
+                private readonly Dictionary<string, object?>? __variables;
+                public void M() { __variables = new Dictionary<string, object?>(); }
+            }
+            """;
+        await Assert.That(HasReadOf(src, "__variables")).IsFalse();
+    }
+
+    [Test]
+    public async Task Heuristic_DeclOnly_IsDead()
+    {
+        var src = """
+            partial class H {
+                private int __orphan;
+            }
+            """;
+        await Assert.That(HasReadOf(src, "__orphan")).IsFalse();
+    }
+
+    [Test]
+    public async Task Heuristic_DeclAndAssignAndRead_IsAlive()
+    {
+        var src = """
+            partial class H {
+                private int __counter;
+                public void M() { __counter = 1; var x = __counter; }
+            }
+            """;
+        await Assert.That(HasReadOf(src, "__counter")).IsTrue();
+    }
+
+    [Test]
+    public async Task Heuristic_DoubleEqualsIsNotAnAssignment()
+    {
+        // Regex `=(?!=)` must reject `==`. Otherwise `if (__x == null)` is mis-counted as a write
+        // and the only read is hidden.
+        var src = """
+            partial class H {
+                private object? __x;
+                public void M() { __x = null; if (__x == null) { } }
+            }
+            """;
+        await Assert.That(HasReadOf(src, "__x")).IsTrue();
+    }
+
+    [Test]
+    public async Task Heuristic_DeclWithInlineInit_NoRead_IsDead()
+    {
+        // `private int __x = 7;` — decl + assignment on the same line. No subsequent read.
+        var src = """
+            partial class H {
+                private int __x = 7;
+            }
+            """;
+        await Assert.That(HasReadOf(src, "__x")).IsFalse();
+    }
+
+    private static string LoadAllCallableSources()
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var dir in new[] { "PLang", "PLang.Tests", "PLang.Generators", "PlangConsole" })
+        {
+            var fullDir = Path.Combine(RepoRoot, dir);
+            if (!Directory.Exists(fullDir)) continue;
+            foreach (var f in Directory.GetFiles(fullDir, "*.cs", SearchOption.AllDirectories))
+            {
+                if (f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar)) continue;
+                if (f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar)) continue;
+                sb.AppendLine(File.ReadAllText(f));
+            }
+        }
+        return sb.ToString();
     }
 }

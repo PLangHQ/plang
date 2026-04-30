@@ -390,6 +390,13 @@ public partial class @this
     // Cycle protection for AsT_Impl. Tracks the raw %-containing strings currently being
     // resolved on this thread. When a recursive call sees a string already in the set, it
     // returns the string as-is — no stack overflow on %a%↔%b% or %x%="%x%" reference graphs.
+    //
+    // ResolveDepthLimit caps recursion for *expanding* cycles where the strings differ at each
+    // level (e.g. %a%="X-%b%", %b%="Y-%a%" produces "X-%b%" → "X-Y-%a%" → "X-Y-X-%b%" → …).
+    // The HashSet alone misses these because every recursion produces a new string. The depth
+    // limit is well above any legitimate chain (real handler chains are 1–5 deep; matrix tests
+    // exercise 5 levels — see AsT_DeepChain_5Levels_ResolvesCorrectly).
+    private const int ResolveDepthLimit = 32;
     [ThreadStatic]
     private static HashSet<string>? _resolvingValues;
 
@@ -407,9 +414,9 @@ public partial class @this
         {
             var isCycleRoot = _resolvingValues == null;
             _resolvingValues ??= new HashSet<string>(StringComparer.Ordinal);
-            if (!_resolvingValues.Add(strVal))
+            if (!_resolvingValues.Add(strVal) || _resolvingValues.Count > ResolveDepthLimit)
             {
-                // Cycle: this exact string is already being resolved up-stack. Return as-is.
+                // Cycle (exact-string OR depth-bound for expanding chains). Return as-is.
                 return ConvertAndWrap<T>(strVal, ctx);
             }
             try

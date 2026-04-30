@@ -1,3 +1,5 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using PLang.Generators;
 using PLang.Generators.Discovery;
 
@@ -124,5 +126,198 @@ public class IncrementalCacheTests
         var x = new EquatableArray<string>(Array.Empty<string>());
         var y = EquatableArray<string>.Empty;
         await Assert.That(x).IsEqualTo(y);
+    }
+
+    // ====================================================================
+    // Pipeline-driven cache-hit tests.
+    //
+    // codeanalyzer/v2 (#39) flagged that the carrier-equality tests above are not enough:
+    // the IIncrementalGenerator pipeline contract is whether the value equality actually
+    // causes downstream stages to skip work on the second run. These tests drive the
+    // generator through CSharpGeneratorDriver with trackIncrementalGeneratorSteps:true
+    // and inspect the TrackedSteps reasons directly.
+    //
+    // Regression these tests catch:
+    //   If ActionClassInfo went back to `sealed class` with reference equality (the v1
+    //   carrier), the second run's ActionInfo step would report Modified for every
+    //   re-evaluated input. These tests would fail with that change.
+    // ====================================================================
+
+    private const string MinimalSource = """
+        using System;
+        namespace App.modules {
+            public class ActionAttribute : Attribute {}
+            public class ProviderAttribute : Attribute {}
+            public class VariableNameAttribute : Attribute {}
+            public interface IContext {}
+            public interface IChannel {}
+            public interface IAction {}
+            public interface IStep {}
+            public interface IStatic {}
+            public interface IEvent {}
+            public interface ICodeGenerated {}
+        }
+        namespace App.Data {
+            public partial class @this {
+                public static @this Ok() => null!;
+                public static @this Ok(object? v) => null!;
+                public static @this Ok(object? v, Type? t) => null!;
+                public static @this NotFound(string n) => null!;
+                public static @this FromError(object e) => null!;
+                public T? As<T>(object? ctx) => default;
+                public class Type {}
+            }
+            public partial class @this<T> : @this {}
+        }
+        namespace App {
+            public partial class @this {}
+            namespace Actor.Context { public partial class @this {} }
+            namespace Errors {
+                public interface IError {}
+                public class ParamSnapshot { public string? Name; public string? DeclaredType; public object? PrValue; public object? PrType; public object? FinalValue; public bool WasAccessed; }
+            }
+            namespace Goals.Goal {
+                public partial class @this {
+                    public class GoalCall { public object? Action; }
+                    public partial class Steps {
+                        public partial class Step {
+                            public partial class Actions {
+                                public partial class Action {
+                                    public partial class @this {
+                                        public Steps.Step.@this? Step;
+                                        public System.Collections.Generic.List<Data.@this>? Parameters;
+                                        public System.Collections.Generic.List<Data.@this>? Defaults;
+                                        public Data.@this? GetParameter(string name, Actor.Context.@this ctx) => null;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            namespace CallStack {
+                public class CallFrame {}
+            }
+        }
+
+        namespace App.Test {
+            [App.modules.Action]
+            public partial class TestHandler {
+                public partial App.Data.@this<string> Foo { get; init; }
+            }
+        }
+        """;
+
+    private static CSharpCompilation CreateCompilation(string source, string? assemblyName = "TestAssembly")
+    {
+        var refs = new[]
+        {
+            // System.Runtime — needed for object, string, etc.
+            MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(System.Runtime.CompilerServices.IsExternalInit).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(System.Linq.Enumerable).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(System.Collections.Generic.List<>).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(System.Threading.Tasks.Task).Assembly.Location),
+            MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location),
+        };
+        // System.Private.CoreLib + netstandard.dll — fold in everything object touches.
+        var trustedAssemblies = ((string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES"))?.Split(Path.PathSeparator);
+        var allRefs = new List<MetadataReference>(refs);
+        if (trustedAssemblies != null)
+        {
+            foreach (var path in trustedAssemblies)
+            {
+                if (string.IsNullOrEmpty(path)) continue;
+                if (path.EndsWith("System.Runtime.dll", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith("netstandard.dll", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith("System.Collections.dll", StringComparison.OrdinalIgnoreCase))
+                {
+                    allRefs.Add(MetadataReference.CreateFromFile(path));
+                }
+            }
+        }
+
+        var parseOptions = new CSharpParseOptions(LanguageVersion.Preview);
+        return CSharpCompilation.Create(
+            assemblyName ?? "TestAssembly",
+            new[] { CSharpSyntaxTree.ParseText(source, parseOptions) },
+            allRefs,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+    }
+
+    private static GeneratorDriver CreateDriver()
+    {
+        var generator = new PLang.Generators.@this().AsSourceGenerator();
+        return CSharpGeneratorDriver.Create(
+            new[] { generator },
+            driverOptions: new GeneratorDriverOptions(
+                disabledOutputs: IncrementalGeneratorOutputKind.None,
+                trackIncrementalGeneratorSteps: true));
+    }
+
+    [Test]
+    public async Task PipelineCache_RerunWithUnchangedSyntax_StepOutputsAreCachedOrUnchanged()
+    {
+        var compilation = CreateCompilation(MinimalSource);
+        var driver = CreateDriver();
+
+        // First run.
+        driver = driver.RunGenerators(compilation);
+
+        // Second run: same syntax, plus an unrelated tree the predicate ignores.
+        // If ActionClassInfo were not value-equal, the ActionInfoFiltered step would
+        // re-execute and report Modified. With value-equal carrier, it stays Unchanged/Cached.
+        var compilation2 = compilation.AddSyntaxTrees(
+            CSharpSyntaxTree.ParseText("namespace Unrelated; public class X {}",
+                new CSharpParseOptions(LanguageVersion.Preview)));
+        driver = driver.RunGenerators(compilation2);
+
+        var result = driver.GetRunResult().Results[0];
+        await Assert.That(result.TrackedSteps).ContainsKey(PLang.Generators.@this.ActionInfoFilteredTrackingName);
+
+        var infoSteps = result.TrackedSteps[PLang.Generators.@this.ActionInfoFilteredTrackingName];
+        await Assert.That(infoSteps.Length).IsGreaterThan(0);
+
+        // Every output of every step should be Cached or Unchanged on the second run.
+        // Modified would mean the carrier value changed despite no semantic change — the
+        // exact failure mode the v1 sealed-class regression produced.
+        foreach (var step in infoSteps)
+        {
+            foreach (var (_, reason) in step.Outputs)
+            {
+                var ok = reason == IncrementalStepRunReason.Cached
+                      || reason == IncrementalStepRunReason.Unchanged;
+                await Assert.That(ok).IsTrue()
+                    .Because($"Expected Cached or Unchanged, got {reason}");
+            }
+        }
+    }
+
+    [Test]
+    public async Task PipelineCache_ActionClassChanged_StepOutputIsModified()
+    {
+        // Sanity-check: when the [Action] partial class actually changes, the cache
+        // correctly invalidates and the step output reports Modified (not Cached).
+        // Without this assertion, a vacuously-passing cache test (always Cached) would
+        // not be caught. This is the negative space of the cache-hit contract.
+        var compilation = CreateCompilation(MinimalSource);
+        var driver = CreateDriver();
+
+        driver = driver.RunGenerators(compilation);
+
+        // Replace TestHandler's property type so ActionClassInfo's Properties array changes.
+        var modifiedSource = MinimalSource.Replace(
+            "public partial App.Data.@this<string> Foo { get; init; }",
+            "public partial App.Data.@this<int> Foo { get; init; }");
+        var compilation2 = CreateCompilation(modifiedSource);
+        driver = driver.RunGenerators(compilation2);
+
+        var result = driver.GetRunResult().Results[0];
+        var infoSteps = result.TrackedSteps[PLang.Generators.@this.ActionInfoFilteredTrackingName];
+        var anyModified = infoSteps.SelectMany(s => s.Outputs)
+            .Any(o => o.Reason == IncrementalStepRunReason.Modified
+                   || o.Reason == IncrementalStepRunReason.New);
+        await Assert.That(anyModified).IsTrue()
+            .Because("Changing the partial property type must invalidate the cache");
     }
 }

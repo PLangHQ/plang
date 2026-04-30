@@ -1,6 +1,8 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace PLang.Tests.Generator;
 
@@ -48,6 +50,58 @@ public class GeneratorValidationTests
         await Assert.That(discoverySrc).Contains("PLNG001");
         await Assert.That(discoverySrc).Contains("RawScalarPropertyDescriptor");
         await Assert.That(discoverySrc).Contains("DiagnosticSeverity.Error");
+    }
+
+    // codeanalyzer/v2 (#45) flagged that PLNG001 was emitted with a synthetic 1-character
+    // span — IDE squiggles pointed at one column instead of underlining the property name.
+    // v3 widens DiagnosticInfo to carry the full identifier span; this test pins the new
+    // contract by driving the generator and asserting the diagnostic's location length
+    // exceeds 1.
+    [Test]
+    public async Task RawScalarProperty_DiagnosticLocation_UnderlinesIdentifier()
+    {
+        const string sourceWithRawScalar = """
+            using System;
+            namespace App.modules {
+                public class ActionAttribute : Attribute {}
+            }
+            namespace App.Test {
+                [App.modules.Action]
+                public partial class BadHandler {
+                    // Raw int — not Data<T>, not [Provider], not [VariableName]. Triggers PLNG001.
+                    public partial int RawIntProperty { get; init; }
+                }
+            }
+            """;
+        // Path must be non-empty — orchestrator falls back to Location.None when FilePath is empty,
+        // which is the realistic build behaviour (real source files always have a path).
+        var compilation = CSharpCompilation.Create(
+            "DiagnosticTest",
+            new[] { CSharpSyntaxTree.ParseText(sourceWithRawScalar,
+                new CSharpParseOptions(LanguageVersion.Preview),
+                path: "BadHandler.cs") },
+            new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var driver = (GeneratorDriver)CSharpGeneratorDriver.Create(
+            new[] { new PLang.Generators.@this().AsSourceGenerator() });
+        driver = driver.RunGenerators(compilation);
+
+        var diagnostics = driver.GetRunResult().Diagnostics;
+        var plng001 = diagnostics.FirstOrDefault(d => d.Id == "PLNG001");
+        await Assert.That(plng001).IsNotNull();
+
+        var span = plng001!.Location.GetLineSpan();
+        var startCol = span.StartLinePosition.Character;
+        var endCol = span.EndLinePosition.Character;
+        var startLine = span.StartLinePosition.Line;
+        var endLine = span.EndLinePosition.Line;
+
+        // Identifier `RawIntProperty` is 14 chars wide. The diagnostic must span more than
+        // one character — anything ≥ 2 is acceptable; the v2 regression was a hard-coded 1.
+        var spanWidth = endLine == startLine ? endCol - startCol : int.MaxValue;
+        await Assert.That(spanWidth).IsGreaterThan(1)
+            .Because($"PLNG001 location should underline the identifier, not a 1-char synthetic span (got width={spanWidth})");
     }
 
     [Test]

@@ -91,11 +91,14 @@ public static class @this
             if (!IsValidActionProperty(prop))
             {
                 var loc = prop.Locations.FirstOrDefault();
+                var span = loc?.GetLineSpan();
                 diagnostics.Add(new DiagnosticInfo(
                     prop.Name, classSymbol.Name,
                     loc?.SourceTree?.FilePath ?? string.Empty,
-                    loc?.GetLineSpan().StartLinePosition.Line ?? 0,
-                    loc?.GetLineSpan().StartLinePosition.Character ?? 0));
+                    span?.StartLinePosition.Line ?? 0,
+                    span?.StartLinePosition.Character ?? 0,
+                    span?.EndLinePosition.Line ?? 0,
+                    span?.EndLinePosition.Character ?? 0));
             }
         }
 
@@ -299,8 +302,10 @@ public sealed record RawScalarValidation(string PropertyName, bool IsString);
 
 /// <summary>
 /// Value-equal diagnostic info for the IIncrementalGenerator cache —
-/// captures property + class names plus location so the source-output stage
-/// can build a Roslyn Diagnostic.
+/// captures property + class names plus the full identifier location span so the
+/// source-output stage can rebuild a Roslyn Diagnostic that underlines the offending
+/// identifier (rather than a synthetic one-character span).
 /// </summary>
 public sealed record DiagnosticInfo(
-    string PropertyName, string ClassName, string FilePath, int Line, int Character);
+    string PropertyName, string ClassName, string FilePath,
+    int StartLine, int StartCharacter, int EndLine, int EndCharacter);

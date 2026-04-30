@@ -167,6 +167,32 @@ public class AppRunScaffoldingTests
         await Assert.That(result.Error.Exception).IsTypeOf<OperationCanceledException>();
     }
 
+    // The other side of the OCE asymmetry: Step.RunAsync's catch DELIBERATELY excludes OCE
+    // (PLang/App/Goals/Goal/Steps/Step/this.cs:157). That's what lets a cancelled token raised
+    // inside the foreach (line 152: ThrowIfCancellationRequested) escape Step.RunAsync and
+    // cascade to whatever wrapped it (modifier.timeoutAfter, parent cancellation, etc.).
+    // Without this assertion, a future "consistency fix" that adds OCE to Step.RunAsync's
+    // catch would silently swallow cancellations and break the timeout chain.
+    [Test]
+    public async Task StepRunAsync_CancellationTokenCancelled_LetsOCEPropagate()
+    {
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+        _app.Context.PushCancellation(cts);
+
+        var action = TestAction.Create("matrix.plain", "stringplain", ("path", "x"));
+        var step = new Step
+        {
+            Index = 0,
+            Text = "test",
+            Actions = new StepActions { action }
+        };
+        action.Step = step;
+
+        await Assert.That(async () => await step.RunAsync(_app.Context))
+            .ThrowsExactly<OperationCanceledException>();
+    }
+
     // Action.Handled (mock.intercept / event.skipAction) bypasses App.Run entirely — no frame, no snapshot.
     [Test]
     public async Task AppRun_NotCalled_WhenHandledOverride()
