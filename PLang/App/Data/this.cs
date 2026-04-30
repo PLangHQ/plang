@@ -414,13 +414,26 @@ public partial class @this
         {
             var isCycleRoot = _resolvingValues == null;
             _resolvingValues ??= new HashSet<string>(StringComparer.Ordinal);
-            if (!_resolvingValues.Add(strVal) || _resolvingValues.Count > ResolveDepthLimit)
+
+            // Cycle: an outer frame is already resolving this exact string. Don't Remove
+            // on the cycle path — the outer frame still owns the entry.
+            if (!_resolvingValues.Add(strVal))
             {
-                // Cycle (exact-string OR depth-bound for expanding chains). Return as-is.
-                return ConvertAndWrap<T>(strVal, ctx);
+                return @this<T>.FromError(new ServiceError(
+                    $"Cyclic %var% reference detected while resolving '{strVal}'.",
+                    "VariableResolutionCycle", 400));
             }
+
             try
             {
+                // Depth-bound for expanding chains (each level produces a new string).
+                if (_resolvingValues.Count > ResolveDepthLimit)
+                {
+                    return @this<T>.FromError(new ServiceError(
+                        $"Variable resolution exceeded depth limit ({ResolveDepthLimit}) at '{strVal}'.",
+                        "ResolveDepthExceeded", 400));
+                }
+
                 var fullMatch = System.Text.RegularExpressions.Regex.Match(strVal, @"^%([^%]+)%$");
                 if (fullMatch.Success)
                 {

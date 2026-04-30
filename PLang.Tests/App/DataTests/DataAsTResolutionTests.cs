@@ -219,10 +219,10 @@ public class DataAsTResolutionTests
         await Assert.That(((System.Collections.Hashtable)result.Value!)["key"]).IsEqualTo("%x%");
     }
 
-    // Cyclic %var% reference (a → b → a) must NOT stack-overflow AND must
-    // return the raw string at the cycle point so callers can see what tripped.
+    // Cyclic %var% reference (a → b → a) must NOT stack-overflow AND must surface a
+    // structured error so callers see the failure rather than an unresolved %var% leak.
     [Test]
-    public async Task AsT_CyclicVarReference_ReturnsCycleBrokenRawString()
+    public async Task AsT_CyclicVarReference_ReturnsCycleError()
     {
         _app.Context.Variables.Set("a", "%b%");
         _app.Context.Variables.Set("b", "%a%");
@@ -230,29 +230,27 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.Context);
 
-        // Cycle detection short-circuits with ConvertAndWrap on the cycle-detected string.
-        // For %a%↔%b% starting at "%a%", the second recursion of "%a%" trips the protector.
-        await Assert.That(result.Value).IsEqualTo("%a%");
-        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableResolutionCycle");
     }
 
-    // Self-referencing %var% (x → %x%) must NOT stack-overflow AND returns the raw template.
+    // Self-referencing %var% (x → %x%) must NOT stack-overflow AND surfaces the cycle error.
     [Test]
-    public async Task AsT_SelfReferencingVar_ReturnsRawTemplate()
+    public async Task AsT_SelfReferencingVar_ReturnsCycleError()
     {
         _app.Context.Variables.Set("x", "%x%");
         var data = new Data("ref", "%x%") { Context = _app.Context };
 
         var result = data.As<string>(_app.Context);
 
-        await Assert.That(result.Value).IsEqualTo("%x%");
-        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableResolutionCycle");
     }
 
     // Self-reference inside an interpolation (e.g. "hello %x%" where %x% = "%x%") must NOT
-    // stack-overflow AND must return the unsubstituted interpolation when the cycle trips.
+    // stack-overflow AND surfaces the cycle error rather than passing through the template.
     [Test]
-    public async Task AsT_PartialMatchSelfReference_ReturnsUnsubstitutedInterpolation()
+    public async Task AsT_PartialMatchSelfReference_ReturnsCycleError()
     {
         _app.Context.Variables.Set("x", "%x%");
         var data = new Data("greeting", "hello %x%") { Context = _app.Context };
@@ -261,17 +259,17 @@ public class DataAsTResolutionTests
 
         // The partial-match branch interpolates "hello %x%" via Variables.Resolve, which
         // re-emits "hello %x%" (x's value is "%x%"). The recursion then trips the cycle
-        // protector and ConvertAndWrap returns the raw string.
-        await Assert.That(result.Value).IsEqualTo("hello %x%");
-        await Assert.That(result.Success).IsTrue();
+        // protector and surfaces a structured error.
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableResolutionCycle");
     }
 
     // Expanding cycle: %a%="X-%b%", %b%="Y-%a%" produces "X-%b%" → "X-Y-%a%" → "X-Y-X-%b%" → …
     // every recursion is a *new* string, so the HashSet alone never trips. Without the depth
-    // bound this stack-overflows. The bound returns gracefully with whatever string was reached
-    // when the limit was hit.
+    // bound this stack-overflows. The bound now surfaces a structured ResolveDepthExceeded
+    // error rather than silently passing the half-resolved template through.
     [Test]
-    public async Task AsT_ExpandingCycle_DepthBoundReturnsGracefully()
+    public async Task AsT_ExpandingCycle_DepthBoundReturnsError()
     {
         _app.Context.Variables.Set("a", "X-%b%");
         _app.Context.Variables.Set("b", "Y-%a%");
@@ -281,10 +279,8 @@ public class DataAsTResolutionTests
 
         // Critical: it returned at all (no StackOverflowException).
         await Assert.That(result).IsNotNull();
-        await Assert.That(result.Value).IsNotNull();
-        // The depth-bound short-circuit returns the not-yet-resolved string at the depth limit,
-        // which still contains a `%var%` template (the bound trips before final substitution).
-        await Assert.That(((string)result.Value!).Contains('%')).IsTrue();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ResolveDepthExceeded");
     }
 
     // Non-cyclic chain of indirections still resolves end-to-end.

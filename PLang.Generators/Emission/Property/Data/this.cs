@@ -14,7 +14,8 @@ public sealed record @this(
     bool IsNullable,
     bool IsPlainData,    // true when declared as `Data.@this` (no <T>)
     string? InnerType,    // T inside Data<T>; null for plain Data
-    string? DefaultValue) // [Default(...)] literal expression; null when absent
+    string? DefaultValue, // [Default(...)] literal expression; null when absent
+    bool IsSensitive)    // [Sensitive] — masks PrValue/FinalValue in __SnapshotParams
     : Base(Name, TypeName)
 {
     public override void EmitProperty(StringBuilder sb)
@@ -52,15 +53,21 @@ public sealed record @this(
     {
         // TypeName comes from the type system — no quote/backslash escapes needed.
         var declaredType = TypeName.Replace("global::", "");
+        var prValueExpr = IsSensitive
+            ? "__pr?.Value != null ? \"******\" : null"
+            : "__pr?.Value";
+        var finalValueExpr = IsSensitive
+            ? $"{SetFlag} ? (object?)\"******\" : null"
+            : $"{SetFlag} ? (object?){Backing} : null";
         sb.AppendLine($"        {{");
         sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine($"            __pr ??= __action?.Defaults?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine($"            __list.Add(new global::App.Errors.ParamSnapshot {{");
         sb.AppendLine($"                Name = \"{Name}\",");
         sb.AppendLine($"                DeclaredType = \"{declaredType}\",");
-        sb.AppendLine($"                PrValue = __pr?.Value,");
+        sb.AppendLine($"                PrValue = {prValueExpr},");
         sb.AppendLine($"                PrType = __pr?.Type?.Value,");
-        sb.AppendLine($"                FinalValue = {SetFlag} ? (object?){Backing} : null,");
+        sb.AppendLine($"                FinalValue = {finalValueExpr},");
         sb.AppendLine($"                WasAccessed = {SetFlag}");
         sb.AppendLine($"            }});");
         sb.AppendLine($"        }}");

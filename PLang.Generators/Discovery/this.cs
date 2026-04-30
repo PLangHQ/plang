@@ -168,6 +168,12 @@ public static class @this
         var isVariableName = prop.GetAttributes().Any(a =>
             a.AttributeClass?.Name == "VariableNameAttribute");
 
+        // [Sensitive] — masks PrValue/FinalValue in __SnapshotParams. Same convention as
+        // SensitivePropertyFilter applies during JSON serialization. The snapshot path
+        // feeds Error.Params, which prints to logs/CI artefacts, so secrets must be masked.
+        var isSensitive = prop.GetAttributes().Any(a =>
+            a.AttributeClass?.Name == "SensitiveAttribute");
+
         // App-resolvable: type has static Resolve(string, Context.@this)
         var isAppResolvable = prop.Type is INamedTypeSymbol named
             && named.GetMembers("Resolve")
@@ -205,13 +211,13 @@ public static class @this
                 var ltIdx = typeNameStr.IndexOf('<');
                 innerType = ltIdx >= 0 ? typeNameStr.Substring(ltIdx + 1, typeNameStr.Length - ltIdx - 2) : "object";
             }
-            return (new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue), implementsIEvent);
+            return (new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive), implementsIEvent);
         }
 
         // Everything else falls into legacy scalar emission (raw string / int / etc.)
         return (new LegacyProperty(
             prop.Name, typeNameStr, isNullable, prop.Type.IsValueType,
-            isAppResolvable, isVariableName, defaultValue), implementsIEvent);
+            isAppResolvable, isVariableName, defaultValue, isSensitive), implementsIEvent);
     }
 
     private static string? ReadDefaultValueExpression(IPropertySymbol prop)

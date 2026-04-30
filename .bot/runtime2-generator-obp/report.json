@@ -955,6 +955,84 @@
         "health": "branch is security-clean; one recurring info-disclosure pattern (medium) flagged for tracking \u2014 same shape as the standing Variables.Snapshot() finding",
         "notes": "Recommended auditor next. If reviewer wants finding 1 fixed first, send to coder \u2014 fix is localised (Discovery.BuildProperty plumbing IsSensitive into DataProperty/LegacyProperty records, branch in EmitSnapshotEntry)."
       }
+    },
+    {
+      "id": "f4d3a2c1-9b8e-4d7f-a6c5-2e1d3f4b5c6a",
+      "bot": "coder",
+      "timestamp_start": "2026-04-30T00:00:00Z",
+      "timestamp_end": "2026-04-30T00:00:00Z",
+      "intent": "Close security/v1 findings 1 (medium, [Sensitive] not honored in __SnapshotParams) and 3 (low, cycle/depth-trip silently swallow). Defer 2 per Ingi; close 4 \u2014 already mitigated by FormatVerboseValue truncation.",
+      "before": {
+        "assumptions": "Both fixes are surgical: #1 lives entirely in PLang.Generators (Discovery + Emission/Property/{Data,Legacy}); #3 lives entirely in Data.AsT_Impl. No new abstractions. Tests for #3 already exist \u2014 they pin the old swallow behavior and need to be rewritten to assert the new error path.",
+        "risk": "#3 is a behavior change \u2014 callers that previously got an unresolved %var% string now get a Data error. Risk of unrelated tests failing because they constructed cyclic variable graphs. Mitigated by running the full 2468-test C# suite. The cycle path's HashSet accounting is delicate (we must not Remove an entry the outer frame owns) \u2014 mitigated by restructuring so the cycle return is *before* the try block, only depth-trip is inside try/finally."
+      },
+      "plan": ".bot/runtime2-generator-obp/coder/v5/summary.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Property/Legacy/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Finding 1: detect [SensitiveAttribute] in BuildProperty (matched by name to follow ProviderAttribute / VariableNameAttribute convention), thread IsSensitive through both DataProperty and LegacyProperty records, branch in EmitSnapshotEntry to emit masked PrValue/FinalValue (\"******\") with null-guard so absent .pr literals stay null. Mirrors SensitivePropertyFilter convention used elsewhere in the codebase."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Finding 3: replace silent ConvertAndWrap<T>(strVal, ctx) returns at the cycle/depth branches with @this<T>.FromError(ServiceError(\u2026)) using distinct keys VariableResolutionCycle / ResolveDepthExceeded. Restructured try/finally: cycle returns *before* try (outer frame owns the HashSet entry, must not Remove); depth-trip lives inside try so finally balances the Add. The 'must not stack-overflow' guarantee is preserved \u2014 only the return shape changed."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/DataTests/DataAsTResolutionTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Renamed and rewrote four existing tests that pinned the old swallow-and-pass-through behavior: AsT_CyclicVarReference_ReturnsCycleError, AsT_SelfReferencingVar_ReturnsCycleError, AsT_PartialMatchSelfReference_ReturnsCycleError, AsT_ExpandingCycle_DepthBoundReturnsError. Each asserts result.Success==false plus the corresponding Error.Key (VariableResolutionCycle or ResolveDepthExceeded). Stack-overflow safety is implicit in the 'returned at all' assertion."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/Matrix/Snapshot/SensitiveHandlers.cs",
+            "PLang.Tests/Generator/Matrix/Snapshot/SnapshotTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "New SensitiveSnapshot matrix handler with [Sensitive] on Data<string> ApiKey and a non-sensitive Data<string> Endpoint. Two new tests: SensitiveProperty_MasksPrValueAndFinalValue (asserts the secret is masked AND the plaintext is absent from both fields, while the non-sensitive sibling stays raw); SensitiveProperty_UnaccessedStillMasksPrValue (asserts the null-guard branch \u2014 PrValue stays null, no false \"******\")."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/IncrementalCacheTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated 6 DataProperty constructor call sites for the new IsSensitive field. All call sites pass IsSensitive: false \u2014 these tests pin equality semantics on the EquatableArray cache, the new field just rides along."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/coder/v5/v4_review_summary.md",
+            ".bot/runtime2-generator-obp/coder/v5/summary.md",
+            ".bot/runtime2-generator-obp/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard v5 artefacts: review summary of security/v1 + which findings to fix vs defer; full session summary; cross-version index updated."
+        }
+      ],
+      "after": {
+        "status": "findings 1 + 3 closed; 2 deferred (doc-only, low priority); 4 closed (already mitigated by Error.cs:280-296 truncation).",
+        "health": "2468/2468 C# tests passing (+2 from baseline). Generated source spot-check on SensitiveSnapshot.Action.g.cs confirms masked emission for ApiKey and raw emission for Endpoint.",
+        "notes": "Recommend codeanalyzer next to review the v5 delta. After that, security can re-check that the snapshot masking + cycle/depth error surfacing are honestly in place."
+      }
     }
   ]
 }
