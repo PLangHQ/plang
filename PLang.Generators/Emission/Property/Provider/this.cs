@@ -1,0 +1,32 @@
+using System.Text;
+using Base = PLang.Generators.Emission.Property.@this;
+
+namespace PLang.Generators.Emission.Property.Provider;
+
+/// <summary>
+/// Emits a [Provider]-attributed property — eagerly assigned in ExecuteAsync
+/// from app.Providers.Get&lt;T&gt;(). Lazy access pattern allows direct test
+/// usage too (Context.App.Providers.Get is invoked on first read if not pre-set).
+/// </summary>
+public sealed record @this(
+    string Name,
+    string TypeName,
+    bool ImplementsIContext)
+    : Base(Name, TypeName)
+{
+    public override void EmitProperty(StringBuilder sb)
+    {
+        var engineExpr = ImplementsIContext ? "__app ?? Context?.App" : "__app";
+        sb.AppendLine($"    private {TypeName}? {Backing};");
+        sb.AppendLine($"    public partial {TypeName} {Name}");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __e = {engineExpr}; if (__e != null) {{ var __r = __e.Providers.Get<{TypeName}>(); if (__r.Success) {Backing} = __r.Value; }} }} return {Backing}!; }}");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+    }
+
+    public override void EmitSnapshotEntry(StringBuilder sb)
+    {
+        // Providers are not parameter-sourced — no PrValue, no FinalValue. Skip the snapshot entry.
+    }
+}

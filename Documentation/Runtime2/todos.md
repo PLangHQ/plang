@@ -57,3 +57,74 @@ Need PLang tests to lock in:
 
 Without these tests, the asymmetry could re-regress the next time someone
 "simplifies" Wrap. Nothing today forces the value path.
+
+## 2026-04-30 — migrate handlers off [VariableName] / raw primitives
+
+Context: Two property-emission paths exist in `PLang.Generators/Emission/Property/`:
+- `Data/this.cs` — the Data<T> path. New handlers should use this.
+- `Legacy/this.cs` — exists during the migration sweep so handlers still using
+  `[VariableName] partial string` and raw `partial int / partial bool / partial string`
+  keep building. Phase 5 was meant to delete this file.
+
+Currently ~20 handlers still depend on the legacy path. They live in:
+- `PLang/App/modules/list/` (add, any, contains, count, first, flatten, get, group,
+  indexof, join, last, range, remove, reverse, set, sort, split, unique)
+- `PLang/App/modules/loop/` (foreach)
+- `PLang/App/modules/variable/` (clear, exists, get, remove, set)
+
+Until this migrates, the auditor/v1 finding #1 fix is asymmetric: the Data<T>
+emission and the Legacy emission both honor the cycle/depth `ServiceError`
+contract, but only because Legacy still exists to honor it. Phase 5 still
+needs to delete Legacy and the build-time `PLNG001` diagnostic fully takes
+over.
+
+### The design problem (open)
+
+`[VariableName]` is **not** plain legacy — it's a distinct semantic. For
+`list/get %products% 0`, the handler needs the *literal name* `"products"` to
+call `Context.Variables.Get(ListName)` and `Variables.Set(ListName, ...)` on
+the write side. If you wrap that property in `Data<string>`, As<T> resolution
+walks `%products%` and hands back the *value* — the name is gone. So the
+migration is not mechanical.
+
+Options to consider when this branch opens:
+
+1. **A new wrapper** like `VarRef<T>` that exposes both `.Name` (literal) and
+   `.Value` (resolved). Replaces `[VariableName] partial string ListName` with
+   `partial VarRef<List<object?>> List`. The handler does `Context.Variables.
+   Get(List.Name)` for reads and `.Set(List.Name, ...)` for writes.
+2. **Carry the name on `Data<T>`** itself. `Data` already has a `Name` field.
+   So `partial Data<List<object?>> List` could expose `List.Name` directly,
+   no new wrapper needed. Risk: confuses `Data.Name` (the variable's name)
+   with the parameter name in the handler.
+3. **Keep an attribute under a non-"legacy" name.** Rename `[VariableName]` to
+   something like `[Literal]` and keep the special-case emission path. Smallest
+   migration cost, but keeps two emission shapes forever — defeats the goal.
+
+Recommendation for the next branch's architect pass: probably (1) — `VarRef<T>`
+as a first-class wrapper. The `Data` carrying a name is already overloaded
+(it's the variable's name, the parameter's name in some contexts, the .pr
+parameter name in others). A separate type makes the semantics explicit.
+
+### Scope
+
+- Design the replacement (architect pass).
+- Migrate ~20 handlers to the new shape.
+- Delete `PLang.Generators/Emission/Property/Legacy/this.cs`.
+- Delete `[VariableName]` attribute and all references.
+- Remove `__Resolve<T>`, `__StripPercent`, `__HasParam`, `RawScalarValidations`
+  from `PLang.Generators/Emission/Action/this.cs:250-295` and surrounding hooks.
+- Remove the `if (__resolutionError != null) return __resolutionError;`
+  pre-Run check at line 232 — once Legacy is gone, `__resolutionError` is only
+  populated during Run (by Data<T> getters), so the pre-Run check can never
+  trip. The post-Run check (added in coder/v6 to close auditor/v1 finding #1)
+  is what catches Data<T> resolution failures and stays.
+
+### Why not on `runtime2-generator-obp`
+
+This branch (the one closing auditor/v1) is in landing shape — codeanalyzer/
+tester/security/auditor all approved, and the fix for finding #1 is small and
+contained. Bolting the [VariableName] migration on top means a new design
+pass plus ~20 handler conversions plus a full re-review cycle — too much
+churn on a shipping branch. The migration deserves its own architect pass
+on a fresh branch.

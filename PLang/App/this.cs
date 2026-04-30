@@ -370,16 +370,64 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     }
 
     /// <summary>
-    /// Pure dispatch: lookup handler by module.action, call ExecuteAsync, return result.
+    /// Dispatches an action through the production execution path: callstack frame,
+    /// Context.Step/Goal/Event save+restore, ServiceError translation in catch, and
+    /// frame.SnapshotVariables on completion. The generated handler ExecuteAsync is
+    /// thin — it sets markers, eagerly resolves [Provider] properties, resets backing
+    /// fields, validates [IsNotNull], then calls Run() directly. App.Run wraps it.
     /// Return variable mapping is owned by Action.RunAsync, not here.
     /// </summary>
     public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context)
     {
         var (handler, error) = Modules.GetCodeGenerated(action);
         if (error != null)
-            return App.Data.@this.FromError(error);
+            return Data.@this.FromError(error);
 
-        return await handler!.ExecuteAsync(action, context);
+        var step = action.Step;
+        var callFrames = context.CallStack?.GetFrames()
+            ?? (IReadOnlyList<CallStack.CallFrame>)Array.Empty<CallStack.CallFrame>();
+
+        // Push a frame for this action's dispatch.
+        var frame = context.CallStack?.Push(action);
+
+        // Save context anchors so nested dispatch can mutate them and we restore on the way out.
+        var previousStep = context.Step;
+        var previousGoal = context.Goal;
+        var previousEvent = context.Event;
+        context.Step = action.Step;
+        if (context.Step != null) context.Step.Context = context;
+        context.Goal = action.Step?.Goal;
+
+        try
+        {
+            var result = await handler!.ExecuteAsync(action, context);
+            // Stamp __SnapshotParams onto Error.Params if the handler returned an error
+            // without one already populated. (Generator no longer attaches snapshots
+            // inside ExecuteAsync — that responsibility moved here in v4 Phase 3.)
+            if (!result.Success && result.Error is Errors.Error err && err.Params == null)
+                err.Params = handler.SnapshotParams();
+            return result;
+        }
+        // Deliberately catches OperationCanceledException — timeout.after depends on this:
+        // the inner action's generated ExecuteAsync swallows OCE into a ServiceError result,
+        // so timeout.after detects the timeout via CTS state + failed result, not via OCE
+        // bubbling up. Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            var serviceErr = new Errors.ServiceError(
+                ex.Message, step, callFrames, "ServiceError", 400) { Exception = ex };
+            serviceErr.Params = handler!.SnapshotParams();
+            return Data.@this.FromError(serviceErr);
+        }
+        finally
+        {
+            frame?.SnapshotVariables(context.Variables);
+            if (context.CallStack != null)
+                await context.CallStack.PopAsync();
+            context.Step = previousStep;
+            context.Goal = previousGoal;
+            context.Event = previousEvent;
+        }
     }
 
     /// <summary>

@@ -32,3 +32,6 @@ Tests/**/workspace/
 # Test runner output
 .test/
 
+# Cache test artifacts created when %var% directories aren't substituted at runtime
+Tests/Modules/Cache/**/%*%/
+

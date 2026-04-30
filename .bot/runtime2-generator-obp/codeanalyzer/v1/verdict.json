@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "NEEDS WORK — 10 MAJOR (incremental cache promise broken, 2 dead emission slots, cycle-detection gap, OCE-catch undocumented, As<T> ignores Data.Type.Convert), 19 MINOR, 9 NIT. Architectural shape is right; cleanup before merge or in immediate follow-up."
+}

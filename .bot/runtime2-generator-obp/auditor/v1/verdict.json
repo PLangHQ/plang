@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "v5 delta closes security #1+#3 honestly; 1 minor cross-file contract gap (Data<T> emission buries As<T> errors that legacy emission surfaces) + 3 nits, no critical/major."
+}

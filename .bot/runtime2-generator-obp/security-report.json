@@ -1,0 +1,121 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-generator-obp",
+  "timestamp": "2026-04-30T00:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "variable-resolution",
+      "exposure": "Data.As<T>(context) walks %var% references in strings, lists, dicts and recursively resolves. Replaces the old Data.Value side-effect getter.",
+      "trust_boundary": ".pr file content is the trust boundary (signed). At runtime, %var% values come from the variable store which is populated by handler results — including external data (HTTP, file content). Worst case: external data containing %x% triggers a chain.",
+      "mitigations": [
+        "Cycle protection via [ThreadStatic] _resolvingValues HashSet — exact-string cycles (%a%=%b%, %b%=%a%) caught immediately",
+        "ResolveDepthLimit=32 for expanding-string cycles (each level produces a new string, e.g. %a%='X-%b%', %b%='Y-%a%')",
+        "Variables.Resolve(skipInfrastructure: true) parameter masks %!var% in untrusted input contexts",
+        "Variables.ResolveVariablesInPath uses its own [ThreadStatic] _resolvingVars for bracket-index cycles",
+        "Action-destination carve-out (IsActionDestination) skips the walk for sub-action templates so %var% is preserved for deferred resolution — prevents accidentally resolving deeply nested action graphs at outer dispatch"
+      ],
+      "gaps": [
+        "Variables.Resolve(input) callers must opt-in to skipInfrastructure=true. Default is false. Untrusted-source callers are easy to forget."
+      ]
+    },
+    {
+      "area": "source-generator emission",
+      "exposure": "PLang.Generators emits partial-class extensions for [Action] handlers: ExecuteAsync, lazy property getters, __SnapshotParams for error reporting. Identifiers (namespace, class, property names, default-value expressions) are string-interpolated into the generated C#.",
+      "trust_boundary": "Source generators run at build time on the developer's own source code. Inputs are C# compile units, not user data. Trust boundary is the developer; injection-into-generated-source is not a runtime threat.",
+      "mitigations": [
+        "Default-value strings are escaped (Discovery.this.cs:225) for backslash and quote",
+        "PLNG001 build-time diagnostic blocks non-Data<T> non-[Provider] non-[VariableName] action properties — keeps the resolution surface narrow",
+        "Generator caching uses EquatableArray for incremental cache stability (no impact on security but on supply-chain reproducibility — a build that flips action-class output between rebuilds would be a supply-chain integrity risk)"
+      ],
+      "gaps": [
+        "__SnapshotParams ignores [Sensitive] on parameter properties — see finding 1"
+      ]
+    },
+    {
+      "area": "App.Run dispatch + error capture",
+      "exposure": "App.Run wraps every action dispatch with CallStack push, context save/restore, catch-and-translate-to-ServiceError. The catch filter excludes NRE/OOM/SOE so unrecoverable conditions still propagate.",
+      "trust_boundary": "The action being dispatched comes from a verified .pr file (signed at build time). The call boundary is internal.",
+      "mitigations": [
+        "catch filter `when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))` — these stay unrecoverable",
+        "frame.SnapshotVariables runs in finally — guaranteed regardless of result path",
+        "context.Step/Goal/Event saved+restored per dispatch so nested mutation doesn't leak"
+      ],
+      "gaps": [
+        "ServiceError stamps __SnapshotParams onto err.Params — inherits the [Sensitive] gap from finding 1"
+      ]
+    },
+    {
+      "area": "JSON ingestion (.pr deserialisation)",
+      "exposure": "Data.UnwrapJsonElement, Data.UnwrapJsonObject/Array recurse through JsonElement structures during .pr load and during string→type conversion (Data.Type.Convert with type='json').",
+      "trust_boundary": ".pr files are signed; type='json' inputs may come from user step-text-as-literal or runtime sources.",
+      "mitigations": [
+        "MaxJsonDepth=128 in UnwrapJsonElement — explicit depth guard, throws on overflow",
+        "System.Text.Json default depth (64) limits the inner Deserialize<Dictionary<string, object?>> path in Type.Convert"
+      ],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "info-disclosure",
+      "vector": "The source generator emits __SnapshotParams() in every action handler; on any failed action, App.Run stamps the snapshot onto Error.Params, which Errors/Error.cs:207-228 prints under '📥 Parameters at dispatch:' to logs/CI artefacts/debug output. Both PrValue (raw .pr literal) and FinalValue (post-%var%-resolution) are captured verbatim. The emission paths in Emission/Property/Data/this.cs:51-67 and Emission/Property/Legacy/this.cs:74-89 do NOT consult [Sensitive] on the property symbol.",
+      "preconditions": "A handler author marks a parameter property [Sensitive] expecting it to be excluded from logs (consistent with how Channels/Serializers/SensitivePropertyFilter treats serialisation), then the action errors with that param populated.",
+      "impact": "Plaintext leak of secret parameter values (API keys, passwords, signing keys) into error logs, CI artefacts, --debug dumps, ServiceError.Params returned to upstream channels. Same recurring class as Variables.Snapshot() (already on file, marked 'not acceptable' by Ingi in the standing-findings memory).",
+      "affected_files": [
+        "PLang.Generators/Emission/Property/Data/this.cs",
+        "PLang.Generators/Emission/Property/Legacy/this.cs",
+        "PLang/App/Errors/Error.cs",
+        "PLang/App/Errors/ParamSnapshot.cs"
+      ],
+      "exploit_sketch": "Author writes `[Sensitive] public Data<string> ApiKey { get; init; }` on a custom action handler. .pr maps `%apiKey% = sk-live-…`. Action throws (network, validation, anything). App.Run catches, calls handler.SnapshotParams(), Error.Params now contains {Name: 'ApiKey', PrValue: '%apiKey%', FinalValue: 'sk-live-…'}. Error.cs prints both to stderr/log channel. Secret in plaintext.",
+      "proposed_fix": "In Discovery (BuildProperty), detect `[Sensitive]` attribute and surface as `IsSensitive` on DataProperty/LegacyProperty records. In EmitSnapshotEntry, when IsSensitive: emit `PrValue = __pr?.Value != null ? \"******\" : null, FinalValue = {SetFlag} ? \"******\" : null` (or omit entirely). Mirror the SensitivePropertyFilter convention so handlers have one consistent rule.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Variables.Resolve(input, skipInfrastructure: false) is the default. Callers handling untrusted external input (HTTP response bodies, file content, LLM output) must remember to pass `true` or %!var% references inside the untrusted payload will be expanded — leaking infrastructure variables (%!fileSystem%, %!engine.fileSystem.RootPath%, %!app.AbsolutePath%) into the resolved string.",
+      "preconditions": "A callsite that runs Variables.Resolve on an attacker-influenced string without the skipInfrastructure flag.",
+      "impact": "Potential disclosure of host paths, app identifiers, or other %!var% values into externally-visible output. Severity is low because PLang is user-sovereign — the user owns the code that runs Resolve. Real risk only if a handler does Resolve on transport-channel content without the flag.",
+      "affected_files": [
+        "PLang/App/Variables/this.cs"
+      ],
+      "exploit_sketch": "Handler reads HTTP response into %resp%, then logs `Variables.Resolve(\"Got: %resp%\")`. If %resp% body contains the literal text '%!app.AbsolutePath%', the Resolve walk substitutes it. Most realistic via reflective injection in error-message templates.",
+      "proposed_fix": "Audit callsites of Variables.Resolve to confirm skipInfrastructure=true at every untrusted boundary. Consider inverting the default (require explicit opt-in to expand %!var%) — this is a safer-by-default change, low blast radius since most internal callers want the expansion. At minimum, document the convention in the XML doc more loudly.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "AsT_Impl ResolveDepthLimit=32 is hard-coded. A legitimate deeply-nested chain past 32 fails (returns the unresolved string) silently — no warning, no error. The cap is set well above realistic chains (matrix tests go to 5) but is invisible to users.",
+      "preconditions": "User constructs a >32-deep variable chain — accidentally via complex template or maliciously to confuse downstream consumers expecting resolved values.",
+      "impact": "Unresolved %var% reference bleeds into the output. Worst case: the string ends up serialised back into a .pr or sent over a channel, looking like an unevaluated variable but actually a payload boundary. Low because the surface for exploitation is narrow — needs an attacker who can write 32 chained variables.",
+      "affected_files": [
+        "PLang/App/Data/this.cs"
+      ],
+      "exploit_sketch": "Fewer of an attack than a footgun. If a user expects %deepChain% to be resolved and the chain is 33+ deep, they get a string with %var% in it.",
+      "proposed_fix": "Surface depth-trip as a Data error rather than silent string passthrough. `if (_resolvingValues.Count > ResolveDepthLimit) return @this<T>.FromError(new ServiceError(\"Variable resolution exceeded depth limit\", ..., \"ResolveDepthExceeded\", 400));`. Same for the cycle-detection branch.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Errors/Error.cs:215-226 calls FormatVerboseValue on PrValue and FinalValue and inlines the result. If FormatVerboseValue truncates long values it limits leakage; if it doesn't, full plaintext goes to log.",
+      "preconditions": "Action error with a large or sensitive parameter.",
+      "impact": "Bounds the same disclosure surface as finding 1 — the formatter is the choke point. Worth verifying the truncation policy.",
+      "affected_files": [
+        "PLang/App/Errors/Error.cs"
+      ],
+      "exploit_sketch": "Action with a Data<List<string>> param of 10 MB of credit-card data fails. FormatVerboseValue serialises the lot into the log.",
+      "proposed_fix": "If FormatVerboseValue doesn't already truncate at a reasonable byte cap (e.g. 1 KB per value with '...' suffix), add it. Honour [Sensitive] here as a second line of defence even if finding 1 is fixed in the generator.",
+      "status": "open"
+    }
+  ],
+  "summary": "Branch posture is generally clean. The Data.As<T>(context) cycle protection (HashSet + ResolveDepthLimit=32 + ThreadStatic) is well-defended against both exact-loop and expanding-string DoS. App.Run's catch filter correctly preserves unrecoverable exceptions. Source-generator emission interpolates only developer-source identifiers (no untrusted input → generated source). PLNG001 narrows the resolution surface to Data<T>/[Provider]/[VariableName] at build time, which is a meaningful security tightening over the previous raw-scalar mess. Four findings, all medium-or-below: the dominant one (Finding 1) is a recurring info-disclosure pattern — __SnapshotParams ignores [Sensitive], same shape as the standing Variables.Snapshot() finding. Currently dormant (no handler uses [Sensitive] on Data params) but a footgun for the first developer who reaches for the attribute. No critical/high open. Verdict: PASS."
+}

@@ -232,7 +232,7 @@ public class SettingsDataTests
     [Test]
     public async Task ErrorPropagation_VariablesGet_SettingsMissing_ReturnsAskError()
     {
-        // This simulates what LazyParamsGenerator's __Resolve<T> does:
+        // This simulates what the source generator's __Resolve<T> does:
         // 1. Gets a parameter with value "%Settings.MissingKey%"
         // 2. Regex matches the full variable: Settings.MissingKey
         // 3. Calls __variables.Get("Settings.MissingKey")

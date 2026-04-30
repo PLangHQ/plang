@@ -1,4 +1,5 @@
 using App.Actor.Context;
+using App.Errors;
 using ActionType = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace App.modules;
@@ -10,4 +11,12 @@ namespace App.modules;
 public interface ICodeGenerated
 {
     Task<Data.@this> ExecuteAsync(ActionType action, Actor.Context.@this context);
+
+    /// <summary>
+    /// Per-property snapshot of pr-side and final-resolved values.
+    /// Called by App.Run from the catch block so the resulting Error carries
+    /// enough context to diagnose "param X arrived as Y" without re-running.
+    /// Default (no parameter properties) returns an empty list.
+    /// </summary>
+    List<ParamSnapshot> SnapshotParams() => new();
 }

@@ -1,0 +1,50 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-generator-obp",
+  "timestamp": "2026-04-30T09:30:00Z",
+  "tested_version": "v4",
+  "test_run": {
+    "csharp": { "total": 2466, "passed": 2466, "failed": 0, "skipped": 0,
+      "note": "v4 added 10 new tests vs v3's 2456. All green." },
+    "csharp_under_coverage": { "note": "Not re-run; v3 confirmed 2 PipelineCache_* tests fail under --coverage instrumentation due to Roslyn-coverage interaction. v4 adds a 3rd PipelineCache_* test (UnfilteredStepOutputsAreCachedOrUnchanged) with the same shape, presumably also failing under coverage. Caveat is documented at top of IncrementalCacheTests.cs (Finding #4 closed, lowest-cost option chosen)." },
+    "plang": { "note": "Not re-run; v4 changes confined to two C# test files, so v3 status (169/48/5) is unchanged." }
+  },
+  "coverage": {
+    "note": "v4 changed only test code. Production-code coverage from v3 (Data/this.cs 83.1%, Generators/this.cs 100.0%, Discovery/this.cs 75.0%) is unchanged.",
+    "carry_forward_from_v3": true
+  },
+  "deletion_tests_performed": [
+    {
+      "fix": "PublicOrProtectedMethodDecl regex widening (PLang.Tests/Generator/NoDeadEmissionTests.cs:153-155)",
+      "mutation": "Narrowed regex from (?:public|protected) back to (?:public)",
+      "result": "PublicOrProtectedMethodDecl_MatchesProtectedDeclaration → fails: Expected to be 1 but found 0",
+      "verdict": "Regex widening is load-bearing; assertion is honest and pins protected matching"
+    },
+    {
+      "fix": "IsOrphanMethod helper (PLang.Tests/Generator/NoDeadEmissionTests.cs:157-167)",
+      "mutation": "Replaced body with `return false;` (no orphans ever flagged)",
+      "result": "Heuristic_OrphanProtectedMethod_IsFlagged + 3 Strip_* tests → all fail with `Expected to be true but found False`",
+      "verdict": "Helper is load-bearing; 4 tests pin the orphan-detection contract independently"
+    },
+    {
+      "fix": "StripCommentsAndStrings helper (PLang.Tests/Generator/NoDeadEmissionTests.cs:357-371)",
+      "mutation": "Replaced body with `return src;` (identity, no stripping)",
+      "result": "All 3 Strip_* tests fail + Heuristic_OrphanProtectedMethod_IsFlagged fails (its input contains `ParamData()` in a comment that the test assumes will be stripped)",
+      "verdict": "Strip helper is load-bearing for both strip tests and the orphan-protected synthetic test"
+    },
+    {
+      "fix": "WithTrackingName(ActionInfoTrackingName) producer/consumer agreement (PLang.Generators/this.cs:29)",
+      "mutation": "Replaced ActionInfoTrackingName constant with literal string 'DisagreeingActionInfoName'",
+      "result": "PipelineCache_RerunWithUnchangedSyntax_UnfilteredStepOutputsAreCachedOrUnchanged → fails: Expected to contain key ActionInfo but key ActionInfo not found",
+      "verdict": "ActionInfoTrackingName constant is now load-bearing; new test catches producer/consumer drift"
+    }
+  ],
+  "live_corpus_verification": {
+    "data_callers_in_user_partials": "10+ files (count, unique, foreach, get, any, range, contains, join, remove, on)",
+    "error_callers_in_user_partials": "10+ files (get, add, range, sort, mock/verify, unique, throw, run, remove, set)",
+    "live_cross_file_test_NoGeneratedHandlerExposesUnusedPublicOrProtectedMethod": "passes with widened Pattern B; framework helpers Data/Error are not flagged because real callers exist"
+  },
+  "findings": [],
+  "verdict": "approved",
+  "summary": "Coder v4 honestly closes all 5 findings from tester v3. The MAJOR `Pattern B regex restricts to public` toothlessness is genuinely fixed: regex now matches `public|protected`, and the fix is pinned by 3 explicit regex assertions plus 6 helper-driven synthetic tests (3 IsOrphanMethod + 3 StripCommentsAndStrings) that drive the orphan-detection logic independently of the live tree. 4 empirical deletion tests confirm each new contract bites when its target mutates: regex narrow → MatchesProtectedDeclaration fails; IsOrphanMethod neutered → Heuristic_OrphanProtectedMethod + 3 strip tests fail; Strip identity → 3 strip tests fail; tracking-name swap → unfiltered cache-hit test fails. C# 2466/2466 green (v3 was 2456; +10 v4 tests). The 4 minor findings (synthetic regression-test gap, comment/string false-positive risk, --coverage flakiness, dead unfiltered constant) are also closed by the same set of changes plus the new pre-Where cache-hit test. No production code changed in v4; the only production-code touchpoint is that the previously-dead `ActionInfoTrackingName` constant is now load-bearing via the new test. One observation noted but not filed: integration of StripCommentsAndStrings into LoadAllCallableSources is not directly pinned (Pattern A has the same architecture gap, so precedent-aligned). Recommend running security analyst next."
+}

@@ -67,14 +67,6 @@ public sealed class @this
     /// </summary>
     public LlmDebug? Llm { get; set; }
 
-    /// <summary>
-    /// When true, logs every ResolveDeep call with input/output types.
-    /// Useful for tracing where %variable% resolution changes types.
-    /// Set via: --debug={"resolveTrace":true}
-    /// </summary>
-    public bool ResolveTrace { get; set; }
-
-
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
     private bool _applied;
@@ -209,13 +201,6 @@ public sealed class @this
             }
         }
 
-        // Subscribe to resolve tracing
-        if (ResolveTrace)
-        {
-            _engine.User.Context.Variables.OnResolveTrace += (varName, resolved, depth) =>
-                Console.Error.WriteLine($"  [ResolveDeep] %{varName}% → {resolved?.GetType().Name ?? "null"} (depth={depth})");
-        }
-
         // Build grep regex
         if (!string.IsNullOrEmpty(Grep))
         {
@@ -278,8 +263,8 @@ public sealed class @this
         sb.AppendLine($"=== WATCH [{name}] CHANGED ===");
         sb.AppendLine($"  Goal: {goalName}[{stepIndex}] {stepText ?? "?"}");
         sb.AppendLine($"  Raw: {oldData.RawValue?.GetType().Name ?? "null"} → {newData.RawValue?.GetType().Name ?? "null"}");
-        sb.AppendLine($"  Resolved: {oldData.Value?.GetType().Name ?? "null"} → {newData.Value?.GetType().Name ?? "null"}");
-        sb.AppendLine($"  NeedsRes: {newData.NeedsResolution}, HasCtx: {newData.Context != null}");
+        sb.AppendLine($"  Value: {oldData.Value?.GetType().Name ?? "null"} → {newData.Value?.GetType().Name ?? "null"}");
+        sb.AppendLine($"  HasCtx: {newData.Context != null}");
         for (int i = 0; i < Math.Min(5, stack.FrameCount); i++)
         {
             var frame = stack.GetFrame(i);
