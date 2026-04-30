@@ -108,12 +108,12 @@ public static class @this
             implementsIAction,
             implementsIStep,
             implementsIStatic,
-            properties,
-            ievents,
+            new EquatableArray<PropertyBase>(properties),
+            new EquatableArray<string>(ievents),
             HasIsNotNull(classSymbol),
-            ScanIsNotNullProperties(classSymbol),
-            ScanRawScalarValidations(classSymbol),
-            diagnostics);
+            new EquatableArray<string>(ScanIsNotNullProperties(classSymbol)),
+            new EquatableArray<RawScalarValidation>(ScanRawScalarValidations(classSymbol)),
+            new EquatableArray<DiagnosticInfo>(diagnostics));
     }
 
     /// <summary>
@@ -275,53 +275,25 @@ public static class @this
 
 /// <summary>
 /// Per-handler metadata produced by Discovery and consumed by the Action emitter.
-/// Lists carry value-equal records only — no Roslyn symbol references — so the
-/// IIncrementalGenerator cache treats two semantically identical inputs as equal.
+/// Record with EquatableArray collections: every field has structural equality, so
+/// the IIncrementalGenerator cache hits when two semantically identical inputs come
+/// through successive compilations.
 /// </summary>
-public sealed class ActionClassInfo
-{
-    public string Namespace { get; }
-    public string ClassName { get; }
-    public string FullName { get; }
-    public bool ImplementsIContext { get; }
-    public bool ImplementsIChannel { get; }
-    public bool ImplementsIAction { get; }
-    public bool ImplementsIStep { get; }
-    public bool ImplementsIStatic { get; }
-    public List<PropertyBase> Properties { get; }
-    public List<string> IEventPropertyNames { get; }
-    public bool HasAnyIsNotNull { get; }
-    public List<string> IsNotNullProperties { get; }
-    public List<RawScalarValidation> RawScalarValidations { get; }
-    public List<DiagnosticInfo> Diagnostics { get; }
-
-    public ActionClassInfo(
-        string ns, string className, string fullName,
-        bool implementsIContext, bool implementsIChannel, bool implementsIAction,
-        bool implementsIStep, bool implementsIStatic,
-        List<PropertyBase> properties,
-        List<string> ievents,
-        bool hasAnyIsNotNull,
-        List<string> isNotNullProperties,
-        List<RawScalarValidation> rawScalarValidations,
-        List<DiagnosticInfo> diagnostics)
-    {
-        Namespace = ns;
-        ClassName = className;
-        FullName = fullName;
-        ImplementsIContext = implementsIContext;
-        ImplementsIChannel = implementsIChannel;
-        ImplementsIAction = implementsIAction;
-        ImplementsIStep = implementsIStep;
-        ImplementsIStatic = implementsIStatic;
-        Properties = properties;
-        IEventPropertyNames = ievents;
-        HasAnyIsNotNull = hasAnyIsNotNull;
-        IsNotNullProperties = isNotNullProperties;
-        RawScalarValidations = rawScalarValidations;
-        Diagnostics = diagnostics;
-    }
-}
+public sealed record ActionClassInfo(
+    string Namespace,
+    string ClassName,
+    string FullName,
+    bool ImplementsIContext,
+    bool ImplementsIChannel,
+    bool ImplementsIAction,
+    bool ImplementsIStep,
+    bool ImplementsIStatic,
+    EquatableArray<PropertyBase> Properties,
+    EquatableArray<string> IEventPropertyNames,
+    bool HasAnyIsNotNull,
+    EquatableArray<string> IsNotNullProperties,
+    EquatableArray<RawScalarValidation> RawScalarValidations,
+    EquatableArray<DiagnosticInfo> Diagnostics);
 
 public sealed record RawScalarValidation(string PropertyName, bool IsString);
 

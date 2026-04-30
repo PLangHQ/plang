@@ -114,6 +114,22 @@ Confirm the test process completes. Capture the success/fail count Ingi mentione
 
 ---
 
+## Phase E — Raw string literals for emission (Finding 19, requested by Ingi)
+
+**File:** `PLang.Generators/Emission/Action/this.cs` (the `sb.AppendLine` cascades)
+
+**Goal.** Replace `sb.AppendLine("    private global::App...")` walls with C# 11+ raw string literals (`"""..."""`) using `{}` interpolation. The emitted shape becomes visible top-to-bottom instead of buried in `\"` and `+` concatenation.
+
+**Approach.**
+- Convert each emit method one at a time (EmitMarkers, EmitResolutionState, EmitDataAndErrorHelpers, EmitExecuteAsync, EmitLegacyHelpers, EmitSnapshotInternal, etc.).
+- Use `$"""..."""` for interpolation and `{{` `}}` to escape literal braces.
+- After each method conversion: rebuild PLang.csproj, diff one generated `.g.cs` to confirm zero output drift.
+- Don't touch the leaf `Property/*/this.cs` emission methods in this phase unless they're trivially convertible — focus is on `Emission/Action/this.cs`.
+
+**Test.** No new test — equality with the v1-emitted output is the contract. The existing Generator + Matrix suites verify behavior.
+
+---
+
 ## Phase D — Trivial cleanup (codeanalyzer findings 2, 3, 6, 9, 21)
 
 These are minutes of work each:

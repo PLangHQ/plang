@@ -33,7 +33,6 @@ public static class @this
         EmitMarkers(sb, info);
         EmitResolutionState(sb);
         EmitProperties(sb, info);
-        EmitParamDataAccessor(sb);
         EmitDataAndErrorHelpers(sb, info);
         EmitExecuteAsync(sb, info);
         EmitSnapshotPublic(sb);
@@ -76,7 +75,6 @@ public static class @this
     private static void EmitResolutionState(StringBuilder sb)
     {
         sb.AppendLine("    private global::App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;");
-        sb.AppendLine("    private global::App.Variables.@this? __variables;");
         sb.AppendLine("    private global::App.@this? __app;");
         sb.AppendLine("    private global::App.Data.@this? __resolutionError;");
         sb.AppendLine();
@@ -86,14 +84,6 @@ public static class @this
     {
         foreach (var prop in info.Properties)
             prop.EmitProperty(sb);
-    }
-
-    private static void EmitParamDataAccessor(StringBuilder sb)
-    {
-        sb.AppendLine("    private System.Collections.Generic.Dictionary<string, global::App.Data.@this?>? __paramData;");
-        sb.AppendLine("    protected global::App.Data.@this? ParamData(string paramName)");
-        sb.AppendLine("        => __paramData != null && __paramData.TryGetValue(paramName, out var d) ? d : null;");
-        sb.AppendLine();
     }
 
     private static void EmitDataAndErrorHelpers(StringBuilder sb, ActionClassInfo info)
@@ -119,11 +109,9 @@ public static class @this
         sb.AppendLine("        global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.Actor.Context.@this context)");
         sb.AppendLine("    {");
         sb.AppendLine("        __action = action;");
-        sb.AppendLine("        __variables = context.Variables;");
         sb.AppendLine("        __app = context.App;");
         sb.AppendLine("        var app = __app!;");
         sb.AppendLine("        __resolutionError = null;");
-        sb.AppendLine("        __paramData = new(StringComparer.OrdinalIgnoreCase);");
 
         // Reset backing fields per call (so reused handler instances re-derive).
         // Skip when action is null (direct C# composition via init — keep init values).
@@ -227,7 +215,6 @@ public static class @this
         sb.AppendLine("            d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine("        if (data == null) return default;");
         sb.AppendLine("        var typed = data.As<T>(Context);");
-        sb.AppendLine("        __paramData?[name] = typed;");
         sb.AppendLine("        if (!typed.Success) { __resolutionError = typed; return default; }");
         sb.AppendLine("        var __value = typed.Value;");
         sb.AppendLine("        if (__value is global::App.Goals.Goal.GoalCall __gc && __gc.Action == null)");
