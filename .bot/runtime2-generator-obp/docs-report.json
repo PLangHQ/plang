@@ -1,0 +1,82 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-generator-obp",
+  "timestamp": "2026-04-30T11:30:00Z",
+  "reviewed_version": "v6",
+  "summary": "First docs pass on runtime2-generator-obp covering coder/v1 through coder/v6 (the full v4-plan implementation plus four review-response rounds). The branch landed: source-generator OBP refactor (Discovery + Emission/Action + Emission/Property/{Data,Provider,Legacy}); Data.As<T>(context) as the v4 resolution entry with cycle (VariableResolutionCycle) + depth (ResolveDepthExceeded) ServiceError contract; PLNG001 build-time gate enforcing Data<T>/[Provider]/[VariableName] property kinds; [Sensitive] masking in ParamSnapshot with v6 null-vs-redacted distinction; the dual-capture pattern (Data<T> getter + post-Run __resolutionError check). Six gaps filled across architecture.md, data-generic-design.md, good_to_know.md, and root CLAUDE.md (stale 'Lazy params *__Generated' line replaced; stale LazyParamsGenerator.cs path replaced; Source Generator section expanded with PLNG001, incremental cache, and test alias-clash convention). Both CLAUDE.md proposals applied (folded into root CLAUDE.md instead of creating PLang/App/CLAUDE.md and PLang.Tests/CLAUDE.md per scoping decision in plan.md). No new XML docs needed — coder's XML on new public surface (Action.GetParameter, ICodeGenerated.SnapshotParams, ParamSnapshot, EquatableArray, Discovery types, Emission types) is meaningful. Build clean post-edits (0 errors). Verdict: PASS.",
+  "stats": {
+    "gaps_found": 6,
+    "gaps_filled": 6,
+    "docs_updated": 4,
+    "docs_created": 0
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/architecture.md",
+      "description": "Expanded 'Modules (Action Registry) → Source Generator' from one paragraph to four subsections: handler pattern, source-generator OBP shape (Discovery + Emission tree), property kinds with PLNG001 table, and the ICodeGenerated key interface including the SnapshotParams default-impl. Replaced the stale 'creates the ExecuteAsync bridge' wording with 'emits a partial-class extension on the action record itself — no separate *__Generated records'."
+    },
+    {
+      "id": 2,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/data-generic-design.md",
+      "description": "Appended 'Resolution semantics — cycle, depth, error contract' section. Documents the [ThreadStatic] HashSet cycle protection, ResolveDepthLimit=32 expanding-cycle bound, action-destination carve-out, and the dual-capture pattern (Data<T> getter sets __resolutionError + post-Run check in ExecuteAsync — both halves load-bearing). Clarifies that .Value is RAW post-v4 (no %var% substitution; substitution is the read transformation in As<T>)."
+    },
+    {
+      "id": 3,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Appended five cross-cutting entries: (a) Source Generator OBP shape + EquatableArray incremental-cache pattern + test alias clash convention; (b) Action property kinds (PLNG001 build-time gate); (c) Data.As<T> cycle/depth ServiceError contract + the dual-capture pattern with code example; (d) [Sensitive] masking in ParamSnapshot with the v6 null-guard distinction; (e) Action.GetParameter pure-lookup contract; (f) ICodeGenerated.SnapshotParams default-impl convention. These span multiple files and aren't derivable from a single source file — exactly what good_to_know.md is for per memory."
+    },
+    {
+      "id": 4,
+      "type": "consistency",
+      "action": "updated",
+      "file": "CLAUDE.md",
+      "description": "Replaced stale 'Lazy params: *__Generated records' line (line 13) with the actual partial-class shape. Replaced stale 'PLang.Generators/LazyParamsGenerator.cs' path with the new 'PLang.Generators/this.cs + Discovery + Emission/Action + Emission/Property/{Data,Provider,Legacy}' tree. Expanded Source Generator section with the OBP shape, PLNG001 property-kinds gate, EquatableArray cache stability rule, and PLang.Tests namespace-alias clash convention."
+    },
+    {
+      "id": 5,
+      "type": "claude-md-proposal",
+      "action": "applied",
+      "file": "CLAUDE.md",
+      "description": "test-designer/v1 proposal (folder/namespace clash with global type aliases): applied by folding into root CLAUDE.md Source Generator section. Did NOT create PLang.Tests/CLAUDE.md — the rule is broad enough that it belongs in the canonical root, and creating a new per-folder CLAUDE.md just for one rule scatters guidance."
+    },
+    {
+      "id": 6,
+      "type": "claude-md-proposal",
+      "action": "applied",
+      "file": "CLAUDE.md",
+      "description": "coder/v1 proposal (action property kinds — Data<T>/[Provider]/[VariableName]): applied by folding into root CLAUDE.md Source Generator section, augmented with the PLNG001 enforcement detail and a forward note that [VariableName] folds into Data<T> once VarRef<T> design lands. Did NOT create PLang/App/CLAUDE.md — same scoping reasoning."
+    }
+  ],
+  "claude_md_proposals": [
+    {
+      "from_bot": "test-designer",
+      "target": "/PLang.Tests/CLAUDE.md",
+      "decision": "applied",
+      "reason": "Genuinely canonical — any future test folder mirroring PLang/App/Data/ or App/Variables/ hits the CS0118 alias shadow. Folded into root CLAUDE.md (no PLang.Tests/CLAUDE.md exists; creating one for a single rule scatters guidance). Same content, more discoverable location."
+    },
+    {
+      "from_bot": "coder",
+      "target": "/PLang/App/CLAUDE.md",
+      "decision": "applied",
+      "reason": "Genuinely canonical — PLNG001 enforces this at build time across the whole tree. Folded into root CLAUDE.md (no PLang/App/CLAUDE.md exists; the existing root Source Generator section is the right place since [VariableName] is already mentioned there). Augmented with PLNG001 detail and the VarRef<T> forward note from Documentation/Runtime2/todos.md."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "missing-example",
+      "file": "docs/modules/",
+      "issue": "The two new ServiceError keys (VariableResolutionCycle, ResolveDepthExceeded) bubble up through standard error.handle modifiers, but no website-doc example shows on-error-key handling for resolution failures. Most PLang developers will never trip these (real chains are 1-5 deep; cap is 32) — the keys exist as a defensive contract, not a common pattern.",
+      "resolution": "flagged-for-tester",
+      "detail": "Tester is responsible for PLang .goal examples. If we want a user-facing example showing 'on error key VariableResolutionCycle', it lives in a tester-written .test.goal file with the cycle setup. Out of scope for this docs pass — flagging for visibility."
+    }
+  ]
+}

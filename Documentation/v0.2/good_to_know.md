@@ -569,3 +569,144 @@ When a step like `set %count% = %count% + 1` produces the wrong action chain, th
 The pattern: `static ExampleSpec[] ExamplesForLlm() => new[] { Example("step text", Action("module.action", new() { ["Param"] = ... }), Action(...)) }` — multi-action chains pass multiple `Action(...)` args to one `Example`. Helpers live in `App.Catalog.ExampleHelpers`.
 
 This keeps three things clean: (1) variables stay dumb (regex `%var%` substitution only, no hidden eval); (2) the action graph is explicit — math operations show up as `math.*` actions in the `.pr`, not as inline strings; (3) the catalog is the single source of truth for what the LLM should produce. Stamping the same intent in two places (catalog examples + runtime evaluator) creates drift and is rejected.
+
+---
+
+## Source Generator — OBP shape and incremental cache
+
+`PLang.Generators/` mirrors the per-folder `@this` convention used by the runtime. Entry point is `PLang.Generators/this.cs` (`IIncrementalGenerator`); below it the work splits into Discovery (Roslyn boundary) and Emission (string output):
+
+```
+PLang.Generators/this.cs                — IIncrementalGenerator entry, source-output stage
+  ├ Discovery/this.cs                   — IsActionPartialClass predicate, GetActionClassInfo, BuildProperty factory
+  └ Emission/
+      ├ Action/this.cs                  — per-handler emitter (shell + ExecuteAsync + __SnapshotParams)
+      └ Property/
+          ├ this.cs                     — abstract record (EmitProperty, EmitSnapshotEntry)
+          ├ Data/this.cs                — Data<T> / plain Data
+          ├ Provider/this.cs            — [Provider]
+          └ Legacy/this.cs              — raw-scalar (transitional)
+```
+
+**Per-property polymorphism.** `Discovery.BuildProperty` picks one of the three Property leaves per declared property and packs primitive fields into the leaf's record. `Emission.Action.@this` consumes `ActionClassInfo` and dispatches via `ActionProperty.EmitProperty(sb)` / `EmitSnapshotEntry(sb)` — the leaves know their own emission shape.
+
+**Incremental cache stability.** Roslyn's `IIncrementalGenerator` caches by **structural** equality on pipeline outputs. `List<T>` uses reference equality, so two lists with identical contents miss the cache on every recompile. `EquatableArray<T>` (in `PLang.Generators/EquatableArray.cs`) wraps `T[]` with element-wise `Equals`/`GetHashCode`. `ActionClassInfo` is a `record` with `EquatableArray<PropertyBase>`, `EquatableArray<string>`, `EquatableArray<RawScalarValidation>`, `EquatableArray<DiagnosticInfo>` — **no `IPropertySymbol` references leak in**, all fields are primitives. Result: if two compilations produce semantically identical class info, Roslyn reuses cached emission output.
+
+Tracking-name constants (`ActionInfoTrackingName`, `ActionInfoFilteredTrackingName`) on `PLang.Generators.@this` exist so `IncrementalCacheTests` can drive `CSharpGeneratorDriver.WithTrackingName(...)` and assert pre-Where vs post-Where step reuse — a regression of "ActionClassInfo no longer value-equal" is caught by the test.
+
+**Test alias clash with namespace generation.** `PLang.Tests/GlobalUsings.cs` declares heavily-used type aliases:
+
+```csharp
+global using Data = global::App.Data.@this;
+global using Variables = App.Variables.@this;
+```
+
+Do NOT create test namespaces matching these alias names — `PLang.Tests.App.Data` or `PLang.Tests.App.Variables` namespaces shadow the type alias for all sibling test files (`CS0118: 'Data' is a namespace but is used like a type`). File-level `using Data = ...` cannot override (CS1537 against the global, and the namespace still wins at sibling scope). Convention: when a test folder mirrors `PLang/App/Data/` or `PLang/App/Variables/`, use the `*Tests` suffix on the folder/namespace (`PLang.Tests/App/DataTests/`, `PLang.Tests/App/VariablesTests/`). Same applies to any future global alias whose name is also a directory under `PLang/App/`.
+
+---
+
+## Action property kinds (PLNG001 build-time gate)
+
+Action handler properties are constrained at build time. `Discovery.IsValidActionProperty` accepts only:
+
+- **`Data<T>` / `Data`** — the standard form. Resolution flows through `Action.GetParameter(name, context).As<T>(Context)` lazily on first read.
+- **`[Provider] T`** — eagerly populated from `app.Providers.Get<T>()` at the start of `ExecuteAsync`. Used for pluggable infrastructure (HTTP, signing, LLM).
+- **`[VariableName] string`** — the variable's *name* with `%` markers stripped. Used by handlers that work with variable identity rather than value (`variable.set`, `list.*`).
+
+Anything else fails the build with `PLNG001: Property '{0}' on action '{1}' must be Data<T>, [Provider], or [VariableName] string. Raw scalars are not permitted.` The diagnostic carries the full identifier span so IDE squiggles underline the property name, not a one-character mark.
+
+**Why the gate exists.** The pre-v4 generator handled raw `partial string` / `partial int` / etc. with bespoke logic per kind — 700 lines of conditionals, hard to extend, easy to break. PLNG001 narrows the surface so emission lives on three Property leaves with one shape each. Future migrations should fold `[VariableName]` into `Data<T>` once a `VarRef<T>` design lands (see `Documentation/Runtime2/todos.md` 2026-04-30 entry).
+
+**Currently exempt.** Handlers under `PLang/App/modules/list/`, `App/modules/loop/`, and `App/modules/variable/` still use `[VariableName]` and raw `partial` scalars routed through `Emission/Property/Legacy/this.cs`. The legacy path stays until the migration completes.
+
+---
+
+## `Data.As<T>` — cycle, depth, ServiceError contract
+
+`Data.As<T>(context)` is the v4 resolution entry point. Three guards plus a `ServiceError` contract; both halves matter for handler correctness.
+
+### The two ServiceError keys
+
+| Key | Status | Trigger | Source |
+|-----|--------|---------|--------|
+| `VariableResolutionCycle` | 400 | A `%var%` references itself transitively (e.g. `%a%="%b%", %b%="%a%"`) | `[ThreadStatic] HashSet<string>` exact-match cycle detection in `AsT_Impl` |
+| `ResolveDepthExceeded` | 400 | An *expanding* chain produces a new string at each level past `ResolveDepthLimit = 32` | Depth check inside the cycle's try/finally |
+
+The HashSet alone misses expanding cycles — `%a%="X-%b%", %b%="Y-%a%"` produces a fresh string each level (`"X-Y-X-Y-..."`), so HashSet membership never trips. Real handler chains go 1–5 levels deep; matrix tests exercise 5 (see `AsT_DeepChain_5Levels_ResolvesCorrectly`). The cap is well above any legitimate use.
+
+### The dual capture pattern (don't break either half)
+
+Generated `Data<T>` getters resolve lazily on first read. When `As<T>` returns `FromError(ServiceError)` for a cycle/depth trip, the FromError-Data lives on the backing field with `.Value = default(T)`. A handler `Run()` body that reads `.Value` proceeds with a default, **masking the resolution error**.
+
+The fix is two-part. Generated emission carries both:
+
+```csharp
+// (1) In each Data<T> getter — capture the error as the property is touched:
+get {
+    if (__Body_backing == null) {
+        __Body_backing = __ResolveData("body").As<string>(Context);
+        if (!__Body_backing.Success) __resolutionError = __Body_backing;
+        __Body_set = true;
+    }
+    return __Body_backing!;
+}
+
+// (2) In ExecuteAsync — surface AFTER Run() completes:
+if (__resolutionError != null) return __resolutionError;
+var __runResult = await Run();
+if (__resolutionError != null) return __resolutionError;
+return __runResult;
+```
+
+The pre-Run check catches eager-validated raw scalars (Legacy emission writes `__resolutionError` before Run too). The post-Run check catches Data<T> getters that fired *during* Run — which is the common case. **Removing either half re-introduces the silent-default bug.** The auditor's first attempt at this fix proposed (1) only; that was dead code without (2).
+
+### Action-destination carve-out
+
+When `T` is `Action.@this` or `IEnumerable<Action.@this>`, `AsT_Impl` skips the variable walk entirely. Sub-actions hold raw `%var%` strings for *deferred* resolution at their own dispatch — resolving them at outer dispatch would prematurely substitute everything inside the action graph.
+
+### `.Value` is raw
+
+`Data.Value` returns the raw stored value (factory-resolved if any, but never `%var%`-substituted). Substitution happens only inside `As<T>(context)`. Each `As<T>` call resolves freshly against the current variable store — there is nothing to cache and nothing to invalidate. Caching, if any, lives on the caller (e.g. the generator's per-property backing field).
+
+---
+
+## `[Sensitive]` masking in ParamSnapshot
+
+When a handler errors, `App.Run` stamps `ICodeGenerated.SnapshotParams()` onto `Error.Params`, which prints to logs/CI artefacts/debug output under "📥 Parameters at dispatch:". Each property contributes a `ParamSnapshot { Name, DeclaredType, PrValue, PrType, FinalValue, WasAccessed }`.
+
+`[Sensitive]` on a `Data<T>` or legacy-scalar property (defined in `App/View.cs`, also used by `SensitivePropertyFilter` for JSON serialization) controls masking in two slots:
+
+| Field | Non-sensitive | Sensitive |
+|-------|---------------|-----------|
+| `PrValue` | `__pr?.Value` (the raw `.pr` literal — often a `%var%` reference) | `"******"` when the literal is non-null, `null` when absent |
+| `FinalValue` | `{set_flag} ? backing : null` | `{set_flag} ? (backing?.Value != null ? "******" : null) : null` |
+
+The null-guard on `FinalValue` (added in v6 nit #3) distinguishes **accessed-and-null** from **accessed-and-redacted**. A sensitive property the handler read but resolved to null reports `FinalValue: null`, not `FinalValue: "******"`. There is no secret to redact in the null case; reporting `"******"` is misleading.
+
+`Provider` properties are not parameter-sourced — they emit no snapshot entry. Match the convention if you add a new property kind.
+
+**Attribute matching is short-name only.** `Discovery` matches `[Sensitive]` by `AttributeClass.Name == "SensitiveAttribute"` — same convention as `[Provider]` and `[VariableName]`. A different `SensitiveAttribute` declared in another namespace would inadvertently trigger masking. Theoretical only; no current namespace collision in the codebase. If standardisation on fully-qualified attribute matching ever lands, do all three at once or you create a different inconsistency.
+
+---
+
+## `Action.GetParameter` — pure parameter lookup
+
+```csharp
+public Data GetParameter(string name, Actor.Context context);
+```
+
+Walks `Parameters` first, falls back to `Defaults`, returns `Data.NotFound(name)` when missing. **Pure lookup — no resolution side effects.** Resolution lives in `Data.As<T>(context)`.
+
+Why the `context` parameter even though the lookup is context-free today: contract symmetry with `As<T>(context)`. Both names "reach into the parameter graph" — a future variant that resolves on lookup (e.g. for handlers that want the resolved Data immediately) keeps the same signature. The hook is cheap; renaming the API later is not.
+
+**Within the source generator**, handlers call `__ResolveData(name)` which delegates to `GetParameter` and stamps the Data's `Context`. From outside, callers (e.g. tests composing actions directly) call `GetParameter` themselves and pipe through `As<T>`.
+
+---
+
+## `ICodeGenerated.SnapshotParams` — default-impl interface method
+
+`ICodeGenerated` declares `List<ParamSnapshot> SnapshotParams() => new();` with an interface default impl. The generator emits a per-handler override that walks each declared property and produces a `ParamSnapshot` (delegating to `EmitSnapshotEntry` on the corresponding `Property` leaf).
+
+**Don't implement `SnapshotParams` by hand.** Same reason handlers don't write `: ICodeGenerated` — the generator owns this surface. The default-impl exists so handlers without parameter properties (e.g. simple infrastructure actions) compile cleanly without a generated override.
+
+`App.Run` calls `handler.SnapshotParams()` from its catch block (and from the success-with-error path) and stamps the result onto `Error.Params` if not already populated. The generator no longer attaches snapshots inside generated `ExecuteAsync` — that responsibility moved to `App.Run` in v4 Phase 3 so all dispatch paths get consistent error context.

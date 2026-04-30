@@ -233,18 +233,52 @@ Namespace:            App.modules.{module}      -> modules.variable
 Registry key:         {module}.{record}         -> variable.set
 ```
 
-The source generator creates the `ExecuteAsync` bridge — resolves `%var%` references in parameters at access time (lazy params), wires capability interfaces (`IContext`, `IChannel`, `IStep`).
+The source generator emits a partial-class extension on the action record itself — resolves `%var%` references in parameters lazily at property access time, wires capability interfaces (`IContext`, `IChannel`, `IStep`), eagerly resolves `[Provider]`s, and emits `__SnapshotParams` for error reporting. No separate `*__Generated` records — the action record IS the partial class.
+
+### Source-generator OBP shape
+
+`PLang.Generators/` mirrors the per-folder `@this` convention:
+
+```
+PLang.Generators/this.cs                — IIncrementalGenerator entry point
+  ├ Discovery/this.cs                   — Roslyn predicate + GetActionClassInfo + property factory
+  └ Emission/
+      ├ Action/this.cs                  — per-handler emitter (partial-class shell, ExecuteAsync, __SnapshotParams)
+      └ Property/
+          ├ this.cs                     — abstract base (EmitProperty, EmitSnapshotEntry)
+          ├ Data/this.cs                — Data<T> / plain Data emission
+          ├ Provider/this.cs            — [Provider]-attributed emission
+          └ Legacy/this.cs              — raw-scalar emission for handlers still on [VariableName]/partial-string
+```
+
+`Discovery.GetActionClassInfo` builds an `ActionClassInfo` record (with `EquatableArray<T>` collections for incremental-cache stability — see [`good_to_know.md`](good_to_know.md)). `Emission/Action` consumes that record and dispatches per-property to the right `Emission/Property/*` leaf via the polymorphic `ActionProperty` base.
+
+### Property kinds (PLNG001 build-time gate)
+
+Action property positions are constrained at build time. `Discovery.IsValidActionProperty` accepts only:
+
+| Shape | Resolution | Used for |
+|-------|------------|----------|
+| `Data<T>` | `Action.GetParameter(name).As<T>(Context)` lazily on read | Standard handler param |
+| `Data` (plain) | Same as `Data<object>` | Untyped passthrough |
+| `[Provider] T` | Eager `app.Providers.Get<T>()` in `ExecuteAsync` | Pluggable infrastructure (HTTP, signing, LLM) |
+| `[VariableName] string` | `__StripPercent(name)` — bare identifier | Handlers that need the variable's *name* not its value (variable.set, list.*) |
+
+Any other shape (raw `partial string`, `partial int`, untagged primitives) reports the **PLNG001** error: *Property '{0}' on action '{1}' must be Data<T>, [Provider], or [VariableName] string. Raw scalars are not permitted.* The diagnostic carries the full identifier span so IDE squiggles underline the property name.
 
 ### Key interface
 
 ```csharp
 public interface ICodeGenerated
 {
-    Task<Data> ExecuteAsync(Action action, App app, Context context);
+    Task<Data> ExecuteAsync(Action action, Context context);
+    List<ParamSnapshot> SnapshotParams() => new();    // default-impl; generator overrides per handler
 }
 ```
 
-All handlers implement this. No fallback path.
+All handlers register through this. The generator adds it automatically — handlers never write `: ICodeGenerated` themselves.
+
+`SnapshotParams()` is stamped onto `Error.Params` by `App.Run` on failure (see *App.Run dispatch* in [`good_to_know.md`](good_to_know.md)) so the resulting error carries "param X arrived as Y" without re-running.
 
 ---
 

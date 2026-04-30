@@ -1179,6 +1179,68 @@
         "health": "C# tests 2471/2471 green (+3 from v5).",
         "notes": "Auditor scope correction: their suggested property-only fix was dead code on its own \u2014 line 232 fires before Run, Data<T> getters fire during Run. Real fix is two-part (capture in getter + post-Run check). Confirmed with Ingi before implementing."
       }
+    },
+    {
+      "id": "docs-3ca923fb-dc83-4dc5-ad05-5687ac73ad6c",
+      "bot": "docs",
+      "timestamp_start": "2026-04-30T11:00:00Z",
+      "timestamp_end": "2026-04-30T11:30:00Z",
+      "intent": "Documentation gate after auditor PASS \u2014 document Data.As<T> resolution contract (cycle/depth ServiceError), source-generator OBP shape (Discovery + Emission/Property), PLNG001 property-kinds gate, [Sensitive] in ParamSnapshot, and apply the two CLAUDE.md proposals.",
+      "before": {
+        "assumptions": "Auditor verdict PASS with v6 closing finding #1 + nits #2,#3. Production code stable at 2471/2471 C# green. Two CLAUDE.md proposals on file (test-designer/v1 + coder/v1). No prior docs work on this branch.",
+        "risk": "Architecture docs (Documentation/v0.2/architecture.md, data-generic-design.md, good_to_know.md) describe pre-v4 generator shape with *__Generated records \u2014 outdated. Root CLAUDE.md's 'Lazy params: *__Generated' line is now actively misleading. Two ServiceError keys (VariableResolutionCycle, ResolveDepthExceeded) introduced in v5/v6 are undocumented."
+      },
+      "plan": ".bot/runtime2-generator-obp/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/data-generic-design.md",
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architecture-doc updates: expanded architecture.md Source Generator subsection (OBP shape, PLNG001 property-kinds gate, ICodeGenerated default-impl); appended data-generic-design.md resolution-semantics section (cycle/depth ServiceError, dual-capture pattern); appended five cross-cutting entries to good_to_know.md (generator OBP shape + EquatableArray; PLNG001 gate; Data.As<T> contract; [Sensitive] in ParamSnapshot; GetParameter / SnapshotParams)."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Root CLAUDE.md: replaced stale '*__Generated' line and 'LazyParamsGenerator.cs' path; expanded Source Generator section with OBP shape + PLNG001 gate + EquatableArray cache stability + test alias-clash convention. Applied both pending CLAUDE.md proposals (test-designer/v1 + coder/v1) by folding into root \u2014 no new per-folder CLAUDE.md files created (alternative considered: create PLang/App/CLAUDE.md and PLang.Tests/CLAUDE.md to hold the rules, rejected for tree flatness)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/docs/v1/plan.md",
+            ".bot/runtime2-generator-obp/docs/v1/result.md",
+            ".bot/runtime2-generator-obp/docs/v1/summary.md",
+            ".bot/runtime2-generator-obp/docs/v1/verdict.json",
+            ".bot/runtime2-generator-obp/docs/summary.md",
+            ".bot/runtime2-generator-obp/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session bookkeeping. result.md is the CHANGELOG-style entry covering user-visible surface (PLNG001 build error, VariableResolutionCycle / ResolveDepthExceeded ServiceError keys, [Sensitive] masking in Error.Params, ICodeGenerated.SnapshotParams default-impl)."
+        },
+        {
+          "paths": [
+            "docs/"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reviewed website docs \u2014 no updates needed. Generator refactor is invisible to PLang developers writing .goal files; the two new ServiceError keys bubble through existing error.handle modifiers without new user-facing API. One minor finding flagged (missing on-error-key example) for tester."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "Build clean (0 errors). All gaps filled, both CLAUDE.md proposals applied. Verdict: PASS \u2014 code is ready to merge.",
+        "notes": "v6 dual-capture pattern (Data<T> getter sets __resolutionError + post-Run check in ExecuteAsync) is the most subtle thing on the branch \u2014 documented in both data-generic-design.md and good_to_know.md with code examples so future devs touching property emission see both halves are load-bearing. One findings entry flagged-for-tester: missing on-error-key=VariableResolutionCycle PLang example (out of scope for docs; tester decides). Stale 'PLang/Runtime2/' paths in CLAUDE.md left untouched \u2014 predates this branch, separate cleanup."
+      }
     }
   ]
 }

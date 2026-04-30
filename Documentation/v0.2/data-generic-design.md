@@ -558,3 +558,55 @@ Smallest blast radius, proves the pattern:
 - Remove TypeMapping calls from source generator (Data.As<T> handles conversion)
 - Simplify Clone, serialization
 - Remove any dead code from the inheritance era
+
+---
+
+## Resolution semantics (`Data.As<T>`) — cycle, depth, error contract
+
+The simplified `As<T>` shown in section 7 above is the design sketch. The shipped implementation in `App/Data/this.cs` adds three guards plus a `ServiceError` contract; both halves matter for handler correctness.
+
+### Cycle protection
+
+A `[ThreadStatic] HashSet<string>? _resolvingValues` tracks the raw `%var%`-containing strings currently being resolved on the current thread. When `As<T>` recurses into a string already in the set (e.g. `%a%="%b%", %b%="%a%"`), it returns `Data<T>.FromError(new ServiceError(..., "VariableResolutionCycle", 400))` instead of overflowing the stack.
+
+### Depth bound
+
+The HashSet alone misses *expanding* cycles where each recursion level produces a new string (e.g. `%a%="X-%b%", %b%="Y-%a%"` → `"X-Y-X-Y-..."`). For those, `ResolveDepthLimit = 32` caps recursion. Real handler chains run 1–5 levels; the limit is well above any legitimate use. Trip → `Data<T>.FromError(new ServiceError(..., "ResolveDepthExceeded", 400))`.
+
+### Action-destination carve-out
+
+When `T` is `Action.@this` (or `IEnumerable<Action.@this>`), sub-actions hold raw `%var%` strings for *deferred* resolution at their own dispatch time. `As<T>` skips the variable walk entirely and converts the raw value straight through `TypeMapping`. Without this carve-out, dispatching an outer step would prematurely resolve everything inside its sub-actions.
+
+### Error capture in generated handlers
+
+Handlers declare `Data<T>` properties. The source-generated getter assigns `__ResolveData(name).As<T>(Context)` to a backing field — but when `As<T>` returns `FromError(...)` (cycle or depth-trip), the FromError-Data lives silently on the backing field with `Value = default(T)`. A `Run()` body that reads `.Value` would proceed with a default value, masking the resolution error.
+
+The fix is two-part. The generator emits both halves:
+
+```csharp
+// In each Data<T> property getter:
+get {
+    if (__Body_backing == null) {
+        __Body_backing = __ResolveData("body").As<string>(Context);
+        if (!__Body_backing.Success) __resolutionError = __Body_backing;
+        __Body_set = true;
+    }
+    return __Body_backing!;
+}
+
+// In ExecuteAsync, AFTER Run() completes:
+if (__resolutionError != null) return __resolutionError;
+var __runResult = await Run();
+if (__resolutionError != null) return __resolutionError;
+return __runResult;
+```
+
+The pre-Run check catches eager-validated raw scalars that fail; the post-Run check catches Data<T> getters that fired during `Run()` (the common case). Both checks are load-bearing — removing either re-introduces the silent-default bug.
+
+### Why .Value is raw
+
+Section 7's sketch shows `.Value` triggering substitution. The shipped contract makes `.Value` the *raw* stored value — no `%var%` substitution, no caching. Each `As<T>(context)` call resolves freshly against the current variable store. This means:
+
+- A `Data<string>` carrying `"%user.name%"` reports `.Value == "%user.name%"` until `As<string>(context)` is called.
+- Variables set later in the goal are visible — there is nothing stale to invalidate.
+- Resolution caching, if any, lives on the caller (e.g. the source-generated backing field).
