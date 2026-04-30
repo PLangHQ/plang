@@ -408,6 +408,10 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
                 err.Params = handler.SnapshotParams();
             return result;
         }
+        // Deliberately catches OperationCanceledException — timeout.after depends on this:
+        // the inner action's generated ExecuteAsync swallows OCE into a ServiceError result,
+        // so timeout.after detects the timeout via CTS state + failed result, not via OCE
+        // bubbling up. Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var serviceErr = new Errors.ServiceError(

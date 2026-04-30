@@ -41,7 +41,7 @@ public static class @this
     /// or [VariableName]-attributed string (the latter is a transitional carve-out for handlers
     /// that work with variable identity rather than value — variable.set, list.*).
     /// </summary>
-    public static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
+    internal static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
         id: "PLNG001",
         title: "Action property must be Data<T> or [Provider]",
         messageFormat: "Property '{0}' on action '{1}' must be Data<T>, [Provider], or [VariableName] string. Raw scalars are not permitted.",
@@ -129,9 +129,10 @@ public static class @this
         if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "VariableNameAttribute"))
             return true;
 
-        // Data<T> or plain Data
+        // Data<T> or plain Data. Roslyn's IPropertySymbol.Name returns the bare identifier
+        // without the leading @ — so we only need to check "this".
         if (prop.Type is INamedTypeSymbol dt
-            && (dt.OriginalDefinition.Name == "this" || dt.OriginalDefinition.Name == "@this")
+            && dt.OriginalDefinition.Name == "this"
             && dt.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data")
             return true;
 
@@ -187,14 +188,11 @@ public static class @this
         var typeNameStr = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var isNullable = prop.NullableAnnotation == NullableAnnotation.Annotated;
 
-        var isDataWrapped = prop.Type is INamedTypeSymbol dt
-            && dt.IsGenericType
-            && (dt.OriginalDefinition.Name == "this" || dt.OriginalDefinition.Name == "@this")
-            && dt.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data";
-        var isPlainData = !isDataWrapped
-            && (prop.Type as INamedTypeSymbol)?.Name is "this" or "@this"
-            && (prop.Type as INamedTypeSymbol)?.ContainingNamespace.ToDisplayString() == "App.Data"
-            && !((INamedTypeSymbol)prop.Type).IsGenericType;
+        var namedType = prop.Type as INamedTypeSymbol;
+        var isAppDataThis = namedType?.OriginalDefinition.Name == "this"
+            && namedType.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data";
+        var isDataWrapped = isAppDataThis && namedType!.IsGenericType;
+        var isPlainData = isAppDataThis && !namedType!.IsGenericType;
 
         if (isDataWrapped || isPlainData)
         {
@@ -223,8 +221,10 @@ public static class @this
         if (arg.Value is string strVal)
             return "\"" + strVal.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
         if (arg.Value == null) return null;
+        // For enum and primitive defaults, return the bare literal value. Emission wraps
+        // it in ({InnerType})… so a separate cast here would produce ({T})({T})value.
         if (prop.Type.TypeKind == TypeKind.Enum)
-            return $"({prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}){arg.Value}";
+            return arg.Value.ToString();
         return arg.Value.ToString()!.ToLowerInvariant();
     }
 

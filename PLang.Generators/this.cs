@@ -11,7 +11,7 @@ namespace PLang.Generators;
 /// Per-property emission lives on the ActionProperty hierarchy under Emission/Property/.
 /// </summary>
 [Generator]
-public class LazyParamsGenerator : IIncrementalGenerator
+public class @this : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {

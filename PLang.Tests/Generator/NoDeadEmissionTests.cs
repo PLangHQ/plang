@@ -25,7 +25,7 @@ public class NoDeadEmissionTests
                 dir = parent.FullName;
             }
             return Path.Combine(dir!, "PLang.Tests", "obj", "Debug", "net10.0",
-                "generated", "PLang.Generators", "PLang.Generators.LazyParamsGenerator");
+                "generated", "PLang.Generators", "PLang.Generators.this");
         }
     }
 

@@ -146,6 +146,27 @@ public class AppRunScaffoldingTests
         await Assert.That(depthAfter).IsEqualTo(depthBefore);
     }
 
+    // App.Run DELIBERATELY catches OperationCanceledException and translates to ServiceError.
+    // timeout.after depends on this: the inner action's ExecuteAsync swallows OCE so the
+    // timeout is detected via CTS state + failed result, not via OCE bubbling up.
+    // Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
+    // Pinning this with a test so a future "consistency fix" doesn't silently break timeouts.
+    [Test]
+    public async Task AppRun_HandlerThrowsOCE_TranslatesToServiceError_DoesNotPropagate()
+    {
+        var oceThrower = new OceThrowingHandler();
+        _app.Modules.Register("matrix.oce", "throwoce", oceThrower);
+
+        var action = MakeAction("matrix.oce", "throwoce");
+
+        // Should NOT throw — OCE is caught and translated.
+        var result = await _app.Run(action, _app.Context);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
+        await Assert.That(result.Error.Exception).IsTypeOf<OperationCanceledException>();
+    }
+
     // Action.Handled (mock.intercept / event.skipAction) bypasses App.Run entirely — no frame, no snapshot.
     [Test]
     public async Task AppRun_NotCalled_WhenHandledOverride()
@@ -177,5 +198,24 @@ internal class ThrowingMatrixHandler : global::App.modules.IAction, global::App.
         global::App.Actor.Context.@this context)
     {
         throw new InvalidOperationException("forced throw");
+    }
+}
+
+// Hand-written handler that throws OperationCanceledException — pins the timeout.after contract.
+internal class OceThrowingHandler : global::App.modules.IAction, global::App.modules.ICodeGenerated
+{
+    public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+    public global::App.@this App { get; private set; } = null!;
+    public global::App.Actor.Context.@this Context { get; private set; } = null!;
+    public System.Type? ParameterType => null;
+
+    public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context)
+    { App = engine; Context = context; }
+
+    public Task<global::App.Data.@this> ExecuteAsync(
+        global::App.Goals.Goal.Steps.Step.Actions.Action.@this action,
+        global::App.Actor.Context.@this context)
+    {
+        throw new OperationCanceledException("simulated cancellation");
     }
 }

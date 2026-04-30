@@ -30,7 +30,7 @@ public class GeneratorValidationTests
         File.ReadAllText(Path.Combine(RepoRoot, "PLang.Generators", relativePath));
 
     private static string GeneratedDir => Path.Combine(RepoRoot, "PLang.Tests", "obj", "Debug",
-        "net10.0", "generated", "PLang.Generators", "PLang.Generators.LazyParamsGenerator");
+        "net10.0", "generated", "PLang.Generators", "PLang.Generators.this");
 
     private static string ReadAnyGeneratedHandler()
     {

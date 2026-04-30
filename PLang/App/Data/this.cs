@@ -505,6 +505,11 @@ public partial class @this
         return result;
     }
 
+    // Shape contract: WalkList / WalkDict / SubstitutePrimitive only match the typed-generic
+    // shapes IList<object?> / IDictionary<string, object?>. A non-generic IList (ArrayList)
+    // or IDictionary (Hashtable) passes through to the fall-through and is returned as-is —
+    // no %var% substitution. JSON ingestion is normalized to the typed forms via
+    // UnwrapJsonElement / UnwrapNewtonsoftToken upstream, so this is safe in practice.
     private static object? SubstitutePrimitive(object? value, Actor.Context.@this ctx)
     {
         if (value == null) return null;

@@ -28,7 +28,7 @@ public class SnapshotParamsTests
     private static string ReadGenerated(string handlerName)
     {
         var generatedDir = Path.Combine(RepoRoot, "PLang.Tests", "obj", "Debug", "net10.0",
-            "generated", "PLang.Generators", "PLang.Generators.LazyParamsGenerator");
+            "generated", "PLang.Generators", "PLang.Generators.this");
         return File.ReadAllText(Path.Combine(generatedDir, handlerName));
     }
 

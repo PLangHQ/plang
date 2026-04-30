@@ -188,6 +188,37 @@ public class DataAsTResolutionTests
         await Assert.That(commentParam!.Value).IsEqualTo("%comment%");
     }
 
+    // Non-generic IList (ArrayList) doesn't match the typed shape — passes through without
+    // %var% substitution. Pinning current behavior; JSON ingestion normalizes to typed forms,
+    // so production never feeds raw ArrayLists into resolution.
+    [Test]
+    public async Task AsT_NonGenericArrayList_PassesThroughWithoutSubstitution()
+    {
+        _app.Context.Variables.Set("x", "substituted");
+        var raw = new System.Collections.ArrayList { "%x%", "literal" };
+        var data = new Data("list", raw) { Context = _app.Context };
+
+        // Asks for object back so the conversion doesn't try to coerce ArrayList to anything.
+        var result = data.As<object>(_app.Context);
+
+        await Assert.That(result.Value).IsEqualTo(raw);
+        // Raw element [0] is still "%x%" — no walk happened.
+        await Assert.That(((System.Collections.ArrayList)result.Value!)[0]).IsEqualTo("%x%");
+    }
+
+    // Non-generic IDictionary (Hashtable) — same shape contract as ArrayList above.
+    [Test]
+    public async Task AsT_NonGenericHashtable_PassesThroughWithoutSubstitution()
+    {
+        _app.Context.Variables.Set("x", "substituted");
+        var raw = new System.Collections.Hashtable { ["key"] = "%x%" };
+        var data = new Data("dict", raw) { Context = _app.Context };
+
+        var result = data.As<object>(_app.Context);
+
+        await Assert.That(((System.Collections.Hashtable)result.Value!)["key"]).IsEqualTo("%x%");
+    }
+
     // Cyclic %var% reference (a → b → a) must NOT stack-overflow.
     [Test]
     public async Task AsT_CyclicVarReference_DoesNotStackOverflow()
