@@ -1,0 +1,17 @@
+{
+  "note": "v4 changed only test code (NoDeadEmissionTests.cs and IncrementalCacheTests.cs). Coverage on production source files (PLang/App/Data/this.cs, PLang.Generators/this.cs, PLang.Generators/Discovery/this.cs) is unchanged from tester/v3 since v4 did not touch production code.",
+  "v3_carry_forward": {
+    "PLang/App/Data/this.cs": "83.1% (651/783) — unchanged",
+    "PLang.Generators/this.cs": "100.0% (70/70) — unchanged",
+    "PLang.Generators/Discovery/this.cs": "75.0% (330/440) — unchanged"
+  },
+  "test_coverage_added_by_v4": {
+    "PLang.Tests/Generator/NoDeadEmissionTests.cs": "9 new tests (3 helper-driven Heuristic_*, 3 Strip_*, 3 PublicOrProtectedMethodDecl_*) — all green",
+    "PLang.Tests/Generator/IncrementalCacheTests.cs": "1 new test (PipelineCache_RerunWithUnchangedSyntax_UnfilteredStepOutputsAreCachedOrUnchanged) — green"
+  },
+  "live_cross_file_test_passes_with_widened_pattern": true,
+  "live_callers_present_in_user_partials": {
+    "Data": ["PLang/App/modules/list/count.cs", "PLang/App/modules/list/unique.cs", "PLang/App/modules/event/on.cs", "PLang/App/modules/list/join.cs", "PLang/App/modules/list/remove.cs", "PLang/App/modules/loop/foreach.cs", "PLang/App/modules/list/contains.cs", "PLang/App/modules/list/get.cs", "PLang/App/modules/list/any.cs", "PLang/App/modules/list/range.cs"],
+    "Error": ["PLang/App/modules/list/get.cs", "PLang/App/modules/module/add.cs", "PLang/App/modules/list/range.cs", "PLang/App/modules/list/sort.cs", "PLang/App/modules/mock/verify.cs", "PLang/App/modules/list/unique.cs", "PLang/App/modules/error/throw.cs", "PLang/App/modules/app/run.cs", "PLang/App/modules/list/remove.cs", "PLang/App/modules/list/set.cs"]
+  }
+}

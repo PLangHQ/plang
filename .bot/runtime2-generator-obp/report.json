@@ -842,6 +842,61 @@
         "notes": "Risk noted in plan (live tree could surface real orphans for Data/Error after widening) empirically resolved: user partials in PLang/App/modules/* contain real Data(...)/Error(...) calls; cross-file scan finds them. Recommend codeanalyzer next, then tester to confirm Finding #1 honestly closed."
       },
       "timestamp_end": "2026-04-30T08:52:25Z"
+    },
+    {
+      "id": "8b033076-8b1e-4a18-9bf8-ab29f0c37dd8",
+      "bot": "tester",
+      "timestamp_start": "2026-04-30T09:04:13Z",
+      "intent": "Verify coder v4 closes the 5 findings from tester v3 — hunt for false greens in the new tests, especially the MAJOR toothlessness fix (Pattern B widened to public|protected).",
+      "before": {
+        "assumptions": "Coder v4 added 10 tests across NoDeadEmissionTests.cs and IncrementalCacheTests.cs: 3 IsOrphanMethod synthetic, 3 strip tests, 3 regex assertions, 1 unfiltered-step cache-hit test. Plus comment-block caveat for --coverage. No production code changed. Coder claims 2466/2466 green and ran 2 empirical deletion tests in-session.",
+        "risk": "v3 toothlessness was a regex-pattern-matches-its-own-docstring trap. v4's fix could repeat the same shape if (a) the regex assertions don't actually pin protected matching, (b) IsOrphanMethod is pinned but the integration into the live test bypasses it, (c) StripCommentsAndStrings is pinned but LoadAllCallableSources stops calling it without any test failing, (d) the new unfiltered cache-hit test passes vacuously because TrackedSteps is empty rather than because outputs are Cached/Unchanged."
+      },
+      "plan": ".bot/runtime2-generator-obp/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Generator/NoDeadEmissionTests.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs",
+            "PLang.Generators/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Pass 1 inspection of all 10 v4 tests for structural toothlessness; all honest. Pass 2 ran 4 empirical deletion tests. (A) Narrowed regex to public-only → PublicOrProtectedMethodDecl_MatchesProtectedDeclaration failed. (B) Made IsOrphanMethod always return false → Heuristic_OrphanProtectedMethod_IsFlagged plus 3 Strip_* tests failed. (C) Made StripCommentsAndStrings identity → 3 Strip_* tests + Heuristic_OrphanProtectedMethod_IsFlagged failed (the latter because input contains ParamData() in a comment). (D) Swapped WithTrackingName(ActionInfoTrackingName) for literal disagreeing string → unfiltered cache-hit test failed with KeyNotFound on ActionInfo. All mutations reverted; final 2466/2466 green."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/list/count.cs",
+            "PLang/App/modules/list/get.cs",
+            "PLang/App/modules/error/throw.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pass 3 secondary toothlessness check: confirmed Data(/Error( have plenty of real callers in user partials (10+ files each) so the widened Pattern B doesn't surface false orphans on the framework-emitted helpers. Live cross-file test passes accordingly."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/tester/v4/plan.md",
+            ".bot/runtime2-generator-obp/tester/v4/summary.md",
+            ".bot/runtime2-generator-obp/tester/v4/verdict.json",
+            ".bot/runtime2-generator-obp/tester/v4/coverage.json",
+            ".bot/runtime2-generator-obp/tester/summary.md",
+            ".bot/runtime2-generator-obp/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session output: plan, summary, verdict (pass), coverage carry-forward note, bot-root summary update, shared test-report (verdict approved, findings cleared)."
+        }
+      ],
+      "after": {
+        "status": "approved — all 5 v3 findings honestly closed; 4 deletion tests confirm contracts pinned.",
+        "health": "green — 2466/2466 C# tests; +10 new v4 tests beyond v3 baseline.",
+        "notes": "One observation logged but not filed as finding: integration of StripCommentsAndStrings into LoadAllCallableSources is not directly pinned (Pattern A has the same architecture gap so precedent-aligned). Recommend running security analyst next."
+      },
+      "timestamp_end": "2026-04-30T09:35:00Z"
     }
   ]
 }
