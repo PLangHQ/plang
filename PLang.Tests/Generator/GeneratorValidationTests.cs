@@ -189,8 +189,10 @@ public class GeneratorValidationTests
     public async Task GeneratedExecuteAsync_CallsRunDirectly()
     {
         var generated = ReadAnyGeneratedHandler();
-        // Phase 3 thin form: ExecuteAsync calls `return await Run();`
-        await Assert.That(generated).Contains("return await Run();");
+        // Phase 3 thin form: ExecuteAsync invokes Run() inline, not via a wrapper.
+        // v6 split the call into capture-and-recheck so Data<T> getters that capture
+        // resolution errors during Run can surface them post-Run.
+        await Assert.That(generated).Contains("var __runResult = await Run();");
     }
 
     [Test]

@@ -98,16 +98,12 @@ public class SnapshotOnErrorTests
         await Assert.That(endpoint!.PrValue).IsEqualTo("https://api.example.com");
     }
 
-    // When a [Sensitive] property is provided in the .pr but never accessed by the handler,
-    // PrValue is masked and FinalValue stays null (WasAccessed=false). The mask must still
-    // apply — PrValue contains the secret straight from the .pr literal.
+    // When a [Sensitive] property's .pr value is null, PrValue masks to null (no "******").
+    // Pins the null-guard branch on the PrValue side of the emitted snapshot expression —
+    // distinguishes 'absent' from 'redacted' for post-mortem analysis.
     [Test]
-    public async Task SnapshotOnError_SensitiveProperty_UnaccessedStillMasksPrValue()
+    public async Task SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull()
     {
-        // Using a static action to bypass the Run() that touches both. We can't easily build
-        // a separate "untouched" handler, so we test the masking behavior with a null PrValue
-        // path: PrValue=null → mask emits null (no "******"). Then with a value present →
-        // mask kicks in. This exercises the null-guard branch in the emitted expression.
         await using var app = new global::App.@this("/app");
         var result = await MatrixRunner.RunAsync<SensitiveSnapshot>(app,
             parameters: new[]
@@ -121,5 +117,8 @@ public class SnapshotOnErrorTests
         await Assert.That(apiKey).IsNotNull();
         // PrValue is null in the .pr → mask short-circuits to null (no false "******").
         await Assert.That(apiKey!.PrValue).IsNull();
+        // FinalValue null-guard: handler touched .Value but resolved to null — masked to null,
+        // not "******". Pins auditor/v1 finding #3.
+        await Assert.That(apiKey.FinalValue).IsNull();
     }
 }

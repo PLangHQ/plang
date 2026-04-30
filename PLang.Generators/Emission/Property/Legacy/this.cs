@@ -78,9 +78,17 @@ public sealed record @this(
         var prValueExpr = IsSensitive
             ? "__pr?.Value != null ? \"******\" : null"
             : "__pr?.Value";
-        var finalValueExpr = IsSensitive
-            ? $"{SetFlag} ? (object?)\"******\" : null"
-            : $"{SetFlag} ? (object?){Backing} : null";
+        // Sensitive masking matches PrValue's null-guard pattern: a property accessed but
+        // resolved to null reports null FinalValue, not '******'. Distinguishes 'accessed-
+        // and-null' from 'accessed-and-redacted' for post-mortem analysis. Non-nullable
+        // value types can't be null, so skip the guard there (avoids CS0472).
+        string finalValueExpr;
+        if (IsSensitive && IsValueType && !IsNullable)
+            finalValueExpr = $"{SetFlag} ? (object?)\"******\" : null";
+        else if (IsSensitive)
+            finalValueExpr = $"{SetFlag} ? ({Backing} != null ? (object?)\"******\" : null) : null";
+        else
+            finalValueExpr = $"{SetFlag} ? (object?){Backing} : null";
         sb.AppendLine($"        {{");
         sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");
         sb.AppendLine($"            __pr ??= __action?.Defaults?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");

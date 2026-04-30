@@ -1039,7 +1039,7 @@
       "bot": "auditor",
       "timestamp_start": "2026-04-30T00:00:00Z",
       "timestamp_end": "2026-04-30T01:30:00Z",
-      "intent": "First auditor pass on runtime2-generator-obp — cross-cutting integrity gate after architect/coder v1–v5, codeanalyzer v3 (CLEAN on coder/v3), tester v4 (APPROVED on coder/v4), security v1 (PASS on coder/v4). Coder/v5 (security #1+#3 fixes) has not been seen by codeanalyzer/tester/security; my pass covers it.",
+      "intent": "First auditor pass on runtime2-generator-obp \u2014 cross-cutting integrity gate after architect/coder v1\u2013v5, codeanalyzer v3 (CLEAN on coder/v3), tester v4 (APPROVED on coder/v4), security v1 (PASS on coder/v4). Coder/v5 (security #1+#3 fixes) has not been seen by codeanalyzer/tester/security; my pass covers it.",
       "before": {
         "assumptions": "Trust prior bots' approvals on what they checked. Focus on gaps: cross-file contracts of v5 delta (Sensitive plumbing through Discovery + DataProperty/LegacyProperty + emission; Data.AsT_Impl cycle/depth contract change from swallow-pass-through to ServiceError), foundation ripple (Data.cs resolution path callers), review-quality (do v5 tests pin what they claim?).",
         "risk": "Behavior change in Data.As<T> from Success=true (raw string) to Success=false (ServiceError) on cycle/depth-trip is a contract shift. Every consumer that accesses .Value without checking .Success is now exposed to null Value where it used to get a string. Generator-emitted property getters may silently drop the error."
@@ -1060,24 +1060,34 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Read full v5 diff. Cross-checked Data.AsT_Impl cycle/depth restructuring against the HashSet lifecycle: cycle returns FromError before try (outer frame owns entry, correct to not Remove); depth returns FromError inside try (frame Added strVal, finally Removes). isCycleRoot cleanup preserved. Verified Discovery threads IsSensitive through both record types and all callers updated. Spot-checked the generated SensitiveSnapshot.Action.g.cs — masking expressions wire correctly per coder claim."
+          "context": "Read full v5 diff. Cross-checked Data.AsT_Impl cycle/depth restructuring against the HashSet lifecycle: cycle returns FromError before try (outer frame owns entry, correct to not Remove); depth returns FromError inside try (frame Added strVal, finally Removes). isCycleRoot cleanup preserved. Verified Discovery threads IsSensitive through both record types and all callers updated. Spot-checked the generated SensitiveSnapshot.Action.g.cs \u2014 masking expressions wire correctly per coder claim."
         },
         {
-          "paths": ["PLang/App/modules/file/read.cs", "PLang/App/modules/http/providers/DefaultHttpProvider.cs"],
+          "paths": [
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Cross-file: traced consumers of Data<T> property values. None of the current production handlers check .Success before reading .Value. This led to Finding 1 — the v5 contract change is silent for Data<T> emission while legacy emission surfaces it. Confirmed legacy __Resolve<T> sets __resolutionError + ExecuteAsync short-circuits; Data<T> getter assigns FromError to backing without surfacing."
+          "context": "Cross-file: traced consumers of Data<T> property values. None of the current production handlers check .Success before reading .Value. This led to Finding 1 \u2014 the v5 contract change is silent for Data<T> emission while legacy emission surfaces it. Confirmed legacy __Resolve<T> sets __resolutionError + ExecuteAsync short-circuits; Data<T> getter assigns FromError to backing without surfacing."
         },
         {
-          "paths": [".bot/runtime2-generator-obp/auditor/v1/result.md", ".bot/runtime2-generator-obp/auditor-report.json"],
+          "paths": [
+            ".bot/runtime2-generator-obp/auditor/v1/result.md",
+            ".bot/runtime2-generator-obp/auditor-report.json"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "1 MINOR (cross-file: Data<T> emission buries As<T> ServiceErrors) + 3 NIT (review-gap on the unaccessed-sensitive test, contract-precision on FinalValue mask, architectural attribute name match) + 1 observation (strip integration into LoadAllCallableSources, agree with tester/v4's precedent reasoning)."
         },
         {
-          "paths": [".bot/runtime2-generator-obp/auditor/v1/verdict.json", ".bot/runtime2-generator-obp/auditor/v1/summary.md", ".bot/runtime2-generator-obp/auditor/summary.md"],
+          "paths": [
+            ".bot/runtime2-generator-obp/auditor/v1/verdict.json",
+            ".bot/runtime2-generator-obp/auditor/v1/summary.md",
+            ".bot/runtime2-generator-obp/auditor/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -1085,9 +1095,89 @@
         }
       ],
       "after": {
-        "status": "PASS — no critical/major. 1 minor + 3 nit + 1 observation. C# 2468/2468 green (re-run locally).",
-        "health": "Branch is shippable. Coder/v5 honestly closes security #1 and #3 at the security-finding boundary. The cross-file gap (Finding 1) is in the contract claim of error-surfacing — only legacy emission honors it; Data<T> emission swallows the new ServiceError on the backing field. Practical impact small (rare scenarios), forward-looking impact larger (Data<T> is the future emission path).",
+        "status": "PASS \u2014 no critical/major. 1 minor + 3 nit + 1 observation. C# 2468/2468 green (re-run locally).",
+        "health": "Branch is shippable. Coder/v5 honestly closes security #1 and #3 at the security-finding boundary. The cross-file gap (Finding 1) is in the contract claim of error-surfacing \u2014 only legacy emission honors it; Data<T> emission swallows the new ServiceError on the backing field. Practical impact small (rare scenarios), forward-looking impact larger (Data<T> is the future emission path).",
         "notes": "Recommend docs next. If Ingi prioritizes Finding 1, send to coder for the single-line fix per Data<T> emission branch + a Data<T>-emitted-handler test pinning the contract."
+      }
+    },
+    {
+      "id": "c37464fa-87fb-4283-9bbc-70791eec8906",
+      "bot": "coder",
+      "timestamp_start": "2026-04-30T10:28:57Z",
+      "timestamp_end": "2026-04-30T10:38:20Z",
+      "intent": "Close auditor/v1 finding #1 (Data<T> emission ServiceError contract gap) plus cheap nits #2 and #3.",
+      "before": {
+        "assumptions": "Auditor PASS verdict; finding #1 minor + 3 nits. Property-side capture into __resolutionError is necessary but not sufficient \u2014 getter only fires during Run, while the existing line 232 check fires before Run. Need a post-Run check in ExecuteAsync to actually surface the captured error.",
+        "risk": "Adding post-Run check changes the ExecuteAsync return shape for every generated handler. Mitigations: existing tests cover happy path, new contract tests pin the failing path. Low risk because __resolutionError is null on the success path so post-Run check is a no-op."
+      },
+      "plan": ".bot/runtime2-generator-obp/coder/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Action/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Auditor finding #1 closure. Property getter captures FromError-Data into __resolutionError; ExecuteAsync gains post-Run recheck so resolution failures during Run() surface to caller. Legacy emission already worked via __Resolve<T>/eager validation; Data<T> emission now matches."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Property/Legacy/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Auditor nit #3 closure. Sensitive FinalValue null-guard mirrors the PrValue pattern: distinguishes accessed-and-null from accessed-and-redacted. Data uses Backing?.Value (Backing is Data<T>?); Legacy uses Backing != null (raw scalar) with skip on non-nullable value types to avoid CS0472."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/Matrix/DataWrapped/Handlers.cs",
+            "PLang.Tests/Generator/Matrix/DataWrapped/DataWrappedTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "New non-pass-through handler DataWrappedStringUses + 3 tests. Pins the post-Run __resolutionError surfacing \u2014 existing pass-through Run() => Body would not catch the bug because the FromError-Data IS the result."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/Matrix/Snapshot/SnapshotTests.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Auditor nit #2 closure (rename misnamed test, add FinalValue null assertion); update GeneratorValidationTests to match the new var __runResult = await Run() form."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Hand-off entry for the next branch: migrate handlers off [VariableName] and raw-primitive partials to Data<T> or successor wrapper. Frames the design problem (literal name vs resolved value), three options with VarRef<T> recommendation, scope (~20 handlers), and what deletes when complete."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/coder/v6/plan.md",
+            ".bot/runtime2-generator-obp/coder/v6/v5_review_summary.md",
+            ".bot/runtime2-generator-obp/coder/v6/summary.md",
+            ".bot/runtime2-generator-obp/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v6 plan + v5 review summary + v6 work summary + bot-root cross-version index updated."
+        }
+      ],
+      "after": {
+        "status": "auditor/v1 finding #1 closed (real fix, not just auditor-suggested partial); nits #2 and #3 closed; nit #4 left as documented follow-up. [VariableName] / raw-primitive migration handed off to future branch via todos.md.",
+        "health": "C# tests 2471/2471 green (+3 from v5).",
+        "notes": "Auditor scope correction: their suggested property-only fix was dead code on its own \u2014 line 232 fires before Run, Data<T> getters fire during Run. Real fix is two-part (capture in getter + post-Run check). Confirmed with Ingi before implementing."
       }
     }
   ]

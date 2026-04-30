@@ -26,22 +26,25 @@ public sealed record @this(
         sb.AppendLine($"    public partial {TypeName} {Name}");
         sb.AppendLine("    {");
 
+        // After resolution, capture FromError-Data (cycle / depth-trip / type-conversion failure)
+        // into __resolutionError so the post-Run check in ExecuteAsync can surface it. Without
+        // this the FromError-Data lives silently on the backing field with Value=default(T).
         if (IsPlainData)
         {
             // Plain Data resolves as Data<object> so %var% references walk through.
-            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = __ResolveData(\"{ParamName}\").As<object>(Context); {SetFlag} = true; }} return {Backing}!; }}");
+            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = __ResolveData(\"{ParamName}\").As<object>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
         }
         else if (IsNullable)
         {
-            sb.AppendLine($"        get {{ if ({Backing} == null && !{SetFlag}) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? null : __d.As<{InnerType}>(Context); {SetFlag} = true; }} return {Backing}; }}");
+            sb.AppendLine($"        get {{ if ({Backing} == null && !{SetFlag}) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? null : __d.As<{InnerType}>(Context); if ({Backing} != null && !{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}; }}");
         }
         else if (DefaultValue != null)
         {
-            sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::App.Data.@this<{InnerType}>(\"{ParamName}\", ({InnerType}){DefaultValue}) : __d.As<{InnerType}>(Context); {SetFlag} = true; }} return {Backing}!; }}");
+            sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __d = __ResolveData(\"{ParamName}\"); {Backing} = __d.IsEmpty ? new global::App.Data.@this<{InnerType}>(\"{ParamName}\", ({InnerType}){DefaultValue}) : __d.As<{InnerType}>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
         }
         else
         {
-            sb.AppendLine($"        get {{ if ({Backing} == null) {{ {Backing} = __ResolveData(\"{ParamName}\").As<{InnerType}>(Context); {SetFlag} = true; }} return {Backing}!; }}");
+            sb.AppendLine($"        get {{ if ({Backing} == null) {{ {Backing} = __ResolveData(\"{ParamName}\").As<{InnerType}>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
         }
 
         sb.AppendLine($"        init {{ {Backing} = value; {SetFlag} = true; }}");
@@ -56,8 +59,13 @@ public sealed record @this(
         var prValueExpr = IsSensitive
             ? "__pr?.Value != null ? \"******\" : null"
             : "__pr?.Value";
+        // Sensitive masking matches PrValue's null-guard pattern: a property accessed but
+        // resolved to a null inner value reports null FinalValue, not '******'. Distinguishes
+        // 'accessed-and-null' from 'accessed-and-redacted' for post-mortem analysis. {Backing}
+        // is Data<T>? — the wrapper can exist with .Value=null after a null-resolving As<T>;
+        // we mask only when there's an actual resolved value to redact.
         var finalValueExpr = IsSensitive
-            ? $"{SetFlag} ? (object?)\"******\" : null"
+            ? $"{SetFlag} ? ({Backing}?.Value != null ? (object?)\"******\" : null) : null"
             : $"{SetFlag} ? (object?){Backing} : null";
         sb.AppendLine($"        {{");
         sb.AppendLine($"            var __pr = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, \"{Name}\", System.StringComparison.OrdinalIgnoreCase));");

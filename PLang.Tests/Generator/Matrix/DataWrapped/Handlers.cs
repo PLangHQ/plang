@@ -29,3 +29,19 @@ public partial class DataWrappedActionList : global::App.modules.IContext
     public partial global::App.Data.@this<List<global::App.Goals.Goal.Steps.Step.Actions.Action.@this>> Actions { get; init; }
     public Task<global::App.Data.@this> Run() => Task.FromResult<global::App.Data.@this>(Actions);
 }
+
+// Cycle / depth-trip contract handler: reads .Value rather than returning the Data wrapper
+// directly. The pass-through `Run() => Body` pattern in DataWrappedString happens to surface
+// FromError because the FromError-Data IS the result. This handler instead consumes .Value
+// and produces a derived result — exercises the post-Run __resolutionError check that surfaces
+// resolution failures captured during property access.
+[global::App.modules.Action("datawrappedstringuses")]
+public partial class DataWrappedStringUses : global::App.modules.IContext
+{
+    public partial global::App.Data.@this<string> Body { get; init; }
+    public Task<global::App.Data.@this> Run()
+    {
+        var len = Body.Value?.Length ?? 0;
+        return Task.FromResult(global::App.Data.@this.Ok(len));
+    }
+}

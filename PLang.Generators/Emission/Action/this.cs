@@ -231,7 +231,13 @@ public static class @this
         sb.Append("""
                     if (__resolutionError != null) return __resolutionError;
 
-                    return await Run();
+                    var __runResult = await Run();
+                    // Data<T> getters fire DURING Run() — they capture cycle/depth-trip into
+                    // __resolutionError as the property is touched. Surface it now so a Run()
+                    // that read .Value of a FromError-Data and produced a default-shaped result
+                    // doesn't bury the resolution failure.
+                    if (__resolutionError != null) return __resolutionError;
+                    return __runResult;
                 }
 
             """);
