@@ -793,6 +793,55 @@
         "health": "C# 2456/2456 green without instrumentation; 2 PipelineCache_* tests flake under --coverage. Production code clean; all v3-added executable lines covered. No new regressions surfaced.",
         "notes": "4 of 7 v2 findings empirically verified honest via deletion tests. Finding #40 closure (Pattern B) is the recurrence \u2014 same toothlessness Ingi flagged in v2. Recommend coder fix Finding #1 before next reviewer pass; findings 2-5 can be a follow-up."
       }
+    },
+    {
+      "id": "325c4faf-0976-4611-b2cf-940330372981",
+      "bot": "coder",
+      "timestamp_start": "2026-04-30T02:49:21Z",
+      "intent": "v4: address tester v3 findings \u2014 fix Pattern B's MAJOR toothlessness (regex restricts to public, original __paramData regression was protected) plus the 4 minor/nit findings.",
+      "before": {
+        "assumptions": "Tester verdict on v3 is needs-fixes. The MAJOR finding is that NoGeneratedHandlerExposesUnusedPublicMethod (Pattern B) cannot catch the regression it is named after \u2014 the v1 ParamData() was protected, not public. Generator currently emits protected static Data() (4 overloads) and Error() that Pattern B does not even examine. Other 6 v2 findings empirically closed (4 deletion tests verified by tester).",
+        "risk": "Once Pattern B widens to protected, Data and Error become the names checked. They are common substrings \u2014 comments and string literals (especially raw-string emission text inside PLang.Generators/Emission/) will false-green the caller scan. Mitigation: strip comments and string literals from LoadAllCallableSources before scanning, plus add 3 synthetic Heuristic_* regression tests for Pattern B that pin IsOrphanMethod independently of the live tree. Risk if the live tree happens to have no caller for the framework Data/Error helpers: fall back to exemption-list with documented why."
+      },
+      "plan": ".bot/runtime2-generator-obp/coder/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/Generator/NoDeadEmissionTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Phase 1 (Findings #1, #2, #3): widened PublicMethodDecl regex to PublicOrProtectedMethodDecl matching public|protected; extracted IsOrphanMethod(name, sources, exemptions) pure-string helper; added StripCommentsAndStrings; applied stripping in LoadAllCallableSources; renamed live cross-file test to NoGeneratedHandlerExposesUnusedPublicOrProtectedMethod. Added 9 new tests: 3 helper-driven, 3 strip tests, 3 regex assertions. Empirical deletion-test: narrowing regex back to public-only causes the protected-match assertion to fail."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/IncrementalCacheTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Phase 2 (Finding #4): added Known-limitation comment block documenting --coverage interaction with Roslyn tracked steps. Phase 3 (Finding #5): added PipelineCache_RerunWithUnchangedSyntax_UnfilteredStepOutputsAreCachedOrUnchanged mirroring post-Where test on pre-Where step. Strictly stronger contract \u2014 catches transform-step instability that post-Where value-equality hides. Activates the previously-dead ActionInfoTrackingName constant. Empirical deletion-test: swapping the constant for a literal disagreeing string causes the new test to fail with KeyNotFound on ActionInfo."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/coder/v4/v3_review_summary.md",
+            ".bot/runtime2-generator-obp/coder/v4/plan.md",
+            ".bot/runtime2-generator-obp/coder/v4/summary.md",
+            ".bot/runtime2-generator-obp/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session docs: v3 review summary, v4 plan (read back for approval), v4 summary, updated bot-root summary."
+        }
+      ],
+      "after": {
+        "status": "tester v3 needs-fixes responded; all 5 findings closed; no production code modified; both new contracts (regex widening + unfiltered cache-hit) deletion-tested empirically.",
+        "health": "green \u2014 2466/2466 C# tests (was 2456 in v3; +10). PLangWindowForms NETSDK1100 unchanged (Windows-targeting, unrelated). plang --test not re-run; v4 changes confined to 2 test files, so v3 status (169/48/5) should be unchanged.",
+        "notes": "Risk noted in plan (live tree could surface real orphans for Data/Error after widening) empirically resolved: user partials in PLang/App/modules/* contain real Data(...)/Error(...) calls; cross-file scan finds them. Recommend codeanalyzer next, then tester to confirm Finding #1 honestly closed."
+      },
+      "timestamp_end": "2026-04-30T08:52:25Z"
     }
   ]
 }

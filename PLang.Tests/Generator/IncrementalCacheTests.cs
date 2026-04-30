@@ -16,6 +16,15 @@ namespace PLang.Tests.Generator;
 //
 // Codeanalyzer Finding 1: my prior test only checked for IPropertySymbol leaks; it did
 // not check that the cache actually hits. These tests fill that gap.
+//
+// Known limitation (tester v3 #4): the three `PipelineCache_*` tests below fail when
+// the suite is run with `dotnet run --project PLang.Tests -- --coverage`. The Roslyn
+// `CSharpGeneratorDriver` with `trackIncrementalGeneratorSteps:true` interacts poorly
+// with coverage instrumentation — coverage hooks wrap generator pipeline lambdas and
+// strip the tracked-step labels, so `runResult.TrackedSteps` does not contain the
+// `ActionInfo` / `ActionInfoFiltered` keys, and the tests fail with
+// `KeyNotFoundException`. The tests pass cleanly without `--coverage`. Do not gate
+// CI on coverage of this file.
 
 public class IncrementalCacheTests
 {
@@ -289,6 +298,42 @@ public class IncrementalCacheTests
                       || reason == IncrementalStepRunReason.Unchanged;
                 await Assert.That(ok).IsTrue()
                     .Because($"Expected Cached or Unchanged, got {reason}");
+            }
+        }
+    }
+
+    [Test]
+    public async Task PipelineCache_RerunWithUnchangedSyntax_UnfilteredStepOutputsAreCachedOrUnchanged()
+    {
+        // Pre-Where step (ActionInfoTrackingName). Strictly stronger than the post-Where
+        // contract: the post-Where step's outputs can stay Cached even if the upstream
+        // transform produced a fresh-but-value-equal ActionClassInfo, because Where only
+        // forwards on value-change. The pre-Where step would catch transform-step
+        // instability where `GetActionClassInfo` regressed to non-deterministic capture.
+        var compilation = CreateCompilation(MinimalSource);
+        var driver = CreateDriver();
+
+        driver = driver.RunGenerators(compilation);
+
+        var compilation2 = compilation.AddSyntaxTrees(
+            CSharpSyntaxTree.ParseText("namespace Unrelated; public class X {}",
+                new CSharpParseOptions(LanguageVersion.Preview)));
+        driver = driver.RunGenerators(compilation2);
+
+        var result = driver.GetRunResult().Results[0];
+        await Assert.That(result.TrackedSteps).ContainsKey(PLang.Generators.@this.ActionInfoTrackingName);
+
+        var infoSteps = result.TrackedSteps[PLang.Generators.@this.ActionInfoTrackingName];
+        await Assert.That(infoSteps.Length).IsGreaterThan(0);
+
+        foreach (var step in infoSteps)
+        {
+            foreach (var (_, reason) in step.Outputs)
+            {
+                var ok = reason == IncrementalStepRunReason.Cached
+                      || reason == IncrementalStepRunReason.Unchanged;
+                await Assert.That(ok).IsTrue()
+                    .Because($"Pre-Where step expected Cached or Unchanged, got {reason}");
             }
         }
     }
