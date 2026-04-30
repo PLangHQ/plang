@@ -1,0 +1,107 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-generator-obp",
+  "timestamp": "2026-04-30T02:38:00Z",
+  "tested_version": "v3",
+  "test_run": {
+    "csharp": { "total": 2456, "passed": 2456, "failed": 0, "skipped": 0 },
+    "csharp_under_coverage": { "total": 2456, "passed": 2454, "failed": 2, "skipped": 0,
+      "note": "Both PipelineCache_* tests fail under --coverage instrumentation. TrackedSteps dictionary missing the 'ActionInfoFiltered' key. Tests pass cleanly without coverage." },
+    "plang": { "total": 222, "passed": 169, "failed": 48, "skipped": 5,
+      "note": "Per coder spot-check, 48 fails are pre-existing infrastructure (signing, identity, fixtures). Tester did not deep-triage; not v3-induced per coder claim." }
+  },
+  "coverage": {
+    "format": "cobertura",
+    "lines_covered_total": 12946,
+    "lines_valid_total": 26730,
+    "line_rate_total": 0.484,
+    "changed_files_covered": 3,
+    "changed_files_total": 3,
+    "uncovered_files": [],
+    "changed_files": {
+      "PLang/App/Data/this.cs": "83.1% (651/783) — all v3 cycle-protection lines (415-420, 442-443) HIT",
+      "PLang.Generators/this.cs": "100.0% (70/70) — all v3 diagnostic-location lines HIT",
+      "PLang.Generators/Discovery/this.cs": "75.0% (330/440) — all v3 GetLineSpan capture lines (94-101) HIT"
+    }
+  },
+  "deletion_tests_performed": [
+    {
+      "fix": "ResolveDepthLimit + Count > Limit clause (PLang/App/Data/this.cs:417)",
+      "mutation": "Removed `|| _resolvingValues.Count > ResolveDepthLimit`",
+      "result": "AsT_ExpandingCycle_DepthBoundReturnsGracefully → StackOverflow (test crashes)",
+      "verdict": "Fix is load-bearing; test is honest"
+    },
+    {
+      "fix": "Step.RunAsync OCE exclusion (PLang/App/Goals/Goal/Steps/Step/this.cs:157)",
+      "mutation": "Removed `OperationCanceledException` from the exception-not-set",
+      "result": "StepRunAsync_CancellationTokenCancelled_LetsOCEPropagate → fails with assertion: Expected to throw exactly OperationCanceledException",
+      "verdict": "Fix is load-bearing; test is honest"
+    },
+    {
+      "fix": "DiagnosticInfo widening + LinePositionSpan use (PLang.Generators/this.cs:46-47)",
+      "mutation": "Replaced EndLine/EndCharacter with StartLine/StartCharacter+1 (the v2 synthetic span)",
+      "result": "RawScalarProperty_DiagnosticLocation_UnderlinesIdentifier → fails: spanWidth=1, expected >1",
+      "verdict": "Fix is load-bearing; test is honest"
+    },
+    {
+      "fix": "ActionInfoFilteredTrackingName WithTrackingName call (PLang.Generators/this.cs:31)",
+      "mutation": "Changed call site to a literal string disagreeing with the constant",
+      "result": "PipelineCache_RerunWithUnchangedSyntax_StepOutputsAreCachedOrUnchanged → fails with: Expected to contain key ActionInfoFiltered",
+      "verdict": "Test machinery sound; ContainsKey assertion catches producer/consumer disagreement"
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/Generator/NoDeadEmissionTests.cs",
+      "code_file": "PLang.Generators/Emission/Action/this.cs",
+      "issue": "`NoGeneratedHandlerExposesUnusedPublicMethod` (Pattern B) regex `PublicMethodDecl` is anchored to `^\\s*public\\s+...` and is therefore structurally incapable of catching the `__paramData/ParamData()` regression it claims to catch in its own docstring. The original v1 `ParamData()` was `protected`, NOT `public`. Empirically verified against the live generated tree: `ExecuteAsync` and `SnapshotParams` (both exempt) are matched, but the generator currently emits `protected static Data()` (4 overloads) and `protected static Error()` which Pattern B's regex does NOT examine. If a future change re-emitted a dead `protected` method (the v1 regression shape exactly), the test would silently pass.",
+      "impact": "The exact toothlessness pattern Ingi flagged in v2 has recurred in v3's fix to v2. The test is named after a regression it cannot detect.",
+      "suggestion": "Widen `PublicMethodDecl` to `^\\s*(?:public|protected)\\s+...` AND add a synthetic regression test that feeds `IsOrphan` (extracted helper) a fake source with a fake orphan `protected` method and asserts it's flagged. The 5 `Heuristic_*` regression tests should have a Pattern B equivalent."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Generator/NoDeadEmissionTests.cs",
+      "code_file": "PLang.Tests/Generator/NoDeadEmissionTests.cs (test logic itself)",
+      "issue": "Pattern A (`HasReadOf`) has 5 synthetic regression tests (`Heuristic_VariablesShape_*`, `Heuristic_DeclOnly_*`, etc.) that pin the heuristic independently of the live generated tree. Pattern B (cross-file scan) has ZERO synthetic regression tests. If the `PublicMethodDecl` regex broke, `LoadAllCallableSources` returned empty, or `_publicMethodCallerExemptions` accidentally swallowed everything, the test would silently pass with an empty `orphans` list.",
+      "impact": "Pattern B's correctness depends entirely on the live generated tree's current shape, plus the test's own internal logic. If either drifted, the test would not detect it. Same defense-in-depth gap that the synthetic Heuristic_* tests close for Pattern A.",
+      "suggestion": "Extract the cross-file scan into a testable helper `IsOrphanMethod(string name, string allCallableSources, ISet<string> exemptions)` and add 2-3 synthetic tests: (a) name appears as caller → returns false, (b) name appears only in declaration → returns true (orphan), (c) exempted name with no caller → returns false."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Generator/NoDeadEmissionTests.cs",
+      "code_file": "PLang.Tests/Generator/NoDeadEmissionTests.cs:128",
+      "issue": "Pattern B's caller-detection regex `\\b{name}\\s*\\(` matches inside string literals AND comments because `LoadAllCallableSources` is the raw concatenated text of every .cs file. Empirically confirmed: `SnapshotParams` (which is exempted, but used here as proof-of-pattern) appears in 5+ comments and docstrings across the tree. If Pattern B widens to non-exempt methods (per Finding #1) without filtering comments/strings, a future genuinely-dead public method whose name happens to be mentioned anywhere in a `//` comment, `///` summary, or string literal would falsely register as 'called'.",
+      "impact": "Latent false-positive risk. Bites when a future method name collides with existing comment/log text.",
+      "suggestion": "Either strip comments and string literals before matching (e.g., a simple regex pass) OR be stricter: require the caller pattern to be `\\b{name}\\s*\\(` not preceded by `//`, `*`, or `\"`. Trade-off: more complex regex vs. risk of false-greens."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "edge-case",
+      "test_file": "PLang.Tests/Generator/IncrementalCacheTests.cs",
+      "code_file": "PLang.Tests/Generator/IncrementalCacheTests.cs:259-322",
+      "issue": "Both `PipelineCache_*` tests FAIL when the test suite is run with `dotnet run --project PLang.Tests -- --coverage` instrumentation. Empirically confirmed: 2454/2456 pass with coverage; the 2 PipelineCache tests fail with `KeyNotFoundException: The given key 'ActionInfoFiltered' was not present in the dictionary`. The Roslyn `CSharpGeneratorDriver` with `trackIncrementalGeneratorSteps:true` is sensitive to instrumentation that wraps generator pipeline lambdas, and the coverage hook breaks step-tracking.",
+      "impact": "If CI ever collects coverage, the suite reports 2 failures that have nothing to do with the production contract. This is a CI-flakiness risk and a developer-confusion risk (someone running with `--coverage` locally would see false fails).",
+      "suggestion": "Either (a) skip these two tests under coverage with a TUnit conditional, (b) document the known limitation in the test class comment, or (c) accept the trade-off and ensure CI doesn't run with coverage. Lowest-cost: add a comment block explaining the known interaction."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/Generator/IncrementalCacheTests.cs",
+      "code_file": "PLang.Generators/this.cs:20, 29",
+      "issue": "Codeanalyzer Finding 46 (NIT) — `ActionInfoTrackingName` (the unfiltered variant on line 20) and its `WithTrackingName` call on line 29 are dead. Confirmed via grep: only references are the declaration and the single call site. No test reads the unfiltered tracking name. Coder did not address this; codeanalyzer flagged it as not blocking. Carrying it forward.",
+      "impact": "Dead code on a generator boundary. Either delete or upgrade. The cache-hit contract on the unfiltered (pre-Where) step would actually catch a *different* class of regression — transform-step instability that doesn't propagate past Where because of value-equal ActionClassInfo.",
+      "suggestion": "Either (a) delete the `ActionInfoTrackingName` constant + `.WithTrackingName(ActionInfoTrackingName)` call on line 29, OR (b) add `PipelineCache_RerunWithUnchangedSyntax_UnfilteredStepOutputsAreCachedOrUnchanged` mirroring the existing test but on the pre-Where step. Option (b) is the stronger contract."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "Coder v3 honestly closed 6 of 7 v2 findings — verified by 4 empirical deletion tests on the production fixes (depth-bound, Step OCE, diagnostic span, pipeline cache machinery), all of which produced the expected test failure when the fix was removed. C# tests 2456/2456 green. New v3 lines have ≥75% coverage across all 3 changed production files, with every v3-added executable line HIT. However, Finding #40's Pattern B (`NoGeneratedHandlerExposesUnusedPublicMethod`) is the same toothlessness shape Ingi flagged in v2: the regex restricts to `public` methods but the original `__paramData/ParamData()` regression involved a `protected` method, AND the generator currently emits `protected Data()` / `Error()` helpers that Pattern B does not even examine. The test cannot catch the regression it is named after — a MAJOR finding that recurs the v2 problem the v3 cycle was meant to solve. Plus 1 NIT carry-forward (Finding 46 unfiltered tracking name dead) and 3 MINOR observations (synthetic regression-test gap for Pattern B, comment/string false-positive risk, --coverage CI flakiness in PipelineCache tests). Recommend coder address Finding #1 before approval; the rest can be folded into a follow-up."
+}

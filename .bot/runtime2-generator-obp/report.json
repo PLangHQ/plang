@@ -573,10 +573,10 @@
       "id": "09f98f55-df64-4bb5-82b2-a32317fc8c71",
       "bot": "coder",
       "timestamp_start": "2026-04-30T01:34:25Z",
-      "intent": "v3: close codeanalyzer v2's 7 findings — fix toothless NoDeadEmissionTests heuristic + add cross-file accessor scan, add real CSharpGeneratorDriver cache-hit test, add Step.RunAsync OCE-propagates symmetry test, strengthen cycle test value assertions, add expanding-cycle depth bound, carry full diagnostic location span.",
+      "intent": "v3: close codeanalyzer v2's 7 findings \u2014 fix toothless NoDeadEmissionTests heuristic + add cross-file accessor scan, add real CSharpGeneratorDriver cache-hit test, add Step.RunAsync OCE-propagates symmetry test, strengthen cycle test value assertions, add expanding-cycle depth bound, carry full diagnostic location span.",
       "before": {
         "assumptions": "v2 production fixes stand (cycle detection, EquatableArray record carrier, dead emission removal, OCE/non-generic comments). v3 work is purely test-hardening + small targeted production fixes (depth bound, DiagnosticInfo widening). 2444/2444 baseline tests pass; new tests should add and not regress.",
-        "risk": "(1) Cross-file accessor scan needs to find callers across 4 source trees — false positives if a sibling test file references the accessor only in a string literal. (2) CSharpGeneratorDriver test needs the analyzer to be reachable as a non-analyzer reference plus ProjectReference; PLang.Tests already has both per v2. (3) Depth bound risks legitimate deep chains tripping it — 32 should be safely above any real case, but verify with the existing AsT_DeepChain_5Levels test. (4) Widening DiagnosticInfo may shift PLNG001 message location in existing snapshot tests — spot check."
+        "risk": "(1) Cross-file accessor scan needs to find callers across 4 source trees \u2014 false positives if a sibling test file references the accessor only in a string literal. (2) CSharpGeneratorDriver test needs the analyzer to be reachable as a non-analyzer reference plus ProjectReference; PLang.Tests already has both per v2. (3) Depth bound risks legitimate deep chains tripping it \u2014 32 should be safely above any real case, but verify with the existing AsT_DeepChain_5Levels test. (4) Widening DiagnosticInfo may shift PLNG001 message location in existing snapshot tests \u2014 spot check."
       },
       "plan": ".bot/runtime2-generator-obp/coder/v3/plan.md",
       "actions": [
@@ -587,7 +587,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Phase 1 — Findings #40, #44. Split contract into three orthogonal assertions: in-file dead field with tightened reads heuristic (subtract decl_line_occurrences; =(?!=) to reject == false-positive); cross-file unused public method scan with framework-dispatch exemption list (ExecuteAsync, SnapshotParams); convention pin asserting all generated private fields are __-prefixed. Plus 5 synthetic-source heuristic regression tests pinning detection of __variables-shape, decl-only, == false-positive, and decl-with-inline-init shapes. The test now actually catches the regressions it's named after, independently of whether the live generated tree happens to be clean."
+          "context": "Phase 1 \u2014 Findings #40, #44. Split contract into three orthogonal assertions: in-file dead field with tightened reads heuristic (subtract decl_line_occurrences; =(?!=) to reject == false-positive); cross-file unused public method scan with framework-dispatch exemption list (ExecuteAsync, SnapshotParams); convention pin asserting all generated private fields are __-prefixed. Plus 5 synthetic-source heuristic regression tests pinning detection of __variables-shape, decl-only, == false-positive, and decl-with-inline-init shapes. The test now actually catches the regressions it's named after, independently of whether the live generated tree happens to be clean."
         },
         {
           "paths": [
@@ -598,7 +598,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Phase 2 — Finding #39. Added ActionInfoTrackingName/ActionInfoFilteredTrackingName constants on the generator + WithTrackingName(...) calls on the pipeline so the test can index TrackedSteps by name. Added Microsoft.CodeAnalysis.CSharp 4.13.0 as a regular PackageReference on PLang.Tests.csproj (was PrivateAssets=all on the generator only). PipelineCache_RerunWithUnchangedSyntax_StepOutputsAreCachedOrUnchanged drives CSharpGeneratorDriver with trackIncrementalGeneratorSteps:true, runs twice with a no-op syntax-tree addition, asserts every output of ActionInfoFiltered is Cached/Unchanged. PipelineCache_ActionClassChanged_StepOutputIsModified is the negative-space sanity check. The 9 existing carrier-equality tests stay."
+          "context": "Phase 2 \u2014 Finding #39. Added ActionInfoTrackingName/ActionInfoFilteredTrackingName constants on the generator + WithTrackingName(...) calls on the pipeline so the test can index TrackedSteps by name. Added Microsoft.CodeAnalysis.CSharp 4.13.0 as a regular PackageReference on PLang.Tests.csproj (was PrivateAssets=all on the generator only). PipelineCache_RerunWithUnchangedSyntax_StepOutputsAreCachedOrUnchanged drives CSharpGeneratorDriver with trackIncrementalGeneratorSteps:true, runs twice with a no-op syntax-tree addition, asserts every output of ActionInfoFiltered is Cached/Unchanged. PipelineCache_ActionClassChanged_StepOutputIsModified is the negative-space sanity check. The 9 existing carrier-equality tests stay."
         },
         {
           "paths": [
@@ -607,7 +607,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Phase 3 — Finding #42. Added StepRunAsync_CancellationTokenCancelled_LetsOCEPropagate. Pre-cancels a CTS, pushes it onto context, builds a Step with one Action, calls Step.RunAsync — foreach line 152's ThrowIfCancellationRequested throws OCE, line 157's catch (excluding OCE) lets it propagate. ThrowsExactly<OperationCanceledException> pins the contract."
+          "context": "Phase 3 \u2014 Finding #42. Added StepRunAsync_CancellationTokenCancelled_LetsOCEPropagate. Pre-cancels a CTS, pushes it onto context, builds a Step with one Action, calls Step.RunAsync \u2014 foreach line 152's ThrowIfCancellationRequested throws OCE, line 157's catch (excluding OCE) lets it propagate. ThrowsExactly<OperationCanceledException> pins the contract."
         },
         {
           "paths": [
@@ -617,7 +617,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 4 (Finding #43) + Phase 5 (Finding #41). Strengthened 3 cycle tests with specific value assertions: %a%↔%b% returns \"%a%\", %x%=%x% returns \"%x%\", \"hello %x%\" with x=%x% returns \"hello %x%\". Added expanding-cycle depth bound (ResolveDepthLimit = 32) in Data.AsT_Impl and AsT_ExpandingCycle_DepthBoundReturnsGracefully test for %a%=X-%b%, %b%=Y-%a% shape (each recursion produces a fresh string the HashSet alone never traps)."
+          "context": "Phase 4 (Finding #43) + Phase 5 (Finding #41). Strengthened 3 cycle tests with specific value assertions: %a%\u2194%b% returns \"%a%\", %x%=%x% returns \"%x%\", \"hello %x%\" with x=%x% returns \"hello %x%\". Added expanding-cycle depth bound (ResolveDepthLimit = 32) in Data.AsT_Impl and AsT_ExpandingCycle_DepthBoundReturnsGracefully test for %a%=X-%b%, %b%=Y-%a% shape (each recursion produces a fresh string the HashSet alone never traps)."
         },
         {
           "paths": [
@@ -628,7 +628,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Phase 6 — Finding #45 (v1 Finding 7). Widened DiagnosticInfo from (PropertyName, ClassName, FilePath, Line, Character) to (PropertyName, ClassName, FilePath, StartLine, StartCharacter, EndLine, EndCharacter). Discovery captures loc.GetLineSpan().EndLinePosition. Orchestrator reconstructs a real LinePositionSpan instead of synthesizing (line, char+1). Test RawScalarProperty_DiagnosticLocation_UnderlinesIdentifier drives the generator on a partial class with a raw int property; asserts the diagnostic span width > 1. Spent debugging time on a test-only issue: ParseText with no `path` arg makes orchestrator fall back to Location.None — must pass path: \"BadHandler.cs\" for the test source to receive a real Location."
+          "context": "Phase 6 \u2014 Finding #45 (v1 Finding 7). Widened DiagnosticInfo from (PropertyName, ClassName, FilePath, Line, Character) to (PropertyName, ClassName, FilePath, StartLine, StartCharacter, EndLine, EndCharacter). Discovery captures loc.GetLineSpan().EndLinePosition. Orchestrator reconstructs a real LinePositionSpan instead of synthesizing (line, char+1). Test RawScalarProperty_DiagnosticLocation_UnderlinesIdentifier drives the generator on a partial class with a raw int property; asserts the diagnostic span width > 1. Spent debugging time on a test-only issue: ParseText with no `path` arg makes orchestrator fall back to Location.None \u2014 must pass path: \"BadHandler.cs\" for the test source to receive a real Location."
         },
         {
           "paths": [
@@ -640,23 +640,23 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "v3 session docs: review summary of codeanalyzer/v2 (FAIL verdict on test toothlessness); plan with 6 phases (Ingi waived plan/approval — \"go for it\"); final summary; bot-root summary updated."
+          "context": "v3 session docs: review summary of codeanalyzer/v2 (FAIL verdict on test toothlessness); plan with 6 phases (Ingi waived plan/approval \u2014 \"go for it\"); final summary; bot-root summary updated."
         }
       ],
       "timestamp_end": "2026-04-30T02:04:45Z",
       "after": {
-        "status": "complete — all 7 codeanalyzer v2 findings closed (2 MAJOR, 3 MINOR, 2 NIT). No findings deferred.",
-        "health": "C# 2456/2456 green (was 2444; +12 new tests). plang --test 169 pass / 48 fail / 5 stale (was 165/42/5 in v2). The 6 additional fails are pre-existing infrastructure (signing, identity, fixtures, test reports) — none tied to v3 production changes (cycle depth bound, tracking names, diagnostic location). Spot-checked failing test names; none in the cycle/depth/diagnostic family.",
-        "notes": "Two small production additions: (1) WithTrackingName(...) on the generator pipeline + 2 const tracking-name strings, makes the cache-hit assertion direct. (2) ResolveDepthLimit = 32 on Data — well above any legitimate variable chain (existing AsT_DeepChain_5Levels test still passes). Recommend codeanalyzer round 3 to verify the test toothlessness gap is genuinely closed and the new production additions (tracking names, depth bound, span widening) hold up. Tester pass on plang --test fails is still worthwhile — they were 100% pre-existing as of v2 and remain so in v3."
+        "status": "complete \u2014 all 7 codeanalyzer v2 findings closed (2 MAJOR, 3 MINOR, 2 NIT). No findings deferred.",
+        "health": "C# 2456/2456 green (was 2444; +12 new tests). plang --test 169 pass / 48 fail / 5 stale (was 165/42/5 in v2). The 6 additional fails are pre-existing infrastructure (signing, identity, fixtures, test reports) \u2014 none tied to v3 production changes (cycle depth bound, tracking names, diagnostic location). Spot-checked failing test names; none in the cycle/depth/diagnostic family.",
+        "notes": "Two small production additions: (1) WithTrackingName(...) on the generator pipeline + 2 const tracking-name strings, makes the cache-hit assertion direct. (2) ResolveDepthLimit = 32 on Data \u2014 well above any legitimate variable chain (existing AsT_DeepChain_5Levels test still passes). Recommend codeanalyzer round 3 to verify the test toothlessness gap is genuinely closed and the new production additions (tracking names, depth bound, span widening) hold up. Tester pass on plang --test fails is still worthwhile \u2014 they were 100% pre-existing as of v2 and remain so in v3."
       }
     },
     {
       "id": "b1f0a4d2-7e2c-4d18-9c45-6f3a8b9d4e51",
       "bot": "codeanalyzer",
       "timestamp_start": "2026-04-30T03:00:00Z",
-      "intent": "Verify coder v3 honestly closes codeanalyzer v2's 7 findings — the toothless tests are now real, the new production deltas (depth bound, tracking names, span widening) hold up.",
+      "intent": "Verify coder v3 honestly closes codeanalyzer v2's 7 findings \u2014 the toothless tests are now real, the new production deltas (depth bound, tracking names, span widening) hold up.",
       "before": {
-        "assumptions": "Coder v3 commit c9314c5e claims to close all 7 v2 findings. C# tests 2456/2456 green. plang --test 169/48/5 (6 more fails than v2 — claimed all pre-existing infra, none tied to v3 production). 4 test files modified + 3 production files modified + 0 deferred.",
+        "assumptions": "Coder v3 commit c9314c5e claims to close all 7 v2 findings. C# tests 2456/2456 green. plang --test 169/48/5 (6 more fails than v2 \u2014 claimed all pre-existing infra, none tied to v3 production). 4 test files modified + 3 production files modified + 0 deferred.",
         "risk": "(1) The new heuristic in NoDeadEmissionTests must arithmetic-correctly catch __variables and __paramData shapes; risk of off-by-one or wrong-pattern that gives illusion of closure. (2) IncrementalCacheTests must drive the actual pipeline, not just exercise records again. (3) Depth bound must increment/decrement under try/finally; off-by-one on the limit, or counter not bounded, would let real cycles slip. (4) DiagnosticInfo widening must produce a span >1 char; the test could pass vacuously if `path` parameter is wrong (orchestrator falls back to Location.None). (5) Step.RunAsync OCE test must drive the right code path (line 152 ThrowIfCancellationRequested, not handler-thrown OCE)."
       },
       "plan": ".bot/runtime2-generator-obp/codeanalyzer/v3/plan.md",
@@ -677,7 +677,7 @@
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Verified Findings #40/#44. Simulated the new heuristic on __variables shape (reads=2-1-1=0, flagged), __paramData shape (in-file reads=4-2-1=1 not flagged → Pattern B cross-file scan finds ParamData() orphan). The 5 heuristic regression tests pin pattern detection independent of live generated tree. Convention pin (__ prefix) prevents drift. =(?!=) correctly excludes == comparisons. Cross-file scan exemption list (ExecuteAsync, SnapshotParams) is defensive — those have textual callers in App/this.cs. Findings closed honestly."
+          "context": "Verified Findings #40/#44. Simulated the new heuristic on __variables shape (reads=2-1-1=0, flagged), __paramData shape (in-file reads=4-2-1=1 not flagged \u2192 Pattern B cross-file scan finds ParamData() orphan). The 5 heuristic regression tests pin pattern detection independent of live generated tree. Convention pin (__ prefix) prevents drift. =(?!=) correctly excludes == comparisons. Cross-file scan exemption list (ExecuteAsync, SnapshotParams) is defensive \u2014 those have textual callers in App/this.cs. Findings closed honestly."
         },
         {
           "paths": [
@@ -701,7 +701,7 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Verified Findings #41/#42/#43/#45. ResolveDepthLimit=32 + Count>Limit clause closes expanding cycles; isCycleRoot-clears-set on root finally is load-bearing under the early-return path (verified the unwind logic). StepRunAsync_CancellationTokenCancelled traces lines 152→157 of Step/this.cs. 3 cycle tests upgraded from IsNotNull to specific value assertions; expanding-cycle test correctly stays at Contains('%') because the stop string at depth 32 is not predictable. DiagnosticInfo widened with Start/End Line/Character; orchestrator builds real LinePositionSpan; test pins spanWidth>1 with load-bearing path:'BadHandler.cs' arg. All four findings closed honestly."
+          "context": "Verified Findings #41/#42/#43/#45. ResolveDepthLimit=32 + Count>Limit clause closes expanding cycles; isCycleRoot-clears-set on root finally is load-bearing under the early-return path (verified the unwind logic). StepRunAsync_CancellationTokenCancelled traces lines 152\u2192157 of Step/this.cs. 3 cycle tests upgraded from IsNotNull to specific value assertions; expanding-cycle test correctly stays at Contains('%') because the stop string at depth 32 is not predictable. DiagnosticInfo widened with Start/End Line/Character; orchestrator builds real LinePositionSpan; test pins spanWidth>1 with load-bearing path:'BadHandler.cs' arg. All four findings closed honestly."
         },
         {
           "paths": [
@@ -727,9 +727,71 @@
       ],
       "timestamp_end": "2026-04-30T03:40:00Z",
       "after": {
-        "status": "review complete — verdict CLEAN. All 7 v2 findings honestly closed, one NIT raised.",
+        "status": "review complete \u2014 verdict CLEAN. All 7 v2 findings honestly closed, one NIT raised.",
         "health": "Production code on v3 deltas is clean. Test-gap concern from v1 genuinely closed: NoDeadEmissionTests can now catch __variables and __paramData regressions; IncrementalCacheTests drives the actual pipeline. C# tests 2456/2456 green (locally re-run).",
-        "notes": "Verdict: pass. One NIT (Finding 46): ActionInfoTrackingName (unfiltered) constant + WithTrackingName call earn no test — either delete or upgrade into a pre-filter cache assertion. Recommend tester next pass for the 48 plang --test failures (claimed pre-existing infrastructure). Production code is cleared to ship."
+        "notes": "Verdict: pass. One NIT (Finding 46): ActionInfoTrackingName (unfiltered) constant + WithTrackingName call earn no test \u2014 either delete or upgrade into a pre-filter cache assertion. Recommend tester next pass for the 48 plang --test failures (claimed pre-existing infrastructure). Production code is cleared to ship."
+      }
+    },
+    {
+      "id": "4c16ab2a-037a-42ee-802d-4aa1e6f91d2a",
+      "bot": "tester",
+      "timestamp_start": "2026-04-30T02:21:51Z",
+      "intent": "Validate test quality of coder v3's 7 v2-finding fixes \u2014 hunt false greens in toothless-fix tests, verify regression-prevention layer is honest.",
+      "before": {
+        "assumptions": "Codeanalyzer v3 verified all 7 closures with PASS verdict + 1 NIT (Finding 46, dead unfiltered tracking name). Coder reports 2456/2456 C# green. PLang test suite has 48 fails claimed pre-existing. My job: independently verify the new tests catch what they claim to catch (deletion test on prod fixes), not just rubber-stamp codeanalyzer's review.",
+        "risk": "The whole v3 cycle is about previously-missed false greens. Highest risk: the new pipeline-cache and dead-emission tests are themselves false greens (a meta-toothlessness). Also: the 6 new PLang test failures since v2 \u2014 coder spot-checked them as pre-existing, I should triage independently."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/tester/v3/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote plan covering false-green hunting per v2 finding (#39-#45), coverage analysis, and PLang test triage. Ingi said 'do your thing' \u2014 skipping explicit approval, proceeding to test runs."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang.Generators/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Performed 4 empirical deletion tests by mutating production code, building, running targeted tests, then reverting. All caught regressions as expected: depth-bound removal \u2192 SO; OCE inclusion in catch \u2192 assertion fail; 1-char span \u2192 assertion fail; mismatched tracking name \u2192 ContainsKey fail. Confirms 4 of 7 v2 findings honestly closed."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/NoDeadEmissionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "MAJOR Finding #1: PublicMethodDecl regex restricts to 'public' but the v1 ParamData() regression was 'protected'. Empirically verified against live generated tree via mini console app \u2014 Pattern B finds only ExecuteAsync/SnapshotParams (both exempt); misses 'protected static Data()' and 'protected static Error()' helpers. Same toothlessness Ingi flagged in v2 has recurred in v3."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/tester/v3/coverage.json",
+            ".bot/runtime2-generator-obp/tester/v3/coverage.xml",
+            ".bot/runtime2-generator-obp/tester/v3/summary.md",
+            ".bot/runtime2-generator-obp/tester/v3/verdict.json",
+            ".bot/runtime2-generator-obp/tester/summary.md",
+            ".bot/runtime2-generator-obp/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard session outputs: coverage data (cobertura + JSON summary), v3 summary.md, verdict.json (status: fail), bot-root summary, test-report.json with 5 findings."
+        }
+      ],
+      "plan": ".bot/runtime2-generator-obp/tester/v3/plan.md",
+      "timestamp_end": "2026-04-30T02:40:00Z",
+      "after": {
+        "status": "verdict: needs-fixes \u2014 1 MAJOR (Pattern B regex restricted to public misses protected ParamData-shape regression), 3 MINOR, 1 NIT carry",
+        "health": "C# 2456/2456 green without instrumentation; 2 PipelineCache_* tests flake under --coverage. Production code clean; all v3-added executable lines covered. No new regressions surfaced.",
+        "notes": "4 of 7 v2 findings empirically verified honest via deletion tests. Finding #40 closure (Pattern B) is the recurrence \u2014 same toothlessness Ingi flagged in v2. Recommend coder fix Finding #1 before next reviewer pass; findings 2-5 can be a follow-up."
       }
     }
   ]

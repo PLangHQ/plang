@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "v2 toothlessness recurs in v3: Pattern B restricts to public methods but the v1 ParamData() regression was protected; test cannot catch the shape it's named for. 4 deletion tests confirmed the other 6 fixes are honest; coverage solid; 2456/2456 green without instrumentation." }
