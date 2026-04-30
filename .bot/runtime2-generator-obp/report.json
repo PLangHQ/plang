@@ -384,6 +384,18 @@
         "health": "NEEDS WORK \u2014 design is sound, but 10 MAJOR findings need cleanup before merge or in immediate follow-up.",
         "notes": "Top three to fix: (1) ActionClassInfo class\u2192record + List<T>\u2192EquatableArray<T>; (2) delete __variables; (3) delete __paramData and ParamData() accessor. Top three behavioral concerns: (1) cycle detection in AsT_Impl; (2) document SubstitutePrimitive shape contract; (3) comment App.Run OCE-catch dependency. Suggest sending back to coder."
       }
+    },
+    {
+      "id": "1ad90799-d16c-472c-aa47-71c117d5ce4a",
+      "bot": "coder",
+      "timestamp_start": "2026-04-29T23:58:07Z",
+      "intent": "v2: address codeanalyzer top-3 (record/dead-emission) + critical cycle-detection fix in Data.AsT_Impl + close test gaps Ingi flagged.",
+      "before": {
+        "assumptions": "v4 architecture is sound and stays. Phase 5 cleanup of legacy helpers will sweep transitional dead code (no need to touch __resolutionError / dual validation blocks now). Stack-overflow seen in plang test maps to Finding 27 (cycle in AsT_Impl) \u2014 fixing that unblocks the suite.",
+        "risk": "ActionClassInfo conversion to record + EquatableArray may surface latent ordering bugs in the IIncrementalGenerator pipeline if any field's hash depended on identity. Mitigated by: (a) value-equal element types already exist (records); (b) new IncrementalCacheTests proves the cache hits. Cycle-detection fix is local \u2014 adds a thread-static visited-set."
+      },
+      "plan": ".bot/runtime2-generator-obp/coder/v2/plan.md",
+      "actions": []
     }
   ]
 }

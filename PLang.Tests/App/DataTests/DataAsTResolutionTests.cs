@@ -188,6 +188,61 @@ public class DataAsTResolutionTests
         await Assert.That(commentParam!.Value).IsEqualTo("%comment%");
     }
 
+    // Cyclic %var% reference (a → b → a) must NOT stack-overflow.
+    [Test]
+    public async Task AsT_CyclicVarReference_DoesNotStackOverflow()
+    {
+        _app.Context.Variables.Set("a", "%b%");
+        _app.Context.Variables.Set("b", "%a%");
+        var data = new Data("ref", "%a%") { Context = _app.Context };
+
+        var result = data.As<string>(_app.Context);
+
+        // Should return gracefully — either null Value or the cycle-broken raw string.
+        await Assert.That(result).IsNotNull();
+        // Critical: it returned at all (no StackOverflowException).
+    }
+
+    // Self-referencing %var% (x → %x%) must NOT stack-overflow.
+    [Test]
+    public async Task AsT_SelfReferencingVar_DoesNotStackOverflow()
+    {
+        _app.Context.Variables.Set("x", "%x%");
+        var data = new Data("ref", "%x%") { Context = _app.Context };
+
+        var result = data.As<string>(_app.Context);
+
+        await Assert.That(result).IsNotNull();
+    }
+
+    // Self-reference inside an interpolation (e.g. "hello %x%" where %x% = "%x%") must NOT stack-overflow.
+    [Test]
+    public async Task AsT_PartialMatchSelfReference_DoesNotStackOverflow()
+    {
+        _app.Context.Variables.Set("x", "%x%");
+        var data = new Data("greeting", "hello %x%") { Context = _app.Context };
+
+        var result = data.As<string>(_app.Context);
+
+        await Assert.That(result).IsNotNull();
+    }
+
+    // Non-cyclic chain of indirections still resolves end-to-end.
+    [Test]
+    public async Task AsT_DeepChain_5Levels_ResolvesCorrectly()
+    {
+        _app.Context.Variables.Set("a", "%b%");
+        _app.Context.Variables.Set("b", "%c%");
+        _app.Context.Variables.Set("c", "%d%");
+        _app.Context.Variables.Set("d", "%e%");
+        _app.Context.Variables.Set("e", "leaf-value");
+        var data = new Data("chain", "%a%") { Context = _app.Context };
+
+        var result = data.As<string>(_app.Context);
+
+        await Assert.That(result.Value).IsEqualTo("leaf-value");
+    }
+
     // Fresh context with different variable values → As<T> picks up the new values, no stale cache.
     [Test]
     public async Task AsT_DifferentContext_PicksUpFreshVariableValues()

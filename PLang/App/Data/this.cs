@@ -387,6 +387,12 @@ public partial class @this
         return AsT_Impl<T>(raw, ctx);
     }
 
+    // Cycle protection for AsT_Impl. Tracks the raw %-containing strings currently being
+    // resolved on this thread. When a recursive call sees a string already in the set, it
+    // returns the string as-is — no stack overflow on %a%↔%b% or %x%="%x%" reference graphs.
+    [ThreadStatic]
+    private static HashSet<string>? _resolvingValues;
+
     private @this<T> AsT_Impl<T>(object? raw, Actor.Context.@this? ctx)
     {
         // Action-destination carve-out: when T is or contains Action.@this, sub-actions
@@ -399,21 +405,36 @@ public partial class @this
         // T=object would always match `raw is T` and short-circuit substitution.
         if (raw is string strVal && strVal.Contains('%') && ctx?.Variables != null)
         {
-            var fullMatch = System.Text.RegularExpressions.Regex.Match(strVal, @"^%([^%]+)%$");
-            if (fullMatch.Success)
+            var isCycleRoot = _resolvingValues == null;
+            _resolvingValues ??= new HashSet<string>(StringComparer.Ordinal);
+            if (!_resolvingValues.Add(strVal))
             {
-                var varName = fullMatch.Groups[1].Value;
-                var resolved = ctx.Variables.Get(varName);
-                if (resolved == null || !resolved.IsInitialized)
-                    return ConvertAndWrap<T>(null, ctx);
-                if (!resolved.Success)
-                    return @this<T>.FromError(resolved.Error!);
-                // Recurse on the variable's value so %x% pointing at another %y% chain resolves.
-                return AsT_Impl<T>(resolved.Value, ctx);
+                // Cycle: this exact string is already being resolved up-stack. Return as-is.
+                return ConvertAndWrap<T>(strVal, ctx);
             }
-            // Partial match — interpolate then continue (the result may need further conversion).
-            var interpolated = ctx.Variables.Resolve(strVal);
-            return AsT_Impl<T>(interpolated, ctx);
+            try
+            {
+                var fullMatch = System.Text.RegularExpressions.Regex.Match(strVal, @"^%([^%]+)%$");
+                if (fullMatch.Success)
+                {
+                    var varName = fullMatch.Groups[1].Value;
+                    var resolved = ctx.Variables.Get(varName);
+                    if (resolved == null || !resolved.IsInitialized)
+                        return ConvertAndWrap<T>(null, ctx);
+                    if (!resolved.Success)
+                        return @this<T>.FromError(resolved.Error!);
+                    // Recurse on the variable's value so %x% pointing at another %y% chain resolves.
+                    return AsT_Impl<T>(resolved.Value, ctx);
+                }
+                // Partial match — interpolate then continue (the result may need further conversion).
+                var interpolated = ctx.Variables.Resolve(strVal);
+                return AsT_Impl<T>(interpolated, ctx);
+            }
+            finally
+            {
+                _resolvingValues.Remove(strVal);
+                if (isCycleRoot) _resolvingValues = null;
+            }
         }
 
         // Containers with potential nested %var% — walk before fast paths for the same reason.
