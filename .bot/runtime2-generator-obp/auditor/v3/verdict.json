@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "coder/v8 closes auditor/v2 major #1. Generator-side guard restores MissingRequiredParameter contract; 20-row regression test pins it. C# 2570/2570 + plang 166/166 green. 1 NIT on empty-string edge."
+}

@@ -1608,6 +1608,53 @@
         "notes": "Hand-off: coder. Clean fix is generator-side at PLang.Generators/Emission/Property/Data/this.cs:EmitProperty - emit a not-null check for non-nullable Data<T> where T : IRawNameResolvable. Plumb IsRawNameResolvable through ActionClassInfo (same pattern as IsSensitive). Per-handler [IsNotNull] x22 also works but is brittle. Codeanalyzer MINOR DRY findings remain optional and dont block."
       },
       "timestamp_end": "2026-05-01T18:30:00Z"
+    },
+    {
+      "id": "b9d4e6f7-1a2c-4b5e-9c8d-3e7f8a0b1c2d",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-01T22:35:00Z",
+      "intent": "v3 follow-up audit on coder/v8 (single commit closing v2 major #1).",
+      "before": {
+        "assumptions": "coder/v8 commit 87d7f6be implements the generator-side fix v2 recommended. Test suite green per coder log (2570/2570 + 166/166).",
+        "risk": "The fix shape is correct; risk is in placement (Property getter vs. Action emitter) and edge-case coverage (empty string, nullable Variable, [IsNotNull] interaction)."
+      },
+      "plan": ".bot/runtime2-generator-obp/auditor/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Tests/Generator/MissingVariableNameTests.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed coder/v8 fix shape: Discovery flag detection via AllInterfaces lookup for App.Variables.IRawNameResolvable, plumbed through DataProperty record ctor (incremental cache preserved). Emission placed in Action emitter (next to [IsNotNull]) rather than Property getter (my v2 suggestion) \u2014 same fire-before-Run() effect, better separation. Filter !p.IsNullable correctly excludes foreach. Test parametrizes 20 non-nullable slots, asserts Error.Key == MissingRequiredParameter and message contains slot name. Verified 2570/2570 C# + 166/166 plang green by running both suites in-session. One NIT: ?.Value == null condition lets empty-string values through; pre-v7 used string.IsNullOrEmpty. Diagnostic-fidelity gap, not a crash."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/auditor/v3/plan.md",
+            ".bot/runtime2-generator-obp/auditor/v3/v2_review_summary.md",
+            ".bot/runtime2-generator-obp/auditor/v3/summary.md",
+            ".bot/runtime2-generator-obp/auditor/v3/verdict.json",
+            ".bot/runtime2-generator-obp/auditor/summary.md",
+            ".bot/runtime2-generator-obp/auditor-report.json",
+            ".bot/runtime2-generator-obp/report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "auditor v3 outputs: plan, v2 review summary (recap of what was asked vs delivered), this versions summary, verdict (PASS), updated branch-shared auditor-report.json, report.json session."
+        }
+      ],
+      "after": {
+        "status": "PASS - v2 major #1 closed; v2 minor #3 closed by new regression test; v2 minor #2 was informational. 1 NIT (empty-string edge) optional follow-up.",
+        "health": "C# 2570/2570 + plang 166/166 green. The contract regression is fully closed at the generator level. Migration is now structurally and behaviorally complete.",
+        "notes": "Hand-off: docs. CLAUDE.md proposals from coder v7 + v8 should be merged. The Discovery-flag -> emission-guard -> parametrized-regression-test pattern is a clean reusable template for future contract-restoration work."
+      },
+      "timestamp_end": "2026-05-01T22:50:00Z"
     }
   ]
 }

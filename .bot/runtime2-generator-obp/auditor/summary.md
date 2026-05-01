@@ -56,3 +56,29 @@ Minors #2 + #3 are review-gap findings explaining how the major slipped
 through. Hand-off: coder.
 
 See [v2/summary.md](v2/summary.md) and [v2/result.md](v2/result.md).
+
+## v3 — 2026-05-01
+
+Single-commit follow-up audit on coder/v8 (`87d7f6be`), which addresses
+v2's major #1.
+
+**Verdict: PASS** — 1 NIT (empty-string edge), no critical/major/minor.
+C# 2570/2570 + plang 166/166 green.
+
+coder/v8 plumbed `IsRawNameResolvable` through Discovery into
+`ActionClassInfo` and emitted a pre-`Run()` validation in the Action
+emitter (next to `[IsNotNull]`). Filter `!p.IsNullable` correctly excludes
+foreach's intentionally-permissive nullable Variable slots. New
+`MissingVariableNameTests.cs` parametrizes 20 rows across all
+non-nullable Data<Variable> slots and asserts both
+`Error.Key == "MissingRequiredParameter"` and the message contains the
+slot name. v2 minor #3 (tester gap) closed by this test; v2 minor #2
+(security count) was informational and needs no code change.
+
+NIT: empty-string slot values pass the new guard
+(`?.Value == null`) but were caught pre-v7 by `string.IsNullOrEmpty`.
+Optional follow-up.
+
+Hand-off: docs.
+
+See [v3/summary.md](v3/summary.md).
