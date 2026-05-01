@@ -1383,6 +1383,68 @@
         "notes": "Plan accuracy issue: architect/v5 asserted Data.As<T>'s line-612 static-Resolve dispatch would route %x% slots to Variable.Resolve. Empirically false \u2014 TryFullVarMatch intercepts, returning Data<Variable> with Value=null when the named variable is uninitialized (the common case for variable.set creating new variable). Worked for bare \"x\" (no %, falls through to line 612). Stopped, showed Ingi the failing test and three options, took Option 1 (IRawNameResolvable marker bypass) over reordering AsT_Impl globally (which would break Path interpolation). Path is unaffected because it doesn't implement the marker. Hand-off to codeanalyzer next."
       },
       "timestamp_end": "2026-05-01T16:44:40Z"
+    },
+    {
+      "id": "f4d31a8e-2b95-4c0f-9d7e-8a1f3b6c4d27",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-01T17:10:00Z",
+      "intent": "Five-pass review of coder/v7 — Variable record + IRawNameResolvable carve-out + 22 handler migrations + [VariableName] deletion.",
+      "before": {
+        "assumptions": "v3 was CLEAN. The v7 changes are an additive Variable record + a 20-line carve-out in Data.AsT_Impl + 22 handler property migrations + deletion of the [VariableName] attribute and Legacy property emitter. No production fixes; this is a contract-shape change driven by an unplanned mid-flight gap (TryFullVarMatch intercepts %x% before line-612 static-Resolve dispatch).",
+        "risk": "Reflection cache shared between the new carve-out and the existing Path-style static-Resolve branch — risk of subtle behavior shifts if a future T were to register both. Variable equality stays default (record structural). WasPercentWrapped has no consumer yet."
+      },
+      "plan": ".bot/runtime2-generator-obp/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/Variables/IRawNameResolvable.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/Attributes.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/modules/list/get.cs",
+            "PLang/App/modules/list/set.cs",
+            "PLang/App/modules/list/remove.cs",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/variable/exists.cs",
+            "PLang/App/modules/variable/remove.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Property/Provider/this.cs",
+            "PLang.Tests/App/VariablesTests/VariableResolveTests.cs",
+            "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five-pass code review covering OBP compliance, simplification, readability, behavioral reasoning, deletion test."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/codeanalyzer/v4/plan.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v4/result.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v4/verdict.json",
+            ".bot/runtime2-generator-obp/codeanalyzer/v4/summary.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v4 outputs — plan, findings, verdict, summary, and bot-root summary update."
+        }
+      ],
+      "after": {
+        "status": "PASS — 0 MAJOR, 3 MINOR (stale comment, two DRY opportunities), 7 NIT.",
+        "health": "Migration is clean. Variable + IRawNameResolvable + carve-out form a complete, well-tested unit. PLNG001 collapse is honest. No OBP violations. No production defects.",
+        "notes": "The carve-out (Data/this.cs:549-562) and the existing Path-style static-Resolve branch (lines 632-644) duplicate their reflection-cache + Invoke + ConstructWrap skeleton — could collapse to a private TryStaticResolve<T> helper (~12 lines saved). Same DRY pattern between IsVariableNameSlot in App/Modules/this.cs:425 and ExampleRenderer.cs:166-177. Property/this.cs:7 doc-block still references deleted LegacyScalarProperty (one-line fix). One latent contract trap noted: a future T : IRawNameResolvable without static Resolve method falls silently through to %var% substitution — the path the marker was supposed to bypass. Today only Variable implements the marker, so this is theoretical. Recommend tester next."
+      },
+      "timestamp_end": "2026-05-01T17:35:00Z"
     }
   ]
 }
