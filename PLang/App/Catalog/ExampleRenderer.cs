@@ -168,7 +168,12 @@ public static class ExampleRenderer
         if (actionType == null) return "object";
         var prop = actionType.GetProperty(paramName, BindingFlags.Public | BindingFlags.Instance);
         if (prop == null) return "object";
-        return TypeMapping.GetTypeName(UnwrapDataAndNullable(prop.PropertyType));
+        var unwrapped = UnwrapDataAndNullable(prop.PropertyType);
+        // Variable-name slots advertise as "string" — the LLM emits a name, not the
+        // type-marker token. Same convention as Modules.@this.Describe().
+        if (typeof(App.Variables.IRawNameResolvable).IsAssignableFrom(unwrapped))
+            return "string";
+        return TypeMapping.GetTypeName(unwrapped);
     }
 
     /// <summary>

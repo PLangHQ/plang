@@ -223,10 +223,13 @@ public sealed class @this
                     // so repeating them here would just bloat the prompt. The type name alone
                     // (e.g. "operator") points the LLM to the Type Information entry.
 
-                    var hasVar = prop.GetCustomAttribute<modules.VariableNameAttribute>() != null;
+                    var hasVar = prop.GetCustomAttribute<modules.VariableNameAttribute>() != null
+                        || IsVariableNameSlot(prop.PropertyType);
                     var defaultAttr = prop.GetCustomAttribute<modules.DefaultAttribute>();
 
-                    var desc = hasVar ? $"%var% {typeName}" : typeName;
+                    // Variable slots advertise as "%var% string" so the LLM emits
+                    // a variable name (with or without %), not the literal type token.
+                    var desc = hasVar ? "%var% string" : typeName;
                     if (defaultAttr != null)
                         desc += $" = {FormatDefault(defaultAttr.Value)}";
 
@@ -413,6 +416,21 @@ public sealed class @this
         bool b => b ? "true" : "false",
         _ => value.ToString() ?? "null"
     };
+
+    /// <summary>
+    /// True when <paramref name="propType"/> is <c>Data&lt;T&gt;</c> (or its nullable
+    /// wrap) for a T that implements <see cref="App.Variables.IRawNameResolvable"/>.
+    /// Replaces the legacy <c>[VariableName]</c> attribute scan for catalog-builder
+    /// purposes — the property is the carrier of "this slot names a variable".
+    /// </summary>
+    private static bool IsVariableNameSlot(Type propType)
+    {
+        var underlying = Nullable.GetUnderlyingType(propType) ?? propType;
+        if (!underlying.IsGenericType) return false;
+        if (underlying.GetGenericTypeDefinition() != typeof(Data.@this<>)) return false;
+        var inner = underlying.GetGenericArguments()[0];
+        return typeof(App.Variables.IRawNameResolvable).IsAssignableFrom(inner);
+    }
 }
 
 /// <summary>

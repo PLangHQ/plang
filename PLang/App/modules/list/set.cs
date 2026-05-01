@@ -6,17 +6,16 @@ namespace App.modules.list;
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
-    [VariableName]
-    public partial string ListName { get; init; }
+    public partial Data.@this<Variable> ListName { get; init; }
     public partial Data.@this<int> Index { get; init; }
     public partial Data.@this Value { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var data = Context.Variables.Get(ListName);
+        var data = Context.Variables.Get(ListName.Value);
         if (data.Value is not List<object?> list)
             return Task.FromResult(Error(
-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new App.Errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         if (Index.Value < 0 || Index.Value >= list.Count)
             return Task.FromResult(Error(

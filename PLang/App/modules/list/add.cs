@@ -7,15 +7,14 @@ namespace App.modules.list;
 [Action("add", Cacheable = false)]
 public partial class Add : IContext
 {
-    [VariableName]
-    public partial string ListName { get; init; }
+    public partial Data.@this<Variable> ListName { get; init; }
     public partial Data.@this Value { get; init; }
     [Default(-1)]
     public partial Data.@this<int> AtIndex { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var data = Context.Variables.Get(ListName);
+        var data = Context.Variables.Get(ListName.Value);
         var existing = data.Value;
         var list = existing as List<object?>;
 
@@ -35,7 +34,7 @@ public partial class Add : IContext
             {
                 list = new List<object?>();
             }
-            Context.Variables.Set(ListName, list);
+            Context.Variables.Set(ListName.Value, list);
         }
 
         // Snapshot the Data so each list entry is independent — without this,

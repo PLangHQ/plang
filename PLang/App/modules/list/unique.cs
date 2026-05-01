@@ -6,15 +6,14 @@ namespace App.modules.list;
 [Action("unique")]
 public partial class Unique : IContext
 {
-    [VariableName]
-    public partial string ListName { get; init; }
+    public partial Data.@this<Variable> ListName { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var existing = Context.Variables.Get(ListName).Value;
+        var existing = Context.Variables.Get(ListName.Value).Value;
         if (existing is not List<object?> list)
             return Task.FromResult(Error(
-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new App.Errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         var distinct = list.Distinct().Cast<object?>().ToList();
         return Task.FromResult(Data(distinct, App.Data.Type.FromName("list")));

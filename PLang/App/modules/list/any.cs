@@ -1,3 +1,5 @@
+using App.Variables;
+
 namespace App.modules.list;
 
 /// <summary>
@@ -8,8 +10,7 @@ namespace App.modules.list;
 [Action("any")]
 public partial class Any : IContext
 {
-    [VariableName]
-    public partial string ListName { get; init; }
+    public partial Data.@this<Variable> ListName { get; init; }
     [IsNotNull]
     public partial Data.@this<string> Key { get; init; }
     [IsNotNull]
@@ -18,7 +19,7 @@ public partial class Any : IContext
 
     public Task<Data.@this> Run()
     {
-        var data = Context.Variables.Get(ListName);
+        var data = Context.Variables.Get(ListName.Value);
         var key = Key.Value!;
         var right = Value.Value != null ? new Data.@this("", Value.Value) : null;
 

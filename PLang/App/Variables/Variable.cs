@@ -19,6 +19,13 @@ namespace App.Variables;
 public sealed record Variable(string Name, string RawValue, bool WasPercentWrapped) : IRawNameResolvable
 {
     /// <summary>
+    /// Convenience for direct C# composition (tests, App.RunAction):
+    /// <c>new Variable("myList")</c> is equivalent to a bare-name slot.
+    /// Records' primary constructor is inherited; this overload chains into it.
+    /// </summary>
+    public Variable(string name) : this(name ?? "", name ?? "", false) { }
+
+    /// <summary>
     /// Implicit conversion to string at any string-expecting boundary
     /// (e.g. <c>Variables.Get(name.Value)</c>). Returns the canonical name.
     /// </summary>

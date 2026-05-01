@@ -41,8 +41,7 @@ public partial class Set : IContext, IBuildValidatable
         return null;
     }
 
-    [VariableName]
-    public partial string Name { get; init; }
+    public partial Data.@this<Variable> Name { get; init; }
     public partial Data.@this Value { get; init; }
     public partial Data.@this<string>? Type { get; init; }
     [Default(false)]
@@ -52,7 +51,7 @@ public partial class Set : IContext, IBuildValidatable
     {
         if (AsDefault.Value)
         {
-            var existing = Context.Variables.Get(Name);
+            var existing = Context.Variables.Get(Name.Value);
             if (existing.IsInitialized)
                 return Task.FromResult(existing);
         }
@@ -79,7 +78,7 @@ public partial class Set : IContext, IBuildValidatable
                     return Task.FromResult(global::App.Data.@this.FromError(err));
                 converted = c;
             }
-            var typedData = ConstructDataOfT(Name, targetType, converted, Context);
+            var typedData = ConstructDataOfT(Name.Value, targetType, converted, Context);
             return Task.FromResult(Context.Variables.Set(typedData));
         }
 
@@ -87,7 +86,7 @@ public partial class Set : IContext, IBuildValidatable
         // int, long, double, bool, decimal, DateTime, Guid, byte[], List, Dict) take the
         // if-chain; cold types fall through to reflection.
         var raw = Value.Value;
-        Data.@this minted = MintTyped(Name, raw, Context);
+        Data.@this minted = MintTyped(Name.Value, raw, Context);
         return Task.FromResult(Context.Variables.Set(minted));
     }
 

@@ -17,17 +17,15 @@ namespace App.modules.loop;
 public partial class Foreach : IContext, IStep
 {
     public partial Data.@this Collection { get; init; }
-    [VariableName]
-    public partial string? ItemName { get; init; }
-    [VariableName]
-    public partial string? KeyName { get; init; }
+    public partial Data.@this<Variable>? ItemName { get; init; }
+    public partial Data.@this<Variable>? KeyName { get; init; }
 
     public async Task<Data.@this> Run()
     {
         if (Collection.Value == null)
             return Data(new types.loop { itemCount = 0, completed = true });
 
-        var variableName = ItemName ?? "item";
+        var variableName = ItemName?.Value?.Name ?? "item";
         int count = 0;
 
         // Find remaining actions in this step (the loop body)
@@ -41,7 +39,7 @@ public partial class Foreach : IContext, IStep
 
             Context.Variables.Set(variableName, item);
             if (KeyName != null)
-                Context.Variables.Set(KeyName, key);
+                Context.Variables.Set(KeyName.Value, key);
 
             foreach (var action in bodyActions)
             {
