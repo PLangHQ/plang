@@ -1,17 +1,18 @@
+using App.Variables;
+
 namespace App.modules.list;
 
 [System.ComponentModel.Description("Group list items by a property key, returning [{key, steps}] buckets")]
 [Action("group")]
 public partial class Group : IContext
 {
-    [VariableName]
-    public partial string ListName { get; init; }
+    public partial Data.@this<Variable> ListName { get; init; }
     [IsNotNull]
     public partial Data.@this<string> Key { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var data = Context.Variables.Get(ListName);
+        var data = Context.Variables.Get(ListName.Value);
         var key = Key.Value!;
 
         var groups = new Dictionary<string, List<object?>>();

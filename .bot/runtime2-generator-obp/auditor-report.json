@@ -1,58 +1,23 @@
 {
   "reviewer": "auditor",
   "branch": "runtime2-generator-obp",
-  "timestamp": "2026-04-30T00:00:00Z",
-  "reviewed_version": "v5",
-  "summary": "First auditor pass on runtime2-generator-obp covering coder/v5 (security #1 [Sensitive] masking + #3 cycle/depth → ServiceError). codeanalyzer/v3 cleared coder/v3, tester/v4 approved coder/v4, security/v1 passed coder/v4 — none reviewed v5. v5 fixes are honest closures of security findings #1 and #3, with one cross-file contract gap: the new Data.As<T> ServiceError contract is honored by legacy property emission (sets __resolutionError) but not by Data<T> property emission (assigns FromError to backing field, error invisible to Run()). Practical impact small — cycles in user variables are rare — but the contract is now inconsistent between the two emission paths and the test comments claim error visibility that only legacy provides. Verdict: PASS. C# 2468/2468 green.",
+  "timestamp": "2026-05-01T22:45:00Z",
+  "reviewed_version": "v3",
+  "summary": "PASS on coder/v8. Auditor v2 major #1 closed: generator-side guard restores the MissingRequiredParameter contract for non-nullable Data<Variable> slots. Discovery detects T : IRawNameResolvable, plumbs through ActionClassInfo, Action emitter emits an eager pre-Run() check that mirrors [IsNotNull]'s shape — fires before any handler reads Name.Value, so the implicit-conversion NRE path is unreachable. 20-row parametrized regression in MissingVariableNameTests.cs pins all non-nullable variable.* + list.* slots; foreach's intentionally-nullable ItemName/KeyName excluded by !p.IsNullable filter. C# 2570/2570 + plang 166/166 green. One NIT: empty-string slot values (\"\") pass the new guard (which checks `?.Value == null`) but were caught pre-v7 by `string.IsNullOrEmpty(...)` — minor diagnostic gap, not a v8 regression, optional follow-up. v2 minor findings: #2 (security count) was a review-quality reflection — no code action; #3 (tester gap) closed by the new regression test. Verdict PASS.",
   "previous_reviews_assessed": {
-    "codeanalyzer": "agree — production code on coder/v3 deltas (cycle, depth, OCE asymmetry, diagnostic span) is clean; Finding 46 NIT honestly closed in v4.",
-    "tester": "agree — Pattern B regex+helper rewrite with 9 deletion-tested contracts is honest closure; strip-integration observation precedent-aligned with Pattern A's gap, appropriate to leave as observation.",
-    "security": "partial — finding #3 fix is half-completed: legacy emission surfaces As<T> ServiceErrors via __resolutionError; Data<T> emission buries them on the backing field. See auditor Finding 1."
+    "auditor_v2": "v2 finding #1 fully addressed. Coder followed the recommended shape — generator-side, mirrors IsSensitive plumbing — but emitted the guard in the Action emitter rather than the Property getter. Functionally equivalent and structurally cleaner."
   },
   "findings": [
     {
       "id": 1,
-      "severity": "minor",
-      "category": "cross-file",
-      "file": "PLang.Generators/Emission/Property/Data/this.cs",
-      "line": 32,
-      "issue": "v5's contract change in Data.AsT_Impl (cycle/depth-trip → FromError(ServiceError)) is honored by the legacy property emission path (__Resolve<T> sets __resolutionError, ExecuteAsync short-circuits before Run()) but NOT by the Data<T> property emission path. The Data<T> getter assigns __ResolveData(...).As<T>(Context) directly to the backing field; if As<T> returned FromError, the FromError-Data lives on the backing field with Error set, but the handler's Run() body reads .Value (default(T) — null) and proceeds without seeing the error. Test comments on the renamed cycle tests claim 'callers see the failure rather than an unresolved %var% leak' — true only for legacy properties. New handlers all use Data<T>.",
-      "missed_by": "security",
-      "impact": "Cycles or expanding chains > 32 deep in user variables silently produce null-Value handler runs instead of surfacing the cycle/depth error. Practical impact low (rare scenarios), but the contract inconsistency between the two emission paths is a footgun for the first handler that depends on loud failure for cyclic %var% references. The Data<T> path is the forward-looking emission (Phase 5 will delete legacy).",
-      "suggestion": "Mirror the legacy pattern in each Data<T> emission branch: after the As<T> call, branch on Success and route to __resolutionError. Single-line addition per branch (lines 32, 36, 40, 44 of PLang.Generators/Emission/Property/Data/this.cs). Add a Data<T> handler test that pins the contract: cyclic %var% resolution → handler returns ServiceError to the caller (not just an Error stamped on the backing Data)."
-    },
-    {
-      "id": 2,
-      "severity": "nit",
-      "category": "review-gap",
-      "file": "PLang.Tests/Generator/Matrix/Snapshot/SnapshotTests.cs",
-      "line": 105,
-      "issue": "SnapshotOnError_SensitiveProperty_UnaccessedStillMasksPrValue is misnamed — the SensitiveSnapshot handler always touches both ApiKey.Value and Endpoint.Value in Run(), so __X_set is always true. The test pins the PrValue null-guard branch (when __pr.Value is null), but the unaccessed-AND-sensitive-AND-FinalValue branch (where {SetFlag} guard is the only thing keeping FinalValue from being '******' for an untouched property) has zero deletion-test coverage. Coder's own comment acknowledges this trade-off.",
-      "missed_by": "none",
-      "impact": "If a future change drops the {SetFlag} guard from the masked FinalValue expression and emits (object?)'******' unconditionally, no test would fail. Low blast radius — the non-sensitive variant of the same guard is pinned by SnapshotOnError_UnaccessedProperty_FinalValueNull, so a regression would leave the non-sensitive contract intact and only affect over-masking precision.",
-      "suggestion": "Add a second [Sensitive] matrix handler that takes a parameter without touching it in Run() (returns FromError immediately), then assert apiKey.WasAccessed IsFalse && apiKey.FinalValue IsNull. Or rename the existing test to SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull to honestly describe what it pins."
-    },
-    {
-      "id": 3,
       "severity": "nit",
       "category": "contract",
-      "file": "PLang.Generators/Emission/Property/Data/this.cs",
-      "line": 60,
-      "issue": "Sensitive FinalValue expression is `{SetFlag} ? (object?)\"******\" : null` — masks regardless of whether the resolved backing value is null. Non-sensitive form is `{SetFlag} ? (object?){Backing} : null` which preserves null. So a sensitive property that was accessed but resolved to null reports FinalValue='******' as if there were a secret to redact. Same shape in Legacy emission (line 82).",
-      "missed_by": "security",
-      "impact": "Slight over-masking, no security concern (never under-masks). Misleading for post-mortem analysis — distinguishing 'accessed-and-null' from 'accessed-and-redacted' is informative.",
-      "suggestion": "Optionally tighten to `{SetFlag} ? ({Backing} != null ? (object?)\"******\" : null) : null` to mirror the PrValue null-guard pattern. NIT — precision improvement, not blocking."
-    },
-    {
-      "id": 4,
-      "severity": "nit",
-      "category": "architectural",
-      "file": "PLang.Generators/Discovery/this.cs",
-      "line": 174,
-      "issue": "SensitiveAttribute matched by short name only: `a.AttributeClass?.Name == \"SensitiveAttribute\"`. Same convention as the existing ProviderAttribute / VariableNameAttribute matches in the same method. A developer declaring a different SensitiveAttribute in another namespace (e.g., MyApp.Custom.SensitiveAttribute) would inadvertently trigger masking. The runtime SensitivePropertyFilter matches by full type via IsDefined(typeof(SensitiveAttribute), false) — the two layers disagree on attribute identity.",
+      "file": "PLang.Generators/Emission/Action/this.cs",
+      "line": 230,
+      "issue": "The new guard checks `__action?.Parameters.FirstOrDefault(...)?.Value == null`. Pre-v7's RawScalarValidations used `string.IsNullOrEmpty(...)`. So an explicit empty-string slot (`Name = \"\"`) passes the guard, resolves through Variable.Resolve to Variable{Name=\"\"}, and Variables.Set(\"\", ...) / Variables.Get(\"\") silently no-op. Pre-v7 surfaced this as MissingParameter.",
       "missed_by": "none",
-      "impact": "Theoretical only. No current attribute name collision in the codebase.",
-      "suggestion": "Existing convention in Discovery — fixing this for SensitiveAttribute alone would create a different inconsistency. Worth knowing for any future standardization on fully-qualified attribute matching in source generators."
+      "impact": "Diagnostic-fidelity gap on a rare malformed-.pr edge. Not a crash. Reachable only from LLM emission bugs or hand-edited .pr — within the signed-.pr trust boundary. Not a v8 regression (the gap predates this branch); v8 closed the dominant null/missing case.",
+      "suggestion": "Optional follow-up — change the condition to `?.Value is null or string s && string.IsNullOrEmpty(s)`. One-line tightening. Not blocking."
     }
   ]
 }

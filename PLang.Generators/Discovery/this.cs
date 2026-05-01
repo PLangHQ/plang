@@ -6,7 +6,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using PLang.Generators.Emission.Property;
 using DataProperty = PLang.Generators.Emission.Property.Data.@this;
 using ProviderProperty = PLang.Generators.Emission.Property.Provider.@this;
-using LegacyProperty = PLang.Generators.Emission.Property.Legacy.@this;
 using PropertyBase = PLang.Generators.Emission.Property.@this;
 
 namespace PLang.Generators.Discovery;
@@ -37,14 +36,14 @@ public static class @this
 
     /// <summary>
     /// Diagnostic descriptor for raw-scalar partial properties on [Action] handlers.
-    /// v4 contract: every action property must be Data&lt;T&gt;, plain Data, [Provider]-attributed,
-    /// or [VariableName]-attributed string (the latter is a transitional carve-out for handlers
-    /// that work with variable identity rather than value — variable.set, list.*).
+    /// Post-v5 contract: every action property must be <c>Data&lt;T&gt;</c>, plain <c>Data</c>,
+    /// or <c>[Provider]</c>-attributed. Variable-name slots use <c>Data&lt;Variable&gt;</c>
+    /// (App.Variables.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
     /// </summary>
     internal static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
         id: "PLNG001",
         title: "Action property must be Data<T> or [Provider]",
-        messageFormat: "Property '{0}' on action '{1}' must be Data<T>, [Provider], or [VariableName] string. Raw scalars are not permitted.",
+        messageFormat: "Property '{0}' on action '{1}' must be Data<T> or [Provider] T. Raw scalars are not permitted.",
         category: "PLang.Generators",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -87,7 +86,7 @@ public static class @this
             if (implementsIEvent) ievents.Add(prop.Name);
 
             // Raw-scalar diagnostic: anything that doesn't qualify as Data<T>, plain Data,
-            // [Provider], or [VariableName] string is rejected per v4 contract.
+            // or [Provider] T is rejected. Variable-name slots are Data<Variable>.
             if (!IsValidActionProperty(prop))
             {
                 var loc = prop.Locations.FirstOrDefault();
@@ -115,21 +114,17 @@ public static class @this
             new EquatableArray<string>(ievents),
             HasIsNotNull(classSymbol),
             new EquatableArray<string>(ScanIsNotNullProperties(classSymbol)),
-            new EquatableArray<RawScalarValidation>(ScanRawScalarValidations(classSymbol)),
             new EquatableArray<DiagnosticInfo>(diagnostics));
     }
 
     /// <summary>
-    /// v4 contract gate: action property is valid iff it is Data, Data&lt;T&gt;,
-    /// [Provider]-attributed, or [VariableName]-attributed string. Anything else
-    /// reports a build-time diagnostic.
+    /// Post-v5 contract gate: action property is valid iff it is plain <c>Data</c>,
+    /// <c>Data&lt;T&gt;</c>, or <c>[Provider] T</c>. Anything else (raw scalars,
+    /// the deleted <c>[VariableName] string</c>) reports a build-time diagnostic.
     /// </summary>
     private static bool IsValidActionProperty(IPropertySymbol prop)
     {
         if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "ProviderAttribute"))
-            return true;
-
-        if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "VariableNameAttribute"))
             return true;
 
         // Data<T> or plain Data. Roslyn's IPropertySymbol.Name returns the bare identifier
@@ -164,25 +159,11 @@ public static class @this
         // [Default] literal expression
         string? defaultValue = ReadDefaultValueExpression(prop);
 
-        // [VariableName] flag (legacy)
-        var isVariableName = prop.GetAttributes().Any(a =>
-            a.AttributeClass?.Name == "VariableNameAttribute");
-
         // [Sensitive] — masks PrValue/FinalValue in __SnapshotParams. Same convention as
         // SensitivePropertyFilter applies during JSON serialization. The snapshot path
         // feeds Error.Params, which prints to logs/CI artefacts, so secrets must be masked.
         var isSensitive = prop.GetAttributes().Any(a =>
             a.AttributeClass?.Name == "SensitiveAttribute");
-
-        // App-resolvable: type has static Resolve(string, Context.@this)
-        var isAppResolvable = prop.Type is INamedTypeSymbol named
-            && named.GetMembers("Resolve")
-                .OfType<IMethodSymbol>()
-                .Any(m => m.IsStatic
-                    && m.Parameters.Length == 2
-                    && m.Parameters[0].Type.SpecialType == SpecialType.System_String
-                    && (m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App"
-                        || m.Parameters[1].Type.ContainingNamespace?.ToDisplayString() == "App.Actor.Context"));
 
         // Strip Nullable<T> wrap for IEvent detection
         var rawType = prop.Type;
@@ -206,18 +187,31 @@ public static class @this
         if (isDataWrapped || isPlainData)
         {
             string? innerType = null;
+            var isRawNameResolvable = false;
             if (isDataWrapped)
             {
                 var ltIdx = typeNameStr.IndexOf('<');
                 innerType = ltIdx >= 0 ? typeNameStr.Substring(ltIdx + 1, typeNameStr.Length - ltIdx - 2) : "object";
+
+                // Detect whether T : IRawNameResolvable. Slots whose T is a name-like type
+                // (Variable today) carry the missing-parameter contract: a missing/null slot
+                // must surface a MissingRequiredParameter ServiceError, not bubble through
+                // as an NRE when the handler reads .Value.
+                if (namedType!.TypeArguments.Length > 0
+                    && namedType.TypeArguments[0] is INamedTypeSymbol innerNamed
+                    && innerNamed.AllInterfaces.Any(i =>
+                        i.Name == "IRawNameResolvable"
+                        && i.ContainingNamespace.ToDisplayString() == "App.Variables"))
+                {
+                    isRawNameResolvable = true;
+                }
             }
-            return (new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive), implementsIEvent);
+            return (new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive, isRawNameResolvable), implementsIEvent);
         }
 
-        // Everything else falls into legacy scalar emission (raw string / int / etc.)
-        return (new LegacyProperty(
-            prop.Name, typeNameStr, isNullable, prop.Type.IsValueType,
-            isAppResolvable, isVariableName, defaultValue, isSensitive), implementsIEvent);
+        // No leaf matches — PLNG001 has already flagged this property; emit nothing
+        // so the build error surfaces without a follow-on NRE elsewhere.
+        return (null, implementsIEvent);
     }
 
     private static string? ReadDefaultValueExpression(IPropertySymbol prop)
@@ -250,36 +244,6 @@ public static class @this
             .Select(p => p.Name)
             .ToList();
 
-    /// <summary>List of properties that need the legacy raw-scalar non-null validation in ExecuteAsync.</summary>
-    private static List<RawScalarValidation> ScanRawScalarValidations(INamedTypeSymbol classSymbol)
-    {
-        var result = new List<RawScalarValidation>();
-        foreach (var prop in classSymbol.GetMembers().OfType<IPropertySymbol>())
-        {
-            if (!prop.IsPartialDefinition) continue;
-            if (prop.DeclaredAccessibility != Accessibility.Public) continue;
-            if (prop.IsStatic) continue;
-            if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "ProviderAttribute")) continue;
-            if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "DefaultAttribute")) continue;
-            if (prop.NullableAnnotation == NullableAnnotation.Annotated) continue;
-            if (prop.Type.IsValueType) continue;
-
-            // Skip Data / Data<T>
-            var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-            if (typeName.Contains("App.Data.@this")) continue;
-
-            // Skip App-resolvable types — they have their own resolve path
-            if (prop.Type is INamedTypeSymbol named
-                && named.GetMembers("Resolve").OfType<IMethodSymbol>()
-                    .Any(m => m.IsStatic && m.Parameters.Length == 2
-                              && m.Parameters[0].Type.SpecialType == SpecialType.System_String))
-                continue;
-
-            var isString = typeName == "string" || typeName == "global::System.String";
-            result.Add(new RawScalarValidation(prop.Name, isString));
-        }
-        return result;
-    }
 }
 
 /// <summary>
@@ -301,10 +265,7 @@ public sealed record ActionClassInfo(
     EquatableArray<string> IEventPropertyNames,
     bool HasAnyIsNotNull,
     EquatableArray<string> IsNotNullProperties,
-    EquatableArray<RawScalarValidation> RawScalarValidations,
     EquatableArray<DiagnosticInfo> Diagnostics);
-
-public sealed record RawScalarValidation(string PropertyName, bool IsString);
 
 /// <summary>
 /// Value-equal diagnostic info for the IIncrementalGenerator cache —

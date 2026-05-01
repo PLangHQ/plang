@@ -1241,6 +1241,482 @@
         "health": "Build clean (0 errors). All gaps filled, both CLAUDE.md proposals applied. Verdict: PASS \u2014 code is ready to merge.",
         "notes": "v6 dual-capture pattern (Data<T> getter sets __resolutionError + post-Run check in ExecuteAsync) is the most subtle thing on the branch \u2014 documented in both data-generic-design.md and good_to_know.md with code examples so future devs touching property emission see both halves are load-bearing. One findings entry flagged-for-tester: missing on-error-key=VariableResolutionCycle PLang example (out of scope for docs; tester decides). Stale 'PLang/Runtime2/' paths in CLAUDE.md left untouched \u2014 predates this branch, separate cleanup."
       }
+    },
+    {
+      "id": "f1d8e6c2-4b7f-4a3e-9c2d-8e1f5a3b9c7e",
+      "bot": "architect",
+      "timestamp_start": "2026-05-01T17:30:00Z",
+      "intent": "v5 \u2014 design the Variable class as Data<Variable> replacement for [VariableName] string. Pulled in runtime2-variablename-migration (architect/v1 plan + coder/v1 decision to keep [VariableName] permanent) to land on this branch's original goal of removing Legacy from source gen, via a different path than v4 imagined.",
+      "before": {
+        "assumptions": "[VariableName] migration was rejected on the variablename-migration branch because Data<string>.As<string>.Name relies on TryFullVarMatch which silently fails for bare LLM emission (`value=\"x\"` not `\"%x%\"`). Source gen has Legacy/ folder + IsAppResolvable detection + ScanRawScalarValidations + __StripPercent helper, all currently load-bearing only for [VariableName] strings. Goal was 'every property is Data<T>'; Ingi reaffirmed that goal but accepts the Data<Variable> wrapping (one indirection) as the path. Ingi confirmed: As<T> dispatch to static Resolve already wired (Data.cs:612-624), implicit string conversion on Variable is wanted (Name.Value gives 'x' at string boundaries).",
+        "risk": "Three commits couple tightly \u2014 if commit 2 (handler migration) leaves any [VariableName] usage and commit 3 (cleanup) deletes the attribute, build breaks. Mitigated by phasing: commit 1 introduces Variable + tests in isolation; commit 2 migrates handlers with source gen unchanged; commit 3 deletes carve-out machinery only after all handlers are migrated. Implicit conversion has a `var foo = Name.Value` gotcha (infers Variable not string) \u2014 documented in good_to_know.md, low real-world incidence in handler code."
+      },
+      "plan": ".bot/runtime2-generator-obp/architect/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/architect/v5/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v5 plan: introduce Variable class as AppResolvable type wrapped in Data<Variable>, migrate 22 [VariableName] handler sites, delete Legacy/ emission branch and supporting machinery. Three-commit phasing (Variable + contract tests, handler migration, source-gen cleanup). Resolves the variablename-migration regression because Variable.Resolve handles `%x%` and `x` symmetrically, matching today's __StripPercent behavior. Reuses existing As<T> dispatch to static Resolve at Data.cs:612-624 \u2014 no new wiring."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-variablename-migration/architect/v1/plan.md",
+            ".bot/runtime2-variablename-migration/coder/v1/architect-handoff.md",
+            ".bot/runtime2-variablename-migration/coder/v1/summary.md",
+            "PLang/App/modules/list/",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/modules/variable/",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Property/Legacy/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/App/Data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the variablename-migration handoff to understand why [VariableName] was kept permanent. Verified the 22 [VariableName] handler sites with grep. Confirmed the Legacy/ emission file's three branches (IsAppResolvable, IsVariableName, raw scalar fallback) \u2014 only IsVariableName has live consumers; the other two are vestigial. Confirmed Data.As<T> already dispatches to static Resolve(string, Context.@this) at lines 612-624 \u2014 the AppResolvable mechanism is already wired through Data, just hasn't had a real consumer. Variable becomes that consumer."
+        }
+      ],
+      "after": {
+        "status": "design complete, plan written, awaiting Ingi read-back before coder handoff",
+        "health": "no code touched, plan reuses existing infrastructure (Data.As<T> static-Resolve dispatch, [IsNotNull] for presence checks, AppResolvable detection already in place). Three-commit phasing makes bisection trivial.",
+        "notes": "Ingi explicitly approved the Data<Variable> direction over a peer Variable shape, accepted Name.Value over Name.Value.Name (with implicit conversion handling string-boundary cases), and approved the migration scope. Open questions in plan are mostly visibility flags (Type slot field, Variable equality semantics, IsAppResolvable removal sanity check, Signature null until signing work). Next: suggest test-designer to lay out PLang-level test coverage for the migrated handlers; the bare-name regression case (value=\"x\" without %) is the critical regression target since that's what killed the variablename-migration branch."
+      }
+    },
+    {
+      "id": "562d0ea3-9a3b-48b8-a2a5-86ec5ccd6654",
+      "bot": "coder",
+      "timestamp_start": "2026-05-01T16:03:28Z",
+      "intent": "Implement architect/v5 plan: replace [VariableName] string with Data<Variable> across 22 handler sites; introduce Variable record with static Resolve; delete Legacy emitter and supporting helpers in source gen.",
+      "before": {
+        "assumptions": "Existing As<T> static-Resolve dispatch at Data/this.cs:612-624 will route Data<Variable>.As<Variable>(ctx) to Variable.Resolve without new wiring. Plan's three-commit phasing keeps each commit bisectable. Adding ToString() override on Variable is a small departure beyond plan to make existing string-interpolation sites readable; equality stays record-default per plan.",
+        "risk": "Pattern A (write-target) handlers may surface a regression that the v1 variablename-migration branch hit if Variable.Resolve doesn't normalize bare-name and percent-wrapped to identical Name. Plan asserts symmetry via single Trim('%') \u2014 same as today's __StripPercent. Plang test matrix is the regression contract."
+      },
+      "plan": ".bot/runtime2-generator-obp/coder/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/Variables/IRawNameResolvable.cs",
+            "PLang/App/Data/this.cs",
+            "PLang.Tests/App/VariablesTests/VariableResolveTests.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 1 (commit 3bd0e9a5). New Variable record + IRawNameResolvable marker. Extended Data.AsT_Impl with a raw-name carve-out before %var% substitution because the architect's plan claim (line-612 dispatch handles %x% via existing flow) was empirically false \u2014 verified by writing the SlotData_PercentWrapped_AsVariable_NameIsX test and watching it NRE. Showed Ingi the test failure and proposed three options; he picked Option 1 (marker bypass) per workflow discipline. 8 unit tests in VariableResolveTests pin the contract."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/modules/list/any.cs",
+            "PLang/App/modules/list/contains.cs",
+            "PLang/App/modules/list/count.cs",
+            "PLang/App/modules/list/first.cs",
+            "PLang/App/modules/list/flatten.cs",
+            "PLang/App/modules/list/get.cs",
+            "PLang/App/modules/list/group.cs",
+            "PLang/App/modules/list/indexof.cs",
+            "PLang/App/modules/list/join.cs",
+            "PLang/App/modules/list/last.cs",
+            "PLang/App/modules/list/remove.cs",
+            "PLang/App/modules/list/reverse.cs",
+            "PLang/App/modules/list/set.cs",
+            "PLang/App/modules/list/sort.cs",
+            "PLang/App/modules/list/unique.cs",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/modules/variable/exists.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/variable/remove.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/Variables/Variable.cs",
+            "PLang.Tests/App/Modules/list/ListTests.cs",
+            "PLang.Tests/App/Modules/list/ListSetTests.cs",
+            "PLang.Tests/App/Modules/variable/existstests.cs",
+            "PLang.Tests/App/Modules/variable/gettests.cs",
+            "PLang.Tests/App/Modules/variable/removetests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 2 (commit 68acfad8). 22 handler property declarations migrated from [VariableName] partial string to partial Data<Variable>. Use sites updated to .Value (Variable->string implicit). foreach (nullable) uses .?Value?.Name fallback. Catalog-side adjustments (Modules.Describe + ExampleRenderer.LookupParamTypeName) detect Variable-shape via IsVariableNameSlot helper rather than the now-deleted attribute scan \u2014 keeps LLM-facing prompt format unchanged (%var% string). Test files updated mechanically (ListName = \"x\" -> ListName = new Variable(\"x\")). Single-arg Variable(string) ctor added for ergonomics."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Emission/Property/Legacy/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang/App/modules/Attributes.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 3 (commit ecba2e33). Deletions: Legacy/this.cs file, [VariableName] attribute, IsAppResolvable detection (vestigial), ScanRawScalarValidations method + RawScalarValidation record + RawScalarValidations field, RawScalarValidations emit block, __Resolve<T> / __HasParam / __StripPercent helpers. Kept __ResolveData (Data emit's lookup helper). PLNG001 message format updated to two-rule contract. Activated 5 Plng001PostMigrationTests stubs (PLNG001_DataT/PlainData/ProviderProperty_NoDiagnostic, PLNG001_VariableNameAttribute_NowReportsDiagnostic, PLNG001_RawScalar_StillReportsDiagnostic) using the same CSharpGeneratorDriver harness GeneratorValidationTests uses."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/coder/v7/plan.md",
+            ".bot/runtime2-generator-obp/coder/v7/summary.md",
+            ".bot/runtime2-generator-obp/coder/summary.md",
+            ".bot/runtime2-generator-obp/claude-md-proposals.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v7 plan + summary, bot-root summary updated, three CLAUDE.md proposals appended (post-v5 property-kinds rule for /PLang/App/CLAUDE.md, Variable section for /Documentation/v0.2/good_to_know.md, close v6 [VariableName] todo entry)."
+        }
+      ],
+      "after": {
+        "status": "all three plan commits landed; one mid-flight architect-plan gap closed via Option-1 marker-interface bypass per Ingi's call",
+        "health": "C#: 2554 total, 4 fail (pre-existing ListAdd Identity stubs from another branch \u2014 outside this scope). plang --test: 160/16 unchanged from baseline. 5 PLNG001PostMigration stubs activated and green. dotnet build clean.",
+        "notes": "Plan accuracy issue: architect/v5 asserted Data.As<T>'s line-612 static-Resolve dispatch would route %x% slots to Variable.Resolve. Empirically false \u2014 TryFullVarMatch intercepts, returning Data<Variable> with Value=null when the named variable is uninitialized (the common case for variable.set creating new variable). Worked for bare \"x\" (no %, falls through to line 612). Stopped, showed Ingi the failing test and three options, took Option 1 (IRawNameResolvable marker bypass) over reordering AsT_Impl globally (which would break Path interpolation). Path is unaffected because it doesn't implement the marker. Hand-off to codeanalyzer next."
+      },
+      "timestamp_end": "2026-05-01T16:44:40Z"
+    },
+    {
+      "id": "f4d31a8e-2b95-4c0f-9d7e-8a1f3b6c4d27",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-01T17:10:00Z",
+      "intent": "Five-pass review of coder/v7 \u2014 Variable record + IRawNameResolvable carve-out + 22 handler migrations + [VariableName] deletion.",
+      "before": {
+        "assumptions": "v3 was CLEAN. The v7 changes are an additive Variable record + a 20-line carve-out in Data.AsT_Impl + 22 handler property migrations + deletion of the [VariableName] attribute and Legacy property emitter. No production fixes; this is a contract-shape change driven by an unplanned mid-flight gap (TryFullVarMatch intercepts %x% before line-612 static-Resolve dispatch).",
+        "risk": "Reflection cache shared between the new carve-out and the existing Path-style static-Resolve branch \u2014 risk of subtle behavior shifts if a future T were to register both. Variable equality stays default (record structural). WasPercentWrapped has no consumer yet."
+      },
+      "plan": ".bot/runtime2-generator-obp/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/Variables/IRawNameResolvable.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/modules/Attributes.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/modules/list/get.cs",
+            "PLang/App/modules/list/set.cs",
+            "PLang/App/modules/list/remove.cs",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/variable/exists.cs",
+            "PLang/App/modules/variable/remove.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Property/Provider/this.cs",
+            "PLang.Tests/App/VariablesTests/VariableResolveTests.cs",
+            "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five-pass code review covering OBP compliance, simplification, readability, behavioral reasoning, deletion test."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/codeanalyzer/v4/plan.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v4/result.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/v4/verdict.json",
+            ".bot/runtime2-generator-obp/codeanalyzer/v4/summary.md",
+            ".bot/runtime2-generator-obp/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v4 outputs \u2014 plan, findings, verdict, summary, and bot-root summary update."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 0 MAJOR, 3 MINOR (stale comment, two DRY opportunities), 7 NIT.",
+        "health": "Migration is clean. Variable + IRawNameResolvable + carve-out form a complete, well-tested unit. PLNG001 collapse is honest. No OBP violations. No production defects.",
+        "notes": "The carve-out (Data/this.cs:549-562) and the existing Path-style static-Resolve branch (lines 632-644) duplicate their reflection-cache + Invoke + ConstructWrap skeleton \u2014 could collapse to a private TryStaticResolve<T> helper (~12 lines saved). Same DRY pattern between IsVariableNameSlot in App/Modules/this.cs:425 and ExampleRenderer.cs:166-177. Property/this.cs:7 doc-block still references deleted LegacyScalarProperty (one-line fix). One latent contract trap noted: a future T : IRawNameResolvable without static Resolve method falls silently through to %var% substitution \u2014 the path the marker was supposed to bypass. Today only Variable implements the marker, so this is theoretical. Recommend tester next."
+      },
+      "timestamp_end": "2026-05-01T17:35:00Z"
+    },
+    {
+      "id": "39ee16d7-cd17-477e-9129-33f07a112824",
+      "bot": "tester",
+      "timestamp_start": "2026-05-01T17:23:38Z",
+      "intent": "Catch up tester from v4 baseline through v5/v6/v7 (cumulative review). Validate test honesty for: (1) Variable + IRawNameResolvable carve-out, (2) 22 handler migrations, (3) 5 reactivated PLNG001PostMigration tests, (4) ListAddIdentity tests, (5) the v7-cleanup commit ac028f0f. Apply deletion-test discipline. Do not duplicate codeanalyzer's v7 review \u2014 focus on test quality.",
+      "before": {
+        "assumptions": "v4 was the last tester pass (coder/v4); branch has since landed 7 commits including the Variable migration. C# was 2466/2466 at v4 \u2192 coder/v7 summary claims 2554 total / 2550 pass / 4 fail (pre-existing ListAdd Identity stubs). codeanalyzer/v4 PASS on coder/v7 (3 MINOR + 7 NIT). plang test suite was 169/48/5 at v3, claimed unchanged through v4 and v7.",
+        "risk": "The IRawNameResolvable carve-out is the load-bearing mechanism for the migration; if its tests aren't honest, the bare-name regression that v1 hit could resurface silently. 22 handler sites with `.Value` use shape \u2014 easy to slip a `.Name` and have the implicit op silently fall back. PLang .pr files might still encode action shapes the v4 tester didn't validate (builder false-greens)."
+      },
+      "plan": ".bot/runtime2-generator-obp/tester/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/modules/variable/set.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Five deletion-test mutations applied and reverted in-session, each rebuilt and re-run to measure load-bearing strength: (1) IRawNameResolvable carve-out at Data/this.cs:549-562 disabled with `if (false && ...)` \u2192 35 C# tests fail; (2) Variable.ToString \u2192 \"MUTATED\" \u2192 1 test fails (interpolation only); (3) Variable implicit operator \u2192 \"MUTATED\" \u2192 49+ tests fail; (4) WasPercentWrapped hardcoded false \u2192 3 tests fail (value-only pinning, no consumer); (5) variable.set CopyProperties commented out \u2192 0 C# but 10 plang TestReport tests fail. All mutations reverted; final git diff shows only .bot/ files modified."
+        },
+        {
+          "paths": [
+            "Tests/Modules/List/.build/listops.test.pr",
+            "Tests/Modules/List/.build/listops2.test.pr",
+            "Tests/Modules/Loop/.build/loop.test.pr",
+            "Tests/TestModule/Run/.build/testrunreportsassertionfailure.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Builder false-green check on .pr files for migrated handlers. Verified each step's `text` semantically matches `actions[0].module.action`. No false-greens. Coverage spans list.add/count/first/last/contains/join/split/get/remove/indexof/sort/reverse/unique/range/set/flatten + loop.foreach + variable.set + list.any."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/tester/v7/plan.md",
+            ".bot/runtime2-generator-obp/tester/v7/summary.md",
+            ".bot/runtime2-generator-obp/tester/v7/coverage.json",
+            ".bot/runtime2-generator-obp/tester/v7/verdict.json",
+            ".bot/runtime2-generator-obp/tester/summary.md",
+            ".bot/runtime2-generator-obp/test-report.json",
+            ".bot/runtime2-generator-obp/report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester outputs \u2014 plan, findings, verdict, summary, branch-shared test report. 4 minor findings filed: missing C# coverage for variable.set CopyProperties; IRawNameResolvable contract trap untested; PLNG001_VariableNameAttribute_NowReportsDiagnostic misnamed; WasPercentWrapped value-only pinning. None block; verdict approved."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 0 critical, 0 major, 4 minor findings. C# 2550/2550 green; plang 166/166 green. The migration's load-bearing mechanisms (IRawNameResolvable carve-out, Variable implicit operator) are heavily deletion-pinned (35-49 tests respectively).",
+        "health": "Coder v5/v6/v7 are honestly tested at the surfaces that matter. Both test suites better than the coder/v7 summary's mid-flight counts because commit 4 (53780c2d) closed the 4 ListAdd stubs and the 10 TestReport regressions.",
+        "notes": "Recommended hand-off: security analyst. security/v1 was on coder/v4; the attack surface has changed with the new IRawNameResolvable bypass + Variable.Resolve. Worth a fresh security read of Data/this.cs:549-562. Codeanalyzer/v4 already passed v7 with 3 MINOR + 7 NIT (no MAJOR); auditor/v1 was on v5. The 4 tester findings are independent of those \u2014 focused on test honesty, not production-shape."
+      },
+      "timestamp_end": "2026-05-01T17:55:00Z"
+    },
+    {
+      "id": "4bef9004-8003-4b24-be9a-1085e6c39683",
+      "bot": "security",
+      "timestamp_start": "2026-05-01T17:49:38Z",
+      "intent": "Re-audit the security delta on runtime2-generator-obp since v1: Variable record + IRawNameResolvable bypass + 22 handler migration + variable.set Properties fix. Confirm v1 finding closure.",
+      "before": {
+        "assumptions": "v1 PASS established the baseline (1 medium + 3 low, no critical/high). v5 closed v1 #1 (Sensitive masking) and #3 (cycle/depth -> ServiceError). The security delta is contained to: new Variable record, new IRawNameResolvable marker + AsT_Impl carve-out at Data.cs:549-562, removal of [VariableName]/RawScalarValidations safety net, 22 handler signature changes, variable.set CopyProperties fix (commit 4).",
+        "risk": "The carve-out is reflection-driven and shares ResolveMethodCache with the Path-style branch. Removing RawScalarValidations may have removed a graceful-error safety net for null/missing slots. Only a subset of the migrated handlers carry [IsNotNull] guards on Name slots."
+      },
+      "plan": ".bot/runtime2-generator-obp/security/v2/plan.md",
+      "timestamp_end": "2026-05-01T18:00:00Z",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/Variables/IRawNameResolvable.cs",
+            "PLang/App/Data/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/variable/exists.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/modules/list/any.cs",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Red-team the security delta. Confirmed v1 #1 (Sensitive masking) + #3 (cycle/depth FromError) closed in v5/v6. Audited new IRawNameResolvable bypass in Data.AsT_Impl: reflection cache + public-static-only lookup + exact signature match + bounded by compile-time generic instantiations. No exposure widening for non-marker T. Audited Variable.Resolve edge inputs: empty/special-character Names produce footguns equivalent to legacy [VariableName] \u2014 not a v7 regression. Audited 22-handler migration: only 3 of 22 carry [IsNotNull]; null/missing slots produce Data<Variable>{Value=null, Success=true}, generated getter doesn't surface error, handler NREs on implicit op (App.Run excludes NRE -> uncaught crash). Pre-v7 same case produced graceful ServiceError. Audited variable.set CopyProperties: restoration of pre-refactor semantics; no new attack surface. ListAdd identity stubs are test-only."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/security/v2/plan.md",
+            ".bot/runtime2-generator-obp/security/v2/summary.md",
+            ".bot/runtime2-generator-obp/security/v2/verdict.json",
+            ".bot/runtime2-generator-obp/security/summary.md",
+            ".bot/runtime2-generator-obp/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan, summary, verdict, and updated security-report.json. Confirms v1 #1 + #3 fixed; logs 4 low findings on the v7 delta (null-Variable NRE in 19 handlers, IRawNameResolvable bypass silent fallthrough, Variable.Resolve edge inputs, standing v1 #2). Verdict PASS, no critical/high open. Hand-off: auditor next (or coder if finding 1 should be closed first via generator-side fix at Emission/Property/Data/this.cs)."
+        }
+      ],
+      "after": {
+        "status": "PASS, 4 low findings, no critical/high open",
+        "health": "v1 #1 + #3 closed by v5/v6. New v2 findings are robustness-leaning under user-sovereign threat model (.pr is signed) \u2014 no external attack vector. Dominant finding (#1) is an architect-vs-implementation gap: deletion of RawScalarValidations safety net was supposed to be covered by [IsNotNull] across 22 handlers, but only 3 got it. Generator-side fix is the cleanest closure path.",
+        "notes": "Recommended next bot: auditor. If reviewer wants finding 1 closed first, send to coder with the EmitProperty change at PLang.Generators/Emission/Property/Data/this.cs (emit not-null check on Data<T> properties whose T : IRawNameResolvable). v1 standing finding #2 (skipInfrastructure default) carries forward."
+      }
+    },
+    {
+      "id": "8a2f3d5e-9c1b-4e7a-b8f3-1d2c4e5f6a7b",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-01T17:55:30Z",
+      "intent": "v2 audit of Variable + IRawNameResolvable migration. Cross-bot integrity check on coder/v5 through coder/v7 \u2014 verify codeanalyzer/v4, tester/v7, security/v2 caught what mattered, and whether the architect/v5-vs-implementation gap on [IsNotNull] coverage is a real regression.",
+      "before": {
+        "assumptions": "codeanalyzer/v4 (3 MINOR + 7 NIT), tester/v7 (4 minor), security/v2 (4 low) all PASS. The dominant signal is security/v2 finding #1 \u2014 19/22 unguarded handlers crash with NRE on null Variable. Security rated it low under user-sovereign threat model.",
+        "risk": "Reviewers approved file-by-file; the v7 contract-deletion (RawScalarValidations) plus per-handler safety-net migration ([IsNotNull] x22) lives between files \u2014 exactly the seam where auditor finds the most."
+      },
+      "plan": ".bot/runtime2-generator-obp/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/Variables/IRawNameResolvable.cs",
+            "PLang/App/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/modules/list/any.cs",
+            "PLang/App/modules/loop/foreach.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified security/v2 #1 empirically. (1) AsT_Impl with raw=null falls through bypass + every other branch to WrapAs(null) -> ConstructWrap<Variable>(default,ctx) -> Data<Variable>{Value=null, Success=true}. Generator emits a Success-only check so __resolutionError is never set; handler reads Name.Value (null Variable), op_Implicit derefs null, NRE. (2) NRE escapes App.Run line 415 (catch excludes NRE) but Step.RunAsync line 157 catches it -> ServiceError(\"Object reference not set\", \"StepError\", 400). Pre-v7 emitted ServiceError(\"...is empty - nothing to use as <name>\", \"MissingParameter\", 400) with parameter+step diagnostic. (3) [IsNotNull] count: ZERO of 22 Data<Variable> slots carry [IsNotNull] (security said 3 but counted decorations on OTHER props in the same handler). (4) Confirmed tester counts: C# 2550/2550, plang 166/166 green."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/auditor/v2/plan.md",
+            ".bot/runtime2-generator-obp/auditor/v2/summary.md",
+            ".bot/runtime2-generator-obp/auditor/v2/result.md",
+            ".bot/runtime2-generator-obp/auditor/v2/verdict.json",
+            ".bot/runtime2-generator-obp/auditor/summary.md",
+            ".bot/runtime2-generator-obp/auditor-report.json",
+            ".bot/runtime2-generator-obp/report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor v2 outputs: plan, summary with empirical evidence, result with detailed findings, verdict, branch-shared auditor-report.json, report.json session. One MAJOR (null-Variable NRE regression escalated from security low) + 2 MINOR (review-gap findings)."
+        }
+      ],
+      "after": {
+        "status": "FAIL - 1 major + 2 minor findings. Severity escalated from security/v2 #1 (low) because: (a) regression replaces clear MissingParameter diagnostic with NRE-derived StepError; (b) architect/v5 plan deleted RawScalarValidations on the assumption [IsNotNull] would cover it but ZERO of 22 handlers got [IsNotNull] on the Variable slot; (c) regression empirically verified.",
+        "health": "Test suites green (C# 2550/2550, plang 166/166). Migration is structurally clean and security-equivalent at the Data resolution layer. Robustness regression is in error-reporting fidelity, not security/availability.",
+        "notes": "Hand-off: coder. Clean fix is generator-side at PLang.Generators/Emission/Property/Data/this.cs:EmitProperty - emit a not-null check for non-nullable Data<T> where T : IRawNameResolvable. Plumb IsRawNameResolvable through ActionClassInfo (same pattern as IsSensitive). Per-handler [IsNotNull] x22 also works but is brittle. Codeanalyzer MINOR DRY findings remain optional and dont block."
+      },
+      "timestamp_end": "2026-05-01T18:30:00Z"
+    },
+    {
+      "id": "b9d4e6f7-1a2c-4b5e-9c8d-3e7f8a0b1c2d",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-01T22:35:00Z",
+      "intent": "v3 follow-up audit on coder/v8 (single commit closing v2 major #1).",
+      "before": {
+        "assumptions": "coder/v8 commit 87d7f6be implements the generator-side fix v2 recommended. Test suite green per coder log (2570/2570 + 166/166).",
+        "risk": "The fix shape is correct; risk is in placement (Property getter vs. Action emitter) and edge-case coverage (empty string, nullable Variable, [IsNotNull] interaction)."
+      },
+      "plan": ".bot/runtime2-generator-obp/auditor/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Tests/Generator/MissingVariableNameTests.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed coder/v8 fix shape: Discovery flag detection via AllInterfaces lookup for App.Variables.IRawNameResolvable, plumbed through DataProperty record ctor (incremental cache preserved). Emission placed in Action emitter (next to [IsNotNull]) rather than Property getter (my v2 suggestion) \u2014 same fire-before-Run() effect, better separation. Filter !p.IsNullable correctly excludes foreach. Test parametrizes 20 non-nullable slots, asserts Error.Key == MissingRequiredParameter and message contains slot name. Verified 2570/2570 C# + 166/166 plang green by running both suites in-session. One NIT: ?.Value == null condition lets empty-string values through; pre-v7 used string.IsNullOrEmpty. Diagnostic-fidelity gap, not a crash."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/auditor/v3/plan.md",
+            ".bot/runtime2-generator-obp/auditor/v3/v2_review_summary.md",
+            ".bot/runtime2-generator-obp/auditor/v3/summary.md",
+            ".bot/runtime2-generator-obp/auditor/v3/verdict.json",
+            ".bot/runtime2-generator-obp/auditor/summary.md",
+            ".bot/runtime2-generator-obp/auditor-report.json",
+            ".bot/runtime2-generator-obp/report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "auditor v3 outputs: plan, v2 review summary (recap of what was asked vs delivered), this versions summary, verdict (PASS), updated branch-shared auditor-report.json, report.json session."
+        }
+      ],
+      "after": {
+        "status": "PASS - v2 major #1 closed; v2 minor #3 closed by new regression test; v2 minor #2 was informational. 1 NIT (empty-string edge) optional follow-up.",
+        "health": "C# 2570/2570 + plang 166/166 green. The contract regression is fully closed at the generator level. Migration is now structurally and behaviorally complete.",
+        "notes": "Hand-off: docs. CLAUDE.md proposals from coder v7 + v8 should be merged. The Discovery-flag -> emission-guard -> parametrized-regression-test pattern is a clean reusable template for future contract-restoration work."
+      },
+      "timestamp_end": "2026-05-01T22:50:00Z"
+    },
+    {
+      "id": "e1398678-7e8d-4d81-be3c-9bf1685ad511",
+      "bot": "docs",
+      "timestamp_start": "2026-05-01T22:33:00Z",
+      "timestamp_end": "2026-05-01T22:55:00Z",
+      "intent": "Second docs pass \u2014 fill gaps from coder/v7-v8 (Variable + IRawNameResolvable migration; v8 missing-name guard) and apply the three coder/v7 CLAUDE.md proposals.",
+      "before": {
+        "assumptions": "v1 docs pass closed v4-v6 (source-generator OBP refactor + cycle/depth contract). v7-v8 added a separate change (retire [VariableName], introduce Data<Variable>) \u2014 v1 docs treat [VariableName] as canonical so those references are stale. XML docs on Variable and IRawNameResolvable are likely already good (coder usually does this).",
+        "risk": "Three doc files reference [VariableName] in the property-kinds rule \u2014 if the wording fragments, devs see contradictory guidance across architecture.md, good_to_know.md, and CLAUDE.md. Mitigation: rewrite all three with consistent two-rule language tied to a single canonical entry in good_to_know.md."
+      },
+      "plan": ".bot/runtime2-generator-obp/docs/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/docs/v2/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan enumerates 8 documentation gaps (root CLAUDE.md, 4 Documentation/v0.2/* edits, todos.md, XML docs check, docs/ check) and decides per-proposal disposition (3 applied, no rejections)."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Root CLAUDE.md: line 21 OBP shape line drops Legacy/. Line 25 property-kinds entry rewritten end-to-end with the two-rule contract + Data<Variable> + the v8 MissingRequiredParameter guard."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/action-catalog.md",
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Removed all stale [VariableName] mechanism references; added Variable + IRawNameResolvable + v8 guard description in good_to_know.md; updated property-kinds tables and PLNG001 message text consistently across architecture.md and good_to_know.md; corrected catalog rendering examples in action-catalog.md from [%var% string] to [string] (per coder's ExampleRenderer change); marked the 2026-04-30 todo as RESOLVED."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/docs/v2/summary.md",
+            ".bot/runtime2-generator-obp/docs/v2/result.md",
+            ".bot/runtime2-generator-obp/docs/v2/verdict.json",
+            ".bot/runtime2-generator-obp/docs/summary.md",
+            ".bot/runtime2-generator-obp/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot-output session files. summary.md is the v2 detailed write-up; result.md is the CHANGELOG-style user-visible surface delta; verdict.json says PASS; bot-root summary.md gets the v2 paragraph appended; docs-report.json is overwritten with the v2 reviewer-report payload (replaces v1's report \u2014 orchestrator latest-write-wins for top-level reports)."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 branch ready to merge",
+        "health": "5 docs files updated, 3 CLAUDE.md proposals applied, 1 minor finding flagged for tester (PLang .goal example for MissingRequiredParameter \u2014 non-blocking, same pattern as v1)",
+        "notes": "No new XML docs needed (coder's were already excellent). No code changes. Plang/C# build status unchanged from auditor/v3 (2570/2570 + 166/166 green)."
+      }
     }
   ]
 }

@@ -2,6 +2,7 @@ using System.Linq;
 using System.Text;
 using PLang.Generators.Discovery;
 using PLang.Generators.Emission.Property;
+using DataProperty = PLang.Generators.Emission.Property.Data.@this;
 using ProviderProperty = PLang.Generators.Emission.Property.Provider.@this;
 
 namespace PLang.Generators.Emission.Action;
@@ -189,27 +190,6 @@ public static class @this
                 """);
         }
 
-        // Legacy raw-scalar non-null validation. Phase 5 deletes these along with the legacy properties.
-        foreach (var v in info.RawScalarValidations)
-        {
-            var lower = v.PropertyName.ToLowerInvariant();
-            var nullCheck = v.IsString ? $"string.IsNullOrEmpty({v.PropertyName})" : $"{v.PropertyName} == null";
-            sb.Append($$"""
-                        if ({{nullCheck}})
-                        {
-                            if (__resolutionError != null) return __resolutionError;
-                            var __prValue = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, "{{v.PropertyName}}", System.StringComparison.OrdinalIgnoreCase))?.Value?.ToString() ?? "(unknown)";
-                            var __stepText = __step?.Text ?? "(unknown step)";
-                            if (__stepText.Length > 80) __stepText = __stepText[..80] + "...";
-                            var __err = new global::App.Errors.ServiceError(
-                                $"'{__prValue}' is empty — nothing to use as '{{lower}}' in step: {__stepText}", __step, __callFrames, "MissingParameter", 400);
-                            __err.Context = context;
-                            return global::App.Data.@this.FromError(__err);
-                        }
-
-                """);
-        }
-
         // [IsNotNull] validation
         if (info.HasAnyIsNotNull)
         {
@@ -222,6 +202,34 @@ public static class @this
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
                                     return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
+
+                    """);
+            }
+            sb.AppendLine("        }");
+        }
+
+        // Missing-required-parameter validation for IRawNameResolvable slots.
+        // Restores pre-v7 RawScalarValidations contract — missing or null variable-name
+        // parameter surfaces a MissingRequiredParameter ServiceError before Run() is
+        // invoked, instead of bubbling up as an NRE through the implicit Variable→string
+        // operator. Auditor v2 finding #1.
+        var rawNameProps = info.Properties
+            .OfType<DataProperty>()
+            .Where(p => p.IsRawNameResolvable && !p.IsNullable)
+            .ToList();
+        if (rawNameProps.Count > 0)
+        {
+            sb.AppendLine("        if (__action?.Parameters != null)");
+            sb.AppendLine("        {");
+            foreach (var prop in rawNameProps)
+            {
+                // Mirror IsNotNull's serialization convention: lowercase the property name
+                // for the parameter-list match, which is how .pr emits parameter keys.
+                var lower = prop.Name.ToLowerInvariant();
+                sb.Append($$"""
+                                if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
+                                    return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(
+                                        "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 
                     """);
             }
@@ -255,46 +263,16 @@ public static class @this
 
     private static void EmitLegacyHelpers(StringBuilder sb)
     {
-        // __Resolve<T>, __ResolveData, __HasParam, __StripPercent — used by legacy/raw-scalar
-        // emission paths. Phase 5 will sweep most of these along with the legacy properties.
+        // After v5: only __ResolveData remains. Legacy scalar/[VariableName] emission
+        // (which used __Resolve<T>, __HasParam, __StripPercent) is gone — Variable-name
+        // slots are Data<Variable> and route through the Data emitter's __ResolveData.
         sb.Append("""
-                private T? __Resolve<T>(string name)
-                {
-                    var data = __action?.Parameters?.FirstOrDefault(
-                        d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
-                    data ??= __action?.Defaults?.FirstOrDefault(
-                        d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
-                    if (data == null) return default;
-                    var typed = data.As<T>(Context);
-                    if (!typed.Success) { __resolutionError = typed; return default; }
-                    var __value = typed.Value;
-                    if (__value is global::App.Goals.Goal.GoalCall __gc && __gc.Action == null)
-                        __gc.Action = __action;
-                    return __value;
-                }
-
                 private global::App.Data.@this __ResolveData(string name)
                 {
                     var data = __action?.GetParameter(name, Context!);
                     if (data == null) return global::App.Data.@this.NotFound(name);
                     data.Context = Context;
                     return data;
-                }
-
-                private bool __HasParam(string name)
-                {
-                    return (__action?.Parameters?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false)
-                        || (__action?.Defaults?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false);
-                }
-
-                private string? __StripPercent(string name)
-                {
-                    var data = __action?.Parameters?.FirstOrDefault(
-                        d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
-                    data ??= __action?.Defaults?.FirstOrDefault(
-                        d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
-                    if (data?.Value is string str) return str.Trim('%');
-                    return data?.Value?.ToString();
                 }
 
             """);

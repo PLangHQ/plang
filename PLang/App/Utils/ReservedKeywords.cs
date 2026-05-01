@@ -50,7 +50,6 @@
 		public static readonly string ParentGoalIndent = "!ParentGoalIndent";
 		public static readonly string GoalTree = "!GoalTree";
 		public  static readonly string VariableValue = "!VariableValue";
-		public static readonly string VariableName = "!VariableName";
 		public static readonly string OutputTarget = "!OutputTarget";
 		public static readonly string DefaultTargetElement = "!TargetElement";
 		internal static string StartingApp = "!StartingApp";

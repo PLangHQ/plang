@@ -541,6 +541,26 @@ public partial class @this
         if (IsActionDestination(typeof(T)))
             return WrapAs<T>(raw, ctx);
 
+        // Raw-name carve-out: types like App.Variables.Variable want the literal slot
+        // string — `%x%` means "the variable named x" not "x's value". Bypass the
+        // %var% substitution branch and dispatch to T.Resolve(raw, ctx) directly.
+        // Variable.Resolve strips the % and produces { Name="x" } regardless of whether
+        // x is initialized — symmetric for both `%x%` and bare `x` slot forms.
+        if (raw is string rawNameStr && ctx != null
+            && typeof(App.Variables.IRawNameResolvable).IsAssignableFrom(typeof(T)))
+        {
+            var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
+                t.GetMethod("Resolve",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
+            if (resolveMethod != null)
+            {
+                var resolvedObj = resolveMethod.Invoke(null, new object[] { rawNameStr, ctx });
+                if (resolvedObj is T result)
+                    return ConstructWrap<T>(result, ctx);
+            }
+        }
+
         // String with %var% — substitute first, BEFORE fast paths. Without this ordering,
         // T=object would always match `raw is T` and short-circuit substitution.
         if (raw is string strVal && strVal.Contains('%') && ctx?.Variables != null)

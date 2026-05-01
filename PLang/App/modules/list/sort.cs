@@ -6,17 +6,16 @@ namespace App.modules.list;
 [Action("sort", Cacheable = false)]
 public partial class Sort : IContext
 {
-    [VariableName]
-    public partial string ListName { get; init; }
+    public partial Data.@this<Variable> ListName { get; init; }
     [Default(false)]
     public partial Data.@this<bool> Descending { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var data = Context.Variables.Get(ListName);
+        var data = Context.Variables.Get(ListName.Value);
         if (data.Value is not List<object?> list)
             return Task.FromResult(Error(
-                new App.Errors.ValidationError($"Variable '{ListName}' is not a list")));
+                new App.Errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         if (Descending.Value)
             list.Sort((a, b) => Comparer<object>.Default.Compare(b, a));

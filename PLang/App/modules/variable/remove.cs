@@ -6,12 +6,11 @@ namespace App.modules.variable;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    [VariableName]
-    public partial string Name { get; init; }
+    public partial Data.@this<Variable> Name { get; init; }
 
     public Task<Data.@this> Run()
     {
-        Context.Variables.Remove(Name);
+        Context.Variables.Remove(Name.Value);
         return Task.FromResult(Data());
     }
 }

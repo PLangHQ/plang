@@ -1,15 +1,16 @@
+using App.Variables;
+
 namespace App.modules.list;
 
 [System.ComponentModel.Description("Return the last item of the list, or empty Data if the list is empty")]
 [Action("last")]
 public partial class Last : IContext
 {
-    [VariableName]
-    public partial string ListName { get; init; }
+    public partial Data.@this<Variable> ListName { get; init; }
 
     public Task<Data.@this> Run()
     {
-        var data = Context.Variables.Get(ListName);
+        var data = Context.Variables.Get(ListName.Value);
         var countData = data.GetChild("Count");
 
         if (countData.IsInitialized && countData.Value is int count && count > 0)

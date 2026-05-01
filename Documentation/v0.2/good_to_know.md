@@ -611,13 +611,26 @@ Action handler properties are constrained at build time. `Discovery.IsValidActio
 
 - **`Data<T>` / `Data`** — the standard form. Resolution flows through `Action.GetParameter(name, context).As<T>(Context)` lazily on first read.
 - **`[Provider] T`** — eagerly populated from `app.Providers.Get<T>()` at the start of `ExecuteAsync`. Used for pluggable infrastructure (HTTP, signing, LLM).
-- **`[VariableName] string`** — the variable's *name* with `%` markers stripped. Used by handlers that work with variable identity rather than value (`variable.set`, `list.*`).
 
-Anything else fails the build with `PLNG001: Property '{0}' on action '{1}' must be Data<T>, [Provider], or [VariableName] string. Raw scalars are not permitted.` The diagnostic carries the full identifier span so IDE squiggles underline the property name, not a one-character mark.
+Anything else fails the build with `PLNG001: Property '{0}' on action '{1}' must be Data<T> or [Provider]. Raw scalars are not permitted.` The diagnostic carries the full identifier span so IDE squiggles underline the property name, not a one-character mark.
 
-**Why the gate exists.** The pre-v4 generator handled raw `partial string` / `partial int` / etc. with bespoke logic per kind — 700 lines of conditionals, hard to extend, easy to break. PLNG001 narrows the surface so emission lives on three Property leaves with one shape each. Future migrations should fold `[VariableName]` into `Data<T>` once a `VarRef<T>` design lands (see `Documentation/Runtime2/todos.md` 2026-04-30 entry).
+**Why the gate exists.** The pre-v4 generator handled raw `partial string` / `partial int` / etc. with bespoke logic per kind — 700 lines of conditionals, hard to extend, easy to break. PLNG001 narrows the surface so emission lives on two Property leaves with one shape each (`Emission/Property/Data` and `Emission/Property/Provider`). The Legacy emitter and `[VariableName]` attribute that bridged this in v4–v6 are gone as of `runtime2-generator-obp` v7.
 
-**Currently exempt.** Handlers under `PLang/App/modules/list/`, `App/modules/loop/`, and `App/modules/variable/` still use `[VariableName]` and raw `partial` scalars routed through `Emission/Property/Legacy/this.cs`. The legacy path stays until the migration completes.
+---
+
+## `App.Variables.Variable` — the variable-name carrier
+
+`Variable` is a record (`Name`, `RawValue`, `WasPercentWrapped`) used as the wrapped type in `Data<Variable>` for action parameters that *name* a variable rather than carry its value (write targets, read-by-name lookups: `variable.set`, every `list.*`, `loop.foreach` ItemName/KeyName). It implements `IRawNameResolvable`, a marker that tells `Data.AsT_Impl` to skip its `%var%` substitution branch and call `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` slot forms collapse to `Variable { Name = "x" }` — symmetric, and works even when the named variable doesn't yet exist (e.g., `set %x% = 5` creating x for the first time).
+
+**Why it exists.** Before this change, `[VariableName] string` was a transitional carve-out for slots whose value the source generator strips `%` from rather than resolving. `Data<Variable>` is the typed form: same payload, but lives in the same OBP shape as every other handler property (`Data<T>`), and provenance attaches at the wrapper level (`Data<Variable>.Signature`) for future signing without a third API shape.
+
+**Implicit string conversion gotcha.** `Variable` defines `static implicit operator string(Variable v) => v.Name`, so `string s = name.Value` works. But `var s = name.Value` infers `Variable`, not `string`. If you need a string-typed local, write `string s = name.Value;` (or extract `.Name` explicitly). The implicit conversion fires at method-call boundaries — `Variables.Get(name.Value)` and `Variables.Set(name.Value, …)` read naturally. For string interpolation, `ToString() => Name` covers it: `$"variable '{name.Value}' missing"` prints the canonical name, not the synthesized record format.
+
+**Nullable variant.** `loop/foreach.cs` `ItemName` / `KeyName` are intentionally nullable. Use `name?.Value?.Name ?? default` because `?.Value` returns `Variable?` which doesn't chain through the implicit operator.
+
+**`WasPercentWrapped`.** Records whether the slot was `%x%` or bare `x` on the wire. Not load-bearing today — surfaces the LLM-emission shape for a future build-time validator that warns on bare-name slot values.
+
+**Missing-name guard (v8).** Non-nullable `Data<Variable>` slots (and any future `Data<T>` where `T : IRawNameResolvable`) get a generator-emitted pre-`Run()` validation that fires `MissingRequiredParameter` ServiceError when the parameter is absent or its `.Value == null`. Plumbed Discovery → `ActionClassInfo.RequiresRawNameResolvable` → `Emission/Action/this.cs` (mirrors `[IsNotNull]`). Closes the silent-NRE path the implicit `string` operator would otherwise take. The `foreach` ItemName/KeyName are skipped via the `!p.IsNullable` filter — those slots are intentionally permissive. Empty-string slot values (`Name = ""`) currently pass the guard (`?.Value == null` is the literal check); pre-v7 surfaced this via `string.IsNullOrEmpty(...)`. Tightening is a noted optional follow-up — not blocking, sits inside the signed-`.pr` trust boundary.
 
 ---
 
@@ -685,7 +698,7 @@ The null-guard on `FinalValue` (added in v6 nit #3) distinguishes **accessed-and
 
 `Provider` properties are not parameter-sourced — they emit no snapshot entry. Match the convention if you add a new property kind.
 
-**Attribute matching is short-name only.** `Discovery` matches `[Sensitive]` by `AttributeClass.Name == "SensitiveAttribute"` — same convention as `[Provider]` and `[VariableName]`. A different `SensitiveAttribute` declared in another namespace would inadvertently trigger masking. Theoretical only; no current namespace collision in the codebase. If standardisation on fully-qualified attribute matching ever lands, do all three at once or you create a different inconsistency.
+**Attribute matching is short-name only.** `Discovery` matches `[Sensitive]` by `AttributeClass.Name == "SensitiveAttribute"` — same convention as `[Provider]`. A different `SensitiveAttribute` declared in another namespace would inadvertently trigger masking. Theoretical only; no current namespace collision in the codebase. If standardisation on fully-qualified attribute matching ever lands, do both at once or you create a different inconsistency.
 
 ---
 

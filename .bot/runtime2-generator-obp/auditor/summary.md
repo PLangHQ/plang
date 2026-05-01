@@ -23,3 +23,62 @@ inconsistency is more than cosmetic. Fix: mirror the legacy pattern
 (declared #3 fixed without checking the emission consumers honor it).
 
 See [v1/summary.md](v1/summary.md) and [v1/result.md](v1/result.md).
+
+## v2 — 2026-05-01
+
+Cumulative audit on the Variable + IRawNameResolvable migration (coder/v6
+auditor closure + architect/v5 → coder/v7 commits 1–4). Reviewers prior:
+codeanalyzer/v4 (PASS, 3 MINOR + 7 NIT), tester/v7 (PASS, 4 minor),
+security/v2 (PASS, 4 low). All file-level work is honest; the gap is
+between the architect's plan and the per-handler `[IsNotNull]` distribution.
+
+**Verdict: FAIL** — 1 major + 2 minor. C# 2550/2550 green; plang 166/166
+green.
+
+Major #1 (cross-file): The deleted `RawScalarValidations` block (which
+emitted `MissingParameter` ServiceError for null/empty `[VariableName]`
+slots pre-v7) was supposed to be replaced by `[IsNotNull]` per the
+architect/v5 plan. Reality: **0 of 22** Data<Variable> slots carry
+`[IsNotNull]` (security/v2 said "3 of 22" but those decorations are on
+OTHER properties in the same handlers). Post-v7 a missing or null Name
+slot resolves to `Data<Variable>{ Value=null, Success=true }`,
+`__resolutionError` is never set, handler reads `Name.Value` (null
+Variable), `op_Implicit` dereferences null, NullReferenceException — caught
+not by App.Run (whose catch excludes NRE) but by Step.RunAsync as
+`ServiceError("Object reference not set...", "StepError", 400)` — without
+parameter name, step text, or Params snapshot. Empirically reproduced.
+
+Fix is generator-side (~10 lines + 1 Discovery flag in
+`Emission/Property/Data/this.cs:EmitProperty`, mirroring `IsSensitive`
+plumbing).
+
+Minors #2 + #3 are review-gap findings explaining how the major slipped
+through. Hand-off: coder.
+
+See [v2/summary.md](v2/summary.md) and [v2/result.md](v2/result.md).
+
+## v3 — 2026-05-01
+
+Single-commit follow-up audit on coder/v8 (`87d7f6be`), which addresses
+v2's major #1.
+
+**Verdict: PASS** — 1 NIT (empty-string edge), no critical/major/minor.
+C# 2570/2570 + plang 166/166 green.
+
+coder/v8 plumbed `IsRawNameResolvable` through Discovery into
+`ActionClassInfo` and emitted a pre-`Run()` validation in the Action
+emitter (next to `[IsNotNull]`). Filter `!p.IsNullable` correctly excludes
+foreach's intentionally-permissive nullable Variable slots. New
+`MissingVariableNameTests.cs` parametrizes 20 rows across all
+non-nullable Data<Variable> slots and asserts both
+`Error.Key == "MissingRequiredParameter"` and the message contains the
+slot name. v2 minor #3 (tester gap) closed by this test; v2 minor #2
+(security count) was informational and needs no code change.
+
+NIT: empty-string slot values pass the new guard
+(`?.Value == null`) but were caught pre-v7 by `string.IsNullOrEmpty`.
+Optional follow-up.
+
+Hand-off: docs.
+
+See [v3/summary.md](v3/summary.md).
