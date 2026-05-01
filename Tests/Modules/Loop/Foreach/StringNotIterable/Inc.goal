@@ -1,0 +1,5 @@
+Inc
+/ Helper goal — increments %count% by 1 each time it's called. The body of
+/ ForeachStringNotIterable's foreach. A single body call after iterating the
+/ atomic string proves the carve-out works end-to-end.
+- throw "not implemented"

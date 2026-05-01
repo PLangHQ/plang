@@ -1,0 +1,57 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-data-share-state",
+  "timestamp": "2026-05-01T00:30:00Z",
+  "reviewed_version": "v2 on coder/v3 (commit b2969406)",
+  "verdict": "pass",
+  "summary": "Coder v3 closes auditor v1's F1 (Debug-watch silent regression). Coder went structurally cleaner than my suggested partial-revert: reframed the contract — events are bound to the NAME, Properties are bound to the Data INSTANCE. Variables.Set replacement unconditionally aliases prev's OnCreate/OnChange/OnDelete onto dv; Properties stay per-instance. CarryStateFromSource deleted entirely; variable.set is now pure mint+store; Variables.Set is the sole state-survival site. Single source of truth. Regression test DebugWatch_OnChange_FiresOnEveryReplacement mirrors Debug/this.cs:141-160 exactly (placeholder + subscribers + 3 sets → 3 calls, was 1 in v1). Plus 6 contract tests pin event aliasing, Properties isolation, idempotent same-instance Set, Value-setter fires. Test ground state verified: C# 2533/2542 (9 honest baseline stubs unchanged), plang 166/166. Recommend merge. F2/F3/F4 carryovers from v1 unchanged (not blocking). One minor non-regressing observation N1 logged.",
+  "f1_status": {
+    "id": 1,
+    "v1_severity": "major",
+    "v3_status": "fixed",
+    "fix_path": "Option 1-strong: unconditional event-list alias from prev to dv on Variables.Set replacement, plus reframe of Properties as per-instance metadata (not per-name). Cleaner than v1's suggested 'restore-only-when-empty' partial revert.",
+    "test_pin": "PLang.Tests/App/VariablesTests/SubscriberSurvivalTests.cs:179-192 DebugWatch_OnChange_FiresOnEveryReplacement (3 sets → 3 calls). Plus 6 contract tests for the underlying aliasing semantics. All pass."
+  },
+  "carryovers_from_v1": [
+    {
+      "id": 2,
+      "severity": "minor",
+      "status": "unchanged",
+      "file": "PLang/App/Data/this.cs:491-494",
+      "issue": "AsCanonical container-walk transient state-aliasing (Properties + 3 event lists) unpinned by tests. v1 suggested ride-along; coder/v3 didn't pick it up. Inherited from tester/v2 (confirmed false-green) + auditor/v1.",
+      "auditor_v2_stance": "Carryover, not blocking. Can ride a future cleanup PR. The new event-aliasing semantics this branch lands make pinning this even more important downstream — but not for this merge."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "status": "unchanged",
+      "file": "PLang/App/modules/variable/set.cs:115-116, PLang/App/modules/list/add.cs:56",
+      "issue": "global::App.Data.@this.SnapshotClone(...) qualifier noise. Inherited from codeanalyzer/v2.",
+      "auditor_v2_stance": "Carryover, cosmetic. Drop on next touch."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "status": "unchanged",
+      "file": "PLang/App/modules/variable/set.cs:115-116",
+      "issue": "Defensive ?? new List/new Dict fallback can never fire. Inherited from codeanalyzer/v1+v2.",
+      "auditor_v2_stance": "Carryover, cosmetic. Drop on next touch."
+    }
+  ],
+  "new_observations_from_v3": [
+    {
+      "id": "N1",
+      "severity": "minor",
+      "category": "consistency",
+      "file": "PLang/App/Data/this.cs:230-232",
+      "issue": "Data.Value setter fires FireOnChange(this) — handlers receive (this, this) AFTER _value is replaced, so oldData.Value == newData.Value (both new) and oldData.RawValue?.GetType() == newData.RawValue?.GetType() always. Inconsistent with the replacement path's prev.FireOnChange(dv) which delivers two distinct objects with old/new state.",
+      "concrete_impact": "Debug's OnTypeChange watch (Debug/this.cs:152-158) compares oldData.RawValue?.GetType().Name != newData.RawValue?.GetType().Name and only logs on transitions. On the Value-setter path, this comparison is never true → OnTypeChange never fires for in-place mutations.",
+      "regression_status": "NOT a regression for user-visible variables. User set %x% = ... always goes through variable.set → MintTyped → Variables.Set Data path which fires (prev, dv) correctly. The Value-setter path is hit only by: Executor.cs goalFile (system var, no watches), http providers !ServiceIdentity (system !-prefix), list/add Variables.Set(ListName, list) where type doesn't change between invocations. All cases either don't have user watches or don't change type.",
+      "suggestion": "Awareness only. If a real consumer ever needs (prev, new) shape on direct mutation, capture _value/_type into a synthetic prev-Data before the setter runs. Not worth changing pre-emptively."
+    }
+  ],
+  "previous_reviews_assessed_for_v3": {
+    "scope_note": "v3 fix is small enough (4 files, 109/65 lines) that re-running codeanalyzer/tester isn't required; the test additions self-document the new contract. Auditor v2 directly verifies the seam closure."
+  },
+  "recommended_next_step": "PASS → green-light merge. Optional: fresh security review (still not on file for this branch — JSON-roundtrip expansions in TypeConverter JsonNode dispatch + variable.set MintTyped's deep-clone of List/Dict warrant one pass)."
+}

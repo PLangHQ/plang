@@ -50,6 +50,19 @@ ProcessFolder
 
 A caller passing `path=/data` overrides the default; a caller passing nothing falls through to `'.'`. Internally this maps to `variable.set` with `AsDefault=true` — the action checks the variable's `IsInitialized` state before writing.
 
+#### Lists and dictionaries are independent copies
+
+When you `set %x% = %y%` and `%y%` is a list or dictionary, `%x%` is a snapshot — a fresh copy. Mutating `%y%` later does **not** bleed into `%x%`:
+
+```plang
+- set %a% = ["one", "two"]
+- set %b% = %a%
+- add "three" to %a%
+/ %a% is ["one","two","three"], %b% is still ["one","two"]
+```
+
+If you want both names to refer to the same underlying list (so `add` is visible from either), keep using one name — don't re-assign.
+
 ### get
 
 Retrieve a variable's value. Usually you just reference `%varName%` directly — the `get` action is for when you need to check if a variable exists.

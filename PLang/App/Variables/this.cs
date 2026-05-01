@@ -64,16 +64,27 @@ public class @this
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
-            // Data value: alias as-is under the given key. No clone, no rename.
+            // Data value: replace under `name`. The binding's state (Properties + event
+            // subscribers) follows the name onto the new Data — that's how
+            // `--debug={"variables":[...]}` watches see every assignment, and how Properties
+            // attached to a name survive a re-mint. In-place mutation of prev is wrong: a
+            // Data may be aliased under multiple keys (e.g. Action stores the step result
+            // both under its own name AND under "__data__"), so mutating prev would bleed
+            // across keys.
             if (value is Data.@this dv)
             {
                 dv.Context = _context;
-                if (type != null) dv.Type = type;
 
                 if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
                 {
+                    // Event subscribers follow the *name* across re-binding (so
+                    // `--debug={"variables":[...]}` watches see every assignment, not just
+                    // the first). Properties stay attached to the Data instance — they're
+                    // result metadata (e.g. condition.if's branchIndex), not binding metadata.
+                    dv.OnCreate = prev.OnCreate;
+                    dv.OnChange = prev.OnChange;
+                    dv.OnDelete = prev.OnDelete;
                     prev.FireOnChange(dv);
-                    dv.CopyEventsFrom(prev);
                 }
                 else if (prev == null)
                 {
@@ -149,15 +160,7 @@ public class @this
         {
             try
             {
-                // CamelCase keys so the cloned dict matches the rest of the
-                // pipeline — .pr serialization, traces, and viewer all expect
-                // camelCase. Default options would PascalCase typed POCO sources.
-                var jsonOpts = new System.Text.Json.JsonSerializerOptions {
-                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-                    PropertyNameCaseInsensitive = true,
-                };
-                var json = System.Text.Json.JsonSerializer.Serialize(rawValue, jsonOpts);
-                rawValue = System.Text.Json.JsonSerializer.Deserialize<object?>(json, jsonOpts);
+                rawValue = Data.@this.SnapshotClone(rawValue!);
             }
             catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
             {
@@ -351,12 +354,18 @@ public class @this
     }
 
     /// <summary>
-    /// Removes a variable.
+    /// Removes a variable. Fires OnDelete on the removed Data so subscribers
+    /// (e.g. --debug={"variables":[{"name":"x","event":"OnDelete"}]}) see it.
     /// </summary>
     public bool Remove(string name)
     {
         name = CleanName(name);
-        return _variables.TryRemove(name, out _);
+        if (_variables.TryRemove(name, out var removed))
+        {
+            removed.FireOnDelete();
+            return true;
+        }
+        return false;
     }
 
     /// <summary>

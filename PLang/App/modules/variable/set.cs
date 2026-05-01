@@ -6,6 +6,11 @@ namespace App.modules.variable;
 /// <summary>
 /// Sets a variable in the current context's variable store.
 /// When AsDefault is true, only sets if the variable doesn't already exist.
+///
+/// variable.set is the binding-mint site — it owns type inference (MintTyped picks
+/// the concrete Data&lt;T&gt; for the runtime type). Variables.Set decides whether to
+/// update the existing binding in place (same type) or replace it (type changed),
+/// and carries Properties + event subscribers across replacement.
 /// </summary>
 [System.ComponentModel.Description("Assign a value to a named variable, optionally coercing to a type or setting only when unset")]
 [Action("set", Cacheable = false)]
@@ -52,9 +57,76 @@ public partial class Set : IContext, IBuildValidatable
                 return Task.FromResult(existing);
         }
 
-        var stored = Context.Variables.Set(Name, Value,
-            Type?.Value != null ? App.Data.Type.FromName(Type.Value) : null);
+        // Forced type via [Type]: convert via TryConvertTo and mint Data<T>. Conversion failure
+        // surfaces as Data.Error (Success=false) — Variables.Set is not called in that case so
+        // the binding stays whatever it was. For primitives this is straight coercion ("42" → 42).
+        // For json (TypeMapping maps "json" → typeof(JsonNode)), TryConvertTo parses the string
+        // into a JsonObject which IS IDictionary — that's what enables `convert %json% from
+        // json` (mapped to variable.set Type=json) followed by foreach over the resulting dict.
+        if (Type?.Value != null)
+        {
+            var targetType = Utils.TypeMapping.GetType(Type.Value);
+            if (targetType == null)
+            {
+                return Task.FromResult(global::App.Data.@this.FromError(
+                    new Errors.ServiceError($"Unknown type '{Type.Value}'", "UnknownType", 400)));
+            }
+            object? converted = Value.Value;
+            if (converted != null && !targetType.IsInstanceOfType(converted))
+            {
+                var (c, err) = Utils.TypeMapping.TryConvertTo(converted, targetType, Context);
+                if (err != null)
+                    return Task.FromResult(global::App.Data.@this.FromError(err));
+                converted = c;
+            }
+            var typedData = ConstructDataOfT(Name, targetType, converted, Context);
+            return Task.FromResult(Context.Variables.Set(typedData));
+        }
 
-        return Task.FromResult(stored);
+        // No forced type — type-infer from Value.Value's runtime type. Hot types (string,
+        // int, long, double, bool, decimal, DateTime, Guid, byte[], List, Dict) take the
+        // if-chain; cold types fall through to reflection.
+        var raw = Value.Value;
+        Data.@this minted = MintTyped(Name, raw, Context);
+        return Task.FromResult(Context.Variables.Set(minted));
     }
+
+    /// <summary>
+    /// Type-infer + mint a Data&lt;T&gt; for the runtime type of <paramref name="raw"/>.
+    /// Mutable refs (List, Dict) snapshot-cloned via JSON roundtrip so later mutation of
+    /// the source doesn't bleed through. null produces plain Data (un-typed).
+    /// </summary>
+    private static Data.@this MintTyped(string name, object? raw, Actor.Context.@this ctx)
+    {
+        return raw switch
+        {
+            null                                 => new Data.@this(name, null) { Context = ctx },
+            string s                             => new Data.@this<string>(name, s) { Context = ctx },
+            bool b                               => new Data.@this<bool>(name, b) { Context = ctx },
+            int i                                => new Data.@this<int>(name, i) { Context = ctx },
+            long l                               => new Data.@this<long>(name, l) { Context = ctx },
+            double d                             => new Data.@this<double>(name, d) { Context = ctx },
+            decimal m                            => new Data.@this<decimal>(name, m) { Context = ctx },
+            float f                              => new Data.@this<float>(name, f) { Context = ctx },
+            DateTime t                           => new Data.@this<DateTime>(name, t) { Context = ctx },
+            DateTimeOffset to                    => new Data.@this<DateTimeOffset>(name, to) { Context = ctx },
+            Guid g                               => new Data.@this<Guid>(name, g) { Context = ctx },
+            byte[] ba                            => new Data.@this<byte[]>(name, ba) { Context = ctx },
+            List<object?> list                   => new Data.@this<List<object?>>(name, (List<object?>?)global::App.Data.@this.SnapshotClone(list) ?? new List<object?>()) { Context = ctx },
+            Dictionary<string, object?> dict     => new Data.@this<Dictionary<string, object?>>(name, (Dictionary<string, object?>?)global::App.Data.@this.SnapshotClone(dict) ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)) { Context = ctx },
+            _                                    => ConstructDataOfT(name, raw.GetType(), raw, ctx)
+        };
+    }
+
+    /// <summary>
+    /// Reflection construction of Data&lt;T&gt; for a runtime type not in the hot if-chain.
+    /// </summary>
+    private static Data.@this ConstructDataOfT(string name, System.Type t, object? value, Actor.Context.@this ctx)
+    {
+        var generic = typeof(Data.@this<>).MakeGenericType(t);
+        var instance = (Data.@this)Activator.CreateInstance(generic, name, value, null, null)!;
+        instance.Context = ctx;
+        return instance;
+    }
+
 }

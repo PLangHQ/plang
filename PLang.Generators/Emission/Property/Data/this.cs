@@ -31,8 +31,11 @@ public sealed record @this(
         // this the FromError-Data lives silently on the backing field with Value=default(T).
         if (IsPlainData)
         {
-            // Plain Data resolves as Data<object> so %var% references walk through.
-            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = __ResolveData(\"{ParamName}\").As<object>(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
+            // Plain Data slot — return the CANONICAL Data, not a wrapped Data<object>. For full-match
+            // %var%, that's the live variable Data; for literal values, the parameter Data itself.
+            // Pattern A handlers (list.add/remove/sort/...) read .Value as the live ref so mutation
+            // is visible to the variable. Architect Phase 2 Rule 4.
+            sb.AppendLine($"        get {{ if (!{SetFlag}) {{ {Backing} = __ResolveData(\"{ParamName}\").AsCanonical(Context); if (!{Backing}.Success) __resolutionError = {Backing}; {SetFlag} = true; }} return {Backing}!; }}");
         }
         else if (IsNullable)
         {

@@ -1,0 +1,52 @@
+{
+  "tested_version": "v1",
+  "branch": "runtime2-data-share-state",
+  "coverage_source": "/tmp/cov/coverage.cobertura.xml",
+  "touched_production_files": {
+    "PLang/App/Data/this.cs": {
+      "lines_covered": 388,
+      "lines_total": 449,
+      "pct": 86.4,
+      "uncovered_lines_count": 61,
+      "notes": "High coverage. Uncovered includes Newtonsoft JToken unwrap shim (847-864) — unrelated to coder/v1 changes; pre-existing v1 compat shim. ToBoolean fall-through types (734-741) pre-existing."
+    },
+    "PLang/App/Variables/this.cs": {
+      "lines_covered": 298,
+      "lines_total": 329,
+      "pct": 90.6,
+      "notes": "High coverage. Set is well-tested. Remove fires OnDelete is tested (SubscriberSurvivalTests.Remove_FiresOnDelete_OnRemovedData)."
+    },
+    "PLang/App/Debug/this.cs": {
+      "lines_covered": 185,
+      "lines_total": 418,
+      "pct": 44.3,
+      "notes": "Only ~5 lines were changed by coder/v1 (`+=` → `.Add(...)` for new event-list shape); rest pre-existing low coverage."
+    },
+    "PLang/App/modules/variable/set.cs": {
+      "lines_covered": 73,
+      "lines_total": 82,
+      "pct": 89.0,
+      "uncovered_lines": [37, 68, 69, 70, 111, 112, 114, 115, 116],
+      "notes": "Uncovered: cold types in MintTyped (decimal:111, float:112, DateTimeOffset:114, Guid:115, byte[]:116), reflection cold path (line 119 — covered? need verify), Unknown forced type error (68-70), ValidateBuild conversion-failure path (37)."
+    },
+    "PLang/App/modules/list/add.cs": {
+      "lines_covered": 23,
+      "lines_total": 41,
+      "pct": 56.1,
+      "uncovered_lines": [26, 27, 28, 29, 31, 32, 33, 53, 55, 56, 57, 58, 59, 60, 63, 64, 65, 66],
+      "notes": "ENTIRE complex-snapshot path (53-66) is uncovered. This is the path codeanalyzer/v2 flagged: SnapshotClone with UnwrapJsonElement now applies. Catch-fallback (59-65) for JsonException/NotSupportedException uncovered. Non-list existing-value branches (26-33) uncovered."
+    },
+    "PLang/App/Utils/Json.cs": {
+      "lines_covered": 65,
+      "lines_total": 120,
+      "pct": 54.2,
+      "notes": "Only ~5 lines new (Json.SnapshotClone serializer options) — covered indirectly via Data.SnapshotClone callers."
+    },
+    "PLang.Generators/Emission/Property/Data/this.cs": {
+      "lines_covered": 42,
+      "lines_total": 51,
+      "pct": 82.4,
+      "notes": "AsCanonical emission path covered indirectly. Direct emission tests not added but AsCanonical itself is tested in AsTIdentityTests Rule 4a/4b."
+    }
+  }
+}

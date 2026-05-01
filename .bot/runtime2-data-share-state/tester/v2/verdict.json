@@ -1,0 +1,15 @@
+{
+  "verdict": "pass",
+  "reviewed_commit": "24cba238",
+  "branch_head": "ae827527",
+  "csharp_tests": "2530/2539",
+  "plang_tests": "166/166",
+  "findings": {
+    "major": 1,
+    "minor": 2,
+    "informational": 1
+  },
+  "false_greens_found": 2,
+  "false_greens_blocking": 0,
+  "next": "auditor"
+}

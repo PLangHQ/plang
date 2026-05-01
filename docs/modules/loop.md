@@ -108,3 +108,22 @@ CountItem
 ```
 
 **Returns:** A loop result with `itemCount` (number of items iterated) and `completed` (whether the loop finished).
+
+## Strings are atomic
+
+Strings are not iterated character-by-character. `foreach` over a string runs the body **once**, with the string itself as `%item%`:
+
+```plang
+- set %greeting% = "hello"
+- foreach %greeting%, call Show item=%word%
+
+Show
+- write out %word%
+```
+
+Output:
+```
+hello
+```
+
+(Not `h`, `e`, `l`, `l`, `o`.) Same goes for any single value — a non-collection always runs the body once with the value bound to `%item%`. Use `string.split` first if you actually want characters or words.

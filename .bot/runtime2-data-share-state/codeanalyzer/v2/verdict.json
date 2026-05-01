@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "All four v1 findings fixed cleanly; helper extraction is sound. Two cosmetic carryovers (defensive ?? fallback in set.cs:117–118; redundant global:: qualification in 3 callsites) — non-blocking."
+}

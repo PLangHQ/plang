@@ -1,0 +1,5 @@
+AddProduct
+/ Helper goal called by ListAddVisibleAfterCall.test.goal — appends "apple"
+/ to the caller's live %products% list. The mutation must be visible after
+/ this goal returns, which is what the test asserts.
+- throw "not implemented"

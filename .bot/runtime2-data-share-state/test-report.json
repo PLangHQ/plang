@@ -1,0 +1,116 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-data-share-state",
+  "timestamp": "2026-04-30T21:02:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 2533, "passed": 2524, "failed": 9, "skipped": 0 },
+    "plang": { "total": 173, "passed": 170, "failed": 2, "skipped": 0, "stale": 1 }
+  },
+  "csharp_failures_are_honest_stubs": {
+    "stub_count": 9,
+    "test_files": [
+      "PLang.Tests/App/Modules/list/ListAddIdentityTests.cs (4 — Phase 5c deferred)",
+      "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs (5 — Phase 6 deferred)"
+    ],
+    "all_use": "Assert.Fail(\"Not implemented\")",
+    "matches_coder_claim": "2524/2533"
+  },
+  "plang_failures_are_pre_existing": {
+    "files": [
+      "tests/modifiers/PerActionErrorScope.test.goal",
+      "tests/modifiers/OnErrorCallGoal.test.goal"
+    ],
+    "cause": "Stale .pr files in legacy tests/modifiers/ directory built against older error.handle / goal.call schema (Actor: 'this' literal, Goal: {name} param shape). Maintained Tests/Modules/Modifiers/ versions pass.",
+    "regression_caused_by_coder_v1": false
+  },
+  "coverage": {
+    "changed_files_covered": 7,
+    "changed_files_total": 7,
+    "high_coverage_files": [
+      "PLang/App/Variables/this.cs (90.6%)",
+      "PLang/App/modules/variable/set.cs (89.0%)",
+      "PLang/App/Data/this.cs (86.4%)",
+      "PLang.Generators/Emission/Property/Data/this.cs (82.4%)"
+    ],
+    "moderate_coverage_files": [
+      "PLang/App/modules/list/add.cs (56.1% — complex-snapshot path uncovered, see finding #2)",
+      "PLang/App/Utils/Json.cs (54.2% — only ~5 new lines, covered indirectly)",
+      "PLang/App/Debug/this.cs (44.3% — only ~5 lines changed by coder/v1)"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Modules/variable/SetTypeInferenceTests.cs",
+      "code_file": "PLang/App/modules/variable/set.cs",
+      "issue": "MintTyped if-chain has 5 cold-type arms (decimal, float, DateTimeOffset, Guid, byte[]) plus a reflection cold-fallback that are all uncovered. Only string, int, long, double, bool, DateTime, List, Dict are tested.",
+      "impact": "A regression in any of the 5 uncovered type arms (e.g. byte[] taking IList branch instead) would ship silently. The Activator.CreateInstance reflection path is the most fragile spot and untested.",
+      "suggestion": "Add Set_DecimalValue_MintsDataOfDecimal, Set_FloatValue_MintsDataOfFloat, Set_DateTimeOffsetValue_MintsDataOfDateTimeOffset, Set_GuidValue_MintsDataOfGuid, Set_ByteArrayValue_MintsDataOfByteArray, plus one custom-record test exercising the reflection fallback. Pattern identical to existing Set_DateTimeValue_MintsDataOfDateTime."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Modules/list/ListTests.cs",
+      "code_file": "PLang/App/modules/list/add.cs",
+      "issue": "Lines 53–66 (the complex-snapshot path via Data.SnapshotClone with UnwrapJsonElement) are entirely uncovered. All existing list.add tests use string values that take the cheap-clone IConvertible branch (line 50). The catch-fallback for JsonException/NotSupportedException (lines 59–65) is also uncovered.",
+      "impact": "This is exactly the path codeanalyzer/v2 flagged as a quiet behavior unification (UnwrapJsonElement now applies to list-entry snapshots). A regression to JsonElement leaks downstream goes silent. The fallback alias-mode is undefended.",
+      "suggestion": "Add Add_DictValue_SnapshotCloneUnwrapsJsonElement that calls list.add with a Dictionary<string, object?> value containing nested Dictionary, then asserts the stored entry's Value is Dictionary<string, object?> (NOT JsonElement) at all depths."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/VariablesTests/VariablesTests.cs",
+      "code_file": "PLang/App/Variables/this.cs (lines 150–172 dot-path snapshot)",
+      "issue": "The Variables.Set dot-path now goes through Data.SnapshotClone (UnwrapJsonElement applied). The existing Set_DotPath_ConvertsListOfObject_ToTypedList passes a dict-list and verifies properties survive — but that works under BOTH the old (JsonElement leak via TypeMapping) and new (Dictionary via UnwrapJsonElement) shapes.",
+      "impact": "Codeanalyzer/v2's behavioral unification is unprotected at this site. Regression to JsonElement graph passes the existing dot-path tests.",
+      "suggestion": "Either (a) add a unit-level test SnapshotClone_OfNestedDict_UnwrapsJsonElementsAtAllDepths on Data.SnapshotClone directly (faster, simpler), or (b) add a dot-path test that introspects the converted intermediate type before downstream conversion."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Modules/variable/SetTypeInferenceTests.cs",
+      "code_file": "PLang/App/modules/variable/set.cs",
+      "issue": "Two error paths uncovered: (a) Run() Unknown forced-type ServiceError (lines 68–70) — no test passes type='bogus'. (b) ValidateBuild conversion-failure error message (line 37) — no unit test for ValidateBuild. Existing Set_ForcedType_ConversionFailure_ReturnsError checks the runtime path but only asserts Success==false (weak).",
+      "impact": "A breaking change to error key 'UnknownType', the 400 status code, or the message format would slip through. Per false_green_techniques.md, Success==false is weak — Error.Key + StatusCode should be pinned.",
+      "suggestion": "Add Set_ForcedType_UnknownTypeName_ReturnsServiceError (assert Error.Key=='UnknownType', StatusCode==400) and ValidateBuild_ForcedTypeConversionFailure_ReturnsErrorString (unit test). Strengthen existing Set_ForcedType_ConversionFailure_ReturnsError to also pin Error.Key and StatusCode."
+    },
+    {
+      "id": 5,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/variable/SetTypeInferenceTests.cs",
+      "code_file": "PLang/App/modules/variable/set.cs",
+      "issue": "Set_IntValue_MintsDataOfInt accepts EITHER Data<int> OR Data<long> (because the JSON pipeline normalizes int to long). The permissive assertion means a regression to e.g. Data<short> or Data<byte> would still pass.",
+      "impact": "Low — the long arm is strictly tested by the separate Set_LongValue_MintsDataOfLong, so the integer hot path is partly pinned. But the int test name is misleading.",
+      "suggestion": "Either rename to Set_IntOrLongValue_MintsTypedNumeric, delete (redundant with Set_LongValue), or pin to a specific shape that the JSON pipeline cannot drift away from."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/VariablesTests/SubscriberSurvivalTests.cs",
+      "code_file": "PLang/App/Variables/this.cs (Set replacement)",
+      "issue": "No test pins that prev.OnDelete is NOT fired during a Set replacement. Architect's contract: OnDelete is for Remove only; replacement fires only OnChange.",
+      "impact": "Low — the dumb-storage replacement code is correct today; but if a future change started firing OnDelete on prev disposal (a plausible 'cleanup' refactor), no test would catch it.",
+      "suggestion": "One-liner addition to Set_Replace_FiresOnChange_OnPrev_WithDvAsNewData: subscribe deleteCalls counter on prev.OnDelete; assert deleteCalls == 0 after Set(dv)."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "tests/modifiers/PerActionErrorScope.test.goal, tests/modifiers/OnErrorCallGoal.test.goal",
+      "code_file": "n/a (stale .pr files)",
+      "issue": "Two PLang tests in legacy tests/modifiers/ have stale .pr files built against an older error.handle / goal.call schema (Actor: 'this' literal, Goal: {name} parameter). They fail with TypeMismatch(400) at runtime. Maintained Tests/Modules/Modifiers/ versions pass.",
+      "impact": "Out of coder/v1 scope. Not a regression. But inflates the failed-count and could mask real future regressions in PLang test runs.",
+      "suggestion": "Either delete tests/modifiers/.build/ and rebuild via plang build, or delete the legacy directory entirely if Tests/Modules/Modifiers/ supersedes it."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "C# 2524/2533 with 9 deferred stubs honestly failing — confirmed. PLang 170/173 with 2 fails in legacy tests/modifiers/ and 1 unrelated stale entry — not regressions. Identity-preservation contract is strongly pinned (every aliasing claim uses ReferenceEquals on Properties / event lists / Value). The pivot from architect's 'alias prev events on Set' to Ingi's 'dumb storage' is correctly reflected in SubscriberSurvivalTests. AsCanonical live-variable resolution and IsPlangAssignable single-source-of-truth are tested. 4 major + 3 minor findings, all coverage gaps (no false greens). Recommend approve-with-deferred-coverage OR brief coder bounce for findings #1–#4."
+}

@@ -1,0 +1,10 @@
+ListAddVisibleAfterCall
+/ End-to-end Pattern A live-ref check. set %products% to an empty list;
+/ call AddProduct (which appends "apple" via list.add); assert the count
+/ of %products% is 1 in the caller. Pattern A: list.add's plain-Data List
+/ slot resolves to the caller's live %products% Data — mutation in the
+/ called goal is visible to the caller because the list ref is shared.
+/ Without Phase 5's Pattern A migration, list.add would Variables.Set a
+/ fresh list and the caller's reference would still point at the stale
+/ empty list.
+- throw "not implemented"

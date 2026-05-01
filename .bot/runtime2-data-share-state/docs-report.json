@@ -1,0 +1,101 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-data-share-state",
+  "timestamp": "2026-05-01T12:00:00Z",
+  "reviewed_version": "v3",
+  "summary": "First docs pass on runtime2-data-share-state covering coder/v1 (data identity-preservation foundation: events as List<Action<...>>, identity-preserving As<T> wrap rules, AsCanonical for plain Data slots, IsPlangIterable/IsPlangAssignable carve-out, variable.set as sole binding-mint site), coder/v2 (nested %var% walk symmetry between AsCanonical and AsT_Impl, JsonNode/JsonArray dispatch in TypeConverter), and coder/v3 (Variables.Set events-follow-name + Properties-stay-with-Data contract; CarryStateFromSource deleted; auditor F1 Debug-watch regression closed). Phases 5b/5c/6 (handler migration off [VariableName] + Legacy emission delete) deferred — need rebuilt .pr files. Eight gaps filled across data-generic-design.md (new identity-preservation section), variables.md (API surface fix + behaviour rules + stale *__Generated ref), architecture.md (Variables snippet fix), debug.md (events aliased not copied), good_to_know.md (6 cross-cutting entries), docs/modules/loop.md (strings-are-atomic), docs/modules/variable.md (snapshot-clone semantics for set %x% = %y%). One CLAUDE.md proposal applied (coder/v2 — running plang tests). No new XML docs needed — coder's XML on new public surface (As<T>, AsCanonical, WrapAs, ConstructWrap, IsPlangIterable, IsPlangAssignable, TryFullVarMatch, WalkContainerVars, IsWalkableContainer, Variables.Set, Variables.Remove, MintTyped, ConstructDataOfT) is meaningful. Build clean post-edits (0 errors, 364 pre-existing nullability warnings unchanged from auditor v2 baseline). Verdict: PASS.",
+  "stats": {
+    "gaps_found": 8,
+    "gaps_filled": 8,
+    "docs_updated": 8,
+    "docs_created": 0
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/data-generic-design.md",
+      "description": "Appended a new section 'Identity preservation — As<T> wrap rules + AsCanonical'. Documents the four As<T> wrap rules (same-type fast / variance fast / cross-type with conversion / failure) with explicit aliasing semantics on Properties + OnCreate/OnChange/OnDelete. Documents AsCanonical for plain-Data slots: full-match returns live variable Data, literal returns this, partial/container/unset paths preserve slot Name. Includes the Variables.Set events-follow-name contract and the IsPlangIterable/IsPlangAssignable carve-out for the string-not-iterable rule. Pre-existing 'always allocate' sketch in section 7 preserved as historical design context."
+    },
+    {
+      "id": 2,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/variables.md",
+      "description": "Replaced the API-surface block (had 'Put(Data data)' which doesn't exist; corrected to actual Set(Data) and Set(string,object?,Type?) overloads + Save/Restore/Snapshot/Resolve). Rewrote 'Behavior & Rules' with: dictionary-key-source-of-truth, in-place update on non-Data path, events-follow-name on replacement, Properties-stay-with-Data, snapshot-clone semantics in variable.set. Updated Code Examples (Data.Type.Int vs Type.Int; added Set(Data) example). Fixed stale '*__Generated' reference at line 152 — replaced with the v4 partial-class shape using As<T>/AsCanonical."
+    },
+    {
+      "id": 3,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/architecture.md",
+      "description": "Variables snippet (line 405-413): replaced 'Variables.Put(data)' (doesn't exist in code) with actual API. Added a paragraph pointing to the events-follow-name + Properties-stay-with-Data identity contract with cross-references to variables.md and data-generic-design.md."
+    },
+    {
+      "id": 4,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/debug.md",
+      "description": "Replaced 'Events are copied when a variable is replaced' with the precise 'Events are aliased' contract. Notes that subscribers added later (to either prev ref or current) are visible from every alias because they share the same list. Aligns with the new Variables.Set contract from coder/v3."
+    },
+    {
+      "id": 5,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Appended six cross-cutting entries: (a) Data identity preservation — As<T> four wrap rules with aliasing impact on debug watches and condition.if branchIndex; (b) AsCanonical — plain Data slots return live variable, with the five branch behaviours; (c) Variables.Set — events follow name, Properties stay with Data, with the alias-on-replacement code, idempotent Set, and the auditor v2 N1 non-Data path inconsistency; (d) variable.set is the sole binding-mint site — MintTyped if-chain, snapshot-clone via JSON roundtrip, forced [Type], non-user-mint callers (__data__, list.add fallback, cache/wrap); (e) String-not-iterable — IsPlangIterable/IsPlangAssignable rule with the three call sites; (f) JsonNode/JsonArray dispatch in TypeConverter — why JsonObject/JsonArray need their own arms, cross-cutting impact on the LLM builder pipeline."
+    },
+    {
+      "id": 6,
+      "type": "user-facing-doc",
+      "action": "updated",
+      "file": "docs/modules/loop.md",
+      "description": "Added 'Strings are atomic' subsection at end of foreach docs. Documents the user-visible behaviour: foreach over a string runs the body once with the string itself as %item% (not char-by-char). Includes example output + reminder to use string.split for chars/words."
+    },
+    {
+      "id": 7,
+      "type": "user-facing-doc",
+      "action": "updated",
+      "file": "docs/modules/variable.md",
+      "description": "Added 'Lists and dictionaries are independent copies' subsection under set default. Documents the user-visible behaviour: set %x% = %y% for a List/Dict creates a snapshot (independent copy). Mutating the source after binding doesn't bleed into the target. Example shows add to source not affecting target."
+    },
+    {
+      "id": 8,
+      "type": "claude-md-proposal",
+      "action": "applied",
+      "file": "CLAUDE.md",
+      "description": "Applied coder/v2's 'Running plang Tests' proposal. New '## Running plang Tests' subsection between '## Build' and '## Debugging'. Codifies: tests live ONLY under Tests/ (uppercase); cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test from canonical location; running from project root surfaces stale .test.goal files under .bot/ as noise; C# tests use 'dotnet run --project PLang.Tests' from project root."
+    }
+  ],
+  "claude_md_proposals": [
+    {
+      "from_bot": "coder",
+      "target": "/CLAUDE.md",
+      "decision": "applied",
+      "reason": "Genuinely canonical — any future bot or human running plang --test from project root will trip the same tests/ (lowercase) + .bot/ discovery noise. The user noted this directly while debugging coder/v2. Folded as new '## Running plang Tests' subsection between existing '## Build' and '## Debugging' — natural placement given the workflow flow (build → test → debug). No fold decision needed; proposal targeted root /CLAUDE.md already."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "missing-example",
+      "file": "docs/modules/loop.md",
+      "issue": "The string-not-iterable rule is now documented with one example (foreach over a string). A complementary .test.goal in Tests/Modules/Loop/Foreach/StringNotIterable/ would be the natural pair for users to copy. The deferred-stub Modules/Loop/Foreach/StringNotIterable.test.goal2 already exists per coder/v1 summary; its conversion to a real .test.goal is gated on the LLM build pipeline.",
+      "resolution": "flagged-for-tester",
+      "detail": "Tester writes PLang tests; the C# ForeachStringNotIterableTests already pin the contract. Out of scope for this docs pass — flagging for visibility on the next branch with builder access."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "missing-example",
+      "file": "docs/modules/variable.md",
+      "issue": "The snapshot-clone semantic for set %x% = %y% (List/Dict) is documented with an inline example. A complementary .test.goal asserting independence after `add` would be the natural pair. The deferred-stub Modules/Variable/Set/SnapshotClone.test.goal2 already exists per coder/v1 summary; the C# Set_ListValue_MintsDataOfListAndSnapshotClones test pins the contract.",
+      "resolution": "flagged-for-tester",
+      "detail": "Same as finding #1 — out of scope for this docs pass."
+    }
+  ],
+  "verdict": "pass",
+  "next_step_recommendation": "Security review (flagged by auditor v1 + v2, not on file). JSON-roundtrip expansions (TypeConverter JsonNode dispatch, list.add SnapshotClone, variable.set MintTyped's deep-clone of List/Dict) are new attack surface worth one pass. F2/F3/F4 auditor carryovers can ride a future cleanup PR."
+}

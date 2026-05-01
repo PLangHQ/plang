@@ -1,0 +1,8 @@
+SetSnapshotClone
+/ End-to-end snapshot clone. set %a% to a list ["x"]; set %b% = %a%; mutate
+/ %a% by adding "y"; assert that %b% does NOT contain "y". Without the
+/ snapshot-clone in variable.set's mint path (Phase 4), %b% would alias
+/ %a%'s list and the assertion would fail. The same regression is what the
+/ list/add.cs:67-69 and Variables/this.cs:147 JSON-roundtrip pattern
+/ originally fixed for the dot-path case.
+- throw "not implemented"

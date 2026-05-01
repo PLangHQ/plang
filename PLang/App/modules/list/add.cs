@@ -40,10 +40,8 @@ public partial class Add : IContext
 
         // Snapshot the Data so each list entry is independent — without this,
         // `add %x% to %list%` stores an alias and later `set %x% = ...` mutates
-        // every list entry. Force.DeepCloner deep-walks the whole graph and
-        // hangs on cyclic runtime types (Goal↔Step↔Action). JSON roundtrip
-        // honors [JsonIgnore] (which breaks the cycles) and produces a clean
-        // serializable copy — exactly what we want for trace-style snapshots.
+        // every list entry. Data.SnapshotClone breaks cyclic runtime types
+        // (Goal↔Step↔Action) via [JsonIgnore] — see Data.SnapshotClone.
         Data.@this snapshot;
         var rawValue = Value.Value;
         if (rawValue is null || rawValue is string || rawValue is bool || rawValue is System.IConvertible)
@@ -55,17 +53,7 @@ public partial class Add : IContext
         {
             try
             {
-                // CamelCase naming policy so cloned dict keys match the rest
-                // of the serialized data (.pr files, traces, viewer all expect
-                // camelCase). Default options would produce PascalCase keys
-                // for typed POCO sources (Goal, Step, Action) and the resulting
-                // dicts would mismatch downstream readers.
-                var jsonOpts = new System.Text.Json.JsonSerializerOptions {
-                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-                    PropertyNameCaseInsensitive = true,
-                };
-                var json = System.Text.Json.JsonSerializer.Serialize(rawValue, jsonOpts);
-                var cloned = System.Text.Json.JsonSerializer.Deserialize<object?>(json, jsonOpts);
+                var cloned = global::App.Data.@this.SnapshotClone(rawValue);
                 snapshot = new Data.@this(Value.Name, cloned, Value.Type) { Context = Context };
             }
             catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)

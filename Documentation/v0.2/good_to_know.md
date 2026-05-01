@@ -710,3 +710,101 @@ Why the `context` parameter even though the lookup is context-free today: contra
 **Don't implement `SnapshotParams` by hand.** Same reason handlers don't write `: ICodeGenerated` — the generator owns this surface. The default-impl exists so handlers without parameter properties (e.g. simple infrastructure actions) compile cleanly without a generated override.
 
 `App.Run` calls `handler.SnapshotParams()` from its catch block (and from the success-with-error path) and stamps the result onto `Error.Params` if not already populated. The generator no longer attaches snapshots inside generated `ExecuteAsync` — that responsibility moved to `App.Run` in v4 Phase 3 so all dispatch paths get consistent error context.
+
+---
+
+## Data identity preservation — `As<T>` four wrap rules
+
+`Data.As<T>(context)` does not always allocate. It applies four rules (architect/v1/plan.md §Phase 2; `App/Data/this.cs` `WrapAs<T>`):
+
+1. **Same-type fast path** — `this is Data<T>` and `.Value is T` → return `this`. No allocation.
+2. **Variance fast path** — `value is T` and `IsPlangAssignable(T, value.GetType())` → new `Data<T>` whose `.Value` is the same reference (cast-only). `Properties`, `OnCreate`, `OnChange`, `OnDelete` aliased from `this`.
+3. **Cross-type with conversion** — converted `.Value`, state aliased. `T == IEnumerable` delegates to `Data.AsEnumerable()` so the string-not-iterable rule has one source of truth.
+4. **Conversion failure** — `Data<T>.FromError(error)` sentinel; nothing aliased. The post-Run resolution check (see *Resolution semantics* in `data-generic-design.md`) surfaces it.
+
+Aliasing means the four state slots are list refs shared between source and view: `wrapped.Properties.Set(...)` is visible through `source.Properties`; subscribers added to either side fire from either side. Removing any of the four alias assignments in `ConstructWrap<T>` is a silent regression — `--debug={"variables":[...]}` watches and `condition.if`'s `branchIndex` (attached to the result Data via `Properties`) both depend on this.
+
+**Where it lives**: `App/Data/this.cs` — `WrapAs<T>` is the dispatch; `ConstructWrap<T>` is the per-rule constructor. Plain `Data` slots bypass `As<T>` entirely via `AsCanonical` (next entry).
+
+---
+
+## `AsCanonical` — plain `Data` slots return the live variable
+
+Handler properties typed as plain `Data` (not `Data<T>`) operate on the *live variable*. The generator emits `__ResolveData(name).AsCanonical(Context)` instead of `As<object>(Context)`. `AsCanonical`:
+
+- **Full match `%var%`** → returns the LIVE variable Data from `Variables.Get(name)`. Mutations to `.Value` on the result IS the variable. `list.add` reads `List.Value as List<object?>`, calls `.Add(...)`, and the live variable sees the change without any explicit write-back.
+- **Literal value (no `%`)** → returns `this` (the parameter Data). Same ref.
+- **Partial interpolation** (`"hello %x%"`) → fresh `Data` over the interpolated string with the slot Name; state aliased from `this`.
+- **Container with nested `%var%`** (list/dict) → walked via `WalkContainerVars`; fresh `Data` with substituted values, state aliased from `this`.
+- **Unset `%var%`** → not-initialized `Data` carrying the variable name (so handler diagnostics see "missing %x%", not "missing slot").
+
+The walker is shared with `AsT_Impl` so plain `Data` and `Data<T>` resolve nested vars by the same rule. Drift between the two paths bit `set ... type=json` over a list-of-dicts (coder/v2 fix) — the typed path walked containers, the plain path didn't, so handlers reading `Value.Value` saw literal `"%var%"` strings inside.
+
+`Properties` and event lists are aliased on the partial/container paths so subscribers attached to the slot survive the wrap. The four alias lines on the container-walk branch (`transient.Properties = ...; transient.OnCreate = ...; ...`) are unpinned by tests as of this branch (auditor F2 carryover) — preserve them when refactoring.
+
+---
+
+## `Variables.Set` — events follow the name, Properties stay with the Data
+
+When `Variables.Set(dv)` replaces an existing binding under the same name (`App/Variables/this.cs:78-87`):
+
+```csharp
+if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
+{
+    dv.OnCreate = prev.OnCreate;   // alias — same list refs
+    dv.OnChange = prev.OnChange;
+    dv.OnDelete = prev.OnDelete;
+    prev.FireOnChange(dv);
+}
+```
+
+**Events follow the name.** Each `Data` under a name shares the *same* event-list refs as the prev binding. Subscribers added at any point — to source, to any view, before or after replacement — are visible from every alias because they share the same list. This is what makes `--debug={"variables":[{"name":"x","event":"onchange"}]}` see every assignment to `%x%`, not just the first; pinned by `Set_Replace_AliasesPrevOnChangeOntoDv` and the regression test `DebugWatch_OnChange_FiresOnEveryReplacement` in `SubscriberSurvivalTests`.
+
+**Properties stay with the `Data` instance.** They're metadata about the *value* (e.g. `condition.if`'s `branchIndex`, attached to a step's `__data__` Data). A new binding starts with its own `Properties` so stale metadata doesn't bleed across re-bindings.
+
+**Idempotent Set.** The `!ReferenceEquals(prev, dv)` guard means setting the same instance twice is a no-op (no double-fire of `OnChange`).
+
+**Inconsistency on the non-Data path.** `Variables.Set(string, object?, Type?)` for a non-Data value mutates the existing Data in place via `existing.Value = value`; the `Value` setter fires `OnChange(this, this)` — same instance for both args. The replacement path fires `(prev, dv)` as two distinct Data; the in-place path fires `(this, this)`. `OnTypeChange` watches via the non-Data path therefore never fire (auditor v2 N1) — but user-visible `set %x% = ...` always goes through `variable.set` → `MintTyped` → Data path, so user variable watches work correctly. Engine paths (`__data__` rebinding, `list.add` write-back, settings vars) hit the non-Data path; OnTypeChange on those is best-effort.
+
+---
+
+## `variable.set` is the sole binding-mint site
+
+`App/modules/variable/set.cs` owns type inference for user-visible variables. `MintTyped(name, raw, ctx)` switches on the runtime type of the bound value and constructs the right `Data<T>` directly. Hot types (string, bool, int, long, double, decimal, float, DateTime, DateTimeOffset, Guid, byte[], `List<object?>`, `Dictionary<string, object?>`) take the if-chain; cold types fall through to a reflection construction (`typeof(Data<>).MakeGenericType`).
+
+**Mutable refs are snapshot-cloned via JSON roundtrip.** `set %x% = %y%` where `y` is a list/dict mints a `Data<List<object?>>` (or `Data<Dict>`) over a *fresh* container — later mutations of the source do not bleed through. The clone runs through `Data.UnwrapJsonElement` to recursively normalize `List<JsonElement>` (which `JsonSerializer.Deserialize<List<object?>>` produces) into primitives.
+
+**Forced type via `[Type]`** — `set %x% = "42", type=int` calls `TypeMapping.TryConvertTo(value, targetType, ctx)`; conversion failure surfaces as `Data.FromError`, `Variables.Set` is not called, and the binding stays whatever it was. For `type=json`, the value flows through `JsonNode` (`JsonObject` implements `IDictionary<string, JsonNode?>`, NOT `IDictionary<string, object?>`, so it has its own dispatch arm in `TypeConverter`); see *JsonNode in TypeConverter* below.
+
+**Other `Variables.Set` callers exist but don't mint user-named bindings:** `Action.RunAsync` rebinds `__data__` per step; `list.add` falls back to `Variables.Set(ListName, list)` on the convert-non-list-to-list path; `cache/wrap.cs` restores cached `__data__`. None of these are slots a user would `set %x% = ...` on, so the "sole" framing holds at the user-visible layer.
+
+---
+
+## String-not-iterable — `IsPlangIterable` / `IsPlangAssignable`
+
+C# treats `string` as `IEnumerable<char>`. Plang treats strings as atomic. Two helpers in `App/Data/this.cs` enforce this:
+
+```csharp
+internal static bool IsPlangIterable(object? value) =>
+    value is IEnumerable && value is not string;
+
+internal static bool IsPlangAssignable(Type target, Type source) {
+    if (typeof(IEnumerable).IsAssignableFrom(target) && source == typeof(string))
+        return false;
+    return target.IsAssignableFrom(source);
+}
+```
+
+Three call sites: `As<T>` variance fast path (so `Data<string>` doesn't variance-cast to `Data<IEnumerable>`), `Data.AsEnumerable()` (single-element wrap), and `Data.EnumerateItems()` (foreach). All route through these helpers so the rule has one source of truth.
+
+**User-visible behaviour**: `foreach %s%` where `s = "hello"` runs the body **once**, with `%item% = "hello"` — not five times with each char. Pinned by `ForeachStringNotIterableTests` (C#) and the deferred `Modules/Loop/Foreach/StringNotIterable.test.goal2` (PLang). `As<IEnumerable>()` on a `Data<string>` falls into Rule 3 and produces a single-element list `["hello"]`.
+
+---
+
+## JsonNode / JsonArray dispatch in `TypeConverter`
+
+`set ... type=json` mints a `Data<JsonNode>` (TypeMapping maps `"json"` → `typeof(JsonNode)`). Downstream typed handlers want concrete types (`LlmMessage`, `List<LlmMessage>`, etc.) so the converter must roundtrip. Caveat: `JsonObject` implements `IDictionary<string, JsonNode?>` (NOT `IDictionary<string, object?>`) and `JsonArray` implements `IList<JsonNode?>` (NOT non-generic `IList`) — neither matches the existing `IDictionary<string, object?>` / `IList` arms in `App/Utils/TypeConverter.cs`'s complex-source dispatch.
+
+Fix lives at `TypeConverter.cs` (~line 336): `JsonNode` joins `IDictionary<string, object?>`, `JsonElement`, `IList` in the complex-source check (so the JSON-roundtrip serialize→deserialize-to-target arm picks it up); `JsonArray` gets its own element-iteration arm parallel to `JsonElement`-array. Pinned by `TypeMappingDictConversionTests`.
+
+**Why this matters cross-cuttingly**: the LLM builder pipeline does `set %messages% = [...], type=json` then passes `%messages%` to a typed handler expecting `List<LlmMessage>`. Without the JsonNode/JsonArray arms, `JsonObject` slipped past every dispatch arm and landed at `TypeMismatch`, which surfaced as an NRE further down in `OpenAiProvider.Query`. Anyone touching the type-conversion dispatch should keep these four arms (`IDictionary`, `JsonElement`, `JsonNode`, `IList`) symmetric — adding a new complex source means adding a parallel arm.

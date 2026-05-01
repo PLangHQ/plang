@@ -123,6 +123,20 @@ public static class TypeConverter
                 return (targetList, null);
             }
 
+            // JsonArray source — parallel to the JsonElement-array case above. JsonArray
+            // implements IList<JsonNode?> but NOT the non-generic IList, so it skips the
+            // generic-list arm below. Iterate its JsonNode items directly.
+            if (value is JsonArray jArr)
+            {
+                var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
+                foreach (var elem in jArr)
+                {
+                    var (convertedElem, _) = TryConvertTo(elem, listElementType, context);
+                    if (convertedElem != null) targetList.Add(convertedElem);
+                }
+                return (targetList, null);
+            }
+
             if (value is System.Collections.IList sourceList)
             {
                 var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
@@ -332,8 +346,12 @@ public static class TypeConverter
             }
         }
 
-        // Complex types: dict/JsonElement/list → serialize to JSON → deserialize to target type
-        if (value is IDictionary<string, object?> or System.Text.Json.JsonElement or System.Collections.IList)
+        // Complex types: dict/JsonElement/JsonNode/list → serialize to JSON → deserialize to target type.
+        // JsonNode covers JsonObject/JsonArray/JsonValue (the System.Text.Json mutable view) — without
+        // it, a value stored via `set ... type=json` (which mints Data<JsonNode>) cannot reach a
+        // strongly-typed handler property: JsonObject implements IDictionary<string, JsonNode?>, NOT
+        // IDictionary<string, object?>, so it slips past the first dispatch arm.
+        if (value is IDictionary<string, object?> or System.Text.Json.JsonElement or JsonNode or System.Collections.IList)
         {
             string json = "";
             try

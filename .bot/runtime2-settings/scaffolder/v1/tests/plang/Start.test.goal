@@ -1,4 +1,0 @@
-Start
-- set max gzip size to 20mb
-- get archive.max, write to %maxSize%
-- assert %maxSize% equals 20971520

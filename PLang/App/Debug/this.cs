@@ -144,18 +144,18 @@ public sealed class @this
             {
                 var placeholder = Data.@this.Uninitialized(v.Name);
                 if (v.Event == DebugEvent.OnCreate)
-                    placeholder.OnCreate += (data) => LogEvent(v.Name, "CREATED", data);
+                    placeholder.OnCreate.Add((data) => LogEvent(v.Name, "CREATED", data));
                 if (v.Event == DebugEvent.OnChange)
-                    placeholder.OnChange += (oldData, newData) => LogMutation(v.Name, oldData, newData);
+                    placeholder.OnChange.Add((oldData, newData) => LogMutation(v.Name, oldData, newData));
                 if (v.Event == DebugEvent.OnDelete)
-                    placeholder.OnDelete += (data) => LogEvent(v.Name, "DELETED", data);
+                    placeholder.OnDelete.Add((data) => LogEvent(v.Name, "DELETED", data));
                 if (v.Event == DebugEvent.OnTypeChange)
-                    placeholder.OnChange += (oldData, newData) =>
+                    placeholder.OnChange.Add((oldData, newData) =>
                     {
                         var oldType = oldData.RawValue?.GetType().Name;
                         var newType = newData.RawValue?.GetType().Name;
                         if (oldType != newType) LogMutation(v.Name, oldData, newData);
-                    };
+                    });
                 vars.Set(placeholder);
             }
         }

@@ -407,10 +407,12 @@ Routes content-type to serializer:
 Thread-safe storage for `%variableName%` resolution.
 
 ```csharp
-Variables.Put(data)              // store Data by Name
+Variables.Set(data)              // store Data under data.Name
+Variables.Set("name", value)     // wrap raw value in Data and store
 Variables.Get("name")            // retrieve Data
-Variables.Set("name", value)     // simple value setter
 ```
+
+On replacement of an existing Data binding, event subscribers (`OnCreate`/`OnChange`/`OnDelete`) are aliased onto the new Data — they follow the *name* across re-binding so debug watches see every assignment. `Properties` stay attached to the Data instance — they're result metadata, not binding metadata. `variable.set` is the sole binding-mint site for user-visible variables; see [`variables.md`](variables.md) and [`data-generic-design.md`](data-generic-design.md) for the full identity contract.
 
 ### Dot-path resolution
 

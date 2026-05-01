@@ -35,6 +35,18 @@ public static class Json
     };
 
     /// <summary>
+    /// Symmetric write+read for snapshot cloning (variable.set, list.add, Variables.Set
+    /// dot-path). CamelCase keys to match the rest of the pipeline (.pr, traces, viewer);
+    /// case-insensitive on read so the deserialize half is lenient. Not indented — internal
+    /// data, never human-read on the hot path.
+    /// </summary>
+    public static readonly JsonSerializerOptions SnapshotClone = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+    };
+
+    /// <summary>
     /// Diagnostic output — state dumps for humans to debug (test reports, variable
     /// snapshots in assertion failures, --debug dumps). [Sensitive] string properties
     /// are masked as "******" so the shape of the data is preserved while secrets are

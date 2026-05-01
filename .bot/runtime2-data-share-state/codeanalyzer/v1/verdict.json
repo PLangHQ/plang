@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Identity-preservation rewrite is architecturally clean and lifecycle-faithful, but has 4 concrete cleanups: dead conditional in AsCanonical, redundant transient Data alloc in WrapAs IEnumerable branch, dead Type-mutation branch in Variables.Set, and 3 duplicated JSON-roundtrip clone blocks." }

@@ -138,7 +138,7 @@ The debugger creates placeholder Data objects in the variable store with event h
 - Old and new value types
 - C# stack trace (top 5 frames)
 
-Events are copied when a variable is replaced, so the handler survives across reassignments.
+Event subscribers are **aliased** when a variable is replaced — `Variables.Set` shares the prev binding's `OnCreate`/`OnChange`/`OnDelete` list refs onto the new Data, so subscribers follow the *name* across any number of re-bindings. Subscribers added later (to either the prev ref or the current one) are visible from every alias because they share the same list.
 
 ### Example: Track type mutations
 

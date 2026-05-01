@@ -153,6 +153,42 @@ public class TypeMappingDictConversionTests
         await Assert.That(target!.Actions![0].Module).IsEqualTo("file");
         await Assert.That(target!.Actions![1].Module).IsEqualTo("output");
     }
+
+    // JsonObject → typed class. `set ... type=json` mints Data<JsonNode>; downstream handlers
+    // read .As<TypedClass>() and the conversion must work. JsonObject implements
+    // IDictionary<string, JsonNode?>, NOT IDictionary<string, object?>, so it slips past the
+    // dict-to-class arm and lands in the JSON-roundtrip arm. Without JsonNode there, this fails.
+    [Test]
+    public async Task TryConvertTo_JsonObjectToClass_DeserializesViaJson()
+    {
+        var node = System.Text.Json.Nodes.JsonNode.Parse("""{"Name":"Alice","Age":30}""")!;
+
+        var (result, error) = TypeMapping.TryConvertTo(node, typeof(SimpleTarget));
+
+        await Assert.That(error).IsNull();
+        var target = result as SimpleTarget;
+        await Assert.That(target!.Name).IsEqualTo("Alice");
+        await Assert.That(target!.Age).IsEqualTo(30);
+    }
+
+    // JsonArray → List<TypedClass>. The iterator at line ~126 of TypeConverter recurses into
+    // each element (a JsonNode) and converts it to the element type. Each element conversion
+    // must reach the JSON-roundtrip path — without JsonNode in the dispatch, every element
+    // hits TypeMismatch and the whole list resolution fails (the BuildGoalCore symptom).
+    [Test]
+    public async Task TryConvertTo_JsonArrayToListOfClass_DeserializesEachElement()
+    {
+        var node = System.Text.Json.Nodes.JsonNode.Parse(
+            """[{"Name":"Alice","Age":30},{"Name":"Bob","Age":25}]""")!;
+
+        var (result, error) = TypeMapping.TryConvertTo(node, typeof(List<SimpleTarget>));
+
+        await Assert.That(error).IsNull();
+        var list = result as List<SimpleTarget>;
+        await Assert.That(list!.Count).IsEqualTo(2);
+        await Assert.That(list[0].Name).IsEqualTo("Alice");
+        await Assert.That(list[1].Name).IsEqualTo("Bob");
+    }
 }
 
 public class SimpleTarget

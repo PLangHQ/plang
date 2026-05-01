@@ -92,31 +92,44 @@ public partial class @this
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?>
         ResolveMethodCache = new();
 
-    /// <summary>Fired by Variables.Set() when this Data is replaced — passes old and new Data.</summary>
-    public event Action<@this, @this>? OnChange;
+    // Subscribers as Lists (not C# events) so cross-type wraps (As<T>) and clones can
+    // share the same list ref between source and view. C# events are immutable
+    // multicast delegates and can't be reference-shared. Direct .Add(...) from the
+    // outside is fine — these are internal infrastructure, not a public-API
+    // contract that needs encapsulation.
 
-    /// <summary>Fired when variable is first created in the store — passes the Data.</summary>
-    public event Action<@this>? OnCreate;
+    /// <summary>Subscribers fired by Variables.Set() when this Data is replaced — (oldData, newData).</summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    public List<Action<@this, @this>> OnChange { get; set; } = new();
 
-    /// <summary>Fired by Variables.Remove() before deletion — passes the Data.</summary>
-    public event Action<@this>? OnDelete;
+    /// <summary>Subscribers fired when variable is first created in the store — (data).</summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    public List<Action<@this>> OnCreate { get; set; } = new();
 
-    /// <summary>Copies event handlers from another Data (used when replacing in variable store).</summary>
-    public void CopyEventsFrom(@this other)
+    /// <summary>Subscribers fired by Variables.Remove() before deletion — (data).</summary>
+    [JsonIgnore]
+    [LlmIgnore]
+    public List<Action<@this>> OnDelete { get; set; } = new();
+
+    /// <summary>Fires every OnChange subscriber in order.</summary>
+    public void FireOnChange(@this newData)
     {
-        if (other.OnCreate != null) OnCreate += other.OnCreate;
-        if (other.OnChange != null) OnChange += other.OnChange;
-        if (other.OnDelete != null) OnDelete += other.OnDelete;
+        foreach (var h in OnChange) h.Invoke(this, newData);
     }
 
-    /// <summary>Fires the OnChange event. Called by Variables.Set() when replacing.</summary>
-    public void FireOnChange(@this newData) => OnChange?.Invoke(this, newData);
+    /// <summary>Fires every OnCreate subscriber in order.</summary>
+    public void FireOnCreate()
+    {
+        foreach (var h in OnCreate) h.Invoke(this);
+    }
 
-    /// <summary>Fires the OnCreate event.</summary>
-    public void FireOnCreate() => OnCreate?.Invoke(this);
-
-    /// <summary>Fires the OnDelete event.</summary>
-    public void FireOnDelete() => OnDelete?.Invoke(this);
+    /// <summary>Fires every OnDelete subscriber in order.</summary>
+    public void FireOnDelete()
+    {
+        foreach (var h in OnDelete) h.Invoke(this);
+    }
 
     [JsonPropertyName("name")]
     public string Name { get; set; }
@@ -165,9 +178,13 @@ public partial class @this
     [JsonIgnore]
     public DateTime Updated { get; private set; }
 
+    // Field initializer (not constructor assignment) so identity-preserving wraps (As<T>)
+    // can override via `new Data<T>(...) { Properties = source.Properties }` and have the
+    // initializer win — assignments in the object initializer fire AFTER field initializers
+    // AND after the constructor body.
     [JsonIgnore]
     [LlmIgnore]
-    public Properties Properties { get; set; }
+    public Properties Properties { get; set; } = new();
 
     [JsonConstructor]
     public @this(string name, object? value = null, Type? type = null, @this? parent = null)
@@ -180,7 +197,6 @@ public partial class @this
         IsInitialized = true;
         Created = System.DateTime.UtcNow;
         Updated = Created;
-        Properties = new Properties();
         if (parent != null)
             _context = parent._context;
     }
@@ -211,6 +227,9 @@ public partial class @this
             _type = null;
             if (_value is modules.IContext contextual && _context != null)
                 contextual.Context = _context;
+            // Data owns OnChange — fires whenever the wrapped value mutates.
+            // Constructors set _value directly and bypass this. SetValueDirect also bypasses.
+            FireOnChange(this);
         }
     }
 
@@ -303,13 +322,33 @@ public partial class @this
     }
 
     /// <summary>
+    /// Plang treats strings as atomic, not as IEnumerable&lt;char&gt;. The single source of
+    /// truth for "is this iterable per plang semantics" — used by AsEnumerable,
+    /// EnumerateItems, and the As&lt;T&gt; variance-fast-path check.
+    /// </summary>
+    internal static bool IsPlangIterable(object? value) =>
+        value is System.Collections.IEnumerable && value is not string;
+
+    /// <summary>
+    /// Plang-specific assignability for the As&lt;T&gt; variance fast path. Same as C# IsAssignableFrom
+    /// EXCEPT: a string source is NOT assignable to an IEnumerable target — strings are atomic
+    /// in plang. This carve-out keeps `foreach %s%` from char-iterating when %s% is a string.
+    /// </summary>
+    internal static bool IsPlangAssignable(System.Type target, System.Type source)
+    {
+        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(target) && source == typeof(string))
+            return false;
+        return target.IsAssignableFrom(source);
+    }
+
+    /// <summary>
     /// Enumerates the inner value. If Value is enumerable, delegates to it.
     /// If Value is a single non-enumerable item, yields it as a one-element sequence.
     /// </summary>
     public System.Collections.IEnumerable AsEnumerable()
     {
-        if (_value is System.Collections.IEnumerable enumerable and not string)
-            return enumerable;
+        if (IsPlangIterable(_value))
+            return (System.Collections.IEnumerable)_value!;
 
         // Single value — treat as a list of one
         if (_value != null)
@@ -342,9 +381,9 @@ public partial class @this
         }
 
         int index = 0;
-        if (_value is System.Collections.IEnumerable enumerable and not string)
+        if (IsPlangIterable(_value))
         {
-            foreach (var item in enumerable)
+            foreach (var item in (System.Collections.IEnumerable)_value!)
                 yield return (new @this("", index++) { Context = _context },
                               WrapItem(item));
             yield break;
@@ -373,6 +412,24 @@ public partial class @this
     public static @this NotFound(string name = "") => new(name, null) { IsInitialized = false };
     public static @this Uninitialized(string name) => new(name, null) { IsInitialized = false };
 
+    private static readonly System.Text.RegularExpressions.Regex FullVarMatchRegex =
+        new(@"^%([^%]+)%$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>
+    /// True when <paramref name="value"/> is a string of the exact shape <c>%name%</c> (no
+    /// surrounding text, no second variable). Returns the bare name in <paramref name="varName"/>.
+    /// Partial-interpolation strings like <c>"hello %name%"</c> or <c>"%a% and %b%"</c> return false.
+    /// Used by both As&lt;T&gt; and AsCanonical to decide whether to resolve through the live
+    /// variable (full match) or treat the value as opaque text (partial / literal).
+    /// </summary>
+    internal static bool TryFullVarMatch(string value, out string varName)
+    {
+        var m = FullVarMatchRegex.Match(value);
+        if (m.Success) { varName = m.Groups[1].Value; return true; }
+        varName = "";
+        return false;
+    }
+
     /// <summary>
     /// Reads this Data as Data&lt;T&gt; — the v4 resolution entry point.
     /// Walks _value, substitutes %variable% references via context.Variables,
@@ -385,6 +442,82 @@ public partial class @this
         var ctx = context ?? _context;
         var raw = Value; // factory-resolved if any; never %var% substituted
         return AsT_Impl<T>(raw, ctx);
+    }
+
+    /// <summary>
+    /// Resolves this Data as the canonical Data — used by the generator's plain `Data` property
+    /// emission to bypass As&lt;T&gt; wrapping entirely (architect/v1/plan.md §Phase 2 Rule 4).
+    /// Returns:
+    ///  - For full-match `%var%`: the LIVE variable Data from Variables.Get (mutations to .Value
+    ///    on the returned Data are visible through Variables.Get(name)).
+    ///  - For literal value (no `%`): `this` (the parameter Data) — same ref.
+    ///  - For partial interpolation `"hello %x%!"`: a transient Data with the interpolated value
+    ///    and `this`'s Name (slot name preserved; Properties and event lists aliased).
+    ///  - For unset `%var%`: a not-initialized Data with the variable's name.
+    /// </summary>
+    public @this AsCanonical(Actor.Context.@this? context = null)
+    {
+        var ctx = context ?? _context;
+        var raw = Value;
+
+        if (raw is string strVal && strVal.Contains('%') && ctx?.Variables != null)
+        {
+            if (TryFullVarMatch(strVal, out var varName))
+            {
+                var resolved = ctx.Variables.Get(varName);
+                if (resolved == null || !resolved.IsInitialized)
+                {
+                    var notFound = new @this(varName, null, null, Parent) { Context = ctx };
+                    notFound.IsInitialized = false;
+                    return notFound;
+                }
+                return resolved;
+            }
+            // Partial — interpolate into a fresh value but keep slot Name + alias state from `this`.
+            var interpolated = ctx.Variables.Resolve(strVal);
+            var transient = new @this(Name, interpolated, _type, Parent) { Context = ctx };
+            transient.Properties = Properties;
+            transient.OnCreate   = OnCreate;
+            transient.OnChange   = OnChange;
+            transient.OnDelete   = OnDelete;
+            return transient;
+        }
+
+        // Containers with potential nested %var% — walk via the shared helper so plain
+        // Data and Data<T> resolve nested vars by the same rule. Without this, handlers
+        // that take plain `Data.@this` (e.g. variable.set) see literal "%var%" strings
+        // inside lists/dicts loaded from the .pr.
+        if (ctx != null && IsWalkableContainer(raw))
+        {
+            var walked = WalkContainerVars(raw, ctx);
+            var transient = new @this(Name, walked, _type, Parent) { Context = ctx };
+            transient.Properties = Properties;
+            transient.OnCreate   = OnCreate;
+            transient.OnChange   = OnChange;
+            transient.OnDelete   = OnDelete;
+            return transient;
+        }
+
+        // Literal value — `this` is the canonical, return as-is.
+        return this;
+    }
+
+    // True when raw is a list/dict shape that needs nested-var walking. Mirrors the
+    // checks WalkContainerVars makes — kept separate so AsCanonical can decide whether
+    // to wrap into a fresh Data without invoking the walker on non-container values.
+    private static bool IsWalkableContainer(object? raw) =>
+        raw is IList<object?> || raw is IDictionary<string, object?>;
+
+    // Walk lists/dicts to substitute nested %var% references. Always returns a fresh
+    // container for IList<object?> / IDictionary<string,object?> (WalkList/WalkDict
+    // allocate). Strings are NOT handled here — full-match vs. partial-interpolation
+    // semantics differ between AsCanonical (returns live var Data) and AsT_Impl (recurses
+    // typed), so each owns its own string path.
+    private static object? WalkContainerVars(object? raw, Actor.Context.@this ctx)
+    {
+        if (raw is IList<object?> list) return WalkList(list, ctx);
+        if (raw is IDictionary<string, object?> dict) return WalkDict(dict, ctx);
+        return raw;
     }
 
     // Cycle protection for AsT_Impl. Tracks the raw %-containing strings currently being
@@ -406,7 +539,7 @@ public partial class @this
         // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
         // and convert raw straight through TypeMapping.
         if (IsActionDestination(typeof(T)))
-            return ConvertAndWrap<T>(raw, ctx);
+            return WrapAs<T>(raw, ctx);
 
         // String with %var% — substitute first, BEFORE fast paths. Without this ordering,
         // T=object would always match `raw is T` and short-circuit substitution.
@@ -434,19 +567,29 @@ public partial class @this
                         "ResolveDepthExceeded", 400));
                 }
 
-                var fullMatch = System.Text.RegularExpressions.Regex.Match(strVal, @"^%([^%]+)%$");
-                if (fullMatch.Success)
+                if (TryFullVarMatch(strVal, out var varName))
                 {
-                    var varName = fullMatch.Groups[1].Value;
                     var resolved = ctx.Variables.Get(varName);
                     if (resolved == null || !resolved.IsInitialized)
-                        return ConvertAndWrap<T>(null, ctx);
+                    {
+                        // Unset var — propagate the variable's name so handler diagnostics see it.
+                        // Mark as not-initialized so callers can detect the difference between
+                        // "value is null" and "var doesn't exist".
+                        var notFound = new @this<T>(varName, default, null, Parent) { Context = ctx };
+                        notFound.IsInitialized = false;
+                        return notFound;
+                    }
                     if (!resolved.Success)
                         return @this<T>.FromError(resolved.Error!);
-                    // Recurse on the variable's value so %x% pointing at another %y% chain resolves.
-                    return AsT_Impl<T>(resolved.Value, ctx);
+                    // Identity-preservation: recurse on the LIVE variable's Data so `this` inside
+                    // the recursive call IS the live variable. The fast paths below then see the
+                    // live variable as their canonical, propagating Name and aliasing Properties +
+                    // event lists. Without this redirect, the slot Data's identity leaks through.
+                    return resolved.AsT_Impl<T>(resolved.Value, ctx);
                 }
                 // Partial match — interpolate then continue (the result may need further conversion).
+                // Canonical stays as `this` (the slot) for partial matches — a partial-interpolated
+                // string is a fresh value, not a reference to any single variable.
                 var interpolated = ctx.Variables.Resolve(strVal);
                 return AsT_Impl<T>(interpolated, ctx);
             }
@@ -458,30 +601,15 @@ public partial class @this
         }
 
         // Containers with potential nested %var% — walk before fast paths for the same reason.
-        if (raw is IList<object?> objList && ctx != null)
-        {
-            var walked = WalkList(objList, ctx);
-            return ConvertAndWrap<T>(walked, ctx);
-        }
-        if (raw is IDictionary<string, object?> dict && ctx != null)
-        {
-            var walked = WalkDict(dict, ctx);
-            return ConvertAndWrap<T>(walked, ctx);
-        }
+        // The walked container is a fresh object; canonical is `this` (slot Data). Shared
+        // with AsCanonical via WalkContainerVars so plain Data and Data<T> resolve by one rule.
+        if (ctx != null && IsWalkableContainer(raw))
+            return WrapAs<T>(WalkContainerVars(raw, ctx), ctx);
 
-        // Already typed correctly — return self
-        if (this is @this<T> typed && typed._value is T)
-            return typed;
-
-        // Raw value is T already (string-without-%, primitive, already-typed container, etc.)
-        if (raw is T already)
-            return new @this<T>(Name, already, _type, Parent) { Context = ctx };
-
-        if (raw == null)
-            return ConvertAndWrap<T>(null, ctx);
-
-        // T has static Resolve(string, Context.@this) — Path-style domain types.
-        if (raw is string srStr && ctx != null)
+        // T has static Resolve(string, Context.@this) — Path-style domain types. Done before
+        // the variance/wrap path because Resolve produces a fresh T from a string, not a
+        // cast of an existing value.
+        if (raw is string srStr && ctx != null && raw is not T)
         {
             var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
                 t.GetMethod("Resolve",
@@ -491,22 +619,80 @@ public partial class @this
             {
                 var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
                 if (resolvedObj is T result)
-                    return new @this<T>(Name, result, _type, Parent) { Context = ctx };
+                    return ConstructWrap<T>(result, ctx);
             }
         }
 
-        // Anything else — straight TypeMapping conversion. No walk; the value is opaque.
-        return ConvertAndWrap<T>(raw, ctx);
+        // No more substitution to do — `this` is the canonical. Apply identity-preserving
+        // wrap rules (same-type fast path → variance → cross-type with conversion).
+        return WrapAs<T>(raw, ctx);
     }
 
-    private @this<T> ConvertAndWrap<T>(object? value, Actor.Context.@this? ctx)
+    /// <summary>
+    /// Identity-preserving wrap. Applies the four As&lt;T&gt; rules (architect/v1/plan.md §Phase 2):
+    ///   1. Same-type fast path  — `this` is already @this&lt;T&gt; with .Value of T → return `this`.
+    ///   2. Variance fast path   — value is castable to T per IsPlangAssignable → new @this&lt;T&gt;,
+    ///                              .Value cast-only (ref shared), state aliased from `this`.
+    ///   3. Cross-type with conv — value can't satisfy T as-is → new @this&lt;T&gt; with converted
+    ///                              .Value, state aliased from `this`. T=IEnumerable delegates to
+    ///                              AsEnumerable so the string-not-iterable rule has one source.
+    ///   4. Conversion failure   — FromError sentinel; no aliasing.
+    ///
+    /// Caller passes the substituted/walked `value` separately because raw value is what we wrap,
+    /// while `this` is the canonical Data whose Name + Properties + event lists we propagate.
+    /// </summary>
+    private @this<T> WrapAs<T>(object? value, Actor.Context.@this? ctx)
     {
-        if (value is T fast)
-            return new @this<T>(Name, fast, _type, Parent) { Context = ctx };
+        // Rule 1 — same-type fast path. If `this` is already Data<T> AND its raw value is T,
+        // return `this`. No allocation, full identity (Name, Properties, events all native).
+        // Note: for action-destination carve-out the value may have been converted; but that
+        // path enters here with raw, not converted, so we still match correctly.
+        if (this is @this<T> sameTyped && sameTyped._value is T)
+            return sameTyped;
+
+        // Rule 2 — variance fast path. `value` is already a T (no conversion needed) but `this`
+        // is not Data<T> (e.g. plain Data, or Data<U> for U:T). Construct a new Data<T> sharing
+        // .Value by ref (cast-only) and alias Properties + events from `this`.
+        if (value is T fast && IsPlangAssignable(typeof(T), value.GetType()))
+            return ConstructWrap<T>(fast, ctx);
+
+        // Null arrives here only when raw was null (or substitution produced null). Construct a
+        // not-initialized Data<T> with default value, aliased state from `this`.
+        if (value == null)
+            return ConstructWrap<T>(default, ctx);
+
+        // Rule 3 — cross-type with conversion. T=IEnumerable (the non-generic interface itself,
+        // not arbitrary subtypes) delegates to AsEnumerable so the string-not-iterable carve-out
+        // applies (a string `value` becomes a one-element array, not a char enumeration). For
+        // typed collections like List<LlmMessage>, fall through to TypeMapping which knows how
+        // to deserialize element-by-element.
+        if (typeof(T) == typeof(System.Collections.IEnumerable))
+        {
+            // value != null guaranteed above, so the AsEnumerable contract collapses to:
+            // iterable → use as-is; non-iterable → wrap as one-element array.
+            object convertedEnum = IsPlangIterable(value) ? value : new[] { value };
+            return ConstructWrap<T>((T?)convertedEnum, ctx);
+        }
+
         var (converted, error) = TypeMapping.TryConvertTo(value, typeof(T), ctx);
         if (error != null)
             return @this<T>.FromError(error);
-        return new @this<T>(Name, (T?)converted, _type, Parent) { Context = ctx };
+        return ConstructWrap<T>((T?)converted, ctx);
+    }
+
+    /// <summary>
+    /// Builds a new Data&lt;T&gt; that takes `this` as the canonical: Name + Type + Parent are
+    /// inherited; Properties + the three event lists are aliased by reference (shared list refs
+    /// so subscribers and metadata mutations are visible through both source and view).
+    /// </summary>
+    private @this<T> ConstructWrap<T>(T? value, Actor.Context.@this? ctx)
+    {
+        var wrapped = new @this<T>(Name, value, _type, Parent) { Context = ctx };
+        wrapped.Properties = Properties;
+        wrapped.OnCreate   = OnCreate;
+        wrapped.OnChange   = OnChange;
+        wrapped.OnDelete   = OnDelete;
+        return wrapped;
     }
 
     private static List<object?> WalkList(IList<object?> list, Actor.Context.@this ctx)
@@ -633,6 +819,23 @@ public partial class @this
         Success ? _value?.ToString() ?? "(null)" : $"Error: {Error?.Message}";
 
     private const int MaxJsonDepth = 128;
+
+    /// <summary>
+    /// JSON-roundtrip deep clone for snapshotting mutable refs (Lists/Dicts/POCOs) where
+    /// `Force.DeepCloner` would hang on cyclic runtime types. Honors `[JsonIgnore]` so
+    /// Goal↔Step↔Action cycles break. Uses CamelCase keys (matches `.pr` files, traces, viewer)
+    /// and unwraps the resulting `JsonElement` graph back to CLR primitives + Dictionary/List
+    /// so callers don't have to.
+    ///
+    /// Throws on serialization failure — call sites that want a fallback (e.g. alias-mode
+    /// degradation) wrap the call in their own try/catch.
+    /// </summary>
+    internal static object? SnapshotClone(object source)
+    {
+        var json = JsonSerializer.Serialize(source, Utils.Json.SnapshotClone);
+        var deserialized = JsonSerializer.Deserialize<object?>(json, Utils.Json.SnapshotClone);
+        return UnwrapJsonElement(deserialized);
+    }
 
     internal static object? UnwrapJsonElement(object? value, int depth = 0)
     {

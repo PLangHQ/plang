@@ -1,0 +1,6 @@
+ForeachStringNotIterable
+/ End-to-end string-not-iterable check (Phase 2c). set %s% = "hello", set
+/ %count% = 0, foreach %s% calls Inc (which increments %count%), assert
+/ %count% equals 1 — NOT 5. Without the IsPlangIterable carve-out, foreach
+/ would iterate the string char-by-char and the assertion would fail at 5.
+- throw "not implemented"

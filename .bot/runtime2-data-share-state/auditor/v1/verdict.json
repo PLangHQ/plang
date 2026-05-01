@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "1 major (Debug placeholder OnChange/OnCreate/OnDelete subscribers permanently lost after first replacement under new dumb-storage Variables.Set — silent regression of --debug={\"variables\":[...]} feature) + 1 minor + 2 nits, all inherited" }

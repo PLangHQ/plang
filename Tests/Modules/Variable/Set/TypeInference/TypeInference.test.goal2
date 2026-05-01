@@ -1,0 +1,7 @@
+TypeInference
+/ End-to-end check that variable.set's Phase 4 always-typed mint reaches
+/ user-observable assertions. set %s% to a string literal — the variable's
+/ type is "string". set %n% to an integer literal — the variable's type is
+/ "long" (LLM/builder produces longs by default for integer literals).
+/ Uses assert.type, which is scope for the coder under this branch.
+- throw "not implemented"

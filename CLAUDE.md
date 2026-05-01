@@ -46,6 +46,18 @@
 - Use `PlangConsole/bin/Debug/net10.0/plang.exe` for net10.0 builds
 - Don't use Select-String in bash — it doesn't work
 
+## Running plang Tests
+
+- All plang tests live under `Tests/` (uppercase). Never under `tests/`, `.bot/`, `.build/`, `os/`, or any other tree.
+- When running `plang --test`, change directory into `Tests/` first so discovery is bounded to the canonical location:
+
+  ```bash
+  cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test
+  ```
+
+  Running `plang --test` from the project root will surface stale `.test.goal` files under `.bot/` (old bot output) as failures or stale entries — those aren't real test results.
+- C# tests run from project root via `dotnet run --project PLang.Tests` (different runner, different rules).
+
 ## Debugging
 - `plang p !debug` — debug all steps
 - `plang p !debug=Start` — debug specific goal
