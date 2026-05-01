@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "v1 #1 + #3 closed; new IRawNameResolvable + 22-handler migration audited. 4 low findings, 0 critical/high. Robustness regression on null Name slots noted (NRE where v6 had ServiceError) — fixable at generator level."
+}

@@ -1388,10 +1388,10 @@
       "id": "f4d31a8e-2b95-4c0f-9d7e-8a1f3b6c4d27",
       "bot": "codeanalyzer",
       "timestamp_start": "2026-05-01T17:10:00Z",
-      "intent": "Five-pass review of coder/v7 — Variable record + IRawNameResolvable carve-out + 22 handler migrations + [VariableName] deletion.",
+      "intent": "Five-pass review of coder/v7 \u2014 Variable record + IRawNameResolvable carve-out + 22 handler migrations + [VariableName] deletion.",
       "before": {
         "assumptions": "v3 was CLEAN. The v7 changes are an additive Variable record + a 20-line carve-out in Data.AsT_Impl + 22 handler property migrations + deletion of the [VariableName] attribute and Legacy property emitter. No production fixes; this is a contract-shape change driven by an unplanned mid-flight gap (TryFullVarMatch intercepts %x% before line-612 static-Resolve dispatch).",
-        "risk": "Reflection cache shared between the new carve-out and the existing Path-style static-Resolve branch — risk of subtle behavior shifts if a future T were to register both. Variable equality stays default (record structural). WasPercentWrapped has no consumer yet."
+        "risk": "Reflection cache shared between the new carve-out and the existing Path-style static-Resolve branch \u2014 risk of subtle behavior shifts if a future T were to register both. Variable equality stays default (record structural). WasPercentWrapped has no consumer yet."
       },
       "plan": ".bot/runtime2-generator-obp/codeanalyzer/v4/plan.md",
       "actions": [
@@ -1436,13 +1436,13 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "v4 outputs — plan, findings, verdict, summary, and bot-root summary update."
+          "context": "v4 outputs \u2014 plan, findings, verdict, summary, and bot-root summary update."
         }
       ],
       "after": {
-        "status": "PASS — 0 MAJOR, 3 MINOR (stale comment, two DRY opportunities), 7 NIT.",
+        "status": "PASS \u2014 0 MAJOR, 3 MINOR (stale comment, two DRY opportunities), 7 NIT.",
         "health": "Migration is clean. Variable + IRawNameResolvable + carve-out form a complete, well-tested unit. PLNG001 collapse is honest. No OBP violations. No production defects.",
-        "notes": "The carve-out (Data/this.cs:549-562) and the existing Path-style static-Resolve branch (lines 632-644) duplicate their reflection-cache + Invoke + ConstructWrap skeleton — could collapse to a private TryStaticResolve<T> helper (~12 lines saved). Same DRY pattern between IsVariableNameSlot in App/Modules/this.cs:425 and ExampleRenderer.cs:166-177. Property/this.cs:7 doc-block still references deleted LegacyScalarProperty (one-line fix). One latent contract trap noted: a future T : IRawNameResolvable without static Resolve method falls silently through to %var% substitution — the path the marker was supposed to bypass. Today only Variable implements the marker, so this is theoretical. Recommend tester next."
+        "notes": "The carve-out (Data/this.cs:549-562) and the existing Path-style static-Resolve branch (lines 632-644) duplicate their reflection-cache + Invoke + ConstructWrap skeleton \u2014 could collapse to a private TryStaticResolve<T> helper (~12 lines saved). Same DRY pattern between IsVariableNameSlot in App/Modules/this.cs:425 and ExampleRenderer.cs:166-177. Property/this.cs:7 doc-block still references deleted LegacyScalarProperty (one-line fix). One latent contract trap noted: a future T : IRawNameResolvable without static Resolve method falls silently through to %var% substitution \u2014 the path the marker was supposed to bypass. Today only Variable implements the marker, so this is theoretical. Recommend tester next."
       },
       "timestamp_end": "2026-05-01T17:35:00Z"
     },
@@ -1450,10 +1450,10 @@
       "id": "39ee16d7-cd17-477e-9129-33f07a112824",
       "bot": "tester",
       "timestamp_start": "2026-05-01T17:23:38Z",
-      "intent": "Catch up tester from v4 baseline through v5/v6/v7 (cumulative review). Validate test honesty for: (1) Variable + IRawNameResolvable carve-out, (2) 22 handler migrations, (3) 5 reactivated PLNG001PostMigration tests, (4) ListAddIdentity tests, (5) the v7-cleanup commit ac028f0f. Apply deletion-test discipline. Do not duplicate codeanalyzer's v7 review — focus on test quality.",
+      "intent": "Catch up tester from v4 baseline through v5/v6/v7 (cumulative review). Validate test honesty for: (1) Variable + IRawNameResolvable carve-out, (2) 22 handler migrations, (3) 5 reactivated PLNG001PostMigration tests, (4) ListAddIdentity tests, (5) the v7-cleanup commit ac028f0f. Apply deletion-test discipline. Do not duplicate codeanalyzer's v7 review \u2014 focus on test quality.",
       "before": {
-        "assumptions": "v4 was the last tester pass (coder/v4); branch has since landed 7 commits including the Variable migration. C# was 2466/2466 at v4 → coder/v7 summary claims 2554 total / 2550 pass / 4 fail (pre-existing ListAdd Identity stubs). codeanalyzer/v4 PASS on coder/v7 (3 MINOR + 7 NIT). plang test suite was 169/48/5 at v3, claimed unchanged through v4 and v7.",
-        "risk": "The IRawNameResolvable carve-out is the load-bearing mechanism for the migration; if its tests aren't honest, the bare-name regression that v1 hit could resurface silently. 22 handler sites with `.Value` use shape — easy to slip a `.Name` and have the implicit op silently fall back. PLang .pr files might still encode action shapes the v4 tester didn't validate (builder false-greens)."
+        "assumptions": "v4 was the last tester pass (coder/v4); branch has since landed 7 commits including the Variable migration. C# was 2466/2466 at v4 \u2192 coder/v7 summary claims 2554 total / 2550 pass / 4 fail (pre-existing ListAdd Identity stubs). codeanalyzer/v4 PASS on coder/v7 (3 MINOR + 7 NIT). plang test suite was 169/48/5 at v3, claimed unchanged through v4 and v7.",
+        "risk": "The IRawNameResolvable carve-out is the load-bearing mechanism for the migration; if its tests aren't honest, the bare-name regression that v1 hit could resurface silently. 22 handler sites with `.Value` use shape \u2014 easy to slip a `.Name` and have the implicit op silently fall back. PLang .pr files might still encode action shapes the v4 tester didn't validate (builder false-greens)."
       },
       "plan": ".bot/runtime2-generator-obp/tester/v7/plan.md",
       "actions": [
@@ -1466,7 +1466,7 @@
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Five deletion-test mutations applied and reverted in-session, each rebuilt and re-run to measure load-bearing strength: (1) IRawNameResolvable carve-out at Data/this.cs:549-562 disabled with `if (false && ...)` → 35 C# tests fail; (2) Variable.ToString → \"MUTATED\" → 1 test fails (interpolation only); (3) Variable implicit operator → \"MUTATED\" → 49+ tests fail; (4) WasPercentWrapped hardcoded false → 3 tests fail (value-only pinning, no consumer); (5) variable.set CopyProperties commented out → 0 C# but 10 plang TestReport tests fail. All mutations reverted; final git diff shows only .bot/ files modified."
+          "context": "Five deletion-test mutations applied and reverted in-session, each rebuilt and re-run to measure load-bearing strength: (1) IRawNameResolvable carve-out at Data/this.cs:549-562 disabled with `if (false && ...)` \u2192 35 C# tests fail; (2) Variable.ToString \u2192 \"MUTATED\" \u2192 1 test fails (interpolation only); (3) Variable implicit operator \u2192 \"MUTATED\" \u2192 49+ tests fail; (4) WasPercentWrapped hardcoded false \u2192 3 tests fail (value-only pinning, no consumer); (5) variable.set CopyProperties commented out \u2192 0 C# but 10 plang TestReport tests fail. All mutations reverted; final git diff shows only .bot/ files modified."
         },
         {
           "paths": [
@@ -1493,15 +1493,67 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Tester outputs — plan, findings, verdict, summary, branch-shared test report. 4 minor findings filed: missing C# coverage for variable.set CopyProperties; IRawNameResolvable contract trap untested; PLNG001_VariableNameAttribute_NowReportsDiagnostic misnamed; WasPercentWrapped value-only pinning. None block; verdict approved."
+          "context": "Tester outputs \u2014 plan, findings, verdict, summary, branch-shared test report. 4 minor findings filed: missing C# coverage for variable.set CopyProperties; IRawNameResolvable contract trap untested; PLNG001_VariableNameAttribute_NowReportsDiagnostic misnamed; WasPercentWrapped value-only pinning. None block; verdict approved."
         }
       ],
       "after": {
-        "status": "PASS — 0 critical, 0 major, 4 minor findings. C# 2550/2550 green; plang 166/166 green. The migration's load-bearing mechanisms (IRawNameResolvable carve-out, Variable implicit operator) are heavily deletion-pinned (35-49 tests respectively).",
+        "status": "PASS \u2014 0 critical, 0 major, 4 minor findings. C# 2550/2550 green; plang 166/166 green. The migration's load-bearing mechanisms (IRawNameResolvable carve-out, Variable implicit operator) are heavily deletion-pinned (35-49 tests respectively).",
         "health": "Coder v5/v6/v7 are honestly tested at the surfaces that matter. Both test suites better than the coder/v7 summary's mid-flight counts because commit 4 (53780c2d) closed the 4 ListAdd stubs and the 10 TestReport regressions.",
-        "notes": "Recommended hand-off: security analyst. security/v1 was on coder/v4; the attack surface has changed with the new IRawNameResolvable bypass + Variable.Resolve. Worth a fresh security read of Data/this.cs:549-562. Codeanalyzer/v4 already passed v7 with 3 MINOR + 7 NIT (no MAJOR); auditor/v1 was on v5. The 4 tester findings are independent of those — focused on test honesty, not production-shape."
+        "notes": "Recommended hand-off: security analyst. security/v1 was on coder/v4; the attack surface has changed with the new IRawNameResolvable bypass + Variable.Resolve. Worth a fresh security read of Data/this.cs:549-562. Codeanalyzer/v4 already passed v7 with 3 MINOR + 7 NIT (no MAJOR); auditor/v1 was on v5. The 4 tester findings are independent of those \u2014 focused on test honesty, not production-shape."
       },
       "timestamp_end": "2026-05-01T17:55:00Z"
+    },
+    {
+      "id": "4bef9004-8003-4b24-be9a-1085e6c39683",
+      "bot": "security",
+      "timestamp_start": "2026-05-01T17:49:38Z",
+      "intent": "Re-audit the security delta on runtime2-generator-obp since v1: Variable record + IRawNameResolvable bypass + 22 handler migration + variable.set Properties fix. Confirm v1 finding closure.",
+      "before": {
+        "assumptions": "v1 PASS established the baseline (1 medium + 3 low, no critical/high). v5 closed v1 #1 (Sensitive masking) and #3 (cycle/depth -> ServiceError). The security delta is contained to: new Variable record, new IRawNameResolvable marker + AsT_Impl carve-out at Data.cs:549-562, removal of [VariableName]/RawScalarValidations safety net, 22 handler signature changes, variable.set CopyProperties fix (commit 4).",
+        "risk": "The carve-out is reflection-driven and shares ResolveMethodCache with the Path-style branch. Removing RawScalarValidations may have removed a graceful-error safety net for null/missing slots. Only a subset of the migrated handlers carry [IsNotNull] guards on Name slots."
+      },
+      "plan": ".bot/runtime2-generator-obp/security/v2/plan.md",
+      "timestamp_end": "2026-05-01T18:00:00Z",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/Variables/IRawNameResolvable.cs",
+            "PLang/App/Data/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/variable/exists.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/modules/list/any.cs",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Red-team the security delta. Confirmed v1 #1 (Sensitive masking) + #3 (cycle/depth FromError) closed in v5/v6. Audited new IRawNameResolvable bypass in Data.AsT_Impl: reflection cache + public-static-only lookup + exact signature match + bounded by compile-time generic instantiations. No exposure widening for non-marker T. Audited Variable.Resolve edge inputs: empty/special-character Names produce footguns equivalent to legacy [VariableName] \u2014 not a v7 regression. Audited 22-handler migration: only 3 of 22 carry [IsNotNull]; null/missing slots produce Data<Variable>{Value=null, Success=true}, generated getter doesn't surface error, handler NREs on implicit op (App.Run excludes NRE -> uncaught crash). Pre-v7 same case produced graceful ServiceError. Audited variable.set CopyProperties: restoration of pre-refactor semantics; no new attack surface. ListAdd identity stubs are test-only."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/security/v2/plan.md",
+            ".bot/runtime2-generator-obp/security/v2/summary.md",
+            ".bot/runtime2-generator-obp/security/v2/verdict.json",
+            ".bot/runtime2-generator-obp/security/summary.md",
+            ".bot/runtime2-generator-obp/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan, summary, verdict, and updated security-report.json. Confirms v1 #1 + #3 fixed; logs 4 low findings on the v7 delta (null-Variable NRE in 19 handlers, IRawNameResolvable bypass silent fallthrough, Variable.Resolve edge inputs, standing v1 #2). Verdict PASS, no critical/high open. Hand-off: auditor next (or coder if finding 1 should be closed first via generator-side fix at Emission/Property/Data/this.cs)."
+        }
+      ],
+      "after": {
+        "status": "PASS, 4 low findings, no critical/high open",
+        "health": "v1 #1 + #3 closed by v5/v6. New v2 findings are robustness-leaning under user-sovereign threat model (.pr is signed) \u2014 no external attack vector. Dominant finding (#1) is an architect-vs-implementation gap: deletion of RawScalarValidations safety net was supposed to be covered by [IsNotNull] across 22 handlers, but only 3 got it. Generator-side fix is the cleanest closure path.",
+        "notes": "Recommended next bot: auditor. If reviewer wants finding 1 closed first, send to coder with the EmitProperty change at PLang.Generators/Emission/Property/Data/this.cs (emit not-null check on Data<T> properties whose T : IRawNameResolvable). v1 standing finding #2 (skipInfrastructure default) carries forward."
+      }
     }
   ]
 }
