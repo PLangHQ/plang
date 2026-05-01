@@ -1,0 +1,31 @@
+{
+  "branch": "runtime2-variablename-migration",
+  "sessions": [
+    {
+      "id": "8f3c5e2a-7b4d-4f1e-9c8a-2d6b1e9f4c3a",
+      "bot": "architect",
+      "timestamp_start": "2026-05-01T00:00:00Z",
+      "timestamp_end": "2026-05-01T00:00:00Z",
+      "intent": "Plan finishing the [VariableName] migration deferred from runtime2-data-share-state.",
+      "before": {
+        "assumptions": "Migration is mechanical once we agree on the name-resolution path. The Data.As<T> contract already propagates Name from %var% form via TryFullVarMatch — both the unset and the live-variable paths land on Data.Name = canonical var name, not slot name.",
+        "risk": "If As<T> Name propagation doesn't actually hold for the live-variable path in all variants, the migration breaks silently — handlers would write to slot name 'Name' instead of var name 'x'. Hence Phase 0 (prove the claim with tests) before any handler change."
+      },
+      "plan": ".bot/runtime2-variablename-migration/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-variablename-migration/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Phased plan: Phase 0 lock-in tests, Phase 1 read sites, Phase 2 write sites with IBuildValidatable, Phase 3 delete Legacy/__StripPercent/[VariableName], Phase 4 docs update. Conversation with Ingi validated the design; existing NamePropagationTests already prove the core claim but a JSON-driven variable.set test was requested to nail down the full path."
+        }
+      ],
+      "after": {
+        "status": "Plan written. Phase 0 hand-off to coder is the next step.",
+        "health": "green",
+        "notes": "Branch created from runtime2 at 4a4a0f6a. No code changes yet — handoff to coder for Phase 0 tests."
+      }
+    }
+  ]
+}
