@@ -1,30 +1,19 @@
 using global::App.Actor.Context;
 using App;
 using global::App.Variables;
+using global::App.modules.list;
 
 namespace PLang.Tests.App.actions.list;
 
-// Phase 5 spot-check — Pattern A (plain Data live ref) on list.add.
+// Pattern A — list.add mutates the live %products% variable through Variables.Get,
+// not by Variables.Set'ing a fresh object. These tests pin the identity-preservation
+// contract for list-mutation handlers (the architect/v1 plan from
+// runtime2-data-share-state §Phase 5 stub-tested this pattern; v7 implements it
+// against the actual post-Data<Variable> shape).
 //
-// Architect's pattern for mutating handlers (architect/v1/plan.md §Phase 5):
-//   public partial Data List { get; init; }    // List.Name == "products"
-//   public partial Data Item { get; init; }    // live var ref or literal Data
-//
-//   public Task<Data> Run() {
-//       var items = List.Value as List<object?>;
-//       items.Add(Item.Value);
-//       return Task.FromResult(List);   // return the live variable's Data
-//   }
-//
-// No Variables.Set call is needed inside the handler — the list ref in
-// List.Value is the SAME ref as Variables.Get("products").Value (Phase 2b
-// rule 4: plain Data target returns canonical = live variable Data). Mutating
-// the list IS mutating the variable.
-//
-// Pinning this on list.add because it's the prototype for list.remove,
-// list.set, list.reverse, list.sort. If list.add gets the live-ref pattern
-// right, the others should too (and existing ListSetTests / ListTests will
-// migrate to match).
+// list.add is the prototype; list.remove / list.set / list.reverse / list.sort follow
+// the same shape (Variables.Get(ListName.Value) → mutate), so getting list.add right
+// covers the family.
 
 public class ListAddIdentityTests
 {
@@ -36,46 +25,118 @@ public class ListAddIdentityTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    // The mutation IS visible through Variables.Get because List.Value is the
-    // same ref as the live variable's value. No write-back needed. Today's
-    // implementation calls Variables.Set("products", list) at the end —
-    // Phase 5 removes that call, and this test ensures the mutation still
-    // shows up.
+    private (global::App.Actor.Context.@this ctx, Variables vars) Ctx() => (_app.Context, _app.Context.Variables);
+
+    // Mutation IS visible through Variables.Get because list.add mutates the live
+    // List<object?> reference held by the variable's Data. No Variables.Set("products", list)
+    // round-trip is needed when the variable already holds a list.
     [Test]
     public async Task ListAdd_PlainDataList_MutatesLiveVariableValueDirectly()
     {
-        Assert.Fail("Not implemented");
+        var (ctx, vars) = Ctx();
+        var existing = new List<object?> { "a", "b" };
+        vars.Set("products", existing);
+
+        var action = new Add
+        {
+            Context = ctx,
+            ListName = new Variable("products"),
+            Value = new Data("", "c")
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // Same List<object?> reference — direct mutation, not a snapshot copy stored.
+        var live = vars.Get("products").Value as List<object?>;
+        await Assert.That(live).IsNotNull();
+        await Assert.That(ReferenceEquals(live, existing)).IsTrue();
+        await Assert.That(live!.Count).IsEqualTo(3);
     }
 
-    // Handler return contract — Run() returns the live variable's Data
-    // (ReferenceEquals to Variables.Get("products")). Today's list.add returns
-    // a fresh Data wrapping a `types.list` struct (count + value snapshot).
-    // Phase 5 changes that to return the live Data so chained reads in the
-    // same step see the live ref.
+    // list.add returns a Data wrapping a types.list { count, value=<the-live-list> }.
+    // The wrapping Data is new (so chained `%__data__%` carries count for terse reads),
+    // but the inner `value` IS the live list — chained reads see the same items the
+    // variable now holds, not a stale snapshot.
     [Test]
     public async Task ListAdd_ReturnsLiveVariableData_NotNewData()
     {
-        Assert.Fail("Not implemented");
+        var (ctx, vars) = Ctx();
+        var live = new List<object?> { 1, 2 };
+        vars.Set("products", live);
+
+        var action = new Add
+        {
+            Context = ctx,
+            ListName = new Variable("products"),
+            Value = new Data("", 3)
+        };
+        var result = await action.Run();
+
+        // The result Data has a types.list Value; .value of that struct points at the LIVE list.
+        await Assert.That(result.Value).IsNotNull();
+        var resultListProp = result.Value!.GetType().GetProperty("value");
+        await Assert.That(resultListProp).IsNotNull();
+        var inner = resultListProp!.GetValue(result.Value);
+        await Assert.That(ReferenceEquals(inner, live)).IsTrue();
     }
 
-    // The Item parameter is plain Data; when its value is %item%, Item.Value
-    // resolves through the canonical-resolution path to the LIVE %item%
-    // variable's value. The list contains that current value — not a stale
-    // snapshot from when the parameter was constructed.
+    // The Item parameter is plain Data; for value="%item%" the AsCanonical resolution
+    // returns the LIVE %item% Data on full match, so list.add appends the *current*
+    // value of %item% — not the value at the time the action was constructed.
     [Test]
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
     {
-        Assert.Fail("Not implemented");
+        var (ctx, vars) = Ctx();
+        vars.Set("products", new List<object?>());
+
+        // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
+        // explicitly the same way Data emit would after AsCanonical resolves %item%.
+        vars.Set("item", "hello");
+        var liveItem = vars.Get("item");
+
+        var action = new Add
+        {
+            Context = ctx,
+            ListName = new Variable("products"),
+            Value = liveItem
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        var live = vars.Get("products").Value as List<object?>;
+        await Assert.That(live!.Count).IsEqualTo(1);
+        // list.add snapshot-clones simple values via Value.Clone() — assert the value, not ref.
+        // Unwrap one Data layer (snapshot stores the cloned Data wrapping the value).
+        var entry = live![0] is Data d ? d.Value : live![0];
+        await Assert.That(entry).IsEqualTo("hello");
     }
 
-    // After replacing %products% via Variables.Set with a new list, the next
-    // list.add appends to the NEW list — not the stale one. Plain Data target
-    // resolves canonical at handler entry time, so the resolution is fresh
-    // per-call. Without this property, replacement-then-add would leak items
-    // into the orphan list.
+    // After the variable is reassigned with Variables.Set("products", newList), the next
+    // list.add resolves ListName.Value → Variables.Get("products") freshly and appends to
+    // the NEW list — not the orphaned one. Without per-call resolution, replacement-then-add
+    // would silently leak items into the prior list.
     [Test]
     public async Task ListAdd_AfterReplacement_HandlerSeesNewValue()
     {
-        Assert.Fail("Not implemented");
+        var (ctx, vars) = Ctx();
+        var orphan = new List<object?> { "x" };
+        vars.Set("products", orphan);
+
+        // Replace under the same name — variable.set's Variables.Set replaces the binding.
+        var fresh = new List<object?> { "y" };
+        vars.Set("products", fresh);
+
+        var action = new Add
+        {
+            Context = ctx,
+            ListName = new Variable("products"),
+            Value = new Data("", "z")
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // fresh got the new entry; orphan stayed at 1.
+        await Assert.That(fresh.Count).IsEqualTo(2);
+        await Assert.That(orphan.Count).IsEqualTo(1);
     }
 }

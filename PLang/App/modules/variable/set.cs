@@ -79,6 +79,7 @@ public partial class Set : IContext, IBuildValidatable
                 converted = c;
             }
             var typedData = ConstructDataOfT(Name.Value, targetType, converted, Context);
+            CopyProperties(Value, typedData);
             return Task.FromResult(Context.Variables.Set(typedData));
         }
 
@@ -87,7 +88,23 @@ public partial class Set : IContext, IBuildValidatable
         // if-chain; cold types fall through to reflection.
         var raw = Value.Value;
         Data.@this minted = MintTyped(Name.Value, raw, Context);
+        CopyProperties(Value, minted);
         return Task.FromResult(Context.Variables.Set(minted));
+    }
+
+    /// <summary>
+    /// Properties carry per-Data result metadata (test.report's summaryFail, condition.if's
+    /// branchIndex, etc.) that downstream <c>%var.prop%</c> navigation depends on. MintTyped
+    /// builds a fresh Data from the source's raw value; without this copy, Properties get
+    /// dropped at the binding-mint site. Pre-merge variable.set passed Value directly to
+    /// Variables.Set which aliased the Data and kept Properties; the binding-mint refactor
+    /// (runtime2-data-share-state) lost that property-survival path.
+    /// </summary>
+    private static void CopyProperties(Data.@this source, Data.@this target)
+    {
+        if (source.Properties.Count == 0 || ReferenceEquals(source, target)) return;
+        foreach (var p in source.Properties)
+            target.Properties.Set(p.Name, p.Value, p.Type);
     }
 
     /// <summary>
