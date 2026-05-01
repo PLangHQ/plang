@@ -18,11 +18,11 @@
 
 ## Source Generator
 - PLang.Generators: netstandard2.0, IIncrementalGenerator
-- OBP shape: entry `PLang.Generators/this.cs` → `Discovery/this.cs` (Roslyn boundary) + `Emission/Action/this.cs` (per-handler) + `Emission/Property/{Data,Provider,Legacy}/this.cs` (polymorphic per-property)
+- OBP shape: entry `PLang.Generators/this.cs` → `Discovery/this.cs` (Roslyn boundary) + `Emission/Action/this.cs` (per-handler) + `Emission/Property/{Data,Provider}/this.cs` (polymorphic per-property)
 - Filter out `EqualityContract` (protected, not public) when scanning virtual props
 - Generated records must be `public sealed record` to match base access level
 - In tests: use `System.Type?` (not `Type?`) to avoid ambiguity with `PLang.Runtime2.Memory.Type`
-- **Property kinds (PLNG001 build-time gate)**: action handler properties must be `Data<T>`, plain `Data`, `[Provider] T`, or `[VariableName] string`. Anything else fails the build with `PLNG001`. `[VariableName]` is the carve-out for handlers that need the variable's *name* not its value (variable.set, list.*) — folded into `Data<T>` once a `VarRef<T>` design lands.
+- **Property kinds (PLNG001 build-time gate)**: action handler properties must be `Data<T>` (or plain `Data`) or `[Provider] T`. Anything else fails the build with `PLNG001`. For parameters that *name* a variable (write targets, read-by-name lookups: `variable.set`, `list.*`, `loop.foreach` ItemName/KeyName), use `Data<App.Variables.Variable>`. `Variable` implements `IRawNameResolvable`, which tells `Data.As<T>` to skip its `%var%` substitution branch and dispatch to `Variable.Resolve(raw, ctx)` directly — both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`. Use sites read `Foo.Value` (Variable's implicit `string` operator covers method-call boundaries; `ToString() => Name` makes interpolation read naturally). Non-nullable `Data<Variable>` slots get a generator-emitted pre-Run guard that surfaces `MissingRequiredParameter` (auto-detected via the `IRawNameResolvable` marker through Discovery → ActionClassInfo → Action emitter, mirroring `[IsNotNull]`).
 - **Incremental cache**: `ActionClassInfo` is a record with `EquatableArray<T>` collections (no `IPropertySymbol` references) so Roslyn cache hits on semantically identical inputs. Tracking-name constants on `PLang.Generators.@this` exist for `IncrementalCacheTests`.
 - **Test alias clash**: `PLang.Tests/GlobalUsings.cs` aliases `Data` and `Variables` to types. Do NOT create `PLang.Tests.App.Data` or `PLang.Tests.App.Variables` namespaces — they shadow the alias for all sibling test files (CS0118). Convention: use `*Tests` suffix on folder/namespace when mirroring `PLang/App/Data/` etc. → `PLang.Tests/App/DataTests/`, `PLang.Tests/App/VariablesTests/`.
 
@@ -37,7 +37,7 @@
 - PLang/Runtime2/Engine/Utility/TypeMapping.cs — PLang type names + MIME types → CLR types
 - PLang/Runtime2/Engine/Utility/GoalMapper.cs — maps Building.Model → Runtime2
 - PLang/Runtime2/GlobalUsings.cs — global type aliases for @this classes
-- PLang.Generators/this.cs — source generator entry point (`Discovery/`, `Emission/Action/`, `Emission/Property/{Data,Provider,Legacy}/` underneath)
+- PLang.Generators/this.cs — source generator entry point (`Discovery/`, `Emission/Action/`, `Emission/Property/{Data,Provider}/` underneath)
 - For full OBP details: `Documentation/Runtime2/plang_object_based_pattern.md`
 
 ## Build

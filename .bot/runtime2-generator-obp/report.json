@@ -1655,6 +1655,68 @@
         "notes": "Hand-off: docs. CLAUDE.md proposals from coder v7 + v8 should be merged. The Discovery-flag -> emission-guard -> parametrized-regression-test pattern is a clean reusable template for future contract-restoration work."
       },
       "timestamp_end": "2026-05-01T22:50:00Z"
+    },
+    {
+      "id": "e1398678-7e8d-4d81-be3c-9bf1685ad511",
+      "bot": "docs",
+      "timestamp_start": "2026-05-01T22:33:00Z",
+      "timestamp_end": "2026-05-01T22:55:00Z",
+      "intent": "Second docs pass \u2014 fill gaps from coder/v7-v8 (Variable + IRawNameResolvable migration; v8 missing-name guard) and apply the three coder/v7 CLAUDE.md proposals.",
+      "before": {
+        "assumptions": "v1 docs pass closed v4-v6 (source-generator OBP refactor + cycle/depth contract). v7-v8 added a separate change (retire [VariableName], introduce Data<Variable>) \u2014 v1 docs treat [VariableName] as canonical so those references are stale. XML docs on Variable and IRawNameResolvable are likely already good (coder usually does this).",
+        "risk": "Three doc files reference [VariableName] in the property-kinds rule \u2014 if the wording fragments, devs see contradictory guidance across architecture.md, good_to_know.md, and CLAUDE.md. Mitigation: rewrite all three with consistent two-rule language tied to a single canonical entry in good_to_know.md."
+      },
+      "plan": ".bot/runtime2-generator-obp/docs/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/docs/v2/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan enumerates 8 documentation gaps (root CLAUDE.md, 4 Documentation/v0.2/* edits, todos.md, XML docs check, docs/ check) and decides per-proposal disposition (3 applied, no rejections)."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Root CLAUDE.md: line 21 OBP shape line drops Legacy/. Line 25 property-kinds entry rewritten end-to-end with the two-rule contract + Data<Variable> + the v8 MissingRequiredParameter guard."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/action-catalog.md",
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Removed all stale [VariableName] mechanism references; added Variable + IRawNameResolvable + v8 guard description in good_to_know.md; updated property-kinds tables and PLNG001 message text consistently across architecture.md and good_to_know.md; corrected catalog rendering examples in action-catalog.md from [%var% string] to [string] (per coder's ExampleRenderer change); marked the 2026-04-30 todo as RESOLVED."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/docs/v2/summary.md",
+            ".bot/runtime2-generator-obp/docs/v2/result.md",
+            ".bot/runtime2-generator-obp/docs/v2/verdict.json",
+            ".bot/runtime2-generator-obp/docs/summary.md",
+            ".bot/runtime2-generator-obp/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot-output session files. summary.md is the v2 detailed write-up; result.md is the CHANGELOG-style user-visible surface delta; verdict.json says PASS; bot-root summary.md gets the v2 paragraph appended; docs-report.json is overwritten with the v2 reviewer-report payload (replaces v1's report \u2014 orchestrator latest-write-wins for top-level reports)."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 branch ready to merge",
+        "health": "5 docs files updated, 3 CLAUDE.md proposals applied, 1 minor finding flagged for tester (PLang .goal example for MissingRequiredParameter \u2014 non-blocking, same pattern as v1)",
+        "notes": "No new XML docs needed (coder's were already excellent). No code changes. Plang/C# build status unchanged from auditor/v3 (2570/2570 + 166/166 green)."
+      }
     }
   ]
 }

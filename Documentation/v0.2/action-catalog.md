@@ -63,7 +63,6 @@ All attributes live in `App.modules` (plus the built-in `System.ComponentModel.D
 |---|---|
 | `[IsNotNull]` | Fails validation if the parameter is missing at build time. The LLM sees this reflected implicitly — non-nullable properties render without the trailing `?`. |
 | `[Default(value)]` | Provides a default. Renders as `Name([type = default])` in the catalog so the LLM knows it's optional. |
-| `[VariableName]` | Marks a string property that is a PLang variable reference (e.g. the `Name` in `variable.set`). Renders as `Name([%var% string])` to tell the LLM "this stays as `%foo%`, it doesn't get resolved at build time". |
 | `[Provider]` | Hides the property from the catalog — it's injected by the source generator at runtime from the provider registry. |
 | `[IsInitiated]` | Source-generator hint for Data properties that must be non-null before Run() (runtime concern, not catalog). |
 
@@ -74,6 +73,7 @@ All attributes live in `App.modules` (plus the built-in `System.ComponentModel.D
 | `string` / `int` / `long` / `bool` / `double` / `decimal` / `DateTime` / `Guid` | Lowercased: `string`, `int`, etc. |
 | Nullable (`string?`, `int?`) | Trailing `?`. |
 | `Data<T>` (LazyParam) | Unwrapped to `T`'s rendering. |
+| `Data<App.Variables.Variable>` | Renders as `string` — the slot names a variable rather than carrying a value. `Variable` implements `IRawNameResolvable`, so `Data.As<T>` resolves it from the raw slot string (`%x%` and bare `x` both produce `Variable { Name = "x" }`). The handler reads `Foo.Value` to get the `Variable`; implicit conversion to `string` covers method-call boundaries. |
 | Enum or type with a `static string[] ValidValues` | Type name plus inline enumeration: `operator(==|!=|>|<|…)`. |
 | `List<T>`, `IList<T>`, arrays | `list<T>`. |
 | `Dictionary<K,V>`, `IDictionary<K,V>`, `ConcurrentDictionary<K,V>`, `ReadOnlyDictionary<K,V>`, etc. | `dict<K,V>`. |
@@ -91,7 +91,7 @@ module.action Name([type] value), Name2([type] value) | next-action Name([type] 
 ```
 
 - Params comma-separated within an action; actions pipe-separated (` | `) within a step.
-- `[type]` tag precedes each value. Use the same type token the catalog renders (`string`, `path`, `object`, `int`, `bool`, `%var% string`, `goal.call`, etc.).
+- `[type]` tag precedes each value. Use the same type token the catalog renders (`string`, `path`, `object`, `int`, `bool`, `goal.call`, etc.). Variable-name slots render as `[string]` with a `%var%` value (e.g. `Name([string] %foo%)`).
 - String values with spaces or commas are quoted; numbers, bools, and `%var%` refs are unquoted.
 - Structured values (e.g. `goal.call` payloads) stay as JSON after the type tag: `GoalName([goal.call] {"name":"Greet","parameters":[...]})`.
 - When the plang step captures output with `write to %var%`, include the implicit `variable.set` as the last pipe segment: `| variable.set Name([string] %var%), Value([object] %__data__%)`.
@@ -110,7 +110,7 @@ Concrete example from `crypto/verify.cs`:
 - Structured JSON values
 - Enum selection
 
-Drop examples that restate the signature (`"set %x% = 1 → Name=x, Value=1"` adds nothing over `variable.set Name([%var% string]), Value([object])`).
+Drop examples that restate the signature (`"set %x% = 1 → Name=x, Value=1"` adds nothing over `variable.set Name([string] %x%), Value([object] 1)`).
 
 ## Adding a new action
 
@@ -168,11 +168,13 @@ public partial class Set : IContext, IBuildValidatable
     // self-correct. Not part of the catalog — this is runtime-adjacent.
     public static string? ValidateBuild(List<Data.@this> parameters) { /* ... */ }
 
-    // [VariableName] — tells the catalog renderer this string is a PLang
-    // variable reference, not a value. Renders as "Name([%var% string])"
-    // in the catalog so the LLM knows to preserve "%foo%" literally.
-    [VariableName]
-    public partial string Name { get; init; }
+    // Data<Variable> — slot names a variable, not a value. The catalog
+    // renders it as "Name([string] %var%)"; Data.As<Variable> resolves
+    // the raw slot string into a Variable (Variable implements
+    // IRawNameResolvable, so %x% and bare x both yield Name="x").
+    // Use sites read Name.Value (Variable→string implicit fires at
+    // Variables.Set boundaries).
+    public partial Data.@this<Variable> Name { get; init; }
 
     // No attribute → renders as "Value([object])". The source generator
     // wraps `partial Data.@this` properties in LazyParam behaviour.
@@ -193,7 +195,7 @@ This class renders in the catalog as:
 ```
 ## variable — Read, write, and inspect PLang runtime variables in the current scope
 - variable.set [no-cache] — Assign a value to a named variable, optionally coercing to a type or setting only when unset
-  (Name([%var% string]), Value([object]), Type([string?]), AsDefault([bool = false]))
+  (Name([string]), Value([object]), Type([string?]), AsDefault([bool = false]))
   e.g. `set %data% = {"name": "%user%", "age": 30}, type=json` → variable.set Name([string] %data%), Value([json] {"name":"%user%","age":30}), Type([string] json)
 ```
 

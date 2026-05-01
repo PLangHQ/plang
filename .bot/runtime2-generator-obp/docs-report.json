@@ -1,71 +1,86 @@
 {
   "reviewer": "docs",
   "branch": "runtime2-generator-obp",
-  "timestamp": "2026-04-30T11:30:00Z",
-  "reviewed_version": "v6",
-  "summary": "First docs pass on runtime2-generator-obp covering coder/v1 through coder/v6 (the full v4-plan implementation plus four review-response rounds). The branch landed: source-generator OBP refactor (Discovery + Emission/Action + Emission/Property/{Data,Provider,Legacy}); Data.As<T>(context) as the v4 resolution entry with cycle (VariableResolutionCycle) + depth (ResolveDepthExceeded) ServiceError contract; PLNG001 build-time gate enforcing Data<T>/[Provider]/[VariableName] property kinds; [Sensitive] masking in ParamSnapshot with v6 null-vs-redacted distinction; the dual-capture pattern (Data<T> getter + post-Run __resolutionError check). Six gaps filled across architecture.md, data-generic-design.md, good_to_know.md, and root CLAUDE.md (stale 'Lazy params *__Generated' line replaced; stale LazyParamsGenerator.cs path replaced; Source Generator section expanded with PLNG001, incremental cache, and test alias-clash convention). Both CLAUDE.md proposals applied (folded into root CLAUDE.md instead of creating PLang/App/CLAUDE.md and PLang.Tests/CLAUDE.md per scoping decision in plan.md). No new XML docs needed — coder's XML on new public surface (Action.GetParameter, ICodeGenerated.SnapshotParams, ParamSnapshot, EquatableArray, Discovery types, Emission types) is meaningful. Build clean post-edits (0 errors). Verdict: PASS.",
-  "stats": {
-    "gaps_found": 6,
-    "gaps_filled": 6,
-    "docs_updated": 4,
-    "docs_created": 0
-  },
+  "timestamp": "2026-05-01T22:55:00Z",
+  "reviewed_version": "v8",
+  "summary": "Second docs pass on runtime2-generator-obp covering coder/v7 (Variable + IRawNameResolvable migration; 22 handlers migrated to Data<Variable>; Legacy property emitter and [VariableName] attribute deleted; PLNG001 collapsed to two-rule gate) and coder/v8 (generator-side pre-Run guard restoring MissingRequiredParameter for non-nullable Data<Variable> slots). Five documentation files updated: root CLAUDE.md (OBP shape line + property kinds entry rewritten); architecture.md (catalog attribute list, source-gen tree, property-kinds table + new Variable paragraph); good_to_know.md (property-kinds section reduced to two rules + new App.Variables.Variable section + [Sensitive] cross-reference cleaned); action-catalog.md (attribute table, type-shape table, fully-annotated variable.set example, trailing literal type-tag references); Documentation/Runtime2/todos.md (2026-04-30 entry marked RESOLVED with actual approach taken). All three CLAUDE.md proposals from coder/v7 applied (folded into root CLAUDE.md, good_to_know.md, todos.md per their respective targets). Coder's XML docs on the new public surface (Variable, IRawNameResolvable) are excellent — added none. Verdict: PASS.",
+  "stats": { "gaps_found": 6, "gaps_filled": 6, "docs_updated": 5, "docs_created": 0 },
   "changes": [
     {
       "id": 1,
-      "type": "architecture-doc",
+      "type": "consistency",
       "action": "updated",
-      "file": "Documentation/v0.2/architecture.md",
-      "description": "Expanded 'Modules (Action Registry) → Source Generator' from one paragraph to four subsections: handler pattern, source-generator OBP shape (Discovery + Emission tree), property kinds with PLNG001 table, and the ICodeGenerated key interface including the SnapshotParams default-impl. Replaced the stale 'creates the ExecuteAsync bridge' wording with 'emits a partial-class extension on the action record itself — no separate *__Generated records'."
+      "file": "CLAUDE.md",
+      "description": "Line 21: dropped Legacy/ from the Emission/Property tree. Line 25: replaced the three-rule property kinds entry with the two-rule (Data<T> / [Provider] T) contract; added the Data<Variable> + IRawNameResolvable description for variable-name slots and a forward-pointer to the v8 MissingRequiredParameter guard."
     },
     {
       "id": 2,
       "type": "architecture-doc",
       "action": "updated",
-      "file": "Documentation/v0.2/data-generic-design.md",
-      "description": "Appended 'Resolution semantics — cycle, depth, error contract' section. Documents the [ThreadStatic] HashSet cycle protection, ResolveDepthLimit=32 expanding-cycle bound, action-destination carve-out, and the dual-capture pattern (Data<T> getter sets __resolutionError + post-Run check in ExecuteAsync — both halves load-bearing). Clarifies that .Value is RAW post-v4 (no %var% substitution; substitution is the read transformation in As<T>)."
+      "file": "Documentation/v0.2/architecture.md",
+      "description": "Four edits. (a) Catalog attribute model line: dropped [VariableName] from the attribute list, added a one-liner that variable-name slots are now typed via Data<App.Variables.Variable>. (b) Source-generator tree diagram: dropped Legacy/this.cs, annotated Data/this.cs with '(incl. Data<Variable> name-slots)'. (c) Property-kinds table: [VariableName] string row removed; PLNG001 message updated. (d) New paragraph after the table covering Variable + IRawNameResolvable + the v8 missing-name guard, with cross-references."
     },
     {
       "id": 3,
       "type": "architecture-doc",
       "action": "updated",
       "file": "Documentation/v0.2/good_to_know.md",
-      "description": "Appended five cross-cutting entries: (a) Source Generator OBP shape + EquatableArray incremental-cache pattern + test alias clash convention; (b) Action property kinds (PLNG001 build-time gate); (c) Data.As<T> cycle/depth ServiceError contract + the dual-capture pattern with code example; (d) [Sensitive] masking in ParamSnapshot with the v6 null-guard distinction; (e) Action.GetParameter pure-lookup contract; (f) ICodeGenerated.SnapshotParams default-impl convention. These span multiple files and aren't derivable from a single source file — exactly what good_to_know.md is for per memory."
+      "description": "Three edits. (a) Property-kinds section: bullet for [VariableName] string removed; PLNG001 message updated; 'Why the gate exists' paragraph rewritten; 'Currently exempt' block deleted (no exemptions remain). (b) New section 'App.Variables.Variable - the variable-name carrier' covering: what it is, why it exists, the implicit-conversion gotcha (var s = name.Value infers Variable not string), the nullable-foreach variant, WasPercentWrapped's purpose, and the v8 missing-name guard with the noted empty-string-slot follow-up. (c) [Sensitive] short-name attribute-matching note: removed the [VariableName] cross-reference."
     },
     {
       "id": 4,
-      "type": "consistency",
+      "type": "architecture-doc",
       "action": "updated",
-      "file": "CLAUDE.md",
-      "description": "Replaced stale 'Lazy params: *__Generated records' line (line 13) with the actual partial-class shape. Replaced stale 'PLang.Generators/LazyParamsGenerator.cs' path with the new 'PLang.Generators/this.cs + Discovery + Emission/Action + Emission/Property/{Data,Provider,Legacy}' tree. Expanded Source Generator section with the OBP shape, PLNG001 property-kinds gate, EquatableArray cache stability rule, and PLang.Tests namespace-alias clash convention."
+      "file": "Documentation/v0.2/action-catalog.md",
+      "description": "Four edits. (a) Property attribute table: [VariableName] row removed. (b) Type-shape table: new row for Data<App.Variables.Variable> describing how it renders (as 'string' with a %var% value). (c) Fully-annotated variable.set example: [VariableName] partial string Name replaced with partial Data<Variable> Name; comments updated to describe the IRawNameResolvable dispatch and .Value use site. (d) Two trailing string-literal references to '[%var% string]' (the old type tag) corrected to '[string]' per the actual post-v7 catalog rendering."
     },
     {
       "id": 5,
-      "type": "claude-md-proposal",
-      "action": "applied",
-      "file": "CLAUDE.md",
-      "description": "test-designer/v1 proposal (folder/namespace clash with global type aliases): applied by folding into root CLAUDE.md Source Generator section. Did NOT create PLang.Tests/CLAUDE.md — the rule is broad enough that it belongs in the canonical root, and creating a new per-folder CLAUDE.md just for one rule scatters guidance."
+      "type": "changelog",
+      "action": "updated",
+      "file": "Documentation/Runtime2/todos.md",
+      "description": "2026-04-30 [VariableName] migration entry marked RESOLVED 2026-05-01 with one-paragraph summary of the actual approach (Variable + IRawNameResolvable, not VarRef<T>) and the v8 missing-name guard. Original design discussion preserved below as archived context."
     },
     {
       "id": 6,
       "type": "claude-md-proposal",
       "action": "applied",
       "file": "CLAUDE.md",
-      "description": "coder/v1 proposal (action property kinds — Data<T>/[Provider]/[VariableName]): applied by folding into root CLAUDE.md Source Generator section, augmented with the PLNG001 enforcement detail and a forward note that [VariableName] folds into Data<T> once VarRef<T> design lands. Did NOT create PLang/App/CLAUDE.md — same scoping reasoning."
+      "description": "coder/v7 proposal #1 (target /PLang/App/CLAUDE.md, replace property-kinds rule with the two-rule + Variable contract): applied by folding into root CLAUDE.md. Same scoping reasoning as v1 - no per-folder file exists; the existing 'Property kinds' line at root is the canonical location."
+    },
+    {
+      "id": 7,
+      "type": "claude-md-proposal",
+      "action": "applied",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "coder/v7 proposal #2 (Variable section in good_to_know.md): applied verbatim with one expansion - added a paragraph about the v8 missing-name guard (post-dates the proposal, but lives in the same section)."
+    },
+    {
+      "id": 8,
+      "type": "claude-md-proposal",
+      "action": "applied",
+      "file": "Documentation/Runtime2/todos.md",
+      "description": "coder/v7 proposal #3 (close 2026-04-30 [VariableName] migration entry): applied with a one-paragraph resolution summary instead of just a checkbox tick - the original options discussion is preserved as archival context for anyone tracing the design path."
     }
   ],
   "claude_md_proposals": [
     {
-      "from_bot": "test-designer",
-      "target": "/PLang.Tests/CLAUDE.md",
-      "decision": "applied",
-      "reason": "Genuinely canonical — any future test folder mirroring PLang/App/Data/ or App/Variables/ hits the CS0118 alias shadow. Folded into root CLAUDE.md (no PLang.Tests/CLAUDE.md exists; creating one for a single rule scatters guidance). Same content, more discoverable location."
-    },
-    {
       "from_bot": "coder",
       "target": "/PLang/App/CLAUDE.md",
       "decision": "applied",
-      "reason": "Genuinely canonical — PLNG001 enforces this at build time across the whole tree. Folded into root CLAUDE.md (no PLang/App/CLAUDE.md exists; the existing root Source Generator section is the right place since [VariableName] is already mentioned there). Augmented with PLNG001 detail and the VarRef<T> forward note from Documentation/Runtime2/todos.md."
+      "reason": "Genuinely canonical - PLNG001 enforces the property-kinds rule at build time across the whole tree, and the Data<Variable> + IRawNameResolvable contract applies to every future name-slot handler. Folded into root CLAUDE.md (no /PLang/App/CLAUDE.md exists; the existing root 'Property kinds' line is the right location). Augmented with the v8 missing-name guard description from the auditor/v3 PASS context."
+    },
+    {
+      "from_bot": "coder",
+      "target": "/Documentation/v0.2/good_to_know.md",
+      "decision": "applied",
+      "reason": "Variable's implicit-conversion gotcha (var infers Variable not string) and IRawNameResolvable dispatch are exactly the cross-cutting non-obvious shape that good_to_know.md is for - multiple files reference it, no single source file describes it end-to-end. Coder's proposed text used as the spine; expanded with the v8 missing-name guard paragraph."
+    },
+    {
+      "from_bot": "coder",
+      "target": "/Documentation/Runtime2/todos.md",
+      "decision": "applied",
+      "reason": "Closing a delivered todo is plain hygiene. Used a fuller resolution paragraph than the proposal suggested (single-line tail) because the original entry's 'options 1-3' design discussion is useful archival context for anyone tracing why the migration ended up at Variable-as-typed-payload rather than VarRef<T>."
     }
   ],
   "findings": [
@@ -73,10 +88,10 @@
       "id": 1,
       "severity": "minor",
       "category": "missing-example",
-      "file": "docs/modules/",
-      "issue": "The two new ServiceError keys (VariableResolutionCycle, ResolveDepthExceeded) bubble up through standard error.handle modifiers, but no website-doc example shows on-error-key handling for resolution failures. Most PLang developers will never trip these (real chains are 1-5 deep; cap is 32) — the keys exist as a defensive contract, not a common pattern.",
+      "file": "Tests/",
+      "issue": "No PLang .goal example covers the MissingRequiredParameter ServiceError surface for variable-name slots. PLang developers writing handlers that take Data<Variable> won't have a worked example showing the error flow when the slot is omitted.",
       "resolution": "flagged-for-tester",
-      "detail": "Tester is responsible for PLang .goal examples. If we want a user-facing example showing 'on error key VariableResolutionCycle', it lives in a tester-written .test.goal file with the cycle setup. Out of scope for this docs pass — flagging for visibility."
+      "detail": "PLang .goal examples are the tester's job. Same pattern as v1 finding #1 (resolution-cycle keys). Out of scope for this docs pass - flagging for visibility. Not blocking; the contract is documented in good_to_know.md and architecture.md."
     }
   ]
 }

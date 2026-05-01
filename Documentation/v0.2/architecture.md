@@ -218,7 +218,7 @@ Collections own their loops (OBP rule 5). Steps iterates its own steps, Actions 
 
 Flat `module.action` registry. No hierarchy, no inheritance.
 
-The catalog rendered into the LLM builder's system prompt — module/action names, parameter type tags, examples — is derived from these registered handlers via `App.Modules.Describe()` plus `App.Catalog.@this.Build()`. See [action-catalog.md](action-catalog.md) for the attribute model (`[Action]`, `[ModuleDescription]`, `[Example]`, `[VariableName]`, `[Default]`, etc.) and the rules for writing structured `ExamplesForLlm()` static methods.
+The catalog rendered into the LLM builder's system prompt — module/action names, parameter type tags, examples — is derived from these registered handlers via `App.Modules.Describe()` plus `App.Catalog.@this.Build()`. See [action-catalog.md](action-catalog.md) for the attribute model (`[Action]`, `[ModuleDescription]`, `[Example]`, `[Default]`, etc.) and the rules for writing structured `ExamplesForLlm()` static methods. Variable-name slots are typed via `Data<App.Variables.Variable>` (no attribute), and the catalog renders them as `Name([string] %var%)` based on the wrapped type.
 
 ### Discovery
 
@@ -246,9 +246,8 @@ PLang.Generators/this.cs                — IIncrementalGenerator entry point
       ├ Action/this.cs                  — per-handler emitter (partial-class shell, ExecuteAsync, __SnapshotParams)
       └ Property/
           ├ this.cs                     — abstract base (EmitProperty, EmitSnapshotEntry)
-          ├ Data/this.cs                — Data<T> / plain Data emission
-          ├ Provider/this.cs            — [Provider]-attributed emission
-          └ Legacy/this.cs              — raw-scalar emission for handlers still on [VariableName]/partial-string
+          ├ Data/this.cs                — Data<T> / plain Data emission (incl. Data<Variable> name-slots)
+          └ Provider/this.cs            — [Provider]-attributed emission
 ```
 
 `Discovery.GetActionClassInfo` builds an `ActionClassInfo` record (with `EquatableArray<T>` collections for incremental-cache stability — see [`good_to_know.md`](good_to_know.md)). `Emission/Action` consumes that record and dispatches per-property to the right `Emission/Property/*` leaf via the polymorphic `ActionProperty` base.
@@ -262,9 +261,10 @@ Action property positions are constrained at build time. `Discovery.IsValidActio
 | `Data<T>` | `Action.GetParameter(name).As<T>(Context)` lazily on read | Standard handler param |
 | `Data` (plain) | Same as `Data<object>` | Untyped passthrough |
 | `[Provider] T` | Eager `app.Providers.Get<T>()` in `ExecuteAsync` | Pluggable infrastructure (HTTP, signing, LLM) |
-| `[VariableName] string` | `__StripPercent(name)` — bare identifier | Handlers that need the variable's *name* not its value (variable.set, list.*) |
 
-Any other shape (raw `partial string`, `partial int`, untagged primitives) reports the **PLNG001** error: *Property '{0}' on action '{1}' must be Data<T>, [Provider], or [VariableName] string. Raw scalars are not permitted.* The diagnostic carries the full identifier span so IDE squiggles underline the property name.
+Any other shape (raw `partial string`, `partial int`, untagged primitives, attributed strings) reports the **PLNG001** error: *Property '{0}' on action '{1}' must be Data<T> or [Provider]. Raw scalars are not permitted.* The diagnostic carries the full identifier span so IDE squiggles underline the property name.
+
+For parameters that name a variable rather than carry its value — write targets and read-by-name lookups (`variable.set`, every `list.*`, `loop.foreach` ItemName/KeyName) — use `Data<App.Variables.Variable>`. `Variable` implements `IRawNameResolvable`, a marker that tells `Data.AsT_Impl` to skip the `%var%` substitution branch and dispatch to `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`, so the name-slot semantic survives whichever shape the LLM emits — including the case where `x` doesn't yet exist (`set %x% = 5` creating x for the first time). Use sites read `Foo.Value`; Variable's implicit `string` operator and `ToString() => Name` cover the read paths. Discovery detects `T : IRawNameResolvable` on non-nullable `Data<T>` slots and the Action emitter emits a pre-`Run()` guard mirroring `[IsNotNull]` — a missing slot surfaces as `MissingRequiredParameter` ServiceError before the implicit conversion can NRE. See [`data-generic-design.md`](data-generic-design.md) and [`good_to_know.md`](good_to_know.md) for the resolution and gotcha details.
 
 ### Key interface
 

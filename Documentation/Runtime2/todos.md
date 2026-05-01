@@ -58,7 +58,12 @@ Need PLang tests to lock in:
 Without these tests, the asymmetry could re-regress the next time someone
 "simplifies" Wrap. Nothing today forces the value path.
 
-## 2026-04-30 — migrate handlers off [VariableName] / raw primitives
+## 2026-04-30 — migrate handlers off [VariableName] / raw primitives — RESOLVED 2026-05-01
+
+**Resolved on `runtime2-generator-obp` (architect/v5 → coder/v7 → coder/v8).** Took the typed-payload route rather than the speculative `VarRef<T>` (option 1 below): introduced `App.Variables.Variable` (record `Name, RawValue, WasPercentWrapped`) plus `IRawNameResolvable` marker. `[VariableName] partial string` slots become `Data<App.Variables.Variable>`; `Data.AsT_Impl` skips its `%var%` substitution branch for `T : IRawNameResolvable` and dispatches to `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`. 22 handlers migrated, `Emission/Property/Legacy/this.cs` deleted, `[VariableName]` attribute and `__Resolve<T>`/`__StripPercent`/`__HasParam`/`RawScalarValidations` removed, `PLNG001` collapsed to a two-rule gate. Coder/v8 added a generator-side pre-`Run()` guard so non-nullable `Data<Variable>` slots surface `MissingRequiredParameter` (closing auditor/v2 finding #1). The original design discussion is preserved below for archival/context.
+
+### Original entry (archived)
+
 
 Context: Two property-emission paths exist in `PLang.Generators/Emission/Property/`:
 - `Data/this.cs` — the Data<T> path. New handlers should use this.
