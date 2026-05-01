@@ -1,58 +1,47 @@
 {
   "reviewer": "auditor",
   "branch": "runtime2-generator-obp",
-  "timestamp": "2026-04-30T00:00:00Z",
-  "reviewed_version": "v5",
-  "summary": "First auditor pass on runtime2-generator-obp covering coder/v5 (security #1 [Sensitive] masking + #3 cycle/depth → ServiceError). codeanalyzer/v3 cleared coder/v3, tester/v4 approved coder/v4, security/v1 passed coder/v4 — none reviewed v5. v5 fixes are honest closures of security findings #1 and #3, with one cross-file contract gap: the new Data.As<T> ServiceError contract is honored by legacy property emission (sets __resolutionError) but not by Data<T> property emission (assigns FromError to backing field, error invisible to Run()). Practical impact small — cycles in user variables are rare — but the contract is now inconsistent between the two emission paths and the test comments claim error visibility that only legacy provides. Verdict: PASS. C# 2468/2468 green.",
+  "timestamp": "2026-05-01T18:30:00Z",
+  "reviewed_version": "v2",
+  "summary": "Cumulative audit on the Variable + IRawNameResolvable migration (coder/v5 -> v7 + commit 4). Codeanalyzer/v4, tester/v7, and security/v2 each PASSed; security caught the dominant cross-cutting issue but rated it low under the user-sovereign threat model. Auditor escalates: the deleted RawScalarValidations safety net is not replaced by [IsNotNull] anywhere on the 22 Data<Variable> slots (security said 3 of 22 but those decorations are on OTHER properties in the same handler, not the Variable slot). Pre-v7 produced a clear ServiceError(\"...nothing to use as 'name'...\", \"MissingParameter\", 400) when a [VariableName] slot was missing or null; post-v7 the same case throws NullReferenceException at op_Implicit, escapes App.Run's NRE-excluded catch, and is caught by Step.RunAsync as a generic ServiceError(\"Object reference not set...\", \"StepError\", 400). The regression replaces a domain-aware diagnostic with a stack-derived one; the parameter name + step text + Params snapshot are all lost. Verdict FAIL on one MAJOR (cross-file contract regression) + 2 MINOR (review-gap findings explaining how the major slipped through).",
   "previous_reviews_assessed": {
-    "codeanalyzer": "agree — production code on coder/v3 deltas (cycle, depth, OCE asymmetry, diagnostic span) is clean; Finding 46 NIT honestly closed in v4.",
-    "tester": "agree — Pattern B regex+helper rewrite with 9 deletion-tested contracts is honest closure; strip-integration observation precedent-aligned with Pattern A's gap, appropriate to leave as observation.",
-    "security": "partial — finding #3 fix is half-completed: legacy emission surfaces As<T> ServiceErrors via __resolutionError; Data<T> emission buries them on the backing field. See auditor Finding 1."
+    "codeanalyzer": "partial — file-level review was clean (3 MINOR + 7 NIT all valid), but missed the architect/v5-vs-implementation gap that lives between the architect plan and the per-handler [IsNotNull] decorator distribution. Not codeanalyzer's job by character (file-by-file scope), but worth flagging.",
+    "tester": "partial — deletion-tested the carve-out (35 tests strongly load-bearing; verdict is real for the migration's positive path) and caught the misnamed PLNG001 test, the WasPercentWrapped value-only pinning, and the variable.set CopyProperties C# coverage gap. Did not write a regression test for the missing-parameter graceful-error contract that pre-v7 had.",
+    "security": "partial — accurately identified the bug in finding #1 with a precise exploit_sketch, correct affected_files list, and the right generator-side fix proposal. Severity rating (low) is defensible under the user-sovereign threat model but understates the contract regression. Counted [IsNotNull] handlers (3 of 22) using a too-loose predicate (decoration anywhere in the handler, not on the Variable slot)."
   },
   "findings": [
     {
       "id": 1,
-      "severity": "minor",
+      "severity": "major",
       "category": "cross-file",
-      "file": "PLang.Generators/Emission/Property/Data/this.cs",
-      "line": 32,
-      "issue": "v5's contract change in Data.AsT_Impl (cycle/depth-trip → FromError(ServiceError)) is honored by the legacy property emission path (__Resolve<T> sets __resolutionError, ExecuteAsync short-circuits before Run()) but NOT by the Data<T> property emission path. The Data<T> getter assigns __ResolveData(...).As<T>(Context) directly to the backing field; if As<T> returned FromError, the FromError-Data lives on the backing field with Error set, but the handler's Run() body reads .Value (default(T) — null) and proceeds without seeing the error. Test comments on the renamed cycle tests claim 'callers see the failure rather than an unresolved %var% leak' — true only for legacy properties. New handlers all use Data<T>.",
-      "missed_by": "security",
-      "impact": "Cycles or expanding chains > 32 deep in user variables silently produce null-Value handler runs instead of surfacing the cycle/depth error. Practical impact low (rare scenarios), but the contract inconsistency between the two emission paths is a footgun for the first handler that depends on loud failure for cyclic %var% references. The Data<T> path is the forward-looking emission (Phase 5 will delete legacy).",
-      "suggestion": "Mirror the legacy pattern in each Data<T> emission branch: after the As<T> call, branch on Success and route to __resolutionError. Single-line addition per branch (lines 32, 36, 40, 44 of PLang.Generators/Emission/Property/Data/this.cs). Add a Data<T> handler test that pins the contract: cyclic %var% resolution → handler returns ServiceError to the caller (not just an Error stamped on the backing Data)."
+      "file": "PLang/App/modules/variable/get.cs",
+      "line": 16,
+      "issue": "Missing-parameter diagnostic regression across 22 migrated handlers. Pre-v7 the source generator emitted a RawScalarValidations block that produced ServiceError(\"'<value>' is empty - nothing to use as '<name>' in step: <step text>\", \"MissingParameter\", 400) when a [VariableName] string slot was null/empty. That block was deleted in coder/v7 commit 3 on the architect/v5 plan's assumption that [IsNotNull] would cover the case. Implementation reality: ZERO of 22 Data<Variable> slots carry [IsNotNull] — the only [IsNotNull] decorations on migrated handlers are on OTHER properties (any.cs Key+Operator, group.cs Key). Post-v7 path for a missing or null Name slot: __ResolveData -> NotFound (Value=null) -> AsT_Impl<Variable>(null, ctx) skips the bypass branch (raw is not string), falls through every other branch to WrapAs(null, ctx) -> ConstructWrap<Variable>(default, ctx) -> Data<Variable>{Value=null, Success=true}. Generated property getter checks `if (!Backing.Success) __resolutionError = Backing` — Success is true so __resolutionError stays null. Handler reads Name.Value (null Variable), op_Implicit dereferences v.Name on null instance, NullReferenceException. App.Run line 415 catch deliberately excludes NRE so it propagates out of dispatch; Step.RunAsync line 157 catch does NOT exclude NRE so the step catches it and produces ServiceError(ex.Message=\"Object reference not set to an instance of an object.\", \"StepError\", 400) — without parameter name, without step text, without Params snapshot. Same shape across variable.{get,set,exists,clear,remove}, list.{add,any/ListName,contains,count,first,flatten,get,group/ListName,indexof,join,last,remove,reverse,set,sort,unique}.",
+      "missed_by": "codeanalyzer",
+      "impact": "Robustness regression: a clear domain-aware error message (\"missing parameter <name> for step <text>\") becomes a stack-derived generic StepError(\"Object reference not set...\"). Loses: parameter name, step context, Params snapshot, the MissingParameter error key, error categorization. Builders, tests, and human debuggers seeing this error post-v7 cannot tell from the message which parameter is missing; pre-v7 they could. Trust boundary holds (.pr signed) so this is not an external-attacker vector — but it is a developer-experience and diagnostics regression that the architect's plan explicitly intended to prevent.",
+      "suggestion": "Generator-side fix at PLang.Generators/Emission/Property/Data/this.cs:EmitProperty. Plumb a new IsRawNameResolvable flag through ActionClassInfo from Discovery (mirror IsSensitive's pattern). For non-nullable Data<T> where T : IRawNameResolvable, emit after the existing __resolutionError capture: `if (Backing.Value == null) __resolutionError = Data.@this.FromError(new ServiceError($\"Required parameter '{ParamName}' is missing or null\", __step, __callFrames, \"MissingRequiredParameter\", 400));`. Roughly 10 lines of generator + 1 Discovery flag + 1 ActionClassInfo field. Per-handler [IsNotNull] x22 is the alternative but brittle (next migrated handler will forget). Empirically verified during audit: NotFound.As<Variable>(ctx).Success is true; Value is null; op_Implicit on null Variable throws NRE."
     },
     {
       "id": 2,
-      "severity": "nit",
+      "severity": "minor",
       "category": "review-gap",
-      "file": "PLang.Tests/Generator/Matrix/Snapshot/SnapshotTests.cs",
-      "line": 105,
-      "issue": "SnapshotOnError_SensitiveProperty_UnaccessedStillMasksPrValue is misnamed — the SensitiveSnapshot handler always touches both ApiKey.Value and Endpoint.Value in Run(), so __X_set is always true. The test pins the PrValue null-guard branch (when __pr.Value is null), but the unaccessed-AND-sensitive-AND-FinalValue branch (where {SetFlag} guard is the only thing keeping FinalValue from being '******' for an untouched property) has zero deletion-test coverage. Coder's own comment acknowledges this trade-off.",
-      "missed_by": "none",
-      "impact": "If a future change drops the {SetFlag} guard from the masked FinalValue expression and emits (object?)'******' unconditionally, no test would fail. Low blast radius — the non-sensitive variant of the same guard is pinned by SnapshotOnError_UnaccessedProperty_FinalValueNull, so a regression would leave the non-sensitive contract intact and only affect over-masking precision.",
-      "suggestion": "Add a second [Sensitive] matrix handler that takes a parameter without touching it in Run() (returns FromError immediately), then assert apiKey.WasAccessed IsFalse && apiKey.FinalValue IsNull. Or rename the existing test to SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull to honestly describe what it pins."
+      "file": ".bot/runtime2-generator-obp/security-report.json",
+      "line": 0,
+      "issue": "security/v2 finding #1 cites '3 of 22' handlers having [IsNotNull]. The actual count on Data<Variable> slots specifically is ZERO of 22. The 3 handlers cited (any.Key+Operator, group.Key) carry [IsNotNull] on OTHER (non-Variable) properties — those decorations don't help when the Variable slot is missing because the [IsNotNull] check loops over IsNotNullProperties only. Security's count understates the regression's blast radius and contributes to the low severity rating.",
+      "missed_by": "security",
+      "impact": "Severity-rating inputs based on 'most handlers are guarded' are wrong. Reading the security report leaves the impression a few stragglers need [IsNotNull]; the actual state is no Variable slot has it. This compounds the codeanalyzer + tester gap into a finding that looks 'mostly fine' instead of 'systematic'.",
+      "suggestion": "When security or any reviewer counts decorator coverage on a specific property kind, the predicate should match the property kind exactly (here: [IsNotNull] on Data<Variable> slots), not 'handler has [IsNotNull] anywhere'. Future cross-spec reviews would benefit from grep patterns in result.md so the predicate is auditable."
     },
     {
       "id": 3,
-      "severity": "nit",
-      "category": "contract",
-      "file": "PLang.Generators/Emission/Property/Data/this.cs",
-      "line": 60,
-      "issue": "Sensitive FinalValue expression is `{SetFlag} ? (object?)\"******\" : null` — masks regardless of whether the resolved backing value is null. Non-sensitive form is `{SetFlag} ? (object?){Backing} : null` which preserves null. So a sensitive property that was accessed but resolved to null reports FinalValue='******' as if there were a secret to redact. Same shape in Legacy emission (line 82).",
-      "missed_by": "security",
-      "impact": "Slight over-masking, no security concern (never under-masks). Misleading for post-mortem analysis — distinguishing 'accessed-and-null' from 'accessed-and-redacted' is informative.",
-      "suggestion": "Optionally tighten to `{SetFlag} ? ({Backing} != null ? (object?)\"******\" : null) : null` to mirror the PrValue null-guard pattern. NIT — precision improvement, not blocking."
-    },
-    {
-      "id": 4,
-      "severity": "nit",
-      "category": "architectural",
-      "file": "PLang.Generators/Discovery/this.cs",
-      "line": 174,
-      "issue": "SensitiveAttribute matched by short name only: `a.AttributeClass?.Name == \"SensitiveAttribute\"`. Same convention as the existing ProviderAttribute / VariableNameAttribute matches in the same method. A developer declaring a different SensitiveAttribute in another namespace (e.g., MyApp.Custom.SensitiveAttribute) would inadvertently trigger masking. The runtime SensitivePropertyFilter matches by full type via IsDefined(typeof(SensitiveAttribute), false) — the two layers disagree on attribute identity.",
-      "missed_by": "none",
-      "impact": "Theoretical only. No current attribute name collision in the codebase.",
-      "suggestion": "Existing convention in Discovery — fixing this for SensitiveAttribute alone would create a different inconsistency. Worth knowing for any future standardization on fully-qualified attribute matching in source generators."
+      "severity": "minor",
+      "category": "review-gap",
+      "file": ".bot/runtime2-generator-obp/tester/v7/summary.md",
+      "line": 0,
+      "issue": "tester/v7 deletion-tested the carve-out itself (35 tests strongly load-bearing — confirmed) but did not write a regression test for the missing-parameter graceful-error path. Pre-v7 invariant: missing/null [VariableName] slot returns ServiceError with the MissingParameter key. Post-v7: NRE -> StepError. A 1-test pin asserting `result.Error.Key == \"MissingParameter\"` (or whatever the post-fix key is) on each migrated handler would have caught the regression at v7 commit 3 land time, not after security/v2's red-team pass.",
+      "missed_by": "tester",
+      "impact": "When the safety net is replaced by reviewer-time check rather than test-time check, the regression bypasses the test suite entirely. C# 2550/2550 green is honest but does not pin the deleted contract. The 4 minor findings tester/v7 filed (CopyProperties coverage, IRawNameResolvable contract trap, misnamed PLNG001 test, WasPercentWrapped) are valid but adjacent — none cover the central regression.",
+      "suggestion": "When this finding is closed (per finding #1's generator-side fix), add a single test per migrated handler asserting `Action.Run() with missing required Name -> result.Error.Key == \"MissingRequiredParameter\"`. Bulk-parametrize via TUnit's [Arguments] over the 22 handlers if that fits the test style. Same shape would have caught this at coder/v7 commit 3."
     }
   ]
 }

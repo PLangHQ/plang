@@ -1554,6 +1554,60 @@
         "health": "v1 #1 + #3 closed by v5/v6. New v2 findings are robustness-leaning under user-sovereign threat model (.pr is signed) \u2014 no external attack vector. Dominant finding (#1) is an architect-vs-implementation gap: deletion of RawScalarValidations safety net was supposed to be covered by [IsNotNull] across 22 handlers, but only 3 got it. Generator-side fix is the cleanest closure path.",
         "notes": "Recommended next bot: auditor. If reviewer wants finding 1 closed first, send to coder with the EmitProperty change at PLang.Generators/Emission/Property/Data/this.cs (emit not-null check on Data<T> properties whose T : IRawNameResolvable). v1 standing finding #2 (skipInfrastructure default) carries forward."
       }
+    },
+    {
+      "id": "8a2f3d5e-9c1b-4e7a-b8f3-1d2c4e5f6a7b",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-01T17:55:30Z",
+      "intent": "v2 audit of Variable + IRawNameResolvable migration. Cross-bot integrity check on coder/v5 through coder/v7 \u2014 verify codeanalyzer/v4, tester/v7, security/v2 caught what mattered, and whether the architect/v5-vs-implementation gap on [IsNotNull] coverage is a real regression.",
+      "before": {
+        "assumptions": "codeanalyzer/v4 (3 MINOR + 7 NIT), tester/v7 (4 minor), security/v2 (4 low) all PASS. The dominant signal is security/v2 finding #1 \u2014 19/22 unguarded handlers crash with NRE on null Variable. Security rated it low under user-sovereign threat model.",
+        "risk": "Reviewers approved file-by-file; the v7 contract-deletion (RawScalarValidations) plus per-handler safety-net migration ([IsNotNull] x22) lives between files \u2014 exactly the seam where auditor finds the most."
+      },
+      "plan": ".bot/runtime2-generator-obp/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/Variables/IRawNameResolvable.cs",
+            "PLang/App/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/modules/list/any.cs",
+            "PLang/App/modules/loop/foreach.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified security/v2 #1 empirically. (1) AsT_Impl with raw=null falls through bypass + every other branch to WrapAs(null) -> ConstructWrap<Variable>(default,ctx) -> Data<Variable>{Value=null, Success=true}. Generator emits a Success-only check so __resolutionError is never set; handler reads Name.Value (null Variable), op_Implicit derefs null, NRE. (2) NRE escapes App.Run line 415 (catch excludes NRE) but Step.RunAsync line 157 catches it -> ServiceError(\"Object reference not set\", \"StepError\", 400). Pre-v7 emitted ServiceError(\"...is empty - nothing to use as <name>\", \"MissingParameter\", 400) with parameter+step diagnostic. (3) [IsNotNull] count: ZERO of 22 Data<Variable> slots carry [IsNotNull] (security said 3 but counted decorations on OTHER props in the same handler). (4) Confirmed tester counts: C# 2550/2550, plang 166/166 green."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/auditor/v2/plan.md",
+            ".bot/runtime2-generator-obp/auditor/v2/summary.md",
+            ".bot/runtime2-generator-obp/auditor/v2/result.md",
+            ".bot/runtime2-generator-obp/auditor/v2/verdict.json",
+            ".bot/runtime2-generator-obp/auditor/summary.md",
+            ".bot/runtime2-generator-obp/auditor-report.json",
+            ".bot/runtime2-generator-obp/report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor v2 outputs: plan, summary with empirical evidence, result with detailed findings, verdict, branch-shared auditor-report.json, report.json session. One MAJOR (null-Variable NRE regression escalated from security low) + 2 MINOR (review-gap findings)."
+        }
+      ],
+      "after": {
+        "status": "FAIL - 1 major + 2 minor findings. Severity escalated from security/v2 #1 (low) because: (a) regression replaces clear MissingParameter diagnostic with NRE-derived StepError; (b) architect/v5 plan deleted RawScalarValidations on the assumption [IsNotNull] would cover it but ZERO of 22 handlers got [IsNotNull] on the Variable slot; (c) regression empirically verified.",
+        "health": "Test suites green (C# 2550/2550, plang 166/166). Migration is structurally clean and security-equivalent at the Data resolution layer. Robustness regression is in error-reporting fidelity, not security/availability.",
+        "notes": "Hand-off: coder. Clean fix is generator-side at PLang.Generators/Emission/Property/Data/this.cs:EmitProperty - emit a not-null check for non-nullable Data<T> where T : IRawNameResolvable. Plumb IsRawNameResolvable through ActionClassInfo (same pattern as IsSensitive). Per-handler [IsNotNull] x22 also works but is brittle. Codeanalyzer MINOR DRY findings remain optional and dont block."
+      },
+      "timestamp_end": "2026-05-01T18:30:00Z"
     }
   ]
 }

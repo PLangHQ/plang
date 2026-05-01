@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "1 major (null-Variable NRE regression in 22 handlers — pre-v7 MissingParameter ServiceError replaced by NRE-derived StepError) + 2 minor review-gap findings."
+}
