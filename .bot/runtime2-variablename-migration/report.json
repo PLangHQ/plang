@@ -26,6 +26,65 @@
         "health": "green",
         "notes": "Branch created from runtime2 at 4a4a0f6a. No code changes yet — handoff to coder for Phase 0 tests."
       }
+    },
+    {
+      "id": "b1d4f7a2-3c8e-4a5b-9d6f-1e2c4b7a9d3f",
+      "bot": "coder",
+      "timestamp_start": "2026-05-01T12:25:00Z",
+      "timestamp_end": "2026-05-01T13:10:00Z",
+      "intent": "Verify architect's Phase 0 claim (Data.As<T> propagates .Name='x' from value='%x%') and report findings.",
+      "before": {
+        "assumptions": "Mechanism is plausible — TryFullVarMatch + ConstructWrap propagate Name through As<T> recursion. Need real tests on the exact slot Data shape from .pr deserialization to lock the contract. Ingi explicitly does not trust the claim and wants proof before any handler migration.",
+        "risk": "If the bare-name case (value='x' no %) silently writes to slot key 'Name', the migration is a robustness regression vs the existing [VariableName] / __StripPercent path."
+      },
+      "plan": ".bot/runtime2-variablename-migration/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang.Tests/App/DataTests/VariableSetNameResolutionTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Four TUnit tests covering architect's full claim: var-missing, var-exists, bare-name negative, round-trip. All pass. Documents the As<T> Name-propagation contract whether or not the migration ships."
+        },
+        {
+          "paths": ["PLang/App/Data/this.cs", "PLang.Generators/Emission/Property/Data/this.cs", "Tests/App/StepResult/.build/stepresult.test.pr"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read As<T> / AsT_Impl / TryFullVarMatch / ConstructWrap to trace the Name flow manually. Confirmed generator line 50 emits __ResolveData(name).As<T>(Context) for Data<T> properties — same call my tests exercise. Confirmed real .pr shape matches the test fixture {name:'Name', value:'%x%'}."
+        },
+        {
+          "paths": ["Tests/App/StepResult/StepResult.test.goal"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "End-to-end run of `set %x% = \"hello\"` via `plang --test` — [Pass]. Proves the live pipeline works today; mechanism is real, not theoretical."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-variablename-migration/coder/v1/plan.md",
+            ".bot/runtime2-variablename-migration/coder/v1/architect-handoff.md",
+            ".bot/runtime2-variablename-migration/coder/v1/summary.md",
+            ".bot/runtime2-variablename-migration/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session artifacts. architect-handoff.md is the operative file — outlines the design decision (keep [VariableName] canonical, Legacy permanent) and asks for a v2 plan covering read-site migration only."
+        },
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi decided to keep [VariableName] permanently. Reasoning: it handles both '%x%' and bare 'x' natively via __StripPercent, matching robustness the As<T>.Name path would need IBuildValidatable to recover. Sending plan back to architect for v2."
+        }
+      ],
+      "after": {
+        "status": "Phase 0 verified mechanically (4/4 pass). Migration declined on robustness grounds. Handoff to architect for v2 plan.",
+        "health": "green",
+        "notes": "Architect picks up architect-handoff.md next. Test file retained as documentation of the As<T> Name-propagation contract — not load-bearing for any migration but useful for future drift detection."
+      }
     }
   ]
 }
