@@ -69,7 +69,7 @@ public class GetActionsTests
         var result = await _app.RunAction(action, _app.Context);
         var actions = (StepActions)result.Value!;
 
-        // variable.set has a Name property with [VariableName]
+        // variable.set has a Name property with Data<Variable> (renders as `%var% string`)
         var varSet = actions.FirstOrDefault(a => a.Module == "variable" && a.ActionName == "set");
         await Assert.That(varSet).IsNotNull();
         var nameParam = varSet!.Parameters.FirstOrDefault(p =>
