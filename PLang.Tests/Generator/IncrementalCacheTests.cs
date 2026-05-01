@@ -43,7 +43,6 @@ public class IncrementalCacheTests
             IEventPropertyNames: EquatableArray<string>.Empty,
             HasAnyIsNotNull: false,
             IsNotNullProperties: EquatableArray<string>.Empty,
-            RawScalarValidations: EquatableArray<RawScalarValidation>.Empty,
             Diagnostics: EquatableArray<DiagnosticInfo>.Empty);
 
     [Test]
@@ -157,7 +156,6 @@ public class IncrementalCacheTests
         namespace App.modules {
             public class ActionAttribute : Attribute {}
             public class ProviderAttribute : Attribute {}
-            public class VariableNameAttribute : Attribute {}
             public interface IContext {}
             public interface IChannel {}
             public interface IAction {}

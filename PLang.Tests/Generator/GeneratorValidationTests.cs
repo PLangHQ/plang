@@ -40,9 +40,10 @@ public class GeneratorValidationTests
         return anyFile != null ? File.ReadAllText(anyFile) : string.Empty;
     }
 
-    // Phase 5: Discovery emits PLNG001 diagnostic when a property is not Data<T>,
-    // [Provider], or [VariableName] string. Verified by the descriptor's existence
-    // and message format in Discovery/this.cs.
+    // Post-v5: Discovery emits PLNG001 diagnostic when a property is not Data<T>
+    // or [Provider] T. ([VariableName] string was removed; Variable-name slots are
+    // now Data<Variable>.) Verified by the descriptor's existence and message
+    // format in Discovery/this.cs.
     [Test]
     public async Task RawScalarProperty_FailsBuild_WithSpecificError()
     {
@@ -156,12 +157,15 @@ public class GeneratorValidationTests
     [Test]
     public async Task Generator_DoesNotEmitOldHelperFamily()
     {
-        // The old helper family was: __TryConvert, __FormatValue, __HasParam, __StripPercent.
-        // After Phase 5, all are gone. Phase 4 keeps __HasParam and __StripPercent for legacy
-        // raw-scalar handlers. Verify __TryConvert and __FormatValue are gone.
+        // The old helper family was: __TryConvert, __FormatValue, __HasParam,
+        // __StripPercent, __Resolve<T>. Post-v5, all are gone — only __ResolveData
+        // remains (Data emit's lookup helper).
         var generated = ReadAnyGeneratedHandler();
         await Assert.That(generated.Contains("__TryConvert")).IsFalse();
         await Assert.That(generated.Contains("__FormatValue")).IsFalse();
+        await Assert.That(generated.Contains("__HasParam")).IsFalse();
+        await Assert.That(generated.Contains("__StripPercent")).IsFalse();
+        await Assert.That(generated.Contains("__Resolve<")).IsFalse();
     }
 
     [Test]
@@ -207,13 +211,13 @@ public class GeneratorValidationTests
     [Test]
     public async Task PropertyHierarchy_TwoLeavesOnly()
     {
-        // After Phase 5 the legacy file is deleted. For Phase 4 we have three leaves
-        // (Data, Provider, Legacy) — verify the file structure exists in the right shape.
+        // Post-v5 contract: only two property leaves remain — Data and Provider.
+        // Legacy/ is deleted along with [VariableName].
         var basePath = Path.Combine(RepoRoot, "PLang.Generators", "Emission", "Property");
         await Assert.That(Directory.Exists(Path.Combine(basePath, "Data"))).IsTrue();
         await Assert.That(Directory.Exists(Path.Combine(basePath, "Provider"))).IsTrue();
         await Assert.That(File.Exists(Path.Combine(basePath, "this.cs"))).IsTrue();
-        // Legacy folder will be removed in Phase 5.
+        await Assert.That(Directory.Exists(Path.Combine(basePath, "Legacy"))).IsFalse();
     }
 
     [Test]
@@ -230,8 +234,8 @@ public class GeneratorValidationTests
         await Assert.That(codeOnly.Contains("IPropertySymbol")).IsFalse();
         await Assert.That(codeOnly.Contains("ITypeSymbol")).IsFalse();
 
-        // Same check on the leaves
-        foreach (var leaf in new[] { "Data/this.cs", "Provider/this.cs", "Legacy/this.cs" })
+        // Same check on the leaves (post-v5: Data + Provider only)
+        foreach (var leaf in new[] { "Data/this.cs", "Provider/this.cs" })
         {
             var leafSrc = ReadGeneratorSource($"Emission/Property/{leaf}");
             var leafCode = string.Join('\n', leafSrc.Split('\n')

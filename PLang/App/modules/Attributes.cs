@@ -29,13 +29,6 @@ public sealed class DefaultAttribute : Attribute
 }
 
 /// <summary>
-/// Marks a string property as a variable name — the source generator strips %% delimiters
-/// instead of resolving the variable's value.
-/// </summary>
-[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-public sealed class VariableNameAttribute : Attribute { }
-
-/// <summary>
 /// Marks a GoalCall property as a callback that injects variables into the called goal.
 /// The Injects property names the variable the callback receives (e.g., "chunk" for streaming data).
 /// The user can rename it in PLang syntax (e.g., "on stream call HandleChunk myData=%chunk%").

@@ -223,8 +223,7 @@ public sealed class @this
                     // so repeating them here would just bloat the prompt. The type name alone
                     // (e.g. "operator") points the LLM to the Type Information entry.
 
-                    var hasVar = prop.GetCustomAttribute<modules.VariableNameAttribute>() != null
-                        || IsVariableNameSlot(prop.PropertyType);
+                    var hasVar = IsVariableNameSlot(prop.PropertyType);
                     var defaultAttr = prop.GetCustomAttribute<modules.DefaultAttribute>();
 
                     // Variable slots advertise as "%var% string" so the LLM emits
@@ -420,8 +419,8 @@ public sealed class @this
     /// <summary>
     /// True when <paramref name="propType"/> is <c>Data&lt;T&gt;</c> (or its nullable
     /// wrap) for a T that implements <see cref="App.Variables.IRawNameResolvable"/>.
-    /// Replaces the legacy <c>[VariableName]</c> attribute scan for catalog-builder
-    /// purposes — the property is the carrier of "this slot names a variable".
+    /// The property type is the carrier of "this slot names a variable" — the catalog
+    /// builder uses this to mark <c>%var%</c>-shape parameters in the LLM prompt.
     /// </summary>
     private static bool IsVariableNameSlot(Type propType)
     {

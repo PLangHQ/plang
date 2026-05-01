@@ -189,27 +189,6 @@ public static class @this
                 """);
         }
 
-        // Legacy raw-scalar non-null validation. Phase 5 deletes these along with the legacy properties.
-        foreach (var v in info.RawScalarValidations)
-        {
-            var lower = v.PropertyName.ToLowerInvariant();
-            var nullCheck = v.IsString ? $"string.IsNullOrEmpty({v.PropertyName})" : $"{v.PropertyName} == null";
-            sb.Append($$"""
-                        if ({{nullCheck}})
-                        {
-                            if (__resolutionError != null) return __resolutionError;
-                            var __prValue = __action?.Parameters?.FirstOrDefault(p => string.Equals(p.Name, "{{v.PropertyName}}", System.StringComparison.OrdinalIgnoreCase))?.Value?.ToString() ?? "(unknown)";
-                            var __stepText = __step?.Text ?? "(unknown step)";
-                            if (__stepText.Length > 80) __stepText = __stepText[..80] + "...";
-                            var __err = new global::App.Errors.ServiceError(
-                                $"'{__prValue}' is empty — nothing to use as '{{lower}}' in step: {__stepText}", __step, __callFrames, "MissingParameter", 400);
-                            __err.Context = context;
-                            return global::App.Data.@this.FromError(__err);
-                        }
-
-                """);
-        }
-
         // [IsNotNull] validation
         if (info.HasAnyIsNotNull)
         {
@@ -255,46 +234,16 @@ public static class @this
 
     private static void EmitLegacyHelpers(StringBuilder sb)
     {
-        // __Resolve<T>, __ResolveData, __HasParam, __StripPercent — used by legacy/raw-scalar
-        // emission paths. Phase 5 will sweep most of these along with the legacy properties.
+        // After v5: only __ResolveData remains. Legacy scalar/[VariableName] emission
+        // (which used __Resolve<T>, __HasParam, __StripPercent) is gone — Variable-name
+        // slots are Data<Variable> and route through the Data emitter's __ResolveData.
         sb.Append("""
-                private T? __Resolve<T>(string name)
-                {
-                    var data = __action?.Parameters?.FirstOrDefault(
-                        d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
-                    data ??= __action?.Defaults?.FirstOrDefault(
-                        d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
-                    if (data == null) return default;
-                    var typed = data.As<T>(Context);
-                    if (!typed.Success) { __resolutionError = typed; return default; }
-                    var __value = typed.Value;
-                    if (__value is global::App.Goals.Goal.GoalCall __gc && __gc.Action == null)
-                        __gc.Action = __action;
-                    return __value;
-                }
-
                 private global::App.Data.@this __ResolveData(string name)
                 {
                     var data = __action?.GetParameter(name, Context!);
                     if (data == null) return global::App.Data.@this.NotFound(name);
                     data.Context = Context;
                     return data;
-                }
-
-                private bool __HasParam(string name)
-                {
-                    return (__action?.Parameters?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false)
-                        || (__action?.Defaults?.Any(d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase)) ?? false);
-                }
-
-                private string? __StripPercent(string name)
-                {
-                    var data = __action?.Parameters?.FirstOrDefault(
-                        d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
-                    data ??= __action?.Defaults?.FirstOrDefault(
-                        d => string.Equals(d.Name, name, StringComparison.OrdinalIgnoreCase));
-                    if (data?.Value is string str) return str.Trim('%');
-                    return data?.Value?.ToString();
                 }
 
             """);
