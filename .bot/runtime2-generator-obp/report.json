@@ -1241,6 +1241,52 @@
         "health": "Build clean (0 errors). All gaps filled, both CLAUDE.md proposals applied. Verdict: PASS \u2014 code is ready to merge.",
         "notes": "v6 dual-capture pattern (Data<T> getter sets __resolutionError + post-Run check in ExecuteAsync) is the most subtle thing on the branch \u2014 documented in both data-generic-design.md and good_to_know.md with code examples so future devs touching property emission see both halves are load-bearing. One findings entry flagged-for-tester: missing on-error-key=VariableResolutionCycle PLang example (out of scope for docs; tester decides). Stale 'PLang/Runtime2/' paths in CLAUDE.md left untouched \u2014 predates this branch, separate cleanup."
       }
+    },
+    {
+      "id": "f1d8e6c2-4b7f-4a3e-9c2d-8e1f5a3b9c7e",
+      "bot": "architect",
+      "timestamp_start": "2026-05-01T17:30:00Z",
+      "intent": "v5 \u2014 design the Variable class as Data<Variable> replacement for [VariableName] string. Pulled in runtime2-variablename-migration (architect/v1 plan + coder/v1 decision to keep [VariableName] permanent) to land on this branch's original goal of removing Legacy from source gen, via a different path than v4 imagined.",
+      "before": {
+        "assumptions": "[VariableName] migration was rejected on the variablename-migration branch because Data<string>.As<string>.Name relies on TryFullVarMatch which silently fails for bare LLM emission (`value=\"x\"` not `\"%x%\"`). Source gen has Legacy/ folder + IsAppResolvable detection + ScanRawScalarValidations + __StripPercent helper, all currently load-bearing only for [VariableName] strings. Goal was 'every property is Data<T>'; Ingi reaffirmed that goal but accepts the Data<Variable> wrapping (one indirection) as the path. Ingi confirmed: As<T> dispatch to static Resolve already wired (Data.cs:612-624), implicit string conversion on Variable is wanted (Name.Value gives 'x' at string boundaries).",
+        "risk": "Three commits couple tightly \u2014 if commit 2 (handler migration) leaves any [VariableName] usage and commit 3 (cleanup) deletes the attribute, build breaks. Mitigated by phasing: commit 1 introduces Variable + tests in isolation; commit 2 migrates handlers with source gen unchanged; commit 3 deletes carve-out machinery only after all handlers are migrated. Implicit conversion has a `var foo = Name.Value` gotcha (infers Variable not string) \u2014 documented in good_to_know.md, low real-world incidence in handler code."
+      },
+      "plan": ".bot/runtime2-generator-obp/architect/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/architect/v5/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v5 plan: introduce Variable class as AppResolvable type wrapped in Data<Variable>, migrate 22 [VariableName] handler sites, delete Legacy/ emission branch and supporting machinery. Three-commit phasing (Variable + contract tests, handler migration, source-gen cleanup). Resolves the variablename-migration regression because Variable.Resolve handles `%x%` and `x` symmetrically, matching today's __StripPercent behavior. Reuses existing As<T> dispatch to static Resolve at Data.cs:612-624 \u2014 no new wiring."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-variablename-migration/architect/v1/plan.md",
+            ".bot/runtime2-variablename-migration/coder/v1/architect-handoff.md",
+            ".bot/runtime2-variablename-migration/coder/v1/summary.md",
+            "PLang/App/modules/list/",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/modules/variable/",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Property/Legacy/this.cs",
+            "PLang.Generators/Emission/Property/Data/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/App/Data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read the variablename-migration handoff to understand why [VariableName] was kept permanent. Verified the 22 [VariableName] handler sites with grep. Confirmed the Legacy/ emission file's three branches (IsAppResolvable, IsVariableName, raw scalar fallback) \u2014 only IsVariableName has live consumers; the other two are vestigial. Confirmed Data.As<T> already dispatches to static Resolve(string, Context.@this) at lines 612-624 \u2014 the AppResolvable mechanism is already wired through Data, just hasn't had a real consumer. Variable becomes that consumer."
+        }
+      ],
+      "after": {
+        "status": "design complete, plan written, awaiting Ingi read-back before coder handoff",
+        "health": "no code touched, plan reuses existing infrastructure (Data.As<T> static-Resolve dispatch, [IsNotNull] for presence checks, AppResolvable detection already in place). Three-commit phasing makes bisection trivial.",
+        "notes": "Ingi explicitly approved the Data<Variable> direction over a peer Variable shape, accepted Name.Value over Name.Value.Name (with implicit conversion handling string-boundary cases), and approved the migration scope. Open questions in plan are mostly visibility flags (Type slot field, Variable equality semantics, IsAppResolvable removal sanity check, Signature null until signing work). Next: suggest test-designer to lay out PLang-level test coverage for the migrated handlers; the bare-name regression case (value=\"x\" without %) is the critical regression target since that's what killed the variablename-migration branch."
+      }
     }
   ]
 }
