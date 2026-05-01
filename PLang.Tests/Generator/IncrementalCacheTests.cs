@@ -67,13 +67,13 @@ public class IncrementalCacheTests
     {
         var propsA = new PropertyBase[]
         {
-            new DataProperty("First", "global::App.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false),
-            new DataProperty("Second", "global::App.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false),
+            new DataProperty("First", "global::App.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("Second", "global::App.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
         };
         var propsB = new PropertyBase[]
         {
-            new DataProperty("First", "global::App.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false),
-            new DataProperty("Second", "global::App.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false),
+            new DataProperty("First", "global::App.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("Second", "global::App.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
         };
 
         var a = MakeInfo("X", propsA);
@@ -86,8 +86,8 @@ public class IncrementalCacheTests
     [Test]
     public async Task ActionClassInfo_DifferentPropertyOrder_AreNotEqual()
     {
-        var p1 = new DataProperty("A", "global::App.Data.@this<string>", false, false, "string", null, false);
-        var p2 = new DataProperty("B", "global::App.Data.@this<int>", false, false, "int", null, false);
+        var p1 = new DataProperty("A", "global::App.Data.@this<string>", false, false, "string", null, false, false);
+        var p2 = new DataProperty("B", "global::App.Data.@this<int>", false, false, "int", null, false, false);
 
         var a = MakeInfo("X", p1, p2);
         var b = MakeInfo("X", p2, p1);

@@ -2,6 +2,7 @@ using System.Linq;
 using System.Text;
 using PLang.Generators.Discovery;
 using PLang.Generators.Emission.Property;
+using DataProperty = PLang.Generators.Emission.Property.Data.@this;
 using ProviderProperty = PLang.Generators.Emission.Property.Provider.@this;
 
 namespace PLang.Generators.Emission.Action;
@@ -201,6 +202,34 @@ public static class @this
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
                                     return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
+
+                    """);
+            }
+            sb.AppendLine("        }");
+        }
+
+        // Missing-required-parameter validation for IRawNameResolvable slots.
+        // Restores pre-v7 RawScalarValidations contract — missing or null variable-name
+        // parameter surfaces a MissingRequiredParameter ServiceError before Run() is
+        // invoked, instead of bubbling up as an NRE through the implicit Variable→string
+        // operator. Auditor v2 finding #1.
+        var rawNameProps = info.Properties
+            .OfType<DataProperty>()
+            .Where(p => p.IsRawNameResolvable && !p.IsNullable)
+            .ToList();
+        if (rawNameProps.Count > 0)
+        {
+            sb.AppendLine("        if (__action?.Parameters != null)");
+            sb.AppendLine("        {");
+            foreach (var prop in rawNameProps)
+            {
+                // Mirror IsNotNull's serialization convention: lowercase the property name
+                // for the parameter-list match, which is how .pr emits parameter keys.
+                var lower = prop.Name.ToLowerInvariant();
+                sb.Append($$"""
+                                if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
+                                    return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(
+                                        "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 
                     """);
             }

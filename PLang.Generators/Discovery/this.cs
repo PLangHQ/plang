@@ -187,12 +187,26 @@ public static class @this
         if (isDataWrapped || isPlainData)
         {
             string? innerType = null;
+            var isRawNameResolvable = false;
             if (isDataWrapped)
             {
                 var ltIdx = typeNameStr.IndexOf('<');
                 innerType = ltIdx >= 0 ? typeNameStr.Substring(ltIdx + 1, typeNameStr.Length - ltIdx - 2) : "object";
+
+                // Detect whether T : IRawNameResolvable. Slots whose T is a name-like type
+                // (Variable today) carry the missing-parameter contract: a missing/null slot
+                // must surface a MissingRequiredParameter ServiceError, not bubble through
+                // as an NRE when the handler reads .Value.
+                if (namedType!.TypeArguments.Length > 0
+                    && namedType.TypeArguments[0] is INamedTypeSymbol innerNamed
+                    && innerNamed.AllInterfaces.Any(i =>
+                        i.Name == "IRawNameResolvable"
+                        && i.ContainingNamespace.ToDisplayString() == "App.Variables"))
+                {
+                    isRawNameResolvable = true;
+                }
             }
-            return (new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive), implementsIEvent);
+            return (new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive, isRawNameResolvable), implementsIEvent);
         }
 
         // No leaf matches — PLNG001 has already flagged this property; emit nothing
