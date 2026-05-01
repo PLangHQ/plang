@@ -1,50 +1,116 @@
 {
   "tester": "tester",
   "branch": "runtime2-generator-obp",
-  "timestamp": "2026-04-30T09:30:00Z",
-  "tested_version": "v4",
+  "timestamp": "2026-05-01T17:50:00Z",
+  "tested_version": "v7",
+  "scope": "Cumulative review of v5/v6/v7 (last tester pass was v4). Focus on the Variable + IRawNameResolvable migration since that's the largest delta and changes the variable-resolution attack surface.",
   "test_run": {
-    "csharp": { "total": 2466, "passed": 2466, "failed": 0, "skipped": 0,
-      "note": "v4 added 10 new tests vs v3's 2456. All green." },
-    "csharp_under_coverage": { "note": "Not re-run; v3 confirmed 2 PipelineCache_* tests fail under --coverage instrumentation due to Roslyn-coverage interaction. v4 adds a 3rd PipelineCache_* test (UnfilteredStepOutputsAreCachedOrUnchanged) with the same shape, presumably also failing under coverage. Caveat is documented at top of IncrementalCacheTests.cs (Finding #4 closed, lowest-cost option chosen)." },
-    "plang": { "note": "Not re-run; v4 changes confined to two C# test files, so v3 status (169/48/5) is unchanged." }
-  },
-  "coverage": {
-    "note": "v4 changed only test code. Production-code coverage from v3 (Data/this.cs 83.1%, Generators/this.cs 100.0%, Discovery/this.cs 75.0%) is unchanged.",
-    "carry_forward_from_v3": true
+    "csharp": {
+      "total": 2550,
+      "passed": 2550,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 15,
+      "note": "Better than the coder/v7 summary's 2554/2550 — commit 4 (53780c2d) cleaned up the 4 pre-existing ListAdd Identity stubs by replacing them with 4 real tests, and the v7-cleanup commit ac028f0f did not affect counts."
+    },
+    "plang": {
+      "total": 166,
+      "passed": 166,
+      "failed": 0,
+      "timeout": 0,
+      "stale": 0,
+      "skipped": 0,
+      "note": "Better than the coder/v7 summary's 160/16 — commit 4 fixed 10 TestReport tests by adding CopyProperties to variable.set (Properties were lost at the binding-mint site post the runtime2-data-share-state merge). Other 6 fail listed by coder may have flake-cleared or been an intermediate state. Run from /workspace/plang/Tests as the character file requires."
+    }
   },
   "deletion_tests_performed": [
     {
-      "fix": "PublicOrProtectedMethodDecl regex widening (PLang.Tests/Generator/NoDeadEmissionTests.cs:153-155)",
-      "mutation": "Narrowed regex from (?:public|protected) back to (?:public)",
-      "result": "PublicOrProtectedMethodDecl_MatchesProtectedDeclaration → fails: Expected to be 1 but found 0",
-      "verdict": "Regex widening is load-bearing; assertion is honest and pins protected matching"
+      "fix": "IRawNameResolvable carve-out (PLang/App/Data/this.cs:549-562)",
+      "mutation": "Wrapped guard with `if (false && ...)` so the carve-out body is unreachable",
+      "result": "35 C# tests fail. SlotData_PercentWrapped_AsVariable_NameIsX, SlotData_PercentWrapped_AsVariable_IgnoresExistingValue, all Foreach_*, all Set_*, multiple cache wrapper tests (Wrap_*), modifier chain tests (RunAsync_*).",
+      "verdict": "STRONGLY load-bearing. The two SlotData_* VariableResolveTests directly pin the carve-out; the Foreach/Set/Wrap families pin it indirectly through the migrated handlers."
     },
     {
-      "fix": "IsOrphanMethod helper (PLang.Tests/Generator/NoDeadEmissionTests.cs:157-167)",
-      "mutation": "Replaced body with `return false;` (no orphans ever flagged)",
-      "result": "Heuristic_OrphanProtectedMethod_IsFlagged + 3 Strip_* tests → all fail with `Expected to be true but found False`",
-      "verdict": "Helper is load-bearing; 4 tests pin the orphan-detection contract independently"
+      "fix": "Variable.ToString → Name (PLang/App/Variables/Variable.cs:59)",
+      "mutation": "Replaced body with `=> \"MUTATED-TOSTRING\"`",
+      "result": "1 test fails: ToString_ReturnsName_ForInterpolationFriendliness.",
+      "verdict": "Lightly pinned. The 22 handler use-sites do `$\"... '{ListName.Value}' ...\"` interpolation in error messages, but error-message contents aren't tested by precedent. Acceptable; nit-level."
     },
     {
-      "fix": "StripCommentsAndStrings helper (PLang.Tests/Generator/NoDeadEmissionTests.cs:357-371)",
-      "mutation": "Replaced body with `return src;` (identity, no stripping)",
-      "result": "All 3 Strip_* tests fail + Heuristic_OrphanProtectedMethod_IsFlagged fails (its input contains `ParamData()` in a comment that the test assumes will be stripped)",
-      "verdict": "Strip helper is load-bearing for both strip tests and the orphan-protected synthetic test"
+      "fix": "Variable implicit operator string (PLang/App/Variables/Variable.cs:32)",
+      "mutation": "Replaced body with `=> \"MUTATED-IMPLICIT\"`",
+      "result": "49+ tests fail. Set_*, ListAdd_*, Foreach_*, list.* family tests, integration tests, ResolveValue_*.",
+      "verdict": "STRONGLY load-bearing. The implicit operator is the load-bearing mechanism for `Context.Variables.Get(ListName.Value)` / `Set(KeyName.Value, ...)` use sites; broken here, downstream variable-store reads/writes fail."
     },
     {
-      "fix": "WithTrackingName(ActionInfoTrackingName) producer/consumer agreement (PLang.Generators/this.cs:29)",
-      "mutation": "Replaced ActionInfoTrackingName constant with literal string 'DisagreeingActionInfoName'",
-      "result": "PipelineCache_RerunWithUnchangedSyntax_UnfilteredStepOutputsAreCachedOrUnchanged → fails: Expected to contain key ActionInfo but key ActionInfo not found",
-      "verdict": "ActionInfoTrackingName constant is now load-bearing; new test catches producer/consumer drift"
+      "fix": "Variable.WasPercentWrapped (PLang/App/Variables/Variable.cs:50-51)",
+      "mutation": "Hardcoded WasPercentWrapped=false in Resolve",
+      "result": "3 tests fail: Resolve_PercentWrapped_StripsAndFlags, SlotData_PercentWrapped_AsVariable_NameIsX, SlotData_PercentWrapped_AsVariable_IgnoresExistingValue.",
+      "verdict": "Pinned by direct value-checks only. NO consumer tests it (codeanalyzer flagged this independently). Field is documented for 'future validators'; tests verify the value is correct but not that anything depends on it. Filed as nit-level observation."
+    },
+    {
+      "fix": "variable.set CopyProperties (PLang/App/modules/variable/set.cs:91)",
+      "mutation": "Commented out the CopyProperties(Value, minted) call",
+      "result": "0 C# tests fail. 10 plang tests fail (all TestReport.* tests under Tests/TestModule/Report/ and Tests/Modules/Test/Report/).",
+      "verdict": "Honestly pinned at the integration tier (plang tests). C# unit tier has zero coverage of the Properties-survival contract — filed as missing-coverage finding. The integration-tier pinning is real (10 distinct tests), so this isn't a false-green; it's a coverage gap."
     }
   ],
-  "live_corpus_verification": {
-    "data_callers_in_user_partials": "10+ files (count, unique, foreach, get, any, range, contains, join, remove, on)",
-    "error_callers_in_user_partials": "10+ files (get, add, range, sort, mock/verify, unique, throw, run, remove, set)",
-    "live_cross_file_test_NoGeneratedHandlerExposesUnusedPublicOrProtectedMethod": "passes with widened Pattern B; framework helpers Data/Error are not flagged because real callers exist"
+  "builder_false_green_check": {
+    "method": "Read .pr files for migrated handlers; verified each step's `text` semantically matches `actions[0].module.action`.",
+    "scoped": [
+      "Tests/Modules/List/.build/listops.test.pr — 33 steps; all map cleanly (variable.set, list.add, list.count, list.first, list.last, list.contains, list.join, list.split, list.get, list.remove, list.indexof, list.sort, list.reverse, list.unique).",
+      "Tests/Modules/List/.build/listops2.test.pr — list.range, list.set, list.flatten verified.",
+      "Tests/Modules/Loop/.build/loop.test.pr — loop.foreach with ItemName=item verified.",
+      "Tests/TestModule/Run/.build/testrunreportsassertionfailure.test.pr — list.any with ListName=%results% verified."
+    ],
+    "verdict": "No builder false-greens detected. Each migrated handler's parameter shape (ListName as string param, etc.) survives the .pr round-trip and the runtime now treats it as Data<Variable> via the carve-out."
   },
-  "findings": [],
+  "coverage_gap_observations": [
+    "C# tier has no test for variable.set Properties survival — only plang TestReport tests pin it. A C# unit test asserting `Set(Name, Value-with-Properties); Get(Name).Properties.Count > 0` would close the gap.",
+    "IRawNameResolvable contract trap (per codeanalyzer's NIT-4): no test pins the silent-fallthrough behavior when `T : IRawNameResolvable` lacks a static Resolve method. Today only Variable implements the marker, so this is theoretical — but adding a test (a synthetic IRawNameResolvable type with no Resolve method, asserting that Data.As<T> for a `%x%` slot falls through to the standard %var% substitution) would prevent a future regression."
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Modules/variable/settests.cs (does not exist; closest is variable/exists/get/remove)",
+      "code_file": "PLang/App/modules/variable/set.cs:91 (CopyProperties call)",
+      "issue": "Commit 4 (53780c2d) added CopyProperties at the binding-mint site to fix Properties-survival across variable.set. The fix is real and load-bearing — disabling it makes 10 plang TestReport tests fail. But there's NO C# unit test for the Properties-survival contract. The fix's only honest pin lives at the integration tier.",
+      "impact": "If a future refactor of variable.set or MintTyped silently breaks Properties carry-over in a way that doesn't trip the plang TestReport tests (e.g. a refactor that only affects non-record Properties, or a refactor that surfaces only on multi-binding sequences not in the current TestReport suite), no C# test would catch it. Properties carry per-Data result metadata (test.report's summaryFail, condition.if's branchIndex) that downstream `%var.prop%` navigation depends on — silent breakage there is hard to debug.",
+      "suggestion": "Add a C# test to PLang.Tests/App/Modules/variable/settests.cs (or a new file) that constructs a Data with Properties, runs variable.set Action with that Data as Value, and asserts `Variables.Get(name).Properties` carries the same entries. The deletion test would: comment out CopyProperties → C# test fails. Cost: one test, ~20 lines."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/VariablesTests/VariableResolveTests.cs",
+      "code_file": "PLang/App/Data/this.cs:549-562 (IRawNameResolvable carve-out)",
+      "issue": "The carve-out's reflection lookup `t.GetMethod(\"Resolve\", ...)` returns null when a type implements IRawNameResolvable but lacks a static Resolve(string, Context) method. The current behavior on null is to silently fall through to the %var% substitution branch (line 564+) — exactly the path the marker was supposed to bypass. There's no test for this fallthrough, and codeanalyzer/v4 flagged the same thing as NIT-4 (latent contract trap).",
+      "impact": "Today only Variable implements IRawNameResolvable, so this is theoretical. But the marker is a public interface; a future T (say, a hypothetical `BindingTarget`) that forgets to add static Resolve would type-check, would compile, and would dispatch to the substitution path — silently losing the bypass it was supposed to opt into. The failure mode is a NullReferenceException on the value path (substitution returns Variables.Get's value, type doesn't match, conversion fails) which is loud BUT triggers the original bare-name regression v7 was designed to prevent.",
+      "suggestion": "Add a synthetic test type implementing IRawNameResolvable without a Resolve method, then assert that Data.As<T>(ctx) for a `%x%` slot either (a) returns FromError with a clear diagnostic OR (b) the test pins the fallthrough behavior explicitly. Option (a) is the better contract — the marker should be required to come with Resolve, enforced at the call site. Cost: one test + possibly a 3-line `if (resolveMethod == null) FromError(...)` in Data/this.cs."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs:111-128",
+      "code_file": "PLang.Generators/Discovery/this.cs (PLNG001 logic)",
+      "issue": "PLNG001_VariableNameAttribute_NowReportsDiagnostic test name implies it pins `[VariableName]` attribute removal — but the test source uses bare `partial string Name` with NO attribute. So the test really pins that bare scalar `string` triggers PLNG001, which is also covered by PLNG001_RawScalar_StillReportsDiagnostic (with `partial int RawCount`). The two tests overlap on the substantive contract.",
+      "impact": "If `[VariableName]` were re-introduced as an attribute (say, by a partial reverter merge that doesn't rebuild PLNG001), this test would NOT detect it because the test source doesn't apply the attribute. The author's likely intent was 'verify PLNG001 doesn't carve out [VariableName]' but the test as written can't verify that.",
+      "suggestion": "Either rename to PLNG001_BareString_NowReportsDiagnostic (honest about what it tests) or modify the test to declare `[VariableName] partial string Name` (referencing the attribute via a Stubs-defined VariableNameAttribute) — that would actually pin the carve-out being gone, distinguishing it from RawScalar coverage. Cost: 5-line test edit."
+    },
+    {
+      "id": 4,
+      "severity": "nit",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/VariablesTests/VariableResolveTests.cs",
+      "code_file": "PLang/App/Variables/Variable.cs:50-51 (WasPercentWrapped)",
+      "issue": "WasPercentWrapped is pinned by 3 direct-value tests. Codeanalyzer/v4 flagged the field as having no consumer (NIT-5 'borderline candidate'). Tests verify the field is computed correctly but no test verifies anything depends on the value.",
+      "impact": "If the field were silently set to a wrong value (and the 3 tests were also wrong consistently), no downstream behavior would be affected — there's no consumer to flag. As long as the field is documented as 'reserved for future validators' it's not a defect. Filing as nit so the next future-validator implementation can be pinned.",
+      "suggestion": "When the future validator lands, ensure it has a test that asserts behavior changes based on WasPercentWrapped. Until then, this is acceptable. NIT only — not blocking."
+    }
+  ],
   "verdict": "approved",
-  "summary": "Coder v4 honestly closes all 5 findings from tester v3. The MAJOR `Pattern B regex restricts to public` toothlessness is genuinely fixed: regex now matches `public|protected`, and the fix is pinned by 3 explicit regex assertions plus 6 helper-driven synthetic tests (3 IsOrphanMethod + 3 StripCommentsAndStrings) that drive the orphan-detection logic independently of the live tree. 4 empirical deletion tests confirm each new contract bites when its target mutates: regex narrow → MatchesProtectedDeclaration fails; IsOrphanMethod neutered → Heuristic_OrphanProtectedMethod + 3 strip tests fail; Strip identity → 3 strip tests fail; tracking-name swap → unfiltered cache-hit test fails. C# 2466/2466 green (v3 was 2456; +10 v4 tests). The 4 minor findings (synthetic regression-test gap, comment/string false-positive risk, --coverage flakiness, dead unfiltered constant) are also closed by the same set of changes plus the new pre-Where cache-hit test. No production code changed in v4; the only production-code touchpoint is that the previously-dead `ActionInfoTrackingName` constant is now load-bearing via the new test. One observation noted but not filed: integration of StripCommentsAndStrings into LoadAllCallableSources is not directly pinned (Pattern A has the same architecture gap, so precedent-aligned). Recommend running security analyst next."
+  "summary": "Coder v5/v6/v7 are honestly tested at the load-bearing surfaces. The IRawNameResolvable carve-out — the load-bearing mechanism for the migration — is heavily pinned (35 C# tests fail when disabled). The Variable.implicit operator is even more critical (49+ tests fail when broken). C# 2550/2550 green; plang 166/166 green — both better than the coder summary's mid-flight counts because commit 4 closed the 4 ListAdd stubs and 10 TestReport regressions. Four findings filed: one missing C# coverage for variable.set CopyProperties (only plang integration pins it), one missing test for the IRawNameResolvable contract trap codeanalyzer also flagged, one misnamed PLNG001 test that overlaps with RawScalar coverage, and one observation on WasPercentWrapped having only direct-value pinning. None block; all minor. Recommend security analyst next — security/v1 was on coder/v4 and never re-ran for the new attack surface (Variable.Resolve, IRawNameResolvable bypass)."
 }

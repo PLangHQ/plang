@@ -1,0 +1,27 @@
+{
+  "method": "Targeted deletion-test mutation; full --coverage harness skipped per v3 history (PipelineCache_* tests fail under instrumentation; carrying forward v3's measurement).",
+  "tested_version": "v7",
+  "production_files_in_scope": [
+    "PLang/App/Variables/Variable.cs",
+    "PLang/App/Variables/IRawNameResolvable.cs",
+    "PLang/App/Data/this.cs (carve-out lines 549-562)",
+    "PLang/App/modules/variable/set.cs",
+    "PLang/App/modules/loop/foreach.cs",
+    "PLang/App/modules/list/*.cs (15 migrated files)",
+    "PLang.Generators/Emission/Property/Legacy/this.cs (DELETED)",
+    "PLang.Generators/Discovery/this.cs (carve-out logic removed)",
+    "PLang.Generators/Emission/Action/this.cs (helpers removed)"
+  ],
+  "deletion_test_summary": {
+    "irawnameresolvable_carveout": { "tests_fail_when_disabled": 35, "load_bearing": true },
+    "variable_implicit_operator": { "tests_fail_when_mutated": "49+", "load_bearing": true },
+    "variable_tostring": { "tests_fail_when_mutated": 1, "load_bearing": "lightly" },
+    "variable_waspercentwrapped": { "tests_fail_when_mutated": 3, "load_bearing": "value-only — no consumer pins purpose" },
+    "variable_set_copyproperties": { "csharp_tests_fail": 0, "plang_tests_fail": 10, "load_bearing": "integration-tier only" }
+  },
+  "uncovered_areas": [
+    "C# unit-tier coverage for variable.set Properties survival (only plang TestReport tier pins it).",
+    "IRawNameResolvable contract trap (per codeanalyzer NIT-4): no test for T-implements-marker-but-no-Resolve fallthrough.",
+    "WasPercentWrapped consumers (none exist; field reserved for future validators)."
+  ]
+}
