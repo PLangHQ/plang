@@ -1287,6 +1287,102 @@
         "health": "no code touched, plan reuses existing infrastructure (Data.As<T> static-Resolve dispatch, [IsNotNull] for presence checks, AppResolvable detection already in place). Three-commit phasing makes bisection trivial.",
         "notes": "Ingi explicitly approved the Data<Variable> direction over a peer Variable shape, accepted Name.Value over Name.Value.Name (with implicit conversion handling string-boundary cases), and approved the migration scope. Open questions in plan are mostly visibility flags (Type slot field, Variable equality semantics, IsAppResolvable removal sanity check, Signature null until signing work). Next: suggest test-designer to lay out PLang-level test coverage for the migrated handlers; the bare-name regression case (value=\"x\" without %) is the critical regression target since that's what killed the variablename-migration branch."
       }
+    },
+    {
+      "id": "562d0ea3-9a3b-48b8-a2a5-86ec5ccd6654",
+      "bot": "coder",
+      "timestamp_start": "2026-05-01T16:03:28Z",
+      "intent": "Implement architect/v5 plan: replace [VariableName] string with Data<Variable> across 22 handler sites; introduce Variable record with static Resolve; delete Legacy emitter and supporting helpers in source gen.",
+      "before": {
+        "assumptions": "Existing As<T> static-Resolve dispatch at Data/this.cs:612-624 will route Data<Variable>.As<Variable>(ctx) to Variable.Resolve without new wiring. Plan's three-commit phasing keeps each commit bisectable. Adding ToString() override on Variable is a small departure beyond plan to make existing string-interpolation sites readable; equality stays record-default per plan.",
+        "risk": "Pattern A (write-target) handlers may surface a regression that the v1 variablename-migration branch hit if Variable.Resolve doesn't normalize bare-name and percent-wrapped to identical Name. Plan asserts symmetry via single Trim('%') \u2014 same as today's __StripPercent. Plang test matrix is the regression contract."
+      },
+      "plan": ".bot/runtime2-generator-obp/coder/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Variables/Variable.cs",
+            "PLang/App/Variables/IRawNameResolvable.cs",
+            "PLang/App/Data/this.cs",
+            "PLang.Tests/App/VariablesTests/VariableResolveTests.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 1 (commit 3bd0e9a5). New Variable record + IRawNameResolvable marker. Extended Data.AsT_Impl with a raw-name carve-out before %var% substitution because the architect's plan claim (line-612 dispatch handles %x% via existing flow) was empirically false \u2014 verified by writing the SlotData_PercentWrapped_AsVariable_NameIsX test and watching it NRE. Showed Ingi the test failure and proposed three options; he picked Option 1 (marker bypass) per workflow discipline. 8 unit tests in VariableResolveTests pin the contract."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/list/add.cs",
+            "PLang/App/modules/list/any.cs",
+            "PLang/App/modules/list/contains.cs",
+            "PLang/App/modules/list/count.cs",
+            "PLang/App/modules/list/first.cs",
+            "PLang/App/modules/list/flatten.cs",
+            "PLang/App/modules/list/get.cs",
+            "PLang/App/modules/list/group.cs",
+            "PLang/App/modules/list/indexof.cs",
+            "PLang/App/modules/list/join.cs",
+            "PLang/App/modules/list/last.cs",
+            "PLang/App/modules/list/remove.cs",
+            "PLang/App/modules/list/reverse.cs",
+            "PLang/App/modules/list/set.cs",
+            "PLang/App/modules/list/sort.cs",
+            "PLang/App/modules/list/unique.cs",
+            "PLang/App/modules/loop/foreach.cs",
+            "PLang/App/modules/variable/exists.cs",
+            "PLang/App/modules/variable/get.cs",
+            "PLang/App/modules/variable/remove.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Catalog/ExampleRenderer.cs",
+            "PLang/App/Variables/Variable.cs",
+            "PLang.Tests/App/Modules/list/ListTests.cs",
+            "PLang.Tests/App/Modules/list/ListSetTests.cs",
+            "PLang.Tests/App/Modules/variable/existstests.cs",
+            "PLang.Tests/App/Modules/variable/gettests.cs",
+            "PLang.Tests/App/Modules/variable/removetests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 2 (commit 68acfad8). 22 handler property declarations migrated from [VariableName] partial string to partial Data<Variable>. Use sites updated to .Value (Variable->string implicit). foreach (nullable) uses .?Value?.Name fallback. Catalog-side adjustments (Modules.Describe + ExampleRenderer.LookupParamTypeName) detect Variable-shape via IsVariableNameSlot helper rather than the now-deleted attribute scan \u2014 keeps LLM-facing prompt format unchanged (%var% string). Test files updated mechanically (ListName = \"x\" -> ListName = new Variable(\"x\")). Single-arg Variable(string) ctor added for ergonomics."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Emission/Property/Legacy/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang/App/modules/Attributes.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Phase 3 (commit ecba2e33). Deletions: Legacy/this.cs file, [VariableName] attribute, IsAppResolvable detection (vestigial), ScanRawScalarValidations method + RawScalarValidation record + RawScalarValidations field, RawScalarValidations emit block, __Resolve<T> / __HasParam / __StripPercent helpers. Kept __ResolveData (Data emit's lookup helper). PLNG001 message format updated to two-rule contract. Activated 5 Plng001PostMigrationTests stubs (PLNG001_DataT/PlainData/ProviderProperty_NoDiagnostic, PLNG001_VariableNameAttribute_NowReportsDiagnostic, PLNG001_RawScalar_StillReportsDiagnostic) using the same CSharpGeneratorDriver harness GeneratorValidationTests uses."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-generator-obp/coder/v7/plan.md",
+            ".bot/runtime2-generator-obp/coder/v7/summary.md",
+            ".bot/runtime2-generator-obp/coder/summary.md",
+            ".bot/runtime2-generator-obp/claude-md-proposals.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v7 plan + summary, bot-root summary updated, three CLAUDE.md proposals appended (post-v5 property-kinds rule for /PLang/App/CLAUDE.md, Variable section for /Documentation/v0.2/good_to_know.md, close v6 [VariableName] todo entry)."
+        }
+      ],
+      "after": {
+        "status": "all three plan commits landed; one mid-flight architect-plan gap closed via Option-1 marker-interface bypass per Ingi's call",
+        "health": "C#: 2554 total, 4 fail (pre-existing ListAdd Identity stubs from another branch \u2014 outside this scope). plang --test: 160/16 unchanged from baseline. 5 PLNG001PostMigration stubs activated and green. dotnet build clean.",
+        "notes": "Plan accuracy issue: architect/v5 asserted Data.As<T>'s line-612 static-Resolve dispatch would route %x% slots to Variable.Resolve. Empirically false \u2014 TryFullVarMatch intercepts, returning Data<Variable> with Value=null when the named variable is uninitialized (the common case for variable.set creating new variable). Worked for bare \"x\" (no %, falls through to line 612). Stopped, showed Ingi the failing test and three options, took Option 1 (IRawNameResolvable marker bypass) over reordering AsT_Impl globally (which would break Path interpolation). Path is unaffected because it doesn't implement the marker. Hand-off to codeanalyzer next."
+      },
+      "timestamp_end": "2026-05-01T16:44:40Z"
     }
   ]
 }
