@@ -26,6 +26,26 @@ public class @this
         }
     }
 
+    /// <summary>
+    /// Fires after a variable is rebound (existing name → new value). Carries (name, before, after).
+    /// Collection-level event — fires for any name. Per-variable Data.OnChange still fires too.
+    /// Used by Call.@this diff capture: subscribe in ctor, unsubscribe in DisposeAsync.
+    /// </summary>
+    [JsonIgnore]
+    public event Action<string, object?, object?>? OnSet;
+
+    /// <summary>
+    /// Fires when a name is created for the first time. Carries (name, value).
+    /// </summary>
+    [JsonIgnore]
+    public event Action<string, object?>? OnCreate;
+
+    /// <summary>
+    /// Fires when a name is removed.
+    /// </summary>
+    [JsonIgnore]
+    public event Action<string>? OnRemove;
+
     public @this()
     {
         // Register system variables
@@ -84,11 +104,18 @@ public class @this
                     dv.OnCreate = prev.OnCreate;
                     dv.OnChange = prev.OnChange;
                     dv.OnDelete = prev.OnDelete;
+                    var prevValue = prev.Value;
                     prev.FireOnChange(dv);
+                    _variables[name] = dv;
+                    OnSet?.Invoke(name, prevValue, dv.Value);
+                    return dv;
                 }
                 else if (prev == null)
                 {
                     dv.FireOnCreate();
+                    _variables[name] = dv;
+                    OnCreate?.Invoke(name, dv.Value);
+                    return dv;
                 }
 
                 _variables[name] = dv;
@@ -97,9 +124,11 @@ public class @this
 
             if (_variables.TryGetValue(name, out var existing))
             {
+                var prevValue = existing.Value;
                 existing.Value = value;
                 if (type != null)
                     existing.Type = type;
+                OnSet?.Invoke(name, prevValue, value);
                 return existing;
             }
             else
@@ -108,6 +137,7 @@ public class @this
                 data.Context = _context;
                 data.FireOnCreate();
                 _variables[name] = data;
+                OnCreate?.Invoke(name, value);
                 return data;
             }
         }
@@ -363,6 +393,7 @@ public class @this
         if (_variables.TryRemove(name, out var removed))
         {
             removed.FireOnDelete();
+            OnRemove?.Invoke(name);
             return true;
         }
         return false;
