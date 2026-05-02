@@ -1,0 +1,52 @@
+{
+  "branch": "runtime2-callstack",
+  "sessions": [
+    {
+      "id": "16824e08-7b42-4b73-af45-4f606e99df9f",
+      "bot": "architect",
+      "timestamp_start": "2026-05-02T15:23:03Z",
+      "timestamp_end": "2026-05-02T15:26:39Z",
+      "intent": "Design causal callstack: App.Debug-owned, off by default, auto-materialized on error, render-agnostic data for trace + flamegraph projections.",
+      "before": {
+        "assumptions": "Callstack code in App/CallStack/ is partly wired: App.Run pushes/pops frames per action, but frame.Error is never set on failure, CallStack.Errors is never populated, !error reads from a parallel Context.Error property, and IsEnabled=false has incoherent push/pop. ErrorChain already exists on Error. Callback design is settled-enough to know it imposes only OBP discipline (frames stay by-ref) on this branch.",
+        "risk": "Recovery scope semantics, %!error% walk-back rule, and the Context.Error -> walk-the-stack transition could regress LlmFixer/error.handle behavior if not migrated carefully. Variable diff capture must not reintroduce the OOM that 10000x10MB foreach previously triggered (mitigated by callstack-off-by-default plus scalar-by-default diff capture)."
+      },
+      "plan": ".bot/runtime2-callstack/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["Documentation/Runtime2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Appended Callback context entry per user request. Captures concept, settled-with-user design points (developer-declared vars, encrypted on wire, sign goal_hash), and three constraints Callback imposes on the callstack branch: (1) Frame stays OBP - no denormalized IDs, (2) Variable snapshot is Callback's concern not callstack's, (3) No Data.Pause lane needed in callstack work. Out-of-scope flag preserved for Callback's own future branch."
+        },
+        {
+          "paths": [".bot/runtime2-callstack/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full plan after multi-turn design discussion with user. Covers ownership move (Context -> Debug), rename (CallFrame -> Call.@this), causal Cause link, Option B recovery (synthetic frame), Option X sibling-split (temporal compression), %!error% via stack-walk, Variables.Events for diffs, Tags from both C# and PLang sides, auto-materialization from Action.Step.Goal.Parent walk on error, scalar-by-default diff capture to avoid prior OOM scenario, render-agnostic data so flamegraph projection falls out for free. 10 phases, file map, risk register, 10 PLang tests + 4 C# test suites listed. Callback explicitly out of scope, recorded in todos for future branch."
+        },
+        {
+          "paths": [".bot/runtime2-callstack/architect/v1/summary.md", ".bot/runtime2-callstack/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect session and bot-root summaries. v1/summary.md describes settled decisions, the new App.Run shape as code example, and the next-bot recommendation (test-designer). Bot-root summary.md is the cross-session light index."
+        },
+        {
+          "paths": [".bot/runtime2-callstack/report.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Initial session report for the runtime2-callstack branch."
+        }
+      ],
+      "after": {
+        "status": "design complete",
+        "health": "no blockers; ready for test-designer",
+        "notes": "One implementation-time decision deferred to coder: synthetic recovery frame's Action reference (reuse recovery goal first action vs sentinel RecoveryAction type) - decide when OBP shape becomes concrete. All architectural decisions settled with user across the multi-turn discussion: causal model, recovery Option B, sibling-split Option X, Frame->Call rename, App.Debug ownership, --debug JSON config shape, scalar-by-default diffs, ErrorChain integration. Callback context captured in todos.md so its future design knows the callstack contract."
+      }
+    }
+  ]
+}
