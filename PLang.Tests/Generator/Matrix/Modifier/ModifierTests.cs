@@ -13,7 +13,7 @@ public class ModifierActionTests
         // Run the modifier in isolation to confirm it behaves as a [Modifier]-attributed
         // handler: the handler exists, ExecuteAsync runs without error.
         MatrixRunner.EnsureRegistered<ModifierAction>(app);
-        var depthBefore = app.Context.CallStack?.Depth ?? 0;
+        var currentBefore = app.Context.CallStack?.Current;
 
         var action = new PrAction
         {
@@ -23,8 +23,7 @@ public class ModifierActionTests
         };
         await app.Run(action, app.Context);
 
-        var depthAfter = app.Context.CallStack?.Depth ?? 0;
-        await Assert.That(depthAfter).IsEqualTo(depthBefore);
+        await Assert.That(app.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     [Test]
@@ -32,7 +31,7 @@ public class ModifierActionTests
     {
         await using var app = new global::App.@this("/app");
         MatrixRunner.EnsureRegistered<StringPlain>(app);
-        var depthBefore = app.Context.CallStack?.Depth ?? 0;
+        var currentBefore = app.Context.CallStack?.Current;
 
         var action = new PrAction
         {
@@ -44,8 +43,7 @@ public class ModifierActionTests
         await app.Run(action, app.Context);
         await app.Run(action, app.Context);
 
-        var depthAfter = app.Context.CallStack?.Depth ?? 0;
-        await Assert.That(depthAfter).IsEqualTo(depthBefore);
+        await Assert.That(app.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     [Test]
@@ -55,7 +53,7 @@ public class ModifierActionTests
         // Test by setting up a BeforeAction binding that returns Handled=true.
         await using var app = new global::App.@this("/app");
         MatrixRunner.EnsureRegistered<StringPlain>(app);
-        var depthBefore = app.Context.CallStack?.Depth ?? 0;
+        var currentBefore = app.Context.CallStack?.Current;
 
         var action = new PrAction
         {
@@ -69,8 +67,7 @@ public class ModifierActionTests
         // direct App.Run dispatch (the override path doesn't apply here, but the symmetric
         // push/pop still holds).
         await app.Run(action, app.Context);
-        var depthAfter = app.Context.CallStack?.Depth ?? 0;
-        await Assert.That(depthAfter).IsEqualTo(depthBefore);
+        await Assert.That(app.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     [Test]

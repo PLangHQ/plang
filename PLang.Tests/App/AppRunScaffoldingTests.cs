@@ -36,13 +36,12 @@ public class AppRunScaffoldingTests
     public async Task AppRun_PushesAndPopsCallstackFrame_AroundHandler()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
-        var depthBefore = _app.Context.CallStack?.Depth ?? 0;
+        var currentBefore = _app.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         await _app.Run(action, _app.Context);
 
-        var depthAfter = _app.Context.CallStack?.Depth ?? 0;
-        await Assert.That(depthAfter).IsEqualTo(depthBefore);
+        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // App.Run sets Context.Step = action.Step before handler runs; restores prior Step after.
@@ -104,15 +103,14 @@ public class AppRunScaffoldingTests
         var thrower = new ThrowingMatrixHandler();
         _app.Modules.Register("matrix.throwing", "throw", thrower);
 
-        var depthBefore = _app.Context.CallStack?.Depth ?? 0;
+        var currentBefore = _app.Context.CallStack?.Current;
         var action = MakeAction("matrix.throwing", "throw");
         var result = await _app.Run(action, _app.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
 
-        var depthAfter = _app.Context.CallStack?.Depth ?? 0;
-        await Assert.That(depthAfter).IsEqualTo(depthBefore);
+        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // Handler succeeds → finally still runs (frame popped, context restored).
@@ -120,14 +118,13 @@ public class AppRunScaffoldingTests
     public async Task AppRun_OnSuccess_FinallySnapshotsAndPops()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
-        var depthBefore = _app.Context.CallStack?.Depth ?? 0;
+        var currentBefore = _app.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "ok"));
         var result = await _app.Run(action, _app.Context);
 
         await Assert.That(result.Success).IsTrue();
-        var depthAfter = _app.Context.CallStack?.Depth ?? 0;
-        await Assert.That(depthAfter).IsEqualTo(depthBefore);
+        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // Two consecutive App.Run calls → push/pop happens twice (no leakage).
@@ -136,14 +133,13 @@ public class AppRunScaffoldingTests
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
 
-        var depthBefore = _app.Context.CallStack?.Depth ?? 0;
+        var currentBefore = _app.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "first"));
         await _app.Run(action, _app.Context);
         await _app.Run(action, _app.Context);
 
-        var depthAfter = _app.Context.CallStack?.Depth ?? 0;
-        await Assert.That(depthAfter).IsEqualTo(depthBefore);
+        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // App.Run DELIBERATELY catches OperationCanceledException and translates to ServiceError.
@@ -199,12 +195,11 @@ public class AppRunScaffoldingTests
     {
         // The Handled-override path lives in Action.RunAsync, not App.Run. We exercise App.Run
         // directly here: not calling App.Run at all means no callstack frame is pushed.
-        var depthBefore = _app.Context.CallStack?.Depth ?? 0;
+        var currentBefore = _app.Context.CallStack?.Current;
 
         // Simulate the override path: Action.RunAsync would short-circuit before invoking App.Run.
         // Therefore the call we DON'T make should leave the call stack untouched.
-        var depthAfter = _app.Context.CallStack?.Depth ?? 0;
-        await Assert.That(depthAfter).IsEqualTo(depthBefore);
+        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 }
 

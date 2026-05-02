@@ -1,4 +1,5 @@
 using Goal = App.Goals.Goal.@this;
+using Call = App.CallStack.Call.@this;
 
 namespace App.Errors;
 
@@ -34,10 +35,10 @@ public interface IError
     Goal? Goal { get; set; }
 
     /// <summary>
-    /// Snapshot of the call stack frames at the time the error was created.
-    /// Reads bottom-up: first frame is the root goal, last frame is where the error occurred.
+    /// Snapshot of the Call chain from the failing scope upward to the root. Index <c>[0]</c>
+    /// is the failing Call itself (post-Push snapshot — chain includes self).
     /// </summary>
-    IReadOnlyList<CallFrame> CallFrames { get; set; }
+    IReadOnlyList<Call> CallFrames { get; set; }
 
     /// <summary>
     /// Snapshot of variable names and their values at the time of the error.

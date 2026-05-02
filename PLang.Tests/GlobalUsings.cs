@@ -54,9 +54,9 @@ global using EngineTypes = App.Types.@this;
 global using ICache = App.Cache.ICache;
 global using MemoryStepCache = App.Cache.MemoryStepCache;
 global using CallStack = App.CallStack.@this;
-global using CallFrame = App.CallStack.CallFrame;
+// Call: not a global alias — App.modules.goal.Call (the goal.call action handler)
+// collides. Use App.CallStack.Call.@this fully qualified, or per-file alias.
 global using SerializableCallStack = App.CallStack.SerializableCallStack;
-global using ExecutionPhase = App.CallStack.ExecutionPhase;
-global using SerializableCallFrame = App.CallStack.SerializableCallFrame;
+global using SerializableCall = App.CallStack.SerializableCall;
 global using Debugging = App.Debug.@this;
 global using Testing = App.Test.@this;

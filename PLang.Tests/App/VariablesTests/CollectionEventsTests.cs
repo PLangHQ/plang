@@ -1,4 +1,4 @@
-namespace PLang.Tests.App.Variables;
+namespace PLang.Tests.App.VariablesTests;
 
 // Variables.@this gains three collection-level events: OnSet, OnCreate, OnRemove.
 // These complement (do not replace) the existing per-variable events on individual Data instances.

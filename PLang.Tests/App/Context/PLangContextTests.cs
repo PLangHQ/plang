@@ -64,24 +64,15 @@ public class PLangContextTests
     }
 
     [Test]
-    public async Task CallStack_DefaultsToNull()
+    public async Task CallStack_ReadsThrough_AppDebugCallStack()
     {
+        // Architectural shift: ownership moved from Context to App.Debug. The Context
+        // exposes a getter that proxies through so PLang %!callStack% still resolves;
+        // there's no per-context allocation.
         await using var engine = new global::App.@this("/app");
         using var context = new global::App.Actor.Context.@this(engine);
 
-        await Assert.That(context.CallStack).IsNull();
-    }
-
-    [Test]
-    public async Task CallStack_CanBeSet()
-    {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
-        var callStack = new CallStack();
-
-        context.CallStack = callStack;
-
-        await Assert.That(context.CallStack).IsEqualTo(callStack);
+        await Assert.That(context.CallStack).IsEqualTo(engine.Debug.CallStack);
     }
 
     [Test]

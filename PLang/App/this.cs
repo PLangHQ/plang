@@ -170,6 +170,12 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     public Debugging Debug { get; }
 
     /// <summary>
+    /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
+    /// audit list of every error pushed. Populated by error.handle.Wrap during recovery.
+    /// </summary>
+    public global::App.Errors.@this Errors { get; } = new();
+
+    /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
     /// </summary>
     public Testing Testing { get; }
@@ -370,25 +376,29 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     }
 
     /// <summary>
-    /// Dispatches an action through the production execution path: callstack frame,
-    /// Context.Step/Goal/Event save+restore, ServiceError translation in catch, and
-    /// frame.SnapshotVariables on completion. The generated handler ExecuteAsync is
-    /// thin — it sets markers, eagerly resolves [Provider] properties, resets backing
-    /// fields, validates [IsNotNull], then calls Run() directly. App.Run wraps it.
-    /// Return variable mapping is owned by Action.RunAsync, not here.
+    /// Dispatches an action through the production execution path: pushes a Call onto
+    /// the CallStack tree (AsyncLocal Current updates), saves/restores Context anchors
+    /// (Step/Goal/Event), populates Call.Errors + stack.Audit on failure, and translates
+    /// CLR exceptions into ServiceError with the post-Push chain attached.
+    ///
+    /// The generated handler ExecuteAsync is thin — it sets markers, eagerly resolves
+    /// [Provider] properties, resets backing fields, validates [IsNotNull], then calls
+    /// Run() directly. App.Run wraps it. Return variable mapping is owned by
+    /// Action.RunAsync, not here.
     /// </summary>
-    public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context)
+    public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context, CallStack.Call.@this? cause = null)
     {
         var (handler, error) = Modules.GetCodeGenerated(action);
         if (error != null)
             return Data.@this.FromError(error);
 
         var step = action.Step;
-        var callFrames = context.CallStack?.GetFrames()
-            ?? (IReadOnlyList<CallStack.CallFrame>)Array.Empty<CallStack.CallFrame>();
+        var stack = Debug.CallStack;
 
-        // Push a frame for this action's dispatch.
-        var frame = context.CallStack?.Push(action);
+        // Push BEFORE the handler runs so call.SnapshotChain() inside the catch reflects
+        // "self at index [0]" — the failing Call IS in the chain (behavior tweak vs old
+        // shape that captured pre-push frames).
+        await using var call = stack.Push(action, context.Variables, cause);
 
         // Save context anchors so nested dispatch can mutate them and we restore on the way out.
         var previousStep = context.Step;
@@ -404,8 +414,12 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
             // Stamp __SnapshotParams onto Error.Params if the handler returned an error
             // without one already populated. (Generator no longer attaches snapshots
             // inside ExecuteAsync — that responsibility moved here in v4 Phase 3.)
-            if (!result.Success && result.Error is Errors.Error err && err.Params == null)
-                err.Params = handler.SnapshotParams();
+            if (!result.Success && result.Error is global::App.Errors.Error err)
+            {
+                if (err.Params == null) err.Params = handler.SnapshotParams();
+                call.Errors.Add(result.Error!);
+                stack.Audit.Add(result.Error!);
+            }
             return result;
         }
         // Deliberately catches OperationCanceledException — timeout.after depends on this:
@@ -414,16 +428,18 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         // bubbling up. Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            var serviceErr = new Errors.ServiceError(
-                ex.Message, step, callFrames, "ServiceError", 400) { Exception = ex };
+            var serviceErr = new global::App.Errors.ServiceError(
+                ex.Message, step!, call.SnapshotChain(), "ServiceError", 400) { Exception = ex };
             serviceErr.Params = handler!.SnapshotParams();
+            call.Errors.Add(serviceErr);
+            stack.Audit.Add(serviceErr);
             return Data.@this.FromError(serviceErr);
         }
         finally
         {
-            frame?.SnapshotVariables(context.Variables);
-            if (context.CallStack != null)
-                await context.CallStack.PopAsync();
+            // Anchor restore runs before the `await using` dispose — the Call's own
+            // bookkeeping (AsyncLocal restore, Children removal when history off,
+            // Variables.OnSet unsubscribe) doesn't depend on Step/Goal/Event being set.
             context.Step = previousStep;
             context.Goal = previousGoal;
             context.Event = previousEvent;
@@ -450,13 +466,13 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
             if (!FileSystem.File.Exists(appPrPath) && !Create)
             {
                 if (Console.IsInputRedirected)
-                    return Data.@this.FromError(new Errors.ServiceError(
+                    return Data.@this.FromError(new global::App.Errors.ServiceError(
                         $"No app found at {AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
                 Console.Write($"No app found at {AbsolutePath}. Create new app? (y/n): ");
                 var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
                 if (answer != "y" && answer != "yes")
-                    return Data.@this.FromError(new Errors.ServiceError(
+                    return Data.@this.FromError(new global::App.Errors.ServiceError(
                         "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
             }
 
@@ -468,7 +484,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         // Resolve goal file
         var goalFile = context.Variables.GetValue("goalFile") as string;
         if (string.IsNullOrEmpty(goalFile))
-            return App.Data.@this.FromError(new Errors.ServiceError(
+            return App.Data.@this.FromError(new global::App.Errors.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
         var goalCall = new GoalCall { PrPath = goalFile };

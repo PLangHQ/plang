@@ -31,19 +31,16 @@ public class @this
     /// Collection-level event — fires for any name. Per-variable Data.OnChange still fires too.
     /// Used by Call.@this diff capture: subscribe in ctor, unsubscribe in DisposeAsync.
     /// </summary>
-    [JsonIgnore]
     public event Action<string, object?, object?>? OnSet;
 
     /// <summary>
     /// Fires when a name is created for the first time. Carries (name, value).
     /// </summary>
-    [JsonIgnore]
     public event Action<string, object?>? OnCreate;
 
     /// <summary>
     /// Fires when a name is removed.
     /// </summary>
-    [JsonIgnore]
     public event Action<string>? OnRemove;
 
     public @this()

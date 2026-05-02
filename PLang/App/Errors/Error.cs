@@ -1,6 +1,7 @@
 using System.Text;
 using App.Actor.Context;
 using Goal = App.Goals.Goal.@this;
+using Call = App.CallStack.Call.@this;
 
 namespace App.Errors;
 
@@ -35,7 +36,7 @@ public class Error : IError
     public List<IError> ErrorChain { get; } = new();
     public Step? Step { get; set; }
     public Goal? Goal { get; set; }
-    public IReadOnlyList<CallFrame> CallFrames { get; set; } = Array.Empty<CallFrame>();
+    public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();
     public Dictionary<string, string> Variables { get; set; } = new();
 
     /// <summary>
@@ -69,23 +70,23 @@ public class Error : IError
     }
 
     /// <summary>
-    /// Creates an error with a step and explicit call stack snapshot.
+    /// Creates an error with a step and explicit Call chain snapshot.
     /// </summary>
-    public Error(string message, Step? step, IReadOnlyList<CallFrame> callFrames, string key = "Error", int statusCode = 400)
+    public Error(string message, Step? step, IReadOnlyList<Call> callFrames, string key = "Error", int statusCode = 400)
         : this(message, step, key, statusCode)
     {
         CallFrames = callFrames;
     }
 
     /// <summary>
-    /// Creates an error from an execution context. Captures step, goal, and call stack automatically.
+    /// Creates an error from an execution context. Captures step, goal, and Call chain automatically.
     /// </summary>
     public Error(string message, Actor.Context.@this context, string key = "Error", int statusCode = 400)
         : this(message, context.Step, key, statusCode)
     {
         Goal = context.Goal;
         Context = context;
-        CallFrames = context.CallStack?.GetFrames() ?? (IReadOnlyList<CallFrame>)Array.Empty<CallFrame>();
+        CallFrames = context.CallStack?.Current?.SnapshotChain() ?? (IReadOnlyList<Call>)Array.Empty<Call>();
     }
 
     /// <summary>
