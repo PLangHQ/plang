@@ -14,28 +14,37 @@
       "plan": ".bot/runtime2-callstack/architect/v1/plan.md",
       "actions": [
         {
-          "paths": ["Documentation/Runtime2/todos.md"],
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
           "context": "Appended Callback context entry per user request. Captures concept, settled-with-user design points (developer-declared vars, encrypted on wire, sign goal_hash), and three constraints Callback imposes on the callstack branch: (1) Frame stays OBP - no denormalized IDs, (2) Variable snapshot is Callback's concern not callstack's, (3) No Data.Pause lane needed in callstack work. Out-of-scope flag preserved for Callback's own future branch."
         },
         {
-          "paths": [".bot/runtime2-callstack/architect/v1/plan.md"],
+          "paths": [
+            ".bot/runtime2-callstack/architect/v1/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Full plan after multi-turn design discussion with user. Covers ownership move (Context -> Debug), rename (CallFrame -> Call.@this), causal Cause link, Option B recovery (synthetic frame), Option X sibling-split (temporal compression), %!error% via stack-walk, Variables.Events for diffs, Tags from both C# and PLang sides, auto-materialization from Action.Step.Goal.Parent walk on error, scalar-by-default diff capture to avoid prior OOM scenario, render-agnostic data so flamegraph projection falls out for free. 10 phases, file map, risk register, 10 PLang tests + 4 C# test suites listed. Callback explicitly out of scope, recorded in todos for future branch."
         },
         {
-          "paths": [".bot/runtime2-callstack/architect/v1/summary.md", ".bot/runtime2-callstack/architect/summary.md"],
+          "paths": [
+            ".bot/runtime2-callstack/architect/v1/summary.md",
+            ".bot/runtime2-callstack/architect/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Architect session and bot-root summaries. v1/summary.md describes settled decisions, the new App.Run shape as code example, and the next-bot recommendation (test-designer). Bot-root summary.md is the cross-session light index."
         },
         {
-          "paths": [".bot/runtime2-callstack/report.json"],
+          "paths": [
+            ".bot/runtime2-callstack/report.json"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -113,7 +122,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "16 PLang test goals — one goal per file per project rule. Cover depth tracking, cross-file chain, Audit accumulator, %!error% nesting incl. null-outside-scope, Cause linkage in recovery body, diff capture in --debug={callstack:{diff:true}}, timeout-modifier-as-cancel-channel (replaces P9 cancel primitive), direct/indirect cycle detection, tag action both Pairs and Label forms, Handled flag both success and failure cases. All bodies are `- throw \"not implemented\"`."
+          "context": "16 PLang test goals \u2014 one goal per file per project rule. Cover depth tracking, cross-file chain, Audit accumulator, %!error% nesting incl. null-outside-scope, Cause linkage in recovery body, diff capture in --debug={callstack:{diff:true}}, timeout-modifier-as-cancel-channel (replaces P9 cancel primitive), direct/indirect cycle detection, tag action both Pairs and Label forms, Handled flag both success and failure cases. All bodies are `- throw \"not implemented\"`."
         },
         {
           "paths": [
@@ -145,7 +154,58 @@
       "after": {
         "status": "test contract complete",
         "health": "no blockers; ready for coder",
-        "notes": "Existing PLang.Tests/App/Core/CallStackTests.cs (against old IsEnabled/Frame.Parent/EventId/Phase shape) intentionally NOT touched — coder will delete/replace it during migration. Two design choices recorded with user approval: P8 OOM safety moved to C# (DiffCaptureTests memory-bound test), P9 cancellation expressed via existing `timeout after` modifier rather than introducing a new cancel primitive. Per-batch interactive flow short-circuited after batch 4 at user request."
+        "notes": "Existing PLang.Tests/App/Core/CallStackTests.cs (against old IsEnabled/Frame.Parent/EventId/Phase shape) intentionally NOT touched \u2014 coder will delete/replace it during migration. Two design choices recorded with user approval: P8 OOM safety moved to C# (DiffCaptureTests memory-bound test), P9 cancellation expressed via existing `timeout after` modifier rather than introducing a new cancel primitive. Per-batch interactive flow short-circuited after batch 4 at user request."
+      }
+    },
+    {
+      "id": "0f7d9ae4-2fc4-4556-a8f0-67b3386e379a",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-02T17:00:00Z",
+      "timestamp_end": "2026-05-02T22:19:56Z",
+      "intent": "Five-pass simplicity/OBP/behavioral review of coder/v1 callstack refactor.",
+      "before": {
+        "assumptions": "coder/v1 lands AsyncLocal Call tree, Errors namespace, Cause linkage, Variables collection events, tag action, --debug={callstack:...}; C# tests pass (2580/2580); PLang tests blocked on pre-existing builder issue.",
+        "risk": "Concurrent paths (Task.WhenAll branches sharing a Variables) and the new exception flow (CallStackOverflowException vs App.Run try/catch) most likely to harbor surprise behavior."
+      },
+      "plan": ".bot/runtime2-callstack/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-callstack/codeanalyzer/v1/plan.md",
+            ".bot/runtime2-callstack/codeanalyzer/v1/result.md",
+            ".bot/runtime2-callstack/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-callstack/codeanalyzer/v1/summary.md",
+            ".bot/runtime2-callstack/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Codeanalyzer artefacts: plan, full result.md (19 findings, 0 MAJOR, 5 MINOR-with-fix-recommendation, ~14 NITs), verdict.json {status:fail}, v1 summary, bot-root summary index."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/CallStack/CallStackFlags.cs",
+            "PLang/App/CallStack/Diff.cs",
+            "PLang/App/CallStack/SerializableCallStack.cs",
+            "PLang/App/Errors/this.cs",
+            "PLang/App/this.cs",
+            "PLang/App/modules/debug/tag.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Debug/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five-pass analysis: OBP, simplification, readability, behavioral reasoning, deletion test. Key findings: (1) CallStackFlags.Tags documented but never checked - tag writes unconditional. (2) Errors._current is static AsyncLocal on instance class - inconsistent with CallStack which deliberately moved to instance for test isolation. (3) stack.Push runs OUTSIDE App.Run try/catch - CallStackOverflowException escapes the exception->Data contract. (4) Call.Diffs.Add not thread-safe; OnSet fired without lock; parallel branches sharing Variables race on List<T>. (5) context.Step.Context = context mutates shared Step, not restored in finally. (6) SerializableCallStack.cs is dead code - zero refs in PLang/, only test GlobalUsings aliases. NITs: depth recomputed three times per Push (cycle-check, ContainsGoal, Call.Depth), CallStackOverflowException reuses depth-message for goal-cycle, GoalFirst/RetryFirst branches duplicate structure."
+        }
+      ],
+      "after": {
+        "status": "review complete - NEEDS WORK",
+        "health": "no MAJOR; 5 MINOR fixes recommended before tester",
+        "notes": "Send back to coder for #1 (Diffs race), #10 (Tags flag), #11 (Errors static AsyncLocal), #13 (Push exception escape), #14 (Step.Context mutation). NITs optional. After fixes: tester."
       }
     }
   ]
