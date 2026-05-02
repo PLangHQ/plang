@@ -195,8 +195,11 @@ public sealed partial class @this : IAsyncDisposable
             _onSetHandler = null;
         }
 
-        if (!_stack.Flags.History)
-            Caller?.Children.Remove(this);
+        if (!_stack.Flags.History && Caller != null)
+        {
+            lock (Caller.Children)
+                Caller.Children.Remove(this);
+        }
 
         // AsyncLocal restore: only flip back if we're still the Current. If a parallel branch
         // has its own Current, we leave that alone.

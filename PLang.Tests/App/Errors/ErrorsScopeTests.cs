@@ -1,61 +1,92 @@
+using global::App.Errors;
+
 namespace PLang.Tests.App.Errors;
 
-// New App.Errors.@this — AsyncLocal-flowed current error + run-wide audit.
-// Replaces today's Context.Error / vars.Set("!error", ...) registration.
 public class ErrorsScopeTests
 {
     [Test]
     public async Task Error_NullOutsideAnyPushScope()
     {
-        // Fresh app.Errors with no Push: app.Errors.Error is null.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var errors = new global::App.Errors.@this();
+        await Assert.That(errors.Error).IsNull();
     }
 
     [Test]
     public async Task Push_SetsErrorToPushedValue()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var errors = new global::App.Errors.@this();
+        var err = new Error("Boom");
+        using (errors.Push(err))
+        {
+            await Assert.That(errors.Error).IsEqualTo(err);
+        }
     }
 
     [Test]
     public async Task Push_ReturnsDisposable_RestoresPreviousOnDispose()
     {
-        // using (app.Errors.Push(e)) { } restores Error to its previous value on exit.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var errors = new global::App.Errors.@this();
+        var err = new Error("Boom");
+        using (errors.Push(err)) { }
+        await Assert.That(errors.Error).IsNull();
     }
 
     [Test]
     public async Task Push_NestedScopes_LifoRestore()
     {
-        // Push A, Push B, dispose B → Error == A. Dispose A → Error == null.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var errors = new global::App.Errors.@this();
+        var a = new Error("A");
+        var b = new Error("B");
+        using (errors.Push(a))
+        {
+            await Assert.That(errors.Error).IsEqualTo(a);
+            using (errors.Push(b))
+            {
+                await Assert.That(errors.Error).IsEqualTo(b);
+            }
+            await Assert.That(errors.Error).IsEqualTo(a);
+        }
+        await Assert.That(errors.Error).IsNull();
     }
 
     [Test]
     public async Task All_AccumulatesEveryPushedError()
     {
-        // app.Errors.All grows monotonically — every Push appends, never trims.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var errors = new global::App.Errors.@this();
+        var a = new Error("A");
+        var b = new Error("B");
+        using (errors.Push(a)) { using (errors.Push(b)) { } }
+        await Assert.That(errors.All.Count).IsEqualTo(2);
+        await Assert.That(errors.All[0]).IsEqualTo(a);
+        await Assert.That(errors.All[1]).IsEqualTo(b);
     }
 
     [Test]
     public async Task Error_FlowsAcrossAwait_ViaAsyncLocal()
     {
-        // Push, then await some work; inside the awaited continuation, app.Errors.Error is still the pushed value.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var errors = new global::App.Errors.@this();
+        var err = new Error("X");
+        using (errors.Push(err))
+        {
+            await Task.Yield();
+            await Assert.That(errors.Error).IsEqualTo(err);
+        }
     }
 
     [Test]
     public async Task Error_DoesNotLeakAcrossParallelBranches()
     {
-        // Task.WhenAll(scope1, scope2) where each branch Pushes a different error: branches see only their own.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var errors = new global::App.Errors.@this();
+        var a = new Error("A");
+        var b = new Error("B");
+        IError? aSeen = null, bSeen = null;
+
+        async Task BranchA() { using (errors.Push(a)) { await Task.Yield(); aSeen = errors.Error; } }
+        async Task BranchB() { using (errors.Push(b)) { await Task.Yield(); bSeen = errors.Error; } }
+
+        await Task.WhenAll(BranchA(), BranchB());
+        // Each branch saw its own pushed error.
+        await Assert.That(aSeen).IsEqualTo(a);
+        await Assert.That(bSeen).IsEqualTo(b);
     }
 }

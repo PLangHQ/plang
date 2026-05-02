@@ -1,53 +1,88 @@
 namespace PLang.Tests.App.VariablesTests;
 
-// Variables.@this gains three collection-level events: OnSet, OnCreate, OnRemove.
-// These complement (do not replace) the existing per-variable events on individual Data instances.
 public class CollectionEventsTests
 {
     [Test]
     public async Task OnSet_FiresOnRebind_WithBeforeAfter()
     {
-        // Set existing variable → OnSet(name, before, after) fires.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var vars = new Variables();
+        vars.Set("name", "old");
+
+        string? capturedName = null;
+        object? capturedBefore = null, capturedAfter = null;
+        vars.OnSet += (n, before, after) => { capturedName = n; capturedBefore = before; capturedAfter = after; };
+
+        vars.Set("name", "new");
+
+        await Assert.That(capturedName).IsEqualTo("name");
+        await Assert.That(capturedBefore).IsEqualTo("old");
+        await Assert.That(capturedAfter).IsEqualTo("new");
     }
 
     [Test]
     public async Task OnCreate_FiresOnInitialSet()
     {
-        // First Set of a name → OnCreate(name, value) fires.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var vars = new Variables();
+        string? capturedName = null;
+        object? capturedValue = null;
+        vars.OnCreate += (n, v) => { capturedName = n; capturedValue = v; };
+
+        vars.Set("name", "ingi");
+
+        await Assert.That(capturedName).IsEqualTo("name");
+        await Assert.That(capturedValue).IsEqualTo("ingi");
     }
 
     [Test]
     public async Task OnRemove_FiresOnDelete()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var vars = new Variables();
+        vars.Set("name", "ingi");
+        string? capturedName = null;
+        vars.OnRemove += n => capturedName = n;
+
+        vars.Remove("name");
+        await Assert.That(capturedName).IsEqualTo("name");
     }
 
     [Test]
     public async Task OnSet_DoesNotFireOnInitialSet()
     {
-        // Initial set → OnCreate only, NOT OnSet (no "before" exists).
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var vars = new Variables();
+        var setFired = false;
+        vars.OnSet += (_, _, _) => setFired = true;
+
+        vars.Set("name", "first");
+        await Assert.That(setFired).IsFalse();
     }
 
     [Test]
     public async Task PerVariableEvents_StillFire_BackCompat()
     {
-        // The pre-existing per-Data OnChange/OnCreate/OnDelete events still fire.
-        // Used by --debug={"variables":[...]}; must not regress.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        // Per-variable Data.OnChange must still fire — used by --debug={"variables":[...]}.
+        var vars = new Variables();
+        vars.Set("name", "first");
+
+        var data = vars.Get("name");
+        bool perVarFired = false;
+        data.OnChange.Add((oldData, newData) => perVarFired = true);
+
+        vars.Set("name", "second");
+
+        await Assert.That(perVarFired).IsTrue();
     }
 
     [Test]
     public async Task Events_NotFired_AfterUnsubscribe()
     {
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var vars = new Variables();
+        vars.Set("name", "first");
+        var fired = false;
+        Action<string, object?, object?> handler = (_, _, _) => fired = true;
+        vars.OnSet += handler;
+        vars.OnSet -= handler;
+
+        vars.Set("name", "second");
+        await Assert.That(fired).IsFalse();
     }
 }

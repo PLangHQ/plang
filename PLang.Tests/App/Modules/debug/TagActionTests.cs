@@ -1,47 +1,81 @@
+using global::App.modules.debug;
+using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
+
 namespace PLang.Tests.App.Modules.debug;
 
-// New PLang `tag` action under PLang/App/modules/debug/tag.cs.
-// Two input shapes: Pairs (Dict<string,string>) or Label (bare string).
-// No-op when CallStack.Current is null.
 public class TagActionTests
 {
     [Test]
     public async Task Tag_PairsForm_MergesIntoCurrentTags()
     {
-        // Action with Pairs={"k1":"v1","k2":"v2"} → Current.Tags contains both entries.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await using var app = new global::App.@this("/app");
+        await using var call = app.Debug.CallStack.Push(MakeAction("Goal"));
+        var action = new Tag
+        {
+            Context = app.Context,
+            Pairs = new global::App.Data.@this<Dictionary<string, string>>(
+                "Pairs",
+                new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" })
+        };
+        await action.Run();
+
+        await Assert.That(call.Tags).IsNotNull();
+        await Assert.That(call.Tags!["k1"]).IsEqualTo("v1");
+        await Assert.That(call.Tags!["k2"]).IsEqualTo("v2");
     }
 
     [Test]
     public async Task Tag_LabelForm_SetsTagsLabelTrue()
     {
-        // Action with Label="manual-checkpoint" → Current.Tags["manual-checkpoint"] == "true".
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await using var app = new global::App.@this("/app");
+        await using var call = app.Debug.CallStack.Push(MakeAction("Goal"));
+        var action = new Tag
+        {
+            Context = app.Context,
+            Label = new global::App.Data.@this<string>("Label", "manual-checkpoint")
+        };
+        await action.Run();
+
+        await Assert.That(call.Tags).IsNotNull();
+        await Assert.That(call.Tags!["manual-checkpoint"]).IsEqualTo("true");
     }
 
     [Test]
     public async Task Tag_NoOpWhenCurrentNull()
     {
-        // CallStack.Current null → handler returns Data.Ok() without throwing.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await using var app = new global::App.@this("/app");
+        // No Push — Current is null.
+        var action = new Tag
+        {
+            Context = app.Context,
+            Label = new global::App.Data.@this<string>("Label", "x")
+        };
+        var result = await action.Run();
+        await Assert.That(result.Success).IsTrue();
     }
 
     [Test]
     public async Task Tag_AllocatesTagsDict_WhenNull()
     {
-        // Current.Tags initially null → first tag write allocates the dict.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        await using var app = new global::App.@this("/app");
+        await using var call = app.Debug.CallStack.Push(MakeAction("Goal"));
+        await Assert.That(call.Tags).IsNull();
+
+        var action = new Tag
+        {
+            Context = app.Context,
+            Label = new global::App.Data.@this<string>("Label", "x")
+        };
+        await action.Run();
+        await Assert.That(call.Tags).IsNotNull();
     }
 
     [Test]
     public async Task Tag_ActionIsNotCacheable()
     {
-        // Tag action is observability — Cacheable must be false.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var attr = typeof(Tag).GetCustomAttributes(typeof(global::App.modules.ActionAttribute), false)
+            .Cast<global::App.modules.ActionAttribute>().FirstOrDefault();
+        await Assert.That(attr).IsNotNull();
+        await Assert.That(attr!.Cacheable).IsFalse();
     }
 }

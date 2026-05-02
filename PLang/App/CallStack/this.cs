@@ -17,7 +17,9 @@ namespace App.CallStack;
 /// </summary>
 public sealed partial class @this
 {
-    private static readonly AsyncLocal<Call.@this?> _current = new();
+    // Instance-level — each CallStack has its own AsyncLocal flow. Tests can spin up
+    // multiple CallStacks in the same process without polluting each other's Current.
+    private readonly AsyncLocal<Call.@this?> _current = new();
     private Call.@this? _root;
 
     /// <summary>
@@ -86,12 +88,19 @@ public sealed partial class @this
 
         var call = new Call.@this(action, caller, cause, this, Flags, caller, variables ?? Variables);
 
-        caller?.Children.Add(call);
+        // Children mutation is locked per-caller because parallel branches (Task.WhenAll
+        // forking the AsyncLocal) Push concurrently under the same caller.
+        if (caller != null)
+        {
+            lock (caller.Children)
+            {
+                caller.Children.Add(call);
 
-        // FIFO eviction when history is on and the cap would be exceeded. Eviction targets
-        // the caller's Children, not the global tree — same-level retention only.
-        if (Flags.History && caller != null && caller.Children.Count > Flags.MaxFrames)
-            caller.Children.RemoveAt(0);
+                // FIFO eviction when history is on and the cap would be exceeded.
+                if (Flags.History && caller.Children.Count > Flags.MaxFrames)
+                    caller.Children.RemoveAt(0);
+            }
+        }
 
         if (_root == null) _root = call;
         _current.Value = call;
