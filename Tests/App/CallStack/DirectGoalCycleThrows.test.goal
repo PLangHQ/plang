@@ -1,0 +1,3 @@
+TestDirectGoalCycleThrows
+/ A goal that calls itself directly throws CallStackOverflowException with a chain path showing the cycle (caught via ContainsGoal on Push).
+- throw "not implemented"

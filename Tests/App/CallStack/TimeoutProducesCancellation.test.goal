@@ -1,0 +1,3 @@
+TestTimeoutAfterModifierProducesCancellationError
+/ A step with `timeout after 100ms` modifier targeting a long-running action produces a Call whose Errors[0] is an OperationCanceledException-shaped IError (cancellation-distinct, not a generic failure).
+- throw "not implemented"

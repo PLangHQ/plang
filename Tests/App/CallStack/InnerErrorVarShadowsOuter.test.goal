@@ -1,0 +1,3 @@
+TestInnerErrorVarShadowsOuter
+/ Inside a nested error.handle's recovery body, %!error% reads the inner caught error — not the outer one — while the inner scope is alive.
+- throw "not implemented"

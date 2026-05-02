@@ -1,0 +1,3 @@
+TestRecoveryActionCauseIsErroredAction
+/ Inside a recovery body invoked by error.handle, %!callStack.Current.Cause.Action.Module% resolves to the module of the action that errored (proves Cause is wired to the errored Call).
+- throw "not implemented"

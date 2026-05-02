@@ -1,0 +1,3 @@
+TestVariableDiffsCapturedInDiffMode
+/ Run with --debug={callstack:{diff:true}}. Set %name% in step 1, modify in step 2; %!callStack.Current.Caller.Children[1].Diffs[0].Before% equals the prior value.
+- throw "not implemented"

@@ -1,0 +1,3 @@
+TestAuditAccumulatesHandledAndUnhandledErrors
+/ Three handled errors plus one unhandled in a single foreach iteration produces %!callStack.Audit.Count% == 4, with Handled flags reflecting recovery outcomes per Call.
+- throw "not implemented"

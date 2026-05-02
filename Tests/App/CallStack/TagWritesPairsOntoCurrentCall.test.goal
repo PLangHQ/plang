@@ -1,0 +1,3 @@
+TestTagWritesPairsOntoCurrentCall
+/ A `- tag critical=true, owner=checkout` step writes both pairs into %!callStack.Current.Tags% under --debug={callstack:{tags:true}}.
+- throw "not implemented"

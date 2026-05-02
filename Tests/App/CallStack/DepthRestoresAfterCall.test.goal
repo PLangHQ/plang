@@ -1,0 +1,3 @@
+TestDepthRestoresAfterCall
+/ After a called goal returns, %!callStack.Current% walks back to the same depth as before the call.
+- throw "not implemented"

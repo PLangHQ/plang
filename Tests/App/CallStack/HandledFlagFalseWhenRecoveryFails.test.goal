@@ -1,0 +1,3 @@
+TestHandledFlagFalseWhenRecoveryFails
+/ When error.handle's recovery body itself errors, the errored Call's Handled flag stays false and the recovery error is appended to caught.ErrorChain.
+- throw "not implemented"

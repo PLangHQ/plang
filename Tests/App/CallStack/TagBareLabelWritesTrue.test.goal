@@ -1,0 +1,3 @@
+TestTagBareLabelWritesTrue
+/ A `- tag "manual-checkpoint"` step writes %!callStack.Current.Tags["manual-checkpoint"]% == "true".
+- throw "not implemented"

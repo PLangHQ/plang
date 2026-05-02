@@ -1,0 +1,3 @@
+TestDepthIncreasesOnGoalCall
+/ Nested goal.call deepens the Caller chain — count of %!callStack.Current.Caller% walks grows by one inside the called goal.
+- throw "not implemented"

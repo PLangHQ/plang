@@ -1,0 +1,3 @@
+TestIndirectGoalCycleThrows
+/ Goals A → B → A (indirect cycle) throws CallStackOverflowException on the second Push of A.
+- throw "not implemented"

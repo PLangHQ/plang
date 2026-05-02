@@ -1,6 +1,0 @@
-Start
-- set %depthBefore% = %!callStack.Depth%
-- assert %depthBefore% is not null, "callStack.Depth should be available"
-- call goal InnerTest
-- set %depthAfter% = %!callStack.Depth%
-- assert %depthAfter% equals %depthBefore%, "depth should return to same level after call"

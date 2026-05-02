@@ -1,0 +1,3 @@
+TestErrorCallFramesContainsDeepNestedChain
+/ Error in a deeply nested cross-file goal.call chain — %!error.CallFrames% reflects the full dynamic chain (not just the static Goal.Parent walk that the old shape produced incorrectly across files).
+- throw "not implemented"

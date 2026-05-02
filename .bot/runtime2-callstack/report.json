@@ -47,6 +47,106 @@
         "health": "no blockers; ready for test-designer",
         "notes": "One implementation-time decision deferred to coder: synthetic recovery frame's Action reference (reuse recovery goal first action vs sentinel RecoveryAction type) - decide when OBP shape becomes concrete. All architectural decisions settled with user across the multi-turn discussion: causal model, recovery Option B, sibling-split Option X, Frame->Call rename, App.Debug ownership, --debug JSON config shape, scalar-by-default diffs, ErrorChain integration. Callback context captured in todos.md so its future design knows the callstack contract."
       }
+    },
+    {
+      "id": "a3c1f4e2-9b7d-4d2a-b8f0-2e1c5a6d8e10",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-02T15:55:00Z",
+      "timestamp_end": "2026-05-02T16:25:00Z",
+      "intent": "Spec test contract for the causal callstack: Call.@this shape, AsyncLocal forking, Cause linkage, recovery via Cause, Variables collection events / diff capture, app.Errors.Push scope, tag action, --debug={callstack:{...}} parse, cycle detection.",
+      "before": {
+        "assumptions": "Architect's plan in v1/plan.md is settled. Existing PLang.Tests/App/Core/CallStackTests.cs targets the OLD shape (IsEnabled, Frame.Parent, EventId, Phase) and will be rewritten/deleted by coder. New tests live under PLang.Tests/App/CallStack/, PLang.Tests/App/Errors/, PLang.Tests/App/Variables/, PLang.Tests/App/Debug/, PLang.Tests/App/Modules/debug/. Existing Tests/App/CallStack/ has thin %!callStack.Depth% goals that will also be rewritten under the new tree-walk semantics.",
+        "risk": "Two PLang tests (P8 OOM safety, P9 cancellation) may not be expressible via plang --test alone. P8 likely belongs in C# (RSS measurement); P9 may need a runtime cancel hook or move to C# side. Will flag in the relevant batch and ask user to decide before writing files."
+      },
+      "plan": ".bot/runtime2-callstack/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/CallStack/CallTests.cs",
+            "PLang.Tests/App/CallStack/CallStackTreeTests.cs",
+            "PLang.Tests/App/CallStack/AsyncLocalForkTests.cs",
+            "PLang.Tests/App/CallStack/CauseLinkageTests.cs",
+            "PLang.Tests/App/CallStack/CycleDetectionTests.cs",
+            "PLang.Tests/App/CallStack/CallStackFlagsTests.cs",
+            "PLang.Tests/App/CallStack/ItemsExtensionTests.cs",
+            "PLang.Tests/App/CallStack/DiffCaptureTests.cs",
+            "PLang.Tests/App/CallStack/CallStackAuditTests.cs",
+            "PLang.Tests/App/CallStack/SnapshotChainTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit stubs (~70 tests) covering the new Call.@this shape, tree mechanics, AsyncLocal fork isolation, Cause distinct from Caller, MaxDepth/ContainsGoal cycle detection, CallStackFlags record struct, Items<T> typed bag, Variables.OnSet-driven diff capture incl. memory-bound test (absorbed P8 from PLang side), run-wide Audit accumulator, and SnapshotChain leaf-to-root ordering with chain[0]==self. All bodies are Assert.Fail(\"Not implemented\")."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Errors/ErrorsScopeTests.cs",
+            "PLang.Tests/App/Errors/ServiceErrorChainTests.cs",
+            "PLang.Tests/App/Variables/CollectionEventsTests.cs",
+            "PLang.Tests/App/Modules/debug/TagActionTests.cs",
+            "PLang.Tests/App/Debug/DebugCallStackParseTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit stubs (~28 tests) for the supporting surfaces: app.Errors.Push LIFO + AsyncLocal flow, ServiceError.CallFrames typed-shape + chain[0]==failing-call invariant, Variables collection-level OnSet/OnCreate/OnRemove with back-compat for per-variable events, the new `tag` action handler (Pairs and Label forms, no-op when Current null, not cacheable), and --debug={callstack:{...}} JSON parse (shorthand, full object, partial, defaults, bad-JSON fallback)."
+        },
+        {
+          "paths": [
+            "Tests/App/CallStack/DepthIncreasesOnGoalCall.test.goal",
+            "Tests/App/CallStack/DepthRestoresAfterCall.test.goal",
+            "Tests/App/CallStack/CrossFileChain.test.goal",
+            "Tests/App/CallStack/Audit.test.goal",
+            "Tests/App/CallStack/OuterErrorVarVisibleAfterInnerHandlerCloses.test.goal",
+            "Tests/App/CallStack/InnerErrorVarShadowsOuter.test.goal",
+            "Tests/App/CallStack/ErrorVarIsNullOutsideHandler.test.goal",
+            "Tests/App/CallStack/CauseLink.test.goal",
+            "Tests/App/CallStack/Diffs.test.goal",
+            "Tests/App/CallStack/TimeoutProducesCancellation.test.goal",
+            "Tests/App/CallStack/DirectGoalCycleThrows.test.goal",
+            "Tests/App/CallStack/IndirectGoalCycleThrows.test.goal",
+            "Tests/App/CallStack/TagWritesPairsOntoCurrentCall.test.goal",
+            "Tests/App/CallStack/TagBareLabelWritesTrue.test.goal",
+            "Tests/App/CallStack/HandledFlagSetWhenRecoverySucceeds.test.goal",
+            "Tests/App/CallStack/HandledFlagFalseWhenRecoveryFails.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "16 PLang test goals — one goal per file per project rule. Cover depth tracking, cross-file chain, Audit accumulator, %!error% nesting incl. null-outside-scope, Cause linkage in recovery body, diff capture in --debug={callstack:{diff:true}}, timeout-modifier-as-cancel-channel (replaces P9 cancel primitive), direct/indirect cycle detection, tag action both Pairs and Label forms, Handled flag both success and failure cases. All bodies are `- throw \"not implemented\"`."
+        },
+        {
+          "paths": [
+            "Tests/App/CallStack/CallStack.test.goal",
+            "Tests/App/CallStack/Start.goal",
+            "Tests/App/CallStack/Inner.goal",
+            "Tests/App/CallStack/InnerTest.goal",
+            "Tests/App/CallStack/.build"
+          ],
+          "type": "delete",
+          "category": "test",
+          "confidence": "high",
+          "context": "Removed obsolete CallStack tests that targeted the deprecated `%!callStack.Depth%` property. The new shape exposes Caller/Children walks instead. Old .build/ cache also removed; regenerates on next build."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callstack/test-designer/v1/plan.md",
+            ".bot/runtime2-callstack/test-designer/v1/test-plan.md",
+            ".bot/runtime2-callstack/test-designer/v1/summary.md",
+            ".bot/runtime2-callstack/test-designer/v1/verdict.json",
+            ".bot/runtime2-callstack/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard test-designer artefacts: plan.md, finalized test-plan.md (file-by-file count + decisions made), v1 summary, verdict.json {pass:true}, bot-root summary index entry."
+        }
+      ],
+      "after": {
+        "status": "test contract complete",
+        "health": "no blockers; ready for coder",
+        "notes": "Existing PLang.Tests/App/Core/CallStackTests.cs (against old IsEnabled/Frame.Parent/EventId/Phase shape) intentionally NOT touched — coder will delete/replace it during migration. Two design choices recorded with user approval: P8 OOM safety moved to C# (DiffCaptureTests memory-bound test), P9 cancellation expressed via existing `timeout after` modifier rather than introducing a new cancel primitive. Per-batch interactive flow short-circuited after batch 4 at user request."
+      }
     }
   ]
 }
