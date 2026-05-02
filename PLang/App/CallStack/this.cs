@@ -72,7 +72,7 @@ public sealed partial class @this
     {
         var caller = _current.Value;
 
-        // Cycle detection — depth and same-goal recurrence both trip CallStackOverflowException.
+        // Cycle detection — depth and goal-cycle both trip CallStackOverflowException.
         if (caller != null)
         {
             int depth = 0;
@@ -82,8 +82,17 @@ public sealed partial class @this
                 throw new CallStackOverflowException(MaxDepth);
         }
 
-        var goalName = action.Step?.Goal?.Name;
-        if (!string.IsNullOrEmpty(goalName) && ContainsGoal(goalName))
+        // Goal-boundary cycle: only enforce when this Push *crosses* into a different goal
+        // than the caller. Two actions inside the same goal share an identity — that's
+        // not a cycle, that's just sequencing (the orchestrator dispatching elseif, retry
+        // dispatching same action, foreach body, etc.). A real cycle is goal A → goal B →
+        // goal A, where the new entry's goal is already on the stack via a prior boundary.
+        // PrPath is the identity (goal Name can collide across an app's goal tree).
+        var goalPath = action.Step?.Goal?.PrPath;
+        var callerGoalPath = caller?.Action.Step?.Goal?.PrPath;
+        if (!string.IsNullOrEmpty(goalPath)
+            && !string.Equals(goalPath, callerGoalPath, StringComparison.OrdinalIgnoreCase)
+            && ContainsGoal(goalPath))
             throw new CallStackOverflowException(MaxDepth);
 
         var call = new Call.@this(action, caller, cause, this, Flags, caller, variables ?? Variables);
@@ -118,16 +127,19 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// True if any Call in the synchronous Caller chain belongs to <paramref name="goalName"/>.
-    /// Case-insensitive. Used by Push to enforce no-direct/no-indirect goal cycles.
+    /// True if any Call in the synchronous Caller chain belongs to a goal with the given
+    /// <paramref name="prPath"/>. Case-insensitive. PrPath is the goal's stable identity —
+    /// goal Name alone can collide across an app's goal tree. Used by Push to enforce
+    /// indirect goal-cycle detection.
     /// </summary>
-    public bool ContainsGoal(string goalName)
+    public bool ContainsGoal(string prPath)
     {
         var node = _current.Value;
         while (node != null)
         {
-            var name = node.Action.Step?.Goal?.Name ?? node.Action.Module;
-            if (string.Equals(name, goalName, StringComparison.OrdinalIgnoreCase))
+            var path = node.Action.Step?.Goal?.PrPath;
+            if (!string.IsNullOrEmpty(path)
+                && string.Equals(path, prPath, StringComparison.OrdinalIgnoreCase))
                 return true;
             node = node.Caller;
         }
