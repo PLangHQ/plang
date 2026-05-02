@@ -222,6 +222,26 @@ public class @this
             return target;
         }
 
+        // Generic IDictionary<string, T> for arbitrary T (JsonObject is the load-bearing
+        // case: T = JsonNode?). Without this arm, `set %trace.pass1% = %x%` on a
+        // type=json `%trace%` falls through to ConvertToDictionary which replaces the
+        // JsonObject with a CLR-reflection dict {Count, Options, Parent, Root} — losing
+        // every JSON key. Use reflection on the runtime indexer to write the value;
+        // for JsonNode-typed slots, serialize CLR objects through JsonSerializer (which
+        // honors [JsonIgnore] etc., so cyclic types like Goal↔Step↔Action don't recurse).
+        var stringDictIface = GetStringKeyedDictInterface(target);
+        if (stringDictIface != null)
+        {
+            var valueType = stringDictIface.GetGenericArguments()[1];
+            value = ConvertForDictSlot(value, valueType);
+            var indexer = stringDictIface.GetProperty("Item");
+            if (indexer != null)
+            {
+                indexer.SetValue(target, value, new object?[] { propertyName });
+                return target;
+            }
+        }
+
         // Handle bracket indexing: "Steps[0]" → property "Steps", index 0
         var bracketIdx = propertyName.IndexOf('[');
         if (bracketIdx > 0)
@@ -309,6 +329,55 @@ public class @this
         if (dict.Count == 0)
             dict["value"] = obj;
         return dict;
+    }
+
+    /// <summary>
+    /// Returns the implemented <c>IDictionary&lt;string, T&gt;</c> interface type if
+    /// <paramref name="target"/> has one (for any <c>T</c>), else null. Used so the
+    /// dot-path set can write through the runtime indexer of foreign string-keyed
+    /// dictionaries (notably <see cref="System.Text.Json.Nodes.JsonObject"/>) without
+    /// falling through to <see cref="ConvertToDictionary"/> — which would replace the
+    /// live JsonObject with a CLR-reflection snapshot and discard its content.
+    /// </summary>
+    private static System.Type? GetStringKeyedDictInterface(object target)
+    {
+        foreach (var iface in target.GetType().GetInterfaces())
+        {
+            if (!iface.IsGenericType) continue;
+            if (iface.GetGenericTypeDefinition() != typeof(IDictionary<,>)) continue;
+            if (iface.GetGenericArguments()[0] == typeof(string)) return iface;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Coerces <paramref name="value"/> to fit a dictionary slot typed as <paramref name="slotType"/>.
+    /// Already-assignable values pass through. <see cref="System.Text.Json.Nodes.JsonNode"/> slots
+    /// (the JsonObject case) get a SerializeToNode round-trip — that's what the rest of the JSON
+    /// pipeline expects in the value position, and it honors <c>[JsonIgnore]</c> so cyclic runtime
+    /// types like Goal↔Step↔Action don't deadlock the serializer. Other slot types fall back to
+    /// TypeMapping; if conversion fails, return the original value and let the caller's indexer
+    /// raise the precise error.
+    /// </summary>
+    private static object? ConvertForDictSlot(object? value, System.Type slotType)
+    {
+        if (value == null) return null;
+        if (slotType.IsAssignableFrom(value.GetType())) return value;
+
+        if (typeof(System.Text.Json.Nodes.JsonNode).IsAssignableFrom(slotType))
+        {
+            try
+            {
+                return System.Text.Json.JsonSerializer.SerializeToNode(value, value.GetType(), Utils.Json.SnapshotClone);
+            }
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
+            {
+                return value;
+            }
+        }
+
+        var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, slotType);
+        return typedValue ?? value;
     }
 
     /// <summary>
