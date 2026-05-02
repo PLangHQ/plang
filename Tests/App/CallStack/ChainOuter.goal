@@ -1,0 +1,3 @@
+ChainOuter
+/ Cross-file chain helper. Calls ChainMiddle which calls ChainThrows. The throw propagates back up through all three goals.
+- call ChainMiddle

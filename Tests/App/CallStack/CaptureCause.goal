@@ -1,0 +1,3 @@
+CaptureCause
+/ Helper for CauseLink test. Runs as a recovery body action — its Call has Cause set to the errored Call. Reads the cause's action module and stashes it.
+- set %causeModule% = %!callStack.Current.Cause.Action.Module%

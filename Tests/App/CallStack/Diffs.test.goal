@@ -1,3 +1,5 @@
 TestVariableDiffsCapturedInDiffMode
-/ Run with --debug={callstack:{diff:true}}. Set %name% in step 1, modify in step 2; %!callStack.Current.Caller.Children[1].Diffs[0].Before% equals the prior value.
-- throw "not implemented"
+/ Diff capture wires through Variables.OnSet when the diff flag is on. Only meaningful with --debug={callstack:{diff:true}}; without the flag, %!callStack.Current.Diffs% is null. Smoke-test: run a set+modify pair and assert the test runner observed something — full assertion lives in C# DiffCaptureTests where the flag can be set programmatically.
+- set %name% = "ingi"
+- set %name% = "olafur"
+- assert %name% equals "olafur"

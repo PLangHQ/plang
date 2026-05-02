@@ -1,3 +1,7 @@
 TestHandledFlagFalseWhenRecoveryFails
-/ When the recovery body itself errors, the original error propagates with the recovery error chained on. (Documented contract — verifying end-to-end from PLang requires inspecting %!error.ErrorChain%, which depends on builder support for that path. C# coverage in CallStackAuditTests pins the underlying flag wiring.)
-- throw "not implemented"
+/ When the recovery body throws, the original error propagates with the recovery error chained. The outermost handler catches the propagated error; afterward we assert the recovery error appended to %!callStack.Audit% (both errors logged).
+- throw error "outer-boom", on error throw error "recovery-failure"
+- on error set %finalCaught% = true
+- assert %finalCaught% is true
+- set %auditCount% = %!callStack.Audit.Count%
+- assert %auditCount% is greater than 1

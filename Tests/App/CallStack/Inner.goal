@@ -1,0 +1,3 @@
+Inner
+/ Helper goal called by depth tests. Stashes the inner Call's depth so the caller can assert.
+- set %innerDepth% = %!callStack.Current.Depth%

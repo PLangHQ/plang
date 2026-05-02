@@ -1,0 +1,3 @@
+CycleA
+/ Helper for IndirectGoalCycleThrows. Calls CycleB, which calls CycleA — second entry into A trips cycle detection at the goal boundary.
+- call CycleB

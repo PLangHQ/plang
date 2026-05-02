@@ -1,3 +1,4 @@
 TestRecoveryActionCauseIsErroredAction
-/ Inside a recovery body invoked by error.handle, %!callStack.Current.Cause.Action.Module% resolves to the module of the action that errored (proves Cause is wired to the errored Call).
-- throw "not implemented"
+/ Inside a recovery body invoked by error.handle, %!callStack.Current.Cause% points at the errored Call. Capture its Action.Module from the recovery body and assert outside the scope.
+- throw error "boom", on error call CaptureCause
+- assert %causeModule% equals "error"

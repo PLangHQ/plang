@@ -1,3 +1,4 @@
 TestOuterErrorVarVisibleAfterInnerHandlerCloses
-/ Outer error.handle wraps an inner error.handle. After the inner Wrap closes, %!error% in the outer recovery body still resolves to the outer caught error (LIFO restore via app.Errors.Push).
-- throw "not implemented"
+/ After the inner error.handle scope closes, the outer recovery body's %!error% restores to the outer caught error via LIFO AsyncLocal scope. Reuses OuterRecoveryWithInnerThrow which sets %outerSeenAfterInner% AFTER its inner handler closes.
+- throw error "outer-boom", on error call OuterRecoveryWithInnerThrow
+- assert %outerSeenAfterInner% equals "outer-boom"

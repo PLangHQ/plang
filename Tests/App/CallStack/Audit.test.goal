@@ -1,3 +1,7 @@
 TestAuditAccumulatesHandledAndUnhandledErrors
-/ Three handled errors plus one unhandled in a single foreach iteration produces %!callStack.Audit.Count% == 4, with Handled flags reflecting recovery outcomes per Call.
-- throw "not implemented"
+/ Three handled errors plus one unhandled in a single foreach iteration produces %!callStack.Audit.Count% == 4. Each ThrowItem invocation throws a different error; the test goal's outer handler catches the unhandled one.
+- set %items% = ["a", "b", "c", "d"]
+- foreach %items%, call ThrowItem item=%item%, on error set %finalCaught% = true
+- assert %finalCaught% is true
+- set %auditCount% = %!callStack.Audit.Count%
+- assert %auditCount% equals 4

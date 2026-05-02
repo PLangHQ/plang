@@ -1,0 +1,3 @@
+SlowGoal
+/ Helper for TimeoutProducesCancellation. Sleeps long enough that the 100ms timeout trips.
+- sleep 1000 ms

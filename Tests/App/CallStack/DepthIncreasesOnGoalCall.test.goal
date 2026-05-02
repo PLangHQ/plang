@@ -1,3 +1,5 @@
 TestDepthIncreasesOnGoalCall
-/ Nested goal.call deepens the Caller chain — count of %!callStack.Current.Caller% walks grows by one inside the called goal.
-- throw "not implemented"
+/ Nested goal.call deepens the Caller chain. Capture depth before the call, have Inner stash its own depth into a context variable, then assert the inner depth is greater than the outer.
+- set %outerDepth% = %!callStack.Current.Depth%
+- call Inner
+- assert %innerDepth% is greater than %outerDepth%

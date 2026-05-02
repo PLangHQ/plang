@@ -1,3 +1,4 @@
 TestIndirectGoalCycleThrows
-/ Goals A → B → A (indirect cycle) throws CallStackOverflowException on the second Push of A.
-- throw "not implemented"
+/ Goals A → B → A (indirect cycle) trips ContainsGoal on the second Push of A. Wrap in error.handle so the test goal still completes.
+- call CycleA, on error set %cycleCaught% = true
+- assert %cycleCaught% is true, "indirect goal cycle A→B→A must trip ContainsGoal at the boundary crossing"

@@ -1,3 +1,4 @@
 TestInnerErrorVarShadowsOuter
-/ Inside a nested error.handle's recovery body, %!error% reads the inner caught error — not the outer one — while the inner scope is alive.
-- throw "not implemented"
+/ Outer error.handle catches "outer-boom", invokes a recovery goal that throws again with its own handler — inside the inner recovery, %!error.Message% is "inner-boom", not the outer one.
+- throw error "outer-boom", on error call OuterRecoveryWithInnerThrow
+- assert %innerSeen% equals "inner-boom"

@@ -1,3 +1,4 @@
 TestTagBareLabelWritesTrue
-/ A `- tag "manual-checkpoint"` step writes %!callStack.Current.Tags["manual-checkpoint"]% == "true".
-- throw "not implemented"
+/ The `tag "label"` bare-string form writes Tags[label]="true". Lazy-allocates the dict on first write.
+- tag "manual-checkpoint"
+- assert %!callStack.Current.Tags."manual-checkpoint"% equals "true"

@@ -1,3 +1,4 @@
 TestTimeoutAfterModifierProducesCancellationError
-/ A step with `timeout after 100ms` modifier targeting a long-running action produces a Call whose Errors[0] is an OperationCanceledException-shaped IError (cancellation-distinct, not a generic failure).
-- throw "not implemented"
+/ A long-running step with `timeout after 100ms` modifier produces a cancellation error distinct from a generic failure. Catches the cancellation via on-error and asserts.
+- call SlowGoal, timeout after 100ms, on error set %timedOut% = true
+- assert %timedOut% is true

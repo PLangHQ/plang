@@ -178,6 +178,30 @@ public sealed partial class @this : IAsyncDisposable
     }
 
     /// <summary>
+    /// PLang-friendly view of the Caller chain — same data as <see cref="SnapshotChain"/>
+    /// but exposed as a property so PLang dot-path resolution can reach it without method
+    /// invocation, and so <c>- foreach %!callStack.Current.Chain%, call ...</c> iterates
+    /// from PLang. Computed each access (cheap — Caller chain depth is typically small).
+    /// </summary>
+    public IReadOnlyList<@this> Chain => SnapshotChain();
+
+    /// <summary>
+    /// Length of the synchronous Caller chain rooted at this Call. <c>Root.Depth == 1</c>
+    /// (only itself), <c>Root.Children[0].Depth == 2</c>, etc. Derived — walks Caller.
+    /// PLang tests can <c>assert %!callStack.Current.Depth% equals 2</c>.
+    /// </summary>
+    public int Depth
+    {
+        get
+        {
+            int count = 0;
+            var node = this;
+            while (node != null) { count++; node = node.Caller; }
+            return count;
+        }
+    }
+
+    /// <summary>
     /// Disposes the Call: stops the stopwatch, unsubscribes diff capture, restores
     /// AsyncLocal Current, and (when history off) removes self from Caller.Children.
     /// </summary>

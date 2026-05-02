@@ -1,3 +1,5 @@
 TestTagWritesPairsOntoCurrentCall
-/ A `- tag critical=true, owner=checkout` step writes both pairs into %!callStack.Current.Tags% under --debug={callstack:{tags:true}}.
-- throw "not implemented"
+/ The `tag` action with key=value pairs writes both into %!callStack.Current.Tags%. Tags is lazy-allocated so the writer always succeeds regardless of the tags flag.
+- tag critical=true, owner=checkout
+- assert %!callStack.Current.Tags.critical% equals "true"
+- assert %!callStack.Current.Tags.owner% equals "checkout"

@@ -1,0 +1,3 @@
+ChainMiddle
+/ Middle link in the cross-file chain. Calls ChainThrows.
+- call ChainThrows
