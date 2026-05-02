@@ -1,3 +1,5 @@
 TestHandledFlagSetWhenRecoverySucceeds
-/ When error.handle's recovery body completes successfully, the errored Call's Handled flag is true and the recovery error is NOT chained onto the caught error.
-- throw "not implemented"
+/ When error.handle's recovery body completes successfully, the recovery suppresses the error, %!error% is restored to null after the scope closes, and downstream code continues.
+- throw error "boom", on error set %recovered% = true
+- assert %recovered% is true, "recovery body should have run"
+- assert %!error% is null, "error scope closed — %!error% restores to null"

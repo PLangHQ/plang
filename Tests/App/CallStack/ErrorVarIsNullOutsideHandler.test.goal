@@ -1,3 +1,4 @@
 TestErrorVarIsNullOutsideHandler
 / Outside any error.handle scope, %!error% resolves to null (no leakage from prior recovery scopes that have already closed).
-- throw "not implemented"
+- set %check% = %!error%
+- assert %check% is null

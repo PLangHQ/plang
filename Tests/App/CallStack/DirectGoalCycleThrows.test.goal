@@ -1,3 +1,4 @@
 TestDirectGoalCycleThrows
-/ A goal that calls itself directly throws CallStackOverflowException with a chain path showing the cycle (caught via ContainsGoal on Push).
-- throw "not implemented"
+/ A goal that calls itself directly throws CallStackOverflowException — caught via ContainsGoal on Push. Wrap in error.handle so the test goal still completes.
+- call TestDirectGoalCycleThrows, on error set %cycleCaught% = true
+- assert %cycleCaught% is true, "self-recursive goal.call must trip ContainsGoal cycle detection"
