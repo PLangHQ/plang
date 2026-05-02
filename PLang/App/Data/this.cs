@@ -537,8 +537,13 @@ public partial class @this
     {
         // Action-destination carve-out: when T is or contains Action.@this, sub-actions
         // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
-        // and convert raw straight through TypeMapping.
-        if (IsActionDestination(typeof(T)))
+        // and convert raw straight through TypeMapping. BUT — only when raw is already a
+        // typed action structure. If raw is itself a `%var%` reference (e.g. `actions=%stepResult.actions%`),
+        // we still have to resolve the variable to GET the action list before the carve-out
+        // applies; otherwise the literal string is handed to TypeConverter which can't
+        // convert "%var%" → StepActions and the build dies with "Cannot convert String to this".
+        if (IsActionDestination(typeof(T))
+            && !(raw is string actStr && actStr.Contains('%') && ctx?.Variables != null))
             return WrapAs<T>(raw, ctx);
 
         // Raw-name carve-out: types like App.Variables.Variable want the literal slot
