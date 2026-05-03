@@ -69,7 +69,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Wrap the goal.call with error.handle so that when the self-recursive call throws (cycle detection), the step recovers by setting %cycleCaught% = true. This ensures the test goal completes.",
+      "guidance": "goal.call to the same goal name to trigger cycle detection; wrap with error.handle so the test goal completes and sets %cycleCaught% = true on error.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -108,7 +108,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the cycle was caught and %cycleCaught% is true.",
+      "guidance": "Post-condition assertion that %cycleCaught% was set to true, confirming cycle detection was caught.",
       "level": "high",
       "confidence": 95,
       "formal": null,

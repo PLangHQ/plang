@@ -19,7 +19,7 @@
               "value": {
                 "name": "ChainMiddle",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": null
               },
               "type": "goal.call"
@@ -30,7 +30,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Use goal.call to invoke ChainMiddle from ChainOuter. This allows any error thrown in ChainMiddle (and deeper) to propagate back to ChainOuter.",
+      "guidance": "Use goal.call to invoke ChainMiddle from ChainOuter. This allows any error thrown inside ChainMiddle (and deeper) to propagate back to ChainOuter.",
       "level": "high",
       "confidence": 98,
       "formal": null,

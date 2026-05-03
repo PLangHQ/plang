@@ -37,6 +37,11 @@
               "action": "handle",
               "parameters": [
                 {
+                  "name": "Key",
+                  "value": "ItemFailed",
+                  "type": "string"
+                },
+                {
                   "name": "Actions",
                   "value": [
                     {
@@ -74,7 +79,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw a 400 error with message \u0027item failed\u0027 and tag it with the current item key (ItemFailed). Wrap with an inner on-error recovery that sets %inner% = true when this throw is handled.",
+      "guidance": "Throw a 400 error with message \u0027item failed\u0027 and tag it with the current item key (ItemFailed). The step text says this is handled by an inner on-error, so we wrap the throw with error.handle that sets %inner% = true when the error occurs.",
       "level": "high",
       "confidence": 78,
       "formal": null,
@@ -94,52 +99,7 @@
           "parameters": [
             {
               "name": "Left",
-              "value": {
-                "Index": 3,
-                "Text": "",
-                "LineNumber": 0,
-                "Indent": 0,
-                "Comment": null,
-                "Actions": [
-                  {
-                    "module": "assert",
-                    "action": "equals",
-                    "Parameters": [
-                      {
-                        "name": "Expected",
-                        "value": "%before%",
-                        "type": "object"
-                      },
-                      {
-                        "name": "Actual",
-                        "value": "%after%",
-                        "type": "object"
-                      },
-                      {
-                        "name": "Message",
-                        "value": "call-stack depth should be restored after Inner returns",
-                        "type": "string"
-                      }
-                    ],
-                    "Defaults": null,
-                    "Modifiers": [],
-                    "Errors": [],
-                    "Warnings": [],
-                    "Examples": [],
-                    "ReturnType": null
-                  }
-                ],
-                "Intent": null,
-                "Guidance": "Assert that %after% equals %before% to verify depth restoration.",
-                "Level": "high",
-                "Confidence": 90,
-                "Formal": "assert.equals Expected([object] %before%), Actual([object] %after%), Message([string] \u0022call-stack depth should be restored after Inner returns\u0022)",
-                "Source": "new",
-                "Keep": false,
-                "Errors": [],
-                "Warnings": [],
-                "WaitForExecution": true
-              },
+              "value": "%item%",
               "type": "object"
             },
             {
@@ -187,7 +147,7 @@
         }
       ],
       "intent": null,
-      "guidance": "If the current item equals \u0027d\u0027, throw a 400 error with message \u0027fourth\u0027 tagged with key Fourth. This is intended to propagate to the outer handler (so no inner on-error recovery is attached here).",
+      "guidance": "If the current %item% equals \u0027d\u0027, throw a 400 error with message \u0027fourth\u0027 tagged with key Fourth. This is the one that should propagate (no inner handler here).",
       "level": "high",
       "confidence": 90,
       "formal": null,

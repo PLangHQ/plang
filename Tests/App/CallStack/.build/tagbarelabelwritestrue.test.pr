@@ -15,9 +15,11 @@
           "action": "tag",
           "parameters": [
             {
-              "name": "Label",
-              "value": "manual-checkpoint",
-              "type": "string"
+              "name": "Pairs",
+              "value": {
+                "manual-checkpoint": "true"
+              },
+              "type": "dict\u003Cstring,string\u003E"
             }
           ],
           "defaults": null,
@@ -25,9 +27,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Use debug.tag to attach a diagnostic label. The step text uses the bare-string form, so we pass it as Label.",
+      "guidance": "debug.tag with a bare string label writes Tags[label] = \u0022true\u0022. Use debug.tag with Pairs containing the label key and value \u0022true\u0022.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -52,6 +54,11 @@
               "name": "Actual",
               "value": "%!callStack.Current.Tags.\u0022manual-checkpoint\u0022%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null,
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -59,9 +66,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert that the current call stack tag value for \u0027manual-checkpoint\u0027 equals the string \u0027true\u0027.",
+      "guidance": "assert.equals to verify the tag value stored at %!callStack.Current.Tags.\u0022manual-checkpoint\u0022% equals string \u0022true\u0022.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true

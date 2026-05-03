@@ -70,9 +70,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw an error with message \u0022boom\u0022. The step text indicates an error scope with a recovery body; map the throw to error.throw and attach error.handle recovery actions that set %recovered% = true.",
+      "guidance": "Throw an error with message \u0022boom\u0022. The step includes an inline on-error recovery that sets %recovered% = true; this recovery should suppress the error within the scope.",
       "level": "high",
-      "confidence": 78,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -104,9 +104,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: assert that %recovered% is true after recovery ran.",
+      "guidance": "Post-condition assertion that %recovered% is true after the recovery body ran. This is an assert.* step, not a conditional branch.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -138,9 +138,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: assert that the scoped %!error% is restored to null after the error.handle scope closes.",
+      "guidance": "Post-condition assertion that the scoped error variable %!error% is null after the error.handle recovery scope closes.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true

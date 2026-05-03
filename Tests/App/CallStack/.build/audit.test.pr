@@ -41,7 +41,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Initialize %items% with a list literal so foreach can iterate over it.",
+      "guidance": "Initialize %items% as a list of strings so foreach can iterate over it.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -116,9 +116,9 @@
                         }
                       ],
                       "Intent": null,
-                      "Guidance": "Post-condition assertion: verify that %causeModule% equals the string \u0022error\u0022 after the recovery body has captured it.",
+                      "Guidance": "Post-condition assertion: verify the captured cause module equals \u0022error\u0022.",
                       "Level": "high",
-                      "Confidence": 95,
+                      "Confidence": 90,
                       "Formal": "assert.equals Expected([string] \u0022error\u0022), Actual([object] %causeModule%)",
                       "Source": "new",
                       "Keep": false,
@@ -203,7 +203,7 @@
             },
             {
               "name": "Message",
-              "value": "Expected %finalCaught% to be true after handled errors",
+              "value": "finalCaught should be true",
               "type": "string"
             }
           ],
@@ -212,7 +212,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: ensure %finalCaught% is true after the foreach completes.",
+      "guidance": "Post-condition: ensure %finalCaught% is true after the foreach loop.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -252,7 +252,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Capture the audit count from the call stack into %auditCount% for the final assertion.",
+      "guidance": "Capture the audit count from the call stack into %auditCount% for later assertion.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -282,7 +282,7 @@
             },
             {
               "name": "Message",
-              "value": "Expected call stack audit count to equal 4",
+              "value": "auditCount should equal 4",
               "type": "string"
             }
           ],
@@ -291,9 +291,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: assert %auditCount% equals 4.",
+      "guidance": "Post-condition: audit count must equal 4.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 93,
       "formal": null,
       "source": null,
       "waitForExecution": true

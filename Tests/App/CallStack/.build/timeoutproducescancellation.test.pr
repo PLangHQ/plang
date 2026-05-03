@@ -111,9 +111,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: assert that %timedOut% was set to true by the on-error handler.",
+      "guidance": "Post-condition assertion that %timedOut% is true. This should fail if the timeout cancellation handler did not set the variable.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

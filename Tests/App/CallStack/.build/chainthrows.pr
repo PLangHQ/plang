@@ -35,7 +35,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Use error.throw to immediately fail the step with the provided message, key, and HTTP status code 404.",
+      "guidance": "Use error.throw to immediately fail the step with the specified message, key, and HTTP status code 404.",
       "level": "high",
       "confidence": 98,
       "formal": null,

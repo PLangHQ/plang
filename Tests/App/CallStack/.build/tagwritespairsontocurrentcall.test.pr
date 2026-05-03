@@ -28,9 +28,9 @@
         }
       ],
       "intent": null,
-      "guidance": "debug.tag writes the provided key=value pairs onto the current call frame tags. Use a dict\u003Cstring,string\u003E for the Pairs parameter.",
+      "guidance": "Use debug.tag to attach the provided key=value pairs (critical=true, owner=checkout) onto the current call frame tags.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -62,9 +62,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the critical tag value equals \u0022true\u0022.",
+      "guidance": "Post-condition assertion that the current call tag \u0027critical\u0027 equals the string \u0022true\u0022. Use assert.equals with Expected as string and Actual as the tag value reference.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -96,9 +96,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the owner tag value equals \u0022checkout\u0022.",
+      "guidance": "Post-condition assertion that the current call tag \u0027owner\u0027 equals the string \u0022checkout\u0022. Use assert.equals with Expected as string and Actual as the tag value reference.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true

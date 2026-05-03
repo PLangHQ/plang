@@ -19,7 +19,7 @@
               "value": {
                 "name": "CycleB",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": null
               },
               "type": "goal.call"
@@ -30,7 +30,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Use goal.call to invoke CycleB from CycleA. This is the only executable action in the step.",
+      "guidance": "Map the step \u0027call CycleB\u0027 to goal.call for goal name CycleB. This is intended to trigger cycle detection when CycleB calls back into CycleA.",
       "level": "high",
       "confidence": 98,
       "formal": null,

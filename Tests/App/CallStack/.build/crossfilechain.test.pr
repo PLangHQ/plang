@@ -69,9 +69,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Execute the goal.call ChainOuter. The step text says \u0027on error set %caught% = true\u0027, so wrap the goal.call with error.handle that runs a recovery action chain setting %caught% to true.",
+      "guidance": "call ChainOuter with on error handling; the known mapping indicates the recovery action is variable.set %caught% = true. This step is expected to trigger the error and be caught by the on-error handler.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -94,7 +94,7 @@
             },
             {
               "name": "Message",
-              "value": "Expected %caught% to be true after ChainOuter error",
+              "value": "Expected %caught% to be true after error",
               "type": "string"
             }
           ],
@@ -103,9 +103,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: assert that %caught% is true.",
+      "guidance": "Post-condition assertion that %caught% is true after the error was caught.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -123,12 +123,12 @@
           "parameters": [
             {
               "name": "Value",
-              "value": [],
+              "value": "%!callStack.Audit%",
               "type": "object"
             },
             {
               "name": "Message",
-              "value": "Expected System.Collections.Generic.List\u00601[App.Errors.IError] to be not null",
+              "value": "Expected %!callStack.Audit% to be not null",
               "type": "string"
             }
           ],
@@ -137,9 +137,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: assert that the audit list variable System.Collections.Generic.List\u00601[App.Errors.IError] is not null.",
+      "guidance": "Post-condition assertion that the audit call stack object (%!callStack.Audit%) is not null.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -177,9 +177,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Compute audit count: set %auditCount% to %!callStack.Audit.Count%.",
+      "guidance": "Assign %auditCount% from the audit frame count: %!callStack.Audit.Count%.",
       "level": "high",
-      "confidence": 80,
+      "confidence": 88,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -216,9 +216,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: assert %auditCount% is greater than 0.",
+      "guidance": "Post-condition assertion that auditCount is greater than 0 (at least one frame present).",
       "level": "high",
-      "confidence": 90,
+      "confidence": 93,
       "formal": null,
       "source": null,
       "waitForExecution": true

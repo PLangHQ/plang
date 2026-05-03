@@ -69,7 +69,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Execute CycleA and, if it throws (expected due to indirect cycle), handle the error by setting %cycleCaught% = true so the test goal can complete.",
+      "guidance": "Use goal.call to invoke CycleA. The step text says to wrap in error.handle so the test goal completes; therefore emit goal.call followed by error.handle that sets %cycleCaught% = true.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -103,9 +103,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: ensure the indirect cycle was caught and %cycleCaught% was set to true.",
+      "guidance": "Post-condition assertion that %cycleCaught% was set to true by the error handler. This must fail if the cycle was not caught.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

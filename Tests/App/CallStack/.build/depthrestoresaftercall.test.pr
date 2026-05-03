@@ -21,7 +21,7 @@
             },
             {
               "name": "Value",
-              "value": 4,
+              "value": "%!callStack.Current.Depth%",
               "type": "object"
             }
           ],
@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Store the current call-stack depth into %before% using variable.set.",
+      "guidance": "Read current call-stack depth from the special runtime variable %!callStack.Current.Depth% and store it in %before%.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -70,9 +70,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Call the Inner goal; this should return control to the caller with restored call-stack depth.",
+      "guidance": "Call the Inner goal; this is the operation whose effect on call-stack depth we are testing.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -95,7 +95,7 @@
             },
             {
               "name": "Value",
-              "value": 4,
+              "value": "%!callStack.Current.Depth%",
               "type": "object"
             }
           ],
@@ -110,7 +110,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Store the call-stack depth after the Inner call into %after%.",
+      "guidance": "After Inner returns, read current call-stack depth again and store it in %after%.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -140,7 +140,7 @@
             },
             {
               "name": "Message",
-              "value": "call-stack depth should be restored after Inner returns",
+              "value": "Call-stack depth was not restored after Inner",
               "type": "string"
             }
           ],
@@ -149,9 +149,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert that %after% equals %before% to verify depth restoration.",
+      "guidance": "Assert that %after% equals %before% to verify the call-stack depth was restored.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true

@@ -70,7 +70,7 @@
         }
       ],
       "intent": null,
-      "guidance": "throw error \u0027inner-boom\u0027 with an on-error handler that sets %innerSeen% to the caught error message (%!error.Message%).",
+      "guidance": "The step text starts with \u0027throw error \u0022inner-boom\u0022\u0027 and includes an \u0027on error\u0027 clause that sets %innerSeen% to the current error message. Map to error.throw with an error.handle recovery chain that sets the variable.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -110,9 +110,9 @@
         }
       ],
       "intent": null,
-      "guidance": "After the inner handler closes, set %outerSeenAfterInner% to the same caught error message (%!error.Message%).",
+      "guidance": "Capture the current error message (%!error.Message%) into %outerSeenAfterInner% via variable.set. This step runs after the inner handler closes, but still uses the outer error context message.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true

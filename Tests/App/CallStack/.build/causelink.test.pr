@@ -42,7 +42,8 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "name": "CaptureCause"
+                            "name": "CaptureCause",
+                            "parameters": []
                           },
                           "type": "goal.call"
                         }
@@ -67,9 +68,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw an error with message \u0022boom\u0022 and, on error, invoke the recovery goal CaptureCause. This matches the step text \u0027throw error \u0022boom\u0022, on error call CaptureCause\u0027.",
+      "guidance": "Step throws an error with message \u0022boom\u0022 and uses error.handle to call recovery goal CaptureCause when the step errors. The @known mapping indicates the exact compiled chain; keep it.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -101,9 +102,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: verify that %causeModule% equals the string \u0022error\u0022 after the recovery body has captured it.",
+      "guidance": "Asserts that %causeModule% equals the string \u0022error\u0022. This is a post-condition invariant after recovery.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

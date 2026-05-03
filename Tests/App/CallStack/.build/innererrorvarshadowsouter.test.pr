@@ -68,7 +68,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw an error with message \u0027outer-boom\u0027. Attach error.handle that calls the recovery goal OuterRecoveryWithInnerThrow when the step errors, so the recovery runs and can set %innerSeen%.",
+      "guidance": "Throw an error with message \u0027outer-boom\u0027. Attach error.handle to intercept it and call the recovery goal OuterRecoveryWithInnerThrow.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -102,9 +102,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: after the recovery flow, %innerSeen% should have been set to the inner error message (\u0027inner-boom\u0027).",
+      "guidance": "Post-condition assertion: after the recovery flow, %innerSeen% should equal \u0027inner-boom\u0027.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true

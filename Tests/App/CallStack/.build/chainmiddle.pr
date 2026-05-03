@@ -30,9 +30,9 @@
         }
       ],
       "intent": null,
-      "guidance": "The step text says to call ChainThrows. Map directly to goal.call with the goal name ChainThrows.",
+      "guidance": "The step text says to call ChainThrows, so compile to goal.call with the goal name ChainThrows. No parameters are provided.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 99,
       "formal": null,
       "source": null,
       "waitForExecution": true

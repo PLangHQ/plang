@@ -21,7 +21,7 @@
             },
             {
               "name": "Value",
-              "value": 4,
+              "value": "%!callStack.Current.Depth%",
               "type": "object"
             }
           ],
@@ -38,7 +38,7 @@
       "intent": null,
       "guidance": "Set %outerDepth% from the current call-stack depth expression so it can be compared after the nested goal.call.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -70,9 +70,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Call the Inner goal. Inner is expected to stash its own depth into %innerDepth% (as described in the test).",
+      "guidance": "Call the goal Inner (non-parallel) to allow it to stash its own depth into %innerDepth% for the subsequent assertion.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 78,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -100,7 +100,7 @@
             },
             {
               "name": "Message",
-              "value": "Expected inner depth to be greater than outer depth",
+              "value": "innerDepth should be greater than outerDepth",
               "type": "string"
             }
           ],
@@ -109,9 +109,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: verify %innerDepth% is greater than %outerDepth% after Inner runs.",
+      "guidance": "Post-condition assertion that %innerDepth% is greater than %outerDepth%.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true

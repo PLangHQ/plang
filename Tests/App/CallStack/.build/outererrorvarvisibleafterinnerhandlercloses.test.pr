@@ -18,14 +18,15 @@
               "name": "Message",
               "value": "outer-boom",
               "type": "string"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "StatusCode",
+              "name": "statuscode",
               "value": 500,
               "type": "int"
             }
           ],
-          "defaults": null,
           "modifiers": [
             {
               "module": "error",
@@ -67,9 +68,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw a structured error for the step, then use error.handle to run the recovery goal OuterRecoveryWithInnerThrow as the on-error action chain.",
+      "guidance": "The step text explicitly says to throw an error, then on error call a recovery goal. Map to error.throw with Message, and wrap it with error.handle that runs a recovery action chain containing goal.call OuterRecoveryWithInnerThrow.",
       "level": "high",
-      "confidence": 70,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -101,9 +102,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: after recovery completes, verify %outerSeenAfterInner% equals the original outer error message.",
+      "guidance": "Post-condition assertion that %outerSeenAfterInner% equals the original outer error string. This is an assert.equals on already-produced variable value.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true

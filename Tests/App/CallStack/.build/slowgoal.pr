@@ -25,7 +25,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Use timer.sleep to pause execution for 1000ms so any shorter timeout (e.g., 100ms) can trigger cancellation.",
+      "guidance": "Use timer.sleep to pause execution for 1000ms so an external 100ms timeout can trigger cancellation.",
       "level": "high",
       "confidence": 98,
       "formal": null,

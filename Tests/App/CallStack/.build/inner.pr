@@ -21,7 +21,7 @@
             },
             {
               "name": "Value",
-              "value": 4,
+              "value": "%!callStack.Current.Depth%",
               "type": "object"
             }
           ],
@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Use variable.set to assign %innerDepth% from the runtime call stack depth expression 4.",
+      "guidance": "Use variable.set to stash the current call stack depth into %innerDepth%. The value expression %!callStack.Current.Depth% is a runtime-provided variable reference.",
       "level": "high",
       "confidence": 95,
       "formal": null,

@@ -760,19 +760,27 @@ public partial class @this
             var fullMatch = System.Text.RegularExpressions.Regex.Match(s, @"^%([^%]+)%$");
             if (fullMatch.Success)
             {
+                var varName = fullMatch.Groups[1].Value;
+                // Infrastructure `%!var%` references (%!callStack%, %!error%, %!trace%,
+                // …) exist at BOTH build time and runtime but with different values —
+                // resolving them here at build bakes the builder's current %!callStack%
+                // depth into the LLM's user-goal .pr, which is wrong. Leave them as raw
+                // strings so the runtime resolves them at dispatch.
+                if (varName.StartsWith('!'))
+                    return s;
                 // Preserve the original `%var%` string when the variable is unset OR
                 // its resolved value is null. Returning null silently strips the
                 // reference, which destroys LLM-emitted parameter values like
                 // `Name = "%x%"` during build (no user variables exist yet, so every
                 // %var% read returns null and the parameter slots get nulled out).
-                // String.Resolve at line below already does this fallback for partial
-                // matches; this brings full-match parity.
-                var resolved = ctx.Variables.Get(fullMatch.Groups[1].Value);
+                // String.Resolve below already does this fallback for partial matches;
+                // this brings full-match parity.
+                var resolved = ctx.Variables.Get(varName);
                 return resolved?.IsInitialized == true && resolved.Value != null
                     ? resolved.Value
                     : (object?)s;
             }
-            return ctx.Variables.Resolve(s);
+            return ctx.Variables.Resolve(s, skipInfrastructure: true);
         }
 
         if (value is IList<object?> innerList) return WalkList(innerList, ctx);

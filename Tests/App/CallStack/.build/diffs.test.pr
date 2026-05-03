@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Assign literal string to %name% using variable.set.",
+      "guidance": "Assign literal string \u0027ingi\u0027 to runtime variable %name% using variable.set.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -76,9 +76,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assign a new literal string to %name% to create a diff event when diff mode is enabled.",
+      "guidance": "Second assignment to %name% with @known mapping; keep the prior compiled action chain to preserve exact behavior.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -112,7 +112,7 @@
       "intent": null,
       "guidance": "Post-condition assertion that %name% equals \u0027olafur\u0027.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

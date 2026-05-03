@@ -30,7 +30,7 @@
         }
       ],
       "intent": null,
-      "guidance": "The step text is a direct goal call to CycleA. Map to goal.call with the goal name CycleA. No parameters are provided.",
+      "guidance": "The step text is a direct goal call to CycleA. Map to goal.call with the goal name CycleA.",
       "level": "high",
       "confidence": 98,
       "formal": null,

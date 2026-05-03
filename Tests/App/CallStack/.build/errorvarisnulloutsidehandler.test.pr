@@ -58,6 +58,11 @@
               "name": "Value",
               "value": "%check%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -65,9 +70,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %check% is null. This should fail if %!error% leaked a value into the outer scope.",
+      "guidance": "Post-condition assertion that %check% is null; fails the step if it is not null.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
