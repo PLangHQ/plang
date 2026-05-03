@@ -1,12 +1,17 @@
 namespace App.modules.debug;
 
 /// <summary>
-/// Writes one or more tags onto the currently-executing Call frame.
+/// Writes one or more tags onto the surrounding (caller's) Call frame.
 /// Two input shapes:
 ///   <c>- tag critical=true, owner=checkout</c>     → Pairs dict
 ///   <c>- tag "manual-checkpoint"</c>               → Label (writes Tags[label]="true")
 /// No-op when CallStack.Current is null (executing outside a tracked dispatch).
 /// Observability action — Cacheable=false; tags are diagnostic side-effects, not values.
+///
+/// Tags attach to the CALLER's frame, not this action's own frame: the user's intent
+/// is to annotate the surrounding step/goal scope, and the tag-action's own Call pops
+/// the moment Run() returns (its Tags would vanish from the live tree before the next
+/// assertion could read them).
 /// </summary>
 [ModuleDescription("Write tag metadata onto the current call frame for diagnostics")]
 [System.ComponentModel.Description("Attach diagnostic tags (key=value pairs or a single label) to the current call")]
@@ -27,17 +32,19 @@ public partial class Tag : IContext
 
     public Task<global::App.Data.@this> Run()
     {
-        var current = Context.CallStack?.Current;
-        if (current == null) return Task.FromResult(global::App.Data.@this.Ok());
+        // Tag the CALLER's Call, not our own — see class summary. Falls back to Current
+        // if there's no caller (we're already at the root, e.g. a single-action scope).
+        var target = Context.CallStack?.Current?.Caller ?? Context.CallStack?.Current;
+        if (target == null) return Task.FromResult(global::App.Data.@this.Ok());
 
         if (Pairs?.Value is { } pairs)
         {
             foreach (var (key, value) in pairs)
-                current.Tag(key, value);
+                target.Tag(key, value);
         }
         else if (Label?.Value is { } label && !string.IsNullOrEmpty(label))
         {
-            current.Tag(label, "true");
+            target.Tag(label, "true");
         }
 
         return Task.FromResult(global::App.Data.@this.Ok());

@@ -267,6 +267,16 @@ public sealed partial class @this : modules.IDataWrappable
         if (!beforeResult.Success) { context.Goal = previousGoal; return beforeResult; }
         if (beforeResult.Handled) { context.Goal = previousGoal; return beforeResult; }
 
+        // Goal-level Call frame. Step actions push under this; the goal frame outlives
+        // any single action's pop, so things like `debug.tag` can attach metadata to a
+        // scope that subsequent steps can still read (they navigate up via Current.Caller).
+        // Cycle detection (ContainsGoal by PrPath) lives here too — entering a goal
+        // already on the chain trips the overflow guard at this Push, before any step
+        // action runs.
+        var goalEntryAction = new Steps.Step.Actions.Action.@this { Module = "goal", ActionName = "enter" };
+        if (Steps.Count > 0) goalEntryAction.Step = Steps[0];
+        await using var goalCall = context.App.Debug.CallStack.Push(goalEntryAction);
+
         try
         {
             var result = await Steps.RunAsync(context);

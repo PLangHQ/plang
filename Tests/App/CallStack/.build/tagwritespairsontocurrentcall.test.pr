@@ -8,7 +8,7 @@
       "text": "debug.tag critical=true, owner=checkout",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "debug.tag with key=value pairs writes both into %!callStack.Current.Tags%. Tags is lazy-allocated so the writer always succeeds regardless of the tags flag.",
+      "comment": "debug.tag attaches Tags to the caller\u0027s Call (the surrounding step/goal scope). Subsequent steps reach those tags via Current.Caller.Tags. Tags dict is lazy-allocated.",
       "actions": [
         {
           "module": "debug",
@@ -28,7 +28,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Use debug.tag to attach the provided key=value pairs (critical=true, owner=checkout) onto the current call frame tags.",
+      "guidance": "Attach diagnostic tags to the current call frame. Use debug.tag with Pairs to set critical and owner.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -37,7 +37,7 @@
     },
     {
       "index": 1,
-      "text": "assert %!callStack.Current.Tags.critical% equals \u0022true\u0022",
+      "text": "assert %!callStack.Current.Caller.Tags.critical% equals \u0022true\u0022",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -53,7 +53,7 @@
             },
             {
               "name": "Actual",
-              "value": "%!callStack.Current.Tags.critical%",
+              "value": "%!callStack.Current.Caller.Tags.critical%",
               "type": "object"
             }
           ],
@@ -62,16 +62,16 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the current call tag \u0027critical\u0027 equals the string \u0022true\u0022. Use assert.equals with Expected as string and Actual as the tag value reference.",
+      "guidance": "Assert that the caller tags dictionary has critical == \u0022true\u0022.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "assert %!callStack.Current.Tags.owner% equals \u0022checkout\u0022",
+      "text": "assert %!callStack.Current.Caller.Tags.owner% equals \u0022checkout\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -87,7 +87,7 @@
             },
             {
               "name": "Actual",
-              "value": "%!callStack.Current.Tags.owner%",
+              "value": "%!callStack.Current.Caller.Tags.owner%",
               "type": "object"
             }
           ],
@@ -96,9 +96,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the current call tag \u0027owner\u0027 equals the string \u0022checkout\u0022. Use assert.equals with Expected as string and Actual as the tag value reference.",
+      "guidance": "Assert that the caller tags dictionary has owner == \u0022checkout\u0022.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -108,7 +108,7 @@
   "visibility": 1,
   "path": "/Tests/App/CallStack/TagWritesPairsOntoCurrentCall.test.goal",
   "prPath": "/Tests/App/CallStack/.build/tagwritespairsontocurrentcall.test.pr",
-  "hash": "408a72231286beb3dcdddf91550946ddd8c74b6203c7e2e46d0f94bf6eb75dec",
+  "hash": "02314ce27b0f1eb7b96df3669fa71c6d36eef852fd3bf4efc3297ad5b9fc4e6d",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

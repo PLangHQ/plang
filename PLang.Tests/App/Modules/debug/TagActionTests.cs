@@ -6,10 +6,15 @@ namespace PLang.Tests.App.Modules.debug;
 public class TagActionTests
 {
     [Test]
-    public async Task Tag_PairsForm_MergesIntoCurrentTags()
+    public async Task Tag_PairsForm_MergesIntoCallerTags()
     {
+        // Real PLang flow: outer scope (goal) has its own Call, then the tag action's
+        // dispatch pushes another Call under it. Tag must write to the OUTER (caller),
+        // not its own Call which pops immediately when Run returns. Otherwise the next
+        // step's assertion can't see the tag.
         await using var app = new global::App.@this("/app");
-        await using var call = app.Debug.CallStack.Push(MakeAction("Goal"));
+        await using var outer = app.Debug.CallStack.Push(MakeAction("Goal"));
+        await using var tagCall = app.Debug.CallStack.Push(MakeAction("TagDispatch", module: "debug", actionName: "tag"));
         var action = new Tag
         {
             Context = app.Context,
@@ -19,9 +24,11 @@ public class TagActionTests
         };
         await action.Run();
 
-        await Assert.That(call.Tags).IsNotNull();
-        await Assert.That(call.Tags!["k1"]).IsEqualTo("v1");
-        await Assert.That(call.Tags!["k2"]).IsEqualTo("v2");
+        await Assert.That(outer.Tags).IsNotNull();
+        await Assert.That(outer.Tags!["k1"]).IsEqualTo("v1");
+        await Assert.That(outer.Tags!["k2"]).IsEqualTo("v2");
+        // The tag's own Call must NOT have its own Tags — those would vanish on Pop.
+        await Assert.That(tagCall.Tags).IsNull();
     }
 
     [Test]
