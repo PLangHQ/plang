@@ -133,15 +133,18 @@ public class DataWrappedActionListTests
     }
 }
 
-// Pins the contract that closes auditor/v1 finding #1: when a Data<T> property's resolution
-// fails (cycle / depth-trip → ServiceError), the error MUST surface to the caller — even when
-// the handler reads .Value instead of returning the wrapper directly. The pre-fix behavior
-// was that FromError-Data lived silently on the backing field and Run() proceeded with
-// .Value=default(T), producing a misleading success result.
+// Resolution semantics: stored values are values, not expressions. Strings that contain
+// %var% text are opaque payload — reading them returns the bytes verbatim, no chain
+// resolution. (Prior cycle/depth-trip ServiceErrors only existed because the read path
+// recursed; once that recursion was removed, no cycle can form on a stored value.)
+//
+// The post-Run __resolutionError surface still matters for genuine resolution failures
+// (e.g., type-conversion errors); the success-path test below pins that the check is a
+// no-op when resolution succeeds.
 public class DataWrappedStringUsesCycleTests
 {
     [Test]
-    public async Task DataWrappedStringUses_CyclicVarReference_HandlerSurfacesCycleServiceError()
+    public async Task DataWrappedStringUses_CyclicVarRef_NoLongerForms_HandlerReadsVerbatimBytes()
     {
         await using var app = new global::App.@this("/app");
         app.Context.Variables.Set("a", "%b%");
@@ -150,17 +153,13 @@ public class DataWrappedStringUsesCycleTests
         var result = await MatrixRunner.RunAsync<DataWrappedStringUses>(app,
             parameters: new[] { ("body", (object?)"%a%") });
 
-        // Without the post-Run __resolutionError check, Body.Value is null,
-        // len=0, and result.Data would be Ok(0). With the fix, the cycle error
-        // captured during property access surfaces as the handler's return.
-        await Assert.That(result.Data.Success).IsFalse();
-        var error = result.Data.Error as global::App.Errors.ServiceError;
-        await Assert.That(error).IsNotNull();
-        await Assert.That(error!.Key).IsEqualTo("VariableResolutionCycle");
+        // %a% holds the literal bytes "%b%" (3 chars). No chain, no cycle.
+        await Assert.That(result.Data.Success).IsTrue();
+        await Assert.That(result.Data.Value).IsEqualTo(3);
     }
 
     [Test]
-    public async Task DataWrappedStringUses_ExpandingCycle_HandlerSurfacesDepthServiceError()
+    public async Task DataWrappedStringUses_StoredVarRefWithText_HandlerReadsVerbatimBytes()
     {
         await using var app = new global::App.@this("/app");
         app.Context.Variables.Set("a", "X-%b%");
@@ -169,10 +168,9 @@ public class DataWrappedStringUsesCycleTests
         var result = await MatrixRunner.RunAsync<DataWrappedStringUses>(app,
             parameters: new[] { ("body", (object?)"%a%") });
 
-        await Assert.That(result.Data.Success).IsFalse();
-        var error = result.Data.Error as global::App.Errors.ServiceError;
-        await Assert.That(error).IsNotNull();
-        await Assert.That(error!.Key).IsEqualTo("ResolveDepthExceeded");
+        // %a% holds the literal bytes "X-%b%" (5 chars). No re-resolution into surrounding text.
+        await Assert.That(result.Data.Success).IsTrue();
+        await Assert.That(result.Data.Value).IsEqualTo(5);
     }
 
     [Test]

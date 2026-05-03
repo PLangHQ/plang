@@ -237,7 +237,7 @@ Any parameter value that is a JSON object or JSON array MUST carry `"type": "jso
 - Variables use \%name\% syntax — preserve literally.
 - NEVER use `"return"` on actions. There is no return property. Variable assignment is always an explicit `variable.set` action.
 - For `goal.call`: simple = `{"name": "GoalName"}`, with params = `{"name": "GoalName", "parameters": [{"name": "key", "value": "val", "type": "string"}]}`.
-- Omit nullable parameters (types ending ?) when not applicable.
+- Omit nullable parameters (types ending ?) when not applicable. NEVER emit `""` (empty string) as a placeholder for an unset parameter — for nullables, leave the slot out of the parameters list entirely. Constrained types (e.g. `actor`, enum-valued types) only accept their declared values; an empty string is not one of them and will fail conversion.
 - \%variable\% references resolve at runtime. Never pre-evaluate.
 - Literal JSON types: `true`/`false` (boolean), numbers unquoted, strings quoted. `type` field must match.
 - When `set \%var\% = {key: value, ...}` contains an inline object (curly braces), the Value parameter must use `"type": "json"` and the value must be a **JSON object** (not a string containing JSON). Example: `{"name": "Value", "value": {"id": "\%x\%", "items": []}, "type": "json"}`.
