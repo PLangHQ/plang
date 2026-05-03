@@ -129,6 +129,7 @@ Example: `if testfile.txt exists, call ProcessFile`
 - If you cannot build a valid result, omit the data field and add an error
 - Actions within a step execute in order. A later action can reference the return variable of an earlier action in the same step.
 - Valid type names: string, int, long, float, double, decimal, bool, datetime, guid, json (for JSON objects/structures), list, dict, actor, goal.call, tstring. Any primitive can be a list — use `list<T>` (e.g. `list<string>`). %var% params expect \%variable\% values (e.g., "\%myVar\%"). Params with defaults are optional. For goal.call type, value is `{"name": "GoalName"}`. The system resolves PrPath post-build.
+- Omit nullable parameters (types ending ?) when not applicable. NEVER emit `""` (empty string) as a placeholder for an unset parameter — leave the slot out of the parameters list entirely. Constrained types (e.g. `actor`, enum-valued types) only accept their declared values; an empty string is not one of them and will fail conversion.
 - `tstring` (translatable string) is a runtime hint; the JSON value is a plain string.
   Step text: `write out "Hello %name%"` → parameter `{"name": "Data", "value": "Hello %name%", "type": "tstring"}`.
   Step text: `write out "Building goal: %goal.Name%"` → parameter `{"name": "Data", "value": "Building goal: %goal.Name%", "type": "tstring"}`.

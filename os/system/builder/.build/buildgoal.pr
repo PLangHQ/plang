@@ -1905,7 +1905,7 @@
                 },
                 {
                   "name": "Actor",
-                  "value": "this?(user|service|system)",
+                  "value": null,
                   "type": "actor"
                 }
               ],

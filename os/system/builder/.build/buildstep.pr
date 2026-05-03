@@ -690,7 +690,7 @@
                 },
                 {
                   "name": "Actor",
-                  "value": "%action%",
+                  "value": null,
                   "type": "actor"
                 }
               ],

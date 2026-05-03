@@ -366,3 +366,16 @@ Motivation surfaced: during the build-trace-viewer branch, chasing a null-valued
 **Scope.** One new file (`App/Catalog/ActionEntry.cs`), refactor `Modules.Describe()` to return or populate these, replace `summary.md` body with structured iteration, update any consumers. Don't change the rendered Markdown shape — the LLM has been trained (by us) on the current shape, and this is infrastructure not wire contract.
 
 **Risk.** Small. The renderer has to produce byte-identical output to the current Liquid template (or LLMs rebuild differently and every `.pr` changes). Snapshot test against a representative catalog before/after cutover.
+
+## Build-time variable type registry for cross-step validation
+
+**Date:** 2026-05-03
+
+During `builder.validate` (per-step), walk the `Parameters` list<Data> and record every variable reference with its declared type into a build-time store keyed by variable name. On subsequent steps the validator (and the next LLM build pass) can look up known variables and:
+
+1. **Validate type consistency** — if step 3 reads `%foo%` typed as `int` and step 7 writes `%foo%` as a `string`, the validator flags the mismatch instead of letting it manifest as a runtime TypeMismatch.
+2. **Inform the LLM** — pass the known-variables map to the system prompt so the LLM emits step mappings with correct type tags for vars already in scope, instead of guessing.
+
+Belongs in the validator (not `variable.set`) so we capture the type as declared *at the parameter slot*, not just the writer's intent.
+
+**Context:** came up while diagnosing `Actor: ""` LLM hallucinations — the .pr type slot says `actor` but the value is empty/wrong-typed, and we only catch it at conversion time. A type registry would surface "variable %x% used as actor here, but it was set as string in step 2" much earlier.

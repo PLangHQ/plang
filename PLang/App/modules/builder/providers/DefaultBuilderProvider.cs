@@ -609,6 +609,19 @@ public class DefaultBuilderProvider : IBuilderProvider
                 if (p.Value is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue; // variable reference
                 if (p.Type == null) continue;
 
+                // LLM-emitted "" for an unset nullable slot — same shape as
+                // validateResponse's normalization, repeated here so detail-pass
+                // results (which bypass validateResponse) also get the fix instead
+                // of failing in TryConvertTo below. For non-nullable slots leave the
+                // empty string in place so the conversion error surfaces and
+                // LlmFixer retries.
+                if (p.Value is string empty && empty.Length == 0
+                    && global::App.modules.builder.ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
+                {
+                    p.Value = null;
+                    continue;
+                }
+
                 // Catalog descriptions ("int = 1", "%var% string", "list<int>?") are schema
                 // metadata produced by Modules.Describe(), not values to normalize. They
                 // surface when the catalog is fed back through validate (BuilderValidateValid
