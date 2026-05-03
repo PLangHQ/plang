@@ -1,0 +1,58 @@
+{
+  "name": "Inner",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %innerDepth% = %!callStack.Current.Depth%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Helper goal called by depth tests. Stashes the inner Call\u0027s depth so the caller can assert.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%innerDepth%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 4,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use variable.set to assign %innerDepth% from the runtime call stack depth expression 4.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/Inner.goal",
+  "prPath": "/Tests/App/CallStack/.build/inner.pr",
+  "hash": "62f43d552fce8bea40f1f38e1f0c5fb09a47ab3e72e12a498bc8b4abee412517",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

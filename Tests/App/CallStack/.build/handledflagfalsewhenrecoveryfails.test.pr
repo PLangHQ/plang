@@ -1,0 +1,53 @@
+{
+  "name": "TestHandledFlagFalseWhenRecoveryFails",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw \u0022not implemented\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "When the recovery body throws, the original error propagates with the recovery error chained. C# CallStackAuditTests pins the underlying flag wiring; expressing this end-to-end from PLang needs a nested error.handle that the builder doesn\u0027t map reliably yet \u2014 leaving as not-implemented for follow-up.",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "not implemented",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "The step text is an unconditional throw of a literal message, so map directly to error.throw.",
+      "level": "high",
+      "confidence": 99,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/HandledFlagFalseWhenRecoveryFails.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/handledflagfalsewhenrecoveryfails.test.pr",
+  "hash": "31c4fdf56258bf1ffe5af7eaae4e12ac9a2508b94fa58d3152f34c0aa615699f",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

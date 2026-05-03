@@ -1,0 +1,57 @@
+{
+  "name": "ChainThrows",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022deep failure\u0022, key NotFound, statusCode 404",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Deepest goal in the chain \u2014 throws a 404 error so the test can assert on the propagation.",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "deep failure",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 404,
+              "type": "int"
+            },
+            {
+              "name": "Key",
+              "value": "NotFound",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use error.throw to immediately fail the step with the provided message, key, and HTTP status code 404.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/ChainThrows.goal",
+  "prPath": "/Tests/App/CallStack/.build/chainthrows.pr",
+  "hash": "9506d292833434ee148a1b259424b3dfa03681cae939b16dad853c524b8999fd",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

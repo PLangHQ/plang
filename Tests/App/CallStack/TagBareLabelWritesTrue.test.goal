@@ -1,4 +1,4 @@
 TestTagBareLabelWritesTrue
-/ The `tag "label"` bare-string form writes Tags[label]="true". Lazy-allocates the dict on first write.
-- tag "manual-checkpoint"
+/ debug.tag "label" bare-string form writes Tags[label]="true". Lazy-allocates the dict on first write.
+- debug.tag "manual-checkpoint"
 - assert %!callStack.Current.Tags."manual-checkpoint"% equals "true"

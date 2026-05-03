@@ -1,0 +1,58 @@
+{
+  "name": "CaptureCause",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %causeModule% = %!callStack.Current.Cause.Action.Module%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Helper for CauseLink test. Runs as a recovery body action \u2014 its Call has Cause set to the errored Call. Reads the cause\u0027s action module and stashes it.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%causeModule%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!callStack.Current.Cause.Action.Module%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use variable.set to assign %causeModule% from the current call stack\u0027s cause action module expression.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/CaptureCause.goal",
+  "prPath": "/Tests/App/CallStack/.build/capturecause.pr",
+  "hash": "cd0bbab863d6e8cea73a407c98a2cca30b7ede4fcf0b4f2ff728d4608215f352",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

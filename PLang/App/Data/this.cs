@@ -628,7 +628,16 @@ public partial class @this
         // Containers with potential nested %var% — walk before fast paths for the same reason.
         // The walked container is a fresh object; canonical is `this` (slot Data). Shared
         // with AsCanonical via WalkContainerVars so plain Data and Data<T> resolve by one rule.
-        if (ctx != null && IsWalkableContainer(raw))
+        //
+        // Action-destination skip: when the slot expects Action.@this or a list of them,
+        // sub-action parameters MUST keep their `%var%` references for deferred resolution
+        // at the sub-action's own dispatch time. WalkContainerVars/SubstitutePrimitive
+        // would resolve them eagerly against the current variable store — turning
+        // `"%x%"` (the LLM's "set this to %x%") into the current value of %x%, or null
+        // when %x% isn't set. The `if (value is @this) return value` guard inside
+        // SubstitutePrimitive only fires for already-typed Data, not for the dict
+        // representation that comes off the LLM response.
+        if (ctx != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)))
             return WrapAs<T>(WalkContainerVars(raw, ctx), ctx);
 
         // T has static Resolve(string, Context.@this) — Path-style domain types. Done before
@@ -750,7 +759,19 @@ public partial class @this
             if (!s.Contains('%')) return s;
             var fullMatch = System.Text.RegularExpressions.Regex.Match(s, @"^%([^%]+)%$");
             if (fullMatch.Success)
-                return ctx.Variables.Get(fullMatch.Groups[1].Value)?.Value;
+            {
+                // Preserve the original `%var%` string when the variable is unset OR
+                // its resolved value is null. Returning null silently strips the
+                // reference, which destroys LLM-emitted parameter values like
+                // `Name = "%x%"` during build (no user variables exist yet, so every
+                // %var% read returns null and the parameter slots get nulled out).
+                // String.Resolve at line below already does this fallback for partial
+                // matches; this brings full-match parity.
+                var resolved = ctx.Variables.Get(fullMatch.Groups[1].Value);
+                return resolved?.IsInitialized == true && resolved.Value != null
+                    ? resolved.Value
+                    : (object?)s;
+            }
             return ctx.Variables.Resolve(s);
         }
 

@@ -1,0 +1,81 @@
+{
+  "name": "TestTagBareLabelWritesTrue",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "debug.tag \u0022manual-checkpoint\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "debug.tag \u0022label\u0022 bare-string form writes Tags[label]=\u0022true\u0022. Lazy-allocates the dict on first write.",
+      "actions": [
+        {
+          "module": "debug",
+          "action": "tag",
+          "parameters": [
+            {
+              "name": "Label",
+              "value": "manual-checkpoint",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use debug.tag to attach a diagnostic label. The step text uses the bare-string form, so we pass it as Label.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %!callStack.Current.Tags.\u0022manual-checkpoint\u0022% equals \u0022true\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "true",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%!callStack.Current.Tags.\u0022manual-checkpoint\u0022%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assert that the current call stack tag value for \u0027manual-checkpoint\u0027 equals the string \u0027true\u0027.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/TagBareLabelWritesTrue.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/tagbarelabelwritestrue.test.pr",
+  "hash": "c1627ed48480298709b7cee89b854a7fb770c9b07a54a94c203150fa66d83042",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

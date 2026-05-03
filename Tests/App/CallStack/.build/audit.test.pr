@@ -1,0 +1,313 @@
+{
+  "name": "TestAuditAccumulatesHandledAndUnhandledErrors",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022, \u0022d\u0022]",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Three handled errors plus one unhandled in a single foreach iteration produces %!callStack.Audit.Count% == 4. Each ThrowItem invocation throws a different error; the test goal\u0027s outer handler catches the unhandled one.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%items%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": [
+                "a",
+                "b",
+                "c",
+                "d"
+              ],
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Initialize %items% with a list literal so foreach can iterate over it.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "foreach %items%, call ThrowItem item=%item%, on error set %finalCaught% = true",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%items%",
+              "type": "object"
+            },
+            {
+              "name": "ItemName",
+              "value": "item",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowItem",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "item",
+                    "value": {
+                      "Index": 1,
+                      "Text": "",
+                      "LineNumber": 0,
+                      "Indent": 0,
+                      "Comment": null,
+                      "Actions": [
+                        {
+                          "module": "assert",
+                          "action": "equals",
+                          "Parameters": [
+                            {
+                              "name": "Expected",
+                              "value": "error",
+                              "type": "string"
+                            },
+                            {
+                              "name": "Actual",
+                              "value": "%causeModule%",
+                              "type": "object"
+                            }
+                          ],
+                          "Defaults": null,
+                          "Modifiers": [],
+                          "Errors": [],
+                          "Warnings": [],
+                          "Examples": [],
+                          "ReturnType": null
+                        }
+                      ],
+                      "Intent": null,
+                      "Guidance": "Post-condition assertion: verify that %causeModule% equals the string \u0022error\u0022 after the recovery body has captured it.",
+                      "Level": "high",
+                      "Confidence": 95,
+                      "Formal": "assert.equals Expected([string] \u0022error\u0022), Actual([object] %causeModule%)",
+                      "Source": "new",
+                      "Keep": false,
+                      "Errors": [],
+                      "Warnings": [],
+                      "WaitForExecution": true
+                    },
+                    "type": "dict\u003Cstring,object\u003E"
+                  }
+                ],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%finalCaught%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "object"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Iterate over %items% and call ThrowItem for each item. The step text says \u0027on error set %finalCaught% = true\u0027, so wrap the goal.call with error.handle that runs a recovery action chain setting %finalCaught% to true.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %finalCaught% is true",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%finalCaught%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %finalCaught% to be true after handled errors",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: ensure %finalCaught% is true after the foreach completes.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %auditCount% = %!callStack.Audit.Count%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%auditCount%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!callStack.Audit.Count%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Capture the audit count from the call stack into %auditCount% for the final assertion.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %auditCount% equals 4",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 4,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%auditCount%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected call stack audit count to equal 4",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: assert %auditCount% equals 4.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/Audit.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/audit.test.pr",
+  "hash": "f95d5dfe45f215ece208fc240dd96342f722c00375985144bf3242ea0b0649de",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
