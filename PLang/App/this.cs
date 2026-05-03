@@ -417,6 +417,11 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
             if (!result.Success && result.Error is global::App.Errors.Error err)
             {
                 if (err.Params == null) err.Params = handler.SnapshotParams();
+                // Capture the failing Call chain so error.handle (and other downstream
+                // observers) can identify the failing Call after this scope's Push pops.
+                // Snapshot is index-[0]=self, walking Caller upward — matches the
+                // ServiceError catch path below.
+                if (err.CallFrames.Count == 0) err.CallFrames = call.SnapshotChain();
                 call.Errors.Add(result.Error!);
                 stack.Audit.Add(result.Error!);
             }

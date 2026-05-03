@@ -81,15 +81,17 @@ public partial class Handle : IContext, IModifier
     {
         return async () =>
         {
-            // Snapshot the failing Call BEFORE the next() awaits resolve and the Call pops.
-            // Recovery dispatch needs the errored Call as `cause` so each recovery body
-            // action's Push stamps Cause = erroredCall (the renderer groups by Cause).
-            var stack = context.App.Debug.CallStack;
-            var erroredCall = stack.Current;
-
             var result = await next();
             if (result.Success) return result;
             if (!MatchesError(result.Error)) return result;
+
+            // Failing Call comes from the error's CallFrames snapshot — App.Run pushed and
+            // popped the action's Call inside next(), so we can't read it from stack.Current
+            // anymore. CallFrames[0] is the failing Call itself (post-Push snapshot).
+            var erroredCall = result.Error is global::App.Errors.Error errWithFrames
+                && errWithFrames.CallFrames.Count > 0
+                ? errWithFrames.CallFrames[0]
+                : null;
 
             var order = Order?.Value ?? ErrorOrder.RetryFirst;
             var actions = Actions?.Value;
