@@ -606,17 +606,17 @@ public partial class @this
                     }
                     if (!resolved.Success)
                         return @this<T>.FromError(resolved.Error!);
-                    // Identity-preservation: recurse on the LIVE variable's Data so `this` inside
-                    // the recursive call IS the live variable. The fast paths below then see the
-                    // live variable as their canonical, propagating Name and aliasing Properties +
-                    // event lists. Without this redirect, the slot Data's identity leaks through.
-                    return resolved.AsT_Impl<T>(resolved.Value, ctx);
+                    // Stored values are values, not expressions. Type-convert only — never
+                    // re-scan the resolved value's text for further %var% references. Calling
+                    // on `resolved` (the live variable) preserves identity: WrapAs sees `resolved`
+                    // as `this` and propagates Name + Properties + event lists.
+                    return resolved.AsT_Convert<T>(resolved.Value, ctx);
                 }
-                // Partial match — interpolate then continue (the result may need further conversion).
-                // Canonical stays as `this` (the slot) for partial matches — a partial-interpolated
-                // string is a fresh value, not a reference to any single variable.
+                // Partial match — interpolate once. The result is the final value; embedded
+                // %var% inside the substituted text is opaque payload (matches mainstream
+                // language semantics: assignment evaluates once, stored value is opaque).
                 var interpolated = ctx.Variables.Resolve(strVal);
-                return AsT_Impl<T>(interpolated, ctx);
+                return AsT_Convert<T>(interpolated, ctx);
             }
             finally
             {
@@ -659,6 +659,31 @@ public partial class @this
 
         // No more substitution to do — `this` is the canonical. Apply identity-preserving
         // wrap rules (same-type fast path → variance → cross-type with conversion).
+        return WrapAs<T>(raw, ctx);
+    }
+
+    /// <summary>
+    /// Type-conversion tail of <see cref="AsT_Impl"/> — no substitution. Used after a slot's
+    /// %var% has already been resolved (full-match Variables.Get or partial-match interpolation):
+    /// the value is final and its string content must NOT be scanned for further %var% references.
+    /// Keeps the static-Resolve(string) carve-out for Path-style domain types, then delegates to
+    /// WrapAs for identity-preserving wrap + conversion.
+    /// </summary>
+    private @this<T> AsT_Convert<T>(object? raw, Actor.Context.@this? ctx)
+    {
+        if (raw is string srStr && ctx != null && raw is not T)
+        {
+            var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
+                t.GetMethod("Resolve",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
+            if (resolveMethod != null)
+            {
+                var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
+                if (resolvedObj is T result)
+                    return ConstructWrap<T>(result, ctx);
+            }
+        }
         return WrapAs<T>(raw, ctx);
     }
 
