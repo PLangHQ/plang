@@ -397,13 +397,33 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
 
         // Push BEFORE the handler runs so call.SnapshotChain() inside the catch reflects
         // "self at index [0]" — the failing Call IS in the chain (behavior tweak vs old
-        // shape that captured pre-push frames).
-        await using var call = stack.Push(action, context.Variables, cause);
+        // shape that captured pre-push frames). CallStackOverflowException (depth limit
+        // or ContainsGoal cycle) trips at Push, before the call frame is on the stack;
+        // catch it here so App.Run's contract (returns Data, never throws) holds.
+        global::App.CallStack.Call.@this call;
+        try
+        {
+            call = stack.Push(action, context.Variables, cause);
+        }
+        catch (global::App.Errors.CallStackOverflowException ex)
+        {
+            var caller = stack.Current;
+            var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::App.CallStack.Call.@this>();
+            var overflowErr = new global::App.Errors.ServiceError(
+                ex.Message, step!, chain, "CallStackOverflow", 500) { Exception = ex };
+            stack.Audit.Add(overflowErr);
+            return Data.@this.FromError(overflowErr);
+        }
+        await using var _ = call;
 
         // Save context anchors so nested dispatch can mutate them and we restore on the way out.
+        // Step.Context is mutated to point at the live dispatch context — capture+restore so
+        // parallel dispatches of the same Step (legal under Task.WhenAll on `goal.call`) don't
+        // leave a sibling branch's Context pointer leaked on the shared Step instance.
         var previousStep = context.Step;
         var previousGoal = context.Goal;
         var previousEvent = context.Event;
+        var previousStepContext = action.Step?.Context;
         context.Step = action.Step;
         if (context.Step != null) context.Step.Context = context;
         context.Goal = action.Step?.Goal;
@@ -448,6 +468,7 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
             context.Step = previousStep;
             context.Goal = previousGoal;
             context.Event = previousEvent;
+            if (action.Step != null) action.Step.Context = previousStepContext;
         }
     }
 

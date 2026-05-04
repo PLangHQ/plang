@@ -619,24 +619,29 @@ public class @this
         return dict;
     }
 
-    [ThreadStatic]
-    private static HashSet<string>? _resolvingVars;
+    private static readonly AsyncLocal<HashSet<string>?> _resolvingVars = new();
 
     /// <summary>
     /// Resolves variable names inside bracket indices.
     /// e.g. "addresses[idx].street" with idx=1 → "addresses[1].street"
-    /// Uses a thread-static visited set to detect circular references (a→b→a).
+    /// Uses an async-local visited set to detect circular references (a→b→a) — survives
+    /// future await introductions; ThreadStatic would race under Task.WhenAll.
     /// </summary>
     private string ResolveVariablesInPath(string path)
     {
-        var isRoot = _resolvingVars == null;
-        _resolvingVars ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var resolving = _resolvingVars.Value;
+        var isRoot = resolving == null;
+        if (isRoot)
+        {
+            resolving = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _resolvingVars.Value = resolving;
+        }
         try
         {
             return Regex.Replace(path, @"\[([^\]\d][^\]]*)\]", match =>
             {
                 var varName = match.Groups[1].Value;
-                if (!_resolvingVars!.Add(varName))
+                if (!resolving!.Add(varName))
                     return match.Value; // Circular reference — leave unresolved
                 try
                 {
@@ -645,13 +650,13 @@ public class @this
                 }
                 finally
                 {
-                    _resolvingVars.Remove(varName);
+                    resolving.Remove(varName);
                 }
             });
         }
         finally
         {
-            if (isRoot) _resolvingVars = null;
+            if (isRoot) _resolvingVars.Value = null;
         }
     }
 

@@ -64,10 +64,12 @@ public class CallStackFlagsTests
     }
 
     [Test]
-    public async Task CallStackFlags_Tags_FlagOff_TagWriteStillAllocatesDictOnDemand()
+    public async Task CallStackFlags_Tags_TagWriteAlwaysLazyAllocates()
     {
-        // Spec: tags flag is renderer-meaningful; the writer always succeeds — Tag()
-        // lazy-allocates regardless of the flag.
+        // Tags flag is advisory (hint to exporters), not a write-gate — explicit
+        // observability intent (user-authored `- tag x=y`, C# handler diagnostics)
+        // always succeeds regardless of flag state. The doc on CallStackFlags.Tags
+        // documents this: the flag exists for downstream tag-rendering decisions.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction("A"));
         call.Tag("k", "v");

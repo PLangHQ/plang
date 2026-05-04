@@ -7,7 +7,10 @@ namespace App.CallStack;
 ///  - <see cref="Timing"/>: StartedAt/CompletedAt/Duration
 ///  - <see cref="Diff"/>: Variables.OnSet → Call.Diffs (scalar-only by default)
 ///  - <see cref="DeepDiff"/>: deep-clone non-scalar Before values (only meaningful with Diff)
-///  - <see cref="Tags"/>: allocate Call.Tags dict on demand (no-op writes when off)
+///  - <see cref="Tags"/>: advisory hint for exporters/serializers. Writes via Call.Tag()
+///    always succeed and lazy-allocate the dict — explicit observability intent (the user
+///    wrote `- tag x=y` or a C# handler emitted a diagnostic) shouldn't be gated. The flag
+///    is reserved for downstream consumers that want to suppress tag rendering.
 ///  - <see cref="History"/>: retain popped Calls in Caller.Children (FIFO-capped at MaxFrames)
 ///  - <see cref="MaxFrames"/>: history-on retention cap
 /// Parsed from <c>--debug={callstack:{...}}</c>.

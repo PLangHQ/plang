@@ -31,29 +31,31 @@ public sealed class DictionaryNavigator : INavigator
         var value = data.Value;
         if (value == null) return Data.@this.NotFound(key);
 
+        // Rule across all three arms: user keys win — "Count" only resolves to dict.Count
+        // when no key with that name exists. Otherwise a dict literal `{count: "x"}`
+        // would silently expose the dict's length instead of "x", and the answer would
+        // depend on which IDictionary shape the value implements.
         if (value is IDictionary<string, object?> generic)
         {
-            if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
-                return new Data.@this(key, generic.Count, parent: data);
-
             foreach (var kvp in generic)
             {
                 if (string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
                     return new Data.@this(key, kvp.Value, parent: data);
             }
+            if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
+                return new Data.@this(key, generic.Count, parent: data);
             return Data.@this.NotFound(key);
         }
 
         if (value is IDictionary dict)
         {
-            if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
-                return new Data.@this(key, dict.Count, parent: data);
-
             foreach (DictionaryEntry entry in dict)
             {
                 if (entry.Key is string k && string.Equals(k, key, StringComparison.OrdinalIgnoreCase))
                     return new Data.@this(key, entry.Value, parent: data);
             }
+            if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
+                return new Data.@this(key, dict.Count, parent: data);
             return Data.@this.NotFound(key);
         }
 

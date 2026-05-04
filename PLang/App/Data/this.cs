@@ -521,8 +521,13 @@ public partial class @this
     }
 
     // Cycle protection for AsT_Impl. Tracks the raw %-containing strings currently being
-    // resolved on this thread. When a recursive call sees a string already in the set, it
-    // returns the string as-is — no stack overflow on %a%↔%b% or %x%="%x%" reference graphs.
+    // resolved within the current async flow. When a recursive call sees a string already
+    // in the set, it returns an error — no stack overflow on %a%↔%b% or %x%="%x%" graphs.
+    //
+    // AsyncLocal (not ThreadStatic) so the invariant "this state is per-resolution-stack"
+    // holds even if a future await is introduced into the resolve chain. The chain is
+    // currently sync, so the finally always clears before any caller awaits — but the
+    // primitive shouldn't depend on that staying true.
     //
     // ResolveDepthLimit caps recursion for *expanding* cycles where the strings differ at each
     // level (e.g. %a%="X-%b%", %b%="Y-%a%" produces "X-%b%" → "X-Y-%a%" → "X-Y-X-%b%" → …).
@@ -530,8 +535,7 @@ public partial class @this
     // limit is well above any legitimate chain (real handler chains are 1–5 deep; matrix tests
     // exercise 5 levels — see AsT_DeepChain_5Levels_ResolvesCorrectly).
     private const int ResolveDepthLimit = 32;
-    [ThreadStatic]
-    private static HashSet<string>? _resolvingValues;
+    private static readonly AsyncLocal<HashSet<string>?> _resolvingValues = new();
 
     private @this<T> AsT_Impl<T>(object? raw, Actor.Context.@this? ctx)
     {
@@ -570,12 +574,17 @@ public partial class @this
         // T=object would always match `raw is T` and short-circuit substitution.
         if (raw is string strVal && strVal.Contains('%') && ctx?.Variables != null)
         {
-            var isCycleRoot = _resolvingValues == null;
-            _resolvingValues ??= new HashSet<string>(StringComparer.Ordinal);
+            var resolving = _resolvingValues.Value;
+            var isCycleRoot = resolving == null;
+            if (isCycleRoot)
+            {
+                resolving = new HashSet<string>(StringComparer.Ordinal);
+                _resolvingValues.Value = resolving;
+            }
 
             // Cycle: an outer frame is already resolving this exact string. Don't Remove
             // on the cycle path — the outer frame still owns the entry.
-            if (!_resolvingValues.Add(strVal))
+            if (!resolving!.Add(strVal))
             {
                 return @this<T>.FromError(new ServiceError(
                     $"Cyclic %var% reference detected while resolving '{strVal}'.",
@@ -585,7 +594,7 @@ public partial class @this
             try
             {
                 // Depth-bound for expanding chains (each level produces a new string).
-                if (_resolvingValues.Count > ResolveDepthLimit)
+                if (resolving.Count > ResolveDepthLimit)
                 {
                     return @this<T>.FromError(new ServiceError(
                         $"Variable resolution exceeded depth limit ({ResolveDepthLimit}) at '{strVal}'.",
@@ -620,8 +629,8 @@ public partial class @this
             }
             finally
             {
-                _resolvingValues.Remove(strVal);
-                if (isCycleRoot) _resolvingValues = null;
+                resolving.Remove(strVal);
+                if (isCycleRoot) _resolvingValues.Value = null;
             }
         }
 

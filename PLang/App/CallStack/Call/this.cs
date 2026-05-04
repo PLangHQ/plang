@@ -128,7 +128,13 @@ public sealed partial class @this : IAsyncDisposable
             var deep = flags.DeepDiff;
             _onSetHandler = (name, before, _) =>
             {
-                Diffs.Add(new Diff(name, CaptureBefore(before, deep), DateTimeOffset.UtcNow));
+                // OnSet fires synchronously on Variables.Set; parallel Task.WhenAll
+                // branches sharing the same Variables instance can invoke this concurrently.
+                // Lock on Diffs (same idiom as Children at CallStack.Push).
+                lock (Diffs!)
+                {
+                    Diffs.Add(new Diff(name, CaptureBefore(before, deep), DateTimeOffset.UtcNow));
+                }
             };
             diffSource.OnSet += _onSetHandler;
         }

@@ -12,7 +12,11 @@ namespace App.Errors;
 /// </summary>
 public sealed partial class @this
 {
-    private static readonly AsyncLocal<IError?> _current = new();
+    // Instance-level (not static) AsyncLocal — multiple App instances in the same test
+    // process must not see each other's Current. Mirrors CallStack/this.cs which moved
+    // _current to instance scope for the same reason; before this fix, `All` was already
+    // per-instance but `Error` read process-wide static.
+    private readonly AsyncLocal<IError?> _current = new();
 
     /// <summary>
     /// The current error in this async context. Null outside any <see cref="Push"/> scope.
@@ -36,21 +40,26 @@ public sealed partial class @this
         var previous = _current.Value;
         _current.Value = error;
         All.Add(error);
-        return new Restorer(previous);
+        return new Restorer(_current, previous);
     }
 
     private sealed class Restorer : IDisposable
     {
+        private readonly AsyncLocal<IError?> _slot;
         private readonly IError? _previous;
         private bool _disposed;
 
-        public Restorer(IError? previous) { _previous = previous; }
+        public Restorer(AsyncLocal<IError?> slot, IError? previous)
+        {
+            _slot = slot;
+            _previous = previous;
+        }
 
         public void Dispose()
         {
             if (_disposed) return;
             _disposed = true;
-            _current.Value = _previous;
+            _slot.Value = _previous;
         }
     }
 }

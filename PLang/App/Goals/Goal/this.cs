@@ -272,13 +272,21 @@ public sealed partial class @this : modules.IDataWrappable
         // scope that subsequent steps can still read (they navigate up via Current.Caller).
         // Cycle detection (ContainsGoal by PrPath) lives here too — entering a goal
         // already on the chain trips the overflow guard at this Push, before any step
-        // action runs.
+        // action runs. Push lives INSIDE the try so a CallStackOverflowException becomes
+        // Data.FromError instead of a raw CLR exception escaping RunAsync.
+        //
+        // Action.Step is pinned to Steps[0] solely to give ContainsGoal a Step→Goal anchor
+        // for the cycle check (it reads action.Step?.Goal?.PrPath). This is the goal-entry
+        // frame, not "step 0 running" — observers reading goalCall.Action.Step should treat
+        // it as the goal anchor, not the currently-executing step (which is whatever the
+        // child stepCall.Action.Step points at).
         var goalEntryAction = new Steps.Step.Actions.Action.@this { Module = "goal", ActionName = "enter" };
         if (Steps.Count > 0) goalEntryAction.Step = Steps[0];
-        await using var goalCall = context.App.Debug.CallStack.Push(goalEntryAction);
 
         try
         {
+            await using var goalCall = context.App.Debug.CallStack.Push(goalEntryAction);
+
             var result = await Steps.RunAsync(context);
 
             // Handle return depth
@@ -294,6 +302,20 @@ public sealed partial class @this : modules.IDataWrappable
             if (!afterResult.Success) return afterResult;
 
             return result;
+        }
+        catch (Errors.CallStackOverflowException ex)
+        {
+            // Cycle detection (depth limit or ContainsGoal) trips at Push, before the
+            // goal frame is on the stack. Convert to ServiceError so Goal.RunAsync's
+            // contract (returns Data, never throws) holds — outer Step.RunAsync's broad
+            // catch would otherwise produce a ServiceError without goal/step context.
+            var stack = context.App.Debug.CallStack;
+            var caller = stack.Current;
+            var chain = caller != null ? caller.SnapshotChain() : Array.Empty<CallStack.Call.@this>();
+            var serviceErr = new Errors.ServiceError(
+                ex.Message, goalEntryAction.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
+            stack.Audit.Add(serviceErr);
+            return Data.@this.FromError(serviceErr);
         }
         finally
         {
