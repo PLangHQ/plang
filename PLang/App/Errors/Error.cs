@@ -185,18 +185,14 @@ public class Error : IError
             }
         }
 
-        // Call stack
+        // Call stack \u2014 CallChainRenderer compresses recursive runs and annotates
+        // recovery boundaries with their originating Cause.
         if (error.CallFrames.Count > 0)
         {
             sb.AppendLine();
             sb.AppendLine($"{indent}\ud83d\udedd  Call stack:");
-            foreach (var frame in error.CallFrames)
-            {
-                var fStep = frame.Action.Step;
-                var fGoal = fStep?.Goal;
-                var stepInfo = fStep != null ? $":{fStep.LineNumber}" : "";
-                sb.AppendLine($"{indent}    {fGoal?.Name ?? frame.Action.Module} - {fGoal?.Path}{stepInfo}");
-            }
+            foreach (var line in CallChainRenderer.Render(error.CallFrames))
+                sb.AppendLine($"{indent}    {line}");
         }
 
         // Per-parameter snapshot — what the handler actually saw at dispatch.
