@@ -371,6 +371,71 @@
         "health": "5 findings: 1 medium (Audit/All race), 4 low (Tag race, public-list lock, unbounded growth, stale _root). Two pre-existing findings carried forward unchanged.",
         "notes": "Branch is mergeable. Medium finding should be addressed before parallel goal.call lands since that is what makes it reproducible. Recommend coder pass for Findings 1+2 (small lock additions) then auditor; alternatively merge and queue the lock with parallel goal.call work."
       }
+    },
+    {
+      "id": "4b17987d-3928-418c-bc42-e26bef640df3",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-04T12:50:00Z",
+      "intent": "Cross-cutting audit of runtime2-callstack post coder v3 (commit 5157d10a closing security v2 F1 + Flags rename).",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS, tester v1 PASS (after stale-binary correction), security v2 PASS with F1 polish recommended; coder then shipped 5157d10a closing F1 (Diffs/Tags domain-class mirror) + accepting F2 inline + Flags rename. No reviewer has covered 5157d10a yet.",
+        "risk": "Always-allocate Tags swap could silently change consumers; Flags rename could leave docs/test-name stragglers; Tags throwing on IDictionary mutation surface could trip cross-file consumers."
+      },
+      "plan": ".bot/runtime2-callstack/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/CallStack/Call/Diffs/this.cs",
+            "PLang/App/CallStack/Call/Tags/this.cs",
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/CallStack/Flags.cs",
+            "PLang/App/Debug/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified F1 (Diffs/Tags raw-List exposure) closed via domain-class promotion symmetric with Audit/Trail/Errors/Children. F2 (Flags torn read) documented inline at CallStack/this.cs:30-35. Flags rename clean, no residual CallStackFlags refs."
+        },
+        {
+          "paths": [
+            "Tests/App/CallStack/TagBareLabelWritesTrue.test.goal",
+            "Tests/App/CallStack/TagWritesPairsOntoCurrentCall.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "End-to-end %!callStack.Caller.Tags.foo% PLang nav works through DictionaryNavigator third arm. One stale lazy-alloc comment flagged as nit."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callstack/auditor/v1/plan.md",
+            ".bot/runtime2-callstack/auditor/v1/summary.md",
+            ".bot/runtime2-callstack/auditor/v1/verdict.json",
+            ".bot/runtime2-callstack/auditor/summary.md",
+            ".bot/runtime2-callstack/auditor-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor PASS verdict + report on coder/v3 (5157d10a)."
+        },
+        {
+          "paths": [
+            "PlangConsole/"
+          ],
+          "type": "decision",
+          "category": "test",
+          "confidence": "high",
+          "context": "Rebuilt PlangConsole from clean (rm -rf bin obj). Pre-rebuild: 5 PLang failures matching tester v1 stale-binary signature. Post-rebuild: 181/181 + 2623/2623 C#. Confirms tester v1 correction."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green \u2014 branch mergeable",
+        "notes": "Two nits only. Recommend docs bot next."
+      },
+      "timestamp_end": "2026-05-04T13:00:00Z"
     }
   ]
 }

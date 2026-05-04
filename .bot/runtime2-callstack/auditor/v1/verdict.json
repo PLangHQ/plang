@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "PASS on coder/v3 (5157d10a). Diffs/Tags promotion closes security F1 cleanly, F2 documented inline, Flags rename has zero stragglers, 2623/2623 C# + 181/181 PLang on clean rebuild. Two nits only (Tags Liskov compromise documented, one stale test-goal comment)."
+}
