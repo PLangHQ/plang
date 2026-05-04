@@ -9,7 +9,7 @@ namespace App.CallStack;
 ///
 /// Structural data (Action, Caller, Cause, Errors) is always populated — the cost of the
 /// thin push/pop is ~50ns per action and means errors get a useful trace without any flag.
-/// Richer capture is fine-grained per-flag (<see cref="CallStackFlags"/>): timing, diff,
+/// Richer capture is fine-grained per-flag (<see cref="Flags"/>): timing, diff,
 /// deepDiff, tags, history.
 ///
 /// AsyncLocal &lt;Call&gt; is the only shared mutable state — fork-safe by construction so
@@ -23,11 +23,18 @@ public sealed partial class @this
     private Call.@this? _root;
 
     /// <summary>
-    /// Per-property gates for richer Call data capture. See <see cref="CallStackFlags"/>.
+    /// Per-property gates for richer Call data capture. See <see cref="Flags"/>.
     /// Settable so <see cref="App.Debug.@this.Apply"/> can update it from <c>--debug</c>
-    /// after construction; otherwise stays at <see cref="CallStackFlags.Default"/>.
+    /// after construction; otherwise stays at <see cref="Flags.Default"/>.
+    ///
+    /// Concurrency note: <see cref="Flags"/> is a multi-field <c>record struct</c>;
+    /// reassigning this property mid-run via Debug.Apply is a non-atomic copy. A reader
+    /// (e.g. Children.Add evaluating <c>History</c> + <c>MaxFrames</c>) executing during the
+    /// reassignment can observe a torn struct. Worst case is one off-by-one FIFO eviction
+    /// decision — no data loss, no exception. Practically rare since debug mode is set at
+    /// startup or pause/resume, not steady-state. Accepted as documented.
     /// </summary>
-    public CallStackFlags Flags { get; set; } = CallStackFlags.Default;
+    public Flags Flags { get; set; } = Flags.Default;
 
     /// <summary>
     /// Run-wide accumulator of every error observed (handled or unhandled). Survives Pop.
@@ -38,7 +45,7 @@ public sealed partial class @this
     /// <summary>
     /// Optional Variables source for diff capture. Set by <see cref="Push"/> via the
     /// per-call <c>variables</c> argument; the active Call subscribes to its <c>OnSet</c>
-    /// when <see cref="CallStackFlags.Diff"/> is on.
+    /// when <see cref="Flags.Diff"/> is on.
     /// </summary>
     public Variables.@this? Variables { get; set; }
 

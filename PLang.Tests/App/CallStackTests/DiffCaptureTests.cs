@@ -16,7 +16,7 @@ public class DiffCaptureTests
     [Test]
     public async Task Diff_FlagOn_VariableSetAppendsDiffEntry()
     {
-        var stack = new CallStack { Flags = CallStackFlags.Default with { Diff = true } };
+        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
         var vars = new global::App.Variables.@this();
         vars.Set("name", "old");
 
@@ -30,7 +30,7 @@ public class DiffCaptureTests
     [Test]
     public async Task Diff_RecordCarriesNameBeforeAt()
     {
-        var stack = new CallStack { Flags = CallStackFlags.Default with { Diff = true } };
+        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
         var vars = new global::App.Variables.@this();
         vars.Set("name", "ingi");
 
@@ -47,7 +47,7 @@ public class DiffCaptureTests
     [Test]
     public async Task Diff_ScalarOnlyByDefault_NonScalarRendersAsSummary()
     {
-        var stack = new CallStack { Flags = CallStackFlags.Default with { Diff = true } };
+        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
         var vars = new global::App.Variables.@this();
         var list = new List<int> { 1, 2, 3 };
         vars.Set("items", list);
@@ -66,7 +66,7 @@ public class DiffCaptureTests
     {
         var stack = new CallStack
         {
-            Flags = CallStackFlags.Default with { Diff = true, DeepDiff = true }
+            Flags = Flags.Default with { Diff = true, DeepDiff = true }
         };
         var vars = new global::App.Variables.@this();
         var list = new List<int> { 1, 2, 3 };
@@ -86,7 +86,7 @@ public class DiffCaptureTests
     [Test]
     public async Task Diff_DisposeUnsubscribesFromVariablesOnSet()
     {
-        var stack = new CallStack { Flags = CallStackFlags.Default with { Diff = true } };
+        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
         var vars = new global::App.Variables.@this();
         vars.Set("x", 1);
 
@@ -105,7 +105,7 @@ public class DiffCaptureTests
         // Architect plan P8: scalar-only default should mitigate the prior OOM scenario.
         // 100 iterations × 1MB list under Diff:true (no DeepDiff). GC delta stays low
         // because Before captures a summary string, not a clone.
-        var stack = new CallStack { Flags = CallStackFlags.Default with { Diff = true } };
+        var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
         var vars = new global::App.Variables.@this();
         // Seed with a 1MB-ish list.
         vars.Set("big", new List<byte>(new byte[1024 * 1024]));

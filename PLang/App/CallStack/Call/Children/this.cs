@@ -9,7 +9,7 @@ namespace App.CallStack.Call.Children;
 /// <see cref="IReadOnlyList{T}"/> for natural iteration; iteration takes a snapshot
 /// to avoid throwing on concurrent Add/Remove.
 ///
-/// FIFO eviction triggers only when <see cref="CallStackFlags.History"/> is on; when
+/// FIFO eviction triggers only when <see cref="Flags.History"/> is on; when
 /// off, popped Calls are removed at dispose so the list stays bounded by live depth
 /// and the Add path never evicts. Eviction reads the live Flags via the back-reference
 /// — Debug.Apply can flip History mid-run, and Add reflects the current state.

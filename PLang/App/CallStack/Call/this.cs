@@ -25,12 +25,6 @@ public sealed partial class @this : IAsyncDisposable
     private Action<string, object?, object?>? _onSetHandler;
     private Dictionary<global::System.Type, object>? _items;
 
-    // Private lock targets for Diffs / Tags. Children owns its own lock inside Children.@this;
-    // Errors/Audit do too. Locking on the public collections themselves would invite deadlock
-    // with consumers that legitimately take their own lock on the same instance.
-    private readonly object _diffsLock = new();
-    private readonly object _tagsLock = new();
-
     /// <summary>
     /// Unique identifier for this Call. 8 hex chars — short enough for log lines.
     /// </summary>
@@ -94,12 +88,19 @@ public sealed partial class @this : IAsyncDisposable
     public TimeSpan? Duration => CompletedAt - StartedAt;
 
     // --- Diff tier (null when Flags.Diff off) ---
-    /// <summary>Variable mutations observed during this Call's lifetime. Null unless Flags.Diff was on at Push.</summary>
-    public List<Diff>? Diffs { get; }
+    /// <summary>
+    /// Variable mutations observed during this Call's lifetime. Null unless Flags.Diff was
+    /// on at Push. See <see cref="Diffs.@this"/> for thread-safety + snapshot iteration.
+    /// </summary>
+    public Diffs.@this? Diffs { get; }
 
-    // --- Tag tier (null until first write) ---
-    /// <summary>Free-form tags written by handlers (<c>tag</c> action) or C# code via <see cref="Tag"/>. Lazy-allocated.</summary>
-    public Dictionary<string, string>? Tags { get; private set; }
+    // --- Tag tier ---
+    /// <summary>
+    /// Free-form tags written by handlers (<c>tag</c> action) or C# code via <see cref="Tag"/>.
+    /// Always allocated (cost is one dict alloc per Call) so the lazy-init race goes away —
+    /// see <see cref="Tags.@this"/> for thread-safety + iteration semantics.
+    /// </summary>
+    public Tags.@this Tags { get; } = new();
 
     /// <summary>
     /// Constructed by <see cref="App.CallStack.@this.Push"/>. Holds back-references to the
@@ -111,7 +112,7 @@ public sealed partial class @this : IAsyncDisposable
         @this? caller,
         @this? cause,
         App.CallStack.@this stack,
-        CallStackFlags flags,
+        Flags flags,
         @this? previousCurrent,
         Variables.@this? diffSource)
     {
@@ -132,35 +133,25 @@ public sealed partial class @this : IAsyncDisposable
 
         if (flags.Diff && diffSource != null)
         {
-            Diffs = new List<Diff>();
+            Diffs = new Diffs.@this();
             var deep = flags.DeepDiff;
             _onSetHandler = (name, before, _) =>
             {
                 // OnSet fires synchronously on Variables.Set; parallel Task.WhenAll
                 // branches sharing the same Variables instance can invoke this concurrently.
-                lock (_diffsLock)
-                {
-                    Diffs!.Add(new Diff(name, CaptureBefore(before, deep), DateTimeOffset.UtcNow));
-                }
+                // Diffs owns its lock and snapshot iteration — Add is safe, readers safe.
+                Diffs.Add(new Diff(name, CaptureBefore(before, deep), DateTimeOffset.UtcNow));
             };
             diffSource.OnSet += _onSetHandler;
         }
     }
 
     /// <summary>
-    /// Writes a single tag onto this Call. Lazy-allocates <see cref="Tags"/>.
-    /// Used by C# handlers (<c>cache.hit=true</c>, <c>http.status=503</c>, <c>llm.tokens=2400</c>)
-    /// and by the <c>tag</c> PLang action. Thread-safe — parallel foreach branches
-    /// dispatching `tag` resolve to the same caller's frame.
+    /// Writes a single tag onto this Call. Used by C# handlers (<c>cache.hit=true</c>,
+    /// <c>http.status=503</c>, <c>llm.tokens=2400</c>) and by the <c>tag</c> PLang action.
+    /// Thread-safe — Tags owns its lock.
     /// </summary>
-    public void Tag(string key, string value)
-    {
-        lock (_tagsLock)
-        {
-            Tags ??= new Dictionary<string, string>();
-            Tags[key] = value;
-        }
-    }
+    public void Tag(string key, string value) => Tags.Set(key, value);
 
     /// <summary>
     /// Typed metadata bag. Use this to attach handler-specific structured data

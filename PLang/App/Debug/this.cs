@@ -114,56 +114,6 @@ public sealed class @this
         return _engine.Channels.WriteAsync(App.Channels.@this.Debug, message);
     }
 
-    /// <summary>
-    /// Parses <c>--debug={callstack:...}</c> into a <see cref="CallStackFlags"/>.
-    ///   <c>callstack:true</c> → Shorthand (Timing + Tags on, others off).
-    ///   <c>callstack:{timing:true,...}</c> → field-by-field.
-    /// Anything else (false, null, malformed) → <see cref="CallStackFlags.Default"/>.
-    /// Defensive parser — bad input doesn't throw, it falls back to all-off.
-    /// </summary>
-    internal static App.CallStack.CallStackFlags ParseCallStackFlags(object? raw)
-    {
-        if (raw is bool b)
-            return b ? App.CallStack.CallStackFlags.Shorthand : App.CallStack.CallStackFlags.Default;
-
-        if (raw is IDictionary<string, object?> obj)
-        {
-            return new App.CallStack.CallStackFlags(
-                Timing:    GetBool(obj, "timing"),
-                Diff:      GetBool(obj, "diff"),
-                DeepDiff:  GetBool(obj, "deepDiff") || GetBool(obj, "deepdiff"),
-                Tags:      GetBool(obj, "tags"),
-                History:   GetBool(obj, "history"),
-                MaxFrames: GetInt(obj, "maxFrames", 1000));
-        }
-
-        return App.CallStack.CallStackFlags.Default;
-    }
-
-    private static bool GetBool(IDictionary<string, object?> obj, string key)
-    {
-        if (!obj.TryGetValue(key, out var raw) || raw == null) return false;
-        return raw switch
-        {
-            bool b => b,
-            string s when bool.TryParse(s, out var parsed) => parsed,
-            _ => false
-        };
-    }
-
-    private static int GetInt(IDictionary<string, object?> obj, string key, int fallback)
-    {
-        if (!obj.TryGetValue(key, out var raw) || raw == null) return fallback;
-        return raw switch
-        {
-            int i => i,
-            long l => (int)l,
-            double d => (int)d,
-            string s when int.TryParse(s, out var parsed) => parsed,
-            _ => fallback
-        };
-    }
-
     public void Apply(object debugValue)
     {
         // Idempotent: subscribing twice would double every event handler and
@@ -195,7 +145,7 @@ public sealed class @this
             // strip it before the generic Populate.
             if (dict.TryGetValue("callstack", out var rawCallstack))
             {
-                CallStack.Flags = ParseCallStackFlags(rawCallstack);
+                CallStack.Flags = App.CallStack.Flags.Parse(rawCallstack);
                 dict.Remove("callstack");
             }
 

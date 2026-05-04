@@ -67,7 +67,7 @@ public class CallTests
     [Test]
     public async Task Call_StartedAt_PopulatedWhenTimingFlagOn()
     {
-        var on = new CallStack { Flags = CallStackFlags.Default with { Timing = true } };
+        var on = new CallStack { Flags = Flags.Default with { Timing = true } };
         var off = new CallStack();
         await using var withTiming = on.Push(MakeAction("A"));
         await using var noTiming = off.Push(MakeAction("A"));
@@ -76,11 +76,13 @@ public class CallTests
     }
 
     [Test]
-    public async Task Call_Tags_NullWhenTagsFlagOff_AndNoTagWritten()
+    public async Task Call_Tags_StartsEmpty()
     {
+        // Tags is now always-allocated (Tags.@this owns its lock; lazy alloc would have
+        // raced with the writer pattern). No tag written → Count == 0.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction("A"));
-        await Assert.That(call.Tags).IsNull();
+        await Assert.That(call.Tags.Count).IsEqualTo(0);
     }
 
     [Test]

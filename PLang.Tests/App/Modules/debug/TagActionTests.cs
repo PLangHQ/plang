@@ -24,11 +24,11 @@ public class TagActionTests
         };
         await action.Run();
 
-        await Assert.That(outer.Tags).IsNotNull();
-        await Assert.That(outer.Tags!["k1"]).IsEqualTo("v1");
-        await Assert.That(outer.Tags!["k2"]).IsEqualTo("v2");
-        // The tag's own Call must NOT have its own Tags — those would vanish on Pop.
-        await Assert.That(tagCall.Tags).IsNull();
+        await Assert.That(outer.Tags.Count).IsEqualTo(2);
+        await Assert.That(outer.Tags["k1"]).IsEqualTo("v1");
+        await Assert.That(outer.Tags["k2"]).IsEqualTo("v2");
+        // The tag's own Call must NOT have entries — those would vanish on Pop.
+        await Assert.That(tagCall.Tags.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -43,8 +43,7 @@ public class TagActionTests
         };
         await action.Run();
 
-        await Assert.That(call.Tags).IsNotNull();
-        await Assert.That(call.Tags!["manual-checkpoint"]).IsEqualTo("true");
+        await Assert.That(call.Tags["manual-checkpoint"]).IsEqualTo("true");
     }
 
     [Test]
@@ -62,11 +61,11 @@ public class TagActionTests
     }
 
     [Test]
-    public async Task Tag_AllocatesTagsDict_WhenNull()
+    public async Task Tag_StartsEmpty_WriteGoesThroughTagsType()
     {
         await using var app = new global::App.@this("/app");
         await using var call = app.Debug.CallStack.Push(MakeAction("Goal"));
-        await Assert.That(call.Tags).IsNull();
+        await Assert.That(call.Tags.Count).IsEqualTo(0);
 
         var action = new Tag
         {
@@ -74,7 +73,8 @@ public class TagActionTests
             Label = new global::App.Data.@this<string>("Label", "x")
         };
         await action.Run();
-        await Assert.That(call.Tags).IsNotNull();
+        await Assert.That(call.Tags.Count).IsEqualTo(1);
+        await Assert.That(call.Tags["x"]).IsEqualTo("true");
     }
 
     [Test]

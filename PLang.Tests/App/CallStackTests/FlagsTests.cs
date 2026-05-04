@@ -2,12 +2,12 @@ using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.CallStackTests;
 
-public class CallStackFlagsTests
+public class FlagsTests
 {
     [Test]
-    public async Task CallStackFlags_DefaultIsAllFalse_MaxFrames1000()
+    public async Task Flags_DefaultIsAllFalse_MaxFrames1000()
     {
-        var d = CallStackFlags.Default;
+        var d = Flags.Default;
         await Assert.That(d.Timing).IsFalse();
         await Assert.That(d.Diff).IsFalse();
         await Assert.That(d.DeepDiff).IsFalse();
@@ -17,17 +17,17 @@ public class CallStackFlagsTests
     }
 
     [Test]
-    public async Task CallStackFlags_RecordStruct_EqualityByValue()
+    public async Task Flags_RecordStruct_EqualityByValue()
     {
-        var a = new CallStackFlags(true, false, false, true, false, 500);
-        var b = new CallStackFlags(true, false, false, true, false, 500);
+        var a = new Flags(true, false, false, true, false, 500);
+        var b = new Flags(true, false, false, true, false, 500);
         await Assert.That(a).IsEqualTo(b);
     }
 
     [Test]
-    public async Task CallStackFlags_Timing_GatesStartedAtCompletedAt()
+    public async Task Flags_Timing_GatesStartedAtCompletedAt()
     {
-        var on = new CallStack { Flags = CallStackFlags.Default with { Timing = true } };
+        var on = new CallStack { Flags = Flags.Default with { Timing = true } };
         var off = new CallStack();
 
         await using (var withTiming = on.Push(MakeAction("A")))
@@ -41,9 +41,9 @@ public class CallStackFlagsTests
     }
 
     [Test]
-    public async Task CallStackFlags_Diff_GatesDiffsCollection()
+    public async Task Flags_Diff_GatesDiffsCollection()
     {
-        var on = new CallStack { Flags = CallStackFlags.Default with { Diff = true } };
+        var on = new CallStack { Flags = Flags.Default with { Diff = true } };
         var off = new CallStack();
         var vars = new global::App.Variables.@this();
 
@@ -54,33 +54,32 @@ public class CallStackFlagsTests
     }
 
     [Test]
-    public async Task CallStackFlags_DeepDiff_RequiresDiff()
+    public async Task Flags_DeepDiff_RequiresDiff()
     {
         // DeepDiff with Diff off → no diff machinery at all (no clones, no list).
-        var stack = new CallStack { Flags = CallStackFlags.Default with { DeepDiff = true } };
+        var stack = new CallStack { Flags = Flags.Default with { DeepDiff = true } };
         var vars = new global::App.Variables.@this();
         await using var call = stack.Push(MakeAction("A"), vars);
         await Assert.That(call.Diffs).IsNull();
     }
 
     [Test]
-    public async Task CallStackFlags_Tags_TagWriteAlwaysLazyAllocates()
+    public async Task Flags_Tags_TagWriteAlwaysSucceeds()
     {
         // Tags flag is advisory (hint to exporters), not a write-gate — explicit
         // observability intent (user-authored `- tag x=y`, C# handler diagnostics)
-        // always succeeds regardless of flag state. The doc on CallStackFlags.Tags
+        // always succeeds regardless of flag state. The doc on Flags.Tags
         // documents this: the flag exists for downstream tag-rendering decisions.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction("A"));
         call.Tag("k", "v");
-        await Assert.That(call.Tags).IsNotNull();
-        await Assert.That(call.Tags!["k"]).IsEqualTo("v");
+        await Assert.That(call.Tags["k"]).IsEqualTo("v");
     }
 
     [Test]
-    public async Task CallStackFlags_History_RetainsPoppedChildren()
+    public async Task Flags_History_RetainsPoppedChildren()
     {
-        var stack = new CallStack { Flags = CallStackFlags.Default with { History = true } };
+        var stack = new CallStack { Flags = Flags.Default with { History = true } };
         await using var outer = stack.Push(MakeAction("A"));
         var inner = stack.Push(MakeAction("B"));
         await inner.DisposeAsync();
@@ -88,8 +87,8 @@ public class CallStackFlagsTests
     }
 
     [Test]
-    public async Task CallStackFlags_MaxFrames_DefaultsTo1000()
+    public async Task Flags_MaxFrames_DefaultsTo1000()
     {
-        await Assert.That(CallStackFlags.Default.MaxFrames).IsEqualTo(1000);
+        await Assert.That(Flags.Default.MaxFrames).IsEqualTo(1000);
     }
 }
