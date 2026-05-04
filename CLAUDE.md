@@ -41,7 +41,7 @@
 - For full OBP details: `Documentation/Runtime2/plang_object_based_pattern.md`
 
 ## Build
-- Always run `plang p build` without specifying a goal name — it builds everything
+- Always run `plang build` without specifying a goal name — it builds everything
 - NEVER delete .build folders
 - Use `PlangConsole/bin/Debug/net10.0/plang.exe` for net10.0 builds
 - Don't use Select-String in bash — it doesn't work
@@ -59,9 +59,10 @@
 - C# tests run from project root via `dotnet run --project PLang.Tests` (different runner, different rules).
 
 ## Debugging
-- `plang p !debug` — debug all steps
-- `plang p !debug=Start` — debug specific goal
-- `plang p !debug=Start:3` — debug specific step index
+- `plang --debug` — debug all steps
+- `plang '--debug={"goal":"Start"}'` — debug specific goal
+- `plang '--debug={"goal":"Start","step":3}'` — debug specific step
+- See `cli_reference.md` (auto-loaded into memory) for the full property bag.
 
 ## Learning
 - When corrected about PLang architecture, **add the insight to `Documentation/Runtime2/good_to_know.md`**
