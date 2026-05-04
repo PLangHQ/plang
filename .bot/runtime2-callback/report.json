@@ -1,0 +1,45 @@
+{
+  "branch": "runtime2-callback",
+  "sessions": [
+    {
+      "id": "8e1a4b9c-4f1e-4a3d-9c5e-3a8b2d6f4e92",
+      "bot": "architect",
+      "timestamp_start": "2026-05-04T14:30:00Z",
+      "timestamp_end": "2026-05-04T15:42:15Z",
+      "intent": "Design the Callback feature: state-machine restoration via seek + bind, two issuers (ask-user, error-retry) sharing one resume primitive.",
+      "before": {
+        "assumptions": "Callstack work is merged on runtime2. Diff infrastructure exists per Call. ISnapshotted does not yet exist. No callback-related code in App/. The conversation drove the design — no prior plan or review feedback to respond to.",
+        "risk": "Misframing Callback as event-sourcing-style replay would force determinism contracts the language doesn't have. Conflating ask-user and error-retry capture policies under one annotation would over-burden every step. Allowing cross-island ref-capture would couple ISnapshotted types and reinvent BinaryFormatter."
+      },
+      "plan": ".bot/runtime2-callback/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-callback/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Captures the settled design from a long architect-mode whiteboard with Ingi: seek-and-bind primitive, two issuers with different capture policies, per-type ISnapshotted, three buckets, islands rule (values only, ref-capture rejected), throw-time-vars-via-diff-reverse-apply, Diff auto-flip on error, %!error.callback% surface, smallest-first-cut test, subsystem inventory first-pass, seven open threads deferred to future sessions."
+        },
+        {
+          "paths": [".bot/runtime2-callback/architect/v1/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Version summary — what was decided, key rejections, what's next."
+        },
+        {
+          "paths": [".bot/runtime2-callback/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot-root cross-session summary."
+        }
+      ],
+      "after": {
+        "status": "design v1 written; no code changes; ready for subsystem walk in next architect session",
+        "health": "green — design is internally consistent and Ingi confirmed each fork in turn",
+        "notes": "Doc captures all conversation context so a future session can pick up without rediscovery. Seven open threads enumerated, none blocking the smallest-first-cut. Recommend test-designer next once we agree the design is final, or another architect session to walk subsystems type-by-type."
+      }
+    }
+  ]
+}
