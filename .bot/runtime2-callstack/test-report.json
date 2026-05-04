@@ -6,7 +6,8 @@
   "tested_coder_version": "v2",
   "test_run": {
     "csharp": { "total": 2623, "passed": 2623, "failed": 0, "skipped": 0 },
-    "plang": { "total": 181, "passed": 176, "failed": 5, "skipped": 0 }
+    "plang": { "total": 181, "passed": 181, "failed": 0, "skipped": 0, "note": "Corrected after clean rebuild. Initial run reported 176/181 — that was a stale `PlangConsole/bin/.../plang` binary pre-dating be77dc12. See tester/v1/correction.md. Original (stale) numbers preserved below for traceability." },
+    "plang_initial_stale_run": { "total": 181, "passed": 176, "failed": 5, "skipped": 0 }
   },
   "coverage": {
     "note": "dotnet test --collect coverage blocked on .NET 10 / Microsoft.Testing.Platform (VSTest path unsupported). Skipped quantitative coverage; analysis below is structural.",
@@ -94,6 +95,7 @@
       "suggestion": "Add `await Assert.That(resolved[\"message\"]?.ToString()).DoesNotContain(\"%!\");` after the equality check."
     }
   ],
-  "verdict": "needs-fixes",
-  "summary": "C# suite is honest and green (2623/2623). The PLang suite is NOT — five real failures (Audit, CauseLink, CrossFileChain, TagBareLabelWritesTrue, TagWritesPairsOntoCurrentCall) directly contradict the coder v2 summary's '181/181 pass' claim. Two distinct root causes: (a) `debug.tag` action not discoverable at runtime despite handler + .pr being in place, and (b) `%!callStack.Audit` PLang binding either null or cyclic. Both are user-facing surfaces the architect plan promised. Branch is not mergeable. Send back to coder for findings 1-3 (critical); findings 4-8 (assertion / convention) can be folded into the same fix round."
+  "verdict": "approved",
+  "superseded_verdict": "needs-fixes",
+  "summary": "Corrected after env-divergence root-cause: 181/181 PLang on clean rebuild. Findings 1-3 (the five 'critical' failures) were artefacts of a stale `PlangConsole/bin/.../plang` binary inherited across bot sessions, pre-dating `be77dc12`'s `app.modules.debug.tag` and `%!callStack.Audit` wiring. Coder/v2's claim was honest. C# suite 2623/2623 throughout. Findings 4-8 (test-quality / convention) stand on their own as minor cleanups, not blockers. See tester/v1/correction.md."
 }

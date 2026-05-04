@@ -266,13 +266,25 @@
           "category": "doc",
           "confidence": "high",
           "context": "Standard tester artefacts. test-report.json filed at branch root: 8 findings (3 critical, 2 major, 3 minor). Verdict: needs-fixes."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callstack/tester/v1/correction.md",
+            ".bot/runtime2-callstack/tester/v1/verdict.json",
+            ".bot/runtime2-callstack/tester/summary.md",
+            ".bot/runtime2-callstack/test-report.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Corrected v1 verdict from `needs-fixes` to `approved` after env-divergence root-cause. The 5 'critical' PLang failures (Tag tests + Audit/CauseLink/CrossFileChain) were caused by a stale `PlangConsole/bin/.../plang` binary inherited from a prior bot session \u2014 pre-dating be77dc12's app.modules.debug.tag and %!callStack.Audit wiring. After `rm -rf bin obj && dotnet build PlangConsole`, suite is 181/181 on the same commit. Coder/v2 was honest. Findings 4-8 (test quality / convention) stand as minor cleanups."
         }
       ],
-      "timestamp_end": "2026-05-04T10:57:04.135127Z",
+      "timestamp_end": "2026-05-04T11:17:11.337174Z",
       "after": {
-        "status": "review complete - NEEDS WORK",
-        "health": "C# clean; PLang has 5 real failures the coder summary missed. Two architectural surfaces (debug.tag, %!callStack.Audit) unreleased.",
-        "notes": "Send back to coder for findings 1-3 (critical). Findings 4-8 (test-quality / convention) can be folded into the same fix round. After fixes, return for tester v2."
+        "status": "review complete - APPROVED (corrected)",
+        "health": "Both suites green on clean rebuild. C# 2623/2623, PLang 181/181 (HEAD~1=00bfc01d, code tip=be77dc12).",
+        "notes": "Initial verdict was `fail` based on stale plang.exe binary. After diagnosing env divergence per user request (commit hash + dotnet --info + raw Test summary line), root cause traced to inherited build artefact, not a real bug. Branch is mergeable. Lesson recorded in correction.md: tester must rebuild PlangConsole before claiming PLang test results."
       }
     }
   ]

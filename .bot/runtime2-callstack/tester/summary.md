@@ -1,10 +1,12 @@
 # tester — runtime2-callstack
 
-## v1 — 2026-05-04 — fail
+## v1 — 2026-05-04 — pass (corrected)
 
-PLang suite is 176/181, contradicting coder v2's 181/181 claim. Five real
-failures: `Audit`, `CauseLink`, `CrossFileChain`, `TagBareLabelWritesTrue`,
-`TagWritesPairsOntoCurrentCall`. Two root causes: `debug.tag` action not
-discoverable at runtime, and `%!callStack.Audit` PLang binding null/cyclic.
-C# suite green at 2623/2623. 8 findings filed; back to coder. See
-[v1/summary.md](v1/summary.md).
+Initial verdict was `fail` (5 PLang failures); corrected to `pass`
+after env-divergence root-caused. The 5 failures were a stale
+`PlangConsole/bin/.../plang` binary inherited across sessions —
+pre-dating `be77dc12`'s `app.modules.debug.tag` and `%!callStack.Audit`
+wiring. After `rm -rf bin/obj && dotnet build PlangConsole`, suite is
+181/181 on the same commit. Coder/v2 was honest. C# 2623/2623 throughout.
+Five test-quality findings (4-8) still stand as minor cleanups. See
+[v1/correction.md](v1/correction.md).

@@ -1,1 +1,1 @@
-{ "status": "fail", "summary": "PLang suite 176/181 — coder v2's 181/181 claim is false; debug.tag action unresolvable at runtime, %!callStack.Audit binding null/cyclic." }
+{ "status": "pass", "summary": "Corrected: 181/181 PLang on clean rebuild — initial 5 failures were a stale-binary artefact, not a real bug. See v1/correction.md.", "superseded_verdict": "fail" }
