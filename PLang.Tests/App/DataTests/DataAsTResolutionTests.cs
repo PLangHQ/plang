@@ -357,4 +357,40 @@ public class DataAsTResolutionTests
         await Assert.That(content).DoesNotContain("BUILDER-X");
         await Assert.That(content).DoesNotContain("BUILDER-Y");
     }
+
+    // Closer LlmFixer reproducer: stored as Data<List<object?>> (the actual minted type from
+    // variable.set's MintTyped path), read as List<LlmMessage> (the actual llm.query slot).
+    // The conversion goes List<object?> → List<LlmMessage> per element via JSON roundtrip —
+    // which should preserve literal %var%, but the actual builder run shows substitution
+    // happening somewhere in this exact path. Confirms whether the leak is in conversion.
+    [Test]
+    public async Task AsT_ListObjectSlot_AsListLlmMessage_StoredLeavesNotReResolved()
+    {
+        var ctx = _app.Context;
+        ctx.Variables.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
+        ctx.Variables.Set("buildStart", 999_999_999L);
+
+        // Mirrors what variable.set's MintTyped stores after walking the literal list.
+        // Each element is a Dictionary<string, object?>, with Content carrying literal %var%.
+        var stored = new List<object?>
+        {
+            new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase)
+            {
+                ["Role"] = "user",
+                ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
+            }
+        };
+        ctx.Variables.Set(new global::App.Data.@this<List<object?>>("fixerMessages", stored) { Context = ctx });
+
+        // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
+        var paramData = new Data("Messages", "%fixerMessages%") { Context = ctx };
+        var result = paramData.As<List<global::App.modules.llm.LlmMessage>>(ctx);
+
+        await Assert.That(result.Success).IsTrue();
+        var content = result.Value![0].Content!;
+        await Assert.That(content).IsEqualTo("literal text with %goal.Name% and %buildStart% inside");
+        // Negative assertion — the bug substituted these:
+        await Assert.That(content).DoesNotContain("BuildGoal");
+        await Assert.That(content).DoesNotContain("999999999");
+    }
 }
