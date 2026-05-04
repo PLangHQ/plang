@@ -2,33 +2,33 @@
 
 ## What this is
 
-A design pass for **Callback** — PLang's mechanism for state-machine restoration: pausing a goal mid-flow (the original process dies) and resuming it later in a fresh process at the exact point it stopped, with the variables and provider state it had. Two real situations need this: `ask user` (developer asks for input, web returns immediately, user submits hours later) and **error-retry** (a step fails, the developer captures the failure for durable retry).
+A design pass for **Callback** — PLang's mechanism for state-machine restoration: pausing a goal mid-flow (the original process dies) and resuming it later in a fresh process at the exact point it stopped, with the variables it had. Two real situations need this: `ask user` (developer asks for input, web returns immediately, user submits hours later) and **error-retry** (a step fails, the developer captures the failure for durable retry).
 
-The architectural challenge: both situations look superficially different but share a core mechanic — *seek + bind*. Construct a fresh App, jump to `(goal, step, action)`, hydrate variables and ISnapshotted state, continue. No replay, no threads, no coroutine state. The session settled the design of that mechanic, then walked every subsystem in `App/` to lock the snapshot inventory.
+The architectural challenge: both situations look superficially different but share a core mechanic — *bind state, jump to position, run*. Construct a fresh App, jump to `(goal, step, action)`, hydrate variables, continue. No replay, no threads, no coroutine state. The session settled the design of that mechanic, walked every subsystem in `App/` to lock the snapshot inventory, and ran one more correction pass that materially shrank the design.
 
 ## What was done
 
-Whiteboard-style architect conversation with Ingi across two passes — first the design shape, then the subsystem walk. No code changed. The deliverable is the design doc at `v1/plan.md`. Key decisions, in conversational order:
+Whiteboard-style architect conversation with Ingi across three passes — first the design shape, then the subsystem walk, then a correction pass that simplified the model. No code changed. The deliverable is the design doc at `v1/plan.md`. Key decisions, in conversational order:
 
-1. **Two issuers, one primitive.** `ask user` and error-retry share `Engine.Seek(callback)`; they differ in *what state they carry* and *who's responsible for the rest*. Ask-user: developer-declared minimal slice, wire-bounded, encrypted+signed. Error-retry: full app state, server-side, no size constraint.
-2. **Per-type `ISnapshotted`.** Each OBP `@this` declares its own snapshot discipline. Three buckets emerge.
-3. **Islands rule.** Each `ISnapshotted` captures values, not graph identity. Ref-capture rejected — no use case survived examination.
-4. **Throw-time vars for error-retry.** Corrected mid-conversation by Ingi. Error handler is its own scope; its variable mutations are real but should not appear in the callback. Reverse-apply diffs from the callstack stream from now back to throw timestamp.
-5. **Diff auto-flips on error.** No conditional path.
-6. **`%!error.callback%`** is a synthetic, lazy PLang property.
-7. **Cross-process causality** via `Call.SetItem<CallbackOrigin>`, not by extending `Cause`.
+1. **Two issuers, one mechanism.** `ask user` and error-retry both use `App.Run(callback)`. Differ in what state they carry, not how it's consumed.
+2. **Per-type `ISnapshotted`.** Each OBP `@this` declares its own snapshot discipline. Three buckets: snapshot-and-restore, reconstruct-on-build, drop. Interface uses `Snapshot.@this` and `Context.@this` — proper OBP types, not invented `Reader`/`Writer`/`RestoreContext`.
+3. **Islands rule.** Each `ISnapshotted` captures values, not graph identity. Ref-capture rejected.
+4. **Throw-time vars for error-retry.** Reverse-apply diffs from the callstack stream; Diff auto-flips on error.
+5. **`%!error.callback%`** is a synthetic, lazy PLang property.
+6. **`App.Providers` snapshots at the registry layer** — default selections + runtime registrations with DLL paths. Provider instances stay reconstruct.
+7. **Identity is name-only.** Provider resolves on resume. Whole `Data<Callback>` signed including `ActorName`.
+8. **Resume position lands at the action in both modes** — error-retry re-executes the failed action; `ask user`'s handler distinguishes fresh vs resumed and returns `Ok(boundValue)` instead of issuing a Callback.
+9. **No `Seek` verb.** `App.Run(callback)` is the same main loop as `App.Run(goal)`; only the entry point differs.
+10. **No `CallbackOrigin`.** Cross-process telemetry stitching is a log-layer concern, correlated by callback identity. No structured runtime field.
+11. **Cache is not snapshotted.** Reframed as a hint, not state. The line between Variables and Cache *is* the line between "must survive resume" and "can be lost on resume." `MemoryStepCache` does not implement `ISnapshotted`; resumed App gets a fresh empty cache. Sharpens the rule for developers: **if it must survive resume, it's a Variable.**
 
-Then the subsystem walk refined the inventory:
+## The synthesis principle
 
-8. **`MemoryStepCache` is audit-derived, not `ISnapshotted`.** Walk the callstack for `cache.set`/`cache.tryAdd` Calls (handlers `Tag` the resolved key), collect distinct keys, ask the cache for current state of each, capture `(key, value, absoluteExpiry)`. Per-run scoped, pluggable-cache friendly, generalisable as a pattern.
-9. **`App.Providers` is snapshot-and-restore at the registry layer.** Captures default selections per type + runtime-registered (non-default) providers with their DLL paths. Provider *instances* themselves remain reconstruct-on-build; built-ins don't implement `ISnapshotted`.
-10. **Names vs values is the unifying principle.** Snapshots store names; they store values only when the name doesn't determine the value. Variables and Cache fall on the values side; provider selections, identity, datasource, encryption, mode flags fall on the names side. Two trust layers gate resume: signature integrity (envelope) and referent integrity (named state still exists in the system).
-11. **Identity is name-only.** Just `Identity.Name`; the provider resolves on resume. The whole `Data<Callback>` envelope is signed including `ActorName`, so tampering with who-runs-as breaks the signature.
-12. **MemoryStepCache and memory Channels drop for now.** Cache loss documented as a known fragility — revisit when someone hits a wall.
+> **Variables are the values that survive resume. Everything else is a name.**
 
-Final snapshot surface is small: three `Variables` (per-actor, with existing exclusions), `Errors.Trail`, `App.Providers` registry selections, `App._statics`, plus `(key, value, expiry)` cache tuples derived from the callstack.
+Variables are the only piece of state captured as full payloads. Everything else that needs to persist (provider selections, identity, datasource, encryption, mode flags, runtime-loaded DLLs) is captured as a name; the provider/registry/store resolves the name on resume. Two trust layers gate the resume: signature integrity (envelope) and referent integrity (named state still exists).
 
-Files modified: only doc files under `.bot/runtime2-callback/architect/v1/`. No source touched.
+`Errors.Trail` and `App._statics` are the small messy exceptions where there's no clean name to dereference, but their content is constrained.
 
 ## Code example
 
@@ -39,16 +39,14 @@ record Callback(
     string GoalHash,
     int StepIndex,
     int ActionIndex,
-    string ActorName,                 // System / Service / User
+    string ActorName,
     Dictionary<string, object?> VariablesByActor,
-    Dictionary<string, object?> Selections,        // names: provider defaults, identity, etc.
-    List<CacheEntry> CacheEntries,                 // (key, value, absoluteExpiry)
+    Dictionary<string, object?> Selections,
     Dictionary<string, object?> Statics,
     List<IError> ErrorTrail,
     bool BuildEnabled,
     bool TestingEnabled,
-    DateTimeOffset Expiry,
-    CallbackOrigin? Origin
+    DateTimeOffset Expiry
 );
 ```
 
@@ -56,8 +54,10 @@ The PLang surface a developer touches:
 
 ```plang
 - insert into users, name=%name%
-   on error
-      - write %!error.callback% to file callbacks/%!error.id%.bin
+   on error call goal HandleError
+
+HandleError
+- write %!error.callback% to file callbacks/%!error.id%.bin
 
 Recover
 - read file callbacks/%id%.bin, write to %callback%
@@ -66,6 +66,7 @@ Recover
 
 ## Next steps
 
-The plan is complete enough that test-designer or coder can pick up the smallest first cut (in-process error → callback → resume). Open threads enumerated at the bottom of `plan.md` are independent layers — wire format, storage ergonomics, ask-user builder annotation. None blocks the seek primitive.
+The design is complete. Two reasonable next sessions:
 
-Recommended next session: **wire format and key management for ask-user**, since that's the load-bearing piece that turns the design into something deployable. Or hand off to test-designer with the design as locked.
+1. **Wire format and key management for ask-user** — signing scheme over `Data<Callback>`, encryption, key rotation, `goal_hash` computation. Turns the design into something deployable.
+2. **Hand to test-designer** to draft the smallest-first-cut test (in-process error → callback → resume) and the surrounding test plan. Coder picks up the resume mechanism once tests are designed.

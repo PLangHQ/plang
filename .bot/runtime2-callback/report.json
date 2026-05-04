@@ -5,7 +5,7 @@
       "id": "8e1a4b9c-4f1e-4a3d-9c5e-3a8b2d6f4e92",
       "bot": "architect",
       "timestamp_start": "2026-05-04T14:30:00Z",
-      "timestamp_end": "2026-05-04T16:40:01Z",
+      "timestamp_end": "2026-05-04T17:40:00Z",
       "intent": "Design the Callback feature: state-machine restoration via seek + bind, two issuers (ask-user, error-retry) sharing one resume primitive. Walk every subsystem in App/ to lock the snapshot inventory.",
       "before": {
         "assumptions": "Callstack work is merged on runtime2. Diff infrastructure exists per Call. ISnapshotted does not yet exist. No callback-related code in App/. The conversation drove the design — no prior plan or review feedback to respond to.",
@@ -33,12 +33,19 @@
           "category": "doc",
           "confidence": "high",
           "context": "Refreshed both summaries to reflect the closed inventory walk and the names-vs-values synthesis."
+        },
+        {
+          "paths": [".bot/runtime2-callback/architect/v1/plan.md", ".bot/runtime2-callback/architect/v1/summary.md", ".bot/runtime2-callback/architect/summary.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Third pass: correction round driven by Ingi's review of v1. Substantial simplifications: (1) OBP types fixed — Snapshot.@this and Context.@this, not invented Reader/Writer/RestoreContext. (2) Removed wrong Cache example from Islands rule (cache owns what it stores; no deep-clone-from-Variables relationship). (3) Cache dropped from snapshot entirely — reframed as a hint, not state, with the rule 'if it must survive resume, it's a Variable'. MemoryStepCache does not implement ISnapshotted. Removed all callstack-walking-as-cache-audit machinery (also broke on the Calls-pop-on-completion rule). (4) No 'Seek' verb — App.Run(callback) shares the main loop with App.Run(goal); only entry point differs. (5) Position semantic corrected — both modes resume AT the action; ask-user handler distinguishes fresh vs resumed itself. (6) CallbackOrigin dropped — telemetry stitching is a log-layer concern. (7) PLang code style fixed — 'on error call goal X' with the steps in a separate goal block, not inline. (8) Names-vs-values principle sharpened: Variables are the values that survive resume, everything else is a name. Two trust layers (signature integrity + referent integrity) made explicit."
         }
       ],
       "after": {
-        "status": "design v1 complete; no code changes; subsystem walk closed",
-        "health": "green — design is internally consistent, Ingi corrected three times during the walk (cache mechanism simplified, signed envelope scope, identity as name) and the final shape is tighter than the first pass",
-        "notes": "Final snapshot surface is small: three Variables instances (per-actor), Errors.Trail, App.Providers registry selections, App._statics, audit-derived cache tuples. Recommend wire format/key management as the next architect session, or hand to test-designer for the smallest-first-cut test now."
+        "status": "design v1 complete and tightened; no code changes; ready for handoff",
+        "health": "green — design is internally consistent. Ingi corrected the design across three passes (cache mechanism, signed envelope scope, identity as name, no Seek verb, cache dropped entirely, position semantics) and the final shape is materially smaller than the first pass.",
+        "notes": "Final snapshot surface: three Variables instances (per-actor), Errors.Trail, App.Providers registry selections, App._statics. Cache is no longer in the snapshot. Recommend wire format/key management as the next architect session, or hand to test-designer for the smallest-first-cut test now."
       }
     }
   ]
