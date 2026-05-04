@@ -286,6 +286,91 @@
         "health": "Both suites green on clean rebuild. C# 2623/2623, PLang 181/181 (HEAD~1=00bfc01d, code tip=be77dc12).",
         "notes": "Initial verdict was `fail` based on stale plang.exe binary. After diagnosing env divergence per user request (commit hash + dotnet --info + raw Test summary line), root cause traced to inherited build artefact, not a real bug. Branch is mergeable. Lesson recorded in correction.md: tester must rebuild PlangConsole before claiming PLang test results."
       }
+    },
+    {
+      "id": "27b5ed82-d3be-45d5-92a2-eaf55875efdd",
+      "bot": "security",
+      "timestamp_start": "2026-05-04T11:27:12Z",
+      "timestamp_end": "2026-05-04T11:32:49Z",
+      "intent": "Blue/red audit of CallStack refactor: AsyncLocal Current, tree-shaped Calls, Cause linkage, Diff capture, Tag surface, Audit accumulator, app.Errors AsyncLocal scope.",
+      "before": {
+        "assumptions": "Branch lands the architect plan (Phases 1-11). PLang trust model: .pr is the trust boundary; user-owned actions are not attacks. Concurrency safety matters because Task.WhenAll on goal.call legitimately forks AsyncLocal \u2014 parallel branches share Audit/All lists, Variables.OnSet event, and (potentially) Caller.Children. Cycle detection (MaxDepth + ContainsGoal) is enforced now (was advisory before). New surface: Variable.cs, IRawNameResolvable, Errors/this.cs (App.Errors), Errors/CallChainRenderer.cs.",
+        "risk": "Concurrency on the run-wide accumulators (Audit, app.Errors.All) under parallel goal.call. Tag dictionary races. Public-list locks (Children, Diffs) as deadlock surface. Cycle detection bypass via missing PrPath. Memory growth in long-running apps via Audit/All/Cause-pinned Calls. Verbose error mode dumping unfiltered variables."
+      },
+      "plan": ".bot/runtime2-callstack/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/CallStack/CallStackFlags.cs",
+            "PLang/App/Errors/this.cs",
+            "PLang/App/Errors/CallChainRenderer.cs",
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/modules/debug/tag.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/Actor/Context/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read every C# file new or materially changed by the callstack refactor. Walked Push/Pop, AsyncLocal restore, cycle detection, Variables.OnSet subscribe/unsubscribe symmetry, app.Errors.Push restorer, Tag handler races, CallChainRenderer ref-equality assumption, Error.Format() info-disclosure surface."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callstack/security/v1/plan.md",
+            ".bot/runtime2-callstack/security/v1/summary.md",
+            ".bot/runtime2-callstack/security/v1/verdict.json",
+            ".bot/runtime2-callstack/security/summary.md",
+            ".bot/runtime2-callstack/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote audit plan, findings (5: 1 medium + 4 low), verdict (pass), session summary, and root summary. Carried two pre-existing standing items forward without widening."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/Errors/this.cs",
+            "PLang/App/Goals/Goal/this.cs",
+            "PLang/App/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Finding #1 (medium): stack.Audit.Add (3 sites) and app.Errors.All.Add (1 site) are unsynchronized \u2014 Task.WhenAll on goal.call (architect-targeted parallelism) races them. Recommended fix before parallel goal.call ships: lock(_auditLock) or ConcurrentBag."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/modules/debug/tag.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Finding #2 (low): Call.Tag() lazy-allocates and writes to Tags dict without a lock. Parallel foreach iterations dispatching tag race on same Caller. Drop-in fix: lock(this) wrap inside Tag()."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/CallStack/Call/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Finding #3 (low): lock(Children)/lock(Diffs) lock targets are publicly-visible Lists. Convention smell \u2014 recommend private _childrenLock/_diffsLock fields."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "5 findings: 1 medium (Audit/All race), 4 low (Tag race, public-list lock, unbounded growth, stale _root). Two pre-existing findings carried forward unchanged.",
+        "notes": "Branch is mergeable. Medium finding should be addressed before parallel goal.call lands since that is what makes it reproducible. Recommend coder pass for Findings 1+2 (small lock additions) then auditor; alternatively merge and queue the lock with parallel goal.call work."
+      }
     }
   ]
 }

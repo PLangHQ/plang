@@ -1,0 +1,200 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-callstack",
+  "timestamp": "2026-05-04T00:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "callstack-push-pop",
+      "exposure": "App.CallStack.@this.Push allocates Call, mutates _current AsyncLocal, appends to caller.Children. Call.@this.DisposeAsync restores AsyncLocal, removes from Children, unsubscribes Variables.OnSet. Both run on every action dispatch.",
+      "trust_boundary": "Internal — invoked only from App.Run and Goal.RunAsync. No external entry point. Action records are constructed from .pr (trust boundary).",
+      "mitigations": [
+        "Cycle detection enforced (MaxDepth=1000 via Caller-walk; ContainsGoal via PrPath) — throws CallStackOverflowException, caught at both Push call sites, translated to ServiceError.",
+        "Children mutation protected by `lock(caller.Children)`.",
+        "Push happens INSIDE a try block in App.Run and Goal.RunAsync — overflow doesn't leak as raw CLR exception.",
+        "Disposal idempotent: RestoreCurrent only flips _current if leaving Call is still Current (parallel sibling won't be clobbered)."
+      ],
+      "gaps": [
+        "lock target is the publicly-visible Children/Diffs List — convention smell that risks deadlock with external readers that lock on the same instance.",
+        "ContainsGoal skipped when action.Step.Goal.PrPath is null/empty — relies on MaxDepth fallback for synthesized actions."
+      ]
+    },
+    {
+      "area": "audit-accumulators",
+      "exposure": "stack.Audit (List<IError>) appended at App.Run x2 + Goal.RunAsync x1. app.Errors.All (List<IError>) appended at every Errors.Push call. Both survive Pop and exposed to PLang via %!callStack.Audit% and %!error% chain.",
+      "trust_boundary": "Run-wide accumulators — meant to outlast individual Calls. Visible to PLang test harness (Audit.test.goal asserts count).",
+      "mitigations": [
+        "Errors.Push is called inside `using` — restorer is Disposable so AsyncLocal restore is exception-safe.",
+        "Audit/All hold IError refs; no copy, no large-payload retention beyond the IError itself."
+      ],
+      "gaps": [
+        "Neither list has any synchronization. Task.WhenAll on goal.call is a stated parallelism vector; concurrent error returns from sibling branches would race List<T>.Add.",
+        "Both lists grow unbounded for the App lifetime — long-running apps leak memory linearly with error count."
+      ]
+    },
+    {
+      "area": "variables-events",
+      "exposure": "Variables.@this exposes OnSet/OnCreate/OnRemove events. Call.@this ctor subscribes when CallStackFlags.Diff is on; unsubscribes in DisposeAsync. Handler appends Diff(name, before, At) to call.Diffs.",
+      "trust_boundary": "Internal — events fire synchronously inside Variables.Set/Remove. Subscribers all live in App.CallStack.Call.@this.",
+      "mitigations": [
+        "Handler synchronizes on `lock(Diffs!)` before append.",
+        "Subscribe-in-ctor / unsubscribe-in-DisposeAsync discipline is symmetrical and survives exceptions (DisposeAsync runs via `await using`).",
+        "Default scalar-only capture (strings ≤256, primitives, DateTime/Guid) avoids deep-cloning huge payloads — DeepDiff is opt-in.",
+        "DeepClone wrapped in try/catch (excludes NRE/OOM/SOF) → summary string on failure."
+      ],
+      "gaps": [
+        "Deep nesting with Diff on means N subscribed handlers; each Variables.Set fires O(N) handlers — perf degradation but documented as a flag-gated mode.",
+        "If a future change makes the OnSet handler throw, the exception propagates back into the Variables.Set caller's site (event invocation is synchronous) — currently no throw site."
+      ]
+    },
+    {
+      "area": "tag-action",
+      "exposure": "App.modules.debug.Tag handler resolves CallStack.Current.Caller (or Current at root) and writes string→string pairs into target.Tags. Lazy-allocated Dictionary<string,string>.",
+      "trust_boundary": "Trusted — invoked only via PLang `- tag k=v` after .pr deserialization. Per threat model the .pr is the trust boundary.",
+      "mitigations": [
+        "No-op when Current is null.",
+        "Cacheable=false — tag is observability-only, not part of value flow."
+      ],
+      "gaps": [
+        "Tag dictionary write has no lock. Parallel foreach branches dispatching `tag` resolve to the SAME caller's Tags — concurrent `Tags ??= new()` and `Tags[key] = value` races. Impact: lost tags or NullReferenceException, no data corruption."
+      ]
+    },
+    {
+      "area": "errors-asynclocal-scope",
+      "exposure": "App.Errors.@this hosts an instance-level AsyncLocal<IError?> _current. Push returns IDisposable that restores previous value on Dispose.",
+      "trust_boundary": "Internal — Push called only from error.handle.Wrap inside `using (...)`. PLang reads %!error% via DynamicData binding to App.Errors.Error.",
+      "mitigations": [
+        "Per-instance AsyncLocal (not static) — multiple App instances in the same test process don't see each other's Current.",
+        "Restorer.Dispose is idempotent (`_disposed` flag) and exception-free.",
+        "All in-place uses are inside `using (...)` blocks — restore is automatic even on exception."
+      ],
+      "gaps": [
+        "All.Add is shared and unsynchronized (see audit-accumulators)."
+      ]
+    },
+    {
+      "area": "call-chain-renderer",
+      "exposure": "Static Render method consumes IReadOnlyList<Call>. Reads Action.Module, Step.Goal.Path, Step.LineNumber. Output goes into error message string surface.",
+      "trust_boundary": "Output destination is the error renderer — landed in stderr, logs, %!error.Format()%.",
+      "mitigations": [
+        "Pure function. No I/O, no allocation beyond the line list.",
+        "Cause boundary detection by ReferenceEquals — coder/v2 risk register documents the assumption."
+      ],
+      "gaps": [
+        "No explicit length cap on rendered output — a very deep chain renders one line per compressed run. Acceptable: chain depth is already capped at MaxDepth=1000."
+      ]
+    },
+    {
+      "area": "callstack-flags-parser",
+      "exposure": "Debug.ParseCallStackFlags accepts arbitrary `--debug={callstack:...}` JSON shape: bool, IDictionary, or anything else. Maps to CallStackFlags struct.",
+      "trust_boundary": "CLI input — typed by the user/operator running plang. Not network-sourced.",
+      "mitigations": [
+        "Defensive parser: bool → Shorthand/Default; dict → field-by-field with type-tolerant GetBool/GetInt; anything else → Default (all-off). Cannot throw on malformed input.",
+        "MaxFrames defaulted to 1000."
+      ],
+      "gaps": [
+        "MaxFrames has no upper cap — a malicious operator could pass `maxFrames: 2147483647` and combine with history:true to retain every popped Call. Within the trust model since operator launches their own process; flag for completeness."
+      ]
+    },
+    {
+      "area": "error-snapshot-info-disclosure",
+      "exposure": "Error.Format() emits error.Variables (Dictionary<string,string>), error.Params snapshots (PrValue + FinalValue), and (when --debug={verbose:true}) every variable in scope at the failure point. CallChainRenderer renders Goal.Path and Step.LineNumber.",
+      "trust_boundary": "Output sinks include stderr, log channels, --debug output files, error envelopes returned to API callers.",
+      "mitigations": [
+        "Debug.cs's _debugJsonOptions DOES strip [Sensitive] for the runtime debug output path.",
+        "Channel serializers (JsonStreamSerializer) DO strip [Sensitive] for outbound transport."
+      ],
+      "gaps": [
+        "Error.cs FormatVerboseValue at line 286 calls JsonSerializer.Serialize(value) WITHOUT options — [Sensitive] NOT stripped. Affects: error.Params dump, error.Variables values when complex, verbose all-vars dump. PRE-EXISTING; not widened by this branch (the Call/CallFrame rename is the only Error.cs change).",
+        "AssertSnapshot.cs:17 captures Variables.Snapshot() onto AssertionError.Variables without [Sensitive] filtering. PRE-EXISTING standing finding from prior audits — unchanged by this branch."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "category": "race-condition",
+      "vector": "Concurrent List<IError>.Add on stack.Audit and app.Errors.All under Task.WhenAll on goal.call. Two parallel branches each returning an error from their handler hit `stack.Audit.Add(error)` simultaneously. List<T>.Add does an internal capacity check + array write; without synchronization the result can be: (a) ArgumentOutOfRangeException on the caller, (b) silent loss of an entry, or (c) corrupt internal _size field leading to later inconsistency.",
+      "preconditions": "Goal.@this.RunAsync invocation parallelism — the architect plan explicitly cites Task.WhenAll on goal.call as the AsyncLocal-fork motivation. The audit-list shared mutation isn't protected.",
+      "impact": "Reliability under parallel execution: dropped audit entries (silent failure mode for downstream observers), or runtime ArgumentOutOfRangeException surfacing into user code on a path that should never throw. Not a malicious vector — but the very parallelism the architect plan targets is what makes this fire. Severity medium because a) it's a correctness bug under documented usage, and b) audit-trail loss matters when downstream tooling treats Audit as authoritative.",
+      "affected_files": [
+        "PLang/App/CallStack/this.cs",
+        "PLang/App/this.cs",
+        "PLang/App/Goals/Goal/this.cs",
+        "PLang/App/Errors/this.cs"
+      ],
+      "exploit_sketch": "Two PLang goals running under Task.WhenAll on goal.call (when parallel goal.call lands), each performing an action whose handler returns Data.FromError. Both stack.Audit.Add calls land on the same List instance from different threads. Without synchronization, the standard List<T>.Add race produces ArgumentOutOfRangeException about 1-in-1000 runs under load. Reproducible with a 2-branch Parallel.For test that calls App.Run on action records guaranteed to fail.",
+      "proposed_fix": "Three options: (a) replace List<IError> with `ConcurrentBag<IError>` (loses ordering — acceptable for an audit accumulator), (b) wrap Add+enumeration in `lock(_auditLock)` with a private lock object, (c) use `ImmutableInterlocked.Update` on an `ImmutableList<IError>`. Recommendation: (b) for both stack.Audit and app.Errors.All — minimal change, preserves ordering, dedicated lock object avoids the public-list-lock pattern smell from Finding 3.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "race-condition",
+      "vector": "App.modules.debug.Tag handler writes target.Tag(key, value) → `Tags ??= new Dictionary; Tags[key] = value` without synchronization. Parallel foreach iterations dispatching the `tag` action resolve to the SAME caller's Call (the foreach goal's frame), and race on lazy-allocate + dictionary indexer write.",
+      "preconditions": "Parallel foreach (when delivered) over a list, each iteration's body dispatching `- tag k=v`. Caller is the foreach goal's Call.",
+      "impact": "Lost tags or NullReferenceException if concurrent ??= sees null then both threads allocate. Diagnostic only — Tags are observability metadata, not value flow. No data corruption beyond the tag set.",
+      "affected_files": [
+        "PLang/App/CallStack/Call/this.cs",
+        "PLang/App/modules/debug/tag.cs"
+      ],
+      "exploit_sketch": "PLang `- foreach %items%, call DoTag item=%item%` where DoTag is `- tag iter=%item%`. Under Task.WhenAll parallelism each iteration's tag.cs handler finds Caller.Caller = foreach frame and writes Tags[\"iter\"] = value concurrently.",
+      "proposed_fix": "Make `Call.Tag(key, value)` thread-safe: either lock on a private object before the lazy-allocate-and-write, or use `LazyInitializer.EnsureInitialized` for the dict allocation and a per-call lock around the write. Drop-in: `lock (this) { Tags ??= new Dictionary<string,string>(); Tags[key] = value; }`.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "concurrency-pattern",
+      "vector": "CallStack.@this.Push uses `lock (caller.Children)` and Call.@this.DisposeAsync uses the same. Call.@this OnSet handler uses `lock (Diffs!)`. Both lock targets are publicly-visible List instances — convention smell. External code reading `call.Children` or `call.Diffs` could legitimately take its own lock on the same instance for unrelated reasons (e.g. snapshot iteration), causing deadlock with Push/Pop.",
+      "preconditions": "Future code (or PLang reflection-based access) takes its own lock on call.Children or call.Diffs. None today, but the public surface invites it.",
+      "impact": "Potential deadlock if compounded with Push/Dispose ordering; today purely a maintainability/discoverability concern. Won't manifest until external code adds its own lock.",
+      "affected_files": [
+        "PLang/App/CallStack/this.cs",
+        "PLang/App/CallStack/Call/this.cs"
+      ],
+      "exploit_sketch": "N/A as a runtime exploit. Pattern smell — the standing convention is `lock(privateField)` not `lock(publicCollection)`. Reads at call.Children iteration without a copy are already non-thread-safe (List enumeration during mutation throws InvalidOperationException), so consumers SHOULD copy under the lock — making the public lock target the obvious choice but a fragile convention.",
+      "proposed_fix": "Add `private readonly object _childrenLock = new()` to Call.@this and `_diffsLock` for the OnSet handler; lock those instead. CallStack.Push locks the caller's _childrenLock. Eliminates the pattern smell and decouples public-API consumers from internal sync.",
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "category": "resource-exhaustion",
+      "vector": "stack.Audit and app.Errors.All grow unbounded for the App lifetime. A long-running PLang process (server, daemon, scheduled-task host) that emits errors regularly leaks memory linearly. Each IError holds refs to Step/Goal/Params/CallFrames — non-trivial retention.",
+      "preconditions": "Long-lived App, recoverable error stream (e.g. periodic HTTP 503 → handle, retry).",
+      "impact": "Slow memory growth; eventually OOM in apps that don't restart. Architect's documented choice — audit trails are by-design accumulators. Calling out for completeness, not as a defect.",
+      "affected_files": [
+        "PLang/App/CallStack/this.cs",
+        "PLang/App/Errors/this.cs"
+      ],
+      "exploit_sketch": "App that runs `- every 1m, call PollEndpoint, on error retry 3` for weeks accumulates 3 × N errors in Audit. Not DOS — by-design.",
+      "proposed_fix": "Bounded ring buffer (e.g. last 10000 entries with FIFO eviction) gated by a flag, OR explicit `Audit.Clear()` API exposed to PLang. Document the unbounded behavior in the public XML doc on Audit/All so consumers know the lifecycle. Lower priority than the concurrency findings.",
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "CallStack._root is set on first Push and never reassigned. After the first run completes (Call popped, possibly removed from Children if history off), Root continues to reference the popped Call — exposed to PLang as `%!callStack.Root%`. Stale info that could mislead debug rendering.",
+      "preconditions": "App runs more than once OR the call tree's root is popped before consumers read Root. Long-running apps trigger this on every subsequent invocation.",
+      "impact": "Cosmetic — `%!callStack.Root%` returns a Call that is no longer 'live' (its DisposeAsync ran). Action.Step still resolves; Cause/Caller still walk; Children may be empty (history off). Could confuse downstream renderers but not security-relevant on its own. Memory pin: the stale Root keeps its whole subtree alive until the CallStack itself GCs.",
+      "affected_files": [
+        "PLang/App/CallStack/this.cs"
+      ],
+      "exploit_sketch": "Run an App, complete a goal, run a second goal — observe `%!callStack.Root%` still points at the first goal's entry frame. The new run's true root is `Current` walked up to the new outermost.",
+      "proposed_fix": "Either reset `_root` to null in DisposeAsync when leaving Call is the root and Caller is null (clean re-entry), or reassign `_root = call` whenever Push happens with caller==null (new top of tree). Latter is simpler and matches the 'first push of THIS run' intent. Trivial diff.",
+      "status": "open"
+    }
+  ],
+  "carry_forward": [
+    {
+      "note": "Error.cs FormatVerboseValue uses JsonSerializer.Serialize without [Sensitive] filtering — pre-existing path that this branch only touched via the CallFrame→Call rename. Tracked in security memory under standing findings (verbose-mode unfiltered)."
+    },
+    {
+      "note": "AssertSnapshot.cs assigns context.Variables.Snapshot() onto AssertionError.Variables — pre-existing standing medium finding (results.json secrets leak). Untouched by this branch."
+    }
+  ],
+  "summary": "Five findings, none critical or high. The CallStack refactor is structurally sound: AsyncLocal forking is correctly per-instance, cycle detection is enforced at both Push sites, error.handle scope uses RAII for AsyncLocal restore, and DeepClone is wrapped against unrecoverable exceptions. The medium finding (Audit/All List.Add race) is a real correctness bug under the same Task.WhenAll parallelism the architect plan motivates — should be fixed before parallel goal.call lands. Other findings are pattern smells and resource-growth concerns that don't block merge. Pre-existing FormatVerboseValue [Sensitive] filtering gap is unchanged here and tracked separately."
+}
