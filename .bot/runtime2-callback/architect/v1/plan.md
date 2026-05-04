@@ -24,7 +24,7 @@ One **resume primitive** at the engine level. Two **issuers** that produce value
                    └──────────────┘
 ```
 
-A `Callback` is a record carrying `(goal_hash, step_index, action_index, vars, snapshot, expiry, signature)`. Issuers produce them. The engine consumes them through `Seek`. Storage and transport (wire, DB, file) are developer-driven PLang code — neither issuer nor engine cares where the callback lives between issue and resume.
+A `Callback` is a record (full schema in "The seek primitive" below). Issuers produce a `Data<Callback>`; the whole envelope is signed. The engine consumes it through `Seek`. Storage and transport (wire, DB, file) are developer-driven PLang code — neither issuer nor engine cares where the envelope lives between issue and resume.
 
 ## Settled design
 
@@ -61,9 +61,9 @@ public interface ISnapshotted
 
 Three buckets emerge naturally:
 
-1. **Snapshot-and-restore** — type implements `ISnapshotted`. Variables, Cache, Channels (in-memory buffers), recoverable Providers, Errors trail. Captured on issuance, restored on resume.
-2. **Reconstruct-on-build** — type does *not* implement `ISnapshotted`. Settings, FileSystem handles, Events subscriptions, stateless Providers. Normal App construction rebuilds them; resume just runs construction.
-3. **Drop** — runtime-only state with no resume relevance. Timing tier, Children-as-history, in-flight network state. Just gone.
+1. **Snapshot-and-restore** — type implements `ISnapshotted`. Variables (per-actor), Errors.Trail, App.Providers (registry-layer selection state), App._statics, plus any third-party `IProvider` that opts in. Captured on issuance, restored on resume.
+2. **Reconstruct-on-build** — type does *not* implement `ISnapshotted`. Modules, Goals, Catalog, Types, Navigators, Config, Settings (sqlite-backed), FileSystem, Events, Channels, Debug, all built-in `IProvider` instances. Normal App construction rebuilds them; resume just runs construction.
+3. **Drop** — runtime-only state with no resume relevance. MemoryStepCache (see "Cache as audit-derived" below for the alternative), live CallStack tree, Timing tier, Children-as-history, in-flight network state. Just gone.
 
 The classifier *is* the type system. A new subsystem's author makes the bucket choice by deciding whether to implement the interface. No coordination across the codebase.
 
@@ -92,7 +92,21 @@ This means:
 
 **Diff is required.** When `Flags.Diff` is off and an error occurs, the runtime auto-flips it for the duration of error processing. Cost is paid only on the error path, which is rare. No conditional code path on the consumer side.
 
-Providers do **not** have diff tracking. The callback captures their current state at materialisation time. Convention: error handlers should not mutate provider state. If they do, the callback reflects the post-handler value — the runtime will not catch this. Honest asymmetry: vars get rich treatment because we have rich tooling for them; providers get the pragmatic one.
+Providers do **not** have diff tracking. The callback captures their registry-layer selection state (see "Providers — two layers" below) at materialisation time. Convention: error handlers should not mutate provider selections. If they do, the callback reflects the post-handler selection — the runtime will not catch this. Honest asymmetry: vars get rich treatment because we have rich tooling for them; providers get the pragmatic one.
+
+### Cache as audit-derived
+
+`MemoryStepCache` does not implement `ISnapshotted` directly. Instead, the cache's contribution to the snapshot is computed *from the callstack audit trail* at materialisation time, exploiting a property already true of the design: every cache mutation flows through a Call frame whose Action is a `cache.*` action.
+
+Mechanism:
+
+1. Walk the callstack tree and collect distinct keys touched by `cache.set` (and `cache.tryAdd`) Calls during the run. Cache action handlers `Call.Tag("cache.key", resolvedKey)` after variable resolution, so the snapshot reads tags rather than re-parsing parameters.
+2. For each key, call `cache.GetAsync(key)` against the live cache. The current value already reflects the net of every set/remove/re-set during the run — no replay engine needed.
+3. Capture each `(key, value, absoluteExpiry)` tuple. Skip keys whose lookup returns null (set-then-removed). Tuples are stored as part of the App's snapshot bag, keyed by a synthetic `cache.snapshot` slot.
+
+On restore, replay each tuple via `SetAsync` with TTL = `absoluteExpiry - now`. Negative TTLs mean the entry expired between issue and resume — skip. Original semantic preserved: `tryAdd`-based nonce keys remain present for their real remaining lifetime, replay window stays closed.
+
+This approach has three properties worth calling out. **(a)** It's pluggable-cache friendly — `ICache` exposes `GetAsync`/`SetAsync`, nothing else; Redis or any other backend works without changes. **(b)** It's per-run scoped — only keys this run touched are in the snapshot, not whatever else is in the cache. **(c)** It generalises — the callstack as audit trail is a substrate any future "I did this at runtime, replay it" subsystem can use the same way.
 
 ### Position semantics
 
@@ -100,15 +114,27 @@ Providers do **not** have diff tracking. The callback captures their current sta
 
 For `ask user`, position is the action *after* the ask — the ask itself is satisfied by the bound `%name%` from the wire payload, and execution resumes at the next action.
 
+### Names vs values — the synthesis
+
+After walking every subsystem in `App/`, one principle organises the whole snapshot story:
+
+> **Snapshots store names; they store values only when the name doesn't determine the value.**
+
+- **Values side** — Variables and Cache. The name is just a key; the value is real state that can't be re-derived from anywhere else. These need full payloads (carried via `ISnapshotted` for Variables; carried via the audit-derived path for Cache).
+- **Names side** — provider selections, identity, datasource, encryption choice, mode flags, runtime-loaded DLLs. The name is a stable reference into system state that exists outside the callback. The provider/registry/store knows how to resolve it.
+
+The names-side carries qualifications when needed — a runtime-registered provider's name is paired with its DLL path so the loader knows how to find it; a cache entry's key is paired with its absolute expiry so TTL semantics survive the resume gap. These are *qualifications of the name*, not full values.
+
+**Two separate trust layers gate a resume:**
+
+1. **Signature integrity** — the signed `Data<Callback>` envelope guarantees the captured contents weren't tampered with. Without a valid signature, the resume is rejected wholesale.
+2. **Referent integrity** — names in the snapshot assume the system state they reference still exists. If `myidentity2` was deleted between issue and resume, the resume fails. Same shape as goal_hash mismatch (redeployed goal → invalid). The signature does *not* guarantee referent integrity, by design — those are different layers.
+
+Both must hold. Future edge cases ("what if X was deleted between issue and retry?") get answered by these two layers: signature integrity fails loud as auth rejection; referent integrity fails loud as resolve-by-name failure. No silent degradation.
+
 ### Cross-process causal trace
 
-When a callback resumes, the new run gets a fresh callstack with its own root Call. To preserve causality across processes for telemetry, the engine writes a `CallbackOrigin` typed item onto the resumed root via the existing `Call.SetItem<T>` mechanism:
-
-```csharp
-record CallbackOrigin(string PriorRunId, string PriorCallId, DateTimeOffset IssuedAt);
-```
-
-The same-process `Call.Cause` field is *not* extended — its invariant ("live ref, same process only") stays clean. Cross-process identity goes through the typed metadata bag, exactly the use case the bag was designed for.
+When a callback resumes, the new run gets a fresh callstack with its own root Call. The engine writes a `CallbackOrigin` typed item onto that root via `Call.SetItem<T>` — see the `Callback` schema above for the field; the `Call.Cause` field stays same-process only.
 
 ## PLang surfaces
 
@@ -144,47 +170,90 @@ Step-level on issuing actions only:
 
 ## The seek primitive — engine-side
 
-`App` constructor accepts an optional `ResumeDirective`:
+The wire/storage shape is a signed `Data<Callback>` envelope — single blob, one signature covering the whole content. Tampering with any field (actor name, goal_hash, position, captured values, expiry) breaks the signature; the envelope is rejected wholesale. Leans on `Data` already being the universal envelope type — no separate "header" sitting outside the signature.
+
+The engine-internal view of that envelope, after verification + decryption, is a `ResumeDirective`:
 
 ```csharp
-record ResumeDirective(
-    string GoalPath,
+record Callback(
+    string GoalHash,
     int StepIndex,
     int ActionIndex,
-    Variables.@this Variables,        // pre-bound, not built from scratch
-    SnapshotBag Snapshot,             // ISnapshotted payloads keyed by class FQN
-    CallbackOrigin? Origin            // for cross-process trace
+    string ActorName,                 // System / Service / User
+    Dictionary<string, object?> VariablesByActor,  // per-actor name → value bag
+    Dictionary<string, object?> Selections,        // App.Providers + identity choices, by name
+    List<CacheEntry> CacheEntries,                 // (key, value, absoluteExpiry)
+    Dictionary<string, object?> Statics,           // App._statics until that TODO closes
+    List<IError> ErrorTrail,                       // read-only at restore
+    bool BuildEnabled,
+    bool TestingEnabled,
+    DateTimeOffset Expiry,
+    CallbackOrigin? Origin
+    // Signature is on the Data<Callback> envelope, not a Callback field.
 );
 ```
 
-When a `ResumeDirective` is present:
-1. App construction runs normally for reconstruct-on-build types (Settings, FileSystem, Events).
-2. Variables and ISnapshotted types are restored from the directive *instead of* default-constructed.
-3. Engine's main loop, on first tick, navigates to `(GoalPath, StepIndex, ActionIndex)` and runs from there.
-4. Root Call gets `SetItem(Origin)` if Origin is non-null.
+When a `Callback` is consumed by `Engine.Seek(callback)`:
+1. App construction runs normally for reconstruct-on-build types (Modules, Goals, Catalog, Settings, FileSystem, Events, Channels, Debug, built-in Providers).
+2. `App.Providers` registry replays runtime-registered (non-default) providers and applies the captured default selections.
+3. Per-actor `Variables` instances are populated from `VariablesByActor` after `RegisterDefaults` runs. `App._statics` is populated from `Statics`. `Errors.Trail` is populated from `ErrorTrail`.
+4. Cache entries are replayed via `cache.SetAsync` with TTL = `absoluteExpiry - now` (skip if negative).
+5. Engine's main loop, on first tick, navigates to `(GoalHash → goal, StepIndex, ActionIndex)` and runs from there.
+6. Root Call gets `SetItem(Origin)` if Origin is non-null.
 
-That's the entire engine-side surface. Five fields, three behaviours during construction, one tweak to the main loop. Everything else (issuance, signing, storage, wire format, UI) is layers on top.
+That's the entire engine-side surface. The `Callback` record is the shared shape between issuance, wire/storage, and engine consumption. Everything else (signing, encryption, transport, UI, store/load actions) is layers on top.
 
-## Subsystem inventory — first-pass buckets
+```csharp
+record CallbackOrigin(string PriorRunId, string PriorCallId, DateTimeOffset IssuedAt);
+```
+
+The same-process `Call.Cause` field is *not* extended — its invariant ("live ref, same process only") stays clean. Cross-process identity goes through the typed metadata bag (`Call.SetItem<CallbackOrigin>`), exactly the use case the bag was designed for.
+
+## Subsystem inventory — final buckets after the walk
+
+Walked type-by-type through `App/`. Refined buckets below.
 
 | Subsystem | Bucket | Notes |
 |---|---|---|
-| `App.Variables` | snapshot-and-restore | Sensitive-marked entries AES-wrapped inside the snapshot. |
-| `App.Cache` | snapshot-and-restore | Mid-run cache misses on resume defeat the no-replay rule. |
-| `App.Channels` (buffered) | snapshot-and-restore | In-flight queued items. |
-| `App.Providers` | mostly reconstruct-on-build; case-by-case | Pure handles (DB, HTTP) reconstruct. Stateful ones (in-memory cache, conversation history) implement `ISnapshotted`. |
-| `App.Settings` / `App.Config` | reconstruct-on-build | Disk-backed, idempotent. |
-| `App.FileSystem` | reconstruct-on-build | Handles don't survive crashes. |
-| `App.Events` (lifecycle) | reconstruct-on-build | Re-attach during App boot. |
-| `App.Errors.Trail` | snapshot-and-restore (read-only context) | Resume needs to know what it's recovering from. |
-| `App.CallStack` | special — see below | |
-| `App.Actor` | unwalked | Need to inspect. |
-| `App.Catalog` | unwalked | Need to inspect. |
-| `App.Test` | reconstruct-on-build | Test machinery, no live state. |
+| `App.Variables` (per actor — System, Service, User) | snapshot-and-restore | Existing `Snapshot()` partition is exactly the boundary: skip `!`-prefixed system vars, skip `DynamicData` (Now/GUID/`!app`/`MyIdentity`), skip `SettingsVariable` (sqlite-backed). Capture `(name, value, Type, Properties)` for everything else. |
+| `App.Errors.Trail` | snapshot-and-restore | Read-only after restore. Resumed run needs `%!error.trail%` to read naturally. |
+| `App.Providers` | snapshot-and-restore (registry layer only) | See "Providers — two layers" below. |
+| `App._statics` | snapshot-and-restore (with caveat) | App-scoped mutable dict. Snapshot until `TODO: Replace with goal-backed dynamic property` closes. Flagged in the doc as a known fragility. |
+| `App.Cache` (`MemoryStepCache`) | drop the implementation; snapshot via callstack audit | See "Cache as audit-derived" above. Tuples live in the snapshot bag, not on `ICache`. |
+| `App.Modules` | reconstruct | Deterministic from assembly scan + DLL discovery. |
+| `App.Goals` | reconstruct | `.pr.json` on disk; `goal_hash` invariant gates any drift. |
+| `App.Catalog` | reconstruct | Pure derivation from Modules. |
+| `App.Types` | reconstruct | Static registry. |
+| `App.Navigators` | reconstruct | Computed from Types. |
+| `App.Config` | reconstruct | Loaded from `.pr.json`. |
+| `App.Settings` (`SettingsVariable` + `SqliteSettingsStore`) | reconstruct | Sqlite file persists; reopen on resume. |
+| `App.FileSystem` | reconstruct | Handles don't survive process death. |
+| `App.Channels` | reconstruct | Std streams reconstruct trivially. Memory channels with buffered data are dropped — channels are I/O, not inter-step state. |
+| `App.Events` (lifecycle) | reconstruct | Re-attach during App boot. |
+| `App.Debug` | reconstruct | Event handlers re-register from CLI flags. |
+| `App.Testing` / `App.Build` mode flags | inside the Callback record | `BuildEnabled` / `TestingEnabled` fields on `Callback`. Not ISnapshotted payload. |
+| `App.Actor` instances | reconstruct | Three actors constructed normally. Per-actor Variables are restored as a separate snapshot step. |
+| Actor identity | name-only, in the Callback record | `Identity.Name` carried; provider's `GetOrCreateDefaultAsync(name)` resolves on resume. The `Identity` object itself is never carried — referent integrity gates the resume. |
+| `App.Test` runner | reconstruct | No live state. |
+| Built-in `IProvider` instances | reconstruct | None implements `ISnapshotted` today (Ed25519 keys on disk, HTTP/LLM/Identity wrap external state, etc.). The interface is a future-facing hook for third parties that hold inter-action mutable state. |
+| Live `App.CallStack` tree | drop (live tree) — but Caller chain is captured separately | See "CallStack as positional context" below. |
 
-**CallStack as positional context.** Not history (drop), not timing (drop). The *Caller chain* of the throwing Call is captured as a sequence of `(goal, step, action)` resume points so when the resumed action finishes and unwinds, control returns to the caller correctly. Concretely: if goal A's step 3 called goal B and B's step 2 errored, resume needs to know "after this resumed B step 2 finishes, return to A step 3 action N+1." That's a small list of positions, not a tree.
+### Providers — two layers
 
-This inventory needs a deeper walk type-by-type before implementation. Flagged for the next architect session.
+The `App.Providers` registry holds two kinds of mutable state, both load-bearing:
+
+1. **Default selections per type.** `SetDefault(IIdentityProvider, "myidentity2")` flips which named provider is returned by `Get<IIdentityProvider>()`. The snapshot captures, per type, the current default name.
+2. **Runtime registrations.** Anything registered after `RegisterDefaults()` — typically by PLang `- use 'mycrypto.dll' for encryption` style actions. The snapshot captures `(type, name, source)` tuples where `source` is the DLL path or whatever identifier the loader needs. Built-in registrations from `RegisterDefaults` are *not* in the snapshot — they reconstruct on App boot.
+
+On restore: `RegisterDefaults()` runs as normal, then runtime registrations are loaded and registered, then default selections are applied. Concrete chacha example walked in the conversation transcript — composes cleanly.
+
+The provider *instances* themselves remain reconstruct-on-build. None of the built-ins hold inter-action mutable state. Third-party providers that do can opt in to `ISnapshotted` separately — that's a per-instance concern, orthogonal to the registry-layer snapshot.
+
+### CallStack as positional context
+
+Not history (drop), not timing (drop). The *Caller chain* of the throwing Call is captured as a sequence of `(goal, step, action)` resume points so when the resumed action finishes and unwinds, control returns to the caller correctly. Concretely: if goal A's step 3 called goal B and B's step 2 errored, resume needs to know "after this resumed B step 2 finishes, return to A step 3 action N+1." A small list of positions, not a tree.
+
+The CallStack *is* used at materialisation time as the audit substrate for the cache snapshot (walk Calls, find `cache.*` action frames, read `cache.key` tags). That's a read of the live tree, not a serialisation of it.
 
 ## Smallest meaningful first cut
 
@@ -210,15 +279,16 @@ If that passes, every remaining piece (signing, encryption, wire format, storage
 
 ## Open threads — for future sessions
 
-These were intentionally deferred. None blocks the seek primitive.
+None blocks the seek primitive (smallest first cut).
 
-1. **Wire format and key management for ask-user.** Signing scheme, encryption (AES-GCM probably), key rotation, expiry semantics, how `goal_hash` is computed and stored.
+1. **Wire format and key management for ask-user.** Signing scheme over `Data<Callback>`, encryption (AES-GCM probably), key rotation, expiry semantics, how `goal_hash` is computed and stored.
 2. **Storage shape for error-retry.** Recommended patterns — file, DB provider, queue. Probably no runtime opinion; developer chooses via PLang. But might want a built-in `callback.store` / `callback.load` action pair for ergonomics.
-3. **`goal_hash` mismatch handling.** Signed but stale → hard error vs. recoverable. Probably hard error (security correct), but worth deciding.
-4. **PLang surface for `- run %callback%`.** Is it a normal action in a `callback` module, or a special infrastructure verb? Lean: normal action. The seek primitive is the runtime mechanism; PLang sees just another module call.
-5. **Subsystem walk** for Variables / Cache / Channels / Providers / Actor / Catalog — `Capture`/`Restore` per type, including how Variables wraps sensitive entries.
-6. **Ask-user builder annotation** — exact `.pr.json` shape for `vars: %x%, %y%` on a step.
-7. **Cross-process trace** (`CallbackOrigin` payload) — what fields are useful for telemetry stitching.
+3. **`goal_hash` mismatch handling.** Signed but stale → hard error. Settled in principle; surface design (error code, `%!callback.error%` shape) is open.
+4. **PLang surface for `- run %callback%`.** Is it a normal action in a `callback` module, or a special infrastructure verb? Lean: normal action.
+5. **Ask-user builder annotation** — exact `.pr.json` shape for `vars: %x%, %y%` on a step.
+6. **`CallbackOrigin` payload** — what fields are useful for telemetry stitching beyond the three currently sketched.
+7. **`App._statics` TODO closure.** When that's replaced with goal-backed dynamic property, drop `Statics` from the `Callback` schema.
+8. **Cache snapshot as a known-cost item.** If the per-key `GetAsync` walk becomes a bottleneck for runs with thousands of cache touches, batch via a single `GetManyAsync` extension on `ICache`. Not v1.
 
 ## Settled rejections (context for future sessions)
 
@@ -226,5 +296,10 @@ These were intentionally deferred. None blocks the seek primitive.
 - **Step-level `vars:` capture annotation.** Only on ask-family actions. Error-retry doesn't need declared vars — it captures everything.
 - **`Cause` extension to cross-process.** Stays same-process only. Cross-process causality goes through `Call.SetItem<CallbackOrigin>`.
 - **Replay-style resume.** Never. Seek + bind only.
-- **Re-running producer steps for stateful provider re-acquisition.** Not in v1. Providers are either pure (reconstruct), stateful-snapshottable (`ISnapshotted`), or out of luck (silently degrade). Event-sourcing is a separate, larger conversation.
+- **Re-running producer steps for stateful provider re-acquisition.** Not in v1. Built-in providers are pure or wrap external state (no inter-action mutable state). Third parties opt in via `ISnapshotted`. Event-sourcing is a separate, larger conversation.
 - **Ref-capture across islands.** Brainstormed, no real use case, closed. Values-only. Serializer-level blob dedup is the answer if size becomes a problem.
+- **`MemoryStepCache` implementing `ISnapshotted`.** Rejected in favour of the audit-derived approach (walk Calls, ask the cache for current state of touched keys). Cleaner abstraction boundary.
+- **Memory channel buffers carried across resume.** Channels are I/O, not inter-step state. If a developer treats a memory channel as state, that's smell.
+- **Capturing `Identity` object instead of name.** Names + referent integrity is the contract; objects are never carried. Same for every selection-shaped piece of state (provider, datasource, encryption, identity).
+- **"Header" outside the signed envelope.** Whole `Data<Callback>` is signed; nothing meaningful sits outside the signature. Tampering is an all-or-nothing rejection.
+- **Resumer's identity replacing captured identity.** The signed envelope authorises; the captured `ActorName` + `Identity.Name` dictate what the resumed code runs as. Who triggers `- run %callback%` is independent of what privilege the resumed code holds.
