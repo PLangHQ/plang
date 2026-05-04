@@ -47,6 +47,39 @@
         "health": "green — design is internally consistent. Ingi corrected the design across three passes (cache mechanism, signed envelope scope, identity as name, no Seek verb, cache dropped entirely, position semantics) and the final shape is materially smaller than the first pass.",
         "notes": "Final snapshot surface: three Variables instances (per-actor), Errors.Trail, App.Providers registry selections, App._statics. Cache is no longer in the snapshot. Recommend wire format/key management as the next architect session, or hand to test-designer for the smallest-first-cut test now."
       }
+    },
+    {
+      "id": "c4a82e1d-7b3f-4f9c-b2d8-1e6a9f4b7c03",
+      "bot": "architect",
+      "timestamp_start": "2026-05-04T17:45:00Z",
+      "timestamp_end": "2026-05-04T18:13:54Z",
+      "intent": "Design the wire format / signing / persistence layer for Callback (v2). Scope to Phase 2 — error-retry only — and stage Phase 3 (ask-user + encryption) as a separate future doc.",
+      "before": {
+        "assumptions": "v1 design is closed and committed (snapshot/restore mechanics, ISnapshotted, names-vs-values). Existing PLang infrastructure: signing module with SignedData envelope is mature; ICryptoProvider exists but only does Hash/Verify (no symmetric encryption). Goal has a Hash property (verified at PLang/App/Goals/Goal/this.cs:121, SHA-256 of name + step text).",
+        "risk": "Designing wire format independently of existing signing infra would duplicate effort and miss the OBP-pure transparent-signing pattern. Conflating Phase 2 (error-retry) and Phase 3 (ask-user) into one milestone would block error-retry on encryption work that isn't strictly needed."
+      },
+      "plan": ".bot/runtime2-callback/architect/v2/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/App/modules/signing/", "PLang/App/modules/crypto/", "PLang/App/Goals/Goal/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Inspected existing signing/crypto/goals infrastructure to ground the design. Found: signing.sign module + Ed25519 default provider already implement the high-level signing pipeline with deterministic JSON, hash-of-data approach, and SignedData envelope (Created/Expires/Nonce/Identity/Contracts/Headers/Hash/Signature). ICryptoProvider only exposes Hash and Verify(hash) — no Encrypt/Decrypt, confirming a real capability gap for Phase 3. Goal already has Hash property — SHA-256 of name + step texts."
+        },
+        {
+          "paths": [".bot/runtime2-callback/architect/v2/plan.md", ".bot/runtime2-callback/architect/v2/summary.md", ".bot/runtime2-callback/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 design: wire/sign/persistence layer scoped to Phase 2. Three insights from the conversation reshape it: (1) signing is transparent at Data IO boundary — auto-populated by serializer via existing signing module, default no-expiry, no explicit `- sign` needed at issue sites. (2) Goal.Hash already exists — Callback.GoalHash uses it directly. (3) Encryption belongs to Callback class (Phase 3), not Data layer. Combined: Phase 2 ships entirely on existing infrastructure. Schema corrections — added GoalPrPath (App.Goals loads lazily by path), removed Expiry (lives in Data.Signature). Flagged SignedData → Signature OBP rename as a coder task. Phase split locked: Phase 1 in-process test, Phase 2 error-retry signed/persisted, Phase 3 ask-user with encryption (extends ICryptoProvider). v2 summary and bot-root summary refreshed to surface v2 above v1."
+        }
+      ],
+      "after": {
+        "status": "v2 design complete; Phase 2 is implementation-ready",
+        "health": "green — v2 is mostly additive on v1, internally consistent, and reuses existing infrastructure rather than introducing new abstractions",
+        "notes": "Phase 2 is now ready for test-designer or coder. Phase 3 (ask-user + ICryptoProvider extension for symmetric encryption) is its own future architect session. Encryption is Callback-class-internal — does not bleed into the Data IO layer. Goal.Hash limitation noted: tracks developer prose, not module-behavior drift; documented as known limitation."
+      }
     }
   ]
 }
