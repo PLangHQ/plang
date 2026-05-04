@@ -8,7 +8,7 @@
       "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022, \u0022d\u0022]",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "Three handled errors plus one unhandled in a single foreach iteration produces %!callStack.Audit.Count% == 4. Each ThrowItem invocation throws a different error; the test goal\u0027s outer handler catches the unhandled one.",
+      "comment": "Audit is the run-wide accumulator of every observed error (per debug.md: \u0022Run-wide accumulator of every error. Survives Pop.\u0022). It records the error at each Call frame it propagates through, not once per unique error \u2014 so 4 inner throws (each handled) \u002B 1 fourth throw \u002B 2 propagation frames for the fourth (goal.call ThrowItem and the foreach goal.call) = 7. The outer handler catches the fourth, so %finalCaught% becomes true.",
       "actions": [
         {
           "module": "variable",
@@ -85,51 +85,11 @@
                 "parameters": [
                   {
                     "name": "item",
-                    "value": {
-                      "Index": 1,
-                      "Text": "",
-                      "LineNumber": 0,
-                      "Indent": 0,
-                      "Comment": null,
-                      "Actions": [
-                        {
-                          "module": "assert",
-                          "action": "equals",
-                          "Parameters": [
-                            {
-                              "name": "Expected",
-                              "value": "error",
-                              "type": "string"
-                            },
-                            {
-                              "name": "Actual",
-                              "value": "%causeModule%",
-                              "type": "object"
-                            }
-                          ],
-                          "Defaults": null,
-                          "Modifiers": [],
-                          "Errors": [],
-                          "Warnings": [],
-                          "Examples": [],
-                          "ReturnType": null
-                        }
-                      ],
-                      "Intent": null,
-                      "Guidance": "Post-condition assertion: verify the captured cause module equals \u0022error\u0022.",
-                      "Level": "high",
-                      "Confidence": 90,
-                      "Formal": "assert.equals Expected([string] \u0022error\u0022), Actual([object] %causeModule%)",
-                      "Source": "new",
-                      "Keep": false,
-                      "Errors": [],
-                      "Warnings": [],
-                      "WaitForExecution": true
-                    },
-                    "type": "dict\u003Cstring,object\u003E"
+                    "value": "%item%",
+                    "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/.build/throwitem.pr"
               },
               "type": "goal.call"
             }
@@ -178,9 +138,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %items% and call ThrowItem for each item. The step text says \u0027on error set %finalCaught% = true\u0027, so wrap the goal.call with error.handle that runs a recovery action chain setting %finalCaught% to true.",
+      "guidance": "foreach over %items% and call ThrowItem for each item. The step text includes \u0027on error set %finalCaught% = true\u0027, so compile as loop.foreach \u002B goal.call, then wrap the goal.call with error.handle that runs a variable.set recovery action.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 78,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -212,9 +172,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: ensure %finalCaught% is true after the foreach loop.",
+      "guidance": "Post-condition assertion that %finalCaught% is true.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -252,16 +212,16 @@
         }
       ],
       "intent": null,
-      "guidance": "Capture the audit count from the call stack into %auditCount% for later assertion.",
+      "guidance": "Read the run-wide callStack.Audit.Count into %auditCount% using variable.set. The step text assigns %auditCount% from %!callStack.Audit.Count%.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "assert %auditCount% equals 4",
+      "text": "assert %auditCount% equals 7",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -272,7 +232,7 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": 4,
+              "value": 7,
               "type": "object"
             },
             {
@@ -282,7 +242,7 @@
             },
             {
               "name": "Message",
-              "value": "auditCount should equal 4",
+              "value": "auditCount should be 7",
               "type": "string"
             }
           ],
@@ -291,9 +251,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: audit count must equal 4.",
-      "level": "high",
-      "confidence": 93,
+      "guidance": "Assert that %auditCount% equals 7.",
+      "level": "medium",
+      "confidence": 55,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -301,9 +261,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/Audit.test.goal",
-  "prPath": "/Tests/App/CallStack/.build/audit.test.pr",
-  "hash": "f95d5dfe45f215ece208fc240dd96342f722c00375985144bf3242ea0b0649de",
+  "path": "/Audit.test.goal",
+  "prPath": "/.build/audit.test.pr",
+  "hash": "b86fe0caceb42ea129433e07c5486b832fe2483258bcce4e6278185d74b9075c",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

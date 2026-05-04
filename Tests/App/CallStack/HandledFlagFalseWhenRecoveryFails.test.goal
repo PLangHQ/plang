@@ -1,3 +1,8 @@
 TestHandledFlagFalseWhenRecoveryFails
-/ When the recovery body throws, the original error propagates with the recovery error chained. C# CallStackAuditTests pins the underlying flag wiring; expressing this end-to-end from PLang needs a nested error.handle that the builder doesn't map reliably yet — leaving as not-implemented for follow-up.
-- throw "not implemented"
+/ When the recovery body itself throws, error.handle.Wrap leaves Handled=false on the inner Call and re-throws — the original error propagates (with the recovery error chained) and the outer handler catches it. Side-effect proof: %outerCaught% gets set by the outer handler, which only fires if the inner recovery failed and re-threw.
+- call InnerWithFailingRecovery, on error set %outerCaught% = true
+- assert %outerCaught% is true, "outer handler should have caught — recovery body must have re-thrown"
+
+InnerWithFailingRecovery
+/ Throws "boom", whose recovery body itself throws "recovery-failed". The outer-most on-error in the test goal is the only one that can catch.
+- throw error "boom", on error throw error "recovery-failed"

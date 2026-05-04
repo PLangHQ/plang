@@ -1,7 +1,7 @@
 TestAuditAccumulatesHandledAndUnhandledErrors
-/ Three handled errors plus one unhandled in a single foreach iteration produces %!callStack.Audit.Count% == 4. Each ThrowItem invocation throws a different error; the test goal's outer handler catches the unhandled one.
+/ Audit is the run-wide accumulator of every observed error (per debug.md: "Run-wide accumulator of every error. Survives Pop."). It records the error at each Call frame it propagates through, not once per unique error — so 4 inner throws (each handled) + 1 fourth throw + 2 propagation frames for the fourth (goal.call ThrowItem and the foreach goal.call) = 7. The outer handler catches the fourth, so %finalCaught% becomes true.
 - set %items% = ["a", "b", "c", "d"]
 - foreach %items%, call ThrowItem item=%item%, on error set %finalCaught% = true
 - assert %finalCaught% is true
 - set %auditCount% = %!callStack.Audit.Count%
-- assert %auditCount% equals 4
+- assert %auditCount% equals 7
