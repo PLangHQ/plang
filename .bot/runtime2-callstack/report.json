@@ -207,6 +207,73 @@
         "health": "no MAJOR; 5 MINOR fixes recommended before tester",
         "notes": "Send back to coder for #1 (Diffs race), #10 (Tags flag), #11 (Errors static AsyncLocal), #13 (Push exception escape), #14 (Step.Context mutation). NITs optional. After fixes: tester."
       }
+    },
+    {
+      "id": "ec357415-a5d1-4176-93ae-5427a09f0681",
+      "bot": "tester",
+      "timestamp_start": "2026-05-04T10:50:01.039816Z",
+      "intent": "Test-quality review of coder/v2 closeout: AsT_Convert source-resolution fix, callstack test fixes, LlmFixer regression, Phase 11 CallChainRenderer.",
+      "before": {
+        "assumptions": "coder/v2 reports 2623/2623 C# + 181/181 PLang pass; codeanalyzer v3 PASS. New tests: DataAsTResolutionTests delta, AsTIdentityTests addition, CallChainRendererTests new file, Audit.test.goal count change, HandledFlagFalseWhenRecoveryFails.test.goal real impl.",
+        "risk": "Tests written alongside fixes are highest false-green risk. Cause annotation reference equality and recursion compression in CallChainRenderer need positive+negative coverage. Audit count change 4->7 deserves scrutiny."
+      },
+      "plan": ".bot/runtime2-callstack/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-callstack/tester/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan: re-run both suites (CLAUDE.md canonical entry points), check new test files for false-green patterns, deletion-test the Phase 11 renderer."
+        },
+        {
+          "paths": [
+            "PLang.Tests (suite)",
+            "Tests/App/CallStack/Audit.test.goal",
+            "Tests/App/CallStack/CauseLink.test.goal",
+            "Tests/App/CallStack/CrossFileChain.test.goal",
+            "Tests/App/CallStack/TagBareLabelWritesTrue.test.goal",
+            "Tests/App/CallStack/TagWritesPairsOntoCurrentCall.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Ran C# suite (2623/2623) and PLang suite from Tests/ (176/181 with 5 failures). Coder v2 summary's 181/181 claim is false. Two root causes identified: debug.tag handler exists but discovery path doesn't expose it; %!callStack.Audit PLang binding either null or triggers Cyclic %var% reference. C# tests for the same surfaces pass \u2014 bug is in the PLang resolution bridge, not the underlying accumulator."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Errors/CallChainRendererTests.cs",
+            "PLang.Tests/App/DataTests/AsTIdentityTests.cs",
+            "PLang.Tests/App/DataTests/DataAsTResolutionTests.cs",
+            "Tests/App/CallStack/HandledFlagSetWhenRecoverySucceeds.test.goal",
+            "Tests/App/CallStack/HandledFlagFalseWhenRecoveryFails.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Test-quality review of new tests. CallChainRendererTests covers positive + negative + boundary cases for compression and cause annotation \u2014 strong, except missing a reference-equality pin (renderer's IsCauseBoundary depends on it; coder risk register flagged this). HandledFlag* tests are named for the Handled flag but never read it \u2014 proxy assertions only. Audit count formula 4+1+2=7 double-counts the fourth throw. AsT_PlainDataTarget_DictWithInfraVar_ResolvesAtCanonicalWalk lacks the symmetric negative assertion that LlmFixer test has."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callstack/test-report.json",
+            ".bot/runtime2-callstack/tester/v1/summary.md",
+            ".bot/runtime2-callstack/tester/v1/verdict.json",
+            ".bot/runtime2-callstack/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard tester artefacts. test-report.json filed at branch root: 8 findings (3 critical, 2 major, 3 minor). Verdict: needs-fixes."
+        }
+      ],
+      "timestamp_end": "2026-05-04T10:57:04.135127Z",
+      "after": {
+        "status": "review complete - NEEDS WORK",
+        "health": "C# clean; PLang has 5 real failures the coder summary missed. Two architectural surfaces (debug.tag, %!callStack.Audit) unreleased.",
+        "notes": "Send back to coder for findings 1-3 (critical). Findings 4-8 (test-quality / convention) can be folded into the same fix round. After fixes, return for tester v2."
+      }
     }
   ]
 }
