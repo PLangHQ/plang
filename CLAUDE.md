@@ -16,6 +16,19 @@
 - **`Data`**: universal result type with `Value`, `Properties`, `Error`, `Success`, `Ok()`, `Fail()`, `Merge()`. Extended via Properties.
 - **`Action.Return`**: `List<Data>?` — simple list of return variable mappings, no wrapper class
 
+## OBP Shape Smells (audit before writing or reviewing C#)
+
+When reading or writing C#, run this checklist. Each item is a yes/no question; any "yes" means the shape is wrong and the fix is structural, not a line edit.
+
+1. **Public mutable collection with rules enforced from outside.** A type exposes `public List<T>` / `Dictionary<K,V>` / `HashSet<T>` and the `Add` / `Remove` / locking / eviction lives in another file. The collection should become its own `@this` type with private lock and `Add(...)` / `IReadOnlyList<T>` surface.
+2. **Cross-file lock target.** `lock (other.X)` taken from outside `other`'s class — the type that owns the data isn't the type that owns the discipline.
+3. **Same logical thing stored twice across types** (overlapping semantics, similar names, same element type, same role).
+4. **Allocate-here / mutate-there / clean-up-elsewhere.** One collection's lifecycle split across three files.
+
+If removing one line of choreography requires editing three files, those three files are one missing type.
+
+Full checklist and worked example: `Documentation/v0.2/good_to_know.md` "OBP Smell Checklist".
+
 ## Source Generator
 - PLang.Generators: netstandard2.0, IIncrementalGenerator
 - OBP shape: entry `PLang.Generators/this.cs` → `Discovery/this.cs` (Roslyn boundary) + `Emission/Action/this.cs` (per-handler) + `Emission/Property/{Data,Provider}/this.cs` (polymorphic per-property)
@@ -58,6 +71,31 @@
   Running `plang --test` from the project root will surface stale `.test.goal` files under `.bot/` (old bot output) as failures or stale entries — those aren't real test results.
 - C# tests run from project root via `dotnet run --project PLang.Tests` (different runner, different rules).
 
+### Stale-binary trap
+
+`plang --test` uses `PlangConsole/bin/Debug/net10.0/plang` — a pre-built
+executable, **not recompiled per session**. Bot runners inherit this binary
+across sessions. Phantom failures with shapes like `Action '<module>.<action>' not found`
+or `(null)` reads of `%!<infra>%` properties — for symbols that exist in
+source on the current commit — mean a stale binary scanned via reflection,
+not a real bug.
+
+Before claiming any PLang test result, rebuild from clean:
+
+```bash
+rm -rf PlangConsole/bin PlangConsole/obj PLang/bin PLang/obj \
+       PLang.Tests/bin PLang.Tests/obj \
+       PLang.Generators/bin PLang.Generators/obj
+dotnet build PlangConsole
+cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test
+```
+
+The C# suite is immune (`dotnet run --project PLang.Tests` recompiles
+in-place). Only `plang --test` is exposed to the trap.
+
+Do **not** delete `Tests/**/.build/` — those are tracked `.pr` files, not
+build artefacts. The "NEVER delete .build folders" rule above applies.
+
 ## Debugging
 - `plang --debug` — debug all steps
 - `plang '--debug={"goal":"Start"}'` — debug specific goal
@@ -67,6 +105,26 @@
 ## Learning
 - When corrected about PLang architecture, **add the insight to `Documentation/Runtime2/good_to_know.md`**
 - Read `good_to_know.md` before making architectural assumptions
+
+## Proposing CLAUDE.md / character changes
+
+Do **not** edit CLAUDE.md or character files directly. Two reasons:
+
+- **Agent-level `CLAUDE.md` files are overwritten on next restart** — edits are silently lost. (This applies to per-agent CLAUDE.md, not this repo CLAUDE.md.)
+- **`characters/*/character.md` is read-only** on most workspaces (`EROFS`).
+
+The repo `CLAUDE.md` you're reading right now does persist, but it's docs-owned — same proposal workflow.
+
+**To propose any change** to a CLAUDE.md or character file, append to `.bot/<branch>/claude-md-proposals.md`:
+
+    ## <author> — v<N> — <date>
+    **Target:** <path>
+    **Why:** <one paragraph — what gap, what evidence, why now>
+    **Proposed change:** <exact text to add/replace, in a fenced block>
+
+See prior branches' `claude-md-proposals.md` files for examples. Docs picks proposals up during a docs pass and applies the ones that hold up.
+
+**Reviewer bots** (codeanalyzer, security, tester) do NOT propose CLAUDE.md changes on their own — only on explicit user request after a real incident on the branch. When filing under that exception, note it in the proposal footer.
 
 ## Todo Capture
 When the user writes "todo:" or "dodo:" (typo), append to `Documentation/Runtime2/todos.md` with date and context. Ask at most one clarifying question. Accept dismissals ("n", "no", "nah", "neibb") and move on.
