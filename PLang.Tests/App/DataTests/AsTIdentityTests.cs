@@ -257,4 +257,26 @@ public class AsTIdentityTests
         await Assert.That(resolved[1]).IsEqualTo("b");
         await Assert.That(resolved[2]).IsEqualTo("c");
     }
+
+    // Rule 4g — infrastructure %!var% references inside container leaves resolve at the
+    // AsCanonical walk, same as plain %var%. Earlier dd7bf37e unconditionally skipped %!*%
+    // here to keep builder runs from baking their own infra state into LLM-response .pr —
+    // but the 959cdd36 fix ("stored values are values, no recursion") covers that case via
+    // the As<T>/AsT_Convert short-circuit. The skip here was over-broad: it left
+    // developer-authored infra refs literal at runtime. Concrete repro: HandleBuildGoalFailure
+    // wrote `set %trace.buildError% = {"message": "%!error.Message%"}` and the trace JSON
+    // captured the literal `"%!error.Message%"` instead of the actual error.
+    [Test]
+    public async Task AsT_PlainDataTarget_DictWithInfraVar_ResolvesAtCanonicalWalk()
+    {
+        var ctx = _app.User.Context;
+        ctx.Variables.Set(new global::App.Data.DynamicData("!error", () => "boom"));
+        var raw = new Dictionary<string, object?> { ["message"] = "%!error%" };
+        var paramData = new Data("trace.buildError", raw) { Context = ctx };
+
+        var canonical = paramData.AsCanonical();
+
+        var resolved = (Dictionary<string, object?>)canonical.Value!;
+        await Assert.That(resolved["message"]).IsEqualTo("boom");
+    }
 }

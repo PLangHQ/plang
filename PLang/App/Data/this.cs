@@ -786,13 +786,6 @@ public partial class @this
             if (fullMatch.Success)
             {
                 var varName = fullMatch.Groups[1].Value;
-                // Infrastructure `%!var%` references (%!callStack%, %!error%, %!trace%,
-                // …) exist at BOTH build time and runtime but with different values —
-                // resolving them here at build bakes the builder's current %!callStack%
-                // depth into the LLM's user-goal .pr, which is wrong. Leave them as raw
-                // strings so the runtime resolves them at dispatch.
-                if (varName.StartsWith('!'))
-                    return s;
                 // Preserve the original `%var%` string when the variable is unset OR
                 // its resolved value is null. Returning null silently strips the
                 // reference, which destroys LLM-emitted parameter values like
@@ -805,7 +798,7 @@ public partial class @this
                     ? resolved.Value
                     : (object?)s;
             }
-            return ctx.Variables.Resolve(s, skipInfrastructure: true);
+            return ctx.Variables.Resolve(s);
         }
 
         if (value is IList<object?> innerList) return WalkList(innerList, ctx);
