@@ -1,0 +1,125 @@
+{
+  "name": "TestIndirectGoalCycleThrows",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call CycleA, on error set %cycleCaught% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Goals A \u2192 B \u2192 A (indirect cycle) trips ContainsGoal on the second Push of A. Wrap in error.handle so the test goal still completes.",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "CycleA",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%cycleCaught%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "bool"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Use goal.call to invoke CycleA. The step text says to wrap in error.handle so the test goal completes; therefore emit goal.call followed by error.handle that sets %cycleCaught% = true.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %cycleCaught% is true, \u0022indirect goal cycle A\u2192B\u2192A must trip ContainsGoal at the boundary crossing\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%cycleCaught%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "indirect goal cycle A\u2192B\u2192A must trip ContainsGoal at the boundary crossing",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %cycleCaught% was set to true by the error handler. This must fail if the cycle was not caught.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/IndirectGoalCycleThrows.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/indirectgoalcyclethrows.test.pr",
+  "hash": "16c8dd583605e9e064c4f836322254389fd0c27c4f01b342624243dc8b2c75cd",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

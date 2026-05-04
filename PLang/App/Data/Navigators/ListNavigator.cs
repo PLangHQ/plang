@@ -59,17 +59,23 @@ public sealed class ListNavigator : INavigator
 
     private static bool IsGenericList(object? value)
         => value?.GetType().GetInterfaces().Any(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>)) ?? false;
+            i.IsGenericType && (
+                i.GetGenericTypeDefinition() == typeof(IList<>) ||
+                i.GetGenericTypeDefinition() == typeof(IReadOnlyList<>))) ?? false;
 
     private static IList? WrapGenericList(object? value)
     {
         if (value == null) return null;
         var iface = value.GetType().GetInterfaces().FirstOrDefault(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IList<>));
+            i.IsGenericType && (
+                i.GetGenericTypeDefinition() == typeof(IList<>) ||
+                i.GetGenericTypeDefinition() == typeof(IReadOnlyList<>)));
         if (iface == null) return null;
 
         var collectionIface = value.GetType().GetInterfaces().FirstOrDefault(i =>
-            i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICollection<>));
+            i.IsGenericType && (
+                i.GetGenericTypeDefinition() == typeof(ICollection<>) ||
+                i.GetGenericTypeDefinition() == typeof(IReadOnlyCollection<>)));
         var count = (int)(collectionIface?.GetProperty("Count")?.GetValue(value) ?? 0);
         var indexer = iface.GetProperty("Item")!;
         var wrapper = new object?[count];

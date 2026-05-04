@@ -48,9 +48,11 @@ global using Variables = App.Variables.@this;
 // Standalone concepts
 global using ICache = App.Cache.ICache;
 global using MemoryStepCache = App.Cache.MemoryStepCache;
-global using CallFrame = App.CallStack.CallFrame;
 global using Debugging = App.Debug.@this;
 global using Testing = App.Test.@this;
+
+// Call: not a global alias — App.modules.goal.Call (the goal.call action handler) collides.
+// Use App.CallStack.Call.@this fully qualified, or per-file alias.
 
 // Build: can't be global alias — v1 PLang.Build namespace conflict.
 // Inside App.@this: the `Build` property shadows the `Build` namespace, so

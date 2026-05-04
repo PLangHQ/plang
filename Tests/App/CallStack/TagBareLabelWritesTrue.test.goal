@@ -1,0 +1,4 @@
+TestTagBareLabelWritesTrue
+/ debug.tag attaches Tags to the caller's Call (the surrounding step/goal scope), not the tag action's own frame which immediately pops. So the assertion reads through %!callStack.Current.Caller.Tags% to reach the tag the user wrote.
+- debug.tag "manual-checkpoint"
+- assert %!callStack.Current.Caller.Tags."manual-checkpoint"% equals "true"

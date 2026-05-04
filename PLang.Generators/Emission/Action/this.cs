@@ -151,7 +151,7 @@ public static class @this
         sb.Append("""
                     }
                     var __step = __action?.Step;
-                    var __callFrames = context.CallStack?.GetFrames() ?? (System.Collections.Generic.IReadOnlyList<global::App.CallStack.CallFrame>)System.Array.Empty<global::App.CallStack.CallFrame>();
+                    var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::App.CallStack.Call.@this>)System.Array.Empty<global::App.CallStack.Call.@this>();
 
             """);
 

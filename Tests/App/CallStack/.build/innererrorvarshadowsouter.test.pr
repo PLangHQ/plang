@@ -1,0 +1,124 @@
+{
+  "name": "TestInnerErrorVarShadowsOuter",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022outer-boom\u0022, on error call OuterRecoveryWithInnerThrow",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Outer error.handle catches \u0022outer-boom\u0022, invokes a recovery goal that throws again with its own handler \u2014 inside the inner recovery, %!error.Message% is \u0022inner-boom\u0022, not the outer one.",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "outer-boom",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "OuterRecoveryWithInnerThrow",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Throw an error with message \u0027outer-boom\u0027. Attach error.handle to intercept it and call the recovery goal OuterRecoveryWithInnerThrow.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %innerSeen% equals \u0022inner-boom\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "inner-boom",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%innerSeen%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: after the recovery flow, %innerSeen% should equal \u0027inner-boom\u0027.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/InnerErrorVarShadowsOuter.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/innererrorvarshadowsouter.test.pr",
+  "hash": "81ded4775b25c5862b4e80b1d9d5efd6b0ec5c423b152a1b0bc2596d4eb48a15",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

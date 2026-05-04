@@ -67,6 +67,14 @@ public sealed class @this
     /// </summary>
     public LlmDebug? Llm { get; set; }
 
+    /// <summary>
+    /// The app's call tree. Always allocated — structural data (Action/Caller/Cause/Errors)
+    /// is on by default. Richer capture (timing, diff, tags, history) is gated by
+    /// <see cref="App.CallStack.@this.Flags"/>, populated from
+    /// <c>--debug={callstack:{...}}</c> via <see cref="Apply"/>.
+    /// </summary>
+    public App.CallStack.@this CallStack { get; }
+
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
     private bool _applied;
@@ -90,6 +98,7 @@ public sealed class @this
     public @this(App.@this engine)
     {
         _engine = engine;
+        CallStack = new App.CallStack.@this();
     }
 
     /// <summary>
@@ -129,6 +138,17 @@ public sealed class @this
                 }
                 dict["variables"] = normalized;
             }
+
+            // CallStack flags: {callstack:true} → Shorthand (Timing+Tags on); {callstack:{...}}
+            // → field-by-field. Populate would set a field on `this` — we want to set the
+            // flags on the already-constructed CallStack, so handle this key explicitly and
+            // strip it before the generic Populate.
+            if (dict.TryGetValue("callstack", out var rawCallstack))
+            {
+                CallStack.Flags = App.CallStack.Flags.Parse(rawCallstack);
+                dict.Remove("callstack");
+            }
+
             App.Utils.TypeMapping.Populate(this, dict);
         }
 
@@ -307,12 +327,17 @@ public sealed class @this
         }
 
         var callStack = context.CallStack;
-        if (callStack != null)
+        if (callStack?.Current != null)
         {
             sb.AppendLine("  Call Stack:");
-            foreach (var line in callStack.GetStackTrace().Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            foreach (var call in callStack.Current.SnapshotChain())
             {
-                sb.AppendLine($"    {line.TrimEnd()}");
+                var goal = call.Action.Step?.Goal;
+                var stepIdx = call.Action.Step?.Index ?? -1;
+                var name = goal?.Name ?? call.Action.Module;
+                var stepInfo = stepIdx >= 0 ? $" (step {stepIdx + 1})" : "";
+                var pathInfo = !string.IsNullOrEmpty(goal?.Path) ? $" in {goal.Path}" : "";
+                sb.AppendLine($"    at {name}.{call.Action.ActionName}{stepInfo}{pathInfo}");
             }
         }
 

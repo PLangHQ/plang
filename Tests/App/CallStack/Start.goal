@@ -1,5 +1,0 @@
-Start
-- write out "Depth before: %!callStack.Depth%\n"
-- call goal Inner
-- write out "Depth after: %!callStack.Depth%\n"
-- call goal Inner  

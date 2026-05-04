@@ -1,0 +1,124 @@
+{
+  "name": "TestOuterErrorVarVisibleAfterInnerHandlerCloses",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022outer-boom\u0022, on error call OuterRecoveryWithInnerThrow",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "After the inner error.handle scope closes, the outer recovery body\u0027s %!error% restores to the outer caught error via LIFO AsyncLocal scope. Reuses OuterRecoveryWithInnerThrow which sets %outerSeenAfterInner% AFTER its inner handler closes.",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "outer-boom",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "OuterRecoveryWithInnerThrow",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "The step text explicitly says to throw an error, then on error call a recovery goal. Map to error.throw with Message, and wrap it with error.handle that runs a recovery action chain containing goal.call OuterRecoveryWithInnerThrow.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %outerSeenAfterInner% equals \u0022outer-boom\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "outer-boom",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%outerSeenAfterInner%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %outerSeenAfterInner% equals the original outer error string. This is an assert.equals on already-produced variable value.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/OuterErrorVarVisibleAfterInnerHandlerCloses.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/outererrorvarvisibleafterinnerhandlercloses.test.pr",
+  "hash": "17934f333fb2178f92b8071fd048cf862042974deb2337a8d18e182b78cb8be0",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

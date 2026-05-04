@@ -1,0 +1,3 @@
+CycleB
+/ Helper for IndirectGoalCycleThrows. Calls back into CycleA — A's PrPath is already on the chain, ContainsGoal trips, CallStackOverflowException is thrown and caught by the test goal's on-error.
+- call CycleA

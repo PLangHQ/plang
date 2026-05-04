@@ -1,0 +1,81 @@
+{
+  "name": "TestTagBareLabelWritesTrue",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "debug.tag \u0022manual-checkpoint\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "debug.tag attaches Tags to the caller\u0027s Call (the surrounding step/goal scope), not the tag action\u0027s own frame which immediately pops. So the assertion reads through %!callStack.Current.Caller.Tags% to reach the tag the user wrote.",
+      "actions": [
+        {
+          "module": "debug",
+          "action": "tag",
+          "parameters": [
+            {
+              "name": "Label",
+              "value": "manual-checkpoint",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "debug.tag to attach the provided bare label to the current call frame. The step text provides only the label, so use Label parameter.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %!callStack.Current.Caller.Tags.\u0022manual-checkpoint\u0022% equals \u0022true\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "true",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%!callStack.Current.Caller.Tags.\u0022manual-checkpoint\u0022%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "assert.equals to verify the tag value stored on the caller frame equals the string \u0022true\u0022. The step references %!callStack.Current.Caller.Tags.\u0022manual-checkpoint\u0022% directly.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/TagBareLabelWritesTrue.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/tagbarelabelwritestrue.test.pr",
+  "hash": "df4d1279ea427d713ece76008bc4aab1ecd12ddd5aacf0257ea411e86f6ebc46",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

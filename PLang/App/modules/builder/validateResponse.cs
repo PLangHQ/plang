@@ -172,6 +172,69 @@ public partial class validateResponse : IContext
             }
         }
 
+        // Value-to-type convertibility check. The LLM occasionally hallucinates a
+        // value that looks like a schema description (e.g. Actor="this?(user|service|system)")
+        // or emits "" as a placeholder for an unset constrained-type parameter.
+        // Catching it here surfaces a corrective message LlmFixer can feed back, instead
+        // of letting the bad value persist into the .pr and blow up at runtime.
+        // Skip: null values, variable references, nested action records (dicts with a
+        // "module" key, lists of such), and types we can't resolve. Empty strings on
+        // nullable parameters are normalized to null in-place so downstream stages
+        // (NormalizeParameterTypes, runtime resolution) treat them like an unset slot.
+        var modules = goal.App?.Modules;
+        foreach (var step in response.Steps)
+        {
+            if (step.Keep) continue;
+            foreach (var a in step.Actions)
+            {
+                if (a.Parameters == null) continue;
+
+                // Cache the action's schema prop info per (module, action) — looked up
+                // once for the parameter loop, used to detect nullable slots.
+                var actionType = modules?.GetActionType(a.Module, a.ActionName);
+
+                foreach (var p in a.Parameters)
+                {
+                    if (p.Type?.Value == null || p.Value == null) continue;
+                    if (p.Value is string sv && sv.StartsWith('%') && sv.EndsWith('%')) continue;
+                    if (ValidateResponseHelpers.IsActionRecord(p.Value)) continue;
+
+                    // LLMs emit "" for unset nullable slots even when the prompt says
+                    // omit them. Map "" → null when the schema prop is nullable, so the
+                    // .pr doesn't store the empty string and TryConvertTo doesn't get
+                    // a string it can't possibly satisfy ("" is not in any actor's
+                    // ValidValues, can't parse to int, etc.). For non-nullable slots we
+                    // *want* the convertibility error to surface — leave it for the
+                    // TryConvertTo path below.
+                    if (p.Value is string emptyCheck && emptyCheck.Length == 0)
+                    {
+                        if (ValidateResponseHelpers.IsNullableSchemaProp(actionType, p.Name))
+                        {
+                            p.Value = null;
+                            continue;
+                        }
+                    }
+
+                    var targetType = App.Utils.TypeMapping.GetType(p.Type.Value);
+                    if (targetType == null) continue;
+                    // Scalar PlangTypes (path, tstring, ...) accept the raw primitive at
+                    // build time — runtime wraps via Resolve. Already covered by the
+                    // shape check above.
+                    if (App.Utils.TypeMapping.IsScalarPlangType(targetType)) continue;
+
+                    var (_, error) = App.Utils.TypeMapping.TryConvertTo(p.Value, targetType);
+                    if (error == null) continue;
+
+                    var validValues = App.Utils.TypeMapping.GetValidValues(targetType);
+                    var hint = validValues != null && validValues.Length > 0
+                        ? $" Valid values: {string.Join(", ", validValues)}."
+                        : "";
+                    errors.Add(
+                        $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(p.Value)} cannot be converted to type '{p.Type.Value}'.{hint} If the parameter is optional and you don't have a value, omit it from the parameters list — never emit \"\" as a placeholder.");
+                }
+            }
+        }
+
         if (errors.Count > 0)
         {
             var message = string.Join("\n", errors.Select(e => $"- {e}"));
@@ -185,4 +248,65 @@ public partial class validateResponse : IContext
 internal static class StepValidationExt
 {
     public static T With<T>(this T self, System.Action<T> mutate) { mutate(self); return self; }
+}
+
+internal static class ValidateResponseHelpers
+{
+    /// <summary>
+    /// True when the value looks like a nested action record (dict with a "module" key)
+    /// or a list of such records — matches the shape the LLM emits for parameters typed
+    /// <c>action</c> or <c>list&lt;action&gt;</c>. We don't try to convert these in
+    /// the validator; that's enrichResponse's job.
+    /// </summary>
+    public static bool IsActionRecord(object? v)
+    {
+        if (v is System.Collections.IDictionary dict)
+            return dict.Contains("module") || dict.Contains("Module");
+        if (v is System.Collections.IEnumerable list && v is not string)
+        {
+            foreach (var item in list) return IsActionRecord(item);
+        }
+        return false;
+    }
+
+    public static string FormatValueForError(object? v)
+    {
+        if (v == null) return "null";
+        if (v is string s) return $"\"{s}\"";
+        return v.ToString() ?? "(null)";
+    }
+
+    /// <summary>
+    /// True when the action's parameter slot named <paramref name="paramName"/> is
+    /// nullable (Data&lt;T&gt;? or T?). Used to decide whether an LLM-emitted "" can
+    /// be safely normalized to null. Null actionType (action not found) returns
+    /// false — without schema we can't make the call, fall through to the
+    /// convertibility error.
+    /// </summary>
+    public static bool IsNullableSchemaProp(System.Type? actionType, string paramName)
+    {
+        if (actionType == null) return false;
+        var prop = actionType.GetProperty(paramName,
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if (prop == null) return false;
+
+        // Value type Nullable<T> — Path is Data<T>? where T is class/value-type wrapper.
+        if (System.Nullable.GetUnderlyingType(prop.PropertyType) != null) return true;
+
+        // Reference-type nullability (the source-generator emits Data<T>? as an
+        // annotated reference type, not Nullable<>). NullabilityInfoContext gives us
+        // the Write nullability of the property.
+        try
+        {
+            var nullCtx = new System.Reflection.NullabilityInfoContext();
+            return nullCtx.Create(prop).WriteState == System.Reflection.NullabilityState.Nullable;
+        }
+        catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
+        {
+            // NullabilityInfoContext can throw on edge-case generic instantiations
+            // (e.g. unsupported reflected type). Default to "not nullable" so we err
+            // toward surfacing the LLM mistake rather than silently swallowing it.
+            return false;
+        }
+    }
 }

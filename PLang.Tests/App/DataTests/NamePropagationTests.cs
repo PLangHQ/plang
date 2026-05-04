@@ -89,18 +89,20 @@ public class NamePropagationTests
         await Assert.That(result.Name).IsEqualTo("Items");
     }
 
-    // Chained full-match — %slot% → "%a%" → "%b%" → 42. The live variable
-    // owning the final value is "b"; result.Name == "b".
+    // Stored values are values, not expressions: a stored "%b%" is opaque payload,
+    // not a chain reference. Name propagates from the IMMEDIATE full-match variable
+    // ("a"), never transitively to "b". Matches mainstream language assignment —
+    // reading a variable returns the stored bytes verbatim.
     [Test]
-    public async Task Name_ChainedFullMatch_PropagatesFinalName()
+    public async Task Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain()
     {
         var ctx = _app.User.Context;
         ctx.Variables.Set(new global::App.Data.@this<int>("b", 42) { Context = ctx });
         ctx.Variables.Set(new global::App.Data.@this<string>("a", "%b%") { Context = ctx });
 
         var paramData = new Data("Slot", "%a%") { Context = ctx };
-        var result = paramData.As<int>();
-        await Assert.That(result.Name).IsEqualTo("b");
-        await Assert.That(result.Value).IsEqualTo(42);
+        var result = paramData.As<string>();
+        await Assert.That(result.Name).IsEqualTo("a");
+        await Assert.That(result.Value).IsEqualTo("%b%");
     }
 }

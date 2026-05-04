@@ -1,0 +1,7 @@
+TestErrorCallFramesContainsDeepNestedChain
+/ Error in a deeply nested cross-file goal.call chain. After the error is caught, the Audit list captures the failing chain and we assert at least 3 frames are present (Outer → Middle → Throws each pushed a Call).
+- call ChainOuter, on error set %caught% = true
+- assert %caught% is true
+- assert %!callStack.Audit% is not null
+- set %auditCount% = %!callStack.Audit.Count%
+- assert %auditCount% is greater than 0

@@ -139,8 +139,10 @@ public sealed partial class @this : modules.IDataWrappable
     /// <summary>
     /// Runs this action: lifecycle events → dispatch → return mapping.
     /// Context travels as parameter — actions are shared objects, not per-request.
+    /// <paramref name="cause"/> is threaded through to <c>App.Run</c> so recovery-body
+    /// dispatches stamp the resulting Call's <c>Cause</c> (the errored sibling).
     /// </summary>
-    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
+    public async Task<Data.@this> RunAsync(Actor.Context.@this context, global::App.CallStack.Call.@this? cause = null)
     {
         var lifecycle = context.LifecycleFor(this);
 
@@ -159,7 +161,7 @@ public sealed partial class @this : modules.IDataWrappable
         }
         else
         {
-            Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context);
+            Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context, cause);
             result = await Modifiers.RunAsync(dispatch, context);
         }
 

@@ -82,10 +82,7 @@ public sealed class @this : IAsyncDisposable
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
-        Context = new Context.@this(app, parentToken: _cts.Token)
-        {
-            CallStack = new CallStack.@this()
-        };
+        Context = new Context.@this(app, parentToken: _cts.Token);
         Context.Actor = this;
         Channels = new AppChannels(app);
 

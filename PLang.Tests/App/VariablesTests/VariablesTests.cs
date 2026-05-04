@@ -840,12 +840,12 @@ public class VariablesCycleDetectionTests
         var normalResult = stack.Get("data.items[idx]");
         await Assert.That(normalResult!.Value).IsEqualTo("one");
 
-        // Pre-seed the thread-static visited set via reflection to simulate
+        // Pre-seed the async-local visited set via reflection to simulate
         // a circular reference already in progress (idx is "being resolved")
         var field = typeof(Variables).GetField("_resolvingVars",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "idx" };
-        field!.SetValue(null, set);
+        var asyncLocal = (AsyncLocal<HashSet<string>?>)field!.GetValue(null)!;
+        asyncLocal.Value = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "idx" };
 
         try
         {
@@ -858,8 +858,8 @@ public class VariablesCycleDetectionTests
         }
         finally
         {
-            // Clean up thread-static state
-            field.SetValue(null, null);
+            // Clean up async-local state
+            asyncLocal.Value = null;
         }
     }
 

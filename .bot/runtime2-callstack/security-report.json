@@ -1,0 +1,86 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-callstack",
+  "version": "v2",
+  "timestamp": "2026-05-04T00:00:00Z",
+  "phase": "delta",
+  "subject": "Re-audit of coder's response to v1 findings (commits d2d9d2be + ec092e91 — OBP refactor promoting IError/Children lists to domain types).",
+  "v1_disposition": [
+    {
+      "id": 1,
+      "severity": "medium",
+      "title": "stack.Audit.Add and app.Errors.All.Add unsynchronized",
+      "status": "closed",
+      "evidence": "App/CallStack/Audit/this.cs and App/Errors/Trail/this.cs are new domain classes wrapping List<IError> with private object _lock. Add/Count/indexer all guarded; iteration takes a snapshot under lock. Errors.Push now calls Trail.Add(error). IReadOnlyList<IError> preserved for PLang access. Replaces the bare List<IError> Audit and All fields."
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "title": "Call.Tag() lazy dict alloc + indexer write race",
+      "status": "closed",
+      "evidence": "Call/this.cs:156-163 — `lock(_tagsLock) { Tags ??= new Dictionary<string,string>(); Tags[key] = value; }`. Private lock object covers both lazy alloc and write atomically."
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "title": "lock(Children) / lock(Diffs) on publicly-visible Lists",
+      "status": "partial",
+      "evidence": "Children: fully fixed — Call/Children/this.cs is a domain class with private object _lock; CallStack.Push and Call.DisposeAsync go through Children.Add/Remove with no public lock target. Diffs: deadlock smell removed — Call/this.cs:31 introduces private _diffsLock, OnSet handler at line 141 locks on it. However, public field `Diffs { get; }` is still `List<Diff>?` — readers iterating the raw List during writes still race. See new finding F1.",
+      "follow_up": "F1"
+    },
+    {
+      "id": 4,
+      "severity": "low",
+      "title": "Audit / All grow unbounded",
+      "status": "open",
+      "evidence": "Audit and Trail XML docs explicitly state 'unbounded for the App's lifetime — long-running processes accumulate linearly. Bounded retention is a future opt-in.' By-design per architect plan; deferred for a follow-up branch."
+    },
+    {
+      "id": 5,
+      "severity": "low",
+      "title": "_root never reassigned — stale across runs",
+      "status": "closed",
+      "evidence": "CallStack/this.cs:104-106 — `if (caller == null) _root = call;` now reassigns on every top-level Push, so %!callStack.Root% reflects the live run. Comment at lines 103-105 explicitly documents the rationale."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "low",
+      "category": "race-condition",
+      "vector": "Call.Diffs is exposed as a raw `public List<Diff>?` while writes from Variables.OnSet are now serialized on a private `_diffsLock` (Call/this.cs:31, handler at line 141). A consumer iterating `call.Diffs` (debugger view, test inspector, PLang reflection) while sibling Task.WhenAll branches sharing the same Variables instance fire OnSet concurrently can hit `InvalidOperationException: Collection was modified` from the enumerator. The OnSet-handler comment at lines 137-140 explicitly acknowledges parallel concurrent invocation.",
+      "preconditions": "Flags.Diff = true at Push, parallel Task.WhenAll branches sharing one Variables instance, and a reader iterating call.Diffs while a Set is in flight. Diff is opt-in via flags; concurrent reader-during-mutation is the constraint.",
+      "impact": "Observability-only. Diff list is rendered into debug views / call tree dumps. Worst case: a debug render throws InvalidOperationException at an inopportune moment, masking the real error context. No data loss; writes are lock-serialized.",
+      "affected_files": [
+        "PLang/App/CallStack/Call/this.cs"
+      ],
+      "exploit_sketch": "Two parallel goal.call branches share the goal's Variables. Each writes %x% repeatedly. A telemetry observer walks `call.Diffs` from the parent Call. Enumerator throws because _entries.Add lands mid-iteration on the same List instance.",
+      "proposed_fix": "Promote Diffs to its own domain class `App.CallStack.Call.Diffs.@this` mirroring Audit/Trail/Errors/Children — private `_lock`, snapshot iteration, `IReadOnlyList<Diff>` for PLang. Restores symmetry with the other four collections coder already migrated. ~30-line mirror of an existing pattern.",
+      "status": "open"
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "category": "race-condition",
+      "vector": "CallStack.Flags is `public CallStackFlags Flags { get; set; }` where CallStackFlags is a `record struct` (multi-field value). App.Debug.Apply reassigns this from a different async context than Children.Add reads it (CallStack/this.cs:30). Children.Add reads `_stack.Flags.History` and `_stack.Flags.MaxFrames` inside its own _lock, but the underlying field write is non-volatile and the struct copy is non-atomic — a torn read between the two Apply assignments is theoretically observable.",
+      "preconditions": "Debug.Apply happens mid-run (operator changes debug mode while goals are dispatching). Practically rare — debug mode is set at startup or pause/resume, not steady-state.",
+      "impact": "One off-by-one eviction decision under FIFO. No data loss, no exception. Pure soft concern.",
+      "affected_files": [
+        "PLang/App/CallStack/this.cs",
+        "PLang/App/CallStack/CallStackFlags.cs"
+      ],
+      "exploit_sketch": "Run with --debug={callstack:false}, mid-flight switch via Debug.Apply to {callstack:{history:true, maxFrames:5}}. Children.Add reads Flags during the change. Worst observed: a child evicted one slot too early or too late. Not security-relevant.",
+      "proposed_fix": "Either (a) wrap Flags getter/setter in a Volatile.Read/Volatile.Write pair, (b) make CallStackFlags a class so the reference assignment is atomic, or (c) accept the risk and document. Recommendation: accept and document — the cost of the change exceeds the realistic exposure.",
+      "status": "open"
+    }
+  ],
+  "carry_forward": [
+    {
+      "note": "Error.cs FormatVerboseValue uses JsonSerializer.Serialize without [Sensitive] filtering — pre-existing path, untouched by this branch."
+    },
+    {
+      "note": "AssertSnapshot.cs assigns context.Variables.Snapshot() onto AssertionError.Variables without [Sensitive] filtering — pre-existing standing medium finding."
+    }
+  ],
+  "summary": "Coder closed 3 of 5 v1 findings cleanly (F1 medium, F2 low, F5 low) and the 4th (F3) is partial — Children fully fixed, Diffs deadlock smell removed via private lock target but the raw List<Diff>? is still publicly exposed leaving readers racing writes. F4 (unbounded growth) is by-design per architect, stays open. Two new low findings: F1 (Diffs reader race — recommended fix is to mirror the existing domain-class pattern) and F2 (CallStack.Flags torn read — soft concern, accept). Verdict pass: zero medium open, two low residuals. Recommend coder one more pass for F1 (~30-line domain class mirror) so all five collections share one pattern; F2 is fine to accept."
+}

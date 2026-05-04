@@ -1,0 +1,72 @@
+{
+  "reviewer": "auditor",
+  "branch": "runtime2-callstack",
+  "timestamp": "2026-05-04T12:55:00Z",
+  "reviewed_version": "v1",
+  "summary": "PASS on coder's post-security-v2 cleanup (commit 5157d10a). Diffs/Tags promoted to domain types symmetric with Audit/Trail/Errors/Children — security F1 closed at the source (no raw List<Diff> exposed, no race surface). F2 accepted with a documentation comment on the property where the torn-read materializes. The Flags rename (`CallStackFlags → App.CallStack.Flags`) and Debug.ParseCallStackFlags → Flags.Parse refactor are clean — zero residual `CallStackFlags` references in PLang, PLang.Tests, or Documentation. Tags becoming always-allocated has no broken consumer (no code null-checks Tags). Build green, 2623/2623 C# pass, 181/181 PLang pass after a clean PlangConsole rebuild. Two nits worth noting: Tags' explicit-interface-throws design is a documented Liskov compromise traded for DictionaryNavigator compatibility, and one PLang test goal carries a stale 'lazy-allocated' comment.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — v3 PASS verdict matches the code; the OBP refactor was clean and the rejected items have honest re-framings.",
+    "tester": "agree — 181/181 reproduces here on a clean PlangConsole rebuild; the v1 stale-binary correction is the genuine root cause.",
+    "security": "agree — v2's F1 recommendation was 'mirror the existing pattern across Diffs/Tags', which is exactly what 5157d10a delivers; F2 was accept-and-document and the document landed at CallStack/this.cs:30-35."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "nit",
+      "category": "architectural",
+      "file": "PLang/App/CallStack/Call/Tags/this.cs",
+      "line": 70,
+      "issue": "Tags implements `IDictionary<string,string>` but routes Add/Remove/Clear through explicit interface methods that throw NotSupportedException. Natural use (`tags.Set` / `tags[\"k\"] = v`) works; a consumer who upcasts to `IDictionary<string,string>` and calls `Add` gets a runtime throw. This is a deliberate trade — IDictionary<,> is required for DictionaryNavigator's third arm to recognize the type for `%!callStack.Caller.Tags.foo%` PLang access — but it is a Liskov-substitution compromise.",
+      "missed_by": "none",
+      "impact": "Surface-area trap. No internal caller hits it (verified — all writes go through `target.Tag(key, value)` or `Tags.Set`); risk is future external code or a serializer that probes IDictionary<,>.Add. Doc on the type explains the rationale.",
+      "suggestion": "Acceptable as-is. If the trap ever materializes, alternatives are: (a) drop IDictionary<,> and enrich DictionaryNavigator to recognize IReadOnlyDictionary<string,T>; (b) keep IDictionary<,> Add as a no-throw alias for Set. Don't preempt — the doc is enough until something needs it."
+    },
+    {
+      "id": 2,
+      "severity": "nit",
+      "category": "review-gap",
+      "file": "Tests/App/CallStack/TagWritesPairsOntoCurrentCall.test.goal",
+      "line": 2,
+      "issue": "Comment reads 'Tags dict is lazy-allocated.' Coder's 5157d10a flipped Tags to always-allocated (one-dict-per-Call) to close the writer-side race that lazy alloc introduced. The comment is now inaccurate; the test still passes because the assertion is shape-equivalent either way.",
+      "missed_by": "tester",
+      "impact": "Doc drift inside the test goal. Future PLang author reading the comment learns a wrong fact about the runtime. Pure cosmetic; no runtime effect.",
+      "suggestion": "Update the comment to 'Tags is always allocated; %!callStack.Current.Caller.Tags% reads the caller's frame.' or just delete the lazy-alloc clause."
+    }
+  ],
+  "verifications": [
+    {
+      "what": "Flags rename has no stragglers",
+      "how": "grep -rEn 'CallStackFlags' across PLang, PLang.Tests, Documentation",
+      "result": "Zero hits in source/tests/docs. Only `.bot/` history references remain (frozen review artifacts)."
+    },
+    {
+      "what": "Tags always-allocate has no broken consumer",
+      "how": "grep for `Tags ?` / `Tags == null` / `Tags != null` in PLang and PLang.Tests",
+      "result": "Zero hits. No consumer null-checked Tags."
+    },
+    {
+      "what": "Diffs domain class is symmetric with sibling collections",
+      "how": "Read Children/this.cs, Diffs/this.cs, Tags/this.cs side-by-side",
+      "result": "Same shape: private List<T> + private object _lock, IReadOnlyList<T> surface, snapshot enumeration. F1 raw-list exposure is gone."
+    },
+    {
+      "what": "F2 acceptance is documented at the relevant property",
+      "how": "Read CallStack/this.cs around Flags property",
+      "result": "Lines 30-35 document the torn-read window and accepted impact (one off-by-one FIFO eviction)."
+    },
+    {
+      "what": "DictionaryNavigator can resolve %!...Tags.foo%",
+      "how": "Trace IDictionary<string,string> through DictionaryNavigator's three arms; spot-check that PLang test goals exercise the path",
+      "result": "Third arm (GetStringKeyedDictType) matches IDictionary<string,string>. Tests/App/CallStack/TagBareLabelWritesTrue.test.goal and TagWritesPairsOntoCurrentCall.test.goal cover end-to-end. Both pass on clean rebuild."
+    },
+    {
+      "what": "Build + tests on clean state (don't trust prior runs)",
+      "how": "rm -rf PlangConsole/{bin,obj} && dotnet build PlangConsole; dotnet run --project PLang.Tests; cd Tests && plang --test",
+      "result": "C#: 2623/2623 (TUnit, 14.97s). PLang: 181/181 after clean rebuild. The pre-rebuild 5-failure run reproduces tester's exact stale-binary diagnostic — corroborates v1 correction."
+    }
+  ],
+  "carry_forward": [
+    "Bounded-retention for Audit/Trail (security v1 F4) remains by-design open; future branch.",
+    "Sensitive-property stripping in FormatVerboseValue / AssertSnapshot (security carry-forwards) — pre-existing standing concerns, not this branch."
+  ]
+}

@@ -305,14 +305,14 @@ public class EngineTests
         var context = engine.Context;
         await engine.RunGoalAsync(goal, context);
 
-        // Goal is restored after execution, but during execution context.Goal was set
-        // After RunAsync completes, Goal is restored to previous (null for root)
-        // So we test the call stack was used correctly instead
-        await Assert.That(context.CallStack!.Depth).IsEqualTo(0);
+        // Goal is restored after execution, but during execution context.Goal was set.
+        // After RunAsync completes, Goal is restored to previous (null for root) and
+        // CallStack.Current rewinds to null on the AsyncLocal flow.
+        await Assert.That(context.CallStack!.Current).IsNull();
     }
 
     [Test]
-    public async Task RunGoalAsync_PushesCallFrame()
+    public async Task RunGoalAsync_PushesCall()
     {
         await using var engine = new global::App.@this("/app");
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
@@ -321,8 +321,8 @@ public class EngineTests
         var context = engine.Context;
         await engine.RunGoalAsync(goal, context);
 
-        // After completion, frame should be popped
-        await Assert.That(context.CallStack!.Depth).IsEqualTo(0);
+        // After completion, AsyncLocal Current is restored to its pre-Push value (null).
+        await Assert.That(context.CallStack!.Current).IsNull();
     }
 
     [Test]

@@ -219,10 +219,12 @@ public class DataAsTResolutionTests
         await Assert.That(((System.Collections.Hashtable)result.Value!)["key"]).IsEqualTo("%x%");
     }
 
-    // Cyclic %var% reference (a → b → a) must NOT stack-overflow AND must surface a
-    // structured error so callers see the failure rather than an unresolved %var% leak.
+    // Stored values are values, not expressions. A stored string that happens to match
+    // %var% syntax is opaque payload — reading it returns the bytes verbatim, no chain
+    // resolution. Matches mainstream language assignment semantics (C, Python, JS, C#).
+    // No "cycle" can form because no recursion fires.
     [Test]
-    public async Task AsT_CyclicVarReference_ReturnsCycleError()
+    public async Task AsT_StoredFullVarRef_ReturnedVerbatim_NoChain()
     {
         _app.Context.Variables.Set("a", "%b%");
         _app.Context.Variables.Set("b", "%a%");
@@ -230,46 +232,49 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.Context);
 
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("VariableResolutionCycle");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("%b%");
     }
 
-    // Self-referencing %var% (x → %x%) must NOT stack-overflow AND surfaces the cycle error.
+    // Self-referencing stored value — same rule. %x% holds the bytes "%x%"; reading
+    // returns "%x%". The PLang chain that would build this state via `set` would
+    // eagerly evaluate and never reach a self-loop; this test proves the read path
+    // is robust even when the store is poked directly.
     [Test]
-    public async Task AsT_SelfReferencingVar_ReturnsCycleError()
+    public async Task AsT_StoredSelfRef_ReturnedVerbatim()
     {
         _app.Context.Variables.Set("x", "%x%");
         var data = new Data("ref", "%x%") { Context = _app.Context };
 
         var result = data.As<string>(_app.Context);
 
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("VariableResolutionCycle");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("%x%");
     }
 
-    // Self-reference inside an interpolation (e.g. "hello %x%" where %x% = "%x%") must NOT
-    // stack-overflow AND surfaces the cycle error rather than passing through the template.
+    // Partial-match interpolation fires once over the slot's literal text, then stops.
+    // %var% references that come in via the substituted value are payload — not expressions.
+    // Here %x% holds "%x%": Variables.Resolve replaces %x% with "%x%", yielding "hello %x%",
+    // and the result is final.
     [Test]
-    public async Task AsT_PartialMatchSelfReference_ReturnsCycleError()
+    public async Task AsT_PartialMatchInterpolatesOncesThenStops()
     {
         _app.Context.Variables.Set("x", "%x%");
         var data = new Data("greeting", "hello %x%") { Context = _app.Context };
 
         var result = data.As<string>(_app.Context);
 
-        // The partial-match branch interpolates "hello %x%" via Variables.Resolve, which
-        // re-emits "hello %x%" (x's value is "%x%"). The recursion then trips the cycle
-        // protector and surfaces a structured error.
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("VariableResolutionCycle");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("hello %x%");
     }
 
-    // Expanding cycle: %a%="X-%b%", %b%="Y-%a%" produces "X-%b%" → "X-Y-%a%" → "X-Y-X-%b%" → …
-    // every recursion is a *new* string, so the HashSet alone never trips. Without the depth
-    // bound this stack-overflows. The bound now surfaces a structured ResolveDepthExceeded
-    // error rather than silently passing the half-resolved template through.
+    // Stored value is "X-%b%" — a string with embedded %var% text. The read returns it
+    // verbatim. No "expanding cycle" can form because no recursion fires on the substituted
+    // bytes. (Why this matters for the builder: render-template output is exactly this
+    // shape — literal source text with embedded %var% — and used to blow up the LLM prompt
+    // by getting re-resolved against the builder's scope.)
     [Test]
-    public async Task AsT_ExpandingCycle_DepthBoundReturnsError()
+    public async Task AsT_StoredVarRefWithSurroundingText_NotReResolved()
     {
         _app.Context.Variables.Set("a", "X-%b%");
         _app.Context.Variables.Set("b", "Y-%a%");
@@ -277,15 +282,16 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.Context);
 
-        // Critical: it returned at all (no StackOverflowException).
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("ResolveDepthExceeded");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("X-%b%");
     }
 
-    // Non-cyclic chain of indirections still resolves end-to-end.
+    // Chains of stored %var% references do NOT transitively resolve. Reading %a% returns
+    // its stored bytes "%b%", not the leaf value at the end of the chain. The right way
+    // to capture an indirection is at write time (`set %a% = %e%` resolves through the
+    // chain when assigning), not at read time.
     [Test]
-    public async Task AsT_DeepChain_5Levels_ResolvesCorrectly()
+    public async Task AsT_DeepChain_NoTransitiveResolution()
     {
         _app.Context.Variables.Set("a", "%b%");
         _app.Context.Variables.Set("b", "%c%");
@@ -296,7 +302,8 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(_app.Context);
 
-        await Assert.That(result.Value).IsEqualTo("leaf-value");
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("%b%");
     }
 
     // Fresh context with different variable values → As<T> picks up the new values, no stale cache.
@@ -310,5 +317,80 @@ public class DataAsTResolutionTests
 
         var result = data.As<string>(app2.Context);
         await Assert.That(result.Value).IsEqualTo("from-app2");
+    }
+
+    // Reproduces the LlmFixer 280k-prompt explosion. A typed slot reading a stored container
+    // (List<Dict>) used to walk the container's leaves a second time and re-resolve embedded
+    // %var% strings against the current scope — turning literal %goal% / %x% / %y% inside
+    // a Content payload into the builder's actual variable values. With the fix, the stored
+    // container is returned verbatim: Content keeps its literal %var% bytes.
+    //
+    // Setup mirrors how the builder's `set %messages% = [{Content: "%goalForLlm%"}]` lands
+    // in storage (variable.set's first walk substitutes %goalForLlm% into Content). The
+    // bug fires on the second read at llm.query Messages=%messages%.
+    [Test]
+    public async Task AsT_TypedContainerSlot_StoredLeavesNotReResolved()
+    {
+        var ctx = _app.Context;
+        ctx.Variables.Set("x", "BUILDER-X");
+        ctx.Variables.Set("y", "BUILDER-Y");
+
+        // Mirrors what variable.set produces after walking [{Content: "%goalForLlm%"}]:
+        // Content holds the rendered template's literal text, with embedded %var% as bytes.
+        var stored = new List<object?>
+        {
+            new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase)
+            {
+                ["Role"] = "user",
+                ["Content"] = "literal text with %x% and %y% inside"
+            }
+        };
+        ctx.Variables.Set(new global::App.Data.@this<List<object?>>("messages", stored) { Context = ctx });
+
+        var paramData = new Data("Messages", "%messages%") { Context = ctx };
+        var result = paramData.As<List<Dictionary<string, object?>>>(ctx);
+
+        await Assert.That(result.Success).IsTrue();
+        var content = (string)result.Value![0]["Content"]!;
+        await Assert.That(content).IsEqualTo("literal text with %x% and %y% inside");
+        // Negative assertion — the bug substituted these:
+        await Assert.That(content).DoesNotContain("BUILDER-X");
+        await Assert.That(content).DoesNotContain("BUILDER-Y");
+    }
+
+    // Closer LlmFixer reproducer: stored as Data<List<object?>> (the actual minted type from
+    // variable.set's MintTyped path), read as List<LlmMessage> (the actual llm.query slot).
+    // The conversion goes List<object?> → List<LlmMessage> per element via JSON roundtrip —
+    // which should preserve literal %var%, but the actual builder run shows substitution
+    // happening somewhere in this exact path. Confirms whether the leak is in conversion.
+    [Test]
+    public async Task AsT_ListObjectSlot_AsListLlmMessage_StoredLeavesNotReResolved()
+    {
+        var ctx = _app.Context;
+        ctx.Variables.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
+        ctx.Variables.Set("buildStart", 999_999_999L);
+
+        // Mirrors what variable.set's MintTyped stores after walking the literal list.
+        // Each element is a Dictionary<string, object?>, with Content carrying literal %var%.
+        var stored = new List<object?>
+        {
+            new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase)
+            {
+                ["Role"] = "user",
+                ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
+            }
+        };
+        ctx.Variables.Set(new global::App.Data.@this<List<object?>>("fixerMessages", stored) { Context = ctx });
+
+        // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
+        var paramData = new Data("Messages", "%fixerMessages%") { Context = ctx };
+        var result = paramData.As<List<global::App.modules.llm.LlmMessage>>(ctx);
+
+        await Assert.That(result.Success).IsTrue();
+        var content = result.Value![0].Content!;
+        await Assert.That(content).IsEqualTo("literal text with %goal.Name% and %buildStart% inside");
+        // Negative assertion — the bug substituted these:
+        await Assert.That(content).DoesNotContain("BuildGoal");
+        await Assert.That(content).DoesNotContain("999999999");
     }
 }

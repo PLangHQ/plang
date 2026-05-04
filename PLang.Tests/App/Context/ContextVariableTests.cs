@@ -60,7 +60,7 @@ public class ContextVariableTests
         var value = vars.GetValue("!callStack");
 
         await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsTypeOf<CallStack>();
+        await Assert.That(value).IsTypeOf<global::App.CallStack.@this>();
     }
 
     [Test]

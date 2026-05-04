@@ -1,0 +1,4 @@
+TestOuterErrorVarVisibleAfterInnerHandlerCloses
+/ After the inner error.handle scope closes, the outer recovery body's %!error% restores to the outer caught error via LIFO AsyncLocal scope. Reuses OuterRecoveryWithInnerThrow which sets %outerSeenAfterInner% AFTER its inner handler closes.
+- throw error "outer-boom", on error call OuterRecoveryWithInnerThrow
+- assert %outerSeenAfterInner% equals "outer-boom"

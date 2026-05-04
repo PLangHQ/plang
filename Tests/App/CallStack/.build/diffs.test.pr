@@ -1,0 +1,132 @@
+{
+  "name": "TestVariableDiffsCapturedInDiffMode",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %name% = \u0022ingi\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Diff capture wires through Variables.OnSet when the diff flag is on. Only meaningful with --debug={callstack:{diff:true}}; without the flag, %!callStack.Current.Diffs% is null. Smoke-test: run a set\u002Bmodify pair and assert the test runner observed something \u2014 full assertion lives in C# DiffCaptureTests where the flag can be set programmatically.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "ingi",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assign literal string \u0027ingi\u0027 to runtime variable %name% using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %name% = \u0022olafur\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "olafur",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Second assignment to %name% with @known mapping; keep the prior compiled action chain to preserve exact behavior.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %name% equals \u0022olafur\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "olafur",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%name%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %name% equals \u0027olafur\u0027.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/Diffs.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/diffs.test.pr",
+  "hash": "322d597c74db7940bee1177ff308401e9a58c2319636af4ef3c43c94354a7224",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

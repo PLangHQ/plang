@@ -1,0 +1,5 @@
+TestTagWritesPairsOntoCurrentCall
+/ debug.tag attaches Tags to the caller's Call (the surrounding step/goal scope). Subsequent steps reach those tags via Current.Caller.Tags. Tags dict is lazy-allocated.
+- debug.tag critical=true, owner=checkout
+- assert %!callStack.Current.Caller.Tags.critical% equals "true"
+- assert %!callStack.Current.Caller.Tags.owner% equals "checkout"

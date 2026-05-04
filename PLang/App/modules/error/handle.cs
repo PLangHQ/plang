@@ -2,6 +2,7 @@ using App.Errors;
 using App.Variables;
 using static App.Catalog.ExampleHelpers;
 using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using Call = App.CallStack.Call.@this;
 
 namespace App.modules.error;
 
@@ -84,6 +85,14 @@ public partial class Handle : IContext, IModifier
             if (result.Success) return result;
             if (!MatchesError(result.Error)) return result;
 
+            // Failing Call comes from the error's CallFrames snapshot — App.Run pushed and
+            // popped the action's Call inside next(), so we can't read it from stack.Current
+            // anymore. CallFrames[0] is the failing Call itself (post-Push snapshot).
+            var erroredCall = result.Error is global::App.Errors.Error errWithFrames
+                && errWithFrames.CallFrames.Count > 0
+                ? errWithFrames.CallFrames[0]
+                : null;
+
             var order = Order?.Value ?? ErrorOrder.RetryFirst;
             var actions = Actions?.Value;
             bool hasRecovery = actions != null && actions.Count > 0;
@@ -92,8 +101,12 @@ public partial class Handle : IContext, IModifier
             {
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
-                    if (recoveryResult.Success) return recoveryResult;
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!, erroredCall);
+                    if (recoveryResult.Success)
+                    {
+                        if (erroredCall != null) erroredCall.Handled = true;
+                        return recoveryResult;
+                    }
                     result.Error!.ErrorChain.Add(recoveryResult.Error!);
                 }
                 var retryResult = await Retry(next, context);
@@ -105,8 +118,12 @@ public partial class Handle : IContext, IModifier
                 if (retryResult?.Success == true) return retryResult;
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
-                    if (recoveryResult.Success) return recoveryResult;
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!, erroredCall);
+                    if (recoveryResult.Success)
+                    {
+                        if (erroredCall != null) erroredCall.Handled = true;
+                        return recoveryResult;
+                    }
                     result.Error!.ErrorChain.Add(recoveryResult.Error!);
                 }
             }
@@ -120,33 +137,32 @@ public partial class Handle : IContext, IModifier
 
     /// <summary>
     /// Runs recovery with <c>%!error%</c> populated to the caught error for the
-    /// duration of the recovery chain, restoring the previous value after.
-    /// Wraps RunRecovery so nested error.handle scopes see their own error
-    /// (the previous outer error is still on the stack via the prevError local).
+    /// duration of the recovery chain, restoring the previous value via AsyncLocal LIFO
+    /// scope on dispose. Each recovery action's Call is dispatched with
+    /// <paramref name="erroredCall"/> as Cause — so renderers see "this happened because
+    /// of that errored sibling."
     /// </summary>
     private static async Task<global::App.Data.@this> RunRecoveryWithErrorScope(
         List<ActionEntity> actions,
         Actor.Context.@this context,
-        App.Errors.IError caughtError)
+        App.Errors.IError caughtError,
+        Call? erroredCall)
     {
-        var prevError = context.Error;
-        context.Error = caughtError;
-        try
+        using (context.App.Errors.Push(caughtError))
         {
-            return await RunRecovery(actions, context);
-        }
-        finally
-        {
-            context.Error = prevError;
+            return await RunRecovery(actions, context, erroredCall);
         }
     }
 
     /// <summary>
-    /// Runs the on-error recovery action chain.
+    /// Runs the on-error recovery action chain. Each action is dispatched through
+    /// <c>App.Run</c> with <paramref name="cause"/> threaded through so the resulting Call
+    /// has <c>Cause = erroredCall</c> in addition to its sync Caller (the goal-level Call).
     /// </summary>
     private static async Task<global::App.Data.@this> RunRecovery(
         List<ActionEntity> actions,
-        Actor.Context.@this context)
+        Actor.Context.@this context,
+        Call? cause)
     {
         // Nested actions live as parameter values with no Step reference of their own.
         // Stamp the enclosing step so navigation — goal.call → GetGoalAsync → sibling
@@ -157,7 +173,7 @@ public partial class Handle : IContext, IModifier
         {
             if (action.Step == null && enclosingStep != null)
                 action.Step = enclosingStep;
-            last = await action.RunAsync(context);
+            last = await action.RunAsync(context, cause);
             if (!last.Success) return last;
         }
         return last;

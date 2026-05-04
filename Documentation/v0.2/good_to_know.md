@@ -135,6 +135,30 @@ Bad names describe a verb or are too broad: `IO` is a verb disguised as a noun. 
 
 ---
 
+## OBP Smell Checklist — When a Collection Should Be Its Own Type
+
+Code reviewers (codeanalyzer, security, manual) should run this scan on any folder that owns state. A "yes" on any of these means an OBP type is missing.
+
+**1. Primitive collection (`List<T>`, `Dictionary<K,V>`, `HashSet<T>`) exposed publicly while its mutation discipline (lock, eviction, lazy-alloc, snapshot-iteration) lives elsewhere.** The collection has rules; the type that owns the rules should own the collection. Smell looks like:
+```csharp
+public List<IError> Audit { get; } = new();   // on type A
+// ...elsewhere on type B...
+lock (something) { stack.Audit.Add(error); }  // discipline lives outside the owner
+```
+Fix: the collection becomes its own type with the lock private and `Add(...)` as a method. PLang surface (`%log.Count%`, `%log[0].Module%`) keeps working when the type implements `IReadOnlyList<T>` (the navigator was extended to recognize it).
+
+**2. `internal readonly object XLock` exposed only so a sibling type can take the lock from outside.** Telltale that X should be its own type — `lock (caller.ChildrenLock)` followed by `caller.Children.Add(call)` is two cooperating pieces of one responsibility, split across files. Fix: move the lock private inside the X type and let `Children.Add(call)` encapsulate it.
+
+**3. Cross-file mutation choreography.** File A allocates, file B does `.Add`, file C does `.Remove` under a lock from file A. If you have to read three files to understand how one collection is mutated, the collection wants to be a type. Fix: same as #2 — collapse the choreography into the collection's type.
+
+**4. Two collections with overlapping semantics in different parent types.** If `stack.Audit` and `app.Errors.All` are both "run-wide IError log", they are one concept used in two places — even if the SCOPES differ (run-wide observed vs run-wide pushed-via-handler). Either one type used twice (with domain-specific wrappers) or — preferred — each gets its own *domain-named* type that happens to share a small implementation pattern. Avoid generic shared utility names like `ErrorLog`, `Tracker`, `Manager` — those are structural names, not domain identities. The folder name is the type name; pick a domain word.
+
+**Worked example (this branch):** `stack.Audit`, `app.Errors.All`, `call.Errors`, `call.Children`, `call.Diffs`, `call.Tags` were all `List<T>` / `Dictionary<K,V>` exposed publicly with locks scattered around CallStack.Push, Call.DisposeAsync, Tag(), and the OnSet handler. All six were promoted to their own types: `Audit`, `Trail` (was `All`), `Errors` (per-call), `Children`, `Diffs`, `Tags` — each `@this` in its own namespace folder. Each owns its lock, its eviction policy (Children FIFO), and its snapshot-iteration semantics. The Diffs and Tags promotions specifically closed the *reader race* that survived the writer-lock fix — a `lock (_diffsLock) { Diffs!.Add(...) }` writer pattern was safe for the writer but a debug observer iterating the public `List<Diff>?` could still throw `InvalidOperationException` mid-Add. Promoting both moved iteration under the same lock as Add (snapshot-then-yield), closing the race symmetrically.
+
+**Tags / Dictionary case** is the same shape as List, with two extra notes: (a) the type implements `IDictionary<string,V>` (not just `IReadOnlyDictionary<string,V>`) because PLang's DictionaryNavigator probes for the writable interface; mutation methods other than the type's own `Set` throw to enforce the lock-internal discipline. (b) Always-allocate the wrapper at construction — lazy alloc would re-introduce the race on the property setter, defeating the point. Cost is one dict alloc per Call (small).
+
+---
+
 ## Libraries Replaces ActionRegistry
 
 `ActionRegistry` was replaced by `app.Modules` (flat action registry). The key changes:

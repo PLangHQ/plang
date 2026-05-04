@@ -133,3 +133,60 @@ contained. Bolting the [VariableName] migration on top means a new design
 pass plus ~20 handler conversions plus a full re-review cycle — too much
 churn on a shipping branch. The migration deserves its own architect pass
 on a fresh branch.
+
+## 2026-05-02 — Callback (context for callstack design)
+
+Captured during the callstack architect pass. Callback is its own future
+branch — this entry exists only so the design constraints it imposes on
+callstack are on record.
+
+### Concept
+
+Callback is **state-machine restoration** for stateless flow + durable
+execution. An action like:
+
+    - ask user 'What is your name?', vars: %orderId%, write to %name%
+
+returns a `Callback` object instead of blocking. The callback carries
+`(goal, step, action, declared-vars, signature)` and is sent over the wire
+(e.g., hidden form field, encrypted). When the user submits, the server
+verifies the signature, hydrates the declared vars, dispatches at the
+resume point with `%name%` set from form data, and continues from there.
+
+The original run's process state is gone by the time the callback returns.
+Resume is a fresh execution rooted at the resume point — not a thread/fiber
+unblock.
+
+### Settled design points
+
+- **Vars are developer-declared**, not auto-snapshotted. Syntax: `vars: %orderId%`
+  on the action. Practical reason: serializing a 1000-row %products% list
+  into a hidden form is not viable. The developer carries IDs and re-queries
+  the rest.
+- **Vars are encrypted on the wire** so the user can't inspect or tamper with
+  carried state.
+- **Sign `(goal_hash, step, action, vars, expiry)`** — goal_hash means a
+  rebuilt goal invalidates outstanding callbacks. Correct security posture:
+  if the developer redeploys, in-flight callbacks fail validation rather
+  than running against changed code.
+- **Errors carry a callback** for "retry from here" — this is the durable
+  execution payoff.
+
+### What this means for callstack design (the only thing relevant now)
+
+- **Frame stays OBP.** Frame holds the live `Action` reference; serializers
+  for callbacks traverse the OBP graph at serialization time to extract
+  `(goal-name, step-index, action-index)`. Do **not** denormalize stable
+  IDs onto Frame.
+- **Variable snapshot is not a callstack concern.** Callback issues a
+  declared-var snapshot via its own mechanism; CallStack neither captures
+  nor restores variables for resume.
+- **No `Data.Pause` lane needed in callstack work.** Callback issuance is a
+  callback-module concern (action returns a Callback as its Data value).
+  Doesn't change Ok/Fail dichotomy.
+
+### Open question for Callback's own design pass
+
+When a callback resumes, does the new run's callstack carry a `Cause` link
+back to the issuing run's identifier (cross-process causal trace), or is
+resume a clean break? Decide on the Callback branch.

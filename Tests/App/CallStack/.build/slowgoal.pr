@@ -1,0 +1,47 @@
+{
+  "name": "SlowGoal",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "sleep 1000 ms",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Helper for TimeoutProducesCancellation. Sleeps long enough that the 100ms timeout trips.",
+      "actions": [
+        {
+          "module": "timer",
+          "action": "sleep",
+          "parameters": [
+            {
+              "name": "Ms",
+              "value": 1000,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use timer.sleep to pause execution for 1000ms so an external 100ms timeout can trigger cancellation.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/SlowGoal.goal",
+  "prPath": "/Tests/App/CallStack/.build/slowgoal.pr",
+  "hash": "d615f3c894309eb7a35f06780621c90e4b5934a53af23c20b175d4b3efdfc8d5",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

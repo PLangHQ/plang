@@ -46,6 +46,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 | `level` | string | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). |
 | `llm` | object | null | Granular LLM tracing — see [LLM Message Tracing](#llm-message-tracing). |
 | `resolveTrace` | bool | false | Log every `%variable%` resolution with resolved type and depth. |
+| `callstack` | bool or object | (off) | Per-flag callstack capture — see [CallStack Flags](#callstack-flags). |
 
 ## Detail Levels
 
@@ -257,6 +258,53 @@ Picks out only the diagnostic lines you care about, hiding the rest of the per-s
 - ❌ Stack traces (use `--debug={"verbose":true}` for that)
 - ❌ Full payload dumps (use `--debug={"llm":{"response":true}}` for LLM data, or `--debug={"variables":[...]}` for vars)
 - ❌ "I'm here" markers without context
+
+## CallStack Flags
+
+The runtime keeps a per-app call tree at `app.Debug.CallStack`. Structural data
+(Action / Caller / Cause / Errors) is **always on** — every action's push/pop is ~50ns
+and gives error traces a useful chain without any flag. Richer per-property capture
+is gated by `--debug={callstack:...}`. Two forms:
+
+```bash
+# Shorthand: timing + tags on, others off (good default for "show me the trace")
+plang '--debug={"callstack":true}'
+
+# Full object: explicit per-property control
+plang '--debug={"callstack":{"timing":true,"diff":true,"tags":true,"history":true,"maxFrames":500}}'
+```
+
+| Sub-flag | Default | What it does |
+|----------|---------|--------------|
+| `timing` | false | Stamp `StartedAt` / `CompletedAt` (DateTimeOffset) and `Duration` on each Call. Off → those properties stay at default. |
+| `diff` | false | Subscribe each Call to `Variables.OnSet` and append `Diff(name, before, At)` records to `Call.Diffs`. Off → `Call.Diffs` is null. |
+| `deepDiff` | false | Only meaningful with `diff:true`. When on, the `Before` value of each diff is a deep-clone of the prior value. When off, non-scalar values render as a summary string (`"<List<int> @ 5042 items>"`) — scalar-only capture is the default to mitigate OOM under tight loops over large collections. |
+| `tags` | false | Renderer-meaningful flag — the `tag` PLang action and C# `call.Tag(k,v)` always succeed (lazy-allocate the `Tags` dict on first write); the flag controls whether the renderer surfaces them. |
+| `history` | false | When on, popped Calls stay in `Caller.Children` instead of being removed on dispose. Combined with `maxFrames` for retention cap (FIFO eviction). Off → live tree only; popped Calls are removed from Children. |
+| `maxFrames` | 1000 | Sibling retention cap when `history:true`. The (N+1)th Push under the same Caller evicts the oldest from Children. Also doubles as the runaway-recursion guard for the Caller chain length — Push throws `CallStackOverflowException` when the chain reaches this depth. |
+
+The shorthand `callstack:true` is equivalent to `{timing:true, tags:true, diff:false, deepDiff:false, history:false, maxFrames:1000}`.
+
+### Reading from PLang
+
+PLang code reaches the live tree through `%!callStack%`:
+
+| Path | Type | Notes |
+|------|------|-------|
+| `%!callStack.Current%` | `Call` | Current execution scope. Null at top of run. |
+| `%!callStack.Current.Caller%` | `Call?` | Sync parent. Null at root. |
+| `%!callStack.Current.Cause%` | `Call?` | Async origin (recovery body, event publish). Null for normal goal.call. |
+| `%!callStack.Current.Depth%` | int | Caller-chain length (1 = root). Derived. |
+| `%!callStack.Current.Chain%` | List | `[Current, Caller, ..., Root]`. **Foreach-friendly** — `- foreach %!callStack.Current.Chain%, call DoFrame frame=%frame%`. |
+| `%!callStack.Current.Children%` | List | Live siblings under Current. |
+| `%!callStack.Current.Errors%` | List | Errors observed at this scope. |
+| `%!callStack.Current.Handled%` | bool | Set by error.handle.Wrap on recovery success. |
+| `%!callStack.Current.Tags%` | dict? | Tag dict — null until first `tag` write. |
+| `%!callStack.Current.Diffs%` | List? | Variable mutations (when `diff:true`). |
+| `%!callStack.Audit%` | List | Run-wide accumulator of every error. Survives Pop. |
+| `%!callStack.Root%` | `Call?` | First Call pushed in this run. |
+
+`%!error%` is a separate channel — AsyncLocal-flowed via `app.Errors.Push` in `error.handle.Wrap`, **not** read off the call tree. Inside a recovery body `%!error%` is the caught error; outside any handler, it's null.
 
 ## Resolve Tracing
 

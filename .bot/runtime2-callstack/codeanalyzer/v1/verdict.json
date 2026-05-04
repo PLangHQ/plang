@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "5 findings to address before tester (Tags flag dead, Errors static AsyncLocal, Push exception escapes App.Run, Diffs.Add race, Step.Context mutation); no MAJOR; ~14 NITs to consider." }

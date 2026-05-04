@@ -1,0 +1,130 @@
+{
+  "name": "TestDirectGoalCycleThrows",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "call TestDirectGoalCycleThrows, on error set %cycleCaught% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "A goal that calls itself directly throws CallStackOverflowException \u2014 caught via ContainsGoal on Push. Wrap in error.handle so the test goal still completes.",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "TestDirectGoalCycleThrows",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%cycleCaught%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "bool"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "goal.call to the same goal name to trigger cycle detection; wrap with error.handle so the test goal completes and sets %cycleCaught% = true on error.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %cycleCaught% is true, \u0022self-recursive goal.call must trip ContainsGoal cycle detection\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%cycleCaught%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "self-recursive goal.call must trip ContainsGoal cycle detection",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %cycleCaught% was set to true, confirming cycle detection was caught.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/DirectGoalCycleThrows.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/directgoalcyclethrows.test.pr",
+  "hash": "bd2bd032fc9f574706f9b6377eb4272706f4152dcd85b46a28fe899ce6a02486",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

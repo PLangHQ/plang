@@ -1,0 +1,132 @@
+{
+  "name": "OuterRecoveryWithInnerThrow",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022inner-boom\u0022, on error set %innerSeen% = %!error.Message%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Outer recovery body \u2014 throws again with its own on-error to capture the inner error message. Used by InnerErrorVarShadowsOuter and OuterErrorVarVisibleAfterInnerHandlerCloses.",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "inner-boom",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%innerSeen%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": "%!error.Message%",
+                          "type": "object"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "The step text starts with \u0027throw error \u0022inner-boom\u0022\u0027 and includes an \u0027on error\u0027 clause that sets %innerSeen% to the current error message. Map to error.throw with an error.handle recovery chain that sets the variable.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %outerSeenAfterInner% = %!error.Message%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%outerSeenAfterInner%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!error.Message%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Capture the current error message (%!error.Message%) into %outerSeenAfterInner% via variable.set. This step runs after the inner handler closes, but still uses the outer error context message.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/OuterRecoveryWithInnerThrow.goal",
+  "prPath": "/Tests/App/CallStack/.build/outerrecoverywithinnerthrow.pr",
+  "hash": "19740688a9cd329218d12628e016991f2b74bb9eefd7bc144974d12fe06a82c0",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

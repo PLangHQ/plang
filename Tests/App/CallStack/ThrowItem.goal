@@ -1,0 +1,4 @@
+ThrowItem
+/ Helper for Audit test. Throws a 400 error tagged with the item key so each iteration adds a distinct entry to %!callStack.Audit%. Three of four are handled by an inner on-error; the fourth (item=d) propagates so the test goal's outer handler catches it.
+- throw error "item failed", key ItemFailed, on error set %inner% = true
+- if %item% equals "d", throw error "fourth", key Fourth

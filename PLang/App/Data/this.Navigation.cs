@@ -38,23 +38,36 @@ public partial class @this
                 remaining = remaining[1..];
         }
 
-        // Check for method call: segment contains (...)
-        var parenIndex = segment.IndexOf('(');
-        if (parenIndex > 0 && segment.EndsWith(')'))
-        {
-            var methodName = segment[..parenIndex];
-            var argsStr = segment[(parenIndex + 1)..^1]; // strip ( and )
-            var result = InvokeMethod(methodName, argsStr);
-            if (!result.IsInitialized) return result;
+        // Quoted-key segment: "manual-checkpoint" or 'foo' — strip quotes and treat as a
+        // literal dictionary key. Lets paths like Tags."key.with.dots" reach a key that
+        // would otherwise be split on the inner dot. Bypasses method-call and `!`
+        // infrastructure parsing (a quoted segment can't be either).
+        bool isQuoted = segment.Length >= 2
+            && ((segment[0] == '"' && segment[^1] == '"')
+                || (segment[0] == '\'' && segment[^1] == '\''));
+        if (isQuoted)
+            segment = segment[1..^1];
 
-            if (string.IsNullOrEmpty(remaining))
-                return result;
-            return result.GetChild(remaining, depth + 1);
+        // Check for method call: segment contains (...)
+        if (!isQuoted)
+        {
+            var parenIndex = segment.IndexOf('(');
+            if (parenIndex > 0 && segment.EndsWith(')'))
+            {
+                var methodName = segment[..parenIndex];
+                var argsStr = segment[(parenIndex + 1)..^1]; // strip ( and )
+                var result = InvokeMethod(methodName, argsStr);
+                if (!result.IsInitialized) return result;
+
+                if (string.IsNullOrEmpty(remaining))
+                    return result;
+                return result.GetChild(remaining, depth + 1);
+            }
         }
 
         // ! prefix = Data infrastructure access (Name, Error, Success, Type, Properties)
         // . prefix (default) = domain/value navigation
-        bool isInfrastructure = segment.StartsWith('!');
+        bool isInfrastructure = !isQuoted && segment.StartsWith('!');
         if (isInfrastructure)
             segment = segment[1..]; // strip the !
 

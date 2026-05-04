@@ -1,4 +1,5 @@
 using App.Actor.Context;
+using Call = App.CallStack.Call.@this;
 
 namespace App.Errors;
 
@@ -15,7 +16,7 @@ public class ServiceError : Error
     public ServiceError(string message, Step step, string key = "ServiceError", int statusCode = 400)
         : base(message, step, key, statusCode) { }
 
-    public ServiceError(string message, Step step, IReadOnlyList<CallFrame> callFrames, string key = "ServiceError", int statusCode = 400)
+    public ServiceError(string message, Step step, IReadOnlyList<Call> callFrames, string key = "ServiceError", int statusCode = 400)
         : base(message, step, callFrames, key, statusCode) { }
 
     public ServiceError(string message, Actor.Context.@this context, string key = "ServiceError", int statusCode = 400)

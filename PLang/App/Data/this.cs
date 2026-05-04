@@ -521,8 +521,13 @@ public partial class @this
     }
 
     // Cycle protection for AsT_Impl. Tracks the raw %-containing strings currently being
-    // resolved on this thread. When a recursive call sees a string already in the set, it
-    // returns the string as-is — no stack overflow on %a%↔%b% or %x%="%x%" reference graphs.
+    // resolved within the current async flow. When a recursive call sees a string already
+    // in the set, it returns an error — no stack overflow on %a%↔%b% or %x%="%x%" graphs.
+    //
+    // AsyncLocal (not ThreadStatic) so the invariant "this state is per-resolution-stack"
+    // holds even if a future await is introduced into the resolve chain. The chain is
+    // currently sync, so the finally always clears before any caller awaits — but the
+    // primitive shouldn't depend on that staying true.
     //
     // ResolveDepthLimit caps recursion for *expanding* cycles where the strings differ at each
     // level (e.g. %a%="X-%b%", %b%="Y-%a%" produces "X-%b%" → "X-Y-%a%" → "X-Y-X-%b%" → …).
@@ -530,15 +535,19 @@ public partial class @this
     // limit is well above any legitimate chain (real handler chains are 1–5 deep; matrix tests
     // exercise 5 levels — see AsT_DeepChain_5Levels_ResolvesCorrectly).
     private const int ResolveDepthLimit = 32;
-    [ThreadStatic]
-    private static HashSet<string>? _resolvingValues;
+    private static readonly AsyncLocal<HashSet<string>?> _resolvingValues = new();
 
     private @this<T> AsT_Impl<T>(object? raw, Actor.Context.@this? ctx)
     {
         // Action-destination carve-out: when T is or contains Action.@this, sub-actions
         // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
-        // and convert raw straight through TypeMapping.
-        if (IsActionDestination(typeof(T)))
+        // and convert raw straight through TypeMapping. BUT — only when raw is already a
+        // typed action structure. If raw is itself a `%var%` reference (e.g. `actions=%stepResult.actions%`),
+        // we still have to resolve the variable to GET the action list before the carve-out
+        // applies; otherwise the literal string is handed to TypeConverter which can't
+        // convert "%var%" → StepActions and the build dies with "Cannot convert String to this".
+        if (IsActionDestination(typeof(T))
+            && !(raw is string actStr && actStr.Contains('%') && ctx?.Variables != null))
             return WrapAs<T>(raw, ctx);
 
         // Raw-name carve-out: types like App.Variables.Variable want the literal slot
@@ -565,12 +574,17 @@ public partial class @this
         // T=object would always match `raw is T` and short-circuit substitution.
         if (raw is string strVal && strVal.Contains('%') && ctx?.Variables != null)
         {
-            var isCycleRoot = _resolvingValues == null;
-            _resolvingValues ??= new HashSet<string>(StringComparer.Ordinal);
+            var resolving = _resolvingValues.Value;
+            var isCycleRoot = resolving == null;
+            if (isCycleRoot)
+            {
+                resolving = new HashSet<string>(StringComparer.Ordinal);
+                _resolvingValues.Value = resolving;
+            }
 
             // Cycle: an outer frame is already resolving this exact string. Don't Remove
             // on the cycle path — the outer frame still owns the entry.
-            if (!_resolvingValues.Add(strVal))
+            if (!resolving!.Add(strVal))
             {
                 return @this<T>.FromError(new ServiceError(
                     $"Cyclic %var% reference detected while resolving '{strVal}'.",
@@ -580,7 +594,7 @@ public partial class @this
             try
             {
                 // Depth-bound for expanding chains (each level produces a new string).
-                if (_resolvingValues.Count > ResolveDepthLimit)
+                if (resolving.Count > ResolveDepthLimit)
                 {
                     return @this<T>.FromError(new ServiceError(
                         $"Variable resolution exceeded depth limit ({ResolveDepthLimit}) at '{strVal}'.",
@@ -601,29 +615,38 @@ public partial class @this
                     }
                     if (!resolved.Success)
                         return @this<T>.FromError(resolved.Error!);
-                    // Identity-preservation: recurse on the LIVE variable's Data so `this` inside
-                    // the recursive call IS the live variable. The fast paths below then see the
-                    // live variable as their canonical, propagating Name and aliasing Properties +
-                    // event lists. Without this redirect, the slot Data's identity leaks through.
-                    return resolved.AsT_Impl<T>(resolved.Value, ctx);
+                    // Stored values are values, not expressions. Type-convert only — never
+                    // re-scan the resolved value's text for further %var% references. Calling
+                    // on `resolved` (the live variable) preserves identity: WrapAs sees `resolved`
+                    // as `this` and propagates Name + Properties + event lists.
+                    return resolved.AsT_Convert<T>(resolved.Value, ctx);
                 }
-                // Partial match — interpolate then continue (the result may need further conversion).
-                // Canonical stays as `this` (the slot) for partial matches — a partial-interpolated
-                // string is a fresh value, not a reference to any single variable.
+                // Partial match — interpolate once. The result is the final value; embedded
+                // %var% inside the substituted text is opaque payload (matches mainstream
+                // language semantics: assignment evaluates once, stored value is opaque).
                 var interpolated = ctx.Variables.Resolve(strVal);
-                return AsT_Impl<T>(interpolated, ctx);
+                return AsT_Convert<T>(interpolated, ctx);
             }
             finally
             {
-                _resolvingValues.Remove(strVal);
-                if (isCycleRoot) _resolvingValues = null;
+                resolving.Remove(strVal);
+                if (isCycleRoot) _resolvingValues.Value = null;
             }
         }
 
         // Containers with potential nested %var% — walk before fast paths for the same reason.
         // The walked container is a fresh object; canonical is `this` (slot Data). Shared
         // with AsCanonical via WalkContainerVars so plain Data and Data<T> resolve by one rule.
-        if (ctx != null && IsWalkableContainer(raw))
+        //
+        // Action-destination skip: when the slot expects Action.@this or a list of them,
+        // sub-action parameters MUST keep their `%var%` references for deferred resolution
+        // at the sub-action's own dispatch time. WalkContainerVars/SubstitutePrimitive
+        // would resolve them eagerly against the current variable store — turning
+        // `"%x%"` (the LLM's "set this to %x%") into the current value of %x%, or null
+        // when %x% isn't set. The `if (value is @this) return value` guard inside
+        // SubstitutePrimitive only fires for already-typed Data, not for the dict
+        // representation that comes off the LLM response.
+        if (ctx != null && IsWalkableContainer(raw) && !IsActionDestination(typeof(T)))
             return WrapAs<T>(WalkContainerVars(raw, ctx), ctx);
 
         // T has static Resolve(string, Context.@this) — Path-style domain types. Done before
@@ -645,6 +668,31 @@ public partial class @this
 
         // No more substitution to do — `this` is the canonical. Apply identity-preserving
         // wrap rules (same-type fast path → variance → cross-type with conversion).
+        return WrapAs<T>(raw, ctx);
+    }
+
+    /// <summary>
+    /// Type-conversion tail of <see cref="AsT_Impl"/> — no substitution. Used after a slot's
+    /// %var% has already been resolved (full-match Variables.Get or partial-match interpolation):
+    /// the value is final and its string content must NOT be scanned for further %var% references.
+    /// Keeps the static-Resolve(string) carve-out for Path-style domain types, then delegates to
+    /// WrapAs for identity-preserving wrap + conversion.
+    /// </summary>
+    private @this<T> AsT_Convert<T>(object? raw, Actor.Context.@this? ctx)
+    {
+        if (raw is string srStr && ctx != null && raw is not T)
+        {
+            var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
+                t.GetMethod("Resolve",
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
+            if (resolveMethod != null)
+            {
+                var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
+                if (resolvedObj is T result)
+                    return ConstructWrap<T>(result, ctx);
+            }
+        }
         return WrapAs<T>(raw, ctx);
     }
 
@@ -745,7 +793,20 @@ public partial class @this
             if (!s.Contains('%')) return s;
             var fullMatch = System.Text.RegularExpressions.Regex.Match(s, @"^%([^%]+)%$");
             if (fullMatch.Success)
-                return ctx.Variables.Get(fullMatch.Groups[1].Value)?.Value;
+            {
+                var varName = fullMatch.Groups[1].Value;
+                // Preserve the original `%var%` string when the variable is unset OR
+                // its resolved value is null. Returning null silently strips the
+                // reference, which destroys LLM-emitted parameter values like
+                // `Name = "%x%"` during build (no user variables exist yet, so every
+                // %var% read returns null and the parameter slots get nulled out).
+                // String.Resolve below already does this fallback for partial matches;
+                // this brings full-match parity.
+                var resolved = ctx.Variables.Get(varName);
+                return resolved?.IsInitialized == true && resolved.Value != null
+                    ? resolved.Value
+                    : (object?)s;
+            }
             return ctx.Variables.Resolve(s);
         }
 

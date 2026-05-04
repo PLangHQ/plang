@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Corrected: 181/181 PLang on clean rebuild — initial 5 failures were a stale-binary artefact, not a real bug. See v1/correction.md.", "superseded_verdict": "fail" }

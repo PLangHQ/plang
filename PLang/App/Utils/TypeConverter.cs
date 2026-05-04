@@ -386,12 +386,58 @@ public static class TypeConverter
         if (!targetType.IsAssignableFrom(sourceType))
         {
             return (null, new Errors.Error(
-                $"Cannot convert {sourceType.Name} to {targetType.Name}",
+                FormatTypeMismatch(value, sourceType, targetType),
                 "TypeMismatch", 400)
-                { FixSuggestion = $"Source: {sourceType.FullName}, Target: {targetType.FullName}" });
+                { FixSuggestion = TypeMismatchHint(value, sourceType, targetType) });
         }
 
         return (value, null);
+    }
+
+    /// <summary>
+    /// Builds the headline TypeMismatch message: target FullName + a value preview so
+    /// the reader sees both *what shape was expected* and *what value couldn't satisfy
+    /// it*. The plain `Name` is uninformative for OBP types (every `@this` reads as
+    /// "this"); FullName disambiguates. The value preview pinpoints unsubstituted
+    /// `%var%` references — the dominant cause of this error in PLang.
+    /// </summary>
+    private static string FormatTypeMismatch(object? value, System.Type sourceType, System.Type targetType)
+    {
+        return $"Cannot convert {sourceType.FullName} to {targetType.FullName}. Source value: {FormatValuePreview(value)}";
+    }
+
+    /// <summary>
+    /// FixSuggestion text — string with `%` is almost always an unresolved variable
+    /// reference (the carve-out paths skipped substitution); flag that explicitly so
+    /// LlmFixer's retry prompt and any human reader land on the cause immediately.
+    /// </summary>
+    private static string TypeMismatchHint(object? value, System.Type sourceType, System.Type targetType)
+    {
+        if (value is string s && s.Contains('%'))
+            return $"Source value contains '%' — likely an unresolved %var% reference. Check that the variable is set and reachable in the current context, or that the dot-path navigation matches the value's actual shape.";
+        return $"Source: {sourceType.FullName}, Target: {targetType.FullName}";
+    }
+
+    /// <summary>
+    /// Compact, single-line preview of a value for diagnostic messages. Strings carry
+    /// the most signal (they reveal unsubstituted vars), so they're shown in full up to
+    /// 100 chars. Collections collapse to a `&lt;TypeName @ N items&gt;` summary so the
+    /// message stays one line and doesn't dump 50KB of JSON. Other values render via
+    /// ToString with the same cap.
+    /// </summary>
+    private static string FormatValuePreview(object? value)
+    {
+        if (value == null) return "(null)";
+        if (value is string s)
+        {
+            var len = s.Length;
+            if (len <= 100) return $"\"{s}\" (string, {len} chars)";
+            return $"\"{s[..100]}…\" (string, {len} chars)";
+        }
+        if (value is System.Collections.ICollection col)
+            return $"<{value.GetType().Name} @ {col.Count} items>";
+        var str = value.ToString() ?? "?";
+        return str.Length <= 100 ? $"{str} ({value.GetType().Name})" : $"{str[..100]}… ({value.GetType().Name})";
     }
 
     /// <summary>

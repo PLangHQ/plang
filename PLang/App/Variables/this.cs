@@ -26,6 +26,23 @@ public class @this
         }
     }
 
+    /// <summary>
+    /// Fires after a variable is rebound (existing name → new value). Carries (name, before, after).
+    /// Collection-level event — fires for any name. Per-variable Data.OnChange still fires too.
+    /// Used by Call.@this diff capture: subscribe in ctor, unsubscribe in DisposeAsync.
+    /// </summary>
+    public event Action<string, object?, object?>? OnSet;
+
+    /// <summary>
+    /// Fires when a name is created for the first time. Carries (name, value).
+    /// </summary>
+    public event Action<string, object?>? OnCreate;
+
+    /// <summary>
+    /// Fires when a name is removed.
+    /// </summary>
+    public event Action<string>? OnRemove;
+
     public @this()
     {
         // Register system variables
@@ -84,11 +101,18 @@ public class @this
                     dv.OnCreate = prev.OnCreate;
                     dv.OnChange = prev.OnChange;
                     dv.OnDelete = prev.OnDelete;
+                    var prevValue = prev.Value;
                     prev.FireOnChange(dv);
+                    _variables[name] = dv;
+                    OnSet?.Invoke(name, prevValue, dv.Value);
+                    return dv;
                 }
                 else if (prev == null)
                 {
                     dv.FireOnCreate();
+                    _variables[name] = dv;
+                    OnCreate?.Invoke(name, dv.Value);
+                    return dv;
                 }
 
                 _variables[name] = dv;
@@ -97,9 +121,11 @@ public class @this
 
             if (_variables.TryGetValue(name, out var existing))
             {
+                var prevValue = existing.Value;
                 existing.Value = value;
                 if (type != null)
                     existing.Type = type;
+                OnSet?.Invoke(name, prevValue, value);
                 return existing;
             }
             else
@@ -108,6 +134,7 @@ public class @this
                 data.Context = _context;
                 data.FireOnCreate();
                 _variables[name] = data;
+                OnCreate?.Invoke(name, value);
                 return data;
             }
         }
@@ -193,6 +220,26 @@ public class @this
                 string.Equals(k, propertyName, StringComparison.OrdinalIgnoreCase)) ?? propertyName;
             dict[key] = value;
             return target;
+        }
+
+        // Generic IDictionary<string, T> for arbitrary T (JsonObject is the load-bearing
+        // case: T = JsonNode?). Without this arm, `set %trace.pass1% = %x%` on a
+        // type=json `%trace%` falls through to ConvertToDictionary which replaces the
+        // JsonObject with a CLR-reflection dict {Count, Options, Parent, Root} — losing
+        // every JSON key. Use reflection on the runtime indexer to write the value;
+        // for JsonNode-typed slots, serialize CLR objects through JsonSerializer (which
+        // honors [JsonIgnore] etc., so cyclic types like Goal↔Step↔Action don't recurse).
+        var stringDictIface = GetStringKeyedDictInterface(target);
+        if (stringDictIface != null)
+        {
+            var valueType = stringDictIface.GetGenericArguments()[1];
+            value = ConvertForDictSlot(value, valueType);
+            var indexer = stringDictIface.GetProperty("Item");
+            if (indexer != null)
+            {
+                indexer.SetValue(target, value, new object?[] { propertyName });
+                return target;
+            }
         }
 
         // Handle bracket indexing: "Steps[0]" → property "Steps", index 0
@@ -285,6 +332,55 @@ public class @this
     }
 
     /// <summary>
+    /// Returns the implemented <c>IDictionary&lt;string, T&gt;</c> interface type if
+    /// <paramref name="target"/> has one (for any <c>T</c>), else null. Used so the
+    /// dot-path set can write through the runtime indexer of foreign string-keyed
+    /// dictionaries (notably <see cref="System.Text.Json.Nodes.JsonObject"/>) without
+    /// falling through to <see cref="ConvertToDictionary"/> — which would replace the
+    /// live JsonObject with a CLR-reflection snapshot and discard its content.
+    /// </summary>
+    private static System.Type? GetStringKeyedDictInterface(object target)
+    {
+        foreach (var iface in target.GetType().GetInterfaces())
+        {
+            if (!iface.IsGenericType) continue;
+            if (iface.GetGenericTypeDefinition() != typeof(IDictionary<,>)) continue;
+            if (iface.GetGenericArguments()[0] == typeof(string)) return iface;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Coerces <paramref name="value"/> to fit a dictionary slot typed as <paramref name="slotType"/>.
+    /// Already-assignable values pass through. <see cref="System.Text.Json.Nodes.JsonNode"/> slots
+    /// (the JsonObject case) get a SerializeToNode round-trip — that's what the rest of the JSON
+    /// pipeline expects in the value position, and it honors <c>[JsonIgnore]</c> so cyclic runtime
+    /// types like Goal↔Step↔Action don't deadlock the serializer. Other slot types fall back to
+    /// TypeMapping; if conversion fails, return the original value and let the caller's indexer
+    /// raise the precise error.
+    /// </summary>
+    private static object? ConvertForDictSlot(object? value, System.Type slotType)
+    {
+        if (value == null) return null;
+        if (slotType.IsAssignableFrom(value.GetType())) return value;
+
+        if (typeof(System.Text.Json.Nodes.JsonNode).IsAssignableFrom(slotType))
+        {
+            try
+            {
+                return System.Text.Json.JsonSerializer.SerializeToNode(value, value.GetType(), Utils.Json.SnapshotClone);
+            }
+            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
+            {
+                return value;
+            }
+        }
+
+        var (typedValue, _) = Utils.TypeMapping.TryConvertTo(value, slotType);
+        return typedValue ?? value;
+    }
+
+    /// <summary>
     /// Gets a variable by name (supports dot notation path).
     /// </summary>
     public Data.@this Get(string name)
@@ -363,6 +459,7 @@ public class @this
         if (_variables.TryRemove(name, out var removed))
         {
             removed.FireOnDelete();
+            OnRemove?.Invoke(name);
             return true;
         }
         return false;
@@ -522,24 +619,29 @@ public class @this
         return dict;
     }
 
-    [ThreadStatic]
-    private static HashSet<string>? _resolvingVars;
+    private static readonly AsyncLocal<HashSet<string>?> _resolvingVars = new();
 
     /// <summary>
     /// Resolves variable names inside bracket indices.
     /// e.g. "addresses[idx].street" with idx=1 → "addresses[1].street"
-    /// Uses a thread-static visited set to detect circular references (a→b→a).
+    /// Uses an async-local visited set to detect circular references (a→b→a) — survives
+    /// future await introductions; ThreadStatic would race under Task.WhenAll.
     /// </summary>
     private string ResolveVariablesInPath(string path)
     {
-        var isRoot = _resolvingVars == null;
-        _resolvingVars ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var resolving = _resolvingVars.Value;
+        var isRoot = resolving == null;
+        if (isRoot)
+        {
+            resolving = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _resolvingVars.Value = resolving;
+        }
         try
         {
             return Regex.Replace(path, @"\[([^\]\d][^\]]*)\]", match =>
             {
                 var varName = match.Groups[1].Value;
-                if (!_resolvingVars!.Add(varName))
+                if (!resolving!.Add(varName))
                     return match.Value; // Circular reference — leave unresolved
                 try
                 {
@@ -548,13 +650,13 @@ public class @this
                 }
                 finally
                 {
-                    _resolvingVars.Remove(varName);
+                    resolving.Remove(varName);
                 }
             });
         }
         finally
         {
-            if (isRoot) _resolvingVars = null;
+            if (isRoot) _resolvingVars.Value = null;
         }
     }
 

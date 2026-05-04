@@ -1,0 +1,273 @@
+{
+  "name": "TestAuditAccumulatesHandledAndUnhandledErrors",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %items% = [\u0022a\u0022, \u0022b\u0022, \u0022c\u0022, \u0022d\u0022]",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Audit is the run-wide accumulator of every observed error (per debug.md: \u0022Run-wide accumulator of every error. Survives Pop.\u0022). It records the error at each Call frame it propagates through, not once per unique error \u2014 so 4 inner throws (each handled) \u002B 1 fourth throw \u002B 2 propagation frames for the fourth (goal.call ThrowItem and the foreach goal.call) = 7. The outer handler catches the fourth, so %finalCaught% becomes true.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%items%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": [
+                "a",
+                "b",
+                "c",
+                "d"
+              ],
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Initialize %items% as a list of strings so foreach can iterate over it.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "foreach %items%, call ThrowItem item=%item%, on error set %finalCaught% = true",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%items%",
+              "type": "object"
+            },
+            {
+              "name": "ItemName",
+              "value": "item",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ThrowItem",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "item",
+                    "value": "%item%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/.build/throwitem.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%finalCaught%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "object"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "foreach over %items% and call ThrowItem for each item. The step text includes \u0027on error set %finalCaught% = true\u0027, so compile as loop.foreach \u002B goal.call, then wrap the goal.call with error.handle that runs a variable.set recovery action.",
+      "level": "high",
+      "confidence": 78,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %finalCaught% is true",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%finalCaught%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "finalCaught should be true",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %finalCaught% is true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %auditCount% = %!callStack.Audit.Count%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%auditCount%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!callStack.Audit.Count%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Read the run-wide callStack.Audit.Count into %auditCount% using variable.set. The step text assigns %auditCount% from %!callStack.Audit.Count%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %auditCount% equals 7",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 7,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%auditCount%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "auditCount should be 7",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assert that %auditCount% equals 7.",
+      "level": "medium",
+      "confidence": 55,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Audit.test.goal",
+  "prPath": "/.build/audit.test.pr",
+  "hash": "b86fe0caceb42ea129433e07c5486b832fe2483258bcce4e6278185d74b9075c",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

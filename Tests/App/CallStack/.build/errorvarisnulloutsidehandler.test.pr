@@ -1,0 +1,92 @@
+{
+  "name": "TestErrorVarIsNullOutsideHandler",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %check% = %!error%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Outside any error.handle scope, %!error% resolves to null (no leakage from prior recovery scopes that have already closed).",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%check%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!error%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assign the current value of the special %!error% variable into %check% using variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %check% is null",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%check%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %check% is null; fails the step if it is not null.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/ErrorVarIsNullOutsideHandler.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/errorvarisnulloutsidehandler.test.pr",
+  "hash": "e4e69985b8e9c4c02ee41eed7655fcf040ec6f30978526bf94e848ca0422ba41",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

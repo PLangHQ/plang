@@ -59,9 +59,9 @@
         }
       ],
       "intent": null,
-      "guidance": "condition.if checks %stepResult.keep% == true, then calls ApplyKeptStep. The @known mapping indicates this step is unchanged and should be kept as-is.",
+      "guidance": "Branch: if %stepResult.keep% == true, apply the kept step by calling ApplyKeptStep. This matches the @known mapping and should be kept as-is.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -121,9 +121,9 @@
         }
       ],
       "intent": null,
-      "guidance": "condition.if checks %stepResult.keep% == true with Negate=true (i.e., keep is not true), then calls ApplyBuiltStep. The @known mapping indicates this step is unchanged and should be kept as-is.",
+      "guidance": "Branch: if %stepResult.keep% == true is false, apply the built step by calling ApplyBuiltStep. This matches the @known mapping and should be kept as-is.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -245,7 +245,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Run builder.validate for the LLM-produced step actions. If validation fails, handle the error by calling HandleValidationError via error.handle Actions=[goal.call ...].",
+          "guidance": "builder.validate using the provided stepResult.actions. On validation error, recover by calling HandleValidationError via error.handle Actions chain.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -284,7 +284,7 @@
                 {
                   "name": "Name",
                   "value": "%goal.Steps[stepResult.index]%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -303,7 +303,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Merge the LLM step result into the existing goal step, then write the merged step back into %goal.Steps[stepResult.index]% by setting the variable to %__data__%.",
+          "guidance": "builder.merge the LLM step result into the existing goal step, then write the merged step back into %goal.Steps[stepResult.index]% by setting the variable to the merge output.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -366,9 +366,9 @@
             }
           ],
           "intent": null,
-          "guidance": "If the built step\u0027s level is not \u0027high\u0027, call BuildStep. This is a conditional branch with a goal.call in the then-branch.",
+          "guidance": "If the stepResult.level is not \u0027high\u0027, call BuildStep (non-parallel).",
           "level": "high",
-          "confidence": 92,
+          "confidence": 85,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -413,9 +413,9 @@
             }
           ],
           "intent": null,
-          "guidance": "write out the validation error message. The placeholder %!error.Message% is invalid in this context; use the runtime error message variable %!error% (object) is not directly printable. Instead, write the error object as-is to match the known mapping intent. Keep the exact output text but remove the invalid placeholder.",
+          "guidance": "write out the validation error message to output. The @known mapping indicates this step is exactly output.write with the provided Data string.",
           "level": "high",
-          "confidence": 55,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -434,7 +434,7 @@
                 {
                   "name": "Name",
                   "value": "%goal.Steps[stepResult.index].validationError%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -453,9 +453,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Store the validation error into the goal step\u0027s validationError variable using variable.set. The value is the runtime error object %!error%.",
+          "guidance": "set the goal step\u0027s validationError variable to the current error object. The @known mapping indicates variable.set Name to %goal.Steps[stepResult.index].validationError% and Value to %!error%.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -487,7 +487,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Call the BuildStep goal. parallel is false per @known; prPath is metadata for the builder and not represented in engine call parameters.",
+          "guidance": "call BuildStep goal. The @known mapping indicates a goal.call with name BuildStep and parallel=false, plus prPath provided by the builder hint.",
           "level": "high",
           "confidence": 90,
           "formal": null,

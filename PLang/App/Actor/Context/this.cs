@@ -41,9 +41,11 @@ public sealed class @this : IDisposable
     public Variables.@this Variables { get; }
 
     /// <summary>
-    /// Call stack for this execution.
+    /// The app's call tree. Read-through to <c>App.Debug.CallStack</c> — moved there from
+    /// per-context ownership so it's a single tree per run, fork-safe via AsyncLocal.
+    /// PLang <c>%!callStack%</c> still resolves through this getter.
     /// </summary>
-    public CallStack.@this? CallStack { get; set; }
+    public CallStack.@this? CallStack => App.Debug?.CallStack;
 
     /// <summary>
     /// Whether this is an async execution.
@@ -98,15 +100,6 @@ public sealed class @this : IDisposable
     /// The step currently being executed.
     /// </summary>
     public Step? Step { get; set; }
-
-    /// <summary>
-    /// The error currently in scope for recovery handlers. Set by error.handle.Wrap
-    /// just before running its recovery actions, restored after — so nested recovery
-    /// scopes see their own error. Accessible from PLang as <c>%!error%</c> /
-    /// <c>%!error.Message%</c> etc. via the DynamicData registered in
-    /// RegisterContextVariables.
-    /// </summary>
-    public IError? Error { get; set; }
 
     /// <summary>
     /// Set by event.skipAction to override the current action's result.
@@ -179,10 +172,11 @@ public sealed class @this : IDisposable
         vars.Set(new Data.DynamicData("!serializers", () => App.Channels.Serializers));
         vars.Set(new Data.DynamicData("!goal", () => Goal));
         vars.Set(new Data.DynamicData("!step", () => Step));
-        // %!error% is set by error.handle.Wrap around recovery actions (try/finally).
-        // Null when no recovery is active; populated with the caught IError during
-        // recovery so handlers can read %!error.Message%, %!error.Key%, etc.
-        vars.Set(new Data.DynamicData("!error", () => Error));
+        // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by
+        // error.handle.Wrap via using(app.Errors.Push(caught)) { ... }. Null outside any
+        // active recovery scope; in nested handlers each scope sees its own caught error
+        // (LIFO restore on dispose). AsyncLocal is parallelism-safe by construction.
+        vars.Set(new Data.DynamicData("!error", () => App.Errors.Error));
         vars.Set(new Data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
         vars.Set(new Data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
         vars.Set(new Data.DynamicData("!test", () => Test));

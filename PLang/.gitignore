@@ -18,6 +18,8 @@ mono_crash.*
 
 # Build results
 [Dd]ebug/
+!App/Debug/
+!App/modules/debug/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/

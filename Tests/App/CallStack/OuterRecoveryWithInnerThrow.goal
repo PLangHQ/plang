@@ -1,0 +1,4 @@
+OuterRecoveryWithInnerThrow
+/ Outer recovery body — throws again with its own on-error to capture the inner error message. Used by InnerErrorVarShadowsOuter and OuterErrorVarVisibleAfterInnerHandlerCloses.
+- throw error "inner-boom", on error set %innerSeen% = %!error.Message%
+- set %outerSeenAfterInner% = %!error.Message%

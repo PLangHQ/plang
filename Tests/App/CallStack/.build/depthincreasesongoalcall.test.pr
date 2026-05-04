@@ -1,0 +1,131 @@
+{
+  "name": "TestDepthIncreasesOnGoalCall",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %outerDepth% = %!callStack.Current.Depth%",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Nested goal.call deepens the Caller chain. Capture depth before the call, have Inner stash its own depth into a context variable, then assert the inner depth is greater than the outer.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%outerDepth%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!callStack.Current.Depth%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set %outerDepth% from the current call-stack depth expression so it can be compared after the nested goal.call.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call Inner",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Inner",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Call the goal Inner (non-parallel) to allow it to stash its own depth into %innerDepth% for the subsequent assertion.",
+      "level": "high",
+      "confidence": 78,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %innerDepth% is greater than %outerDepth%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "greaterThan",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%innerDepth%",
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": "%outerDepth%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "innerDepth should be greater than outerDepth",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %innerDepth% is greater than %outerDepth%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/DepthIncreasesOnGoalCall.test.goal",
+  "prPath": "/Tests/App/CallStack/.build/depthincreasesongoalcall.test.pr",
+  "hash": "c0ab43a03e6b9192772a3ef2b95a1290023d502d3fb1ea003758d229d116abaf",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,0 +1,169 @@
+{
+  "name": "ThrowItem",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022item failed\u0022, key ItemFailed, on error set %inner% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Helper for Audit test. Throws a 400 error tagged with the item key so each iteration adds a distinct entry to %!callStack.Audit%. Three of four are handled by an inner on-error; the fourth (item=d) propagates so the test goal\u0027s outer handler catches it.",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "item failed",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 400,
+              "type": "int"
+            },
+            {
+              "name": "Key",
+              "value": "ItemFailed",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Key",
+                  "value": "ItemFailed",
+                  "type": "string"
+                },
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%inner%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "bool"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Throw a 400 error with message \u0027item failed\u0027 and tag it with the current item key (ItemFailed). The step text says this is handled by an inner on-error, so we wrap the throw with error.handle that sets %inner% = true when the error occurs.",
+      "level": "high",
+      "confidence": 78,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %item% equals \u0022d\u0022, throw error \u0022fourth\u0022, key Fourth",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%item%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": "d",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "fourth",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 400,
+              "type": "int"
+            },
+            {
+              "name": "Key",
+              "value": "Fourth",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "If the current %item% equals \u0027d\u0027, throw a 400 error with message \u0027fourth\u0027 tagged with key Fourth. This is the one that should propagate (no inner handler here).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/App/CallStack/ThrowItem.goal",
+  "prPath": "/Tests/App/CallStack/.build/throwitem.pr",
+  "hash": "14f7bb116587bdef4a7aa40345dadc085ef624465f68c8906e698f8f428cf255",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}
