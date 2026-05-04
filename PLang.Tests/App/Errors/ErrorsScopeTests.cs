@@ -50,15 +50,15 @@ public class ErrorsScopeTests
     }
 
     [Test]
-    public async Task All_AccumulatesEveryPushedError()
+    public async Task Trail_AccumulatesEveryPushedError()
     {
         var errors = new global::App.Errors.@this();
         var a = new Error("A");
         var b = new Error("B");
         using (errors.Push(a)) { using (errors.Push(b)) { } }
-        await Assert.That(errors.All.Count).IsEqualTo(2);
-        await Assert.That(errors.All[0]).IsEqualTo(a);
-        await Assert.That(errors.All[1]).IsEqualTo(b);
+        await Assert.That(errors.Trail.Count).IsEqualTo(2);
+        await Assert.That(errors.Trail[0]).IsEqualTo(a);
+        await Assert.That(errors.Trail[1]).IsEqualTo(b);
     }
 
     [Test]

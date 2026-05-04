@@ -25,6 +25,12 @@ public sealed partial class @this : IAsyncDisposable
     private Action<string, object?, object?>? _onSetHandler;
     private Dictionary<global::System.Type, object>? _items;
 
+    // Private lock targets for Diffs / Tags. Children owns its own lock inside Children.@this;
+    // Errors/Audit do too. Locking on the public collections themselves would invite deadlock
+    // with consumers that legitimately take their own lock on the same instance.
+    private readonly object _diffsLock = new();
+    private readonly object _tagsLock = new();
+
     /// <summary>
     /// Unique identifier for this Call. 8 hex chars — short enough for log lines.
     /// </summary>
@@ -59,9 +65,10 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Errors observed at this scope. Populated by App.Run when the handler returns a
     /// failure or throws. <see cref="Handled"/> tracks recovery outcome independently —
-    /// the error stays in the list either way (audit trail).
+    /// the error stays in the list either way (audit trail). See <see cref="Errors.@this"/>
+    /// for thread-safety semantics.
     /// </summary>
-    public List<IError> Errors { get; } = new();
+    public Errors.@this Errors { get; } = new();
 
     /// <summary>
     /// Flipped <c>true</c> by error.handle.Wrap on recovery success. Renderers use this to
@@ -70,11 +77,11 @@ public sealed partial class @this : IAsyncDisposable
     public bool Handled { get; set; }
 
     /// <summary>
-    /// Live siblings under this Call. Always allocated (cost is one List allocation per
-    /// Push). When <see cref="CallStackFlags.History"/> is off, popped Calls are removed
-    /// here on dispose; when on, they're retained (FIFO-capped at MaxFrames).
+    /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
+    /// <see cref="Children.@this"/>. Allocated lazily via the constructor below so the
+    /// back-reference to the parent CallStack is set before any Add can land.
     /// </summary>
-    public List<@this> Children { get; } = new();
+    public Children.@this Children { get; }
 
     // --- Timing tier (default(DateTimeOffset) when Flags.Timing off) ---
     /// <summary>UTC timestamp at Push. <c>default(DateTimeOffset)</c> when Timing flag off.</summary>
@@ -115,6 +122,7 @@ public sealed partial class @this : IAsyncDisposable
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
+        Children = new Children.@this(stack);
 
         if (flags.Timing)
         {
@@ -130,10 +138,9 @@ public sealed partial class @this : IAsyncDisposable
             {
                 // OnSet fires synchronously on Variables.Set; parallel Task.WhenAll
                 // branches sharing the same Variables instance can invoke this concurrently.
-                // Lock on Diffs (same idiom as Children at CallStack.Push).
-                lock (Diffs!)
+                lock (_diffsLock)
                 {
-                    Diffs.Add(new Diff(name, CaptureBefore(before, deep), DateTimeOffset.UtcNow));
+                    Diffs!.Add(new Diff(name, CaptureBefore(before, deep), DateTimeOffset.UtcNow));
                 }
             };
             diffSource.OnSet += _onSetHandler;
@@ -143,12 +150,16 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Writes a single tag onto this Call. Lazy-allocates <see cref="Tags"/>.
     /// Used by C# handlers (<c>cache.hit=true</c>, <c>http.status=503</c>, <c>llm.tokens=2400</c>)
-    /// and by the <c>tag</c> PLang action.
+    /// and by the <c>tag</c> PLang action. Thread-safe — parallel foreach branches
+    /// dispatching `tag` resolve to the same caller's frame.
     /// </summary>
     public void Tag(string key, string value)
     {
-        Tags ??= new Dictionary<string, string>();
-        Tags[key] = value;
+        lock (_tagsLock)
+        {
+            Tags ??= new Dictionary<string, string>();
+            Tags[key] = value;
+        }
     }
 
     /// <summary>
@@ -233,10 +244,7 @@ public sealed partial class @this : IAsyncDisposable
         }
 
         if (!_stack.Flags.History && Caller != null)
-        {
-            lock (Caller.Children)
-                Caller.Children.Remove(this);
-        }
+            Caller.Children.Remove(this);
 
         // AsyncLocal restore: only flip back if we're still the Current. If a parallel branch
         // has its own Current, we leave that alone.

@@ -31,9 +31,9 @@ public sealed partial class @this
 
     /// <summary>
     /// Run-wide accumulator of every error observed (handled or unhandled). Survives Pop.
-    /// Replaces today's <c>Errors</c> property with a clearer name.
+    /// See <see cref="Audit.@this"/> for thread-safety + lifecycle.
     /// </summary>
-    public List<IError> Audit { get; } = new();
+    public Audit.@this Audit { get; } = new();
 
     /// <summary>
     /// Optional Variables source for diff capture. Set by <see cref="Push"/> via the
@@ -97,21 +97,13 @@ public sealed partial class @this
 
         var call = new Call.@this(action, caller, cause, this, Flags, caller, variables ?? Variables);
 
-        // Children mutation is locked per-caller because parallel branches (Task.WhenAll
-        // forking the AsyncLocal) Push concurrently under the same caller.
-        if (caller != null)
-        {
-            lock (caller.Children)
-            {
-                caller.Children.Add(call);
+        // Children owns its own lock + FIFO eviction policy.
+        caller?.Children.Add(call);
 
-                // FIFO eviction when history is on and the cap would be exceeded.
-                if (Flags.History && caller.Children.Count > Flags.MaxFrames)
-                    caller.Children.RemoveAt(0);
-            }
-        }
-
-        if (_root == null) _root = call;
+        // Track the live run's root: reassign whenever the new Push has no caller, so
+        // %!callStack.Root% reflects the current run rather than a stale prior root that
+        // may have already been popped (and disposed).
+        if (caller == null) _root = call;
         _current.Value = call;
         return call;
     }

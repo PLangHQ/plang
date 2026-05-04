@@ -25,13 +25,13 @@ public sealed partial class @this
     public IError? Error => _current.Value;
 
     /// <summary>
-    /// Run-wide append-only audit of every error pushed into scope. Survives Pop.
-    /// Use this for "did anything fail during this run, even if recovered?"
+    /// Run-wide trail of every error pushed into scope. Survives Pop.
+    /// See <see cref="Trail.@this"/> for thread-safety + lifecycle.
     /// </summary>
-    public List<IError> All { get; } = new();
+    public Trail.@this Trail { get; } = new();
 
     /// <summary>
-    /// Pushes <paramref name="error"/> as the current error and appends to <see cref="All"/>.
+    /// Pushes <paramref name="error"/> as the current error and appends to <see cref="Trail"/>.
     /// The returned disposable restores the previous AsyncLocal value on Dispose — use
     /// <c>using</c> or <c>using var</c> at the call site.
     /// </summary>
@@ -39,7 +39,7 @@ public sealed partial class @this
     {
         var previous = _current.Value;
         _current.Value = error;
-        All.Add(error);
+        Trail.Add(error);
         return new Restorer(_current, previous);
     }
 
