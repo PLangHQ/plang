@@ -27,10 +27,13 @@ characters/
 
 # PLang test runtime workspace directories
 Tests/**/workspace/
-.build/traces/
+**/.build/traces/
 
 # Test runner output
 .test/
+
+# Test snapshots with non-deterministic content (timestamps, generated keys)
+**/junit_sensitive_masked.xml
 
 # Cache test artifacts created when %var% directories aren't substituted at runtime
 Tests/Modules/Cache/**/%*%/
