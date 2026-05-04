@@ -85,7 +85,7 @@
             {
               "name": "ItemName",
               "value": "step",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -117,7 +117,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %stepResults.steps% and call ValidateStep for each item, passing the current step as parameter item=%step%. The @known mapping indicates the loop body is a goal.call with parallel=false.",
+      "guidance": "Iterate over %stepResults.steps% and call ValidateStep for each item, passing the current step as parameter item=%step%. The @known mapping indicates the builder already confirmed this step text.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -187,9 +187,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Branch: if %step.keep% == true, validate the kept step by calling ValidateKeptStep. This step is a conditional with an inline goal call.",
+          "guidance": "First branch: if %step.keep% is true, call ValidateKeptStep. This step is a conditional branch action chain starting with condition.if.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -250,9 +250,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Else-if branch: if %step.keep% is not true, validate the built step by calling ValidateBuiltStep. This is the second conditional branch with an inline goal call.",
+          "guidance": "Second branch: if %step.keep% is not true, call ValidateBuiltStep. This is an elseif branch paired with the prior if.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -332,9 +332,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check the keep:true guard: if %step.actions% is not empty, throw an error. This matches the @known mapping exactly.",
+          "guidance": "Guard rail: if the current step has keep:true, it must not also emit fresh actions. Implemented as a condition check on %step.actions% not being empty, then throw an error.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -396,9 +396,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check that the prior .pr had actions: if %goal.Steps[step.index].Actions.Count% == 0, throw an error. This matches the @known mapping exactly.",
+          "guidance": "Guard rail: if the prior .pr has no actions for this step index, keep:true is invalid. Implemented as a condition check on %goal.Steps[step.index].Actions.Count% == 0, then throw an error.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -507,7 +507,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Run builder.validate against the provided step.actions to ensure modules/actions and parameter schemas are valid.",
+          "guidance": "builder.validate to validate the provided step actions against known modules and parameter schemas. The step is annotated @known, so the prior mapping is authoritative.",
           "level": "high",
           "confidence": 95,
           "formal": null,

@@ -25,9 +25,9 @@
         }
       ],
       "intent": null,
-      "guidance": "write out a translatable message using output.write. The step text is explicitly marked @known with the exact action mapping.",
+      "guidance": "Write a translatable status message to output. Step text is explicitly marked @known for output.write with tstring.",
       "level": "high",
-      "confidence": 99,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -46,7 +46,7 @@
             {
               "name": "Name",
               "value": "%buildStart%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -70,7 +70,7 @@
         }
       ],
       "intent": null,
-      "guidance": "set %buildStart% to %Now.Ticks% as a string. Uses variable.set with explicit Type([string] string) per @known.",
+      "guidance": "Store build start tick count into %buildStart% as a string typed variable (per @known).",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -91,7 +91,7 @@
             {
               "name": "Name",
               "value": "%trace%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -123,7 +123,7 @@
         }
       ],
       "intent": null,
-      "guidance": "initialize %trace% as a JSON object with fields from runtime variables. Because it uses inline object syntax and type=json, emit variable.set with Value type json.",
+      "guidance": "Initialize %trace% as a JSON object containing trace metadata. Step is marked @known; emit variable.set with Type=json and JSON value.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -194,9 +194,9 @@
         }
       ],
       "intent": null,
-      "guidance": "call BuildGoalCore and on error run HandleBuildGoalFailure. The @known mapping shows goal.call with error.handle Actions list containing a goal.call to HandleBuildGoalFailure.",
+      "guidance": "Call BuildGoalCore and, on error, run HandleBuildGoalFailure via error.handle Actions chain. Step is marked @known; preserve its exact structure.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 88,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -215,7 +215,7 @@
             {
               "name": "Name",
               "value": "%trace.pass1%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -234,7 +234,7 @@
         }
       ],
       "intent": null,
-      "guidance": "set %trace.pass1% to %currentPass% (object). Uses variable.set per @known.",
+      "guidance": "Set %trace.pass1% to %currentPass% (per @known).",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -255,7 +255,7 @@
             {
               "name": "Name",
               "value": "%goal.BuilderVersion%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -274,9 +274,9 @@
         }
       ],
       "intent": null,
-      "guidance": "set %goal.BuilderVersion% to literal \u00220.2.2\u0022 as string. Uses variable.set per @known.",
-      "level": "medium",
-      "confidence": 70,
+      "guidance": "Set builder version string into %goal.BuilderVersion% (per @known).",
+      "level": "high",
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -295,7 +295,7 @@
             {
               "name": "Name",
               "value": "%parentGoal%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -314,7 +314,7 @@
         }
       ],
       "intent": null,
-      "guidance": "set %parentGoal% to %goal% (object). Uses variable.set per @known.",
+      "guidance": "Set %parentGoal% to %goal% (per @known).",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -340,7 +340,12 @@
             {
               "name": "ItemName",
               "value": "subGoal",
-              "type": "string"
+              "type": "variable"
+            },
+            {
+              "name": "KeyName",
+              "value": "subGoal",
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -362,7 +367,7 @@
             },
             {
               "name": "Actor",
-              "value": null,
+              "value": "%subGoal%",
               "type": "actor"
             }
           ],
@@ -371,9 +376,9 @@
         }
       ],
       "intent": null,
-      "guidance": "foreach over %parentGoal.Goals% and call BuildSubGoal for each item, passing item=%subGoal%. The @known mapping indicates loop.foreach with Collection type list and ItemName subGoal, then goal.call BuildSubGoal with parallel false and parameters null/prPath null, plus item binding.",
-      "level": "low",
-      "confidence": 35,
+      "guidance": "Iterate over %parentGoal.Goals% and call BuildSubGoal for each item, binding item to %subGoal% (per @known).",
+      "level": "medium",
+      "confidence": 70,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -392,7 +397,7 @@
             {
               "name": "Name",
               "value": "%goal%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -411,7 +416,7 @@
         }
       ],
       "intent": null,
-      "guidance": "set %goal% to %parentGoal% (object). Uses variable.set per @known.",
+      "guidance": "Set %goal% back to %parentGoal% (per @known).",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -450,7 +455,7 @@
             {
               "name": "Name",
               "value": "%elapsedTicks%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -469,7 +474,7 @@
         }
       ],
       "intent": null,
-      "guidance": "compute elapsed ticks = %Now.Ticks% - %buildStart% using math.subtract, then store to %elapsedTicks%.",
+      "guidance": "Compute elapsed ticks = %Now.Ticks% - %buildStart% using math.subtract, then store into %elapsedTicks% (per @known).",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -508,7 +513,7 @@
             {
               "name": "Name",
               "value": "%elapsedMs%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -527,7 +532,7 @@
         }
       ],
       "intent": null,
-      "guidance": "compute elapsedMs = elapsedTicks / 10000 using math.divide, then store to %elapsedMs%.",
+      "guidance": "Compute elapsedMs = %elapsedTicks% / 10000 using math.divide, then store into %elapsedMs% (per @known).",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -548,7 +553,7 @@
             {
               "name": "Name",
               "value": "%trace.durationMs%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -567,7 +572,7 @@
         }
       ],
       "intent": null,
-      "guidance": "set %trace.durationMs% to %elapsedMs% (object). Uses variable.set per @known.",
+      "guidance": "Set %trace.durationMs% to %elapsedMs% (per @known).",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -601,7 +606,7 @@
         }
       ],
       "intent": null,
-      "guidance": "save %trace% to a file path under /.build/traces/%!trace.id%/%trace.goal.name%.json using file.save.",
+      "guidance": "Save %trace% to the specified traces file path (per @known).",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -622,7 +627,7 @@
             {
               "name": "ListName",
               "value": "%traceGoals%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -640,9 +645,9 @@
         }
       ],
       "intent": null,
-      "guidance": "append %goal.Name% to %traceGoals% list using list.add per @known.",
+      "guidance": "Append %goal.Name% to %traceGoals% list (per @known).",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -669,9 +674,9 @@
         }
       ],
       "intent": null,
-      "guidance": "call builder.goalsSave to persist the built goal artifact for %goal%. Uses builder.goalsSave per @known.",
+      "guidance": "Persist the built goal artifact by calling builder.goalsSave with %goal% (per @known).",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -1254,9 +1259,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Validate the LLM response. On error, handle by calling goal LlmFixer. Fix: error.handle Actions must be a list\u003Caction\u003E with goal.call action object; also ensure correct parameter names for builder.validateResponse: StepResults and Goal.",
+          "guidance": "Validate the LLM build response; on validation error, call LlmFixer via error.handle recovery action chain.",
           "level": "high",
-          "confidence": 85,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -1694,7 +1699,7 @@
                 {
                   "name": "ListName",
                   "value": "%stepResults.steps%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Key",
@@ -1712,7 +1717,7 @@
                 {
                   "name": "Name",
                   "value": "%groupedSteps%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -1752,12 +1757,12 @@
                 {
                   "name": "Collection",
                   "value": "%groupedSteps%",
-                  "type": "string"
+                  "type": "object"
                 },
                 {
                   "name": "ItemName",
                   "value": "group",
-                  "type": "string"
+                  "type": "variable"
                 }
               ],
               "defaults": null,
@@ -1827,7 +1832,7 @@
                 {
                   "name": "Name",
                   "value": "%goal%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -1846,7 +1851,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the runtime variable %goal% to %subGoal%. This is a variable assignment; use variable.set with Name and Value. The @known indicates the exact mapping should be reused.",
+          "guidance": "Set the runtime variable %goal% to %subGoal% (as specified by the step).",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -1875,7 +1880,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Write a trace line to output. The string is translatable (tstring) and includes %goal.Name% interpolation.",
+          "guidance": "Write a translatable log line showing the sub-goal name.",
           "level": "high",
           "confidence": 98,
           "formal": null,
@@ -1950,9 +1955,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call BuildGoalCore on the current actor (this?). On error, run HandleBuildGoalFailure via error.handle Actions chain. The goal.call payload must use {\u0022name\u0022:\u0022...\u0022} and parameters must be a list of {name,value,type}. The @known mapping indicates the prior exact structure; corrected to match the engine schema by using name-only payload for BuildGoalCore and HandleBuildGoalFailure.",
+          "guidance": "Call BuildGoalCore to build the sub-goal; on error, call HandleBuildGoalFailure as the recovery action chain.",
           "level": "high",
-          "confidence": 72,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -1971,7 +1976,7 @@
                 {
                   "name": "ListName",
                   "value": "%trace.subGoals%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -1990,9 +1995,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Append the current pass (%currentPass%) into the parent\u0027s trace list variable (%trace.subGoals%) using list.add.",
+          "guidance": "Append the current pass data (%currentPass%) to the parent\u0027s trace list %trace.subGoals%.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2239,7 +2244,7 @@
                 {
                   "name": "Name",
                   "value": "%fixerMessages%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -2267,9 +2272,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %fixerMessages% to a JSON array containing system/user messages. Because the value is an inline JSON array, use variable.set with type=json.",
+          "guidance": "Set %fixerMessages% to a JSON array containing system/user messages with the build prompt and the validation error context.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2293,75 +2298,191 @@
                 {
                   "name": "Schema",
                   "value": {
-                    "description": "string",
-                    "errors?": [
-                      {
-                        "key": "string",
-                        "message": "string"
-                      }
-                    ],
-                    "warnings?": [
-                      {
-                        "key": "string",
-                        "message": "string"
-                      }
-                    ],
-                    "steps": [
-                      {
-                        "index": "int",
-                        "keep?": "bool",
-                        "guidance?": "string",
-                        "formal?": "string",
-                        "actions?": [
-                          {
-                            "module": "string",
-                            "action": "string",
-                            "parameters?": [
-                              {
-                                "name": "string",
-                                "value?": "object",
-                                "type?": "string"
+                    "type": "object",
+                    "properties": {
+                      "description": {
+                        "type": "string"
+                      },
+                      "errors": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key",
+                            "message"
+                          ]
+                        }
+                      },
+                      "warnings": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key",
+                            "message"
+                          ]
+                        }
+                      },
+                      "steps": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "index": {
+                              "type": "integer"
+                            },
+                            "keep": {
+                              "type": "boolean"
+                            },
+                            "guidance": {
+                              "type": "string"
+                            },
+                            "formal": {
+                              "type": "string"
+                            },
+                            "actions": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "module": {
+                                    "type": "string"
+                                  },
+                                  "action": {
+                                    "type": "string"
+                                  },
+                                  "parameters": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "name": {
+                                          "type": "string"
+                                        },
+                                        "value": {},
+                                        "type": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "name"
+                                      ]
+                                    }
+                                  },
+                                  "errors": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "message": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "key",
+                                        "message"
+                                      ]
+                                    }
+                                  },
+                                  "warnings": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "message": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "key",
+                                        "message"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "module",
+                                  "action"
+                                ]
                               }
-                            ],
-                            "errors?": [
-                              {
-                                "key": "string",
-                                "message": "string"
+                            },
+                            "errors": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "key": {
+                                    "type": "string"
+                                  },
+                                  "message": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "key",
+                                  "message"
+                                ]
                               }
-                            ],
-                            "warnings?": [
-                              {
-                                "key": "string",
-                                "message": "string"
+                            },
+                            "warnings": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "key": {
+                                    "type": "string"
+                                  },
+                                  "message": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "key",
+                                  "message"
+                                ]
                               }
-                            ]
-                          }
-                        ],
-                        "errors?": [
-                          {
-                            "key": "string",
-                            "message": "string"
-                          }
-                        ],
-                        "warnings?": [
-                          {
-                            "key": "string",
-                            "message": "string"
-                          }
-                        ],
-                        "level?": "string",
-                        "confidence?": "int"
+                            },
+                            "level": {
+                              "type": "string"
+                            },
+                            "confidence": {
+                              "type": "integer"
+                            }
+                          },
+                          "required": [
+                            "index"
+                          ]
+                        }
                       }
-                    ],
-                    "level?": "string",
-                    "confidence?": "int"
+                    },
+                    "required": [
+                      "description",
+                      "steps"
+                    ]
                   },
-                  "type": "list\u003Ckeyvaluepair\u003E"
-                },
-                {
-                  "name": "Cache",
-                  "value": "%!build.cache%",
-                  "type": "bool"
+                  "type": "dict\u003Cstring,object\u003E"
                 },
                 {
                   "name": "MaxTokens",
@@ -2389,6 +2510,11 @@
                   "name": "maxvalidationretries",
                   "value": 0,
                   "type": "int"
+                },
+                {
+                  "name": "cache",
+                  "value": true,
+                  "type": "bool"
                 }
               ],
               "modifiers": []
@@ -2400,7 +2526,7 @@
                 {
                   "name": "Name",
                   "value": "%stepResults%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -2419,9 +2545,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Re-query the LLM using the fixer messages as Messages, provide a structured JSON Schema for the expected response, apply caching based on %!build.cache%, and write the LLM result to %stepResults% via variable.set.",
-          "level": "high",
-          "confidence": 70,
+          "guidance": "Call llm.query using the fixer messages, request a structured schema for the corrected response, enable caching, and store the returned step results into %stepResults%.",
+          "level": "medium",
+          "confidence": 62,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2443,7 +2569,7 @@
                     "name": "ValidateBuildResponse",
                     "parallel": false,
                     "parameters": null,
-                    "prPath": "/system/builder/.build/validatebuildresponse.pr"
+                    "prPath": "/.build/validatebuildresponse.pr"
                   },
                   "type": "goal.call"
                 }
@@ -2453,7 +2579,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Call the goal ValidateBuildResponse to validate the corrected LLM output stored in %stepResults%.",
+          "guidance": "Call ValidateBuildResponse to validate the corrected LLM response.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2500,9 +2626,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Write a formatted build error message to output. Uses tstring because the step text is a translation candidate.",
+          "guidance": "Write the build error message to output. Step text explicitly says write out with %!error.Message% and is annotated @known for output.write Data([tstring] ...).",
           "level": "high",
-          "confidence": 96,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2521,7 +2647,7 @@
                 {
                   "name": "Name",
                   "value": "%currentPass.buildError%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -2545,9 +2671,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the failing pass\u0027s buildError object (key/message/statusCode/details) into %currentPass.buildError% as json.",
+          "guidance": "Set the current pass buildError object (key/message/statusCode/details) into %currentPass.buildError% as json. Uses the @known mapping, which (despite the step text) sets Value as a list of keyvaluepair objects.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 85,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2566,7 +2692,7 @@
                 {
                   "name": "Name",
                   "value": "%trace.buildError%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -2590,9 +2716,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the parent trace\u0027s buildError object (key/message/statusCode/details) into %trace.buildError% as json.",
+          "guidance": "Set the parent trace buildError object into %trace.buildError% as json. Uses the @known mapping.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 85,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2639,7 +2765,7 @@
                 {
                   "name": "Name",
                   "value": "%trace.pass1%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -2658,7 +2784,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If trace.pass1 is null, set it to the current pass.",
+          "guidance": "If %trace.pass1% is null, set it to %currentPass%. This is a conditional branch with an inline variable.set in the same step.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -2707,7 +2833,7 @@
                 {
                   "name": "ListName",
                   "value": "%trace.subGoals%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -2725,7 +2851,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If trace.pass1 is not null, append the current pass to trace.subGoals.",
+          "guidance": "If %trace.pass1% is not null, add %currentPass% to %trace.subGoals% (append). Conditional branch with inline list.add.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -2759,9 +2885,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Persist the updated trace object to the build traces file path.",
+          "guidance": "Save the updated %trace% object to the trace JSON file path under /.build/traces/%!trace.id%/%trace.goal.name%.json. Uses @known file.save mapping.",
           "level": "high",
-          "confidence": 93,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2793,9 +2919,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Throw the captured error message with status code 500 (as specified in the step).",
+          "guidance": "Throw the structured error using %!error.Message% and status code %!error.StatusCode%. Uses @known error.throw mapping.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 88,
           "formal": null,
           "source": null,
           "waitForExecution": true

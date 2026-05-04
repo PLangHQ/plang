@@ -284,12 +284,50 @@
             },
             {
               "name": "Schema",
-              "value": "{\u0022errors\u0022: [{\u0022key\u0022: string, \u0022message\u0022: string}], \u0022warnings\u0022: [{\u0022key\u0022: string, \u0022message\u0022: string}], \u0022actions\u0022: [{\u0022module\u0022: string, \u0022action\u0022: string, \u0022parameters\u0022: [{\u0022name\u0022: string, \u0022value\u0022: object, \u0022type\u0022: string}], \u0022errors\u0022: [{\u0022key\u0022: string, \u0022message\u0022: string}], \u0022warnings\u0022: [{\u0022key\u0022: string, \u0022message\u0022: string}]}]}",
-              "type": "string"
+              "value": {
+                "errors": [
+                  {
+                    "key": "string",
+                    "message": "string"
+                  }
+                ],
+                "warnings": [
+                  {
+                    "key": "string",
+                    "message": "string"
+                  }
+                ],
+                "actions": [
+                  {
+                    "module": "string",
+                    "action": "string",
+                    "parameters": [
+                      {
+                        "name": "string",
+                        "value": "object",
+                        "type": "string"
+                      }
+                    ],
+                    "errors": [
+                      {
+                        "key": "string",
+                        "message": "string"
+                      }
+                    ],
+                    "warnings": [
+                      {
+                        "key": "string",
+                        "message": "string"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "type": "list\u003Ckeyvaluepair\u003E"
             },
             {
               "name": "Cache",
-              "value": "%build.cache%",
+              "value": "%!build.cache%",
               "type": "bool"
             },
             {
@@ -370,7 +408,7 @@
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -389,9 +427,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Query the LLM with the prepared messages and a schema describing expected errors/warnings/actions. Wrap with error handling that calls HandleBuildStepFailure on error, then store the LLM result into %result%.",
-      "level": "high",
-      "confidence": 70,
+      "guidance": "Call llm.query using the prepared %messages% and a schema describing errors/warnings/actions. Apply cache modifier from %build.cache%. On error, run recovery goal HandleBuildStepFailure via error.handle Actions chain, then store %__data__% into %result%.",
+      "level": "medium",
+      "confidence": 55,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -642,7 +680,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If %result.errors% is not empty, branch and call ThrowBuildStepErrors. The @known mapping indicates the condition is compiled as: isempty with Negate=true (i.e., errors is not empty).",
+          "guidance": "If %result.errors% is not empty, branch conditionally and call ThrowBuildStepErrors. The @known mapping indicates the condition is compiled as isempty-negated.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -668,7 +706,7 @@
                 {
                   "name": "ItemName",
                   "value": "action",
-                  "type": "string"
+                  "type": "variable"
                 }
               ],
               "defaults": null,
@@ -699,7 +737,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Iterate over %result.actions% and validate action-level errors for each item by calling ValidateActionErrors with item=%action%. The @known mapping also sets Actor([actor] %action%).",
+          "guidance": "Iterate over %result.actions% and call ValidateActionErrors for each item, passing item=%action%. The @known mapping also includes Actor([actor] null).",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -826,7 +864,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to branch on whether %action.errors% is empty. The @known mapping indicates the condition is compiled as: if isempty(%action.errors%) is true, negate it (Negate=true) so the body runs when errors is not empty. Then call goal ThrowActionErrors (non-parallel).",
+          "guidance": "Use condition.if to check whether %action.errors% is empty; Negate=true means the body runs when errors are NOT empty. Then call the goal ThrowActionErrors.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -920,7 +958,7 @@
             }
           ],
           "intent": null,
-          "guidance": "write out a formatted error message to output. Use tstring so the engine treats it as a translation candidate; keep the runtime placeholder as %error.Message%.",
+          "guidance": "output.write to emit the build step error message. Uses tstring because the step text is a translation candidate with %error.Message% interpolation.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -959,9 +997,9 @@
             }
           ],
           "intent": null,
-          "guidance": "throw the provided error object from the step using error.throw, mapping Message/StatusCode/Key from the error fields referenced in the step text.",
+          "guidance": "error.throw to fail the step with the structured error message, using the error\u0027s message, status code 500, and key from %error%.",
           "level": "high",
-          "confidence": 92,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
