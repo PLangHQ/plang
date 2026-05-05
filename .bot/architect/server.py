@@ -8,15 +8,18 @@ Open:  http://localhost:8081
 Auto-detects the current git branch and serves files under
 .bot/<branch>/architect/  (all *.md, recursive).
 
-Comments are saved to .bot/<branch>/architect/comments.json
-so they live with the branch and get committed alongside the work.
+Renders Markdown -> HTML in the browser, but every block (and every list
+item) carries the SOURCE line number so comments anchor to the exact
+line of the .md file. Comments are saved to
+.bot/<branch>/architect/comments.json so they live with the branch.
 """
 
 import http.server
 import json
-import os
+import re
 import subprocess
 import urllib.parse
+from html import escape
 from pathlib import Path
 
 PORT = 8081
@@ -39,10 +42,7 @@ def list_files() -> list[str]:
     base = architect_dir()
     if not base.exists():
         return []
-    files = []
-    for p in sorted(base.rglob("*.md")):
-        files.append(str(p.relative_to(base)))
-    # Sort: root summary.md first, then v1/, v2/, ... in numeric order
+    files = [str(p.relative_to(base)) for p in sorted(base.rglob("*.md"))]
     def sort_key(rel: str):
         parts = rel.split("/")
         if len(parts) == 1:
@@ -74,8 +74,199 @@ def save_comments(data: dict) -> None:
     p.write_text(json.dumps(data, indent=2, ensure_ascii=False))
 
 
+def load_comments_normalized() -> dict:
+    return normalize_comments(load_comments())
+
+
+def normalize_comments(data: dict) -> dict:
+    """Backfill author/status/parent_id defaults on legacy entries."""
+    for f, arr in data.items():
+        for c in arr:
+            c.setdefault("author", "user")
+            c.setdefault("status", "open")
+            c.setdefault("parent_id", None)
+    return data
+
+
+# --- Minimal Markdown renderer that tracks source line numbers ---
+
+INLINE_CODE = re.compile(r"`([^`]+)`")
+BOLD = re.compile(r"\*\*([^*]+)\*\*")
+ITALIC = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
+LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+
+
+def render_inline(text: str) -> str:
+    # Escape first, then re-introduce inline markup.
+    s = escape(text)
+    placeholders: list[str] = []
+
+    def stash(html: str) -> str:
+        placeholders.append(html)
+        return f"\x00{len(placeholders)-1}\x00"
+
+    s = INLINE_CODE.sub(lambda m: stash(f"<code>{m.group(1)}</code>"), s)
+    s = LINK.sub(lambda m: stash(
+        f'<a href="{m.group(2)}" target="_blank" rel="noopener">{m.group(1)}</a>'
+    ), s)
+    s = BOLD.sub(r"<strong>\1</strong>", s)
+    s = ITALIC.sub(r"<em>\1</em>", s)
+    s = re.sub(r"\x00(\d+)\x00", lambda m: placeholders[int(m.group(1))], s)
+    return s
+
+
+def is_list_item(s: str) -> bool:
+    return bool(re.match(r"^\s*([-*+]|\d+\.)\s+", s))
+
+
+TABLE_SEP = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$")
+
+
+def split_row(s: str) -> list[str]:
+    s = s.strip()
+    if s.startswith("|"):
+        s = s[1:]
+    if s.endswith("|"):
+        s = s[:-1]
+    return [c.strip() for c in s.split("|")]
+
+
+def is_table_start(lines: list[str], i: int) -> bool:
+    if i + 1 >= len(lines):
+        return False
+    if "|" not in lines[i]:
+        return False
+    return bool(TABLE_SEP.match(lines[i + 1]))
+
+
+def render_markdown(text: str) -> list[dict]:
+    """Return a list of blocks: {start, end, html}.
+
+    `start`/`end` are 1-based source line numbers (inclusive).
+    For lists, individual <li> elements carry data-line on the rendered HTML
+    so comments can anchor to specific items.
+    """
+    lines = text.splitlines()
+    blocks: list[dict] = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        ln = lines[i]
+        if not ln.strip():
+            i += 1
+            continue
+        start = i + 1
+
+        # Fenced code block
+        if ln.lstrip().startswith("```"):
+            i += 1
+            code = []
+            while i < n and not lines[i].lstrip().startswith("```"):
+                code.append(lines[i])
+                i += 1
+            if i < n:
+                i += 1  # closing ```
+            html = f'<pre><code>{escape(chr(10).join(code))}</code></pre>'
+            blocks.append({"start": start, "end": i, "html": html})
+            continue
+
+        # ATX heading
+        m = re.match(r"^(#{1,6})\s+(.*)$", ln)
+        if m:
+            level = len(m.group(1))
+            html = f"<h{level}>{render_inline(m.group(2))}</h{level}>"
+            blocks.append({"start": start, "end": start, "html": html})
+            i += 1
+            continue
+
+        # Horizontal rule
+        if re.match(r"^\s*([-*_])\1{2,}\s*$", ln):
+            blocks.append({"start": start, "end": start, "html": "<hr>"})
+            i += 1
+            continue
+
+        # GFM table: header row, separator, then body rows
+        if is_table_start(lines, i):
+            tstart = start
+            header = split_row(lines[i])
+            i += 2  # skip header + separator
+            rows_html = [
+                "<thead><tr data-line=\"" + str(tstart) + "\">"
+                + "".join(f"<th>{render_inline(c)}</th>" for c in header)
+                + "</tr></thead>"
+            ]
+            body_rows = []
+            while i < n and "|" in lines[i] and lines[i].strip():
+                row_line = i + 1
+                cells = split_row(lines[i])
+                # pad/truncate to header width
+                if len(cells) < len(header):
+                    cells += [""] * (len(header) - len(cells))
+                else:
+                    cells = cells[: len(header)]
+                body_rows.append(
+                    f'<tr data-line="{row_line}">'
+                    + "".join(f"<td>{render_inline(c)}</td>" for c in cells)
+                    + "</tr>"
+                )
+                i += 1
+            if body_rows:
+                rows_html.append("<tbody>" + "".join(body_rows) + "</tbody>")
+            html = "<table>" + "".join(rows_html) + "</table>"
+            blocks.append({"start": tstart, "end": i, "html": html})
+            continue
+
+        # Lists (unordered or ordered) — group consecutive items
+        if is_list_item(ln):
+            ordered = bool(re.match(r"^\s*\d+\.\s+", ln))
+            items_html = []
+            list_start = start
+            while i < n and is_list_item(lines[i]):
+                item_line = i + 1
+                item_text = re.sub(r"^\s*([-*+]|\d+\.)\s+", "", lines[i])
+                items_html.append(
+                    f'<li data-line="{item_line}">{render_inline(item_text)}</li>'
+                )
+                i += 1
+            tag = "ol" if ordered else "ul"
+            html = f"<{tag}>{''.join(items_html)}</{tag}>"
+            blocks.append({"start": list_start, "end": i, "html": html})
+            continue
+
+        # Blockquote
+        if ln.lstrip().startswith(">"):
+            qlines = []
+            while i < n and lines[i].lstrip().startswith(">"):
+                qlines.append(re.sub(r"^\s*>\s?", "", lines[i]))
+                i += 1
+            html = f"<blockquote>{render_inline(' '.join(qlines))}</blockquote>"
+            blocks.append({"start": start, "end": i, "html": html})
+            continue
+
+        # Paragraph: collect until blank line or new block-start
+        para = [ln]
+        i += 1
+        while (
+            i < n
+            and lines[i].strip()
+            and not lines[i].lstrip().startswith("```")
+            and not re.match(r"^#{1,6}\s+", lines[i])
+            and not is_list_item(lines[i])
+            and not lines[i].lstrip().startswith(">")
+            and not re.match(r"^\s*([-*_])\1{2,}\s*$", lines[i])
+        ):
+            para.append(lines[i])
+            i += 1
+        html = f"<p>{render_inline(' '.join(para))}</p>"
+        blocks.append({"start": start, "end": i, "html": html})
+
+    return blocks
+
+
 INDEX_HTML = r"""<!doctype html>
-<html><head><meta charset="utf-8"><title>Architect Review — {branch}</title>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Architect Review — {branch}</title>
 <style>
   * { box-sizing: border-box; }
   body { margin:0; font-family: -apple-system, system-ui, sans-serif; display:flex; height:100vh; background:#1e1e1e; color:#d4d4d4; }
@@ -87,28 +278,123 @@ INDEX_HTML = r"""<!doctype html>
   #sidebar li:hover { background:#2a2d2e; }
   #sidebar li.active { background:#094771; color:#fff; }
   #sidebar li .badge { float:right; background:#f48771; color:#000; padding:0 6px; border-radius:8px; font-size:10px; }
-  #main { flex:1; overflow-y:auto; padding:0; }
-  #header { padding:12px 20px; background:#2d2d30; border-bottom:1px solid #333; position:sticky; top:0; z-index:10; }
-  #header h1 { margin:0; font-size:14px; font-family:monospace; color:#9cdcfe; }
-  #content { padding:20px; }
-  .line-row { display:flex; font-family: 'SF Mono', Consolas, monospace; font-size:13px; line-height:1.5; }
+  #main { flex:1; overflow-y:auto; }
+  #header { padding:12px 20px; background:#2d2d30; border-bottom:1px solid #333; position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:12px; }
+  #header h1 { margin:0; font-size:14px; font-family:monospace; color:#9cdcfe; flex:1; }
+  #header .toggle { font-size:12px; color:#888; cursor:pointer; user-select:none; }
+  #header .toggle:hover { color:#fff; }
+  #content { padding:20px 40px 80px; max-width: 980px; }
+  #content.raw { font-family: 'SF Mono', Consolas, monospace; font-size:13px; }
+  /* Markdown styling */
+  .md h1, .md h2, .md h3, .md h4 { color:#e8e8e8; border-bottom:1px solid #333; padding-bottom:4px; margin: 18px 0 10px; }
+  .md h1 { font-size: 22px; } .md h2 { font-size: 18px; } .md h3 { font-size: 15px; } .md h4 { font-size: 14px; }
+  .md p { line-height:1.6; }
+  .md a { color: #569cd6; }
+  .md code { background:#2d2d30; padding:1px 5px; border-radius:3px; font-family:'SF Mono',Consolas,monospace; font-size:0.92em; color:#ce9178; }
+  .md pre { background:#0e0e0e; border:1px solid #333; padding:10px 14px; border-radius:4px; overflow-x:auto; }
+  .md pre code { background:transparent; padding:0; color:#d4d4d4; font-size:12px; }
+  .md blockquote { border-left:3px solid #569cd6; margin: 10px 0; padding: 4px 12px; color:#bbb; background:#252b32; }
+  .md ul, .md ol { padding-left: 26px; line-height:1.6; }
+  .md hr { border:0; border-top:1px solid #333; margin: 16px 0; }
+  .md table { border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  .md th, .md td { border:1px solid #444; padding: 6px 10px; text-align:left; vertical-align: top; }
+  .md th { background:#2d2d30; color:#e8e8e8; }
+  .md tr { position:relative; }
+  .md tbody tr:nth-child(even) { background:#23272b; }
+  .md tr .row-gutter { display:none; position:absolute; left:-40px; top:6px; font-family:monospace; font-size:11px; color:#666; cursor:pointer; padding:0 4px; border-radius:3px; }
+  .md tr:hover > .row-gutter { display:inline; }
+  .md tr .row-gutter:hover { background:#094771; color:#fff; }
+  .md tr .row-gutter.has-comment { display:inline; color:#f48771; font-weight:bold; }
+  /* Block hover & comment markers */
+  .block, .md li { position:relative; }
+  .block { padding: 2px 8px 2px 56px; border-radius:3px; }
+  .block:hover { background:#252b32; }
+  .block:hover > .gutter { color:#999; }
+  .gutter { position:absolute; left:6px; top:4px; width:42px; text-align:right; font-family:monospace; font-size:11px; color:#3a3a3a; user-select:none; cursor:pointer; padding:2px 4px; border-radius:3px; }
+  .gutter:hover { background:#094771; color:#fff !important; }
+  .gutter.has-comment { color:#f48771 !important; font-weight:bold; }
+  .md li .li-gutter { display:none; position:absolute; left:-40px; top:0; font-family:monospace; font-size:11px; color:#666; cursor:pointer; padding:0 4px; border-radius:3px; }
+  .md li:hover > .li-gutter { display:inline; }
+  .md li .li-gutter:hover { background:#094771; color:#fff; }
+  .md li .li-gutter.has-comment { display:inline; color:#f48771; font-weight:bold; }
+  /* Raw view */
+  .line-row { display:flex; line-height:1.5; }
   .line-row:hover { background:#2a2d2e; }
-  .line-row:hover .ln { color:#888; }
   .ln { width:50px; text-align:right; padding-right:12px; color:#555; user-select:none; cursor:pointer; flex-shrink:0; }
   .ln:hover { color:#fff !important; background:#094771; }
   .ln.has-comment { color:#f48771; font-weight:bold; }
-  .lc { white-space:pre-wrap; word-break:break-word; flex:1; padding-right:12px; }
-  .comment-block { margin: 4px 0 4px 50px; padding:10px 12px; background:#2d3a4e; border-left:3px solid #569cd6; border-radius:3px; font-family:-apple-system,system-ui,sans-serif; font-size:13px; }
-  .comment-block .meta { color:#888; font-size:11px; margin-bottom:4px; }
-  .comment-block .body { white-space:pre-wrap; }
-  .comment-block .del { float:right; color:#f48771; cursor:pointer; font-size:11px; }
-  #composer { display:none; margin: 4px 0 4px 50px; padding:10px; background:#252526; border:1px solid #569cd6; border-radius:3px; }
-  #composer textarea { width:100%; min-height:70px; background:#1e1e1e; color:#d4d4d4; border:1px solid #444; padding:6px; font-family:inherit; font-size:13px; resize:vertical; }
-  #composer .row { margin-top:6px; display:flex; gap:8px; align-items:center; }
-  #composer button { background:#0e639c; color:#fff; border:0; padding:6px 14px; cursor:pointer; border-radius:2px; font-size:13px; }
-  #composer button.cancel { background:#3a3d41; }
-  #composer .target { color:#888; font-size:11px; flex:1; }
+  .lc { white-space:pre-wrap; word-break:break-word; flex:1; padding-right:12px; font-family:'SF Mono',Consolas,monospace; }
+  /* Comments */
+  .comment-block { margin: 6px 0 6px 56px; padding:10px 12px; background:#2d3a4e; border-left:3px solid #569cd6; border-radius:3px; font-family:-apple-system,system-ui,sans-serif; font-size:13px; }
+  .comment-block.author-architect { background:#3d352d; border-left-color:#dcdcaa; }
+  .comment-block.status-resolved { opacity:0.55; border-left-color:#6a9955 !important; background:#1f261f !important; }
+  .comment-block.status-resolved .body { text-decoration: line-through; color:#888; }
+  .comment-block.status-disagreed { border-left-color:#f48771 !important; background:#3a2d2d !important; }
+  .comment-block.is-reply { margin-left: 80px; }
+  .comment-block .meta { color:#888; font-size:11px; margin-bottom:4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .comment-block .meta .who { font-weight:bold; }
+  .comment-block.author-user .meta .who { color:#9cdcfe; }
+  .comment-block.author-architect .meta .who { color:#dcdcaa; }
+  .comment-block .meta .badge { padding:1px 6px; border-radius:8px; font-size:10px; background:#444; color:#fff; }
+  .comment-block .meta .badge.resolved { background:#6a9955; }
+  .comment-block .meta .badge.disagreed { background:#f48771; color:#000; }
+  .comment-block .body { white-space:pre-wrap; word-wrap: break-word; }
+  .comment-block .actions { margin-top: 8px; display:flex; gap:6px; flex-wrap:wrap; }
+  .comment-block .actions button { background:#3a3d41; color:#ccc; border:0; padding:4px 10px; border-radius:3px; cursor:pointer; font-size:11px; }
+  .comment-block .actions button.resolve { background:#3a5a3a; color:#cfe6cf; }
+  .comment-block .actions button.disagree { background:#5a3a3a; color:#f4cfcf; }
+  .comment-block .actions button.reply { background:#3a4a5a; color:#cfdce6; }
+  .comment-block .actions button.del { background:transparent; color:#f48771; padding:4px 6px; }
+  .comment-block .actions button:hover { filter: brightness(1.3); }
+  .composer { margin: 6px 0 6px 56px; padding:10px; background:#252526; border:1px solid #569cd6; border-radius:3px; }
+  .composer textarea { width:100%; min-height:70px; background:#1e1e1e; color:#d4d4d4; border:1px solid #444; padding:6px; font-family:inherit; font-size:13px; resize:vertical; }
+  .composer .row { margin-top:6px; display:flex; gap:8px; align-items:center; }
+  .composer button { background:#0e639c; color:#fff; border:0; padding:6px 14px; cursor:pointer; border-radius:2px; font-size:13px; }
+  .composer button.cancel { background:#3a3d41; }
+  .composer .target { color:#888; font-size:11px; flex:1; }
   .empty { padding:40px; color:#888; text-align:center; }
+  #send-architect { background:#0e639c; color:#fff; border:0; padding:6px 12px; cursor:pointer; border-radius:3px; font-size:12px; }
+  #send-architect:hover { background:#1177bb; }
+  #send-architect:disabled { background:#3a3d41; cursor:not-allowed; }
+  #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#2d3a4e; color:#fff; padding:14px 18px; border-radius:6px; border:1px solid #569cd6; box-shadow:0 4px 16px rgba(0,0,0,0.4); display:none; z-index:50; max-width:90vw; font-size:13px; line-height:1.5; }
+  #toast.show { display:block; }
+  #toast .prompt { background:#1e1e1e; padding:8px; border-radius:3px; margin-top:8px; font-family:monospace; font-size:12px; word-break:break-word; white-space:pre-wrap; }
+  #toast .close { float:right; cursor:pointer; color:#888; margin-left:12px; }
+  /* Hamburger — hidden on desktop */
+  #hamburger { display:none; background:transparent; border:0; color:#d4d4d4; font-size:22px; padding:4px 10px; cursor:pointer; }
+  #scrim { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:20; }
+  /* Mobile */
+  @media (max-width: 760px) {
+    body { font-size: 15px; }
+    #hamburger { display:inline-block; }
+    #sidebar {
+      position: fixed; top:0; left:0; bottom:0; width: 78%; max-width: 320px;
+      transform: translateX(-100%); transition: transform 0.2s ease;
+      z-index: 30; box-shadow: 2px 0 12px rgba(0,0,0,0.4);
+    }
+    body.drawer-open #sidebar { transform: translateX(0); }
+    body.drawer-open #scrim { display:block; }
+    #sidebar li { padding: 10px 8px; font-size: 14px; }
+    #main { width: 100%; }
+    #header { padding: 10px 12px; }
+    #header h1 { font-size: 13px; }
+    #content { padding: 12px 14px 80px; }
+    /* Bigger tap targets for gutters */
+    .block { padding: 6px 8px 6px 44px; }
+    .gutter { left:2px; top:6px; width:36px; font-size:12px; padding:6px 4px; }
+    .md li .li-gutter, .md tr .row-gutter {
+      display:inline; left:auto; right:auto; position:static;
+      margin-left:6px; padding:2px 8px; font-size:11px; background:#2d3a4e; color:#888;
+    }
+    .md li .li-gutter.has-comment, .md tr .row-gutter.has-comment { color:#f48771; }
+    .comment-block, .composer { margin-left: 8px; margin-right: 0; }
+    .composer textarea { min-height: 90px; font-size: 15px; }
+    .composer button { padding: 10px 16px; font-size: 14px; }
+    .md table { display:block; overflow-x:auto; max-width: 100%; }
+    .md pre { font-size: 11px; }
+    .ln { width: 38px; font-size: 12px; padding: 6px 8px 6px 4px; }
+    .lc { font-size: 12px; }
+  }
 </style></head>
 <body>
 <div id="sidebar">
@@ -117,14 +403,24 @@ INDEX_HTML = r"""<!doctype html>
   <ul id="filelist"></ul>
 </div>
 <div id="main">
-  <div id="header"><h1 id="filename">Select a file</h1></div>
-  <div id="content"><div class="empty">Pick a file from the left.</div></div>
+  <div id="header">
+    <button id="hamburger" aria-label="Files">☰</button>
+    <h1 id="filename">Select a file</h1>
+    <button id="send-architect" title="Mark comments ready and copy a prompt to clipboard">📨 Send to Architect</button>
+    <span class="toggle" id="toggle-view">view: rendered ▾</span>
+  </div>
+  <div id="toast"></div>
+  <div id="scrim"></div>
+  <div id="content" class="md"><div class="empty">Pick a file from the left.</div></div>
 </div>
 
 <script>
 let currentFile = null;
 let comments = {};
 let files = [];
+let viewMode = 'rendered';   // or 'raw'
+let currentRaw = '';         // raw text of current file
+let currentBlocks = [];      // server-parsed blocks for current file
 
 async function loadFiles() {
   const r = await fetch('/api/files');
@@ -158,18 +454,109 @@ async function openFile(path) {
   document.getElementById('filename').textContent = path;
   const r = await fetch('/api/file?path=' + encodeURIComponent(path));
   const j = await r.json();
-  renderFile(j.lines);
+  currentRaw = j.text;
+  currentBlocks = j.blocks;
+  renderView();
   renderSidebar();
 }
 
-function renderFile(lines) {
+function renderView() {
   const c = document.getElementById('content');
   c.innerHTML = '';
-  const fileComments = comments[currentFile] || [];
+  c.className = viewMode === 'raw' ? 'raw' : 'md';
+  document.getElementById('toggle-view').textContent =
+    'view: ' + viewMode + ' ▾';
+  if (viewMode === 'raw') renderRaw(); else renderRendered();
+}
+
+function fileComments() {
+  return (comments[currentFile] || []).slice().sort((a,b)=>a.line-b.line);
+}
+
+function renderRendered() {
+  const c = document.getElementById('content');
+  const fc = fileComments();
+  // Index comments by line
   const byLine = {};
-  for (const cm of fileComments) {
-    (byLine[cm.line] ||= []).push(cm);
+  for (const cm of fc) (byLine[cm.line] ||= []).push(cm);
+
+  for (const blk of currentBlocks) {
+    const wrap = document.createElement('div');
+    wrap.className = 'block';
+    wrap.dataset.start = blk.start;
+    wrap.dataset.end = blk.end;
+    const gut = document.createElement('span');
+    gut.className = 'gutter';
+    gut.textContent = blk.start;
+    gut.title = 'Comment on line ' + blk.start;
+    gut.onclick = (e) => { e.stopPropagation(); showComposer(blk.start, wrap); };
+    wrap.appendChild(gut);
+    const body = document.createElement('div');
+    body.innerHTML = blk.html;
+    wrap.appendChild(body);
+    c.appendChild(wrap);
+
+    // Per-LI and per-TR gutters
+    body.querySelectorAll('li[data-line], tr[data-line]').forEach(el => {
+      const lineNo = parseInt(el.dataset.line, 10);
+      const g = document.createElement('span');
+      g.className = el.tagName === 'LI' ? 'li-gutter' : 'row-gutter';
+      g.textContent = lineNo;
+      g.title = 'Comment on line ' + lineNo;
+      g.onclick = (e) => { e.stopPropagation(); showComposer(lineNo, el); };
+      // For TR we need to attach to first cell so it positions correctly
+      if (el.tagName === 'TR') {
+        const firstCell = el.querySelector('th, td');
+        if (firstCell) { firstCell.style.position = 'relative'; firstCell.appendChild(g); }
+        else el.appendChild(g);
+      } else {
+        el.appendChild(g);
+      }
+    });
+
+    // Mark gutter if comments exist anywhere in block range
+    const subAnchored = new Set();
+    body.querySelectorAll('li[data-line], tr[data-line]').forEach(el => {
+      subAnchored.add(parseInt(el.dataset.line, 10));
+    });
+    const hasOpenInRange = fc.some(cm =>
+      cm.line >= blk.start && cm.line <= blk.end &&
+      (cm.status || 'open') === 'open' && !subAnchored.has(cm.line)
+    );
+    if (hasOpenInRange) gut.classList.add('has-comment');
+
+    // Mark per-LI / per-TR gutters (only for OPEN comments on that line)
+    body.querySelectorAll('li[data-line], tr[data-line]').forEach(el => {
+      const lineNo = parseInt(el.dataset.line, 10);
+      const open = (byLine[lineNo] || []).some(cm => (cm.status || 'open') === 'open');
+      if (open) {
+        const cls = el.tagName === 'LI' ? '.li-gutter' : '.row-gutter';
+        const g = el.querySelector(cls);
+        if (g) g.classList.add('has-comment');
+      }
+    });
+
+    // Render comments for this block: those without a sub-anchor go after the block
+    for (const cm of fc) {
+      if (cm.line < blk.start || cm.line > blk.end) continue;
+      if (subAnchored.has(cm.line)) continue;
+      c.appendChild(makeCommentBlock(cm));
+    }
+
+    // For sub-anchored lines (li/tr with comments), append comment blocks after the parent block
+    body.querySelectorAll('li[data-line], tr[data-line]').forEach(el => {
+      const lineNo = parseInt(el.dataset.line, 10);
+      for (const cm of (byLine[lineNo] || [])) c.appendChild(makeCommentBlock(cm));
+    });
   }
+}
+
+function renderRaw() {
+  const c = document.getElementById('content');
+  const lines = currentRaw.split('\n');
+  const fc = fileComments();
+  const byLine = {};
+  for (const cm of fc) (byLine[cm.line] ||= []).push(cm);
   lines.forEach((text, i) => {
     const lineNo = i + 1;
     const row = document.createElement('div');
@@ -178,62 +565,114 @@ function renderFile(lines) {
     ln.className = 'ln';
     if (byLine[lineNo]) ln.classList.add('has-comment');
     ln.textContent = lineNo;
-    ln.onclick = () => showComposer(lineNo);
+    ln.onclick = () => showComposer(lineNo, row);
     const lc = document.createElement('div');
-    lc.className = 'lc';
-    lc.textContent = text || ' ';
+    lc.className = 'lc'; lc.textContent = text || ' ';
     row.appendChild(ln); row.appendChild(lc);
     c.appendChild(row);
     if (byLine[lineNo]) {
-      for (const cm of byLine[lineNo]) {
-        const cb = document.createElement('div');
-        cb.className = 'comment-block';
-        const meta = document.createElement('div');
-        meta.className = 'meta';
-        meta.textContent = '@ line ' + lineNo + '  ·  ' + cm.ts;
-        const del = document.createElement('span');
-        del.className = 'del'; del.textContent = '✕ delete';
-        del.onclick = () => deleteComment(cm.id);
-        meta.appendChild(del);
-        const body = document.createElement('div');
-        body.className = 'body'; body.textContent = cm.text;
-        cb.appendChild(meta); cb.appendChild(body);
-        c.appendChild(cb);
-      }
+      for (const cm of byLine[lineNo]) c.appendChild(makeCommentBlock(cm));
     }
   });
 }
 
-function showComposer(lineNo) {
-  let comp = document.getElementById('composer');
-  if (comp) comp.remove();
-  comp = document.createElement('div');
-  comp.id = 'composer';
-  comp.style.display = 'block';
-  comp.innerHTML = `
-    <textarea id="cmt-text" placeholder="Comment on line ${lineNo}..."></textarea>
-    <div class="row">
-      <span class="target">${currentFile} : line ${lineNo}</span>
-      <button class="cancel" onclick="document.getElementById('composer').remove()">Cancel</button>
-      <button onclick="submitComment(${lineNo})">Save</button>
-    </div>`;
-  // Insert composer just below the clicked line
-  const rows = document.querySelectorAll('#content .line-row');
-  if (rows[lineNo - 1]) {
-    rows[lineNo - 1].insertAdjacentElement('afterend', comp);
-  } else {
-    document.getElementById('content').appendChild(comp);
+function makeCommentBlock(cm) {
+  const cb = document.createElement('div');
+  const author = cm.author || 'user';
+  const status = cm.status || 'open';
+  cb.className = 'comment-block author-' + author + ' status-' + status;
+  if (cm.parent_id) cb.classList.add('is-reply');
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  const who = document.createElement('span');
+  who.className = 'who';
+  who.textContent = author === 'architect' ? '🏛 architect' : '👤 you';
+  meta.appendChild(who);
+  const lineInfo = document.createElement('span');
+  lineInfo.textContent = '@ line ' + cm.line + ' · ' + cm.ts;
+  meta.appendChild(lineInfo);
+  if (status !== 'open') {
+    const b = document.createElement('span');
+    b.className = 'badge ' + status;
+    b.textContent = status;
+    meta.appendChild(b);
   }
-  document.getElementById('cmt-text').focus();
+  cb.appendChild(meta);
+
+  const body = document.createElement('div');
+  body.className = 'body'; body.textContent = cm.text;
+  cb.appendChild(body);
+
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+  const reply = document.createElement('button');
+  reply.className = 'reply'; reply.textContent = '↳ reply';
+  reply.onclick = () => showComposer(cm.line, cb, { parent_id: cm.id, author: 'user' });
+  actions.appendChild(reply);
+  if (status === 'open') {
+    const res = document.createElement('button');
+    res.className = 'resolve'; res.textContent = 'Mark resolved';
+    res.title = 'Mark this comment as resolved';
+    res.onclick = () => updateStatus(cm.id, 'resolved');
+    actions.appendChild(res);
+  } else {
+    const reopen = document.createElement('button');
+    reopen.textContent = 'Reopen';
+    reopen.title = 'Reopen this comment';
+    reopen.onclick = () => updateStatus(cm.id, 'open');
+    actions.appendChild(reopen);
+  }
+  const del = document.createElement('button');
+  del.className = 'del'; del.textContent = '✕';
+  del.title = 'Delete';
+  del.onclick = () => deleteComment(cm.id);
+  actions.appendChild(del);
+  cb.appendChild(actions);
+
+  return cb;
 }
 
-async function submitComment(lineNo) {
-  const text = document.getElementById('cmt-text').value.trim();
+async function updateStatus(id, status) {
+  const r = await fetch('/api/comment?id=' + encodeURIComponent(id), {
+    method: 'PATCH', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ status })
+  });
+  const j = await r.json();
+  comments = j.comments;
+  await openFile(currentFile);
+}
+
+function showComposer(lineNo, anchorEl, opts) {
+  opts = opts || {};
+  document.querySelectorAll('.composer').forEach(e => e.remove());
+  const comp = document.createElement('div');
+  comp.className = 'composer';
+  const label = opts.parent_id ? `Reply to comment @ line ${lineNo}` : `Comment on line ${lineNo}`;
+  comp.innerHTML = `
+    <textarea placeholder="${label}..."></textarea>
+    <div class="row">
+      <span class="target">${currentFile} : line ${lineNo}${opts.parent_id ? ' (reply)' : ''}</span>
+      <button class="cancel">Cancel</button>
+      <button class="save">Save</button>
+    </div>`;
+  anchorEl.insertAdjacentElement('afterend', comp);
+  comp.querySelector('.cancel').onclick = () => comp.remove();
+  comp.querySelector('.save').onclick = () => submitComment(lineNo, comp, opts);
+  comp.querySelector('textarea').focus();
+}
+
+async function submitComment(lineNo, comp, opts) {
+  opts = opts || {};
+  const text = comp.querySelector('textarea').value.trim();
   if (!text) return;
   const r = await fetch('/api/comment', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ file: currentFile, line: lineNo, text })
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      file: currentFile, line: lineNo, text,
+      parent_id: opts.parent_id || null,
+      author: opts.author || 'user'
+    })
   });
   const j = await r.json();
   comments = j.comments;
@@ -242,11 +681,43 @@ async function submitComment(lineNo) {
 
 async function deleteComment(id) {
   if (!confirm('Delete this comment?')) return;
-  const r = await fetch('/api/comment?id=' + encodeURIComponent(id), { method: 'DELETE' });
+  const r = await fetch('/api/comment?id=' + encodeURIComponent(id), { method:'DELETE' });
   const j = await r.json();
   comments = j.comments;
   await openFile(currentFile);
 }
+
+document.getElementById('toggle-view').onclick = () => {
+  viewMode = viewMode === 'rendered' ? 'raw' : 'rendered';
+  if (currentFile) renderView();
+};
+
+// Send to Architect button
+document.getElementById('send-architect').onclick = async () => {
+  const r = await fetch('/api/request-review', { method: 'POST' });
+  const j = await r.json();
+  const prompt = `read my comments at ${j.commentsPath} and address them`;
+  try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+  showToast(j.count, prompt);
+};
+
+function showToast(count, prompt) {
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span class="close" onclick="document.getElementById('toast').classList.remove('show')">✕</span>
+    <strong>${count} comment${count===1?'':'s'} marked for review.</strong><br>
+    Prompt copied to clipboard — paste into Claude:
+    <div class="prompt">${prompt}</div>`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 12000);
+}
+
+// Mobile drawer
+const drawerToggle = () => document.body.classList.toggle('drawer-open');
+document.getElementById('hamburger').onclick = drawerToggle;
+document.getElementById('scrim').onclick = drawerToggle;
+// Auto-close drawer when picking a file on mobile
+const _origOpen = openFile;
+openFile = async (p) => { await _origOpen(p); if (window.innerWidth <= 760) document.body.classList.remove('drawer-open'); };
 
 loadFiles();
 </script>
@@ -256,7 +727,7 @@ loadFiles();
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
-        pass  # quiet
+        pass
 
     def _send(self, code, body, ctype="application/json"):
         data = body if isinstance(body, bytes) else body.encode("utf-8")
@@ -271,12 +742,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urllib.parse.urlparse(self.path)
-        if u.path == "/" or u.path == "/index.html":
+        if u.path in ("/", "/index.html"):
             html = INDEX_HTML.replace("{branch}", current_branch())
             self._send(200, html, "text/html")
             return
         if u.path == "/api/files":
-            self._json(200, {"files": list_files(), "comments": load_comments()})
+            self._json(200, {"files": list_files(), "comments": load_comments_normalized()})
             return
         if u.path == "/api/file":
             qs = urllib.parse.parse_qs(u.query)
@@ -287,10 +758,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._json(404, {"error": "not found"})
                 return
             text = target.read_text(encoding="utf-8", errors="replace")
-            self._json(200, {"lines": text.splitlines()})
+            blocks = render_markdown(text)
+            self._json(200, {"text": text, "blocks": blocks})
             return
-        if u.path == "/api/comment" and self.command == "DELETE":
-            return self.do_DELETE()
         self._send(404, "not found", "text/plain")
 
     def do_DELETE(self):
@@ -298,7 +768,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if u.path != "/api/comment":
             self._send(404, "not found", "text/plain"); return
         cid = urllib.parse.parse_qs(u.query).get("id", [""])[0]
-        comments = load_comments()
+        comments = load_comments_normalized()
         for f, arr in list(comments.items()):
             comments[f] = [c for c in arr if c.get("id") != cid]
             if not comments[f]:
@@ -306,23 +776,61 @@ class Handler(http.server.BaseHTTPRequestHandler):
         save_comments(comments)
         self._json(200, {"comments": comments})
 
+    def do_PATCH(self):
+        u = urllib.parse.urlparse(self.path)
+        if u.path != "/api/comment":
+            self._send(404, "not found", "text/plain"); return
+        cid = urllib.parse.parse_qs(u.query).get("id", [""])[0]
+        length = int(self.headers.get("Content-Length", "0"))
+        body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+        new_status = body.get("status")
+        if new_status not in ("open", "resolved", "disagreed"):
+            self._json(400, {"error": "invalid status"}); return
+        comments = load_comments_normalized()
+        for f, arr in comments.items():
+            for c in arr:
+                if c.get("id") == cid:
+                    c["status"] = new_status
+        save_comments(comments)
+        self._json(200, {"comments": comments})
+
     def do_POST(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path == "/api/request-review":
+            import datetime
+            comments = load_comments_normalized()
+            count = sum(len(v) for v in comments.values())
+            rel = comments_path().relative_to(REPO_ROOT)
+            marker = architect_dir() / "review-requested.json"
+            marker.parent.mkdir(parents=True, exist_ok=True)
+            marker.write_text(json.dumps({
+                "ts": datetime.datetime.now().isoformat(timespec="seconds"),
+                "count": count,
+                "comments_path": str(rel),
+            }, indent=2))
+            print(f"[review requested] {count} comment(s) — {rel}")
+            self._json(200, {"count": count, "commentsPath": str(rel)})
+            return
         if u.path != "/api/comment":
             self._send(404, "not found", "text/plain"); return
         length = int(self.headers.get("Content-Length", "0"))
         body = json.loads(self.rfile.read(length).decode("utf-8"))
         f = body["file"]; line = int(body["line"]); text = body["text"]
+        author = body.get("author", "user")
+        parent_id = body.get("parent_id")
         import uuid, datetime
         entry = {
             "id": uuid.uuid4().hex[:10],
             "line": line,
             "text": text,
+            "author": author,
+            "status": "open",
+            "parent_id": parent_id,
             "ts": datetime.datetime.now().isoformat(timespec="seconds"),
         }
-        comments = load_comments()
+        comments = load_comments_normalized()
         comments.setdefault(f, []).append(entry)
-        comments[f].sort(key=lambda c: c["line"])
+        comments[f].sort(key=lambda c: (c["line"], c["ts"]))
         save_comments(comments)
         self._json(200, {"comments": comments})
 
