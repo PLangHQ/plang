@@ -1,0 +1,4 @@
+Start
+/ Builder validation — a vars: annotation on a non-ask action is rejected at
+/ build time. This test verifies the build fails with a typed builder error.
+- throw "not implemented"

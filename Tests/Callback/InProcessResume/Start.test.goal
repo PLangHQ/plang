@@ -1,0 +1,5 @@
+Start
+/ First integration cut — bind-jump-run, throw-time variable capture.
+/ Setup: set %x%=1, throw, set %x%=2. Expect %x%==2 after resume,
+/ and %!error.callback%.App.Variables["x"]==1 (throw-time view).
+- throw "not implemented"

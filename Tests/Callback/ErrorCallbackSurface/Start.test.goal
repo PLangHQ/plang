@@ -1,0 +1,5 @@
+Start
+/ Reading %!error.callback% inside an error handler resolves through
+/ app.Errors.Current.Callback to a Data<ErrorCallback>; assert it is not null
+/ and its Position lands at the throwing (goal, step, action).
+- throw "not implemented"

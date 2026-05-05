@@ -1,0 +1,4 @@
+Start
+/ - run %x% where %x% is not Data<ICallback> raises a typed handler error
+/ visible to PLang `on error`.
+- throw "not implemented"

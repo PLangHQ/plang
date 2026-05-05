@@ -1,0 +1,4 @@
+Start
+/ - run %callback% dispatches the callback.run action which verifies the
+/ signature, then invokes ICallback.Run and returns the resumed action's Data.
+- throw "not implemented"

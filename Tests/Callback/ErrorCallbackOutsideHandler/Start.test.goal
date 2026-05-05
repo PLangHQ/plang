@@ -1,0 +1,5 @@
+Start
+/ Reading %!error.callback% outside an error handler scope is invalid.
+/ Default decision: throws ErrorCallbackOutsideErrorScope (coder may flip to null
+/ during review). This test pins the throw branch.
+- throw "not implemented"

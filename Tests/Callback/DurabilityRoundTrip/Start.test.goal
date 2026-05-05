@@ -1,0 +1,6 @@
+Start
+/ Second integration cut — durability round-trip across two App instances.
+/ Issue %!error.callback% in process A, persist via application/plang+data
+/ (auto-signed), reconstruct in process B, verify, run. Expect %x%==2 after
+/ resume; throw-time view of %x% remains 1 in the captured snapshot.
+- throw "not implemented"

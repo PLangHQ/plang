@@ -1,0 +1,4 @@
+Start
+/ - ask user "...", vars: %x%, write to %y% issues an AskCallback whose
+/ Variables dictionary contains exactly %x% (and not unrelated user vars).
+- throw "not implemented"

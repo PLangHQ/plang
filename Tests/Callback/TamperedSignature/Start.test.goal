@@ -1,0 +1,5 @@
+Start
+/ Tamper one byte of a serialized callback envelope, then - run %callback%.
+/ The signing.verify gate inside callback.run fails; PLang `on error` sees
+/ a typed signature-mismatch error.
+- throw "not implemented"

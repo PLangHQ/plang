@@ -80,6 +80,89 @@
         "health": "green — v2 is mostly additive on v1, internally consistent, and reuses existing infrastructure rather than introducing new abstractions",
         "notes": "Phase 2 is now ready for test-designer or coder. Phase 3 (ask-user + ICryptoProvider extension for symmetric encryption) is its own future architect session. Encryption is Callback-class-internal — does not bleed into the Data IO layer. Goal.Hash limitation noted: tracks developer prose, not module-behavior drift; documented as known limitation."
       }
+    },
+    {
+      "id": "f1c8e2a4-1d6b-4f3e-9a2c-7e5b3d1f8a44",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-05T17:54:32Z",
+      "timestamp_end": "2026-05-05T18:05:00Z",
+      "intent": "Translate the architect's Stage 1-4 design + test-coverage matrix into a concrete batched test plan; present batches for approval; write C# TUnit + PLang .goal test stubs.",
+      "before": {
+        "assumptions": "Architect v3 lands the test-strategy + test-coverage split with explicit layer mapping (C# / goal / integration) and a failure matrix. New surfaces inventory is authoritative for type/method names. Stages 1-4 will land sequentially; tests for later stages stay red until their stage closes. C# tests in PLang.Tests/, PLang tests in Tests/, both already have neighbouring test groups (CallStackTests/, Errors/, Signing/, Crypto/) we can mirror.",
+        "risk": "Two coverage rows are ambiguous (`%!error.callback%` outside handler scope, unregistered mimetype) — writing tests against a placeholder behavior would force coder into a decision not flagged. Idempotency row could mean reference- or value-equality. The matrix doesn't tag rows by stage, so a coder running tests mid-stream may misread red as drift. The `signature-rename.md` 'compiles cleanly' row is a build assertion not a test."
+      },
+      "plan": ".bot/runtime2-callback/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-callback/test-designer/v1/plan.md",
+            ".bot/runtime2-callback/test-designer/v1/test-plan.md",
+            ".bot/runtime2-callback/test-designer/v1/verdict.json",
+            ".bot/runtime2-callback/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan documents approach, layer mapping, batch index, and 5 open decisions resolved with defaults (per-row in the matrix that had ambiguity). test-plan.md enumerates every test name across 14 batches with stage tags [S1]-[S4] added on top of the architect's matrix so coder can run progressively. verdict + summary mirror the bot output convention."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/SnapshotTests/SnapshotInterfaceTests.cs",
+            "PLang.Tests/App/SnapshotTests/AppSnapshotTests.cs",
+            "PLang.Tests/App/SnapshotTests/StaticsAndModesSnapshotTests.cs",
+            "PLang.Tests/App/SnapshotTests/ProvidersSnapshotTests.cs",
+            "PLang.Tests/App/VariablesTests/VariablesSnapshotTests.cs",
+            "PLang.Tests/App/VariablesTests/SnapshotAtErrorTests.cs",
+            "PLang.Tests/App/Errors/ErrorsTrailSnapshotTests.cs",
+            "PLang.Tests/App/Errors/ErrorCallbackPropertyTests.cs",
+            "PLang.Tests/App/CallStackTests/CallSnapshotTests.cs",
+            "PLang.Tests/App/CallStackTests/CallStackSnapshotTests.cs",
+            "PLang.Tests/App/CallStackTests/EventsSinceTests.cs",
+            "PLang.Tests/App/CallStackTests/FlagsDiffAutoFlipTests.cs",
+            "PLang.Tests/App/DataTests/DataLazySignatureTests.cs",
+            "PLang.Tests/App/DataTests/DataContextWiringTests.cs",
+            "PLang.Tests/App/Serializers/JsonSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/PlangDataSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/MimeRegistrationTests.cs",
+            "PLang.Tests/App/Modules/signing/SignatureRenameTests.cs",
+            "PLang.Tests/App/Modules/crypto/CryptoV1PassThroughTests.cs",
+            "PLang.Tests/App/CallbackTests/ICallbackPositionTests.cs",
+            "PLang.Tests/App/CallbackTests/AskCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/ErrorCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/AppCallbackConfigTests.cs",
+            "PLang.Tests/App/CallbackTests/CallbackRunActionTests.cs",
+            "PLang.Tests/App/CallbackTests/FailureMatrixTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit stubs (~85 tests across 25 files). Bodies are uniformly `await Task.CompletedTask; Assert.Fail(\"Not implemented\");` per the test-designer character spec. Folder choices follow the *Tests-suffix-when-area-name-is-aliased rule (SnapshotTests, CallbackTests, DataTests, VariablesTests) and neighbour-style elsewhere (Errors/, Serializers/, Modules/signing/, Modules/crypto/). Each test has a comment explaining the contract being pinned, drawn directly from the architect's matrix or the stage doc."
+        },
+        {
+          "paths": [
+            "Tests/Callback/InProcessResume/Start.test.goal",
+            "Tests/Callback/DurabilityRoundTrip/Start.test.goal",
+            "Tests/Callback/ErrorCallbackSurface/Start.test.goal",
+            "Tests/Callback/RunCallbackVerb/Start.test.goal",
+            "Tests/Callback/AskWithVars/Start.test.goal",
+            "Tests/Callback/AskVarsResumeBindsValue/Start.test.goal",
+            "Tests/Callback/CallbackTimeoutSetting/Start.test.goal",
+            "Tests/Callback/AskVarsOnNonAsk/Start.test.goal",
+            "Tests/Callback/ErrorCallbackOutsideHandler/Start.test.goal",
+            "Tests/Callback/RunNonCallback/Start.test.goal",
+            "Tests/Callback/TamperedSignature/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang .goal stubs — 11 scenario folders mirroring Tests/Signing/, Tests/Crypto/ layout. Each Start.test.goal has the spec as a comment line and a body of `- throw \"not implemented\"`. Includes the two integration cuts (InProcessResume, DurabilityRoundTrip), six developer-surface scenarios, and three negative-path scenarios."
+        }
+      ],
+      "after": {
+        "status": "v1 test stubs written; coder is unblocked to start Stage 1.",
+        "health": "green — stubs follow architect's matrix faithfully; 5 ambiguous coverage rows resolved with documented defaults that coder/architect can override during review.",
+        "notes": "Stage tags [S1]-[S4] on each test let coder run the suite progressively after each stage closes. Two C# tests reference future types (Snapshot.@this, ICallback, ErrorCallback, AskCallback, etc.) only by behaviour comment — bodies are placeholder Assert.Fail so the suite compiles trivially regardless of what's implemented. Recommend coder runs `dotnet build PLang.Tests` first to confirm the new files compile before starting Stage 1."
+      }
     }
   ]
 }
