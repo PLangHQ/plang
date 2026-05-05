@@ -634,6 +634,32 @@
         "health": "green — dotnet build PLang.Tests 0 errors after fixes.",
         "notes": "Real crypto (todos.md) will close F2's attack surface at the source. N1 (ErrorCallback.Position always null pre-Run) is the most likely to confuse a future reader; worth fixing in stage-5 if the architect adds the output.ask surface docs."
       }
+    },
+    {
+      "id": "f4e2c8d6-1a9b-4c7d-8e3f-5b2a4c6d8f0a",
+      "bot": "tester",
+      "timestamp_start": "2026-05-05T22:00:00Z",
+      "timestamp_end": "2026-05-05T22:30:00Z",
+      "intent": "Run full test suite on a clean rebuild, verify pass/fail/stale counts, audit test quality of new callback surface for false-greens / weak assertions.",
+      "before": {
+        "assumptions": "Coder handoff claims C# 2720/2720, PLang 188/0 fail/4 stale. Auditor passed F1+F2 fixes. Need clean-rebuild confirmation per the stale-binary lesson, plus a deletion-style quality scan of the ~1500 lines of new callback test code.",
+        "risk": "Phantom failures from stale PlangConsole binary; or genuine green hiding name-vs-assertion mismatches that mask future regressions."
+      },
+      "plan": ".bot/runtime2-callback/tester/v1/report.md",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-callback/tester/v1/report.md", ".bot/runtime2-callback/tester/v1/verdict.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester verdict PASS with quality findings. Clean rebuild green: C# 2720/2720, PLang 188 pass / 0 fail / 4 documented stale (the four out-of-branch-scope gaps from coder handoff). 16 quality findings filed: 11 name-vs-assertion mismatches (e.g. AskCallback_Serialize_CallsCryptoEncrypt asserts only bytes.Length>0; FailureMatrix_ExpiredSignature can't distinguish expired from tampered; multiple AssertsAbsenceOfVerifyCall tests actually assert presence-of-signature), 1 JSON-substring trap, 4 PLang-side under-verification gaps. None are blockers. Highest-value tightening: add a recording sink for encrypt/verify calls so #1, #9, #10 become real assertions; split expired vs tampered key in FailureMatrix; add a PLang-layer assertion for Variables.SnapshotAt(error) at throw-time."
+        }
+      ],
+      "after": {
+        "status": "PASS with 16 non-blocking quality findings.",
+        "health": "green — 2720 + 188 actual pass; 4 stales documented out-of-scope; no real failures.",
+        "notes": "Suggest coder address findings #1, #5, #9, #10 (name-promises-X-body-verifies-Y on the encrypt/verify spy paths) before stage-5 — these are most likely to mask a future regression. The PlangDataSerializer JSON-substring trap (#12) is also cheap to convert to a parsed-field assertion."
+      }
     }
   ]
 }

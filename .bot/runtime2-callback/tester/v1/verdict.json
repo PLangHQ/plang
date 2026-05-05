@@ -1,0 +1,21 @@
+{
+  "branch": "runtime2-callback",
+  "bot": "tester",
+  "version": "v1",
+  "date": "2026-05-05",
+  "verdict": "pass",
+  "summary": "PASS with quality findings. Clean rebuild green: C# 2720/2720, PLang 188/0 fail/4 documented stale.",
+  "results": {
+    "csharp": { "total": 2720, "passed": 2720, "failed": 0, "skipped": 0 },
+    "plang":  { "total": 192,  "passed": 188,  "failed": 0, "stale": 4 }
+  },
+  "stale_tests_documented_out_of_scope": [
+    "Tests/Callback/AskVarsOnNonAsk/Start.test.goal",
+    "Tests/Callback/CallbackTimeoutSetting/Start.test.goal",
+    "Tests/Callback/DurabilityRoundTrip/Start.test.goal",
+    "Tests/Callback/TamperedSignature/Start.test.goal"
+  ],
+  "quality_findings_count": 16,
+  "blocking_findings": 0,
+  "report": ".bot/runtime2-callback/tester/v1/report.md"
+}
