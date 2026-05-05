@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization.Metadata;
 using App.CallStack;
+using App.Channels.Serializers;
 
 namespace App.Callback;
 
@@ -40,12 +42,24 @@ public sealed class ErrorCallback : ICallback
         return (byte[])(encrypted.Value ?? bytes);
     }
 
+    /// <summary>
+    /// Defense-in-depth wire size cap (4 MB — larger than AskCallback because ErrorCallback
+    /// carries the full snapshot). The channel layer is the primary control. Security v1 S-F3.
+    /// </summary>
+    internal const int MaxWireBytes = 4 * 1024 * 1024;
+
     public static ErrorCallback Deserialize(byte[] bytes, global::App.Actor.Context.@this ctx)
     {
+        if (bytes.Length > MaxWireBytes)
+            throw new InvalidOperationException(
+                $"ErrorCallback: wire payload exceeds size cap ({bytes.Length} > {MaxWireBytes} bytes)");
         var decrypted = ctx.App.RunAction<App.modules.crypto.decrypt>(
             new App.modules.crypto.decrypt { Input = global::App.Data.@this<byte[]>.Ok(bytes) }, ctx)
             .GetAwaiter().GetResult();
         var plain = (byte[])(decrypted.Value ?? bytes);
+        if (plain.Length > MaxWireBytes)
+            throw new InvalidOperationException(
+                $"ErrorCallback: decrypted payload exceeds size cap ({plain.Length} > {MaxWireBytes} bytes)");
         var snap = DeserializeSnapshot(plain);
         return new ErrorCallback { AppSnapshot = snap };
     }
@@ -150,7 +164,14 @@ public sealed class ErrorCallback : ICallback
     {
         PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        // Strip [Sensitive]-marked properties from the wire — captured Variables in the
+        // snapshot can carry arbitrary objects whose typed properties may include secrets.
+        // Security v1 S-F4.
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { SensitivePropertyFilter.Strip }
+        }
     };
 
     internal sealed class SnapshotWire

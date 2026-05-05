@@ -1,5 +1,7 @@
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using App.CallStack;
+using App.Channels.Serializers;
 
 namespace App.Callback;
 
@@ -38,12 +40,25 @@ public sealed class AskCallback : ICallback
         return (byte[])(encrypted.Value ?? bytes);
     }
 
+    /// <summary>
+    /// Defense-in-depth wire size cap (1 MB). The channel layer is the primary control
+    /// (e.g. http body cap); this cap stops a misconfigured channel from streaming a
+    /// multi-GB body into JsonSerializer. Security v1 S-F3.
+    /// </summary>
+    internal const int MaxWireBytes = 1 * 1024 * 1024;
+
     public static AskCallback Deserialize(byte[] bytes, global::App.Actor.Context.@this ctx)
     {
+        if (bytes.Length > MaxWireBytes)
+            throw new InvalidOperationException(
+                $"AskCallback: wire payload exceeds size cap ({bytes.Length} > {MaxWireBytes} bytes)");
         var decrypted = ctx.App.RunAction<App.modules.crypto.decrypt>(
             new App.modules.crypto.decrypt { Input = global::App.Data.@this<byte[]>.Ok(bytes) }, ctx)
             .GetAwaiter().GetResult();
         var plain = (byte[])(decrypted.Value ?? bytes);
+        if (plain.Length > MaxWireBytes)
+            throw new InvalidOperationException(
+                $"AskCallback: decrypted payload exceeds size cap ({plain.Length} > {MaxWireBytes} bytes)");
         var wire = JsonSerializer.Deserialize<Wire>(plain, _options)
                    ?? throw new InvalidOperationException("AskCallback: empty wire payload");
 
@@ -92,7 +107,13 @@ public sealed class AskCallback : ICallback
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+        // Strip [Sensitive]-marked properties from the wire — captured Variables can carry
+        // arbitrary objects whose typed properties may include secrets. Security v1 S-F4.
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { SensitivePropertyFilter.Strip }
+        }
     };
 
     internal sealed class Wire

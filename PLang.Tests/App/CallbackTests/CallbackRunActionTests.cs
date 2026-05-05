@@ -22,11 +22,27 @@ public class CallbackRunActionTests
     [Test]
     public async Task CallbackRun_VerifiesSignature_BeforeDispatch()
     {
-        // No signature on the Data → handler skips verify. Call dispatches and returns.
+        // No signature pre-set; in-process Data has Context, so EnsureSigned signs locally,
+        // signing.verify roundtrips against the same identity, dispatch runs, returns Success.
+        // (Pre-S-F1 fix this path skipped verify entirely; post-fix it's a real verify.)
         var app = NewApp();
         var data = new Data("cb") { Value = new StubCallback(), Context = app.User.Context };
         var result = await app.RunAction<run>(new run { Callback = data }, app.User.Context);
         await Assert.That(result.Success).IsTrue();
+    }
+
+    [Test]
+    public async Task CallbackRun_RejectsUnsignableData_WhenContextMissing()
+    {
+        // Wire-deserialized Data with no signature AND no Context can't be sealed by
+        // EnsureSigned. Handler must reject with MissingCallbackSignature — this is the
+        // S-F1 hard gate: absence-of-signature on a Data we can't sign locally is rejection,
+        // never trust.
+        var app = NewApp();
+        var data = new Data("cb") { Value = new StubCallback() }; // NOTE: no Context
+        var result = await app.RunAction<run>(new run { Callback = data }, app.User.Context);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("MissingCallbackSignature");
     }
 
     [Test]

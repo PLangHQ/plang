@@ -686,6 +686,73 @@
         "health": "green — no code changed since b7f7c526; no rebuild needed.",
         "notes": "Suggested next bot: coder, to bundle S-F1 (option 2 symmetric EnsureSigned), S-F2 (Variables.Restore !-prefix filter — use auditor v2's option A or B, NOT security v1's snippet which is logically inverted), S-F4 (one-line SensitivePropertyFilter.Strip on each of the three callback-wire option blocks), and the test rename/inversion in CallbackRunActionTests.cs in one fix pass. S-F3 can defer to channel-wiring stage if the channel-layer size cap is firm. Auditor v1 N3 (CLR exceptions out of Restore wrapped as Data.FromError) belongs in the same pass."
       }
+    },
+    {
+      "id": "5b4a3c2d-1e0f-9a8b-7c6d-5e4f3a2b1c00",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T23:45:00Z",
+      "timestamp_end": "2026-05-05T23:59:00Z",
+      "intent": "Address auditor v2 / security v1 findings on runtime2-callback. Per Ingi: fix S-F1 (Medium), S-F3 + S-F4 (Lows), and auditor v1 N3 (CLR exceptions out of Restore). Skip S-F2 — Ingi: 'not a security issue'.",
+      "before": {
+        "assumptions": "Branch state at f6496cd8 with auditor v2 PASS. C# 2720/2720, Plang 192/188 pass / 0 fail / 4 stale. No code changes since b7427751. Architect handoff is a separate-branch concern, not a blocker.",
+        "risk": "EnsureSigned-on-dispatch could break the existing positive in-process tests if the test's User.Context can't drive signing.sign through to a real identity. Wrapping cb.Run exceptions could swallow useful diagnostics if too aggressive."
+      },
+      "plan": ".bot/runtime2-callback/coder/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/callback/run.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "S-F1 + N3. Replaced the 'if (RawSignature != null) verify' gate with: (a) Callback.EnsureSigned() always runs; if it throws InvalidOperationException (no Context, can't sign locally), surface MissingCallbackSignature. (b) defensive null-check post-Ensure → MissingCallbackSignature. (c) signing.verify always runs; tampered → CallbackSignatureMismatch. (d) wrap await cb.Run(Context) in try/catch for CallbackGoalNotFound (404), CallbackGoalHashMismatch (409), InvalidOperationException (500 CallbackDispatchError) — N3 — so the public entry never leaks raw CLR exceptions to channels."
+        },
+        {
+          "paths": [
+            "PLang/App/Callback/AskCallback.cs",
+            "PLang/App/Callback/ErrorCallback.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "S-F3: defense-in-depth wire size caps. AskCallback.MaxWireBytes = 1 MB; ErrorCallback.MaxWireBytes = 4 MB (snapshot is larger). Deserialize checks bytes.Length pre-decrypt and post-decrypt; throws InvalidOperationException on overflow. Channel layer remains the primary control. S-F4: added TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { SensitivePropertyFilter.Strip } } to both _options blocks so [Sensitive]-marked properties on captured Variable values can't cross the wire."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "S-F4: added SensitivePropertyFilter.Strip modifier to the _options TypeInfoResolver — mirrors Data.@this._envelopeJsonOptions."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CallbackTests/CallbackRunActionTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated CallbackRun_VerifiesSignature_BeforeDispatch comment — pre-fix the body asserted the bypass, post-fix the in-process path actually signs and verifies. Assertion still IsTrue. Added CallbackRun_RejectsUnsignableData_WhenContextMissing — pins the S-F1 hard gate: a Data without Context can't be sealed and must be rejected with MissingCallbackSignature."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v5/plan.md",
+            ".bot/runtime2-callback/coder/v5/baseline-tests.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v5 plan, baseline test counts, refreshed summary."
+        }
+      ],
+      "after": {
+        "status": "v5 complete. C# 2721/2721 (added 1 negative-path test). Plang 192/188 pass / 0 fail / 4 stale (unchanged, preexisting handoff gaps). All requested findings addressed; S-F2 deliberately skipped per Ingi.",
+        "health": "green — clean build, no regressions. The EnsureSigned-on-dispatch contract roundtrips cleanly: in-process Data with Context signs locally and self-verifies; Data without Context is rejected up front.",
+        "notes": "Suggested next bot: codeanalyzer to review the new try/catch shape in callback/run.cs for OBP / simplification. Stage 5 / channel wiring / ask-user HTTP / real symmetric crypto / S-F2 deferred to architect's separate handoff branch."
+      }
     }
   ]
 }

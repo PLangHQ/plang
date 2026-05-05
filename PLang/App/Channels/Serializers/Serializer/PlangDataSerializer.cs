@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
 namespace App.Channels.Serializers.Serializer;
 
@@ -25,7 +26,13 @@ public sealed class PlangDataSerializer : ISerializer
         PropertyNameCaseInsensitive = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         WriteIndented = false,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        // Strip [Sensitive]-marked properties from the envelope's Value object —
+        // mirrors Data.@this._envelopeJsonOptions. Security v1 S-F4.
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { SensitivePropertyFilter.Strip }
+        }
     };
 
     public async Task SerializeAsync(Stream stream, object? value, Type? type = null,
