@@ -54,6 +54,27 @@ def list_files() -> list[str]:
     return files
 
 
+def review_requested_mtime() -> float:
+    """Epoch seconds of the last 'Send to Architect' click, or 0 if never."""
+    marker = architect_dir() / "review-requested.json"
+    if not marker.exists():
+        return 0.0
+    return marker.stat().st_mtime
+
+
+def files_modified_since_review() -> list[str]:
+    base = architect_dir()
+    cutoff = review_requested_mtime()
+    if cutoff == 0 or not base.exists():
+        return []
+    out = []
+    for rel in list_files():
+        p = base / rel
+        if p.exists() and p.stat().st_mtime > cutoff:
+            out.append(rel)
+    return out
+
+
 def comments_path() -> Path:
     return architect_dir() / "comments.json"
 
@@ -278,6 +299,8 @@ INDEX_HTML = r"""<!doctype html>
   #sidebar li:hover { background:#2a2d2e; }
   #sidebar li.active { background:#094771; color:#fff; }
   #sidebar li .badge { float:right; background:#f48771; color:#000; padding:0 6px; border-radius:8px; font-size:10px; }
+  #sidebar li .modified { display:inline-block; width:7px; height:7px; border-radius:50%; background:#dcdcaa; margin-right:6px; vertical-align:middle; box-shadow:0 0 4px rgba(220,220,170,0.6); }
+  #sidebar li .modified[title] { cursor:help; }
   #main { flex:1; overflow-y:auto; }
   #header { padding:12px 20px; background:#2d2d30; border-bottom:1px solid #333; position:sticky; top:0; z-index:10; display:flex; align-items:center; gap:12px; }
   #header h1 { margin:0; font-size:14px; font-family:monospace; color:#9cdcfe; flex:1; }
@@ -421,22 +444,40 @@ let files = [];
 let viewMode = 'rendered';   // or 'raw'
 let currentRaw = '';         // raw text of current file
 let currentBlocks = [];      // server-parsed blocks for current file
+let modifiedSinceReview = []; // files touched after last "Send to Architect"
 
 async function loadFiles() {
   const r = await fetch('/api/files');
   const j = await r.json();
   files = j.files;
   comments = j.comments;
+  modifiedSinceReview = j.modifiedSinceReview || [];
   renderSidebar();
-  if (files.length && !currentFile) openFile(files[0]);
+  if (files.length && !currentFile) {
+    let initial = files[0];
+    if (location.hash.length > 1) {
+      const fromHash = decodeURIComponent(location.hash.slice(1));
+      if (files.includes(fromHash)) initial = fromHash;
+    }
+    // Replace (not push) so the back button doesn't first land on a blank entry.
+    await openFile(initial, { push: false });
+    history.replaceState({ path: initial, scroll: 0 }, '', '#' + encodeURIComponent(initial));
+  }
 }
 
 function renderSidebar() {
   const ul = document.getElementById('filelist');
   ul.innerHTML = '';
+  const modSet = new Set(modifiedSinceReview);
   for (const f of files) {
     const li = document.createElement('li');
-    li.textContent = f;
+    if (modSet.has(f)) {
+      const dot = document.createElement('span');
+      dot.className = 'modified';
+      dot.title = 'Modified since last review request';
+      li.appendChild(dot);
+    }
+    li.appendChild(document.createTextNode(f));
     if (f === currentFile) li.className = 'active';
     const count = (comments[f] || []).length;
     if (count) {
@@ -449,7 +490,20 @@ function renderSidebar() {
   }
 }
 
-async function openFile(path) {
+async function openFile(path, opts) {
+  opts = opts || {};
+  const main = document.getElementById('main');
+  const isRefresh = (currentFile === path);
+  // Save scroll of the file we're leaving into the current history entry,
+  // so going forward/back returns to the exact location.
+  if (currentFile && !isRefresh) {
+    history.replaceState({ path: currentFile, scroll: main ? main.scrollTop : 0 }, '');
+  }
+  // Default scroll: preserve on refresh (e.g., after saving a comment), top on navigate.
+  let scroll;
+  if (opts.scroll != null) scroll = opts.scroll;
+  else if (isRefresh) scroll = main ? main.scrollTop : 0;
+  else scroll = 0;
   currentFile = path;
   document.getElementById('filename').textContent = path;
   const r = await fetch('/api/file?path=' + encodeURIComponent(path));
@@ -458,8 +512,18 @@ async function openFile(path) {
   currentBlocks = j.blocks;
   renderView();
   renderSidebar();
-  document.getElementById('main').scrollTop = 0;
+  main.scrollTop = scroll;
+  if (opts.push !== false && !isRefresh) {
+    history.pushState({ path: path, scroll: 0 }, '', '#' + encodeURIComponent(path));
+  }
 }
+
+window.addEventListener('popstate', (ev) => {
+  const st = ev.state;
+  if (st && st.path) {
+    openFile(st.path, { push: false, scroll: st.scroll || 0 });
+  }
+});
 
 function renderView() {
   const c = document.getElementById('content');
@@ -725,8 +789,27 @@ document.getElementById('send-architect').onclick = async () => {
   const j = await r.json();
   const prompt = `read my comments at ${j.commentsPath} and address them`;
   try { await navigator.clipboard.writeText(prompt); } catch (e) {}
+  // Reset the "modified since review" indicators — review-requested.json was just touched.
+  modifiedSinceReview = [];
+  renderSidebar();
   showToast(j.count, prompt);
 };
+
+// Auto-poll for files modified since last review (architect may be working in background).
+async function refreshModifiedDots() {
+  try {
+    const r = await fetch('/api/files');
+    const j = await r.json();
+    const next = j.modifiedSinceReview || [];
+    const a = next.slice().sort().join('|');
+    const b = modifiedSinceReview.slice().sort().join('|');
+    if (a !== b) {
+      modifiedSinceReview = next;
+      renderSidebar();
+    }
+  } catch (e) {}
+}
+setInterval(refreshModifiedDots, 5000);
 
 function showToast(count, prompt) {
   const t = document.getElementById('toast');
@@ -744,7 +827,7 @@ document.getElementById('hamburger').onclick = drawerToggle;
 document.getElementById('scrim').onclick = drawerToggle;
 // Auto-close drawer when picking a file on mobile
 const _origOpen = openFile;
-openFile = async (p) => { await _origOpen(p); if (window.innerWidth <= 760) document.body.classList.remove('drawer-open'); };
+openFile = async (p, opts) => { await _origOpen(p, opts); if (window.innerWidth <= 760) document.body.classList.remove('drawer-open'); };
 
 loadFiles();
 </script>
@@ -774,7 +857,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self._send(200, html, "text/html")
             return
         if u.path == "/api/files":
-            self._json(200, {"files": list_files(), "comments": load_comments_normalized()})
+            self._json(200, {
+                "files": list_files(),
+                "comments": load_comments_normalized(),
+                "modifiedSinceReview": files_modified_since_review(),
+            })
             return
         if u.path == "/api/file":
             qs = urllib.parse.parse_qs(u.query)
