@@ -154,3 +154,92 @@ The codeanalyzer's job is to **read and report**, not to change code.
 ```
 
 *Footer: filed against an incident on this branch — auditor fixed F1/F2 in AskCallback.cs without being asked. Ingi flagged it explicitly. Reviewer-bot exception applies.*
+
+## architect — v3 — 2026-05-05
+**Target:** /workspace/plang/characters/architect/character.md
+**Why:** When carving the test-designer handoff on this branch I produced
+only `plan/test-strategy.md` and was undershooting — test-designer pulled,
+read it, and came back with a long list of gaps: scope ambiguity (is this
+the floor or ceiling?), missing coverage matrix, missing failure matrix,
+ask-user issuer not mentioned, no new-surfaces inventory, no test-layer
+mapping (C# TUnit vs PLang `.goal`). All of those are work the architect
+should do — we know the architecture; test-designer doesn't, and shouldn't
+have to derive it from 11 topic files. The fix on this branch was to add a
+sibling `plan/test-coverage.md` carrying the matrix and inventory. That
+shape should become the convention so the next architect session doesn't
+hand off a thin strategy file and force test-designer to do the
+extraction.
+**Proposed change:** Add this section to `character.md`, under the
+"Writing Plans" section, immediately before the "When You're Done"
+section:
+
+```markdown
+## Preparing test-designer
+
+When the design is settled and you're about to suggest test-designer, the
+test-strategy file alone is **not enough**. Test-designer reads the spine
+and topic files but shouldn't have to derive coverage from scratch — that's
+your job. Produce two test-related files in `plan/`:
+
+### `plan/test-strategy.md` — the narrative
+
+- **Scope** — settle the floor/ceiling ambiguity in one sentence:
+  "The integration cuts below are the contract for end-to-end behavior;
+  per-topic and negative-path tests sit beneath them in
+  test-coverage.md."
+- **Test layer mapping** — which behaviors live in C# TUnit, which in
+  PLang `.goal`, which are integration cuts. State the rule
+  (e.g. "C# pins internal `@this` behavior; goal pins developer-facing
+  surfaces"), then defer per-behavior assignment to the matrix.
+- **Integration cuts** — narrate each one. Setup, capture, resume, what
+  it must prove. Two to four cuts is normal; more usually means a cut
+  could be split into smaller behaviors.
+- **What's not covered by these cuts** — explicit list of the things
+  the matrix picks up beneath: per-`@this` round-trips, negative paths,
+  per-surface developer tests, the other issuer if cuts only cover one.
+
+### `plan/test-coverage.md` — the heavy reference
+
+Three sections:
+
+1. **Coverage matrix** — table organized by topic file. Columns:
+   Behavior, Layer (C# / goal / integration), Sense (green / negative).
+   One row per behavior the topic file commits to. Test-designer reads
+   this top-to-bottom and writes one test per row.
+
+2. **Failure matrix** — consolidated negative paths. Columns: Failure
+   mode, Detected by (which `@this` raises), Error type, Layer. Each
+   row is a way the system *should* fail; the test asserts the failure
+   is hard, typed, and at the right layer. The architect knows which
+   negative paths are real and which are impossible-by-design — encode
+   that knowledge here so test-designer doesn't write tests for the
+   latter.
+
+3. **New surfaces this branch introduces** — inventory of types,
+   methods, properties, and registrations the coder will create. Path
+   + signature where useful. Test-designer names tests against these
+   without spelunking. Split into subsections: "Interfaces and types",
+   "New methods on existing types", "New PLang actions", "New
+   registrations" (MIME types, etc.), and "Existing surfaces this
+   branch touches by reference" so test-designer knows what's already
+   real vs. what's new.
+
+### Why two files, not one
+
+The strategy file is a narrative that reads top-to-bottom; the coverage
+file is a reference that gets searched/scanned. Different access patterns
+deserve different files. Coder also reads test-coverage.md while
+implementing per-stage tests, so it isn't test-designer-only — it's
+design content like the other topic files.
+
+### Why not a special "test-brief" file at root (parallel to stages)
+
+Stage files at root are imperative units of incremental work; test-designer
+has one job, not multiple stages. Test files belong in `plan/` alongside
+the design topics they cover.
+```
+
+*Footer: this proposal codifies the test-designer-prep pattern after
+test-designer's pull-and-feedback on this branch surfaced the gap. No
+external incident — the trigger was direct feedback from a downstream bot
+that the architect's hand-off was thin.*
