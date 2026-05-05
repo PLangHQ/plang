@@ -1,4 +1,3 @@
 Start
-/ Builder validation — a vars: annotation on a non-ask action is rejected at
-/ build time. This test verifies the build fails with a typed builder error.
+/ BLOCKED ON: builder validation pass for the `vars:` annotation. Out of branch scope per Ingi (Q2).
 - throw "not implemented"

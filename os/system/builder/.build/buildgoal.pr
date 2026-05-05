@@ -344,7 +344,7 @@
             },
             {
               "name": "KeyName",
-              "value": "subGoal",
+              "value": null,
               "type": "variable"
             }
           ],
@@ -367,7 +367,7 @@
             },
             {
               "name": "Actor",
-              "value": "%subGoal%",
+              "value": null,
               "type": "actor"
             }
           ],

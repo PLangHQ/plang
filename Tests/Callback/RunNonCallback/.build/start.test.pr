@@ -1,0 +1,262 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %notACallback% = 42",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "- callback.run on a Data whose value is not an ICallback raises a typed\nTypeError visible to PLang \u0060on error\u0060. Pin: error key is \u0022TypeError\u0022.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%notACallback%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 42,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set %notACallback% to 42 so callback.run receives a non-ICallback value. This step is annotated @known, so reuse the prior mapping exactly.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "callback.run callback=%notACallback%, on error call HandleTypeError",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "callback",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Callback",
+              "value": {
+                "callback": "%notACallback%"
+              },
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Key",
+                  "value": "TypeError",
+                  "type": "string"
+                },
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "HandleTypeError"
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Run callback.run using %notACallback% as the callback input. If a typed TypeError occurs, handle it by calling the goal HandleTypeError. The step is annotated @known, so reuse the prior mapping exactly.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %typeErrorSeen% is true, \u0022on-error handler should have run\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%typeErrorSeen%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "on-error handler should have run",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assert that %typeErrorSeen% is true, confirming the on-error handler executed. The step is annotated @known, so reuse the prior mapping exactly.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleTypeError",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %typeErrorSeen% = true",
+          "lineNumber": 9,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%typeErrorSeen%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set the runtime flag %typeErrorSeen% to true.",
+          "level": "high",
+          "confidence": 98,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "assert %!error.Key% equals \u0022TypeError\u0022",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "assert",
+              "action": "equals",
+              "parameters": [
+                {
+                  "name": "Expected",
+                  "value": "TypeError",
+                  "type": "string"
+                },
+                {
+                  "name": "Actual",
+                  "value": "%!error.Key%",
+                  "type": "object"
+                },
+                {
+                  "name": "Message",
+                  "value": "Expected error key to be TypeError",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Post-condition assertion: verify the runtime error key variable %!error.Key% equals the expected string \u0022TypeError\u0022. This must fail the step if the values differ.",
+          "level": "high",
+          "confidence": 98,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/RunNonCallback/Start.test.goal",
+      "prPath": "/RunNonCallback/.build/start.test.pr",
+      "hash": "c59281634ecc7c4a4b072e94b9c83fca37d2318930f7c3ff03c4362a24d622bf",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/RunNonCallback/Start.test.goal",
+  "prPath": "/RunNonCallback/.build/start.test.pr",
+  "hash": "f4f973e1e467136b9b00bc52ab057a9958e270c4d0c1bdf12cd4305b2ba7e8e9",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

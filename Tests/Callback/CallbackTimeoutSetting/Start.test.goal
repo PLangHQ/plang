@@ -1,4 +1,3 @@
 Start
-/ - set callback timeout to 5 minutes writes
-/ app.Callback.Signature.ExpiresInMs = 300000 in the App's config tree.
+/ BLOCKED ON: PLang verb-level surface for writing app.Callback.Signature.ExpiresInMs. C# AppCallbackConfigTests covers the contract.
 - throw "not implemented"

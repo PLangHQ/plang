@@ -94,3 +94,45 @@ is enough — no restart needed.
 *Footer: this proposal documents a tool the architect built for the user
 during this branch. No incident triggered it; it's a new capability that
 needs persistent instructions so it isn't reinvented next session.*
+
+
+## coder — v4 — 2026-05-05
+**Target:** `characters/coder/character.md` — new sub-section under "Testing Requirements" (near the existing "Both C# and PLang tests are required" line). Fallback target: `/CLAUDE.md` if the character file route isn't preferred.
+
+**Why:** On `runtime2-callback` Stage 4 I closed the branch with all 2720 C# tests green but left 11 `Tests/Callback/*/Start.test.goal` stubs that test-designer wrote as `- throw "not implemented"` showing as **stale** in `plang --test`. Some stubs (AskWithVars, AskVarsResumeBindsValue) genuinely need builder support that's out of branch scope per Ingi's Q2 — but most (RunCallbackVerb, ErrorCallbackSurface, RunNonCallback, TamperedSignature, CallbackTimeoutSetting, ErrorCallbackOutsideHandler, DurabilityRoundTrip, InProcessResume) only needed me to write the goal text and run `plang build` + `plang --test`. I have that capability — the character file already says "Building plang files works" and "Run plang tests with `plang --test`" — but nothing told me that **handing back stale .test.goal stubs counts as incomplete stage closure**. I treated stubs the test-designer wrote as a contract I owed only on the C# side. Ingi flagged this in conversation: "you have plang build support, read the doc and propose claude change so you know that you should write and build plang tests."
+
+The fix is one explicit rule: when test-designer leaves `.test.goal` stubs, I write them out, build with `plang build`, run `plang --test`, and call out which (if any) genuinely cannot be written because they depend on out-of-scope work — naming the missing piece. "Stale" is a real failure mode that the user shouldn't have to chase.
+
+**Proposed change:** Add this section to `characters/coder/character.md` directly after the existing "Both C# and PLang tests are required" line in the "Testing Requirements" section.
+
+```markdown
+### Test-designer's `.test.goal` stubs are part of your contract
+
+When test-designer writes `Tests/<Area>/<Scenario>/Start.test.goal` stubs with
+`- throw "not implemented"` bodies, they are owed work — same as the C#
+`Assert.Fail("Not implemented")` stubs. `plang --test` reports them as **stale**;
+that is a failure mode, not a green light. Stage closure means:
+
+1. Write the goal body that exercises the C# code you just landed. Use the
+   stub's spec comment as the contract.
+2. Build the .goal: `plang build` (or
+   `plang '--build={"files":"<scenario>.goal"}'` for one file). The builder is
+   non-deterministic — read the resulting `.pr` after every build and verify
+   module/action/parameters match the step text.
+3. Run `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test`. The
+   `Tests/<Area>/*` you wrote should now pass; **stale count for your branch's
+   scenarios drops to zero**.
+4. If a stub genuinely cannot be written because it depends on work that's
+   out of branch scope (e.g. a builder annotation, a module action that doesn't
+   exist on this branch), say so explicitly in your stage summary — naming the
+   missing piece, not just "stale". Don't leave the user to figure out which
+   stale entries are deliberate vs. forgotten.
+
+A green C# suite with red/stale `.test.goal` stubs from your stage is **not**
+done. Both layers are the deliverable.
+```
+
+*Footer: this proposal is filed against an incident on this branch — Stage 4
+shipped with 11 stale .test.goal stubs that I should have written and built.
+Ingi flagged it explicitly. Falls under the architect/test-designer/coder
+proposal exception, not the reviewer-bot blanket prohibition.*

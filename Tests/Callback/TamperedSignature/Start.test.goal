@@ -1,5 +1,3 @@
 Start
-/ Tamper one byte of a serialized callback envelope, then - run %callback%.
-/ The signing.verify gate inside callback.run fails; PLang `on error` sees
-/ a typed signature-mismatch error.
+/ BLOCKED ON: PLang surface for byte-level mutation of a serialized callback envelope. C# CallbackRun_HardErrors_WhenSigningVerifyFails covers it.
 - throw "not implemented"

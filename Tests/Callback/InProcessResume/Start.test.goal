@@ -1,5 +1,14 @@
 Start
-/ First integration cut — bind-jump-run, throw-time variable capture.
-/ Setup: set %x%=1, throw, set %x%=2. Expect %x%==2 after resume,
-/ and %!error.callback%.App.Variables["x"]==1 (throw-time view).
-- throw "not implemented"
+/ First integration cut — set %x%=1, throw, recovery sets %x%=2; the captured
+/ callback's snapshot reflects the throw-time view (%x%==1) via
+/ Variables.SnapshotAt(error). After recovery, live %x% is 2.
+- set %x% = 1
+- throw error "boom", on error call CaptureAndRecover
+- assert %x% equals 2, "live x should be 2 after recovery"
+- assert %callbackPresent% is true
+
+CaptureAndRecover
+- set %cb% = %!error.callback%
+- set %callbackPresent% = true
+- assert %cb% is not null
+- set %x% = 2

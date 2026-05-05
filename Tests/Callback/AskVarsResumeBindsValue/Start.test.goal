@@ -1,4 +1,3 @@
 Start
-/ Resume of an AskCallback binds Variables and dispatches the ask action with
-/ the bound value — no fresh ask is issued.
+/ BLOCKED ON: builder support for the `vars:` annotation on `output.ask`. Out of branch scope per Ingi (Q2).
 - throw "not implemented"

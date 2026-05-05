@@ -1,0 +1,91 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %callbackOutsideScope% = %!error.callback%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Reading %!error.callback% outside an error handler scope: %!error% itself is\nnull (no AsyncLocal-flowed error in this context), so the callback path is\nunresolved. Coder flipped the default from \u0022throws\u0022 to \u0022null\u0022 \u2014 simpler\nruntime contract, matches how %!error.X% works generally outside scope.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%callbackOutsideScope%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!error.callback%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assign the runtime special variable %!error.callback% to %callbackOutsideScope% using variable.set. This is a direct value read; no error handler scope is involved.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %callbackOutsideScope% is null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%callbackOutsideScope%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition check: assert that %callbackOutsideScope% is null. This should fail if the value is not null.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/ErrorCallbackOutsideHandler/Start.test.goal",
+  "prPath": "/ErrorCallbackOutsideHandler/.build/start.test.pr",
+  "hash": "d8909ba7003ac5dbdfc0a742f13c1d7c19a8a99161acc1d370c8f06a5484928c",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
