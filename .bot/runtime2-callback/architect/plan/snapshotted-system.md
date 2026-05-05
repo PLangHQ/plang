@@ -16,11 +16,19 @@ public interface ISnapshotted
 
 The classifier *is* the type system. A new subsystem's author makes the bucket choice by deciding whether to implement the interface. No coordination across the codebase.
 
+## `App.Snapshot()` is the entry point
+
+`App` has its own `Snapshot()` method — it walks its `@this` properties and asks each one that implements `ISnapshotted` for its capture. The result is a `Snapshot.@this` tree mirroring the App's structure (`App.Variables` → `Variables` subtree, `App.Errors` → `Errors` subtree, etc.).
+
+`Snapshot.@this` is *the* snapshot type — the same type `ISnapshotted.Capture` writes to and `ISnapshotted.Restore` reads from. There's no separate `AppSnapshot`; `app.Snapshot()` returns `Snapshot.@this` and that's what `ErrorCallback` carries — see [callback-schema.md](callback-schema.md#errorcallback). One concept, one type. The wire shape *is* the App tree. No translator class converting between "App state" and "callback fields."
+
+Restore is the dual: `App.Restore(snapshot, ctx)` boots a fresh App normally, then walks the snapshot subtrees and hands each one to the matching `@this.Restore(subsnap, ctx)`.
+
 ## The three buckets
 
 1. **Snapshot-and-restore** — type implements `ISnapshotted`. Variables (per-actor), `Errors.Trail`, `App.Providers` registry-layer state, `App._statics`, plus any third-party `IProvider` that opts in.
 2. **Reconstruct-on-build** — type does *not* implement `ISnapshotted`. Modules, Goals, Catalog, Types, Navigators, Config, Settings (sqlite-backed), FileSystem, Events, Channels, Cache, Debug, all built-in `IProvider` instances. Normal App construction rebuilds them; resume just runs construction.
-3. **Drop** — runtime-only state with no resume relevance. Live `App.CallStack` tree, Timing tier, Children-as-history, in-flight network state. Just gone.
+3. **Drop** — runtime-only state with no resume relevance. Children-as-history (Calls that already completed under any active Call), Timing tier, in-flight network state. Just gone. The active CallStack chain is *not* in this bucket — see "CallStack: position lives in frames" below.
 
 ## Islands rule — values only, no graph identity
 
@@ -34,7 +42,7 @@ After `Restore`, no pointer fix-up phase, no inter-type ordering dependency. Two
 
 | Subsystem | Bucket | Notes |
 |---|---|---|
-| `App.Variables` (per actor — System, Service, User) | snapshot-and-restore | Existing `Snapshot()` partition is exactly the boundary: skip `!`-prefixed system vars, skip `DynamicData` (Now/GUID/`!app`/`MyIdentity`), skip `SettingsVariable` (sqlite-backed). Capture `(name, value, Type, Properties)` for everything else. |
+| `App.Variables` (per actor — System, Service, User) | snapshot-and-restore | Existing `Snapshot()` partition is exactly the boundary: skip `!`-prefixed system vars, skip `DynamicData` (Now/GUID/`!app`/`MyIdentity`), skip `SettingsVariable` (sqlite-backed). Capture `(name, value, Type, Properties)` for everything else. Variables also owns `SnapshotAt(error)` for the throw-time projection — see "Variables owns its own time-travel" below. |
 | `App.Errors.Trail` | snapshot-and-restore | Read-only after restore. Resumed run needs `%!error.trail%` to read naturally. |
 | `App.Providers` | snapshot-and-restore (registry layer only) | See "Providers — two layers" below. |
 | `App._statics` | snapshot-and-restore (with caveat) | App-scoped mutable dict. Snapshot until `TODO: Replace with goal-backed dynamic property` closes. Flagged as a known fragility. |
@@ -50,12 +58,13 @@ After `Restore`, no pointer fix-up phase, no inter-type ordering dependency. Two
 | `App.Cache` (`MemoryStepCache`) | reconstruct (empty) | Cache is a hint, not state. See "Cache is not snapshotted" below. |
 | `App.Events` (lifecycle) | reconstruct | Re-attach during App boot. |
 | `App.Debug` | reconstruct | Event handlers re-register from CLI flags. |
-| `App.Testing` / `App.Build` mode flags | inside the Callback record | `BuildEnabled` / `TestingEnabled` fields on `Callback`. |
+| `App.Build` (`@this`, has `IsEnabled`) | snapshot-and-restore | Build mode materially affects step semantics. `Build.Snapshot()` emits `IsEnabled`. AskCallback doesn't capture `App` at all — it's a clean pause; this is an ErrorCallback concern. |
+| `App.Testing` (`@this`, has `IsEnabled`) | snapshot-and-restore | Same logic as Build. |
 | `App.Actor` instances | reconstruct | Three actors constructed normally. Per-actor Variables are restored as a separate snapshot step. |
-| Actor identity | name-only, in the Callback record | `Identity.Name` carried via `Selections`; provider's `GetOrCreateDefaultAsync(name)` resolves on resume. The `Identity` object itself is never carried — referent integrity gates the resume. |
+| Actor identity | name-only, inside `App.Providers` snapshot | `Identity.Name` is one of the named selections captured under Providers; provider's `GetOrCreateDefaultAsync(name)` resolves on resume. The `Identity` object itself is never carried — referent integrity gates the resume. |
 | `App.Test` runner | reconstruct | No live state. |
 | Built-in `IProvider` instances | reconstruct | None implements `ISnapshotted` today. The interface is a future-facing hook for third parties that hold inter-action mutable state. |
-| Live `App.CallStack` tree | drop (live tree) — Caller chain captured as positional context | See "CallStack as positional context" below. |
+| `App.CallStack` | snapshot-and-restore (frames as positional context) | See "CallStack: position lives in frames" below. |
 
 ## Providers — two layers
 
@@ -66,11 +75,39 @@ The `App.Providers` registry holds two kinds of mutable state, both load-bearing
 
 On restore: `RegisterDefaults()` runs as normal, then runtime registrations are loaded and registered, then default selections are applied.
 
+**Unresolvable name on restore = hard error.** If the captured runtime registration can't be loaded (DLL missing, loader fails) or a captured default-selection name doesn't exist after registration, the resume fails with a referent-integrity error — same shape as the goal-not-found case. No silent fallback to the system default. The contract is: names + referent integrity. If the named thing isn't there, the resume isn't safe.
+
 The provider *instances* themselves remain reconstruct-on-build. None of the built-ins hold inter-action mutable state. Third-party providers that do can opt in to `ISnapshotted` separately — that's a per-instance concern, orthogonal to the registry-layer snapshot.
 
-## CallStack as positional context
+## Variables owns its own time-travel
 
-Not history (drop), not timing (drop). The *Caller chain* of the throwing Call is captured as a sequence of `(goal, step, action)` resume points so when the resumed action finishes and unwinds, control returns to the caller correctly. Concretely: if goal A's step 3 called goal B and B's step 2 errored, resume needs to know "after this resumed B step 2 finishes, return to A step 3 action N+1." A small list of positions, not a tree.
+The throw-time projection — "give me what `App.Variables` looked like at `error.throwTime`" — lives on `App.Variables`, not on a synthetic helper or on CallStack:
+
+```csharp
+// On App.Variables
+public Variables.@this SnapshotAt(Error error) { … }
+```
+
+The split is principled:
+
+- **CallStack owns the diff stream** — each Call records the variable mutations that happened during it as part of its own audit trail. That's where time-ordered events naturally live.
+- **Variables owns the projection** — *how* to compute "what I looked like at T" is Variables' concern. Internally, `SnapshotAt(error)` asks CallStack for the diff events with `timestamp > error.throwTime` and reverse-applies them to its own current state.
+
+The seam reads as: *Variables knows how to project itself; CallStack knows what happened in time.* Neither type knows the other's internals — Variables asks CallStack a small question (events-since-T) and answers the bigger one (what did I look like at T).
+
+Lazy materialization of `%!error.callback%` calls `app.Variables.SnapshotAt(error)` as part of `app.Snapshot()`'s walk — see [variable-capture.md](variable-capture.md).
+
+## CallStack: position lives in frames
+
+The CallStack *is* the position. There's no separate "where do we resume" field on ErrorCallback — that question is already answered by the live App at any moment, and the snapshot just captures the answer.
+
+`App.CallStack.Snapshot()` walks the active frames (live Call chain up to the throwing Call) and emits each as a positional record: `(Goal-stub, StepIndex, ActionIndex, …)`. The **bottom-most frame** is the resume point — that's where the throw happened. Outer frames are the Caller chain, used so unwinding after the resumed action completes returns control through the right outer Calls.
+
+`Call` is itself an `@this` and owns its own snapshot/restore. It emits its `Goal` as a stub (`{ PrPath, Hash }`), restores by resolving the path against the live registry. Goal-hash mismatch on restore = hard error.
+
+Children-as-history (Calls that already completed under this Call), timing tier, in-flight network state — those still drop. The snapshot captures the active chain, not the history.
+
+Concretely: if goal A's step 3 called goal B and B's step 2 errored, the snapshot has two frames — A@step3 and B@step2. Resume rebuilds both, lands at B@step2, runs the action, and on completion unwinds to A@step3 + 1.
 
 ## Cache is not snapshotted
 

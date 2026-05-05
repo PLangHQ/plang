@@ -190,3 +190,46 @@ unblock.
 When a callback resumes, does the new run's callstack carry a `Cause` link
 back to the issuing run's identifier (cross-process causal trace), or is
 resume a clean break? Decide on the Callback branch.
+
+## 2026-05-05 — `crypto.encrypt` / `crypto.decrypt` real implementation
+
+The `runtime2-callback` branch ships these two actions as identity
+pass-through: input bytes are returned unchanged. The wiring is real
+(Callback's `Serialize`/`Deserialize` calls through them; the Channels
+Data layer signs the resulting bytes), so when real crypto lands, only
+the action handler bodies change.
+
+**Design target:** symmetric AES-256-GCM keyed by the existing
+`IKeyProvider`. Both actions take `byte[]` and return `byte[]`.
+
+**Gating:** named the missing PLang runtime features when picking this up
+— briefly noted by Ingi as "we have some missing feature in the plang
+runtime." Confirm what those are before starting.
+
+**Migration:** none needed. Pass-through callbacks issued under v1 will
+not decrypt under real keys, but nothing has shipped to users yet.
+
+## 2026-05-05 — replace `App._statics` with goal-backed dynamic property
+
+`PLang/App/this.cs:108` carries a private
+`ConcurrentDictionary<string, ConcurrentDictionary<string, object?>>`
+keyed by module name, exposed through `GetStatic(key)`. Inline TODO at the
+declaration says "Replace with goal-backed dynamic property" — that
+replacement hasn't been written down anywhere as a real follow-up, so
+this entry pins it.
+
+**Why it matters now:** the callback design captures `App._statics` as
+part of `app.Snapshot()` (snapshot-and-restore bucket, see
+`plan/snapshotted-system.md`). The capture is *provisional* — once the
+goal-backed dynamic property mechanism lands, statics live there and the
+explicit `_statics` snapshot subtree drops out of `ErrorCallback`'s wire
+shape. Callback code shouldn't depend on the field name.
+
+**Design target:** dynamic properties scoped to a goal (or app-wide,
+addressed via `app.X.Y` like the rest of the config tree) replacing the
+flat module-keyed dict. OBP-shaped, addressable by dot-path, snapshots
+naturally as a property of whatever `@this` owns it.
+
+**Out of scope here:** the actual implementation. This entry exists so
+the callback work doesn't bake the `_statics` field name into anything
+load-bearing.

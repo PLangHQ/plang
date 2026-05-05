@@ -1,30 +1,57 @@
-# Encryption layering — setup for the future ask-user branch
+# Encryption — owned by the Callback serializer
 
-**This branch ships without encryption.** The file settles the layering decision now so the signing path doesn't need to be rethought when the ask-user branch lands.
+Encryption ships in this branch. v1 is a **structural pass-through**: the actions exist (`crypto.encrypt`, `crypto.decrypt`), the Callback serializer wires through them, but the v1 implementations return their input unchanged. Real symmetric crypto lands later (tracked in `Documentation/Runtime2/todos.md`) once the missing PLang runtime features are in place. The shape of the layering is settled now so the real implementation slots in without rework.
 
-## The decision
+## The layering
 
-For ask-user, the variable values transported over the wire need encryption (the user's browser shouldn't be able to read `%orderId%`). The encryption sits **inside Callback's own serialization**, *not* at the Data layer.
+Three classes, three concerns:
 
-## Layering for issuance (future)
+- **Callback (`AskCallback` / `ErrorCallback`)** — owns its on-disk shape end-to-end via `Serialize` / `Deserialize`. Encryption happens *inside* this layer, not above or below it.
+- **Channels Data serializer** — wraps the Callback's bytes in `Data<ICallback>`, attaches `Data.Signature` over those (already-encrypted) bytes. Knows nothing about plaintext.
+- **`crypto` module** — exposes `crypto.encrypt` and `crypto.decrypt` actions. v1 is identity (input → input); future v2 implements AES-GCM via `IKeyProvider`.
 
-1. Callback class encrypts its variable values internally — `Callback.EncryptInPlace(Context ctx)` walks `VariablesByActor`, calls `ctx.App.Modules.Get('crypto').EncryptAsync(value)` per entry.
-2. The resulting `Data<Callback>` is serialized to bytes — Data layer signs the encrypted-variables-containing bytes (same transparent path as in [transparent-signing.md](transparent-signing.md)).
-3. Wire transport ships the signed envelope (base64 in an HTTP form field).
+The Data layer never sees plaintext; the crypto module never knows it's serving Callback. Each class minds its own business.
 
-## Layering for resume (future)
+## What gets encrypted
 
-1. Verify Data signature (existing `signing.verify`).
-2. Callback class decrypts internally — `Callback.DecryptInPlace(Context ctx)`.
-3. Hand off to `App.Run(callback)` as in this branch.
+The whole Callback payload. Each `Serialize` builds the byte representation it needs (`AskCallback`'s explicit fields; `ErrorCallback`'s `Snapshot.@this` tree) and pipes the entire thing through `crypto.encrypt` before returning. No partial encryption, no per-field decisions — the layer is owned by one class so defense-in-depth is free.
 
-## Why this layering
+There's no reason to leak path, position, frame chain, or provider names to anyone holding a stored callback blob.
 
-- **Most Data writes don't need encryption** — keeping it out of the Data layer means logs, debug output, file writes, channel output stay unaffected.
-- **Encryption is Callback's discipline** — OBP says the class owns its own behavior. Other Data subtypes don't pay any cost.
-- **Signing wraps encryption naturally** — the signature certifies the encrypted content as authentically issued.
-- **Forward-compatible** — Callback ships now *without* encryption methods; the ask-user branch adds them. Nothing has shipped yet, so no breakage.
+What's *not* encrypted: `Data.Signature` itself (the signing identity, the signature bytes, expiry timestamp). That's the envelope that needs to be verifiable without knowing the encryption key.
 
-## What the ask-user branch will need (not now)
+## Issuance flow
 
-`ICryptoProvider` extension: `EncryptAsync(value)` / `DecryptAsync(value)`. Symmetric AES-256-GCM via the existing `IKeyProvider`. Encrypt/decrypt as Callback-class methods, not module actions.
+Inside `callback.Serialize(ctx)`:
+
+1. Build a flat byte representation of the record's fields.
+2. Pipe through `ctx.App.Modules.Get("crypto").EncryptAsync(bytes)`.
+3. Return the encrypted bytes.
+
+The Channels Data serializer takes those bytes, wraps them in `Data<ICallback>`, populates `Data.Signature` (signing the encrypted bytes), and writes to whatever channel the developer chose. See [transparent-signing.md](transparent-signing.md) for the channel-aware emission rules.
+
+## Resume flow
+
+Inside `callback.Run(ctx)`:
+
+1. Verify `Data.Signature` (existing `signing.verify`). Hard error on mismatch.
+2. Unwrap `Data<ICallback>` to get the encrypted payload bytes.
+3. Pipe through `ctx.App.Modules.Get("crypto").DecryptAsync(bytes)`.
+4. `XxxCallback.Deserialize(plaintext, ctx)` reconstructs the record.
+5. Resolve `Goal` stub against the live App, jump and run (see [resume-mechanics.md](resume-mechanics.md#callback-run)).
+
+## v1 implementation: pass-through actions
+
+`crypto.encrypt` and `crypto.decrypt` exist as real PLang actions in v1. Their handler bodies return the input unchanged. The full pipeline — Callback's serializer calling through them, signature wrapping the (currently identical) bytes — is exercised end-to-end. When real crypto lands, only the action handlers change; nothing in Callback or Data needs to move.
+
+Tracked in `Documentation/Runtime2/todos.md`:
+
+> **`crypto.encrypt` / `crypto.decrypt` real implementation.** v1 is identity. Real impl is symmetric AES-GCM via `IKeyProvider`, gated on `<missing PLang runtime features — name them when known>`.
+
+## OBP rationale
+
+Earlier sketches had `Callback.EncryptInPlace(ctx)` / `Callback.DecryptInPlace(ctx)` as separate methods invoked by an outside coordinator. That's the wrong shape — it splits Callback's serialization across two callers. With encryption inside `Serialize` / `Deserialize`, the call site (Channels) doesn't know encryption exists, the developer doesn't see encryption verbs in PLang, and there's no orchestration question about "did someone forget to encrypt before signing." The class owns its discipline.
+
+## Forward compatibility
+
+When real crypto lands, the action signatures stay the same; the wire bytes change content but not envelope shape; the signature still wraps the encrypted payload. Existing pass-through callbacks become unreadable (their plaintext bytes won't decrypt under real keys), which is correct — they were never secure. No migration story is needed because nothing has shipped to users yet.

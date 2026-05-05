@@ -4,7 +4,7 @@ The developer-facing PLang surface for callbacks. Three pieces.
 
 ## `%!error.callback%`
 
-Synthetic, read-only, lazy. Available inside any error handler scope. Materialises a `Callback` record on read. See [variable-capture.md](variable-capture.md) for the throw-time semantics and [callback-schema.md](callback-schema.md) for the materialisation steps.
+Synthetic, read-only, lazy. Available inside any error handler scope. The PLang path `%!error.callback%` reads through to `app.Errors.Current.Callback` — the property lives on the current error (`Error.@this` owns it). Reading it materialises an `ErrorCallback` record. See [variable-capture.md](variable-capture.md) for the throw-time semantics and [callback-schema.md](callback-schema.md) for the materialisation steps.
 
 ```plang
 - insert into users, name=%name%
@@ -14,11 +14,11 @@ HandleError
 - write %!error.callback% to file callbacks/%!error.id%.bin
 ```
 
-`on error call goal X` is the right shape — it cleanly separates the failure path into its own goal where steps can do whatever they need (write, log, queue, dispatch). Inline `on error` with steps underneath is not how PLang error handlers compose.
+`on error call goal X` is the right shape — it cleanly separates the failure path into its own goal where steps can do whatever they need (write, log, queue, dispatch).
 
 ## `- run %callback%`
 
-Consumes a callback. Verifies signature (via `signing.verify`), confirms `goal_hash` against current build (mismatch = signed-but-stale → hard error), constructs an App with the callback as entry point, runs.
+Consumes a callback. Calls `callback.Run(ctx)`, which verifies the signature, resolves the embedded `Goal` against the current build (mismatch = signed-but-stale → hard error), decrypts the payload, and runs from the captured `(StepIndex, ActionIndex)` with bound state.
 
 ```plang
 Recover
@@ -26,7 +26,7 @@ Recover
 - run %callback%
 ```
 
-For the future ask-user case, `- run %callback%` will also decrypt encrypted variable values internally via `Callback.DecryptInPlace(ctx)` — see [encryption-layering.md](encryption-layering.md).
+Decryption is internal to `callback.Run` — see [encryption-layering.md](encryption-layering.md).
 
 ## Ask-user `vars:` annotation
 

@@ -1,19 +1,23 @@
 # Callback — design spine
 
-This branch designs the **callback mechanism** end-to-end: how PLang preserves runtime state at a failure or pause point, persists it durably, verifies it on resume, and runs it from a fresh `App` process. Two issuers — `ask user` and error-retry — share one `App.Run(callback)` entry point. Encryption and HTTP wire transport (the ask-user case in full) are deferred to a future branch — the layering is settled here so that future branch doesn't reshape this.
+This branch designs the **callback mechanism** end-to-end: how PLang preserves runtime state at a failure or pause point, persists it durably, verifies it on resume, and runs it from a fresh `App` process. Two issuers — `ask user` and error-retry — produce two concrete callback types (`AskCallback`, `ErrorCallback`) under one `ICallback` interface. The shared verb is `callback.Run(ctx)` — Callback owns the resume orchestration end-to-end. Encryption ships in this branch as a structural pass-through (real symmetric crypto follows once missing runtime features land); HTTP wire transport for the ask-user case is the remaining piece.
 
 ## The few insights that reshape this design
 
 These cross-cut multiple topic files. If you only know these, you can navigate the rest.
 
-1. **Bind, jump, run — never replay.** Resume jumps directly to `(goal X, step Y, action Z)` with carried state already bound, and continues from there. No prior step is re-executed. The engine has one main loop; `App.Run(goal)` and `App.Run(callback)` only differ in *where the loop's first tick lands*. No `Seek` verb.
-2. **Variables are the values that survive resume. Everything else is a name.** Variables get full payload capture; provider selections, identity, datasource, modes are captured as names that resolve through their existing registries. Two trust layers gate resume: signature integrity (envelope) and referent integrity (the names still resolve).
-3. **Per-type `ISnapshotted` — three buckets.** Each OBP `@this` type declares its own snapshot discipline. No central registry. Three buckets: snapshot-and-restore (variables, errors, registry-layer providers, statics), reconstruct-on-build (modules, goals, channels, cache, etc.), drop (live callstack tree, timing, network state).
-4. **Signing is transparent at the Data IO boundary.** Any `Data.@this` written through the Channels serializer gets its `Signature` auto-populated by the existing `signing` module. Default = no expiry (integrity, not validity). No explicit `- sign` is needed at the issue site.
-5. **`Goal.Hash` already exists** at `PLang/App/Goals/Goal/this.cs:121` — SHA-256 of `Name + concatenated step text`. We use it directly for `Callback.GoalHash`. No new hashing.
-6. **Encryption is a Callback-internal concern, not a Data-layer concern.** Most Data writes (logs, files, debug) don't need encryption. Callback owns its own encryption discipline (deferred to the ask-user branch). The Data layer signs the encrypted bytes.
+1. **Bind, jump, run — never replay.** Resume lands at the captured `(goal, step, action)` with state already bound, and continues. No prior step is re-executed. The engine has one main loop; resume is a different entry point, not a different loop. No `Seek` verb.
+2. **`callback.Run(ctx)` is the OBP root verb.** `ICallback` exposes two methods: `Serialize(ctx)` and `Run(ctx)`. PLang's `- run %callback%` is a thin shim that dispatches into Run. Each impl owns verify, decrypt, restore, jump, and run — end-to-end.
+3. **Two records, one tiny interface.** `ICallback` exposes `Position` (a `Call` frame), `Serialize(ctx)`, and `Run(ctx) -> Task<Data>`. `AskCallback` is slim and explicit: `Position, Actor, Variables`. `ErrorCallback` is `Snapshot App` only — *everything* lives inside the snapshot, including the call chain whose bottom frame answers `Position`.
+4. **The App tree is the schema.** `app.Snapshot()` walks `@this` properties and asks each `ISnapshotted` for its capture into a `Snapshot.@this`. Restore is the dual: `app.Restore(snapshot, ctx)`. Adding a new App component? Implement `ISnapshotted` or don't — no `ErrorCallback` schema change.
+5. **CallStack is the position.** `App.CallStack` snapshots its active frame chain. Each `Call` is `@this` and emits `(Goal-stub, StepIndex, ActionIndex, …)`. Bottom frame = resume point; outer frames = unwind chain. Goal-hash mismatch on any frame's stub during restore = hard error.
+6. **Variables owns its own time-travel.** `app.Variables.SnapshotAt(error)` is the throw-time projection method. Variables knows *how to project itself*; it asks `App.CallStack` (which owns the diff stream as part of its audit trail) for events-since-T and reverse-applies. Time-ordered data on CallStack; projection method on Variables; clean seam between the two.
+7. **Three buckets — chosen by the type, not a classifier.** Implement `ISnapshotted` (snapshot-and-restore: Variables, Errors, Providers registry, Statics, Build, Testing, CallStack). Don't (reconstruct-on-build: Modules, Goals, Channels, Cache, etc.). Or stay invisible to the snapshot (drop: live IO state, timing, history).
+8. **Data signs itself; Serializers shape the wire; Channels route.** `Data.@this` carries a lazy `Signature` property — first access populates via the `signing` module. `Serializer.@this` per mimetype family (`JsonSerializer`, `PlangDataSerializer`, etc.) decides whether to read `data.Signature` (and thus trigger signing) or only `data.Value`. `Channel.@this` picks the serializer for the receiver's mimetype and orchestrates. No `PrepareForOutput` verb, no Channel-side signing logic. New MIME type `application/plang+data` introduced for full-envelope wire shape.
+9. **Encryption is owned by Callback's serializer.** `ICallback.Serialize(ctx)` pipes the whole payload through `crypto.encrypt` before returning bytes; `Deserialize` reverses. `Data.Signature` (lazily populated) signs already-encrypted bytes — Data never sees plaintext. v1 ships `crypto.encrypt`/`crypto.decrypt` as identity pass-through (real AES-GCM tracked in `Documentation/Runtime2/todos.md`).
+10. **`app.Callback` is config, not an `ICallback`.** `app.Callback.Signature.ExpiresInMs` reads through "the App's `Callback` config holder, its `Signature` sub-config, the `ExpiresInMs` value." Default `null`. Data's lazy signature getter reads it from `Context.App.Callback.Signature.ExpiresInMs` *only when the wrapped value is an `ICallback`*. Two distinct things share the word *Signature* — keep them straight: `Data.Signature` is wire envelope; `app.Callback.Signature` is config.
 
-Combined consequence: **this design ships entirely on existing infrastructure.** No new modules, no new crypto, no new core abstractions.
+Combined consequence: **this design ships on existing infrastructure plus two new `crypto` actions** (encrypt/decrypt, identity pass-through in v1). No new modules, no new core abstractions.
 
 ## Topic files
 
@@ -33,13 +37,14 @@ The durability layer:
 
 Forward-compat + housekeeping:
 
-- [encryption-layering.md](plan/encryption-layering.md) — why encryption belongs to Callback (sets up the future ask-user branch)
-- [test-strategy.md](plan/test-strategy.md) — smallest meaningful first cuts (in-process and durability)
+- [encryption-layering.md](plan/encryption-layering.md) — encryption owned by Callback's serializer; v1 ships `crypto.encrypt`/`crypto.decrypt` as identity pass-through
+- [test-strategy.md](plan/test-strategy.md) — integration cuts (in-process resume + durability round-trip) + test layer mapping
+- [test-coverage.md](plan/test-coverage.md) — coverage matrix per topic, failure matrix, new-surfaces inventory
 - [open-threads.md](plan/open-threads.md) — deferred items + settled rejections
 
 ## Settled rejections that span topics
 
-- **`Data.Pause` lane.** Callback is a successful `Data` value whose payload happens to be a Callback record. Engine has one extra branch ("is the value a Callback? unwind without continuing"). No new Ok/Fail/Pause trichotomy.
+- **`Data.Pause` lane.** A callback is a successful `Data` value whose payload happens to be an `ICallback`. Engine has one extra branch ("is the value an ICallback? unwind without continuing"). No new Ok/Fail/Pause trichotomy.
 - **Replay-style resume.** Never. Bind + jump only.
 - **Ref-capture across islands.** Brainstormed, no real use case, closed. Values only. Serializer-level blob dedup is the answer if size becomes a problem.
 - **Cache in the snapshot.** Rejected. Cache is a hint, not state. If it must survive resume, it's a Variable.

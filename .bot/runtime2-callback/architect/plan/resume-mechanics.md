@@ -1,6 +1,6 @@
 # Resume mechanics — the issue/resume movie
 
-The conceptual mechanic (bind, jump, run) lives in [resume.md](resume.md). This file walks the same flow concretely across the serialization boundary — issue, persist, deserialize, verify, run.
+The conceptual mechanic (bind, jump, run) lives in [resume.md](resume.md). This file walks the same flow concretely across the serialization boundary — issue, persist, deserialize, verify, decrypt, run.
 
 ## Issue (developer's `on error` runs)
 
@@ -16,10 +16,11 @@ Step-by-step:
 
 1. `insert into users` blows up. Error is captured in `App.Errors`; handler dispatch begins.
 2. `HandleError` runs as the recovery body.
-3. `%!error.callback%` is read → lazy materialization triggers (see [callback-schema.md](callback-schema.md#lazy-materialization-of-errorcallback)).
-4. `- write %!error.callback% to file ...` invokes file-channel write → serializer kicks in.
-5. Serializer sees `Data<Callback>` with no `Signature` → calls `signing.SignAsync` with no expiry → populates `Data.Signature` (see [transparent-signing.md](transparent-signing.md)).
-6. Serialized bytes (Callback record + Signature) hit disk.
+3. `%!error.callback%` (which lives at `app.Errors.Current.Callback`) is read → lazy materialization triggers: `app.Snapshot()` walks the App tree, `app.Variables.SnapshotAt(error)` produces the throw-time view via diff reverse-apply, `App.CallStack.Snapshot()` captures the active frame chain. The result is wrapped in `ErrorCallback(snapshot)` and then `Data<ErrorCallback>`. See [callback-schema.md](callback-schema.md#lazy-materialization-of-errorcallback).
+4. `- write %!error.callback% to file ...` invokes the file channel.
+5. Channel picks the right `Serializer.@this` for the file's mimetype (see [transparent-signing.md](transparent-signing.md)). For a callback, that's `PlangDataSerializer` (`application/plang+data`).
+6. `PlangDataSerializer` reads `data.Value.Serialize(ctx)` for the payload (encrypted via `crypto.encrypt` — see [encryption-layering.md](encryption-layering.md)) and reads `data.Signature` to emit on the wire. Reading `data.Signature` triggers Data's lazy signing — `signing.SignAsync` runs with `expiresInMs` seeded from `ctx.App.Callback.Signature.ExpiresInMs`.
+7. Final signed envelope hits disk.
 
 ## Resume (developer triggers it)
 
@@ -31,30 +32,53 @@ Recover
 
 Step-by-step:
 
-1. `read file ...` reads bytes. Deserializer reconstructs `Data<Callback>` with `Signature` populated (unverified).
-2. `- run %callback%` invokes the callback module:
-   - `signing.verify` checks signature integrity, expiry (no expiry by default → always passes), identity, contracts. **Hard error on mismatch.**
-   - Look up goal: `app.Goals.LoadByPrPath(callback.GoalPrPath)`. **Hard error if not found** (referent-integrity failure — same shape as a deleted identity).
-   - Compare `goal.Hash` against `callback.GoalHash`. **Hard error on mismatch** (signed but stale — redeployed goal).
-   - Construct fresh `App` with the Callback as entry point.
-   - `App.Run(callback)`:
-     - `RegisterDefaults()` runs.
-     - Replay runtime provider registrations + apply default selections from `Selections` (see [snapshotted-system.md](snapshotted-system.md#providers--two-layers)).
-     - Populate per-actor Variables from `VariablesByActor`.
-     - Populate `Errors.Trail` from `ErrorTrail`.
-     - Populate `App._statics` from `Statics`.
-     - Apply mode flags (`BuildEnabled`, `TestingEnabled`).
-     - Main loop's first tick lands at `(GoalPrPath → goal, StepIndex, ActionIndex)` → re-executes the failed action with the captured state.
+1. `read file ...` reads bytes. The right `Serializer.@this` for the file's mimetype reconstructs `Data<ICallback>` (typed dispatch picks `Data<ErrorCallback>` or `Data<AskCallback>` based on the envelope) with `Signature` populated (unverified — verification is the consumer's explicit step, not automatic on read).
+2. `- run %callback%` calls `callback.Run(ctx)` — the interface verb. Each impl owns its body and returns `Task<Data>`, propagating whatever the resumed action returned.
 
-That's the whole flow.
+## `ErrorCallback.Run(ctx)`
 
-## Goal lookup on resume
+```
+errorCallback.Run(ctx)
+├── 1. signing.verify(data.Signature) over the encrypted payload bytes
+│      └── Hard error on integrity / expiry / identity mismatch
+├── 2. crypto.decrypt(payload bytes) → plaintext snapshot bytes
+│      └── ErrorCallback.Deserialize(plaintext, ctx) reconstructs the snapshot tree
+├── 3. Construct fresh App (RegisterDefaults runs, modules + channels boot normally)
+├── 4. app.Restore(snapshot, ctx) — walk subtrees and dispatch to each @this:
+│      • App.Providers.Restore  → replay runtime registrations, apply default selections
+│      │                          (hard error if any name doesn't resolve)
+│      • App.Variables.Restore  → bind throw-time variable values
+│      • App.Errors.Restore     → populate Trail
+│      • App._statics.Restore   → bind statics dict
+│      • App.Build.Restore      → set IsEnabled
+│      • App.Testing.Restore    → set IsEnabled
+│      • App.CallStack.Restore  → reconstruct frame chain
+│      • Each frame's Goal-stub resolves against app.Goals; hash-match (hard error on mismatch)
+├── 5. Main loop's first tick lands at the bottom CallStack frame (Goal, StepIndex, ActionIndex)
+│      → re-executes the failed action with the bound state
+```
 
-`app.Goals.LoadByPrPath(prPath)` is the lookup. Goals load lazily; the resumer needs the path to find one. If the file doesn't exist (developer deleted/moved it between issue and resume), the resume fails as a referent-integrity error — same shape as a deleted identity.
+`callback.Run` is the only verb the resumer sees. Position lives inside `app.CallStack` after restore — the engine pulls it from there, just like in any normal run.
 
-The actual API name (`LoadByPrPath` vs `GetByPath` vs whatever) is a coder lookup task. **The architectural requirement:** the App must be able to load a goal by its `PrPath` from the on-disk goals registry. Whether that involves filesystem scanning or an in-memory index is an implementation detail.
+## `AskCallback.Run(ctx)`
 
-## `Goal.Hash` subtlety — known limitation
+Different shape inside, same interface verb outside.
+
+```
+askCallback.Run(ctx)
+├── 1. signing.verify(data.Signature)
+├── 2. crypto.decrypt(payload bytes)
+├── 3. AskCallback.Deserialize(plaintext, ctx) → record fields populated
+├── 4. Resolve Position.Goal stub against app.Goals; hash-match (hard error on mismatch)
+├── 5. Construct fresh App
+├── 6. Bind callback.Variables into App.Variables (the names the developer pinned via `vars:`)
+├── 7. Dispatch the ask action at (Position.StepIndex, Position.ActionIndex) with callback.Actor
+│      as actor context; the action returns the bound value instead of issuing a fresh ask
+```
+
+No App snapshot to walk — ask-user is a clean pause, the developer named the surviving variables, the rest is fresh App boot.
+
+## Goal hash subtlety — known limitation
 
 `Goal.Hash` (at `PLang/App/Goals/Goal/this.cs:121`) covers the developer's prose: goal name + concatenated step text. It does **not** cover:
 
