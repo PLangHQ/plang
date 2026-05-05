@@ -17,6 +17,8 @@ public class FluidProvider : ITemplateProvider
 {
     public string Name => "default";
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     private FluidParser CreateParser()
     {

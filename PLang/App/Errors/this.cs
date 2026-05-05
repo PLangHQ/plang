@@ -28,7 +28,18 @@ public sealed partial class @this
     /// Run-wide trail of every error pushed into scope. Survives Pop.
     /// See <see cref="Trail.@this"/> for thread-safety + lifecycle.
     /// </summary>
-    public Trail.@this Trail { get; } = new();
+    public Trail.@this Trail { get; private set; } = new();
+
+    /// <summary>
+    /// Replaces the current Trail with one populated from a captured snapshot
+    /// and freezes it. Called by Trail.@this.Restore through App.Restore.
+    /// </summary>
+    internal void RestoreTrail(IEnumerable<IError> entries)
+    {
+        var rebuilt = new Trail.@this();
+        rebuilt.LoadAndFreeze(entries);
+        Trail = rebuilt;
+    }
 
     /// <summary>
     /// Pushes <paramref name="error"/> as the current error and appends to <see cref="Trail"/>.

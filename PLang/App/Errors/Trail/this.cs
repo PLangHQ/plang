@@ -15,13 +15,24 @@ namespace App.Errors.Trail;
 /// Lifecycle: unbounded for the App's lifetime — long-running processes accumulate
 /// linearly. Bounded retention is a future opt-in.
 /// </summary>
-public sealed class @this : IReadOnlyList<IError>
+public sealed partial class @this : IReadOnlyList<IError>
 {
     private readonly List<IError> _entries = new();
     private readonly object _lock = new();
+    private bool _frozen;
+
+    /// <summary>
+    /// True when the Trail has been frozen (e.g. populated by Restore from a snapshot).
+    /// Frozen Trails reject <see cref="Add"/> — they are a historic record, not a live
+    /// append target. Live Trails created by App boot stay unfrozen.
+    /// </summary>
+    public bool IsFrozen => _frozen;
 
     public void Add(IError error)
     {
+        if (_frozen)
+            throw new InvalidOperationException(
+                "Errors.Trail is frozen (restored from snapshot) and cannot be appended to.");
         lock (_lock) _entries.Add(error);
     }
 

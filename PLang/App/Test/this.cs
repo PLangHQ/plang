@@ -9,7 +9,7 @@ namespace App.Test;
 /// and test.tag / assert handlers use the state on this object.
 /// Activated by: plang --test
 /// </summary>
-public sealed class @this
+public sealed partial class @this
 {
     /// <summary>Whether test mode is active. Set by --test, read by subsystems that branch on test mode.</summary>
     public bool IsEnabled { get; set; }

@@ -17,6 +17,8 @@ public class Ed25519Provider : ISigningProvider
 {
     public string Name => "ed25519";
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     // --- High-level pipeline ---
 

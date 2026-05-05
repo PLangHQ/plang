@@ -9,7 +9,7 @@ namespace App.Variables;
 /// <summary>
 /// Thread-safe variable storage for App.
 /// </summary>
-public class @this
+public partial class @this
 {
     private readonly ConcurrentDictionary<string, Data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
     private Actor.Context.@this? _context;

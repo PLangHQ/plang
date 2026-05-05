@@ -15,6 +15,8 @@ public sealed class FakeProvider : IFakeProvider
 {
     public string Name => "fake";
     public bool IsDefault { get; set; } = true;
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
     public string Echo(string s) => $"echo:{s}";
 }
 

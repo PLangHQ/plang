@@ -25,6 +25,8 @@ public sealed class DefaultHttpProvider : IHttpProvider
 {
     public string Name { get; init; } = "default";
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     private readonly HttpMessageHandler? _handler;
     private HttpClient? _client;

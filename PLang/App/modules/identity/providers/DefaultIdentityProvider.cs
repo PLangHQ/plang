@@ -20,6 +20,8 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
 
     public string Name => "default";
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     public async Task<Data.@this> GetAsync(Get action)
     {

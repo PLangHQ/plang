@@ -50,6 +50,8 @@ public partial class load : IContext
                 return Error(new ActionError($"Provider '{type.Name}' has no parameterless constructor", "ProviderConstructor", 400));
 
             var instance = (IProvider)ctor.Invoke(null);
+            // Stamp DLL origin so snapshot capture / restore can reload from the same source.
+            instance.Source = Context.App.FileSystem.Path.GetFullPath(Path.Value!, Context.App.AbsolutePath);
 
             // Register for each IProvider-derived interface the type implements
             var interfaces = type.GetInterfaces()

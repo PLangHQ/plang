@@ -13,9 +13,15 @@ namespace App.Providers;
 /// First registered becomes default. Thread-safe via ConcurrentDictionary.
 /// Generic methods delegate to non-generic — single source of truth for all logic.
 /// </summary>
-public sealed class @this
+public sealed partial class @this
 {
     private readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, IProvider>> _providers = new();
+
+    // Remembers which provider RegisterDefaults marked as the type's default. Used by
+    // Snapshot capture to decide whether the *current* default differs from what a
+    // freshly-booted App would set. Without this, SetDefault() clearing the built-in's
+    // IsDefault flag would erase the evidence needed to detect the override.
+    private readonly ConcurrentDictionary<System.Type, string> _builtInDefaults = new();
 
     // --- Generic convenience methods (delegate to non-generic) ---
 
@@ -212,18 +218,30 @@ public sealed class @this
     /// </summary>
     public void RegisterDefaults()
     {
+        // Stamp every built-in registration so the snapshot capture skips them —
+        // the fresh App's RegisterDefaults reproduces the same set on Restore, so
+        // they don't need to ride along in the payload.
         var ed25519 = new Ed25519Provider();
-        Register<ISigningProvider>(ed25519);
-        Register<IKeyProvider>(ed25519);
-        Register<IIdentityProvider>(new DefaultIdentityProvider());
-        Register<ICryptoProvider>(new DefaultCryptoProvider());
-        Register<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
-        Register<modules.condition.providers.IEvaluator>(new modules.condition.providers.DefaultEvaluator());
-        Register<modules.assert.providers.IAssertProvider>(new modules.assert.providers.DefaultAssertProvider());
-        Register<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider());
-        Register<ITemplateProvider>(new FluidProvider());
-        Register<modules.llm.providers.ILlmProvider>(new modules.llm.providers.OpenAiProvider());
-        Register<modules.builder.providers.IBuilderProvider>(new modules.builder.providers.DefaultBuilderProvider());
-        Register<Data.Providers.IGrepProvider>(new Data.Providers.DefaultGrepProvider());
+        RegisterBuiltIn<ISigningProvider>(ed25519);
+        RegisterBuiltIn<IKeyProvider>(ed25519);
+        RegisterBuiltIn<IIdentityProvider>(new DefaultIdentityProvider());
+        RegisterBuiltIn<ICryptoProvider>(new DefaultCryptoProvider());
+        RegisterBuiltIn<modules.http.providers.IHttpProvider>(new modules.http.providers.DefaultHttpProvider());
+        RegisterBuiltIn<modules.condition.providers.IEvaluator>(new modules.condition.providers.DefaultEvaluator());
+        RegisterBuiltIn<modules.assert.providers.IAssertProvider>(new modules.assert.providers.DefaultAssertProvider());
+        RegisterBuiltIn<modules.file.providers.IFileProvider>(new modules.file.providers.DefaultFileProvider());
+        RegisterBuiltIn<ITemplateProvider>(new FluidProvider());
+        RegisterBuiltIn<modules.llm.providers.ILlmProvider>(new modules.llm.providers.OpenAiProvider());
+        RegisterBuiltIn<modules.builder.providers.IBuilderProvider>(new modules.builder.providers.DefaultBuilderProvider());
+        RegisterBuiltIn<Data.Providers.IGrepProvider>(new Data.Providers.DefaultGrepProvider());
+    }
+
+    private void RegisterBuiltIn<T>(T provider) where T : class, IProvider
+    {
+        provider.IsBuiltIn = true;
+        Register(typeof(T), provider);
+        // Stamp the type's "natural" default name *once* — the first built-in for a type
+        // becomes default by virtue of being first-registered, mirroring Register's contract.
+        _builtInDefaults.TryAdd(typeof(T), provider.Name);
     }
 }

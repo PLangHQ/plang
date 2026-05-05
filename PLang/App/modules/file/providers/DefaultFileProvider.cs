@@ -12,6 +12,8 @@ public class DefaultFileProvider : IFileProvider
 {
     public string Name => "default";
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     public Data.@this Read(Read action)
     {

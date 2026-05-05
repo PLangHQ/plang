@@ -130,6 +130,10 @@ public class IdentityKeyProviderTests
         public string Name => ProviderName;
         public bool IsDefault { get; set; }
 
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
+
         public MockKeyProvider(string pubKey, string privKey)
         {
             _pubKey = pubKey;
@@ -143,6 +147,10 @@ public class IdentityKeyProviderTests
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
+
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
         public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

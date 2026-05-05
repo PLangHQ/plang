@@ -163,6 +163,165 @@
         "health": "green — stubs follow architect's matrix faithfully; 5 ambiguous coverage rows resolved with documented defaults that coder/architect can override during review.",
         "notes": "Stage tags [S1]-[S4] on each test let coder run the suite progressively after each stage closes. Two C# tests reference future types (Snapshot.@this, ICallback, ErrorCallback, AskCallback, etc.) only by behaviour comment — bodies are placeholder Assert.Fail so the suite compiles trivially regardless of what's implemented. Recommend coder runs `dotnet build PLang.Tests` first to confirm the new files compile before starting Stage 1."
       }
+    },
+    {
+      "id": "dbdb1a9d-09d9-48cb-91aa-97c60bf26c6a",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T18:19:01Z",
+      "intent": "Implement Stage 1 — Snapshot Foundation: ISnapshotted + Snapshot.@this + App.Snapshot()/Restore() + Capture/Restore on Variables, Errors.Trail, Providers, _statics, Build, Testing. Make all [S1] test-designer stubs green.",
+      "before": {
+        "assumptions": "Architect's plan + 4 stage docs + test-designer's 97 stubs are landed. Q1 (Data context) resolved with Ingi: keep the existing settable Context property — it propagates already through Variables.Set, Step/Action/Goal dispatch, Envelope, Clone. No constructor change. If null hits the lazy signature getter, deal with it then. Q2 resolved: output.ask gets `List<Data> Variables`. Builder annotation work out of branch scope. Stages will be committed individually; no PR.",
+        "risk": "Providers two-step Restore needs a real Assembly.LoadFrom path to satisfy the hard-error tests for unresolvable DLL — no mocking. _statics extraction touches App constructor + the GetStatic shim. Errors.Trail freeze-on-restore needs a state mutation method (Trail isn't currently mutable from outside its Add). Variables Capture must preserve full Data shape (Name, Value, Type, Properties) per test-designer's `PreservesValuesAndProperties_ForUserVars`."
+      },
+      "plan": ".bot/runtime2-callback/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Snapshot/ISnapshotted.cs",
+            "PLang/App/Snapshot/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "ISnapshotted interface (Capture + static abstract Restore) and Snapshot.@this typed read/write tree (Section/Write/Read/Has/HasSection). Storage stays private — callers only see the typed surface, satisfying the architect's 'don't expose entries as a public collection' constraint."
+        },
+        {
+          "paths": [
+            "PLang/App/Statics/this.cs",
+            "PLang/App/Statics/this.Snapshot.cs",
+            "PLang/App/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Extracted App._statics inline ConcurrentDictionary into its own AppStatics @this so it can implement ISnapshotted. App keeps GetStatic(key) shim for backwards compatibility with module callers."
+        },
+        {
+          "paths": [
+            "PLang/App/Build/this.cs",
+            "PLang/App/Build/this.Snapshot.cs",
+            "PLang/App/Test/this.cs",
+            "PLang/App/Test/this.Snapshot.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Marked App.Build.@this and App.Test.@this as partial; added Capture/Restore for IsEnabled bit. Other fields (Files filter, Cache, Results, Coverage, CurrentTest, etc.) are reconstruct-on-build per architect."
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Variables/this.Snapshot.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Variables Capture preserves full Data shape via Clone (Name, Value, Type, Properties), honouring the existing partition (skip !-prefix, DynamicData, SettingsVariable). Restore re-clones into a fresh Variables so the snapshot can be re-applied independently."
+        },
+        {
+          "paths": [
+            "PLang/App/Errors/this.cs",
+            "PLang/App/Errors/this.Snapshot.cs",
+            "PLang/App/Errors/Trail/this.cs",
+            "PLang/App/Errors/Trail/this.Snapshot.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Trail captures entries; Restore replaces the live Trail with a frozen one (rejects further Add via InvalidOperationException). Errors exposes RestoreTrail(entries) as the bulk-load entry point and is itself ISnapshotted, dispatching into its 'trail' subsection."
+        },
+        {
+          "paths": [
+            "PLang/App/Providers/IProvider.cs",
+            "PLang/App/Providers/this.cs",
+            "PLang/App/Providers/this.Snapshot.cs",
+            "PLang/App/modules/provider/load.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added IsBuiltIn + Source to IProvider. RegisterDefaults goes through RegisterBuiltIn<T> which stamps IsBuiltIn=true and remembers the type's born default in _builtInDefaults — survives SetDefault clearing the IsDefault flag. provider.load stamps Source = absoluteDllPath. Two-step Restore: replay non-built-in registrations (Assembly.LoadFrom; hard error on missing DLL or impl-type), then apply default-selection overrides (hard error on unknown name). New ProviderRestoreException carries the failure."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/Providers/DefaultGrepProvider.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/App/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/App/modules/assert/providers/DefaultAssertProvider.cs",
+            "PLang/App/modules/identity/providers/DefaultIdentityProvider.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/crypto/providers/DefaultProvider.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added IsBuiltIn + Source auto-property implementations to all 11 production provider classes (alongside the existing IsDefault). Mechanical, type-system-required."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/crypto/HashActionTests.cs",
+            "PLang.Tests/App/Modules/crypto/ProviderRegistryTests.cs",
+            "PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs",
+            "PLang.Tests/App/Modules/signing/IdentityKeyProviderTests.cs",
+            "PLang.Tests/App/Modules/signing/VerifyActionTests.cs",
+            "PLang.Tests/App/Core/NamedProviderRegistryTests.cs",
+            "PLang.Tests/App/Modules/ui/RenderTests.cs",
+            "PLang.Tests/App/Modules/signing/SignActionTests.cs",
+            "PLang.Tests/App/Modules/provider/ProviderModuleTests.cs",
+            "PLang.Tests/Generator/Matrix/Provider/Handlers.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added IsBuiltIn + Source to all in-test provider classes (Mock/Stub/Throwing/Failing/Custom variants) so the build compiles after the IProvider interface change."
+        },
+        {
+          "paths": [
+            "PLang/App/this.Snapshot.cs",
+            "PLang/App/GlobalUsings.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "App.Snapshot()/Restore() entry points walking the six ISnapshotted subsystems by name. Global aliases Snapshot, ISnapshotted, AppStatics added. Restore uses fully-qualified global::App.X.@this.Restore because the global aliases shadow the parent-namespace lookup inside App.* files."
+        },
+        {
+          "paths": [
+            "PLang.Tests/GlobalUsings.cs",
+            "PLang.Tests/App/SnapshotTests/SnapshotInterfaceTests.cs",
+            "PLang.Tests/App/SnapshotTests/AppSnapshotTests.cs",
+            "PLang.Tests/App/SnapshotTests/StaticsAndModesSnapshotTests.cs",
+            "PLang.Tests/App/SnapshotTests/ProvidersSnapshotTests.cs",
+            "PLang.Tests/App/VariablesTests/VariablesSnapshotTests.cs",
+            "PLang.Tests/App/Errors/ErrorsTrailSnapshotTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled bodies of 17 test-designer Stage-1 stubs. Pattern uses `new global::App.@this(\"/test\")` to construct an App and exercises round-trip (src → snap → dst). Providers tests use a public CustomGrep with parameterless ctor in this assembly so Restore's Assembly.LoadFrom path can re-instantiate. Hard-error tests use a synthetic snapshot pointing at /nonexistent/ghost.dll to assert ProviderRestoreException fires. Added Snapshot/ISnapshotted/AppStatics global aliases to the test project too."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v1/plan.md",
+            ".bot/runtime2-callback/coder/v1/baseline-tests.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage-1 plan, captured baseline (C# 97 fails = all stubs / 0 real; PLang 11 stale + 0 fail), and summary. Per-stage commit per Ingi."
+        }
+      ],
+      "after": {
+        "status": "Stage 1 complete: ISnapshotted + Snapshot.@this + 6 subsystem captures land. C# 97 stubs → 80 (17 [S1] flipped green; the 80 remaining are Stages 2-4). PLang 192/181 pass / 0 fail / 11 stale — unchanged from baseline.",
+        "health": "green — clean build, no regressions. The Providers two-step Restore was the real complexity (DLL load + impl-type lookup + born-default tracking to survive SetDefault); landed cleanly with hard-error coverage.",
+        "notes": "Stage 2 next: CallStack frames + Variables.SnapshotAt(error). The CallStack-related test stubs are already in place from test-designer. No CLAUDE.md proposals from this stage — nothing canonical-and-new emerged that wasn't already in /PLang/App/CLAUDE.md or covered by the architect's plan."
+      },
+      "timestamp_end": "2026-05-05T18:38:00Z"
     }
   ]
 }

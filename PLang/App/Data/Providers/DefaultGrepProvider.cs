@@ -11,6 +11,8 @@ public class DefaultGrepProvider : IGrepProvider
 {
     public string Name => "default";
     public bool IsDefault { get; set; } = true;
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     public @this Grep(@this data, string pattern, int contextLines = 0)
     {

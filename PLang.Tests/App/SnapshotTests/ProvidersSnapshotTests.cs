@@ -1,22 +1,62 @@
+using global::App.Providers;
+
 namespace PLang.Tests.App.SnapshotTests;
 
 public class ProvidersSnapshotTests
 {
+    // Public + parameterless ctor so Restore can re-instantiate it from the test DLL.
+    public sealed class CustomGrep : global::App.Data.Providers.IGrepProvider
+    {
+        public string Name => "custom";
+        public bool IsDefault { get; set; }
+        public bool IsBuiltIn { get; set; }
+        public string? Source { get; set; }
+        public Data Grep(Data data, string pattern, int contextLines = 0) => Data.Ok(true);
+        public Data GrepCount(Data data, string pattern) => Data.Ok(0L);
+    }
+
     [Test]
     public async Task Providers_RoundTrip_PreservesDefaultSelectionsAndRuntimeRegistrations()
     {
         // Default selections per type + runtime (type, name, source) tuples both survive.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var src = new global::App.@this("/src");
+        var custom = new CustomGrep();
+        // Stamp Source so the snapshot has a loadable origin (use this assembly's path).
+        custom.Source = typeof(CustomGrep).Assembly.Location;
+        src.Providers.Register(typeof(global::App.Data.Providers.IGrepProvider), custom);
+        src.Providers.SetDefault(typeof(global::App.Data.Providers.IGrepProvider), "custom");
+
+        var snap = src.Snapshot();
+        var registrations = snap.Section("Providers")
+            .Read<List<global::App.Providers.@this.Registration>>("registrations");
+        var overrides = snap.Section("Providers")
+            .Read<List<global::App.Providers.@this.DefaultOverride>>("defaultOverrides");
+
+        await Assert.That(registrations).IsNotNull();
+        await Assert.That(registrations!.Any(r => r.ProviderName == "custom")).IsTrue();
+        await Assert.That(overrides).IsNotNull();
+        await Assert.That(overrides!.Any(o => o.ProviderName == "custom")).IsTrue();
     }
 
     [Test]
     public async Task Providers_Restore_ReplaysRegistrationsBeforeApplyingDefaults()
     {
         // Order matters: registrations first, then defaults — otherwise defaults reference
-        // names that don't exist yet.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // names that don't exist yet. We assert the contract by capturing an override that
+        // names a registration that only exists post-step-1; if the order were inverted,
+        // SetDefault would fire before Register and the restore would hard-error.
+        var src = new global::App.@this("/src");
+        var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
+        src.Providers.Register(typeof(global::App.Data.Providers.IGrepProvider), custom);
+        src.Providers.SetDefault(typeof(global::App.Data.Providers.IGrepProvider), "custom");
+
+        var snap = src.Snapshot();
+        var dst = new global::App.@this("/dst");
+        dst.Restore(snap, dst.User.Context);
+
+        var defaultGrep = dst.Providers.Get<global::App.Data.Providers.IGrepProvider>();
+        await Assert.That(defaultGrep.Success).IsTrue();
+        await Assert.That(defaultGrep.Value!.Name).IsEqualTo("custom");
     }
 
     [Test]
@@ -24,8 +64,21 @@ public class ProvidersSnapshotTests
     {
         // Captured runtime registration's DLL/source can't be loaded → referent-integrity
         // hard error. No silent fallback to system default.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var snap = new Snapshot();
+        snap.Section("Providers").Write("registrations", new List<global::App.Providers.@this.Registration>
+        {
+            new(typeof(global::App.Data.Providers.IGrepProvider).AssemblyQualifiedName!,
+                "ghost",
+                "/nonexistent/ghost-provider.dll")
+        });
+        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Providers.@this.DefaultOverride>());
+
+        var dst = new global::App.@this("/dst");
+        await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
+        {
+            dst.Restore(snap, dst.User.Context);
+            await Task.CompletedTask;
+        });
     }
 
     [Test]
@@ -33,8 +86,19 @@ public class ProvidersSnapshotTests
     {
         // Registrations succeed but default-selection name doesn't match any registered
         // provider → referent-integrity hard error.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var snap = new Snapshot();
+        snap.Section("Providers").Write("registrations", new List<global::App.Providers.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Providers.@this.DefaultOverride>
+        {
+            new(typeof(global::App.Data.Providers.IGrepProvider).AssemblyQualifiedName!, "phantom")
+        });
+
+        var dst = new global::App.@this("/dst");
+        await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
+        {
+            dst.Restore(snap, dst.User.Context);
+            await Task.CompletedTask;
+        });
     }
 
     [Test]
@@ -42,16 +106,34 @@ public class ProvidersSnapshotTests
     {
         // RegisterDefaults output is reconstructed on App boot — only post-defaults
         // registrations end up in the captured payload.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this("/test");
+        var snap = app.Snapshot();
+        var registrations = snap.Section("Providers")
+            .Read<List<global::App.Providers.@this.Registration>>("registrations");
+
+        await Assert.That(registrations).IsNotNull();
+        await Assert.That(registrations!.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task Providers_OnlyRegistryLayer_Captured_ProviderInstancesAreReconstructed()
     {
         // The provider instances themselves are reconstruct-on-build — only the registry
-        // layer (selections + registrations) is in the snapshot.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // layer (selections + registrations) is in the snapshot. We confirm by inspecting
+        // the wire shape: only Registration tuples + DefaultOverride records, no provider
+        // object graphs.
+        var src = new global::App.@this("/src");
+        var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
+        src.Providers.Register(typeof(global::App.Data.Providers.IGrepProvider), custom);
+
+        var snap = src.Snapshot();
+        var registrations = snap.Section("Providers")
+            .Read<List<global::App.Providers.@this.Registration>>("registrations");
+
+        await Assert.That(registrations).IsNotNull();
+        await Assert.That(registrations!.Count).IsEqualTo(1);
+        // The wire entry is the metadata triple, not the IProvider instance graph.
+        await Assert.That(registrations[0].ProviderName).IsEqualTo("custom");
+        await Assert.That(registrations[0].Source).IsNotNull();
     }
 }

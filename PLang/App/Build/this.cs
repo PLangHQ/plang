@@ -7,7 +7,7 @@ namespace App.Build;
 /// so the builder can validate SQL against real schema without creating files.
 /// Activated by: plang p build
 /// </summary>
-public sealed class @this
+public sealed partial class @this
 {
     private readonly App.@this _app;
 

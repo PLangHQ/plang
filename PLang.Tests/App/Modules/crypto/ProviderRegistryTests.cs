@@ -106,6 +106,10 @@ public class ProviderRegistryTests
         public string Name { get; }
         public bool IsDefault { get; set; }
 
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
+
         public NamedCryptoProvider(string name) { Name = name; }
 
         public Data Hash(Hash action) => Data.Ok(new byte[32]);

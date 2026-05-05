@@ -11,6 +11,8 @@ public class DefaultCryptoProvider : ICryptoProvider
 {
     public string Name => "default";
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     public Data.@this Hash(Hash action)
     {

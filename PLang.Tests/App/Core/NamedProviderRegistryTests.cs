@@ -356,6 +356,10 @@ public class NamedProviderRegistryTests
         public string Name { get; }
         public bool IsDefault { get; set; }
 
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
+
         public MockSigningProvider(string name) { Name = name; }
 
         public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));

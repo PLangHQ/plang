@@ -45,6 +45,13 @@ global using AppProviders = App.Providers.@this;
 // Variables (was MemoryStack)
 global using Variables = App.Variables.@this;
 
+// Snapshot subsystem
+global using Snapshot = App.Snapshot.@this;
+global using ISnapshotted = App.Snapshot.ISnapshotted;
+
+// Statics — App-scoped key/value store extracted from App._statics
+global using AppStatics = App.Statics.@this;
+
 // Standalone concepts
 global using ICache = App.Cache.ICache;
 global using MemoryStepCache = App.Cache.MemoryStepCache;
