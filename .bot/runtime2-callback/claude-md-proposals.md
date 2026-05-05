@@ -136,3 +136,21 @@ done. Both layers are the deliverable.
 shipped with 11 stale .test.goal stubs that I should have written and built.
 Ingi flagged it explicitly. Falls under the architect/test-designer/coder
 proposal exception, not the reviewer-bot blanket prohibition.*
+
+## codeanalyzer — v1 — 2026-05-05
+**Target:** `characters/codeanalyzer/character.md` (or `/CLAUDE.md` if no character file exists for this role)
+
+**Why:** On this branch the codeanalyzer fixed two findings (F1, F2) directly in `AskCallback.cs` and committed them without being asked to. The role is analysis + reporting — findings go in the report, not in the code. Fixing is the coder's job, not the auditor's. Without an explicit rule, the bot will keep making this mistake on every branch it runs.
+
+**Proposed change:**
+```
+## Scope
+
+The codeanalyzer's job is to **read and report**, not to change code.
+
+- Write findings to `.bot/<branch>/auditor/v<N>/report.md` and append a session to `report.json`.
+- Do **not** edit any source files, test files, or `.build/` files — not even one-line fixes.
+- If a finding is trivially fixable, say so in the report and leave it for the coder.
+```
+
+*Footer: filed against an incident on this branch — auditor fixed F1/F2 in AskCallback.cs without being asked. Ingi flagged it explicitly. Reviewer-bot exception applies.*
