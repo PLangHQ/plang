@@ -1,52 +1,28 @@
-# Callback v2 — Phase 2: Signing, Storage, and Resume for Error-Retry
+# Callback — Phase 2: Signing, Storage, and Resume for Error-Retry
 
-This is a delta on `v1/plan.md`. v1 settled the snapshot/restore design (what gets captured, the islands rule, the per-actor Variables, the Providers registry-layer snapshot, etc.). v2 covers the **wire format, signing, persistence, and resume mechanics** — and stages the work so error-retry can ship without ask-user/encryption.
+This is **Phase 2**. Phase 1 (`v1/plan.md`) settled the resume mechanism end-to-end in-process: snapshot/restore, the islands rule, per-actor Variables, the Providers registry-layer snapshot, throw-time variable capture, position semantics, the `Callback` schema. Phase 2 is the first phase that touches durability — it adds the wire format, signing, persistence, and resume mechanics on top of the v1 foundation, so any error becomes durably retriable.
 
-Read v1 first for the underlying state model. v2 is the layer above it.
+Phase 3 (future `v3/plan.md`) adds HTTP wire transport and encryption for ask-user. Each phase is its own version doc.
 
-## What changed since v1
+Read v1 first for the underlying state model. Phase 2 is the durability layer above it.
 
-Three substantive insights from the v2 conversation:
-
-1. **Signing is transparent at the Data IO boundary.** Any `Data.@this` written to a stream gets its `Signature` property populated automatically by the serializer (via the `signing` module). Default signature has *no expiry* — it's an integrity guarantee, not a validity gate. Developers who want time-bounded validity call `- sign %callback% expires in 24h` explicitly, which overwrites the default Signature.
-2. **Goal already has a `Hash` property** at `PLang/App/Goals/Goal/this.cs:121` — SHA-256 of `Name + concatenated step text`. We use it directly for `Callback.GoalHash`. No new hashing infrastructure.
-3. **Encryption belongs to the Callback class, not the Data layer.** Most Data writes don't need encryption (logs, files, debug output). Only Callback-in-ask-user-mode does. So encryption lives as a Callback-internal serialization concern and is a Phase 3 capability — Phase 2 ships without it.
-
-These three combined mean Phase 2 ships entirely on existing infrastructure: the `signing` module, `Goal.Hash`, and developer-written PLang storage (`- write %callback% to file ...`). No new crypto, no new modules, no new core abstractions beyond what v1 already designed.
-
-## The phase split
+## Phase scope
 
 | Phase | Scope | New infra required |
 |---|---|---|
-| **Phase 1** | In-process error → callback → resume test, no signing, no storage | None — pure v1 mechanics |
+| **Phase 1** *(`v1/plan.md`)* | In-process error → callback → resume, no signing, no storage | None — pure mechanics |
 | **Phase 2** *(this doc)* | Error-retry: signed envelope, developer-chosen storage, full resume cycle | None — uses existing `signing` module |
-| **Phase 3** *(future v3 doc)* | Ask-user: HTTP wire transport, encryption | Extends `ICryptoProvider` with `EncryptAsync`/`DecryptAsync` |
+| **Phase 3** *(future `v3/plan.md`)* | Ask-user: HTTP wire transport, encryption | Extends `ICryptoProvider` with `EncryptAsync`/`DecryptAsync` |
 
 Phase 2 captures most of the durable-execution value (any error becomes durably retriable). Phase 3 is the wire-bound special case.
 
-## Schema corrections to `Callback`
+## Three insights that make Phase 2 cheap
 
-From v1's draft schema, three changes:
+1. **Signing is transparent at the Data IO boundary.** Any `Data.@this` written to a stream gets its `Signature` property populated automatically by the serializer (via the `signing` module). Default signature has *no expiry* — it's an integrity guarantee, not a validity gate. Developers who want time-bounded validity call `- sign %callback% expires in 24h` explicitly, which overwrites the default Signature.
+2. **Goal already has a `Hash` property** at `PLang/App/Goals/Goal/this.cs:121` — SHA-256 of `Name + concatenated step text`. We use it directly for `Callback.GoalHash`. No new hashing infrastructure.
+3. **Encryption belongs to the Callback class, not the Data layer.** Most Data writes don't need encryption (logs, files, debug output). Only Callback-in-ask-user-mode does. So encryption lives as a Callback-internal serialization concern in Phase 3 — Phase 2 ships without it.
 
-```csharp
-record Callback(
-    string GoalPrPath,                              // NEW — relative path to .pr file (App.Goals loads goals lazily by path)
-    string GoalHash,                                // = goal.Hash (SHA-256 of name + step text); drift = hard error on resume
-    int StepIndex,
-    int ActionIndex,
-    string ActorName,                               // System / Service / User
-    Dictionary<string, object?> VariablesByActor,
-    Dictionary<string, object?> Selections,         // App.Providers + identity, by name
-    Dictionary<string, object?> Statics,            // App._statics until that TODO closes
-    List<IError> ErrorTrail,
-    bool BuildEnabled,
-    bool TestingEnabled
-    // REMOVED: Expiry — now lives in Data.Signature (set by explicit `- sign expires in N` if wanted)
-);
-```
-
-- **Added** `GoalPrPath` because `App.Goals` loads goals lazily by path. Without the path the resumer can't find the goal to load.
-- **Removed** `Expiry`. It was duplicating what `Data.Signature` already carries (`SignedData.Expires`). Default integrity-only signing has no expiry; explicit time-bounded signing populates `Data.Signature.Expires`. One source of truth.
+These three combined mean Phase 2 ships entirely on existing infrastructure: the `signing` module, `Goal.Hash`, and developer-written PLang storage (`- write %callback% to file ...`). No new crypto, no new modules, no new core abstractions beyond what v1 already designed.
 
 ## Transparent Data signing — the IO hook
 
@@ -76,11 +52,11 @@ Affected files (inventory, not exhaustive — coder verifies):
 - All references in `Ed25519Provider`, `sign.cs`, `verify.cs`.
 - Any consumer that reads `Data.Signature` (which already exists as a property — check whether the property name needs adjusting; if it's typed `Signature`, the rename composes cleanly).
 
-This is a mechanical refactor, low risk. Bundle into the same PR as v2 implementation or do it standalone first; coder's call.
+This is a mechanical refactor, low risk. Bundle into the same PR as Phase 2 implementation or do it standalone first; coder's call.
 
-## Encryption is Callback-internal — the layering decision
+## Encryption is Callback-internal — the layering decision (Phase 3 setup)
 
-For Phase 3 (ask-user), the variable values transported over the wire need encryption (the user's browser shouldn't be able to read `%orderId%`). The encryption sits **inside Callback's own serialization**, *not* at the Data layer.
+For Phase 3 (ask-user), the variable values transported over the wire need encryption (the user's browser shouldn't be able to read `%orderId%`). The encryption sits **inside Callback's own serialization**, *not* at the Data layer. Phase 2 doesn't ship encryption, but the layering is settled now so Phase 2's signing path doesn't need to be rethought when Phase 3 lands.
 
 Layering for Phase 3 issuance:
 
@@ -231,13 +207,13 @@ Adding to v1's list:
 - **Explicit `- sign %callback%` at every issue site.** Rejected. Default signing is transparent at the IO boundary; developers only call `- sign` explicitly when they want to override (custom expiry, contracts, headers).
 - **Auto-verification on Data read.** Rejected. Reads do not verify signatures automatically; the consumer that cares (`- run %callback%`, `- verify %x%`) explicitly invokes verify. Otherwise every Data read pays a crypto cost when most readers don't need integrity.
 - **Default expiry on auto-signed Data.** Rejected. Default = no expiry. Integrity, not validity, is what the default protects. Developers add expiry explicitly when they want it.
-- **`Expiry` field on `Callback` record.** Rejected. Lives in `Data.Signature` (the renamed `SignedData`). One source of truth.
+- **`Expiry` field on `Callback` record.** Rejected. Lives in `Data.Signature` (the renamed `SignedData`). One source of truth. (The v1 schema in `v1/plan.md` reflects this — `Callback` has no `Expiry` field.)
 - **Encryption at the Data layer.** Rejected. Belongs to the Callback class, invoked during its own serialization. Most Data writes don't need encryption.
 - **Built-in `callback.store` / `callback.load` actions for storage ergonomics.** Rejected for Phase 2. Storage is the developer's concern via existing `file.*`, `db.*`, channel actions. If a real ergonomics case appears later, ship as a thin convenience module — not core infra.
 
 ## What carries over unchanged from v1
 
-For completeness — the things v2 does NOT change:
+For completeness — the things Phase 2 does NOT change:
 
 - Three-bucket `ISnapshotted` model with the inventory.
 - Names-vs-values synthesis principle.
@@ -252,4 +228,4 @@ For completeness — the things v2 does NOT change:
 - Islands rule.
 - No `CallbackOrigin`.
 
-If a v1 decision ever conflicts with a v2 statement, v1 governs — this doc is purely additive on the wire/sign/storage/staging axis.
+If a v1 decision ever conflicts with a Phase 2 statement, v1 governs — this doc is purely additive on the wire/sign/storage axis.

@@ -1,0 +1,13 @@
+{
+  "v2/plan.md": [
+    {
+      "id": "cb462e91bf",
+      "line": 7,
+      "text": "let not say what changed in v1, lets have the change in v1, then we can have v1 as one phase, v2 as another phase. if we already have more than 2 phases, then create vX file for each phase",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T10:54:35"
+    }
+  ]
+}

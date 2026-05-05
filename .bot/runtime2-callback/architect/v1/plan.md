@@ -1,4 +1,6 @@
-# Callback — State-Machine Restoration
+# Callback — State-Machine Restoration (Phase 1)
+
+This is the **foundation phase**: the resume mechanism itself, end-to-end in-process. No signing, no storage, no wire. One App throws, one App resumes from the captured Callback, control lands at the failed action with throw-time variables. Phase 2 (`v2/plan.md`) layers signing + developer-chosen storage on top. Phase 3 (future `v3/plan.md`) layers encryption + HTTP wire transport for ask-user.
 
 ## Why this exists
 
@@ -180,7 +182,8 @@ The wire/storage shape is a signed `Data<Callback>` envelope — single blob, on
 
 ```csharp
 record Callback(
-    string GoalHash,
+    string GoalPrPath,                             // relative path to .pr file (App.Goals loads goals lazily by path)
+    string GoalHash,                               // = goal.Hash (SHA-256 of name + step text); drift = hard error on resume
     int StepIndex,
     int ActionIndex,
     string ActorName,                              // System / Service / User
@@ -189,18 +192,21 @@ record Callback(
     Dictionary<string, object?> Statics,           // App._statics until that TODO closes
     List<IError> ErrorTrail,                       // read-only at restore
     bool BuildEnabled,
-    bool TestingEnabled,
-    DateTimeOffset Expiry
-    // Signature is on the Data<Callback> envelope, not a Callback field.
+    bool TestingEnabled
+    // Signature lives on the Data<Callback> envelope (Data.Signature), not a Callback field.
+    // Validity / expiry, when wanted, also lives in Data.Signature — populated by explicit
+    // `- sign %callback% expires in N`. Default signing is integrity-only, no expiry.
 );
 ```
+
+`GoalPrPath` is required because `App.Goals` loads goals lazily by path — without it the resumer can't locate the goal to load. `Goal.Hash` (already on `PLang/App/Goals/Goal/this.cs:121`, SHA-256 of name + concatenated step text) is what `GoalHash` carries; no new hashing infrastructure.
 
 When a `Callback` is consumed by `App.Run(callback)`:
 
 1. App construction runs normally for reconstruct-on-build types (Modules, Goals, Catalog, Settings, FileSystem, Events, Channels, Cache, Debug, built-in Providers).
 2. `App.Providers` registry replays runtime-registered (non-default) providers and applies the captured default selections.
 3. Per-actor `Variables` instances are populated from `VariablesByActor`. `App._statics` is populated from `Statics`. `Errors.Trail` is populated from `ErrorTrail`.
-4. The engine's main loop, on first tick, navigates to `(GoalHash → goal, StepIndex, ActionIndex)` and runs from there.
+4. The engine's main loop, on first tick, navigates to `(GoalPrPath → goal, StepIndex, ActionIndex)` and runs from there. `goal.Hash` is checked against `callback.GoalHash` at load — mismatch is a hard referent-integrity failure (signed but stale; goal was redeployed).
 
 That's the entire engine-side surface. The `Callback` record is the shared shape between issuance, wire/storage, and engine consumption. Everything else (signing, encryption, transport, UI, store/load actions) is layers on top.
 
