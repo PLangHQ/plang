@@ -69,8 +69,12 @@ public sealed class AskCallback : ICallback
                 new global::App.Errors.ServiceError("AskCallback has no Position", "NoPosition", 400));
 
         // Bind surviving variables onto the resumed context's Variables.
+        // Skip !-prefixed names — infra variables are not user state and must not be injected from wire.
         foreach (var v in Variables)
-            ctx.Variables.Set(v.Name, v.Value);
+        {
+            if (!string.IsNullOrEmpty(v.Name) && !v.Name.StartsWith("!"))
+                ctx.Variables.Set(v.Name, v.Value);
+        }
 
         // Inject the answer under the resume sentinel; ask handler reads + consumes it.
         if (Answer != null)
@@ -121,7 +125,11 @@ public sealed class AskCallback : ICallback
             var liveHash = goal.Hash ?? "";
             if (!string.Equals(liveHash, GoalHash, StringComparison.OrdinalIgnoreCase))
                 throw new global::App.Errors.CallbackGoalHashMismatch(GoalPrPath, GoalHash, liveHash);
+            if (StepIndex < 0 || StepIndex >= goal.Steps.Count)
+                throw new global::App.Errors.CallbackGoalNotFound($"{GoalPrPath} (stepIndex {StepIndex} out of range)");
             var step = goal.Steps[StepIndex];
+            if (ActionIndex < 0 || ActionIndex >= step.Actions.Count)
+                throw new global::App.Errors.CallbackGoalNotFound($"{GoalPrPath} (actionIndex {ActionIndex} out of range at step {StepIndex})");
             var action = step.Actions[ActionIndex];
             return new RestoredFrame(action, goal, StepIndex, ActionIndex, "");
         }

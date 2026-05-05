@@ -601,6 +601,39 @@
         "health": "green — clean build, no regressions. The Stage-3 FakeCallback test doubles broke when ICallback expanded; updated them in line. Position resolution / hash-match / hard-error coverage all sit on Stage 2's foundations cleanly.",
         "notes": "Suggested next bot: codeanalyzer to review OBP compliance + simplification opportunities across the branch's diff before any wider review or PR. The 11 stale Plang stubs wait for builder support for `output.ask` `vars:` annotation — that's a separate piece of work."
       }
+    },
+    {
+      "id": "a1c3e7b9-5d2f-4e8a-b0c4-9f1d3e5a7b2c",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-05T21:00:00Z",
+      "timestamp_end": "2026-05-05T21:30:00Z",
+      "intent": "OBP compliance audit + security review of all C# added or changed on this branch vs runtime2.",
+      "before": {
+        "assumptions": "All 4 stage commits are in. C# 2720/2720 per coder summary. Coder handoff lists 16 open decisions/gaps for architect review.",
+        "risk": "Callback wire deserialization handles attacker-influenced data; index bounds and variable injection paths need checking. Sync-over-async was explicitly endorsed by architect — not a new risk but need to confirm it didn't spread beyond the approved boundary."
+      },
+      "plan": ".bot/runtime2-callback/auditor/v1/report.md",
+      "actions": [
+        {
+          "paths": ["PLang/App/Callback/AskCallback.cs"],
+          "type": "modify",
+          "category": "fix",
+          "confidence": "high",
+          "context": "F1: Added missing stepIndex/actionIndex bounds guards in PositionWire.Resolve — mirrors the identical guards already in CallStack.this.Snapshot.cs:132-137. Without these, a wire payload with an out-of-range index throws an uncaught ArgumentOutOfRangeException rather than the controlled CallbackGoalNotFound. F2: Added !-prefix filter in AskCallback.Run variable binding loop — prevents wire payload from injecting infrastructure variable names (!app, !error, etc.) onto the resumed context."
+        },
+        {
+          "paths": [".bot/runtime2-callback/auditor/v1/report.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full audit report: 2 fixed lows (F1 medium unchecked index, F2 low var injection), 3 notes (N1 ErrorCallback.Position contract, N2 SnapshotAt drops Type/Properties, N3 hard errors as CLR exceptions). OBP table: all new types pass. Sync-over-async noted as endorsed design decision."
+        }
+      ],
+      "after": {
+        "status": "PASS. F1 (medium) and F2 (low) fixed in AskCallback.cs. N1-N3 are documentation-level items for the architect/coder to address in stage-5 or separately.",
+        "health": "green — dotnet build PLang.Tests 0 errors after fixes.",
+        "notes": "Real crypto (todos.md) will close F2's attack surface at the source. N1 (ErrorCallback.Position always null pre-Run) is the most likely to confuse a future reader; worth fixing in stage-5 if the architect adds the output.ask surface docs."
+      }
     }
   ]
 }
