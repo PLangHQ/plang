@@ -107,7 +107,7 @@ def render_inline(text: str) -> str:
 
     s = INLINE_CODE.sub(lambda m: stash(f"<code>{m.group(1)}</code>"), s)
     s = LINK.sub(lambda m: stash(
-        f'<a href="{m.group(2)}" target="_blank" rel="noopener">{m.group(1)}</a>'
+        f'<a href="{m.group(2)}">{m.group(1)}</a>'
     ), s)
     s = BOLD.sub(r"<strong>\1</strong>", s)
     s = ITALIC.sub(r"<em>\1</em>", s)
@@ -458,6 +458,7 @@ async function openFile(path) {
   currentBlocks = j.blocks;
   renderView();
   renderSidebar();
+  document.getElementById('main').scrollTop = 0;
 }
 
 function renderView() {
@@ -653,8 +654,8 @@ function showComposer(lineNo, anchorEl, opts) {
     <textarea placeholder="${label}..."></textarea>
     <div class="row">
       <span class="target">${currentFile} : line ${lineNo}${opts.parent_id ? ' (reply)' : ''}</span>
-      <button class="cancel">Cancel</button>
       <button class="save">Save</button>
+      <button class="cancel">Cancel</button>
     </div>`;
   anchorEl.insertAdjacentElement('afterend', comp);
   comp.querySelector('.cancel').onclick = () => comp.remove();
@@ -691,6 +692,32 @@ document.getElementById('toggle-view').onclick = () => {
   viewMode = viewMode === 'rendered' ? 'raw' : 'rendered';
   if (currentFile) renderView();
 };
+
+function resolveRelPath(base, rel) {
+  if (rel.startsWith('/')) return rel.replace(/^\/+/, '');
+  const stack = base ? base.split('/') : [];
+  for (const seg of rel.split('/')) {
+    if (seg === '..') stack.pop();
+    else if (seg && seg !== '.') stack.push(seg);
+  }
+  return stack.join('/');
+}
+
+document.getElementById('content').addEventListener('click', (ev) => {
+  const a = ev.target.closest('a');
+  if (!a) return;
+  const href = a.getAttribute('href');
+  if (!href || /^(https?:|mailto:|#)/i.test(href)) return;
+  const dir = currentFile && currentFile.includes('/')
+    ? currentFile.slice(0, currentFile.lastIndexOf('/'))
+    : '';
+  const [pathPart] = href.split('#');
+  const resolved = resolveRelPath(dir, pathPart);
+  if (files.includes(resolved)) {
+    ev.preventDefault();
+    openFile(resolved);
+  }
+});
 
 // Send to Architect button
 document.getElementById('send-architect').onclick = async () => {
