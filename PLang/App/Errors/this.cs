@@ -59,6 +59,8 @@ public sealed partial class @this
         var previous = _current.Value;
         _current.Value = error;
         Trail.Add(error);
+        // Wire App back-reference so error.Callback can materialise via app.Snapshot().
+        if (error is Error e && e.App == null) e.App = App;
 
         // Auto-flip Flags.Diff on for the duration of error processing so handler-time
         // mutations land on the diff stream — Variables.SnapshotAt(error) reverse-applies

@@ -6,7 +6,12 @@ namespace PLang.Tests.App.Serializers;
 
 public class PlangDataSerializerRoundTripTests
 {
-    private sealed class FakeCallback : ICallback { }
+    private sealed class FakeCallback : ICallback
+    {
+        public global::App.CallStack.RestoredFrame? Position => null;
+        public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
+        public Task<Data> Run(global::App.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
+    }
 
     [Test]
     public async Task PlangDataSerializer_Write_EmitsTypePlusValuePlusSignature()

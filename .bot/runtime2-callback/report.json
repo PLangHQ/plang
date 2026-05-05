@@ -520,6 +520,87 @@
         "health": "green — clean build, no regressions. The DynamicData factory-eval trap during lazy getter was the real surprise; reading _value (not Value) skipped it cleanly. Test fixture DLL refresh was an obvious hygiene step missed in Stage 1.",
         "notes": "Stage 4 next: AskCallback / ErrorCallback / Error.Callback / callback.run / crypto v1. Builder support for `vars:` annotation on `output.ask` is out of branch scope per Ingi — the C# class `ask` gets `List<Data> Variables` but no PLang surface wiring."
       }
+    },
+    {
+      "id": "1c8e2a5b-3f6d-4d7c-8e0a-9b4c6f1d2e7f",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T19:40:00Z",
+      "timestamp_end": "2026-05-05T20:05:00Z",
+      "intent": "Implement Stage 4 — ICallback expansion + AskCallback + ErrorCallback + Error.Callback lazy property + callback.run action + crypto.encrypt/decrypt v1. Make all [S4] stubs green and close the branch's C# coverage.",
+      "before": {
+        "assumptions": "Stages 1-3 landed (commits f93dcdd3, 88bdfcc6, 02b18bd7). ICallback marker exists from Stage 3 (empty interface). app.Callback config holder ready. PlangDataSerializer can read Signature lazily. Stage 4 stubs cover ICallback, Ask/ErrorCallback, Error.Callback property, crypto v1, callback.run, AppCallback config, FailureMatrix. PLang `.test.goal` stubs need builder support for output.ask vars: — out of branch scope.",
+        "risk": "ErrorCallback's wire shape needs to be self-contained — JSON-encoded snapshot of CallStack + Variables sections suffices for [S4] tests but isn't full Snapshot fidelity. Error.Callback property needs an App back-ref; wire it via Errors.Push (the natural materialisation site). Sync-over-async via `.GetAwaiter().GetResult()` in Serialize is acceptable per architect."
+      },
+      "plan": ".bot/runtime2-callback/coder/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Callback/ICallback.cs",
+            "PLang/App/Callback/AskCallback.cs",
+            "PLang/App/Callback/ErrorCallback.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "ICallback expanded with Position + Serialize + Run. AskCallback (Position + ActorName + Variables) Serialize JSON-encodes wire shape and pipes through crypto.encrypt v1; Deserialize reverses, resolving Position via app.Goals.Get with hash-match (raises CallbackGoalNotFound / CallbackGoalHashMismatch from Stage 2). Run binds variables and dispatches via app.Run. ErrorCallback wraps Snapshot.@this; wire shape captures CallStack frames + Variables; Run calls app.Restore + dispatches BottomFrame's Action."
+        },
+        {
+          "paths": [
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Errors/this.cs",
+            "PLang/App/Errors/AssertionError.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Error gains internal App back-ref + lazy Callback property cached per Error instance. Errors.Push wires App on the error. AssertionError fully-qualifies App.Utils.Json (the new App property on Error otherwise shadowed the App namespace)."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/crypto/encrypt.cs",
+            "PLang/App/modules/crypto/decrypt.cs",
+            "PLang/App/modules/callback/run.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "encrypt + decrypt actions: v1 identity pass-through with async signature. callback.run takes Data, verifies signature when present (raises CallbackSignatureMismatch on failure), dispatches into ICallback.Run."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CallbackTests/AppCallbackConfigTests.cs",
+            "PLang.Tests/App/CallbackTests/ICallbackPositionTests.cs",
+            "PLang.Tests/App/CallbackTests/AskCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/ErrorCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/CallbackRunActionTests.cs",
+            "PLang.Tests/App/CallbackTests/FailureMatrixTests.cs",
+            "PLang.Tests/App/Errors/ErrorCallbackPropertyTests.cs",
+            "PLang.Tests/App/Modules/crypto/CryptoV1PassThroughTests.cs",
+            "PLang.Tests/App/Serializers/PlangDataSerializerRoundTripTests.cs",
+            "PLang.Tests/App/DataTests/DataContextWiringTests.cs",
+            "PLang.Tests/App/DataTests/DataLazySignatureTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled all 37 [S4] test bodies. Stage 3 FakeCallback test doubles updated to satisfy the now-expanded ICallback (Position/Serialize/Run). Tests use temp-dir App paths because signing pipeline writes to disk."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v4/plan.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v4 plan + final branch summary."
+        }
+      ],
+      "after": {
+        "status": "Stage 4 complete. All 4 stages of the architect's plan have landed. C# 2720/2720 passing. PLang 192/181/0fail/11stale (the 11 stale need builder support for output.ask vars:, out of branch scope per Ingi).",
+        "health": "green — clean build, no regressions. The Stage-3 FakeCallback test doubles broke when ICallback expanded; updated them in line. Position resolution / hash-match / hard-error coverage all sit on Stage 2's foundations cleanly.",
+        "notes": "Suggested next bot: codeanalyzer to review OBP compliance + simplification opportunities across the branch's diff before any wider review or PR. The 11 stale Plang stubs wait for builder support for `output.ask` `vars:` annotation — that's a separate piece of work."
+      }
     }
   ]
 }

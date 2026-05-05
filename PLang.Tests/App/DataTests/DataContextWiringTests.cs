@@ -4,7 +4,12 @@ namespace PLang.Tests.App.DataTests;
 
 public class DataContextWiringTests
 {
-    private sealed class FakeCallback : ICallback { }
+    private sealed class FakeCallback : ICallback
+    {
+        public global::App.CallStack.RestoredFrame? Position => null;
+        public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
+        public Task<Data> Run(global::App.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
+    }
 
     [Test]
     public async Task Data_Constructor_AcceptsContext_AndStoresPrivately()
