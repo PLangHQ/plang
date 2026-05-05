@@ -845,3 +845,35 @@ Three call sites: `As<T>` variance fast path (so `Data<string>` doesn't variance
 Fix lives at `TypeConverter.cs` (~line 336): `JsonNode` joins `IDictionary<string, object?>`, `JsonElement`, `IList` in the complex-source check (so the JSON-roundtrip serialize→deserialize-to-target arm picks it up); `JsonArray` gets its own element-iteration arm parallel to `JsonElement`-array. Pinned by `TypeMappingDictConversionTests`.
 
 **Why this matters cross-cuttingly**: the LLM builder pipeline does `set %messages% = [...], type=json` then passes `%messages%` to a typed handler expecting `List<LlmMessage>`. Without the JsonNode/JsonArray arms, `JsonObject` slipped past every dispatch arm and landed at `TypeMismatch`, which surfaced as an NRE further down in `OpenAiProvider.Query`. Anyone touching the type-conversion dispatch should keep these four arms (`IDictionary`, `JsonElement`, `JsonNode`, `IList`) symmetric — adding a new complex source means adding a parallel arm.
+
+---
+
+## Lazy `Data.Signature` is ICallback-only — the carve-out
+
+When you read `data.Signature`, the getter populates lazily **only if the wrapped value is an `ICallback`**. Plain `Data<T>` keeps `Signature == null` until something explicitly calls `EnsureSigned()` on it.
+
+The carve-out is deliberate. A fully lazy populate would silently break every existing `if (data.Signature == null)` site across the verify path — they'd start succeeding (signature populated) where they previously needed an explicit sign. Restricting auto-populate to `ICallback` keeps the change behavioural-minimum: callbacks cross security boundaries, so they always seal; everything else keeps the explicit-`EnsureSigned` discipline.
+
+`RawSignature` (an internal accessor on `Data.@this`) is the verify-path's hatch: it returns the underlying field without triggering populate, so verify can ask "is there already a signature here?" without changing state.
+
+**If you're tempted to widen the carve-out, audit every `data.Signature == null` site first.** The trip-wires are subtle.
+
+See `Documentation/v0.2/callbacks.md` for the seal-then-verify gate that depends on this discipline.
+
+---
+
+## `RestoredFrame` is a surrogate, not a `Call.@this`
+
+`PLang/App/CallStack/RestoredFrame.cs` is the position record callbacks use to identify their resume point. It carries the resolved live `Action` (linked to its Step → Goal in the live `App.Goals` registry) plus the positional triple `(StepIndex, ActionIndex, Id)` captured at issue time.
+
+**It is not a `Call.@this`.** It cannot be Pushed into `CallStack`'s AsyncLocal `Current`. It has no Stopwatch, no `OnSet`, no lifecycle. Restoring into a real `Call.@this` would tear up its invariants because Call's ctor is internal and lifecycle-coupled.
+
+The dispatch path is: callbacks read `RestoredFrame` to identify the resume `Position`; `callback.Run` dispatches the bottom frame's Action through `App.Run`, which Pushes a *fresh* live `Call`. The surrogate exists so the snapshot wire shape stays a pure data record — restoring does not mean reconstructing the AsyncLocal frame in place.
+
+---
+
+## `Errors.Push` sets `error.App = this.App` for callback materialisation
+
+`Error.Callback` is a property that materialises an `ErrorCallback` on demand by calling `app.Snapshot()`. For that call to land, the `Error` instance needs a path to the live App tree at the point the callback is asked for — which is later than the point the error was raised.
+
+`PLang/App/Errors/this.cs` solves this by setting `error.App = this.App` inside `Push`. Errors plumb through code that doesn't know about App; the back-ref means recovery callbacks can materialise without re-threading App through the throw site. If you reorganise error handling, preserve this assignment — `Error.Callback` reads `App` via this property and silently returning `null` would mask the recovery path.

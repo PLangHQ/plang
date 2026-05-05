@@ -486,6 +486,30 @@ When an error goal is called, the error is passed as `%!error%` parameter to the
 
 ---
 
+## Snapshot / Restore
+
+Subsystems that need to round-trip across a suspend implement `App.Snapshot.ISnapshotted` — the type system is the bucket assignment. Each implementer captures into its own subtree of a `Snapshot.@this` and reconstructs from that subtree on Restore; references across subsystems are by name, never by pointer. `App.Snapshot()` walks every `ISnapshotted` property; `App.Restore(s, ctx)` walks `s.SectionNames` and dispatches each name to the right subsystem's `Restore`. Section presence is the gate — missing sections stay missing on the receiving side, which is what lets narrow wire shapes (e.g. CallStack + Variables only) round-trip cleanly.
+
+Subsystems that don't implement `ISnapshotted` (Modules, Goals, Channels, Cache, FileSystem) are reconstructed at App build instead. There's no third bucket and no per-call opt-in.
+
+See `snapshots.md` for the per-subsystem subtrees and the referent-integrity discipline.
+
+---
+
+## Callbacks
+
+A callback is a typed record (`ICallback`) that captures "where this run was paused, what state survives the pause, and how to land back here". Two implementations in v1: `AskCallback` (slim — Position + ActorName + developer-named Variables, used by `output.ask`) and `ErrorCallback` (full Snapshot — for the error-retry issuer).
+
+The public verb is `- run %callback%` (`callback.run`). It implements a strict seal-then-verify gate: `EnsureSigned` first (in-process Data signs locally; wire Data without Context is rejected), then `signing.verify`, then dispatch into the typed callback's `Run`. In-process and wire paths are indistinguishable to the gate — absence of signature is rejection, never trust.
+
+`AskCallback` resumes by binding the answer under the sentinel `%!ask.answer%` and re-dispatching the original `output.ask` action. `ErrorCallback` resumes by reconstructing a fresh App from the snapshot and dispatching from `BottomFrame`. CLR exceptions out of `cb.Run` are wrapped as typed `Data.FromError` (no raw exceptions leak through the public entry).
+
+The wire serializer is `application/plang+data` (`PlangDataSerializer`); reading `data.Signature` on Write triggers lazy signing **only when the wrapped value is an `ICallback`** — see `good_to_know.md` for the carve-out.
+
+See `callbacks.md` for the full design.
+
+---
+
 ## Directory Structure
 
 ```
