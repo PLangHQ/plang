@@ -22,6 +22,7 @@ public sealed partial class @this
         Statics.Capture(s.Section("Statics"));
         Build.Capture(s.Section("Build"));
         Testing.Capture(s.Section("Testing"));
+        Debug.CallStack.Capture(s.Section("CallStack"));
         return s;
     }
 
@@ -45,5 +46,6 @@ public sealed partial class @this
         if (s.HasSection("Statics"))   global::App.Statics.@this.Restore(s.Section("Statics"), ctx);
         if (s.HasSection("Build"))     global::App.Build.@this.Restore(s.Section("Build"), ctx);
         if (s.HasSection("Testing"))   global::App.Test.@this.Restore(s.Section("Testing"), ctx);
+        if (s.HasSection("CallStack")) global::App.CallStack.@this.Restore(s.Section("CallStack"), ctx);
     }
 }

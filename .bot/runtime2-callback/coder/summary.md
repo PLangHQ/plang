@@ -1,81 +1,59 @@
 # coder summary — runtime2-callback
 
 ## Version
-v1 — Stage 1 (Snapshot Foundation)
+v2 — Stage 2 (CallStack frames + Variables time-travel)
 
 ## What this is
 
-Implements Stage 1 of the architect's 4-stage callback design (`.bot/runtime2-callback/architect/stage-1-snapshot-foundation.md`): the snapshot/restore plumbing every callback record will sit on top of. After this stage, six App subsystems can capture themselves into a typed Snapshot tree and rebuild from it on a fresh App.
+Stage 2 of the architect's 4-stage callback design. After this stage, position (which goal/step/action a callback resumes at) and throw-time variables both round-trip — the two pieces error-callbacks need before callbacks themselves get implemented (Stage 4).
 
-This is the foundation only. No CallStack, no time-travel for Variables, no Data signing, no callback records — those are Stages 2/3/4.
+Builds on Stage 1's snapshot foundation.
 
 ## What was done
 
 ### New types
-- `App.Snapshot.ISnapshotted` (`PLang/App/Snapshot/ISnapshotted.cs`) — `void Capture(Snapshot.@this s)` + `static abstract void Restore(Snapshot.@this s, Context.@this ctx)`. The marker; the type system is the classifier.
-- `App.Snapshot.@this` (`PLang/App/Snapshot/this.cs`) — typed read/write tree. `Section(name)` returns a child snapshot for nested ISnapshotted. `Write<T>` / `Read<T>` / `Has` / `HasSection`. Underlying storage stays private.
-- `App.Statics.@this` (`PLang/App/Statics/this.cs` + `this.Snapshot.cs`) — extracts the App's inline `_statics` dict into its own `@this` so it can implement ISnapshotted. App keeps a `GetStatic(key)` shim for legacy callers.
+- `RestoredFrame` (`PLang/App/CallStack/RestoredFrame.cs`) — surrogate record holding the resolved live `Action` + `Goal` + positional triple. Restored chains are read-only positional context for callbacks; not pushable into AsyncLocal Current.
+- `CallbackGoalNotFound`, `CallbackGoalHashMismatch` (`PLang/App/Errors/CallbackGoalErrors.cs`) — typed referent-integrity hard errors raised by `CallStack.Restore`.
 
-### Subsystems converted to ISnapshotted (partial-class additions)
-- `App.@this` — `Snapshot()` + `Restore(snap, ctx)` walking the subsystem list (`PLang/App/this.Snapshot.cs`).
-- `App.Variables.@this` — captures full Data shape (Name, Value, Type, Properties via `Clone()`); honours existing partition (skip `!`-prefix, DynamicData, SettingsVariable).
-- `App.Errors.@this` + `App.Errors.Trail.@this` — Trail captures entries; Restore replaces the live Trail with one populated from the snapshot AND freezes it (rejects further `Add`).
-- `App.Providers.@this` — registry-layer two-step capture/restore: non-built-in `(typeName, providerName, source)` tuples + default-selection overrides (only when current default differs from the type's *born* default — tracked via `_builtInDefaults` dict to survive `SetDefault`).
-- `App.Build.@this` / `App.Test.@this` — capture/restore `IsEnabled` only. Other fields (Files, Cache, Results, Coverage, etc.) are reconstruct-on-build.
-
-### IProvider extensions
-- Added `bool IsBuiltIn { get; set; }` and `string? Source { get; set; }` to `IProvider`. Updated all 12 production providers + 13 test providers to implement them. `RegisterDefaults` now goes through `RegisterBuiltIn<T>` which stamps `IsBuiltIn = true` and remembers the type's born default. `provider.load.cs` stamps `Source = absoluteDllPath`.
-
-### Errors hard-error type
-- `App.Providers.ProviderRestoreException` — referent-integrity hard error raised by Providers.Restore when a captured registration's source DLL can't be loaded, the impl type can't be found in the DLL, or a default-selection name doesn't resolve. No silent fallback to system defaults.
+### Subsystems extended
+- `App.CallStack.Call.@this` — `Capture(snap)` writes `(GoalPrPath, GoalHash, StepIndex, ActionIndex, ActionModule, ActionName, Id)`. No `Restore` on Call directly (its constructor is internal and lifetime-coupled to the live AsyncLocal); restore happens on the parent CallStack and produces `RestoredFrame` records. Excludes timing tier and in-flight network state per the architect's drop bucket.
+- `App.CallStack.@this` — implements `ISnapshotted`. Capture walks the active Caller chain (outer first, bottom last). Restore resolves each captured frame's Goal against `app.Goals.Get(prPath)`; hard-errors on missing goal or hash mismatch. Adds `RestoredChain` (read-only list), `BottomFrame` (last entry of restored chain, or live `Current` translated into a `RestoredFrame`), and `EventsSince(t)` (reads from both per-Call `Diffs` and a CallStack-level diff stream).
+- `App.CallStack.@this` also gains a CallStack-level diff stream: `EnableDiffStream(vars)` / `DisableDiffStream()`. Subscribes to both `OnSet` and `OnCreate` (Variables.Set fires `OnCreate` for first-time names, `OnSet` only for replace; both are mutations the diff stream cares about). Per-Call `Call.this.cs` now also subscribes to `OnCreate` so its `Diffs` capture creates as well.
+- `App.Variables.@this.SnapshotAt(error)` — clones the current Variables, then reverse-applies each `Diff` from `app.CallStack.EventsSince(error.CreatedUtc)` (newest→oldest) by writing the variable back to `Diff.Before`. Pure — same `(error, current state)` → same projection.
+- `App.Errors.@this.Push(error)` — auto-flips `CallStack.Flags.Diff = true` for the scope AND wires the CallStack-level diff stream against `app.Variables` so handler-time mutations land on the stream regardless of when live Calls were pushed (per-Call subscription is decided at Push time and can't backfill). Restored on Dispose. Requires Errors to know the App — wired via `internal App { get; set; }` set in App's constructor.
+- `App.@this.Snapshot()/Restore()` — gain `CallStack` section.
 
 ### Tests filled
-17 of the 24 test-designer Stage-1 stubs flipped from red to green:
-- `SnapshotInterfaceTests` × 2
-- `AppSnapshotTests` × 4
-- `StaticsAndModesSnapshotTests` × 3
-- `VariablesSnapshotTests` × 2
-- `ErrorsTrailSnapshotTests` × 2
-- `ProvidersSnapshotTests` × 6 (including the two hard-error tests using a `/nonexistent/ghost.dll` source path)
+21 of the test-designer Stage-2 stubs (16 explicit [S2] + 5 supporting):
 
-C# baseline: 97 stubs failing → 80 stubs failing (the 80 are Stages 2-4 stubs, expected red).
-PLang baseline: 192/181/0fail/11stale → 192/181/0fail/11stale. No regression.
+- `CallSnapshotTests` × 8 — wire-shape, positional triple, Goal-stub resolution, hard-error coverage (not-found and hash-mismatch), purity, drop-bucket exclusions
+- `CallStackSnapshotTests` × 4 — outer-to-bottom ordering, drop-completed-children, restore roundtrip, BottomFrame on live stack
+- `EventsSinceTests` × 2 — events filtered by timestamp, empty when none
+- `FlagsDiffAutoFlipTests` × 2 — auto-flip on Errors.Push, restore on Dispose
+- `SnapshotAtErrorTests` × 5 — projection type, reverse-apply, post-error mutations excluded, no-op when no mutations, idempotency
+
+C# baseline: 80 stubs failing (post-Stage-1) → 59. PLang tests: 192/181/0fail/11stale (unchanged).
 
 ## Code example
 
-The OBP shape — every subsystem owns its own snapshot in its own partial file:
+The seam between Variables (projection) and CallStack (time-ordered data):
 
 ```csharp
-// PLang/App/Build/this.Snapshot.cs
-namespace App.Build;
-
-public sealed partial class @this : ISnapshotted
+public @this SnapshotAt(IError error)
 {
-    public void Capture(Snapshot.@this s) => s.Write("isEnabled", IsEnabled);
+    var clone = ShallowCloneStore();
+    var stack = _context?.App?.Debug?.CallStack;
+    if (stack == null) return clone;
 
-    public static void Restore(Snapshot.@this s, Actor.Context.@this ctx)
-        => ctx.App.Build.IsEnabled = s.Read<bool>("isEnabled");
+    var events = stack.EventsSince(error.CreatedUtc).Reverse();
+    foreach (var diff in events)
+        clone._variables[diff.Name] = new Data.@this(diff.Name, diff.Before) { Context = _context };
+    return clone;
 }
 ```
 
-App.Snapshot()/Restore() is then a thin walk:
-
-```csharp
-public Snapshot.@this Snapshot()
-{
-    var s = new Snapshot.@this();
-    Variables.Capture(s.Section("Variables"));
-    Errors.Capture(s.Section("Errors"));
-    Providers.Capture(s.Section("Providers"));
-    Statics.Capture(s.Section("Statics"));
-    Build.Capture(s.Section("Build"));
-    Testing.Capture(s.Section("Testing"));
-    return s;
-}
-```
-
-Adding a new subsystem to the snapshot in future stages is two things: implement `ISnapshotted` and add one line here. No central registry, no per-subsystem ordering coupling.
+Variables knows *how* to project itself (reverse-apply); CallStack knows *what* happened in time (events). Neither knows the other's internals.
 
 ## Next
 
-Stage 2 — `Call.@this` and `App.CallStack.@this` Capture/Restore with Goal-stub + hash-match, `EventsSince(t)` query, `Variables.SnapshotAt(error)`, `Flags.Diff` auto-flip in error path. Will turn the `[S2]` test-designer stubs green (~16 tests).
+Stage 3 — Data lazy signing + per-mimetype serializers. Will turn the `[S3]` test-designer stubs green. Per Ingi's Q1 resolution, no Data constructor change — keep settable Context property; deal with null exceptions if/when they hit.

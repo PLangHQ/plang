@@ -16,6 +16,7 @@ public class AppSnapshotTests
         await Assert.That(snap.HasSection("Statics")).IsTrue();
         await Assert.That(snap.HasSection("Build")).IsTrue();
         await Assert.That(snap.HasSection("Testing")).IsTrue();
+        await Assert.That(snap.HasSection("CallStack")).IsTrue();
     }
 
     [Test]

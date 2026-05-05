@@ -322,6 +322,98 @@
         "notes": "Stage 2 next: CallStack frames + Variables.SnapshotAt(error). The CallStack-related test stubs are already in place from test-designer. No CLAUDE.md proposals from this stage — nothing canonical-and-new emerged that wasn't already in /PLang/App/CLAUDE.md or covered by the architect's plan."
       },
       "timestamp_end": "2026-05-05T18:38:00Z"
+    },
+    {
+      "id": "9c6e4d0a-1c0a-4f7e-b8f1-2d4f6a8b1e5c",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T18:40:00Z",
+      "timestamp_end": "2026-05-05T19:05:00Z",
+      "intent": "Implement Stage 2 — CallStack frames Capture/Restore (with Goal-stub + hash-match), App.CallStack EventsSince(t), Variables.SnapshotAt(error) reverse-apply, Flags.Diff auto-flip on Errors.Push. Make all [S2] test-designer stubs green.",
+      "before": {
+        "assumptions": "Stage 1 landed (commit f93dcdd3). Call.@this has positional data (Action.Step.Goal.PrPath/Hash, Step.Index, Action's index in Step.Actions). CallStack already has per-Call diff capture gated by Flags.Diff at Push time. Errors.@this Push returns IDisposable for AsyncLocal pop; can extend with diff-stream subscription. Goal.Hash is SHA-256 of name+step text, init-only.",
+        "risk": "Restoring Call.@this directly is wrong — its constructor is internal and lifecycle-coupled to AsyncLocal/Stopwatch/OnSet. Solution: produce RestoredFrame surrogates instead. Per-Call diff subscription at Push time can't backfill — handler-time mutations during an error scope need a CallStack-level OnSet/OnCreate subscription that auto-flip wires up. Variables.Set fires OnCreate (not OnSet) for first-time names, so subscribers must listen to both."
+      },
+      "plan": ".bot/runtime2-callback/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/CallStack/RestoredFrame.cs",
+            "PLang/App/Errors/CallbackGoalErrors.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "RestoredFrame surrogate (resolved Action+Goal+positional triple+Id). CallbackGoalNotFound / CallbackGoalHashMismatch typed exceptions for hard referent-integrity errors during CallStack.Restore."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/Call/this.Snapshot.cs",
+            "PLang/App/CallStack/Call/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Call.Capture writes (GoalPrPath, GoalHash, StepIndex, ActionIndex, Module, ActionName, Id). No Restore on Call directly — produced by parent CallStack. Extended Call ctor's diff capture to subscribe to OnCreate as well as OnSet (Variables.Set fires OnCreate for first-time names; both are mutations the diff stream cares about)."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/this.Snapshot.cs",
+            "PLang/App/this.Snapshot.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "CallStack ISnapshotted: Capture walks active Caller chain outer-to-bottom; Restore resolves each frame's Goal against app.Goals.Get(prPath), hard-errors on missing/hash-mismatch, populates RestoredChain. Adds BottomFrame (last entry of restored chain or live Current as RestoredFrame). EventsSince(t) reads from per-Call Diffs AND a CallStack-level diff stream. EnableDiffStream/DisableDiffStream wire OnSet+OnCreate subscriptions for the auto-flip path. App.Snapshot()/Restore() wire CallStack as the seventh section."
+        },
+        {
+          "paths": [
+            "PLang/App/Errors/this.cs",
+            "PLang/App/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Errors.@this gains internal App reference (set by App ctor) so Push can auto-flip Flags.Diff and wire EnableDiffStream(app.Variables) on the CallStack. Restorer.Dispose tears down the subscription and restores prior flag state."
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.SnapshotAt.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Variables.SnapshotAt(IError) — clones the store, walks app.Debug.CallStack.EventsSince(error.CreatedUtc) in reverse and writes each variable back to its Diff.Before value. Pure; no caching. The seam is clean — Variables owns projection, CallStack owns time-ordered data."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CallStackTests/CallSnapshotTests.cs",
+            "PLang.Tests/App/CallStackTests/CallStackSnapshotTests.cs",
+            "PLang.Tests/App/CallStackTests/EventsSinceTests.cs",
+            "PLang.Tests/App/CallStackTests/FlagsDiffAutoFlipTests.cs",
+            "PLang.Tests/App/VariablesTests/SnapshotAtErrorTests.cs",
+            "PLang.Tests/App/SnapshotTests/AppSnapshotTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled bodies of 21 [S2] tests (8 Call snapshot, 4 CallStack snapshot, 2 EventsSince, 2 FlagsDiff auto-flip, 5 SnapshotAt). Helpers build live Action/Step/Goal triples and register goals on the App. Hash-mismatch test asserts via different step text producing different SHA-256. AppSnapshotTests updated for new CallStack section."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v2/plan.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 plan and updated summary."
+        }
+      ],
+      "after": {
+        "status": "Stage 2 complete: CallStack/Call ISnapshotted, RestoredFrame, EventsSince, Variables.SnapshotAt, Flags.Diff auto-flip. C# 80 stubs → 59 (21 [S2] flipped green; 59 remaining are Stages 3-4). PLang tests unchanged at 192/181/0fail/11stale.",
+        "health": "green — clean build, no regressions. The architect's split between Variables-owns-projection and CallStack-owns-data landed clean. The OnCreate-vs-OnSet asymmetry in Variables.Set was a real surprise — fix was symmetric: subscribe to both events on both per-Call and CallStack-level capture paths.",
+        "notes": "Stage 3 next: Data.@this lazy Signature property + Serializer.@this per mimetype. Per Ingi's Q1: keep current settable Context; deal with null if it hits. The architect's 'constructor change vs additive' question is moot — Context is already wired through Variables.Set/Step/Action/Goal/Envelope/Clone."
+      }
     }
   ]
 }

@@ -1,36 +1,114 @@
+using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+
 namespace PLang.Tests.App.CallStackTests;
 
 public class CallStackSnapshotTests
 {
+    private static (Goal goal, Step step, ActionEntity action) MakeFrame(
+        string goalName, string stepText = "step", string module = "test", string actionName = "test")
+    {
+        var goal = new Goal { Name = goalName, Path = $"/{goalName}.goal" };
+        var step = new Step { Index = 0, Text = stepText, Goal = goal };
+        var action = new ActionEntity { Module = module, ActionName = actionName };
+        action.Step = step;
+        step.Actions.Add(action);
+        goal.Steps.Add(step);
+        return (goal, step, action);
+    }
+
+    private static global::App.@this BuildAppWithGoals(params Goal[] goals)
+    {
+        var app = new global::App.@this("/test");
+        foreach (var g in goals) app.Goals.Add(g);
+        return app;
+    }
+
     [Test]
     public async Task CallStack_Capture_WalksActiveFrameChain_OuterToBottom()
     {
-        // Captured chain is ordered outer Calls first, throwing Call last (bottom = resume point).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var (g1, _, a1) = MakeFrame("Outer");
+        var (g2, _, a2) = MakeFrame("Inner");
+        var app = BuildAppWithGoals(g1, g2);
+
+        var stack = app.Debug.CallStack;
+        await using var outer = stack.Push(a1);
+        await using var inner = stack.Push(a2);
+
+        var section = new Snapshot();
+        stack.Capture(section);
+
+        var frames = section.Read<List<Snapshot>>("frames")!;
+        await Assert.That(frames.Count).IsEqualTo(2);
+        // Outer first → bottom (inner) last.
+        await Assert.That(frames[0].Read<string>("goalPrPath")).IsEqualTo(g1.PrPath);
+        await Assert.That(frames[1].Read<string>("goalPrPath")).IsEqualTo(g2.PrPath);
     }
 
     [Test]
     public async Task CallStack_Capture_DropsCompletedChildren_AsHistoryNotState()
     {
-        // Children of an active Call that already completed are runtime-only audit; not in snapshot.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var (g1, _, a1) = MakeFrame("Parent");
+        var (g2, _, a2) = MakeFrame("CompletedChild");
+        var app = BuildAppWithGoals(g1, g2);
+        var stack = app.Debug.CallStack;
+        // Turn History on so completed children stay in the tree — we'll assert the snapshot
+        // still excludes them because they're not on the *active* chain.
+        stack.Flags = stack.Flags with { History = true };
+
+        await using (var parent = stack.Push(a1))
+        {
+            await using (var child = stack.Push(a2)) { /* completes here */ }
+            var section = new Snapshot();
+            stack.Capture(section);
+            var frames = section.Read<List<Snapshot>>("frames")!;
+            await Assert.That(frames.Count).IsEqualTo(1);
+            await Assert.That(frames[0].Read<string>("goalPrPath")).IsEqualTo(g1.PrPath);
+        }
     }
 
     [Test]
     public async Task CallStack_Restore_RebuildsChain_BottomFrameIsResumePoint()
     {
-        // After Restore, BottomFrame matches the originally throwing (goal, step, action).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Build src with 2 frames; capture; replay onto dst that has matching goals.
+        var (g1, _, a1) = MakeFrame("Outer2");
+        var (g2, _, a2) = MakeFrame("Inner2");
+        var src = BuildAppWithGoals(g1, g2);
+
+        await using (var outer = src.Debug.CallStack.Push(a1))
+        await using (var inner = src.Debug.CallStack.Push(a2))
+        {
+            var snap = src.Snapshot();
+
+            // Build dst with matching goals (same Path + Hash via identical step text).
+            var (dg1, _, _) = MakeFrame("Outer2");
+            var (dg2, _, _) = MakeFrame("Inner2");
+            var dst = BuildAppWithGoals(dg1, dg2);
+
+            dst.Restore(snap, dst.User.Context);
+
+            var chain = dst.Debug.CallStack.RestoredChain!;
+            await Assert.That(chain.Count).IsEqualTo(2);
+            await Assert.That(chain[0].Goal.PrPath).IsEqualTo(g1.PrPath);
+            await Assert.That(chain[^1].Goal.PrPath).IsEqualTo(g2.PrPath);
+
+            await Assert.That(dst.Debug.CallStack.BottomFrame).IsNotNull();
+            await Assert.That(dst.Debug.CallStack.BottomFrame!.Goal.PrPath).IsEqualTo(g2.PrPath);
+        }
     }
 
     [Test]
     public async Task CallStack_BottomFrame_IdentifiesThrowingCall()
     {
-        // BottomFrame on a live CallStack is the deepest active frame — the resume entry point.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // On a *live* CallStack, BottomFrame is the deepest active frame.
+        var (g1, _, a1) = MakeFrame("LBOuter");
+        var (g2, _, a2) = MakeFrame("LBInner");
+        var app = BuildAppWithGoals(g1, g2);
+        var stack = app.Debug.CallStack;
+        await using var outer = stack.Push(a1);
+        await using var inner = stack.Push(a2);
+
+        var bottom = stack.BottomFrame;
+        await Assert.That(bottom).IsNotNull();
+        await Assert.That(bottom!.Action).IsSameReferenceAs(a2);
     }
 }

@@ -305,6 +305,8 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new AppChannels(this);
 
+        Errors.App = this;
+
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();
         Navigators.RegisterDefaults();

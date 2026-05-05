@@ -23,6 +23,7 @@ public sealed partial class @this : IAsyncDisposable
     private readonly @this? _previousCurrent;
     private readonly Variables.@this? _diffSource;
     private Action<string, object?, object?>? _onSetHandler;
+    private Action<string, object?>? _onCreateHandler;
     private Dictionary<global::System.Type, object>? _items;
 
     /// <summary>
@@ -142,7 +143,14 @@ public sealed partial class @this : IAsyncDisposable
                 // Diffs owns its lock and snapshot iteration — Add is safe, readers safe.
                 Diffs.Add(new Diff(name, CaptureBefore(before, deep), DateTimeOffset.UtcNow));
             };
+            // OnCreate fires for first-time variable creation (replacing OnSet for that path).
+            // Capture as a diff with Before=null so reverse-apply unwinds the create.
+            _onCreateHandler = (name, _) =>
+            {
+                Diffs.Add(new Diff(name, null, DateTimeOffset.UtcNow));
+            };
             diffSource.OnSet += _onSetHandler;
+            diffSource.OnCreate += _onCreateHandler;
         }
     }
 
@@ -232,6 +240,11 @@ public sealed partial class @this : IAsyncDisposable
         {
             _diffSource.OnSet -= _onSetHandler;
             _onSetHandler = null;
+        }
+        if (_onCreateHandler != null && _diffSource != null)
+        {
+            _diffSource.OnCreate -= _onCreateHandler;
+            _onCreateHandler = null;
         }
 
         if (!_stack.Flags.History && Caller != null)
