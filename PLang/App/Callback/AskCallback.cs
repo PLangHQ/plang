@@ -55,6 +55,13 @@ public sealed class AskCallback : ICallback
         };
     }
 
+    /// <summary>
+    /// Optional answer to inject on resume — bound under <c>!ask.answer</c> so the
+    /// ask handler returns it instead of issuing a fresh ask. Caller (HTTP channel)
+    /// sets this from the user's response before invoking <c>callback.run</c>.
+    /// </summary>
+    public object? Answer { get; init; }
+
     public async Task<global::App.Data.@this> Run(global::App.Actor.Context.@this ctx)
     {
         if (Position == null)
@@ -65,10 +72,13 @@ public sealed class AskCallback : ICallback
         foreach (var v in Variables)
             ctx.Variables.Set(v.Name, v.Value);
 
-        // Dispatch the original action through the live execution path. Stage 4's contract
-        // is "the ask handler distinguishes fresh-vs-resumed itself"; that handler is out
-        // of scope on this branch (per Ingi). Run the action as-is — the resumed run lands
-        // at Position with Variables already bound.
+        // Inject the answer under the resume sentinel; ask handler reads + consumes it.
+        if (Answer != null)
+            ctx.Variables.Set(global::App.modules.output.ask.AnswerVariableName, Answer);
+
+        // Dispatch the original action through the live execution path. The resumed run
+        // lands at Position; the ask handler sees !ask.answer and short-circuits to it
+        // instead of issuing a fresh ask.
         return await ctx.App.Run(Position.Action, ctx);
     }
 

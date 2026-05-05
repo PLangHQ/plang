@@ -1,3 +1,6 @@
 Start
-/ BLOCKED ON: builder support for the `vars:` annotation on `output.ask`. Out of branch scope per Ingi (Q2).
-- throw "not implemented"
+/ When !ask.answer is pre-bound (resume path), output.ask short-circuits and
+/ returns the answer instead of issuing a fresh AskCallback.
+- set %!ask.answer% = "Alice"
+- output.ask question="what's your name?", write to %name%
+- assert %name% equals "Alice"
