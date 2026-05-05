@@ -660,6 +660,32 @@
         "health": "green — 2720 + 188 actual pass; 4 stales documented out-of-scope; no real failures.",
         "notes": "Suggest coder address findings #1, #5, #9, #10 (name-promises-X-body-verifies-Y on the encrypt/verify spy paths) before stage-5 — these are most likely to mask a future regression. The PlangDataSerializer JSON-substring trap (#12) is also cheap to convert to a parsed-field assertion."
       }
+    },
+    {
+      "id": "9d4e6c2a-7b1f-4e8c-9a3d-2c5e8f1b4d76",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-05T23:00:00Z",
+      "timestamp_end": "2026-05-05T23:30:00Z",
+      "intent": "Independent re-audit on the post-security-v1 state — confirm or push back on security v1's 1 Medium + 3 Lows before any coder pass touches them. No code changes since auditor v1 (3fbc7cfa); auditor's value-add is a primary-source re-walk of the wire surface.",
+      "before": {
+        "assumptions": "Auditor v1 PASS'd at 3fbc7cfa with F1/F2 fixed in AskCallback. Tester v1 PASS'd with 16 non-blocking quality findings. Security v1 PASS'd with 1 Medium (callback.run verify-skip when RawSignature==null) and 3 Lows (Variables.Restore !-prefix, JSON size caps, [Sensitive] filter on callback wires). No coder fix has landed since security.",
+        "risk": "Reflexively rubber-stamping security's read; or missing a transcription error in security's suggested fix snippets; or missing a wire-surface vector security didn't reach."
+      },
+      "plan": ".bot/runtime2-callback/auditor/v2/report.md",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-callback/auditor/v2/report.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor v2 PASS. All four security findings (S-F1 Medium, S-F2/S-F3/S-F4 Low) confirmed by primary-source re-walk of callback/run.cs, AskCallback.cs, ErrorCallback.cs, Variables/this.Snapshot.cs, App/this.Snapshot.cs, PlangDataSerializer.cs, and the test that pins the bypass. Severities concur. One bug caught in security's suggested F2 fix snippet — the `continue` condition is logically inverted (would only Set !-prefix names instead of skipping them); flagged with two correct alternatives so coder doesn't paste the broken version. One additional observation lifted from tester #3 + security: the test name `CallbackRun_VerifiesSignature_BeforeDispatch` is misleading and pins the bypass — must be renamed/inverted alongside the S-F1 fix. Providers/Assembly.LoadFrom path confirmed inert via wire (App.Restore gates each subsystem on HasSection; ErrorCallback only writes CallStack+Variables sections)."
+        }
+      ],
+      "after": {
+        "status": "PASS — branch is mergeable on the auditor's gate. Security v1's recommendation (option 2: symmetric EnsureSigned for in-process callbacks, then require RawSignature on dispatch) stands.",
+        "health": "green — no code changed since b7f7c526; no rebuild needed.",
+        "notes": "Suggested next bot: coder, to bundle S-F1 (option 2 symmetric EnsureSigned), S-F2 (Variables.Restore !-prefix filter — use auditor v2's option A or B, NOT security v1's snippet which is logically inverted), S-F4 (one-line SensitivePropertyFilter.Strip on each of the three callback-wire option blocks), and the test rename/inversion in CallbackRunActionTests.cs in one fix pass. S-F3 can defer to channel-wiring stage if the channel-layer size cap is firm. Auditor v1 N3 (CLR exceptions out of Restore wrapped as Data.FromError) belongs in the same pass."
+      }
     }
   ]
 }
