@@ -1,59 +1,69 @@
 # coder summary — runtime2-callback
 
 ## Version
-v2 — Stage 2 (CallStack frames + Variables time-travel)
+v3 — Stage 3 (Data Lazy Signing + Per-Mimetype Serializers)
 
 ## What this is
 
-Stage 2 of the architect's 4-stage callback design. After this stage, position (which goal/step/action a callback resumes at) and throw-time variables both round-trip — the two pieces error-callbacks need before callbacks themselves get implemented (Stage 4).
-
-Builds on Stage 1's snapshot foundation.
+Stage 3 of the architect's 4-stage callback design. After this stage, any Data crossing IO can transparently sign itself when a serializer reads its `Signature`; debug/value-only paths pay zero crypto cost. Builds on Stages 1+2.
 
 ## What was done
 
-### New types
-- `RestoredFrame` (`PLang/App/CallStack/RestoredFrame.cs`) — surrogate record holding the resolved live `Action` + `Goal` + positional triple. Restored chains are read-only positional context for callbacks; not pushable into AsyncLocal Current.
-- `CallbackGoalNotFound`, `CallbackGoalHashMismatch` (`PLang/App/Errors/CallbackGoalErrors.cs`) — typed referent-integrity hard errors raised by `CallStack.Restore`.
+### Type rename
+- `App.modules.signing.SignedData` → `App.modules.signing.Signature` (file moved + class renamed). The inner property formerly called `Signature` (the base64 sig string) renamed to `Value` to avoid the member-name-equals-enclosing-type compile error; wire JSON key stays "signature" via `[JsonPropertyName("signature")]` for backwards compatibility. Updated 45+ call sites across PLang and PLang.Tests.
 
-### Subsystems extended
-- `App.CallStack.Call.@this` — `Capture(snap)` writes `(GoalPrPath, GoalHash, StepIndex, ActionIndex, ActionModule, ActionName, Id)`. No `Restore` on Call directly (its constructor is internal and lifetime-coupled to the live AsyncLocal); restore happens on the parent CallStack and produces `RestoredFrame` records. Excludes timing tier and in-flight network state per the architect's drop bucket.
-- `App.CallStack.@this` — implements `ISnapshotted`. Capture walks the active Caller chain (outer first, bottom last). Restore resolves each captured frame's Goal against `app.Goals.Get(prPath)`; hard-errors on missing goal or hash mismatch. Adds `RestoredChain` (read-only list), `BottomFrame` (last entry of restored chain, or live `Current` translated into a `RestoredFrame`), and `EventsSince(t)` (reads from both per-Call `Diffs` and a CallStack-level diff stream).
-- `App.CallStack.@this` also gains a CallStack-level diff stream: `EnableDiffStream(vars)` / `DisableDiffStream()`. Subscribes to both `OnSet` and `OnCreate` (Variables.Set fires `OnCreate` for first-time names, `OnSet` only for replace; both are mutations the diff stream cares about). Per-Call `Call.this.cs` now also subscribes to `OnCreate` so its `Diffs` capture creates as well.
-- `App.Variables.@this.SnapshotAt(error)` — clones the current Variables, then reverse-applies each `Diff` from `app.CallStack.EventsSince(error.CreatedUtc)` (newest→oldest) by writing the variable back to `Diff.Before`. Pure — same `(error, current state)` → same projection.
-- `App.Errors.@this.Push(error)` — auto-flips `CallStack.Flags.Diff = true` for the scope AND wires the CallStack-level diff stream against `app.Variables` so handler-time mutations land on the stream regardless of when live Calls were pushed (per-Call subscription is decided at Push time and can't backfill). Restored on Dispose. Requires Errors to know the App — wired via `internal App { get; set; }` set in App's constructor.
-- `App.@this.Snapshot()/Restore()` — gain `CallStack` section.
+### New types
+- `App.Callback.@this` + `App.Callback.Signature.@this` — config holders. `app.Callback.Signature.ExpiresInMs` is the only field today (default null); Stage 4 expands.
+- `App.Callback.ICallback` — empty marker interface; Stage 4 fills with `AskCallback`/`ErrorCallback` records.
+- `App.Channels.Serializers.UnregisteredMimeType` — typed exception raised by `GetByMimeType` on a missing registration. Sibling-shape to ProviderRestoreException's referent-integrity model.
+- `App.Channels.Serializers.Serializer.PlangDataSerializer` — new serializer for `application/plang+data`. Emits the full envelope (Type+Value+Signature). Calls `data.EnsureSigned()` before reading Signature on Write so non-callback Data still signs.
+
+### Data lazy signature
+- `Data.@this.Signature` — backing field `_signature`; getter lazy-populates ONLY when `_value is ICallback` (read directly from the field, NOT via `Value` property — DynamicData's lazy factory must not be force-computed just to check ICallback-ness; a stale read there hit the filesystem and broke unrelated tests). For non-callback values, the getter returns the field as-is so existing verify-style "if (data.Signature == null)" still fail-closed instead of auto-signing.
+- `Data.@this.RawSignature` — internal accessor that never triggers populate. Used by `Ed25519Provider.VerifyAsync` and other peek sites.
+- `Data.@this.EnsureSigned()` — explicit populate trigger. Throws `InvalidOperationException` when no Context. Sync-over-async dispatch through `app.RunAction<sign>(...)`. Reads `app.Callback.Signature.ExpiresInMs` only for ICallback values.
+
+### Channel routing
+- `App.Channels.Serializers.@this.GetByMimeType(string)` — throws `UnregisteredMimeType` on miss. Existing `GetByContentType` (returns null) preserved for legacy callers.
+- Registered `text/html` as alias to JsonStreamSerializer (same wire shape).
+- Registered `application/plang+data` → PlangDataSerializer at App boot.
 
 ### Tests filled
-21 of the test-designer Stage-2 stubs (16 explicit [S2] + 5 supporting):
+22 of the test-designer Stage-3 stubs:
+- `SignatureRenameTests` × 2 — old name unresolved, new name exists.
+- `DataLazySignatureTests` × 4 — first-access populates, cached on subsequent reads, expires seeded from app.Callback config for ICallback only.
+- `DataContextWiringTests` × 3 — settable Context property pinned (per Ingi's Q1 — no constructor change), lazy expiry, throws-without-Context on EnsureSigned.
+- `JsonSerializerRoundTripTests` × 3 — emits value only, never reads Signature, both text/html + application/json route to same serializer.
+- `PlangDataSerializerRoundTripTests` × 5 — full envelope wire shape, lazy signing on first Signature read, round-trip preserves signature unverified, no auto-verify, mimetype routing.
+- `MimeRegistrationTests` × 3 — lookup by mimetype, hard-error on unregistered, plang+data registered at boot.
 
-- `CallSnapshotTests` × 8 — wire-shape, positional triple, Goal-stub resolution, hard-error coverage (not-found and hash-mismatch), purity, drop-bucket exclusions
-- `CallStackSnapshotTests` × 4 — outer-to-bottom ordering, drop-completed-children, restore roundtrip, BottomFrame on live stack
-- `EventsSinceTests` × 2 — events filtered by timestamp, empty when none
-- `FlagsDiffAutoFlipTests` × 2 — auto-flip on Errors.Push, restore on Dispose
-- `SnapshotAtErrorTests` × 5 — projection type, reverse-apply, post-error mutations excluded, no-op when no mutations, idempotency
+### Test fixture updates
+- `TestFixtures/TestProvider/TestSigningProvider.cs` and `TestFixtures/NoCtorProvider/NoCtorProvider.cs` — added IsBuiltIn + Source to satisfy the IProvider interface (Stage 1 added these). Rebuilt the DLLs and re-staged into `PLang.Tests/App/Fixtures/dlls/`.
 
-C# baseline: 80 stubs failing (post-Stage-1) → 59. PLang tests: 192/181/0fail/11stale (unchanged).
+C# baseline: 59 stubs failing (post-Stage-2) → 37. The 37 remaining are all Stage-4 stubs. PLang tests: 192/181/0fail/11stale (unchanged).
+
+### Test-pathing change
+Tests that go through the signing pipeline write to disk (identity store at `/test/.db`). Switched their App constructor to a temp-dir path so the sandbox doesn't reject filesystem writes. Older Stage-1/2 tests that don't reach signing keep using `/test`.
 
 ## Code example
 
-The seam between Variables (projection) and CallStack (time-ordered data):
+The lazy signature getter:
 
 ```csharp
-public @this SnapshotAt(IError error)
+public Signature? Signature
 {
-    var clone = ShallowCloneStore();
-    var stack = _context?.App?.Debug?.CallStack;
-    if (stack == null) return clone;
-
-    var events = stack.EventsSince(error.CreatedUtc).Reverse();
-    foreach (var diff in events)
-        clone._variables[diff.Name] = new Data.@this(diff.Name, diff.Before) { Context = _context };
-    return clone;
+    get
+    {
+        // Read _value directly (not Value) so DynamicData's factory isn't force-computed.
+        if (_signature == null && _value is ICallback) EnsureSigned();
+        return _signature;
+    }
+    set => _signature = value;
 }
 ```
 
-Variables knows *how* to project itself (reverse-apply); CallStack knows *what* happened in time (events). Neither knows the other's internals.
+`PlangDataSerializer.Write` triggers signing for non-callback Data via the explicit `EnsureSigned()` hook, so the wire envelope always has a Signature, while JSON writes never touch it (the property is `[JsonIgnore]`).
 
 ## Next
 
-Stage 3 — Data lazy signing + per-mimetype serializers. Will turn the `[S3]` test-designer stubs green. Per Ingi's Q1 resolution, no Data constructor change — keep settable Context property; deal with null exceptions if/when they hit.
+Stage 4 — `ICallback` records (AskCallback / ErrorCallback), `Error.Callback` lazy property, `callback.run` action, `crypto.encrypt`/`decrypt` v1 pass-through. Will turn the remaining `[S4]` test-designer stubs green and unlock both integration cuts.

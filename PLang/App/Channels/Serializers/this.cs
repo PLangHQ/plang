@@ -16,15 +16,19 @@ public sealed class @this
         var json = new JsonStreamSerializer();
         var text = new TextStreamSerializer(jsonFallback: json);
         var plang = new PlangSerializer();
+        var plangData = new PlangDataSerializer();
 
         Register(json);
         Register(text);
         Register(plang);
+        Register(plangData);
 
         // Register alternative content types
         _byContentType["text/json"] = json;
         _byContentType["application/json; charset=utf-8"] = json;
         _byContentType["application/plang+json"] = plang;
+        // text/html shares the JSON wire shape — JsonStreamSerializer emits Value only.
+        _byContentType["text/html"] = json;
 
         _default = json;
     }
@@ -36,6 +40,19 @@ public sealed class @this
     {
         _byContentType[serializer.ContentType] = serializer;
         _byExtension[serializer.FileExtension] = serializer;
+    }
+
+    /// <summary>
+    /// Gets a serializer by mimetype, throwing <see cref="UnregisteredMimeType"/> when not
+    /// registered. Use this when the contract is "the caller named a specific wire shape and
+    /// expects routing to succeed" — in particular, Channel routing for outbound Data with an
+    /// explicit content type. Counterpart of <see cref="GetByContentType"/> which returns null.
+    /// </summary>
+    public ISerializer GetByMimeType(string mimeType)
+    {
+        var s = GetByContentType(mimeType);
+        if (s == null) throw new UnregisteredMimeType(mimeType);
+        return s;
     }
 
     /// <summary>

@@ -414,6 +414,112 @@
         "health": "green — clean build, no regressions. The architect's split between Variables-owns-projection and CallStack-owns-data landed clean. The OnCreate-vs-OnSet asymmetry in Variables.Set was a real surprise — fix was symmetric: subscribe to both events on both per-Call and CallStack-level capture paths.",
         "notes": "Stage 3 next: Data.@this lazy Signature property + Serializer.@this per mimetype. Per Ingi's Q1: keep current settable Context; deal with null if it hits. The architect's 'constructor change vs additive' question is moot — Context is already wired through Variables.Set/Step/Action/Goal/Envelope/Clone."
       }
+    },
+    {
+      "id": "8e4d2b1a-7c3f-4e6d-9a1b-5d8e2c4f6a73",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T19:10:00Z",
+      "timestamp_end": "2026-05-05T19:35:00Z",
+      "intent": "Implement Stage 3 — SignedData→Signature rename, lazy Data.Signature, app.Callback config, ICallback marker, PlangDataSerializer + GetByMimeType + UnregisteredMimeType. Make all [S3] stubs green.",
+      "before": {
+        "assumptions": "Stage 2 landed (commit 88bdfcc6). Existing signing module has SignedData class with property `Signature` holding base64 sig. Data.@this already has a settable Signature property (auto-prop today). Per Ingi Q1: keep the additive Context pattern, deal with NREs if they hit. ISerializer infrastructure exists (JsonStreamSerializer, TextStreamSerializer, PlangSerializer for application/plang).",
+        "risk": "Renaming SignedData→Signature collides with the inner `Signature` field name; rename it to Value with JsonPropertyName preserving wire compat. Lazy populate on getter must not force DynamicData factory eval (the trace showed identity store hitting disk via Clone→Signature→Value). 45 SignedData callsites to update. Test fixture DLLs (TestProvider, NoCtorProvider) need rebuild after IProvider interface gained IsBuiltIn+Source in Stage 1 — they were stale."
+      },
+      "plan": ".bot/runtime2-callback/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/signing/Signature.cs",
+            "PLang/App/Data/this.Envelope.cs",
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang.Tests/App/Modules/signing/SigningSerializationTests.cs",
+            "PLang.Tests/App/Modules/signing/VerifyActionTests.cs",
+            "PLang.Tests/App/Modules/signing/SignActionTests.cs",
+            "PLang.Tests/App/Modules/http/RequestActionTests.cs",
+            "PLang.Tests/App/DataTests/DataTests.cs",
+            "PLang.Tests/App/Serializers/TransportPropertyFilterTests.cs"
+          ],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "SignedData→Signature rename across 45+ callsites. Inner `Signature` property (base64 sig) renamed to `Value` to avoid CS0542 (member name = enclosing type); wire JSON key stays \"signature\" via JsonPropertyName for backwards compatibility. signedData.Signature/sd.Signature → .Value across signing tests; data.Signature.Signature → data.Signature.Value across other tests."
+        },
+        {
+          "paths": [
+            "PLang/App/Callback/ICallback.cs",
+            "PLang/App/Callback/this.cs",
+            "PLang/App/Callback/Signature/this.cs",
+            "PLang/App/this.cs",
+            "PLang/App/GlobalUsings.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "ICallback empty marker (Stage 4 fills with AskCallback/ErrorCallback). app.Callback config holder + Signature sub-config with ExpiresInMs (int?, default null). Wired into App via auto-property. Global aliases AppCallback + ICallback added."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.Envelope.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Data.Signature gains lazy populate via _signature backing field. Getter triggers EnsureSigned() ONLY when _value is ICallback (read directly from field — using Value would force DynamicData factory eval, which hits the filesystem and breaks unrelated tests). RawSignature internal accessor for peek paths (e.g. verify's no-signature check). EnsureSigned() throws InvalidOperationException without Context; otherwise dispatches sync-over-async through app.RunAction<sign>. Reads expiry from app.Callback.Signature.ExpiresInMs only for ICallback values."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs",
+            "PLang/App/Channels/Serializers/this.cs",
+            "PLang/App/Channels/Serializers/UnregisteredMimeType.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "PlangDataSerializer for application/plang+data emits the full Envelope (Type+Value+Signature). Calls EnsureSigned() before reading Signature on Write so non-callback Data still seals for wire transport. GetByMimeType throws UnregisteredMimeType on miss (sibling to ProviderRestoreException's hard-error model). text/html aliased to JsonStreamSerializer. application/plang+data registered at App.Channels.Serializers boot."
+        },
+        {
+          "paths": [
+            "TestFixtures/TestProvider/TestSigningProvider.cs",
+            "TestFixtures/NoCtorProvider/NoCtorProvider.cs",
+            "PLang.Tests/App/Fixtures/dlls/TestProvider.dll",
+            "PLang.Tests/App/Fixtures/dlls/NoCtorProvider.dll"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test-fixture providers gained IsBuiltIn + Source (required by IProvider after Stage 1). Rebuilt DLLs and copied into the test fixtures dir."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/signing/SignatureRenameTests.cs",
+            "PLang.Tests/App/DataTests/DataLazySignatureTests.cs",
+            "PLang.Tests/App/DataTests/DataContextWiringTests.cs",
+            "PLang.Tests/App/Serializers/JsonSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/PlangDataSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/MimeRegistrationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled 22 [S3] test bodies. Tests that exercise the signing pipeline use a temp-dir App path (signing writes identity to disk; sandbox blocked /test/.db). RawSignature is the assertion target for 'before first access' / 'after EnsureSigned' so we don't trigger our own auto-populate."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v3/plan.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 plan + summary."
+        }
+      ],
+      "after": {
+        "status": "Stage 3 complete: rename + lazy Data.Signature + Callback config + PlangDataSerializer + GetByMimeType. C# 59 → 37 (22 [S3] flipped green; 37 remaining are Stage 4). PLang tests unchanged at 192/181/0fail/11stale.",
+        "health": "green — clean build, no regressions. The DynamicData factory-eval trap during lazy getter was the real surprise; reading _value (not Value) skipped it cleanly. Test fixture DLL refresh was an obvious hygiene step missed in Stage 1.",
+        "notes": "Stage 4 next: AskCallback / ErrorCallback / Error.Callback / callback.run / crypto v1. Builder support for `vars:` annotation on `output.ask` is out of branch scope per Ingi — the C# class `ask` gets `List<Data> Variables` but no PLang surface wiring."
+      }
     }
   ]
 }

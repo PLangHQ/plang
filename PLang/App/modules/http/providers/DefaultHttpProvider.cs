@@ -364,7 +364,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
 
     /// <summary>
     /// Signs a request via app.RunAction&lt;sign&gt;().
-    /// Returns null if unsigned, the sign result Data on success (navigate .Signature for SignedData).
+    /// Returns null if unsigned, the sign result Data on success (navigate .Signature for Signature).
     /// </summary>
     private static async Task<Data.@this?> SignRequestAsync(
         Actor.Context.@this context,
@@ -642,7 +642,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         if (!doc.RootElement.TryGetProperty("signature", out var sigElement))
             return;
 
-        var signedData = JsonSerializer.Deserialize<SignedData>(sigElement.GetRawText(),
+        var signedData = JsonSerializer.Deserialize<Signature>(sigElement.GetRawText(),
             App.Utils.Json.CaseInsensitiveRead);
         if (signedData == null) return;
 

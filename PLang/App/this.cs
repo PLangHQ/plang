@@ -192,6 +192,13 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     public global::App.Build.@this Build { get; }
 
     /// <summary>
+    /// Callback subsystem config holder. NOT an ICallback — this is `app.Callback.*` config
+    /// (e.g. `app.Callback.Signature.ExpiresInMs`). Stage 4 expands the surface; Stage 3
+    /// ships only the signature config.
+    /// </summary>
+    public global::App.Callback.@this Callback { get; } = new();
+
+    /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
     /// </summary>
     public bool Create { get; set; }

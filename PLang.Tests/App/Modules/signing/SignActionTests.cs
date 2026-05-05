@@ -70,7 +70,7 @@ public class SignActionTests
         await Assert.That(sd.Nonce).IsNotEmpty();
         await Assert.That(sd.Identity).IsNotEmpty();
         await Assert.That(sd.Hash).IsNotNull();
-        await Assert.That(sd.Signature).IsNotNull();
+        await Assert.That(sd.Value).IsNotNull();
     }
 
     [Test]
@@ -202,7 +202,7 @@ public class SignActionTests
         await Assert.That(result.Success).IsTrue();
 
         var sd = result.Signature!;
-        var sigBytes = Convert.FromBase64String(sd.Signature!);
+        var sigBytes = Convert.FromBase64String(sd.Value!);
         var signingBytes = sd.ToSigningBytes();
 
         var provider = new Ed25519Provider();

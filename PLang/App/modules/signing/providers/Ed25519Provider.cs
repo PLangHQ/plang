@@ -11,7 +11,7 @@ namespace App.modules.signing.providers;
 
 /// <summary>
 /// Ed25519 signing provider. Owns the full signing/verification pipeline.
-/// Low-level crypto via NSec. High-level pipeline builds SignedData envelopes.
+/// Low-level crypto via NSec. High-level pipeline builds Signature envelopes.
 /// </summary>
 public class Ed25519Provider : ISigningProvider
 {
@@ -38,7 +38,7 @@ public class Ed25519Provider : ISigningProvider
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
         var nonce = action.Context.Variables.GetValue("GUID")!.ToString()!;
 
-        var signedData = new SignedData
+        var signedData = new Signature
         {
             Type = "signature",
             Algorithm = Name,
@@ -54,7 +54,7 @@ public class Ed25519Provider : ISigningProvider
         var signingBytes = signedData.ToSigningBytes();
         var signResult = Sign(signingBytes, identity.PrivateKey);
         if (!signResult.Success) return signResult;
-        signedData.Signature = Convert.ToBase64String((byte[])signResult.Value!);
+        signedData.Value = Convert.ToBase64String((byte[])signResult.Value!);
 
         action.Data!.Signature = signedData;
         return action.Data;
@@ -62,10 +62,10 @@ public class Ed25519Provider : ISigningProvider
 
     public virtual async Task<Data.@this> VerifyAsync(verify action)
     {
-        if (action.Data?.Signature == null)
+        if (action.Data?.RawSignature == null)
             return App.Data.@this.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
-        var signedData = action.Data.Signature;
+        var signedData = action.Data.RawSignature;
         var app = action.Context.App;
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);
@@ -130,11 +130,11 @@ public class Ed25519Provider : ISigningProvider
         }
 
         // 8. Signature verification
-        if (string.IsNullOrEmpty(signedData.Signature))
+        if (string.IsNullOrEmpty(signedData.Value))
             return App.Data.@this.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
 
         byte[] signatureBytes;
-        try { signatureBytes = Convert.FromBase64String(signedData.Signature); }
+        try { signatureBytes = Convert.FromBase64String(signedData.Value); }
         catch (FormatException) { return App.Data.@this.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
 
         var signingBytes = signedData.ToSigningBytes();

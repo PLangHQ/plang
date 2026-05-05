@@ -45,7 +45,7 @@ public class TransportPropertyFilterTests
     public async Task DefaultJson_ExcludesSignature_BecauseJsonIgnore()
     {
         var data = Data.Ok("test-value");
-        data.Signature = new SignedData
+        data.Signature = new Signature
         {
             Identity = "test-key",
             Nonce = "abc123"
@@ -87,7 +87,7 @@ public class TransportPropertyFilterTests
     public async Task ForOutbound_SerializesSignature_DespiteJsonIgnore()
     {
         var data = Data.Ok("outbound-test");
-        data.Signature = new SignedData
+        data.Signature = new Signature
         {
             Identity = "out-key",
             Nonce = "out-nonce"
@@ -115,13 +115,13 @@ public class TransportPropertyFilterTests
     public async Task Roundtrip_SignaturePreserved_ThroughSerializeDeserialize()
     {
         var original = Data.Ok("roundtrip");
-        original.Signature = new SignedData
+        original.Signature = new Signature
         {
             Identity = "rt-key",
             Algorithm = "ed25519",
             Nonce = "rt-nonce",
         };
-        original.Signature.GetType().GetProperty("Signature")!.SetValue(original.Signature, "base64sig");
+        original.Signature.GetType().GetProperty("Value")!.SetValue(original.Signature, "base64sig");
 
         // Serialize with [Out], deserialize with [In]
         var json = JsonSerializer.Serialize(original, _outboundOptions);

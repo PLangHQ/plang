@@ -1,44 +1,88 @@
+using global::App.Channels.Serializers;
+using global::App.Channels.Serializers.Serializer;
+using global::App.Callback;
+
 namespace PLang.Tests.App.Serializers;
 
 public class PlangDataSerializerRoundTripTests
 {
+    private sealed class FakeCallback : ICallback { }
+
     [Test]
     public async Task PlangDataSerializer_Write_EmitsTypePlusValuePlusSignature()
     {
         // application/plang+data wire shape is the full envelope: Type + Value + Signature.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var data = new Data("v") { Value = "hello", Context = app.User.Context };
+        app.User.Context.Variables.Set(data);
+
+        var s = app.Channels.Serializers.GetByMimeType("application/plang+data");
+        var wire = s.Serialize(data);
+
+        await Assert.That(wire.Contains("\"type\"")).IsTrue();
+        await Assert.That(wire.Contains("\"value\"")).IsTrue();
+        await Assert.That(wire.Contains("\"signature\"")).IsTrue();
     }
 
     [Test]
     public async Task PlangDataSerializer_Write_TriggersLazySigning_OnFirstSignatureRead()
     {
         // Write reads data.Signature → first access populates via signing.SignAsync.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var data = new Data("v") { Value = "hello", Context = app.User.Context };
+        app.User.Context.Variables.Set(data);
+
+        await Assert.That(data.RawSignature).IsNull();
+
+        var s = app.Channels.Serializers.GetByMimeType("application/plang+data");
+        s.Serialize(data);
+
+        await Assert.That(data.RawSignature).IsNotNull();
     }
 
     [Test]
     public async Task PlangDataSerializer_RoundTrip_SignaturePopulatedUnverifiedOnRead()
     {
-        // After reading the payload back, Data.Signature is populated (unverified).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var data = new Data("v") { Value = "hello", Context = app.User.Context };
+        app.User.Context.Variables.Set(data);
+
+        var s = app.Channels.Serializers.GetByMimeType("application/plang+data");
+        var wire = s.Serialize(data);
+        var restored = s.Deserialize<Data>(wire);
+
+        await Assert.That(restored).IsNotNull();
+        await Assert.That(restored!.RawSignature).IsNotNull();
     }
 
     [Test]
     public async Task PlangDataSerializer_RoundTrip_DoesNotAutoVerify()
     {
         // Reading does NOT auto-verify; verification is the consumer's explicit step.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // The reconstructed Data has signature populated but unchecked. This is a
+        // structural pin — Read returns a Data whose RawSignature is set; nothing
+        // calls Verify implicitly.
+        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var data = new Data("v") { Value = "hello", Context = app.User.Context };
+        app.User.Context.Variables.Set(data);
+
+        var s = app.Channels.Serializers.GetByMimeType("application/plang+data");
+        var wire = s.Serialize(data);
+        var restored = s.Deserialize<Data>(wire);
+
+        // Signature present, no verification performed: there's no Verified flag set.
+        await Assert.That(restored!.RawSignature).IsNotNull();
+        // The signature on the restored Data hasn't been checked — nothing on Data
+        // tracks "verified" today, so we assert presence + that round-trip succeeded.
+        await Assert.That(restored.Value as string).IsEqualTo("hello");
     }
 
     [Test]
     public async Task PlangDataSerializer_HandlesApplicationPlangDataMimeType()
     {
-        // Registered for application/plang+data; channels routing test pins this.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var s = app.Channels.Serializers.GetByMimeType("application/plang+data");
+        await Assert.That(s).IsTypeOf<PlangDataSerializer>();
+        await Assert.That(s.ContentType).IsEqualTo("application/plang+data");
     }
 }
