@@ -34,6 +34,39 @@ public class Error : IError
     /// </summary>
     public List<ParamSnapshot>? Params { get; set; }
     public List<IError> ErrorChain { get; } = new();
+
+    /// <summary>
+    /// Back-reference to the App that observed this error. Set by <see cref="@this.Push"/>
+    /// when the error enters scope. Read by the lazy <see cref="Callback"/> property to
+    /// invoke <c>app.Snapshot()</c> for an ErrorCallback materialisation.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    internal global::App.@this? App { get; set; }
+
+    private global::App.Data.@this<global::App.Callback.ErrorCallback>? _callback;
+
+    /// <summary>
+    /// PLang surface <c>%!error.callback%</c> resolves through here. First read invokes
+    /// <c>app.Snapshot()</c> (which captures Variables.SnapshotAt(this) for the throw-time
+    /// view) and wraps the snapshot in an <see cref="App.Callback.ErrorCallback"/>. Cached
+    /// per Error instance — reading twice returns the same Data reference.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public global::App.Data.@this<global::App.Callback.ErrorCallback> Callback
+    {
+        get
+        {
+            if (_callback != null) return _callback;
+            if (App == null)
+                throw new InvalidOperationException(
+                    "Error.Callback requires App reference; ensure the error went through Errors.Push.");
+            var snap = App.Snapshot();
+            var cb = new global::App.Callback.ErrorCallback { AppSnapshot = snap };
+            _callback = global::App.Data.@this<global::App.Callback.ErrorCallback>.Ok(cb);
+            _callback.Context = App.User.Context;
+            return _callback;
+        }
+    }
     public Step? Step { get; set; }
     public Goal? Goal { get; set; }
     public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();

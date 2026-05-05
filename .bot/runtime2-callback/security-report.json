@@ -1,0 +1,100 @@
+{
+  "branch": "runtime2-callback",
+  "reviewer": "security",
+  "version": "v1",
+  "verdict": "pass",
+  "summary": "Threat-model walk of callback wire surface (Stages 1-4). One Medium and three Lows; zero High. Bounded by absence of HTTP/channel ingest of callbacks today; the Medium becomes High when that wiring lands. Auditor F1 (PositionWire bounds) and F2 (AskCallback !-prefix filter) re-verified closed.",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "title": "callback.run skips signing.verify when RawSignature is null",
+      "files": ["PLang/App/modules/callback/run.cs:27-35"],
+      "summary": "PlangDataSerializer.FromEnvelope sets Data.Signature directly from the envelope JSON; an attacker omitting the signature field results in RawSignature==null, callback.run skips signing.verify entirely, and dispatch proceeds with attacker-chosen Position + Variables. v1 = identity *encryption* doesn't excuse this — *signing* is real (Ed25519). Bounded today by lack of channel ingest; will become exploitable as soon as Stage 5 / HTTP wiring lands callback receive.",
+      "fix_recommendation": "Auto-EnsureSigned for in-process ICallback dispatch (symmetric posture wire vs in-process), then make callback.run reject RawSignature==null. Three workable shapes detailed in summary.md.",
+      "blocking": "before-channel-wiring",
+      "exploitability_today": "narrow — only in-process, where the trust boundary is fine"
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "title": "Variables.Restore + ErrorCallback wire path miss !-prefix filter",
+      "files": [
+        "PLang/App/Variables/this.Snapshot.cs:35-46",
+        "PLang/App/Callback/ErrorCallback.cs:104-109"
+      ],
+      "summary": "Variables.Capture filters !-prefix names (system/infra: !app, !ask.answer, !error.*). Variables.Restore does not. ErrorCallback's wire path goes through Restore and lets attacker-supplied !-prefixed names through. Mirror of auditor F2 closure (which fixed only AskCallback's bind loop in 3fbc7cfa); the fix didn't propagate to the source-of-truth path or the ErrorCallback variant. Compounds with F1 — unsigned ErrorCallback can inject !ask.answer to short-circuit a downstream ask.",
+      "fix_recommendation": "Add `if (!string.IsNullOrEmpty(data.Name) && data.Name.StartsWith(\"!\")) continue;` to Variables.@this.Restore. One-line fix; covers ErrorCallback wire and any future Snapshot consumer.",
+      "blocking": "with F1"
+    },
+    {
+      "id": "F3",
+      "severity": "low",
+      "title": "Callback wire JSON deserialize has no body size / list cap",
+      "files": [
+        "PLang/App/Callback/AskCallback.cs:47",
+        "PLang/App/Callback/ErrorCallback.cs:86-87"
+      ],
+      "summary": "JsonSerializer.Deserialize on callback wires uses default options — no MaxBytes, no Variables-list cap. crypto.decrypt is identity (v1), so the buffer arrives unchanged. Data.@this's GZipDecompress already caps at 100MB but callback wire bypasses gzip. Multi-GB body fed into JsonSerializer.Deserialize OOMs the parser.",
+      "fix_recommendation": "Add MaxBytes / MaxVariables constants and reject oversized wires. Mirrors http module's existing size-limits pattern.",
+      "blocking": "before-channel-wiring (channel-layer bound is the primary control; this is defense-in-depth)"
+    },
+    {
+      "id": "F4",
+      "severity": "low",
+      "title": "Callback wire serializers don't apply SensitivePropertyFilter",
+      "files": [
+        "PLang/App/Callback/AskCallback.cs:91-96",
+        "PLang/App/Callback/ErrorCallback.cs:149-154",
+        "PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs:22-29"
+      ],
+      "summary": "Data.@this._envelopeJsonOptions applies SensitivePropertyFilter.Strip; the three callback-wire option blocks above do not. Variables captured into a callback include the full Data envelope including [Sensitive]-marked Value sub-properties, which then cross the wire un-redacted. Today only Identity.PrivateKey is [Sensitive] and rarely lands in user-namespace variables, so practical exposure is narrow — but the architectural pattern teaches the wrong thing as more types get marked.",
+      "fix_recommendation": "Add `Modifiers = { SensitivePropertyFilter.Strip }` to each of the three option blocks. One line each. Mirrors `Data.@this._envelopeJsonOptions`.",
+      "blocking": false
+    }
+  ],
+  "notes": [
+    {
+      "id": "N1",
+      "title": "CallbackGoal* errors propagate as CLR exceptions",
+      "summary": "Auditor's N3. Combined with F1, an attacker satisfying the signature gate but sending a bad position throws an unhandled CLR exception out of cb.Run. Caller framing decides whether this surfaces as 500 vs controlled error. Worth threading through Data.FromError when channel wiring lands.",
+      "files": ["PLang/App/Errors/CallbackGoalErrors.cs", "PLang/App/CallStack/this.Snapshot.cs:124-129", "PLang/App/Callback/AskCallback.cs:128-132"]
+    },
+    {
+      "id": "N2",
+      "title": "Providers.@this.Restore Assembly.LoadFrom path is wire-unreachable in current shape",
+      "summary": "Providers.Restore does Assembly.LoadFrom(reg.Source); reg.Source comes from the Snapshot. Neither AskCallback nor ErrorCallback wires populate the Providers section (only CallStack + Variables). So the wire cannot reach Assembly.LoadFrom today. Standing rule (memory: small-rules in MEMORY.md) already covers Module.add/provider.load as accepted-trust on .pr. **If** ErrorCallback's wire format is ever extended to round-trip Providers, this becomes Critical — pre-emptive note for the architect.",
+      "files": ["PLang/App/Providers/this.Snapshot.cs:95-128", "PLang/App/Callback/ErrorCallback.cs:74-82"]
+    },
+    {
+      "id": "N3",
+      "title": "ActorName, ActionModule, ActionName, Id are wire fields with no consumer",
+      "summary": "Wire shapes carry these fields but Restore doesn't read them. Inert today. Worth dropping to shrink attack surface and wire size.",
+      "files": ["PLang/App/Callback/ErrorCallback.cs:162-171", "PLang/App/Callback/AskCallback.cs:106-119"]
+    }
+  ],
+  "auditor_v1_re_verification": {
+    "F1_PositionWire_bounds": {
+      "status": "closed",
+      "where": "PLang/App/Callback/AskCallback.cs:128-132",
+      "comment": "Both stepIndex and actionIndex bounds guards present, mirror CallStack.this.Snapshot.cs:131-136. CallbackGoalNotFound thrown with descriptive context."
+    },
+    "F2_AskCallback_bang_prefix_filter": {
+      "status": "closed",
+      "where": "PLang/App/Callback/AskCallback.cs:73-77",
+      "comment": "AskCallback.Run bind loop now skips !-prefix names. *But* the same fix is missing on Variables.@this.Restore (the path ErrorCallback wires use) — see F2 above."
+    }
+  },
+  "tests": {
+    "csharp_tunit": {
+      "command": "PLang.Tests/bin/Debug/net10.0/PLang.Tests",
+      "result": "2720/2720 pass",
+      "rebuild": "clean (rm -rf bin obj for PlangConsole/PLang/PLang.Tests/PLang.Generators, then dotnet build PlangConsole)"
+    },
+    "plang": {
+      "command": "cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test",
+      "result": "192 [Pass] entries; 6 [Fail] are intentional fixture goals under _fixtures_sensitive/ and _fixtures_fail/ consumed by meta-tests (matches tester v1 accounting)"
+    }
+  },
+  "recommendation": "merge after F1 fix scheduled before any channel-side wiring of callback ingest; bundle F2 + F4 (one-liners) into the same pass; F3 fine to defer to channel wiring with channel-layer bound as primary control."
+}

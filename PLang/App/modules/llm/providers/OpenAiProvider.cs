@@ -23,6 +23,8 @@ public sealed class OpenAiProvider : ILlmProvider
 {
     public string Name { get; init; } = "OpenAi";
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     /// <summary>Fired before each LLM API call with resolved messages and the schema string (if any). Debug subscribes to this.</summary>
     public event Action<List<LlmMessage>, string?>? OnBeforeRequest;

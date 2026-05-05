@@ -1,0 +1,36 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-callback",
+  "timestamp": "2026-05-05T00:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Final docs gate on runtime2-callback. Coder XML doc quality on the new public surface (Callback/, Snapshot/, modules/callback/run.cs, modules/output/ask.cs, PlangDataSerializer, *.Snapshot.cs partials) was already high — no member-level fills needed. Wrote architecture docs for the new callback + snapshot subsystems, three cross-cutting good_to_know entries, user-facing module docs (callback new, output rewrite, index update), and applied all four character proposals filed on the branch. CHANGELOG drafted in v1/result.md.",
+  "stats": {
+    "gaps_found": 11,
+    "gaps_filled": 11,
+    "docs_updated": 5,
+    "docs_created": 4
+  },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "created", "file": "Documentation/v0.2/callbacks.md", "description": "Full architecture + developer reference for the callback subsystem: ICallback contract, AskCallback vs ErrorCallback wire-shape choice, seal-then-verify gate (S-F1), size caps (S-F3), sensitive-property strip (S-F4), %!ask.answer% resume sentinel, lazy-Signature ICallback carve-out, application/plang+data mimetype." },
+    { "id": 2, "type": "architecture-doc", "action": "created", "file": "Documentation/v0.2/snapshots.md", "description": "ISnapshotted classifier, Snapshot.@this section-tree container, per-subsystem subtree reference (10 implementers), referent-integrity discipline, what's NOT in the snapshot, wire-shape choice rationale." },
+    { "id": 3, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Three new entries: lazy Data.Signature ICallback-only carve-out (trip-wires are subtle); RestoredFrame is surrogate not Call.@this; Errors.Push sets error.App for callback materialisation." },
+    { "id": 4, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/architecture.md", "description": "Added Snapshot/Restore + Callbacks sections after Error Handling, each pointing to the topic file. Architecture remains a high-level map; topic files carry the detail." },
+    { "id": 5, "type": "architecture-doc", "action": "created", "file": "docs/modules/callback.md", "description": "User-facing reference for - run %callback%. Worked example, full typed-error key table, wire size limits, relationship to ask." },
+    { "id": 6, "type": "architecture-doc", "action": "updated", "file": "docs/modules/output.md", "description": "Rewrote with ask as its own action subsection. Covers vars: annotation and the resume mechanism in plain terms ('tampered or unsigned envelopes never resume'). Note: PLang .goal examples beyond the basic ones are tester turf." },
+    { "id": 7, "type": "consistency", "action": "updated", "file": "docs/modules/index.md", "description": "Added callback row to the Core module reference table; expanded output's actions to include ask." },
+    { "id": 8, "type": "changelog", "action": "created", "file": ".bot/runtime2-callback/docs/v1/result.md", "description": "CHANGELOG entry drafted: Added (callbacks subsystem, callback.run, ask vars+resume, application/plang+data, App snapshot/restore, wire caps, sensitive strip), Renamed (SignedData → Signature), Internal (lazy-Signature carve-out, RestoredFrame surrogate, Errors.Push back-ref)." }
+  ],
+  "findings": [],
+  "claude_md_proposals": [
+    { "from_bot": "architect", "target": "characters/architect/character.md", "decision": "applied", "reason": "v2 — review-server workflow with HTTP API surface. Real tooling built on this branch; without persistent instructions future architect sessions would edit comments.json by hand. Canonical, not branch-specific." },
+    { "from_bot": "architect", "target": "characters/architect/character.md", "decision": "applied", "reason": "v3 — test-designer prep two-files convention (test-strategy.md narrative + test-coverage.md matrix). Validated on this branch when test-designer pulled and surfaced the gap; codifying prevents the next branch repeating it." },
+    { "from_bot": "coder", "target": "characters/coder/character.md", "decision": "applied", "reason": "v4 — stale .test.goal stubs are part of stage closure. User explicitly flagged the incident; concrete rule with explicit out-of-scope escape hatch. Falls under architect/test-designer/coder proposal exception." },
+    { "from_bot": "codeanalyzer", "target": "characters/codeanalyzer/character.md", "decision": "applied", "reason": "v1 — read-only scope. User flagged the 'auditor changed code' incident on this branch (codeanalyzer fixed F1/F2 in AskCallback.cs without being asked). Tight one-paragraph rule, reviewer-bot exception applies." }
+  ],
+  "character_proposals": [
+    { "from_bot": "architect", "target": "architect", "decision": "applied", "reason": "v2 — review server is real tooling that needs persistent instructions to be reused next session." },
+    { "from_bot": "architect", "target": "architect", "decision": "applied", "reason": "v3 — two-file test-designer prep convention validated on this branch." },
+    { "from_bot": "coder", "target": "coder", "decision": "applied", "reason": "v4 — branch-incident-driven, addresses real failure mode (stale stubs) with concrete steps." },
+    { "from_bot": "codeanalyzer", "target": "codeanalyzer", "decision": "applied", "reason": "v1 — branch-incident-driven; reviewer-bot must not change code." }
+  ]
+}

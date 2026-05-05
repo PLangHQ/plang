@@ -32,13 +32,72 @@ public partial class @this
         }
     };
 
+    private App.modules.signing.Signature? _signature;
+
     /// <summary>
-    /// Cryptographic signature of the data. Contains a SignedData object when signed.
+    /// Cryptographic signature envelope. Lazy-populates on read ONLY when the wrapped value
+    /// is an <see cref="ICallback"/> — callbacks need a wire seal at every Serialize and the
+    /// architect's design says reading the property is the trigger. For non-callback values,
+    /// returns the backing field as-is so existing verify-style "if (data.Signature == null)"
+    /// checks still fail-closed instead of auto-signing. Use <see cref="EnsureSigned"/> as
+    /// the explicit populate trigger when a serializer needs to seal a non-callback Data.
+    /// The setter writes the field directly — wire-deserializers inject a captured signature
+    /// without triggering populate.
     /// </summary>
     [JsonIgnore]
     [In]
     [Out]
-    public App.modules.signing.SignedData? Signature { get; set; }
+    public App.modules.signing.Signature? Signature
+    {
+        get
+        {
+            // Read _value directly (not the Value property) so DynamicData's lazy factory
+            // isn't force-computed just to check ICallback-ness. DynamicData wrapping an
+            // ICallback is not a real shape we encounter; if it ever is, callers can call
+            // EnsureSigned() explicitly.
+            if (_signature == null && _value is ICallback) EnsureSigned();
+            return _signature;
+        }
+        set => _signature = value;
+    }
+
+    /// <summary>
+    /// Backing-field accessor that never triggers lazy populate. Used by code paths that
+    /// need to *peek* whether a signature exists (signing.verify's "no signature" check)
+    /// without auto-signing.
+    /// </summary>
+    [JsonIgnore]
+    internal App.modules.signing.Signature? RawSignature => _signature;
+
+    /// <summary>
+    /// Explicitly populates <see cref="Signature"/> via the configured signing pipeline if
+    /// not already set. No-op when a signature is already present. Called by serializers
+    /// that need to seal a non-callback Data for wire transport (e.g. PlangDataSerializer).
+    /// Throws <see cref="InvalidOperationException"/> when this Data has no Context.
+    /// </summary>
+    public void EnsureSigned()
+    {
+        if (_signature != null) return;
+        if (_context == null)
+            throw new InvalidOperationException(
+                "Data.Signature cannot be lazily populated without a Context — " +
+                "set Context (or use the Variables.Set path which wires it) before reading Signature.");
+
+        var expiresInMs = Value is ICallback
+            ? _context.App.Callback.Signature.ExpiresInMs
+            : (int?)null;
+
+        var action = new App.modules.signing.sign
+        {
+            Data = this,
+            ExpiresInMs = expiresInMs.HasValue ? new @this<int>("", expiresInMs.Value) : null
+        };
+        var result = _context.App.RunAction<App.modules.signing.sign>(action, _context)
+            .GetAwaiter().GetResult();
+        if (!result.Success)
+            throw new InvalidOperationException(
+                $"Signing failed during lazy Signature populate: {result.Error?.Message ?? "unknown"}.");
+    }
 
     // --- Outbound pipeline: Wrap → Compress → Encrypt ---
 

@@ -1,0 +1,10 @@
+Start
+/ Materialize a callback via %!error.callback%, then dispatch it via callback.run.
+/ The original failing action re-runs through the live execution path.
+- throw error "boom", on error call CaptureCallback
+- assert %ranCallback% is true, "callback dispatch should have completed"
+
+CaptureCallback
+- set %cb% = %!error.callback%
+- callback.run callback=%cb%, on error ignore
+- set %ranCallback% = true

@@ -1,0 +1,10 @@
+Start
+/ Reading %!error.callback% inside an error handler resolves through
+/ app.Errors.Current.Callback to a Data<ErrorCallback>.
+- throw error "boom", on error call HandleErrorCallback
+- assert %callbackSeen% is true, "on-error handler should have run and read callback"
+
+HandleErrorCallback
+- set %cb% = %!error.callback%
+- assert %cb% is not null
+- set %callbackSeen% = true

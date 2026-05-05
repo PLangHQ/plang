@@ -12,6 +12,8 @@ public class NoCtorSigningProvider : ISigningProvider
 
     public string Name => _name;
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     public App.Data.@this<KeyPair> GenerateKeyPair()
         => App.Data.@this<KeyPair>.Ok(new KeyPair("pub", "priv"));

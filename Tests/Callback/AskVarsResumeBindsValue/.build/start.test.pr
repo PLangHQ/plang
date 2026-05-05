@@ -1,0 +1,154 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %!ask.answer% = \u0022Alice\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "When !ask.answer is pre-bound (resume path), output.ask short-circuits and\nreturns the answer instead of issuing a fresh AskCallback.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%!ask.answer%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "Alice",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set the special pre-bound ask answer variable so output.ask short-circuits on resume.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "output.ask question=\u0022what\u0027s your name?\u0022, write to %name%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "ask",
+          "parameters": [
+            {
+              "name": "Question",
+              "value": "what\u0027s your name?",
+              "type": "string"
+            },
+            {
+              "name": "Variables",
+              "value": [],
+              "type": "list\u003Cvariable\u003E"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Ask the actor for the name; because %!ask.answer% is pre-bound, output.ask should return that value and write it to %name%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %name% equals \u0022Alice\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "Alice",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%name%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": null
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that the asked/written name equals Alice.",
+      "level": "medium",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/AskVarsResumeBindsValue/Start.test.goal",
+  "prPath": "/AskVarsResumeBindsValue/.build/start.test.pr",
+  "hash": "31b1350f1fd15d30286134f6ccb01ae6ae3792fbe1c0c7c953b70ea96b13dd4e",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

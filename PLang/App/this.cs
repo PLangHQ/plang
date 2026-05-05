@@ -16,7 +16,7 @@ namespace App;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed class @this : Data.@this<@this>, IAsyncDisposable
+public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly AppModules _modules;
@@ -102,12 +102,18 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     public CancellationToken ShutdownToken => _shutdownCts.Token;
 
     /// <summary>
-    /// App-scoped static storage for modules. Persists for the lifetime of the app.
-    /// TODO: Replace with goal-backed dynamic property (see todos.md).
+    /// App-scoped key/value store. Module-owned mutable state that must persist for
+    /// the lifetime of the App goes here. Implements ISnapshotted — round-trips with
+    /// the rest of the App tree on Snapshot/Restore.
+    /// TODO: replace with goal-backed dynamic property (see todos.md).
     /// </summary>
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, object?>> _statics = new();
-    internal ConcurrentDictionary<string, object?> GetStatic(string key) =>
-        _statics.GetOrAdd(key, _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
+    public AppStatics Statics { get; } = new();
+
+    /// <summary>
+    /// Backwards-compatible accessor for module callers that hold the bag.
+    /// Identical to <c>Statics.GetBag(key)</c>.
+    /// </summary>
+    internal ConcurrentDictionary<string, object?> GetStatic(string key) => Statics.GetBag(key);
 
     /// <summary>
     /// Global event collection for the application.
@@ -184,6 +190,13 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
     /// Builder mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
     public global::App.Build.@this Build { get; }
+
+    /// <summary>
+    /// Callback subsystem config holder. NOT an ICallback — this is `app.Callback.*` config
+    /// (e.g. `app.Callback.Signature.ExpiresInMs`). Stage 4 expands the surface; Stage 3
+    /// ships only the signature config.
+    /// </summary>
+    public global::App.Callback.@this Callback { get; } = new();
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.
@@ -298,6 +311,8 @@ public sealed class @this : Data.@this<@this>, IAsyncDisposable
         _goals = new AppGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
         Channels = new AppChannels(this);
+
+        Errors.App = this;
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();

@@ -25,7 +25,8 @@ You don't need to know the module name — just write what you want and the LLM 
 | Module | Description | Actions |
 |--------|-------------|---------|
 | [variable](variable.md) | Set, get, and manage variables | set, get, remove, clear, exists |
-| [output](output.md) | Write text to the user | write |
+| [output](output.md) | Write text to the user, ask the user a question | write, ask |
+| [callback](callback.md) | Run a signed callback envelope (resume a paused goal) | run |
 | [condition](condition.md) | If/else branching | if |
 | [loop](loop.md) | Iterate over collections | foreach |
 | [goal](goal.md) | Call other goals | call |

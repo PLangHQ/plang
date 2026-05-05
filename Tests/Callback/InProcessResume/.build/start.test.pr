@@ -1,0 +1,370 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = 1",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "First integration cut \u2014 set %x%=1, throw, recovery sets %x%=2; the captured\ncallback\u0027s snapshot reflects the throw-time view (%x%==1) via\nVariables.SnapshotAt(error). After recovery, live %x% is 2.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assign literal 1 to runtime variable %x% using variable.set.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "throw error \u0022boom\u0022, on error call CaptureAndRecover",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "boom",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "CaptureAndRecover",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Throw an error with message \u0022boom\u0022. The step text says \u0027on error call CaptureAndRecover\u0027, so wrap the throw with error.handle that runs a recovery action chain calling the goal CaptureAndRecover.",
+      "level": "medium",
+      "confidence": 62,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %x% equals 2, \u0022live x should be 2 after recovery\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 2,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%x%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "live x should be 2 after recovery",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: after recovery, live %x% should equal 2. Use assert.equals.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %callbackPresent% is true",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%callbackPresent%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: %callbackPresent% should be true. Use assert.isTrue.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "CaptureAndRecover",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %cb% = %!error.callback%",
+          "lineNumber": 11,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%cb%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%!error.callback%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Assign the runtime error callback variable %!error.callback% into %cb% using variable.set.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %callbackPresent% = true",
+          "lineNumber": 12,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%callbackPresent%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Mark that a callback is present by setting %callbackPresent% to true.",
+          "level": "high",
+          "confidence": 98,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "assert %cb% is not null",
+          "lineNumber": 13,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "assert",
+              "action": "isNotNull",
+              "parameters": [
+                {
+                  "name": "Value",
+                  "value": "%cb%",
+                  "type": "object"
+                },
+                {
+                  "name": "Message",
+                  "value": "Expected %cb% to be not null",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Post-condition assertion: ensure %cb% is not null; fail the step if it is null.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "set %x% = 2",
+          "lineNumber": 14,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%x%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": 2,
+                  "type": "int"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set %x% to numeric value 2.",
+          "level": "high",
+          "confidence": 98,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/InProcessResume/Start.test.goal",
+      "prPath": "/InProcessResume/.build/start.test.pr",
+      "hash": "113e21d55210eff01e8b8dfe222cd51b38f1ea3a93b119ab3f16563fbc593fad",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/InProcessResume/Start.test.goal",
+  "prPath": "/InProcessResume/.build/start.test.pr",
+  "hash": "a4d80533dc75723d67214bc1c348bc15a8fe2fadc91f757b9c107b31391e2daf",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

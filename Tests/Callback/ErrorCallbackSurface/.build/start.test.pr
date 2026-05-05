@@ -1,0 +1,256 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022boom\u0022, on error call HandleErrorCallback",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Reading %!error.callback% inside an error handler resolves through\napp.Errors.Current.Callback to a Data\u003CErrorCallback\u003E.",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "boom",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "HandleErrorCallback",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Throw an error with message \u0022boom\u0022. The step text specifies an on-error handler that should run next.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %callbackSeen% is true, \u0022on-error handler should have run and read callback\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%callbackSeen%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "on-error handler should have run and read callback",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: verify %callbackSeen% is true after the on-error handler runs.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "HandleErrorCallback",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %cb% = %!error.callback%",
+          "lineNumber": 8,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%cb%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%!error.callback%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Assign the runtime error callback (%!error.callback%) into the local variable %cb% so later steps can use it.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "assert %cb% is not null",
+          "lineNumber": 9,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "assert",
+              "action": "isNotNull",
+              "parameters": [
+                {
+                  "name": "Value",
+                  "value": "%cb%",
+                  "type": "object"
+                },
+                {
+                  "name": "Message",
+                  "value": "Error callback must be set",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Post-condition assertion: ensure the callback variable is not null/unset at this point; fail the step if it is.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "set %callbackSeen% = true",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%callbackSeen%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set a boolean flag %callbackSeen% to true to record that the callback was handled.",
+          "level": "high",
+          "confidence": 98,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/ErrorCallbackSurface/Start.test.goal",
+      "prPath": "/ErrorCallbackSurface/.build/start.test.pr",
+      "hash": "29ec01e93d84b1de727c910869e80e044046726f6aedfcc9287423fc1e9fb953",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/ErrorCallbackSurface/Start.test.goal",
+  "prPath": "/ErrorCallbackSurface/.build/start.test.pr",
+  "hash": "13f1d97d7c6a19d19a054c5aa01e63498a569bfd1fe0d98f7dc54895a2826e16",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

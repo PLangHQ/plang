@@ -1,0 +1,234 @@
+{
+  "v2/plan.md": [
+    {
+      "id": "cb462e91bf",
+      "line": 7,
+      "text": "let not say what changed in v1, lets have the change in v1, then we can have v1 as one phase, v2 as another phase. if we already have more than 2 phases, then create vX file for each phase",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T10:54:35"
+    }
+  ],
+  "plan.md": [
+    {
+      "id": "723eb578b5",
+      "line": 3,
+      "text": "App.Run, it looks like you are referencing static App, but it should be instance of app, app.Run",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T14:23:11"
+    },
+    {
+      "id": "a51db0a511",
+      "line": 12,
+      "text": "RestoreFrom, just Restore",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T16:52:12"
+    },
+    {
+      "id": "b283e0b08c",
+      "line": 13,
+      "text": "GoalHash feel like wrong(obp wrong), I would expect Goal.Hash, this would basically allow us to say Callback.Goal and it could load it self up according to the Hash and PrPath and give us the goal object. What do you think.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T14:26:33"
+    },
+    {
+      "id": "5915b1b164",
+      "line": 16,
+      "text": "we will be adding new actions to the crypto module, I think that is it",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T14:27:12"
+    }
+  ],
+  "plan/variable-capture.md": [
+    {
+      "id": "b0e4b6c0b7",
+      "line": 28,
+      "text": "no it should always produce the same output, only if the %!error% object changes is it different. We can even cache the callback",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:16:06"
+    }
+  ],
+  "plan/plang-surfaces.md": [
+    {
+      "id": "afd6b07621",
+      "line": 17,
+      "text": "'Inline on error with steps underneath is not how PLang error handlers compose.' - this is when you created a plang test like this\n\n- insert into users, name=%name%\n   on error call goal HandleError\n       - write %!error.callback% to file callbacks/%!error.id%.bin\n\nHaving that text is just confusing when the wrong example is not there, so lets just remove that text",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:18:29"
+    },
+    {
+      "id": "1a0e152512",
+      "line": 21,
+      "text": "is it still goal_hash after our discussion about goal.hash?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:19:10"
+    },
+    {
+      "id": "6d8cdeef70",
+      "line": 29,
+      "text": "DecryptInPlace is some nonsense, just link to see",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:19:43"
+    }
+  ],
+  "plan/callback-schema.md": [
+    {
+      "id": "ae33683af0",
+      "line": 7,
+      "text": "I feel like ActorName should just be Actor?\n\n\nI feel like this object looks very differently for a ask user request, something like \n\nrecord Callback(\n    Goal Goal,                                     // serialized as { PrPath, Hash } only — see \"Goal as embedded reference\" below\n    int StepIndex,\n    int ActionIndex,\n    Dictionary<string, object?> Variables,  // per-actor name → value bag\n);\n\nMaybe include the Actor, because in our example here we are always saying 'ask user', which is an actor, might also be 'ask system', 'ask service', where it's just a parameter on output.ask",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:24:31"
+    },
+    {
+      "id": "d3fcea89da",
+      "line": 13,
+      "text": "I think that it should be Task<Data> Run, thats how we run stuff, then we return the Data to whatever called us",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T16:54:01"
+    },
+    {
+      "id": "4049762955",
+      "line": 37,
+      "text": "lets make an example here\n\n```plang\n/ some code before where we loaded stuff, such as %order% and used it, we then see we are missing name\n- ask user \"what is your name?\", var: %order.id%, write to %name%\n/ now because this was stateless, the plang developer needs to know that he must get the order again from db, since we sent %order.id% as a var with the ask, it gets automatically loaded when user responds\n- select * from orders where id=%order.id%, return 1, write to %order%\n```",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T16:57:51"
+    },
+    {
+      "id": "84d21280eb",
+      "line": 50,
+      "text": "I feel like Selections is bad name, we should really try to keep the strcuture of the app as serialized, this then make me think of BuildEnabled and TestingEnabled (btw bad obp names, but the names wont matter if this goes where I am going with this). \n\nso why not have app.Serialize and on ErrorCallback there is App variable. The app.Serialize would then walk it's properties and ask if they are ISomething (dont know what to call it) and if they are ISomething that means they are serializable, so app.Providers woudl then know how to serialize it, so in the end ErrorCallback.App would be serialized to { app : { providers: { \"module\": \"crypto\", \"name\": \"eas-256\"}, ...}, Build:{isenabled:true, ...} }  (ok this json is completely wrong structure, but it to make the point), and it maps one to one of the structure of the app tree, so if we want to serialize something to the ErrorCallback that property would know how to do it? if we view the json it would be clear how it maps. \n\nThe way it maps now, I dont know what Selections is, BuildEnable what does that mean in form, if we map it one to one to the file structure and the properties on the @this classes it is easy to understand. It would also mean that deserializeing would be easy, just map the classes, just kind of json.deserialize<app>(errorcallback.app) would give us instance of app to run",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T16:31:45"
+    },
+    {
+      "id": "1049e8a5ca",
+      "line": 57,
+      "text": "lets add to todo: to fix the _statics if it isn't in there already",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T16:59:54"
+    }
+  ],
+  "plan/transparent-signing.md": [
+    {
+      "id": "19d0bae0d0",
+      "line": 7,
+      "text": "I want to talk a bit about the expire time, what if we could set it, for instance app.Callback.ExpiresInMs, giving us the option of config on the callback, we could the have other Callback configs not just the expire property. \n\nI could have a step like this \n```plang\n- set callback timeout to 5 minutes\n```\nthis would call 'app.callback.expiresInMs = 5*60*1000'\n\nwhen the Data<Callback> object would be created it could set the expire time from that property, how would this go??",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:29:25"
+    },
+    {
+      "id": "ba7e04f4ce",
+      "line": 7,
+      "text": "just note, expireInMs is default null",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "19d0bae0d0",
+      "ts": "2026-05-05T15:30:21"
+    },
+    {
+      "id": "735793ccd4",
+      "line": 26,
+      "text": "I want to give you high level overview on how the Data signing goes, this hasn't been fully implemented and still a work in progress but here is my idea about it:\n\n\nthis all depends on what is Accepted by the reciever, lets say for instance\nhttp request is made, accept is basically \"text/html\" or \"*\" (the default behavour for browser), then Data is not returned to the browser, but the Data.Value. when the browser makes another request with accept as \"plang/data\" (or similiar) we know he can accept Data object so we serialize that\n\n\nfor db insert, we just need to insert the Data.Value unless it's defined specifically to save the Data object in full \n\nfor files being save, it should depending on the filesystem settings, for now it should just when we save we also save a another file with the signature with it, file.jpg => file.jpg.signature. What I would like to do in future is save file.jpg.plang which would basically be plang format of the Data in binary. but this is future stuff.\n\nfor console, it is just Data.Value unless console is started with the accept of 'plang/data', then it would console.write the Data (serialized probably as json) and the user of the console would know how to read that, but giving it the signature",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:37:52"
+    }
+  ],
+  "plan/resume-mechanics.md": [
+    {
+      "id": "112a3745f5",
+      "line": 54,
+      "text": "\"not runnable\" this gave me idea, the correct obp would actually be then callback.Goal.Run wouldn't it? this would then know how to load up the goal file, what step to go to and what action. This feel pretty good, what do you say? Then we have no LoadByPrPath (this is obp violation, but lets leave it because there is other code using it and we will clean this later)",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:41:41"
+    }
+  ],
+  "plan/encryption-layering.md": [
+    {
+      "id": "27642409ac",
+      "line": 1,
+      "text": "this is not seperate branch, we need to do this in this branch, so ask about this now",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:46:51"
+    },
+    {
+      "id": "ba39e81591",
+      "line": 3,
+      "text": "no, lets do the encryption, we need first version of it, it will be limited but the module with the action should exists, crypto.encrypt, we can actually just return the same string for now, lets add to Todo: list to implement encryption action, we cant just yet, we have some missing feature in the plang runtime",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:48:23"
+    },
+    {
+      "id": "ff59ff66be",
+      "line": 7,
+      "text": "we should also encrypt the goal information, there is no need to leak out the prpath, step and action indexes",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:49:28"
+    },
+    {
+      "id": "4543cc86b5",
+      "line": 11,
+      "text": "since I had comment on VariablesByActor in other file, we might have to change this part some way. I feel like that Callback serialization should handle this encryption stuff, EncryptInPlace feels wrong. The serializer is saying to callback, give me data, the Callback does it thing to return to serializer, at that point it should be encrypted before returning to serializer",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:51:39"
+    },
+    {
+      "id": "4db1807f79",
+      "line": 17,
+      "text": "DecryptInPlace feels again wrong some how in obp sense",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:52:01"
+    },
+    {
+      "id": "3749bfaad0",
+      "line": 28,
+      "text": "There is not ask user branch, it's all the same branch, so lets get this out of our docs. Everything is just ONE branch",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-05T15:52:46"
+    }
+  ]
+}

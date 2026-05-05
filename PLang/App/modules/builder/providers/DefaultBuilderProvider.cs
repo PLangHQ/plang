@@ -12,6 +12,8 @@ public class DefaultBuilderProvider : IBuilderProvider
 {
     public string Name => "default";
     public bool IsDefault { get; set; }
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
 
     private static readonly Stopwatch _buildTimer = new();
 

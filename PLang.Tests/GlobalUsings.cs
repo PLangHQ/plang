@@ -59,3 +59,6 @@ global using Flags = App.CallStack.Flags;
 // collides. Use App.CallStack.Call.@this fully qualified, or per-file alias.
 global using Debugging = App.Debug.@this;
 global using Testing = App.Test.@this;
+global using Snapshot = App.Snapshot.@this;
+global using ISnapshotted = App.Snapshot.ISnapshotted;
+global using AppStatics = App.Statics.@this;

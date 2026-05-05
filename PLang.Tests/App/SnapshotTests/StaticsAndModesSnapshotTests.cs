@@ -1,0 +1,52 @@
+namespace PLang.Tests.App.SnapshotTests;
+
+public class StaticsAndModesSnapshotTests
+{
+    [Test]
+    public async Task Statics_RoundTrip_PreservesNameValuePairs()
+    {
+        // App._statics survives Capture/Restore (provisional — flagged in todos.md).
+        var src = new global::App.@this("/src");
+        var srcBag = src.Statics.GetBag("greetings");
+        srcBag["hello"] = "world";
+        srcBag["lang"] = "en";
+
+        var snap = src.Snapshot();
+        var dst = new global::App.@this("/dst");
+        dst.Restore(snap, dst.User.Context);
+
+        var dstBag = dst.Statics.GetBag("greetings");
+        await Assert.That(dstBag["hello"]).IsEqualTo("world");
+        await Assert.That(dstBag["lang"]).IsEqualTo("en");
+    }
+
+    [Test]
+    public async Task Build_RoundTrip_PreservesIsEnabled()
+    {
+        // App.Build is a @this with IsEnabled; Capture/Restore round-trips that bool.
+        var src = new global::App.@this("/src");
+        src.Build.IsEnabled = true;
+
+        var snap = src.Snapshot();
+        var dst = new global::App.@this("/dst");
+        await Assert.That(dst.Build.IsEnabled).IsFalse(); // pre-restore baseline
+        dst.Restore(snap, dst.User.Context);
+
+        await Assert.That(dst.Build.IsEnabled).IsTrue();
+    }
+
+    [Test]
+    public async Task Testing_RoundTrip_PreservesIsEnabled()
+    {
+        // App.Testing is a @this with IsEnabled; Capture/Restore round-trips that bool.
+        var src = new global::App.@this("/src");
+        src.Testing.IsEnabled = true;
+
+        var snap = src.Snapshot();
+        var dst = new global::App.@this("/dst");
+        await Assert.That(dst.Testing.IsEnabled).IsFalse();
+        dst.Restore(snap, dst.User.Context);
+
+        await Assert.That(dst.Testing.IsEnabled).IsTrue();
+    }
+}

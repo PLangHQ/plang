@@ -1,0 +1,7 @@
+Start
+/ Reading %!error.callback% outside an error handler scope: %!error% itself is
+/ null (no AsyncLocal-flowed error in this context), so the callback path is
+/ unresolved. Coder flipped the default from "throws" to "null" — simpler
+/ runtime contract, matches how %!error.X% works generally outside scope.
+- set %callbackOutsideScope% = %!error.callback%
+- assert %callbackOutsideScope% is null

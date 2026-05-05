@@ -1,0 +1,3 @@
+Start
+/ BLOCKED ON: PLang surface for byte-level callback persistence across processes. C# round-trip covered by PLang.Tests/App/CallbackTests/ErrorCallbackTests.cs.
+- throw "not implemented"

@@ -1,0 +1,860 @@
+{
+  "branch": "runtime2-callback",
+  "sessions": [
+    {
+      "id": "8e1a4b9c-4f1e-4a3d-9c5e-3a8b2d6f4e92",
+      "bot": "architect",
+      "timestamp_start": "2026-05-04T14:30:00Z",
+      "timestamp_end": "2026-05-04T17:40:00Z",
+      "intent": "Design the Callback feature: state-machine restoration via seek + bind, two issuers (ask-user, error-retry) sharing one resume primitive. Walk every subsystem in App/ to lock the snapshot inventory.",
+      "before": {
+        "assumptions": "Callstack work is merged on runtime2. Diff infrastructure exists per Call. ISnapshotted does not yet exist. No callback-related code in App/. The conversation drove the design \u2014 no prior plan or review feedback to respond to.",
+        "risk": "Misframing Callback as event-sourcing-style replay would force determinism contracts the language doesn't have. Conflating ask-user and error-retry capture policies under one annotation would over-burden every step. Allowing cross-island ref-capture would couple ISnapshotted types and reinvent BinaryFormatter."
+      },
+      "plan": ".bot/runtime2-callback/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-callback/architect/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Captures the settled design from a long architect-mode whiteboard with Ingi: seek-and-bind primitive, two issuers with different capture policies, per-type ISnapshotted, three buckets, islands rule (values only, ref-capture rejected), throw-time-vars-via-diff-reverse-apply, Diff auto-flip on error, %!error.callback% surface, smallest-first-cut test, full subsystem inventory after type-by-type walk, names-vs-values synthesis principle, two-trust-layer model (signature + referent integrity), audit-derived cache snapshot, Providers registry-layer ISnapshotted, identity-as-name."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/architect/v1/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Second pass: subsystem walk. Replaced first-pass inventory with refined buckets (Channels reconstruct, MemoryStepCache audit-derived rather than ISnapshotted, Providers two-layer model). Added 'Cache as audit-derived' section explaining the callstack-walk mechanism. Added 'Names vs values' synthesis section with the two-trust-layer (signature integrity + referent integrity) framing. Updated ResumeDirective to a full Callback record schema; clarified the whole envelope is signed Data<Callback> with no header outside the signature. Refreshed open threads and rejections."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/architect/v1/summary.md",
+            ".bot/runtime2-callback/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Refreshed both summaries to reflect the closed inventory walk and the names-vs-values synthesis."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/architect/v1/plan.md",
+            ".bot/runtime2-callback/architect/v1/summary.md",
+            ".bot/runtime2-callback/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Third pass: correction round driven by Ingi's review of v1. Substantial simplifications: (1) OBP types fixed \u2014 Snapshot.@this and Context.@this, not invented Reader/Writer/RestoreContext. (2) Removed wrong Cache example from Islands rule (cache owns what it stores; no deep-clone-from-Variables relationship). (3) Cache dropped from snapshot entirely \u2014 reframed as a hint, not state, with the rule 'if it must survive resume, it's a Variable'. MemoryStepCache does not implement ISnapshotted. Removed all callstack-walking-as-cache-audit machinery (also broke on the Calls-pop-on-completion rule). (4) No 'Seek' verb \u2014 App.Run(callback) shares the main loop with App.Run(goal); only entry point differs. (5) Position semantic corrected \u2014 both modes resume AT the action; ask-user handler distinguishes fresh vs resumed itself. (6) CallbackOrigin dropped \u2014 telemetry stitching is a log-layer concern. (7) PLang code style fixed \u2014 'on error call goal X' with the steps in a separate goal block, not inline. (8) Names-vs-values principle sharpened: Variables are the values that survive resume, everything else is a name. Two trust layers (signature integrity + referent integrity) made explicit."
+        }
+      ],
+      "after": {
+        "status": "design v1 complete and tightened; no code changes; ready for handoff",
+        "health": "green \u2014 design is internally consistent. Ingi corrected the design across three passes (cache mechanism, signed envelope scope, identity as name, no Seek verb, cache dropped entirely, position semantics) and the final shape is materially smaller than the first pass.",
+        "notes": "Final snapshot surface: three Variables instances (per-actor), Errors.Trail, App.Providers registry selections, App._statics. Cache is no longer in the snapshot. Recommend wire format/key management as the next architect session, or hand to test-designer for the smallest-first-cut test now."
+      }
+    },
+    {
+      "id": "c4a82e1d-7b3f-4f9c-b2d8-1e6a9f4b7c03",
+      "bot": "architect",
+      "timestamp_start": "2026-05-04T17:45:00Z",
+      "timestamp_end": "2026-05-04T18:13:54Z",
+      "intent": "Design the wire format / signing / persistence layer for Callback (v2). Scope to Phase 2 \u2014 error-retry only \u2014 and stage Phase 3 (ask-user + encryption) as a separate future doc.",
+      "before": {
+        "assumptions": "v1 design is closed and committed (snapshot/restore mechanics, ISnapshotted, names-vs-values). Existing PLang infrastructure: signing module with SignedData envelope is mature; ICryptoProvider exists but only does Hash/Verify (no symmetric encryption). Goal has a Hash property (verified at PLang/App/Goals/Goal/this.cs:121, SHA-256 of name + step text).",
+        "risk": "Designing wire format independently of existing signing infra would duplicate effort and miss the OBP-pure transparent-signing pattern. Conflating Phase 2 (error-retry) and Phase 3 (ask-user) into one milestone would block error-retry on encryption work that isn't strictly needed."
+      },
+      "plan": ".bot/runtime2-callback/architect/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/signing/",
+            "PLang/App/modules/crypto/",
+            "PLang/App/Goals/Goal/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Inspected existing signing/crypto/goals infrastructure to ground the design. Found: signing.sign module + Ed25519 default provider already implement the high-level signing pipeline with deterministic JSON, hash-of-data approach, and SignedData envelope (Created/Expires/Nonce/Identity/Contracts/Headers/Hash/Signature). ICryptoProvider only exposes Hash and Verify(hash) \u2014 no Encrypt/Decrypt, confirming a real capability gap for Phase 3. Goal already has Hash property \u2014 SHA-256 of name + step texts."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/architect/v2/plan.md",
+            ".bot/runtime2-callback/architect/v2/summary.md",
+            ".bot/runtime2-callback/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 design: wire/sign/persistence layer scoped to Phase 2. Three insights from the conversation reshape it: (1) signing is transparent at Data IO boundary \u2014 auto-populated by serializer via existing signing module, default no-expiry, no explicit `- sign` needed at issue sites. (2) Goal.Hash already exists \u2014 Callback.GoalHash uses it directly. (3) Encryption belongs to Callback class (Phase 3), not Data layer. Combined: Phase 2 ships entirely on existing infrastructure. Schema corrections \u2014 added GoalPrPath (App.Goals loads lazily by path), removed Expiry (lives in Data.Signature). Flagged SignedData \u2192 Signature OBP rename as a coder task. Phase split locked: Phase 1 in-process test, Phase 2 error-retry signed/persisted, Phase 3 ask-user with encryption (extends ICryptoProvider). v2 summary and bot-root summary refreshed to surface v2 above v1."
+        }
+      ],
+      "after": {
+        "status": "v2 design complete; Phase 2 is implementation-ready",
+        "health": "green \u2014 v2 is mostly additive on v1, internally consistent, and reuses existing infrastructure rather than introducing new abstractions",
+        "notes": "Phase 2 is now ready for test-designer or coder. Phase 3 (ask-user + ICryptoProvider extension for symmetric encryption) is its own future architect session. Encryption is Callback-class-internal \u2014 does not bleed into the Data IO layer. Goal.Hash limitation noted: tracks developer prose, not module-behavior drift; documented as known limitation."
+      }
+    },
+    {
+      "id": "f1c8e2a4-1d6b-4f3e-9a2c-7e5b3d1f8a44",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-05T17:54:32Z",
+      "timestamp_end": "2026-05-05T18:05:00Z",
+      "intent": "Translate the architect's Stage 1-4 design + test-coverage matrix into a concrete batched test plan; present batches for approval; write C# TUnit + PLang .goal test stubs.",
+      "before": {
+        "assumptions": "Architect v3 lands the test-strategy + test-coverage split with explicit layer mapping (C# / goal / integration) and a failure matrix. New surfaces inventory is authoritative for type/method names. Stages 1-4 will land sequentially; tests for later stages stay red until their stage closes. C# tests in PLang.Tests/, PLang tests in Tests/, both already have neighbouring test groups (CallStackTests/, Errors/, Signing/, Crypto/) we can mirror.",
+        "risk": "Two coverage rows are ambiguous (`%!error.callback%` outside handler scope, unregistered mimetype) \u2014 writing tests against a placeholder behavior would force coder into a decision not flagged. Idempotency row could mean reference- or value-equality. The matrix doesn't tag rows by stage, so a coder running tests mid-stream may misread red as drift. The `signature-rename.md` 'compiles cleanly' row is a build assertion not a test."
+      },
+      "plan": ".bot/runtime2-callback/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-callback/test-designer/v1/plan.md",
+            ".bot/runtime2-callback/test-designer/v1/test-plan.md",
+            ".bot/runtime2-callback/test-designer/v1/verdict.json",
+            ".bot/runtime2-callback/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan documents approach, layer mapping, batch index, and 5 open decisions resolved with defaults (per-row in the matrix that had ambiguity). test-plan.md enumerates every test name across 14 batches with stage tags [S1]-[S4] added on top of the architect's matrix so coder can run progressively. verdict + summary mirror the bot output convention."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/SnapshotTests/SnapshotInterfaceTests.cs",
+            "PLang.Tests/App/SnapshotTests/AppSnapshotTests.cs",
+            "PLang.Tests/App/SnapshotTests/StaticsAndModesSnapshotTests.cs",
+            "PLang.Tests/App/SnapshotTests/ProvidersSnapshotTests.cs",
+            "PLang.Tests/App/VariablesTests/VariablesSnapshotTests.cs",
+            "PLang.Tests/App/VariablesTests/SnapshotAtErrorTests.cs",
+            "PLang.Tests/App/Errors/ErrorsTrailSnapshotTests.cs",
+            "PLang.Tests/App/Errors/ErrorCallbackPropertyTests.cs",
+            "PLang.Tests/App/CallStackTests/CallSnapshotTests.cs",
+            "PLang.Tests/App/CallStackTests/CallStackSnapshotTests.cs",
+            "PLang.Tests/App/CallStackTests/EventsSinceTests.cs",
+            "PLang.Tests/App/CallStackTests/FlagsDiffAutoFlipTests.cs",
+            "PLang.Tests/App/DataTests/DataLazySignatureTests.cs",
+            "PLang.Tests/App/DataTests/DataContextWiringTests.cs",
+            "PLang.Tests/App/Serializers/JsonSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/PlangDataSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/MimeRegistrationTests.cs",
+            "PLang.Tests/App/Modules/signing/SignatureRenameTests.cs",
+            "PLang.Tests/App/Modules/crypto/CryptoV1PassThroughTests.cs",
+            "PLang.Tests/App/CallbackTests/ICallbackPositionTests.cs",
+            "PLang.Tests/App/CallbackTests/AskCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/ErrorCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/AppCallbackConfigTests.cs",
+            "PLang.Tests/App/CallbackTests/CallbackRunActionTests.cs",
+            "PLang.Tests/App/CallbackTests/FailureMatrixTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit stubs (~85 tests across 25 files). Bodies are uniformly `await Task.CompletedTask; Assert.Fail(\"Not implemented\");` per the test-designer character spec. Folder choices follow the *Tests-suffix-when-area-name-is-aliased rule (SnapshotTests, CallbackTests, DataTests, VariablesTests) and neighbour-style elsewhere (Errors/, Serializers/, Modules/signing/, Modules/crypto/). Each test has a comment explaining the contract being pinned, drawn directly from the architect's matrix or the stage doc."
+        },
+        {
+          "paths": [
+            "Tests/Callback/InProcessResume/Start.test.goal",
+            "Tests/Callback/DurabilityRoundTrip/Start.test.goal",
+            "Tests/Callback/ErrorCallbackSurface/Start.test.goal",
+            "Tests/Callback/RunCallbackVerb/Start.test.goal",
+            "Tests/Callback/AskWithVars/Start.test.goal",
+            "Tests/Callback/AskVarsResumeBindsValue/Start.test.goal",
+            "Tests/Callback/CallbackTimeoutSetting/Start.test.goal",
+            "Tests/Callback/AskVarsOnNonAsk/Start.test.goal",
+            "Tests/Callback/ErrorCallbackOutsideHandler/Start.test.goal",
+            "Tests/Callback/RunNonCallback/Start.test.goal",
+            "Tests/Callback/TamperedSignature/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang .goal stubs \u2014 11 scenario folders mirroring Tests/Signing/, Tests/Crypto/ layout. Each Start.test.goal has the spec as a comment line and a body of `- throw \"not implemented\"`. Includes the two integration cuts (InProcessResume, DurabilityRoundTrip), six developer-surface scenarios, and three negative-path scenarios."
+        }
+      ],
+      "after": {
+        "status": "v1 test stubs written; coder is unblocked to start Stage 1.",
+        "health": "green \u2014 stubs follow architect's matrix faithfully; 5 ambiguous coverage rows resolved with documented defaults that coder/architect can override during review.",
+        "notes": "Stage tags [S1]-[S4] on each test let coder run the suite progressively after each stage closes. Two C# tests reference future types (Snapshot.@this, ICallback, ErrorCallback, AskCallback, etc.) only by behaviour comment \u2014 bodies are placeholder Assert.Fail so the suite compiles trivially regardless of what's implemented. Recommend coder runs `dotnet build PLang.Tests` first to confirm the new files compile before starting Stage 1."
+      }
+    },
+    {
+      "id": "dbdb1a9d-09d9-48cb-91aa-97c60bf26c6a",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T18:19:01Z",
+      "intent": "Implement Stage 1 \u2014 Snapshot Foundation: ISnapshotted + Snapshot.@this + App.Snapshot()/Restore() + Capture/Restore on Variables, Errors.Trail, Providers, _statics, Build, Testing. Make all [S1] test-designer stubs green.",
+      "before": {
+        "assumptions": "Architect's plan + 4 stage docs + test-designer's 97 stubs are landed. Q1 (Data context) resolved with Ingi: keep the existing settable Context property \u2014 it propagates already through Variables.Set, Step/Action/Goal dispatch, Envelope, Clone. No constructor change. If null hits the lazy signature getter, deal with it then. Q2 resolved: output.ask gets `List<Data> Variables`. Builder annotation work out of branch scope. Stages will be committed individually; no PR.",
+        "risk": "Providers two-step Restore needs a real Assembly.LoadFrom path to satisfy the hard-error tests for unresolvable DLL \u2014 no mocking. _statics extraction touches App constructor + the GetStatic shim. Errors.Trail freeze-on-restore needs a state mutation method (Trail isn't currently mutable from outside its Add). Variables Capture must preserve full Data shape (Name, Value, Type, Properties) per test-designer's `PreservesValuesAndProperties_ForUserVars`."
+      },
+      "plan": ".bot/runtime2-callback/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Snapshot/ISnapshotted.cs",
+            "PLang/App/Snapshot/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "ISnapshotted interface (Capture + static abstract Restore) and Snapshot.@this typed read/write tree (Section/Write/Read/Has/HasSection). Storage stays private \u2014 callers only see the typed surface, satisfying the architect's 'don't expose entries as a public collection' constraint."
+        },
+        {
+          "paths": [
+            "PLang/App/Statics/this.cs",
+            "PLang/App/Statics/this.Snapshot.cs",
+            "PLang/App/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Extracted App._statics inline ConcurrentDictionary into its own AppStatics @this so it can implement ISnapshotted. App keeps GetStatic(key) shim for backwards compatibility with module callers."
+        },
+        {
+          "paths": [
+            "PLang/App/Build/this.cs",
+            "PLang/App/Build/this.Snapshot.cs",
+            "PLang/App/Test/this.cs",
+            "PLang/App/Test/this.Snapshot.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Marked App.Build.@this and App.Test.@this as partial; added Capture/Restore for IsEnabled bit. Other fields (Files filter, Cache, Results, Coverage, CurrentTest, etc.) are reconstruct-on-build per architect."
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Variables/this.Snapshot.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Variables Capture preserves full Data shape via Clone (Name, Value, Type, Properties), honouring the existing partition (skip !-prefix, DynamicData, SettingsVariable). Restore re-clones into a fresh Variables so the snapshot can be re-applied independently."
+        },
+        {
+          "paths": [
+            "PLang/App/Errors/this.cs",
+            "PLang/App/Errors/this.Snapshot.cs",
+            "PLang/App/Errors/Trail/this.cs",
+            "PLang/App/Errors/Trail/this.Snapshot.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Trail captures entries; Restore replaces the live Trail with a frozen one (rejects further Add via InvalidOperationException). Errors exposes RestoreTrail(entries) as the bulk-load entry point and is itself ISnapshotted, dispatching into its 'trail' subsection."
+        },
+        {
+          "paths": [
+            "PLang/App/Providers/IProvider.cs",
+            "PLang/App/Providers/this.cs",
+            "PLang/App/Providers/this.Snapshot.cs",
+            "PLang/App/modules/provider/load.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added IsBuiltIn + Source to IProvider. RegisterDefaults goes through RegisterBuiltIn<T> which stamps IsBuiltIn=true and remembers the type's born default in _builtInDefaults \u2014 survives SetDefault clearing the IsDefault flag. provider.load stamps Source = absoluteDllPath. Two-step Restore: replay non-built-in registrations (Assembly.LoadFrom; hard error on missing DLL or impl-type), then apply default-selection overrides (hard error on unknown name). New ProviderRestoreException carries the failure."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/Providers/DefaultGrepProvider.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/App/modules/condition/providers/DefaultEvaluator.cs",
+            "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/App/modules/assert/providers/DefaultAssertProvider.cs",
+            "PLang/App/modules/identity/providers/DefaultIdentityProvider.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/crypto/providers/DefaultProvider.cs",
+            "PLang/App/modules/ui/providers/FluidProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Added IsBuiltIn + Source auto-property implementations to all 11 production provider classes (alongside the existing IsDefault). Mechanical, type-system-required."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/crypto/HashActionTests.cs",
+            "PLang.Tests/App/Modules/crypto/ProviderRegistryTests.cs",
+            "PLang.Tests/App/Modules/crypto/ProviderResolutionTests.cs",
+            "PLang.Tests/App/Modules/signing/IdentityKeyProviderTests.cs",
+            "PLang.Tests/App/Modules/signing/VerifyActionTests.cs",
+            "PLang.Tests/App/Core/NamedProviderRegistryTests.cs",
+            "PLang.Tests/App/Modules/ui/RenderTests.cs",
+            "PLang.Tests/App/Modules/signing/SignActionTests.cs",
+            "PLang.Tests/App/Modules/provider/ProviderModuleTests.cs",
+            "PLang.Tests/Generator/Matrix/Provider/Handlers.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added IsBuiltIn + Source to all in-test provider classes (Mock/Stub/Throwing/Failing/Custom variants) so the build compiles after the IProvider interface change."
+        },
+        {
+          "paths": [
+            "PLang/App/this.Snapshot.cs",
+            "PLang/App/GlobalUsings.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "App.Snapshot()/Restore() entry points walking the six ISnapshotted subsystems by name. Global aliases Snapshot, ISnapshotted, AppStatics added. Restore uses fully-qualified global::App.X.@this.Restore because the global aliases shadow the parent-namespace lookup inside App.* files."
+        },
+        {
+          "paths": [
+            "PLang.Tests/GlobalUsings.cs",
+            "PLang.Tests/App/SnapshotTests/SnapshotInterfaceTests.cs",
+            "PLang.Tests/App/SnapshotTests/AppSnapshotTests.cs",
+            "PLang.Tests/App/SnapshotTests/StaticsAndModesSnapshotTests.cs",
+            "PLang.Tests/App/SnapshotTests/ProvidersSnapshotTests.cs",
+            "PLang.Tests/App/VariablesTests/VariablesSnapshotTests.cs",
+            "PLang.Tests/App/Errors/ErrorsTrailSnapshotTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled bodies of 17 test-designer Stage-1 stubs. Pattern uses `new global::App.@this(\"/test\")` to construct an App and exercises round-trip (src \u2192 snap \u2192 dst). Providers tests use a public CustomGrep with parameterless ctor in this assembly so Restore's Assembly.LoadFrom path can re-instantiate. Hard-error tests use a synthetic snapshot pointing at /nonexistent/ghost.dll to assert ProviderRestoreException fires. Added Snapshot/ISnapshotted/AppStatics global aliases to the test project too."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v1/plan.md",
+            ".bot/runtime2-callback/coder/v1/baseline-tests.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage-1 plan, captured baseline (C# 97 fails = all stubs / 0 real; PLang 11 stale + 0 fail), and summary. Per-stage commit per Ingi."
+        }
+      ],
+      "after": {
+        "status": "Stage 1 complete: ISnapshotted + Snapshot.@this + 6 subsystem captures land. C# 97 stubs \u2192 80 (17 [S1] flipped green; the 80 remaining are Stages 2-4). PLang 192/181 pass / 0 fail / 11 stale \u2014 unchanged from baseline.",
+        "health": "green \u2014 clean build, no regressions. The Providers two-step Restore was the real complexity (DLL load + impl-type lookup + born-default tracking to survive SetDefault); landed cleanly with hard-error coverage.",
+        "notes": "Stage 2 next: CallStack frames + Variables.SnapshotAt(error). The CallStack-related test stubs are already in place from test-designer. No CLAUDE.md proposals from this stage \u2014 nothing canonical-and-new emerged that wasn't already in /PLang/App/CLAUDE.md or covered by the architect's plan."
+      },
+      "timestamp_end": "2026-05-05T18:38:00Z"
+    },
+    {
+      "id": "9c6e4d0a-1c0a-4f7e-b8f1-2d4f6a8b1e5c",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T18:40:00Z",
+      "timestamp_end": "2026-05-05T19:05:00Z",
+      "intent": "Implement Stage 2 \u2014 CallStack frames Capture/Restore (with Goal-stub + hash-match), App.CallStack EventsSince(t), Variables.SnapshotAt(error) reverse-apply, Flags.Diff auto-flip on Errors.Push. Make all [S2] test-designer stubs green.",
+      "before": {
+        "assumptions": "Stage 1 landed (commit f93dcdd3). Call.@this has positional data (Action.Step.Goal.PrPath/Hash, Step.Index, Action's index in Step.Actions). CallStack already has per-Call diff capture gated by Flags.Diff at Push time. Errors.@this Push returns IDisposable for AsyncLocal pop; can extend with diff-stream subscription. Goal.Hash is SHA-256 of name+step text, init-only.",
+        "risk": "Restoring Call.@this directly is wrong \u2014 its constructor is internal and lifecycle-coupled to AsyncLocal/Stopwatch/OnSet. Solution: produce RestoredFrame surrogates instead. Per-Call diff subscription at Push time can't backfill \u2014 handler-time mutations during an error scope need a CallStack-level OnSet/OnCreate subscription that auto-flip wires up. Variables.Set fires OnCreate (not OnSet) for first-time names, so subscribers must listen to both."
+      },
+      "plan": ".bot/runtime2-callback/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/CallStack/RestoredFrame.cs",
+            "PLang/App/Errors/CallbackGoalErrors.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "RestoredFrame surrogate (resolved Action+Goal+positional triple+Id). CallbackGoalNotFound / CallbackGoalHashMismatch typed exceptions for hard referent-integrity errors during CallStack.Restore."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/Call/this.Snapshot.cs",
+            "PLang/App/CallStack/Call/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Call.Capture writes (GoalPrPath, GoalHash, StepIndex, ActionIndex, Module, ActionName, Id). No Restore on Call directly \u2014 produced by parent CallStack. Extended Call ctor's diff capture to subscribe to OnCreate as well as OnSet (Variables.Set fires OnCreate for first-time names; both are mutations the diff stream cares about)."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/this.Snapshot.cs",
+            "PLang/App/this.Snapshot.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "CallStack ISnapshotted: Capture walks active Caller chain outer-to-bottom; Restore resolves each frame's Goal against app.Goals.Get(prPath), hard-errors on missing/hash-mismatch, populates RestoredChain. Adds BottomFrame (last entry of restored chain or live Current as RestoredFrame). EventsSince(t) reads from per-Call Diffs AND a CallStack-level diff stream. EnableDiffStream/DisableDiffStream wire OnSet+OnCreate subscriptions for the auto-flip path. App.Snapshot()/Restore() wire CallStack as the seventh section."
+        },
+        {
+          "paths": [
+            "PLang/App/Errors/this.cs",
+            "PLang/App/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Errors.@this gains internal App reference (set by App ctor) so Push can auto-flip Flags.Diff and wire EnableDiffStream(app.Variables) on the CallStack. Restorer.Dispose tears down the subscription and restores prior flag state."
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.SnapshotAt.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Variables.SnapshotAt(IError) \u2014 clones the store, walks app.Debug.CallStack.EventsSince(error.CreatedUtc) in reverse and writes each variable back to its Diff.Before value. Pure; no caching. The seam is clean \u2014 Variables owns projection, CallStack owns time-ordered data."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CallStackTests/CallSnapshotTests.cs",
+            "PLang.Tests/App/CallStackTests/CallStackSnapshotTests.cs",
+            "PLang.Tests/App/CallStackTests/EventsSinceTests.cs",
+            "PLang.Tests/App/CallStackTests/FlagsDiffAutoFlipTests.cs",
+            "PLang.Tests/App/VariablesTests/SnapshotAtErrorTests.cs",
+            "PLang.Tests/App/SnapshotTests/AppSnapshotTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled bodies of 21 [S2] tests (8 Call snapshot, 4 CallStack snapshot, 2 EventsSince, 2 FlagsDiff auto-flip, 5 SnapshotAt). Helpers build live Action/Step/Goal triples and register goals on the App. Hash-mismatch test asserts via different step text producing different SHA-256. AppSnapshotTests updated for new CallStack section."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v2/plan.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 plan and updated summary."
+        }
+      ],
+      "after": {
+        "status": "Stage 2 complete: CallStack/Call ISnapshotted, RestoredFrame, EventsSince, Variables.SnapshotAt, Flags.Diff auto-flip. C# 80 stubs \u2192 59 (21 [S2] flipped green; 59 remaining are Stages 3-4). PLang tests unchanged at 192/181/0fail/11stale.",
+        "health": "green \u2014 clean build, no regressions. The architect's split between Variables-owns-projection and CallStack-owns-data landed clean. The OnCreate-vs-OnSet asymmetry in Variables.Set was a real surprise \u2014 fix was symmetric: subscribe to both events on both per-Call and CallStack-level capture paths.",
+        "notes": "Stage 3 next: Data.@this lazy Signature property + Serializer.@this per mimetype. Per Ingi's Q1: keep current settable Context; deal with null if it hits. The architect's 'constructor change vs additive' question is moot \u2014 Context is already wired through Variables.Set/Step/Action/Goal/Envelope/Clone."
+      }
+    },
+    {
+      "id": "8e4d2b1a-7c3f-4e6d-9a1b-5d8e2c4f6a73",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T19:10:00Z",
+      "timestamp_end": "2026-05-05T19:35:00Z",
+      "intent": "Implement Stage 3 \u2014 SignedData\u2192Signature rename, lazy Data.Signature, app.Callback config, ICallback marker, PlangDataSerializer + GetByMimeType + UnregisteredMimeType. Make all [S3] stubs green.",
+      "before": {
+        "assumptions": "Stage 2 landed (commit 88bdfcc6). Existing signing module has SignedData class with property `Signature` holding base64 sig. Data.@this already has a settable Signature property (auto-prop today). Per Ingi Q1: keep the additive Context pattern, deal with NREs if they hit. ISerializer infrastructure exists (JsonStreamSerializer, TextStreamSerializer, PlangSerializer for application/plang).",
+        "risk": "Renaming SignedData\u2192Signature collides with the inner `Signature` field name; rename it to Value with JsonPropertyName preserving wire compat. Lazy populate on getter must not force DynamicData factory eval (the trace showed identity store hitting disk via Clone\u2192Signature\u2192Value). 45 SignedData callsites to update. Test fixture DLLs (TestProvider, NoCtorProvider) need rebuild after IProvider interface gained IsBuiltIn+Source in Stage 1 \u2014 they were stale."
+      },
+      "plan": ".bot/runtime2-callback/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/signing/Signature.cs",
+            "PLang/App/Data/this.Envelope.cs",
+            "PLang/App/modules/signing/providers/Ed25519Provider.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang.Tests/App/Modules/signing/SigningSerializationTests.cs",
+            "PLang.Tests/App/Modules/signing/VerifyActionTests.cs",
+            "PLang.Tests/App/Modules/signing/SignActionTests.cs",
+            "PLang.Tests/App/Modules/http/RequestActionTests.cs",
+            "PLang.Tests/App/DataTests/DataTests.cs",
+            "PLang.Tests/App/Serializers/TransportPropertyFilterTests.cs"
+          ],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "SignedData\u2192Signature rename across 45+ callsites. Inner `Signature` property (base64 sig) renamed to `Value` to avoid CS0542 (member name = enclosing type); wire JSON key stays \"signature\" via JsonPropertyName for backwards compatibility. signedData.Signature/sd.Signature \u2192 .Value across signing tests; data.Signature.Signature \u2192 data.Signature.Value across other tests."
+        },
+        {
+          "paths": [
+            "PLang/App/Callback/ICallback.cs",
+            "PLang/App/Callback/this.cs",
+            "PLang/App/Callback/Signature/this.cs",
+            "PLang/App/this.cs",
+            "PLang/App/GlobalUsings.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "ICallback empty marker (Stage 4 fills with AskCallback/ErrorCallback). app.Callback config holder + Signature sub-config with ExpiresInMs (int?, default null). Wired into App via auto-property. Global aliases AppCallback + ICallback added."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.Envelope.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Data.Signature gains lazy populate via _signature backing field. Getter triggers EnsureSigned() ONLY when _value is ICallback (read directly from field \u2014 using Value would force DynamicData factory eval, which hits the filesystem and breaks unrelated tests). RawSignature internal accessor for peek paths (e.g. verify's no-signature check). EnsureSigned() throws InvalidOperationException without Context; otherwise dispatches sync-over-async through app.RunAction<sign>. Reads expiry from app.Callback.Signature.ExpiresInMs only for ICallback values."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs",
+            "PLang/App/Channels/Serializers/this.cs",
+            "PLang/App/Channels/Serializers/UnregisteredMimeType.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "PlangDataSerializer for application/plang+data emits the full Envelope (Type+Value+Signature). Calls EnsureSigned() before reading Signature on Write so non-callback Data still seals for wire transport. GetByMimeType throws UnregisteredMimeType on miss (sibling to ProviderRestoreException's hard-error model). text/html aliased to JsonStreamSerializer. application/plang+data registered at App.Channels.Serializers boot."
+        },
+        {
+          "paths": [
+            "TestFixtures/TestProvider/TestSigningProvider.cs",
+            "TestFixtures/NoCtorProvider/NoCtorProvider.cs",
+            "PLang.Tests/App/Fixtures/dlls/TestProvider.dll",
+            "PLang.Tests/App/Fixtures/dlls/NoCtorProvider.dll"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test-fixture providers gained IsBuiltIn + Source (required by IProvider after Stage 1). Rebuilt DLLs and copied into the test fixtures dir."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/signing/SignatureRenameTests.cs",
+            "PLang.Tests/App/DataTests/DataLazySignatureTests.cs",
+            "PLang.Tests/App/DataTests/DataContextWiringTests.cs",
+            "PLang.Tests/App/Serializers/JsonSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/PlangDataSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/MimeRegistrationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled 22 [S3] test bodies. Tests that exercise the signing pipeline use a temp-dir App path (signing writes identity to disk; sandbox blocked /test/.db). RawSignature is the assertion target for 'before first access' / 'after EnsureSigned' so we don't trigger our own auto-populate."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v3/plan.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 plan + summary."
+        }
+      ],
+      "after": {
+        "status": "Stage 3 complete: rename + lazy Data.Signature + Callback config + PlangDataSerializer + GetByMimeType. C# 59 \u2192 37 (22 [S3] flipped green; 37 remaining are Stage 4). PLang tests unchanged at 192/181/0fail/11stale.",
+        "health": "green \u2014 clean build, no regressions. The DynamicData factory-eval trap during lazy getter was the real surprise; reading _value (not Value) skipped it cleanly. Test fixture DLL refresh was an obvious hygiene step missed in Stage 1.",
+        "notes": "Stage 4 next: AskCallback / ErrorCallback / Error.Callback / callback.run / crypto v1. Builder support for `vars:` annotation on `output.ask` is out of branch scope per Ingi \u2014 the C# class `ask` gets `List<Data> Variables` but no PLang surface wiring."
+      }
+    },
+    {
+      "id": "1c8e2a5b-3f6d-4d7c-8e0a-9b4c6f1d2e7f",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T19:40:00Z",
+      "timestamp_end": "2026-05-05T20:05:00Z",
+      "intent": "Implement Stage 4 \u2014 ICallback expansion + AskCallback + ErrorCallback + Error.Callback lazy property + callback.run action + crypto.encrypt/decrypt v1. Make all [S4] stubs green and close the branch's C# coverage.",
+      "before": {
+        "assumptions": "Stages 1-3 landed (commits f93dcdd3, 88bdfcc6, 02b18bd7). ICallback marker exists from Stage 3 (empty interface). app.Callback config holder ready. PlangDataSerializer can read Signature lazily. Stage 4 stubs cover ICallback, Ask/ErrorCallback, Error.Callback property, crypto v1, callback.run, AppCallback config, FailureMatrix. PLang `.test.goal` stubs need builder support for output.ask vars: \u2014 out of branch scope.",
+        "risk": "ErrorCallback's wire shape needs to be self-contained \u2014 JSON-encoded snapshot of CallStack + Variables sections suffices for [S4] tests but isn't full Snapshot fidelity. Error.Callback property needs an App back-ref; wire it via Errors.Push (the natural materialisation site). Sync-over-async via `.GetAwaiter().GetResult()` in Serialize is acceptable per architect."
+      },
+      "plan": ".bot/runtime2-callback/coder/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Callback/ICallback.cs",
+            "PLang/App/Callback/AskCallback.cs",
+            "PLang/App/Callback/ErrorCallback.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "ICallback expanded with Position + Serialize + Run. AskCallback (Position + ActorName + Variables) Serialize JSON-encodes wire shape and pipes through crypto.encrypt v1; Deserialize reverses, resolving Position via app.Goals.Get with hash-match (raises CallbackGoalNotFound / CallbackGoalHashMismatch from Stage 2). Run binds variables and dispatches via app.Run. ErrorCallback wraps Snapshot.@this; wire shape captures CallStack frames + Variables; Run calls app.Restore + dispatches BottomFrame's Action."
+        },
+        {
+          "paths": [
+            "PLang/App/Errors/Error.cs",
+            "PLang/App/Errors/this.cs",
+            "PLang/App/Errors/AssertionError.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Error gains internal App back-ref + lazy Callback property cached per Error instance. Errors.Push wires App on the error. AssertionError fully-qualifies App.Utils.Json (the new App property on Error otherwise shadowed the App namespace)."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/crypto/encrypt.cs",
+            "PLang/App/modules/crypto/decrypt.cs",
+            "PLang/App/modules/callback/run.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "encrypt + decrypt actions: v1 identity pass-through with async signature. callback.run takes Data, verifies signature when present (raises CallbackSignatureMismatch on failure), dispatches into ICallback.Run."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CallbackTests/AppCallbackConfigTests.cs",
+            "PLang.Tests/App/CallbackTests/ICallbackPositionTests.cs",
+            "PLang.Tests/App/CallbackTests/AskCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/ErrorCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/CallbackRunActionTests.cs",
+            "PLang.Tests/App/CallbackTests/FailureMatrixTests.cs",
+            "PLang.Tests/App/Errors/ErrorCallbackPropertyTests.cs",
+            "PLang.Tests/App/Modules/crypto/CryptoV1PassThroughTests.cs",
+            "PLang.Tests/App/Serializers/PlangDataSerializerRoundTripTests.cs",
+            "PLang.Tests/App/DataTests/DataContextWiringTests.cs",
+            "PLang.Tests/App/DataTests/DataLazySignatureTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Filled all 37 [S4] test bodies. Stage 3 FakeCallback test doubles updated to satisfy the now-expanded ICallback (Position/Serialize/Run). Tests use temp-dir App paths because signing pipeline writes to disk."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v4/plan.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v4 plan + final branch summary."
+        }
+      ],
+      "after": {
+        "status": "Stage 4 complete. All 4 stages of the architect's plan have landed. C# 2720/2720 passing. PLang 192/181/0fail/11stale (the 11 stale need builder support for output.ask vars:, out of branch scope per Ingi).",
+        "health": "green \u2014 clean build, no regressions. The Stage-3 FakeCallback test doubles broke when ICallback expanded; updated them in line. Position resolution / hash-match / hard-error coverage all sit on Stage 2's foundations cleanly.",
+        "notes": "Suggested next bot: codeanalyzer to review OBP compliance + simplification opportunities across the branch's diff before any wider review or PR. The 11 stale Plang stubs wait for builder support for `output.ask` `vars:` annotation \u2014 that's a separate piece of work."
+      }
+    },
+    {
+      "id": "a1c3e7b9-5d2f-4e8a-b0c4-9f1d3e5a7b2c",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-05T21:00:00Z",
+      "timestamp_end": "2026-05-05T21:30:00Z",
+      "intent": "OBP compliance audit + security review of all C# added or changed on this branch vs runtime2.",
+      "before": {
+        "assumptions": "All 4 stage commits are in. C# 2720/2720 per coder summary. Coder handoff lists 16 open decisions/gaps for architect review.",
+        "risk": "Callback wire deserialization handles attacker-influenced data; index bounds and variable injection paths need checking. Sync-over-async was explicitly endorsed by architect \u2014 not a new risk but need to confirm it didn't spread beyond the approved boundary."
+      },
+      "plan": ".bot/runtime2-callback/auditor/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Callback/AskCallback.cs"
+          ],
+          "type": "modify",
+          "category": "fix",
+          "confidence": "high",
+          "context": "F1: Added missing stepIndex/actionIndex bounds guards in PositionWire.Resolve \u2014 mirrors the identical guards already in CallStack.this.Snapshot.cs:132-137. Without these, a wire payload with an out-of-range index throws an uncaught ArgumentOutOfRangeException rather than the controlled CallbackGoalNotFound. F2: Added !-prefix filter in AskCallback.Run variable binding loop \u2014 prevents wire payload from injecting infrastructure variable names (!app, !error, etc.) onto the resumed context."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/auditor/v1/report.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full audit report: 2 fixed lows (F1 medium unchecked index, F2 low var injection), 3 notes (N1 ErrorCallback.Position contract, N2 SnapshotAt drops Type/Properties, N3 hard errors as CLR exceptions). OBP table: all new types pass. Sync-over-async noted as endorsed design decision."
+        }
+      ],
+      "after": {
+        "status": "PASS. F1 (medium) and F2 (low) fixed in AskCallback.cs. N1-N3 are documentation-level items for the architect/coder to address in stage-5 or separately.",
+        "health": "green \u2014 dotnet build PLang.Tests 0 errors after fixes.",
+        "notes": "Real crypto (todos.md) will close F2's attack surface at the source. N1 (ErrorCallback.Position always null pre-Run) is the most likely to confuse a future reader; worth fixing in stage-5 if the architect adds the output.ask surface docs."
+      }
+    },
+    {
+      "id": "f4e2c8d6-1a9b-4c7d-8e3f-5b2a4c6d8f0a",
+      "bot": "tester",
+      "timestamp_start": "2026-05-05T22:00:00Z",
+      "timestamp_end": "2026-05-05T22:30:00Z",
+      "intent": "Run full test suite on a clean rebuild, verify pass/fail/stale counts, audit test quality of new callback surface for false-greens / weak assertions.",
+      "before": {
+        "assumptions": "Coder handoff claims C# 2720/2720, PLang 188/0 fail/4 stale. Auditor passed F1+F2 fixes. Need clean-rebuild confirmation per the stale-binary lesson, plus a deletion-style quality scan of the ~1500 lines of new callback test code.",
+        "risk": "Phantom failures from stale PlangConsole binary; or genuine green hiding name-vs-assertion mismatches that mask future regressions."
+      },
+      "plan": ".bot/runtime2-callback/tester/v1/report.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-callback/tester/v1/report.md",
+            ".bot/runtime2-callback/tester/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester verdict PASS with quality findings. Clean rebuild green: C# 2720/2720, PLang 188 pass / 0 fail / 4 documented stale (the four out-of-branch-scope gaps from coder handoff). 16 quality findings filed: 11 name-vs-assertion mismatches (e.g. AskCallback_Serialize_CallsCryptoEncrypt asserts only bytes.Length>0; FailureMatrix_ExpiredSignature can't distinguish expired from tampered; multiple AssertsAbsenceOfVerifyCall tests actually assert presence-of-signature), 1 JSON-substring trap, 4 PLang-side under-verification gaps. None are blockers. Highest-value tightening: add a recording sink for encrypt/verify calls so #1, #9, #10 become real assertions; split expired vs tampered key in FailureMatrix; add a PLang-layer assertion for Variables.SnapshotAt(error) at throw-time."
+        }
+      ],
+      "after": {
+        "status": "PASS with 16 non-blocking quality findings.",
+        "health": "green \u2014 2720 + 188 actual pass; 4 stales documented out-of-scope; no real failures.",
+        "notes": "Suggest coder address findings #1, #5, #9, #10 (name-promises-X-body-verifies-Y on the encrypt/verify spy paths) before stage-5 \u2014 these are most likely to mask a future regression. The PlangDataSerializer JSON-substring trap (#12) is also cheap to convert to a parsed-field assertion."
+      }
+    },
+    {
+      "id": "9d4e6c2a-7b1f-4e8c-9a3d-2c5e8f1b4d76",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-05T23:00:00Z",
+      "timestamp_end": "2026-05-05T23:30:00Z",
+      "intent": "Independent re-audit on the post-security-v1 state \u2014 confirm or push back on security v1's 1 Medium + 3 Lows before any coder pass touches them. No code changes since auditor v1 (3fbc7cfa); auditor's value-add is a primary-source re-walk of the wire surface.",
+      "before": {
+        "assumptions": "Auditor v1 PASS'd at 3fbc7cfa with F1/F2 fixed in AskCallback. Tester v1 PASS'd with 16 non-blocking quality findings. Security v1 PASS'd with 1 Medium (callback.run verify-skip when RawSignature==null) and 3 Lows (Variables.Restore !-prefix, JSON size caps, [Sensitive] filter on callback wires). No coder fix has landed since security.",
+        "risk": "Reflexively rubber-stamping security's read; or missing a transcription error in security's suggested fix snippets; or missing a wire-surface vector security didn't reach."
+      },
+      "plan": ".bot/runtime2-callback/auditor/v2/report.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-callback/auditor/v2/report.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor v2 PASS. All four security findings (S-F1 Medium, S-F2/S-F3/S-F4 Low) confirmed by primary-source re-walk of callback/run.cs, AskCallback.cs, ErrorCallback.cs, Variables/this.Snapshot.cs, App/this.Snapshot.cs, PlangDataSerializer.cs, and the test that pins the bypass. Severities concur. One bug caught in security's suggested F2 fix snippet \u2014 the `continue` condition is logically inverted (would only Set !-prefix names instead of skipping them); flagged with two correct alternatives so coder doesn't paste the broken version. One additional observation lifted from tester #3 + security: the test name `CallbackRun_VerifiesSignature_BeforeDispatch` is misleading and pins the bypass \u2014 must be renamed/inverted alongside the S-F1 fix. Providers/Assembly.LoadFrom path confirmed inert via wire (App.Restore gates each subsystem on HasSection; ErrorCallback only writes CallStack+Variables sections)."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 branch is mergeable on the auditor's gate. Security v1's recommendation (option 2: symmetric EnsureSigned for in-process callbacks, then require RawSignature on dispatch) stands.",
+        "health": "green \u2014 no code changed since b7f7c526; no rebuild needed.",
+        "notes": "Suggested next bot: coder, to bundle S-F1 (option 2 symmetric EnsureSigned), S-F2 (Variables.Restore !-prefix filter \u2014 use auditor v2's option A or B, NOT security v1's snippet which is logically inverted), S-F4 (one-line SensitivePropertyFilter.Strip on each of the three callback-wire option blocks), and the test rename/inversion in CallbackRunActionTests.cs in one fix pass. S-F3 can defer to channel-wiring stage if the channel-layer size cap is firm. Auditor v1 N3 (CLR exceptions out of Restore wrapped as Data.FromError) belongs in the same pass."
+      }
+    },
+    {
+      "id": "5b4a3c2d-1e0f-9a8b-7c6d-5e4f3a2b1c00",
+      "bot": "coder",
+      "timestamp_start": "2026-05-05T23:45:00Z",
+      "timestamp_end": "2026-05-05T23:59:00Z",
+      "intent": "Address auditor v2 / security v1 findings on runtime2-callback. Per Ingi: fix S-F1 (Medium), S-F3 + S-F4 (Lows), and auditor v1 N3 (CLR exceptions out of Restore). Skip S-F2 \u2014 Ingi: 'not a security issue'.",
+      "before": {
+        "assumptions": "Branch state at f6496cd8 with auditor v2 PASS. C# 2720/2720, Plang 192/188 pass / 0 fail / 4 stale. No code changes since b7427751. Architect handoff is a separate-branch concern, not a blocker.",
+        "risk": "EnsureSigned-on-dispatch could break the existing positive in-process tests if the test's User.Context can't drive signing.sign through to a real identity. Wrapping cb.Run exceptions could swallow useful diagnostics if too aggressive."
+      },
+      "plan": ".bot/runtime2-callback/coder/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/callback/run.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "S-F1 + N3. Replaced the 'if (RawSignature != null) verify' gate with: (a) Callback.EnsureSigned() always runs; if it throws InvalidOperationException (no Context, can't sign locally), surface MissingCallbackSignature. (b) defensive null-check post-Ensure \u2192 MissingCallbackSignature. (c) signing.verify always runs; tampered \u2192 CallbackSignatureMismatch. (d) wrap await cb.Run(Context) in try/catch for CallbackGoalNotFound (404), CallbackGoalHashMismatch (409), InvalidOperationException (500 CallbackDispatchError) \u2014 N3 \u2014 so the public entry never leaks raw CLR exceptions to channels."
+        },
+        {
+          "paths": [
+            "PLang/App/Callback/AskCallback.cs",
+            "PLang/App/Callback/ErrorCallback.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "S-F3: defense-in-depth wire size caps. AskCallback.MaxWireBytes = 1 MB; ErrorCallback.MaxWireBytes = 4 MB (snapshot is larger). Deserialize checks bytes.Length pre-decrypt and post-decrypt; throws InvalidOperationException on overflow. Channel layer remains the primary control. S-F4: added TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { SensitivePropertyFilter.Strip } } to both _options blocks so [Sensitive]-marked properties on captured Variable values can't cross the wire."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "S-F4: added SensitivePropertyFilter.Strip modifier to the _options TypeInfoResolver \u2014 mirrors Data.@this._envelopeJsonOptions."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CallbackTests/CallbackRunActionTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated CallbackRun_VerifiesSignature_BeforeDispatch comment \u2014 pre-fix the body asserted the bypass, post-fix the in-process path actually signs and verifies. Assertion still IsTrue. Added CallbackRun_RejectsUnsignableData_WhenContextMissing \u2014 pins the S-F1 hard gate: a Data without Context can't be sealed and must be rejected with MissingCallbackSignature."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/coder/v5/plan.md",
+            ".bot/runtime2-callback/coder/v5/baseline-tests.md",
+            ".bot/runtime2-callback/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v5 plan, baseline test counts, refreshed summary."
+        }
+      ],
+      "after": {
+        "status": "v5 complete. C# 2721/2721 (added 1 negative-path test). Plang 192/188 pass / 0 fail / 4 stale (unchanged, preexisting handoff gaps). All requested findings addressed; S-F2 deliberately skipped per Ingi.",
+        "health": "green \u2014 clean build, no regressions. The EnsureSigned-on-dispatch contract roundtrips cleanly: in-process Data with Context signs locally and self-verifies; Data without Context is rejected up front.",
+        "notes": "Suggested next bot: codeanalyzer to review the new try/catch shape in callback/run.cs for OBP / simplification. Stage 5 / channel wiring / ask-user HTTP / real symmetric crypto / S-F2 deferred to architect's separate handoff branch."
+      }
+    },
+    {
+      "id": "9854210e-1fb0-408d-b85a-f9e368f0a8a4",
+      "bot": "docs",
+      "timestamp_start": "2026-05-05T22:41:32.394285Z",
+      "intent": "Document the runtime2-callback branch: snapshot/callback architecture, user-facing module docs, evaluate 4 CLAUDE.md/character proposals, write CHANGELOG.",
+      "before": {
+        "assumptions": "Coder XML docs are dense and high-quality (verified spot-check on Callback/, Snapshot/, modules/callback/run.cs, output/ask.cs). Gaps are at architecture-doc layer (no Documentation/v0.2/{callbacks,snapshots}.md) and user-facing (docs/modules/callback.md missing; output.md may not cover ask+vars+resume).",
+        "risk": "ErrorCallback wire shape is intentionally narrow (CallStack+Variables only), AskCallback uses sentinel %!ask.answer% \u2014 both nuances must be preserved in docs."
+      },
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/callbacks.md",
+            "Documentation/v0.2/snapshots.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architecture + developer reference for the new callback subsystem and the ISnapshotted pattern it rides on. Covers seal-then-verify gate, lazy-Signature ICallback carve-out, per-subsystem snapshot subtrees, referent-integrity discipline."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/architecture.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Appended 3 cross-cutting good_to_know entries (lazy-Signature carve-out trip-wires, RestoredFrame surrogate semantics, Errors.Push App back-ref). Inserted Snapshot/Restore + Callbacks sections into architecture.md after Error Handling."
+        },
+        {
+          "paths": [
+            "docs/modules/callback.md",
+            "docs/modules/output.md",
+            "docs/modules/index.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "User-facing module docs: callback.md new (run verb + typed errors), output.md rewritten (ask + vars: + resume), index.md updated (callback row + ask listed)."
+        },
+        {
+          "paths": [
+            "characters/architect/character.md",
+            "characters/coder/character.md",
+            "characters/codeanalyzer/character.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied 4 character proposals: architect v2 (review-server workflow), architect v3 (test-designer prep two-file convention), coder v4 (.test.goal stub contract), codeanalyzer v1 (read-only scope). All branch-incident-driven and persistent."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-callback/docs/v1/result.md",
+            ".bot/runtime2-callback/docs/v1/summary.md",
+            ".bot/runtime2-callback/docs/summary.md",
+            ".bot/runtime2-callback/docs-report.json",
+            ".bot/runtime2-callback/docs/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session deliverables: CHANGELOG draft, v1 summary, root summary, docs-report (with proposal decisions), pass verdict."
+        }
+      ],
+      "plan": ".bot/runtime2-callback/docs/v1/plan.md",
+      "after": {
+        "status": "complete",
+        "health": "pass",
+        "notes": "All gaps filled at the architecture-doc + user-facing layers. Coder XML doc quality on the new public surface (Callback/, Snapshot/, modules/callback/run.cs, modules/output/ask.cs, PlangDataSerializer, *.Snapshot.cs partials) was already high \u2014 no member-level fills required. All four character proposals applied. Verdict: pass \u2014 code ready to merge."
+      },
+      "timestamp_end": "2026-05-05T22:49:50.223806Z"
+    }
+  ]
+}

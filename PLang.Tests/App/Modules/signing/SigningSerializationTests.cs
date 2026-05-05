@@ -15,10 +15,10 @@ public class SigningSerializationTests
     public async Task SignedData_SigningBytes_ExcludesSignature()
     {
         var sd = CreateTestSignedData();
-        sd.Signature = "some-signature-value";
+        sd.Value = "some-signature-value";
 
         // SigningOptions excludes the Signature property for thread-safe signing bytes
-        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+        var json = JsonSerializer.Serialize(sd, Signature.SigningOptions);
         await Assert.That(json).DoesNotContain("some-signature-value");
         await Assert.That(json).DoesNotContain("\"signature\":\"");
     }
@@ -29,8 +29,8 @@ public class SigningSerializationTests
         var sd1 = CreateTestSignedData();
         var sd2 = CreateTestSignedData();
 
-        var bytes1 = JsonSerializer.SerializeToUtf8Bytes(sd1, SignedData.SigningOptions);
-        var bytes2 = JsonSerializer.SerializeToUtf8Bytes(sd2, SignedData.SigningOptions);
+        var bytes1 = JsonSerializer.SerializeToUtf8Bytes(sd1, Signature.SigningOptions);
+        var bytes2 = JsonSerializer.SerializeToUtf8Bytes(sd2, Signature.SigningOptions);
 
         await Assert.That(bytes1.AsSpan().SequenceEqual(bytes2)).IsTrue();
     }
@@ -39,7 +39,7 @@ public class SigningSerializationTests
     public async Task SignedData_CamelCaseNaming()
     {
         var sd = CreateTestSignedData();
-        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+        var json = JsonSerializer.Serialize(sd, Signature.SigningOptions);
 
         await Assert.That(json).Contains("\"type\":");
         await Assert.That(json).Contains("\"algorithm\":");
@@ -50,7 +50,7 @@ public class SigningSerializationTests
     public async Task SignedData_Hash_SerializesAsTypeAndValue()
     {
         var sd = CreateTestSignedData();
-        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+        var json = JsonSerializer.Serialize(sd, Signature.SigningOptions);
 
         // Hash field should serialize as { "type": "sha256", "value": "..." }
         await Assert.That(json).Contains("\"hash\":{");
@@ -64,7 +64,7 @@ public class SigningSerializationTests
         var sd = CreateTestSignedData();
         sd.Identity = "héllo";
 
-        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+        var json = JsonSerializer.Serialize(sd, Signature.SigningOptions);
         // Non-ASCII should appear literally, not as \uXXXX
         await Assert.That(json).Contains("héllo");
     }
@@ -73,7 +73,7 @@ public class SigningSerializationTests
     public async Task SignedData_Roundtrip_Deserialize()
     {
         var original = CreateTestSignedData();
-        original.Signature = Convert.ToBase64String(new byte[64]);
+        original.Value = Convert.ToBase64String(new byte[64]);
 
         // Use standard options for general roundtrip (SigningOptions excludes Signature)
         var generalOptions = new JsonSerializerOptions
@@ -82,13 +82,13 @@ public class SigningSerializationTests
             PropertyNameCaseInsensitive = true
         };
         var json = JsonSerializer.Serialize(original, generalOptions);
-        var deserialized = JsonSerializer.Deserialize<SignedData>(json, generalOptions)!;
+        var deserialized = JsonSerializer.Deserialize<Signature>(json, generalOptions)!;
 
         await Assert.That(deserialized.Type).IsEqualTo(original.Type);
         await Assert.That(deserialized.Algorithm).IsEqualTo(original.Algorithm);
         await Assert.That(deserialized.Nonce).IsEqualTo(original.Nonce);
         await Assert.That(deserialized.Identity).IsEqualTo(original.Identity);
-        await Assert.That(deserialized.Signature).IsEqualTo(original.Signature);
+        await Assert.That(deserialized.Value).IsEqualTo(original.Value);
     }
 
     [Test]
@@ -129,18 +129,18 @@ public class SigningSerializationTests
         // Verified is [JsonIgnore] — verify by checking it's not in the serialized output
         var sd = CreateTestSignedData();
 
-        var json = JsonSerializer.Serialize(sd, SignedData.SigningOptions);
+        var json = JsonSerializer.Serialize(sd, Signature.SigningOptions);
         await Assert.That(json).DoesNotContain("\"verified\"");
     }
 
     [Test]
     public async Task Hash_InvalidBase64_VerifyRejects()
     {
-        // Create a SignedData with invalid base64 in Hash
+        // Create a Signature with invalid base64 in Hash
         // Verification should handle it gracefully (the hash comparison will fail)
         var sd = CreateTestSignedData();
         sd.Hash = Data.Ok(new byte[] { 0xFF }, global::App.Data.Type.FromName("sha256"));
-        sd.Signature = Convert.ToBase64String(new byte[64]);
+        sd.Value = Convert.ToBase64String(new byte[64]);
         sd.Contracts = new List<string> { "C0" };
 
         // Verify should fail (hash mismatch at minimum) but not throw
@@ -150,7 +150,7 @@ public class SigningSerializationTests
         {
             var engine = new global::App.@this(tempDir);
             var signedData = Data.Ok("test");
-            signedData.Signature = sd;
+            signedData.Value = sd;
 
             var action = new verify
             {
@@ -173,7 +173,7 @@ public class SigningSerializationTests
     public async Task SignedData_ToSigningBytes_ThreadSafe()
     {
         var sd = CreateTestSignedData();
-        sd.Signature = Convert.ToBase64String(new byte[64]);
+        sd.Value = Convert.ToBase64String(new byte[64]);
 
         // Call ToSigningBytes concurrently — should produce identical results
         // without corrupting Signature (the old bug: mutated Signature to null during serialization)
@@ -186,12 +186,12 @@ public class SigningSerializationTests
             await Assert.That(result.AsSpan().SequenceEqual(first)).IsTrue();
 
         // Signature should still be intact after all concurrent calls
-        await Assert.That(sd.Signature).IsEqualTo(Convert.ToBase64String(new byte[64]));
+        await Assert.That(sd.Value).IsEqualTo(Convert.ToBase64String(new byte[64]));
     }
 
-    private static SignedData CreateTestSignedData()
+    private static Signature CreateTestSignedData()
     {
-        return new SignedData
+        return new Signature
         {
             Type = "signature",
             Algorithm = "ed25519",
@@ -200,7 +200,7 @@ public class SigningSerializationTests
             Identity = "testPublicKey",
             Contracts = new List<string> { "C0" },
             Hash = Data.Ok(new byte[32], global::App.Data.Type.FromName("sha256")),
-            Signature = null
+            Value = null
         };
     }
 }

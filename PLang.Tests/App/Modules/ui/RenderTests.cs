@@ -715,6 +715,10 @@ public class RenderTests : IDisposable
         public string Name => "stub";
         public bool IsDefault { get; set; }
 
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
+
         public Task<Data> Render(Render action)
         {
             return Task.FromResult(Data.Ok((object)"stub-rendered"));

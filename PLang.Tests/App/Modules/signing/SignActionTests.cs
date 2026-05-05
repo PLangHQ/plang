@@ -70,7 +70,7 @@ public class SignActionTests
         await Assert.That(sd.Nonce).IsNotEmpty();
         await Assert.That(sd.Identity).IsNotEmpty();
         await Assert.That(sd.Hash).IsNotNull();
-        await Assert.That(sd.Signature).IsNotNull();
+        await Assert.That(sd.Value).IsNotNull();
     }
 
     [Test]
@@ -202,7 +202,7 @@ public class SignActionTests
         await Assert.That(result.Success).IsTrue();
 
         var sd = result.Signature!;
-        var sigBytes = Convert.FromBase64String(sd.Signature!);
+        var sigBytes = Convert.FromBase64String(sd.Value!);
         var signingBytes = sd.ToSigningBytes();
 
         var provider = new Ed25519Provider();
@@ -284,6 +284,10 @@ public class SignActionTests
         private readonly Ed25519Provider _inner = new();
         public string Name { get; }
         public bool IsDefault { get; set; }
+
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
         public bool SignCalled { get; private set; }
 
         public MockSigningProvider(string name) { Name = name; }
@@ -299,6 +303,10 @@ public class SignActionTests
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
+
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
         public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
@@ -310,6 +318,10 @@ public class SignActionTests
     {
         public string Name => "throwing-key";
         public bool IsDefault { get; set; }
+
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
         public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

@@ -190,3 +190,127 @@ unblock.
 When a callback resumes, does the new run's callstack carry a `Cause` link
 back to the issuing run's identifier (cross-process causal trace), or is
 resume a clean break? Decide on the Callback branch.
+
+## 2026-05-05 — `crypto.encrypt` / `crypto.decrypt` real implementation
+
+The `runtime2-callback` branch ships these two actions as identity
+pass-through: input bytes are returned unchanged. The wiring is real
+(Callback's `Serialize`/`Deserialize` calls through them; the Channels
+Data layer signs the resulting bytes), so when real crypto lands, only
+the action handler bodies change.
+
+**Design target:** symmetric AES-256-GCM keyed by the existing
+`IKeyProvider`. Both actions take `byte[]` and return `byte[]`.
+
+**Gating:** named the missing PLang runtime features when picking this up
+— briefly noted by Ingi as "we have some missing feature in the plang
+runtime." Confirm what those are before starting.
+
+**Migration:** none needed. Pass-through callbacks issued under v1 will
+not decrypt under real keys, but nothing has shipped to users yet.
+
+## 2026-05-05 — replace `App._statics` with goal-backed dynamic property
+
+`PLang/App/this.cs:108` carries a private
+`ConcurrentDictionary<string, ConcurrentDictionary<string, object?>>`
+keyed by module name, exposed through `GetStatic(key)`. Inline TODO at the
+declaration says "Replace with goal-backed dynamic property" — that
+replacement hasn't been written down anywhere as a real follow-up, so
+this entry pins it.
+
+**Why it matters now:** the callback design captures `App._statics` as
+part of `app.Snapshot()` (snapshot-and-restore bucket, see
+`plan/snapshotted-system.md`). The capture is *provisional* — once the
+goal-backed dynamic property mechanism lands, statics live there and the
+explicit `_statics` snapshot subtree drops out of `ErrorCallback`'s wire
+shape. Callback code shouldn't depend on the field name.
+
+**Design target:** dynamic properties scoped to a goal (or app-wide,
+addressed via `app.X.Y` like the rest of the config tree) replacing the
+flat module-keyed dict. OBP-shaped, addressable by dot-path, snapshots
+naturally as a property of whatever `@this` owns it.
+
+**Out of scope here:** the actual implementation. This entry exists so
+the callback work doesn't bake the `_statics` field name into anything
+load-bearing.
+
+## 2026-05-05 — runtime2-callback branch close-out (open items from coder handoff)
+
+Coder shipped Stages 1–4 (2720/2720 C# green; 188 PLang pass / 0 fail / 4
+stale). Open decisions and gaps from `.bot/runtime2-callback/coder/handoff.md`,
+captured here so the branch can close. Each cluster is a real follow-up, not
+branch-blocking.
+
+### Ratification sweep (decisions made under the line)
+
+The following calls were made by coder mid-stage without an architect doc.
+They're shipped and tested, but no architect has read the code that landed
+them. Next architect session that touches callback should sweep these and
+either bless or carve a redesign:
+
+1. `output.ask` shape — sentinel `%!ask.answer%` for resume; untyped `Data`
+   `Variables` param; `AskCallback.Answer` init-only field written before
+   re-dispatch. (Stage 4 doc didn't specify the ask handler.)
+2. Lazy `Data.Signature` carve-out — auto-populates only when `_value is
+   ICallback`; everything else uses explicit `EnsureSigned()`. Done to
+   preserve existing `Signature == null` verify checks.
+3. `RawSignature` internal accessor — peek without triggering populate.
+   Pragmatic workaround for (2); revisit if (2) gets redesigned.
+4. `RestoredFrame` surrogate record vs. extending `Call.@this` with a
+   restored mode. Coder picked surrogate because `Call`'s ctor is internal
+   and lifecycle-coupled (Stopwatch, AsyncLocal, OnSet).
+5. `Errors.Push` setting `error.App = this.App` to wire the back-ref needed
+   by `Error.Callback` materialisation. Confirm this is the right injection
+   point, or move materialisation off `Error`.
+6. Sync-over-async (`.GetAwaiter().GetResult()`) in `Data.EnsureSigned` and
+   `Callback.Serialize`/`Deserialize`. Stage-3 doc explicitly endorsed it
+   for `Signature`; coder extended to Serialize/Deserialize for symmetry.
+7. `PlangDataSerializer` JSON `{type, value, signature}` envelope. Stage-3
+   left format open. Decide whether to pin a real wire format (CBOR,
+   length-prefixed, etc.) or accept JSON.
+8. `ErrorCallback.Serialize` narrow shape — only CallStack frames + Variables,
+   not full Snapshot fidelity (Errors.Trail, Providers regs, Statics bags
+   don't round-trip across the wire). Adequate for current tests; production
+   needs a richer wire pass.
+9. `os/system/builder/.build/buildgoal.pr` hand-edit — fixed `Actor:
+   %subGoal%` and `KeyName: subGoal` to null in the foreach BuildSubGoal
+   step, because `plang build` was broken on a fresh app. Decide whether
+   this is the right fix or whether the builder LLM prompt needs work.
+
+### Stale PLang tests — need builder/verb work
+
+Four `Tests/Callback/*/Start.test.goal` stubs are stale because the PLang
+surface they test doesn't exist yet:
+
+10. **AskVarsOnNonAsk** — needs builder validator that rejects `vars:`
+    annotation on non-`output.ask` actions. Build-time check; lives in
+    `system/builder/`. Real builder work.
+11. **CallbackTimeoutSetting** — needs PLang verb that writes
+    `app.Callback.Signature.ExpiresInMs`. Either extend `variable.set` to
+    walk into App config, or add a `callback.timeout` action. ~30 lines
+    once approach is picked.
+12. **DurabilityRoundTrip** — needs PLang surface for writing `Data` with
+    explicit `application/plang+data` mime to a file and reading it back
+    into a different App. Needs `file.write` (or similar) to take a mime
+    hint and dispatch through the registered serializer.
+13. **TamperedSignature** — trivial once (12) lands; needs a Plang surface
+    for byte-level mutation of a serialised payload. Without (12), no
+    Plang reach into raw bytes.
+
+(11) and (12)+(13) are entangled with (1) and (7) respectively — pick up
+together when the ratification sweep happens.
+
+### Other branch-level loose ends
+
+14. **HTTP wire transport for ask-user** — Stage 4 doc explicitly listed
+    this as separate work. Without it, real ask-user pause/resume across an
+    HTTP boundary doesn't exist; only the in-process resume in
+    `AskCallback.Run` works. Needs its own design pass.
+15. **Real symmetric crypto** — already tracked in the
+    `2026-05-05 — crypto.encrypt / crypto.decrypt real implementation`
+    entry above. Listed here only for cross-reference.
+16. **Builder revalidation after `buildgoal.pr` hand-edit** — per CLAUDE.md
+    "When the builder changes — revalidate. All previously passing tests
+    must be rebuilt and rerun." Coder didn't trigger a global rebuild; the
+    edit only affects fresh-app foreach behaviour, so probably fine.
+    Confirm on next builder pass.

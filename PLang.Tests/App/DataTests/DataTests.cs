@@ -596,7 +596,7 @@ public class DataTests
     public async Task Signature_CanBeSet()
     {
         var data = new Data("test", "hello");
-        var sig = new global::App.modules.signing.SignedData { Type = "signature", Nonce = "test" };
+        var sig = new global::App.modules.signing.Signature { Type = "signature", Nonce = "test" };
 
         data.Signature = sig;
 

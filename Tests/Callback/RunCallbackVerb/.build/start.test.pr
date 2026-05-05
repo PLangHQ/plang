@@ -1,0 +1,268 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022boom\u0022, on error call CaptureCallback",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "Materialize a callback via %!error.callback%, then dispatch it via callback.run.\nThe original failing action re-runs through the live execution path.",
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "boom",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "CaptureCallback",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Throw an error with message \u0022boom\u0022. The step text says \u0022on error call CaptureCallback\u0022, so we wrap the throw with error.handle that runs a recovery action chain calling the CaptureCallback goal.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %ranCallback% is true, \u0022callback dispatch should have completed\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%ranCallback%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "callback dispatch should have completed",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: %ranCallback% must be true after the on-error callback dispatch path completes.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "CaptureCallback",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %cb% = %!error.callback%",
+          "lineNumber": 8,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%cb%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%!error.callback%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Assign the provided runtime callback handle (%!error.callback%) into %cb% so it can be passed to callback.run.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "callback.run callback=%cb%, on error ignore",
+          "lineNumber": 9,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "callback",
+              "action": "run",
+              "parameters": [
+                {
+                  "name": "Callback",
+                  "value": {
+                    "callback": "%cb%"
+                  },
+                  "type": "object"
+                }
+              ],
+              "defaults": null,
+              "modifiers": [
+                {
+                  "module": "error",
+                  "action": "handle",
+                  "parameters": [
+                    {
+                      "name": "IgnoreError",
+                      "value": true,
+                      "type": "bool"
+                    }
+                  ],
+                  "defaults": null,
+                  "modifiers": []
+                }
+              ]
+            }
+          ],
+          "intent": null,
+          "guidance": "Run the callback. The step text says \u0027on error ignore\u0027, so wrap the callback.run with error.handle IgnoreError=true.",
+          "level": "medium",
+          "confidence": 55,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "set %ranCallback% = true",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%ranCallback%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Mark that the callback was executed by setting %ranCallback% to true.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/RunCallbackVerb/Start.test.goal",
+      "prPath": "/RunCallbackVerb/.build/start.test.pr",
+      "hash": "bbaae2cf99a4f8789ca18e016dd4c225f89f409e4dcd90f1503c421c0935ad99",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/RunCallbackVerb/Start.test.goal",
+  "prPath": "/RunCallbackVerb/.build/start.test.pr",
+  "hash": "646546a1c3b481e93e4c100b235b0396ff3264517b3058fac2442985533a04d1",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

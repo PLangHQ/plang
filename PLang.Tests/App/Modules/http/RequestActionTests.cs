@@ -716,7 +716,7 @@ public class RequestActionTests
         };
 
         var badData = new Data("payload");
-        badData.Signature = new SignedData { Identity = "fake", Signature = "AAAA_bogus" };
+        badData.Signature = new Signature { Identity = "fake", Value = "AAAA_bogus" };
         var ndjson = JsonSerializer.Serialize(badData, transportOptions) + "\n";
 
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -808,9 +808,9 @@ public class RequestActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_handler.LastRequest!.Headers.Contains("X-Signature")).IsTrue();
-        // Verify X-Signature deserializes to a valid SignedData
+        // Verify X-Signature deserializes to a valid Signature
         var sigHeader = _handler.LastRequest!.Headers.GetValues("X-Signature").First();
-        var signedData = JsonSerializer.Deserialize<SignedData>(sigHeader, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var signedData = JsonSerializer.Deserialize<Signature>(sigHeader, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         await Assert.That(signedData).IsNotNull();
         await Assert.That(signedData!.Identity).IsNotEmpty();
         // Accept header includes application/plang
@@ -830,10 +830,10 @@ public class RequestActionTests
         await action.Run();
 
         var sigHeader = _handler.LastRequest!.Headers.GetValues("X-Signature").First();
-        var signedData = JsonSerializer.Deserialize<SignedData>(sigHeader, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var signedData = JsonSerializer.Deserialize<Signature>(sigHeader, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         await Assert.That(signedData).IsNotNull();
         await Assert.That(signedData!.Identity).IsNotEmpty();
-        await Assert.That(signedData.Signature).IsNotNull();
+        await Assert.That(signedData.Value).IsNotNull();
     }
 
     [Test]
@@ -883,10 +883,10 @@ public class RequestActionTests
     {
         // Build a Data with a bogus signature
         var responseData = new Data("payload");
-        responseData.Signature = new SignedData
+        responseData.Signature = new Signature
         {
             Identity = "fake-identity",
-            Signature = "AAAA_invalid_base64_sig"
+            Value = "AAAA_invalid_base64_sig"
         };
         var transportOptions = new JsonSerializerOptions
         {

@@ -216,6 +216,10 @@ public class HashActionTests
     {
         public string Name => "failing";
         public bool IsDefault { get; set; }
+
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
         public Data Hash(Hash action) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
         public Data Verify(Verify action) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
     }

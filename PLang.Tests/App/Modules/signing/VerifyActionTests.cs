@@ -182,9 +182,9 @@ public class VerifyActionTests
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         // Flip first byte of signature
-        var sigBytes = Convert.FromBase64String(signed.Signature!.Signature!);
+        var sigBytes = Convert.FromBase64String(signed.Signature!.Value!);
         sigBytes[0] ^= 0xFF;
-        signed.Signature.Signature = Convert.ToBase64String(sigBytes);
+        signed.Signature.Value = Convert.ToBase64String(sigBytes);
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();
@@ -336,7 +336,7 @@ public class VerifyActionTests
 
     #endregion
 
-    #region Tampered Contracts on SignedData
+    #region Tampered Contracts on Signature
 
     [Test]
     public async Task Verify_SignedDataContractsNull_RequiredNotNull_ReturnsError()
@@ -419,52 +419,52 @@ public class VerifyActionTests
 
     #endregion
 
-    #region SignedData.Verify Direct Tests
+    #region Signature.Verify Direct Tests
 
     [Test]
     public async Task SignedDataVerify_EmptySignature_ReturnsSignatureInvalid()
     {
-        var sd = new SignedData
+        var sd = new Signature
         {
             Type = "signature",
             Algorithm = "ed25519",
             Identity = "somekey",
-            Signature = null
+            Value = null
         };
 
         // Null signature — provider.Verify needs non-null bytes, so this tests the guard in VerifyAsync
-        await Assert.That(string.IsNullOrEmpty(sd.Signature)).IsTrue();
+        await Assert.That(string.IsNullOrEmpty(sd.Value)).IsTrue();
     }
 
     [Test]
     public async Task SignedDataVerify_EmptyStringSignature_IsEmpty()
     {
-        var sd = new SignedData
+        var sd = new Signature
         {
             Type = "signature",
             Algorithm = "ed25519",
             Identity = "somekey",
-            Signature = ""
+            Value = ""
         };
 
-        await Assert.That(string.IsNullOrEmpty(sd.Signature)).IsTrue();
+        await Assert.That(string.IsNullOrEmpty(sd.Value)).IsTrue();
     }
 
     [Test]
     public async Task SignedDataVerify_InvalidBase64Signature_ReturnsSignatureInvalid()
     {
-        var sd = new SignedData
+        var sd = new Signature
         {
             Type = "signature",
             Algorithm = "ed25519",
             Identity = "somekey",
-            Signature = "not-valid-base64!!!"
+            Value = "not-valid-base64!!!"
         };
 
         // Invalid base64 should fail at Convert.FromBase64String
         var provider = new Ed25519Provider();
         byte[] sigBytes;
-        try { sigBytes = Convert.FromBase64String(sd.Signature); Assert.Fail("Expected FormatException"); }
+        try { sigBytes = Convert.FromBase64String(sd.Value); Assert.Fail("Expected FormatException"); }
         catch (FormatException) { /* expected */ }
         var result = provider.Verify(sd.ToSigningBytes(), new byte[64], sd.Identity);
 
@@ -478,6 +478,10 @@ public class VerifyActionTests
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
+
+        public bool IsBuiltIn { get; set; }
+
+        public string? Source { get; set; }
         public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));

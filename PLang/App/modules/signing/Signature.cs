@@ -9,7 +9,7 @@ namespace App.modules.signing;
 /// The signed data envelope. Owns creation (signing) and verification.
 /// All fields are serialized in a deterministic order for signature verification.
 /// </summary>
-public class SignedData
+public class Signature
 {
     [JsonPropertyOrder(1), JsonInclude]
     public string Type { get; internal set; } = "signature";
@@ -71,8 +71,14 @@ public class SignedData
         }
     }
 
-    [JsonPropertyOrder(10), JsonInclude]
-    public string? Signature { get; internal set; }
+    /// <summary>
+    /// Base64-encoded signature bytes. Renamed to <c>Value</c> after the
+    /// <c>SignedData</c> → <c>Signature</c> type rename — the property name would
+    /// otherwise collide with its enclosing class. Wire JSON key stays "signature"
+    /// via <see cref="JsonPropertyNameAttribute"/> for backwards compatibility.
+    /// </summary>
+    [JsonPropertyOrder(10), JsonInclude, JsonPropertyName("signature")]
+    public string? Value { get; internal set; }
 
     // --- Serialization ---
 
@@ -91,7 +97,7 @@ public class SignedData
             {
                 static typeInfo =>
                 {
-                    if (typeInfo.Type != typeof(SignedData)) return;
+                    if (typeInfo.Type != typeof(Signature)) return;
                     foreach (var prop in typeInfo.Properties)
                     {
                         if (prop.Name.Equals("signature", StringComparison.OrdinalIgnoreCase))
@@ -103,7 +109,7 @@ public class SignedData
     };
 
     /// <summary>
-    /// Serializes this SignedData to deterministic JSON bytes for signing/verification.
+    /// Serializes this Signature to deterministic JSON bytes for signing/verification.
     /// Thread-safe: Signature is excluded via JsonSerializerOptions, not by mutation.
     /// </summary>
     internal byte[] ToSigningBytes()
