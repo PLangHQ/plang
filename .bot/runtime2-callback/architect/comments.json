@@ -9,5 +9,34 @@
       "parent_id": null,
       "ts": "2026-05-05T10:54:35"
     }
+  ],
+  "plan.md": [
+    {
+      "id": "723eb578b5",
+      "line": 3,
+      "text": "App.Run, it looks like you are referencing static App, but it should be instance of app, app.Run",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-05T14:23:11"
+    },
+    {
+      "id": "b283e0b08c",
+      "line": 13,
+      "text": "GoalHash feel like wrong(obp wrong), I would expect Goal.Hash, this would basically allow us to say Callback.Goal and it could load it self up according to the Hash and PrPath and give us the goal object. What do you think.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-05T14:26:33"
+    },
+    {
+      "id": "5915b1b164",
+      "line": 16,
+      "text": "we will be adding new actions to the crypto module, I think that is it",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-05T14:27:12"
+    }
   ]
 }

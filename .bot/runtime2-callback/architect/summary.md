@@ -1,19 +1,32 @@
 # architect — runtime2-callback
 
-## v2 — Wire format and Phase 2 staging ([details](v2/summary.md))
+## What this is
 
-The wire/sign/persistence layer above v1's snapshot/restore design, scoped to Phase 2 (error-retry only). Phase 3 (ask-user + encryption) deferred.
+The **callback mechanism**, end-to-end: how PLang preserves runtime state at a failure or pause point, persists it durably (signed envelope, developer-chosen storage), verifies it on resume, and runs it from a fresh `App` process. Two issuers — `ask user` and error-retry — share one `App.Run(callback)` entry point.
 
-Three insights reshape it: **(1)** signing is transparent at the Data IO boundary — any `Data` write picks up a default no-expiry signature via the existing `signing` module, no explicit `- sign` needed at issue sites; **(2)** `Goal.Hash` already exists at `App/Goals/Goal/this.cs:121` (SHA-256 of name + step text), so `Callback.GoalHash = goal.Hash` directly with no new infra; **(3)** encryption belongs to the Callback class, invoked during its own serialization, not at the Data layer — most Data writes don't need encryption.
+Encryption and HTTP wire transport (the ask-user case in full) are deferred to a future branch — the layering is settled here so that future branch doesn't reshape this.
 
-Combined consequence: **Phase 2 ships entirely on existing infrastructure.** No new modules, no new crypto, no new core abstractions. The work is the transparent-IO hook, schema corrections (`GoalPrPath` added, `Expiry` removed in favor of `Data.Signature.Expires`), the `SignedData` → `Signature` OBP rename, and the `App.Run(callback)` entry point. Phase 3 adds encryption (`ICryptoProvider.Encrypt/Decrypt`) only when ask-user lands.
+## Current state
 
-## v1 — Callback design ([details](v1/summary.md))
+Design settled and ready for handoff:
 
-Three-pass whiteboard with Ingi: design shape, subsystem walk, correction pass.
+- **Resume mechanic:** bind, jump, run — never replay. `App.Run` accepts a Callback as entry point; same main loop, lands at the action. No `Seek` verb.
+- **Snapshot system:** per-type `ISnapshotted` interface. Three buckets — snapshot-and-restore, reconstruct-on-build, drop. Names-vs-values: variables are values that survive resume; everything else is a name. Two trust layers: signature integrity + referent integrity.
+- **Error-retry capture:** throw-time variables via Diff reverse-apply (auto-flips on error). Lazy materialization of `%!error.callback%`.
+- **Signing:** transparent at the Data IO boundary in `App.Channels.Serializers`. Default = no expiry. No explicit `- sign` at issue sites.
+- **`GoalHash`:** reuses existing `Goal.Hash` at `App/Goals/Goal/this.cs:121`. Mismatch = hard error on resume.
+- **Encryption layering:** Callback-internal (not Data-layer). Deferred to future ask-user branch.
+- **OBP rename queued:** `App.modules.signing.SignedData` → `Signature`.
 
-State-machine restoration via *bind state, jump to position, run* — never replay. Two issuers (`ask user`, error-retry) share one `App.Run(callback)` entry point but follow different capture policies. Per-type `ISnapshotted` (using `Snapshot.@this` and `Context.@this`). Three buckets — snapshot-and-restore, reconstruct-on-build, drop. Islands rule — values only.
+Ships entirely on existing infrastructure. No new modules, no new crypto, no new core abstractions.
 
-Error-retry captures throw-time variables by reverse-applying the callstack's diff stream; Diff auto-flips on error. `App.Providers` is snapshot-and-restore at the registry layer (default selections + runtime registrations). Cache is **not** snapshotted — it's a hint, not state. Resume always lands **at the action** in both modes. No `Seek` verb. No `CallbackOrigin`.
+## Where to read
 
-Synthesis principle: **Variables are the values that survive resume. Everything else is a name.** Two trust layers gate resume: signature integrity (envelope) and referent integrity (named state still exists).
+- `plan.md` — spine, read end-to-end.
+- `plan/<topic>.md` — focused topic files for each concern.
+
+## Next handoff
+
+**test-designer** picks up next — turn `plan/test-strategy.md` into a test plan and surface anything underspecified. Then **coder** implements: per-type `ISnapshotted` rollout, `Callback` record + lazy materialization, `App.Run(callback)` entry point, transparent-signing IO hook, `SignedData` → `Signature` rename, `callback.run` action, goal-hash mismatch error path.
+
+Stages will be carved when the topic files settle. Currently the topic content carries forward verbatim from the prior whiteboard sessions; Ingi may still iterate on individual topics before stage carving.
