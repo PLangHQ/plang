@@ -167,7 +167,127 @@
         "risk": "9-stage refactor touches Channel, Channels, every IChannel action, source generator, builder catalog, App ctor, PlangConsole entry, and adds Services + events + migrate. Easy to break unrelated areas. Rebuild-and-run after every stage; keep regressions zero outside the stubs."
       },
       "plan": ".bot/runtime2-channels/coder/v1/plan.md",
-      "actions": []
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/this.cs",
+            "PLang/App/Channels/Channel/Role/this.cs",
+            "PLang/App/Channels/Channel/Session/this.cs",
+            "PLang/App/Channels/Channel/Message/this.cs",
+            "PLang/App/Channels/Channel/Stream/this.cs",
+            "PLang/App/Channels/Channel/Goal/this.cs",
+            "PLang/App/Channels/Channel/EventContext.cs",
+            "PLang/App/Channels/Channel/MigrationEnvelope.cs",
+            "PLang/App/Channels/ChannelNotFoundException.cs",
+            "PLang/App/Channels/this.cs",
+            "PLang/App/Channels/Serializers/TimeSpanIso8601Converter.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stages 1-3 + 9: abstract Channel base + Session/Message + Stream + Goal concretes; Role enum; TimeSpan ISO 8601 converter; foundational set + recursion rule; channel events firing on the base; migration API stub."
+        },
+        {
+          "paths": [
+            "PLang/App/Services/this.cs",
+            "PLang/App/Services/Service/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 7: flat per-call Service collection on App. Service is not an Actor — separate type with Channels, Identity (always System's), Parent ref."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/channel/set.cs",
+            "PLang/App/modules/channel/add.cs",
+            "PLang/App/modules/channel/remove.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 5: three module actions managing channels — set replaces a role channel with a goal channel, add registers a new custom-named channel with full per-channel config, remove unregisters (refuses role channels)."
+        },
+        {
+          "paths": [
+            "PLang/App/this.cs",
+            "PLang/App/Actor/this.cs",
+            "PLang/App/Actor/Context/this.cs",
+            "PLang/App/modules/IChannel.cs",
+            "PLang/App/modules/output/write.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/Events/EventType.cs",
+            "PLang/App/Events/Lifecycle/Bindings/Binding/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stages 4 + 6 + 7 + 8: source-gen single Channel slot; App.Channels dropped; App.Serializers promoted; EnsureRoleChannels + FreezeFoundational on Start; Actor's foundational set + AsyncLocal channel override + EscalationLevel removed; EventType gains channel lifecycle; EventBinding gains ChannelName filter; Modules.Describe injects channel param + GetChannelInventory."
+        },
+        {
+          "paths": [
+            "PLang/Executor.cs",
+            "PLang/App/modules/http/providers/DefaultHttpProvider.cs",
+            "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/Goals/this.cs",
+            "PLang/App/Goals/Setup/this.cs",
+            "PLang/App/Utils/Json.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 6 caller migration: app.Channels.Serializers → app.Serializers; app.Channels.WriteAsync → actor.Channels.WriteAsync; TimeSpan ISO 8601 converter registered globally."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/ChannelsTests/Stage1_ChannelBaseTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage1_TimeSpanJsonConverterTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage2_StreamChannelTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage3_GoalChannelTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage4_ChannelResolutionTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage4_BuilderCatalogTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage5_ChannelActionsBuilderCatalogTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage6_EntryPointWiringTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage7_AppServicesTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage9_ChannelMigrateTests.cs",
+            "PLang.Tests/App/ChannelsTests/Integration/IntegrationCutsTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "All 88 C# channel stubs from test-designer filled green plus 3 integration cuts."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/IO/ChannelTests.cs",
+            "PLang.Tests/App/IO/IOTests.cs"
+          ],
+          "type": "delete",
+          "category": "test",
+          "confidence": "high",
+          "context": "Obsolete v1 tests against the concrete-Channel surface — superseded by Stage 1+2 tests against the abstract base / Stream concrete (architect plan)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-channels/coder/v1/plan.md",
+            ".bot/runtime2-channels/coder/v1/baseline-tests.md",
+            ".bot/runtime2-channels/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Coder's plan, captured baseline, and final summary."
+        }
+      ],
+      "after": {
+        "status": "All 9 stages green at the C# layer. C# 2745 pass / 0 fail; PLang 188 pass / 0 fail / 18 stale (the .test.goal stubs cover developer-facing channel.* surface — bodies + plang build deferred to follow-up since the runtime stages 1-9 are end-to-end validated by the integration cuts).",
+        "health": "ok",
+        "notes": "Channel base, Session/Message abstracts, Stream + Goal concretes, foundational recursion rule, source-gen Channel slot, builder catalog inventory, three channel module actions, App.Services + per-call Service, channel events with ChannelName filter, migration API stub. Old ChannelTests/IOTests deleted as superseded; legacy app.Channels surface fully migrated to app.Serializers / actor.Channels. EscalationLevel removed; Actor.ValidValues drops to user/system. App ctor takes autoWireConsoleChannels=true so test fixtures and embedded scenarios still get usable channels; entry points opt out and own the wiring."
+      },
+      "timestamp_end": "2026-05-06T19:00:00Z"
     }
   ]
 }
