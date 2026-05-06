@@ -22,6 +22,7 @@ public class Stage4_ChannelResolutionTests
     public async Task ChannelsResolve_NullName_ReturnsOutputRoleChannel()
     {
         var app = new global::App.@this("/tmp/s4a");
+        global::App.@this.WireDefaultConsoleChannels(app.User);
         var ch = app.User.Channels.Resolve(null);
         await Assert.That(ch).IsNotNull();
         await Assert.That(ch.Role).IsEqualTo(ChannelRole.Output);

@@ -21,7 +21,7 @@ public class Stage4_BuilderCatalogTests
     public async Task BuilderCatalog_PassesPerActorChannelInventory_AtBuildTime()
     {
         var app = new global::App.@this("/tmp/s4cat-b");
-        // Pre-baseline: stages 1's transitional wiring registers output/error/input on User.
+        global::App.@this.WireDefaultConsoleChannels(app.User);
         app.User.Channels.Register(StreamChannel.Memory("logger"));
 
         var inventory = app.Modules.GetChannelInventory(app.User);

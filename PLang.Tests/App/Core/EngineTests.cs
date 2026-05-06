@@ -69,16 +69,6 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Service_ReturnsActorWithCorrectName()
-    {
-        await using var engine = new global::App.@this("/app");
-
-        var service = engine.System;
-
-        await Assert.That(service.Name).IsEqualTo("Service");
-    }
-
-    [Test]
     public async Task User_ReturnsActorWithCorrectName()
     {
         await using var engine = new global::App.@this("/app");

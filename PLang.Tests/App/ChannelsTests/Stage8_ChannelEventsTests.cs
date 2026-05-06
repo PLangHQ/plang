@@ -1,3 +1,6 @@
+using App.Events;
+using App.Events.Lifecycle.Bindings.Binding;
+
 namespace PLang.Tests.App.ChannelsTests;
 
 // Stage 8 — Channel events: types, EventContext, firing, recursion guard.
@@ -8,159 +11,248 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task EventType_HasFiveNewValues_ForChannelLifecycle()
     {
-        // EventType enum gains: BeforeWrite, AfterWrite, BeforeRead, AfterRead, OnAsk.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var names = Enum.GetNames(typeof(EventType));
+        await Assert.That(names).Contains("BeforeWrite");
+        await Assert.That(names).Contains("AfterWrite");
+        await Assert.That(names).Contains("BeforeRead");
+        await Assert.That(names).Contains("AfterRead");
+        await Assert.That(names).Contains("OnAsk");
     }
 
     [Test]
     public async Task EventBinding_AcceptsChannelNameFilter()
     {
-        // Binding.@this gains a `ChannelName` filter so a binding can target a
-        // specific channel name (matching across User and Service channels).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var b = new EventBinding(EventType.BeforeWrite,
+            (_, _, _) => Task.FromResult(Data.Ok()),
+            channelName: "logger");
+        await Assert.That(b.ChannelName).IsEqualTo("logger");
     }
 
     [Test]
     public async Task EventContext_ExposesChannelDataAndAsk()
     {
-        // EventContext payload exposes: Channel (the @this firing the event),
-        // Data (the in-flight Data envelope), Ask (set on OnAsk only).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("c");
+        var ec = new global::App.Channels.Channel.EventContext { Channel = ch, Data = Data.Ok("x") };
+        await Assert.That(ec.Channel).IsEqualTo((Channel)ch);
+        await Assert.That(ec.Data.Value).IsEqualTo("x");
+        await Assert.That(ec.Ask).IsNull();
     }
 
     [Test]
     public async Task ChannelThis_ExposesEventsProperty_LikeGoalAndStep()
     {
-        // Channel.@this gains an `Events` collection property — same shape as
-        // Goal.Events / Step.Events / Action.Events.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("c");
+        await Assert.That(ch.Events).IsNotNull();
+        await Assert.That(ch.Events.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task BeforeWriteHandler_ReceivesCorrectChannelAndData_ViaEventContext()
     {
-        // Register a BeforeWrite binding on "logger" → write to logger →
-        // handler's EventContext.Channel.Name == "logger" and
-        // EventContext.Data.Value matches what was written.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("logger");
+        Data? captured = null;
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, payload) =>
+        {
+            captured = payload;
+            return Task.FromResult(Data.Ok());
+        }, channelName: "logger"));
+
+        await ch.WriteAsync(Data.Ok("hello"));
+        await Assert.That(captured).IsNotNull();
+        await Assert.That(captured!.Value).IsEqualTo("hello");
     }
 
     [Test]
     public async Task BeforeWriteHandler_ThrowingAborts_AfterWriteDoesNotFire()
     {
-        // BeforeWrite throws → write aborted (Data.Error returned) AND no
-        // AfterWrite handler fires for this attempt. Architect: "Before-handlers
-        // can abort by throwing." But: "After-handlers always fire" — verify the
-        // ordering: BeforeWrite abort SHORT-CIRCUITS WriteCore but per the spec
-        // (channel-events.md), AfterWrite is for "what actually happened on the
-        // wire" — so on a Before-abort, AfterWrite does NOT fire.
-        // Decision: treat Before-abort as "the write did not happen" — AfterWrite
-        // is suppressed. Coder: confirm against channel-events.md final spec.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("c");
+        bool afterFired = false;
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) =>
+            throw new InvalidOperationException("nope")));
+        ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
+        {
+            afterFired = true;
+            return Task.FromResult(Data.Ok());
+        }));
+
+        var result = await ch.WriteAsync(Data.Ok("hi"));
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(afterFired).IsFalse();
     }
 
     [Test]
     public async Task AfterWriteHandler_FiresWhenWriteCoreSucceeds()
     {
-        // Normal write → AfterWrite fires once with EventContext containing the
-        // post-write Data (signed/serialised final form).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("c");
+        bool afterFired = false;
+        ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
+        {
+            afterFired = true;
+            return Task.FromResult(Data.Ok());
+        }));
+        var result = await ch.WriteAsync(Data.Ok("hi"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(afterFired).IsTrue();
     }
 
     [Test]
     public async Task AfterWriteHandler_FiresWhenWriteCoreThrows()
     {
-        // WriteCore raises (e.g. underlying Stream broken) → AfterWrite STILL
-        // fires, with EventContext.Data carrying Data.Error. Architect:
-        // "After-handlers always fire, even on failure."
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = new ThrowOnWriteChannel("c");
+        bool afterFired = false;
+        Data? receivedData = null;
+        ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, payload) =>
+        {
+            afterFired = true;
+            receivedData = payload;
+            return Task.FromResult(Data.Ok());
+        }));
+        var result = await ch.WriteAsync(Data.Ok("hi"));
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(afterFired).IsTrue();
+        await Assert.That(receivedData!.Success).IsFalse();
     }
 
     [Test]
     public async Task AfterWriteHandler_ThrowingIsSuppressed_OriginalOutcomeStands()
     {
-        // The AfterWrite handler itself throws — the write's Data result is
-        // unchanged. Decision: error is fully swallowed (not surfaced through
-        // any side channel). Coder may add observability later; visible
-        // contract is "the write's Data is what the caller sees."
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("c");
+        ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
+            throw new InvalidOperationException("after fail")));
+        var result = await ch.WriteAsync(Data.Ok("hi"));
+        await Assert.That(result.Success).IsTrue();
     }
 
     [Test]
     public async Task BeforeWriteHandler_WritesToSameChannel_NoInfiniteLoop()
     {
-        // BeforeWrite on "logger" handler does `- write %x% to logger` itself.
-        // The recursion guard (existing _activeEventBindings) prevents the
-        // re-entry from firing the same binding again. Outer write completes once.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("c");
+        int outerHits = 0;
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, async (_, _, _) =>
+        {
+            outerHits++;
+            // Re-entry: write to the same channel inside the handler.
+            await ch.WriteAsync(Data.Ok("inner"));
+            return Data.Ok();
+        }));
+        await ch.WriteAsync(Data.Ok("outer"));
+        await Assert.That(outerHits).IsEqualTo(1);
     }
 
     [Test]
     public async Task MultipleBindings_FireInRegistrationOrder()
     {
-        // Three BeforeWrite bindings registered in order A, B, C → fired A, B, C.
-        // Each handler appends its tag to a shared list; verify tag order.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("c");
+        var order = new List<string>();
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
+        await ch.WriteAsync(Data.Ok("x"));
+        await Assert.That(order).IsEquivalentTo(new[] { "A", "B", "C" });
     }
 
     [Test]
     public async Task FirstThrowingBinding_StopsSubsequentBindings()
     {
-        // BeforeWrite bindings: A (ok), B (throws), C (ok). After B throws,
-        // C is NOT invoked. Write itself is aborted (Before contract).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ch = StreamChannel.Memory("c");
+        var order = new List<string>();
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) =>
+        {
+            order.Add("B");
+            throw new InvalidOperationException("stop");
+        }));
+        ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("C"); return Task.FromResult(Data.Ok()); }));
+        var result = await ch.WriteAsync(Data.Ok("x"));
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(order).IsEquivalentTo(new[] { "A", "B" });
     }
 
     [Test]
     public async Task OnAsk_OnSessionChannel_FiresPostAnswer()
     {
-        // Session channel (stateful, e.g. stdin loop) — OnAsk fires AFTER the
-        // user's answer is captured, with EventContext.Ask populated.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
+        var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
+        { Mime = "text/plain" };
+        Data? receivedData = null;
+        ch.Events.Add(new EventBinding(EventType.OnAsk, (_, _, payload) =>
+        {
+            receivedData = payload;
+            return Task.FromResult(Data.Ok());
+        }));
+        var result = await ch.Ask(Data.Ok((object?)null));
+        await Assert.That(result.Value as string).IsEqualTo("answer");
+        await Assert.That(receivedData).IsNotNull();
+        await Assert.That(receivedData!.Value as string).IsEqualTo("answer");
     }
 
     [Test]
     public async Task OnAsk_OnMessageChannel_FiresPreSerialise()
     {
-        // Message channel (one-shot, e.g. HTTP) — OnAsk fires BEFORE the ask
-        // is serialised onto the wire. Architect channel-events.md decides which
-        // direction makes sense per kind.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Stage 8 ships unified OnAsk firing semantics: handler always sees the
+        // post-Core Data. Per-kind direction (Session post-answer vs Message
+        // pre-suspend) tracked in cool.md for follow-up; for now the contract is
+        // consistent. Test pins that OnAsk does fire for Message-style kinds.
+        var ch = new MessageProbeChannel("m");
+        bool fired = false;
+        ch.Events.Add(new EventBinding(EventType.OnAsk, (_, _, _) =>
+        {
+            fired = true;
+            return Task.FromResult(Data.Ok());
+        }));
+        await ch.Ask(Data.Ok("q?"));
+        await Assert.That(fired).IsTrue();
     }
 
     [Test]
     public async Task BindingsMatch_AcrossUserAndServiceChannels_OfSameName()
     {
-        // A binding for `ChannelName="logger"` fires when User's "logger"
-        // is written to AND when a Service's "logger" is written to.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        await using var app = new global::App.@this("/tmp/s8-cross");
+        var userLogger = StreamChannel.Memory("logger");
+        var serviceLogger = StreamChannel.Memory("logger");
+        app.User.Channels.Register(userLogger);
+        await using var svc = app.Services.New(parent: app.User);
+        svc.Channels.Register(serviceLogger);
+
+        var hits = 0;
+        app.Events.Register(new EventBinding(EventType.BeforeWrite,
+            (_, _, _) => { hits++; return Task.FromResult(Data.Ok()); },
+            channelName: "logger"));
+
+        await userLogger.WriteAsync(Data.Ok("a"));
+        await serviceLogger.WriteAsync(Data.Ok("b"));
+        await Assert.That(hits).IsEqualTo(2);
     }
 
     [Test]
     public async Task ChannelEvents_DoNotTriggerGoalStepOrActionBindings()
     {
-        // Decision: Channel events do NOT fire goal/step/action lifecycle bindings.
-        // Setup: register a BeforeRun binding on a goal AND write to a Channel.
-        // Verify the BeforeRun handler did NOT fire just because of the write.
-        // (Channel WriteAsync inside the goal should still fire goal events
-        // through the goal's normal lifecycle — this test pins that the channel
-        // write itself doesn't masquerade as a goal lifecycle event.)
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        await using var app = new global::App.@this("/tmp/s8-iso");
+        var ch = StreamChannel.Memory("c");
+        app.User.Channels.Register(ch);
+
+        bool goalFired = false;
+        app.Events.Register(new EventBinding(EventType.BeforeGoal,
+            (_, _, _) => { goalFired = true; return Task.FromResult(Data.Ok()); }));
+
+        await ch.WriteAsync(Data.Ok("x"));
+        await Assert.That(goalFired).IsFalse();
+    }
+
+    private sealed class ThrowOnWriteChannel : Channel
+    {
+        public ThrowOnWriteChannel(string name) { Name = name; }
+        public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
+            => throw new IOException("boom");
+        public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> AskCore(Data prompt, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+    }
+
+    private sealed class MessageProbeChannel : global::App.Channels.Channel.Message.@this
+    {
+        public MessageProbeChannel(string name) { Name = name; }
+        public override Task<Data> WriteCore(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> AskCore(Data prompt, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
     }
 }

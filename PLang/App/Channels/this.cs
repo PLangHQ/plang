@@ -119,7 +119,10 @@ public sealed class @this : IAsyncDisposable
         => _channels.TryGetValue(name, out var channel) ? channel : null;
 
     public void Register(Channel.@this channel)
-        => _channels[channel.Name] = channel;
+    {
+        channel.App = _app;
+        _channels[channel.Name] = channel;
+    }
 
     public async Task<bool> RemoveAsync(string name)
     {

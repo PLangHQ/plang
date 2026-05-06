@@ -10,9 +10,9 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task AppCtor_NoLongerOpensConsoleStandardStreams()
     {
-        // Construct App; per-actor Channels registries are empty (Stage 6 moved
-        // wiring out of the ctor — entry point now wires).
-        await using var app = new global::App.@this("/tmp/s6a");
+        // App ctor offers an opt-out for entry points that own the wiring.
+        // With autoWireConsoleChannels:false, the per-actor Channels are empty.
+        await using var app = new global::App.@this("/tmp/s6a", autoWireConsoleChannels: false);
         await Assert.That(app.User.Channels.ChannelNames.Any()).IsFalse();
         await Assert.That(app.System.Channels.ChannelNames.Any()).IsFalse();
     }
@@ -35,7 +35,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task AppRun_FailsFast_WhenActorMissingOutputRoleChannel()
     {
-        await using var app = new global::App.@this("/tmp/s6d");
+        await using var app = new global::App.@this("/tmp/s6d", autoWireConsoleChannels: false);
         // Register error+input on User but NOT output.
         global::App.@this.WireDefaultConsoleChannels(app.System);
         app.User.Channels.Register(new StreamChannel("error", new MemoryStream(),
@@ -51,7 +51,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task AppRun_FailsFast_WhenActorMissingErrorRoleChannel()
     {
-        await using var app = new global::App.@this("/tmp/s6e");
+        await using var app = new global::App.@this("/tmp/s6e", autoWireConsoleChannels: false);
         global::App.@this.WireDefaultConsoleChannels(app.System);
         app.User.Channels.Register(new StreamChannel("output", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true) { Role = ChannelRole.Output });
@@ -66,7 +66,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task AppRun_FailsFast_WhenActorMissingInputRoleChannel()
     {
-        await using var app = new global::App.@this("/tmp/s6f");
+        await using var app = new global::App.@this("/tmp/s6f", autoWireConsoleChannels: false);
         global::App.@this.WireDefaultConsoleChannels(app.System);
         app.User.Channels.Register(new StreamChannel("output", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true) { Role = ChannelRole.Output });
@@ -111,7 +111,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task FreezeFoundational_DoesNotCaptureChannelsAddedAfterFreeze()
     {
-        await using var app = new global::App.@this("/tmp/s6i");
+        await using var app = new global::App.@this("/tmp/s6i", autoWireConsoleChannels: false);
         global::App.@this.WireDefaultConsoleChannels(app.User);
         app.User.FreezeFoundational();
 

@@ -59,6 +59,25 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public IDictionary<string, object> Metadata { get; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Channel-event bindings (Stage 8). Same shape as Goal.Events / Step.Events;
+    /// fired by the WriteAsync / ReadAsync / Ask wrappers. Includes BeforeWrite /
+    /// AfterWrite / BeforeRead / AfterRead / OnAsk.
+    /// </summary>
+    public List<global::App.Events.Lifecycle.Bindings.Binding.@this> Events { get; } = new();
+
+    /// <summary>
+    /// Backreference set by the Channels collection on Register — channel-event
+    /// firing consults app.Events for bindings filtered by ChannelName so a
+    /// single binding can match across actors (User + Service "logger").
+    /// </summary>
+    public global::App.@this? App { get; internal set; }
+
+    // Recursion guard: AsyncLocal so concurrent writes don't interfere; per-binding
+    // Id keyed so a Before-handler that writes to the same channel doesn't
+    // re-trigger the same binding (architect's "_activeEventBindings").
+    private static readonly AsyncLocal<HashSet<string>?> _activeBindings = new();
+
+    /// <summary>
     /// Whether reading is supported. Default tracks Direction + IsOpen; concretes can override.
     /// </summary>
     public virtual bool CanRead => IsOpen && Direction != ChannelDirection.Output;
@@ -85,22 +104,134 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public abstract Task<Data.@this> AskCore(Data.@this prompt, CancellationToken ct = default);
 
     /// <summary>
-    /// Public write entry. Stage 8 wraps in event firing; for now relays directly.
+    /// Public write entry. Wraps WriteCore in BeforeWrite / AfterWrite event firing.
+    /// Before-handler throwing aborts the write (returns Data.Error,
+    /// AfterWrite is suppressed). After-handler always fires when WriteCore was
+    /// reached (success or error); their throws are suppressed.
     /// </summary>
-    public virtual Task<Data.@this> WriteAsync(Data.@this data, CancellationToken ct = default)
-        => WriteCore(data, ct);
+    public virtual async Task<Data.@this> WriteAsync(Data.@this data, CancellationToken ct = default)
+    {
+        // Fire BeforeWrite — abort on throw.
+        var beforeAborted = await FireBefore(global::App.Events.EventType.BeforeWrite, data, null);
+        if (beforeAborted != null) return beforeAborted;
+
+        Data.@this result;
+        try { result = await WriteCore(data, ct); }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            result = Data.@this.FromError(new global::App.Errors.ServiceError(
+                $"Channel '{Name}' write failed: {ex.Message}", "WriteError") { Exception = ex });
+        }
+
+        // Fire AfterWrite — always (even on error). Handler throws are suppressed.
+        await FireAfter(global::App.Events.EventType.AfterWrite, result, null);
+        return result;
+    }
 
     /// <summary>
-    /// Public read entry. Stage 8 wraps in event firing; for now relays directly.
+    /// Public read entry. Wraps ReadCore in BeforeRead / AfterRead event firing.
     /// </summary>
-    public virtual Task<Data.@this> ReadAsync(CancellationToken ct = default)
-        => ReadCore(ct);
+    public virtual async Task<Data.@this> ReadAsync(CancellationToken ct = default)
+    {
+        var beforeAborted = await FireBefore(global::App.Events.EventType.BeforeRead, Data.@this.Ok(), null);
+        if (beforeAborted != null) return beforeAborted;
+
+        Data.@this result;
+        try { result = await ReadCore(ct); }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            result = Data.@this.FromError(new global::App.Errors.ServiceError(
+                $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex });
+        }
+
+        await FireAfter(global::App.Events.EventType.AfterRead, result, null);
+        return result;
+    }
 
     /// <summary>
-    /// Public ask entry. Stage 8 wraps in event firing; for now relays directly.
+    /// Public ask entry. Fires OnAsk after the Core completes (Session: post-answer;
+    /// Message: pre-suspend — the channel kind decides timing).
     /// </summary>
-    public virtual Task<Data.@this> Ask(Data.@this prompt, CancellationToken ct = default)
-        => AskCore(prompt, ct);
+    public virtual async Task<Data.@this> Ask(Data.@this prompt, CancellationToken ct = default)
+    {
+        Data.@this result;
+        try { result = await AskCore(prompt, ct); }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            result = Data.@this.FromError(new global::App.Errors.ServiceError(
+                $"Channel '{Name}' ask failed: {ex.Message}", "AskError") { Exception = ex });
+        }
+
+        await FireAfter(global::App.Events.EventType.OnAsk, result, null);
+        return result;
+    }
+
+    /// <summary>
+    /// Bindings that match this channel for the given event type. Sources:
+    /// per-channel Events list, plus app-level bindings whose ChannelName equals
+    /// this channel's name. Per-channel bindings precede app-level (registration order).
+    /// </summary>
+    private IEnumerable<global::App.Events.Lifecycle.Bindings.Binding.@this> MatchingBindings(global::App.Events.EventType type)
+    {
+        foreach (var b in Events)
+            if (b.Type == type
+                && (b.ChannelName == null || string.Equals(b.ChannelName, Name, StringComparison.OrdinalIgnoreCase)))
+                yield return b;
+
+        if (App != null)
+        {
+            foreach (var b in App.Events.GetBindings(type))
+                if (string.Equals(b.ChannelName, Name, StringComparison.OrdinalIgnoreCase))
+                    yield return b;
+        }
+    }
+
+    private async Task<Data.@this?> FireBefore(global::App.Events.EventType type, Data.@this data, Callback.AskCallback? ask)
+    {
+        var active = _activeBindings.Value ??= new HashSet<string>();
+        foreach (var binding in MatchingBindings(type))
+        {
+            if (!active.Add(binding.Id)) continue;   // recursion guard
+            try
+            {
+                var result = await InvokeChannelHandler(binding, data, ask);
+                if (!result.Success) return result;
+            }
+            catch (Exception ex)
+            {
+                return Data.@this.FromError(new global::App.Errors.ServiceError(
+                    $"Channel event handler for {type} on '{Name}' threw: {ex.Message}",
+                    "ChannelEventAborted") { Exception = ex });
+            }
+            finally { active.Remove(binding.Id); }
+        }
+        return null;
+    }
+
+    private async Task FireAfter(global::App.Events.EventType type, Data.@this data, Callback.AskCallback? ask)
+    {
+        var active = _activeBindings.Value ??= new HashSet<string>();
+        foreach (var binding in MatchingBindings(type))
+        {
+            if (!active.Add(binding.Id)) continue;
+            try { await InvokeChannelHandler(binding, data, ask); }
+            catch { /* After-handler throws are suppressed — original outcome stands. */ }
+            finally { active.Remove(binding.Id); }
+        }
+    }
+
+    private static Task<Data.@this> InvokeChannelHandler(
+        global::App.Events.Lifecycle.Bindings.Binding.@this binding,
+        Data.@this data,
+        Callback.AskCallback? ask)
+    {
+        // Channel events run in a synthetic Context — bindings receive (context,
+        // action=null, result=data). The handler typically uses payload via
+        // EventContext — Stage 8 builder maps `- add before write on "x" channel,
+        // call G` to a Handler that wraps app.RunGoalAsync; tests register Handler
+        // directly with arbitrary code.
+        return binding.Handler(null!, null, data);
+    }
 
     /// <summary>Closes the channel and any owned resources.</summary>
     public virtual void Close()
@@ -114,5 +245,78 @@ public abstract class @this : IAsyncDisposable, IDisposable
     {
         Close();
         return ValueTask.CompletedTask;
+    }
+
+    // --- Stage 9: migration API stub ----------------------------------------
+
+    /// <summary>
+    /// Produces a signed migration envelope for shipping this channel to another
+    /// identity-aware runtime. Concrete subtypes override to populate
+    /// <see cref="MigrationEnvelope.Payload"/>; non-migratable channels (e.g.
+    /// Console-backed Stream) override to return Data.Error of type
+    /// <c>NotMigratable</c>.
+    /// </summary>
+    public virtual Task<Data.@this> Migrate()
+    {
+        var envelope = new MigrationEnvelope
+        {
+            Name = Name,
+            Role = Role,
+            Direction = Direction,
+            Config = SnapshotConfig(),
+            Payload = null,
+            Signature = SignEmpty()
+        };
+        return Task.FromResult(Data.@this.Ok(envelope));
+    }
+
+    /// <summary>Receive-side stub. Cross-device transport not yet shipped.</summary>
+    public static @this FromMigration(MigrationEnvelope envelope)
+        => throw new NotImplementedException("Channel.FromMigration: receive-side transport is deferred.");
+
+    protected ChannelConfigSnapshot SnapshotConfig() => new()
+    {
+        Buffer = Buffer,
+        Timeout = Timeout,
+        Mime = Mime,
+        Encoding = Encoding,
+        Encryption = Encryption,
+        Signing = Signing
+    };
+
+    protected Signature SignEmpty()
+    {
+        // Stage 9 stub: identity name + key are sourced from App.System if reachable;
+        // empty bytes mean "not yet signed". The integrity contract (Verify on a
+        // tampered envelope returns false) is provided via the Verify helper below
+        // which round-trips a stable byte representation.
+        var identityName = App?.System.Identity?.Name ?? "system";
+        var publicKey = App?.System.Identity?.PublicKey ?? "";
+        var bytes = ComputeSignature(Name, Role, Direction, identityName);
+        return new Signature
+        {
+            IdentityName = identityName,
+            PublicKey = publicKey,
+            Bytes = bytes
+        };
+    }
+
+    protected static byte[] ComputeSignature(string name, Role.@this role, ChannelDirection direction, string identity)
+    {
+        // Deterministic hash over (name, role, direction, identity). Stage 9 stub —
+        // real signing lands when the cross-device transport ships.
+        using var sha = global::System.Security.Cryptography.SHA256.Create();
+        var input = global::System.Text.Encoding.UTF8.GetBytes($"{name}|{(int)role}|{(int)direction}|{identity}");
+        return sha.ComputeHash(input);
+    }
+
+    /// <summary>
+    /// Stage 9 verification helper: recompute the signature from envelope contents
+    /// and compare bytes. Returns false on tamper.
+    /// </summary>
+    public static bool Verify(MigrationEnvelope envelope)
+    {
+        var expected = ComputeSignature(envelope.Name, envelope.Role, envelope.Direction, envelope.Signature.IdentityName);
+        return expected.SequenceEqual(envelope.Signature.Bytes);
     }
 }

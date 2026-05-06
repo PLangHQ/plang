@@ -185,4 +185,31 @@ public sealed class @this : Session.@this
         IsOpen = false;
         if (_ownsStream) await Stream.DisposeAsync();
     }
+
+    /// <summary>
+    /// Console-backed streams cannot migrate (process resource); MemoryStream
+    /// captures contents into the envelope payload.
+    /// </summary>
+    public override Task<Data.@this> Migrate()
+    {
+        if (Stream is global::System.IO.MemoryStream ms)
+        {
+            var envelope = new global::App.Channels.Channel.MigrationEnvelope
+            {
+                Name = Name,
+                Role = Role,
+                Direction = Direction,
+                Config = SnapshotConfig(),
+                Payload = ms.ToArray(),
+                Signature = SignEmpty()
+            };
+            return Task.FromResult(Data.@this.Ok(envelope));
+        }
+
+        // Non-memory streams (Console.OpenStandard*, network sockets, etc.) are
+        // process-bound resources — not migratable.
+        return Task.FromResult(Data.@this.FromError(
+            new global::App.Errors.ServiceError(
+                $"Channel '{Name}' is backed by a non-migratable stream", "NotMigratable", 400)));
+    }
 }

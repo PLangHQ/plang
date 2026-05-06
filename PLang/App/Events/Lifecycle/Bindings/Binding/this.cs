@@ -17,6 +17,12 @@ public sealed class @this
     public string? StepPattern { get; }
     public string? ActionPattern { get; }
     /// <summary>
+    /// Channel-name filter for channel lifecycle bindings (BeforeWrite/AfterWrite/
+    /// BeforeRead/AfterRead/OnAsk). Matches across User and Service channels of
+    /// the same name.
+    /// </summary>
+    public string? ChannelName { get; }
+    /// <summary>
     /// Handler receives (context, action, result). action and result are populated for
     /// payload-carrying events (AfterAction); null for all other event types. Subscribers
     /// that don't use the payload should take the arguments as (_, _, _) — architect §4.4.
@@ -77,7 +83,8 @@ public sealed class @this
         int priority = 0,
         bool stopOnError = true,
         bool isRegex = false,
-        Goals.Goal.GoalCall? goalToCall = null)
+        Goals.Goal.GoalCall? goalToCall = null,
+        string? channelName = null)
     {
         Id = Guid.NewGuid().ToString("N")[..8];
         Type = type;
@@ -89,6 +96,7 @@ public sealed class @this
         StopOnError = stopOnError;
         IsRegex = isRegex;
         GoalToCall = goalToCall;
+        ChannelName = channelName;
     }
 
     /// <summary>

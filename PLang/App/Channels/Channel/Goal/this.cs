@@ -14,7 +14,7 @@ namespace App.Channels.Channel.Goal;
 /// the overlay that fired this goal — preventing infinite recursion and giving
 /// fan-out via composition for free.
 /// </summary>
-public sealed class @this : Session.@this
+public class @this : Session.@this
 {
     /// <summary>The goal this channel dispatches writes to.</summary>
     public global::App.Goals.Goal.@this Goal { get; }
@@ -83,4 +83,35 @@ public sealed class @this : Session.@this
         Close();
         return ValueTask.CompletedTask;
     }
+
+    /// <summary>
+    /// Goal channels migrate by carrying the goal name (resolveable on the
+    /// receiver) and a Variables snapshot. Stage 9 stub — full transport ships
+    /// when the receive-side runtime lands.
+    /// </summary>
+    public override Task<Data.@this> Migrate()
+    {
+        var payload = new GoalMigrationPayload
+        {
+            GoalName = Goal.Name ?? "",
+            Variables = RegisteringActor.Context.Variables.Snapshot()
+        };
+        var envelope = new global::App.Channels.Channel.MigrationEnvelope
+        {
+            Name = Name,
+            Role = Role,
+            Direction = Direction,
+            Config = SnapshotConfig(),
+            Payload = payload,
+            Signature = SignEmpty()
+        };
+        return Task.FromResult(Data.@this.Ok(envelope));
+    }
+}
+
+/// <summary>Goal-channel migration payload — goal name + Variables snapshot.</summary>
+public sealed class GoalMigrationPayload
+{
+    public required string GoalName { get; init; }
+    public required object Variables { get; init; }
 }

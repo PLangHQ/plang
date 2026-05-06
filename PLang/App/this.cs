@@ -292,7 +292,8 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 
     public @this(string absolutePath, AppModules? modules = null,
         App.FileSystem.IPLangFileSystem? fileSystem = null,
-        string? environment = null)
+        string? environment = null,
+        bool autoWireConsoleChannels = true)
         : base("!app")
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -321,6 +322,16 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
+
+        // Auto-wire console channels for ad-hoc App constructions (sub-process
+        // test fixtures, embedded scenarios, C# tests). Entry points that own
+        // the wiring (PlangConsole's Executor) construct with autoWireConsoleChannels:false
+        // and call WireDefaultConsoleChannels themselves.
+        if (autoWireConsoleChannels)
+        {
+            WireDefaultConsoleChannels(System);
+            WireDefaultConsoleChannels(User);
+        }
     }
 
     /// <summary>
