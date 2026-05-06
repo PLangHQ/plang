@@ -77,7 +77,25 @@ public sealed class @this : IAsyncDisposable
     /// - known name → that channel.
     /// - unknown name → null (caller surfaces a typed ChannelNotFound).
     /// </summary>
-    public Channel.@this? Resolve(string? name)
+    public Channel.@this Resolve(string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            var output = GetByRole(Channel.Role.@this.Output)
+                ?? Get(Output)
+                ?? Get("default");
+            if (output == null) throw new ChannelNotFoundException(Output);
+            return output;
+        }
+        var named = Get(name);
+        if (named == null) throw new ChannelNotFoundException(name);
+        return named;
+    }
+
+    /// <summary>
+    /// Non-throwing variant of <see cref="Resolve"/>.
+    /// </summary>
+    public Channel.@this? TryResolve(string? name)
     {
         if (string.IsNullOrEmpty(name))
             return GetByRole(Channel.Role.@this.Output)
@@ -255,26 +273,6 @@ public sealed class @this : IAsyncDisposable
         var channel = Channel.Stream.@this.Memory(name, direction);
         Register(channel);
         return channel;
-    }
-
-    /// <summary>
-    /// Stage 4 entry point: write via an action's resolved Channel slot.
-    /// Until source-gen emits the Channel slot directly, Write.Run routes here.
-    /// </summary>
-    public async Task<Data.@this> WriteAsync(modules.output.Write action)
-    {
-        var channelName = action.Data?.Properties?.Get<string>("channel");
-        var channel = Resolve(channelName);
-        if (channel == null)
-            return App.Data.@this.FromError(new ServiceError(
-                $"Channel '{channelName ?? "<output>"}' not found", "ChannelNotFound", 404));
-
-        var content = action.Data?.Value;
-        if (content is string str && str.Contains('%'))
-            content = action.Context.Variables.Resolve(str, skipInfrastructure: true);
-
-        var envelope = content is Data.@this d ? d : Data.@this.Ok(content);
-        return await channel.WriteAsync(envelope);
     }
 
     public async ValueTask DisposeAsync()

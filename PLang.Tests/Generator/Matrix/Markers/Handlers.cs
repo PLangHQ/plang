@@ -11,7 +11,7 @@ public partial class IContextHandler : global::App.modules.IContext
 public partial class IChannelHandler : global::App.modules.IContext, global::App.modules.IChannel
 {
     public Task<global::App.Data.@this> Run() =>
-        Task.FromResult(global::App.Data.@this.Ok(Channels != null));
+        Task.FromResult(global::App.Data.@this.Ok(Channel != null));
 }
 
 [global::App.modules.Action("iactionhandler")]

@@ -3,15 +3,25 @@ using App.Variables;
 namespace App.modules.output;
 
 /// <summary>
-/// Writes data to the actor's output channel.
-/// Channel selection is handled by the IChannel interface — default is the actor's primary channel.
+/// Writes data to a channel. Channel selection is handled by the IChannel interface —
+/// source-gen resolves the action's "channel" parameter against the current actor's
+/// Channels at ExecuteAsync time. No name → Output role channel.
 /// </summary>
-[ModuleDescription("Send text or data to an output channel (console, trace, UI, etc.)")]
-[System.ComponentModel.Description("Write Data to the actor's current output channel (default: console or configured channel)")]
+[ModuleDescription("Send text or data to a channel (console, logger, audit, etc.)")]
+[System.ComponentModel.Description("Write Data to a named channel — defaults to the actor's output channel.")]
 [Action("write", Cacheable = false)]
 public partial class Write : IContext, IChannel
 {
     public partial Data.@this Data { get; init; }
 
-    public async Task<Data.@this> Run() => await Channels.WriteAsync(this);
+    public async Task<Data.@this> Run()
+    {
+        var envelope = Data ?? App.Data.@this.Ok();
+        if (envelope.Value is string str && str.Contains('%'))
+        {
+            var resolved = Context.Variables.Resolve(str, skipInfrastructure: true);
+            envelope = App.Data.@this.Ok(resolved);
+        }
+        return await Channel.WriteAsync(envelope);
+    }
 }

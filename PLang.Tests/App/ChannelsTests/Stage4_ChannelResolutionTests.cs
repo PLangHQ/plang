@@ -1,3 +1,5 @@
+using App.Channels;
+
 namespace PLang.Tests.App.ChannelsTests;
 
 // Stage 4 — Channel slot resolution + IChannel marker + Write.Run.
@@ -8,76 +10,130 @@ public class Stage4_ChannelResolutionTests
     [Test]
     public async Task SourceGen_EmitsChannelResolutionCode_ForIChannelActions()
     {
-        // The PLang.Generators emits a property-resolution snippet for any
-        // action implementing IChannel, dispatching:
-        //   Channel = (context.Actor ?? app.User).Channels.Resolve(action.Json["channel"])
-        // Verify by inspecting generated source for the Write action.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // The Write action implements IChannel — the generator emits a
+        // `Channel { get; set; }` slot. Verify via reflection.
+        var writeType = typeof(global::App.modules.output.Write);
+        var prop = writeType.GetProperty("Channel");
+        await Assert.That(prop).IsNotNull();
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::App.Channels.Channel.@this));
     }
 
     [Test]
     public async Task ChannelsResolve_NullName_ReturnsOutputRoleChannel()
     {
-        // Resolve(null) → channel registered under literal name "output".
-        // Decision: Resolve("") behaves identically to Resolve(null).
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this("/tmp/s4a");
+        var ch = app.User.Channels.Resolve(null);
+        await Assert.That(ch).IsNotNull();
+        await Assert.That(ch.Role).IsEqualTo(ChannelRole.Output);
     }
 
     [Test]
     public async Task ChannelsResolve_NamedChannel_ReturnsThatChannel()
     {
-        // Resolve("logger") → the channel registered under "logger".
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this("/tmp/s4b");
+        var logger = StreamChannel.Memory("logger");
+        app.User.Channels.Register(logger);
+        var ch = app.User.Channels.Resolve("logger");
+        await Assert.That(ch).IsEqualTo((Channel)logger);
     }
 
     [Test]
     public async Task ChannelsResolve_UnknownName_ThrowsChannelNotFound()
     {
-        // Resolve("dbg") when "dbg" never registered → typed ChannelNotFound error.
-        // Failure matrix: ChannelNotFound at C# / goal layers.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this("/tmp/s4c");
+        await Assert.That(() => app.User.Channels.Resolve("dbg"))
+            .Throws<ChannelNotFoundException>();
     }
 
     [Test]
     public async Task WriteRun_NoChannelSlot_WritesToDefaultOutput()
     {
-        // Action JSON has no `channel` field → Resolve(null) → Output role channel.
-        // Verify bytes land on the actor's output.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this("/tmp/s4d");
+        var captured = new MemoryStream();
+        app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
+        { Role = ChannelRole.Output, Mime = "text/plain" });
+
+        var write = new global::App.modules.output.Write
+        {
+            Context = app.User.Context,
+            Data = Data.Ok("hello-default"),
+            Channel = app.User.Channels.Resolve(null)
+        };
+        // Direct Run skips ExecuteAsync's reset of init backing fields.
+        await write.Run();
+
+        var bytes = global::System.Text.Encoding.UTF8.GetString(captured.ToArray());
+        await Assert.That(bytes.Contains("hello-default")).IsTrue();
     }
 
     [Test]
     public async Task WriteRun_WithChannelSlot_WritesToThatChannel()
     {
-        // Action JSON has `"channel":"logger"` → bytes land on the logger channel,
-        // not on output.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var app = new global::App.@this("/tmp/s4e");
+        var loggerCapture = new MemoryStream();
+        app.User.Channels.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
+        { Mime = "text/plain" });
+
+        var write = new global::App.modules.output.Write
+        {
+            Context = app.User.Context,
+            Data = Data.Ok("targetted"),
+            Channel = app.User.Channels.Resolve("logger")
+        };
+        await write.Run();
+
+        var bytes = global::System.Text.Encoding.UTF8.GetString(loggerCapture.ToArray());
+        await Assert.That(bytes.Contains("targetted")).IsTrue();
     }
 
     [Test]
     public async Task Write_PassesFullDataEnvelope_NotJustValue()
     {
-        // Write.Run hands Channel.WriteAsync the full Data.@this (Value + Properties
-        // + Signature + Mime). Plan rule 7: "relay don't repackage."
-        // Verify by intercepting WriteAsync and checking the received Data carries
-        // properties from the action's input Data.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        // Plan rule 7: relay don't repackage. Channel.WriteAsync receives full Data.
+        var app = new global::App.@this("/tmp/s4f");
+        var probe = new EnvelopeProbeChannel();
+        app.User.Channels.Register(probe);
+
+        var data = Data.Ok("payload");
+        data.Properties.Set("custom-prop", "x");
+
+        var write = new global::App.modules.output.Write
+        {
+            Context = app.User.Context,
+            Data = data,
+            Channel = probe
+        };
+        await write.Run();
+
+        await Assert.That(probe.Received).IsNotNull();
+        await Assert.That(ReferenceEquals(probe.Received, data)).IsTrue();
     }
 
     [Test]
     public async Task ChannelsThis_WriteAsyncWriteOverload_IsRemoved()
     {
-        // The old `Channels.@this.WriteAsync(Write action)` overload is gone —
-        // Channels stops importing from App.modules.output. Compile-time check
-        // via reflection: no method with that signature exists on Channels.@this.
-        await Task.CompletedTask;
-        Assert.Fail("Not implemented");
+        var channelsType = typeof(EngineChannels);
+        var writeOverload = channelsType.GetMethods()
+            .FirstOrDefault(m => m.Name == "WriteAsync"
+                && m.GetParameters().Length == 1
+                && m.GetParameters()[0].ParameterType == typeof(global::App.modules.output.Write));
+        await Assert.That(writeOverload).IsNull();
+    }
+
+    private sealed class EnvelopeProbeChannel : Channel
+    {
+        public Data? Received { get; private set; }
+        public EnvelopeProbeChannel()
+        {
+            Name = "probe";
+            Direction = ChannelDirection.Output;
+        }
+        public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
+        {
+            Received = data;
+            return Task.FromResult(Data.Ok());
+        }
+        public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> AskCore(Data prompt, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 }
