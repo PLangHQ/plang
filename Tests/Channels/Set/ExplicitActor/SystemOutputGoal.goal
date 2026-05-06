@@ -1,0 +1,2 @@
+SystemOutputGoal
+- set %systemOutputCalled% = true

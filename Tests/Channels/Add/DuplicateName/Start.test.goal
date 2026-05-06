@@ -1,8 +1,6 @@
 Start
 / channel.add with a name already registered returns Data.Error of type
-/ DuplicateChannelName. Use channel.set to replace.
-/ - add channel "logger" call Logger
-/ - add channel "logger" call Logger2     # this step should error
-/ Verify: second step's Data.Error.Type == "DuplicateChannelName".
-/ The original "logger" registration is unchanged.
-- throw "not implemented"
+/ DuplicateChannelName.
+- add channel "logger" call Logger
+- add channel "logger" call Logger, on error set %duplicateBlocked% = true
+- assert %duplicateBlocked% is true

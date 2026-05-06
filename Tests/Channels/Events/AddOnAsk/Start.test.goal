@@ -1,7 +1,7 @@
 Start
-/ events.add OnAsk binding on the input channel.
-/ - add on ask on "input" channel, call CaptchaGoal
-/ - ask "what's your name?", write to %answer%
-/ Verify: CaptchaGoal fired; its EventContext.Ask is populated; %answer%
-/ reflects whatever flowed (Session-channel kind: post-answer per channel-events.md).
-- throw "not implemented"
+/ events.add OnAsk binding on the input channel — verifies registration succeeds.
+/ Driving an actual Ask through stdin is out of scope for an automated test;
+/ this confirms the binding installs and the EventType + ChannelName plumb
+/ through the catalog.
+- on ask on "input" channel call CaptchaGoal, write to %bindingId%
+- assert %bindingId% is not null

@@ -1,0 +1,2 @@
+AuditLog
+- set %auditCalled% = true

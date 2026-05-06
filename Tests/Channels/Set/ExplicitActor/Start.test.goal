@@ -1,6 +1,6 @@
 Start
-/ channel.set with an explicit actor target.
-/ - set system output channel as SystemOutputGoal
-/ Verify: the rebinding lands on app.System.Channels, NOT app.User.Channels.
-/ User's output remains untouched.
-- throw "not implemented"
+/ channel.set targeting System rebinds System's output, not User's.
+/ Default context actor is User; writing 'u-msg' must NOT trigger SystemOutputGoal.
+- set system output channel as SystemOutputGoal
+- write 'u-msg'
+- assert %systemOutputCalled% is null

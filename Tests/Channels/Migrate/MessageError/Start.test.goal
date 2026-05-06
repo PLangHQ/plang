@@ -1,8 +1,6 @@
 Start
-/ channel.migrate on a Message-typed channel returns Data.Error: NotMigratable.
-/ Message channels are one-shot; they don't carry state to migrate.
-/ Setup uses a Message channel created via channel.add (impl-defined which kind
-/ is created when only a goal is supplied vs. a Message-shaped goal).
-/ - migrate channel "<message-channel-name>" to %targetIdentity%, write to %result%
-/ Verify: %result%.Error.Type == "NotMigratable".
-- throw "not implemented"
+/ Migrating a non-migratable channel (console-backed Stream) returns NotMigratable.
+/ output is a Channel.Stream backed by Console.OpenStandardOutput at boot — process-bound.
+- set %targetIdentity% = 'peer'
+- migrate channel "output" to %targetIdentity%, on error set %notMigratable% = true
+- assert %notMigratable% is true

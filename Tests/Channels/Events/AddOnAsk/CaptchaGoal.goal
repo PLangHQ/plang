@@ -1,0 +1,2 @@
+CaptchaGoal
+- set %captchaCalled% = true

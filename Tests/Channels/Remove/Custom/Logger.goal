@@ -1,0 +1,2 @@
+Logger
+- set %loggerCalled% = true

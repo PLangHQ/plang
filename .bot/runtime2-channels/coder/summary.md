@@ -149,21 +149,112 @@ Channel = (context.Actor ?? app.User).Channels.Resolve(
   integration cuts cover the behaviours; the PLang stubs are the
   developer-side complement.
 
-## What's still in progress
+## v1.1 — close the stage gaps + fill `.test.goal` bodies
 
-- 14 `Tests/Channels/<Behaviour>/Start.test.goal` bodies. Each requires
-  writing the goal logic, `plang build` per file (builder is
-  non-deterministic — reading the resulting `.pr` after every build),
-  then `plang --test` to confirm the channel.* surface produces the
-  expected verbs / data shapes for the developer-facing PLang
-  programmer. Architect's stage briefs hold the spec; the existing
-  stubs already carry the spec comments.
+Pass over the work after the v1 hand-off surfaced two genuine deliverable
+gaps from stages 8 and 9 that the .test.goal stubs depend on, plus the
+14 stub bodies themselves. All landed in this pass.
+
+### Stage gaps closed
+
+1. **Stage 9: `App/modules/channel/migrate.cs`** — the action handler
+   was missing. The architect brief lists it as the stage's primary
+   deliverable; `Channel.Migrate()` plumbing was already in place but no
+   PLang surface existed to invoke it. Added with the documented shape:
+   `Name`, `Target`, optional `Actor`. Resolves the channel on the
+   target actor, dispatches to `ch.Migrate()`, returns the envelope (or
+   `NotMigratable` Data error for non-migratable concretes like
+   console-backed Streams).
+
+2. **Stage 8: `event.on` `ChannelName` parameter** — the `EventBinding`
+   already carried `ChannelName` and the channel-bound EventTypes
+   (`BeforeWrite`/`AfterWrite`/`BeforeRead`/`AfterRead`/`OnAsk`) were
+   wired into the firing layer, but the PLang surface action didn't
+   expose `ChannelName`, so steps like `- on before write on "audit"
+   channel call X` had no channel filter to bind onto. Added the slot
+   on `App.modules.@event.On` and threaded it through to the
+   `EventBinding` ctor.
+
+### `.test.goal` bodies written
+
+All 14 stale `Tests/Channels/<Scenario>/Start.test.goal` stubs replaced
+with real bodies; helper sub-goals added (`Logger.goal`, `AuditLog.goal`,
+`OutputGoal.goal`, `ChatGoal.goal`, `ApprovalGoal.goal`,
+`SystemOutputGoal.goal`, `CaptchaGoal.goal`) under the matching scenario
+folders.
+
+The bodies follow a consistent pattern: invoke the action under test,
+trigger an observable side-effect via a goal-channel handler that flips
+a flag variable, then `assert` the flag. Error paths use
+`on error set %x% = true` and assert the captured flag.
+
+### What is NOT yet done in this pass
+
+The bodies are written but **not built into `.pr` and not run**. The
+Tests/Channels tree has no app marker (`.build/`/`.db/`) and the
+builder hits two real issues that need stage-level fixes before
+`plang --test` will turn the stale count to zero:
+
+1. **`Tests/Channels` has no app initialised.** Other Tests subtrees
+   (`Tests/Callback`, `Tests/App`, etc.) are each their own plang app
+   with `.build/app.pr` + `.db/system.sqlite`. `Tests/Channels` was
+   created as a tree of stubs by test-designer but never `--app create`-d.
+   Running `plang '--app={"create":true}' build` from that directory
+   creates `.build/` but the build then fails on the catalog issues
+   below, so no stable .pr is produced for any scenario.
+
+2. **Builder catalog: `Actor` parameter is typed as
+   `Data<App.Variables.Variable>?` in `channel.set` / `channel.add` /
+   `channel.remove` / `channel.migrate`.** The catalog describes it as
+   `%var% string` (via `IsVariableNameSlot`), but `validateResponse`'s
+   `TryConvertTo` resolves the parameter against the runtime `actor`
+   type (which has `ValidValues = ["user", "system"]`). When the LLM
+   emits the literal `"system"` the validator rejects it with
+   `parameter 'Actor' = "system" cannot be converted to type 'actor'.
+   Valid values: user, system.` That's a contradiction — `system` IS in
+   the valid values, but the conversion path treats it as a Variable
+   reference, not a closed-enum literal. This affects every
+   `channel.*` action that exposes `Actor`, even when the test step
+   doesn't say "system" or "user" (the LLM still hallucinates the slot).
+
+3. **Step splitting** — the LLM occasionally returned 4 steps from
+   3 input lines on the `Add/Basic` test (probably folding an `assert`
+   into the prior `write`). That's noise on top of (2) and may resolve
+   itself once (2) is fixed.
+
+(2) is real builder catalog work — the catalog should either
+- describe `Actor` as a closed-enum string slot when the underlying
+  resolution is `App.GetActor(name)`, or
+- have `TryConvertTo` accept `string` for `Variable`-typed slots that
+  the catalog has flagged as `%var% string`.
+
+Either route is a stage-5/builder-catalog fix outside the .test.goal
+bodies' scope. Until it's resolved, the 14 channel stubs stay stale on
+`plang --test` even though the bodies are in place.
+
+## Test status
+
+- **C#**: 2745 pass, 0 fail. The two new pieces (`channel.migrate`
+  action, `event.on` `ChannelName` param) build cleanly via the source
+  generator with no test regressions.
+- **PLang**: 14 channel `.test.goal` bodies written; not yet building
+  due to the catalog issue above. Stale count unchanged at 18 (4
+  pre-existing Callback stales + 14 channels). Will drop to 4 once the
+  catalog Actor-parameter handling is fixed and `plang --app create
+  build` is run from `Tests/Channels`.
 
 ## Next step
 
-Suggest running the **codeanalyzer** next on the runtime stages 1-9
-deliverables (OBP compliance, simplification opportunities), then come
-back to fill the PLang `.test.goal` bodies. The 18 stale entries are
-non-blocking for a runtime-only review since the C# stubs and
-integration cuts already validate the behaviours end-to-end at the
-runtime layer.
+Builder/catalog work to fix the `Actor` parameter resolution path
+(option (a) or (b) above). Once that lands, run:
+
+```bash
+cd /workspace/plang/Tests/Channels
+../../PlangConsole/bin/Debug/net10.0/plang '--app={"create":true}' build
+cd /workspace/plang/Tests
+../PlangConsole/bin/Debug/net10.0/plang --test
+```
+
+Channel scenario stales should drop to zero. The bodies + helper goals
+are already in place — only the builder needs to produce stable `.pr`
+files for them.

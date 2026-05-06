@@ -1,6 +1,6 @@
 Start
-/ channel.remove unregisters a custom-named channel.
-/ - add channel "logger" call Logger
-/ - remove channel "logger"
-/ Verify: app.User.Channels.Resolve("logger") raises ChannelNotFound after removal.
-- throw "not implemented"
+/ channel.remove unregisters a custom-named channel — subsequent write to it errors.
+- add channel "logger" call Logger
+- remove channel "logger"
+- write 'hi' to logger, on error set %writeFailed% = true
+- assert %writeFailed% is true

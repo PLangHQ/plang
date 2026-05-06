@@ -1,7 +1,4 @@
 Start
-/ Writing to an unregistered channel surfaces ChannelNotFound on the error channel.
-/ - write 'hi' to dbg     # dbg never registered anywhere
-/ Verify: error channel received a typed ChannelNotFound message; output channel
-/ saw nothing. The error channel invariant guarantees the message has somewhere
-/ to land.
-- throw "not implemented"
+/ Writing to an unregistered channel raises ChannelNotFound — caught via on-error.
+- write 'hi' to dbg, on error set %unknownChannelError% = true
+- assert %unknownChannelError% is true

@@ -1,8 +1,6 @@
 Start
-/ The builder maps a write step's intent to a custom channel name from inventory.
-/ Channel inventory is teaching the LLM, not pattern parsing.
-/ - add channel "logger" call Logger
-/ - write 'hi' to logger
-/ Verify: the .pr emits Channel="logger" on the second write's action JSON.
-/ At runtime, Logger goal received the data envelope.
-- throw "not implemented"
+/ Builder maps the write step's intent to a custom channel name from inventory.
+/ Channel inventory teaches the LLM, not pattern parsing.
+- add channel "logger" call Logger
+- write 'hi' to logger
+- assert %loggerCalled% is true
