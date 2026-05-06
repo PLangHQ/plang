@@ -1,0 +1,7 @@
+Start
+/ events.add OnAsk binding on the input channel.
+/ - add on ask on "input" channel, call CaptchaGoal
+/ - ask "what's your name?", write to %answer%
+/ Verify: CaptchaGoal fired; its EventContext.Ask is populated; %answer%
+/ reflects whatever flowed (Session-channel kind: post-answer per channel-events.md).
+- throw "not implemented"

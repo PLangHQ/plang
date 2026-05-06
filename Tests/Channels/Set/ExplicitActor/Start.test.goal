@@ -1,0 +1,6 @@
+Start
+/ channel.set with an explicit actor target.
+/ - set system output channel as SystemOutputGoal
+/ Verify: the rebinding lands on app.System.Channels, NOT app.User.Channels.
+/ User's output remains untouched.
+- throw "not implemented"

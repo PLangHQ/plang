@@ -1,0 +1,6 @@
+Start
+/ channel.set without an explicit actor uses Context.Actor.
+/ - set output channel as OutputGoal
+/ Verify: when this step runs in a User context, User's output is rebound;
+/ when invoked from a System-context goal, System's output is rebound.
+- throw "not implemented"

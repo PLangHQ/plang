@@ -5,15 +5,17 @@
       "id": "305064fb-f9a5-455a-b516-985b1ec0f0d1",
       "bot": "architect",
       "timestamp_start": "2026-05-06T08:00:00Z",
-      "intent": "First plan for channels — App ctor takes per-actor streams, Channel slot on Write, builder learns `to <name>`, goal-as-channel.",
+      "intent": "First plan for channels \u2014 App ctor takes per-actor streams, Channel slot on Write, builder learns `to <name>`, goal-as-channel.",
       "before": {
-        "assumptions": "Channels infra already exists (Channels/this.cs, Channel/this.cs, Serializers, IChannel marker) but is hardcoded to console streams in the AppChannels ctor. App.Channels is allocated alongside per-actor Channels — only Serializers is actually used from the App-level instance. Write extracts channel name from action.Data.Properties — choreography in the wrong place. ask is out of scope (uses callback machinery). Goal-as-channel is simple — register a channel that dispatches via app.Run.",
-        "risk": "Naming new types is the OBP trap — keep changes within existing folder/@this concepts, parameterize ctors, don't bag-name."
+        "assumptions": "Channels infra already exists (Channels/this.cs, Channel/this.cs, Serializers, IChannel marker) but is hardcoded to console streams in the AppChannels ctor. App.Channels is allocated alongside per-actor Channels \u2014 only Serializers is actually used from the App-level instance. Write extracts channel name from action.Data.Properties \u2014 choreography in the wrong place. ask is out of scope (uses callback machinery). Goal-as-channel is simple \u2014 register a channel that dispatches via app.Run.",
+        "risk": "Naming new types is the OBP trap \u2014 keep changes within existing folder/@this concepts, parameterize ctors, don't bag-name."
       },
       "plan": ".bot/runtime2-channels/architect/v1/plan.md",
       "actions": [
         {
-          "paths": [".bot/runtime2-channels/architect/v1/plan.md"],
+          "paths": [
+            ".bot/runtime2-channels/architect/v1/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -49,21 +51,27 @@
           "context": "Nine stage briefs at architect bot root. Each: goal, scope, deliverables, dependencies, design notes."
         },
         {
-          "paths": ["Documentation/Runtime2/cool.md"],
+          "paths": [
+            "Documentation/Runtime2/cool.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Forward-looking PLang-only capabilities: channel migration, smart-contract channels, counterfactual replay, sudo-for-I/O, causal lineage (Data.Causes DAG)."
         },
         {
-          "paths": ["Documentation/Runtime2/todos.md"],
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
           "context": "Added: mobile signed code via channels (`actions.run`); ExpiresInMs migration to ISO 8601 duration."
         },
         {
-          "paths": [".bot/runtime2-channels/architect/summary.md"],
+          "paths": [
+            ".bot/runtime2-channels/architect/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -76,6 +84,78 @@
         "health": "ok",
         "notes": "All review comments resolved. Open threads (A-E) all resolved. Two-layer plan structure followed (spine + plan/ topic files). Forward-looking ideas captured in cool.md and todos.md. EscalationLevel flagged as dead code, removed in Stage 7 with note to re-introduce inverted when sandbox feature actually needs it."
       }
+    },
+    {
+      "id": "9d620547-2368-44a2-8149-fae0fbaa1527",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-06T17:07:03Z",
+      "intent": "Translate channels architect design into C# TUnit + PLang test stubs covering 9 stages + 3 integration cuts.",
+      "before": {
+        "assumptions": "Architect has approved test-strategy.md and test-coverage.md. ~80 covered behaviours across stages. Existing C# test of Channel (PLang.Tests/App/IO/ChannelTests.cs) refers to current monolithic Channel \u2014 will be largely superseded by Channel.Stream tests but old file should not be deleted by me; coder will refactor. PLang test format follows callback patterns (Tests/Callback/...).",
+        "risk": "Many new types not yet existing means C# test files will reference types-to-be-built. Must use Assert.Fail(\"Not implemented\") bodies and tolerate type-not-found compile errors until coder catches up \u2014 keep test file well-organized so coder can iterate."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-channels/test-designer/v1/test-plan.md",
+            ".bot/runtime2-channels/test-designer/v1/verdict.json",
+            ".bot/runtime2-channels/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Test plan with batch breakdown, behavioural decisions made on behalf of the language, and summary."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/ChannelsTests/Stage1_ChannelBaseTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage1_TimeSpanJsonConverterTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage2_StreamChannelTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage3_GoalChannelTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage4_ChannelResolutionTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage4_BuilderCatalogTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage5_ChannelActionsBuilderCatalogTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage6_EntryPointWiringTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage7_AppServicesTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage9_ChannelMigrateTests.cs",
+            "PLang.Tests/App/ChannelsTests/Integration/IntegrationCutsTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "~92 C# TUnit stubs across stages 1-9 plus three integration cuts. Bodies are Assert.Fail; spec lives in test name + comment. Project builds clean."
+        },
+        {
+          "paths": [
+            "Tests/Channels/Set/ReplaceOutputWithGoal/Start.test.goal",
+            "Tests/Channels/Set/ExplicitActor/Start.test.goal",
+            "Tests/Channels/Set/ContextActor/Start.test.goal",
+            "Tests/Channels/Add/Basic/Start.test.goal",
+            "Tests/Channels/Add/WithConfig/Start.test.goal",
+            "Tests/Channels/Add/DuplicateName/Start.test.goal",
+            "Tests/Channels/Remove/Custom/Start.test.goal",
+            "Tests/Channels/Remove/RoleChannelRefused/Start.test.goal",
+            "Tests/Channels/WriteToCustomChannel/Start.test.goal",
+            "Tests/Channels/WriteToUnknownChannel/Start.test.goal",
+            "Tests/Channels/Events/AddBeforeWrite/Start.test.goal",
+            "Tests/Channels/Events/AddOnAsk/Start.test.goal",
+            "Tests/Channels/Migrate/SessionOk/Start.test.goal",
+            "Tests/Channels/Migrate/MessageError/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "14 PLang .goal stubs covering channel.* surface, intent-not-pattern build, channel events, and migrate."
+        }
+      ],
+      "after": {
+        "status": "v1 stubs complete: ~92 C# TUnit + 14 PLang .goal across all 9 stages plus 3 integration cuts. PLang.Tests builds clean.",
+        "health": "ok",
+        "notes": "10 behavioural decisions documented in v1/test-plan.md for coder to adopt or correct. One known internal disagreement between Stage 8 BeforeWrite-abort test and Cut 3 (AfterWrite count after abort) flagged inline."
+      },
+      "plan": ".bot/runtime2-channels/test-designer/v1/test-plan.md",
+      "timestamp_end": "2026-05-06T17:17:40Z"
     }
   ]
 }

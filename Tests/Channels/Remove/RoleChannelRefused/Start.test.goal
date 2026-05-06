@@ -1,0 +1,6 @@
+Start
+/ channel.remove on a standard role-channel (output / error / input) is refused.
+/ - remove channel "output"
+/ Verify: Data.Error.Type == "ChannelInvariantViolation". Output channel is still
+/ registered after the failed removal.
+- throw "not implemented"

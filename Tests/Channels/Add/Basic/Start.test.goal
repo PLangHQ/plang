@@ -1,0 +1,6 @@
+Start
+/ channel.add registers a new named Goal channel.
+/ - add channel "logger" call Logger
+/ Verify: app.User.Channels.Resolve("logger") returns a Channel.Goal
+/ wrapping the Logger goal.
+- throw "not implemented"

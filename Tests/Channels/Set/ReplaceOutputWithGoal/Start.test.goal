@@ -1,0 +1,6 @@
+Start
+/ channel.set replaces the role channel with a Goal-backed channel.
+/ - set output channel as OutputGoal
+/ Verify: subsequent writes to output flow through OutputGoal,
+/ which writes to a buffer captured by the test fixture.
+- throw "not implemented"

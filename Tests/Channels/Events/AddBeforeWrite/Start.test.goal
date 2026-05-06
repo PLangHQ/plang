@@ -1,0 +1,8 @@
+Start
+/ events.add for channel-targeted bindings: BeforeWrite on a named channel.
+/ - add channel "audit" call AuditLog
+/ - add before write on "audit" channel, call ApprovalGoal
+/ - write 'payload' to audit
+/ Verify: ApprovalGoal received an EventContext with Channel.Name=="audit" and
+/ Data.Value=="payload" before AuditLog was invoked.
+- throw "not implemented"
