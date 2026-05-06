@@ -117,6 +117,19 @@ public sealed class @this : IAsyncDisposable
     /// <summary>All registered channels.</summary>
     public IEnumerable<Channel.@this> All => _channels.Values;
 
+    /// <summary>
+    /// Shallow snapshot — new registry, same channel instances. Mutations to either
+    /// side after the call do not affect the other. Used to capture the foundational
+    /// set for goal-channel recursion isolation.
+    /// </summary>
+    public @this Snapshot()
+    {
+        var copy = new @this(_app, Serializers);
+        foreach (var ch in _channels.Values)
+            copy.Register(ch);
+        return copy;
+    }
+
     private (Channel.@this? Channel, Data.@this? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
     {
         var channel = Get(name);
