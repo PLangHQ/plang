@@ -25,8 +25,8 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     private bool _disposed;
 
     private Actor.@this? _system;
-    private Actor.@this? _service;
     private Actor.@this? _user;
+    private global::App.Services.@this? _services;
 
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
@@ -217,14 +217,16 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     public Actor.@this System => _system ??= new Actor.@this("System", this, _shutdownCts.Token);
 
     /// <summary>
-    /// Service actor for external service operations. Links to System's cancellation token.
-    /// </summary>
-    public Actor.@this Service => _service ??= new Actor.@this("Service", this, System.CancellationToken);
-
-    /// <summary>
     /// User actor for end user operations. Links to System's cancellation token.
     /// </summary>
     public Actor.@this User => _user ??= new Actor.@this("User", this, System.CancellationToken);
+
+    /// <summary>
+    /// Flat per-call Service collection. Each Service is one outbound call's I/O
+    /// scope (channels, identity, parent ref). Stage 7: replaces runtime1's
+    /// Service-as-actor model.
+    /// </summary>
+    public global::App.Services.@this Services => _services ??= new global::App.Services.@this(this);
 
     /// <summary>
     /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
@@ -249,7 +251,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         var actor = name.ToLowerInvariant() switch
         {
             "system" => System,
-            "service" => Service,
             "user" => User,
             _ => (Actor.@this?)null
         };
@@ -658,8 +659,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         // Dispose created actors
         if (_system != null)
             await _system.DisposeAsync();
-        if (_service != null)
-            await _service.DisposeAsync();
         if (_user != null)
             await _user.DisposeAsync();
 

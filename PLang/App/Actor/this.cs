@@ -112,15 +112,7 @@ public sealed class @this : IAsyncDisposable
     /// Valid values for LLM action summaries.
     /// Convention: types with this property get their values shown in builder summaries.
     /// </summary>
-    public static string[] ValidValues => ["user", "service", "system"];
-
-    /// <summary>
-    /// Escalation level. System (2) can execute as anyone. User/Service (1) only as themselves.
-    /// </summary>
-    public int EscalationLevel => Name.ToLowerInvariant() switch
-    {
-        "system" => 2, "service" => 1, "user" => 1, _ => 0
-    };
+    public static string[] ValidValues => ["user", "system"];
 
     public @this(string name, App.@this app, CancellationToken parentToken = default)
     {
