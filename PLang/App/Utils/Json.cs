@@ -20,7 +20,7 @@ public static class Json
     public static readonly JsonSerializerOptions CaseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new EmptyStringToNullEnumConverterFactory() },
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new EmptyStringToNullEnumConverterFactory(), new Channels.Serializers.TimeSpanIso8601Converter() },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
@@ -31,7 +31,8 @@ public static class Json
     public static readonly JsonSerializerOptions CamelCaseIndented = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
+        WriteIndented = true,
+        Converters = { new Channels.Serializers.TimeSpanIso8601Converter() }
     };
 
     /// <summary>

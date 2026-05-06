@@ -63,10 +63,10 @@ public class IfHandlerTests : IDisposable
     public async Task Run_ConditionTrue_OrchestrateThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new StreamChannel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         // Build a step with: condition.if, then output.write
         var condAction = new Action
@@ -103,10 +103,10 @@ public class IfHandlerTests : IDisposable
     public async Task Run_ConditionFalse_SkipsThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new StreamChannel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         var condAction = new Action
         {
@@ -142,10 +142,10 @@ public class IfHandlerTests : IDisposable
     public async Task Run_IfElse_TrueRunsThen()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new StreamChannel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         // if true → write "then", else → write "else"
         var condAction = new Action
@@ -195,10 +195,10 @@ public class IfHandlerTests : IDisposable
     public async Task Run_IfElse_FalseRunsElse()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new StreamChannel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         // if false → skip then, else always true → write "else"
         var condAction = new Action
@@ -372,10 +372,10 @@ public class IfHandlerTests : IDisposable
     public async Task Run_InnerGoalCondition_OrchestatesIndependently()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
+        _app.User.Channels.Register(new StreamChannel(
             EngineChannels.Default, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         // --- Inner goal: if true → write "inner-then", else → write "inner-else" ---
         var innerCondAction = new Action

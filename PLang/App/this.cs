@@ -320,6 +320,35 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
+
+        // TRANSITIONAL (Stage 1 → Stage 6): wire the role-channels here so the
+        // runtime keeps working between the moment Channels stops auto-opening
+        // console streams (Stage 1) and the moment PlangConsole takes over the
+        // wiring (Stage 6). When Stage 6 lands, this block moves into the entry
+        // point and App.Run enforces the all-three-roles invariant instead.
+        WireDefaultConsoleChannels(System);
+        WireDefaultConsoleChannels(User);
+    }
+
+    private static void WireDefaultConsoleChannels(global::App.Actor.@this actor)
+    {
+        // Direction is Output for stdout/stderr, Input for stdin. Role aligns with the channel's
+        // logical role — stderr is the Error role even though its direction is also Output.
+        if (!actor.Channels.Contains(global::App.Channels.@this.Output))
+            actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
+                global::App.Channels.@this.Output, Console.OpenStandardOutput(),
+                global::App.Channels.Channel.ChannelDirection.Output, ownsStream: false)
+            { Role = global::App.Channels.Channel.Role.@this.Output });
+        if (!actor.Channels.Contains(global::App.Channels.@this.Error))
+            actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
+                global::App.Channels.@this.Error, Console.OpenStandardError(),
+                global::App.Channels.Channel.ChannelDirection.Output, ownsStream: false)
+            { Role = global::App.Channels.Channel.Role.@this.Error });
+        if (!actor.Channels.Contains(global::App.Channels.@this.Input))
+            actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
+                global::App.Channels.@this.Input, Console.OpenStandardInput(),
+                global::App.Channels.Channel.ChannelDirection.Input, ownsStream: false)
+            { Role = global::App.Channels.Channel.Role.@this.Input });
     }
 
     /// <summary>

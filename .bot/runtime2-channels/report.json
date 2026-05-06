@@ -156,6 +156,18 @@
       },
       "plan": ".bot/runtime2-channels/test-designer/v1/test-plan.md",
       "timestamp_end": "2026-05-06T17:17:40Z"
+    },
+    {
+      "id": "f3a8e9c7-7c1a-4d3a-9bcf-8e3a4cdb2104",
+      "bot": "coder",
+      "timestamp_start": "2026-05-06T18:00:00Z",
+      "intent": "Implement architect's 9-stage channels refactor end-to-end, one stage at a time, in dependency order.",
+      "before": {
+        "assumptions": "Architect plan v1 + 9 stage briefs landed; test-designer dropped 88 C# stubs (Assert.Fail) and 14 PLang .test.goal stubs (throw 'not implemented'). Baseline: C# 2721 pass / 88 fail (all stubs); PLang 188 pass / 0 fail / 18 stale (channel stubs). All 88 failures and 18 stale entries are this branch's stubs to fill.",
+        "risk": "9-stage refactor touches Channel, Channels, every IChannel action, source generator, builder catalog, App ctor, PlangConsole entry, and adds Services + events + migrate. Easy to break unrelated areas. Rebuild-and-run after every stage; keep regressions zero outside the stubs."
+      },
+      "plan": ".bot/runtime2-channels/coder/v1/plan.md",
+      "actions": []
     }
   ]
 }

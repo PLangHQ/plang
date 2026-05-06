@@ -29,7 +29,9 @@ global using EngineModules = App.Modules.@this;
 // Channels subsystem
 global using EngineChannels = App.Channels.@this;
 global using Channel = App.Channels.Channel.@this;
+global using StreamChannel = App.Channels.Channel.Stream.@this;
 global using ChannelDirection = App.Channels.Channel.ChannelDirection;
+global using ChannelRole = App.Channels.Channel.Role.@this;
 global using Serializers = App.Channels.Serializers.@this;
 global using SerializeOptions = App.Channels.Serializers.SerializeOptions;
 global using DeserializeOptions = App.Channels.Serializers.DeserializeOptions;
