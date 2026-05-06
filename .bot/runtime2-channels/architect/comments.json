@@ -1,0 +1,186 @@
+{
+  "v1/plan.md": [
+    {
+      "id": "183923f374",
+      "line": 9,
+      "text": "lets me carefull with 'to <name>', we want the builder to understand intent, not patterns. what if I wrote this in Icelandic? or in any other different 100 ways all meaning the same. this is why I feel we need list of channels sent to the builder, if there is a channel registered called 'builder', then it is easy for llm to map '- write out 'hello' at the best ever builder'  (no one would write it that way, but as a human, I would understand what he means if I knew there was a builder channel, so would llm I think)",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:29:21"
+    },
+    {
+      "id": "a35aee0cad",
+      "line": 19,
+      "text": "when you say Singleton, I dont think that is right, it's just a single instance on the app class, being singleton it would fail with having multiple apps running in a single goal\n\n```plang\n- create app 'myApp', write to %myApp%\n- create app 'myApp2', write to %myApp2%\n- run %myApp%\n- run %myApp%\n```\n\nthis is not an option today but will be. it is just an instance on app class, no singleton",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:31:47"
+    },
+    {
+      "id": "1ac5294016",
+      "line": 44,
+      "text": "I have a bit of problem with Services being under each actor since the Identity is always the system identity. it feels icky, having system sign something that lives under user. Is it wrong to have it live there?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:25:32"
+    },
+    {
+      "id": "18e67ea33a",
+      "line": 44,
+      "text": "Fair, the placement and identity mismatch is a real smell. Three options:\n\n1. **Services under System only** — `app.System.Services`. Identity-location aligned (System owns what System signs). Each Service has `Parent` ref to whoever triggered it (User or System). Lose the per-actor navigation.\n\n2. **Flat `App.Services`** — single collection on App. Each Service has `Parent`. No actor-bound location, no icky split. Simplest.\n\n3. **Stay per-actor** (current plan) — accept the icky factor as the cost of preserving \"who triggered this\" via location.\n\nMy lean: 2. Flat `App.Services` cleanly separates origin (Parent) from identity (always System). The Actor-owned `Services` collection was me overfitting OBP rule 5 — the collections real owner is App, not Actor. Whats your read?",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "1ac5294016",
+      "ts": "2026-05-06T14:05:46"
+    },
+    {
+      "id": "12207b9553",
+      "line": 44,
+      "text": "Flat",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "18e67ea33a",
+      "ts": "2026-05-06T14:07:08"
+    },
+    {
+      "id": "e101885fbf",
+      "line": 51,
+      "text": "is there any EscalationLevel in the code now? do we need to define this?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:34:16"
+    },
+    {
+      "id": "771e159c3d",
+      "line": 57,
+      "text": "should the \"response\" not be \"output\"?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T14:14:51"
+    },
+    {
+      "id": "5d381f2317",
+      "line": 80,
+      "text": "doesn't system need Input? I think so, for example on Ask that propigates to top",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:42:59"
+    },
+    {
+      "id": "0fdb351fef",
+      "line": 104,
+      "text": "what happens when we try to write to channel that doesn't exist? like here we are creating 2 (fix that stdin, please) channels, but no error channel, so where do errors go? and I just mean in general, what should happen, just funnel them through default?\n\nYou mentioned in our chat, \"input\"/\"output\"/\"error\" somewhere, I think thats better than default, stdin, etc.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T14:10:07"
+    },
+    {
+      "id": "d5cac07271",
+      "line": 104,
+      "text": "Three things addressed:\n\n1. **Channel name rename** — agreed. Standard names now match Role: `output`/`error`/`input` (was `default`/`error`/`stdin`). Updated everywhere.\n\n2. **Web example missing error channel** — fixed. Web example now registers all three (output/error/input). Added a note in the example: entry points are responsible for registering all three for any actor that does I/O.\n\n3. **What happens when a channel doesnt exist** — added a new section above this point. My take: hard typed error (`ChannelNotFound`), no silent fallback to `output`. Reasoning: silent fallback hides bugs; a typo (`to dbug`) should be loud. Same for missing standard role-channels — entry-point incompleteness should fail at use, not get swallowed. Program can catch via standard error handling if it wants to recover.\n\nIf youd rather have a fallback (e.g. `error` falls back to `output` when missing), say so — thats a real alternative; I picked strict because its safer by default but it does mean entry points must be complete.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "0fdb351fef",
+      "ts": "2026-05-06T14:13:01"
+    },
+    {
+      "id": "c1e79340bd",
+      "line": 111,
+      "text": "it should be app.currentUser.Services.New(); because maybe we are running as system",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:51:49"
+    },
+    {
+      "id": "f406640f83",
+      "line": 121,
+      "text": "(Reposting here — original reply was anchored at line 104, which became blank after plan edits, hence invisible.)\n\nThree things from your line-104 comment:\n\n1. **Channel name rename** — done. `default`/`stdin` → `output`/`input` everywhere.\n2. **Web example missing error channel** — fixed. Web example now registers all three (output/error/input).\n3. **Missing channel behavior** — added this section above. My take: hard typed error (`ChannelNotFound`), no silent fallback. Reasoning: silent fallback hides bugs; a typo (`to dbug`) should be loud.\n\nOpen question: do you want a fallback for the special case of `error` falling back to `output` when error is missing? Strict says no; ergonomic says maybe. I picked strict. Push back if you want fallback for error specifically.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "0fdb351fef",
+      "ts": "2026-05-06T14:31:37"
+    },
+    {
+      "id": "2aeec4d322",
+      "line": 121,
+      "text": "I think \"error\" and \"output\" and \"input\" should always exists, if I write to channel 'dbg' that doesn't exist, then that should be an error, that will be redirected to the error channel",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "f406640f83",
+      "ts": "2026-05-06T14:33:37"
+    },
+    {
+      "id": "4df05483ad",
+      "line": 126,
+      "text": "Since Write implement IChannel, Channel property will be added by source gen, that Channel property will be of type IChannel, this is something that builder needs to be aware of, so that when he write ExampleForLlm he can list out the channels available. The Channel property in Write you have there should not be there, delete it. Run should simply be Channel.WriteAsync...",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:56:36"
+    },
+    {
+      "id": "8da2d8bf3a",
+      "line": 142,
+      "text": "we are missing the actor as and option, when I say '- set...' it should default to current Actor but maybe I want to overwrite 'system'",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:58:16"
+    },
+    {
+      "id": "d517324d2e",
+      "line": 181,
+      "text": "just .pr not .pr.json, where did you get .json??",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T13:25:56"
+    },
+    {
+      "id": "b5361c3758",
+      "line": 245,
+      "text": "First are we using this at all? and I actually feel like EscalationLevel should be in the other direction, system=0 (most trusted), user=1(second most trusted), someOther=100 (now we can set any level and define any possible other to have a number, if most untrusted is 0 we cant really give other any other number. but first, are we really using this Escalationlevel?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T14:26:58"
+    },
+    {
+      "id": "641ae510f0",
+      "line": 266,
+      "text": "well, it does, it's the ask. it is just named 'read', so if as plang developer would say something like '- read from input, write to %answer%' that would basically map to 'ask'",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-06T14:01:56"
+    }
+  ],
+  "stage-1-channel-base.md": [
+    {
+      "id": "327c8956b3",
+      "line": 29,
+      "text": "lets add [LlmBuilder] attribute to those properties that builder should see",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-06T16:48:17"
+    },
+    {
+      "id": "07c0f91993",
+      "line": 29,
+      "text": "same goes for other classes ofc in this plan",
+      "author": "user",
+      "status": "open",
+      "parent_id": "327c8956b3",
+      "ts": "2026-05-06T16:48:36"
+    }
+  ]
+}
