@@ -177,7 +177,7 @@ public class FailureMatrixTests
         var app = NewApp();
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);
-        var s = app.Channels.Serializers.GetByMimeType("application/plang+data");
+        var s = app.Serializers.GetByMimeType("application/plang+data");
         var wire = s.Serialize(data);
         var restored = s.Deserialize<Data>(wire);
         await Assert.That(restored).IsNotNull();

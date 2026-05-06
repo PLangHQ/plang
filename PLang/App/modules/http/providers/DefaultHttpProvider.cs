@@ -793,7 +793,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         };
         var result = await app.RunGoalAsync(call, context, ct);
         if (!result.Success)
-            await app.Channels.WriteAsync(AppChannels.StdErr, result);
+            await app.System.Channels.WriteTextAsync(AppChannels.Error, result.Error?.Message ?? "");
     }
 
     private static StreamFormat DetectStreamFormat(string contentType)
@@ -849,7 +849,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                         throw new InvalidOperationException(
                             $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
 
-                    await app.Channels.WriteAsync(AppChannels.StdErr,
+                    await app.System.Channels.WriteAsync(AppChannels.Error,
                         App.Data.@this.FromError(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
                             "SSEBufferOverflow", 413)));
@@ -904,7 +904,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
             }
             catch (JsonException)
             {
-                await app.Channels.WriteAsync(AppChannels.StdErr,
+                await app.System.Channels.WriteAsync(AppChannels.Error,
                     App.Data.@this.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
                 continue;
             }

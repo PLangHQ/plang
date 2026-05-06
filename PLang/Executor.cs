@@ -39,6 +39,11 @@ namespace PLang
 			var engine = new App.@this(fileSystem);
 			engine.OsDirectory = fileSystem.OsDirectory;
 
+			// Stage 6: entry-point wires console standard streams. App ctor no longer
+			// auto-opens them; the invariant check on Run() ensures they're present.
+			App.@this.WireDefaultConsoleChannels(engine.System);
+			App.@this.WireDefaultConsoleChannels(engine.User);
+
 			var userVars = engine.User.Context.Variables;
 
 			// Route CLI parameters to user Variables

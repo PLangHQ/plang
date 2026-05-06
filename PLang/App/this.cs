@@ -148,9 +148,10 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     public App.FileSystem.IPLangFileSystem FileSystem { get; set; }
 
     /// <summary>
-    /// I/O operations (file reading, channels).
+    /// App-wide serializer registry — content-type routing for I/O. Stage 6 promoted
+    /// from per-actor Channels to App-level: actors share one serializer registry.
     /// </summary>
-    public AppChannels Channels { get; }
+    public Serializers Serializers { get; } = new Serializers();
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -310,7 +311,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         _modules = modules ?? new AppModules();
         _goals = new AppGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
-        Channels = new AppChannels(this);
 
         Errors.App = this;
 
@@ -320,17 +320,41 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
-
-        // TRANSITIONAL (Stage 1 → Stage 6): wire the role-channels here so the
-        // runtime keeps working between the moment Channels stops auto-opening
-        // console streams (Stage 1) and the moment PlangConsole takes over the
-        // wiring (Stage 6). When Stage 6 lands, this block moves into the entry
-        // point and App.Run enforces the all-three-roles invariant instead.
-        WireDefaultConsoleChannels(System);
-        WireDefaultConsoleChannels(User);
     }
 
-    private static void WireDefaultConsoleChannels(global::App.Actor.@this actor)
+    /// <summary>
+    /// Verifies the all-three-roles invariant on every I/O actor (System, User).
+    /// Returns Data.Error on first missing channel; Ok otherwise. PlangConsole
+    /// (or any entry point) must register Output/Error/Input on each before
+    /// goal execution. <see cref="Start"/> calls this and surfaces failure as
+    /// MissingRequiredChannelAtBoot before any user code runs.
+    /// </summary>
+    public Data.@this EnsureRoleChannels()
+    {
+        foreach (var actor in new[] { System, User })
+        {
+            foreach (var (role, name) in new[]
+            {
+                (Channels.Channel.Role.@this.Output, Channels.@this.Output),
+                (Channels.Channel.Role.@this.Error, Channels.@this.Error),
+                (Channels.Channel.Role.@this.Input, Channels.@this.Input)
+            })
+            {
+                if (!actor.Channels.Contains(name))
+                    return Data.@this.FromError(new Errors.ServiceError(
+                        $"{actor.Name} actor missing required channel '{name}' (role {role}). Entry point must register all three role-channels before Run.",
+                        "MissingRequiredChannelAtBoot", 500));
+            }
+        }
+        return Data.@this.Ok();
+    }
+
+    /// <summary>
+    /// Wires the console standard streams onto the given actor's Channels under
+    /// the role-channel names ("output", "error", "input"). PlangConsole calls
+    /// this for System and User after constructing the App.
+    /// </summary>
+    public static void WireDefaultConsoleChannels(global::App.Actor.@this actor)
     {
         // Direction is Output for stdout/stderr, Input for stdin. Role aligns with the channel's
         // logical role — stderr is the Error role even though its direction is also Output.
@@ -524,6 +548,16 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     {
         await Load();
 
+        // Invariant: every I/O actor must have all three role-channels registered
+        // by the entry point before goal execution. Surface a clear error otherwise.
+        var invariant = EnsureRoleChannels();
+        if (!invariant.Success) return invariant;
+
+        // Foundational set: capture the boot-time channels so goal channels can
+        // resolve their writes against the originals (recursion isolation).
+        System.FreezeFoundational();
+        User.FreezeFoundational();
+
         context ??= System.Context;
         CurrentActor = System;
 
@@ -646,9 +680,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
             else if (provider is IDisposable disposableProv)
                 disposableProv.Dispose();
         }
-
-        // Dispose app-level channels
-        await Channels.DisposeAsync();
 
         // Dispose KeepAlive objects
         foreach (var d in _keepAlive)

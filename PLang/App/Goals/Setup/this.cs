@@ -51,7 +51,9 @@ public sealed class @this
 
             try
             {
-                var goal = await app.Channels.ReadAsync<Goal.@this>(file, ct);
+                var content = await fs.File.ReadAllTextAsync(file, ct);
+                var ext = fs.Path.GetExtension(file);
+                var goal = app.Serializers.Deserialize<Goal.@this>(new App.Channels.Serializers.DeserializeOptions { Value = content, Extension = ext });
                 if (goal == null || !goal.IsSetup) continue;
 
                 foreach (var step in goal.Steps)
