@@ -19,6 +19,13 @@ public sealed class @this : IAsyncDisposable
     private readonly App.@this _app;
 
     /// <summary>
+    /// The actor this collection belongs to. Set by <see cref="Actor.@this"/> right
+    /// after construction. <see cref="Register"/> stamps it onto each registered
+    /// channel so channel-event firing can read from <c>Actor.Context.Events</c>.
+    /// </summary>
+    internal global::App.Actor.@this? Actor { get; set; }
+
+    /// <summary>
     /// The serializer registry — content-type routing for I/O.
     /// Stage 6 promotes this to <c>App.Serializers</c> (app-wide, not per-actor).
     /// </summary>
@@ -103,6 +110,7 @@ public sealed class @this : IAsyncDisposable
     public void Register(Channel.@this channel)
     {
         channel.App = _app;
+        if (channel.Actor == null) channel.Actor = Actor;
         _channels[channel.Name] = channel;
     }
 
@@ -127,7 +135,7 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public @this Snapshot()
     {
-        var copy = new @this(_app, Serializers);
+        var copy = new @this(_app, Serializers) { Actor = Actor };
         foreach (var ch in _channels.Values)
             copy.Register(ch);
         return copy;

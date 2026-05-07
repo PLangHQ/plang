@@ -126,7 +126,7 @@ public sealed class @this : IAsyncDisposable
         _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
         Context = new Context.@this(app, parentToken: _cts.Token);
         Context.Actor = this;
-        _channels = new AppChannels(app);
+        _channels = new AppChannels(app) { Actor = this };
 
         // Register shared SettingsVariable — same object for all actors.
         // %Settings.ApiKey% resolves identically in User, Service, and System contexts.

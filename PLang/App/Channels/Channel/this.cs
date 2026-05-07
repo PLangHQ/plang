@@ -63,10 +63,14 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public List<global::App.Events.Lifecycle.Bindings.Binding.@this> Events { get; } = new();
 
     /// <summary>
-    /// Backreference set by the Channels collection on Register — channel-event
-    /// firing consults app.Events for bindings filtered by ChannelName so a
-    /// single binding can match across actors (User + Service "logger").
+    /// The actor this channel belongs to — set by the Channels collection on
+    /// Register. Channel-event firing reads from <c>Actor.Context.Events</c>
+    /// (the same place <c>event.on</c> writes to). Channels live per-actor;
+    /// the actor is the natural scope for channel-bound bindings.
     /// </summary>
+    public global::App.Actor.@this? Actor { get; internal set; }
+
+    /// <summary>App backreference — kept for SignEmpty / general App access.</summary>
     public global::App.@this? App { get; internal set; }
 
     // Recursion guard: AsyncLocal so concurrent writes don't interfere; per-binding
@@ -175,6 +179,16 @@ public abstract class @this : IAsyncDisposable, IDisposable
                 && (b.ChannelName == null || string.Equals(b.ChannelName, Name, StringComparison.OrdinalIgnoreCase)))
                 yield return b;
 
+        // Per-actor lifecycle events — where event.on writes its bindings.
+        if (Actor != null)
+        {
+            foreach (var b in Actor.Context.Events.GetBindings(type))
+                if (string.Equals(b.ChannelName, Name, StringComparison.OrdinalIgnoreCase))
+                    yield return b;
+        }
+
+        // App-level bindings — match across actors so one binding can cover
+        // every channel-of-name "logger" regardless of which actor owns it.
         if (App != null)
         {
             foreach (var b in App.Events.GetBindings(type))
@@ -217,17 +231,18 @@ public abstract class @this : IAsyncDisposable, IDisposable
         }
     }
 
-    private static Task<Data.@this> InvokeChannelHandler(
+    private Task<Data.@this> InvokeChannelHandler(
         global::App.Events.Lifecycle.Bindings.Binding.@this binding,
         Data.@this data,
         Callback.AskCallback? ask)
     {
-        // Channel events run in a synthetic Context — bindings receive (context,
-        // action=null, result=data). The handler typically uses payload via
-        // EventContext — Stage 8 builder maps `- add before write on "x" channel,
-        // call G` to a Handler that wraps app.RunGoalAsync; tests register Handler
-        // directly with arbitrary code.
-        return binding.Handler(null!, null, data);
+        // Bindings receive (context, action=null, result=data). The context comes
+        // from the channel's owning Actor — handlers like the one event.on installs
+        // need ctx.App + ctx.CancellationToken to dispatch the bound goal. Tests
+        // that register Handler directly often ignore ctx — null-tolerant by design
+        // for that path.
+        var ctx = Actor?.Context!;
+        return binding.Handler(ctx!, null, data);
     }
 
     /// <summary>Closes the channel and any owned resources.</summary>

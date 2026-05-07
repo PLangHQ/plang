@@ -379,3 +379,11 @@ During `builder.validate` (per-step), walk the `Parameters` list<Data> and recor
 Belongs in the validator (not `variable.set`) so we capture the type as declared *at the parameter slot*, not just the writer's intent.
 
 **Context:** came up while diagnosing `Actor: ""` LLM hallucinations — the .pr type slot says `actor` but the value is empty/wrong-typed, and we only catch it at conversion time. A type registry would surface "variable %x% used as actor here, but it was set as string in step 2" much earlier.
+
+## Go over events — `App.Events` vs `Context.Events`
+
+**Date:** 2026-05-07
+
+Two `AppEvents` registries exist (one on `App`, one per-actor on
+`Context`). Suspect smell — same concept twice. Worth a pass to decide
+which scope owns what, and whether they should be one thing.

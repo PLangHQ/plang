@@ -19,15 +19,12 @@ public class @this : Session.@this
     /// <summary>The goal this channel dispatches writes to.</summary>
     public global::App.Goals.Goal.@this Goal { get; }
 
-    /// <summary>The actor that registered this channel — its FoundationalChannels are used during goal execution.</summary>
-    public global::App.Actor.@this RegisteringActor { get; }
-
-    public @this(string name, global::App.Goals.Goal.@this goal, global::App.Actor.@this registeringActor,
+    public @this(string name, global::App.Goals.Goal.@this goal, global::App.Actor.@this actor,
         ChannelDirection direction = ChannelDirection.Bidirectional)
     {
         Name = name;
         Goal = goal;
-        RegisteringActor = registeringActor;
+        Actor = actor;
         Direction = direction;
     }
 
@@ -51,14 +48,14 @@ public class @this : Session.@this
         if (!IsOpen)
             return Data.@this.FromError(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
 
-        var app = RegisteringActor.App;
-        var foundational = RegisteringActor.FoundationalChannels;
+        var app = Actor.App;
+        var foundational = Actor.FoundationalChannels;
         // Switch the actor's channel resolution to the foundational set for the duration
         // of the goal call. AsyncLocal scoping means concurrent calls don't collide.
-        using var _ = RegisteringActor.PushChannelsOverride(foundational);
+        using var _ = Actor.PushChannelsOverride(foundational);
 
         // Bind the inbound Data as %!data% so the goal body can reference it.
-        var ctx = RegisteringActor.Context;
+        var ctx = Actor.Context;
         ctx.Variables.Set("!data", data);
 
         try
@@ -94,7 +91,7 @@ public class @this : Session.@this
         var payload = new GoalMigrationPayload
         {
             GoalName = Goal.Name ?? "",
-            Variables = RegisteringActor.Context.Variables.Snapshot()
+            Variables = Actor.Context.Variables.Snapshot()
         };
         var envelope = new global::App.Channels.Channel.MigrationEnvelope
         {
