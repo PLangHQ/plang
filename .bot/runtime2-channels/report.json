@@ -1020,6 +1020,56 @@
         "next_bot_reason": "Auditor v1 close-out pass. A1 satisfied by removing the entire channel-migration surface (the misleading Signature struct can no longer mislead). A3 fixed with regression test. A2 is now moot (no migrate action). A4/A5 remain deferred per auditor v1 verdict.",
         "notes": "Mid-session, Ingi escalated A1 from 'fix the doc' \u2192 'delete the inner hash' \u2192 'delete the entire channel-migration surface'. cool.md keeps the 'channels migrate across devices' idea as a future sketch."
       }
+    },
+    {
+      "id": "07c0c409-5c48-4741-b9ab-a61d915cd183",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-07T16:30:38.787626Z",
+      "timestamp_end": "2026-05-07T16:30:38.787688Z",
+      "intent": "Close-out pass on coder v9 (deletion of channel-migration surface + A3 Stream.AskCore fix).",
+      "before": {
+        "assumptions": "v1 verdict was FAIL with pre-merge A1+A3. Coder v9 may have addressed both as scoped, or pivoted scope.",
+        "risk": "Bigger move (delete entire migration surface) needs cross-file completeness check \u2014 dangling refs, doc lies, latent callers."
+      },
+      "plan": ".bot/runtime2-channels/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/this.cs",
+            "PLang/App/Channels/Channel/Stream/this.cs",
+            "PLang/App/Channels/Channel/Goal/this.cs",
+            "PLang/App/Channels/Channel/MigrationEnvelope.cs",
+            "PLang/App/modules/channel/migrate.cs",
+            "PLang/App/modules/channel/set.cs",
+            "PLang.Tests/App/ChannelsTests/Stage2_StreamChannelTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage9_ChannelMigrateTests.cs",
+            "Tests/Channels/Migrate"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified deletion is complete via grep across src+tests (no Migrat/MigrationEnvelope/VerifyEnvelope/FromMigration/SignEmpty/ComputeSignature/MigrateSnapshot/SnapshotConfig refs remain \u2014 only .gitignore entry and unrelated Plng001PostMigrationTests). A3 fix correct: using StreamReader + ResolveEncoding + leaveOpen=true. New regression test exercises iso-8859-1 decoding. Channel.App backreference still load-bearing for app-level event-binding match (lines 186-190) and diagnostic, not orphaned."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-channels/auditor/v2/plan.md",
+            ".bot/runtime2-channels/auditor/v2/verdict.json",
+            ".bot/runtime2-channels/auditor/v2/v1_review_summary.md",
+            ".bot/runtime2-channels/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v2 close-out: PASS, next bot is docs. A1 closed by deletion (stronger than rename+[Obsolete]), A3 closed with regression. A2 mooted by deletion."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "next_bot": "docs",
+        "csharp_tests": "2755/2755",
+        "plang_tests": "203 pass + 6 deliberate fixture fails",
+        "notes": "Three notes for docs/future-stage9 architect: cool.md migration sketch should label as future, A2 carry-forward intent attaches to Stage 9 rebuild, deletion was structurally right call."
+      }
     }
   ]
 }
