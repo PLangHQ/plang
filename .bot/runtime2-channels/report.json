@@ -808,14 +808,56 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Re-check report. No source changes — report only."
+          "context": "Re-check report. No source changes \u2014 report only."
         }
       ],
       "after": {
-        "status": "PASS — all prior findings resolved, no new issues.",
+        "status": "PASS \u2014 all prior findings resolved, no new issues.",
         "health": "ok",
         "notes": "B1 (static _active) and L1 (mutable AsyncLocal shared ref) both correctly fixed. I1 still deferred per design decision. OBP shape clean. Tests identical to baseline."
       }
+    },
+    {
+      "id": "87c87e45-6d2d-4b17-8fd9-865f4bb4f0aa",
+      "bot": "tester",
+      "timestamp_start": "2026-05-07T14:20:51Z",
+      "intent": "Validate test quality for coder v7 fixes (B1 _active static\u2192instance, L1 copy-on-write Releaser) on Channel.Events.@this",
+      "before": {
+        "assumptions": "Coder v7 fixed two codeanalyzer findings on PLang/App/Channels/Channel/Events/this.cs. Coder explicitly added no new tests (\"failure modes have no current callsite\"). Need to verify whether existing Stage8 tests would catch regressions of the fixes.",
+        "risk": "Both fixes target failure modes that require multi-channel or parallel fan-out scenarios; existing tests use single channel + sequential awaits. Likely missing-coverage findings."
+      },
+      "plan": ".bot/runtime2-channels/tester/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-channels/tester/v7/plan.md",
+            ".bot/runtime2-channels/tester/v7/result.md",
+            ".bot/runtime2-channels/tester/v7/verdict.json",
+            ".bot/runtime2-channels/tester/summary.md",
+            ".bot/runtime2-channels/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reviewed coder v7 (B1+L1 fixes on Channel.Events.@this). Ran clean rebuild + C# suite (2760/2760). Deletion-test reasoning across Stage8 tests: zero tests would fail if either fix were reverted. Two minor missing-coverage findings recorded; verdict approved."
+        },
+        {
+          "paths": [
+            "/home/claude/.claude/projects/-workspace-plang/memory/feedback_no_code_edits.md",
+            "/home/claude/.claude/projects/-workspace-plang/memory/MEMORY.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Mid-session, Ingi made it a strict rule that tester does not modify source code. Recorded as feedback memory + indexed in MEMORY.md. Brief temp edit during deletion-test attempt was reverted, working tree clean."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "C# 2760/2760 green; coder v7 fixes correct but uncovered by tests",
+        "notes": "Two minor missing-coverage findings (F1: B1 regression test, F2: L1 regression test). Both ~3 lines each, recommended as small follow-up commit. Compounding fact for B1: Binding.Id is random GUID-substring so cross-channel collision is not exercisable through the public API today. Process note: tester is now read-only on source code (no deletion-test by mutation)."
+      },
+      "timestamp_end": "2026-05-07T14:27:52Z"
     }
   ]
 }
