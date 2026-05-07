@@ -1,0 +1,125 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "add channel \u0022logger\u0022 call Logger",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "channel.add registers a new named Goal channel \u2014 verify by writing to it and\nobserving the goal-channel\u0027s body ran.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "logger",
+              "type": "string"
+            },
+            {
+              "name": "Actor",
+              "value": "system",
+              "type": "variable"
+            },
+            {
+              "name": "Goal",
+              "value": "Logger",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Register a new custom-named channel \u0027logger\u0027 backed by the goal \u0027Logger\u0027. This creates the channel so later writes trigger the goal-backed channel handler.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write \u0027hi\u0027 to logger",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hi",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "logger",
+              "type": "this"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write \u0027hi\u0027 to the named channel \u0027logger\u0027 so the Logger goal-backed channel runs.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %loggerCalled% is true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%loggerCalled%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %loggerCalled% to be true after writing to logger channel.",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition invariant: ensure the Logger goal ran by asserting %loggerCalled% is true.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Add/Basic/Start.test.goal",
+  "prPath": "/Add/Basic/.build/start.test.pr",
+  "hash": "0caeba089962bf07a7b159300460a14858df4e958316c6ab9abc61c4bb9705b4",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

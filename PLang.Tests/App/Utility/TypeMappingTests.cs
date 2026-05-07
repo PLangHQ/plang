@@ -644,12 +644,12 @@ public class TypeMappingTests
     }
 
     [Test]
-    public async Task TryConvertTo_IObject_InvalidString_ReturnsError()
+    public async Task TryConvertTo_Operator_InvalidString_ReturnsError()
     {
         var (result, error) = TypeMapping.TryConvertTo("equals", typeof(global::App.modules.condition.Operator));
 
         await Assert.That(error).IsNotNull();
-        await Assert.That(error!.Key).IsEqualTo("IObjectConversionFailed");
+        await Assert.That(error!.Key).IsEqualTo("ConstructorFailed");
     }
 
     [Test]

@@ -1,0 +1,120 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set output channel as OutputGoal",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "channel.set without an explicit actor uses Context.Actor (User by default).\nWriting \u0027hi\u0027 must trigger OutputGoal because User\u0027s output got rebound.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Role",
+              "value": 1,
+              "type": "role"
+            },
+            {
+              "name": "Actor",
+              "value": "%Context.Actor%",
+              "type": "variable"
+            },
+            {
+              "name": "Goal",
+              "value": "OutputGoal",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Rebind the role output channel to a goal-backed channel by calling channel.set with Role=Output and Goal=OutputGoal. Actor is omitted in the step text, so it uses Context.Actor (User by default).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write \u0027hi\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hi",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write \u0027hi\u0027 to the (now rebound) output channel. Since no explicit channel is provided, it defaults to the actor\u0027s output channel (User).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %userOutputCalled% is true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%userOutputCalled%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition invariant: assert that %userOutputCalled% is true after writing \u0027hi\u0027.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Set/ContextActor/Start.test.goal",
+  "prPath": "/Set/ContextActor/.build/start.test.pr",
+  "hash": "b53ca86ff19b3ab0034ec738013bce59d8ed17a3fc0a27310417968cf4119d61",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

@@ -1,0 +1,125 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write \u0027hi\u0027 to dbg, on error set %unknownChannelError% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Writing to an unregistered channel raises ChannelNotFound \u2014 caught via on-error.",
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hi",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "dbg",
+              "type": "this"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Key",
+                  "value": "ChannelNotFound",
+                  "type": "string"
+                },
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%unknownChannelError%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "bool"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "output.write to channel dbg. On ChannelNotFound, handle the error by setting %unknownChannelError% = true.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %unknownChannelError% is true",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%unknownChannelError%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %unknownChannelError% is true.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/WriteToUnknownChannel/Start.test.goal",
+  "prPath": "/WriteToUnknownChannel/.build/start.test.pr",
+  "hash": "4d483a6b3378c420ecb605b39187ee33c620ae51f1066c7d989a2f32a8675331",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

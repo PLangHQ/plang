@@ -1,0 +1,149 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "remove channel \u0022output\u0022, on error set %removalRefused% = true",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "channel.remove on a standard role-channel (output / error / input) is refused.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "output",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%removalRefused%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "bool"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Try to remove the standard role-channel \u0027output\u0027. The engine refuses this operation; on error, set %removalRefused% = true.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %removalRefused% is true",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%removalRefused%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that the removalRefused flag is true. This must fail the step if the condition is not met.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write \u0027still here\u0027 to output",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "still here",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "output",
+              "type": "this"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write the literal string \u0027still here\u0027 to the actor\u0027s output channel. The step text specifies channel([this] output).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Remove/RoleChannelRefused/Start.test.goal",
+  "prPath": "/Remove/RoleChannelRefused/.build/start.test.pr",
+  "hash": "fff88bfa9f6f69ae8c5f33131c69eeb1592c782d2873e924e7a3189917675755",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

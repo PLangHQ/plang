@@ -1,0 +1,58 @@
+{
+  "name": "SystemOutputGoal",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %systemOutputCalled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%systemOutputCalled%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use variable.set to assign %systemOutputCalled% = true in the current scope.",
+      "level": "high",
+      "confidence": 99,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Set/ExplicitActor/SystemOutputGoal.goal",
+  "prPath": "/Set/ExplicitActor/.build/systemoutputgoal.pr",
+  "hash": "6dbd6a0ed1e7595438370134bf09ab62a7b0f1ecc414c8b9d39cc026076b075f",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

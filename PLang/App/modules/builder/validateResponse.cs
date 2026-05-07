@@ -222,6 +222,23 @@ public partial class validateResponse : IContext
                     // shape check above.
                     if (App.Utils.TypeMapping.IsScalarPlangType(targetType)) continue;
 
+                    // [Choices]-bearing types: vocabulary check, not type construction.
+                    // Stateful runtime types (Actor) cannot honestly be constructed from
+                    // a string at build time — resolution lives on the type. Membership
+                    // in the Choices list is the build-time contract; runtime materializes
+                    // the chosen name however the type prefers (App.GetActor for Actor,
+                    // ctor registry for Operator, ...).
+                    var choices = App.Choices.@this.Get(targetType);
+                    if (choices != null)
+                    {
+                        var sval = p.Value as string;
+                        if (sval != null && choices.Any(c => string.Equals(c, sval, StringComparison.OrdinalIgnoreCase)))
+                            continue;
+                        errors.Add(
+                            $"Step[{step.Index}] {a.Module}.{a.ActionName}: parameter '{p.Name}' = {ValidateResponseHelpers.FormatValueForError(p.Value)} is not a valid {p.Type.Value}. Valid values: {string.Join(", ", choices)}.");
+                        continue;
+                    }
+
                     var (_, error) = App.Utils.TypeMapping.TryConvertTo(p.Value, targetType);
                     if (error == null) continue;
 

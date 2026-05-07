@@ -195,7 +195,7 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Stage 7: flat per-call Service collection on App. Service is not an Actor — separate type with Channels, Identity (always System's), Parent ref."
+          "context": "Stage 7: flat per-call Service collection on App. Service is not an Actor \u2014 separate type with Channels, Identity (always System's), Parent ref."
         },
         {
           "paths": [
@@ -206,7 +206,7 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "Stage 5: three module actions managing channels — set replaces a role channel with a goal channel, add registers a new custom-named channel with full per-channel config, remove unregisters (refuses role channels)."
+          "context": "Stage 5: three module actions managing channels \u2014 set replaces a role channel with a goal channel, add registers a new custom-named channel with full per-channel config, remove unregisters (refuses role channels)."
         },
         {
           "paths": [
@@ -238,7 +238,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Stage 6 caller migration: app.Channels.Serializers → app.Serializers; app.Channels.WriteAsync → actor.Channels.WriteAsync; TimeSpan ISO 8601 converter registered globally."
+          "context": "Stage 6 caller migration: app.Channels.Serializers \u2192 app.Serializers; app.Channels.WriteAsync \u2192 actor.Channels.WriteAsync; TimeSpan ISO 8601 converter registered globally."
         },
         {
           "paths": [
@@ -268,7 +268,7 @@
           "type": "delete",
           "category": "test",
           "confidence": "high",
-          "context": "Obsolete v1 tests against the concrete-Channel surface — superseded by Stage 1+2 tests against the abstract base / Stream concrete (architect plan)."
+          "context": "Obsolete v1 tests against the concrete-Channel surface \u2014 superseded by Stage 1+2 tests against the abstract base / Stream concrete (architect plan)."
         },
         {
           "paths": [
@@ -283,11 +283,91 @@
         }
       ],
       "after": {
-        "status": "All 9 stages green at the C# layer. C# 2745 pass / 0 fail; PLang 188 pass / 0 fail / 18 stale (the .test.goal stubs cover developer-facing channel.* surface — bodies + plang build deferred to follow-up since the runtime stages 1-9 are end-to-end validated by the integration cuts).",
+        "status": "All 9 stages green at the C# layer. C# 2745 pass / 0 fail; PLang 188 pass / 0 fail / 18 stale (the .test.goal stubs cover developer-facing channel.* surface \u2014 bodies + plang build deferred to follow-up since the runtime stages 1-9 are end-to-end validated by the integration cuts).",
         "health": "ok",
         "notes": "Channel base, Session/Message abstracts, Stream + Goal concretes, foundational recursion rule, source-gen Channel slot, builder catalog inventory, three channel module actions, App.Services + per-call Service, channel events with ChannelName filter, migration API stub. Old ChannelTests/IOTests deleted as superseded; legacy app.Channels surface fully migrated to app.Serializers / actor.Channels. EscalationLevel removed; Actor.ValidValues drops to user/system. App ctor takes autoWireConsoleChannels=true so test fixtures and embedded scenarios still get usable channels; entry points opt out and own the wiring."
       },
       "timestamp_end": "2026-05-06T19:00:00Z"
+    },
+    {
+      "id": "64df3a71-3b8f-424d-9501-b60338b2db69",
+      "bot": "coder",
+      "timestamp_start": "2026-05-07T09:02:07Z",
+      "intent": "v2: standardize closed-set parameter validation via [Choices] attribute; unblock 14 channel .test.goal builds.",
+      "before": {
+        "assumptions": "Builder validator rejects Actor=\"system\" literal because TryConvertTo tries to construct an Actor from the string instead of membership-checking ValidValues. Closed-set types are split between IObject (Operator) and bare static ValidValues (Actor) \u2014 half-formed convention that does not honestly fit Actor as a stateful runtime object. Tests/Channels/ has no .build/ marker.",
+        "risk": "Removing IObject + the construct-from-string path may regress Operator if its build-time code path relied on IObject branch. Mitigated by keeping Operator string ctor and the generic single-string-ctor branch in TypeConverter."
+      },
+      "plan": ".bot/runtime2-channels/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Attributes/ChoicesAttribute.cs",
+            "PLang/App/Choices/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New [Choices] convention + lazy assembly-scan registry."
+        },
+        {
+          "paths": [
+            "PLang/App/Actor/this.cs",
+            "PLang/App/modules/condition/Operator.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Migrated to [Choices]. Operator drops : IObject."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/IObject.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "No remaining users."
+        },
+        {
+          "paths": [
+            "PLang/App/Utils/TypeMapping.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/modules/builder/validateResponse.cs",
+            "PLang/App/modules/condition/providers/DefaultEvaluator.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Validator membership-checks via Choices; routes GetValidValues through registry."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/condition/OperatorTests.cs",
+            "PLang.Tests/App/Utility/TypeMappingTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage7_AppServicesTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated to new convention; deleted ImplementsIObject test."
+        },
+        {
+          "paths": [
+            "Tests/Channels/.build/app.pr"
+          ],
+          "type": "create",
+          "category": "config",
+          "confidence": "high",
+          "context": "App marker \u2014 13 of 14 channel scenarios built clean."
+        }
+      ],
+      "after": {
+        "status": "v2 done \u2014 Choices standardized, validator unblocked.",
+        "health": "C#: 2744/0/0. PLang: 191 pass / 10 fail / 5 stale (was 188/0/18). Stale -13.",
+        "notes": "10 channel runtime fails are next-version scope. Add/WithConfig stale is LLM step-splitting."
+      },
+      "timestamp_end": "2026-05-07T09:21:00Z"
     }
   ]
 }

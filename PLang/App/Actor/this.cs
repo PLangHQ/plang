@@ -109,10 +109,12 @@ public sealed class @this : IAsyncDisposable
     public static @this? Resolve(string name, Context.@this context) => context.App.GetActor(name).Actor;
 
     /// <summary>
-    /// Valid values for LLM action summaries.
-    /// Convention: types with this property get their values shown in builder summaries.
+    /// Closed list of actor names the LLM may emit for an Actor-typed slot.
+    /// Build-time validation membership-checks against this; runtime resolves the
+    /// chosen name via <see cref="Resolve"/> → <c>App.GetActor</c>.
     /// </summary>
-    public static string[] ValidValues => ["user", "system"];
+    [App.Attributes.Choices]
+    public static string[] Choices(Context.@this? ctx) => ["user", "system"];
 
     public @this(string name, App.@this app, CancellationToken parentToken = default)
     {

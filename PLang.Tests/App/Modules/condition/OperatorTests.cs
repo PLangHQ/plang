@@ -30,12 +30,12 @@ public class OperatorTests
             .WithMessageMatching("*Unsupported operator*");
     }
 
-    // --- ValidValues ---
+    // --- Choices ---
 
     [Test]
-    public async Task ValidValues_ContainsAllOperators()
+    public async Task Choices_ContainsAllOperators()
     {
-        var values = Operator.ValidValues;
+        var values = Operator.Choices(null);
         await Assert.That(values).Contains("==");
         await Assert.That(values).Contains("!=");
         await Assert.That(values).Contains(">");
@@ -101,15 +101,6 @@ public class OperatorTests
         var op = new Operator(">");
         await Assert.That(op.Evaluate(D(10), D(5))).IsTrue();
         await Assert.That(op.Evaluate(D(5), D(10))).IsFalse();
-    }
-
-    // --- IObject interface ---
-
-    [Test]
-    public async Task ImplementsIObject()
-    {
-        var op = new Operator("==");
-        await Assert.That(op is global::App.modules.IObject).IsTrue();
     }
 
     // --- Implicit conversion ---

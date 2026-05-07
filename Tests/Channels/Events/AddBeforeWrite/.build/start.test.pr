@@ -1,0 +1,209 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "add channel \u0022audit\u0022 call AuditLog",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "events.add for channel-targeted bindings: BeforeWrite on a named channel.",
+      "actions": [
+        {
+          "module": "event",
+          "action": "on",
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "BeforeWrite",
+              "type": "eventtype"
+            },
+            {
+              "name": "GoalToCall",
+              "value": {
+                "name": "ApprovalGoal",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ChannelName",
+              "value": "audit",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "isregex",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "priority",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Register a lifecycle event callback: on BeforeWrite for the named channel \u0027audit\u0027, call ApprovalGoal. This ensures ApprovalGoal runs before any write to that channel.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "on before write on \u0022audit\u0022 channel call ApprovalGoal",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "AuditLog",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Call AuditLog (channel-targeted binding). This step represents the explicit call to AuditLog before writing the payload to the audit channel.",
+      "level": "medium",
+      "confidence": 60,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write \u0027payload\u0027 to audit",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "payload",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "audit",
+              "type": "this"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write the literal \u0027payload\u0027 to the named channel \u0027audit\u0027. The previously registered BeforeWrite hook should trigger ApprovalGoal before this write.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %approvalCalled% is true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%approvalCalled%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "approvalCalled should be true",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition invariant: ensure %approvalCalled% is true after the BeforeWrite hook ran ApprovalGoal.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %auditCalled% is true",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%auditCalled%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "auditCalled should be true",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition invariant: ensure %auditCalled% is true after AuditLog ran.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Events/AddBeforeWrite/Start.test.goal",
+  "prPath": "/Events/AddBeforeWrite/.build/start.test.pr",
+  "hash": "250228302608030b2cc8604e82f3a26756f06db9ee4a41d8bb410a3993a832c0",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

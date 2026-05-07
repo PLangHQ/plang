@@ -59,7 +59,7 @@ public sealed class DefaultEvaluator : IEvaluator
             "EvaluationError")
         {
             Exception = ex,
-            FixSuggestion = $"Valid operators: {string.Join(", ", Operator.ValidValues)}"
+            FixSuggestion = $"Valid operators: {string.Join(", ", Operator.Choices(null))}"
         });
     }
 }

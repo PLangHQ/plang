@@ -184,37 +184,11 @@ public static class TypeConverter
                 return (null, convError);
         }
 
-        // IObject types — validated value types with string constructors
-        if (typeof(App.modules.IObject).IsAssignableFrom(targetType))
-        {
-            var strVal = value is string sv ? sv : value?.ToString();
-            if (strVal == null)
-                return (null, new Errors.Error(
-                    $"Cannot convert null to {targetType.Name}",
-                    "IObjectConversionFailed", 400));
-            var ctor = targetType.GetConstructor([typeof(string)]);
-            if (ctor == null)
-                return (null, new Errors.Error(
-                    $"{targetType.Name} has no string constructor",
-                    "IObjectConversionFailed", 400));
-            try
-            {
-                return (ctor.Invoke([strVal]), null);
-            }
-            catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-            {
-                var inner = ex.InnerException ?? ex;
-                var validValues = TypeMapping.GetValidValues(targetType);
-                return (null, new Errors.Error(
-                    inner.Message,
-                    "IObjectConversionFailed", 400)
-                    { FixSuggestion = validValues != null
-                        ? $"Valid values: {string.Join(", ", validValues)}"
-                        : null });
-            }
-        }
-
-        // Types with a constructor that accepts a single string (may have optional params)
+        // Types with a constructor that accepts a single string (may have optional params).
+        // [Choices]-bearing wrapper types like Operator land here — their string ctor
+        // validates the chosen name against the type's own registry. Stateful runtime
+        // types like Actor have no usable construct-from-string path; the validator
+        // short-circuits via Choices membership before reaching TryConvertTo.
         if (value is string ctorStr)
         {
             var ctor = targetType.GetConstructors()

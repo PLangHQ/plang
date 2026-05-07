@@ -1,0 +1,120 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set output channel as OutputGoal",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "channel.set replaces the role channel with a Goal-backed channel \u2014 writes\nto output now run OutputGoal, which sets a flag we can assert.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Role",
+              "value": 1,
+              "type": "role"
+            },
+            {
+              "name": "Actor",
+              "value": "%__actor__%",
+              "type": "variable"
+            },
+            {
+              "name": "Goal",
+              "value": "OutputGoal",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set the role output channel to be backed by the goal OutputGoal so that writing to output triggers that goal. This uses channel.set with Role=Output and Goal=OutputGoal.",
+      "level": "high",
+      "confidence": 70,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write \u0027hello\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hello",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write the literal string \u0027hello\u0027 to the actor\u0027s output channel using output.write.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %outputGoalCalled% is true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isTrue",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%outputGoalCalled%",
+              "type": "bool"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %outputGoalCalled% to be true after writing to output.",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition invariant: assert that the flag %outputGoalCalled% is true after the write.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Set/ReplaceOutputWithGoal/Start.test.goal",
+  "prPath": "/Set/ReplaceOutputWithGoal/.build/start.test.pr",
+  "hash": "a7102eb3d0575cfeb95a15c75f73a32dfa23ff3b75f6cd7b8268da093ce69016",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

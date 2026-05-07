@@ -1,0 +1,120 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set system output channel as SystemOutputGoal",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "channel.set targeting System rebinds System\u0027s output, not User\u0027s.\nDefault context actor is User; writing \u0027u-msg\u0027 must NOT trigger SystemOutputGoal.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Role",
+              "value": 1,
+              "type": "role"
+            },
+            {
+              "name": "Actor",
+              "value": "System",
+              "type": "variable"
+            },
+            {
+              "name": "Goal",
+              "value": "SystemOutputGoal",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Rebind the role output channel for the System actor to a goal-backed channel named SystemOutputGoal. This ensures only System\u0027s output is redirected, not User\u0027s.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "write \u0027u-msg\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "u-msg",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Write \u0027u-msg\u0027 to the current actor\u0027s output channel. This should not trigger the SystemOutputGoal because the actor is User by default.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %systemOutputCalled% is null",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%systemOutputCalled%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "SystemOutputGoal must not be called when writing as User",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition invariant: systemOutputCalled must be null (SystemOutputGoal must not have been invoked when writing as User).",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Set/ExplicitActor/Start.test.goal",
+  "prPath": "/Set/ExplicitActor/.build/start.test.pr",
+  "hash": "431aeb62b1a6d9665f74929d7ec115eae5eb4699e308797d403d7b1cf670ac0e",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

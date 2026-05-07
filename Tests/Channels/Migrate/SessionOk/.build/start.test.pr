@@ -1,0 +1,209 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %targetIdentity% = \u0027peer\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "channel.migrate on a Session-shaped channel (Goal-backed) returns a\nMigrationEnvelope carrying name, role, direction, config snapshot.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%targetIdentity%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "peer",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Assign the target identity name into %targetIdentity% for later use in channel.migrate.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "add channel \u0022chat\u0022 call ChatGoal",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "channel",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "chat",
+              "type": "string"
+            },
+            {
+              "name": "Actor",
+              "value": "%system%",
+              "type": "variable"
+            },
+            {
+              "name": "Goal",
+              "value": "ChatGoal",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Register a new custom-named channel backed by the goal ChatGoal for the system actor. This matches the known mapping.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "migrate channel \u0022chat\u0022 to %targetIdentity%, write to %envelope%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "channel",
+          "action": "migrate",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "chat",
+              "type": "string"
+            },
+            {
+              "name": "Target",
+              "value": "%targetIdentity%",
+              "type": "variable"
+            },
+            {
+              "name": "Actor",
+              "value": "%envelope%",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Migrate the registered channel \u0027chat\u0027 to the target identity. The envelope is written to %envelope%.",
+      "level": "medium",
+      "confidence": 55,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %envelope% is not null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%envelope%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "envelope must not be null",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: ensure %envelope% is not null/empty.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %envelope.Name% equals \u0027chat\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "chat",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%envelope.Name%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "envelope.Name must equal \u0027chat\u0027",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: ensure envelope.Name equals \u0027chat\u0027.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Migrate/SessionOk/Start.test.goal",
+  "prPath": "/Migrate/SessionOk/.build/start.test.pr",
+  "hash": "8d8afc611be0d9248b1c707c9a35e52ee2f9b75cd137e609ed0b81b87acf7df0",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

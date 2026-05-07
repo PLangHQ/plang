@@ -1,0 +1,198 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "add channel \u0022logger\u0022 call Logger",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "channel.remove unregisters a custom-named channel \u2014 subsequent write to it errors.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "logger",
+              "type": "string"
+            },
+            {
+              "name": "Actor",
+              "value": "system",
+              "type": "variable"
+            },
+            {
+              "name": "Goal",
+              "value": "Logger",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Register a new custom-named channel \u0027logger\u0027 backed by the goal Logger. This is required before it can be written to.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "remove channel \u0022logger\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "channel",
+          "action": "remove",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "logger",
+              "type": "string"
+            },
+            {
+              "name": "Actor",
+              "value": "system",
+              "type": "variable"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Remove the custom-named channel \u0027logger\u0027. Subsequent writes to it should error.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "write \u0027hi\u0027 to logger, on error set %writeFailed% = true",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "hi",
+              "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "logger",
+              "type": "this"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%writeFailed%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": true,
+                          "type": "bool"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u003Caction\u003E"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Attempt to write \u0027hi\u0027 to the removed channel \u0027logger\u0027. On error, set %writeFailed% = true.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %writeFailed% is true",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%writeFailed%",
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: the write to the removed channel must have failed, so %writeFailed% should be true.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Remove/Custom/Start.test.goal",
+  "prPath": "/Remove/Custom/.build/start.test.pr",
+  "hash": "926d2aa298a9e357e771cb36e8471593bd28696696f79b8db1fcfd0b56da208b",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

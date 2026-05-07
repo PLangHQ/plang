@@ -73,9 +73,9 @@ public class Stage7_AppServicesTests
     }
 
     [Test]
-    public async Task ActorValidValues_DropsToUserAndSystem()
+    public async Task ActorChoices_DropsToUserAndSystem()
     {
-        var values = global::App.Actor.@this.ValidValues;
+        var values = global::App.Actor.@this.Choices(null);
         await Assert.That(values).Contains("user");
         await Assert.That(values).Contains("system");
         await Assert.That(values).DoesNotContain("service");
