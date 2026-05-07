@@ -2,7 +2,9 @@
 
 **Scope:** independent audit on the state at `38f9d153` (coder v8 + tester v7 PASS + codeanalyzer v4 PASS). No security pass has run on this branch — the auditor here also lifts the wire-surface concerns that would normally be a security input. Re-walks the new channel architecture, the `Variables.Calls` overlay, and the Stage 9 migration stub.
 
-**Verdict: PASS with conditions.** All prior codeanalyzer findings (F1/F4/F5/F6 + B1/L1) confirmed closed by independent reading. Five new findings (1 High latent, 1 Medium, 1 Low, 2 Notes) — none block the merge for the stated stub scope, but **A1 and A2 must be addressed before any cross-device receive-side ships**, and **A3 is a real Ask bug that should be fixed pre-merge**.
+**Verdict: FAIL.** Five new findings; A1 (doc lies about signature coverage) and A3 (real `AskCore` bug) need fix before merge. All prior codeanalyzer findings (F1/F4/F5/F6 + B1/L1) confirmed closed by independent reading. A2 / A4 / A5 are deferred to their downstream feature work and don't block this merge.
+
+**Next bot: coder.** Two pre-merge items (A1 + A3); after those land, re-run auditor for the close-out pass.
 
 Baseline rebuilt from clean: C# 2762/2762, PLang 201/201.
 
@@ -202,7 +204,14 @@ No new cross-file lock targets. No "allocate-here / mutate-there / clean-up-else
 | A4 — `Variables.Set` dot-path bypasses `Calls.Current` | Note | ✅ | Defer to parallel-foreach. Add inline comment. |
 | A5 — `PlangDataSerializer` no size/depth caps | Note | ✅ | Bundle with Stage 9 transport. |
 
-`pass` — branch is mergeable on the auditor's gate. Stage 9 is explicitly a stub; the produce-side ships but no transport consumes envelopes off-wire today. Recommend the A1 doc fix and A3 one-liner pre-merge; A2 and A4 belong with the work that lands the actual fork/transport features.
+`fail` — A1 + A3 are pre-merge work. Stage 9 stub status doesn't excuse the doc/code mismatch on `Signature` (A1) or the `AskCore` regression that F5 missed (A3). Once coder addresses both, re-run auditor for the close-out PASS.
+
+**Next bot: coder.** Scope:
+- A1 — either expand `ComputeSignature` to include `Config` + `Payload`, or `[Obsolete]` `VerifyEnvelope` and rewrite the `Signature.Bytes` xmldoc to match what's actually hashed.
+- A3 — one-liner in `Stream/this.cs:115-119`: `using var reader = new StreamReader(Stream, ResolveEncoding(), detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);` — covers both the missing `using` and the encoding gap.
+- Add a regression test for A3 (round-trip a non-UTF-8 line via Ask on a memory channel; assert input bytes aren't dropped across two consecutive Asks).
+
+Out of scope for this coder pass (logged, deferred): A2 (gate `migrate`, by-value Snapshot — bundle with transport), A4 (dot-path overlay routing — bundle with parallel-foreach), A5 (size/depth caps — bundle with Stage 9 transport).
 
 ---
 

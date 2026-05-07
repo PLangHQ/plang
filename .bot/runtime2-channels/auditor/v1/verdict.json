@@ -2,7 +2,17 @@
   "branch": "runtime2-channels",
   "bot": "auditor",
   "version": "v1",
-  "verdict": "pass",
+  "verdict": "fail",
+  "next_bot": "coder",
+  "next_scope": [
+    "A1 — fix MigrationEnvelope signature OR rewrite Signature.Bytes xmldoc + [Obsolete] VerifyEnvelope",
+    "A3 — Stream.AskCore: using + ResolveEncoding (one-liner) + regression test"
+  ],
+  "deferred_out_of_scope": [
+    "A2 — gate migrate / by-value Snapshot — bundle with Stage 9 transport",
+    "A4 — Variables.Set dot-path overlay routing — bundle with parallel-foreach",
+    "A5 — PlangDataSerializer size/depth caps — bundle with Stage 9 transport"
+  ],
   "reviewed_state": "38f9d153",
   "baseline": {
     "csharp": "2762/2762",

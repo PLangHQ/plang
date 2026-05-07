@@ -923,9 +923,9 @@
         }
       ],
       "after": {
-        "status": "PASS with conditions — 5 findings (1 High latent, 1 Medium, 1 Low real bug, 2 Notes). All prior codeanalyzer findings confirmed closed.",
-        "health": "ok",
-        "notes": "A1: MigrationEnvelope.Signature doesn't cover Payload/Config; doc claims it does. A2: migrate exposes Variables snapshot to user code, no permission, by-ref. A3: Stream.AskCore leaks StreamReader + ignores Encoding (F5 missed AskCore). A4: Variables.Set dot-path bypasses Calls overlay. A5: PlangDataSerializer no size/depth caps (S-F3 carry-over). Recommend A1 doc fix + A3 one-liner pre-merge; A2/A4/A5 belong with their respective downstream work."
+        "status": "FAIL — 5 findings; A1 (doc/code mismatch on signature coverage) + A3 (real AskCore bug, F5 regression site) are pre-merge work. All prior codeanalyzer findings confirmed closed.",
+        "health": "fail",
+        "notes": "Next bot: coder. Pre-merge scope: A1 (fix MigrationEnvelope signature OR rewrite xmldoc + [Obsolete] VerifyEnvelope), A3 (Stream.AskCore: using + ResolveEncoding one-liner + regression test). Deferred: A2 (gate migrate / by-value Snapshot — bundle with transport), A4 (dot-path overlay — bundle with parallel-foreach), A5 (size/depth caps — bundle with transport)."
       }
     }
   ]
