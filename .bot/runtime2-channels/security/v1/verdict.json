@@ -39,5 +39,7 @@
     "PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs",
     "PLang/App/Channels/Serializers/SensitivePropertyFilter.cs",
     "PLang/App/Data/this.Envelope.cs"
-  ]
+  ],
+  "next_bot": "auditor",
+  "next_bot_reason": "Independent re-verification of F1 (Stream Buffer cap) and F2 (MigrationEnvelope misleading-signature) before any code change lands — same security→auditor→coder pattern used on runtime2-callback. Skip auditor and go straight to coder if the F2 cleanup (delete VerifyEnvelope, rename inner field to IntegrityHash, drop identity fields) feels uncontroversial."
 }

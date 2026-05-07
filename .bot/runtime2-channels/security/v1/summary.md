@@ -305,3 +305,20 @@ cross-device transport branch *if and only if* a prominent comment at
 trust gate and `VerifyEnvelope` must not be relied upon. Cleanest is to
 delete `VerifyEnvelope` and rename the inner field to `IntegrityHash` now,
 while no caller exists.
+
+## Next bot
+
+**auditor** — independent re-verification of F1 and F2 before any code
+change lands. Same security→auditor→coder pattern used on
+runtime2-callback. After auditor passes, hand to **coder** to land:
+
+1. F1: enforce `Channel.Buffer` in `Channel.Stream.ReadAllBytesAsync` via
+   chunked read with running-total cap (small, local fix).
+2. F2: delete `VerifyEnvelope`, rename inner `MigrationEnvelope.Signature`
+   → `IntegrityHash`, drop `IdentityName` / `PublicKey` fields. Zero
+   callers exist today, so this is a near-zero-risk cleanup.
+
+If both fixes feel uncontroversial, skipping auditor and going straight to
+coder is acceptable — F2's misleading API surface is the kind of fix that
+is *safer to land now* (while no caller has gated trust on it) than after
+merge.

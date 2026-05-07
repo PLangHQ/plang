@@ -120,5 +120,7 @@
     "PLang/App/Data/this.Envelope.cs",
     "PLang/App/Utils/Json.cs"
   ],
-  "next_step": "Branch is ready to merge. F1 should land before any non-stdin Stream channel use ships. F2 cleanest fix (delete VerifyEnvelope, rename inner field) can land now while no callers exist."
+  "next_step": "Branch is ready to merge. F1 should land before any non-stdin Stream channel use ships. F2 cleanest fix (delete VerifyEnvelope, rename inner field) can land now while no callers exist.",
+  "next_bot": "auditor",
+  "next_bot_reason": "Independent re-verification of F1 (Stream Buffer cap) and F2 (MigrationEnvelope misleading-signature) before any code change lands — same security→auditor→coder pattern used on runtime2-callback. After auditor passes, hand to coder for the F1 + F2 fixes. Fast-path: skip auditor and go straight to coder if the F2 cleanup feels uncontroversial — landing it now while no caller exists is safer than after merge."
 }

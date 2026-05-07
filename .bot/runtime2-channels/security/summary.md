@@ -25,3 +25,11 @@ problem: PKI-shape fields + keyless hash + doc/impl mismatch ("over Name,
 Direction, Config, Payload" but actually only `name|direction|identity`).
 Cleanest fix today is to delete `VerifyEnvelope` and rename the inner
 field to `IntegrityHash` before any caller arrives.
+
+## Next bot
+
+**auditor** — independent re-verification of F1 and F2 before any code
+change lands. After auditor passes, hand to **coder** for the F1 + F2
+fixes (small, local). See `v1/summary.md` "Next bot" for details and the
+fast-path option (skip auditor → straight to coder for the F2 cleanup
+while no caller exists).
