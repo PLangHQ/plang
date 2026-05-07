@@ -1,0 +1,85 @@
+{
+  "plan.md": [
+    {
+      "id": "8604fac121",
+      "line": 11,
+      "text": "lets keep it as one branch",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T12:29:56"
+    },
+    {
+      "id": "8d206af386",
+      "line": 11,
+      "text": "Done across the four spots: dropped the per-stage branch model, rewrote the Branch strategy section to single-branch sequential commits merging into runtime2 at the end, removed the branch-trunk and branch-lifetime questions from Open questions, and updated summary.md. Same change in spirit for all four comments.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "8604fac121",
+      "ts": "2026-05-07T12:33:29"
+    },
+    {
+      "id": "ff786639b5",
+      "line": 20,
+      "text": "I think this can be one branch, just do it in stages carefully, if it gets out of hand, I can always change mind and split it up into more branches later",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T12:01:51"
+    },
+    {
+      "id": "d1a0b28c63",
+      "line": 63,
+      "text": "jebb, one branch, runtime2-cleanup is fine",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T12:30:16"
+    },
+    {
+      "id": "8b4fd30ae7",
+      "line": 86,
+      "text": "it goes into runtime2 after everything",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T12:30:35"
+    },
+    {
+      "id": "e3178f0fda",
+      "line": 88,
+      "text": "not sure, you choose.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T12:44:07"
+    },
+    {
+      "id": "f8eb0e3046",
+      "line": 88,
+      "text": "Picked serializers-stage-6-finish as stage 1 — closes the channels-Stage-6 drift before any other stage touches Channels. keepalive-collection moves to stage 3 (still in Tier 1, still teaches the pattern, just second). Settled in plan.md.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "e3178f0fda",
+      "ts": "2026-05-07T12:51:12"
+    },
+    {
+      "id": "88f8977703",
+      "line": 89,
+      "text": "dont care, which ever",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T12:44:41"
+    },
+    {
+      "id": "6e7a115461",
+      "line": 89,
+      "text": "Default one stage per session, flexible — Tier 1 stages may double up if appetite holds, Tier 3 stages (App.Run especially) probably need multi-session. Decide each one when carving its stage brief, no rigid cadence.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "88f8977703",
+      "ts": "2026-05-07T12:51:12"
+    }
+  ]
+}
