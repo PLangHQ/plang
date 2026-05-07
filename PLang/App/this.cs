@@ -563,8 +563,20 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
                     return Data.@this.FromError(new global::App.Errors.ServiceError(
                         $"No app found at {AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
-                Console.Write($"No app found at {AbsolutePath}. Create new app? (y/n): ");
-                var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
+                // Channels are wired by the entry point (PlangConsole) before Run.
+                // The User actor's "output"/"input" channels wrap stdout/stdin — write
+                // the prompt to output, then ReadLine off the input stream. Two-call
+                // because the default channels are direction-split (output write-only,
+                // input read-only) so Stream.AskCore can't bridge them.
+                var outputChannel = User.Channels.Get(global::App.Channels.@this.Output) as global::App.Channels.Channel.Stream.@this;
+                var inputChannel = User.Channels.Get(global::App.Channels.@this.Input) as global::App.Channels.Channel.Stream.@this;
+                if (outputChannel == null || inputChannel == null)
+                    return Data.@this.FromError(new global::App.Errors.ServiceError(
+                        "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
+
+                await outputChannel.WriteTextAsync($"No app found at {AbsolutePath}. Create new app? (y/n): ");
+                using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
+                var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
                 if (answer != "y" && answer != "yes")
                     return Data.@this.FromError(new global::App.Errors.ServiceError(
                         "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));

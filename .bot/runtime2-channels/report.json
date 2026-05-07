@@ -1070,6 +1070,73 @@
         "plang_tests": "203 pass + 6 deliberate fixture fails",
         "notes": "Three notes for docs/future-stage9 architect: cool.md migration sketch should label as future, A2 carry-forward intent attaches to Stage 9 rebuild, deletion was structurally right call."
       }
+    },
+    {
+      "id": "ac14304e-c80c-4dc6-8f0a-ebb06492ddfd",
+      "bot": "coder",
+      "timestamp_start": "2026-05-07T16:44:11Z",
+      "intent": "Purge production Console.* writes; route through channels (debug channel for diagnostics, output/input for App build prompt).",
+      "before": {
+        "assumptions": "Debug.Write exists and routes to debug-or-error channel. Default channels (output/error/input) are wired by entry point. Channel.Stream exposes WriteTextAsync + raw Stream so the App ask can compose output-write + input-readline.",
+        "risk": "AskCore is bidirectional-stream-only \u2014 does not work across the split console output/input pair. Adding a cross-channel Ask helper would be speculative for one caller. Plan is two-call: WriteTextAsync on output, StreamReader.ReadLineAsync on input.Stream."
+      },
+      "plan": ".bot/runtime2-channels/coder/v10/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Debug/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Routed 5 internal Console.Error sites through Debug.Write (debug-channel surface): LogMutation, LogEvent, EmitLlmBlock file-fail fallback, WriteFiltered, AfterGoalHandler. Static handlers (BeforeStep/AfterStep/BeforeAction/AfterAction/AfterGoal) became async to await WriteFiltered cleanly. Sync OnCreate/OnDelete/OnBeforeRequest event lambdas use fire-and-forget _ = Write(...)."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/builder/providers/IBuilderProvider.cs",
+            "PLang/App/modules/builder/promoteGroups.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Builder progress messages (Saved {goal}, Group promotion ...) routed to CurrentActor.Channels.WriteTextAsync(\"output\"). PromoteGroups handler became async to support the await; interface and the Run() shim updated to match."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "LLM validation chatter (retry messages) routed to CurrentActor.Channels.WriteTextAsync(\"output\"). Decision (with Ingi): not debug-gated \u2014 these are regular program output, must show without --debug."
+        },
+        {
+          "paths": [
+            "PLang/App/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Replaced Console.Write/ReadLine for the build-mode \"Create new app? (y/n)\" prompt with User.Channels output WriteTextAsync + StreamReader.ReadLineAsync on input.Stream. Two-call pattern because default channels are direction-split (Stream.AskCore is bidirectional-only)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Testing/DebugSmokeTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Replaced Console.SetError stderr capture with a memory channel registered as \"error\" on System actor. The old capture model is incompatible with channels (channels hold Stream references captured at registration time, not the redirectable Console.Error TextWriter)."
+        }
+      ],
+      "after": {
+        "status": "done \u2014 both test suites green",
+        "health": "C# 2755/2755 pass, plang 199/199 pass; 0 production Console.* writes remaining (only Console.IsInputRedirected query at App/this.cs:562 and the boundary at PlangConsole/Program.cs:26 which Ingi explicitly chose to leave).",
+        "notes": "No new tests added \u2014 coverage relies on existing DebugSmokeTests (now exercising the channel path) plus the broader suite (any test running the builder or LLM path indirectly exercises new routing). PlangConsole/Program.cs:26 left as boundary fallback per Ingi.",
+        "next_bot": "codeanalyzer"
+      },
+      "timestamp_end": "2026-05-07T16:54:43Z"
     }
   ]
 }

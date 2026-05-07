@@ -1,78 +1,76 @@
-# Coder summary — runtime2-channels
+# coder summary — runtime2-channels
 
-## Latest version: v9 — auditor v1 close-out + drop channel migration
+## Version
+v10 — Console.* purge: route production writes through channels.
 
-### What this is
+## What this is
 
-Auditor v1 returned FAIL with A1 (misleading `MigrationEnvelope.Signature`
-that lied about coverage) and A3 (`Stream.AskCore` leaks reader + ignores
-configured Encoding) as pre-merge blockers; A2/A4/A5 were deferred to
-downstream feature work.
+The branch is "runtime2-channels" — channels are the wired primitive for actor I/O, with the entire point being **redirectability**: a user can re-register the `output`/`error`/`debug` channel to a file, an in-memory buffer, an HTTP response — anything. But several production sites still wrote directly to `Console.WriteLine` / `Console.Error.WriteLine`, bypassing that surface entirely.
 
-A1's design discussion led Ingi to remove the entire channel-migration
-surface from this branch — the `cool.md` sketch is staying as a future
-idea, but the half-built Stage 9 stub (`Channel.Migrate` +
-`channel.migrate` action + `MigrationEnvelope` + `Signature` struct +
-`FromMigration` + tests) is gone. The migration concept will be designed
-properly when an actual cross-device transport need lands; Stage 9's stub
-was code without a consumer.
+The most ironic offender was the Debug class itself: it exposed `Debug.Write(...)` (which routes through `System.Channels.Resolve("debug") ?? Resolve("error")`) and *its own docstring* said "use this instead of Console.WriteLine". Then 5 of its own internal sites wrote straight to `Console.Error`.
 
-A3 is a small one-line fix in `Stream.AskCore` plus a regression test.
+This pass purges all production `Console.*` writes. Remaining `Console.*` references in production are:
+- `Console.IsInputRedirected` at `PLang/App/this.cs:562` — a **query** (am I in a TTY?), not a write. Stays.
+- `Console.Error.WriteLine` at `PlangConsole/Program.cs:26` — process boundary; if `executor.Run` itself fails to wire channels, this is the last-resort error sink. Ingi explicitly chose to leave it.
 
-### What was done in v9
+## What was done
 
-- **Deleted** the entire channel-migration surface across:
-  - `PLang/App/Channels/Channel/MigrationEnvelope.cs`
-  - `PLang/App/Channels/Channel/this.cs` (Migrate / FromMigration / SignEmpty
-    / ComputeSignature / VerifyEnvelope / SnapshotConfig)
-  - `PLang/App/Channels/Channel/Stream/this.cs` (Migrate override)
-  - `PLang/App/Channels/Channel/Goal/this.cs` (Migrate override + `GoalMigrationPayload`)
-  - `PLang/App/modules/channel/migrate.cs` (action handler)
-  - `PLang.Tests/App/ChannelsTests/Stage9_ChannelMigrateTests.cs`
-  - `Tests/Channels/Migrate/{SessionOk,MessageError}/` (plang `.test.goal` files)
-  - Module description on `PLang/App/modules/channel/set.cs` updated.
-- **A3 fix** at `PLang/App/Channels/Channel/Stream/this.cs:115-120` —
-  `using var reader = new StreamReader(Stream, ResolveEncoding(),
-  detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen:
-  true);` — closes the StreamReader leak and routes through the channel's
-  configured Encoding.
-- **A3 regression test** added at
-  `PLang.Tests/App/ChannelsTests/Stage2_StreamChannelTests.cs` —
-  `StreamChannel_Ask_HonoursConfiguredEncoding` writes `0xE9 0x0A` (invalid
-  UTF-8 prefix; valid `é\n` in iso-8859-1) and asserts `AskCore` returns
-  `"é"` when Encoding is `iso-8859-1`. Without the fix the test fails
-  (UTF-8 default produces `U+FFFD`).
+### 1. Debug class internal bypass (`PLang/App/Debug/this.cs`)
 
-### Code example
+5 sites (lines 301, 310, 414, 521, 527) routed through `Debug.Write` (debug channel, falls back to error). The static lifecycle handlers (`BeforeStepHandler`, `AfterStepHandler`, `BeforeActionHandler`, `AfterActionHandler`, `AfterGoalHandler`) became `async Task<Data.@this>` so they could `await WriteFiltered(...)`. `WriteFiltered` and `WriteLlmBlock` returned `Task`. Sync event-handler sites (`LogMutation` / `LogEvent` subscribed as `Action<Data>`, the LLM file-write fallback inside an OnBeforeRequest lambda) use fire-and-forget `_ = Write(...)` — Console.Error was non-awaitable too, so ordering guarantees are unchanged.
 
-A3 fix shape:
+### 2. Builder progress (`DefaultBuilderProvider.cs` + interface)
+
+`Saved {goal} (1.2s)` and `Group promotion: N step(s) ...` were `Console.WriteLine` — now `await app.CurrentActor.Channels.WriteTextAsync("output", ...)`. Decision (after surfacing the question to Ingi): **not** routed through `Debug.Write`, because that gate (`if (!IsEnabled) return Task.CompletedTask`) would silence them whenever `--debug` is off — which is the default. These are user-facing build chatter, not diagnostic output.
+
+`PromoteGroups` handler had to flip from `Data.@this` to `async Task<Data.@this>`. Updated `IBuilderProvider.PromoteGroups` and the `promoteGroups.Run()` shim to match.
+
+### 3. LLM validation chatter (`OpenAiProvider.cs`)
+
+Same call: `await app.CurrentActor.Channels.WriteTextAsync("output", ...)`. Same reasoning — regular user-facing output, not debug-gated.
+
+### 4. App build prompt (`PLang/App/this.cs`)
+
+The interesting case. Default channels are direction-split: `output` is write-only stdout, `input` is read-only stdin, `error` is write-only stderr. `Channel.Stream.AskCore` is bidirectional-stream-only — it writes the prompt to its own stream then reads, which works for memory/HTTP-session channels but not for the split console pair.
+
+Resolved with a two-call pattern:
 
 ```csharp
-// Channel/Stream/this.cs — AskCore
-using var reader = new StreamReader(Stream, ResolveEncoding(),
-    detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
-var line = await reader.ReadLineAsync(timeoutCts.Token);
-return Data.@this.Ok(line ?? string.Empty);
+var outputChannel = User.Channels.Get("output") as Channel.Stream.@this;
+var inputChannel  = User.Channels.Get("input")  as Channel.Stream.@this;
+await outputChannel.WriteTextAsync($"No app found at ... Create new app? (y/n): ");
+using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
+var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
 ```
 
-### Test results
+`Console.IsInputRedirected` (`is stdin a TTY?`) stays — that's the gate for *whether* to prompt at all, not *how*. No new API added (e.g. cross-channel `AskAsync`) — only one caller right now; if a second appears, that's the time to extract.
 
-- C#: 2755/2755 (was 2762; ‑7 net = 8 Stage 9 tests deleted + 1 Ask test added).
-- PLang: 203 pass + 6 deliberate fixture fails (was 205; ‑2 net = 2 migrate
-  test goals deleted).
+### 5. Test fixture update (`DebugSmokeTests.cs`)
 
-### Hand-off
+`Console.SetError` capture was incompatible with channels: the channel is registered with `Console.OpenStandardError()` *at boot time*, capturing that Stream reference. Re-pointing `Console.Error` later doesn't affect the captured Stream. Replaced with a memory channel registered as `"error"` on the System actor — that's the redirection model channels exist to provide.
 
-Auditor close-out next. A1 is satisfied by the wider deletion; A3 is fixed
-with a regression test. A2/A4/A5 remain deferred per the original
-auditor verdict — A2 is now moot (no `migrate` action exposes a Variables
-snapshot, because no `migrate` action).
+## Code example
 
-### Prior versions
+```csharp
+// Before: bypasses channels, ignores --debug routing and output redirection
+Console.WriteLine($"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s)");
 
-v1–v8 history is in commits `30ec543a` → `38f9d153` and the per-version
-`.bot/runtime2-channels/coder/v<N>/` directories. Headlines: stages 8+9
-shipped (v1), `[Choices]` standardisation (v2), channel architecture
-cleanup (v3, v3.1, v3.2), codeanalyzer fixes across v5–v7, tester v7
-probe tests (v8). v9 (this version) closes auditor v1 by deleting Stage 9
-entirely.
+// After: routed through the actor's output channel — redirectable,
+// captured by tests via memory channels, free to be re-registered to a file.
+await app.CurrentActor.Channels.WriteTextAsync(
+    global::App.Channels.@this.Output,
+    $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
+```
+
+For the Debug class internals it's the same shape but through the gated `Debug.Write` (debug channel surface), since those sites are conceptually diagnostic and *should* go silent without `--debug`.
+
+## Tests
+
+- C# (`dotnet run --project PLang.Tests`): 2755/2755 ✅
+- PLang (`cd Tests && plang --test`): 199/199 ✅
+
+Baseline matches; no regressions. The single test that broke (`DebugSmokeTests`) broke for exactly the reason the channels work was needed — its capture mechanism was the old bypass model. Now exercises the real channel path.
+
+## Next bot
+
+**codeanalyzer** — review for OBP / channel-discipline issues (e.g. is fire-and-forget acceptable for the Debug event-handler sites, or should those event lambdas return Task?), and any simplification opportunities. No new modules or actions added — `builder-handoff.md` not needed.

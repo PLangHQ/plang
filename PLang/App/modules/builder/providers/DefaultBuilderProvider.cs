@@ -189,7 +189,8 @@ public class DefaultBuilderProvider : IBuilderProvider
         var saveResult = await app.RunAction(saveAction, context);
 
         var elapsed = _buildTimer.Elapsed;
-        Console.WriteLine($"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s)");
+        await app.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output,
+            $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
         _buildTimer.Restart();
 
         return saveResult.Success ? Data.@this.Ok(true) : saveResult;
@@ -468,7 +469,7 @@ public class DefaultBuilderProvider : IBuilderProvider
 
     // --- Promote Groups ---
 
-    public Data.@this PromoteGroups(promoteGroups action)
+    public async Task<Data.@this> PromoteGroups(promoteGroups action)
     {
 
         var steps = ToStepList(action.Steps.Value);
@@ -516,7 +517,8 @@ public class DefaultBuilderProvider : IBuilderProvider
         }
 
         if (promoted > 0)
-            Console.WriteLine($"  Group promotion: {promoted} step(s) promoted to detail pass");
+            await action.Context.App.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output,
+                $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
 
         return Data.@this.Ok(action.Steps.Value);
     }

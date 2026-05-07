@@ -20,5 +20,5 @@ public partial class promoteGroups : IContext
     [Provider]
     public partial IBuilderProvider Builder { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Builder.PromoteGroups(this));
+    public Task<Data.@this> Run() => Builder.PromoteGroups(this);
 }
