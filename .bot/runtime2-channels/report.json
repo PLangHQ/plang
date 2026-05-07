@@ -1137,6 +1137,50 @@
         "next_bot": "codeanalyzer"
       },
       "timestamp_end": "2026-05-07T16:54:43Z"
+    },
+    {
+      "id": "d64b275b-ce59-4a9e-adf2-b291ee111320",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-07T17:10:05Z",
+      "intent": "v5: review coder v10 Console.* purge \u2014 5 Debug sites + builder/llm progress + App build prompt routed through channels",
+      "before": {
+        "assumptions": "Auditor v2 PASSED on v9 (channel/migrate deletion + Stream.AskCore). Coder v10 then took up Console.* purge per branch theme (channels are wired primitive). Need to verify: fire-and-forget patterns are sound, channel choice (output vs debug) matches intent, no resource leaks in StreamReader path.",
+        "risk": "medium \u2014 touches Debug instrumentation hot path, builder progress UX, and interactive prompt boot path"
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-channels/codeanalyzer/v5/report.md",
+            ".bot/runtime2-channels/codeanalyzer/v5/verdict.json",
+            ".bot/runtime2-channels/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v5 codeanalyzer pass on coder v10 Console.* purge. PASS with 3 minor notes (no bugs, no OBP violations). Reviewed Debug/this.cs (5 sites + handler async conversions), DefaultBuilderProvider.cs (2 sites + IBuilderProvider sig), OpenAiProvider.cs (2 sites), App/this.cs (interactive build prompt via channels). Behavioral parity preserved with old Console.* writes."
+        },
+        {
+          "paths": [
+            "PLang/App/Debug/this.cs",
+            "PLang/App/this.cs",
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs",
+            "PLang/App/modules/llm/providers/OpenAiProvider.cs",
+            "PLang/App/Channels/this.cs",
+            "PLang/App/Channels/Channel/Stream/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "5-pass analysis. N1: App prompt bypasses Channels.WriteTextAsync helper for write side. N2: builder+LLM sites discard returned Data envelope. N3: v10 plan said route through Debug.Write, code uses Output channel \u2014 code's choice correct (build progress should not be debug-gated). Encoding inconsistency in App prompt StreamReader vs AskCore.ResolveEncoding noted but low-impact for y/n."
+        }
+      ],
+      "plan": ".bot/runtime2-channels/codeanalyzer/v5/report.md",
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "Branch theme upheld \u2014 every removed Console.* writes through a channel. Carry-over Channel.Events public-list shape smell (from v2) untouched by v10."
+      },
+      "timestamp_end": "2026-05-07T17:12:10Z"
     }
   ]
 }
