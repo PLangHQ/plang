@@ -603,10 +603,13 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 
         // Inject parameters — GetGoalAsync only injects when loading from file,
         // but goals found in memory (app.Goals.Get) need parameters too.
-        // Sequential calls share Variables on purpose (e.g. LoadUser leaks %user%
-        // for the caller to read). Concurrency boundaries — goal channels,
-        // parallel foreach, fire-and-forget — push their own Variables.Calls frame
-        // to isolate per-call bindings.
+        // Goal-call is *not* a fork: it stays in the caller's flow. Variables.Set
+        // is overlay-aware — if a fork operator above us (channel fire, parallel
+        // foreach iteration) pushed a Calls scope, these writes land in that
+        // scope; otherwise they go to the actor-shared dict. Either way,
+        // sequential goal.call shares state with its caller (LoadUser leak still
+        // works in plain top-of-flow code), and concurrent invocations are
+        // isolated by whatever forked them.
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
                 context.Variables.Set(param.Name, param);

@@ -56,14 +56,14 @@ public class @this : Session.@this
 
         var ctx = Actor.Context;
 
-        // Bind the inbound envelope as %!data% via a per-call AsyncLocal frame on
-        // Variables.Calls. The channel write site is the concurrency boundary —
-        // multiple flows can hit WriteAsync simultaneously, and each one gets its
-        // own frame so they don't race on a shared %!data% slot. Goal-body sets
-        // still write to actor-shared Variables (matching the LoadUser pattern),
-        // only the parameter binding is isolated.
-        var paramData = new Data.@this("!data", data.Value, data.Type);
-        await using var __ = ctx.Variables.Calls.Push(new[] { paramData });
+        // Channels are not a fork — `write out %x%` is just a function call from
+        // the user's POV, and the channel layer is the plumbing under it. Whatever
+        // upstream operator forked the flow (parallel foreach iteration, async
+        // call, listener accept-loop, etc.) has already pushed a Calls overlay,
+        // and AsyncLocal carries it down to here. Variables.Set("!data", ...)
+        // lands in that overlay if there is one, in the actor-shared dict
+        // otherwise — and either way subsequent goal-body sets behave the same.
+        ctx.Variables.Set("!data", new Data.@this("!data", data.Value, data.Type));
 
         try
         {

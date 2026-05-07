@@ -56,11 +56,12 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public IDictionary<string, object> Metadata { get; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Channel-event bindings (Stage 8). Same shape as Goal.Events / Step.Events;
-    /// fired by the WriteAsync / ReadAsync / Ask wrappers. Includes BeforeWrite /
-    /// AfterWrite / BeforeRead / AfterRead / OnAsk.
+    /// Channel-event bindings (Stage 8) with their lock discipline and recursion
+    /// guard encapsulated. Same shape spirit as Goal.Events / Step.Events.
+    /// Bindings fire from WriteAsync / ReadAsync / Ask: BeforeWrite, AfterWrite,
+    /// BeforeRead, AfterRead, OnAsk.
     /// </summary>
-    public List<global::App.Events.Lifecycle.Bindings.Binding.@this> Events { get; } = new();
+    public global::App.Channels.Channel.Events.@this Events { get; } = new();
 
     /// <summary>
     /// The actor this channel belongs to — set by the Channels collection on
@@ -72,11 +73,6 @@ public abstract class @this : IAsyncDisposable, IDisposable
 
     /// <summary>App backreference — kept for SignEmpty / general App access.</summary>
     public global::App.@this? App { get; internal set; }
-
-    // Recursion guard: AsyncLocal so concurrent writes don't interfere; per-binding
-    // Id keyed so a Before-handler that writes to the same channel doesn't
-    // re-trigger the same binding (architect's "_activeEventBindings").
-    private static readonly AsyncLocal<HashSet<string>?> _activeBindings = new();
 
     /// <summary>
     /// Whether reading is supported. Default tracks Direction + IsOpen; concretes can override.
@@ -174,10 +170,8 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// </summary>
     private IEnumerable<global::App.Events.Lifecycle.Bindings.Binding.@this> MatchingBindings(global::App.Events.EventType type)
     {
-        foreach (var b in Events)
-            if (b.Type == type
-                && (b.ChannelName == null || string.Equals(b.ChannelName, Name, StringComparison.OrdinalIgnoreCase)))
-                yield return b;
+        // Per-channel bindings (with their own lock + filter, owned by Events).
+        foreach (var b in Events.Match(type, Name)) yield return b;
 
         // Per-actor lifecycle events — where event.on writes its bindings.
         if (Actor != null)
@@ -199,10 +193,10 @@ public abstract class @this : IAsyncDisposable, IDisposable
 
     private async Task<Data.@this?> FireBefore(global::App.Events.EventType type, Data.@this data, Callback.AskCallback? ask)
     {
-        var active = _activeBindings.Value ??= new HashSet<string>();
         foreach (var binding in MatchingBindings(type))
         {
-            if (!active.Add(binding.Id)) continue;   // recursion guard
+            if (Events.IsActive(binding.Id)) continue;   // recursion guard
+            using var _ = Events.Enter(binding.Id);
             try
             {
                 var result = await InvokeChannelHandler(binding, data, ask);
@@ -214,20 +208,18 @@ public abstract class @this : IAsyncDisposable, IDisposable
                     $"Channel event handler for {type} on '{Name}' threw: {ex.Message}",
                     "ChannelEventAborted") { Exception = ex });
             }
-            finally { active.Remove(binding.Id); }
         }
         return null;
     }
 
     private async Task FireAfter(global::App.Events.EventType type, Data.@this data, Callback.AskCallback? ask)
     {
-        var active = _activeBindings.Value ??= new HashSet<string>();
         foreach (var binding in MatchingBindings(type))
         {
-            if (!active.Add(binding.Id)) continue;
+            if (Events.IsActive(binding.Id)) continue;
+            using var _ = Events.Enter(binding.Id);
             try { await InvokeChannelHandler(binding, data, ask); }
             catch { /* After-handler throws are suppressed — original outcome stands. */ }
-            finally { active.Remove(binding.Id); }
         }
     }
 
@@ -239,10 +231,11 @@ public abstract class @this : IAsyncDisposable, IDisposable
         // Bindings receive (context, action=null, result=data). The context comes
         // from the channel's owning Actor when the channel went through
         // Channels.Register; tests sometimes construct a channel directly without
-        // an Actor, in which case ctx is null. Handlers that need ctx (e.g. the
-        // one event.on installs to dispatch a goal) must guard for null
-        // themselves — the framework forwards whatever it has rather than
-        // silently swallowing the binding.
+        // an Actor. Most handlers don't read ctx (they capture what they need at
+        // registration), so we forward null rather than skip — handlers that *do*
+        // need ctx (notably the one event.on installs to dispatch a goal) can
+        // guard locally. The diagnostic surfaces the case so production paths
+        // can be spotted in --debug output.
         var ctx = Actor?.Context;
         if (ctx == null)
             _ = App?.Debug?.Write($"[Channel '{Name}'] binding {binding.Id} firing with no Actor — handlers receive null ctx");

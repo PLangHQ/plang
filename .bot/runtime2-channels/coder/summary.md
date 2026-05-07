@@ -1,158 +1,157 @@
-# coder — runtime2-channels
+# Coder summary — runtime2-channels
 
 ## Version
-v5 — codeanalyzer v1 fixes (response to FAIL verdict on the v3+v4 channel work).
 
-## What this is
+**v6** (current). v1–v5 history kept in this branch's report.json.
 
-Codeanalyzer v1 reviewed v3+v4 (channel architecture cleanup, event
-firing fix) and returned a FAIL verdict with six findings: two real
-bugs, one latent crash, one dead type, one silent encoding bug, one
-design gap. v5 closes all six.
+## What v6 is
 
-The non-trivial one is F2 (concurrent goal-channel writes racing on
-shared `Variables`). The fix grew into a new primitive (`Variables.Calls`,
-an AsyncLocal parameter scope) and a small architectural rule:
-**concurrency boundaries — not regular goal calls — push the scope.**
-Sequential goal calls keep today's leaky semantics (e.g. `LoadUser` setting
-`%user%` for the caller to read). Only fork sites isolate.
+Address codeanalyzer v2 (FAIL) on top of coder v5. Two of v5's "fixes" landed
+incorrectly (B1 and B2), and the wider design conversation with Ingi
+reframed the underlying model so future parallel work has a clean home.
 
-## What was done — fix-by-fix
+The prior model (v5) said: every `goal.call` boundary pushes a per-call
+parameter scope. That scope was a *read-only* overlay: parameter names
+shadowed underlying writes, and `set %x% = 2` inside the called goal was
+invisible to subsequent `get %x%` in the same goal — an unintuitive trap
+(L1 in codeanalyzer's report). It also didn't actually solve the race that
+motivated it: `RunGoalAsync(GoalCall)` was still injecting parameters into
+the actor-shared dict before falling through.
 
-**F1 — `Services` atomic Remove.** Replaced
-`ConcurrentBag<Service>` (no atomic Remove; the old drain-and-rebuild
-silently dropped services racing concurrent `New()`) with
-`ConcurrentDictionary<Guid, Service>`. `Service.Id` is the stable key.
-- Files: `PLang/App/Services/this.cs`,
-  `PLang/App/Services/Service/this.cs`.
-- Test: `Stage7_AppServicesTests.Services_ConcurrentNewAndRemove_NoServiceDropped`
-  — 200 concurrent New + half-dispose; asserts no survivor lost.
+The v6 model: **Push iff fork.** A fork is what *spawns concurrency* —
+parallel foreach iteration, future explicit async-call operator, future
+inbound-listener accept loop. Sequential `goal.call`, channel write,
+callback dispatch, and sequential foreach iter all pass through whatever
+flow they were called in. Inside a fork overlay, *every* `Variables.Set`
+is captured (not just parameter shadows) so siblings stay isolated.
+Reads cascade overlay → caller chain → actor dict. Communication out of
+a fork is via explicit return collection (`append to %results%`), not
+shared mutation.
 
-**F2 — `Variables.Calls` AsyncLocal scope, pushed at `GoalChannel.WriteAsync`.**
-The deepest fix. New types under `PLang/App/Variables/Calls/`:
-- `Calls.@this` — collection holding `AsyncLocal<Call?>`. Mirrors
-  `CallStack.@this` shape (Push returns `IAsyncDisposable`,
-  `RestoreCurrent` no-ops if `Current` already moved on).
-- `Call.@this` — one frame's parameter bindings as
-  `ImmutableDictionary<string, Data>`; walks `Caller` chain on lookup
-  so inner shadows outer.
+This dissolves L1 (sequential `goal.call` has no overlay → `set %x% = 2`
+hits actor dict → `get %x%` returns 2 immediately and after the goal
+returns), preserves the LoadUser leak pattern (called goal sets `%user%`
+and caller sees it), and gives parallel foreach a precise home for the
+moment it lands.
 
-`Variables.Get` and `Contains` consult `Calls.Current?.TryGet(name)`
-*before* the underlying dict — frame wins on reads. `Variables.Set`
-unchanged: writes always go to underlying. So inside a frame,
-`%!data%` reads from the frame and `set %lastMessage%` writes to the
-actor as before.
+## What was done
 
-`GoalChannel.InvokeGoal` pushes a frame around `RunGoalAsync` carrying
-`!data`. `RunGoalAsync(GoalCall)` itself does **not** push (sequential
-calls stay leaky on purpose).
+### B1 — Channel null-Actor handler
 
-Wider goal-body concurrency (e.g. `set %x%` racing across parallel
-branches) is logged in `Documentation/Runtime2/todos.md` as a
-follow-up; the design likely splits into `Variables.Calls`
-(parameter-only) and `Variables.Branches` (full read+write isolation)
-when parallel foreach lands.
+`PLang/App/Channels/Channel/this.cs` — codeanalyzer's prescribed fix
+(`return Data.Ok(null)` early when ctx is null) breaks the Stage 8
+channel-event tests, which construct channels without an Actor and rely
+on their handlers firing. Reverted to v5's "log diagnostic + forward
+null" shape; comment updated to make the contract explicit. The only
+production handler that *requires* ctx is the `event.on` goal-dispatch
+handler — it can guard locally.
 
-- Files: `PLang/App/Variables/Calls/{this.cs,Call/this.cs}`,
-  `PLang/App/Variables/this.cs` (Get/Contains/Calls property),
-  `PLang/App/Channels/Channel/Goal/this.cs` (use Push instead of
-  Variables.Set), `PLang/App/this.cs` (revert RunGoalAsync param
-  injection unchanged from baseline).
-- Tests: 10 new in `PLang.Tests/App/VariablesTests/CallsTests.cs`
-  covering nesting, dispose-order, Set-write-through,
-  AsyncLocal isolation across `Task.Run`, and the 200-task concurrent
-  push race.
+### B2 — Variables.Set overlay-aware + no Push at goal.call
 
-**F3 — `InvokeChannelHandler` null-Actor handling.** Removed the
-`ctx!` lie on `Actor?.Context!`. New behavior: pass `Actor?.Context`
-(possibly null) and emit a `Debug.Write` diagnostic. Handlers that need
-ctx must guard themselves; tests that construct channels in isolation
-without an Actor still work (their handlers ignore ctx).
-- File: `PLang/App/Channels/Channel/this.cs:234`.
+`PLang/App/Variables/this.cs` — `Set` now routes simple-name writes into
+`Calls.Current` if an overlay is active, else to the actor-shared dict.
+Inside an overlay, writes for a name that already lives in this overlay
+mutate in place; writes for new names mint a fresh local entry that
+shadows whatever was inherited via the Caller chain — never bleed up.
 
-**F4 — delete dead `App.Channels.Channel.EventContext`.** Type was
-declared, never constructed by the firing path. Stage 8 had one
-shape-test of it in isolation — deleted that test, fixed the comment
-and one test name that referenced "ViaEventContext".
-- Files: removed `PLang/App/Channels/Channel/EventContext.cs`;
-  edits in `PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs`.
+`PLang/App/Variables/Calls/Call/this.cs` — `Call.@this` is now a mutable
+overlay, not a read-only param frame. Holds its own `Dictionary` and
+exposes `Set`, `TryGet`, and `ContainsLocal`. Reads walk the Caller chain
+unchanged.
 
-**F5 — Stream `Encoding` honored.** `ReadAllTextAsync` /
-`WriteTextAsync` previously hardcoded UTF-8, ignoring the channel's
-`Encoding` property. Added `ResolveEncoding()` —
-`Encoding.GetEncoding(Encoding)` with UTF-8 fallback for null/empty
-or unknown names.
-- Files: `PLang/App/Channels/Channel/Stream/this.cs:157-180`.
-- Tests: 3 new in `Stage2_StreamChannelTests` — latin-1 round-trip
-  read/write, unknown-encoding fallback.
+`PLang/App/this.cs` `RunGoalAsync(GoalCall)` no longer pushes a frame.
+Comment updated to describe the new policy: caller-flow inheritance via
+AsyncLocal handles isolation when (and only when) something forked.
 
-**F6 — goal channels default to Bidirectional + accept explicit
-`Direction`.** `channel.set` previously stamped every goal channel as
-`Output` unless the name was literally `"input"`. But `GoalChannel`
-extends `Session` (Ask-capable), so a channel named `"chat"` could
-answer Ask while reporting `CanRead = false` — inconsistent. Added
-optional `Direction` parameter (`"input"` | `"output"` |
-`"bidirectional"`); precedence: explicit > name shortcut
-(input/output) > Bidirectional default.
-- File: `PLang/App/modules/channel/set.cs`.
+`PLang/App/Channels/Channel/Goal/this.cs` — `GoalChannel.InvokeGoal` no
+longer pushes either. Channels are pass-through plumbing; `write out`
+shouldn't silently wrap the bound goal in an isolating scope. The fork
+lives at whoever spawned concurrency above.
 
-## Code example
+### I1 — `Push_FrameInvisibleToParallelFlows` actually parallel now
 
-The shape of F2 — push at the fork site, not the call site:
+`PLang.Tests/App/VariablesTests/CallsTests.cs` — converted the
+`ContinueWith` chain to `Task.WhenAll`, renamed
+`Push_ParallelFlows_EachSeesOwnBinding`. Added four more tests for the
+new mutable-overlay semantics:
+
+- `SetInsideOverlay_IsVisibleToSubsequentGet` — the L1-dissolution test.
+- `SetInsideOverlay_DoesNotLeakToUnderlying` — writes inside vanish on dispose.
+- `SetInsideOverlay_NewName_DoesNotEscape` — same for fresh names.
+- `SetInsideOverlay_DoesNotLeakToSiblingOverlay` — the production race
+  the v5 model was meant to solve, now expressed as a parallel test.
+
+### I2 — `Channel.Events` encapsulated
+
+`PLang/App/Channels/Channel/Events/this.cs` (new) — owns the bindings
+list, the lock, the `Match(type, channelName)` filter, and the AsyncLocal
+recursion guard (`IsActive`/`Enter`). Channel keeps the cross-source
+orchestration (per-channel → per-actor → app-level) since it spans three
+owners. Test surface preserved (`ch.Events.Add(...)`, `ch.Events.Count`).
+
+### PLang scenario locked in
+
+`Tests/Modules/Variable/Scoping/VariableScoping.test.goal` extended with
+the param-leak scenario:
+
+```plang
+- call InnerWithParam id=42
+- assert %id% equals 999
+- assert %user% equals "alice"
+
+InnerWithParam
+- set %id% = 999
+- set %user% = "alice"
+```
+
+Both `%id%` (param mutation) and `%user%` (fresh name) leak back to the
+caller — sequential `goal.call` is fully transparent.
+
+## Test results
+
+- C# **2760 / 2760 pass** (was 2757; +3 new CallsTests).
+- PLang **201 / 201 pass**, 0 fail, 0 stale.
+
+Both clean.
+
+## Code example — the rule, one sentence
 
 ```csharp
-// PLang/App/Channels/Channel/Goal/this.cs
-private async Task<Data.@this> InvokeGoal(Data.@this data, CancellationToken ct)
-{
-    if (!IsOpen) return Data.@this.FromError(...);
-
-    var ctx = Actor.Context;
-    using var __chans = Actor.PushChannelsOverride(Actor.FoundationalChannels);
-
-    // Concurrency boundary: each WriteAsync gets its own frame.
-    var paramData = new Data.@this("!data", data.Value, data.Type);
-    await using var __frame = ctx.Variables.Calls.Push(new[] { paramData });
-
-    return await app.RunGoalAsync(Goal, ctx, ct);
-}
+// Variables.Set, simple-name path:
+var frame = Calls.Current;
+if (frame != null) { /* write into innermost overlay (capture) */ }
+else                { /* write into actor dict (LoadUser leak)  */ }
 ```
 
 ```csharp
-// PLang/App/Variables/this.cs — Get consults frame first, falls back to actor dict
-if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed))
-    root = framed;
-else if (!_variables.TryGetValue(rootName, out root))
-    return Data.@this.NotFound(name);
+// Variables.Get walks: Calls.Current.TryGet → Caller chain → actor dict.
 ```
 
-## v4 → v5 — what reviewer flagged and how it was addressed
+```plang
+// PLang developer's view (no fork above):
+Start
+- call LoadUser id=42
+- write out %id%    / 999
+- write out %user%  / 'alice'
 
-| Finding | Fix |
-|---|---|
-| F1 ConcurrentBag race | ConcurrentDictionary + Service.Id |
-| F2 GoalChannel %!data% race | Variables.Calls AsyncLocal scope, pushed at WriteAsync |
-| F3 NRE on null Actor | Drop the `!` lie, diagnostic + null-tolerant handler contract |
-| F4 EventContext dead | Deleted |
-| F5 Stream encoding ignored | ResolveEncoding() honors property + UTF-8 fallback |
-| F6 Bidirectional unreachable | Default goal channels to Bidirectional + accept Direction |
+LoadUser
+- set %id% = 999
+- set %user% = 'alice'
+```
 
-**Design clarification surfaced during review:** Ingi reframed F2 — the
-boundary belongs at concurrency creators (goal channel writes,
-parallel foreach, fire-and-forget), not at every goal call. Sequential
-parameter leak is intentional (`LoadUser` pattern). v5 implements that
-narrower scoping; the wider parallel-branch isolation is logged as
-todo for the parallel-foreach work.
+## What v7 would do
 
-## Test status
+- `loop.foreach` parallel mode: when added, each iteration awaits-using
+  `ctx.Variables.Calls.Push(seedParams)` and joins via `Task.WhenAll`.
+  The `Variables.Set` overlay routing already supports this — no change
+  needed in the variables layer when the foreach feature lands.
+- Optionally: rename `%__data__%` → `%!data%` (Ingi noted as a future
+  cleanup — not in scope for this branch).
 
-- **C#**: 2757 pass / 0 fail (was 2744 — 13 new tests across F1, F2, F5).
-- **PLang**: 201 / 201 pass / 0 fail / 0 stale.
+## For reviewer
 
-## What's next
-
-Suggest **codeanalyzer** runs again on this branch to verify the v1
-findings are closed. No new modules or actions added (just a new
-optional `Direction` parameter on `channel.set`); builder rebuild
-not strictly required, but a builder pass would be worth doing if
-the new `Direction` shortcut should make it into the LLM-visible
-catalog descriptions.
+Suggest **codeanalyzer v3** to verify findings closed and check the new
+`Variables.Set` overlay routing (especially the corner where a write to
+a fresh name inside an overlay mints a local entry rather than mutating
+an inherited Data — that's the corner that bit me once and got fixed
+mid-v6).

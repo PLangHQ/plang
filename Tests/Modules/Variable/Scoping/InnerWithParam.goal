@@ -1,0 +1,3 @@
+InnerWithParam
+- set %id% = 999
+- set %user% = "alice"

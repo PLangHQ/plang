@@ -1,17 +1,23 @@
-using System.Collections.Immutable;
-
 namespace App.Variables.Calls.Call;
 
 /// <summary>
-/// One call's parameter bindings — read-only overlay scoped to the call's lifetime.
-/// Reads go through <see cref="TryGet"/>; writes are not supported here (the
-/// <see cref="Variables.@this"/> Set path always targets the underlying dict, so
-/// goal-body mutations like <c>set %x% = 1</c> persist on actor state regardless
-/// of an active call frame).
+/// One forked flow's variable scope — a mutable overlay over the actor-shared
+/// <see cref="Variables.@this"/> dictionary.
+///
+/// Push points are the operators that fork a new flow (channel fire, parallel
+/// foreach iteration, concurrent task) — not the goal-call boundary. Sequential
+/// <c>goal.call</c> stays in the caller's flow and writes/reads pass through
+/// whatever scope (or none) is currently active.
+///
+/// Reads walk this overlay first, then the <see cref="Caller"/> chain. Writes
+/// (routed by <see cref="Variables.@this.Set"/> when an overlay is active) land
+/// in the innermost overlay only — they do not leak to siblings, and they
+/// disappear when the scope disposes.
 /// </summary>
 public sealed class @this : IAsyncDisposable
 {
-    private readonly ImmutableDictionary<string, Data.@this> _parameters;
+    private readonly Dictionary<string, Data.@this> _entries =
+        new(StringComparer.OrdinalIgnoreCase);
     private readonly Calls.@this _owner;
 
     /// <summary>Outer Call (the one that was Current when this was pushed). Null at root.</summary>
@@ -21,30 +27,24 @@ public sealed class @this : IAsyncDisposable
     {
         Caller = caller;
         _owner = owner;
-        if (parameters == null)
-        {
-            _parameters = ImmutableDictionary<string, Data.@this>.Empty.WithComparers(StringComparer.OrdinalIgnoreCase);
-            return;
-        }
-        var b = ImmutableDictionary.CreateBuilder<string, Data.@this>(StringComparer.OrdinalIgnoreCase);
+        if (parameters == null) return;
         foreach (var p in parameters)
         {
             if (p == null || string.IsNullOrEmpty(p.Name)) continue;
-            b[p.Name] = p;   // last wins on duplicate names
+            _entries[p.Name] = p;   // last wins on duplicate names
         }
-        _parameters = b.ToImmutable();
     }
 
     /// <summary>
-    /// Looks up <paramref name="name"/> in this frame, walking up <see cref="Caller"/>
-    /// so an inner frame can shadow an outer one. Case-insensitive.
+    /// Looks up <paramref name="name"/> in this overlay, walking up <see cref="Caller"/>
+    /// so an inner scope shadows an outer one. Case-insensitive.
     /// </summary>
     public bool TryGet(string name, out Data.@this value)
     {
         var node = this;
         while (node != null)
         {
-            if (node._parameters.TryGetValue(name, out var hit))
+            if (node._entries.TryGetValue(name, out var hit))
             {
                 value = hit;
                 return true;
@@ -54,6 +54,21 @@ public sealed class @this : IAsyncDisposable
         value = null!;
         return false;
     }
+
+    /// <summary>
+    /// Writes <paramref name="value"/> into this overlay under <paramref name="name"/>.
+    /// Does not propagate to <see cref="Caller"/> — siblings are isolated.
+    /// </summary>
+    public void Set(string name, Data.@this value)
+    {
+        _entries[name] = value;
+    }
+
+    /// <summary>
+    /// True if this overlay (not the Caller chain) holds an entry for <paramref name="name"/>.
+    /// Used by Variables.Set to decide whether the existing binding lives in this scope.
+    /// </summary>
+    public bool ContainsLocal(string name) => _entries.ContainsKey(name);
 
     public ValueTask DisposeAsync()
     {
