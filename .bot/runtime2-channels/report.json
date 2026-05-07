@@ -642,6 +642,35 @@
         "health": "C# 2757/2757 pass; PLang 201/201 pass; both clean. All 6 codeanalyzer findings addressed.",
         "notes": "F2 grew into a small architectural primitive (Variables.Calls) with a clear policy: concurrency boundaries push frames; sequential calls do not. Sequential parameter-leak semantics preserved (LoadUser pattern). Suggest codeanalyzer re-run to verify findings closed."
       }
+    },
+    {
+      "id": "b3c4d5e6-f7a8-9012-bcde-f12345678901",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-07T13:00:00Z",
+      "timestamp_end": "2026-05-07T13:30:00Z",
+      "intent": "v2: re-check coder v5 fixes against codeanalyzer v1 findings F1-F6",
+      "before": {
+        "assumptions": "C# 2757/2757 from coder v5. Reviewing Variables.Calls infrastructure, InvokeChannelHandler guard, RunGoalAsync param injection, Channel.Events shape, Stream encoding, channel.set direction."
+      },
+      "plan": ".bot/runtime2-channels/codeanalyzer/v2/result.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-channels/codeanalyzer/v2/result.md",
+            ".bot/runtime2-channels/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-channels/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Re-check report and verdict. No source changes — report only."
+        }
+      ],
+      "after": {
+        "status": "FAIL — 4 findings. 2 bugs (InvokeChannelHandler null-ctx not guarded; RunGoalAsync(GoalCall) still injects into shared Variables), 1 latent trap (call-frame shadows goal-body set), 1 test quality issue, 1 OBP smell. F1/F4/F5/F6 closed. F2 partially closed. F3 not closed.",
+        "health": "fail",
+        "notes": "B1: InvokeChannelHandler logs null-ctx warning but falls through to binding.Handler(ctx!, ...) — any handler accessing ctx NREs. B2: RunGoalAsync(GoalCall) foreach+Set loop unchanged — goal.call, llm providers, http providers all still race on shared Variables when concurrent. F2 fix was scoped to GoalChannel only."
+      }
     }
   ]
 }
