@@ -1,70 +1,66 @@
+using App;
 using App.Errors;
 using App.Variables;
 
 namespace App.modules.channel;
 
 /// <summary>
-/// Replaces the channel registered for a role on the target actor with a Goal-backed
-/// channel. The role-channel still exists under its standard name; only its backing
-/// changes. PLang surface:
-///   - set output channel as OutputGoal              (current actor)
-///   - set system output channel as OutputGoal       (System)
-///   - set user input channel as InputGoal           (User)
+/// Registers or replaces a named channel backed by a goal call. Upserts — if a
+/// channel with the same name already exists, it is disposed and replaced.
+/// PLang surface:
+///   - set output channel as MyOutputGoal
+///   - set channel "logger" call Logger
+///   - set channel "audit" call AuditLog, buffer: 65536, timeout: PT30S
+///   - set system input channel as InputGoal
 /// </summary>
-[ModuleDescription("Manage I/O channels (set, add, remove) for the current or named actor.")]
-[System.ComponentModel.Description("Replace a role-channel (output/error/input) with a goal-backed channel.")]
+[ModuleDescription("Manage channels (set, remove, migrate) for the current or named actor.")]
+[System.ComponentModel.Description("Register or replace a named channel backed by a goal call. Always upserts.")]
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
-    public partial Data.@this<global::App.Channels.Channel.Role.@this> Role { get; init; }
-    public partial Data.@this<App.Variables.Variable>? Actor { get; init; }
-    public partial Data.@this<App.Variables.Variable> Goal { get; init; }
+    public partial Data.@this<string> Name { get; init; }
+    public partial Data.@this<GoalCall> Goal { get; init; }
+    public partial Data.@this<global::App.Actor.@this>? Actor { get; init; }
+    public partial Data.@this<long>? Buffer { get; init; }
+    public partial Data.@this<TimeSpan>? Timeout { get; init; }
+    public partial Data.@this<string>? Mime { get; init; }
+    public partial Data.@this<string>? Encoding { get; init; }
+    public partial Data.@this<App.Variables.Variable>? Encryption { get; init; }
+    public partial Data.@this<App.Variables.Variable>? Signing { get; init; }
 
     public async Task<Data.@this> Run()
     {
-        var actor = ResolveTargetActor(Context, Actor);
-        if (actor.Error != null) return actor.Error;
+        var name = Name.Value;
+        if (string.IsNullOrEmpty(name))
+            return App.Data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 
-        var goalName = Goal.Value?.Name;
-        if (string.IsNullOrEmpty(goalName))
-            return global::App.Data.@this.FromError(new ServiceError("Goal name is required", "ValueRequired", 400));
+        var actor = Actor?.Value ?? Context.Actor;
 
-        var goalEntry = Context.App.Goals.Get(goalName);
-        if (goalEntry == null)
-            return global::App.Data.@this.FromError(new ServiceError($"Goal '{goalName}' not found", "GoalNotFound", 404));
+        var goalCall = Goal.Value;
+        if (goalCall == null || string.IsNullOrEmpty(goalCall.Name) && string.IsNullOrEmpty(goalCall.PrPath))
+            return App.Data.@this.FromError(new ServiceError("Goal is required", "ValueRequired", 400));
 
-        var role = Role.Value;
-        var name = role switch
+        var goalResult = await goalCall.GetGoalAsync(Context.App, Context);
+        if (!goalResult.Success) return goalResult;
+        var goalEntry = (App.Goals.Goal.@this)goalResult.Value!;
+
+        var direction = string.Equals(name, App.Channels.@this.Input, StringComparison.OrdinalIgnoreCase)
+            ? App.Channels.Channel.ChannelDirection.Input
+            : App.Channels.Channel.ChannelDirection.Output;
+
+        // Upsert: dispose any existing channel under this name before re-registering.
+        await actor.Channels.RemoveAsync(name);
+
+        var ch = new App.Channels.Channel.Goal.@this(name, goalEntry, actor, direction)
         {
-            global::App.Channels.Channel.Role.@this.Output => global::App.Channels.@this.Output,
-            global::App.Channels.Channel.Role.@this.Error => global::App.Channels.@this.Error,
-            global::App.Channels.Channel.Role.@this.Input => global::App.Channels.@this.Input,
-            _ => null
+            Buffer = Buffer != null ? Buffer.Value : 4096L,
+            Timeout = Timeout != null ? Timeout.Value : TimeSpan.FromSeconds(30),
+            Mime = Mime?.Value ?? "text/plain",
+            Encoding = Encoding?.Value ?? "utf-8",
+            Encryption = Encryption?.Value?.Name,
+            Signing = Signing?.Value?.Name ?? "auto"
         };
-        if (name == null)
-            return global::App.Data.@this.FromError(new ServiceError("Role must be Output, Error, or Input", "InvalidRole", 400));
-
-        // Dispose the existing role channel cleanly (Stream concretes own console
-        // streams in the transitional wiring — we hand control to a goal channel).
-        await actor.Value!.Channels.RemoveAsync(name);
-        var ch = new global::App.Channels.Channel.Goal.@this(name, goalEntry, actor.Value!,
-            role == global::App.Channels.Channel.Role.@this.Input
-                ? global::App.Channels.Channel.ChannelDirection.Input
-                : global::App.Channels.Channel.ChannelDirection.Output)
-        { Role = role };
-        actor.Value!.Channels.Register(ch);
-        return global::App.Data.@this.Ok(ch);
-    }
-
-    internal static (global::App.Actor.@this? Value, Data.@this? Error) ResolveTargetActor(
-        global::App.Actor.Context.@this context,
-        Data.@this<App.Variables.Variable>? actorParam)
-    {
-        if (actorParam == null) return (context.Actor, null);
-        var name = actorParam.Value?.Name;
-        if (string.IsNullOrEmpty(name)) return (context.Actor, null);
-        var (a, err) = context.App.GetActor(name);
-        if (err != null) return (null, global::App.Data.@this.FromError(err));
-        return (a, null);
+        actor.Channels.Register(ch);
+        return App.Data.@this.Ok(ch);
     }
 }

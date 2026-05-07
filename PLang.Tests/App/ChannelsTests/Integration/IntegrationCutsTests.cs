@@ -15,11 +15,11 @@ public class IntegrationCutsTests
         var userError = new MemoryStream();
         var userInput = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", userOutput, ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Output, Mime = "text/plain" });
+        { Mime = "text/plain" });
         app.User.Channels.Register(new StreamChannel("error", userError, ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Error, Mime = "text/plain" });
+        { Mime = "text/plain" });
         app.User.Channels.Register(new StreamChannel("input", userInput, ChannelDirection.Input, ownsStream: false)
-        { Role = ChannelRole.Input, Mime = "text/plain" });
+        { Mime = "text/plain" });
         global::App.@this.WireDefaultConsoleChannels(app.System);
 
         // Direct write through the resolved Output channel — proves
@@ -38,7 +38,7 @@ public class IntegrationCutsTests
         await using var app = new global::App.@this("/tmp/cut2");
         var foundational = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", foundational, ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Output, Mime = "text/plain" });
+        { Mime = "text/plain" });
         app.User.FreezeFoundational();
 
         // Logger goal: simulate fan-out by registering a Goal channel that

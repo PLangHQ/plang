@@ -10,7 +10,6 @@ namespace App.Channels.Channel;
 public sealed class MigrationEnvelope
 {
     public required string Name { get; init; }
-    public required Role.@this Role { get; init; }
     public required ChannelDirection Direction { get; init; }
     public required ChannelConfigSnapshot Config { get; init; }
 
@@ -39,6 +38,6 @@ public sealed class Signature
     public required string IdentityName { get; init; }
     /// <summary>Identity public key (for verification on the receive side).</summary>
     public required string PublicKey { get; init; }
-    /// <summary>Signature bytes over (Name, Role, Direction, Config, Payload).</summary>
+    /// <summary>Signature bytes over (Name, Direction, Config, Payload).</summary>
     public required byte[] Bytes { get; init; }
 }

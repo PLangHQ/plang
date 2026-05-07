@@ -1,6 +1,0 @@
-Start
-/ channel.add with a name already registered returns Data.Error of type
-/ DuplicateChannelName.
-- add channel "logger" call Logger
-- add channel "logger" call Logger, on error set %duplicateBlocked% = true
-- assert %duplicateBlocked% is true

@@ -15,19 +15,19 @@
           "action": "set",
           "parameters": [
             {
-              "name": "Role",
-              "value": 1,
-              "type": "role"
-            },
-            {
-              "name": "Actor",
-              "value": "%__actor__%",
-              "type": "variable"
+              "name": "Name",
+              "value": "output",
+              "type": "string"
             },
             {
               "name": "Goal",
-              "value": "OutputGoal",
-              "type": "variable"
+              "value": {
+                "name": "OutputGoal",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -35,9 +35,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Set the role output channel to be backed by the goal OutputGoal so that writing to output triggers that goal. This uses channel.set with Role=Output and Goal=OutputGoal.",
+      "guidance": "Use channel.set to replace the output channel with a Goal-backed channel that runs OutputGoal. This is the mechanism that should trigger OutputGoal and set %outputGoalCalled%.",
       "level": "high",
-      "confidence": 70,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -64,7 +64,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the literal string \u0027hello\u0027 to the actor\u0027s output channel using output.write.",
+      "guidance": "Write \u0027hello\u0027 to the (now Goal-backed) output channel to trigger OutputGoal.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -89,7 +89,7 @@
             },
             {
               "name": "Message",
-              "value": "Expected %outputGoalCalled% to be true after writing to output.",
+              "value": "Expected %outputGoalCalled% to be true after writing to Goal-backed output",
               "type": "string"
             }
           ],
@@ -98,9 +98,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition invariant: assert that the flag %outputGoalCalled% is true after the write.",
+      "guidance": "Post-condition assertion that OutputGoal ran and set the flag %outputGoalCalled% to true.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true

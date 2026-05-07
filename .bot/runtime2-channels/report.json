@@ -368,6 +368,144 @@
         "notes": "10 channel runtime fails are next-version scope. Add/WithConfig stale is LLM step-splitting."
       },
       "timestamp_end": "2026-05-07T09:21:00Z"
+    },
+    {
+      "id": "3aad6819-6eb5-4560-bc40-faf74824e9fd",
+      "bot": "coder",
+      "timestamp_start": "2026-05-07T09:30:00Z",
+      "timestamp_end": "2026-05-07T10:19:57Z",
+      "intent": "v3: channel architecture cleanup \u2014 drop Role enum, collapse set/add, retype slots, Resolve returns Data, Step preserves typed exception keys.",
+      "before": {
+        "assumptions": "Role enum split channels into role/custom without behavioural justification. Channels.Resolve threw exception. channel.set used Goals.Get(name) registry-only lookup. Step.RunAsync flattened typed exceptions to StepError.",
+        "risk": "Wide blast radius \u2014 Channel base, Channels registry, App entry, modules, source-gen, tests."
+      },
+      "plan": ".bot/runtime2-channels/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Channels/this.cs",
+            "PLang/App/Channels/Channel/this.cs",
+            "PLang/App/Channels/Channel/Stream/this.cs",
+            "PLang/App/Channels/Channel/Goal/this.cs",
+            "PLang/App/Channels/Channel/MigrationEnvelope.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Drop Role property + enum file. Add Channels.Defaults + Verify(). Resolve returns Channel?. VerifyEnvelope renamed."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/Role"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Role enum folder removed entirely."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/ChannelNotFoundException.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Exception removed; Resolve returns null instead."
+        },
+        {
+          "paths": [
+            "PLang/App/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "EnsureRoleChannels removed; boot calls actor.Channels.Verify(). Stream factories drop Role assignments."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/channel/set.cs",
+            "PLang/App/modules/channel/remove.cs",
+            "PLang/App/modules/channel/migrate.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "set rewritten \u2014 Name+GoalCall+Actor.@this+config; always upserts. remove/migrate retype Actor slot."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/channel/add.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Collapsed into set."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Emission/Action/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "IChannel emission: TryResolve + early-return Data error pattern."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/providers/DefaultBuilderProvider.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "NormalizeParameterTypes skips Choices-bearing types \u2014 Actor stays as string in the .pr."
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/Goal/Steps/Step/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Step.RunAsync catch preserves typed exception keys."
+        },
+        {
+          "paths": [
+            "PLang.Tests/GlobalUsings.cs",
+            "PLang.Tests/App/ChannelsTests/Stage1_ChannelBaseTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage4_ChannelResolutionTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage5_ChannelActionsBuilderCatalogTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage6_EntryPointWiringTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage9_ChannelMigrateTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated for the new shape: drop ChannelRole, drop role tests, replace EnsureRoleChannels with Channels.Verify, rename Verify \u2192 VerifyEnvelope."
+        },
+        {
+          "paths": [
+            "Tests/Channels/Add/DuplicateName"
+          ],
+          "type": "delete",
+          "category": "test",
+          "confidence": "high",
+          "context": "Scenario tests duplicate-rejection rule that no longer exists (set always upserts)."
+        },
+        {
+          "paths": [
+            "Tests/Channels"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "All goal files migrated from  to . Helper goals built. 12 of 13 scenarios pass; 1 still failing on event-binding firing (separate concern)."
+        }
+      ],
+      "after": {
+        "status": "v3 done \u2014 channel architecture cleanup landed; 9 of 10 v2 fails resolved.",
+        "health": "C# 2744/0/0. PLang 199/1/5 (was 191/10/5). 8 channel scenarios newly pass, 1 still fails on Events/AddBeforeWrite (event-binding firing \u2014 separate concern for v4).",
+        "notes": "v4 candidate: debug Events/AddBeforeWrite firing path. Other v4: dynamic Choices, Add/WithConfig step-splitting."
+      }
     }
   ]
 }

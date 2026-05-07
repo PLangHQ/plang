@@ -54,7 +54,7 @@ public class Stage3_GoalChannelTests
         // Foundational state: capture stream registered as "output".
         var foundationalCapture = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", foundationalCapture, ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Output, Mime = "text/plain" });
+        { Mime = "text/plain" });
         app.User.FreezeFoundational();
 
         // Now overlay a goal channel as "output".
@@ -79,7 +79,7 @@ public class Stage3_GoalChannelTests
         var app = new global::App.@this("/tmp/g5");
         var captured = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Output, Mime = "text/plain" });
+        { Mime = "text/plain" });
         app.User.FreezeFoundational();
 
         var overlayGoal = new EngineGoal { Name = "Overlay", Path = "O.goal", PrPath = "/O.pr" };
@@ -102,7 +102,7 @@ public class Stage3_GoalChannelTests
         var app = new global::App.@this("/tmp/g6");
         var foundationCapture = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", foundationCapture, ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Output, Mime = "text/plain" });
+        { Mime = "text/plain" });
         app.User.FreezeFoundational();
 
         var goalA = new EngineGoal { Name = "A", Path = "A.goal", PrPath = "/A.pr" };
@@ -126,7 +126,7 @@ public class Stage3_GoalChannelTests
         var app = new global::App.@this("/tmp/g7");
         var captured = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Output, Mime = "text/plain" });
+        { Mime = "text/plain" });
         app.User.FreezeFoundational();
 
         var loggerGoal = new EngineGoal { Name = "Logger", Path = "L.goal", PrPath = "/L.pr" };

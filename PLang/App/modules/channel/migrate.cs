@@ -18,7 +18,7 @@ public partial class Migrate : IContext
 {
     public partial Data.@this<string> Name { get; init; }
     public partial Data.@this<App.Variables.Variable>? Target { get; init; }
-    public partial Data.@this<App.Variables.Variable>? Actor { get; init; }
+    public partial Data.@this<global::App.Actor.@this>? Actor { get; init; }
 
     public async Task<Data.@this> Run()
     {
@@ -26,11 +26,10 @@ public partial class Migrate : IContext
         if (string.IsNullOrEmpty(name))
             return global::App.Data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 
-        var (actor, actorErr) = Set.ResolveTargetActor(Context, Actor);
-        if (actorErr != null) return actorErr;
+        var actor = Actor?.Value ?? Context.Actor;
 
-        var ch = actor!.Channels.TryResolve(name);
-        if (ch == null || !actor.Channels.Contains(name))
+        var ch = actor.Channels.Resolve(name);
+        if (ch == null)
             return global::App.Data.@this.FromError(new ServiceError(
                 $"Channel '{name}' not found", "ChannelNotFound", 404));
 

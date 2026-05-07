@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Use variable.set to mark that CaptchaGoal was invoked.",
+      "guidance": "variable.set to mark that the captcha flow was invoked.",
       "level": "high",
       "confidence": 99,
       "formal": null,

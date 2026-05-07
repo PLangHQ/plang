@@ -5,14 +5,14 @@
   "steps": [
     {
       "index": 0,
-      "text": "add channel \u0022logger\u0022 call Logger",
+      "text": "set channel \u0022logger\u0022 call Logger",
       "lineNumber": 4,
       "indent": 0,
       "comment": "channel.add registers a new named Goal channel \u2014 verify by writing to it and\nobserving the goal-channel\u0027s body ran.",
       "actions": [
         {
           "module": "channel",
-          "action": "add",
+          "action": "set",
           "parameters": [
             {
               "name": "Name",
@@ -20,14 +20,14 @@
               "type": "string"
             },
             {
-              "name": "Actor",
-              "value": "system",
-              "type": "variable"
-            },
-            {
               "name": "Goal",
-              "value": "Logger",
-              "type": "variable"
+              "value": {
+                "name": "Logger",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -35,9 +35,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Register a new custom-named channel \u0027logger\u0027 backed by the goal \u0027Logger\u0027. This creates the channel so later writes trigger the goal-backed channel handler.",
+      "guidance": "Register/attach the named channel \u0027logger\u0027 to a goal call Logger so writes to this channel execute the goal.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -69,7 +69,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Write \u0027hi\u0027 to the named channel \u0027logger\u0027 so the Logger goal-backed channel runs.",
+      "guidance": "Write the literal \u0027hi\u0027 to the named channel logger; this should trigger the channel-backed goal execution.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -94,7 +94,7 @@
             },
             {
               "name": "Message",
-              "value": "Expected %loggerCalled% to be true after writing to logger channel.",
+              "value": "loggerCalled should be true",
               "type": "string"
             }
           ],
@@ -103,9 +103,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition invariant: ensure the Logger goal ran by asserting %loggerCalled% is true.",
+      "guidance": "Post-condition assertion that %loggerCalled% is true after writing to the channel.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -115,7 +115,7 @@
   "visibility": 1,
   "path": "/Add/Basic/Start.test.goal",
   "prPath": "/Add/Basic/.build/start.test.pr",
-  "hash": "0caeba089962bf07a7b159300460a14858df4e958316c6ab9abc61c4bb9705b4",
+  "hash": "3b8700e3787ae2d9e651b314a122fce84c5392712645333119dc7caa204b1f4d",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

@@ -74,9 +74,9 @@
         }
       ],
       "intent": null,
-      "guidance": "output.write to channel dbg. On ChannelNotFound, handle the error by setting %unknownChannelError% = true.",
+      "guidance": "Write \u0027hi\u0027 to channel \u0027dbg\u0027. Since the channel is unregistered, wrap the write with error.handle keyed to ChannelNotFound and set %unknownChannelError% = true in the recovery actions.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -103,9 +103,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %unknownChannelError% is true.",
+      "guidance": "Post-condition check: assert that %unknownChannelError% is true after the on-error recovery.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true

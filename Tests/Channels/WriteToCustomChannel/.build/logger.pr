@@ -36,9 +36,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Use variable.set to assign a boolean value to %loggerCalled%.",
+      "guidance": "variable.set to mark that the logger was called.",
       "level": "high",
-      "confidence": 99,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

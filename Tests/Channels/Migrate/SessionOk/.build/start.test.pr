@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Assign the target identity name into %targetIdentity% for later use in channel.migrate.",
+      "guidance": "Assign the target identity name to %targetIdentity% for use in the later channel migration.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -45,14 +45,14 @@
     },
     {
       "index": 1,
-      "text": "add channel \u0022chat\u0022 call ChatGoal",
+      "text": "set channel \u0022chat\u0022 call ChatGoal",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "channel",
-          "action": "add",
+          "action": "set",
           "parameters": [
             {
               "name": "Name",
@@ -60,14 +60,14 @@
               "type": "string"
             },
             {
-              "name": "Actor",
-              "value": "%system%",
-              "type": "variable"
-            },
-            {
               "name": "Goal",
-              "value": "ChatGoal",
-              "type": "variable"
+              "value": {
+                "name": "ChatGoal",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -75,7 +75,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Register a new custom-named channel backed by the goal ChatGoal for the system actor. This matches the known mapping.",
+      "guidance": "Register or replace the \u0027chat\u0027 channel backed by a goal call to ChatGoal, so it is eligible for migration.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -102,21 +102,40 @@
               "name": "Target",
               "value": "%targetIdentity%",
               "type": "variable"
-            },
-            {
-              "name": "Actor",
-              "value": "%envelope%",
-              "type": "variable"
             }
           ],
           "defaults": null,
           "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%envelope%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Migrate the registered channel \u0027chat\u0027 to the target identity. The envelope is written to %envelope%.",
-      "level": "medium",
-      "confidence": 55,
+      "guidance": "Migrate the registered \u0027chat\u0027 channel to the target identity and write the resulting MigrationEnvelope to %envelope%.",
+      "level": "high",
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -148,7 +167,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: ensure %envelope% is not null/empty.",
+      "guidance": "Post-condition: ensure the migration envelope object is not null/empty.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -187,9 +206,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: ensure envelope.Name equals \u0027chat\u0027.",
+      "guidance": "Post-condition: verify the envelope.Name equals the expected channel name \u0027chat\u0027.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -199,7 +218,7 @@
   "visibility": 1,
   "path": "/Migrate/SessionOk/Start.test.goal",
   "prPath": "/Migrate/SessionOk/.build/start.test.pr",
-  "hash": "8d8afc611be0d9248b1c707c9a35e52ee2f9b75cd137e609ed0b81b87acf7df0",
+  "hash": "68f1030daeaa65010421759163b31d7ce39acff94129fdf99e7833ad194c2e10",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

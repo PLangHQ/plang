@@ -15,19 +15,19 @@
           "action": "set",
           "parameters": [
             {
-              "name": "Role",
-              "value": 1,
-              "type": "role"
-            },
-            {
-              "name": "Actor",
-              "value": "%Context.Actor%",
-              "type": "variable"
+              "name": "Name",
+              "value": "output",
+              "type": "string"
             },
             {
               "name": "Goal",
-              "value": "OutputGoal",
-              "type": "variable"
+              "value": {
+                "name": "OutputGoal",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -35,9 +35,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Rebind the role output channel to a goal-backed channel by calling channel.set with Role=Output and Goal=OutputGoal. Actor is omitted in the step text, so it uses Context.Actor (User by default).",
+      "guidance": "Rebind the named output channel to a goal call (OutputGoal). No explicit actor is provided, so the engine uses the current Context.Actor by default.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -57,6 +57,11 @@
               "name": "Data",
               "value": "hi",
               "type": "string"
+            },
+            {
+              "name": "channel",
+              "value": "output",
+              "type": "this"
             }
           ],
           "defaults": null,
@@ -64,9 +69,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Write \u0027hi\u0027 to the (now rebound) output channel. Since no explicit channel is provided, it defaults to the actor\u0027s output channel (User).",
+      "guidance": "Write literal \u0027hi\u0027 to the output channel. Because output was rebound to OutputGoal, this should trigger the user output path.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -80,17 +85,17 @@
       "actions": [
         {
           "module": "assert",
-          "action": "equals",
+          "action": "isTrue",
           "parameters": [
             {
-              "name": "Expected",
-              "value": true,
+              "name": "Value",
+              "value": "%userOutputCalled%",
               "type": "bool"
             },
             {
-              "name": "Actual",
-              "value": "%userOutputCalled%",
-              "type": "bool"
+              "name": "Message",
+              "value": "Expected %userOutputCalled% to be true after writing to output",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -98,9 +103,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition invariant: assert that %userOutputCalled% is true after writing \u0027hi\u0027.",
+      "guidance": "Post-condition assertion that %userOutputCalled% is true after the write.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true

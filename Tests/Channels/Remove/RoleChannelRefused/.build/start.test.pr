@@ -64,7 +64,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Try to remove the standard role-channel \u0027output\u0027. The engine refuses this operation; on error, set %removalRefused% = true.",
+      "guidance": "Try to remove the standard channel named \u0022output\u0022. The engine refuses this; use on-error handling to set %removalRefused% = true.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -93,9 +93,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the removalRefused flag is true. This must fail the step if the condition is not met.",
+      "guidance": "Post-condition assertion that the removal was refused (flag must be true).",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -127,9 +127,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the literal string \u0027still here\u0027 to the actor\u0027s output channel. The step text specifies channel([this] output).",
+      "guidance": "Write literal \u0027still here\u0027 to the actor\u0027s output channel. The step text explicitly targets output, so use output.write with channel=\u0027output\u0027.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

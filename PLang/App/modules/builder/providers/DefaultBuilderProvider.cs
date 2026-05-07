@@ -641,6 +641,13 @@ public class DefaultBuilderProvider : IBuilderProvider
                 // generator's Resolve convention when the action actually executes.
                 if (TypeMapping.IsScalarPlangType(targetType)) continue;
 
+                // [Choices]-bearing types (Actor, Operator, ...) keep their string form in
+                // the .pr — runtime resolves the chosen name via the type's own path
+                // (App.GetActor, ctor registry, ...). Eagerly constructing here would
+                // either fail (Actor has no usable string ctor) or produce a stateful
+                // object that doesn't round-trip cleanly. Same shape as the scalar carve-out.
+                if (global::App.Choices.@this.Has(targetType)) continue;
+
                 // Already correctly typed? Skip (e.g. value is bool, target is bool).
                 if (targetType.IsInstanceOfType(p.Value)) continue;
 

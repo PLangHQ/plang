@@ -40,17 +40,11 @@ public sealed class @this : Session.@this
 
     /// <summary>Read-only stream channel (e.g. stdin).</summary>
     public static @this Input(string name, global::System.IO.Stream stream, bool ownsStream = false)
-        => new(name, stream, ChannelDirection.Input, ownsStream)
-        {
-            Role = global::App.Channels.Channel.Role.@this.Input
-        };
+        => new(name, stream, ChannelDirection.Input, ownsStream);
 
     /// <summary>Write-only stream channel (e.g. stdout, stderr).</summary>
     public static @this Output(string name, global::System.IO.Stream stream, bool ownsStream = false)
-        => new(name, stream, ChannelDirection.Output, ownsStream)
-        {
-            Role = global::App.Channels.Channel.Role.@this.Output
-        };
+        => new(name, stream, ChannelDirection.Output, ownsStream);
 
     /// <summary>In-memory bidirectional channel (testing / capture).</summary>
     public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
@@ -197,7 +191,6 @@ public sealed class @this : Session.@this
             var envelope = new global::App.Channels.Channel.MigrationEnvelope
             {
                 Name = Name,
-                Role = Role,
                 Direction = Direction,
                 Config = SnapshotConfig(),
                 Payload = ms.ToArray(),

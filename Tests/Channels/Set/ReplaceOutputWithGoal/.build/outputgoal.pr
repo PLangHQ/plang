@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "variable.set to mark that OutputGoal was called.",
+      "guidance": "Use variable.set to assign a boolean value to %outputGoalCalled%.",
       "level": "high",
       "confidence": 99,
       "formal": null,

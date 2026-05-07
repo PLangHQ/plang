@@ -19,13 +19,13 @@ public class Stage4_ChannelResolutionTests
     }
 
     [Test]
-    public async Task ChannelsResolve_NullName_ReturnsOutputRoleChannel()
+    public async Task ChannelsResolve_NullName_ReturnsChannelNamedOutput()
     {
         var app = new global::App.@this("/tmp/s4a");
         global::App.@this.WireDefaultConsoleChannels(app.User);
         var ch = app.User.Channels.Resolve(null);
         await Assert.That(ch).IsNotNull();
-        await Assert.That(ch.Role).IsEqualTo(ChannelRole.Output);
+        await Assert.That(ch!.Name).IsEqualTo("output");
     }
 
     [Test]
@@ -39,11 +39,11 @@ public class Stage4_ChannelResolutionTests
     }
 
     [Test]
-    public async Task ChannelsResolve_UnknownName_ThrowsChannelNotFound()
+    public async Task ChannelsResolve_UnknownName_ReturnsNull()
     {
         var app = new global::App.@this("/tmp/s4c");
-        await Assert.That(() => app.User.Channels.Resolve("dbg"))
-            .Throws<ChannelNotFoundException>();
+        var ch = app.User.Channels.Resolve("dbg");
+        await Assert.That(ch).IsNull();
     }
 
     [Test]
@@ -52,7 +52,7 @@ public class Stage4_ChannelResolutionTests
         var app = new global::App.@this("/tmp/s4d");
         var captured = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Output, Mime = "text/plain" });
+        { Mime = "text/plain" });
 
         var write = new global::App.modules.output.Write
         {

@@ -4,6 +4,9 @@ namespace PLang.Tests.App.ChannelsTests;
 
 // Stage 6 — Entry-point wiring + invariants + FreezeFoundational.
 // Architect: stage-6-entry-point-wiring.md.
+// v3 cleanup: Channel.Role enum and EnsureRoleChannels are gone — invariant
+// lives on the registry as Channels.Verify; the names "output"/"error"/"input"
+// are pre-registered defaults.
 
 public class Stage6_EntryPointWiringTests
 {
@@ -33,59 +36,54 @@ public class Stage6_EntryPointWiringTests
     }
 
     [Test]
-    public async Task AppRun_FailsFast_WhenActorMissingOutputRoleChannel()
+    public async Task ChannelsVerify_FailsFast_WhenOutputMissing()
     {
         await using var app = new global::App.@this("/tmp/s6d", autoWireConsoleChannels: false);
-        // Register error+input on User but NOT output.
-        global::App.@this.WireDefaultConsoleChannels(app.System);
         app.User.Channels.Register(new StreamChannel("error", new MemoryStream(),
-            ChannelDirection.Output, ownsStream: true) { Role = ChannelRole.Error });
+            ChannelDirection.Output, ownsStream: true));
         app.User.Channels.Register(new StreamChannel("input", new MemoryStream(),
-            ChannelDirection.Input, ownsStream: true) { Role = ChannelRole.Input });
+            ChannelDirection.Input, ownsStream: true));
 
-        var result = app.EnsureRoleChannels();
+        var result = app.User.Channels.Verify();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
 
     [Test]
-    public async Task AppRun_FailsFast_WhenActorMissingErrorRoleChannel()
+    public async Task ChannelsVerify_FailsFast_WhenErrorMissing()
     {
         await using var app = new global::App.@this("/tmp/s6e", autoWireConsoleChannels: false);
-        global::App.@this.WireDefaultConsoleChannels(app.System);
         app.User.Channels.Register(new StreamChannel("output", new MemoryStream(),
-            ChannelDirection.Output, ownsStream: true) { Role = ChannelRole.Output });
+            ChannelDirection.Output, ownsStream: true));
         app.User.Channels.Register(new StreamChannel("input", new MemoryStream(),
-            ChannelDirection.Input, ownsStream: true) { Role = ChannelRole.Input });
+            ChannelDirection.Input, ownsStream: true));
 
-        var result = app.EnsureRoleChannels();
+        var result = app.User.Channels.Verify();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
 
     [Test]
-    public async Task AppRun_FailsFast_WhenActorMissingInputRoleChannel()
+    public async Task ChannelsVerify_FailsFast_WhenInputMissing()
     {
         await using var app = new global::App.@this("/tmp/s6f", autoWireConsoleChannels: false);
-        global::App.@this.WireDefaultConsoleChannels(app.System);
         app.User.Channels.Register(new StreamChannel("output", new MemoryStream(),
-            ChannelDirection.Output, ownsStream: true) { Role = ChannelRole.Output });
+            ChannelDirection.Output, ownsStream: true));
         app.User.Channels.Register(new StreamChannel("error", new MemoryStream(),
-            ChannelDirection.Output, ownsStream: true) { Role = ChannelRole.Error });
+            ChannelDirection.Output, ownsStream: true));
 
-        var result = app.EnsureRoleChannels();
+        var result = app.User.Channels.Verify();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("MissingRequiredChannelAtBoot");
     }
 
     [Test]
-    public async Task AppRun_Succeeds_WhenAllRoleChannelsRegisteredForIOActor()
+    public async Task ChannelsVerify_Succeeds_WhenAllDefaultsRegistered()
     {
         await using var app = new global::App.@this("/tmp/s6g");
-        global::App.@this.WireDefaultConsoleChannels(app.System);
         global::App.@this.WireDefaultConsoleChannels(app.User);
 
-        var result = app.EnsureRoleChannels();
+        var result = app.User.Channels.Verify();
         await Assert.That(result.Success).IsTrue();
     }
 
@@ -123,24 +121,21 @@ public class Stage6_EntryPointWiringTests
     }
 
     [Test]
-    public async Task ChannelNotFound_RoutesToErrorChannel_NotSilentFallback()
+    public async Task ChannelsResolve_UnknownName_ReturnsNull_AndErrorChannelIsReachable()
     {
         await using var app = new global::App.@this("/tmp/s6j");
         var errorCapture = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("error", errorCapture,
             ChannelDirection.Output, ownsStream: false)
-        { Role = ChannelRole.Error, Mime = "text/plain" });
+        { Mime = "text/plain" });
 
-        // Resolve an unknown channel — should throw ChannelNotFoundException.
-        // Application-level error routing happens through App.Run's catch path
-        // (existing scaffolding) which surfaces ServiceError. Here we verify the
-        // building block: Resolve throws, and the error channel is reachable.
-        await Assert.That(() => app.User.Channels.Resolve("dbg"))
-            .Throws<global::App.Channels.ChannelNotFoundException>();
+        // Unknown channel — Resolve returns null (no exception), source-gen
+        // surfaces ChannelNotFound Data error from the IChannel slot.
+        await Assert.That(app.User.Channels.Resolve("dbg")).IsNull();
 
-        // Error channel is registered and writable — error chain has somewhere to land.
+        // Error channel is registered and resolvable.
         var errCh = app.User.Channels.Resolve("error");
         await Assert.That(errCh).IsNotNull();
-        await Assert.That(errCh.Role).IsEqualTo(ChannelRole.Error);
+        await Assert.That(errCh!.Name).IsEqualTo("error");
     }
 }

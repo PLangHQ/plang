@@ -5,14 +5,14 @@
   "steps": [
     {
       "index": 0,
-      "text": "add channel \u0022logger\u0022 call Logger",
+      "text": "set channel \u0022logger\u0022 call Logger",
       "lineNumber": 4,
       "indent": 0,
       "comment": "Builder maps the write step\u0027s intent to a custom channel name from inventory.\nChannel inventory teaches the LLM, not pattern parsing.",
       "actions": [
         {
           "module": "channel",
-          "action": "add",
+          "action": "set",
           "parameters": [
             {
               "name": "Name",
@@ -20,14 +20,14 @@
               "type": "string"
             },
             {
-              "name": "Actor",
-              "value": "system",
-              "type": "variable"
-            },
-            {
               "name": "Goal",
-              "value": "Logger",
-              "type": "variable"
+              "value": {
+                "name": "Logger",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -35,9 +35,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Register a custom-named channel \u0027logger\u0027 backed by the Logger goal so later writes target it.",
+      "guidance": "The step \u0027set channel \u0022logger\u0022 call Logger\u0027 registers/upserts a named channel backed by a goal call to Logger.",
       "level": "high",
-      "confidence": 70,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -69,7 +69,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the literal string \u0027hi\u0027 to the custom channel named logger. The step text directs output.write to channel([this] logger).",
+      "guidance": "The step \u0027write \u0022hi\u0022 to logger\u0027 writes the produced literal to the named channel logger.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -91,11 +91,6 @@
               "name": "Value",
               "value": "%loggerCalled%",
               "type": "bool"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %loggerCalled% to be true",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -103,9 +98,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition invariant: ensure %loggerCalled% is true after the write triggers the Logger goal.",
+      "guidance": "The step \u0027assert %loggerCalled% is true\u0027 is a post-condition invariant check on the boolean variable loggerCalled.",
       "level": "high",
-      "confidence": 80,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -115,7 +110,7 @@
   "visibility": 1,
   "path": "/WriteToCustomChannel/Start.test.goal",
   "prPath": "/WriteToCustomChannel/.build/start.test.pr",
-  "hash": "0caeba089962bf07a7b159300460a14858df4e958316c6ab9abc61c4bb9705b4",
+  "hash": "3b8700e3787ae2d9e651b314a122fce84c5392712645333119dc7caa204b1f4d",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

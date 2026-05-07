@@ -107,7 +107,7 @@ public class StepsSubStepTests : IDisposable
     {
         var stream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Default, stream,
+            EngineChannels.Output, stream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 

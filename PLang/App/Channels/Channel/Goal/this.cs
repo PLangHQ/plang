@@ -99,7 +99,6 @@ public class @this : Session.@this
         var envelope = new global::App.Channels.Channel.MigrationEnvelope
         {
             Name = Name,
-            Role = Role,
             Direction = Direction,
             Config = SnapshotConfig(),
             Payload = payload,

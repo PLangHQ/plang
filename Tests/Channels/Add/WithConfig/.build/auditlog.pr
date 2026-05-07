@@ -1,11 +1,11 @@
 {
-  "name": "SystemOutputGoal",
+  "name": "AuditLog",
   "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "set %systemOutputCalled% = true",
+      "text": "set %auditCalled% = true",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%systemOutputCalled%",
+              "value": "%auditCalled%",
               "type": "variable"
             },
             {
@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "variable.set to mark that SystemOutputGoal was called.",
+      "guidance": "variable.set to mark that AuditLog was invoked.",
       "level": "high",
       "confidence": 99,
       "formal": null,
@@ -46,9 +46,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Set/ExplicitActor/SystemOutputGoal.goal",
-  "prPath": "/Set/ExplicitActor/.build/systemoutputgoal.pr",
-  "hash": "6dbd6a0ed1e7595438370134bf09ab62a7b0f1ecc414c8b9d39cc026076b075f",
+  "path": "/Add/WithConfig/AuditLog.goal",
+  "prPath": "/Add/WithConfig/.build/auditlog.pr",
+  "hash": "f0bba0e40e12ff9a39f72b0d72a5d06b8bad7b34df908a3414d806994cb2ba80",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

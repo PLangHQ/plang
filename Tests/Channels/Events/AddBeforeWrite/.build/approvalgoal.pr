@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Use variable.set to assign %approvalCalled% = true in the current scope.",
+      "guidance": "Use variable.set to assign the boolean value true to %approvalCalled%.",
       "level": "high",
       "confidence": 99,
       "formal": null,

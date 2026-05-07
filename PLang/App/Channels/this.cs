@@ -24,22 +24,19 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public Serializers.@this Serializers { get; }
 
-    // Standard channel names. New names (output/error/input) are role-aligned;
-    // Default/StdOut/StdErr/StdIn aliases retained as constants for v1 callers
-    // until they migrate.
     public const string Output = "output";
     public const string Error = "error";
     public const string Input = "input";
     public const string Debug = "debug";
 
-    [Obsolete("Use Output (role-aligned name).")]
-    public const string Default = Output;
-    [Obsolete("Use Output (role-aligned name).")]
-    public const string StdOut = Output;
-    [Obsolete("Use Error (role-aligned name).")]
-    public const string StdErr = Error;
-    [Obsolete("Use Input (role-aligned name).")]
-    public const string StdIn = Input;
+    /// <summary>
+    /// The three pre-registered channel names. Removal is refused for these;
+    /// boot enforces all three are present via <see cref="Verify"/>. Just names —
+    /// no separate "role channel" type. <c>write</c> with no channel argument
+    /// resolves to the channel named <c>"output"</c>; error writes to
+    /// <c>"error"</c>; reads from <c>"input"</c>.
+    /// </summary>
+    public static readonly string[] Defaults = [Output, Error, Input];
 
     public @this(App.@this app, Serializers.@this? serializers = null)
     {
@@ -72,44 +69,29 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Resolves a channel name to a concrete channel.
-    /// - null / "" → the Output role channel (or null if no actor has wired one).
-    /// - known name → that channel.
-    /// - unknown name → null (caller surfaces a typed ChannelNotFound).
+    /// Resolves a channel by name. Empty/null falls back to the channel named
+    /// <c>"output"</c>. Returns null when nothing is registered under the requested
+    /// name — caller decides how to surface that (see e.g. source-generator-emitted
+    /// IChannel resolution which returns a <c>ChannelNotFound</c> Data error).
     /// </summary>
-    public Channel.@this Resolve(string? name)
-    {
-        if (string.IsNullOrEmpty(name))
-        {
-            var output = GetByRole(Channel.Role.@this.Output)
-                ?? Get(Output)
-                ?? Get("default");
-            if (output == null) throw new ChannelNotFoundException(Output);
-            return output;
-        }
-        var named = Get(name);
-        if (named == null) throw new ChannelNotFoundException(name);
-        return named;
-    }
+    public Channel.@this? Resolve(string? name)
+        => string.IsNullOrEmpty(name) ? Get(Output) : Get(name);
 
     /// <summary>
-    /// Non-throwing variant of <see cref="Resolve"/>.
+    /// Boot invariant: every name in <see cref="Defaults"/> must be registered.
+    /// Returns Ok or a Data error with key <c>MissingRequiredChannelAtBoot</c>.
+    /// Replaces the role-channel enforcement that lived in App.EnsureRoleChannels.
     /// </summary>
-    public Channel.@this? TryResolve(string? name)
+    public Data.@this Verify()
     {
-        if (string.IsNullOrEmpty(name))
-            return GetByRole(Channel.Role.@this.Output)
-                ?? Get(Output)
-                ?? Get("default");
-        return Get(name);
-    }
-
-    /// <summary>Returns the channel registered for the given role, or null.</summary>
-    public Channel.@this? GetByRole(Channel.Role.@this role)
-    {
-        foreach (var ch in _channels.Values)
-            if (ch.Role == role) return ch;
-        return null;
+        foreach (var name in Defaults)
+        {
+            if (!_channels.ContainsKey(name))
+                return App.Data.@this.FromError(new ServiceError(
+                    $"Channel '{name}' not registered. Default channels ({string.Join(", ", Defaults)}) must be wired before goals run.",
+                    "MissingRequiredChannelAtBoot", 500));
+        }
+        return App.Data.@this.Ok();
     }
 
     public Channel.@this GetOrCreate(string name, Func<Channel.@this> factory)

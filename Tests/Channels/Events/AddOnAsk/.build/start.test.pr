@@ -24,7 +24,7 @@
               "value": {
                 "name": "CaptchaGoal",
                 "parallel": false,
-                "parameters": [],
+                "parameters": null,
                 "prPath": null
               },
               "type": "goal.call"
@@ -75,9 +75,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Register a lifecycle event handler for Type=OnAsk, scoped to the input channel. The handler calls CaptchaGoal. Capture the returned binding identifier into %bindingId%.",
+      "guidance": "Register a lifecycle event handler for OnAsk, scoped to the input channel, that calls CaptchaGoal. Capture the returned binding id into %bindingId% for later verification.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -109,7 +109,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: ensure the bindingId was produced (not null).",
+      "guidance": "Post-condition assertion that the binding id was produced (not null).",
       "level": "high",
       "confidence": 95,
       "formal": null,

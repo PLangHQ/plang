@@ -1,7 +1,7 @@
 Start
 / channel.add honours optional config: buffer (int bytes), timeout (ISO 8601 string),
 / mime, encoding. Verifying via Data result of the add step.
-- add channel "audit" call AuditLog, buffer: 65536, timeout: PT30S, mime: 'application/json', write to %channel%
+- set channel "audit" call AuditLog, buffer: 65536, timeout: PT30S, mime: 'application/json', write to %channel%
 - assert %channel% is not null
 - assert %channel.Buffer% equals 65536
 - assert %channel.Mime% equals 'application/json'

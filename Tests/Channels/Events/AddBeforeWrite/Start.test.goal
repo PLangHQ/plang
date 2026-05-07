@@ -1,6 +1,6 @@
 Start
 / events.add for channel-targeted bindings: BeforeWrite on a named channel.
-- add channel "audit" call AuditLog
+- set channel "audit" call AuditLog
 - on before write on "audit" channel call ApprovalGoal
 - write 'payload' to audit
 - assert %approvalCalled% is true

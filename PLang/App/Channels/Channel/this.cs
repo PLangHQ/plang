@@ -25,9 +25,6 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// <summary>Logical channel name (e.g. "output", "logger"). Case-insensitive at registry level.</summary>
     public string Name { get; init; } = "";
 
-    /// <summary>Logical role within the actor's I/O surface. Custom-named channels use Role.None.</summary>
-    public global::App.Channels.Channel.Role.@this Role { get; init; } = global::App.Channels.Channel.Role.@this.None;
-
     /// <summary>Direction (Input / Output / Bidirectional).</summary>
     public ChannelDirection Direction { get; init; } = ChannelDirection.Bidirectional;
 
@@ -261,7 +258,6 @@ public abstract class @this : IAsyncDisposable, IDisposable
         var envelope = new MigrationEnvelope
         {
             Name = Name,
-            Role = Role,
             Direction = Direction,
             Config = SnapshotConfig(),
             Payload = null,
@@ -292,7 +288,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         // which round-trips a stable byte representation.
         var identityName = App?.System.Identity?.Name ?? "system";
         var publicKey = App?.System.Identity?.PublicKey ?? "";
-        var bytes = ComputeSignature(Name, Role, Direction, identityName);
+        var bytes = ComputeSignature(Name, Direction, identityName);
         return new Signature
         {
             IdentityName = identityName,
@@ -301,12 +297,12 @@ public abstract class @this : IAsyncDisposable, IDisposable
         };
     }
 
-    protected static byte[] ComputeSignature(string name, Role.@this role, ChannelDirection direction, string identity)
+    protected static byte[] ComputeSignature(string name, ChannelDirection direction, string identity)
     {
-        // Deterministic hash over (name, role, direction, identity). Stage 9 stub —
+        // Deterministic hash over (name, direction, identity). Stage 9 stub —
         // real signing lands when the cross-device transport ships.
         using var sha = global::System.Security.Cryptography.SHA256.Create();
-        var input = global::System.Text.Encoding.UTF8.GetBytes($"{name}|{(int)role}|{(int)direction}|{identity}");
+        var input = global::System.Text.Encoding.UTF8.GetBytes($"{name}|{(int)direction}|{identity}");
         return sha.ComputeHash(input);
     }
 
@@ -314,9 +310,9 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// Stage 9 verification helper: recompute the signature from envelope contents
     /// and compare bytes. Returns false on tamper.
     /// </summary>
-    public static bool Verify(MigrationEnvelope envelope)
+    public static bool VerifyEnvelope(MigrationEnvelope envelope)
     {
-        var expected = ComputeSignature(envelope.Name, envelope.Role, envelope.Direction, envelope.Signature.IdentityName);
+        var expected = ComputeSignature(envelope.Name, envelope.Direction, envelope.Signature.IdentityName);
         return expected.SequenceEqual(envelope.Signature.Bytes);
     }
 }

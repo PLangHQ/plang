@@ -341,50 +341,25 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     /// goal execution. <see cref="Start"/> calls this and surfaces failure as
     /// MissingRequiredChannelAtBoot before any user code runs.
     /// </summary>
-    public Data.@this EnsureRoleChannels()
-    {
-        foreach (var actor in new[] { System, User })
-        {
-            foreach (var (role, name) in new[]
-            {
-                (Channels.Channel.Role.@this.Output, Channels.@this.Output),
-                (Channels.Channel.Role.@this.Error, Channels.@this.Error),
-                (Channels.Channel.Role.@this.Input, Channels.@this.Input)
-            })
-            {
-                if (!actor.Channels.Contains(name))
-                    return Data.@this.FromError(new Errors.ServiceError(
-                        $"{actor.Name} actor missing required channel '{name}' (role {role}). Entry point must register all three role-channels before Run.",
-                        "MissingRequiredChannelAtBoot", 500));
-            }
-        }
-        return Data.@this.Ok();
-    }
-
     /// <summary>
     /// Wires the console standard streams onto the given actor's Channels under
-    /// the role-channel names ("output", "error", "input"). PlangConsole calls
+    /// the well-known names ("output", "error", "input"). PlangConsole calls
     /// this for System and User after constructing the App.
     /// </summary>
     public static void WireDefaultConsoleChannels(global::App.Actor.@this actor)
     {
-        // Direction is Output for stdout/stderr, Input for stdin. Role aligns with the channel's
-        // logical role — stderr is the Error role even though its direction is also Output.
         if (!actor.Channels.Contains(global::App.Channels.@this.Output))
             actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
                 global::App.Channels.@this.Output, Console.OpenStandardOutput(),
-                global::App.Channels.Channel.ChannelDirection.Output, ownsStream: false)
-            { Role = global::App.Channels.Channel.Role.@this.Output });
+                global::App.Channels.Channel.ChannelDirection.Output, ownsStream: false));
         if (!actor.Channels.Contains(global::App.Channels.@this.Error))
             actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
                 global::App.Channels.@this.Error, Console.OpenStandardError(),
-                global::App.Channels.Channel.ChannelDirection.Output, ownsStream: false)
-            { Role = global::App.Channels.Channel.Role.@this.Error });
+                global::App.Channels.Channel.ChannelDirection.Output, ownsStream: false));
         if (!actor.Channels.Contains(global::App.Channels.@this.Input))
             actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
                 global::App.Channels.@this.Input, Console.OpenStandardInput(),
-                global::App.Channels.Channel.ChannelDirection.Input, ownsStream: false)
-            { Role = global::App.Channels.Channel.Role.@this.Input });
+                global::App.Channels.Channel.ChannelDirection.Input, ownsStream: false));
     }
 
     /// <summary>
@@ -562,8 +537,11 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 
         // Invariant: every I/O actor must have all three role-channels registered
         // by the entry point before goal execution. Surface a clear error otherwise.
-        var invariant = EnsureRoleChannels();
-        if (!invariant.Success) return invariant;
+        foreach (var actor in new[] { System, User })
+        {
+            var invariant = actor.Channels.Verify();
+            if (!invariant.Success) return invariant;
+        }
 
         // Foundational set: capture the boot-time channels so goal channels can
         // resolve their writes against the originals (recursion isolation).

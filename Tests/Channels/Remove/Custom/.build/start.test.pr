@@ -5,14 +5,14 @@
   "steps": [
     {
       "index": 0,
-      "text": "add channel \u0022logger\u0022 call Logger",
+      "text": "set channel \u0022logger\u0022 call Logger",
       "lineNumber": 3,
       "indent": 0,
       "comment": "channel.remove unregisters a custom-named channel \u2014 subsequent write to it errors.",
       "actions": [
         {
           "module": "channel",
-          "action": "add",
+          "action": "set",
           "parameters": [
             {
               "name": "Name",
@@ -20,14 +20,14 @@
               "type": "string"
             },
             {
-              "name": "Actor",
-              "value": "system",
-              "type": "variable"
-            },
-            {
               "name": "Goal",
-              "value": "Logger",
-              "type": "variable"
+              "value": {
+                "name": "Logger",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -35,9 +35,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Register a new custom-named channel \u0027logger\u0027 backed by the goal Logger. This is required before it can be written to.",
+      "guidance": "Register/upsert the custom-named channel \u0027logger\u0027 backed by a goal call to Logger, so later writes target that channel.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -57,11 +57,6 @@
               "name": "Name",
               "value": "logger",
               "type": "string"
-            },
-            {
-              "name": "Actor",
-              "value": "system",
-              "type": "variable"
             }
           ],
           "defaults": null,
@@ -69,9 +64,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Remove the custom-named channel \u0027logger\u0027. Subsequent writes to it should error.",
+      "guidance": "Remove the custom-named channel \u0027logger\u0027 so subsequent writes to it will error.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -144,7 +139,7 @@
       "intent": null,
       "guidance": "Attempt to write \u0027hi\u0027 to the removed channel \u0027logger\u0027. On error, set %writeFailed% = true.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -176,9 +171,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: the write to the removed channel must have failed, so %writeFailed% should be true.",
+      "guidance": "Post-condition: verify that %writeFailed% was set to true by the error handler.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -188,7 +183,7 @@
   "visibility": 1,
   "path": "/Remove/Custom/Start.test.goal",
   "prPath": "/Remove/Custom/.build/start.test.pr",
-  "hash": "926d2aa298a9e357e771cb36e8471593bd28696696f79b8db1fcfd0b56da208b",
+  "hash": "367a0955383d10568e71f4e33c90940dd6873a57cbd0fbf728f5b7af20f93e9a",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

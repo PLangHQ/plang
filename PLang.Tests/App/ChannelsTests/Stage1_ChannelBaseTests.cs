@@ -12,7 +12,6 @@ public class Stage1_ChannelBaseTests
     {
         var ch = new StreamChannel("custom", new MemoryStream(), ChannelDirection.Bidirectional, ownsStream: true)
         {
-            Role = ChannelRole.Output,
             Buffer = 8192L,
             Timeout = TimeSpan.FromSeconds(45),
             Mime = "application/json",
@@ -21,7 +20,6 @@ public class Stage1_ChannelBaseTests
             Signing = "myKey"
         };
         await Assert.That(ch.Name).IsEqualTo("custom");
-        await Assert.That(ch.Role).IsEqualTo(ChannelRole.Output);
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Bidirectional);
         await Assert.That(ch.Buffer).IsEqualTo(8192L);
         await Assert.That(ch.Timeout).IsEqualTo(TimeSpan.FromSeconds(45));
@@ -60,12 +58,11 @@ public class Stage1_ChannelBaseTests
     }
 
     [Test]
-    public async Task Role_Enum_HasOutputErrorInputValues()
+    public async Task Channels_DefaultsContains_OutputErrorInput()
     {
-        var values = Enum.GetNames(typeof(ChannelRole));
-        await Assert.That(values).Contains("Output");
-        await Assert.That(values).Contains("Error");
-        await Assert.That(values).Contains("Input");
+        await Assert.That(EngineChannels.Defaults).Contains("output");
+        await Assert.That(EngineChannels.Defaults).Contains("error");
+        await Assert.That(EngineChannels.Defaults).Contains("input");
     }
 
     [Test]

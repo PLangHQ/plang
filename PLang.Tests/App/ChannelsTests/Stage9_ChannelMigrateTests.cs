@@ -22,12 +22,11 @@ public class Stage9_ChannelMigrateTests
     }
 
     [Test]
-    public async Task MigrationEnvelope_Contains_NameRoleDirectionConfig()
+    public async Task MigrationEnvelope_Contains_NameDirectionConfig()
     {
         var app = new global::App.@this("/tmp/s9b");
         var ch = new StreamChannel("audit", new MemoryStream(), ChannelDirection.Output, ownsStream: true)
         {
-            Role = ChannelRole.Output,
             Buffer = 65536L,
             Timeout = TimeSpan.FromMinutes(2),
             Mime = "application/json",
@@ -38,7 +37,6 @@ public class Stage9_ChannelMigrateTests
         var result = await ch.Migrate();
         var env = (MigrationEnvelope)result.Value!;
         await Assert.That(env.Name).IsEqualTo("audit");
-        await Assert.That(env.Role).IsEqualTo(ChannelRole.Output);
         await Assert.That(env.Direction).IsEqualTo(ChannelDirection.Output);
         await Assert.That(env.Config.Buffer).IsEqualTo(65536L);
         await Assert.That(env.Config.Timeout).IsEqualTo(TimeSpan.FromMinutes(2));
@@ -69,19 +67,18 @@ public class Stage9_ChannelMigrateTests
         var result = await ch.Migrate();
         var env = (MigrationEnvelope)result.Value!;
 
-        await Assert.That(global::App.Channels.Channel.@this.Verify(env)).IsTrue();
+        await Assert.That(global::App.Channels.Channel.@this.VerifyEnvelope(env)).IsTrue();
 
         // Tamper: change Name → signature no longer verifies.
         var tampered = new MigrationEnvelope
         {
             Name = "chat-tampered",
-            Role = env.Role,
             Direction = env.Direction,
             Config = env.Config,
             Payload = env.Payload,
             Signature = env.Signature
         };
-        await Assert.That(global::App.Channels.Channel.@this.Verify(tampered)).IsFalse();
+        await Assert.That(global::App.Channels.Channel.@this.VerifyEnvelope(tampered)).IsFalse();
     }
 
     [Test]
@@ -134,7 +131,6 @@ public class Stage9_ChannelMigrateTests
         var env = new MigrationEnvelope
         {
             Name = "any",
-            Role = ChannelRole.Output,
             Direction = ChannelDirection.Output,
             Config = new global::App.Channels.Channel.ChannelConfigSnapshot(),
             Signature = new global::App.Channels.Channel.Signature

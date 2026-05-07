@@ -422,7 +422,7 @@ public class FileHandlerTests : IDisposable
 
         var captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Default, captureStream,
+            EngineChannels.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
@@ -499,7 +499,7 @@ public class FileHandlerTests : IDisposable
     {
         var captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
-            EngineChannels.Default, captureStream,
+            EngineChannels.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 

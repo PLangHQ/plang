@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Set the runtime variable %targetIdentity% to the literal identity name \u0027peer\u0027.",
+      "guidance": "Set the runtime variable %targetIdentity% to the literal identity name \u0027peer\u0027 for use by the migration step.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -61,11 +61,6 @@
             },
             {
               "name": "Target",
-              "value": "%targetIdentity%",
-              "type": "variable"
-            },
-            {
-              "name": "Actor",
               "value": "%targetIdentity%",
               "type": "variable"
             }
@@ -114,7 +109,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Migrate the named channel \u0027output\u0027 to the target identity stored in %targetIdentity%. On error, set %notMigratable% = true. The error.handle modifier wraps the channel.migrate action and runs the recovery action chain.",
+      "guidance": "Attempt to migrate the named channel \u0027output\u0027 to the target identity stored in %targetIdentity%. On error, handle by setting %notMigratable% = true.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -143,7 +138,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %notMigratable% is true after the migration attempt.",
+      "guidance": "Post-condition: verify the migration failure path set %notMigratable% to true.",
       "level": "high",
       "confidence": 95,
       "formal": null,
