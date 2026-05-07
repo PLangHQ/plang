@@ -110,13 +110,22 @@ kicks in on the JSON path. Added a `TimeSpan` branch to
 `XmlConvert.ToTimeSpan`, falling back to `TimeSpan.Parse`. Same wire
 shape the JSON converter uses.
 
+## v4.2 — clean up Callback stale stubs
+
+Removed 4 `.test.goal` stubs under `Tests/Callback/` that were
+deliberately stale — each documented a missing PLang surface (callback
+configure, durability round-trip, signature tamper, `vars:` annotation
+validation) and pointed at the C# tests that already cover the
+behaviour. Logged in `Documentation/v0.2/todos.md` so the missing
+PLang surfaces aren't lost.
+
 ## Test status
 
-- **C#**: 2744 pass, 0 fail. Flat through v3 / v4 / v4.1.
-- **PLang**: **201 pass, 0 fail, 4 stale** (was 188/0/18 at branch
-  start; v2 → 191/10/5; v3 → 199/1/5; v4 → 200/0/5; v4.1 → 201/0/4).
-  - All channel scenarios pass.
-  - 4 stale: pre-existing Callback (out of branch scope).
+- **C#**: 2744 pass, 0 fail.
+- **PLang**: **201 / 201 pass / 0 fail / 0 stale.**
+  - Was 188 pass / 0 fail / 18 stale at branch start.
+  - v2 → 191/10/5, v3 → 199/1/5, v4 → 200/0/5, v4.1 → 201/0/4,
+    v4.2 → 201/0/0.
 
 ## What's next (out of scope here)
 

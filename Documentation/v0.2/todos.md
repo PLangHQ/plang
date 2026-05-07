@@ -387,3 +387,25 @@ Belongs in the validator (not `variable.set`) so we capture the type as declared
 Two `AppEvents` registries exist (one on `App`, one per-actor on
 `Context`). Suspect smell — same concept twice. Worth a pass to decide
 which scope owns what, and whether they should be one thing.
+
+## Callback PLang surfaces — durability, timeout, signature tamper, AskVars
+
+**Date:** 2026-05-07
+
+Four `.test.goal` stubs were removed from `Tests/Callback/` because they
+documented missing PLang surface, not real test work:
+
+- **`callback.configure` (or similar)** — verb-level surface for writing
+  `app.Callback.Signature.ExpiresInMs`. C# already covers the contract
+  via `AppCallbackConfigTests`.
+- **Byte-level callback persistence across processes** — `DurabilityRoundTrip`
+  needs a PLang surface to drive the round-trip. C# coverage in
+  `PLang.Tests/App/CallbackTests/ErrorCallbackTests.cs`.
+- **Byte-level mutation of a serialized callback envelope** —
+  `TamperedSignature` needs the same kind of surface to corrupt and
+  re-verify. C# coverage in `CallbackRun_HardErrors_WhenSigningVerifyFails`.
+- **`vars:` annotation builder validation** — `AskVarsOnNonAsk` blocked
+  on builder pass that flags `vars:` on non-`ask` actions.
+
+All four are nice-to-have PLang-side complements; the behaviour is
+already proven in C#. Worth a pass when callback work resumes.

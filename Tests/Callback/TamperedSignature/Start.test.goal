@@ -1,3 +1,0 @@
-Start
-/ BLOCKED ON: PLang surface for byte-level mutation of a serialized callback envelope. C# CallbackRun_HardErrors_WhenSigningVerifyFails covers it.
-- throw "not implemented"
