@@ -1,0 +1,58 @@
+{
+  "name": "OutputGoal",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %outputGoalCalled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%outputGoalCalled%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use variable.set to assign a boolean value to %outputGoalCalled%.",
+      "level": "high",
+      "confidence": 99,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Set/ReplaceOutputWithGoal/OutputGoal.goal",
+  "prPath": "/Set/ReplaceOutputWithGoal/.build/outputgoal.pr",
+  "hash": "609f0c54260730ab90fe38e855074412d509a2b19f8b62adc38deed28bc7a061",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

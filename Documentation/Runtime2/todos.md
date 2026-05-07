@@ -314,3 +314,67 @@ together when the ratification sweep happens.
     must be rebuilt and rerun." Coder didn't trigger a global rebuild; the
     edit only affects fresh-app foreach behaviour, so probably fine.
     Confirm on next builder pass.
+
+## 2026-05-06 — mobile signed code via channels (`actions.run`)
+
+Context: PLang's primitives — channels + signing + identity + actor-scoped privilege — combine to enable signed mobile code. A server can ship a function (an actions list as Data) through a channel to a client. The client verifies the signature against the server's known identity, then runs the actions in a level-0 sandbox via a new `actions.run %actions% level: 0` action.
+
+What this unlocks: form validators, custom queries, plug-ins, browser-extension-style scripts — all as signed code over channels. Trust is cryptographic, isolation is structural. Other languages need signed manifests + custom sandbox + RPC + protocol design. PLang has every piece; just needs the action.
+
+What to add when this lands:
+- `actions.run` action in a new module (or under `system`), takes `actions: List<Data>` and `level: int` (defaults to current actor's level; 0 for sandbox).
+- Privilege gate that consults `Context.Actor.EscalationLevel` (need to re-introduce EscalationLevel — see runtime2-channels plan, removed there as dead code with note to bring back inverted: `system=0`, `user=1`, `untrusted=100+`).
+- Channel-aware Data-as-actions packaging — probably a Mime type like `application/x-plang-actions`.
+
+Defer until there's a real consumer driving the shape (a use case more concrete than "imagine if").
+
+## 2026-05-06 — migrate `ExpiresInMs` to ISO 8601 duration
+
+Context: runtime2-channels chose ISO 8601 duration strings (e.g.
+`"PT30S"`) as the standard JSON form for time durations, with C# type
+`TimeSpan` plus a custom JsonConverter. Reason: LLM zero-counting risk
+on int milliseconds.
+
+Callback's `App.Callback.Signature.@this.ExpiresInMs` (int?) is
+inconsistent with this. Migrate it (and any other int-ms time fields
+that show up — search `*Ms` properties under `App/Callback/` and
+related) to the same ISO 8601 + TimeSpan + converter pattern. Touch is
+small per site but may exist in more places than expected.
+
+Do this when the channel branch's converter / catalog work has settled
+so the callback migration can copy the same shape.
+
+## 2026-05-07 — fork-site Variables isolation beyond parameters
+
+Context: codeanalyzer v1 on `runtime2-channels` flagged that
+`GoalChannel.InvokeGoal` raced on `%!data%` because parameter binding
+mutated actor-shared `Variables`. Coder v5 fixed it by adding
+`Variables.Calls` — an AsyncLocal frame pushed at `GoalChannel.WriteAsync`,
+so each concurrent write sees its own `!data` slot.
+
+The frame currently isolates **only parameter resolution**. Goal-body
+`set %x% = ...` inside the called goal still writes to actor-shared
+`Variables`. That's intentional for sequential calls (`LoadUser` writes
+`%user%`, parent reads it — a feature) but means concurrent fork-site
+invocations still race on goal-body sets:
+
+```
+ChatGoal:
+- set %lastMessage% = %!data.message%       # races across concurrent writers
+- write out %lastMessage%
+```
+
+When the runtime grows other concurrency boundaries (parallel foreach,
+`call X, dont wait`), revisit:
+- Should fork-site frames also intercept Set, isolating the entire branch?
+- Or stay parameter-only, with users responsible for not racing on actor
+  state inside a forked branch?
+- For goal channels specifically, fanout-via-write to actor state is
+  often the *intent* (e.g. accumulating chat history). So full isolation
+  is probably wrong for channels but right for parallel foreach.
+
+Probably the answer is per-fork-site policy: `Variables.Calls.Push` for
+parameter-only isolation (current), and a separate
+`Variables.Branches.Push` (or similar) for full read+write isolation
+when forking parallel branches. Designed when the parallel foreach
+work lands.

@@ -1,0 +1,6 @@
+Start
+/ Builder maps the write step's intent to a custom channel name from inventory.
+/ Channel inventory teaches the LLM, not pattern parsing.
+- set channel "logger" call Logger
+- write 'hi' to logger
+- assert %loggerCalled% is true

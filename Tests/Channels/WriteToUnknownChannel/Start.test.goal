@@ -1,0 +1,4 @@
+Start
+/ Writing to an unregistered channel raises ChannelNotFound — caught via on-error.
+- write 'hi' to dbg, on error set %unknownChannelError% = true
+- assert %unknownChannelError% is true

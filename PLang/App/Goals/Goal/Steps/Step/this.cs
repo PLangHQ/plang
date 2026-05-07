@@ -156,8 +156,18 @@ public sealed partial class @this : modules.IDataWrappable
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
         {
+            // Preserve the exception's class identity as the error Key so on-error
+            // handlers keyed on a typed exception (e.g. ChannelNotFoundException →
+            // "ChannelNotFound") still match. Falls back to "StepError" only when
+            // the exception is the bare base type. Trims trailing "Exception".
+            var typeName = ex.GetType().Name;
+            var key = typeName == nameof(Exception)
+                ? "StepError"
+                : (typeName.EndsWith("Exception", StringComparison.Ordinal)
+                    ? typeName[..^"Exception".Length]
+                    : typeName);
             result = Data.@this.FromError(new Errors.ServiceError(
-                ex.Message, "StepError", 400) { Exception = ex });
+                ex.Message, key, 400) { Exception = ex });
         }
 
         var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterStep);

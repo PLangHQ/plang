@@ -11,23 +11,33 @@ namespace PLang.Tests.App.Testing;
 public class DebugSmokeTests
 {
     private global::App.@this _app = null!;
-    private TextWriter _originalErr = null!;
-    private StringWriter _err = null!;
+    private global::App.Channels.Channel.Stream.@this _capture = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _app = new global::App.@this("/test");
-        _originalErr = Console.Error;
-        _err = new StringWriter();
-        Console.SetError(_err);
+        // Debug.Write routes via System.Channels.Resolve("debug") ?? Resolve("error").
+        // Register a memory channel as "error" on System so debug output lands in a
+        // capture buffer instead of the real stderr stream the channel was wired to.
+        _app.System.Channels.Register(global::App.Channels.Channel.Stream.@this.Memory(
+            global::App.Channels.@this.Error));
+        _capture = (global::App.Channels.Channel.Stream.@this)
+            _app.System.Channels.Get(global::App.Channels.@this.Error)!;
     }
 
     [After(Test)]
     public async Task Teardown()
     {
-        Console.SetError(_originalErr);
         await _app.DisposeAsync();
+    }
+
+    private string ReadCapture()
+    {
+        // The MemoryStream has been written + flushed; rewind and read all.
+        _capture.Stream.Position = 0;
+        using var reader = new StreamReader(_capture.Stream, leaveOpen: true);
+        return reader.ReadToEnd();
     }
 
     // Debug.Apply with level="action" attaches BeforeAction + AfterAction widened handlers.
@@ -65,7 +75,7 @@ public class DebugSmokeTests
         // null), this call throws. If signatures are correct, it completes and emits to stderr.
         await _app.RunGoalAsync(goal, _app.User.Context);
 
-        var debugOut = _err.ToString();
+        var debugOut = ReadCapture();
         // Step-level markers come from the always-on handlers.
         await Assert.That(debugOut).Contains("DEBUG [BEFORE]");
         await Assert.That(debugOut).Contains("DEBUG [AFTER]");

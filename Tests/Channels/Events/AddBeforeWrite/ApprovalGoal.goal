@@ -1,0 +1,2 @@
+ApprovalGoal
+- set %approvalCalled% = true

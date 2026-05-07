@@ -14,6 +14,15 @@ public partial class @this
     private readonly ConcurrentDictionary<string, Data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
     private Actor.Context.@this? _context;
 
+    /// <summary>
+    /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before
+    /// falling back to the actor-shared dictionary — that's how goal-call parameters
+    /// (e.g. <c>%!data%</c> on a goal channel) avoid racing across concurrent calls on
+    /// the same actor.
+    /// </summary>
+    [JsonIgnore]
+    public Calls.@this Calls { get; } = new();
+
     [JsonIgnore]
     internal Actor.Context.@this? Context
     {
@@ -81,6 +90,12 @@ public partial class @this
         // Simple case: no dot/bracket path — set the root variable directly
         if (rootName == name)
         {
+            // If a Calls overlay is active (we're inside a forked flow — channel fire,
+            // parallel foreach iteration, etc.), route the write into the overlay so
+            // siblings can't see it. Reads cascade overlay → caller chain → underlying
+            // dict, so subsequent gets here see the new value.
+            var frame = Calls.Current;
+
             // Data value: replace under `name`. The binding's state (Properties + event
             // subscribers) follows the name onto the new Data — that's how
             // `--debug={"variables":[...]}` watches see every assignment, and how Properties
@@ -91,6 +106,31 @@ public partial class @this
             if (value is Data.@this dv)
             {
                 dv.Context = _context;
+
+                if (frame != null)
+                {
+                    var hadPrev = frame.TryGet(name, out var prevFrame);
+                    if (hadPrev && !ReferenceEquals(prevFrame, dv))
+                    {
+                        dv.OnCreate = prevFrame.OnCreate;
+                        dv.OnChange = prevFrame.OnChange;
+                        dv.OnDelete = prevFrame.OnDelete;
+                        var prevValue = prevFrame.Value;
+                        prevFrame.FireOnChange(dv);
+                        frame.Set(name, dv);
+                        OnSet?.Invoke(name, prevValue, dv.Value);
+                        return dv;
+                    }
+                    else if (!hadPrev)
+                    {
+                        dv.FireOnCreate();
+                        frame.Set(name, dv);
+                        OnCreate?.Invoke(name, dv.Value);
+                        return dv;
+                    }
+                    frame.Set(name, dv);
+                    return dv;
+                }
 
                 if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
                 {
@@ -117,6 +157,37 @@ public partial class @this
 
                 _variables[name] = dv;
                 return dv;
+            }
+
+            if (frame != null)
+            {
+                // If the binding already exists in *this* overlay, mutate in place.
+                if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
+                {
+                    var prevValue = existingFrame.Value;
+                    existingFrame.Value = value;
+                    if (type != null)
+                        existingFrame.Type = type;
+                    OnSet?.Invoke(name, prevValue, value);
+                    return existingFrame;
+                }
+
+                // Either nothing visible, or only visible via Caller chain — mint a
+                // fresh local entry that shadows. Mutating an inherited Data would
+                // bleed the write up to the caller's scope.
+                var data = new Data.@this(name, value, type);
+                data.Context = _context;
+                if (frame.TryGet(name, out var inherited))
+                {
+                    OnSet?.Invoke(name, inherited.Value, value);
+                }
+                else
+                {
+                    data.FireOnCreate();
+                    OnCreate?.Invoke(name, value);
+                }
+                frame.Set(name, data);
+                return data;
             }
 
             if (_variables.TryGetValue(name, out var existing))
@@ -410,7 +481,13 @@ public partial class @this
             remaining = null;
         }
 
-        if (!_variables.TryGetValue(rootName, out var root))
+        // Per-call parameter scope wins over actor-shared variables — see Calls.@this.
+        Data.@this? root;
+        if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed))
+        {
+            root = framed;
+        }
+        else if (!_variables.TryGetValue(rootName, out root))
         {
             return Data.@this.NotFound(name);
         }
@@ -446,7 +523,10 @@ public partial class @this
     public bool Contains(string name)
     {
         name = CleanName(name);
-        return _variables.ContainsKey(GetRootName(name));
+        var rootName = GetRootName(name);
+        if (Calls.Current is { } frame && frame.TryGet(rootName, out _))
+            return true;
+        return _variables.ContainsKey(rootName);
     }
 
     /// <summary>

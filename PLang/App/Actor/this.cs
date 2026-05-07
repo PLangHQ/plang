@@ -24,10 +24,58 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public Context.@this Context { get; }
 
+    private readonly AppChannels _channels;
+    private AppChannels? _foundationalChannels;
+    private readonly AsyncLocal<AppChannels?> _channelsOverride = new();
+
     /// <summary>
-    /// Named channels owned by this actor.
+    /// Named channels owned by this actor. Honours the AsyncLocal channel override
+    /// (used by goal channels to isolate their execution from the live overlay).
     /// </summary>
-    public AppChannels Channels { get; }
+    public AppChannels Channels => _channelsOverride.Value ?? _channels;
+
+    /// <summary>
+    /// The foundational (boot-time) channel set, used by goal channels to resolve
+    /// writes against the original entry-point streams instead of the current overlay.
+    /// Lazy: returns a snapshot at first access if <see cref="FreezeFoundational"/>
+    /// has not been called yet.
+    /// </summary>
+    public AppChannels FoundationalChannels
+    {
+        get => _foundationalChannels ??= _channels.Snapshot();
+        private set => _foundationalChannels = value;
+    }
+
+    /// <summary>
+    /// Captures the current channel set as the foundational snapshot. Stage 6 wires
+    /// PlangConsole to call this after registering all initial channels but before
+    /// goal execution starts.
+    /// </summary>
+    public void FreezeFoundational() => _foundationalChannels = _channels.Snapshot();
+
+    /// <summary>
+    /// Pushes a channel override onto the AsyncLocal scope; disposing the returned
+    /// scope restores the previous override. Used by Channel.Goal to make writes
+    /// inside the goal resolve against the foundational set, not the live overlay.
+    /// </summary>
+    public IDisposable PushChannelsOverride(AppChannels overlay)
+    {
+        var prev = _channelsOverride.Value;
+        _channelsOverride.Value = overlay;
+        return new ChannelsOverrideScope(this, prev);
+    }
+
+    private sealed class ChannelsOverrideScope : IDisposable
+    {
+        private readonly @this _actor;
+        private readonly AppChannels? _previous;
+        public ChannelsOverrideScope(@this actor, AppChannels? previous)
+        {
+            _actor = actor;
+            _previous = previous;
+        }
+        public void Dispose() => _actor._channelsOverride.Value = _previous;
+    }
 
     /// <summary>
     /// Back-reference to the app.
@@ -61,18 +109,12 @@ public sealed class @this : IAsyncDisposable
     public static @this? Resolve(string name, Context.@this context) => context.App.GetActor(name).Actor;
 
     /// <summary>
-    /// Valid values for LLM action summaries.
-    /// Convention: types with this property get their values shown in builder summaries.
+    /// Closed list of actor names the LLM may emit for an Actor-typed slot.
+    /// Build-time validation membership-checks against this; runtime resolves the
+    /// chosen name via <see cref="Resolve"/> → <c>App.GetActor</c>.
     /// </summary>
-    public static string[] ValidValues => ["user", "service", "system"];
-
-    /// <summary>
-    /// Escalation level. System (2) can execute as anyone. User/Service (1) only as themselves.
-    /// </summary>
-    public int EscalationLevel => Name.ToLowerInvariant() switch
-    {
-        "system" => 2, "service" => 1, "user" => 1, _ => 0
-    };
+    [App.Attributes.Choices]
+    public static string[] Choices(Context.@this? ctx) => ["user", "system"];
 
     public @this(string name, App.@this app, CancellationToken parentToken = default)
     {
@@ -84,7 +126,7 @@ public sealed class @this : IAsyncDisposable
         _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
         Context = new Context.@this(app, parentToken: _cts.Token);
         Context.Actor = this;
-        Channels = new AppChannels(app);
+        _channels = new AppChannels(app) { Actor = this };
 
         // Register shared SettingsVariable — same object for all actors.
         // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
@@ -134,6 +176,6 @@ public sealed class @this : IAsyncDisposable
         if (_dataSource.IsValueCreated)
             _dataSource.Value.Dispose();
         Context.Dispose();
-        await Channels.DisposeAsync();
+        await _channels.DisposeAsync();
     }
 }

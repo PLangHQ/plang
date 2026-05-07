@@ -15,6 +15,7 @@
 - **`ICodeGenerated`**: added automatically by the source generator — handlers never implement it directly
 - **`Data`**: universal result type with `Value`, `Properties`, `Error`, `Success`, `Ok()`, `Fail()`, `Merge()`. Extended via Properties.
 - **`Action.Return`**: `List<Data>?` — simple list of return variable mappings, no wrapper class
+- **No `Console.*` writes in production C#.** Channels exist to make I/O redirectable; `Console.WriteLine`/`Console.Error.WriteLine` bypass that. Diagnostics → `await context.App.Debug.Write(...)` (debug channel, gated on `--debug`). User-facing chatter → `await app.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output, ...)` (do **not** route through `Debug.Write` — its `IsEnabled` gate would silence it without `--debug`). Interactive prompts use a two-call pattern across the split `output`/`input` pair (write via `output`, read via `StreamReader(input.Stream, leaveOpen: true)`). Permitted exceptions: `Console.IsInputRedirected`/`IsOutputRedirected` (queries, not writes) and `PlangConsole/Program.cs:26` (process-boundary last resort if channels failed to wire). Full rule + test-fixture pattern: `Documentation/v0.2/good_to_know.md` "Console.* Is Banned in Production C#".
 
 ## OBP Shape Smells (audit before writing or reviewing C#)
 

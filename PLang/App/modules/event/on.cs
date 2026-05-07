@@ -38,6 +38,9 @@ public partial class On : IContext
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
     public partial Data.@this<Actor.@this>? Actor { get; init; }
 
+    /// <summary>Channel-name filter for channel lifecycle events (BeforeWrite/AfterWrite/BeforeRead/AfterRead/OnAsk). Null = no filter.</summary>
+    public partial Data.@this<string>? ChannelName { get; init; }
+
     public Task<Data.@this> Run()
     {
         // Resolve target actor — default to current context's actor
@@ -55,7 +58,8 @@ public partial class On : IContext
             actionPattern: ActionPattern?.Value,
             priority: Priority.Value,
             isRegex: IsRegex.Value,
-            goalToCall: goalToCall);
+            goalToCall: goalToCall,
+            channelName: ChannelName?.Value);
 
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);

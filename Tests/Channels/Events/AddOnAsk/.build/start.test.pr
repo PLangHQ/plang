@@ -1,0 +1,131 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "on ask on \u0022input\u0022 channel call CaptchaGoal, write to %bindingId%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "events.add OnAsk binding on the input channel \u2014 verifies registration succeeds.\nDriving an actual Ask through stdin is out of scope for an automated test;\nthis confirms the binding installs and the EventType \u002B ChannelName plumb\nthrough the catalog.",
+      "actions": [
+        {
+          "module": "event",
+          "action": "on",
+          "parameters": [
+            {
+              "name": "Type",
+              "value": "OnAsk",
+              "type": "eventtype"
+            },
+            {
+              "name": "GoalToCall",
+              "value": {
+                "name": "CaptchaGoal",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "ChannelName",
+              "value": "input",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "isregex",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "priority",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%bindingId%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Register a lifecycle event handler for OnAsk, scoped to the input channel, that calls CaptchaGoal. Capture the returned binding id into %bindingId% for later verification.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %bindingId% is not null",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%bindingId%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Expected %bindingId% to be set after event binding registration",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that the binding id was produced (not null).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Events/AddOnAsk/Start.test.goal",
+  "prPath": "/Events/AddOnAsk/.build/start.test.pr",
+  "hash": "34bb54f6b3f14f28e63962630f2b6a8e026dd2aac44b925e53ed3d774ed62207",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

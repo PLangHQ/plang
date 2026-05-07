@@ -96,7 +96,7 @@ public class DefaultFileProvider : IFileProvider
             else
             {
                 await using var stream = fs.File.Create(path.Absolute);
-                await action.Context.App.Channels.Serializers.SerializeAsync(new SerializeOptions
+                await action.Context.App.Serializers.SerializeAsync(new SerializeOptions
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 

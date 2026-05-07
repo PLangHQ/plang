@@ -1,0 +1,6 @@
+Start
+/ channel.set replaces the role channel with a Goal-backed channel — writes
+/ to output now run OutputGoal, which sets a flag we can assert.
+- set output channel as OutputGoal
+- write 'hello'
+- assert %outputGoalCalled% is true

@@ -81,10 +81,10 @@ public class IfErrorOrchestrationTests : IDisposable
     public async Task If_OrchestratedSuccess_MarksResultHandled()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
-            EngineChannels.Default, captureStream,
+        _app.User.Channels.Register(new StreamChannel(
+            EngineChannels.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         var condAction = new Action
         {

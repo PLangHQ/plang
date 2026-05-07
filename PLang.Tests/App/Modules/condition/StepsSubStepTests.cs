@@ -106,10 +106,10 @@ public class StepsSubStepTests : IDisposable
     private (System.IO.MemoryStream stream, Func<string> getOutput) SetupCapture()
     {
         var stream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
-            EngineChannels.Default, stream,
+        _app.User.Channels.Register(new StreamChannel(
+            EngineChannels.Output, stream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         return (stream, () =>
         {

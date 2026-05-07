@@ -37,10 +37,10 @@ public class PlangRuntimeTests : IDisposable
     public async Task Kernel_Execute_RunsStepActions()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
-            EngineChannels.Default, captureStream,
+        _app.User.Channels.Register(new StreamChannel(
+            EngineChannels.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         var step = new Step
         {
@@ -115,10 +115,10 @@ public class PlangRuntimeTests : IDisposable
     public async Task PlangRuntime_SimpleGoal_ExecutesThroughRunGoal()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channels.Register(new Channel(
-            EngineChannels.Default, captureStream,
+        _app.User.Channels.Register(new StreamChannel(
+            EngineChannels.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { ContentType = "text/plain" });
+        { Mime = "text/plain" });
 
         var goal = new Goal
         {

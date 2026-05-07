@@ -8,7 +8,7 @@
       "text": "set %x% = \u0022before\u0022",
       "lineNumber": 3,
       "indent": 0,
-      "comment": "inner goal sets variable visible to caller",
+      "comment": "inner goal sets variable visible to caller \u2014 fresh-name leak (LoadUser pattern)",
       "actions": [
         {
           "module": "variable",
@@ -195,7 +195,7 @@
             {
               "name": "Name",
               "value": "%captured%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -203,14 +203,20 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Initialize %captured% to an empty string so subsequent CaptureItem calls can append/modify it; this is a variable assignment.",
+      "level": "high",
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -234,7 +240,7 @@
             {
               "name": "ItemName",
               "value": "item",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -248,13 +254,15 @@
               "name": "GoalName",
               "value": {
                 "name": "CaptureItem",
+                "parallel": false,
                 "parameters": [
                   {
                     "name": "item",
                     "value": "%item%",
                     "type": "string"
                   }
-                ]
+                ],
+                "prPath": "/.build/captureitem.pr"
               },
               "type": "goal.call"
             }
@@ -264,9 +272,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Iterate over %items% and call CaptureItem for each item, passing the current loop item as the goal parameter.",
+      "level": "high",
+      "confidence": 93,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -338,13 +346,121 @@
       "formal": null,
       "source": null,
       "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "call InnerWithParam id=42",
+      "lineNumber": 17,
+      "indent": 0,
+      "comment": "param value passed into goal: mutating it inside leaks back to caller\n(sequential goal.call has no overlay \u2192 all writes hit actor dict)",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "InnerWithParam",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "id",
+                    "value": 42,
+                    "type": "long"
+                  }
+                ],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Call InnerWithParam with id=42. This step is intended to test whether mutating the parameter inside the called goal leaks back to the caller.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "assert %id% equals 999",
+      "lineNumber": 18,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "999",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%id%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: verify %id% equals 999 after InnerWithParam runs (tests mutation leak).",
+      "level": "medium",
+      "confidence": 55,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "assert %user% equals \u0022alice\u0022",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "alice",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%user%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: verify %user% equals \u0022alice\u0022 after InnerWithParam runs (tests mutation leak).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
   "path": "/VariableScoping.test.goal",
   "prPath": "/.build/variablescoping.test.pr",
-  "hash": "c32737166653604c22d4d239baed09929cbc95e64c135139ad51b1e6a77288a5",
+  "hash": "b828e1a8f9b5487f543899544d036fa9ffb85ebe6d9b52c79aee415cd7a47ebf",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

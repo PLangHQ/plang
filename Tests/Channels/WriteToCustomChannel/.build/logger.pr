@@ -1,0 +1,58 @@
+{
+  "name": "Logger",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %loggerCalled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%loggerCalled%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "variable.set to mark that the logger was called.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/WriteToCustomChannel/Logger.goal",
+  "prPath": "/WriteToCustomChannel/.build/logger.pr",
+  "hash": "5ee893a6cdfb3f82baeeac34895818ace1026b53bd9da0ed346c679cd7e1a48d",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

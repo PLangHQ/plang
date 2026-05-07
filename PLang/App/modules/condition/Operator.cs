@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Globalization;
-using App.Variables;
 
 namespace App.modules.condition;
 
@@ -10,7 +9,7 @@ namespace App.modules.condition;
 /// means adding one entry to the Registry.
 /// Receives Data objects — unwraps to raw values only at the point of comparison.
 /// </summary>
-public sealed class Operator : IObject
+public sealed class Operator
 {
     private static readonly Dictionary<string, Func<Data.@this?, Data.@this?, bool>> Registry =
         new(StringComparer.OrdinalIgnoreCase)
@@ -30,7 +29,8 @@ public sealed class Operator : IObject
             ["or"] = (l, r) => IsTruthy(l) || IsTruthy(r),
         };
 
-    public static string[] ValidValues => [.. Registry.Keys];
+    [App.Attributes.Choices]
+    public static string[] Choices(Actor.Context.@this? ctx) => [.. Registry.Keys];
 
     public string Value { get; }
     public Func<Data.@this?, Data.@this?, bool> Evaluate { get; }

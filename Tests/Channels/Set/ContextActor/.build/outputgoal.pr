@@ -1,0 +1,58 @@
+{
+  "name": "OutputGoal",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %userOutputCalled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%userOutputCalled%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use variable.set to assign the boolean value true to %userOutputCalled%.",
+      "level": "high",
+      "confidence": 99,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Set/ContextActor/OutputGoal.goal",
+  "prPath": "/Set/ContextActor/.build/outputgoal.pr",
+  "hash": "dc342261eefbd336ff840cb6c7ffa4be0ee52f472339d37a63b459e5b427e997",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

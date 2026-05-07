@@ -372,14 +372,16 @@ public sealed class OpenAiProvider : ILlmProvider
 
                     if (validationRetries >= action.MaxValidationRetries.Value)
                     {
-                        Console.WriteLine($"  Validation failed (no retries left): {validationError}");
+                        await app.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output,
+                            $"  Validation failed (no retries left): {validationError}{Environment.NewLine}");
                         return App.Data.@this.FromError(new ActionError(
                             $"LLM validation failed: {validationError}",
                             "ValidationFailed", 400));
                     }
 
                     validationRetries++;
-                    Console.WriteLine($"  Validation failed (retry {validationRetries}/{action.MaxValidationRetries.Value}): {validationError}");
+                    await app.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output,
+                        $"  Validation failed (retry {validationRetries}/{action.MaxValidationRetries.Value}): {validationError}{Environment.NewLine}");
                     messages.Add(new LlmMessage
                     {
                         Role = "user",

@@ -213,14 +213,10 @@ public static class TypeMapping
         var declared = PlangTypeIndex.ResolveName(type);
         if (declared != null) return declared;
 
-        // Check for ValidValues static property (convention for constrained types)
-        // Return the lowercased type name — callers use GetValidValues() for the values
-        var validValuesProp = type.GetProperty("ValidValues",
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-        if (validValuesProp != null && validValuesProp.PropertyType == typeof(string[]))
-        {
+        // [Choices]-bearing types: lowercased type name (e.g. Actor → "actor"). The
+        // catalog renders the choices list separately via Catalog/Type Information.
+        if (App.Choices.@this.Has(type))
             return StripGenericArity(type.Name).ToLowerInvariant();
-        }
 
         return StripGenericArity(type.Name).ToLowerInvariant();
     }
@@ -236,10 +232,11 @@ public static class TypeMapping
     // the full [PlangType] + @this resolution for domain types.
 
     /// <summary>
-    /// Gets the valid values for a constrained type (e.g. Actor → ["user","service","system"]).
-    /// Returns null if the type has no ValidValues convention property.
+    /// Gets the valid values for a constrained type — enum names for real enums,
+    /// or the [Choices] vocabulary for types that declare one. Returns null when
+    /// the type is neither an enum nor a [Choices]-bearing type.
     /// </summary>
-    public static string[]? GetValidValues(Type type)
+    public static string[]? GetValidValues(Type type, Actor.Context.@this? context = null)
     {
         // Unwrap nullable
         var underlying = Nullable.GetUnderlyingType(type);
@@ -253,12 +250,8 @@ public static class TypeMapping
         if (type.IsEnum)
             return Enum.GetNames(type);
 
-        // Convention: static ValidValues property
-        var prop = type.GetProperty("ValidValues",
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-        if (prop != null && prop.PropertyType == typeof(string[]))
-            return (string[])prop.GetValue(null)!;
-        return null;
+        // [Choices] convention
+        return App.Choices.@this.Get(type, context);
     }
 
     /// <summary>

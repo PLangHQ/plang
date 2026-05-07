@@ -69,16 +69,6 @@ public class EngineTests
     }
 
     [Test]
-    public async Task Service_ReturnsActorWithCorrectName()
-    {
-        await using var engine = new global::App.@this("/app");
-
-        var service = engine.Service;
-
-        await Assert.That(service.Name).IsEqualTo("Service");
-    }
-
-    [Test]
     public async Task User_ReturnsActorWithCorrectName()
     {
         await using var engine = new global::App.@this("/app");
@@ -135,7 +125,7 @@ public class EngineTests
 
         await Assert.That(engine.User.Context.Actor).IsEqualTo(engine.User);
         await Assert.That(engine.System.Context.Actor).IsEqualTo(engine.System);
-        await Assert.That(engine.Service.Context.Actor).IsEqualTo(engine.Service);
+        await Assert.That(engine.System.Context.Actor).IsEqualTo(engine.System);
     }
 
     [Test]
@@ -158,7 +148,7 @@ public class EngineTests
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
         await Assert.That(engine.Modules).IsNotNull();
-        await Assert.That(engine.Channels.Serializers).IsNotNull();
+        await Assert.That(engine.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
         await Assert.That(engine.FileSystem).IsNotNull();
     }
@@ -214,8 +204,8 @@ public class EngineTests
     {
         await using var engine = new global::App.@this("/app");
 
-        await Assert.That(engine.Channels.Serializers).IsNotNull();
-        await Assert.That(engine.Channels.Serializers.GetByContentType("application/json")).IsNotNull();
+        await Assert.That(engine.Serializers).IsNotNull();
+        await Assert.That(engine.Serializers.GetByContentType("application/json")).IsNotNull();
     }
 
     [Test]
@@ -482,7 +472,7 @@ public class EngineTests
         // Access actors to create them
         var user = engine.User;
         var system = engine.System;
-        var service = engine.Service;
+        var service = engine.System;
 
         // Get references to contexts
         var userContext = user.Context;

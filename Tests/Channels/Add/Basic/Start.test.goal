@@ -1,0 +1,6 @@
+Start
+/ channel.add registers a new named Goal channel — verify by writing to it and
+/ observing the goal-channel's body ran.
+- set channel "logger" call Logger
+- write 'hi' to logger
+- assert %loggerCalled% is true

@@ -1,0 +1,5 @@
+Start
+/ channel.remove on a standard role-channel (output / error / input) is refused.
+- remove channel "output", on error set %removalRefused% = true
+- assert %removalRefused% is true
+- write 'still here' to output

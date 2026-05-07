@@ -298,7 +298,7 @@ public class SettingsDataTests
         // All actors should share the exact same SettingsVariable instance
         var userSettings = _app.User.Context.Variables.Get("Settings");
         var systemSettings = _app.System.Context.Variables.Get("Settings");
-        var serviceSettings = _app.Service.Context.Variables.Get("Settings");
+        var serviceSettings = _app.System.Context.Variables.Get("Settings");
 
         await Assert.That(userSettings).IsNotNull();
         await Assert.That(systemSettings).IsNotNull();
@@ -322,7 +322,7 @@ public class SettingsDataTests
         await Assert.That(result.Value?.ToString()).IsEqualTo("shared-value");
 
         // Read from Service context (should also work)
-        var serviceResult = _app.Service.Context.Variables.Get("Settings.SharedKey");
+        var serviceResult = _app.System.Context.Variables.Get("Settings.SharedKey");
         await Assert.That(serviceResult).IsNotNull();
         await Assert.That(serviceResult!.Success).IsTrue();
         await Assert.That(serviceResult.Value?.ToString()).IsEqualTo("shared-value");

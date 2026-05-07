@@ -1,0 +1,2 @@
+OutputGoal
+- set %outputGoalCalled% = true

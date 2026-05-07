@@ -31,6 +31,7 @@ public class IChannelHandlerTests
     public async Task IChannelHandler_ChannelsAssigned_BeforeRun()
     {
         await using var app = new global::App.@this("/app");
+        global::App.@this.WireDefaultConsoleChannels(app.User);
         var result = await MatrixRunner.RunAsync<IChannelHandler>(app);
         await Assert.That(result.Data.Value).IsEqualTo(true);
     }
@@ -78,6 +79,7 @@ public class MultiMarkerHandlerTests
     public async Task MultiMarker_AllSlotsAssigned_BeforeRun()
     {
         await using var app = new global::App.@this("/app");
+        global::App.@this.WireDefaultConsoleChannels(app.User);
 
         var ctx = await MatrixRunner.RunAsync<IContextHandler>(app);
         var ch = await MatrixRunner.RunAsync<IChannelHandler>(app);

@@ -62,7 +62,7 @@ public static class @this
                 """);
         if (info.ImplementsIChannel)
             sb.Append("""
-                    public global::App.Channels.@this Channels { get; set; } = null!;
+                    public global::App.Channels.Channel.@this Channel { get; set; } = null!;
 
                 """);
         if (info.ImplementsIAction)
@@ -156,7 +156,19 @@ public static class @this
             """);
 
         if (info.ImplementsIContext) sb.AppendLine("        Context = context;");
-        if (info.ImplementsIChannel) sb.AppendLine("        Channels = (context.Actor ?? app.User).Channels;");
+        if (info.ImplementsIChannel)
+        {
+            sb.Append("""
+                        {
+                            var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
+                            Channel = (context.Actor ?? app.User).Channels.Resolve(__channelName);
+                            if (Channel == null)
+                                return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(
+                                    $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404));
+                        }
+
+                """);
+        }
         if (info.ImplementsIAction) sb.AppendLine("        Action = __action!;");
         if (info.ImplementsIStep) sb.AppendLine("        Step = __action?.Step!;");
         if (info.ImplementsIStatic)

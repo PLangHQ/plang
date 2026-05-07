@@ -877,3 +877,22 @@ The dispatch path is: callbacks read `RestoredFrame` to identify the resume `Pos
 `Error.Callback` is a property that materialises an `ErrorCallback` on demand by calling `app.Snapshot()`. For that call to land, the `Error` instance needs a path to the live App tree at the point the callback is asked for — which is later than the point the error was raised.
 
 `PLang/App/Errors/this.cs` solves this by setting `error.App = this.App` inside `Push`. Errors plumb through code that doesn't know about App; the back-ref means recovery callbacks can materialise without re-threading App through the throw site. If you reorganise error handling, preserve this assignment — `Error.Callback` reads `App` via this property and silently returning `null` would mask the recovery path.
+
+---
+
+## Console.* Is Banned in Production C#
+
+Channels exist so that I/O is **redirectable** — a user can re-register the `output`/`error`/`debug` channel to a file, an in-memory buffer, an HTTP response, or a goal. Any `Console.WriteLine` / `Console.Write` / `Console.Error.WriteLine` in production C# silently bypasses that surface and breaks the contract.
+
+The rule, with the three flavours of write:
+
+- **Diagnostic / debug chatter** (lifecycle banners, `--debug` traces, internal warnings) → `await context.App.Debug.Write(...)`. This routes through the `debug` channel falling back to `error`, and is gated on `IsEnabled` so it goes silent without `--debug`. Sites that subscribe as `Action<...>` (sync event handlers) can use `_ = Debug.Write(...)` — `Console.Error` was non-awaitable already, so ordering guarantees don't change.
+- **User-facing program output** (builder progress lines, LLM validation chatter — the user expects to see them with `--debug` off) → `await app.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output, ...)`. Do **not** route these through `Debug.Write` — the `IsEnabled` gate would silence them in the default case.
+- **Interactive prompts** (the App build "create new app? (y/n)" prompt is the canonical example). The default console pair is direction-split: `output` is write-only, `input` is read-only. `Channel.Stream.AskCore` writes-then-reads on a single bidirectional stream and does not work across the split pair. Two-call pattern: write the prompt through `output`, then `using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true)` and `await reader.ReadLineAsync()`. Don't extract a `Channels.AskAcrossAsync` primitive on speculation — there's only one caller.
+
+The two `Console.*` references that **stay**:
+
+- `Console.IsInputRedirected` / `Console.IsOutputRedirected` — these are **queries** ("is stdin a TTY?"), not writes. They gate *whether* to prompt, not *how*.
+- `PlangConsole/Program.cs:26` — the process boundary. If `executor.Run` itself fails before channels are wired, this is the last-resort error sink. Single explicit exemption.
+
+Test fixtures that capture stderr by `Console.SetError(...)` are broken under the channel model — the `error` channel was registered with `Console.OpenStandardError()` *at boot*, and re-pointing `Console.Error` later doesn't affect the captured Stream reference. Capture by registering a memory channel as `"error"` on the System actor instead — that's the redirection model channels exist to provide.

@@ -25,8 +25,8 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     private bool _disposed;
 
     private Actor.@this? _system;
-    private Actor.@this? _service;
     private Actor.@this? _user;
+    private global::App.Services.@this? _services;
 
     /// <summary>
     /// Unique identifier for this app. Loaded from app.pr, or generated on first run.
@@ -148,9 +148,10 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     public App.FileSystem.IPLangFileSystem FileSystem { get; set; }
 
     /// <summary>
-    /// I/O operations (file reading, channels).
+    /// App-wide serializer registry — content-type routing for I/O. Stage 6 promoted
+    /// from per-actor Channels to App-level: actors share one serializer registry.
     /// </summary>
-    public AppChannels Channels { get; }
+    public Serializers Serializers { get; } = new Serializers();
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -216,14 +217,16 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     public Actor.@this System => _system ??= new Actor.@this("System", this, _shutdownCts.Token);
 
     /// <summary>
-    /// Service actor for external service operations. Links to System's cancellation token.
-    /// </summary>
-    public Actor.@this Service => _service ??= new Actor.@this("Service", this, System.CancellationToken);
-
-    /// <summary>
     /// User actor for end user operations. Links to System's cancellation token.
     /// </summary>
     public Actor.@this User => _user ??= new Actor.@this("User", this, System.CancellationToken);
+
+    /// <summary>
+    /// Flat per-call Service collection. Each Service is one outbound call's I/O
+    /// scope (channels, identity, parent ref). Stage 7: replaces runtime1's
+    /// Service-as-actor model.
+    /// </summary>
+    public global::App.Services.@this Services => _services ??= new global::App.Services.@this(this);
 
     /// <summary>
     /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
@@ -248,7 +251,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         var actor = name.ToLowerInvariant() switch
         {
             "system" => System,
-            "service" => Service,
             "user" => User,
             _ => (Actor.@this?)null
         };
@@ -290,7 +292,8 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 
     public @this(string absolutePath, AppModules? modules = null,
         App.FileSystem.IPLangFileSystem? fileSystem = null,
-        string? environment = null)
+        string? environment = null,
+        bool autoWireConsoleChannels = true)
         : base("!app")
     {
         Id = Guid.NewGuid().ToString("N")[..12];
@@ -310,7 +313,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         _modules = modules ?? new AppModules();
         _goals = new AppGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
-        Channels = new AppChannels(this);
 
         Errors.App = this;
 
@@ -320,6 +322,44 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
 
         // Default actor is User — Start() switches to System for bootstrap
         CurrentActor = User;
+
+        // Auto-wire console channels for ad-hoc App constructions (sub-process
+        // test fixtures, embedded scenarios, C# tests). Entry points that own
+        // the wiring (PlangConsole's Executor) construct with autoWireConsoleChannels:false
+        // and call WireDefaultConsoleChannels themselves.
+        if (autoWireConsoleChannels)
+        {
+            WireDefaultConsoleChannels(System);
+            WireDefaultConsoleChannels(User);
+        }
+    }
+
+    /// <summary>
+    /// Verifies the all-three-roles invariant on every I/O actor (System, User).
+    /// Returns Data.Error on first missing channel; Ok otherwise. PlangConsole
+    /// (or any entry point) must register Output/Error/Input on each before
+    /// goal execution. <see cref="Start"/> calls this and surfaces failure as
+    /// MissingRequiredChannelAtBoot before any user code runs.
+    /// </summary>
+    /// <summary>
+    /// Wires the console standard streams onto the given actor's Channels under
+    /// the well-known names ("output", "error", "input"). PlangConsole calls
+    /// this for System and User after constructing the App.
+    /// </summary>
+    public static void WireDefaultConsoleChannels(global::App.Actor.@this actor)
+    {
+        if (!actor.Channels.Contains(global::App.Channels.@this.Output))
+            actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
+                global::App.Channels.@this.Output, Console.OpenStandardOutput(),
+                global::App.Channels.Channel.ChannelDirection.Output, ownsStream: false));
+        if (!actor.Channels.Contains(global::App.Channels.@this.Error))
+            actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
+                global::App.Channels.@this.Error, Console.OpenStandardError(),
+                global::App.Channels.Channel.ChannelDirection.Output, ownsStream: false));
+        if (!actor.Channels.Contains(global::App.Channels.@this.Input))
+            actor.Channels.Register(new global::App.Channels.Channel.Stream.@this(
+                global::App.Channels.@this.Input, Console.OpenStandardInput(),
+                global::App.Channels.Channel.ChannelDirection.Input, ownsStream: false));
     }
 
     /// <summary>
@@ -495,6 +535,19 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     {
         await Load();
 
+        // Invariant: every I/O actor must have all three role-channels registered
+        // by the entry point before goal execution. Surface a clear error otherwise.
+        foreach (var actor in new[] { System, User })
+        {
+            var invariant = actor.Channels.Verify();
+            if (!invariant.Success) return invariant;
+        }
+
+        // Foundational set: capture the boot-time channels so goal channels can
+        // resolve their writes against the originals (recursion isolation).
+        System.FreezeFoundational();
+        User.FreezeFoundational();
+
         context ??= System.Context;
         CurrentActor = System;
 
@@ -510,8 +563,20 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
                     return Data.@this.FromError(new global::App.Errors.ServiceError(
                         $"No app found at {AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
-                Console.Write($"No app found at {AbsolutePath}. Create new app? (y/n): ");
-                var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
+                // Channels are wired by the entry point (PlangConsole) before Run.
+                // The User actor's "output"/"input" channels wrap stdout/stdin — write
+                // the prompt to output, then ReadLine off the input stream. Two-call
+                // because the default channels are direction-split (output write-only,
+                // input read-only) so Stream.AskCore can't bridge them.
+                var outputChannel = User.Channels.Get(global::App.Channels.@this.Output) as global::App.Channels.Channel.Stream.@this;
+                var inputChannel = User.Channels.Get(global::App.Channels.@this.Input) as global::App.Channels.Channel.Stream.@this;
+                if (outputChannel == null || inputChannel == null)
+                    return Data.@this.FromError(new global::App.Errors.ServiceError(
+                        "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
+
+                await outputChannel.WriteTextAsync($"No app found at {AbsolutePath}. Create new app? (y/n): ");
+                using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
+                var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
                 if (answer != "y" && answer != "yes")
                     return Data.@this.FromError(new global::App.Errors.ServiceError(
                         "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
@@ -549,7 +614,14 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         if (!goalResult.Success) return goalResult;
 
         // Inject parameters — GetGoalAsync only injects when loading from file,
-        // but goals found in memory (app.Goals.Get) need parameters too
+        // but goals found in memory (app.Goals.Get) need parameters too.
+        // Goal-call is *not* a fork: it stays in the caller's flow. Variables.Set
+        // is overlay-aware — if a fork operator above us (channel fire, parallel
+        // foreach iteration) pushed a Calls scope, these writes land in that
+        // scope; otherwise they go to the actor-shared dict. Either way,
+        // sequential goal.call shares state with its caller (LoadUser leak still
+        // works in plain top-of-flow code), and concurrent invocations are
+        // isolated by whatever forked them.
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
                 context.Variables.Set(param.Name, param);
@@ -595,8 +667,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         // Dispose created actors
         if (_system != null)
             await _system.DisposeAsync();
-        if (_service != null)
-            await _service.DisposeAsync();
         if (_user != null)
             await _user.DisposeAsync();
 
@@ -617,9 +687,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
             else if (provider is IDisposable disposableProv)
                 disposableProv.Dispose();
         }
-
-        // Dispose app-level channels
-        await Channels.DisposeAsync();
 
         // Dispose KeepAlive objects
         foreach (var d in _keepAlive)

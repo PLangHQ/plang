@@ -9,9 +9,9 @@ public class MimeRegistrationTests
     public async Task Channels_LookupSerializerByMimeType_RoutesAccordingly()
     {
         var app = new global::App.@this("/test");
-        var json = app.Channels.Serializers.GetByMimeType("application/json");
-        var pdata = app.Channels.Serializers.GetByMimeType("application/plang+data");
-        var text = app.Channels.Serializers.GetByMimeType("text/plain");
+        var json = app.Serializers.GetByMimeType("application/json");
+        var pdata = app.Serializers.GetByMimeType("application/plang+data");
+        var text = app.Serializers.GetByMimeType("text/plain");
 
         await Assert.That(json).IsTypeOf<JsonStreamSerializer>();
         await Assert.That(pdata).IsTypeOf<PlangDataSerializer>();
@@ -25,7 +25,7 @@ public class MimeRegistrationTests
         var app = new global::App.@this("/test");
         await Assert.ThrowsAsync<UnregisteredMimeType>(async () =>
         {
-            app.Channels.Serializers.GetByMimeType("application/x-totally-made-up");
+            app.Serializers.GetByMimeType("application/x-totally-made-up");
             await Task.CompletedTask;
         });
     }
@@ -34,7 +34,7 @@ public class MimeRegistrationTests
     public async Task ApplicationPlangData_Mime_RegisteredAtAppBoot()
     {
         var app = new global::App.@this("/test");
-        var s = app.Channels.Serializers.GetByMimeType("application/plang+data");
+        var s = app.Serializers.GetByMimeType("application/plang+data");
         await Assert.That(s).IsTypeOf<PlangDataSerializer>();
     }
 }

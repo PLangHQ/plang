@@ -379,3 +379,56 @@ During `builder.validate` (per-step), walk the `Parameters` list<Data> and recor
 Belongs in the validator (not `variable.set`) so we capture the type as declared *at the parameter slot*, not just the writer's intent.
 
 **Context:** came up while diagnosing `Actor: ""` LLM hallucinations — the .pr type slot says `actor` but the value is empty/wrong-typed, and we only catch it at conversion time. A type registry would surface "variable %x% used as actor here, but it was set as string in step 2" much earlier.
+
+## Go over events — `App.Events` vs `Context.Events`
+
+**Date:** 2026-05-07
+
+Two `AppEvents` registries exist (one on `App`, one per-actor on
+`Context`). Suspect smell — same concept twice. Worth a pass to decide
+which scope owns what, and whether they should be one thing.
+
+## Callback PLang surfaces — durability, timeout, signature tamper, AskVars
+
+**Date:** 2026-05-07
+
+Four `.test.goal` stubs were removed from `Tests/Callback/` because they
+documented missing PLang surface, not real test work:
+
+- **`callback.configure` (or similar)** — verb-level surface for writing
+  `app.Callback.Signature.ExpiresInMs`. C# already covers the contract
+  via `AppCallbackConfigTests`.
+- **Byte-level callback persistence across processes** — `DurabilityRoundTrip`
+  needs a PLang surface to drive the round-trip. C# coverage in
+  `PLang.Tests/App/CallbackTests/ErrorCallbackTests.cs`.
+- **Byte-level mutation of a serialized callback envelope** —
+  `TamperedSignature` needs the same kind of surface to corrupt and
+  re-verify. C# coverage in `CallbackRun_HardErrors_WhenSigningVerifyFails`.
+- **`vars:` annotation builder validation** — `AskVarsOnNonAsk` blocked
+  on builder pass that flags `vars:` on non-`ask` actions.
+
+All four are nice-to-have PLang-side complements; the behaviour is
+already proven in C#. Worth a pass when callback work resumes.
+
+## Static mutable state in C# — sweep for multi-App safety
+
+**Date:** 2026-05-07
+
+When PLang gains the ability to host multiple `App` instances in one
+process (`%app%` + `%app2%`, etc.), any `private static` mutable field
+becomes a cross-App leak. Found one concrete hotspot during the v10
+Console.* purge audit:
+
+- **`PLang/App/modules/builder/providers/DefaultBuilderProvider.cs:18`**
+  — `private static readonly Stopwatch _buildTimer = new();` is
+  process-global. Two concurrent builds (`%app%` and `%app2%` both
+  building) share one Stopwatch; `Restart()` from one corrupts the
+  elapsed measurement the other reads. Move to instance field on the
+  provider.
+
+The rest of the area is fine (`VarRefPattern` Regex, `_debugJsonOptions`
+JsonSerializerOptions, the `private static` lifecycle handlers in
+`App/Debug/this.cs` — those are stateless dispatchers that read state
+from `context.App.Debug`, not from static fields). But the *rule* to
+enforce: no `static` mutable state in any code path that an `App`
+instance touches. Worth a sweep when multi-App lands.

@@ -184,37 +184,11 @@ public static class TypeConverter
                 return (null, convError);
         }
 
-        // IObject types — validated value types with string constructors
-        if (typeof(App.modules.IObject).IsAssignableFrom(targetType))
-        {
-            var strVal = value is string sv ? sv : value?.ToString();
-            if (strVal == null)
-                return (null, new Errors.Error(
-                    $"Cannot convert null to {targetType.Name}",
-                    "IObjectConversionFailed", 400));
-            var ctor = targetType.GetConstructor([typeof(string)]);
-            if (ctor == null)
-                return (null, new Errors.Error(
-                    $"{targetType.Name} has no string constructor",
-                    "IObjectConversionFailed", 400));
-            try
-            {
-                return (ctor.Invoke([strVal]), null);
-            }
-            catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
-            {
-                var inner = ex.InnerException ?? ex;
-                var validValues = TypeMapping.GetValidValues(targetType);
-                return (null, new Errors.Error(
-                    inner.Message,
-                    "IObjectConversionFailed", 400)
-                    { FixSuggestion = validValues != null
-                        ? $"Valid values: {string.Join(", ", validValues)}"
-                        : null });
-            }
-        }
-
-        // Types with a constructor that accepts a single string (may have optional params)
+        // Types with a constructor that accepts a single string (may have optional params).
+        // [Choices]-bearing wrapper types like Operator land here — their string ctor
+        // validates the chosen name against the type's own registry. Stateful runtime
+        // types like Actor have no usable construct-from-string path; the validator
+        // short-circuits via Choices membership before reaching TryConvertTo.
         if (value is string ctorStr)
         {
             var ctor = targetType.GetConstructors()
@@ -248,6 +222,22 @@ public static class TypeConverter
                 {
                     return (null, new Errors.Error(ex.InnerException?.Message ?? ex.Message, "ConstructorFailed", 400));
                 }
+            }
+        }
+
+        // TimeSpan: parse ISO 8601 (e.g. "PT30S", "PT1H30M") via XmlConvert,
+        // fall back to .NET TimeSpan.Parse (e.g. "00:30:00"). Same wire shape
+        // the TimeSpanIso8601Converter uses for JSON.
+        if (targetType == typeof(TimeSpan) && value is string tsStr)
+        {
+            try { return (System.Xml.XmlConvert.ToTimeSpan(tsStr), null); }
+            catch (FormatException)
+            {
+                if (TimeSpan.TryParse(tsStr, System.Globalization.CultureInfo.InvariantCulture, out var ts))
+                    return (ts, null);
+                return (null, new Errors.Error(
+                    $"Cannot parse '{tsStr}' as TimeSpan — expected ISO 8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).",
+                    "TimeSpanParseFailed", 400));
             }
         }
 

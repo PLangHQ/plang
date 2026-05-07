@@ -111,7 +111,13 @@ public sealed class @this
     public Task Write(object? message)
     {
         if (!IsEnabled) return Task.CompletedTask;
-        return _engine.Channels.WriteAsync(App.Channels.@this.Debug, message);
+        // Debug surface routes via System actor's "error" channel (stderr equivalent).
+        // Stage 6: was app.Channels.WriteAsync; now per-actor.
+        var ch = _engine.System.Channels.Resolve(App.Channels.@this.Debug)
+              ?? _engine.System.Channels.Resolve(App.Channels.@this.Error);
+        if (ch == null) return Task.CompletedTask;
+        var envelope = message is App.Data.@this d ? d : App.Data.@this.Ok(message);
+        return ch.WriteAsync(envelope);
     }
 
     public void Apply(object debugValue)
@@ -292,7 +298,10 @@ public sealed class @this
                 sb.AppendLine($"  at {frame.GetMethod()!.DeclaringType?.Name}.{frame.GetMethod()!.Name}:{frame.GetFileLineNumber()}");
         }
         sb.AppendLine("==============================");
-        Console.Error.Write(sb.ToString());
+        // Subscribed as sync OnChange callback — fire-and-forget through the
+        // debug channel. Console.Error was non-awaitable too, so ordering
+        // guarantees are unchanged.
+        _ = Write(sb.ToString());
     }
 
     public void LogEvent(string name, string eventType, Data.@this data)
@@ -301,14 +310,14 @@ public sealed class @this
         var goalName = context?.Goal?.Name ?? "?";
         var stepIndex = context?.Step?.Index.ToString() ?? "?";
 
-        Console.Error.WriteLine($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Value?.GetType().Name ?? "null"} ===");
+        _ = Write($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Value?.GetType().Name ?? "null"} ==={Environment.NewLine}");
     }
 
-    private static Task<Data.@this> BeforeStepHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<Data.@this> BeforeStepHandler(Actor.Context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return Task.FromResult(App.Data.@this.Ok());
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(App.Data.@this.Ok());
+        if (step == null) return App.Data.@this.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return App.Data.@this.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -344,15 +353,15 @@ public sealed class @this
         AppendStepVariables(sb, context);
         sb.AppendLine("========================================");
 
-        WriteFiltered(sb, context);
-        return Task.FromResult(App.Data.@this.Ok());
+        await WriteFiltered(sb, context);
+        return App.Data.@this.Ok();
     }
 
-    private static Task<Data.@this> AfterStepHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<Data.@this> AfterStepHandler(Actor.Context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return Task.FromResult(App.Data.@this.Ok());
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(App.Data.@this.Ok());
+        if (step == null) return App.Data.@this.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return App.Data.@this.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -362,8 +371,8 @@ public sealed class @this
         AppendStepVariables(sb, context);
         sb.AppendLine("========================================");
 
-        WriteFiltered(sb, context);
-        return Task.FromResult(App.Data.@this.Ok());
+        await WriteFiltered(sb, context);
+        return App.Data.@this.Ok();
     }
 
     /// <summary>
@@ -371,14 +380,14 @@ public sealed class @this
     /// the same filter/truncate pipeline as the rest of debug output. Used by the
     /// granular Llm.* flag handlers — each flag fires its own block independently.
     /// </summary>
-    private static void WriteLlmBlock(string title, IEnumerable<string> chunks, Actor.Context.@this context)
+    private static Task WriteLlmBlock(string title, IEnumerable<string> chunks, Actor.Context.@this context)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"=== {title} ===");
         foreach (var chunk in chunks)
             sb.AppendLine(chunk);
         sb.AppendLine($"=== END {title} ===");
-        WriteFiltered(sb, context);
+        return WriteFiltered(sb, context);
     }
 
     /// <summary>
@@ -403,14 +412,14 @@ public sealed class @this
             catch (System.IO.IOException ex)
             {
                 // Surface the failure so users know their --debug llm.output=file isn't producing
-                // files. Silent disk write failures are exactly the case the
-                // "don't hide exceptions" feedback applies to.
-                Console.Error.WriteLine($"[debug] LLM file write failed: {ex.Message} (path={_currentLlmFilePath})");
+                // files. EmitLlmBlock is invoked from sync OnBeforeRequest/OnAfterResponse
+                // event lambdas — fire-and-forget through the debug channel.
+                _ = Write($"[debug] LLM file write failed: {ex.Message} (path={_currentLlmFilePath}){Environment.NewLine}");
             }
             return;
         }
 
-        WriteLlmBlock(title, chunks, context);
+        _ = WriteLlmBlock(title, chunks, context);
     }
 
     /// <summary>
@@ -480,7 +489,7 @@ public sealed class @this
         return sb.ToString();
     }
 
-    private static void WriteFiltered(StringBuilder sb, Actor.Context.@this context)
+    private static Task WriteFiltered(StringBuilder sb, Actor.Context.@this context)
     {
         var debug = context.App?.Debug;
         var maxLen = debug?.MaxLength ?? 500;
@@ -512,21 +521,23 @@ public sealed class @this
             output = truncated.ToString();
         }
 
-        Console.Error.Write(output);
+        return context.App?.Debug?.Write(output) ?? Task.CompletedTask;
     }
 
-    private static Task<Data.@this> AfterGoalHandler(Actor.Context.@this context)
+    private static async Task<Data.@this> AfterGoalHandler(Actor.Context.@this context)
     {
         var goalName = context.Goal?.Name ?? "?";
-        Console.Error.WriteLine($"--- DEBUG: Goal '{goalName}' completed ---");
-        return Task.FromResult(App.Data.@this.Ok());
+        var debug = context.App?.Debug;
+        if (debug != null)
+            await debug.Write($"--- DEBUG: Goal '{goalName}' completed ---{Environment.NewLine}");
+        return App.Data.@this.Ok();
     }
 
-    private static Task<Data.@this> BeforeActionHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<Data.@this> BeforeActionHandler(Actor.Context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return Task.FromResult(App.Data.@this.Ok());
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(App.Data.@this.Ok());
+        if (step == null) return App.Data.@this.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return App.Data.@this.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -534,15 +545,15 @@ public sealed class @this
 
         AppendStepVariables(sb, context);
 
-        WriteFiltered(sb, context);
-        return Task.FromResult(App.Data.@this.Ok());
+        await WriteFiltered(sb, context);
+        return App.Data.@this.Ok();
     }
 
-    private static Task<Data.@this> AfterActionHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<Data.@this> AfterActionHandler(Actor.Context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return Task.FromResult(App.Data.@this.Ok());
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return Task.FromResult(App.Data.@this.Ok());
+        if (step == null) return App.Data.@this.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return App.Data.@this.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -550,8 +561,8 @@ public sealed class @this
 
         AppendStepVariables(sb, context);
 
-        WriteFiltered(sb, context);
-        return Task.FromResult(App.Data.@this.Ok());
+        await WriteFiltered(sb, context);
+        return App.Data.@this.Ok();
     }
 
     private static readonly Regex VarRefPattern = new(@"%([^%]+)%", RegexOptions.Compiled);

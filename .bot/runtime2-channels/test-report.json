@@ -1,0 +1,40 @@
+{
+  "tester": "tester",
+  "branch": "runtime2-channels",
+  "timestamp": "2026-05-07T00:00:00Z",
+  "tested_version": "v7",
+  "test_run": {
+    "csharp": { "total": 2760, "passed": 2760, "failed": 0, "skipped": 0 },
+    "plang": { "total": 211, "passed": 205, "failed": 6, "skipped": 0, "note": "all 6 fails are deliberately-failing fixture inputs (_fixtures_fail/*, _fixtures_sensitive/*.fixture.goal); not re-run for v7 (no PLang surface change), values carried from coder baseline" }
+  },
+  "coverage": {
+    "changed_files_covered": 0,
+    "changed_files_total": 1,
+    "uncovered_files": ["PLang/App/Channels/Channel/Events/this.cs"],
+    "note": "v7 changed lines (_active instance scope, copy-on-write Enter, parent-restoring Releaser) are not exercised by any existing test; reverting either fix would not turn the suite red."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs",
+      "code_file": "PLang/App/Channels/Channel/Events/this.cs:22",
+      "issue": "B1 fix (`_active` static→instance) has no regression test. Walked all Stage8 tests — none would fail if `static` were reintroduced. Compounded by `Binding.Id = Guid.NewGuid().ToString(\"N\")[..8]` (Binding/this.cs:89) so cross-channel id collisions cannot occur through the public API.",
+      "impact": "Future refactors (deterministic binding ids, another consumer of `_active`) could re-introduce `static` and ship green.",
+      "suggestion": "Direct unit test on `Channel.Events.@this`: instantiate two `Events.@this`, call `evA.Enter(\"X\")`, assert `evB.IsActive(\"X\") == false`. ~3 lines, fails immediately if `_active` becomes static."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs",
+      "code_file": "PLang/App/Channels/Channel/Events/this.cs:69-85",
+      "issue": "L1 fix (copy-on-write `Enter` + parent-restoring `Releaser`) has no regression test. Coder explicitly acknowledged 'no current callsite' exercises parallel fan-out from a binding handler. Stage8's `BeforeWriteHandler_WritesToSameChannel_NoInfiniteLoop` only does sequential await.",
+      "impact": "A future binding handler that uses `Task.WhenAll` for parallel logging/fan-out would race on the shared HashSet if L1 were reverted, surfacing as a flaky `InvalidOperationException` in production rather than at test time.",
+      "suggestion": "The naive Task.WhenAll test does NOT catch this regression (children Add then Remove, leaving the set unchanged either way). Empirically validated suggestion: pause a child mid-Enter via TaskCompletionSource and observe the parent flow's IsActive on the child's id. Pseudocode: `using var _ = ev.Enter(\"A\"); var inside=new TCS(); var release=new TCS(); var t=Task.Run(async()=>{using var __=ev.Enter(\"B\"); inside.SetResult(); await release.Task;}); await inside.Task; var leaked=ev.IsActive(\"B\"); release.SetResult(); await t; Assert.That(leaked).IsFalse();`. Passes with L1 in place, fails (parent sees child's id leaked through shared HashSet ref) when L1 is reverted."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "Suite is green (2760/2760 C#). v7 change is conceptually correct. Both fixes are uncovered — empirically confirmed by reverting each fix in turn (working tree only, never committed): suite stayed green both times. Two minor missing-coverage findings; non-blocking. F2's suggested test was self-corrected after empirical run — the obvious Task.WhenAll version is a false green. Recommend a small follow-up commit (the two probe tests, ≤25 lines) before security."
+}

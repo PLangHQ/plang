@@ -1,0 +1,58 @@
+{
+  "name": "AuditLog",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %auditCalled% = true",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%auditCalled%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "variable.set to mark that AuditLog was invoked.",
+      "level": "high",
+      "confidence": 99,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Add/WithConfig/AuditLog.goal",
+  "prPath": "/Add/WithConfig/.build/auditlog.pr",
+  "hash": "f0bba0e40e12ff9a39f72b0d72a5d06b8bad7b34df908a3414d806994cb2ba80",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

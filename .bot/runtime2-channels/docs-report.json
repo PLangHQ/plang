@@ -1,0 +1,69 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-channels",
+  "timestamp": "2026-05-07T00:00:00Z",
+  "reviewed_version": "v10",
+  "summary": "Merge-gate docs pass after auditor v2 PASS on coder v10. Filled auditor N1 (cool.md migration entry was present-tense after v9 deletion of the surface — now reframed as roadmap). Captured the Console.* discipline rule v10 established as a canonical entry in good_to_know.md and a one-line bullet in /CLAUDE.md. Wrote CHANGELOG-equivalent in v1/result.md. Flagged Documentation/v0.2/io-channels.md as materially stale (predates OBP restructure + per-actor split) but did not block merge on it — that's its own architect-pass.",
+  "stats": { "gaps_found": 3, "gaps_filled": 2, "docs_updated": 3, "docs_created": 3 },
+  "changes": [
+    {
+      "id": 1,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/Runtime2/cool.md",
+      "description": "Reframed 'Channels that migrate across devices' from present-tense feature description to roadmap. Added explicit note that the v0.x Channel.Migrate / MigrationEnvelope surface was prototyped on this branch and removed before merge (security review on signature shape; receive-side undesigned). Resurrection happens fresh under Stage 9 transport. Closes auditor v2 N1."
+    },
+    {
+      "id": 2,
+      "type": "architecture-doc",
+      "action": "created",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Added 'Console.* Is Banned in Production C#' section. Documents the three write flavours (Debug.Write for diagnostics gated on --debug; Channels.WriteTextAsync(\"output\",...) for user-facing chatter; two-call pattern across the split output/input pair for interactive prompts), the two explicit exemptions (Console.IsInputRedirected as a query not a write; PlangConsole/Program.cs:26 as last-resort process-boundary sink), and the test-fixture migration pattern (capture via memory channel registered as 'error' on the System actor, not Console.SetError)."
+    },
+    {
+      "id": 3,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "CLAUDE.md",
+      "description": "Added one-line bullet in Runtime2 Conventions: 'No Console.* writes in production C#'. Compact summary of the three flavours + two exemptions, with a pointer to the long-form rule in good_to_know.md."
+    },
+    {
+      "id": 4,
+      "type": "changelog",
+      "action": "created",
+      "file": ".bot/runtime2-channels/docs/v1/result.md",
+      "description": "CHANGELOG-equivalent for the runtime2-channels branch as a whole: per-actor Channels registry, role channels, Channel subtype split, Debug.Write surface, Console.* purge, MigrationEnvelope deletion, StreamReader regression test."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "stale-doc",
+      "file": "Documentation/Runtime2/cool.md",
+      "issue": "Migration entry read in present tense after v9 surface deletion ('the channel.migrate action snapshots…', 'Plumbing exists in snapshot infrastructure').",
+      "resolution": "filled",
+      "detail": "Rewrote as roadmap with explicit deletion note. Carries forward auditor N2/N3 design constraints (real Ed25519 envelope; permission gate on Variables-snapshot exposure)."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "issue": "v10 establishes a non-obvious canonical rule (no Console.* in production; three flavours of write; two explicit exemptions) but the rule wasn't documented anywhere — only implicit in the diff.",
+      "resolution": "filled",
+      "detail": "Added long-form section + one-line CLAUDE.md bullet pointing to it."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "Documentation/v0.2/io-channels.md",
+      "issue": "Doc predates the OBP restructure and per-actor split. Names types like App.IO.IO / App.IO.Channel / actor.IO; current code is App.Channels.@this per actor (actor.Channels) with Channel.{Stream,Goal,Session,Events,Message}.@this subtypes. Static-factory list (Channel.Input/Output/Memory/File) doesn't match current API.",
+      "resolution": "flagged-for-coder",
+      "detail": "Refresh is large enough to land as its own architect/docs pass. Branch-wide drift, not v10-specific. Calling this branch merge-blocked on a stale unrelated doc is the wrong tradeoff. Followup: architect pass for a v0.2 channels reference doc."
+    }
+  ],
+  "claude_md_proposals": [],
+  "character_proposals": []
+}

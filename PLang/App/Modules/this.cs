@@ -167,6 +167,14 @@ public sealed class @this
     /// Describes all registered actions with parameter metadata for the LLM builder prompt.
     /// AppModules owns this because it knows its own types.
     /// </summary>
+    /// <summary>
+    /// Returns the inventory of channel names visible to the given actor at build time
+    /// (registered on actor.Channels). The builder catalog passes this to the LLM so it
+    /// can pick a channel from real names — no `to <name>` pattern parsing.
+    /// </summary>
+    public IReadOnlyList<string> GetChannelInventory(global::App.Actor.@this actor)
+        => actor.Channels.ChannelNames.ToList();
+
     // Capability interfaces — their declared properties are wired by the source generator
     // from the execution context (Step, Channels, Event, Static, Context) and are NOT
     // user-supplied parameters. Describe() filters them so the catalog doesn't teach the
@@ -234,6 +242,12 @@ public sealed class @this
 
                     parameters.Add(new Data.@this(prop.Name, desc));
                 }
+
+                // IChannel actions: source-gen reads action.Parameters["channel"] to resolve
+                // the Channel slot. Surface that parameter to the LLM so it can emit a name
+                // from the actor's channel inventory.
+                if (typeof(modules.IChannel).IsAssignableFrom(parameterType))
+                    parameters.Add(new Data.@this("channel", "string?"));
 
                 bool cacheable = true;
                 var actionAttr = parameterType.GetCustomAttribute<modules.ActionAttribute>();

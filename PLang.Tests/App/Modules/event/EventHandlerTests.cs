@@ -154,7 +154,7 @@ public class EventHandlerTests
     public async Task PerContextIsolation_TwoContexts_DifferentEvents()
     {
         var context1 = _app.User.Context;
-        var context2 = _app.Service.Context;
+        var context2 = _app.System.Context;
 
         await MakeOn(context1, global::App.Events.EventType.BeforeGoal, "LogGoal", goalPattern: "TestGoal").Run();
 
