@@ -71,7 +71,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// </summary>
     public global::App.Actor.@this? Actor { get; internal set; }
 
-    /// <summary>App backreference — kept for SignEmpty / general App access.</summary>
+    /// <summary>App backreference for general App access.</summary>
     public global::App.@this? App { get; internal set; }
 
     /// <summary>
@@ -254,77 +254,5 @@ public abstract class @this : IAsyncDisposable, IDisposable
     {
         Close();
         return ValueTask.CompletedTask;
-    }
-
-    // --- Stage 9: migration API stub ----------------------------------------
-
-    /// <summary>
-    /// Produces a signed migration envelope for shipping this channel to another
-    /// identity-aware runtime. Concrete subtypes override to populate
-    /// <see cref="MigrationEnvelope.Payload"/>; non-migratable channels (e.g.
-    /// Console-backed Stream) override to return Data.Error of type
-    /// <c>NotMigratable</c>.
-    /// </summary>
-    public virtual Task<Data.@this> Migrate()
-    {
-        var envelope = new MigrationEnvelope
-        {
-            Name = Name,
-            Direction = Direction,
-            Config = SnapshotConfig(),
-            Payload = null,
-            Signature = SignEmpty()
-        };
-        return Task.FromResult(Data.@this.Ok(envelope));
-    }
-
-    /// <summary>Receive-side stub. Cross-device transport not yet shipped.</summary>
-    public static @this FromMigration(MigrationEnvelope envelope)
-        => throw new NotImplementedException("Channel.FromMigration: receive-side transport is deferred.");
-
-    protected ChannelConfigSnapshot SnapshotConfig() => new()
-    {
-        Buffer = Buffer,
-        Timeout = Timeout,
-        Mime = Mime,
-        Encoding = Encoding,
-        Encryption = Encryption,
-        Signing = Signing
-    };
-
-    protected Signature SignEmpty()
-    {
-        // Stage 9 stub: identity name + key are sourced from App.System if reachable;
-        // empty bytes mean "not yet signed". The integrity contract (Verify on a
-        // tampered envelope returns false) is provided via the Verify helper below
-        // which round-trips a stable byte representation.
-        var identityName = App?.System.Identity?.Name ?? "system";
-        var publicKey = App?.System.Identity?.PublicKey ?? "";
-        var bytes = ComputeSignature(Name, Direction, identityName);
-        return new Signature
-        {
-            IdentityName = identityName,
-            PublicKey = publicKey,
-            Bytes = bytes
-        };
-    }
-
-    protected static byte[] ComputeSignature(string name, ChannelDirection direction, string identity)
-    {
-        // Deterministic hash over (name, direction, identity). Stage 9 stub —
-        // real signing lands when the cross-device transport ships.
-        using var sha = global::System.Security.Cryptography.SHA256.Create();
-        var input = global::System.Text.Encoding.UTF8.GetBytes($"{name}|{(int)direction}|{identity}");
-        return sha.ComputeHash(input);
-    }
-
-    /// <summary>
-    /// Stage 9 verification helper: recompute the signature from envelope contents
-    /// and compare bytes. Returns false on tamper.
-    /// </summary>
-    public static bool VerifyEnvelope(MigrationEnvelope envelope)
-    {
-        var expected = ComputeSignature(envelope.Name, envelope.Direction, envelope.Signature.IdentityName);
-        return expected.SequenceEqual(envelope.Signature.Bytes);
     }
 }

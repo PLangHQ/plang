@@ -1,57 +1,78 @@
 # Coder summary — runtime2-channels
 
-## Version
+## Latest version: v9 — auditor v1 close-out + drop channel migration
 
-**v8** (current). v1–v7 history kept in this branch's report.json.
+### What this is
 
-## What this is
-Tester v7 PASS but flagged two minor missing-coverage findings on `PLang/App/Channels/Channel/Events/this.cs` — neither v7 fix had a regression test. Tester empirically verified by reverting each in turn (working tree only) that the suite stayed green both times. v8 adds the two probe tests so future refactors can't silently re-introduce either bug.
+Auditor v1 returned FAIL with A1 (misleading `MigrationEnvelope.Signature`
+that lied about coverage) and A3 (`Stream.AskCore` leaks reader + ignores
+configured Encoding) as pre-merge blockers; A2/A4/A5 were deferred to
+downstream feature work.
 
-## What was done
+A1's design discussion led Ingi to remove the entire channel-migration
+surface from this branch — the `cool.md` sketch is staying as a future
+idea, but the half-built Stage 9 stub (`Channel.Migrate` +
+`channel.migrate` action + `MigrationEnvelope` + `Signature` struct +
+`FromMigration` + tests) is gone. The migration concept will be designed
+properly when an actual cross-device transport need lands; Stage 9's stub
+was code without a consumer.
 
-Two new `[Test]` methods appended to `PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs`:
+A3 is a small one-line fix in `Stream.AskCore` plus a regression test.
 
-- **`EventsActiveSet_IsInstanceScoped_NotShared`** (B1 probe) — instantiates two `Events.@this`, asserts that `evA.Enter("X")` does not bleed into `evB.IsActive("X")`. If `_active` becomes `static` again, this fails.
-- **`Enter_FromConcurrentChild_DoesNotLeakChildIdToParentFlow`** (L1 probe) — uses `TaskCompletionSource` to pause a child mid-`Enter`, then asserts the parent flow does **not** observe the child's id. Tester explicitly noted the naive `Task.WhenAll` shape is a false green; this is the empirically-validated form.
+### What was done in v9
 
-No production code change.
+- **Deleted** the entire channel-migration surface across:
+  - `PLang/App/Channels/Channel/MigrationEnvelope.cs`
+  - `PLang/App/Channels/Channel/this.cs` (Migrate / FromMigration / SignEmpty
+    / ComputeSignature / VerifyEnvelope / SnapshotConfig)
+  - `PLang/App/Channels/Channel/Stream/this.cs` (Migrate override)
+  - `PLang/App/Channels/Channel/Goal/this.cs` (Migrate override + `GoalMigrationPayload`)
+  - `PLang/App/modules/channel/migrate.cs` (action handler)
+  - `PLang.Tests/App/ChannelsTests/Stage9_ChannelMigrateTests.cs`
+  - `Tests/Channels/Migrate/{SessionOk,MessageError}/` (plang `.test.goal` files)
+  - Module description on `PLang/App/modules/channel/set.cs` updated.
+- **A3 fix** at `PLang/App/Channels/Channel/Stream/this.cs:115-120` —
+  `using var reader = new StreamReader(Stream, ResolveEncoding(),
+  detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen:
+  true);` — closes the StreamReader leak and routes through the channel's
+  configured Encoding.
+- **A3 regression test** added at
+  `PLang.Tests/App/ChannelsTests/Stage2_StreamChannelTests.cs` —
+  `StreamChannel_Ask_HonoursConfiguredEncoding` writes `0xE9 0x0A` (invalid
+  UTF-8 prefix; valid `é\n` in iso-8859-1) and asserts `AskCore` returns
+  `"é"` when Encoding is `iso-8859-1`. Without the fix the test fails
+  (UTF-8 default produces `U+FFFD`).
 
-### Verification
-- Built clean.
-- Stage8 filter: 17/17 (was 15).
-- Full C# suite: **2762/2762**, 0 fail, 0 skip (was 2760).
-- Sanity-checked L1 by reverting it in working tree → L1 probe correctly went red → restored. (B1 revert breaks compilation — `Releaser` accesses `_active` via instance — so the static-reintroduction path is doubly guarded.)
+### Code example
 
-### Files modified
-- `PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs` — +37 lines, two `[Test]` methods.
-
-### Artifacts
-- `.bot/runtime2-channels/coder/v8/plan.md`
-- `.bot/runtime2-channels/coder/v8/v7_review_summary.md`
-
-## Code example
+A3 fix shape:
 
 ```csharp
-[Test]
-public async Task Enter_FromConcurrentChild_DoesNotLeakChildIdToParentFlow()
-{
-    var ev = new global::App.Channels.Channel.Events.@this();
-    using var _ = ev.Enter("A");
-    var inside = new TaskCompletionSource();
-    var release = new TaskCompletionSource();
-    var t = Task.Run(async () =>
-    {
-        using var __ = ev.Enter("B");
-        inside.SetResult();
-        await release.Task;
-    });
-    await inside.Task;
-    var leaked = ev.IsActive("B");   // parent's snapshot must not see child's "B"
-    release.SetResult();
-    await t;
-    await Assert.That(leaked).IsFalse();
-}
+// Channel/Stream/this.cs — AskCore
+using var reader = new StreamReader(Stream, ResolveEncoding(),
+    detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
+var line = await reader.ReadLineAsync(timeoutCts.Token);
+return Data.@this.Ok(line ?? string.Empty);
 ```
 
-## For v8 after review
-This is the response to tester v7. Hand off to **security** next per tester's recommendation.
+### Test results
+
+- C#: 2755/2755 (was 2762; ‑7 net = 8 Stage 9 tests deleted + 1 Ask test added).
+- PLang: 203 pass + 6 deliberate fixture fails (was 205; ‑2 net = 2 migrate
+  test goals deleted).
+
+### Hand-off
+
+Auditor close-out next. A1 is satisfied by the wider deletion; A3 is fixed
+with a regression test. A2/A4/A5 remain deferred per the original
+auditor verdict — A2 is now moot (no `migrate` action exposes a Variables
+snapshot, because no `migrate` action).
+
+### Prior versions
+
+v1–v8 history is in commits `30ec543a` → `38f9d153` and the per-version
+`.bot/runtime2-channels/coder/v<N>/` directories. Headlines: stages 8+9
+shipped (v1), `[Choices]` standardisation (v2), channel architecture
+cleanup (v3, v3.1, v3.2), codeanalyzer fixes across v5–v7, tester v7
+probe tests (v8). v9 (this version) closes auditor v1 by deleting Stage 9
+entirely.

@@ -93,6 +93,26 @@ public class Stage2_StreamChannelTests
     }
 
     [Test]
+    public async Task StreamChannel_Ask_HonoursConfiguredEncoding()
+    {
+        // Auditor v1 A3 regression: AskCore was hard-coded to UTF-8 (StreamReader
+        // ctor with no encoding) and ignored the channel's Encoding property.
+        // With the fix it routes through ResolveEncoding() like ReadAllTextAsync.
+        // Bytes 0xE9 0x0A = "é\n" in iso-8859-1; 0xE9 alone is an invalid UTF-8
+        // start byte, so a UTF-8 reader would yield U+FFFD instead of 'é'.
+        var bytes = new byte[] { 0xE9, 0x0A };
+        var ms = new MemoryStream(bytes);
+        var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
+        {
+            Mime = "text/plain",
+            Encoding = "iso-8859-1"
+        };
+        var result = await ch.AskCore(Data.Ok((object?)null));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value as string).IsEqualTo("é");
+    }
+
+    [Test]
     public async Task StreamChannel_Ask_TimesOutPerChannelTimeoutConfig()
     {
         // Pipe with no writer → Read blocks forever; Timeout=PT1S triggers AskTimeout.

@@ -87,34 +87,4 @@ public class @this : Session.@this
         Close();
         return ValueTask.CompletedTask;
     }
-
-    /// <summary>
-    /// Goal channels migrate by carrying the goal name (resolveable on the
-    /// receiver) and a Variables snapshot. Stage 9 stub — full transport ships
-    /// when the receive-side runtime lands.
-    /// </summary>
-    public override Task<Data.@this> Migrate()
-    {
-        var payload = new GoalMigrationPayload
-        {
-            GoalName = Goal.Name ?? "",
-            Variables = Actor.Context.Variables.Snapshot()
-        };
-        var envelope = new global::App.Channels.Channel.MigrationEnvelope
-        {
-            Name = Name,
-            Direction = Direction,
-            Config = SnapshotConfig(),
-            Payload = payload,
-            Signature = SignEmpty()
-        };
-        return Task.FromResult(Data.@this.Ok(envelope));
-    }
-}
-
-/// <summary>Goal-channel migration payload — goal name + Variables snapshot.</summary>
-public sealed class GoalMigrationPayload
-{
-    public required string GoalName { get; init; }
-    public required object Variables { get; init; }
 }

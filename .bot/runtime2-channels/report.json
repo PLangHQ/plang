@@ -866,7 +866,7 @@
       "intent": "v8: add 2 probe tests for tester v7 missing-coverage findings F1 (B1) and F2 (L1) on Channel.Events.@this.",
       "before": {
         "assumptions": "Tester v7 PASS but flagged two minor uncovered fixes. F1 needs a 2-instance regression test for _active being instance-scoped. F2 needs an empirically-validated mid-flow probe using TaskCompletionSource (naive Task.WhenAll is a false green per tester).",
-        "risk": "low — test-only addition; no production code change."
+        "risk": "low \u2014 test-only addition; no production code change."
       },
       "plan": ".bot/runtime2-channels/coder/v8/plan.md",
       "actions": [
@@ -893,7 +893,7 @@
       ],
       "after": {
         "status": "done",
-        "health": "C# 2762/2762 pass (was 2760, +2 probes); L1 revert sanity-checked → probe goes red → restored.",
+        "health": "C# 2762/2762 pass (was 2760, +2 probes); L1 revert sanity-checked \u2192 probe goes red \u2192 restored.",
         "notes": "Test-only commit. Hand off to security per tester recommendation."
       },
       "timestamp_end": "2026-05-07T15:55:00Z"
@@ -903,7 +903,7 @@
       "bot": "auditor",
       "timestamp_start": "2026-05-07T16:30:00Z",
       "timestamp_end": "2026-05-07T17:10:00Z",
-      "intent": "v1 — independent audit on coder v8 + codeanalyzer v4 PASS + tester v7 PASS. No security pass had run on this branch; auditor also lifts wire-surface concerns.",
+      "intent": "v1 \u2014 independent audit on coder v8 + codeanalyzer v4 PASS + tester v7 PASS. No security pass had run on this branch; auditor also lifts wire-surface concerns.",
       "before": {
         "assumptions": "Baseline (clean rebuild): C# 2762/2762, PLang 201/201. codeanalyzer v4 PASS on Channel.Events fixes; tester v7 PASS. Re-walking new channel architecture, Variables.Calls overlay, Stage 9 migration stub.",
         "risk": "Stage 9 ships a produce-side migrate action; receive side is NotImplemented. Wire-shape concerns and the new fork-overlay scaffolding need fresh eyes."
@@ -919,13 +919,106 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Audit report, verdict JSON, top-level summary. No source changes — auditor reports, doesn't change code."
+          "context": "Audit report, verdict JSON, top-level summary. No source changes \u2014 auditor reports, doesn't change code."
         }
       ],
       "after": {
-        "status": "FAIL — 5 findings; A1 (doc/code mismatch on signature coverage) + A3 (real AskCore bug, F5 regression site) are pre-merge work. All prior codeanalyzer findings confirmed closed.",
+        "status": "FAIL \u2014 5 findings; A1 (doc/code mismatch on signature coverage) + A3 (real AskCore bug, F5 regression site) are pre-merge work. All prior codeanalyzer findings confirmed closed.",
         "health": "fail",
-        "notes": "Next bot: coder. Pre-merge scope: A1 (fix MigrationEnvelope signature OR rewrite xmldoc + [Obsolete] VerifyEnvelope), A3 (Stream.AskCore: using + ResolveEncoding one-liner + regression test). Deferred: A2 (gate migrate / by-value Snapshot — bundle with transport), A4 (dot-path overlay — bundle with parallel-foreach), A5 (size/depth caps — bundle with transport)."
+        "notes": "Next bot: coder. Pre-merge scope: A1 (fix MigrationEnvelope signature OR rewrite xmldoc + [Obsolete] VerifyEnvelope), A3 (Stream.AskCore: using + ResolveEncoding one-liner + regression test). Deferred: A2 (gate migrate / by-value Snapshot \u2014 bundle with transport), A4 (dot-path overlay \u2014 bundle with parallel-foreach), A5 (size/depth caps \u2014 bundle with transport)."
+      }
+    },
+    {
+      "id": "731406dd-2000-4fa3-a5ea-cfe28b41e624",
+      "bot": "coder",
+      "timestamp_start": "2026-05-07T16:09:36.902446+00:00",
+      "timestamp_end": "2026-05-07T16:22:48.474707+00:00",
+      "intent": "v9 \u2014 auditor v1 fixes A1 (drop misleading Signature struct in MigrationEnvelope; rename to IntegrityHash) + A3 (Stream.AskCore using + ResolveEncoding).",
+      "before": {
+        "assumptions": "Auditor v1 FAIL \u2192 coder is next. A1 + A3 only. No callers of VerifyEnvelope outside two tests on this branch. Outer Data.Signature already provides Ed25519 trust gate via PlangDataSerializer.EnsureSigned, so removing the inner PKI-shaped fields is safe.",
+        "risk": "Stage9_ChannelMigrateTests has tests that consume the Signature struct + VerifyEnvelope; need rewrite, not just rename.",
+        "baseline": {
+          "csharp": "2762/2762",
+          "plang": "205 pass + 6 deliberate fixture fails"
+        }
+      },
+      "plan": ".bot/runtime2-channels/coder/v9/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/MigrationEnvelope.cs",
+            "PLang/App/modules/channel/migrate.cs",
+            "PLang.Tests/App/ChannelsTests/Stage9_ChannelMigrateTests.cs",
+            "Tests/Channels/Migrate/SessionOk/Start.test.goal",
+            "Tests/Channels/Migrate/SessionOk/ChatGoal.goal",
+            "Tests/Channels/Migrate/MessageError/Start.test.goal"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 9 channel migration was code without a consumer (FromMigration always threw NotImplemented); A1 doc-vs-code mismatch + auditor's misleading-PKI concern resolved by deleting the surface, not patching it. Ingi: 'I actually feel like all this Migration on channel is not needed now, lets remove it.'"
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/this.cs",
+            "PLang/App/Channels/Channel/Stream/this.cs",
+            "PLang/App/Channels/Channel/Goal/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Removed Migrate / FromMigration / SignEmpty / ComputeSignature / VerifyEnvelope / SnapshotConfig from Channel base; removed Migrate overrides from Stream and Goal; removed GoalMigrationPayload class. Cleaned the App-backreference xmldoc that referenced SignEmpty."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/Stream/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "A3 fix: AskCore StreamReader is now `using var` and constructed with ResolveEncoding(), bufferSize: 1024, leaveOpen: true. Closes the reader leak and honours the channel's configured Encoding (auditor v1 A3 / security v1 F5 carry-over)."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/channel/set.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Module description string trimmed: 'Manage channels (set, remove) for the current or named actor.' (was 'set, remove, migrate')."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/ChannelsTests/Stage2_StreamChannelTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added StreamChannel_Ask_HonoursConfiguredEncoding regression test: feeds 0xE9 0x0A (invalid UTF-8 prefix; valid `\u00e9\\n` in iso-8859-1) and asserts AskCore returns '\u00e9' when Encoding='iso-8859-1'. Locks A3."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-channels/coder/v9/plan.md",
+            ".bot/runtime2-channels/coder/v9/baseline-tests.md",
+            ".bot/runtime2-channels/coder/v9/result.md",
+            ".bot/runtime2-channels/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v9 plan, baseline (clean rebuild: C# 2762/2762, plang 205+6), result, and summary."
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "green",
+        "tests": {
+          "csharp": "2755/2755",
+          "plang": "203 pass + 6 deliberate fixture fails"
+        },
+        "next_bot": "auditor",
+        "next_bot_reason": "Auditor v1 close-out pass. A1 satisfied by removing the entire channel-migration surface (the misleading Signature struct can no longer mislead). A3 fixed with regression test. A2 is now moot (no migrate action). A4/A5 remain deferred per auditor v1 verdict.",
+        "notes": "Mid-session, Ingi escalated A1 from 'fix the doc' \u2192 'delete the inner hash' \u2192 'delete the entire channel-migration surface'. cool.md keeps the 'channels migrate across devices' idea as a future sketch."
       }
     }
   ]

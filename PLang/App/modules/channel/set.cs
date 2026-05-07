@@ -13,7 +13,7 @@ namespace App.modules.channel;
 ///   - set channel "audit" call AuditLog, buffer: 65536, timeout: PT30S
 ///   - set system input channel as InputGoal
 /// </summary>
-[ModuleDescription("Manage channels (set, remove, migrate) for the current or named actor.")]
+[ModuleDescription("Manage channels (set, remove) for the current or named actor.")]
 [System.ComponentModel.Description("Register or replace a named channel backed by a goal call. Always upserts.")]
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
