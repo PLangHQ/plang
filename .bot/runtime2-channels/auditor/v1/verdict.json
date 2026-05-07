@@ -1,0 +1,82 @@
+{
+  "branch": "runtime2-channels",
+  "bot": "auditor",
+  "version": "v1",
+  "verdict": "fail",
+  "next_bot": "coder",
+  "next_scope": [
+    "A1 — fix MigrationEnvelope signature OR rewrite Signature.Bytes xmldoc + [Obsolete] VerifyEnvelope",
+    "A3 — Stream.AskCore: using + ResolveEncoding (one-liner) + regression test"
+  ],
+  "deferred_out_of_scope": [
+    "A2 — gate migrate / by-value Snapshot — bundle with Stage 9 transport",
+    "A4 — Variables.Set dot-path overlay routing — bundle with parallel-foreach",
+    "A5 — PlangDataSerializer size/depth caps — bundle with Stage 9 transport"
+  ],
+  "reviewed_state": "38f9d153",
+  "baseline": {
+    "csharp": "2762/2762",
+    "plang": "201/201"
+  },
+  "findings": [
+    {
+      "id": "A1",
+      "severity": "high-latent",
+      "title": "MigrationEnvelope.Signature does not cover Payload or Config",
+      "files": [
+        "PLang/App/Channels/Channel/this.cs:295-319",
+        "PLang/App/Channels/Channel/MigrationEnvelope.cs:41"
+      ],
+      "blocking": "before any cross-device receive ships; doc-vs-code mismatch should be fixed pre-merge"
+    },
+    {
+      "id": "A2",
+      "severity": "medium",
+      "title": "migrate action exposes Variables snapshot to user code, no permission, by-ref",
+      "files": [
+        "PLang/App/modules/channel/migrate.cs:23-37",
+        "PLang/App/Channels/Channel/Goal/this.cs:96-112",
+        "PLang/App/Variables/this.cs:689-700"
+      ],
+      "blocking": "before transport ships"
+    },
+    {
+      "id": "A3",
+      "severity": "low",
+      "title": "Stream.AskCore leaks StreamReader and ignores configured Encoding",
+      "files": [
+        "PLang/App/Channels/Channel/Stream/this.cs:115-119"
+      ],
+      "blocking": "recommended pre-merge — one-line fix"
+    },
+    {
+      "id": "A4",
+      "severity": "note",
+      "title": "Variables.Set dot/bracket-path bypasses Calls.Current overlay",
+      "files": [
+        "PLang/App/Variables/this.cs:213+"
+      ],
+      "blocking": "defer to parallel-foreach"
+    },
+    {
+      "id": "A5",
+      "severity": "note",
+      "title": "PlangDataSerializer lacks MaxBytes / MaxDepth caps (S-F3 carry-over)",
+      "files": [
+        "PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs:23-36"
+      ],
+      "blocking": "bundle with Stage 9 transport"
+    }
+  ],
+  "closed": [
+    "F1 (codeanalyzer v1): Services ConcurrentBag race",
+    "F4 (codeanalyzer v1): EventContext dead code",
+    "F5 (codeanalyzer v1): Stream Encoding ignored — closed for ReadAllText/WriteText, NOT for AskCore (see A3)",
+    "F6 (codeanalyzer v1): channel.set Bidirectional support",
+    "B1 (codeanalyzer v3): Events._active static",
+    "L1 (codeanalyzer v3): Enter mutated shared HashSet"
+  ],
+  "reframed_not_fixed": [
+    "F2/B2: RunGoalAsync(GoalCall) shared-Variables race — design accepted as 'push iff fork', latent until fork operator pushes"
+  ]
+}

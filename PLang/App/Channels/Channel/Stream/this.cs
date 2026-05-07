@@ -114,7 +114,8 @@ public sealed class @this : Session.@this
 
         try
         {
-            var reader = new StreamReader(Stream, leaveOpen: true);
+            using var reader = new StreamReader(Stream, ResolveEncoding(),
+                detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
             var line = await reader.ReadLineAsync(timeoutCts.Token);
             return Data.@this.Ok(line ?? string.Empty);
         }
@@ -157,13 +158,26 @@ public sealed class @this : Session.@this
     public async Task<string> ReadAllTextAsync(CancellationToken cancellationToken = default)
     {
         var bytes = await ReadAllBytesAsync(cancellationToken);
-        return global::System.Text.Encoding.UTF8.GetString(bytes);
+        return ResolveEncoding().GetString(bytes);
     }
 
     public async Task WriteTextAsync(string text, CancellationToken cancellationToken = default)
     {
-        var bytes = global::System.Text.Encoding.UTF8.GetBytes(text);
+        var bytes = ResolveEncoding().GetBytes(text);
         await WriteBytesAsync(bytes, cancellationToken);
+    }
+
+    /// <summary>
+    /// Resolves the channel's <see cref="Channel.@this.Encoding"/> name to a real
+    /// <see cref="global::System.Text.Encoding"/>. Falls back to UTF-8 when the
+    /// property is null/empty or names an unknown encoding.
+    /// </summary>
+    private global::System.Text.Encoding ResolveEncoding()
+    {
+        if (string.IsNullOrEmpty(Encoding))
+            return global::System.Text.Encoding.UTF8;
+        try { return global::System.Text.Encoding.GetEncoding(Encoding); }
+        catch (ArgumentException) { return global::System.Text.Encoding.UTF8; }
     }
 
     public override void Close()
@@ -180,29 +194,4 @@ public sealed class @this : Session.@this
         if (_ownsStream) await Stream.DisposeAsync();
     }
 
-    /// <summary>
-    /// Console-backed streams cannot migrate (process resource); MemoryStream
-    /// captures contents into the envelope payload.
-    /// </summary>
-    public override Task<Data.@this> Migrate()
-    {
-        if (Stream is global::System.IO.MemoryStream ms)
-        {
-            var envelope = new global::App.Channels.Channel.MigrationEnvelope
-            {
-                Name = Name,
-                Direction = Direction,
-                Config = SnapshotConfig(),
-                Payload = ms.ToArray(),
-                Signature = SignEmpty()
-            };
-            return Task.FromResult(Data.@this.Ok(envelope));
-        }
-
-        // Non-memory streams (Console.OpenStandard*, network sockets, etc.) are
-        // process-bound resources — not migratable.
-        return Task.FromResult(Data.@this.FromError(
-            new global::App.Errors.ServiceError(
-                $"Channel '{Name}' is backed by a non-migratable stream", "NotMigratable", 400)));
-    }
 }

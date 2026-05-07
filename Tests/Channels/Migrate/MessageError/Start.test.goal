@@ -1,6 +1,0 @@
-Start
-/ Migrating a non-migratable channel (console-backed Stream) returns NotMigratable.
-/ output is a Channel.Stream backed by Console.OpenStandardOutput at boot — process-bound.
-- set %targetIdentity% = 'peer'
-- migrate channel "output" to %targetIdentity%, on error set %notMigratable% = true
-- assert %notMigratable% is true

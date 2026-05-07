@@ -1,0 +1,126 @@
+{
+  "bot": "security",
+  "branch": "runtime2-channels",
+  "version": "v1",
+  "verdict": "pass",
+  "summary": "Threat-model walk over the Stages 1-9 per-actor channel architecture. One Medium and one Low, no High/Critical. Tests green (C# 2762/2762; PLang 205 pass + 6 fixture-fails). codeanalyzer v3 / tester v7 closures re-verified.",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "title": "Channel.Stream read path ignores Channel.Buffer; unbounded read",
+      "files": [
+        "PLang/App/Channels/Channel/Stream/this.cs:135",
+        "PLang/App/Channels/Channel/Stream/this.cs:80",
+        "PLang/App/Channels/Channel/this.cs:31"
+      ],
+      "responsibility": "Stream channel core: bounded I/O over an arbitrary stream.",
+      "blast_radius_today": "stdin (local DoS / OOM via huge piped input).",
+      "blast_radius_when_wired": "Any future Stream-channel-backed HTTP body / socket / pipe ingest is unprotected — same shape as the runtime2-builder-v2-http response body cap.",
+      "fix_posture": "Enforce Channel.Buffer in ReadAllBytesAsync via chunked read with running-total cap; throw on exceed."
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "title": "MigrationEnvelope.Signature has PKI-shape fields but is a keyless integrity hash; doc/impl mismatch on coverage",
+      "files": [
+        "PLang/App/Channels/Channel/MigrationEnvelope.cs:35",
+        "PLang/App/Channels/Channel/this.cs:295",
+        "PLang/App/Channels/Channel/this.cs:312",
+        "PLang/App/Channels/Channel/this.cs:325"
+      ],
+      "issues": [
+        "Bytes = SHA256(name|direction|identity) — no key; anyone can forge a verifying envelope.",
+        "Doc on Signature.Bytes claims coverage of (Name, Direction, Config, Payload); impl covers only (Name, Direction, IdentityName). Config and Payload are not even in the integrity hash.",
+        "Struct named Signature with IdentityName + PublicKey fields signals a PKI signature; future maintainer landing FromMigration could plausibly use VerifyEnvelope as the trust gate — that would be a complete bypass."
+      ],
+      "today_mitigation": "Migrate() returns Data; PlangDataSerializer egress lazy-signs the outer Data via EnsureSigned (real Ed25519). FromMigration throws NotImplementedException, so no consumer exists.",
+      "fix_posture": "Drop the misleading struct: rename inner field IntegrityHash, remove identity fields, delete VerifyEnvelope. Or wire through real Ed25519. Or fail-closed on Migrate() until receive-side ships."
+    },
+    {
+      "id": "N1",
+      "severity": "note",
+      "title": "Channel.Goal.Migrate carries Variables.Snapshot() — standing Sensitive-leak finding applies",
+      "files": [
+        "PLang/App/Channels/Channel/Goal/this.cs:96",
+        "PLang/App/Variables/this.cs:689"
+      ],
+      "context": "Snapshot() doesn't honour [Sensitive] (existing standing finding in MEMORY.md). Wire serializers (JsonStreamSerializer, PlangDataSerializer) apply SensitivePropertyFilter.Strip recursively, which catches structured [Sensitive]-tagged properties (e.g. Identity.PrivateKey). Plaintext-string user variables remain unredacted (no attribute on raw strings). New use site of an existing tracked limitation; not a new finding."
+    },
+    {
+      "id": "N2",
+      "severity": "note",
+      "title": "MigrationEnvelope.Payload is object? — polymorphic deserialize hazard for future receive side",
+      "files": [
+        "PLang/App/Channels/Channel/MigrationEnvelope.cs:17"
+      ],
+      "context": "FromMigration is NotImplementedException today. When it ships, polymorphic deserialize via System.Text.Json on object? is unsafe. Receive-side must use a discriminator + closed [JsonDerivedType] set, or treat Payload as opaque bytes decoded after outer signature verifies."
+    },
+    {
+      "id": "N3",
+      "severity": "note",
+      "title": "Channel.Stream.ResolveEncoding silently falls back to UTF-8 on unknown encoding name",
+      "files": [
+        "PLang/App/Channels/Channel/Stream/this.cs:174"
+      ],
+      "context": "Operational misconfig, not a security boundary. Two peers configured with different encodings will produce mojibake silently. Logged warning on fallback would surface the mistake."
+    }
+  ],
+  "prior_findings_re_verified": {
+    "codeanalyzer_v3_B1_active_static_to_instance": {
+      "status": "closed",
+      "evidence": "PLang/App/Channels/Channel/Events/this.cs:22 — `private readonly` (no static). Probe test EventsActiveSet_IsInstanceScoped_NotShared added in coder v8."
+    },
+    "codeanalyzer_v3_L1_enter_copy_on_write": {
+      "status": "closed",
+      "evidence": "PLang/App/Channels/Channel/Events/this.cs:69-85 — copy-on-write Enter, parent-restoring Releaser. Probe test Enter_FromConcurrentChild_DoesNotLeakChildIdToParentFlow added in coder v8."
+    },
+    "codeanalyzer_v3_I1_variables_snapshot_overlay": {
+      "status": "deferred (design call) — captured here as N1 for the new Goal-channel migrate use site"
+    }
+  },
+  "tests": {
+    "csharp": {
+      "framework": "TUnit",
+      "command": "PLang.Tests/bin/Debug/net10.0/PLang.Tests",
+      "result": "2762/2762 pass",
+      "rebuild": "clean (rm -rf bin obj across PlangConsole/PLang/PLang.Tests/PLang.Generators per CLAUDE.md stale-binary protocol)"
+    },
+    "plang": {
+      "command": "cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test",
+      "result": "205 pass, 6 deliberate fixture-fails (_fixtures_fail/, _fixtures_sensitive/), 0 skip",
+      "matches_baseline": "tester v7 + coder v8"
+    }
+  },
+  "files_audited_in_depth": [
+    "PLang/App/Channels/Channel/this.cs",
+    "PLang/App/Channels/Channel/Stream/this.cs",
+    "PLang/App/Channels/Channel/Goal/this.cs",
+    "PLang/App/Channels/Channel/Events/this.cs",
+    "PLang/App/Channels/Channel/MigrationEnvelope.cs",
+    "PLang/App/Channels/Channel/Session/this.cs",
+    "PLang/App/Channels/Channel/Message/this.cs",
+    "PLang/App/Channels/this.cs",
+    "PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs",
+    "PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs",
+    "PLang/App/Channels/Serializers/SensitivePropertyFilter.cs",
+    "PLang/App/Services/this.cs",
+    "PLang/App/Services/Service/this.cs",
+    "PLang/App/Choices/this.cs",
+    "PLang/App/modules/IChannel.cs",
+    "PLang/App/modules/channel/set.cs",
+    "PLang/App/modules/channel/remove.cs",
+    "PLang/App/modules/channel/migrate.cs",
+    "PLang/App/modules/output/write.cs",
+    "PLang/App/Modules/this.cs",
+    "PLang.Generators/Emission/Action/this.cs",
+    "PLang/App/this.cs",
+    "PLang/App/Actor/this.cs",
+    "PLang/App/Variables/this.cs",
+    "PLang/App/Data/this.Envelope.cs",
+    "PLang/App/Utils/Json.cs"
+  ],
+  "next_step": "Branch is ready to merge. F1 should land before any non-stdin Stream channel use ships. F2 cleanest fix (delete VerifyEnvelope, rename inner field) can land now while no callers exist.",
+  "next_bot": "auditor",
+  "next_bot_reason": "Independent re-verification of F1 (Stream Buffer cap) and F2 (MigrationEnvelope misleading-signature) before any code change lands — same security→auditor→coder pattern used on runtime2-callback. After auditor passes, hand to coder for the F1 + F2 fixes. Fast-path: skip auditor and go straight to coder if the F2 cleanup feels uncontroversial — landing it now while no caller exists is safer than after merge."
+}

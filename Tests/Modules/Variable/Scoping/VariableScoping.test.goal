@@ -1,5 +1,5 @@
 Start
-/ inner goal sets variable visible to caller
+/ inner goal sets variable visible to caller — fresh-name leak (LoadUser pattern)
 - set %x% = "before"
 - call InnerGoal
 - assert %x% equals "modified"
@@ -11,3 +11,9 @@ Start
 - foreach %items%, call CaptureItem item=%item%
 - assert %captured% contains "alpha"
 - assert %captured% contains "beta"
+
+/ param value passed into goal: mutating it inside leaks back to caller
+/ (sequential goal.call has no overlay → all writes hit actor dict)
+- call InnerWithParam id=42
+- assert %id% equals 999
+- assert %user% equals "alice"

@@ -1,137 +1,76 @@
-# coder — runtime2-channels
+# coder summary — runtime2-channels
 
 ## Version
-v4 (continuation of v3 — channel architecture cleanup + event firing fix)
+v10 — Console.* purge: route production writes through channels.
 
 ## What this is
 
-v3 collapsed the `Channel.Role` enum, merged `set`/`add` into one
-upserting verb, replaced `EnsureRoleChannels` with `Channels.Verify`,
-retyped channel handler slots properly, and made `Channels.Resolve`
-return non-throwing nullable. v4 closes out the last channel test
-failure: BeforeWrite event bindings registered via `event.on` weren't
-firing on writes.
+The branch is "runtime2-channels" — channels are the wired primitive for actor I/O, with the entire point being **redirectability**: a user can re-register the `output`/`error`/`debug` channel to a file, an in-memory buffer, an HTTP response — anything. But several production sites still wrote directly to `Console.WriteLine` / `Console.Error.WriteLine`, bypassing that surface entirely.
 
-## v4 — event firing fix
+The most ironic offender was the Debug class itself: it exposed `Debug.Write(...)` (which routes through `System.Channels.Resolve("debug") ?? Resolve("error")`) and *its own docstring* said "use this instead of Console.WriteLine". Then 5 of its own internal sites wrote straight to `Console.Error`.
 
-**Bug:** `event.on` registers bindings on `targetActor.Context.Events`
-but `Channel.@this.MatchingBindings` was reading from `App.Events`. Two
-separate registries — bindings invisible to the firing path.
+This pass purges all production `Console.*` writes. Remaining `Console.*` references in production are:
+- `Console.IsInputRedirected` at `PLang/App/this.cs:562` — a **query** (am I in a TTY?), not a write. Stays.
+- `Console.Error.WriteLine` at `PlangConsole/Program.cs:26` — process boundary; if `executor.Run` itself fails to wire channels, this is the last-resort error sink. Ingi explicitly chose to leave it.
 
-**Fix:** stamp the owning actor onto each Channel via
-`Channels.Register`, and have `MatchingBindings` consult both
-`Actor.Context.Events` (where `event.on` writes) and `App.Events`
-(preserves cross-actor matching for the same channel name on User +
-Service).
+## What was done
 
-Concretely:
+### 1. Debug class internal bypass (`PLang/App/Debug/this.cs`)
 
-- `Channel.@this.Actor` — new property; stamped by `Channels.Register`
-  using a back-reference set on `Channels.@this.Actor` (Actor sets it
-  right after constructing its Channels collection). Replaces
-  `Channel.Goal.@this.RegisteringActor` (renamed to `Actor` and
-  pulled up to base — same concept, smaller name, OBP-correct: the
-  receiver carries the noun).
-- `MatchingBindings` reads from per-channel Events list →
-  `Actor.Context.Events` → `App.Events`.
-- `InvokeChannelHandler` passes `Actor.Context` instead of `null!` so
-  the handler can dispatch via `ctx.App.RunGoalAsync`.
+5 sites (lines 301, 310, 414, 521, 527) routed through `Debug.Write` (debug channel, falls back to error). The static lifecycle handlers (`BeforeStepHandler`, `AfterStepHandler`, `BeforeActionHandler`, `AfterActionHandler`, `AfterGoalHandler`) became `async Task<Data.@this>` so they could `await WriteFiltered(...)`. `WriteFiltered` and `WriteLlmBlock` returned `Task`. Sync event-handler sites (`LogMutation` / `LogEvent` subscribed as `Action<Data>`, the LLM file-write fallback inside an OnBeforeRequest lambda) use fire-and-forget `_ = Write(...)` — Console.Error was non-awaitable too, so ordering guarantees are unchanged.
 
-The wider events architecture (one `AppEvents` registry on App, one
-per actor on Context — same concept twice) is logged as a separate
-todo in `Documentation/v0.2/todos.md` for a future pass.
+### 2. Builder progress (`DefaultBuilderProvider.cs` + interface)
 
-## v3 architecture cleanup
+`Saved {goal} (1.2s)` and `Group promotion: N step(s) ...` were `Console.WriteLine` — now `await app.CurrentActor.Channels.WriteTextAsync("output", ...)`. Decision (after surfacing the question to Ingi): **not** routed through `Debug.Write`, because that gate (`if (!IsEnabled) return Task.CompletedTask`) would silence them whenever `--debug` is off — which is the default. These are user-facing build chatter, not diagnostic output.
 
-- **`Channel.Role` enum + `Channel.@this.Role` property — deleted.**
-  No enum, no `IsDefault`/`IsCore`/`Direction` flag — just channels.
-- **`Channels.@this.Defaults`** — static `["output", "error", "input"]`.
-- **`Channels.@this.Verify()`** — boot invariant; replaces
-  `App.EnsureRoleChannels`. Surfaces `MissingRequiredChannelAtBoot`.
-- **`Channels.@this.Resolve(name)`** — non-throwing, returns
-  `Channel.@this?`. Empty name → channel named `"output"`.
-- **`ChannelNotFoundException` — deleted.** Source-gen-emitted IChannel
-  slot adopts early-return pattern.
-- **`channel.set` rewritten:** Name + `Data<GoalCall>` Goal +
-  `Data<Actor.@this>?` Actor + config slots. Always upserts. Builder
-  stamps `GoalCall.PrPath` at build time — runtime no longer reaches
-  for the `Goals.Get(name)` registry-only shortcut.
-- **`channel.add` — deleted.** `set` does both jobs.
-- **`channel.remove`** — refuses for names in `Channels.Defaults`.
-- **`MigrationEnvelope.Role` — deleted.** Signature trimmed to
-  `(Name, Direction, identity)`.
-- **`Channel.@this.Verify(envelope)` → `VerifyEnvelope(envelope)`.**
-  Disambiguates from `Channels.@this.Verify()`.
-- **`NormalizeParameterTypes`** — skips `[Choices]`-bearing types so
-  Actor stays as a string in the .pr; runtime resolves via
-  `App.GetActor`.
-- **`Step.RunAsync` catch** — preserves the exception's class identity
-  as the error Key (trims trailing `Exception`). Bare `Exception` →
-  `"StepError"`. Lets `on error key:"X"` handlers match typed runtime
-  failures even when they slip through as exceptions.
+`PromoteGroups` handler had to flip from `Data.@this` to `async Task<Data.@this>`. Updated `IBuilderProvider.PromoteGroups` and the `promoteGroups.Run()` shim to match.
+
+### 3. LLM validation chatter (`OpenAiProvider.cs`)
+
+Same call: `await app.CurrentActor.Channels.WriteTextAsync("output", ...)`. Same reasoning — regular user-facing output, not debug-gated.
+
+### 4. App build prompt (`PLang/App/this.cs`)
+
+The interesting case. Default channels are direction-split: `output` is write-only stdout, `input` is read-only stdin, `error` is write-only stderr. `Channel.Stream.AskCore` is bidirectional-stream-only — it writes the prompt to its own stream then reads, which works for memory/HTTP-session channels but not for the split console pair.
+
+Resolved with a two-call pattern:
+
+```csharp
+var outputChannel = User.Channels.Get("output") as Channel.Stream.@this;
+var inputChannel  = User.Channels.Get("input")  as Channel.Stream.@this;
+await outputChannel.WriteTextAsync($"No app found at ... Create new app? (y/n): ");
+using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
+var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
+```
+
+`Console.IsInputRedirected` (`is stdin a TTY?`) stays — that's the gate for *whether* to prompt at all, not *how*. No new API added (e.g. cross-channel `AskAsync`) — only one caller right now; if a second appears, that's the time to extract.
+
+### 5. Test fixture update (`DebugSmokeTests.cs`)
+
+`Console.SetError` capture was incompatible with channels: the channel is registered with `Console.OpenStandardError()` *at boot time*, capturing that Stream reference. Re-pointing `Console.Error` later doesn't affect the captured Stream. Replaced with a memory channel registered as `"error"` on the System actor — that's the redirection model channels exist to provide.
 
 ## Code example
 
 ```csharp
-public sealed class @this    // Channels collection
-{
-    internal global::App.Actor.@this? Actor { get; set; }
+// Before: bypasses channels, ignores --debug routing and output redirection
+Console.WriteLine($"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s)");
 
-    public void Register(Channel.@this channel)
-    {
-        channel.App = _app;
-        if (channel.Actor == null) channel.Actor = Actor;   // stamp
-        _channels[channel.Name] = channel;
-    }
-}
+// After: routed through the actor's output channel — redirectable,
+// captured by tests via memory channels, free to be re-registered to a file.
+await app.CurrentActor.Channels.WriteTextAsync(
+    global::App.Channels.@this.Output,
+    $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
 ```
 
-```csharp
-private IEnumerable<Binding.@this> MatchingBindings(EventType type)
-{
-    foreach (var b in Events) if (b.Type == type && ...) yield return b;
-    if (Actor != null)
-        foreach (var b in Actor.Context.Events.GetBindings(type))
-            if (string.Equals(b.ChannelName, Name, ...)) yield return b;
-    if (App != null)
-        foreach (var b in App.Events.GetBindings(type))
-            if (string.Equals(b.ChannelName, Name, ...)) yield return b;
-}
-```
+For the Debug class internals it's the same shape but through the gated `Debug.Write` (debug channel surface), since those sites are conceptually diagnostic and *should* go silent without `--debug`.
 
-## v4.1 — TimeSpan ISO 8601 in TypeConverter
+## Tests
 
-`Add/WithConfig` was failing the build with *"Cannot convert 'PT30S'
-(String) to TimeSpan."* `TypeConverter` had no TimeSpan branch — fell
-through to `Convert.ChangeType` which doesn't understand ISO 8601.
-`TimeSpanIso8601Converter` exists for JSON serialization but only
-kicks in on the JSON path. Added a `TimeSpan` branch to
-`TypeConverter.TryConvertTo` that parses ISO 8601 via
-`XmlConvert.ToTimeSpan`, falling back to `TimeSpan.Parse`. Same wire
-shape the JSON converter uses.
+- C# (`dotnet run --project PLang.Tests`): 2755/2755 ✅
+- PLang (`cd Tests && plang --test`): 199/199 ✅
 
-## v4.2 — clean up Callback stale stubs
+Baseline matches; no regressions. The single test that broke (`DebugSmokeTests`) broke for exactly the reason the channels work was needed — its capture mechanism was the old bypass model. Now exercises the real channel path.
 
-Removed 4 `.test.goal` stubs under `Tests/Callback/` that were
-deliberately stale — each documented a missing PLang surface (callback
-configure, durability round-trip, signature tamper, `vars:` annotation
-validation) and pointed at the C# tests that already cover the
-behaviour. Logged in `Documentation/v0.2/todos.md` so the missing
-PLang surfaces aren't lost.
+## Next bot
 
-## Test status
-
-- **C#**: 2744 pass, 0 fail.
-- **PLang**: **201 / 201 pass / 0 fail / 0 stale.**
-  - Was 188 pass / 0 fail / 18 stale at branch start.
-  - v2 → 191/10/5, v3 → 199/1/5, v4 → 200/0/5, v4.1 → 201/0/4,
-    v4.2 → 201/0/0.
-
-## What's next (out of scope here)
-
-1. **Events architecture pass** — `App.Events` vs `Context.Events`
-   are two registries for one concept. Logged in
-   `Documentation/v0.2/todos.md`.
-2. **Dynamic `[Choices]`** — build-time-cumulative vocabulary so
-   declared channel/variable/service names extend the LLM's choice
-   list for subsequent steps. Designed in v3, deferred.
+**codeanalyzer** — review for OBP / channel-discipline issues (e.g. is fire-and-forget acceptable for the Debug event-handler sites, or should those event lambdas return Task?), and any simplification opportunities. No new modules or actions added — `builder-handoff.md` not needed.

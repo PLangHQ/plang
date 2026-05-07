@@ -1,8 +1,0 @@
-Start
-/ channel.migrate on a Session-shaped channel (Goal-backed) returns a
-/ MigrationEnvelope carrying name, role, direction, config snapshot.
-- set %targetIdentity% = 'peer'
-- set channel "chat" call ChatGoal
-- migrate channel "chat" to %targetIdentity%, write to %envelope%
-- assert %envelope% is not null
-- assert %envelope.Name% equals 'chat'

@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "2 real bugs (Services.Remove race, GoalChannel %!data% race), 1 latent crash (NRE on null Actor in InvokeChannelHandler), 1 dead-code mismatch (EventContext), 1 silent encoding bug (Stream.ReadAllTextAsync ignores Encoding), 1 design gap (Bidirectional goal channels unreachable from channel.set)"
+}

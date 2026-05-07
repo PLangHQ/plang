@@ -3,7 +3,7 @@ using App.Events.Lifecycle.Bindings.Binding;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 8 — Channel events: types, EventContext, firing, recursion guard.
+// Stage 8 — Channel events: types, firing, recursion guard.
 // Architect: stage-8-channel-events.md and v1/plan/channel-events.md.
 
 public class Stage8_ChannelEventsTests
@@ -29,16 +29,6 @@ public class Stage8_ChannelEventsTests
     }
 
     [Test]
-    public async Task EventContext_ExposesChannelDataAndAsk()
-    {
-        var ch = StreamChannel.Memory("c");
-        var ec = new global::App.Channels.Channel.EventContext { Channel = ch, Data = Data.Ok("x") };
-        await Assert.That(ec.Channel).IsEqualTo((Channel)ch);
-        await Assert.That(ec.Data.Value).IsEqualTo("x");
-        await Assert.That(ec.Ask).IsNull();
-    }
-
-    [Test]
     public async Task ChannelThis_ExposesEventsProperty_LikeGoalAndStep()
     {
         var ch = StreamChannel.Memory("c");
@@ -47,7 +37,7 @@ public class Stage8_ChannelEventsTests
     }
 
     [Test]
-    public async Task BeforeWriteHandler_ReceivesCorrectChannelAndData_ViaEventContext()
+    public async Task BeforeWriteHandler_ReceivesCorrectData()
     {
         var ch = StreamChannel.Memory("logger");
         Data? captured = null;
@@ -237,6 +227,42 @@ public class Stage8_ChannelEventsTests
 
         await ch.WriteAsync(Data.Ok("x"));
         await Assert.That(goalFired).IsFalse();
+    }
+
+    [Test]
+    public async Task EventsActiveSet_IsInstanceScoped_NotShared()
+    {
+        // Regression probe for B1: `_active` is an instance field, not static.
+        // If it ever becomes static, evB sees evA's active set.
+        var evA = new global::App.Channels.Channel.Events.@this();
+        var evB = new global::App.Channels.Channel.Events.@this();
+        using var _ = evA.Enter("X");
+        await Assert.That(evA.IsActive("X")).IsTrue();
+        await Assert.That(evB.IsActive("X")).IsFalse();
+    }
+
+    [Test]
+    public async Task Enter_FromConcurrentChild_DoesNotLeakChildIdToParentFlow()
+    {
+        // Regression probe for L1: Enter must copy-on-write.
+        // If a child mutates the parent's HashSet in place, the parent flow
+        // sees the child's id while the child is still inside its scope.
+        // (Naive Task.WhenAll passes either way — children Add then Remove.)
+        var ev = new global::App.Channels.Channel.Events.@this();
+        using var _ = ev.Enter("A");
+        var inside = new TaskCompletionSource();
+        var release = new TaskCompletionSource();
+        var t = Task.Run(async () =>
+        {
+            using var __ = ev.Enter("B");
+            inside.SetResult();
+            await release.Task;
+        });
+        await inside.Task;
+        var leaked = ev.IsActive("B");
+        release.SetResult();
+        await t;
+        await Assert.That(leaked).IsFalse();
     }
 
     private sealed class ThrowOnWriteChannel : Channel

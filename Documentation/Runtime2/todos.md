@@ -343,3 +343,38 @@ small per site but may exist in more places than expected.
 
 Do this when the channel branch's converter / catalog work has settled
 so the callback migration can copy the same shape.
+
+## 2026-05-07 — fork-site Variables isolation beyond parameters
+
+Context: codeanalyzer v1 on `runtime2-channels` flagged that
+`GoalChannel.InvokeGoal` raced on `%!data%` because parameter binding
+mutated actor-shared `Variables`. Coder v5 fixed it by adding
+`Variables.Calls` — an AsyncLocal frame pushed at `GoalChannel.WriteAsync`,
+so each concurrent write sees its own `!data` slot.
+
+The frame currently isolates **only parameter resolution**. Goal-body
+`set %x% = ...` inside the called goal still writes to actor-shared
+`Variables`. That's intentional for sequential calls (`LoadUser` writes
+`%user%`, parent reads it — a feature) but means concurrent fork-site
+invocations still race on goal-body sets:
+
+```
+ChatGoal:
+- set %lastMessage% = %!data.message%       # races across concurrent writers
+- write out %lastMessage%
+```
+
+When the runtime grows other concurrency boundaries (parallel foreach,
+`call X, dont wait`), revisit:
+- Should fork-site frames also intercept Set, isolating the entire branch?
+- Or stay parameter-only, with users responsible for not racing on actor
+  state inside a forked branch?
+- For goal channels specifically, fanout-via-write to actor state is
+  often the *intent* (e.g. accumulating chat history). So full isolation
+  is probably wrong for channels but right for parallel foreach.
+
+Probably the answer is per-fork-site policy: `Variables.Calls.Push` for
+parameter-only isolation (current), and a separate
+`Variables.Branches.Push` (or similar) for full read+write isolation
+when forking parallel branches. Designed when the parallel foreach
+work lands.

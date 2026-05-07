@@ -54,9 +54,16 @@ public class @this : Session.@this
         // of the goal call. AsyncLocal scoping means concurrent calls don't collide.
         using var _ = Actor.PushChannelsOverride(foundational);
 
-        // Bind the inbound Data as %!data% so the goal body can reference it.
         var ctx = Actor.Context;
-        ctx.Variables.Set("!data", data);
+
+        // Channels are not a fork — `write out %x%` is just a function call from
+        // the user's POV, and the channel layer is the plumbing under it. Whatever
+        // upstream operator forked the flow (parallel foreach iteration, async
+        // call, listener accept-loop, etc.) has already pushed a Calls overlay,
+        // and AsyncLocal carries it down to here. Variables.Set("!data", ...)
+        // lands in that overlay if there is one, in the actor-shared dict
+        // otherwise — and either way subsequent goal-body sets behave the same.
+        ctx.Variables.Set("!data", new Data.@this("!data", data.Value, data.Type));
 
         try
         {
@@ -80,34 +87,4 @@ public class @this : Session.@this
         Close();
         return ValueTask.CompletedTask;
     }
-
-    /// <summary>
-    /// Goal channels migrate by carrying the goal name (resolveable on the
-    /// receiver) and a Variables snapshot. Stage 9 stub — full transport ships
-    /// when the receive-side runtime lands.
-    /// </summary>
-    public override Task<Data.@this> Migrate()
-    {
-        var payload = new GoalMigrationPayload
-        {
-            GoalName = Goal.Name ?? "",
-            Variables = Actor.Context.Variables.Snapshot()
-        };
-        var envelope = new global::App.Channels.Channel.MigrationEnvelope
-        {
-            Name = Name,
-            Direction = Direction,
-            Config = SnapshotConfig(),
-            Payload = payload,
-            Signature = SignEmpty()
-        };
-        return Task.FromResult(Data.@this.Ok(envelope));
-    }
-}
-
-/// <summary>Goal-channel migration payload — goal name + Variables snapshot.</summary>
-public sealed class GoalMigrationPayload
-{
-    public required string GoalName { get; init; }
-    public required object Variables { get; init; }
 }

@@ -409,3 +409,26 @@ documented missing PLang surface, not real test work:
 
 All four are nice-to-have PLang-side complements; the behaviour is
 already proven in C#. Worth a pass when callback work resumes.
+
+## Static mutable state in C# — sweep for multi-App safety
+
+**Date:** 2026-05-07
+
+When PLang gains the ability to host multiple `App` instances in one
+process (`%app%` + `%app2%`, etc.), any `private static` mutable field
+becomes a cross-App leak. Found one concrete hotspot during the v10
+Console.* purge audit:
+
+- **`PLang/App/modules/builder/providers/DefaultBuilderProvider.cs:18`**
+  — `private static readonly Stopwatch _buildTimer = new();` is
+  process-global. Two concurrent builds (`%app%` and `%app2%` both
+  building) share one Stopwatch; `Restart()` from one corrupts the
+  elapsed measurement the other reads. Move to instance field on the
+  provider.
+
+The rest of the area is fine (`VarRefPattern` Regex, `_debugJsonOptions`
+JsonSerializerOptions, the `private static` lifecycle handlers in
+`App/Debug/this.cs` — those are stateless dispatchers that read state
+from `context.App.Debug`, not from static fields). But the *rule* to
+enforce: no `static` mutable state in any code path that an `App`
+instance touches. Worth a sweep when multi-App lands.

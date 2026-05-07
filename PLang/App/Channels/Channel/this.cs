@@ -56,11 +56,12 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public IDictionary<string, object> Metadata { get; } = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Channel-event bindings (Stage 8). Same shape as Goal.Events / Step.Events;
-    /// fired by the WriteAsync / ReadAsync / Ask wrappers. Includes BeforeWrite /
-    /// AfterWrite / BeforeRead / AfterRead / OnAsk.
+    /// Channel-event bindings (Stage 8) with their lock discipline and recursion
+    /// guard encapsulated. Same shape spirit as Goal.Events / Step.Events.
+    /// Bindings fire from WriteAsync / ReadAsync / Ask: BeforeWrite, AfterWrite,
+    /// BeforeRead, AfterRead, OnAsk.
     /// </summary>
-    public List<global::App.Events.Lifecycle.Bindings.Binding.@this> Events { get; } = new();
+    public global::App.Channels.Channel.Events.@this Events { get; } = new();
 
     /// <summary>
     /// The actor this channel belongs to — set by the Channels collection on
@@ -70,13 +71,8 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// </summary>
     public global::App.Actor.@this? Actor { get; internal set; }
 
-    /// <summary>App backreference — kept for SignEmpty / general App access.</summary>
+    /// <summary>App backreference for general App access.</summary>
     public global::App.@this? App { get; internal set; }
-
-    // Recursion guard: AsyncLocal so concurrent writes don't interfere; per-binding
-    // Id keyed so a Before-handler that writes to the same channel doesn't
-    // re-trigger the same binding (architect's "_activeEventBindings").
-    private static readonly AsyncLocal<HashSet<string>?> _activeBindings = new();
 
     /// <summary>
     /// Whether reading is supported. Default tracks Direction + IsOpen; concretes can override.
@@ -174,10 +170,8 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// </summary>
     private IEnumerable<global::App.Events.Lifecycle.Bindings.Binding.@this> MatchingBindings(global::App.Events.EventType type)
     {
-        foreach (var b in Events)
-            if (b.Type == type
-                && (b.ChannelName == null || string.Equals(b.ChannelName, Name, StringComparison.OrdinalIgnoreCase)))
-                yield return b;
+        // Per-channel bindings (with their own lock + filter, owned by Events).
+        foreach (var b in Events.Match(type, Name)) yield return b;
 
         // Per-actor lifecycle events — where event.on writes its bindings.
         if (Actor != null)
@@ -199,10 +193,10 @@ public abstract class @this : IAsyncDisposable, IDisposable
 
     private async Task<Data.@this?> FireBefore(global::App.Events.EventType type, Data.@this data, Callback.AskCallback? ask)
     {
-        var active = _activeBindings.Value ??= new HashSet<string>();
         foreach (var binding in MatchingBindings(type))
         {
-            if (!active.Add(binding.Id)) continue;   // recursion guard
+            if (Events.IsActive(binding.Id)) continue;   // recursion guard
+            using var _ = Events.Enter(binding.Id);
             try
             {
                 var result = await InvokeChannelHandler(binding, data, ask);
@@ -214,20 +208,18 @@ public abstract class @this : IAsyncDisposable, IDisposable
                     $"Channel event handler for {type} on '{Name}' threw: {ex.Message}",
                     "ChannelEventAborted") { Exception = ex });
             }
-            finally { active.Remove(binding.Id); }
         }
         return null;
     }
 
     private async Task FireAfter(global::App.Events.EventType type, Data.@this data, Callback.AskCallback? ask)
     {
-        var active = _activeBindings.Value ??= new HashSet<string>();
         foreach (var binding in MatchingBindings(type))
         {
-            if (!active.Add(binding.Id)) continue;
+            if (Events.IsActive(binding.Id)) continue;
+            using var _ = Events.Enter(binding.Id);
             try { await InvokeChannelHandler(binding, data, ask); }
             catch { /* After-handler throws are suppressed — original outcome stands. */ }
-            finally { active.Remove(binding.Id); }
         }
     }
 
@@ -237,11 +229,16 @@ public abstract class @this : IAsyncDisposable, IDisposable
         Callback.AskCallback? ask)
     {
         // Bindings receive (context, action=null, result=data). The context comes
-        // from the channel's owning Actor — handlers like the one event.on installs
-        // need ctx.App + ctx.CancellationToken to dispatch the bound goal. Tests
-        // that register Handler directly often ignore ctx — null-tolerant by design
-        // for that path.
-        var ctx = Actor?.Context!;
+        // from the channel's owning Actor when the channel went through
+        // Channels.Register; tests sometimes construct a channel directly without
+        // an Actor. Most handlers don't read ctx (they capture what they need at
+        // registration), so we forward null rather than skip — handlers that *do*
+        // need ctx (notably the one event.on installs to dispatch a goal) can
+        // guard locally. The diagnostic surfaces the case so production paths
+        // can be spotted in --debug output.
+        var ctx = Actor?.Context;
+        if (ctx == null)
+            _ = App?.Debug?.Write($"[Channel '{Name}'] binding {binding.Id} firing with no Actor — handlers receive null ctx");
         return binding.Handler(ctx!, null, data);
     }
 
@@ -257,77 +254,5 @@ public abstract class @this : IAsyncDisposable, IDisposable
     {
         Close();
         return ValueTask.CompletedTask;
-    }
-
-    // --- Stage 9: migration API stub ----------------------------------------
-
-    /// <summary>
-    /// Produces a signed migration envelope for shipping this channel to another
-    /// identity-aware runtime. Concrete subtypes override to populate
-    /// <see cref="MigrationEnvelope.Payload"/>; non-migratable channels (e.g.
-    /// Console-backed Stream) override to return Data.Error of type
-    /// <c>NotMigratable</c>.
-    /// </summary>
-    public virtual Task<Data.@this> Migrate()
-    {
-        var envelope = new MigrationEnvelope
-        {
-            Name = Name,
-            Direction = Direction,
-            Config = SnapshotConfig(),
-            Payload = null,
-            Signature = SignEmpty()
-        };
-        return Task.FromResult(Data.@this.Ok(envelope));
-    }
-
-    /// <summary>Receive-side stub. Cross-device transport not yet shipped.</summary>
-    public static @this FromMigration(MigrationEnvelope envelope)
-        => throw new NotImplementedException("Channel.FromMigration: receive-side transport is deferred.");
-
-    protected ChannelConfigSnapshot SnapshotConfig() => new()
-    {
-        Buffer = Buffer,
-        Timeout = Timeout,
-        Mime = Mime,
-        Encoding = Encoding,
-        Encryption = Encryption,
-        Signing = Signing
-    };
-
-    protected Signature SignEmpty()
-    {
-        // Stage 9 stub: identity name + key are sourced from App.System if reachable;
-        // empty bytes mean "not yet signed". The integrity contract (Verify on a
-        // tampered envelope returns false) is provided via the Verify helper below
-        // which round-trips a stable byte representation.
-        var identityName = App?.System.Identity?.Name ?? "system";
-        var publicKey = App?.System.Identity?.PublicKey ?? "";
-        var bytes = ComputeSignature(Name, Direction, identityName);
-        return new Signature
-        {
-            IdentityName = identityName,
-            PublicKey = publicKey,
-            Bytes = bytes
-        };
-    }
-
-    protected static byte[] ComputeSignature(string name, ChannelDirection direction, string identity)
-    {
-        // Deterministic hash over (name, direction, identity). Stage 9 stub —
-        // real signing lands when the cross-device transport ships.
-        using var sha = global::System.Security.Cryptography.SHA256.Create();
-        var input = global::System.Text.Encoding.UTF8.GetBytes($"{name}|{(int)direction}|{identity}");
-        return sha.ComputeHash(input);
-    }
-
-    /// <summary>
-    /// Stage 9 verification helper: recompute the signature from envelope contents
-    /// and compare bytes. Returns false on tamper.
-    /// </summary>
-    public static bool VerifyEnvelope(MigrationEnvelope envelope)
-    {
-        var expected = ComputeSignature(envelope.Name, envelope.Direction, envelope.Signature.IdentityName);
-        return expected.SequenceEqual(envelope.Signature.Bytes);
     }
 }

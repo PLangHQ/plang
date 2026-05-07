@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "2 bugs (InvokeChannelHandler null-ctx still crashes handlers; RunGoalAsync(GoalCall) still injects params into shared Variables), 1 latent developer trap (call-frame shadows goal-body set), 1 test quality issue (sequential test named 'parallel'), 1 OBP smell (Channel.Events is public List<>). F1/F4/F5/F6 closed. F2 partially closed (GoalChannel path fixed, general path not). F3 not closed."
+}
