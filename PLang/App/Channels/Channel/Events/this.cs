@@ -19,7 +19,7 @@ public sealed class @this
 {
     private readonly List<EventBinding> _list = new();
     private readonly object _lock = new();
-    private static readonly AsyncLocal<HashSet<string>?> _active = new();
+    private readonly AsyncLocal<HashSet<string>?> _active = new();
 
     public int Count
     {
@@ -68,16 +68,19 @@ public sealed class @this
     /// </summary>
     public IDisposable Enter(string bindingId)
     {
-        var set = _active.Value ??= new HashSet<string>();
-        set.Add(bindingId);
-        return new Releaser(set, bindingId);
+        var parent = _active.Value;
+        var set = parent == null
+            ? new HashSet<string> { bindingId }
+            : new HashSet<string>(parent) { bindingId };
+        _active.Value = set;
+        return new Releaser(this, parent);
     }
 
     private sealed class Releaser : IDisposable
     {
-        private readonly HashSet<string> _set;
-        private readonly string _id;
-        public Releaser(HashSet<string> set, string id) { _set = set; _id = id; }
-        public void Dispose() => _set.Remove(_id);
+        private readonly @this _owner;
+        private readonly HashSet<string>? _parent;
+        public Releaser(@this owner, HashSet<string>? parent) { _owner = owner; _parent = parent; }
+        public void Dispose() => _owner._active.Value = _parent;
     }
 }

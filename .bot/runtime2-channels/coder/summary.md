@@ -2,156 +2,74 @@
 
 ## Version
 
-**v6** (current). v1–v5 history kept in this branch's report.json.
+**v7** (current). v1–v6 history kept in this branch's report.json.
 
-## What v6 is
+## What this is
+The `Channel.Events.@this` type owns each channel's event-binding list, lock, recursion guard, and per-channel filter. Introduced in v6 to encapsulate state that previously leaked across `Channel.@this` and binding-firing helpers (OBP: the type that owns the data also owns its access rules — same spirit as `App.Goals.Goal.Events`).
 
-Address codeanalyzer v2 (FAIL) on top of coder v5. Two of v5's "fixes" landed
-incorrectly (B1 and B2), and the wider design conversation with Ingi
-reframed the underlying model so future parallel work has a clean home.
+Codeanalyzer v3 found two flaws in that v6 introduction:
+- the recursion-guard `AsyncLocal` was declared `static`, so it became per-flow across all channels instead of per-channel;
+- the guard's `HashSet<string>` is mutable and inherited by spawned children — any future parallel fan-out from inside a binding handler would let child tasks corrupt the parent's active-set.
 
-The prior model (v5) said: every `goal.call` boundary pushes a per-call
-parameter scope. That scope was a *read-only* overlay: parameter names
-shadowed underlying writes, and `set %x% = 2` inside the called goal was
-invisible to subsequent `get %x%` in the same goal — an unintuitive trap
-(L1 in codeanalyzer's report). It also didn't actually solve the race that
-motivated it: `RunGoalAsync(GoalCall)` was still injecting parameters into
-the actor-shared dict before falling through.
-
-The v6 model: **Push iff fork.** A fork is what *spawns concurrency* —
-parallel foreach iteration, future explicit async-call operator, future
-inbound-listener accept loop. Sequential `goal.call`, channel write,
-callback dispatch, and sequential foreach iter all pass through whatever
-flow they were called in. Inside a fork overlay, *every* `Variables.Set`
-is captured (not just parameter shadows) so siblings stay isolated.
-Reads cascade overlay → caller chain → actor dict. Communication out of
-a fork is via explicit return collection (`append to %results%`), not
-shared mutation.
-
-This dissolves L1 (sequential `goal.call` has no overlay → `set %x% = 2`
-hits actor dict → `get %x%` returns 2 immediately and after the goal
-returns), preserves the LoadUser leak pattern (called goal sets `%user%`
-and caller sees it), and gives parallel foreach a precise home for the
-moment it lands.
+v7 fixes both. A third finding (I1: `Variables.Snapshot()` ignores the overlay) was deferred — only the Stage-9 migration stub calls it today, and the correct semantics are a design call.
 
 ## What was done
+- **B1 fix:** dropped `static` from `_active` in `PLang/App/Channels/Channel/Events/this.cs:22`. Now per-instance.
+- **L1 fix:** `Enter(...)` is copy-on-write — snapshot parent set into a fresh HashSet, install it, and `Releaser.Dispose` restores the parent reference. `Releaser` no longer mutates a shared set.
 
-### B1 — Channel null-Actor handler
+Tests:
+- C# baseline & after: 2760/2760 pass.
+- PLang: 205 pass; 6 `_fixtures_fail/*` and `_fixtures_sensitive/*.fixture.goal` are intentionally-failing test inputs, not regressions.
 
-`PLang/App/Channels/Channel/this.cs` — codeanalyzer's prescribed fix
-(`return Data.Ok(null)` early when ctx is null) breaks the Stage 8
-channel-event tests, which construct channels without an Actor and rely
-on their handlers firing. Reverted to v5's "log diagnostic + forward
-null" shape; comment updated to make the contract explicit. The only
-production handler that *requires* ctx is the `event.on` goal-dispatch
-handler — it can guard locally.
+Files modified:
+- `PLang/App/Channels/Channel/Events/this.cs` — `_active` instance scope; `Enter` copy-on-write; `Releaser` rewritten.
 
-### B2 — Variables.Set overlay-aware + no Push at goal.call
+Artifacts:
+- `.bot/runtime2-channels/coder/v7/plan.md`
+- `.bot/runtime2-channels/coder/v7/v6_review_summary.md`
+- `.bot/runtime2-channels/coder/v7/baseline-tests.md`
 
-`PLang/App/Variables/this.cs` — `Set` now routes simple-name writes into
-`Calls.Current` if an overlay is active, else to the actor-shared dict.
-Inside an overlay, writes for a name that already lives in this overlay
-mutate in place; writes for new names mint a fresh local entry that
-shadows whatever was inherited via the Caller chain — never bleed up.
-
-`PLang/App/Variables/Calls/Call/this.cs` — `Call.@this` is now a mutable
-overlay, not a read-only param frame. Holds its own `Dictionary` and
-exposes `Set`, `TryGet`, and `ContainsLocal`. Reads walk the Caller chain
-unchanged.
-
-`PLang/App/this.cs` `RunGoalAsync(GoalCall)` no longer pushes a frame.
-Comment updated to describe the new policy: caller-flow inheritance via
-AsyncLocal handles isolation when (and only when) something forked.
-
-`PLang/App/Channels/Channel/Goal/this.cs` — `GoalChannel.InvokeGoal` no
-longer pushes either. Channels are pass-through plumbing; `write out`
-shouldn't silently wrap the bound goal in an isolating scope. The fork
-lives at whoever spawned concurrency above.
-
-### I1 — `Push_FrameInvisibleToParallelFlows` actually parallel now
-
-`PLang.Tests/App/VariablesTests/CallsTests.cs` — converted the
-`ContinueWith` chain to `Task.WhenAll`, renamed
-`Push_ParallelFlows_EachSeesOwnBinding`. Added four more tests for the
-new mutable-overlay semantics:
-
-- `SetInsideOverlay_IsVisibleToSubsequentGet` — the L1-dissolution test.
-- `SetInsideOverlay_DoesNotLeakToUnderlying` — writes inside vanish on dispose.
-- `SetInsideOverlay_NewName_DoesNotEscape` — same for fresh names.
-- `SetInsideOverlay_DoesNotLeakToSiblingOverlay` — the production race
-  the v5 model was meant to solve, now expressed as a parallel test.
-
-### I2 — `Channel.Events` encapsulated
-
-`PLang/App/Channels/Channel/Events/this.cs` (new) — owns the bindings
-list, the lock, the `Match(type, channelName)` filter, and the AsyncLocal
-recursion guard (`IsActive`/`Enter`). Channel keeps the cross-source
-orchestration (per-channel → per-actor → app-level) since it spans three
-owners. Test surface preserved (`ch.Events.Add(...)`, `ch.Events.Count`).
-
-### PLang scenario locked in
-
-`Tests/Modules/Variable/Scoping/VariableScoping.test.goal` extended with
-the param-leak scenario:
-
-```plang
-- call InnerWithParam id=42
-- assert %id% equals 999
-- assert %user% equals "alice"
-
-InnerWithParam
-- set %id% = 999
-- set %user% = "alice"
-```
-
-Both `%id%` (param mutation) and `%user%` (fresh name) leak back to the
-caller — sequential `goal.call` is fully transparent.
-
-## Test results
-
-- C# **2760 / 2760 pass** (was 2757; +3 new CallsTests).
-- PLang **201 / 201 pass**, 0 fail, 0 stale.
-
-Both clean.
-
-## Code example — the rule, one sentence
-
+## Code example
+Before:
 ```csharp
-// Variables.Set, simple-name path:
-var frame = Calls.Current;
-if (frame != null) { /* write into innermost overlay (capture) */ }
-else                { /* write into actor dict (LoadUser leak)  */ }
+private static readonly AsyncLocal<HashSet<string>?> _active = new();
+
+public IDisposable Enter(string bindingId)
+{
+    var set = _active.Value ??= new HashSet<string>();
+    set.Add(bindingId);
+    return new Releaser(set, bindingId);
+}
 ```
 
+After:
 ```csharp
-// Variables.Get walks: Calls.Current.TryGet → Caller chain → actor dict.
+private readonly AsyncLocal<HashSet<string>?> _active = new();
+
+public IDisposable Enter(string bindingId)
+{
+    var parent = _active.Value;
+    var set = parent == null
+        ? new HashSet<string> { bindingId }
+        : new HashSet<string>(parent) { bindingId };
+    _active.Value = set;
+    return new Releaser(this, parent);
+}
+
+private sealed class Releaser : IDisposable
+{
+    private readonly @this _owner;
+    private readonly HashSet<string>? _parent;
+    public Releaser(@this owner, HashSet<string>? parent) { _owner = owner; _parent = parent; }
+    public void Dispose() => _owner._active.Value = _parent;
+}
 ```
 
-```plang
-// PLang developer's view (no fork above):
-Start
-- call LoadUser id=42
-- write out %id%    / 999
-- write out %user%  / 'alice'
+## For v7 after review
+v3 review flagged:
+- B1 (`_active` static) — fixed by removing `static`.
+- L1 (mutable AsyncLocal hazard) — fixed by copy-on-write + parent-restore on dispose.
+- I1 (`Variables.Snapshot()` overlay-blind) — deferred; only Stage-9 stub calls it.
 
-LoadUser
-- set %id% = 999
-- set %user% = 'alice'
-```
-
-## What v7 would do
-
-- `loop.foreach` parallel mode: when added, each iteration awaits-using
-  `ctx.Variables.Calls.Push(seedParams)` and joins via `Task.WhenAll`.
-  The `Variables.Set` overlay routing already supports this — no change
-  needed in the variables layer when the foreach feature lands.
-- Optionally: rename `%__data__%` → `%!data%` (Ingi noted as a future
-  cleanup — not in scope for this branch).
-
-## For reviewer
-
-Suggest **codeanalyzer v3** to verify findings closed and check the new
-`Variables.Set` overlay routing (especially the corner where a write to
-a fresh name inside an overlay mints a local entry rather than mutating
-an inherited Data — that's the corner that bit me once and got fixed
-mid-v6).
+## Next
+Suggest **codeanalyzer** to verify the fixes.

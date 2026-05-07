@@ -663,13 +663,13 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Re-check report and verdict. No source changes — report only."
+          "context": "Re-check report and verdict. No source changes \u2014 report only."
         }
       ],
       "after": {
-        "status": "FAIL — 4 findings. 2 bugs (InvokeChannelHandler null-ctx not guarded; RunGoalAsync(GoalCall) still injects into shared Variables), 1 latent trap (call-frame shadows goal-body set), 1 test quality issue, 1 OBP smell. F1/F4/F5/F6 closed. F2 partially closed. F3 not closed.",
+        "status": "FAIL \u2014 4 findings. 2 bugs (InvokeChannelHandler null-ctx not guarded; RunGoalAsync(GoalCall) still injects into shared Variables), 1 latent trap (call-frame shadows goal-body set), 1 test quality issue, 1 OBP smell. F1/F4/F5/F6 closed. F2 partially closed. F3 not closed.",
         "health": "fail",
-        "notes": "B1: InvokeChannelHandler logs null-ctx warning but falls through to binding.Handler(ctx!, ...) — any handler accessing ctx NREs. B2: RunGoalAsync(GoalCall) foreach+Set loop unchanged — goal.call, llm providers, http providers all still race on shared Variables when concurrent. F2 fix was scoped to GoalChannel only."
+        "notes": "B1: InvokeChannelHandler logs null-ctx warning but falls through to binding.Handler(ctx!, ...) \u2014 any handler accessing ctx NREs. B2: RunGoalAsync(GoalCall) foreach+Set loop unchanged \u2014 goal.call, llm providers, http providers all still race on shared Variables when concurrent. F2 fix was scoped to GoalChannel only."
       }
     },
     {
@@ -692,7 +692,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "B2 — Call.@this becomes a mutable overlay (Dictionary, Set/TryGet/ContainsLocal). Variables.Set routes simple-name writes into Calls.Current when active; mints fresh local entry rather than mutating inherited Data so caller chain doesn't bleed. Writes for names already in this overlay mutate in place."
+          "context": "B2 \u2014 Call.@this becomes a mutable overlay (Dictionary, Set/TryGet/ContainsLocal). Variables.Set routes simple-name writes into Calls.Current when active; mints fresh local entry rather than mutating inherited Data so caller chain doesn't bleed. Writes for names already in this overlay mutate in place."
         },
         {
           "paths": [
@@ -702,7 +702,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "B2 reframe — RunGoalAsync(GoalCall) does not push (sequential goal.call shares state with caller). GoalChannel.InvokeGoal does not push either (channels are pass-through plumbing; `write out` shouldn't silently isolate). Push lives at fork operators only."
+          "context": "B2 reframe \u2014 RunGoalAsync(GoalCall) does not push (sequential goal.call shares state with caller). GoalChannel.InvokeGoal does not push either (channels are pass-through plumbing; `write out` shouldn't silently isolate). Push lives at fork operators only."
         },
         {
           "paths": [
@@ -711,7 +711,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "B1 reverted to v5 shape — codeanalyzer's prescribed early-return breaks 10 Stage 8 channel-event tests that construct channels without an Actor. Log diagnostic + forward null; comment makes contract explicit. Removed `_activeBindings` static AsyncLocal — moved into ChannelEvents. Updated MatchingBindings to consult Events.Match. FireBefore/FireAfter use Events.IsActive/Enter for recursion guard."
+          "context": "B1 reverted to v5 shape \u2014 codeanalyzer's prescribed early-return breaks 10 Stage 8 channel-event tests that construct channels without an Actor. Log diagnostic + forward null; comment makes contract explicit. Removed `_activeBindings` static AsyncLocal \u2014 moved into ChannelEvents. Updated MatchingBindings to consult Events.Match. FireBefore/FireAfter use Events.IsActive/Enter for recursion guard."
         },
         {
           "paths": [
@@ -720,7 +720,7 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "I2 — encapsulated ChannelEvents owning bindings list, lock, Match(type, channelName) filter, and AsyncLocal recursion guard (IsActive/Enter scope). Test surface preserved (Add, Count). Channel keeps cross-source orchestration since it spans Channel + Actor + App."
+          "context": "I2 \u2014 encapsulated ChannelEvents owning bindings list, lock, Match(type, channelName) filter, and AsyncLocal recursion guard (IsActive/Enter scope). Test surface preserved (Add, Count). Channel keeps cross-source orchestration since it spans Channel + Actor + App."
         },
         {
           "paths": [
@@ -729,7 +729,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "I1 — Push_FrameInvisibleToParallelFlows converted from ContinueWith to Task.WhenAll, renamed Push_ParallelFlows_EachSeesOwnBinding. SetInsideFrame_WritesUnderlying replaced by 4 new tests for new semantics: SetInsideOverlay_IsVisibleToSubsequentGet (L1 dissolution), SetInsideOverlay_DoesNotLeakToUnderlying, SetInsideOverlay_NewName_DoesNotEscape, SetInsideOverlay_DoesNotLeakToSiblingOverlay (the production race in parallel test form)."
+          "context": "I1 \u2014 Push_FrameInvisibleToParallelFlows converted from ContinueWith to Task.WhenAll, renamed Push_ParallelFlows_EachSeesOwnBinding. SetInsideFrame_WritesUnderlying replaced by 4 new tests for new semantics: SetInsideOverlay_IsVisibleToSubsequentGet (L1 dissolution), SetInsideOverlay_DoesNotLeakToUnderlying, SetInsideOverlay_NewName_DoesNotEscape, SetInsideOverlay_DoesNotLeakToSiblingOverlay (the production race in parallel test form)."
         },
         {
           "paths": [
@@ -759,7 +759,35 @@
       "after": {
         "status": "complete",
         "health": "C# 2760/2760 pass; PLang 201/201 pass, 0 stale. All five codeanalyzer v2 findings addressed (B1 reverted with explanation; B2 reframed; L1 dissolved by reframing; I1 fixed; I2 encapsulated).",
-        "notes": "Model is now 'Push iff fork.' Sequential goal.call and channel write are pass-through; only true concurrent fork operators (parallel foreach iter — when it lands — and future async/listener forks) push an overlay. Variables.Set overlay-aware. Reads cascade overlay → Caller chain → actor dict. Suggest codeanalyzer v3 next; verify findings closed and check the fresh-name-shadow corner in Variables.Set."
+        "notes": "Model is now 'Push iff fork.' Sequential goal.call and channel write are pass-through; only true concurrent fork operators (parallel foreach iter \u2014 when it lands \u2014 and future async/listener forks) push an overlay. Variables.Set overlay-aware. Reads cascade overlay \u2192 Caller chain \u2192 actor dict. Suggest codeanalyzer v3 next; verify findings closed and check the fresh-name-shadow corner in Variables.Set."
+      }
+    },
+    {
+      "id": "fbdd0f72-6d20-42b5-a4e2-fec420ce549c",
+      "bot": "coder",
+      "timestamp_start": "2026-05-07T14:15:54.811125Z",
+      "timestamp_end": "2026-05-07T14:15:54.811125Z",
+      "intent": "Apply codeanalyzer v3 fixes (B1 + L1) to Channel.Events.@this; defer I1.",
+      "before": {
+        "assumptions": "codeanalyzer v3 findings on coder v6: B1 _active static, L1 mutable AsyncLocal, I1 Snapshot overlay-blind.",
+        "risk": "low \u2014 both fixes localised to Channel/Events/this.cs."
+      },
+      "plan": ".bot/runtime2-channels/coder/v7/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/Events/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "B1: removed static from _active. L1: Enter is now copy-on-write; Releaser restores parent reference instead of mutating shared set. I1 deferred (only Stage-9 migration stub calls Snapshot today)."
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "C# 2760/2760 pass; PLang 205 pass + 6 deliberately-failing fixture inputs (matches v6 baseline).",
+        "notes": "Hand off to codeanalyzer for re-review."
       }
     }
   ]
