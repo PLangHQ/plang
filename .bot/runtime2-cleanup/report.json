@@ -127,6 +127,60 @@
         "health": "ok",
         "notes": "No code changes. Doc is the architect's lean, not a contract — every stage we land may push back on the tree. Architect-side: ready to start carving stage 1 (serializers-stage-6-finish) once Ingi has reviewed the tree."
       }
+    },
+    {
+      "id": "e7f4c1b9-3a2d-4e8b-9c5f-6d8e2a4b1c7e",
+      "bot": "architect",
+      "timestamp_start": "2026-05-07T17:40:00Z",
+      "timestamp_end": "2026-05-07T18:25:00Z",
+      "intent": "Address Ingi's six review comments on post-cleanup-tree.md (v1) and pull latest runtime2 (channels merge + io-channels docs).",
+      "before": {
+        "assumptions": "Branch was on the pre-channels-merge runtime2 base. Ingi posted a big multi-bullet review comment plus five focused ones on the tree. The merge from runtime2 brings in the channels work which already realised parts of stage 14: EventContext.cs renamed to Channel/Events/this.cs, MigrationEnvelope.cs deleted, Variables/Calls/ added. Some review bullets were rendered moot by the merge (Migration removal); some were sharpened (case-mismatch concern on JSON options, with a Rule C frame).",
+        "risk": "The big bullet comment spans agree / disagree / clarify across 17 sub-points — single-status resolution wouldn't reflect reality. Posted comprehensive reply and left it open so Ingi can re-engage per bullet if anything in the rewrite missed. Provider→Code rename is a real design question parked as Open judgment call E. Catalog placement under Build/ is parked as B (waiting on Ingi to recall the prior thread)."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan/post-cleanup-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full rewrite reflecting v1 review. Tree updated for: MemoryStepCache → Cache/Memory.cs; Callback/Signature/ folded into Callback/this.cs; Choices → Build/Choices/; PropertyFilters/{Sensitive,Transport,View}.cs collection; Json.cs/Text.cs renames; Data/Converter.cs; Snapshot/ISnapshot.cs; Test/{File,Run,Status}.cs; ReservedKeywords → Variables/Reserved.cs (all const/readonly); OpenAi counter → DELETE; Events/ collapsed (Lifecycle layer dropped). New 'Inline answers to v1 review questions' section walks each bullet. Open judgment calls revised: A (JSON home — shifted to single-home given case-mismatch concern), B (Catalog under Build/ — waiting on prior thread), C (Plang vs PlangData — depends on legacy mimetype usage), D (RestoredFrame → Call/Position low priority), E (Provider→Code design question), F (Events collapse blast radius), G (ChildAppCreated event shape), H (Info/View loose roots deferred unchanged)."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Logged the OpenAiProvider._requestCount static counter as a temporary blocker per Ingi 2026-05-07. Stage 15 deletes the field, the MaxRequestsPerProcess const, and the increment-and-throw block. No replacement scope."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/comments.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Posted six architect replies via the review server API. Four user comments resolved (JSON options, ReservedKeywords, OpenAi counter, PropertyFilters). Two left open intentionally — the big bullet comment (multi-status, can't be resolved as one) and ChildAppCreated (design TBD until stage 15 carves)."
+        },
+        {
+          "paths": [
+            "."
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pulled origin/runtime2 twice (channels merge + io-channels docs update). Worked around CLAUDE.md skip-worktree by saving harness overlay, lifting flag, checking out HEAD, merging, restoring overlay. Two merge commits land cleanly: 8d5a5b82 (channels merge) and 92a1e... (io-channels docs)."
+        }
+      ],
+      "after": {
+        "status": "Tree v2 reflects all settled review feedback. Three substantive design questions parked open for Ingi: Provider→Code (concept change vs find-replace), Catalog placement (under Build/?), and Plang vs PlangData (legacy mimetype usage). Branch is up-to-date with runtime2; ready for stage 1 carve once design questions are settled.",
+        "health": "ok",
+        "notes": "No code changes — pure planning. The Provider→Code question is the most consequential: my position is that it's only a good rename if it carries a story-level concept change ('runtime no longer talks about providers'), not a 88-file find-replace. Waiting on Ingi's read."
+      }
     }
   ]
 }

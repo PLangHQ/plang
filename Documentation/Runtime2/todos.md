@@ -378,3 +378,20 @@ parameter-only isolation (current), and a separate
 `Variables.Branches.Push` (or similar) for full read+write isolation
 when forking parallel branches. Designed when the parallel foreach
 work lands.
+
+---
+
+## 2026-05-07 — `OpenAiProvider._requestCount` static counter is a temporary blocker
+
+`PLang/App/modules/llm/providers/OpenAiProvider.cs:41` — `private static int _requestCount`
+guarded by `MaxRequestsPerProcess = 5000` (line 42), incremented atomically per LLM
+request, surfaces an error when the cap is reached: "LLM request limit reached. Possible
+infinite loop. Restart to reset."
+
+This is a temp safety net to prevent runaway LLM costs during dev. Ingi confirmed
+2026-05-07 it should be removed in the future, not promoted to instance scope or App-level
+metering. When stage 15 (`static-state-eviction-sweep`) lands, **delete the field, the
+const, and the increment-and-throw block.** No replacement.
+
+Context: this surfaced during the Rule C audit (`static fields are a missing @this`).
+The right fix is removal, not relocation.

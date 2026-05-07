@@ -81,5 +81,115 @@
       "parent_id": "88f8977703",
       "ts": "2026-05-07T12:51:12"
     }
+  ],
+  "plan/post-cleanup-tree.md": [
+    {
+      "id": "907548f65b",
+      "line": 19,
+      "text": "I will write comments on the tree here:\n- MemoryStepCache.cs = feels like bad obp name, and should this belong to the Step/?\n- CallStack/RestoredFrame.cs = is it really restoredframe, isn't just a Call, when you snapshot a Call, dont you restore a Call?\n- ActionSpec/ExampleSpec = I dont know, feel kind of wrong name, I am not sure what it does. We also had a branch, not to old, this or last weak were we were talking about remove the Catalog (something else owned the info it creates, dont remember), and weren't we also talking here about moving it under Build?\n- Callback/Signature.cs = this should not exist, Data contains the Signature\n- Channel/Migration.cs = will be removed on next pull\n- Serializers = I think the classes can just be Json.cs, instead of JsonStreamSerializer.cs, Plang (what is different between PlangData and Plang), Text (this is Data.Value). \n- SensitivePropertyFilter = just Sensitive, instead of SensitivePropertyFilter, same for Transport?\n- Choices = really top level? I feel like it's builder related or something like that\n- Config = what is ModuleView.cs??\n- Data = PlangTypeConverter.cs, is it not just Converter.cs\n- Events/ = I feel like there is just to much sub foldering here, why not just Events/this.cs and Event.cs, I feel like Lifecycle and Bindings are to much\n- Providers/ = see comment below about Code\n- Services/ = are we using any of this any more? what is it?\n- Settings/ = you had some opinion on these classes, I dont see changes in this final tree result.\n- ISnapshotted.cs = shouldn't it be ISnapshot?\n- Test/ = I see TestFile.cs, TestRun.cs and TestStatus.cs, they dont need prefix Test.\n\nThen I want to talk about the word Provider, I want to change this to Code, and they would implement ICode. This is my thought process. providers is something that and external party can inject into the the language runtime and overwrite it, that is basically code that is being inserted into the runtime, I feel like calling it what it is, what do you think??",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-07T17:28:51"
+    },
+    {
+      "id": "9996a52698",
+      "line": 19,
+      "text": "Tree revised against your bullets — see the rewritten doc, plus the new \"Inline answers to v1 review questions\" section that walks through each one in prose.\n\nApplied to the tree (agreed, no further discussion):\n- MemoryStepCache → Cache/Memory.cs (rationale: cache subsystem owns the impl variant; not Step's data)\n- Callback/Signature/ folder → folded into Callback/this.cs as a property\n- Channel/Migration → already gone in the trunk merge (confirmed)\n- Serializer Json.cs / Text.cs renames (Stream/Serializer suffixes dropped)\n- PropertyFilters/{Sensitive,Transport,View}.cs with parent collection (suffix dropped, missing-collection added)\n- Choices → moved to Build/Choices/ (both consumers are build-time)\n- Data/Converter.cs (PlangType prefix dropped — namespace is App.Data)\n- ISnapshotted → ISnapshot\n- Test/{File,Run,Status}.cs (Test prefix dropped — namespace is App.Test)\n- Events/ collapsed: Lifecycle layer removed; Before/After become properties on Events/this.cs; Bindings/this.cs and Binding/this.cs sit one level up\n\nEngaged + applied with reasoning:\n- RestoredFrame: yes, the name describes a state, not a noun. Tree proposes Call/Position.cs (it identifies *where*). Inline answer explains why a separate type is still needed (lifecycle differs from live Call).\n\nStill open (flagged in Open judgment calls):\n- Catalog under Build/: I don't have memory of the prior thread — please point me at it. Lean if pressed: full move to Build/Catalog/, with TypeEntry relocating to App/Types.\n- PlangSerializer vs PlangDataSerializer: depends on whether application/plang is dead transport. I'll trace usage when stage 1 lands.\n- Provider → Code: real design question, not auto-applying. Inline section walks the tradeoff. Short version: \"Code\" is too generic to be a type-system identifier; the rename only carries weight if it's a story-level concept change (\"runtime no longer talks about Providers\"). What's the underlying concept change?\n\nAnswered as information (no tree change):\n- ModuleView.cs: per-module typed settings view returned by app.Config.For<T>(context); generic; runtime-used\n- Services: in active use — per-outbound-call I/O scope (HTTP/TCP/WS); referenced from App.this.cs:229\n- Settings: I had no specific prior opinion; the tree is OBP-clean as-is (SqliteSettingsStore is the per-impl variant, same shape as Cache/Memory.cs)\n\nOpenAi static-counter todo logged in Documentation/Runtime2/todos.md.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "907548f65b",
+      "ts": "2026-05-07T17:46:03"
+    },
+    {
+      "id": "3f529f45df",
+      "line": 231,
+      "text": "isn't it C, it's about how we (de)serialize stuff? unrelated to this folder structure, I feel like we are getting to many case differences errors, could that be?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T17:30:15"
+    },
+    {
+      "id": "f43d86175d",
+      "line": 231,
+      "text": "Yes, Rule C — JSON options are static fields with no @this owner, so the cleanup applies. The interesting part is your case-mismatch concern: it's a real risk if options disperse across consumers (two consumers, two opinions on case sensitivity → silent serialization mismatch).\n\nUpdated tree: lean shifts from v1's \"(a) disperse\" to **(b) single home — App/Json/this.cs** with options as instance properties (app.Json.SnapshotClone, app.Json.PrWrite, etc). Rule C is preserved (the data has an owner, even if it's a config-shaped owner) and there's one source of truth for case/property conventions. Codified in Open judgment call A in the doc.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "3f529f45df",
+      "ts": "2026-05-07T17:46:14"
+    },
+    {
+      "id": "c4aa52c02e",
+      "line": 237,
+      "text": "should all be readonly, I kind like the app/variables/reserved.cs location",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T17:31:33"
+    },
+    {
+      "id": "45148de6d1",
+      "line": 237,
+      "text": "Settled: Variables/Reserved.cs as the home, all const/readonly. The current mutable `public static string Test = \"!Test\"` and the `static List<string> keywords = new()` get fixed alongside the move (stage 15).",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "c4aa52c02e",
+      "ts": "2026-05-07T17:46:20"
+    },
+    {
+      "id": "dc92b23d6e",
+      "line": 247,
+      "text": "this is just temporary blocker, will be removed in future, maybe add it to todo",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T17:31:54"
+    },
+    {
+      "id": "4774ba84ad",
+      "line": 247,
+      "text": "Logged at Documentation/Runtime2/todos.md (with full context: field name, the 5000-cap const, and the increment-and-throw block). Stage 15 deletes all three. No replacement scope.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "dc92b23d6e",
+      "ts": "2026-05-07T17:46:21"
+    },
+    {
+      "id": "000d10d61a",
+      "line": 273,
+      "text": "not sure what it's used for so cant answer",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-07T17:32:48"
+    },
+    {
+      "id": "1e8129dcc3",
+      "line": 273,
+      "text": "Looked at the use sites. Fires once per child App after construction (OsDirectory inherited, Testing.IsEnabled set, CurrentTest assigned), before the test's entry goal runs. Six probes in PLang.Tests/App/Testing/RunActionTests.cs subscribe to assert child-App state (parallel count, OsDirectory, IsEnabled).\n\nIt's static because there's no other way for the test to reach the child App before its first goal runs — children are constructed inside the test runner's parallel loop and aren't returned to the caller. The static event is the only hook point.\n\nArchitect's lean: the test runner (App.Test.@this) should own a list of child-app callbacks. Static-ness moves onto the test runner, which is itself ~singleton per test process. Detail in Open judgment call G in the doc. Leaving this comment open until stage 15 carves and the rewrite shape settles.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "000d10d61a",
+      "ts": "2026-05-07T17:46:31"
+    },
+    {
+      "id": "b6e1ab1adc",
+      "line": 279,
+      "text": "if it's same code, then shouldn't it be removed? or is it not same code?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T17:34:02"
+    },
+    {
+      "id": "937b6c7f1f",
+      "line": 279,
+      "text": "Different filters, not duplicate code. Sensitive strips secrets; Transport strips runtime-only properties for serialization; View filters by the [Default/Store/LlmBuilder/Debug/Out/In] view tag. Same shape (interface), different rules.\n\nRename agreed: drop the PropertyFilter suffix → Sensitive.cs, Transport.cs, View.cs (your earlier bullet). By Rule B, three siblings with the same shape want a parent collection, so the tree adds PropertyFilters/this.cs as the registry. Folded into stage 14.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "b6e1ab1adc",
+      "ts": "2026-05-07T17:46:37"
+    }
   ]
 }
