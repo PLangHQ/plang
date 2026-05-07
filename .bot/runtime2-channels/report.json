@@ -789,6 +789,33 @@
         "health": "C# 2760/2760 pass; PLang 205 pass + 6 deliberately-failing fixture inputs (matches v6 baseline).",
         "notes": "Hand off to codeanalyzer for re-review."
       }
+    },
+    {
+      "id": "d4e5f6a7-b8c9-0123-defa-345678901bcd",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-07T15:00:00Z",
+      "timestamp_end": "2026-05-07T15:20:00Z",
+      "intent": "v4: re-check coder v7 fixes (B1 + L1) on Channel.Events.@this",
+      "before": {
+        "assumptions": "C# 2760/2760, PLang 205 pass + 6 fixture-fails from coder v7. Only Channel/Events/this.cs changed."
+      },
+      "plan": ".bot/runtime2-channels/codeanalyzer/v4/report.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-channels/codeanalyzer/v4/report.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Re-check report. No source changes — report only."
+        }
+      ],
+      "after": {
+        "status": "PASS — all prior findings resolved, no new issues.",
+        "health": "ok",
+        "notes": "B1 (static _active) and L1 (mutable AsyncLocal shared ref) both correctly fixed. I1 still deferred per design decision. OBP shape clean. Tests identical to baseline."
+      }
     }
   ]
 }
