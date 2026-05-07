@@ -2,74 +2,56 @@
 
 ## Version
 
-**v7** (current). v1–v6 history kept in this branch's report.json.
+**v8** (current). v1–v7 history kept in this branch's report.json.
 
 ## What this is
-The `Channel.Events.@this` type owns each channel's event-binding list, lock, recursion guard, and per-channel filter. Introduced in v6 to encapsulate state that previously leaked across `Channel.@this` and binding-firing helpers (OBP: the type that owns the data also owns its access rules — same spirit as `App.Goals.Goal.Events`).
-
-Codeanalyzer v3 found two flaws in that v6 introduction:
-- the recursion-guard `AsyncLocal` was declared `static`, so it became per-flow across all channels instead of per-channel;
-- the guard's `HashSet<string>` is mutable and inherited by spawned children — any future parallel fan-out from inside a binding handler would let child tasks corrupt the parent's active-set.
-
-v7 fixes both. A third finding (I1: `Variables.Snapshot()` ignores the overlay) was deferred — only the Stage-9 migration stub calls it today, and the correct semantics are a design call.
+Tester v7 PASS but flagged two minor missing-coverage findings on `PLang/App/Channels/Channel/Events/this.cs` — neither v7 fix had a regression test. Tester empirically verified by reverting each in turn (working tree only) that the suite stayed green both times. v8 adds the two probe tests so future refactors can't silently re-introduce either bug.
 
 ## What was done
-- **B1 fix:** dropped `static` from `_active` in `PLang/App/Channels/Channel/Events/this.cs:22`. Now per-instance.
-- **L1 fix:** `Enter(...)` is copy-on-write — snapshot parent set into a fresh HashSet, install it, and `Releaser.Dispose` restores the parent reference. `Releaser` no longer mutates a shared set.
 
-Tests:
-- C# baseline & after: 2760/2760 pass.
-- PLang: 205 pass; 6 `_fixtures_fail/*` and `_fixtures_sensitive/*.fixture.goal` are intentionally-failing test inputs, not regressions.
+Two new `[Test]` methods appended to `PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs`:
 
-Files modified:
-- `PLang/App/Channels/Channel/Events/this.cs` — `_active` instance scope; `Enter` copy-on-write; `Releaser` rewritten.
+- **`EventsActiveSet_IsInstanceScoped_NotShared`** (B1 probe) — instantiates two `Events.@this`, asserts that `evA.Enter("X")` does not bleed into `evB.IsActive("X")`. If `_active` becomes `static` again, this fails.
+- **`Enter_FromConcurrentChild_DoesNotLeakChildIdToParentFlow`** (L1 probe) — uses `TaskCompletionSource` to pause a child mid-`Enter`, then asserts the parent flow does **not** observe the child's id. Tester explicitly noted the naive `Task.WhenAll` shape is a false green; this is the empirically-validated form.
 
-Artifacts:
-- `.bot/runtime2-channels/coder/v7/plan.md`
-- `.bot/runtime2-channels/coder/v7/v6_review_summary.md`
-- `.bot/runtime2-channels/coder/v7/baseline-tests.md`
+No production code change.
+
+### Verification
+- Built clean.
+- Stage8 filter: 17/17 (was 15).
+- Full C# suite: **2762/2762**, 0 fail, 0 skip (was 2760).
+- Sanity-checked L1 by reverting it in working tree → L1 probe correctly went red → restored. (B1 revert breaks compilation — `Releaser` accesses `_active` via instance — so the static-reintroduction path is doubly guarded.)
+
+### Files modified
+- `PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs` — +37 lines, two `[Test]` methods.
+
+### Artifacts
+- `.bot/runtime2-channels/coder/v8/plan.md`
+- `.bot/runtime2-channels/coder/v8/v7_review_summary.md`
 
 ## Code example
-Before:
-```csharp
-private static readonly AsyncLocal<HashSet<string>?> _active = new();
 
-public IDisposable Enter(string bindingId)
+```csharp
+[Test]
+public async Task Enter_FromConcurrentChild_DoesNotLeakChildIdToParentFlow()
 {
-    var set = _active.Value ??= new HashSet<string>();
-    set.Add(bindingId);
-    return new Releaser(set, bindingId);
+    var ev = new global::App.Channels.Channel.Events.@this();
+    using var _ = ev.Enter("A");
+    var inside = new TaskCompletionSource();
+    var release = new TaskCompletionSource();
+    var t = Task.Run(async () =>
+    {
+        using var __ = ev.Enter("B");
+        inside.SetResult();
+        await release.Task;
+    });
+    await inside.Task;
+    var leaked = ev.IsActive("B");   // parent's snapshot must not see child's "B"
+    release.SetResult();
+    await t;
+    await Assert.That(leaked).IsFalse();
 }
 ```
 
-After:
-```csharp
-private readonly AsyncLocal<HashSet<string>?> _active = new();
-
-public IDisposable Enter(string bindingId)
-{
-    var parent = _active.Value;
-    var set = parent == null
-        ? new HashSet<string> { bindingId }
-        : new HashSet<string>(parent) { bindingId };
-    _active.Value = set;
-    return new Releaser(this, parent);
-}
-
-private sealed class Releaser : IDisposable
-{
-    private readonly @this _owner;
-    private readonly HashSet<string>? _parent;
-    public Releaser(@this owner, HashSet<string>? parent) { _owner = owner; _parent = parent; }
-    public void Dispose() => _owner._active.Value = _parent;
-}
-```
-
-## For v7 after review
-v3 review flagged:
-- B1 (`_active` static) — fixed by removing `static`.
-- L1 (mutable AsyncLocal hazard) — fixed by copy-on-write + parent-restore on dispose.
-- I1 (`Variables.Snapshot()` overlay-blind) — deferred; only Stage-9 stub calls it.
-
-## Next
-Suggest **codeanalyzer** to verify the fixes.
+## For v8 after review
+This is the response to tester v7. Hand off to **security** next per tester's recommendation.

@@ -858,6 +858,45 @@
         "notes": "Two minor missing-coverage findings (F1: B1 regression test, F2: L1 regression test). Both ~3 lines each, recommended as small follow-up commit. Compounding fact for B1: Binding.Id is random GUID-substring so cross-channel collision is not exercisable through the public API today. Process note: tester is now read-only on source code (no deletion-test by mutation)."
       },
       "timestamp_end": "2026-05-07T14:27:52Z"
+    },
+    {
+      "id": "e5f6a7b8-c9d0-1234-efab-456789012cde",
+      "bot": "coder",
+      "timestamp_start": "2026-05-07T15:30:00Z",
+      "intent": "v8: add 2 probe tests for tester v7 missing-coverage findings F1 (B1) and F2 (L1) on Channel.Events.@this.",
+      "before": {
+        "assumptions": "Tester v7 PASS but flagged two minor uncovered fixes. F1 needs a 2-instance regression test for _active being instance-scoped. F2 needs an empirically-validated mid-flow probe using TaskCompletionSource (naive Task.WhenAll is a false green per tester).",
+        "risk": "low — test-only addition; no production code change."
+      },
+      "plan": ".bot/runtime2-channels/coder/v8/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added 2 probe tests: EventsActiveSet_IsInstanceScoped_NotShared (B1) and Enter_FromConcurrentChild_DoesNotLeakChildIdToParentFlow (L1, TCS-based mid-flow probe per tester's empirically-validated shape)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-channels/coder/v8/plan.md",
+            ".bot/runtime2-channels/coder/v8/v7_review_summary.md",
+            ".bot/runtime2-channels/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan, review summary, top-level summary updated."
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "C# 2762/2762 pass (was 2760, +2 probes); L1 revert sanity-checked → probe goes red → restored.",
+        "notes": "Test-only commit. Hand off to security per tester recommendation."
+      },
+      "timestamp_end": "2026-05-07T15:55:00Z"
     }
   ]
 }
