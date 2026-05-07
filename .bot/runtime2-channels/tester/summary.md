@@ -36,7 +36,11 @@ public async Task ActiveSet_IsScoped_PerChannelEventsInstance()
 Three lines, fails immediately if `_active` were static again.
 
 ## Process note (v7)
-Ingi instituted a strict rule mid-session: **tester does not modify source code**, even temporarily for a deletion test. I had begun reverting the B1 fix to run the deletion test and was stopped. The revert was rolled back immediately (working tree clean). Going forward, the deletion test is conducted by reading code and tests carefully and reasoning about which assertions would still hold — not by mutating the source. Saved as feedback memory.
+Ingi set the rule mid-session in two stages:
+1. First: tester does not modify source code at all.
+2. Then loosened: tester *may* edit source freely in the working tree — deletion tests, scratch probes — but **never commits source**. The bright line is that tester commits only paths under `.bot/<branch>/`. Saved as feedback memory.
+
+Used the loosened version for the rest of v7. Reverted B1, ran tests (still 2760/2760 — fixes empirically uncovered). Restored. Reverted L1, same result. Restored. Wrote scratch probes to validate the suggested regression tests; this caught a false green in my own first L1 probe (Add-then-Remove leaves the set unchanged either way) and forced me to design a synchronization-based version that actually fails when L1 is reverted. Working tree clean before commit. Scratch file deleted.
 
 ## Next
 Suggest **security** next. Consider also picking up the two missing-coverage suggestions as a small follow-up commit before security if you want them locked in alongside the fixes.

@@ -11,8 +11,30 @@ No new tests added.
 - **C# (TUnit):** 2760 / 2760 pass — matches coder's baseline exactly.
 - **PLang:** Coder reports 205 pass / 6 fixture-fails (`_fixtures_fail/*`, `_fixtures_sensitive/*.fixture.goal` — deliberately-failing test inputs). Not re-run here; the v7 diff is a 2-line C# change with no PLang surface impact, so plang results carry over. Spot-checked: no `.test.goal` was modified in v7.
 
-## Deletion-test reasoning (read-only)
-Per-rule, I do not edit source. I reason about which assertions would still hold if each fix were reverted.
+## Deletion test — empirical (post-rule-update)
+Mid-session Ingi loosened the rule: tester may edit source freely in the working tree (deletion test, scratch probes), but **never commit source**. So I empirically ran the deletion test for both fixes.
+
+**Method:** revert each fix in turn, run C# suite, observe. Restore between runs. Working tree confirmed clean before commit.
+
+**Results:**
+| Revert | Suite result |
+|---|---|
+| B1 only (`_active` static, Releaser deref via `@this._active`) | 2760 / 2760 pass |
+| L1 only (mutate-shared-set Releaser) | 2760 / 2760 pass |
+
+Both empirically uncovered. Read-only reasoning was correct.
+
+I then wrote the two suggested probe tests (`PLang.Tests/App/ChannelsTests/_TesterProbe_v7.cs`, scratch — deleted before commit) and ran them against each revert:
+
+| Probe | Fixes in place | B1 reverted | L1 reverted |
+|---|---|---|---|
+| Probe_B1 (`evA.Enter("X")` then `evB.IsActive("X") == false`) | pass | **fail** ✅ | pass |
+| Probe_L1 v1 (`Task.WhenAll` two children, assert parent set unchanged after) | pass | pass | **pass — false negative** ❌ |
+| Probe_L1 v2 (block child mid-`Enter` via TCS, assert parent doesn't see child's id) | pass | pass | **fail** ✅ |
+
+**Probe_L1 v1 is the interesting finding for myself.** The "obvious" L1 probe (parallel children, assert nothing leaks) doesn't work: with the old buggy `Enter`, children Add then Remove on Dispose, so the final state is identical to the fixed version. The bug is only observable *during* a child's scope, not after it. v2 uses a `TaskCompletionSource` to pause the child mid-flight and lets the parent observe the leaked id. Without that synchronization, the "deletion test" gives a false green even when run empirically. This corrects what I would have shipped as a recommendation in v1 of this report.
+
+## Read-only reasoning notes (kept for reference)
 
 ### B1 reverted (`_active` becomes `static` again)
 Walk through Stage8 tests (`PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs`):
@@ -54,7 +76,31 @@ Skimmed the full ChannelsTests folder — no other test exercises the recursion 
 - **Code:** `PLang/App/Channels/Channel/Events/this.cs:69-85`
 - **Issue:** Copy-on-write `Enter`/parent-restoring `Releaser` has no test. The coder is upfront that "no current callsite" exercises parallel fan-out from a binding handler. Reverting L1 to mutate the inherited set would break in `Task.WhenAll`-from-a-handler scenarios that don't yet exist.
 - **Impact:** When a future consumer adds parallel writes from inside a handler (legitimate pattern: structured logging fan-out), an L1 regression would surface as flaky `InvalidOperationException` in production, not at test time.
-- **Suggestion:** A direct unit test on `Channel.Events.@this`: call `Enter("A")` on the parent flow, then `await Task.WhenAll(Task.Run(() => events.Enter("B").Dispose()), Task.Run(() => events.Enter("C").Dispose()))`. With L1 in place: parent set unchanged after children dispose; without L1: `_active.Value` contains B and/or C, or HashSet throws under contention. Three lines, deterministic on Linux/CI.
+- **Suggestion (corrected after empirical run):** the "obvious" `Task.WhenAll` test does NOT catch the regression — children Add and Remove on Dispose, leaving the parent set unchanged either way. A working test must observe the parent flow *while the child is still inside Enter*:
+
+```csharp
+[Test]
+public async Task ChildEnter_DoesNotLeakIntoParentSet()
+{
+    var ev = new global::App.Channels.Channel.Events.@this();
+    using var _ = ev.Enter("A");
+    var childInside = new TaskCompletionSource();
+    var releaseChild = new TaskCompletionSource();
+    var task = Task.Run(async () =>
+    {
+        using var __ = ev.Enter("B");
+        childInside.SetResult();
+        await releaseChild.Task;
+    });
+    await childInside.Task;
+    var leaked = ev.IsActive("B");
+    releaseChild.SetResult();
+    await task;
+    await Assert.That(leaked).IsFalse();
+}
+```
+
+Empirically confirmed: passes with L1 in place, fails on the line `Assert.That(leaked).IsFalse()` when L1 is reverted.
 
 ### F3 — Process: baseline-tests.md present and accurate
 Not a finding — noting compliance. `baseline-tests.md` exists and matches what I observed (2760/2760). Good.
