@@ -1,0 +1,43 @@
+{
+  "status": "pass",
+  "summary": "Threat-model walk over the per-actor channel architecture. One Medium (Channel.Stream.ReadAllBytesAsync ignores Channel.Buffer; unbounded read), one Low (MigrationEnvelope.Signature is keyless SHA256 with PKI-shaped fields and a doc/impl mismatch — VerifyEnvelope returns true for any forged envelope), and three Notes (Variables.Snapshot use site under standing Sensitive-leak finding; MigrationEnvelope.Payload polymorphic-deserialize concern for future receive side; encoding fallback silent). Zero High, zero Critical. F1 turns into a real OOM vector the moment Stream channels wrap untrusted network bodies; F2 becomes a complete trust bypass the moment FromMigration ships if VerifyEnvelope is treated as a gate.",
+  "findings": {
+    "high": 0,
+    "medium": 1,
+    "low": 1,
+    "note": 3
+  },
+  "prior_findings_re_verified": {
+    "codeanalyzer_v3_B1_static_to_instance": "closed (probe test added in coder v8)",
+    "codeanalyzer_v3_L1_copy_on_write_Enter": "closed (probe test added in coder v8)",
+    "tester_v7_missing_coverage": "closed by coder v8"
+  },
+  "tests": {
+    "csharp_tunit": "2762/2762 (clean rebuild per stale-binary protocol)",
+    "plang": "205 pass, 6 fixture-fails in _fixtures_fail/_fixtures_sensitive (deliberate test inputs; matches tester v7 + coder v8 baseline)"
+  },
+  "files_audited_in_depth": [
+    "PLang/App/Channels/Channel/this.cs",
+    "PLang/App/Channels/Channel/Stream/this.cs",
+    "PLang/App/Channels/Channel/Goal/this.cs",
+    "PLang/App/Channels/Channel/Events/this.cs",
+    "PLang/App/Channels/Channel/MigrationEnvelope.cs",
+    "PLang/App/Channels/this.cs",
+    "PLang/App/Services/this.cs",
+    "PLang/App/Services/Service/this.cs",
+    "PLang/App/Choices/this.cs",
+    "PLang/App/modules/IChannel.cs",
+    "PLang/App/modules/channel/set.cs",
+    "PLang/App/modules/channel/remove.cs",
+    "PLang/App/modules/channel/migrate.cs",
+    "PLang/App/modules/output/write.cs",
+    "PLang.Generators/Emission/Action/this.cs",
+    "PLang/App/this.cs",
+    "PLang/App/Actor/this.cs",
+    "PLang/App/Variables/this.cs",
+    "PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs",
+    "PLang/App/Channels/Serializers/Serializer/JsonStreamSerializer.cs",
+    "PLang/App/Channels/Serializers/SensitivePropertyFilter.cs",
+    "PLang/App/Data/this.Envelope.cs"
+  ]
+}
