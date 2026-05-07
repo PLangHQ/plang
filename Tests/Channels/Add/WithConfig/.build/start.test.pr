@@ -1,0 +1,193 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set channel \u0022audit\u0022 call AuditLog, buffer: 65536, timeout: PT30S, mime: \u0027application/json\u0027, write to %channel%",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": "channel.add honours optional config: buffer (int bytes), timeout (ISO 8601 string),\nmime, encoding. Verifying via Data result of the add step.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "audit",
+              "type": "string"
+            },
+            {
+              "name": "Goal",
+              "value": {
+                "name": "AuditLog",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
+            },
+            {
+              "name": "Buffer",
+              "value": 65536,
+              "type": "long"
+            },
+            {
+              "name": "Timeout",
+              "value": "00:00:30",
+              "type": "timespan"
+            },
+            {
+              "name": "Mime",
+              "value": "application/json",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%channel%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set (upsert) the named channel \u0027audit\u0027 backed by a goal call to AuditLog, with buffer=65536, timeout=PT30S, mime=application/json. The step writes the resulting channel object to %channel% via variable.set.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %channel% is not null",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNotNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%channel%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %channel% is not null (and thus the previous channel.set produced a value).",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %channel.Buffer% equals 65536",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": 65536,
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%channel.Buffer%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %channel.Buffer% equals 65536.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %channel.Mime% equals \u0027application/json\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "application/json",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%channel.Mime%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %channel.Mime% equals application/json.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Add/WithConfig/Start.test.goal",
+  "prPath": "/Add/WithConfig/.build/start.test.pr",
+  "hash": "e4a965e6e0d358ce0d19869398a51b423ccd31f6cf97906dcd0c48f7247792cb",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

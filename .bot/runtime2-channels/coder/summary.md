@@ -99,22 +99,30 @@ private IEnumerable<Binding.@this> MatchingBindings(EventType type)
 }
 ```
 
+## v4.1 — TimeSpan ISO 8601 in TypeConverter
+
+`Add/WithConfig` was failing the build with *"Cannot convert 'PT30S'
+(String) to TimeSpan."* `TypeConverter` had no TimeSpan branch — fell
+through to `Convert.ChangeType` which doesn't understand ISO 8601.
+`TimeSpanIso8601Converter` exists for JSON serialization but only
+kicks in on the JSON path. Added a `TimeSpan` branch to
+`TypeConverter.TryConvertTo` that parses ISO 8601 via
+`XmlConvert.ToTimeSpan`, falling back to `TimeSpan.Parse`. Same wire
+shape the JSON converter uses.
+
 ## Test status
 
-- **C#**: 2744 pass, 0 fail. Flat through v3 and v4.
-- **PLang**: **200 pass, 0 fail, 5 stale** (was 188/0/18 at branch
-  start; was 191/10/5 after v2; was 199/1/5 after v3).
+- **C#**: 2744 pass, 0 fail. Flat through v3 / v4 / v4.1.
+- **PLang**: **201 pass, 0 fail, 4 stale** (was 188/0/18 at branch
+  start; v2 → 191/10/5; v3 → 199/1/5; v4 → 200/0/5; v4.1 → 201/0/4).
   - All channel scenarios pass.
-  - 5 stale: 4 pre-existing Callback (out of scope) + 1
-    `Add/WithConfig` (LLM step-splitting on long modifier-chain line —
-    separate concern noted in v3 plan).
+  - 4 stale: pre-existing Callback (out of branch scope).
 
 ## What's next (out of scope here)
 
-1. **`Add/WithConfig` step-splitting** — LLM-noise issue.
-2. **Events architecture pass** — `App.Events` vs `Context.Events`
+1. **Events architecture pass** — `App.Events` vs `Context.Events`
    are two registries for one concept. Logged in
    `Documentation/v0.2/todos.md`.
-3. **Dynamic `[Choices]`** — build-time-cumulative vocabulary so
+2. **Dynamic `[Choices]`** — build-time-cumulative vocabulary so
    declared channel/variable/service names extend the LLM's choice
    list for subsequent steps. Designed in v3, deferred.

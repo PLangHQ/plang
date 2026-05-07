@@ -225,6 +225,22 @@ public static class TypeConverter
             }
         }
 
+        // TimeSpan: parse ISO 8601 (e.g. "PT30S", "PT1H30M") via XmlConvert,
+        // fall back to .NET TimeSpan.Parse (e.g. "00:30:00"). Same wire shape
+        // the TimeSpanIso8601Converter uses for JSON.
+        if (targetType == typeof(TimeSpan) && value is string tsStr)
+        {
+            try { return (System.Xml.XmlConvert.ToTimeSpan(tsStr), null); }
+            catch (FormatException)
+            {
+                if (TimeSpan.TryParse(tsStr, System.Globalization.CultureInfo.InvariantCulture, out var ts))
+                    return (ts, null);
+                return (null, new Errors.Error(
+                    $"Cannot parse '{tsStr}' as TimeSpan — expected ISO 8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).",
+                    "TimeSpanParseFailed", 400));
+            }
+        }
+
         // Enum types
         if (targetType.IsEnum)
         {
