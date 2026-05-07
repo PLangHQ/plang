@@ -4,17 +4,17 @@ Forward-looking ideas. Not committed, not necessarily near-term. Here because PL
 
 ## Channels that migrate across devices
 
+**Status:** Roadmap (Stage 9). An early `Channel.Migrate` / `MigrationEnvelope` surface was prototyped on `runtime2-channels` and **removed before merge** (security review found the envelope's signature shape was misleading and the receive side wasn't designed). Resurrection happens fresh under Stage 9 transport, not by reviving the deleted surface.
+
 **The combination:** Snapshots + signed identity + suspend/resume + channels-as-state.
 
-**The capability:** A Session channel can be lifted, serialized into a snapshot, transported to another device, and resumed there with the conversation state intact. Not session replication where two clients share state — the *channel itself* moves, with cryptographic continuity proving it's the same channel.
+**The capability:** A Session channel could be lifted, serialized into a snapshot, transported to another device, and resumed there with the conversation state intact. Not session replication where two clients share state — the *channel itself* would move, with cryptographic continuity proving it's the same channel.
 
-**Concrete:** "I started a chat on my phone, picked up on my laptop. The channel migrated; my counterpart never saw a disconnect." The channel.migrate action snapshots the channel + its identity, signs it, ships it; the target's identity-aware runtime accepts and resumes.
+**Concrete:** "I started a chat on my phone, picked up on my laptop. The channel migrated; my counterpart never saw a disconnect." A future `channel.migrate` action would snapshot the channel + its identity, sign it, ship it; the target's identity-aware runtime would accept and resume.
 
 **Why nothing else does this:** Erlang has process migration but no signing. WebRTC has session resumption but no identity continuity. PLang has both as language primitives.
 
-**What it would take:** a `channel.migrate` action that bundles channel state + signing + transport. Plumbing exists in snapshot infrastructure; needs a packaging surface.
-
-(Tracked in `runtime2-channels` plan as a deferred stage.)
+**What it would take:** a `channel.migrate` action that bundles channel state + a real signing envelope (Ed25519 over name + direction + config + payload, not just an integrity hash) + transport. Snapshot infrastructure already exists; the packaging surface, the receive-side handshake, and the permission gate on Variables-snapshot exposure must all be designed in from the start.
 
 ## Channels as smart contracts (no blockchain)
 

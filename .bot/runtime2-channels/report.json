@@ -1181,6 +1181,74 @@
         "notes": "Branch theme upheld \u2014 every removed Console.* writes through a channel. Carry-over Channel.Events public-list shape smell (from v2) untouched by v10."
       },
       "timestamp_end": "2026-05-07T17:12:10Z"
+    },
+    {
+      "id": "37f82e44-6d63-4c73-9dcf-9490716f23b3",
+      "bot": "docs",
+      "timestamp_start": "2026-05-07T17:22:10.893637Z",
+      "intent": "Merge-gate docs pass on runtime2-channels \u2014 fix auditor N1, document Console.* discipline rule from v10, write CHANGELOG-equivalent in result.md, spot-check XML docs.",
+      "before": {
+        "assumptions": "Branch is auditor-PASS on v10. Architecture docs predate OBP restructure; biggest gap is io-channels.md staleness (out of scope) and the Console.* discipline rule from v10 (in scope).",
+        "risk": "Touching CLAUDE.md mid-pipeline; safe under docs authority."
+      },
+      "plan": ".bot/runtime2-channels/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/Runtime2/cool.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor v2 N1: reframed migration entry as roadmap after v9 deleted the Channel.Migrate/MigrationEnvelope surface."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added long-form 'Console.* Is Banned in Production C#' rule capturing v10's pattern: 3 write flavours, 2 exemptions, test-fixture migration."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "One-line Runtime2 Conventions bullet pointing at the long-form rule. Canonical guidance for future bots in PLang/."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-channels/docs/v1/plan.md",
+            ".bot/runtime2-channels/docs/v1/result.md",
+            ".bot/runtime2-channels/docs/v1/verdict.json",
+            ".bot/runtime2-channels/docs/summary.md",
+            ".bot/runtime2-channels/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot session output + verdict + CHANGELOG-equivalent."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/io-channels.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reviewed but did NOT update: materially stale (predates OBP restructure + per-actor split). Flagged as major/stale-doc for an architect-led follow-up; not merge-blocking for v10."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "Merge gate green. 3 docs files updated (cool.md, good_to_know.md, /CLAUDE.md), 5 created in .bot/. One major stale-doc flagged for follow-up (io-channels.md) but not blocking merge."
+      },
+      "timestamp_end": "2026-05-07T17:25:22.026694Z"
     }
   ]
 }
