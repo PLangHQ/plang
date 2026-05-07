@@ -74,17 +74,24 @@ if (choices != null)
   - 4 pre-existing Callback stales remain (pre-existing per baseline,
     not this branch's scope).
 
-## What's next (v3 scope, NOT done in v2)
+## What's next — scoped as v3
 
-- Debug the 10 channel runtime failures — `--debug` per scenario to
-  decide whether each is a test body bug, a helper goal bug, or a real
-  channel runtime bug.
-- Decide what to do about `Add/WithConfig` step-splitting — re-shape
-  the goal text or harden the builder step-counter.
-- Re-baseline the test suite numbers before v3.
+Debug session classified the 10 fails into 3 root-cause groups, all
+architectural:
 
-## Recommendation
+1. `channel.add`/`set` resolve helper goals via `app.Goals.Get(name)`
+   — registry-only, no lazy load. Should be `Data<GoalCall>`-typed
+   slot like every other goal-calling action; builder stamps PrPath.
+2. `Channels.Resolve` throws `ChannelNotFoundException` instead of
+   returning `Data`. `Step.RunAsync` then flattens to
+   `Key="StepError"` — destroys the typed key the on-error handler
+   matched.
+3. The `Channel.Role` enum splits channels into "role" and "custom"
+   without any behaviour requiring the split. Just convenience
+   defaults around the names "output", "error", "input".
 
-Ingi to triage the 10 channel runtime fails — some may be trivial test
-body bugs, others may surface real channel-runtime issues that need
-their own design pass.
+(3) is the real refactor and absorbs (1) and (2). v3 does the channel
+cleanup: delete `Role` enum, `set`/`add` collapse to `set`, channels
+are uniform, `Channels.@this.Defaults` (a small static name list) +
+`Channels.@this.Verify()` replace the role-channel boot invariant.
+See `v3/plan.md` for the full plan.
