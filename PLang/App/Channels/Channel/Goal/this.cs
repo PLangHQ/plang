@@ -54,9 +54,16 @@ public class @this : Session.@this
         // of the goal call. AsyncLocal scoping means concurrent calls don't collide.
         using var _ = Actor.PushChannelsOverride(foundational);
 
-        // Bind the inbound Data as %!data% so the goal body can reference it.
         var ctx = Actor.Context;
-        ctx.Variables.Set("!data", data);
+
+        // Bind the inbound envelope as %!data% via a per-call AsyncLocal frame on
+        // Variables.Calls. The channel write site is the concurrency boundary —
+        // multiple flows can hit WriteAsync simultaneously, and each one gets its
+        // own frame so they don't race on a shared %!data% slot. Goal-body sets
+        // still write to actor-shared Variables (matching the LoadUser pattern),
+        // only the parameter binding is isolated.
+        var paramData = new Data.@this("!data", data.Value, data.Type);
+        await using var __ = ctx.Variables.Calls.Push(new[] { paramData });
 
         try
         {

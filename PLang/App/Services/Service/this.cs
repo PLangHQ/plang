@@ -15,6 +15,9 @@ public sealed class @this : IAsyncDisposable
 {
     private readonly App.Services.@this _collection;
 
+    /// <summary>Stable identity for collection lookups — see <see cref="App.Services.@this.Remove"/>.</summary>
+    public Guid Id { get; } = Guid.NewGuid();
+
     /// <summary>The actor that spawned this Service (audit / tracing).</summary>
     public global::App.Actor.@this Parent { get; }
 

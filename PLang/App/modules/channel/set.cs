@@ -25,6 +25,9 @@ public partial class Set : IContext
     public partial Data.@this<TimeSpan>? Timeout { get; init; }
     public partial Data.@this<string>? Mime { get; init; }
     public partial Data.@this<string>? Encoding { get; init; }
+    /// <summary>"input", "output", or "bidirectional". Default: bidirectional unless
+    /// the channel name is "input" or "output", in which case the name decides.</summary>
+    public partial Data.@this<string>? Direction { get; init; }
     public partial Data.@this<App.Variables.Variable>? Encryption { get; init; }
     public partial Data.@this<App.Variables.Variable>? Signing { get; init; }
 
@@ -44,9 +47,7 @@ public partial class Set : IContext
         if (!goalResult.Success) return goalResult;
         var goalEntry = (App.Goals.Goal.@this)goalResult.Value!;
 
-        var direction = string.Equals(name, App.Channels.@this.Input, StringComparison.OrdinalIgnoreCase)
-            ? App.Channels.Channel.ChannelDirection.Input
-            : App.Channels.Channel.ChannelDirection.Output;
+        var direction = ResolveDirection(name, Direction?.Value);
 
         // Upsert: dispose any existing channel under this name before re-registering.
         await actor.Channels.RemoveAsync(name);
@@ -62,5 +63,30 @@ public partial class Set : IContext
         };
         actor.Channels.Register(ch);
         return App.Data.@this.Ok(ch);
+    }
+
+    /// <summary>
+    /// Direction precedence: explicit Direction parameter wins; otherwise the channel
+    /// name "input"/"output" decides; otherwise Bidirectional. Goal channels extend
+    /// Session and can answer Ask, so a name without a direction shortcut (e.g.
+    /// "chat") defaults to Bidirectional rather than the historical Output.
+    /// </summary>
+    private static App.Channels.Channel.ChannelDirection ResolveDirection(string name, string? explicitDirection)
+    {
+        if (!string.IsNullOrEmpty(explicitDirection))
+        {
+            return explicitDirection.ToLowerInvariant() switch
+            {
+                "input" => App.Channels.Channel.ChannelDirection.Input,
+                "output" => App.Channels.Channel.ChannelDirection.Output,
+                "bidirectional" or "both" => App.Channels.Channel.ChannelDirection.Bidirectional,
+                _ => App.Channels.Channel.ChannelDirection.Bidirectional
+            };
+        }
+        if (string.Equals(name, App.Channels.@this.Input, StringComparison.OrdinalIgnoreCase))
+            return App.Channels.Channel.ChannelDirection.Input;
+        if (string.Equals(name, App.Channels.@this.Output, StringComparison.OrdinalIgnoreCase))
+            return App.Channels.Channel.ChannelDirection.Output;
+        return App.Channels.Channel.ChannelDirection.Bidirectional;
     }
 }

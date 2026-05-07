@@ -213,4 +213,42 @@ public class Stage2_StreamChannelTests
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
+
+    // F5 regression — non-UTF-8 Encoding property must be honored by the convenience
+    // text helpers, not silently coerced to UTF-8.
+    [Test]
+    public async Task StreamChannel_WriteTextAsync_HonorsLatin1Encoding()
+    {
+        var capture = new MemoryStream();
+        var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
+        { Mime = "text/plain", Encoding = "iso-8859-1" };
+
+        // 'é' is one byte in latin-1 (0xE9) but two bytes in UTF-8.
+        await ch.WriteTextAsync("é");
+        var bytes = capture.ToArray();
+
+        await Assert.That(bytes.Length).IsEqualTo(1);
+        await Assert.That(bytes[0]).IsEqualTo((byte)0xE9);
+    }
+
+    [Test]
+    public async Task StreamChannel_ReadAllTextAsync_HonorsLatin1Encoding()
+    {
+        var ms = new MemoryStream(new byte[] { 0xE9 });
+        var ch = new StreamChannel("c", ms, ChannelDirection.Input, ownsStream: false)
+        { Mime = "text/plain", Encoding = "iso-8859-1" };
+
+        var text = await ch.ReadAllTextAsync();
+        await Assert.That(text).IsEqualTo("é");
+    }
+
+    [Test]
+    public async Task StreamChannel_UnknownEncoding_FallsBackToUtf8()
+    {
+        var capture = new MemoryStream();
+        var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
+        { Mime = "text/plain", Encoding = "totally-not-an-encoding" };
+        await ch.WriteTextAsync("hi");
+        await Assert.That(capture.ToArray()).IsEquivalentTo(new byte[] { (byte)'h', (byte)'i' });
+    }
 }

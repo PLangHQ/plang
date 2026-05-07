@@ -512,7 +512,7 @@
       "bot": "codeanalyzer",
       "timestamp_start": "2026-05-07T11:00:00Z",
       "timestamp_end": "2026-05-07T11:30:00Z",
-      "intent": "v1: review channel architecture implementation — Channels, GoalChannel, Services, channel module actions.",
+      "intent": "v1: review channel architecture implementation \u2014 Channels, GoalChannel, Services, channel module actions.",
       "before": {
         "assumptions": "Coder v3 left C# 2744/0/0, PLang 199/1/5. Reviewing the new channel types (Channel base, Stream, Goal, Session, Message), Channels registry, Services, and channel.set/remove/migrate actions."
       },
@@ -527,13 +527,120 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Analysis report and verdict. No source changes — report only."
+          "context": "Analysis report and verdict. No source changes \u2014 report only."
         }
       ],
       "after": {
-        "status": "FAIL — 6 findings. 2 bugs, 1 latent crash, 3 design/consistency issues. No source files modified.",
+        "status": "FAIL \u2014 6 findings. 2 bugs, 1 latent crash, 3 design/consistency issues. No source files modified.",
         "health": "fail",
-        "notes": "F1: Services.Remove ConcurrentBag race (silent service loss). F2: GoalChannel %!data% variable races under concurrent writes. F3: InvokeChannelHandler NRE when Actor is null. F4: EventContext dead code — defined but never constructed in firing path. F5: Stream text I/O ignores Encoding property. F6: channel.set cannot create Bidirectional goal channels."
+        "notes": "F1: Services.Remove ConcurrentBag race (silent service loss). F2: GoalChannel %!data% variable races under concurrent writes. F3: InvokeChannelHandler NRE when Actor is null. F4: EventContext dead code \u2014 defined but never constructed in firing path. F5: Stream text I/O ignores Encoding property. F6: channel.set cannot create Bidirectional goal channels."
+      }
+    },
+    {
+      "id": "9c0381dc-ce69-41be-9277-47121049fde9",
+      "bot": "coder",
+      "timestamp_start": "2026-05-07T11:42:27.125845+00:00",
+      "timestamp_end": "2026-05-07T12:33:13.706205+00:00",
+      "intent": "Address codeanalyzer v1 findings F1-F6 on the channels work",
+      "before": {
+        "assumptions": "C# 2744/2744, PLang 201/201 from clean rebuild",
+        "risk": "F2 adds Variables.Calls \u2014 risk of regressing read paths if frame-first lookup changes semantics"
+      },
+      "plan": ".bot/runtime2-channels/coder/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Variables/Calls/this.cs",
+            "PLang/App/Variables/Calls/Call/this.cs",
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 \u2014 new Variables.Calls AsyncLocal parameter scope. Mirrors CallStack.Push/IAsyncDisposable shape. Variables.Get/Contains consult Calls.Current first, falling back to underlying dict."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/Goal/this.cs",
+            "PLang/App/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F2 \u2014 GoalChannel.InvokeGoal pushes a Variables.Calls frame at the WriteAsync boundary instead of writing %!data% to shared Variables. App.RunGoalAsync(GoalCall) parameter injection unchanged (sequential leaky semantics preserved by design)."
+        },
+        {
+          "paths": [
+            "PLang/App/Services/this.cs",
+            "PLang/App/Services/Service/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F1 \u2014 ConcurrentBag \u2192 ConcurrentDictionary<Guid, Service>. Service.Id added. Atomic Remove via TryRemove."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F3 \u2014 InvokeChannelHandler: pass Actor?.Context (possibly null) with diagnostic, drop ctx! lie. Handlers responsible for guarding null. Preserves existing test patterns."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/EventContext.cs",
+            "PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "F4 \u2014 delete dead App.Channels.Channel.EventContext type and its single shape-test."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Channel/Stream/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F5 \u2014 ReadAllTextAsync/WriteTextAsync use ResolveEncoding() which honors channel.Encoding via Encoding.GetEncoding, with UTF-8 fallback for null/empty/unknown."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/channel/set.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "F6 \u2014 added optional Direction parameter; ResolveDirection() precedence: explicit > input/output name shortcut > Bidirectional default. Goal channels named e.g. \"chat\" now support Ask correctly."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/VariablesTests/CallsTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage7_AppServicesTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage2_StreamChannelTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "13 new C# tests: 10 for Variables.Calls (nesting, isolation, concurrent race), 1 for Services concurrent New+Remove, 3 for Stream encoding (latin-1 round-trip + unknown fallback)."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Logged the wider question: full parallel-branch Variables isolation (Set as well as Get) deferred to parallel-foreach work. Probably splits into Variables.Calls (param-only) + Variables.Branches (full) when fork sites grow beyond goal channels."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "C# 2757/2757 pass; PLang 201/201 pass; both clean. All 6 codeanalyzer findings addressed.",
+        "notes": "F2 grew into a small architectural primitive (Variables.Calls) with a clear policy: concurrency boundaries push frames; sequential calls do not. Sequential parameter-leak semantics preserved (LoadUser pattern). Suggest codeanalyzer re-run to verify findings closed."
       }
     }
   ]

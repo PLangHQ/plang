@@ -237,11 +237,15 @@ public abstract class @this : IAsyncDisposable, IDisposable
         Callback.AskCallback? ask)
     {
         // Bindings receive (context, action=null, result=data). The context comes
-        // from the channel's owning Actor — handlers like the one event.on installs
-        // need ctx.App + ctx.CancellationToken to dispatch the bound goal. Tests
-        // that register Handler directly often ignore ctx — null-tolerant by design
-        // for that path.
-        var ctx = Actor?.Context!;
+        // from the channel's owning Actor when the channel went through
+        // Channels.Register; tests sometimes construct a channel directly without
+        // an Actor, in which case ctx is null. Handlers that need ctx (e.g. the
+        // one event.on installs to dispatch a goal) must guard for null
+        // themselves — the framework forwards whatever it has rather than
+        // silently swallowing the binding.
+        var ctx = Actor?.Context;
+        if (ctx == null)
+            _ = App?.Debug?.Write($"[Channel '{Name}'] binding {binding.Id} firing with no Actor — handlers receive null ctx");
         return binding.Handler(ctx!, null, data);
     }
 

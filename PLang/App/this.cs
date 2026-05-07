@@ -602,7 +602,11 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         if (!goalResult.Success) return goalResult;
 
         // Inject parameters — GetGoalAsync only injects when loading from file,
-        // but goals found in memory (app.Goals.Get) need parameters too
+        // but goals found in memory (app.Goals.Get) need parameters too.
+        // Sequential calls share Variables on purpose (e.g. LoadUser leaks %user%
+        // for the caller to read). Concurrency boundaries — goal channels,
+        // parallel foreach, fire-and-forget — push their own Variables.Calls frame
+        // to isolate per-call bindings.
         if (goalCall.Parameters != null)
             foreach (var param in goalCall.Parameters)
                 context.Variables.Set(param.Name, param);

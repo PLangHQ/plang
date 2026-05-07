@@ -157,13 +157,26 @@ public sealed class @this : Session.@this
     public async Task<string> ReadAllTextAsync(CancellationToken cancellationToken = default)
     {
         var bytes = await ReadAllBytesAsync(cancellationToken);
-        return global::System.Text.Encoding.UTF8.GetString(bytes);
+        return ResolveEncoding().GetString(bytes);
     }
 
     public async Task WriteTextAsync(string text, CancellationToken cancellationToken = default)
     {
-        var bytes = global::System.Text.Encoding.UTF8.GetBytes(text);
+        var bytes = ResolveEncoding().GetBytes(text);
         await WriteBytesAsync(bytes, cancellationToken);
+    }
+
+    /// <summary>
+    /// Resolves the channel's <see cref="Channel.@this.Encoding"/> name to a real
+    /// <see cref="global::System.Text.Encoding"/>. Falls back to UTF-8 when the
+    /// property is null/empty or names an unknown encoding.
+    /// </summary>
+    private global::System.Text.Encoding ResolveEncoding()
+    {
+        if (string.IsNullOrEmpty(Encoding))
+            return global::System.Text.Encoding.UTF8;
+        try { return global::System.Text.Encoding.GetEncoding(Encoding); }
+        catch (ArgumentException) { return global::System.Text.Encoding.UTF8; }
     }
 
     public override void Close()

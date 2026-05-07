@@ -82,6 +82,40 @@ public class Stage7_AppServicesTests
     }
 
     [Test]
+    public async Task Services_ConcurrentNewAndRemove_NoServiceDropped()
+    {
+        // Regression for the ConcurrentBag drain-and-rebuild Remove that could lose
+        // services racing with concurrent New(). With ConcurrentDictionary<Guid, Service>,
+        // Add and Remove are atomic, so every still-live service must remain visible.
+        await using var app = new global::App.@this("/tmp/s7-race");
+        const int n = 200;
+        var pool = new AppService[n];
+        for (int i = 0; i < n; i++) pool[i] = app.Services.New(parent: app.User);
+
+        // Half are removed concurrently; the other half stay alive and must remain.
+        var removeTasks = new Task[n / 2];
+        for (int i = 0; i < n / 2; i++)
+        {
+            var s = pool[i];
+            removeTasks[i] = Task.Run(async () => await s.DisposeAsync());
+        }
+        // Concurrently spawn another batch — these should also all land.
+        var addTasks = new Task<AppService>[n / 2];
+        for (int i = 0; i < n / 2; i++)
+            addTasks[i] = Task.Run(() => app.Services.New(parent: app.User));
+
+        await Task.WhenAll(removeTasks);
+        var added = await Task.WhenAll(addTasks);
+
+        // Survivors: original second half (n/2) + newly added (n/2) = n.
+        await Assert.That(app.Services.Count).IsEqualTo(n);
+        for (int i = n / 2; i < n; i++)
+            await Assert.That(app.Services.Contains(pool[i])).IsTrue();
+        foreach (var s in added)
+            await Assert.That(app.Services.Contains(s)).IsTrue();
+    }
+
+    [Test]
     public async Task Actor_NoLongerHasEscalationLevel()
     {
         var prop = typeof(global::App.Actor.@this).GetProperty("EscalationLevel",

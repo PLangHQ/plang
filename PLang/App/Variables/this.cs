@@ -14,6 +14,15 @@ public partial class @this
     private readonly ConcurrentDictionary<string, Data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
     private Actor.Context.@this? _context;
 
+    /// <summary>
+    /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before
+    /// falling back to the actor-shared dictionary — that's how goal-call parameters
+    /// (e.g. <c>%!data%</c> on a goal channel) avoid racing across concurrent calls on
+    /// the same actor.
+    /// </summary>
+    [JsonIgnore]
+    public Calls.@this Calls { get; } = new();
+
     [JsonIgnore]
     internal Actor.Context.@this? Context
     {
@@ -410,7 +419,13 @@ public partial class @this
             remaining = null;
         }
 
-        if (!_variables.TryGetValue(rootName, out var root))
+        // Per-call parameter scope wins over actor-shared variables — see Calls.@this.
+        Data.@this? root;
+        if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed))
+        {
+            root = framed;
+        }
+        else if (!_variables.TryGetValue(rootName, out root))
         {
             return Data.@this.NotFound(name);
         }
@@ -446,7 +461,10 @@ public partial class @this
     public bool Contains(string name)
     {
         name = CleanName(name);
-        return _variables.ContainsKey(GetRootName(name));
+        var rootName = GetRootName(name);
+        if (Calls.Current is { } frame && frame.TryGet(rootName, out _))
+            return true;
+        return _variables.ContainsKey(rootName);
     }
 
     /// <summary>

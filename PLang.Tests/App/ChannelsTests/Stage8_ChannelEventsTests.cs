@@ -3,7 +3,7 @@ using App.Events.Lifecycle.Bindings.Binding;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 8 — Channel events: types, EventContext, firing, recursion guard.
+// Stage 8 — Channel events: types, firing, recursion guard.
 // Architect: stage-8-channel-events.md and v1/plan/channel-events.md.
 
 public class Stage8_ChannelEventsTests
@@ -29,16 +29,6 @@ public class Stage8_ChannelEventsTests
     }
 
     [Test]
-    public async Task EventContext_ExposesChannelDataAndAsk()
-    {
-        var ch = StreamChannel.Memory("c");
-        var ec = new global::App.Channels.Channel.EventContext { Channel = ch, Data = Data.Ok("x") };
-        await Assert.That(ec.Channel).IsEqualTo((Channel)ch);
-        await Assert.That(ec.Data.Value).IsEqualTo("x");
-        await Assert.That(ec.Ask).IsNull();
-    }
-
-    [Test]
     public async Task ChannelThis_ExposesEventsProperty_LikeGoalAndStep()
     {
         var ch = StreamChannel.Memory("c");
@@ -47,7 +37,7 @@ public class Stage8_ChannelEventsTests
     }
 
     [Test]
-    public async Task BeforeWriteHandler_ReceivesCorrectChannelAndData_ViaEventContext()
+    public async Task BeforeWriteHandler_ReceivesCorrectData()
     {
         var ch = StreamChannel.Memory("logger");
         Data? captured = null;
