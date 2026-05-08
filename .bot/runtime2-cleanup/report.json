@@ -634,36 +634,145 @@
       "next_bot": "codeanalyzer"
     },
     {
-      "id": "ef5824b6-2f45-497d-a42d-3578ff5bf253",
-      "bot": "codeanalyzer",
-      "timestamp_start": "2026-05-08T19:19:26Z",
-      "intent": "Codeanalyzer v2: review coder v2 (stage 2 \u2014 drop dead Channels v1 helpers).",
+      "id": "1103bf27-c78d-4bf5-8170-3a6b7a4a95eb",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T20:30:00Z",
+      "timestamp_end": "2026-05-08T21:15:00Z",
+      "intent": "Pull stage 2 result; carve stages 3 and 4 as a Tier 1 batch.",
       "before": {
-        "assumptions": "Stage 2 is dead-code deletion only: two-string WriteAsync(actorName, channelName, ...) overload + contentType-override branch + the contentType parameter. No new shape introduced. Three remaining `is Channel.Stream.@this sc` casts (ReadChannelAsync/WriteTextAsync/ReadTextAsync) explicitly out-of-scope per the architect.",
-        "risk": "Very low. Build break is the only realistic failure (unverified caller). Both DefaultHttpProvider sites at lines 852/907 use positional (channelName, data) form, source-compatible after parameter removal."
+        "assumptions": "Stage 2 landed cleanly per coder (2755/2755 + 199/199); codeanalyzer PASS on stage 1. Stages 3 and 4 are both Tier 1, both touch App.DisposeAsync in different sections, sanctioned by the plan principles for two-stages-per-session cadence.",
+        "risk": "Earlier stages had bugs in first drafts that the coder caught. For 3+4 the surface is small and code-verified; risk minor."
       },
+      "plan": ".bot/runtime2-cleanup/architect/stage-3-keepalive-collection.md",
       "actions": [
         {
           "paths": [
-            ".bot/runtime2-cleanup/codeanalyzer/v2/plan.md",
-            ".bot/runtime2-cleanup/codeanalyzer/v2/report.md",
-            ".bot/runtime2-cleanup/codeanalyzer/v2/verdict.json",
-            ".bot/runtime2-cleanup/codeanalyzer/summary.md"
+            ".bot/runtime2-cleanup/architect/stage-3-keepalive-collection.md"
           ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Five-pass review of coder v2 (stage 2 dead-code drop). PASS. Three grep gates clean; DefaultHttpProvider callers bind to new signature; surviving WriteAsync body collapsed from ~28 lines to ~5. No new findings; v1 carryovers correctly untouched."
+          "context": "Stage 3 brief. Verified: KeepAlive(x) and RemoveKeepAlive(x) on App have zero external callers (grep all of PLang/, PLang.Tests/, Tests/). Pure extract-class refactor. New App/KeepAlive/this.cs implements IAsyncDisposable with Add/Remove/DisposeAsync; two App methods deleted entirely."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-4-dispose-self-owns.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 4 brief. Modules.@this and Providers.@this each gain IAsyncDisposable + DisposeAsync mirroring their All projections. App.DisposeAsync replaces two foreach blocks with two await calls. Modules.All / Providers.All() lose their only callers but stay as public surface (out of scope for stage 4 to decide)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "plan.md stage 2 marked complete; stages 3 and 4 link briefs and replace one-liners. summary.md latest+5 entry covering stage 2 land + 3+4 carve, with rationale for batching."
         }
       ],
-      "plan": ".bot/runtime2-cleanup/codeanalyzer/v2/plan.md",
       "after": {
-        "status": "PASS. Stage 2 lands the exact deletion architect scoped; no new findings.",
-        "health": "ok",
-        "notes": "Three out-of-scope `is Channel.Stream.@this sc` casts confirmed remaining at Channels/this.cs:169,198,218 \u2014 architect-flagged for a future Channel-polymorphism stage. v1 finding #2 (stale Stage 1 comment) still present; coder didn't touch the ctor. Trivial."
+        "status": "stages 3 and 4 ready for coder; both can land in either order",
+        "health": "plan + briefs + tree + scope-map + summary all consistent",
+        "notes": "If both go well, next session batches stages 5 + 6 similarly."
+      }
+    },
+    {
+      "id": "fe75b990-bf19-4954-95de-61ddc4667468",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T20:30:00Z",
+      "timestamp_end": "2026-05-08T21:15:00Z",
+      "intent": "Pull stage 2 result; carve stages 3 and 4 as a Tier 1 batch.",
+      "before": {
+        "assumptions": "Stage 2 landed cleanly per coder (2755/2755 + 199/199); codeanalyzer PASS on stage 1 and stage 2. Stages 3 and 4 are both Tier 1, both touch App.DisposeAsync in different sections, sanctioned by the plan principles for two-stages-per-session cadence.",
+        "risk": "Earlier stages had bugs in first drafts that the coder caught. For 3+4 the surface is small and code-verified; risk minor."
       },
-      "timestamp_end": "2026-05-08T19:20:53Z",
-      "next_bot": "tester"
+      "plan": ".bot/runtime2-cleanup/architect/stage-3-keepalive-collection.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-3-keepalive-collection.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 3 brief. Verified: KeepAlive(x) and RemoveKeepAlive(x) on App have zero external callers (grep all of PLang/, PLang.Tests/, Tests/). Pure extract-class refactor. New App/KeepAlive/this.cs implements IAsyncDisposable with Add/Remove/DisposeAsync; two App methods deleted entirely."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-4-dispose-self-owns.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 4 brief. Modules.@this and Providers.@this each gain IAsyncDisposable + DisposeAsync mirroring their All projections. App.DisposeAsync replaces two foreach blocks with two await calls. Modules.All / Providers.All() lose their only callers but stay as public surface (out of scope for stage 4 to decide)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "plan.md stage 2 marked complete; stages 3 and 4 link briefs and replace one-liners. summary.md latest+5 entry covering stage 2 land + 3+4 carve, with rationale for batching."
+        }
+      ],
+      "after": {
+        "status": "stages 3 and 4 ready for coder; both can land in either order",
+        "health": "plan + briefs + tree + scope-map + summary all consistent",
+        "notes": "If both go well, next session batches stages 5 + 6 similarly."
+      }
+    },
+    {
+      "id": "f30073b5-75eb-4cfd-b393-e917359843f3",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T20:30:00Z",
+      "timestamp_end": "2026-05-08T21:15:00Z",
+      "intent": "Pull stage 2 result; carve stages 3 and 4 as a Tier 1 batch.",
+      "before": {
+        "assumptions": "Stage 2 landed cleanly per coder (2755/2755 + 199/199); codeanalyzer PASS on stage 1 and stage 2. Stages 3 and 4 are both Tier 1, both touch App.DisposeAsync in different sections, sanctioned by the plan principles for two-stages-per-session cadence.",
+        "risk": "Earlier stages had bugs in first drafts that the coder caught. For 3+4 the surface is small and code-verified; risk minor."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-3-keepalive-collection.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-3-keepalive-collection.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 3 brief. Verified KeepAlive zero external callers. Pure extract-class refactor with new App/KeepAlive/this.cs (IAsyncDisposable)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-4-dispose-self-owns.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 4 brief. Modules and Providers each gain IAsyncDisposable; App.DisposeAsync replaces foreach blocks with delegated calls."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 2 marked complete; stages 3+4 link briefs. Summary entry covers stage 2 land + 3+4 carve with batching rationale."
+        }
+      ],
+      "after": {
+        "status": "stages 3 and 4 ready for coder",
+        "health": "plan + briefs + scope-map + summary all consistent",
+        "notes": "Next session likely batches stages 5+6 similarly."
+      }
     }
   ]
 }

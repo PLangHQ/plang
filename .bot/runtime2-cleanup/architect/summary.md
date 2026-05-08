@@ -1,5 +1,28 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+5) — stage 2 landed; stages 3 + 4 carved as a Tier 1 pair
+
+Stage 2 (`channels-v1-helpers-drop`) landed cleanly — coder reported 2755/2755 + 199/199. Codeanalyzer ran on stage 1 with PASS verdict (3 minor findings, none blocking). Pulled and carved stages 3 and 4 as a pair — both Tier 1, both touch `App.DisposeAsync` in different sections, sanctioned by the plan's "two could fit per session" cadence.
+
+### Stage 3 carve (`keepalive-collection`)
+
+Brief at `stage-3-keepalive-collection.md`. Pure extract-class refactor with zero external callers — verified the `KeepAlive(x)` / `RemoveKeepAlive(x)` methods on App have no consumers anywhere in `PLang/`, `PLang.Tests/`, or `Tests/`. Both methods get deleted (not preserved as delegates). The new `App/KeepAlive/this.cs` is a faithful translation of today's lifecycle: Add, Remove (with the same sync-dispose semantics today's RemoveKeepAlive uses), IAsyncDisposable that disposes each entry and clears.
+
+### Stage 4 carve (`dispose-self-owns`)
+
+Brief at `stage-4-dispose-self-owns.md`. Modules.@this and Providers.@this each gain `IAsyncDisposable` + a `DisposeAsync` that iterates their own internal collection (mirroring today's `Modules.All` and `Providers.All()` projections). App.DisposeAsync's two ~8-line foreach blocks shrink to two delegated calls. `Modules.All` and `Providers.All()` lose their only callers but stay as public surface — explicit non-decision in stage 4.
+
+### Why batch 3 and 4
+
+- Both Tier 1 (small, isolated).
+- Both touch the same method (`App.DisposeAsync`) in different sections — coder can land them in either order without conflict.
+- Coherent narrative: "App stops doing manual cleanup; sub-systems own their own dispose."
+- Sanctioned by plan principles: "Tier 1 stages are small enough that two could fit in a session if appetite holds."
+
+If both go well, next session likely batches stages 5 (`getstatic-shim-drop`) and 6 (`app-data-inheritance-drop`) similarly.
+
+---
+
 ## 2026-05-08 (latest+4) — stage 1 landed (coder); stage 2 carved
 
 Coder finished stage 1 (`serializers-single-home`) cleanly — 2755/2755 C# + 199/199 PLang, all five caller sites swept, the boot-ordering case the brief flagged caught and fixed in 7 unit tests. Pulled the work; carved stage 2.
