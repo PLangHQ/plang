@@ -1169,6 +1169,53 @@
         "health": "plan + briefs + scope-map + summary all consistent",
         "notes": "Tier 4 remaining: 15, 16, 19 each merit own session. After those, cleanup is done."
       }
+    },
+    {
+      "id": "e563fbf4-fd6d-4722-8c07-090c3b544205",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T08:00:00Z",
+      "timestamp_end": "2026-05-09T08:30:00Z",
+      "intent": "Pull stages 18+22; carve stages 15+16 (penultimate Tier 4 batch).",
+      "before": {
+        "assumptions": "Stages 18 and 22 landed clean. Coder consistently catches grep misses in production sweeps; brief should rely on coder to backfill. Stages 15 and 16 are both rule-driven sweeps; sanctioned for batching.",
+        "risk": "Stage 15 has volume risk (16 renames + namespace + callers) but mechanical. Stage 16 has 8 hits each with different fix; medium per-target judgment."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-15-compound-name-rename.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-15-compound-name-rename.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 15 brief \u2014 Rule A renames. 16 file renames + 1 new Filters/this.cs (Rule B parent collection). Includes folder reshapes (Plang/ subfolder, Filters/ subfolder). Cross-folder relocation TypeJsonConverter \u2192 Data/Json.cs. Exclusions: UnregisteredMimeType (typed exception), INavigator (interface convention), ValueNavigators (plural)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-16-static-state-eviction-sweep.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 16 brief \u2014 Rule C sweep. 8 static-field hits with per-target migration table. Per-instance migrations for JsonSerializerOptions blocks. PlangTypeIndex absorbs into Types.@this partial. ReservedKeywords moves to Variables/Reserved.cs (const string). OpenAi requestCount + cap + throw block deletes entirely (Ingi)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 18 and 22 marked complete with stage 22 grep-miss note. Stages 15 and 16 link briefs."
+        }
+      ],
+      "after": {
+        "status": "stages 15 and 16 ready for coder; only stage 19 remaining after this batch",
+        "health": "plan + briefs + scope-map + summary all consistent",
+        "notes": "After 15+16 land, only stage 19 (Provider\u2192Code, biggest sweep) remains. Then cleanup is done."
+      }
     }
   ]
 }

@@ -1,5 +1,34 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+15) — stages 18+22 landed; stages 15+16 carved (penultimate Tier 4 batch)
+
+Stages 18 and 22 landed cleanly per coder.
+
+**Stage 18**: 2752/2752 + 199/199. Big restructure (Types/this.cs lost ~280 lines of MIME data + methods to the new Formats/this.cs).
+
+**Stage 22**: 2752/2752 + 199/199. Coder caught **4 more production sites** beyond the brief's 2 — unqualified `Variables`/`Context` references inside App's own partials and adjacent subsystems (Errors/this.cs, Debug/this.cs, etc.). Brief grep targeted `app.Variables` / `app.Context` qualified form; the unqualified form inside App-self-partials was invisible. Coder's full sweep caught the lot.
+
+### Stages 15 + 16 carved (penultimate Tier 4 batch)
+
+**Stage 15** (`compound-name-rename`) — Rule A sweep. 16 file renames + 1 new `Filters/this.cs` collection (Rule B). Includes folder reshapes (new `Plang/` subfolder for plang-format serializers; new `Filters/` subfolder for property filters). Plus one cross-folder relocation (TypeJsonConverter → Data/Json.cs). Mechanical but volume + namespace updates make it medium-risk.
+
+**Stage 16** (`static-state-eviction-sweep`) — Rule C sweep. 8 static-field hits per migration table in the brief. Most become per-instance fields. Two file relocations: `Utils/PlangTypeIndex.cs` → `Types/Registry.cs` partial; `Utils/ReservedKeywords.cs` → `Variables/Reserved.cs`. The `OpenAiProvider._requestCount` per-process cap deletes entirely (Ingi 2026-05-07; todos.md confirmed).
+
+### Why batch 15 + 16
+
+- Both Tier 4 hygiene (Rule A and Rule C respectively).
+- Both mechanical sweeps with grep verification.
+- Independent — coder picks order. If 15 lands first, file paths in stage 16 update accordingly (e.g., `PlangDataSerializer.cs` → `Plang/Data.cs`).
+- Together, they finish the rule-driven cleanup. Stage 19 (Provider→Code) is the remaining big sweep.
+
+### After 15+16 land
+
+Only stage 19 (Provider→Code) remains. The biggest sweep on this branch — full namespace/folder relocation across all 11 provider folders + interface drops + class renames + caller sweeps. Its own focused session.
+
+After stage 19: cleanup complete.
+
+---
+
 ## 2026-05-08 (latest+14) — stages 17+21 landed; stages 18+22 carved (Tier 4 batch)
 
 Stages 17 and 21 landed cleanly per coder.
