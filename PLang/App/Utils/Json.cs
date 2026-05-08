@@ -20,7 +20,7 @@ public static class Json
     public static readonly JsonSerializerOptions CaseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new EmptyStringToNullEnumConverterFactory(), new Channels.Serializers.TimeSpanIso8601Converter() },
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new EmptyStringToNullEnumConverterFactory(), new Channels.Serializers.TimeSpanIso8601() },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
@@ -32,7 +32,7 @@ public static class Json
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
-        Converters = { new Channels.Serializers.TimeSpanIso8601Converter() }
+        Converters = { new Channels.Serializers.TimeSpanIso8601() }
     };
 
     /// <summary>
@@ -60,7 +60,7 @@ public static class Json
         WriteIndented = true,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { Channels.Serializers.SensitivePropertyFilter.Mask }
+            Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Mask }
         }
     };
 

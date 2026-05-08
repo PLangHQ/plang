@@ -7,18 +7,18 @@ namespace App.Channels.Serializers.Serializer;
 /// Falls back to JSON for complex types so that e.g. List&lt;T&gt; outputs proper JSON
 /// instead of "System.Collections.Generic.List`1[...]".
 /// </summary>
-public sealed class TextStreamSerializer : ISerializer
+public sealed class Text : ISerializer
 {
     public string ContentType => "text/plain";
     public string FileExtension => ".txt";
 
     private readonly Encoding _encoding;
-    private readonly JsonStreamSerializer _jsonFallback;
+    private readonly global::App.Channels.Serializers.Serializer.Json _jsonFallback;
 
-    public TextStreamSerializer(Encoding? encoding = null, JsonStreamSerializer? jsonFallback = null)
+    public Text(Encoding? encoding = null, global::App.Channels.Serializers.Serializer.Json? jsonFallback = null)
     {
         _encoding = encoding ?? Encoding.UTF8;
-        _jsonFallback = jsonFallback ?? new JsonStreamSerializer();
+        _jsonFallback = jsonFallback ?? new global::App.Channels.Serializers.Serializer.Json();
     }
 
     public async Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)

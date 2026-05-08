@@ -10,7 +10,7 @@ namespace App.Settings;
 
 /// <summary>
 /// SQLite-backed persistent settings store.
-/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data envelope via PlangSerializer).
+/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data envelope via global::App.Channels.Serializers.Serializer.Plang.@this).
 /// WAL mode for concurrent reads. Tables auto-created on first write.
 /// Connection per operation (SQLite pools internally via connection string).
 /// </summary>
@@ -18,7 +18,7 @@ public sealed class Sqlite : IStore
 {
     private readonly string _connectionString;
     private readonly SqliteConnection? _sentinel;
-    private readonly PlangSerializer _serializer = new();
+    private readonly global::App.Channels.Serializers.Serializer.Plang.@this _serializer = new();
     private bool _disposed;
 
     /// <summary>

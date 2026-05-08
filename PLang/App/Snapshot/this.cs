@@ -3,7 +3,7 @@ namespace App.Snapshot;
 /// <summary>
 /// Typed read/write surface for a subsystem snapshot. A snapshot is a tree of
 /// named sections; each section is itself a `@this` so a subsystem with nested
-/// `ISnapshotted` properties (e.g. App owning Variables, Errors, …) can give
+/// `ISnapshot` properties (e.g. App owning Variables, Errors, …) can give
 /// each child its own subtree without leaking storage to the children.
 ///
 /// The wire shape is the App tree — that's the OBP win the design hangs on.
@@ -19,7 +19,7 @@ public sealed class @this
 
     /// <summary>
     /// Returns the named subsection, creating it if missing. Subsystems hand the
-    /// returned subtree to their nested ISnapshotted children — each owns its scope.
+    /// returned subtree to their nested ISnapshot children — each owns its scope.
     /// </summary>
     public @this Section(string name)
     {

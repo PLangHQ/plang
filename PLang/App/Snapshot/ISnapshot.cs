@@ -11,7 +11,7 @@ namespace App.Snapshot;
 /// are by name (the way PLang already works at runtime) — Restore never depends
 /// on inter-subsystem ordering or pointer fixup.
 /// </summary>
-public interface ISnapshotted
+public interface ISnapshot
 {
     /// <summary>
     /// Writes this subsystem's state into <paramref name="s"/>. The subsystem

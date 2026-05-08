@@ -1,13 +1,13 @@
 using System.Text.Json.Serialization.Metadata;
 
-namespace App.Channels.Serializers;
+namespace App.Channels.Serializers.Filters;
 
 /// <summary>
 /// Modifiers that enforce <see cref="SensitiveAttribute"/> during JSON serialization.
 ///
 /// Two modes for different output intents:
 ///  - <see cref="Strip"/> — removes the property entirely. Used on user-facing output
-///    channels (<c>JsonStreamSerializer</c>, envelope) where the consumer should not
+///    channels (<c>global::App.Channels.Serializers.Serializer.Json</c>, envelope) where the consumer should not
 ///    even learn that a secret exists.
 ///  - <see cref="Mask"/> — replaces the value with <c>"******"</c>, keeping the property
 ///    visible. Used on diagnostic output (test reports, debug dumps) where the reader
@@ -17,7 +17,7 @@ namespace App.Channels.Serializers;
 /// Storage paths (raw <see cref="System.Text.Json.JsonSerializer"/>, <c>PrWrite</c>) do not
 /// apply either modifier — sensitive data persists so it can be re-read.
 /// </summary>
-public static class SensitivePropertyFilter
+public static class Sensitive
 {
     private const string MaskValue = "******";
 

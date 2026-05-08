@@ -10,7 +10,7 @@ public class Stage1_TimeSpanJsonConverterTests
 {
     private static JsonSerializerOptions Options() => new()
     {
-        Converters = { new TimeSpanIso8601Converter() }
+        Converters = { new TimeSpanIso8601() }
     };
 
     [Test]

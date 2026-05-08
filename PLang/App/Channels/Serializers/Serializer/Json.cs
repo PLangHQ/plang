@@ -9,15 +9,15 @@ namespace App.Channels.Serializers.Serializer;
 /// <summary>
 /// JSON serializer using System.Text.Json with stream support.
 /// </summary>
-public sealed class JsonStreamSerializer : ISerializer
+public sealed class Json : ISerializer
 {
     public string ContentType => "application/json";
     public string FileExtension => ".json";
 
     private readonly JsonSerializerOptions _options;
-    private readonly ConcurrentDictionary<View, JsonStreamSerializer> _viewCache = new();
+    private readonly ConcurrentDictionary<View, Json> _viewCache = new();
 
-    public JsonStreamSerializer(JsonSerializerOptions? options = null)
+    public Json(JsonSerializerOptions? options = null)
     {
         _options = options ?? new JsonSerializerOptions
         {
@@ -27,7 +27,7 @@ public sealed class JsonStreamSerializer : ISerializer
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
-                Modifiers = { SensitivePropertyFilter.Strip }
+                Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Strip }
             },
             Converters =
             {
@@ -39,7 +39,7 @@ public sealed class JsonStreamSerializer : ISerializer
     /// <summary>
     /// Returns a serializer that only includes properties tagged with the given view.
     /// </summary>
-    public JsonStreamSerializer ForView(View view)
+    public Json ForView(View view)
     {
         return _viewCache.GetOrAdd(view, v =>
         {
@@ -47,10 +47,10 @@ public sealed class JsonStreamSerializer : ISerializer
             {
                 TypeInfoResolver = new DefaultJsonTypeInfoResolver
                 {
-                    Modifiers = { SensitivePropertyFilter.Strip, ViewPropertyFilter.For(v) }
+                    Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Strip, global::App.Channels.Serializers.Filters.View.For(v) }
                 }
             };
-            return new JsonStreamSerializer(viewOptions);
+            return new Json(viewOptions);
         });
     }
 
@@ -110,12 +110,12 @@ public sealed class JsonStreamSerializer : ISerializer
     /// <summary>
     /// Creates a copy with indented output for pretty printing.
     /// </summary>
-    public JsonStreamSerializer WithIndentation()
+    public Json WithIndentation()
     {
         var newOptions = new JsonSerializerOptions(_options)
         {
             WriteIndented = true
         };
-        return new JsonStreamSerializer(newOptions);
+        return new Json(newOptions);
     }
 }

@@ -2,7 +2,7 @@ using App.Errors;
 
 namespace App.CallStack;
 
-public sealed partial class @this : global::App.Snapshot.ISnapshotted
+public sealed partial class @this : global::App.Snapshot.ISnapshot
 {
     private List<RestoredFrame>? _restoredChain;
 

@@ -13,10 +13,10 @@ public sealed class @this
 
     public @this()
     {
-        var json = new JsonStreamSerializer();
-        var text = new TextStreamSerializer(jsonFallback: json);
-        var plang = new PlangSerializer();
-        var plangData = new PlangDataSerializer();
+        var json = new global::App.Channels.Serializers.Serializer.Json();
+        var text = new global::App.Channels.Serializers.Serializer.Text(jsonFallback: json);
+        var plang = new global::App.Channels.Serializers.Serializer.Plang.@this();
+        var plangData = new global::App.Channels.Serializers.Serializer.Plang.Data();
 
         Register(json);
         Register(text);
@@ -27,7 +27,7 @@ public sealed class @this
         _byContentType["text/json"] = json;
         _byContentType["application/json; charset=utf-8"] = json;
         _byContentType["application/plang+json"] = plang;
-        // text/html shares the JSON wire shape — JsonStreamSerializer emits Value only.
+        // text/html shares the JSON wire shape — global::App.Channels.Serializers.Serializer.Json emits Value only.
         _byContentType["text/html"] = json;
 
         _default = json;

@@ -653,7 +653,7 @@ public sealed class @this
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
         {
-            Modifiers = { App.Channels.Serializers.SensitivePropertyFilter.Strip }
+            Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Strip }
         }
     };
 

@@ -1,6 +1,6 @@
 namespace App.Errors;
 
-public sealed partial class @this : ISnapshotted
+public sealed partial class @this : ISnapshot
 {
     /// <summary>
     /// Routes capture into a "trail" subsection so the App snapshot tree mirrors

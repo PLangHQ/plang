@@ -53,7 +53,6 @@ global using EngineTypes = App.Types.@this;
 
 // Standalone concepts (no v1 conflicts in tests)
 global using ICache = App.Cache.ICache;
-global using MemoryStepCache = App.Cache.MemoryStepCache;
 global using CallStack = App.CallStack.@this;
 global using Flags = App.CallStack.Flags;
 // Call: not a global alias — App.modules.goal.Call (the goal.call action handler)
@@ -61,5 +60,5 @@ global using Flags = App.CallStack.Flags;
 global using Debugging = App.Debug.@this;
 global using Tester = App.Tester.@this;
 global using Snapshot = App.Snapshot.@this;
-global using ISnapshotted = App.Snapshot.ISnapshotted;
+global using ISnapshot = App.Snapshot.ISnapshot;
 global using AppStatics = App.Statics.@this;

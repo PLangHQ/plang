@@ -25,10 +25,10 @@ public partial class @this
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new TypeJsonConverter() },
+        Converters = { new global::App.Data.Json() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { SensitivePropertyFilter.Strip }
+            Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Strip }
         }
     };
 
@@ -72,7 +72,7 @@ public partial class @this
     /// <summary>
     /// Explicitly populates <see cref="Signature"/> via the configured signing pipeline if
     /// not already set. No-op when a signature is already present. Called by serializers
-    /// that need to seal a non-callback Data for wire transport (e.g. PlangDataSerializer).
+    /// that need to seal a non-callback Data for wire transport (e.g. global::App.Channels.Serializers.Serializer.Plang.Data).
     /// Throws <see cref="InvalidOperationException"/> when this Data has no Context.
     /// </summary>
     public void EnsureSigned()

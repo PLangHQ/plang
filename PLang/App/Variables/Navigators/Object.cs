@@ -5,7 +5,7 @@ namespace App.Variables.Navigators;
 /// <summary>
 /// Navigates CLR objects via reflection. Lowest priority fallback.
 /// </summary>
-public sealed class ObjectNavigator : INavigator
+public sealed class Object : INavigator
 {
     public bool CanNavigate(Data.@this data) => data.Value != null;
 

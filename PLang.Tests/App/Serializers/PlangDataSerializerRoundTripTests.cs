@@ -87,7 +87,7 @@ public class PlangDataSerializerRoundTripTests
     {
         var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
-        await Assert.That(s).IsTypeOf<PlangDataSerializer>();
+        await Assert.That(s).IsTypeOf<global::App.Channels.Serializers.Serializer.Plang.Data>();
         await Assert.That(s.ContentType).IsEqualTo("application/plang+data");
     }
 }

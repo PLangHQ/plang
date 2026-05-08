@@ -170,7 +170,7 @@ public sealed class ErrorCallback : ICallback
         // Security v1 S-F4.
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { SensitivePropertyFilter.Strip }
+            Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Strip }
         }
     };
 

@@ -9,7 +9,7 @@ using global::App.modules.signing;
 namespace PLang.Tests.App.Serializers;
 
 /// <summary>
-/// Tests TransportPropertyFilter — re-includes [JsonIgnore] properties
+/// Tests global::App.Channels.Serializers.Filters.Transport — re-includes [JsonIgnore] properties
 /// that have [In] or [Out] attributes for application/plang transport.
 /// </summary>
 public class TransportPropertyFilterTests
@@ -26,7 +26,7 @@ public class TransportPropertyFilterTests
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { TransportPropertyFilter.ForInbound }
+            Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForInbound }
         }
     };
 
@@ -37,7 +37,7 @@ public class TransportPropertyFilterTests
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { TransportPropertyFilter.ForOutbound }
+            Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
         }
     };
 

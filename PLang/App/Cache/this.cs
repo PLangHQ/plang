@@ -4,7 +4,7 @@ namespace App.Cache;
 
 /// <summary>
 /// Pluggable cache interface for step result caching.
-/// Default: MemoryStepCache. Swap via: - use 'redis.dll' for caching
+/// Default: global::App.Cache.Memory. Swap via: - use 'redis.dll' for caching
 /// </summary>
 public interface ICache
 {

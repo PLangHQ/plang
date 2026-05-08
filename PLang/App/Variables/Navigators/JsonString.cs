@@ -6,7 +6,7 @@ namespace App.Variables.Navigators;
 /// Navigates string values that contain JSON objects or arrays.
 /// Parses on access, then delegates to the appropriate navigator.
 /// </summary>
-public sealed class JsonStringNavigator : INavigator
+public sealed class JsonString : INavigator
 {
     private const int MaxJsonStringSize = 10 * 1024 * 1024; // 10MB
 

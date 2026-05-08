@@ -1,6 +1,6 @@
 namespace App.Variables;
 
-public partial class @this : ISnapshotted
+public partial class @this : ISnapshot
 {
     /// <summary>
     /// Captures user-visible variables into the snapshot. Honours the existing

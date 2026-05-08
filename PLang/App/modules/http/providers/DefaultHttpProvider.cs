@@ -52,7 +52,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { TransportPropertyFilter.ForInbound }
+            Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForInbound }
         }
     };
 

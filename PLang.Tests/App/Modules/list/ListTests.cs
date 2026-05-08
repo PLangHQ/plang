@@ -17,7 +17,7 @@ public class ListTests
     // --- Add ---
 
     // list.add stores the WHOLE Data — lists carry Data objects, not raw values,
-    // so each element keeps its name/type/context. Readers (ListNavigator,
+    // so each element keeps its name/type/context. Readers (global::App.Variables.Navigators.List,
     // EnumerateItems) unwrap on access; low-level tests look at the Data wrapper.
     private static object? Unwrap(object? slot) =>
         slot is global::App.Data.@this d ? d.Value : slot;

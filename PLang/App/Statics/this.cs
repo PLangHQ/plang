@@ -5,7 +5,7 @@ namespace App.Statics;
 /// <summary>
 /// App-scoped key/value store. Each top-level key holds its own bag of
 /// name → value. Persists for the lifetime of the App; survives goal calls.
-/// Implements <see cref="App.Snapshot.ISnapshotted"/> so it round-trips with
+/// Implements <see cref="App.Snapshot.ISnapshot"/> so it round-trips with
 /// the rest of the App tree on snapshot/restore.
 ///
 /// TODO: replace with goal-backed dynamic property (see Documentation/Runtime2/todos.md).

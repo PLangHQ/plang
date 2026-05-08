@@ -663,7 +663,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { TransportPropertyFilter.ForOutbound }
+                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
 
@@ -711,7 +711,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { TransportPropertyFilter.ForOutbound }
+                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
 
@@ -853,7 +853,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { TransportPropertyFilter.ForOutbound }
+                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
         var responseBody = JsonSerializer.Serialize(responseData, transportOptions);
@@ -894,7 +894,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { TransportPropertyFilter.ForOutbound }
+                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
         var responseBody = JsonSerializer.Serialize(responseData, transportOptions);

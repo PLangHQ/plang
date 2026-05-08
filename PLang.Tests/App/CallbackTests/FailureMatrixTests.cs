@@ -170,7 +170,7 @@ public class FailureMatrixTests
     [Test]
     public async Task FailureMatrix_DataReadDoesNotAutoVerify_AssertsAbsenceOfVerifyCall()
     {
-        // Reading a Data instance (deserialize through PlangDataSerializer) does NOT
+        // Reading a Data instance (deserialize through global::App.Channels.Serializers.Serializer.Plang.Data) does NOT
         // invoke signing.verify — verification is the consumer's explicit step. Pin
         // this by checking that a deserialized Data has signature populated but the
         // app's signing module wasn't called as part of the read.

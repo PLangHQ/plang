@@ -9,10 +9,10 @@ internal static class ValueNavigators
 {
     private static readonly INavigator[] _navigators =
     [
-        new DictionaryNavigator(),
-        new ListNavigator(),
-        new JsonStringNavigator(),
-        new ObjectNavigator(),
+        new global::App.Variables.Navigators.Dictionary(),
+        new global::App.Variables.Navigators.List(),
+        new global::App.Variables.Navigators.JsonString(),
+        new global::App.Variables.Navigators.Object(),
     ];
 
     public static Data.@this Navigate(Data.@this data, string key)

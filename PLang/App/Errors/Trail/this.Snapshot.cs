@@ -1,6 +1,6 @@
 namespace App.Errors.Trail;
 
-public sealed partial class @this : ISnapshotted
+public sealed partial class @this : ISnapshot
 {
     /// <summary>
     /// Captures the Trail entries as a List&lt;IError&gt;. Iteration uses the snapshot

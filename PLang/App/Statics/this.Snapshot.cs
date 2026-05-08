@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 namespace App.Statics;
 
-public sealed partial class @this : ISnapshotted
+public sealed partial class @this : ISnapshot
 {
     /// <summary>
     /// Captures the bag tree as a Dictionary<string, Dictionary<string, object?>>.

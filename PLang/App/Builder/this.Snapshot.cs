@@ -1,6 +1,6 @@
 namespace App.Builder;
 
-public sealed partial class @this : ISnapshotted
+public sealed partial class @this : ISnapshot
 {
     /// <summary>
     /// Captures the build-mode bit. The other fields (Files filter, Cache flag,

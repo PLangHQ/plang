@@ -39,8 +39,8 @@ public class JsonSerializerRoundTripTests
         var app = new global::App.@this("/test");
         var jsonByJson = app.User.Channels.Serializers.GetByMimeType("application/json");
         var jsonByHtml = app.User.Channels.Serializers.GetByMimeType("text/html");
-        await Assert.That(jsonByJson).IsTypeOf<JsonStreamSerializer>();
-        await Assert.That(jsonByHtml).IsTypeOf<JsonStreamSerializer>();
+        await Assert.That(jsonByJson).IsTypeOf<global::App.Channels.Serializers.Serializer.Json>();
+        await Assert.That(jsonByHtml).IsTypeOf<global::App.Channels.Serializers.Serializer.Json>();
         // Same instance — text/html aliases to the JSON serializer.
         await Assert.That(jsonByHtml).IsSameReferenceAs(jsonByJson);
     }

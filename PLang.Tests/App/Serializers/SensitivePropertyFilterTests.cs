@@ -59,7 +59,7 @@ public class SensitivePropertyFilterTests
             Created = DateTime.UtcNow
         };
 
-        var serializer = new JsonStreamSerializer();
+        var serializer = new global::App.Channels.Serializers.Serializer.Json();
         var json = serializer.Serialize(identity);
 
         await Assert.That(json).Contains("pubkey123");
@@ -78,7 +78,7 @@ public class SensitivePropertyFilterTests
             IsDefault = true
         };
 
-        // Raw JsonSerializer (used by DataSource) has no SensitivePropertyFilter
+        // Raw JsonSerializer (used by DataSource) has no global::App.Channels.Serializers.Filters.Sensitive
         var json = JsonSerializer.Serialize(identity);
 
         await Assert.That(json).Contains("pubkey123");
@@ -91,7 +91,7 @@ public class SensitivePropertyFilterTests
         // A type without [Sensitive] should serialize normally
         var obj = new { Name = "test", Value = 42 };
 
-        var serializer = new JsonStreamSerializer();
+        var serializer = new global::App.Channels.Serializers.Serializer.Json();
         var json = serializer.Serialize(obj);
 
         await Assert.That(json).Contains("test");
@@ -110,7 +110,7 @@ public class SensitivePropertyFilterTests
         };
 
         // ForView should also strip [Sensitive] in addition to view filtering
-        var serializer = new JsonStreamSerializer();
+        var serializer = new global::App.Channels.Serializers.Serializer.Json();
         var storeSerializer = serializer.ForView(View.Store);
         var storeJson = storeSerializer.Serialize(identity);
 
@@ -203,7 +203,7 @@ public class SensitivePropertyFilterTests
         var result = await create.Run();
         var identity = result.Value as Identity;
 
-        var serializer = new JsonStreamSerializer();
+        var serializer = new global::App.Channels.Serializers.Serializer.Json();
         var json = serializer.Serialize(identity);
 
         // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'

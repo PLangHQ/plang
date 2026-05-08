@@ -13,9 +13,9 @@ public class MimeRegistrationTests
         var pdata = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
         var text = app.User.Channels.Serializers.GetByMimeType("text/plain");
 
-        await Assert.That(json).IsTypeOf<JsonStreamSerializer>();
-        await Assert.That(pdata).IsTypeOf<PlangDataSerializer>();
-        await Assert.That(text).IsTypeOf<TextStreamSerializer>();
+        await Assert.That(json).IsTypeOf<global::App.Channels.Serializers.Serializer.Json>();
+        await Assert.That(pdata).IsTypeOf<global::App.Channels.Serializers.Serializer.Plang.Data>();
+        await Assert.That(text).IsTypeOf<global::App.Channels.Serializers.Serializer.Text>();
     }
 
     [Test]
@@ -35,6 +35,6 @@ public class MimeRegistrationTests
     {
         var app = new global::App.@this("/test");
         var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
-        await Assert.That(s).IsTypeOf<PlangDataSerializer>();
+        await Assert.That(s).IsTypeOf<global::App.Channels.Serializers.Serializer.Plang.Data>();
     }
 }

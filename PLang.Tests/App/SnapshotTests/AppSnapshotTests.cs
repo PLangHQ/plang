@@ -62,7 +62,7 @@ public class AppSnapshotTests
         var dst = new global::App.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        await Assert.That(dst.Cache).IsTypeOf<MemoryStepCache>();
+        await Assert.That(dst.Cache).IsTypeOf<global::App.Cache.Memory>();
         await Assert.That(snap.HasSection("Cache")).IsFalse();
     }
 }

@@ -6,7 +6,7 @@ namespace App.Variables.Navigators;
 /// Navigates lists by numeric index and special accessors (first, last, random, count/length).
 /// Supports implicit first-element delegation: %addresses.street% → addresses[0].street.
 /// </summary>
-public sealed class ListNavigator : INavigator
+public sealed class List : INavigator
 {
     public bool CanNavigate(Data.@this data)
         => data.Value is IList || IsGenericList(data.Value);

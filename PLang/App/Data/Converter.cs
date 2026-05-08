@@ -8,7 +8,7 @@ namespace App.Data;
 /// Newtonsoft.Json automatically discovers this via the [TypeConverter] attribute,
 /// so App needs no Newtonsoft dependency.
 /// </summary>
-public sealed class PlangTypeConverter : TypeConverter
+public sealed class Converter : TypeConverter
 {
     public override bool CanConvertFrom(ITypeDescriptorContext? context, System.Type sourceType)
         => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);

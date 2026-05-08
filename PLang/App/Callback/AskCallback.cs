@@ -112,7 +112,7 @@ public sealed class AskCallback : ICallback
         // arbitrary objects whose typed properties may include secrets. Security v1 S-F4.
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { SensitivePropertyFilter.Strip }
+            Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Strip }
         }
     };
 

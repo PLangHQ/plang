@@ -97,7 +97,7 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// App-scoped key/value store. Module-owned mutable state that must persist for
-    /// the lifetime of the App goes here. Implements ISnapshotted — round-trips with
+    /// the lifetime of the App goes here. Implements ISnapshot — round-trips with
     /// the rest of the App tree on Snapshot/Restore.
     /// TODO: replace with goal-backed dynamic property (see todos.md).
     /// </summary>
@@ -138,7 +138,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
     /// </summary>
-    public ICache Cache { get; set; } = new MemoryStepCache();
+    public ICache Cache { get; set; } = new global::App.Cache.Memory();
 
     /// <summary>
     /// Strongly typed, goal-scoped module config.

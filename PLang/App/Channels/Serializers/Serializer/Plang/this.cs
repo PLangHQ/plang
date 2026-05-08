@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace App.Channels.Serializers.Serializer;
+namespace App.Channels.Serializers.Serializer.Plang;
 
 /// <summary>
 /// Serializes the full Data envelope for PLang-to-PLang transport.
@@ -10,7 +10,7 @@ namespace App.Channels.Serializers.Serializer;
 /// External formats (application/json, text/plain) serialize just the value —
 /// this serializer preserves the complete Data structure for inter-app communication.
 /// </summary>
-public sealed class PlangSerializer : ISerializer
+public sealed class @this : ISerializer
 {
     public string ContentType => "application/plang";
     public string FileExtension => ".plang";
@@ -18,7 +18,7 @@ public sealed class PlangSerializer : ISerializer
     private readonly JsonSerializerOptions _serializeOptions;
     private readonly JsonSerializerOptions _deserializeOptions;
 
-    public PlangSerializer()
+    public @this()
     {
         _serializeOptions = new JsonSerializerOptions
         {
@@ -26,10 +26,10 @@ public sealed class PlangSerializer : ISerializer
             PropertyNameCaseInsensitive = true,
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new TypeJsonConverter() },
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::App.Data.Json() },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
-                Modifiers = { TransportPropertyFilter.ForOutbound }
+                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
 
@@ -38,10 +38,10 @@ public sealed class PlangSerializer : ISerializer
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new TypeJsonConverter() },
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::App.Data.Json() },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
-                Modifiers = { TransportPropertyFilter.ForInbound }
+                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForInbound }
             }
         };
     }

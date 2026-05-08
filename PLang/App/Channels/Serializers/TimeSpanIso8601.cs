@@ -12,7 +12,7 @@ namespace App.Channels.Serializers;
 /// to LLMs, structured, no math required. Same converter applies anywhere TimeSpan
 /// appears — register globally on JsonSerializerOptions.
 /// </summary>
-public sealed class TimeSpanIso8601Converter : JsonConverter<TimeSpan>
+public sealed class TimeSpanIso8601 : JsonConverter<TimeSpan>
 {
     public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

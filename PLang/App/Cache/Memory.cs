@@ -7,7 +7,7 @@ namespace App.Cache;
 /// Default in-memory ICache implementation using System.Runtime.Caching.MemoryCache.
 /// Stores Data references directly — no serialization overhead.
 /// </summary>
-public sealed class MemoryStepCache : ICache
+public sealed class Memory : ICache
 {
     private readonly MemoryCache _cache = new MemoryCache("StepCache_" + Guid.NewGuid().ToString("N")[..8]);
 

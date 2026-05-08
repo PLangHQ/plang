@@ -15,7 +15,7 @@ namespace App.Variables.Navigators;
 ///     the reflection navigator and only ever found CLR properties (Count, Options, Parent,
 ///     Root) — never the actual JSON keys.
 /// </summary>
-public sealed class DictionaryNavigator : INavigator
+public sealed class Dictionary : INavigator
 {
     public bool CanNavigate(Data.@this data)
     {

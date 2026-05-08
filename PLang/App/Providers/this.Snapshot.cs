@@ -3,7 +3,7 @@ using App.Errors;
 
 namespace App.Providers;
 
-public sealed partial class @this : ISnapshotted
+public sealed partial class @this : ISnapshot
 {
     /// <summary>
     /// Snapshot record for one runtime registration. Type is the AssemblyQualifiedName

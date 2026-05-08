@@ -227,7 +227,7 @@ public static class TypeConverter
 
         // TimeSpan: parse ISO 8601 (e.g. "PT30S", "PT1H30M") via XmlConvert,
         // fall back to .NET TimeSpan.Parse (e.g. "00:30:00"). Same wire shape
-        // the TimeSpanIso8601Converter uses for JSON.
+        // the TimeSpanIso8601 uses for JSON.
         if (targetType == typeof(TimeSpan) && value is string tsStr)
         {
             try { return (System.Xml.XmlConvert.ToTimeSpan(tsStr), null); }

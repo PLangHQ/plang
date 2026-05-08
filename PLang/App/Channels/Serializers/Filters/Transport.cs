@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text.Json.Serialization.Metadata;
 
-namespace App.Channels.Serializers;
+namespace App.Channels.Serializers.Filters;
 
 /// <summary>
 /// Transport filter that overrides [JsonIgnore] for properties marked with [In] or [Out].
@@ -11,10 +11,10 @@ namespace App.Channels.Serializers;
 /// the target transport attribute.
 ///
 /// Usage:
-///   TransportPropertyFilter.ForInbound  — re-includes [In] properties (deserialization)
-///   TransportPropertyFilter.ForOutbound — re-includes [Out] properties (serialization)
+///   Transport.ForInbound  — re-includes [In] properties (deserialization)
+///   Transport.ForOutbound — re-includes [Out] properties (serialization)
 /// </summary>
-public static class TransportPropertyFilter
+public static class Transport
 {
     /// <summary>
     /// Modifier that re-includes [In] properties that were excluded by [JsonIgnore].

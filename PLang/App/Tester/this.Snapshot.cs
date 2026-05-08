@@ -1,6 +1,6 @@
 namespace App.Tester;
 
-public sealed partial class @this : ISnapshotted
+public sealed partial class @this : ISnapshot
 {
     /// <summary>
     /// Captures the test-mode bit. Run state (Results, Coverage, CurrentTest) and

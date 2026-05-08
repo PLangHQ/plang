@@ -9,7 +9,7 @@ namespace App.Variables.Navigators;
 public sealed class @this
 {
     private readonly ConcurrentDictionary<System.Type, INavigator> _navigators = new();
-    private readonly INavigator _fallback = new ObjectNavigator();
+    private readonly INavigator _fallback = new global::App.Variables.Navigators.Object();
 
     /// <summary>
     /// Register a navigator for a specific type.
@@ -56,8 +56,8 @@ public sealed class @this
     /// </summary>
     public void RegisterDefaults()
     {
-        Register(typeof(System.Collections.IList), new ListNavigator());
-        Register(typeof(IDictionary<string, object?>), new DictionaryNavigator());
-        Register(typeof(IDictionary<,>), new DictionaryNavigator());
+        Register(typeof(System.Collections.IList), new global::App.Variables.Navigators.List());
+        Register(typeof(IDictionary<string, object?>), new global::App.Variables.Navigators.Dictionary());
+        Register(typeof(IDictionary<,>), new global::App.Variables.Navigators.Dictionary());
     }
 }

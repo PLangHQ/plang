@@ -3,14 +3,14 @@ namespace App;
 public sealed partial class @this
 {
     /// <summary>
-    /// Walks the App's ISnapshotted properties and aggregates them into a typed
-    /// Snapshot tree. Only subsystems implementing <see cref="ISnapshotted"/>
+    /// Walks the App's ISnapshot properties and aggregates them into a typed
+    /// Snapshot tree. Only subsystems implementing <see cref="ISnapshot"/>
     /// participate — the ones that don't (Modules, Goals, Channels, Cache, Events,
     /// Settings, Navigators, Types, Config, FileSystem, …) are reconstruct-on-build
     /// and stay invisible to the snapshot.
     ///
     /// The wire shape mirrors the App tree: each subsystem owns a named section.
-    /// Adding a new subsystem to the snapshot is just implementing ISnapshotted
+    /// Adding a new subsystem to the snapshot is just implementing ISnapshot
     /// and adding a one-liner here — no central registry, no ordering coupling.
     /// </summary>
     public Snapshot.@this Snapshot()

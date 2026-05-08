@@ -2,13 +2,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Type = App.Data.Type;
 
-namespace App.Channels.Serializers;
+namespace App.Data;
 
 /// <summary>
 /// Serializes <see cref="Type"/> as a plain JSON string (e.g. "string", "int").
 /// Deserializes a JSON string back into a <see cref="Type"/> instance.
 /// </summary>
-public sealed class TypeJsonConverter : JsonConverter<Type?>
+public sealed class Json : JsonConverter<Type?>
 {
     public override Type? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
     {

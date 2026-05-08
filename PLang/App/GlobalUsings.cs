@@ -47,7 +47,7 @@ global using Variables = App.Variables.@this;
 
 // Snapshot subsystem
 global using Snapshot = App.Snapshot.@this;
-global using ISnapshotted = App.Snapshot.ISnapshotted;
+global using ISnapshot = App.Snapshot.ISnapshot;
 
 // Callback subsystem
 global using AppCallback = App.Callback.@this;
@@ -58,7 +58,6 @@ global using AppStatics = App.Statics.@this;
 
 // Standalone concepts
 global using ICache = App.Cache.ICache;
-global using MemoryStepCache = App.Cache.MemoryStepCache;
 global using Debugging = App.Debug.@this;
 global using Tester = App.Tester.@this;
 

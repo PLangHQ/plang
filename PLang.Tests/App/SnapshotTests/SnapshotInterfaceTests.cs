@@ -23,7 +23,7 @@ public class SnapshotInterfaceTests
     public async Task ISnapshotted_RestoreIsStaticFactory_NotInstanceMethod()
     {
         // Pins the `static abstract Restore(Snapshot.@this s, Context.@this ctx)` shape.
-        var iface = typeof(ISnapshotted);
+        var iface = typeof(ISnapshot);
         var restore = iface.GetMethod("Restore",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
 

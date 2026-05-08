@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Text.Json.Serialization.Metadata;
 using App;
 
-namespace App.Channels.Serializers;
+namespace App.Channels.Serializers.Filters;
 
 /// <summary>
 /// Filters JSON properties based on view attributes.
@@ -13,7 +13,7 @@ namespace App.Channels.Serializers;
 ///
 /// For types that don't use view attributes: no filtering, normal serialization.
 /// </summary>
-public static class ViewPropertyFilter
+public static class View
 {
     private static readonly Type[] ViewAttributeTypes =
     {
@@ -23,15 +23,15 @@ public static class ViewPropertyFilter
         typeof(DefaultAttribute)
     };
 
-    private static readonly Dictionary<View, Type> ViewToAttribute = new()
+    private static readonly Dictionary<global::App.View, Type> ViewToAttribute = new()
     {
-        [View.Store] = typeof(StoreAttribute),
-        [View.LlmBuilder] = typeof(LlmBuilderAttribute),
-        [View.Debug] = typeof(DebugAttribute),
-        [View.Default] = typeof(DefaultAttribute),
+        [global::App.View.Store] = typeof(StoreAttribute),
+        [global::App.View.LlmBuilder] = typeof(LlmBuilderAttribute),
+        [global::App.View.Debug] = typeof(DebugAttribute),
+        [global::App.View.Default] = typeof(DefaultAttribute),
     };
 
-    public static Action<JsonTypeInfo> For(View view) => typeInfo =>
+    public static Action<JsonTypeInfo> For(global::App.View view) => typeInfo =>
     {
         if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
         if (!ViewToAttribute.TryGetValue(view, out var targetAttr)) return;

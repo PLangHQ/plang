@@ -14,7 +14,7 @@ namespace App.Data;
 /// PLang type descriptor. Value is a type string: "string", "long", "text/markdown", "image/jpeg", etc.
 /// CLR type is derived on the fly via TypeMapping.
 /// </summary>
-[System.ComponentModel.TypeConverter(typeof(PlangTypeConverter))]
+[System.ComponentModel.TypeConverter(typeof(global::App.Data.Converter))]
 public sealed class Type
 {
     public string Value { get; }
@@ -271,7 +271,7 @@ public partial class @this
 
     [JsonPropertyName("type")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonConverter(typeof(TypeJsonConverter))]
+    [JsonConverter(typeof(global::App.Data.Json))]
     public Type? Type
     {
         get
