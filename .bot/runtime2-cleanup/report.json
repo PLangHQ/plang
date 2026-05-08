@@ -235,6 +235,47 @@
         "health": "ok",
         "notes": "Discovered /shared/app-tree/ doesn't exist — v3's audit methodology is blocked. Flagged in tree as open question I with three resolution paths. Architect lean: tightening rules covers a lot of what the audit would catch; (a) building the surface files is too much overhead unless we commit to a long-term doc artifact. Waiting on Ingi's call. Choices placement also flagged tentative (★) — re-evaluate after Catalog dissolves to see if the build/runtime border has shifted enough that Choices wants a different home."
       }
+    },
+    {
+      "id": "f9c7d3e2-8a4b-4f1c-b6e2-3a8d7f9e1c4b",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T11:30:00Z",
+      "timestamp_end": "2026-05-08T13:00:00Z",
+      "intent": "Split rule material per Ingi's distinction: audit recipes go in Documentation/v0.2/audit/; per-bot OBP lens suggestions go in mounted drive /shared/bots/obp/. Existing OBP docs unchanged.",
+      "before": {
+        "assumptions": "Ingi's distinction between audit material (find smells in existing code) and authoring material (don't write smells in the first place) is structurally correct. The 5 sharpened rules with grep recipes are audit material; the foundational principles + per-bot workflow guidance is authoring material. Existing /CLAUDE.md and Documentation/v0.2/good_to_know.md already cover the foundational 4 smells and the OBP naming principle well — additive work, not restructure.",
+        "risk": "Per-bot lenses could drift from the shared core over time. Mitigated by keeping lenses small (~50 lines each, workflow framing only) and pointing at core.md for principles. Bot lens docs are suggestions in mounted drive, not committed proposals — Ingi's call on whether to formalize them through the proposal mechanism later."
+      },
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/audit/README.md",
+            "Documentation/v0.2/audit/obp-rules.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Audit folder. README explains when to use (end-of-refactor sweep, onboarding, specific-smell investigation) and how to extend (new pattern → add the screen + filter + worked example). obp-rules.md has all 5 sharpened rules with full grep screens, filter recipes, today's signal/noise counts on PLang/App/, and worked examples linked to current cleanup stages."
+        },
+        {
+          "paths": [
+            "/shared/bots/obp/core.md",
+            "/shared/bots/obp/coder.md",
+            "/shared/bots/obp/architect.md",
+            "/shared/bots/obp/codeanalyzer.md",
+            "/shared/bots/obp/tester.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Per-bot OBP lens suggestions in mounted drive. core.md is the consolidated source of truth (foundational 4 + sharpened 5 + naming principle + how-the-rules-relate). Each lens (~50-80 lines) is workflow-specific framing that points at core.md for principles. Coder lens: 'when you write a class.' Architect lens: 'when you design.' Codeanalyzer lens: 'what to flag, severity guidance, what NOT to flag.' Tester lens: 'OBP shape and testability, where to expect tests, smells that affect test design.'"
+        }
+      ],
+      "after": {
+        "status": "Audit folder committed to Documentation/v0.2/audit/. Per-bot lens suggestions in /shared/bots/obp/ (5 files, mounted drive — not committed). Existing OBP docs unchanged. Branch ready for stage 1 carve when design questions settle.",
+        "health": "ok",
+        "notes": "Open question for Ingi: when to read through the lens suggestions and decide whether to formalize via proposal mechanism. My lean: end-of-refactor, when we have real cleanup-experience to validate the lens content against."
+      }
     }
   ]
 }
