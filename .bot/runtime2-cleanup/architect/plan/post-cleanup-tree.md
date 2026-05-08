@@ -1,6 +1,6 @@
 # `PLang/App/` — Post-Cleanup Target Tree
 
-What `PLang/App/` should look like after all 19 stages land. This is the *destination*, not a stage-by-stage trace — read this when you want to judge the end state at a glance instead of reading prose.
+What `PLang/App/` should look like after all 21 stages land. This is the *destination*, not a stage-by-stage trace — read this when you want to judge the end state at a glance instead of reading prose.
 
 The tree is annotated with what each stage does to it, and revised against Ingi's review of v1 (2026-05-07). Folders/files with no marker are unchanged.
 
@@ -105,7 +105,7 @@ PLang/App/
 ├── Data/
 │   ├── Converter.cs                         (RENAMED ← PlangTypeConverter.cs; System.ComponentModel.TypeConverter for Type)
 │   ├── Json.cs                              (RELOCATED ← Channels/Serializers/TypeJsonConverter.cs; System.Text.Json JsonConverter for Type — lives with what it serves)
-│   ├── Navigators/...
+│   (Navigators/ MOVED to App/Variables/Navigators/, stage 21 — Data is stored and retrieved via Variables, so Navigators belongs there)
 │   ├── Properties.cs
 │   ├── Code/Grep.cs                         (RENAMED ← Providers/DefaultGrepProvider.cs; folder Code/, drop both Default and suffix)
 │   ├── Code/IGrep.cs                        (RENAMED ← Providers/IGrepProvider.cs; per-domain interface, suffix dropped)
@@ -222,6 +222,8 @@ PLang/App/
 ├── Variables/
 │   ├── Calls/                               (already in trunk — per-call scopes from channels merge)
 │   │   ├── Call/this.cs
+│   │   └── this.cs
+│   ├── Navigators/                          (MOVED ← App/Data/Navigators/, stage 21; namespace App.Data.Navigators → App.Variables.Navigators; access path app.Navigators → app.Variables.Navigators)
 │   │   └── this.cs
 │   ├── IRawNameResolvable.cs
 │   ├── Reserved.cs                          (NEW or MOVED ← Utils/ReservedKeywords.cs, stage 16; well-known variable names belong with the Variables owner; all values const/readonly)

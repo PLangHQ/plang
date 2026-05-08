@@ -1,5 +1,73 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+3) — scope map authored; six questions settled; two stages added; two todos filed
+
+After stage 1's brief settled, Ingi pushed for an explicit shared-vs-per-actor map for the App graph — "this distinction is very important; we should know what is shared and what is per-actor and agree on it." Authored `plan/scope-map.md` (~200 lines), reviewed across two rounds of comments, settled six scope questions and filed two architectural concerns to `Documentation/Runtime2/todos.md`.
+
+### What changed
+
+**New artifact: `plan/scope-map.md`.** Catalogs every long-lived `@this` and major property on the App graph by scope (shared / per-actor / per-context / per-call). Linked from `plan.md`. Vocabulary section, shared list (~15 items), per-actor list (~7 items), mixed cases (Settings absorbed, SettingsStore relocated, CallStack flagged, app.Variables/Context shortcuts removed), per-operation section (Snapshot, CallStack.Call), three-tier Events explainer, settled-questions trail.
+
+**Six scope questions settled (across two review rounds):**
+
+| Q | Topic | Resolution |
+|---|-------|-----------|
+| Q1 | Settings.@this after stage 13 | shared, one per app |
+| Q2 | `app.Variables` / `app.Context` shortcuts | REMOVE — fragile under parallel execution; folded into stage 10 |
+| Q3 | `Channel.@this.App` back-ref after stage 1 | REMOVE — redundant once `Channel.Channels` lands; new stage 20 |
+| Q4 | `app.Cache` scope | shared per app, intentional ("global cache") |
+| Q5 | `Errors.Trail` scope | leave shared, no change in this branch |
+| Q6 | `app.Events` vs `Context.Events` | three-tier design intentional, kept; writer-path design pass filed in todos |
+| Q7 | `app.Navigators` placement | move to Variables; new stage 21 |
+
+**Two architectural concerns filed in todos.md (not in this branch):**
+
+- **Events three-tier scoping needs a design pass** — per-channel + per-actor + app-level tiers exist; app-level reader exists but no writer path. Decide whether to build the writer or remove the tier.
+- **CallStack scope: shared on App.Debug is wrong for parallel execution** — `_current` is correctly AsyncLocal but `_root`, `Audit`, tree structure are shared. Sequential CLI fine; web-pool parallel breaks. Per-context vs split-config-from-state both real options.
+
+**Two new stages:**
+
+- **Stage 20** `channel-app-backref-drop` — once stage 1's `Channel.Channels` lands, drop `Channel.App` back-ref; sweep readers to navigate via `Channels.Actor.App`.
+- **Stage 21** `navigators-to-variables` — folder + namespace + property relocation; `app.Navigators` becomes `app.Variables.Navigators`.
+
+**Stage scopes expanded:**
+
+- **Stage 10** `app-run-redesign` — gains the `app.Variables` / `app.Context` shortcut removal.
+- **Stage 13** `settings-collection-rework` — gains the SettingsStore-from-per-actor-to-app-level move (verified: zero consumers use User's SettingsStore today; per-actor allocation is dead drift).
+
+**Principles loosened:**
+
+`plan/principles.md` Context section's "scope test" replaced with "choosing what back-ref(s) a class holds" — Context, App, parent-ref, or none, depending on what the class touches. Smells around god-bag back-refs and implicit per-actor reaches dressed up as app-level. Trade-off named: minimalism over uniformity.
+
+### Stage count
+
+19 → 21.
+
+### Final stage index
+
+| # | Tier | Slug | Status |
+|---|------|------|--------|
+| 1 | 1 | serializers-single-home | brief carved, ready for coder |
+| 2-9 | 1-2 | (channels-v1 through catalog-dissolve) | pending |
+| 10 | 3 | app-run-redesign (+ shortcut sweep) | pending |
+| 11-12 | 3 | (errors-app-backref-drop, build-branch-to-build-this) | pending |
+| 13 | 3 | settings-collection-rework (+ SettingsStore move) | pending |
+| 14-19 | 4 | (timespan, compound-name, static, builder-tester, mime-table, provider-to-code) | pending |
+| 20 | 4 | channel-app-backref-drop | pending (NEW) |
+| 21 | 4 | navigators-to-variables | pending (NEW) |
+
+### Pattern observed
+
+Three rounds of scope-map comments exposed misreadings I made by skimming code:
+- Called Events "dead drift" — actually a deliberate three-tier design.
+- Listed `app.Snapshot` as shared — actually per-operation, not even a property.
+- Listed `actor.SettingsStore` as per-actor — dead drift, never used; should be app-level.
+- Listed CallStack as cleanly shared — actually shared *with* AsyncLocal-current that's correct, but other state shared in a way that breaks under parallel.
+
+The lesson: read the actual usage chain (allocation site → readers → writers) before classifying scope. Shape inferred from one file is often wrong.
+
+---
+
 ## 2026-05-08 (latest+2) — per-actor Serializers settled; principle loosened; stage 1 brief rewritten
 
 Ingi walked me through the actual PLang construction model (App → System/User actors → each Actor creates its own Context, then its own Channels). Under that model, **Serializers is per-actor — each actor's Channels owns its own registry**. My earlier "shared singleton on App" framing was over-engineered.

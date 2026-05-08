@@ -408,6 +408,79 @@
         "notes": "Brief carefully validated against actual code (App ctor flow, Actor.this.cs:127-129, Channel.@this:75 App back-ref). New Channel.Channels back-ref is the only additive type-system change in stage 1."
       },
       "timestamp_end": "2026-05-08T17:00:00Z"
+    },
+    {
+      "id": "8e4c5c0c-df03-4577-ae10-d39e8490ff71",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T17:30:00Z",
+      "timestamp_end": "2026-05-08T19:00:00Z",
+      "intent": "Author scope-map (shared vs per-actor for the App graph); settle scope questions through review rounds; file architectural concerns to todos.md.",
+      "before": {
+        "assumptions": "Ingi pushed for explicit shared/per-actor distinction across the App graph. The earlier scope test in principles.md was too rigid; the actual codebase has nuanced patterns (per-channel events tier, per-context events tier, app-level events tier; AsyncLocal current with shared root; etc).",
+        "risk": "Misreading scope from one file leads to wrong classifications. Three rounds of comments exposed bugs in my map (Events dead drift / Snapshot shared / SettingsStore per-actor / CallStack cleanly-shared \u2014 all wrong)."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/plan/scope-map.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan/scope-map.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New artifact mapping shared vs per-actor for every long-lived @this and major property on the App graph. Catalogs ~15 shared, ~7 per-actor, mixed cases, per-operation, three-tier Events explainer, settled-questions trail."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 10 and 13 expanded. Stages 20 (channel-app-backref-drop) and 21 (navigators-to-variables) added. Stage count 19 \u2192 21."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan/principles.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Replaced strict scope test with looser choose-back-ref-by-need rule (Context, App, parent-ref, or none). Smells around god-bag back-refs and implicit per-actor reaches added. Minimalism trade-off named."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan/post-cleanup-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage count 19 \u2192 21. App/Data/Navigators/ deletion-marker added. App/Variables/Navigators/ entry added. CallStack annotation reframed (shared today; scope wrong for parallel; kept as-is per Ingi)."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Two new entries: Events three-tier design pass (writer-path question for app-level tier); CallStack scope wrong for parallel execution (per-context vs split-config-from-state options)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Latest+3 entry covering scope-map authored, six questions settled, two stages added, two todos filed, principles loosened, lessons learned about misreading scope from one file."
+        }
+      ],
+      "after": {
+        "status": "scope map complete; six questions settled; stage count 21; two architectural concerns filed for future plans",
+        "health": "plan + principles + tree + scope-map + summary all consistent; zero open user comments",
+        "notes": "Coder reads plan.md \u2192 principles.md \u2192 scope-map.md \u2192 stage-1 brief and starts."
+      }
     }
   ]
 }

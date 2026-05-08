@@ -395,3 +395,75 @@ const, and the increment-and-throw block.** No replacement.
 
 Context: this surfaced during the Rule C audit (`static fields are a missing @this`).
 The right fix is removal, not relocation.
+
+## 2026-05-08 — Events three-tier scoping needs a design pass
+
+Context: `Channel.@this.MatchingBindings` (Channels/Channel/this.cs:170-192) checks
+event bindings at three tiers when an event fires:
+
+1. **Per-channel** — `Channel.Events` (one Events.@this per Channel instance).
+2. **Per-actor** — `Actor.Context.Events`. This is where PLang `event.on` and
+   related modules write today (`event/on.cs:65`, `mock/action.cs:73`,
+   `test/run.cs:120`).
+3. **App-level** — `App.Events`. The reader infrastructure exists but **no writer
+   path exists today**. The intent (per the inline comment) is "match across
+   actors so one binding can cover every channel-of-name 'logger' regardless
+   of which actor owns it" — useful for cross-actor hooks, but no PLang
+   construct currently produces these.
+
+The three-tier design is intentional and stays as-is for now (Ingi 2026-05-08).
+What's missing: the writer side for the app-level tier, and a clearer mental
+model for when each tier is the right scope.
+
+When you pick this up:
+1. Decide whether cross-actor events are an actual need (driven by a use case),
+   or whether the app-level tier should be removed.
+2. If kept, build the writer path — what PLang construct registers an
+   app-level binding? `- add app-wide before /admin call Authenticate`?
+   Or some other surface.
+3. Document the three tiers and when each applies, so users (and module
+   authors) can reason about scope.
+4. Watch for interaction with the per-context mode flags direction
+   (Build/Debug/Testing as per-context) — Events scoping may want to
+   align with that conversation.
+
+Filed alongside the scope-map (`.bot/runtime2-cleanup/architect/plan/scope-map.md`)
+which records the current state and Ingi's "keep as-is, file todo" call.
+
+## 2026-05-08 — CallStack scope: shared on App.Debug is wrong for parallel execution
+
+Context: `App/Debug/this.cs:101` allocates a single `App.CallStack.@this()` per app
+and exposes it as `app.Debug.CallStack`. Comment in `App/Actor/Context/this.cs:44-47`
+explains the move ("moved there from per-context ownership so it's a single tree
+per run, fork-safe via AsyncLocal"). The reasoning was sequential CLI execution.
+
+The problem: under parallel execution (web-pool, multiple Contexts in flight),
+the shared CallStack interleaves pushes from concurrent flows:
+
+- `_current` is `AsyncLocal<Call.@this?>` — correctly flow-scoped per flow ✓
+- `_root` (the first call pushed, line 60) — shared
+- `Audit` collection (line 43) — shared
+- Tree structure — different request flows interleave into one tree
+- `%!callStack%` from one request may show frames from another concurrent
+  request (depending on how traversal navigates)
+- Audit mixes traces from all parallel flows
+
+For sequential CLI (`plang start`), this is fine — one flow at a time.
+For parallel web-pool execution, the shared scope is broken.
+
+When you pick this up:
+1. Grep readers of `app.Debug.CallStack` to understand who depends on the
+   shared tree (cross-context error reporting? cross-actor stack traces?).
+2. Decide between:
+   - **Per-context** — each Context has its own CallStack.@this. Simplest;
+     sequential CLI behaves identically; parallel web-pool gets isolated
+     per-request trees.
+   - **Split config from state** — config (Flags, MaxDepth) stays shared on
+     App; tree state (`_current`, `_root`, `Audit`) moves per-Context.
+     Cleaner OBP if config really needs cross-context overrides.
+3. Update stage 7 of the runtime2-cleanup plan if still pending — its
+   current scope ("promote `app.Debug.CallStack` to `app.CallStack`")
+   maintains the wrong shared scope.
+
+**Not touched in the runtime2-cleanup branch** (Ingi 2026-05-08). Stage 7
+stays as a property-promotion only.

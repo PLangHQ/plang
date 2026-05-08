@@ -35,7 +35,7 @@
     },
     {
       "id": "d1a0b28c63",
-      "line": 63,
+      "line": 67,
       "text": "jebb, one branch, runtime2-cleanup is fine",
       "author": "user",
       "status": "resolved",
@@ -57,7 +57,7 @@
     },
     {
       "id": "e3178f0fda",
-      "line": 88,
+      "line": 92,
       "text": "not sure, you choose.",
       "author": "user",
       "status": "resolved",
@@ -68,7 +68,7 @@
     },
     {
       "id": "f8eb0e3046",
-      "line": 88,
+      "line": 92,
       "text": "Picked serializers-stage-6-finish as stage 1 — closes the channels-Stage-6 drift before any other stage touches Channels. keepalive-collection moves to stage 3 (still in Tier 1, still teaches the pattern, just second). Settled in plan.md.",
       "author": "architect",
       "status": "resolved",
@@ -79,7 +79,7 @@
     },
     {
       "id": "88f8977703",
-      "line": 89,
+      "line": 93,
       "text": "dont care, which ever",
       "author": "user",
       "status": "resolved",
@@ -90,7 +90,7 @@
     },
     {
       "id": "6e7a115461",
-      "line": 89,
+      "line": 93,
       "text": "Default one stage per session, flexible — Tier 1 stages may double up if appetite holds, Tier 3 stages (App.Run especially) probably need multi-session. Decide each one when carving its stage brief, no rigid cadence.",
       "author": "architect",
       "status": "resolved",
@@ -224,7 +224,7 @@
     },
     {
       "id": "3f529f45df",
-      "line": 230,
+      "line": 232,
       "text": "isn't it C, it's about how we (de)serialize stuff? unrelated to this folder structure, I feel like we are getting to many case differences errors, could that be?",
       "author": "user",
       "status": "resolved",
@@ -235,7 +235,7 @@
     },
     {
       "id": "f43d86175d",
-      "line": 230,
+      "line": 232,
       "text": "Yes, Rule C — JSON options are static fields with no @this owner, so the cleanup applies. The interesting part is your case-mismatch concern: it's a real risk if options disperse across consumers (two consumers, two opinions on case sensitivity → silent serialization mismatch).\n\nUpdated tree: lean shifts from v1's \"(a) disperse\" to **(b) single home — App/Json/this.cs** with options as instance properties (app.Json.SnapshotClone, app.Json.PrWrite, etc). Rule C is preserved (the data has an owner, even if it's a config-shaped owner) and there's one source of truth for case/property conventions. Codified in Open judgment call A in the doc.",
       "author": "architect",
       "status": "resolved",
@@ -246,7 +246,7 @@
     },
     {
       "id": "96c0679770",
-      "line": 230,
+      "line": 232,
       "text": "I dont like  App/Json   Json is a serialzation format it doesn't deserve to be root object, did I misunderstand this maybe?",
       "author": "user",
       "status": "resolved",
@@ -257,7 +257,7 @@
     },
     {
       "id": "127b7f8fc8",
-      "line": 230,
+      "line": 232,
       "text": "Right — you're correct. Json is a serialization format, not a domain entity. App/Json/ as a root mount was wrong; reverting that decision.\n\nUpdated tree: Utils/Json.cs is deleted; each consumer owns its own JsonSerializerOptions instance. Snapshot already inlines its options for clone semantics; Build/PrWrite holds its own; Data.Envelope already inlines _envelopeJsonOptions; each Serializer/{Json,Plang/this,Plang/Data,Text}.cs holds its own internals.\n\nMy earlier 'case-mismatch' worry was overblown — the options ARE mostly consumer-specific in their actual content; the 'shared' feel was a junk-drawer artifact in Utils/Json.cs. When two consumers genuinely need identical options, that's a design conversation at that point, not a justification for a synthetic root home.\n\nOpen question A resolved: disperse to consumers.",
       "author": "architect",
       "status": "resolved",
@@ -312,7 +312,7 @@
     },
     {
       "id": "c4aa52c02e",
-      "line": 236,
+      "line": 238,
       "text": "should all be readonly, I kind like the app/variables/reserved.cs location",
       "author": "user",
       "status": "resolved",
@@ -323,7 +323,7 @@
     },
     {
       "id": "45148de6d1",
-      "line": 236,
+      "line": 238,
       "text": "Settled: Variables/Reserved.cs as the home, all const/readonly. The current mutable `public static string Test = \"!Test\"` and the `static List<string> keywords = new()` get fixed alongside the move (stage 15).",
       "author": "architect",
       "status": "resolved",
@@ -334,7 +334,7 @@
     },
     {
       "id": "dc92b23d6e",
-      "line": 246,
+      "line": 248,
       "text": "this is just temporary blocker, will be removed in future, maybe add it to todo",
       "author": "user",
       "status": "resolved",
@@ -345,7 +345,7 @@
     },
     {
       "id": "4774ba84ad",
-      "line": 246,
+      "line": 248,
       "text": "Logged at Documentation/Runtime2/todos.md (with full context: field name, the 5000-cap const, and the increment-and-throw block). Stage 15 deletes all three. No replacement scope.",
       "author": "architect",
       "status": "resolved",
@@ -356,7 +356,7 @@
     },
     {
       "id": "000d10d61a",
-      "line": 272,
+      "line": 274,
       "text": "not sure what it's used for so cant answer",
       "author": "user",
       "status": "resolved",
@@ -367,7 +367,7 @@
     },
     {
       "id": "1e8129dcc3",
-      "line": 272,
+      "line": 274,
       "text": "Looked at the use sites. Fires once per child App after construction (OsDirectory inherited, Testing.IsEnabled set, CurrentTest assigned), before the test's entry goal runs. Six probes in PLang.Tests/App/Testing/RunActionTests.cs subscribe to assert child-App state (parallel count, OsDirectory, IsEnabled).\n\nIt's static because there's no other way for the test to reach the child App before its first goal runs — children are constructed inside the test runner's parallel loop and aren't returned to the caller. The static event is the only hook point.\n\nArchitect's lean: the test runner (App.Test.@this) should own a list of child-app callbacks. Static-ness moves onto the test runner, which is itself ~singleton per test process. Detail in Open judgment call G in the doc. Leaving this comment open until stage 15 carves and the rewrite shape settles.",
       "author": "architect",
       "status": "resolved",
@@ -378,7 +378,7 @@
     },
     {
       "id": "3baca6ed2d",
-      "line": 272,
+      "line": 274,
       "text": "I think we need to improve this commenting tool, this text \"not sure what it's used for so cant answer\" is pointing to line 273 which doesn't seem to exist anymore so bit lost, maybe we should store the line text with the comment so we can at least know what it was about. what do you say?? this is the python webserver fix.\n\nregarding the code that comment applies, I think we can just leave it for now, unless you feel it's important to fix",
       "author": "user",
       "status": "resolved",
@@ -389,7 +389,7 @@
     },
     {
       "id": "3cadd401e3",
-      "line": 272,
+      "line": 274,
       "text": "Tool issue noted — line-anchored comments drift when the doc changes. Two practical workarounds inside the current tool:\n\n1. **Quote a snippet of the line text** in the comment body (the original L273 was about App/Json/ + ReservedKeywords; with the App/Json/ revert, that area shifted).\n2. **Section-anchor** instead of line — comment on a heading line (the section name doesn't move as much as content lines).\n\nReal fix is on the tool side: store an anchor token (line content hash or section path) and re-locate the comment after edits. Not architect work but flagging here. As for the original ChildAppCreated comment (id 000d10d61a) — still open in stage 15's design queue; lean is test-runner-owned registry, settled when stage 15 carves.",
       "author": "architect",
       "status": "resolved",
@@ -424,7 +424,7 @@
   "plan/principles.md": [
     {
       "id": "878bf92cf6",
-      "line": 62,
+      "line": 128,
       "text": "plang p build does not exist, where did you find that?? plus I want the cli to just use \"plang --builder\", no \"plang build\"",
       "author": "user",
       "status": "resolved",
@@ -435,13 +435,268 @@
     },
     {
       "id": "81ece6f2bf",
-      "line": 62,
+      "line": 128,
       "text": "Right — `plang p build` was fictional, and the CLI form should align with everything else as a flag, not a verb. Fixed in two places:\n\n- principles.md Rule D table: collapsed the two CLI rows into one — `plang build` (today, wrong) → `plang --builder` (after, correct). Dropped the verb-commands-stay-verbs carve-out paragraph; it had no concrete anchor in the codebase since the CLI is flag-driven.\n- plan.md stage 16: removed the `(commands plang p build / plang p test stay verbs)` parenthetical; CLI line now reads `plang build → plang --builder, plang --test → plang --tester`.\n\nVerified against Executor.cs:34 — today accepts `plang build` and `plang --build` as the same form; test side is already `--test`. Rule D itself stands; only the bogus illustration was removed.",
       "anchor": "| Form | Today (wrong) | After (correct) |",
       "author": "architect",
       "status": "resolved",
       "parent_id": "878bf92cf6",
       "ts": "2026-05-08T12:36:18",
+      "drifted": false
+    }
+  ],
+  "plan/scope-map.md": [
+    {
+      "id": "7848e7f4e4",
+      "line": 15,
+      "text": "and when we create new threads, such as '- call goal Run, dont wait' - this is async call where we dont wait for the answer and a new context is created, belonging to the same actor ofc... hmmm.... and actually I suppose system context as well... hmm... well see when we get there, this isn't implemented yet, just wanted to note it.",
+      "anchor": "- **Per-context** — one instance per Actor.Context. Today this is essentially \"per-actor\" because each Actor owns one Context, but the distinction matters for things scoped to an execution context (Trace).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T17:33:38",
+      "drifted": false
+    },
+    {
+      "id": "9cf1a1726d",
+      "line": 15,
+      "text": "Noted. The per-context vocabulary already accommodates this — when async-call-without-wait lands, the spawned work gets its own Context belonging to the same actor. Added to the doc under \"Acknowledged for the future, not actionable now.\" Will update if the construct ships before this cleanup completes.",
+      "anchor": "- **Per-context** — one instance per Actor.Context. Today this is essentially \"per-actor\" because each Actor owns one Context, but the distinction matters for things scoped to an execution context (Trace).",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "7848e7f4e4",
+      "ts": "2026-05-08T17:55:42",
+      "drifted": false
+    },
+    {
+      "id": "70aaafbc23",
+      "line": 26,
+      "text": "I reading this doc, and I am bit confusing myself. So for console, sure all good. For web request, then I suppose we have app pool, rent it and return it on each request. the app object\n  would be reset to rented state on return. what confuses me is thing like app.Debug\n\nI want to have in my code\n\n'- set debug = true' which basically whould set debug mode on my context and no other, same goes for builder, '- build my.goal', or testing, '- run tests on '/tests'', \n'- add before '/admin' call Authenitcate' <= event created on web request\n\nwhen you say app.Errors , app.Snapshot, app.Callback, app.Events on instance, so if user has error and system has error, are they in same thing. that feels wrong, app.callback feels like per actor, \n\nSo as you can see I am a bit confused, and the mental model is clearly not clear. \n\nI see you have comments below, you can maybe answer these, dig into the code also, dont assume. then maybe update the Mixed cases\n\nGeneral:\napp.Navigators not sure why this is here, this is per Data, but I see it exists on app as property, I would have thought this is more of a Variables thing since Data is stored and retrieved in the Variables.",
+      "anchor": "| Property | Type | Reason for shared scope |",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T17:51:42",
+      "drifted": false
+    },
+    {
+      "id": "ddf9925bc7",
+      "line": 26,
+      "text": "Dug into the code; your intuition was right on the substantive items. Findings:\n\n**Settled by digging:**\n\n- **Events** — drift, not just shared. `Context.Events` exists per-Context (Actor/Context/this.cs:92) AND `App.Events` exists. ALL real registrations go through `Context.Events` (event/on.cs:65, mock/action.cs:73, test/run.cs:120). The App-level one is unused dead drift. Future stage: delete `app.Events`, unify on Context.Events. Events is *already* per-actor in practice.\n\n- **Errors** — Trail is run-wide (App-shared) but `_current` is AsyncLocal (flow-scoped). User and System errors mix into the same Trail. Your intuition is right — **Trail should be per-actor**. The AsyncLocal-current stays correct.\n\n- **Snapshot** — `app.Snapshot` doesnt actually exist as a property. `Snapshot.@this` is instantiated per-operation (App.this.Snapshot.cs:18, CallStack/this.Snapshot.cs:94, Callback/ErrorCallback.cs:102 — each `new Snapshot.@this()`). My map was wrong. Removed from shared; added a new \"Per-operation\" section.\n\n- **Callback** — confirmed shared is correct. Its purely *config* (`app.Callback.Signature.ExpiresInMs`), not a callback registry. Actual callbacks live with the Data they belong to. App-level config makes sense.\n\n**Architectural direction noted but bigger than this plan:**\n\n- **Build/Debug/Testing as per-context mode flags** — your `- set debug = true`, `- build my.goal`, `- run tests on /tests`, `- add before /admin call Authenticate` examples describe per-context modes. Today these are app-level CLI flags (`plang --builder`, `--debug`, `--tester` set them at launch). The shift to per-context is a real architectural direction but bigger than this cleanup plan — added a section \"App-level today, but the scope is wrong or contested\" naming it as a future direction. Probably its own plan after this one lands.\n\n**Navigators (general comment)** — today on App, registered at boot via `Navigators.RegisterDefaults()`. Your point that its per-Data and feels like a Variables thing is real — added as Open Question 7. Worth deciding whether `Navigators` moves under `Variables/` or `Data/`, or stays on App.\n\nUpdated the scope-map: corrected the shared list (removed Snapshot, Catalog, Choices), added two new sections (App-level-but-scope-wrong, Per-operation), added Context.Events to the per-actor list, rewrote the Open questions to separate \"settled by digging\" from \"still genuinely open.\"\n\nRead through the updated doc and let me know which of the still-open questions (1, 2, 3, 4, 7, 8) want decisions now vs deferred to follow-up plans.",
+      "anchor": "| Property | Type | Reason for shared scope |",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "70aaafbc23",
+      "ts": "2026-05-08T17:56:05",
+      "drifted": false
+    },
+    {
+      "id": "4d7956569c",
+      "line": 46,
+      "text": "you can move app.build, .debug, .testing up to app level, we wont change this in this branch\nnot sure about rest, Events seems huge task, or maybe we just need to chat about it\n.Trail I have no idea, what do you say?",
+      "anchor": "These properties exist on `App.@this` today but the actual usage pattern doesn't match \"one shared instance per app.\" Each is flagged for what's true now and what Ingi's intuition says it should be.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T18:08:05",
+      "drifted": true
+    },
+    {
+      "id": "488c7d3326",
+      "line": 46,
+      "text": "Done. Build/Debug/Testing moved back to the shared (App-level) list with notes that per-context mode flags are a future direction not addressed in this branch. Events kept in a slimmer drift section flagged \"deferred for chat.\" For Errors.Trail — my read: shared isnt actively breaking; \"all errors that happened in this app run\" is a coherent meaning for a diagnostic Trail, and no current consumer needs per-actor isolation. Lean: leave shared, no change in this branch. Revisit if a per-actor use case (e.g., per-actor error reporting in a UI) ever surfaces. Captured that as the recommendation in the doc.",
+      "anchor": "| `app.Navigators` | `Data.Navigators.@this` | Data navigation registry. ★ Open question 7 — Ingi questions whether this belongs on App or under Variables. |",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "4d7956569c",
+      "ts": "2026-05-08T18:13:18",
+      "drifted": true
+    },
+    {
+      "id": "6cc44f39ce",
+      "line": 89,
+      "text": "It is one per app.",
+      "anchor": "After stage 13 (`settings-collection-rework`): `Settings/this.cs` becomes a collection over Data; the SettingsVariable absorption changes the shape. The new question is: is the resulting `Settings.@this` shared (one per app) or per-actor? Per the per-actor `SettingsStore`, it's likely *per-actor* — because the storage is per-actor. **Need to settle.**",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T18:01:55",
+      "drifted": true
+    },
+    {
+      "id": "ccf626e26c",
+      "line": 91,
+      "text": "there is only going to be system.sqlite for the settings, on per app, using system.sqlite",
+      "anchor": "**2. `actor.SettingsStore` — per-actor SQLite, but shared storage paths?**",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T18:02:37",
+      "drifted": true
+    },
+    {
+      "id": "901f10ed0e",
+      "line": 93,
+      "text": "Settled — Settings.@this is shared (one per app). Updated Mixed cases section + stage 13 description in plan.md to reflect this.",
+      "anchor": "Today: one `SettingsVariable` lives on App; it gets registered on every actor's `Context.Variables` (Actor.this.cs:133). Navigation hook exists once per actor; the object itself is shared.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "6cc44f39ce",
+      "ts": "2026-05-08T18:13:19",
+      "drifted": false
+    },
+    {
+      "id": "e7672834b5",
+      "line": 95,
+      "text": "Settled — SettingsStore moves from per-actor (todays drift) to App level (`app.SettingsStore` backed by `system.sqlite`). Verified: every real consumer already goes through `app.System.SettingsStore` (Goals/Setup, identity provider, llm provider, settings module); zero callers ever use Users store. The per-actor `_dataSource` field on Actor is dead drift. Folded into stage 13s scope. Updated plan.md stage 13 description: collection-over-Data + app-level SettingsStore relocation + RegisterNavigable mechanism.",
+      "anchor": "After stage 13 (`settings-collection-rework`): the `Settings.@this` collection is **shared (one per app)** — Ingi confirmed 2026-05-08. There's only going to be `system.sqlite` for settings (per-app, not per-actor). The current per-actor allocation in `Actor.@this._dataSource` is dead drift; future stage 13 work also moves SettingsStore to App level.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "ccf626e26c",
+      "ts": "2026-05-08T18:13:19",
+      "drifted": false
+    },
+    {
+      "id": "4678c0ee3e",
+      "line": 101,
+      "text": "what is the question?",
+      "anchor": "After stage 7 (`callstack-promote-app-property`), the property moves from `app.Debug.CallStack` to `app.CallStack` directly. Still shared.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T18:04:14",
+      "drifted": true
+    },
+    {
+      "id": "86380e1b60",
+      "line": 101,
+      "text": "Youre right, there wasnt one — that was a stray sentence ending without a question. Reworded the CallStack section to drop the implied question and just state the shared-data, multiple-paths-to-reach-it pattern (App owns the tree; Context exposes a read-through view; stage 7 promotes the property).",
+      "anchor": "The CallStack tree is one per app run. `Context.CallStack` is a read-through accessor (`Context/this.cs:48: CallStack => App.Debug?.CallStack`). Data lives shared on App; navigation path also exposed through Context. Not a scope mismatch — conventional shared-data, multiple-paths-to-reach-it pattern. Stage 7 promotes the property to `app.CallStack` directly.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "4678c0ee3e",
+      "ts": "2026-05-08T18:13:19",
+      "drifted": true
+    },
+    {
+      "id": "94f53155fc",
+      "line": 101,
+      "text": "\"The CallStack tree is one per app run.\" is it tho? isn't it per context? isn't App.Debug.CallStack just config? make sure, because if callstack is on App.Debug I think we are in trouble",
+      "anchor": "The CallStack tree is one per app run. `Context.CallStack` is a read-through accessor (`Context/this.cs:48: CallStack => App.Debug?.CallStack`). Data lives shared on App; navigation path also exposed through Context. Not a scope mismatch — conventional shared-data, multiple-paths-to-reach-it pattern. Stage 7 promotes the property to `app.CallStack` directly.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "86380e1b60",
+      "ts": "2026-05-08T18:22:01",
+      "drifted": true
+    },
+    {
+      "id": "f490667cef",
+      "line": 101,
+      "text": "Youre right to worry. Dug in — `App/Debug/this.cs:101` allocates one CallStack per app; inside it, `_current` is correctly AsyncLocal (flow-scoped), but `_root`, `Audit`, and the tree structure are shared. Under parallel execution (web-pool, concurrent Contexts), pushes from different request flows interleave into one tree; Audit mixes traces; `%!callStack%` may show frames from a concurrent flow. Sequential CLI works; parallel doesnt.\n\nKept as-is for this branch per your call — stage 7 stays a pure property-promotion (`app.Debug.CallStack` → `app.CallStack`); scope remains shared. Filed in `Documentation/Runtime2/todos.md` 2026-05-08 with the full analysis (per-context vs split-config-from-state options) for when this becomes the active concern. Updated scope-map.md Mixed-cases entry to reflect \"shared today, scope wrong for parallel, kept as-is, todo filed.\"",
+      "anchor": "Future stage (stage 13): move to `app.SettingsStore` (one shared instance backed by `system.sqlite`); drop the per-actor `_dataSource` field; sweep `app.System.SettingsStore` references to `app.SettingsStore`.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "94f53155fc",
+      "ts": "2026-05-08T18:30:12",
+      "drifted": false
+    },
+    {
+      "id": "a6227a0e88",
+      "line": 109,
+      "text": "you mean we should remove the shortcuts?",
+      "anchor": "These two app-root properties are conveniences that hide the per-actor reality. Call sites using `app.Variables` are implicitly per-actor (the *current* actor). That's the same anti-pattern flagged in `principles.md` (\"implicit per-actor dependencies dressed up as app-level reaches\"). Worth a future cleanup pass — likely fold into stage 10 (`app-run-redesign`) when App.Run gets clarified.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T18:04:51",
+      "drifted": true
+    },
+    {
+      "id": "fcabc028d9",
+      "line": 109,
+      "text": "it actually migth be issue having these shortcuts, if we run paralell, we have the same app but new context, so maybe we should remove it",
+      "anchor": "These two app-root properties are conveniences that hide the per-actor reality. Call sites using `app.Variables` are implicitly per-actor (the *current* actor). That's the same anti-pattern flagged in `principles.md` (\"implicit per-actor dependencies dressed up as app-level reaches\"). Worth a future cleanup pass — likely fold into stage 10 (`app-run-redesign`) when App.Run gets clarified.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "a6227a0e88",
+      "ts": "2026-05-08T18:05:32",
+      "drifted": true
+    },
+    {
+      "id": "dadbed1cd3",
+      "line": 109,
+      "text": "Yes, settled both (yours below confirmed it). The shortcuts get removed — theyre fragile under parallel execution (same App, multiple Contexts in flight, the shortcut returns whichever actor is current per AsyncLocal which is non-deterministic in the parallel case). Updated Mixed cases section to mark as settled-remove. Folded into stage 10s scope (`app-run-redesign` already touches Apps surface; the shortcut sweep fits there). Stage 10 description in plan.md updated. If the sweep turns out too big to fold, it carves out as its own small stage.",
+      "anchor": "```",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "a6227a0e88",
+      "ts": "2026-05-08T18:13:19",
+      "drifted": true
+    },
+    {
+      "id": "439253959d",
+      "line": 172,
+      "text": "whichever, you choose",
+      "anchor": "3. **`Channel.@this.App` back-ref after stage 1** — once `Channel.@this.Channels` exists, App is reachable via `Channels.Actor.App`. Remove in a future stage, or keep both?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T18:31:54",
+      "drifted": true
+    },
+    {
+      "id": "e4ec0c59da",
+      "line": 172,
+      "text": "Choose: **remove** in a future stage. Once stage 1s `Channel.Channels` back-ref lands, App is reachable via `Channels.Actor.App`; the direct `Channel.App` back-ref is redundant and violates the single-navigation-point OBP discipline. Filed as **stage 20** (`channel-app-backref-drop`) — small mechanical sweep depending on stage 1.",
+      "anchor": "- **Snapshot** is per-operation, not shared. Map corrected.",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "439253959d",
+      "ts": "2026-05-08T18:35:34",
+      "drifted": false
+    },
+    {
+      "id": "3d54a0741a",
+      "line": 173,
+      "text": "per app. this is global cache",
+      "anchor": "4. **`app.Cache`** — today shared (cross-actor step-cache hits). Per-actor would isolate. Confirm intended shared, or flag for follow-up?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T18:32:16",
+      "drifted": true
+    },
+    {
+      "id": "ee2e2f5d72",
+      "line": 173,
+      "text": "Settled — shared per app. Updated annotation in shared list to make the design intent explicit.",
+      "anchor": "- **Events de facto pattern** — PLang `event.on` writes to `Context.Events` (per-actor), the middle of the three intentional tiers. (Earlier this map called `app.Events` \"dead drift\" — that was wrong; correction recorded above.)",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "3d54a0741a",
+      "ts": "2026-05-08T18:35:34",
+      "drifted": false
+    },
+    {
+      "id": "07ae6219ae",
+      "line": 174,
+      "text": "I think it should move yes",
+      "anchor": "7. **`app.Navigators` placement** — Ingi's general comment: \"this is per Data… I would have thought this is more of a Variables thing since Data is stored and retrieved in the Variables.\" Today registered at boot via `Navigators.RegisterDefaults()` on App. Move under Variables/ or Data/, or keep on App?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-08T18:32:44",
+      "drifted": true
+    },
+    {
+      "id": "0b60c690ce",
+      "line": 174,
+      "text": "Confirmed move. Filed as **stage 21** (`navigators-to-variables`): folder `App/Data/Navigators/` → `App/Variables/Navigators/`; namespace `App.Data.Navigators` → `App.Variables.Navigators`; property `app.Navigators` → `app.Variables.Navigators`; boot registration `Navigators.RegisterDefaults()` moves to where Variables is allocated. Pure folder relocation + namespace rename + caller sweep; no behaviour change. Tree updated to show Navigators under Variables/.",
+      "anchor": "- **Errors `_current`** is correctly AsyncLocal (flow-scoped); only Trail was at issue (now settled above).",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "07ae6219ae",
+      "ts": "2026-05-08T18:35:34",
       "drifted": false
     }
   ]
