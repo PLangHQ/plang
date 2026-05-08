@@ -29,10 +29,11 @@ public class Stage6_EntryPointWiringTests
     }
 
     [Test]
-    public async Task AppThis_SerializersExists_AtAppLevel()
+    public async Task AppThis_SerializersExists_PerActor()
     {
         await using var app = new global::App.@this("/tmp/s6c");
-        await Assert.That(app.Serializers).IsNotNull();
+        await Assert.That(app.User.Channels.Serializers).IsNotNull();
+        await Assert.That(app.System.Channels.Serializers).IsNotNull();
     }
 
     [Test]

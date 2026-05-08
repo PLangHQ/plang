@@ -75,6 +75,14 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public global::App.@this? App { get; internal set; }
 
     /// <summary>
+    /// The Channels collection this channel belongs to — set by
+    /// <see cref="App.Channels.@this.Register"/>. Stream channels navigate through
+    /// this to reach their parent Channels' Serializers registry; the per-actor
+    /// Channels owns the single Serializers home.
+    /// </summary>
+    public global::App.Channels.@this? Channels { get; internal set; }
+
+    /// <summary>
     /// Whether reading is supported. Default tracks Direction + IsOpen; concretes can override.
     /// </summary>
     public virtual bool CanRead => IsOpen && Direction != ChannelDirection.Output;

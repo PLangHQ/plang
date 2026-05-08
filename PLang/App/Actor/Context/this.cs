@@ -169,7 +169,7 @@ public sealed class @this : IDisposable
         vars.Set(new Data.DynamicData("!callStack", () => CallStack));
         vars.Set(new Data.DynamicData("!trace", () => Trace));
         vars.Set(new Data.DynamicData("!channels", () => Actor?.Channels));
-        vars.Set(new Data.DynamicData("!serializers", () => App.Serializers));
+        vars.Set(new Data.DynamicData("!serializers", () => Actor!.Channels.Serializers));
         vars.Set(new Data.DynamicData("!goal", () => Goal));
         vars.Set(new Data.DynamicData("!step", () => Step));
         // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by

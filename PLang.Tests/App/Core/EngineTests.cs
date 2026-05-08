@@ -148,7 +148,7 @@ public class EngineTests
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
         await Assert.That(engine.Modules).IsNotNull();
-        await Assert.That(engine.Serializers).IsNotNull();
+        await Assert.That(engine.User.Channels.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
         await Assert.That(engine.FileSystem).IsNotNull();
     }
@@ -204,8 +204,8 @@ public class EngineTests
     {
         await using var engine = new global::App.@this("/app");
 
-        await Assert.That(engine.Serializers).IsNotNull();
-        await Assert.That(engine.Serializers.GetByContentType("application/json")).IsNotNull();
+        await Assert.That(engine.User.Channels.Serializers).IsNotNull();
+        await Assert.That(engine.User.Channels.Serializers.GetByContentType("application/json")).IsNotNull();
     }
 
     [Test]

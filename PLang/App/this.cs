@@ -148,12 +148,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     public App.FileSystem.IPLangFileSystem FileSystem { get; set; }
 
     /// <summary>
-    /// App-wide serializer registry — content-type routing for I/O. Stage 6 promoted
-    /// from per-actor Channels to App-level: actors share one serializer registry.
-    /// </summary>
-    public Serializers Serializers { get; } = new Serializers();
-
-    /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
     /// </summary>
     public ICache Cache { get; set; } = new MemoryStepCache();

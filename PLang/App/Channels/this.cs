@@ -26,8 +26,9 @@ public sealed class @this : IAsyncDisposable
     internal global::App.Actor.@this? Actor { get; set; }
 
     /// <summary>
-    /// The serializer registry — content-type routing for I/O.
-    /// Stage 6 promotes this to <c>App.Serializers</c> (app-wide, not per-actor).
+    /// The serializer registry — content-type routing for I/O. Per-actor:
+    /// each actor's Channels owns its own registry. Boot-time defaults register
+    /// identically per actor; runtime extensions apply to the registering actor.
     /// </summary>
     public Serializers.@this Serializers { get; }
 
@@ -110,6 +111,7 @@ public sealed class @this : IAsyncDisposable
     public void Register(Channel.@this channel)
     {
         channel.App = _app;
+        channel.Channels = this;
         if (channel.Actor == null) channel.Actor = Actor;
         _channels[channel.Name] = channel;
     }
@@ -173,7 +175,7 @@ public sealed class @this : IAsyncDisposable
         {
             try
             {
-                await sc.Serializers.SerializeAsync(new SerializeOptions
+                await Serializers.SerializeAsync(new SerializeOptions
                 {
                     Stream = sc.Stream,
                     Data = envelope.Value,
@@ -201,7 +203,7 @@ public sealed class @this : IAsyncDisposable
         {
             try
             {
-                var result = await sc.Serializers.DeserializeAsync<T>(new DeserializeOptions
+                var result = await Serializers.DeserializeAsync<T>(new DeserializeOptions
                 {
                     Stream = sc.Stream,
                     ContentType = sc.Mime,

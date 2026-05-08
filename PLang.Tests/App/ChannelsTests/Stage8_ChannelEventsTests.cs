@@ -39,7 +39,9 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task BeforeWriteHandler_ReceivesCorrectData()
     {
+        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("logger");
+        app.User.Channels.Register(ch);
         Data? captured = null;
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, payload) =>
         {
@@ -73,7 +75,9 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task AfterWriteHandler_FiresWhenWriteCoreSucceeds()
     {
+        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
+        app.User.Channels.Register(ch);
         bool afterFired = false;
         ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
         {
@@ -106,7 +110,9 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task AfterWriteHandler_ThrowingIsSuppressed_OriginalOutcomeStands()
     {
+        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
+        app.User.Channels.Register(ch);
         ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
             throw new InvalidOperationException("after fail")));
         var result = await ch.WriteAsync(Data.Ok("hi"));
@@ -132,7 +138,9 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task MultipleBindings_FireInRegistrationOrder()
     {
+        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
+        app.User.Channels.Register(ch);
         var order = new List<string>();
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("A"); return Task.FromResult(Data.Ok()); }));
         ch.Events.Add(new EventBinding(EventType.BeforeWrite, (_, _, _) => { order.Add("B"); return Task.FromResult(Data.Ok()); }));

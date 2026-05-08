@@ -317,12 +317,12 @@ public sealed class @this
             var trimmed = content.TrimStart();
             if (trimmed.StartsWith('['))
             {
-                goals = app.Serializers.Deserialize<List<Goal.@this>>(
+                goals = app.System.Channels.Serializers.Deserialize<List<Goal.@this>>(
                     new Channels.Serializers.DeserializeOptions { Value = content, Extension = ext });
             }
             else
             {
-                var single = app.Serializers.Deserialize<Goal.@this>(
+                var single = app.System.Channels.Serializers.Deserialize<Goal.@this>(
                     new Channels.Serializers.DeserializeOptions { Value = content, Extension = ext });
                 if (single != null)
                     goals = new List<Goal.@this> { single };

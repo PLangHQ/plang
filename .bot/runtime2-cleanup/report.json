@@ -481,6 +481,85 @@
         "health": "plan + principles + tree + scope-map + summary all consistent; zero open user comments",
         "notes": "Coder reads plan.md \u2192 principles.md \u2192 scope-map.md \u2192 stage-1 brief and starts."
       }
+    },
+    {
+      "id": "8c3a72b5-1f4e-4d6a-9c8f-3e2a7b6d1f0c",
+      "bot": "coder",
+      "timestamp_start": "2026-05-08T00:00:00Z",
+      "timestamp_end": "2026-05-08T01:30:00Z",
+      "intent": "Stage 1: per-actor Channels.Serializers as single home; delete App.Serializers and Stream._serializers; add Channel.Channels back-ref.",
+      "before": {
+        "assumptions": "Baseline tests fully green (C# 2755/2755, PLang 199/199) on tip c18ae01c. Architect plan and stage 1 brief are precise: 5 production sites and 6 test files to sweep.",
+        "risk": "Low \u2014 mechanical refactor. Boot-ordering of Channel.Channels back-ref must be set before any WriteCore call; only Stream factories that bypass Channels.Register would break (none observed)."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/this.cs",
+            "PLang/App/Channels/Channel/this.cs",
+            "PLang/App/Channels/Channel/Stream/this.cs",
+            "PLang/App/Channels/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Core realignment: drop App.Serializers property; drop Stream._serializers + Serializers property; add Channel.Channels back-ref; set it in Channels.Register; route Stream.WriteCore through Channels!.Serializers; collapse two internal sc.Serializers sites in Channels to this.Serializers."
+        },
+        {
+          "paths": [
+            "PLang/App/Goals/this.cs",
+            "PLang/App/Goals/Setup/this.cs",
+            "PLang/App/modules/file/providers/DefaultFileProvider.cs",
+            "PLang/App/Actor/Context/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Production caller sweep \u2014 all 5 external app.Serializers sites move to per-actor form: Goals/Setup \u2192 app.System.Channels.Serializers (app-level infra), DefaultFileProvider \u2192 action.Context.Actor.Channels.Serializers, Context.!serializers DynamicData \u2192 () => Actor!.Channels.Serializers."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serializers/JsonSerializerRoundTripTests.cs",
+            "PLang.Tests/App/Serializers/MimeRegistrationTests.cs",
+            "PLang.Tests/App/Serializers/PlangDataSerializerRoundTripTests.cs",
+            "PLang.Tests/App/CallbackTests/FailureMatrixTests.cs",
+            "PLang.Tests/App/Core/EngineTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage6_EntryPointWiringTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test caller sweep mirroring the production sweep. Stage6 wiring test renamed AppThis_SerializersExists_AtAppLevel \u2192 AppThis_SerializersExists_PerActor and now asserts both User.Channels.Serializers and System.Channels.Serializers are non-null."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/ChannelsTests/Stage1_ChannelBaseTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage2_StreamChannelTests.cs",
+            "PLang.Tests/App/ChannelsTests/Stage8_ChannelEventsTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Boot-ordering follow-through: 7 unit tests previously constructed StreamChannel directly and called WriteCore/WriteAsync. With Channels back-ref required and lazy fallback gone, those NRE'd. Each updated to register through `app.User.Channels.Register(ch)` (autoWireConsoleChannels:false App) before exercising. Stage8 tests where BeforeWrite aborts before WriteCore left untouched."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/coder/v1/plan.md",
+            ".bot/runtime2-cleanup/coder/v1/baseline-tests.md",
+            ".bot/runtime2-cleanup/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Coder bot session artefacts: baseline test capture (both suites green pre-change), plan.md with the file edits, summary.md with the realignment example and stage-20 hand-off notes."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green \u2014 both suites match baseline exactly",
+        "notes": "C# 2755/2755 pass; PLang 199/199 pass. Greps for `app.Serializers`, `_serializers` in Channels, and `sc.Serializers` all return zero. Build clean (0 errors, 448 warnings = unchanged from baseline). Ready for codeanalyzer."
+      }
     }
   ]
 }

@@ -13,20 +13,9 @@ namespace App.Channels.Channel.Stream;
 public sealed class @this : Session.@this
 {
     private readonly bool _ownsStream;
-    private Serializers.@this? _serializers;
 
     /// <summary>The underlying stream this channel reads/writes.</summary>
     public global::System.IO.Stream Stream { get; }
-
-    /// <summary>
-    /// Optional serializer registry override. Defaults to a process-wide instance lazily.
-    /// Stage 6 promotes this to <c>App.Serializers</c>; for now Stream channels carry the registry.
-    /// </summary>
-    public Serializers.@this Serializers
-    {
-        get => _serializers ??= new Serializers.@this();
-        init => _serializers = value;
-    }
 
     public @this(string name, global::System.IO.Stream stream,
         ChannelDirection direction = ChannelDirection.Bidirectional,
@@ -61,7 +50,7 @@ public sealed class @this : Session.@this
 
         try
         {
-            await Serializers.SerializeAsync(new SerializeOptions
+            await Channels!.Serializers.SerializeAsync(new SerializeOptions
             {
                 Stream = Stream,
                 Data = data.Value,

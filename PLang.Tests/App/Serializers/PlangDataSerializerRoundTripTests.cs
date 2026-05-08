@@ -21,7 +21,7 @@ public class PlangDataSerializerRoundTripTests
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
-        var s = app.Serializers.GetByMimeType("application/plang+data");
+        var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
         var wire = s.Serialize(data);
 
         await Assert.That(wire.Contains("\"type\"")).IsTrue();
@@ -39,7 +39,7 @@ public class PlangDataSerializerRoundTripTests
 
         await Assert.That(data.RawSignature).IsNull();
 
-        var s = app.Serializers.GetByMimeType("application/plang+data");
+        var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
         s.Serialize(data);
 
         await Assert.That(data.RawSignature).IsNotNull();
@@ -52,7 +52,7 @@ public class PlangDataSerializerRoundTripTests
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
-        var s = app.Serializers.GetByMimeType("application/plang+data");
+        var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
         var wire = s.Serialize(data);
         var restored = s.Deserialize<Data>(wire);
 
@@ -71,7 +71,7 @@ public class PlangDataSerializerRoundTripTests
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
-        var s = app.Serializers.GetByMimeType("application/plang+data");
+        var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
         var wire = s.Serialize(data);
         var restored = s.Deserialize<Data>(wire);
 
@@ -86,7 +86,7 @@ public class PlangDataSerializerRoundTripTests
     public async Task PlangDataSerializer_HandlesApplicationPlangDataMimeType()
     {
         var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var s = app.Serializers.GetByMimeType("application/plang+data");
+        var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
         await Assert.That(s).IsTypeOf<PlangDataSerializer>();
         await Assert.That(s.ContentType).IsEqualTo("application/plang+data");
     }
