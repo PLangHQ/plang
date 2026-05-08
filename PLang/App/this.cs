@@ -424,87 +424,32 @@ public sealed partial class @this : IAsyncDisposable
     public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context, CallStack.Call.@this? cause = null)
     {
         var (handler, error) = Modules.GetCodeGenerated(action);
-        if (error != null)
-            return Data.@this.FromError(error);
+        if (error != null) return Data.@this.FromError(error);
 
-        var step = action.Step;
-        var stack = CallStack;
+        // CallStackOverflowException (depth limit or ContainsGoal cycle) trips at Push,
+        // before the call frame is on the stack — catch it here so App.Run's contract
+        // (returns Data, never throws) holds. Once Push succeeds the Call owns its
+        // own try/catch via ExecuteAsync.
+        CallStack.Call.@this call;
+        try { call = CallStack.Push(action, context.Variables, cause); }
+        catch (Errors.CallStackOverflowException ex) { return HandleOverflow(ex, action.Step, CallStack); }
 
-        // Push BEFORE the handler runs so call.SnapshotChain() inside the catch reflects
-        // "self at index [0]" — the failing Call IS in the chain (behavior tweak vs old
-        // shape that captured pre-push frames). CallStackOverflowException (depth limit
-        // or ContainsGoal cycle) trips at Push, before the call frame is on the stack;
-        // catch it here so App.Run's contract (returns Data, never throws) holds.
-        global::App.CallStack.Call.@this call;
-        try
-        {
-            call = stack.Push(action, context.Variables, cause);
-        }
-        catch (global::App.Errors.CallStackOverflowException ex)
-        {
-            var caller = stack.Current;
-            var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::App.CallStack.Call.@this>();
-            var overflowErr = new global::App.Errors.ServiceError(
-                ex.Message, step!, chain, "CallStackOverflow", 500) { Exception = ex };
-            stack.Audit.Add(overflowErr);
-            return Data.@this.FromError(overflowErr);
-        }
+        // Dispose order matters: anchor restore must run BEFORE Call's await-using
+        // dispose (AsyncLocal restore, Children removal, Variables.OnSet unsubscribe).
+        // C# disposes in reverse declaration order — declare `await using call` first
+        // so the inner `using anchor` disposes first.
         await using var _ = call;
+        using var _anchor = context.AnchorScope(action);
+        return await call.ExecuteAsync(handler!, context);
+    }
 
-        // Save context anchors so nested dispatch can mutate them and we restore on the way out.
-        // Step.Context is mutated to point at the live dispatch context — capture+restore so
-        // parallel dispatches of the same Step (legal under Task.WhenAll on `goal.call`) don't
-        // leave a sibling branch's Context pointer leaked on the shared Step instance.
-        var previousStep = context.Step;
-        var previousGoal = context.Goal;
-        var previousEvent = context.Event;
-        var previousStepContext = action.Step?.Context;
-        context.Step = action.Step;
-        if (context.Step != null) context.Step.Context = context;
-        context.Goal = action.Step?.Goal;
-
-        try
-        {
-            var result = await handler!.ExecuteAsync(action, context);
-            // Stamp __SnapshotParams onto Error.Params if the handler returned an error
-            // without one already populated. (Generator no longer attaches snapshots
-            // inside ExecuteAsync — that responsibility moved here in v4 Phase 3.)
-            if (!result.Success && result.Error is global::App.Errors.Error err)
-            {
-                if (err.Params == null) err.Params = handler.SnapshotParams();
-                // Capture the failing Call chain so error.handle (and other downstream
-                // observers) can identify the failing Call after this scope's Push pops.
-                // Snapshot is index-[0]=self, walking Caller upward — matches the
-                // ServiceError catch path below.
-                if (err.CallFrames.Count == 0) err.CallFrames = call.SnapshotChain();
-                call.Errors.Add(result.Error!);
-                stack.Audit.Add(result.Error!);
-            }
-            return result;
-        }
-        // Deliberately catches OperationCanceledException — timeout.after depends on this:
-        // the inner action's generated ExecuteAsync swallows OCE into a ServiceError result,
-        // so timeout.after detects the timeout via CTS state + failed result, not via OCE
-        // bubbling up. Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            var serviceErr = new global::App.Errors.ServiceError(
-                ex.Message, step!, call.SnapshotChain(), "ServiceError", 400) { Exception = ex };
-            serviceErr.Params = handler!.SnapshotParams();
-            call.Errors.Add(serviceErr);
-            stack.Audit.Add(serviceErr);
-            return Data.@this.FromError(serviceErr);
-        }
-        finally
-        {
-            // Anchor restore runs before the `await using` dispose — the Call's own
-            // bookkeeping (AsyncLocal restore, Children removal when history off,
-            // Variables.OnSet unsubscribe) doesn't depend on Step/Goal/Event being set.
-            context.Step = previousStep;
-            context.Goal = previousGoal;
-            context.Event = previousEvent;
-            if (action.Step != null) action.Step.Context = previousStepContext;
-        }
+    private static Data.@this HandleOverflow(Errors.CallStackOverflowException ex, Step? step, CallStack.@this stack)
+    {
+        var caller = stack.Current;
+        var chain = caller != null ? caller.SnapshotChain() : Array.Empty<CallStack.Call.@this>();
+        var overflowErr = new Errors.ServiceError(ex.Message, step!, chain, "CallStackOverflow", 500) { Exception = ex };
+        stack.Audit.Add(overflowErr);
+        return Data.@this.FromError(overflowErr);
     }
 
     /// <summary>

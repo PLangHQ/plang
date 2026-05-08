@@ -2,6 +2,7 @@
 
 ## Version
 
+v10 — Stage 10 (`app-run-redesign`).
 v9 — Stage 9 (`catalog-dissolve-to-modules-schema`).
 v8 — Stage 8 (`read-file-off-channels`).
 v7 — Stage 7 (`callstack-promote-app-property`).
@@ -11,6 +12,94 @@ v4 — Stage 4 (`dispose-self-owns`).
 v3 — Stage 3 (`keepalive-collection`).
 v2 — Stage 2 (`channels-v1-helpers-drop`).
 v1 — Stage 1 (`serializers-single-home`).
+
+---
+
+## v10 — Stage 10 (`app-run-redesign`)
+
+### What this is
+
+The headliner. `App.Run` was 85 lines with ~10 foreign mutations on
+`context` (Step, Goal, Event, Step.Context) plus an inline try/catch that
+stamped errors with `SnapshotParams` and `CallFrames`. Two new
+abstractions extract those concerns to their natural owners:
+
+- `Context.AnchorScope(action)` — IDisposable that captures the
+  Step/Goal/Event/Step.Context anchors, sets them to the action's, and
+  restores on Dispose.
+- `Call.ExecuteAsync(handler, context)` — runs the handler, stamps
+  errors with `SnapshotParams` + `SnapshotChain()`, adds to `Errors` +
+  `_stack.Audit`, and swallows OCE into a `ServiceError` (timeout.after
+  contract).
+
+App.Run now reads as: get handler → push call (with overflow catch) →
+AnchorScope → `call.ExecuteAsync(handler, context)`.
+
+### What was done
+
+**`PLang/App/Actor/Context/this.cs`** — new `AnchorScope(Action action)`
+method + private `AnchorScopeDisposable` struct. The struct captures
+prevStep / prevGoal / prevEvent / prevStepContext on construction (the
+caller-side AnchorScope sets the new anchors immediately after); Dispose
+restores. `action.Step.Context = this` swap (the parallel-Task.WhenAll
+guard) lives inside AnchorScope's setter.
+
+**`PLang/App/CallStack/Call/this.cs`** — new `ExecuteAsync(ICodeGenerated
+handler, Actor.Context.@this context)` instance method. Reads
+`this.Action`, `this.Errors`, `this._stack.Audit`, `this.SnapshotChain()`
+— no extra parameters. Holds the handler-execution try/catch plus the
+OCE swallow. Same error-stamping order as before (Params then
+CallFrames; both gated on "if not already set").
+
+**`PLang/App/this.cs`** — `App.Run` collapses from 85 lines to ~15:
+
+```csharp
+public async Task<Data.@this> Run(Action action, Context context, Call? cause = null)
+{
+    var (handler, error) = Modules.GetCodeGenerated(action);
+    if (error != null) return Data.@this.FromError(error);
+
+    Call call;
+    try { call = CallStack.Push(action, context.Variables, cause); }
+    catch (CallStackOverflowException ex) { return HandleOverflow(ex, action.Step, CallStack); }
+
+    await using var _ = call;
+    using var _anchor = context.AnchorScope(action);
+    return await call.ExecuteAsync(handler!, context);
+}
+```
+
+`HandleOverflow` stays in App.Run as a private helper because overflow
+trips at Push-time before the Call frame exists — can't fold into
+ExecuteAsync.
+
+### Behaviour preserved precisely
+
+- `CallStackOverflowException` catch tight to `CallStack.Push` only.
+- OperationCanceledException swallowed inside `Call.ExecuteAsync` only —
+  App.Run's outer flow doesn't catch it.
+- Error stamping order: Params → CallFrames (matches today).
+- Dispose order: `await using var _ = call;` declared *before*
+  `using var _anchor = ...;` so reverse-order disposal runs the sync
+  anchor restore first, then the async Call dispose. This mirrors the
+  old code's `try/finally`-then-`await using` ordering.
+- The `action.Step.Context = context` swap (shared-Step parallel-dispatch
+  guard) replicated in AnchorScope's setter.
+
+### Verification
+
+- `dotnet build PlangConsole` clean (0 errors).
+- C# 2755/2755 pass.
+- PLang 199/199 pass.
+- App.Run + HandleOverflow combined: ~30 lines including doc-comments
+  (vs 85 lines before). Happy path is 6 lines.
+
+### Notes
+
+- No file relocations, no caller sweeps. Both new methods are internal
+  to App.Run's flow.
+- Step alias (`global using Step = App.Goals.Goal.Steps.Step.@this`)
+  already in scope — used in the `HandleOverflow` signature.
 
 ---
 

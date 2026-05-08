@@ -263,6 +263,51 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>
+    /// Captures the current Step / Goal / Event / Step.Context anchors and
+    /// sets them to the action's for the dispatch's lifetime. On Dispose,
+    /// restores. Used by App.Run to scope the dispatch context — parallel
+    /// dispatches of the same Step (legal under Task.WhenAll on goal.call)
+    /// don't leave a sibling branch's Context pointer leaked on the shared
+    /// Step instance.
+    /// </summary>
+    public IDisposable AnchorScope(Action action)
+    {
+        var disposable = new AnchorScopeDisposable(this, action);
+        Step = action.Step;
+        if (Step != null) Step.Context = this;
+        Goal = action.Step?.Goal;
+        return disposable;
+    }
+
+    private readonly struct AnchorScopeDisposable : IDisposable
+    {
+        private readonly @this _ctx;
+        private readonly Action _action;
+        private readonly Step? _previousStep;
+        private readonly Goal? _previousGoal;
+        private readonly modules.EventContext? _previousEvent;
+        private readonly @this? _previousStepContext;
+
+        public AnchorScopeDisposable(@this ctx, Action action)
+        {
+            _ctx = ctx;
+            _action = action;
+            _previousStep = ctx.Step;
+            _previousGoal = ctx.Goal;
+            _previousEvent = ctx.Event;
+            _previousStepContext = action.Step?.Context;
+        }
+
+        public void Dispose()
+        {
+            _ctx.Step = _previousStep;
+            _ctx.Goal = _previousGoal;
+            _ctx.Event = _previousEvent;
+            if (_action.Step != null) _action.Step.Context = _previousStepContext;
+        }
+    }
+
+    /// <summary>
     /// Clones this context with a new Variables.
     /// Test fixture — see CreateChild. Not used by production code; the property
     /// propagation here (IsAsync, Setup, ConfigScope, _data) reflects what existing

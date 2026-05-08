@@ -225,6 +225,54 @@ public sealed partial class @this : IAsyncDisposable
     }
 
     /// <summary>
+    /// Executes the resolved handler under this Call frame. Wraps:
+    ///   - <c>handler.ExecuteAsync(action, context)</c> invocation
+    ///   - error stamping: <c>SnapshotParams</c> onto <c>Error.Params</c>,
+    ///     <c>CallFrames</c> from <see cref="SnapshotChain"/> if not already set
+    ///   - this.Errors.Add and CallStack.Audit.Add on failure
+    ///   - OperationCanceledException swallowing into ServiceError (timeout.after
+    ///     contract: inner action's generated ExecuteAsync swallows OCE; this
+    ///     catch is the safety net for handlers that bubble it differently)
+    /// Returns the handler's result (or a ServiceError-wrapped result on
+    /// caught exception).
+    /// </summary>
+    public async Task<Data.@this> ExecuteAsync(modules.ICodeGenerated handler, Actor.Context.@this context)
+    {
+        try
+        {
+            var result = await handler.ExecuteAsync(Action, context);
+            // Stamp __SnapshotParams onto Error.Params if the handler returned an error
+            // without one already populated. (Generator no longer attaches snapshots
+            // inside ExecuteAsync — that responsibility lives here.)
+            if (!result.Success && result.Error is Error err)
+            {
+                if (err.Params == null) err.Params = handler.SnapshotParams();
+                // Capture the failing Call chain so error.handle (and other downstream
+                // observers) can identify the failing Call after this scope's Push pops.
+                // Snapshot is index-[0]=self, walking Caller upward — matches the
+                // ServiceError catch path below.
+                if (err.CallFrames.Count == 0) err.CallFrames = SnapshotChain();
+                Errors.Add(result.Error!);
+                _stack.Audit.Add(result.Error!);
+            }
+            return result;
+        }
+        // Deliberately catches OperationCanceledException — timeout.after depends on this:
+        // the inner action's generated ExecuteAsync swallows OCE into a ServiceError result,
+        // so timeout.after detects the timeout via CTS state + failed result, not via OCE
+        // bubbling up. Step.RunAsync's catch DOES exclude OCE — that asymmetry is intentional.
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            var serviceErr = new ServiceError(
+                ex.Message, Action.Step!, SnapshotChain(), "ServiceError", 400) { Exception = ex };
+            serviceErr.Params = handler.SnapshotParams();
+            Errors.Add(serviceErr);
+            _stack.Audit.Add(serviceErr);
+            return Data.@this.FromError(serviceErr);
+        }
+    }
+
+    /// <summary>
     /// Disposes the Call: stops the stopwatch, unsubscribes diff capture, restores
     /// AsyncLocal Current, and (when history off) removes self from Caller.Children.
     /// </summary>
