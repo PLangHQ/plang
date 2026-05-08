@@ -592,6 +592,46 @@
       },
       "timestamp_end": "2026-05-08T19:06:50Z",
       "next_bot": "tester"
+    },
+    {
+      "id": "1f2c3a18-7e64-4b9f-9c5a-7d4e6f1b2c8f",
+      "bot": "coder",
+      "timestamp_start": "2026-05-08T20:00:00Z",
+      "timestamp_end": "2026-05-08T20:25:00Z",
+      "intent": "Stage 2: drop dead Channels v1 helpers (two-string WriteAsync overload + contentType-override branch and parameter).",
+      "before": {
+        "assumptions": "Stage 1 landed clean and codeanalyzer passed it. Trunk green at C# 2755/2755 + PLang 199/199. Architect's stage-2 brief is precise: one file, two deletions, ~25 lines gone. DefaultHttpProvider's two callers (lines 852, 907) verified to use the single-string form without contentType.",
+        "risk": "Very low — dead-code deletion. Build break would only surface a missed caller; none expected."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Channels/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Two deletions in one file: (1) the two-string WriteAsync(actorName, channelName, data, ct) overload (10 lines incl. doc); (2) the contentType-override branch + the contentType parameter from the single-string WriteAsync, plus a doc-comment rewrite to match the post-stage-1 reality. Surviving WriteAsync body is 5 lines. Three remaining `is Channel.Stream.@this sc` casts in WriteTextAsync/ReadChannelAsync/ReadTextAsync left in place — flagged in the brief as future-stage work."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/coder/v2/plan.md",
+            ".bot/runtime2-cleanup/coder/v2/baseline-tests.md",
+            ".bot/runtime2-cleanup/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Coder bot v2 session artefacts. summary.md updated to add the v2 entry above the existing v1 entry."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green — both suites match baseline exactly",
+        "notes": "C# 2755/2755 pass; PLang 199/199 pass. Greps all match the brief's DoD: zero `WriteAsync(string actorName`, zero `string? contentType`, three remaining `sc` casts (the explicitly-out-of-scope ones). Build clean."
+      },
+      "next_bot": "codeanalyzer"
     }
   ]
 }

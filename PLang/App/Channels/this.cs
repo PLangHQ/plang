@@ -54,18 +54,6 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// App-level routing helper kept for v1 callers (DefaultHttpProvider etc.).
-    /// Stage 4 replaces with direct Channel navigation; for now this resolves the
-    /// requested channel on the requested actor and writes through it.
-    /// </summary>
-    public async Task<Data.@this> WriteAsync(string actorName, string channelName, object? data, CancellationToken ct = default)
-    {
-        var (actor, error) = _app.GetActor(actorName);
-        if (error != null) return App.Data.@this.FromError(error);
-        return await actor!.Channels.WriteAsync(channelName, data, cancellationToken: ct);
-    }
-
-    /// <summary>
     /// Reads a file and deserializes its content via the serializer registry.
     /// </summary>
     public async Task<T?> ReadAsync<T>(string filePath, CancellationToken cancellationToken = default)
@@ -159,37 +147,16 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Convenience write — resolves the channel and writes via its serializer.
-    /// Stage 4 moves this responsibility entirely onto the resolved Channel; this
-    /// overload remains for v1 callers (DefaultHttpProvider, file/save fall-back).
+    /// Convenience write — resolves the channel by name, wraps the data in an
+    /// envelope if needed, and delegates to the channel's own WriteAsync (which
+    /// fires events and routes through WriteCore + the per-actor Serializers).
     /// </summary>
-    public async Task<Data.@this> WriteAsync(string channelName, object? data, string? contentType = null, CancellationToken cancellationToken = default)
+    public async Task<Data.@this> WriteAsync(string channelName, object? data, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
 
         var envelope = data is Data.@this d ? d : Data.@this.Ok(data);
-        // Mime override on a per-call basis — temporarily set on the channel for routing.
-        // Stage 4 cleans this up by passing options through to WriteCore directly.
-        if (!string.IsNullOrEmpty(contentType) && channel is Channel.Stream.@this sc)
-        {
-            try
-            {
-                await Serializers.SerializeAsync(new SerializeOptions
-                {
-                    Stream = sc.Stream,
-                    Data = envelope.Value,
-                    ContentType = contentType,
-                    CancellationToken = cancellationToken
-                });
-                return App.Data.@this.Ok();
-            }
-            catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-            {
-                return App.Data.@this.FromError(new ServiceError($"Failed to write to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
-            }
-        }
-
         return await channel!.WriteAsync(envelope, cancellationToken);
     }
 
