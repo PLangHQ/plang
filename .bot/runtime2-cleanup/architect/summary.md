@@ -1,5 +1,43 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+7) — Tier 1 complete (stages 5+6 landed); Tier 2 begins (stages 7+8 carved)
+
+**Tier 1 finished.** Stages 5 and 6 landed cleanly per coder — 2755/2755 + 199/199 each. Notable side effect on stage 6: build warnings collapsed 449 → 68 (the inherited Data surface on App generated a flock of nullability warnings that are now gone).
+
+Tier 1 retrospective — six stages, all passed first time, no scope corrections from coder. The "two Tier 1 stages per session" cadence held throughout: stages 1 alone (initial), then 2 alone (transition), then 3+4, then 5+6.
+
+### Stage 7 carve (`callstack-promote-app-property`)
+
+Brief at `stage-7-callstack-promote-app-property.md`. Property relocation: `app.Debug.CallStack` → `app.CallStack`. Folder structure already names App as owner; only the property placement disagrees. Touches:
+
+- App.this.cs gains the property + `new()` allocation.
+- Debug.this.cs loses property (line 76) + allocation (line 101); the one internal use (line 154's `CallStack.Flags = ...`) reaches via Debug's existing App field reference.
+- Context.this.cs:48 read-through accessor updates from `App.Debug?.CallStack` to `App?.CallStack`.
+- 7 external callers swept (App.Run, Snapshot, Goals, ErrorCallback, etc.).
+
+**CallStack scope (per-context vs shared) is filed in `Documentation/Runtime2/todos.md` and explicitly NOT in scope here.** Stage 7 only changes the navigation path.
+
+### Stage 8 carve (`read-file-off-channels`) — reduced to dead-code deletion
+
+Brief at `stage-8-read-file-off-channels.md`. The plan one-liner anticipated relocating `Channels.ReadAsync<T>(filePath)` to `app.Serializers` or FileSystem. Two findings reduced this to pure deletion:
+
+1. **Zero callers** anywhere (verified by two distinct grep patterns across `PLang/`, `PLang.Tests/`, `Tests/`).
+2. **`app.Serializers` no longer exists** — it was deleted in stage 1; per-actor `actor.Channels.Serializers` is the new home. The plan's relocation target is gone.
+
+Just delete the method. If a future caller wants "read a file and deserialize," they write the two-step at the call site.
+
+### Why batch 7 and 8
+
+- Both Tier 2 (medium-sized; 7 is property + 7-caller sweep, 8 is single-method delete).
+- Independent (different files, different concerns).
+- Stage 9 (Catalog dissolution) is substantially bigger and deserves its own focused session — carving it later, not in this batch.
+
+### Stage 9 punted
+
+`catalog-dissolve-to-modules-schema` is the biggest remaining stage in Tier 2: whole `App/Catalog/` folder relocates into `App/Modules/Schema/`, two static formatters in builder providers absorb into `Schema.Render`, Rule E navigation (`Build()` and `Render(spec)` become instance methods on Modules.Schema). Real restructure. Carve in its own session after 7+8 land.
+
+---
+
 ## 2026-05-08 (latest+6) — stages 3 + 4 landed; stages 5 + 6 carved as the Tier 1 finisher
 
 Both stages 3 (`keepalive-collection`) and 4 (`dispose-self-owns`) landed cleanly — coder reported 2755/2755 + 199/199 for each. The Tier 1 batching pattern works.

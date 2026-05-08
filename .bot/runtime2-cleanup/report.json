@@ -820,6 +820,53 @@
         "health": "plan + briefs + scope-map + summary all consistent",
         "notes": "Next session: Tier 2 (stages 7-9 \u2014 callstack-promote, read-file-off-channels, catalog-dissolve)."
       }
+    },
+    {
+      "id": "76f900f4-c3db-4d1a-a32e-50702bdba05c",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T23:00:00Z",
+      "timestamp_end": "2026-05-08T23:30:00Z",
+      "intent": "Tier 1 retrospective; carve stages 7+8 (Tier 2 opener); punt stage 9 to its own focused session.",
+      "before": {
+        "assumptions": "Stages 5 and 6 landed cleanly per coder. Tier 1 done. Stages 7-9 are Tier 2; 7 and 8 are small enough to batch, 9 is bigger and deserves focused attention.",
+        "risk": "Stage 7 has 7 caller sites \u2014 wider sweep than recent stages but mechanical. Stage 8 reduced to dead-code deletion (zero callers; relocation target app.Serializers is gone)."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-7-callstack-promote-app-property.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-7-callstack-promote-app-property.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 7 brief. Property promotion app.Debug.CallStack to app.CallStack. App gains property + allocation; Debug loses both; Debug.Apply line 154 updated to reach via _engine ref. Context.this.cs:48 read-through accessor updated. 7 external callers identified by grep, listed by file:line."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-8-read-file-off-channels.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 8 brief. Plan one-liner anticipated relocating Channels.ReadAsync<T>(filePath) but two findings reduce to pure delete: zero callers verified; app.Serializers (the plan relocation target) was deleted in stage 1."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 5 and 6 marked complete (with stage 6 warning-collapse note). Stages 7 and 8 link briefs and replace one-liners. Summary entry covers Tier 1 retrospective + Tier 2 opener + stage 9 punt rationale."
+        }
+      ],
+      "after": {
+        "status": "stages 7 and 8 ready for coder; both can land in either order; stage 9 carved next round",
+        "health": "plan + briefs + scope-map + summary all consistent at Tier 1 done",
+        "notes": "Stage 9 (catalog-dissolve-to-modules-schema) is substantially bigger \u2014 full folder relocation + Rule E refactor. Its own session after 7+8 land."
+      }
     }
   ]
 }
