@@ -379,14 +379,35 @@
           "category": "doc",
           "confidence": "high",
           "context": "Old file removed; stage 1 was renamed and rewritten."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan/principles.md",
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/plan/post-cleanup-tree.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 1 reframed under the per-actor Serializers model (Ingi: each actor owns its own registry; the smell is the two extra surfaces bypassing per-actor, not the per-actor allocation itself). Principles.md scope test loosened \u2014 classes hold whatever back-ref they need (Context, App, parent-ref, or none), no uniform rule. Stage 20 cancelled (its work folds into stage 1). Stage count 20 \u2192 19. Channels.@this ctor stays (App app) \u2014 no Context conversion in stage 1."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-1-serializers-single-home.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Third rewrite of stage 1 brief. Per-actor model: delete App.Serializers; remove Stream._serializers; add Channel.Channels back-ref; sweep 5 external callers. Channels.@this ctor unchanged. 5 caller sites named with specific access paths (app.System.Channels.Serializers for app-level Goals; action.Context.Actor.Channels.Serializers for handlers; Actor!.Channels.Serializers for DynamicData lambda). Lessons-learned section in summary acknowledges the four-rewrite pattern."
         }
       ],
       "after": {
-        "status": "plan corrected, stage 1 rewritten with Channels-owned ownership; stage 20 (serializers-app-shortcut-drop) carved as a follow-up",
-        "health": "plan/principles/tree/summary all consistent at 20 stages with revised Serializers ownership story",
-        "notes": "Outstanding: rewriting tree note about app.Serializers shortcut going away in stage 20; verifying summary entry chronology. Coder reads plan.md \u2192 principles.md \u2192 stage-1-serializers-single-home.md."
+        "status": "stage 1 ready under per-actor model; principles loosened; stage 20 cancelled; 19 stages total",
+        "health": "plan/principles/tree/summary consistent; coder can read brief and execute",
+        "notes": "Brief carefully validated against actual code (App ctor flow, Actor.this.cs:127-129, Channel.@this:75 App back-ref). New Channel.Channels back-ref is the only additive type-system change in stage 1."
       },
-      "timestamp_end": "2026-05-08T15:30:00Z"
+      "timestamp_end": "2026-05-08T17:00:00Z"
     }
   ]
 }

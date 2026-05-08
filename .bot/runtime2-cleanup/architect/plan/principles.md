@@ -13,6 +13,72 @@ Reproduced from `/CLAUDE.md` so the cleanup work is anchored against the canonic
 
 If removing one line of choreography requires editing three files, those three files are one missing type.
 
+## The Context principle (foundational — added 2026-05-08)
+
+Every object that *does something* holds a Context. Context exposes App; App exposes everything App holds. Through Context, any object reaches what it needs without holding direct refs to App, sub-systems, or sibling actors.
+
+This is the rule that lets every other OBP rule work. The eight smell tests above (mutable collections leaking out, cross-file locks, allocate-here / mutate-there) all stem from objects holding wrong references — direct refs to siblings, parents, specific subsystems. Context replaces those direct refs with one navigation point. Without Context, "each object responsible for itself" doesn't compose: an object that needs `app.Settings` and `app.Modules` and `app.Channels.Serializers` ends up with three direct refs (or three constructor parameters) — exactly the smell. With Context, it has one (`_context`) and navigates.
+
+### Where Context lives
+
+- **As a field on long-lived `@this` classes** — `Channels`, `Modules`, `Settings`, `Errors`, etc. Internal code uses `_context.App.X` to reach what it needs.
+- **As a method parameter on PLang-boundary calls** — `RunAction`, `Run`, `Start`. The boundary is "called from outside the runtime." The parameter is how the language hands control to the runtime.
+
+### What needs a Context
+
+Anything that needs to reach App or its sub-systems. The criterion is functional: **add a Context if the class needs it; don't add it if not.** The class type doesn't determine this — records, exceptions, and value-types can all hold a Context if it makes sense for them. `Data` is the case in point: it's a value-shaped type that holds Context because navigation/resolution needs it.
+
+### Choosing what back-ref(s) a class holds
+
+A class doesn't automatically take Context (or App) just because it's per-actor (or per-app). It takes **whatever back-ref(s) it needs to navigate to what it actually touches** — no more, no less.
+
+Possible choices:
+
+- **Context** — when the class touches per-actor state (Variables, Trace, the actor's specific identity).
+- **App** — when the class needs app-level state only, and the actor is either irrelevant or reachable through some other property (e.g., `Channels.@this` has an `Actor` property set after construction; `Channels` itself doesn't need Context).
+- **A specific parent-ref** (e.g., `Channel.Channels`, `Variable.parent`) — when navigating up the immediate parent chain is what the class actually does. Used when "go to my parent" is a natural operation, not a workaround for a missing direct ref.
+- **No back-ref at all** — for pure values, leaves, IDs, exception types.
+
+**Method-parameter Context** — when a class is per-app but a particular method needs per-actor state (e.g., `Goals.LoadFromFileAsync(... Context context)`), Context flows as a method parameter, not a field. The instance doesn't hold a Context; the call provides one per invocation.
+
+### The smells
+
+- **Allocating direct refs to everything you might want to navigate to.** A class with `_app`, `_actor`, `_context`, `_variables`, `_settings` all stored separately is a god-bag. One navigation point that gets you everywhere is enough.
+- **Implicit per-actor dependencies dressed up as app-level reaches.** A class that takes `App` and internally calls `_app.CurrentActor.Variables` is hiding a per-actor dependency. Make it explicit — take Context where it's needed.
+- **Holding a back-ref you don't actually use.** A class that takes `App` because "everyone takes App" but never reads from it. The back-ref ought to earn its keep.
+
+### Trade-off worth naming
+
+This is the minimalist position: each class declares only the back-refs it actually needs. The cost is judgment — readers need to look at what a class does to know what it holds. The benefit is each class is honest about its dependencies; there's no Context-as-god-bag hiding what's actually used. PLang chooses minimalism over uniform "everyone holds Context."
+
+### What doesn't need a Context
+
+App itself. App is the bootstrap root — `Context.App` *is* App, so App can't hold a Context (chicken/egg). App's own internal code reaches its sub-systems directly through field references. `app.Context` exists as a shortcut to the current actor's Context.
+
+### How Context gets to objects
+
+Construction flow:
+```
+new App(...)                           — bootstrap root
+  ↓ creates
+System actor, User actor               — Actor.@this(name, app, ...)
+  ↓ each Actor creates
+its Context                            — new Context.@this(app, ...)
+  ↓ Actor passes Context to its sub-systems
+new Channels.@this(context),
+new Modules.@this(context), …
+```
+
+The actor receives App in its ctor (it has to — App is the parent). The actor creates one Context for itself with the App reference. The actor then constructs its sub-systems passing the Context. From there, no object below the Actor layer needs to know about App except through Context.
+
+### Cross-actor navigation goes through App
+
+When code in User's actor needs to reach System's state, the navigation is `Context.App.System.Context.X`. Shared things sit on App as a single instance and are surfaced on each actor's Context — e.g., `app.SettingsVariable` is one shared instance that gets registered on every actor's `Context.Variables`. Object lives on App; access path is per-Context.
+
+### Module handlers see the calling actor's Context
+
+When User runs a goal, the module handlers receive User's Context. Same goal run by System gives handlers System's Context. `Context.App` is the same App in both cases; `Context.Variables` differs. The handler doesn't construct its own Context — it consumes the one handed to it.
+
 ## The architect-sharpened rules (added 2026-05-07)
 
 These are detection rules that feed the eight smell tests with concrete red flags every reader can spot in seconds.

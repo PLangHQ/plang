@@ -1,5 +1,44 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+2) — per-actor Serializers settled; principle loosened; stage 1 brief rewritten
+
+Ingi walked me through the actual PLang construction model (App → System/User actors → each Actor creates its own Context, then its own Channels). Under that model, **Serializers is per-actor — each actor's Channels owns its own registry**. My earlier "shared singleton on App" framing was over-engineered.
+
+The smell stage 1 closes is **not** "three instances of one thing." It's **two surfaces that bypass the per-actor model**:
+- `App.@this.Serializers` (App-root shortcut that skips actors)
+- Per-`Channel.Stream.@this.Serializers` (third copy lazily allocated per stream, not shared with its parent Channels)
+
+Both go away; per-actor `Channels.@this.Serializers` stays as the home; Stream channels reach their parent via a new `Channel.Channels` back-ref.
+
+### Principle loosened
+
+Earlier "scope test" in `principles.md` (per-actor → take Context, per-app → take App) was too strict. Real rule: **classes hold whatever back-ref(s) they actually need.** Channel needing a Channels back-ref (not Context, not App) is the example. Trade-off acknowledged: minimalism over uniformity. Each class is honest about its dependencies; reading code requires looking at what it touches. PLang chooses minimalism.
+
+Updated `principles.md` Context section: dropped scope test; replaced with "choosing what back-ref(s) a class holds" — Context, App, parent-ref, or none, depending on what the class actually touches. Added smells around god-bag back-refs and implicit per-actor reaches dressed up as app-level.
+
+### Stage 1 brief rewritten (third time)
+
+- Slug: `serializers-single-home` (kept).
+- Scope: delete `App.Serializers`; remove Stream's `_serializers`; add `Channels` back-ref to `Channel`; sweep 5 external callers.
+- Channels.@this ctor stays `(App app)` — no Context conversion. Channels has an Actor property for per-actor reach; doesn't need Context for what it does today.
+- 5 external caller sites identified by file:line — each gets a specific access path (`app.System.Channels.Serializers` for app-level; `action.Context.Actor.Channels.Serializers` for handlers; `Actor!.Channels.Serializers` for the DynamicData lambda).
+- One additive change: `Channel.@this` gains a `Channels` back-ref alongside the existing `App` back-ref. Set during `Channels.Register(channel)`.
+
+### Stage count
+
+Stage 20 (`serializers-app-shortcut-drop`) cancelled — its work folds into stage 1. Total stages: 19.
+
+### Pattern observed in this thread
+
+I rewrote stage 1 four times because I kept locking onto an architectural framing before validating it against the codebase. Each rewrite Ingi caught the bug. The lessons:
+- Verify property/path existence in code before writing them into briefs (`app.Channels` doesn't exist).
+- Don't concede to a strong-sounding architectural argument without checking whether its premise holds.
+- Per-actor vs shared is a design decision the user makes, not a default I should assume.
+
+Future stage briefs: read the construction flow before sketching ctor signatures. Validate every navigation path against the actual code.
+
+---
+
 ## 2026-05-08 (latest+1) — Serializers ownership clarified, stage 20 added, stage 1 reframed
 
 Ingi pushed back on a quiet inconsistency in stage 1's brief: it routed everything through `app.Serializers` while the destination tree had Serializers under Channels. His architectural argument: serialization only ever happens at I/O boundary crossings, and Channels IS the I/O boundary subsystem in PLang — so the registry belongs under Channels, full stop. The earlier framing (treating Serializers as a "general utility used by Channels among others") was wrong; the OBP-coherent shape is one I/O subsystem owning all I/O concerns.

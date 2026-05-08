@@ -1,6 +1,6 @@
 # `PLang/App/` — Post-Cleanup Target Tree
 
-What `PLang/App/` should look like after all 20 stages land. This is the *destination*, not a stage-by-stage trace — read this when you want to judge the end state at a glance instead of reading prose.
+What `PLang/App/` should look like after all 19 stages land. This is the *destination*, not a stage-by-stage trace — read this when you want to judge the end state at a glance instead of reading prose.
 
 The tree is annotated with what each stage does to it, and revised against Ingi's review of v1 (2026-05-07). Folders/files with no marker are unchanged.
 
@@ -9,7 +9,7 @@ The tree is annotated with what each stage does to it, and revised against Ingi'
 **v3 absorption (2026-05-08):** Reviewed `origin/runtime2-obp-restructure` architect/v1-v3 (the prior cleanup attempt that was deferred). Several insights folded into this doc and the principles file:
 
 1. **Catalog dissolves into `app.Modules.Schema`** — the catalog is "Modules describing itself to an LLM"; Modules is the owner. Builder/UI/trace-viewer are consumers. The v3 thread Ingi remembered. Open question B (Catalog placement) is now resolved.
-2. **MIME table splits two ways** — `Utils/MimeTypes.cs` does two jobs: `GetMimeType(ext)` is I/O (extension forward) → `app.Channels.Serializers.Formats`; `TryGetClrType(mimeType)` is type resolution (family rules) → `app.Types.Clr(mimeType)` overload alongside `Clr(plangName)`.
+2. **MIME table splits two ways** — `Utils/MimeTypes.cs` does two jobs: `GetMimeType(ext)` is I/O (extension forward) → `app.Serializers.Formats`; `TryGetClrType(mimeType)` is type resolution (family rules) → `app.Types.Clr(mimeType)` overload alongside `Clr(plangName)`.
 3. **Build → Builder, Test → Tester** rename — gerunds describe state; nouns name objects. Tree below applies the rename throughout.
 4. **Two new sharpened rules**: Rule D (gerund-named app-graph properties) and Rule E (decomposed parameters → navigation) added to `plan/principles.md`. Both are detection rules with grep screens.
 5. **Modules out of scope** with sharper rationale: the source generator + handler pattern *forces* OBP shape on module action handlers — they can't drift OBP without compile breaks. Cleaner reason than v1's "handler-level cleanup is a separate plan."
@@ -79,7 +79,7 @@ PLang/App/
 │   │   ├── Stream/this.cs
 │   │   └── this.cs
 │   ├── Serializers/
-│   │   ├── Formats/                         (NEW; stage 18; mount = app.Channels.Serializers.Formats; absorbs the extension table from Utils/MimeTypes.cs and the MIME/Kind/Compressible block currently inside Types/this.cs)
+│   │   ├── Formats/                         (NEW; stage 18; mount = app.Serializers.Formats; absorbs the extension table from Utils/MimeTypes.cs and the MIME/Kind/Compressible block currently inside Types/this.cs)
 │   │   │   └── this.cs                      (Mime(ext), Kind(ext), Compressible(kind), KindOf(typeValue), Add(ext, kind, mime), Remove(ext))
 │   │   ├── Serializer/
 │   │   │   ├── Json.cs                      (RENAMED ← JsonStreamSerializer.cs)
@@ -525,7 +525,7 @@ Settled in the tree: `Events/Lifecycle/Bindings/Binding/` collapses to `Events/B
 - All `App/modules/X/providers/` → `App/modules/X/code/` (Provider→Code; ~10 modules)
 
 **Files materially shrunk: 5**
-- `App/this.cs` 681 → <300 (multiple stages; also loses the `Serializers` shortcut property in stage 20 — `app.Channels.Serializers` becomes the only access path)
+- `App/this.cs` 681 → <300 (multiple stages; `app.Serializers` stays as the canonical access path for app-level callers — folder placement of `App/Channels/Serializers/` is a separate open question, deferred)
 - `App/Modules/this.cs` 464 → ~150 (stage 9; example-rendering becomes local navigation `Schema.Render(spec)`)
 - `App/Channels/this.cs` 277 → <150 (stages 1, 2, 8)
 - `App/Builder/this.cs` (gains content from App.Start, stage 12; gains Choices subfolder)
