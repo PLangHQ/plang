@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Stage 2 deletes exactly the two dead surfaces the architect scoped (two-string WriteAsync + contentType-override branch + parameter). Three grep gates pass; DefaultHttpProvider's two callers bind cleanly to the new signature; no new findings."
+}

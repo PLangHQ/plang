@@ -601,7 +601,7 @@
       "intent": "Stage 2: drop dead Channels v1 helpers (two-string WriteAsync overload + contentType-override branch and parameter).",
       "before": {
         "assumptions": "Stage 1 landed clean and codeanalyzer passed it. Trunk green at C# 2755/2755 + PLang 199/199. Architect's stage-2 brief is precise: one file, two deletions, ~25 lines gone. DefaultHttpProvider's two callers (lines 852, 907) verified to use the single-string form without contentType.",
-        "risk": "Very low — dead-code deletion. Build break would only surface a missed caller; none expected."
+        "risk": "Very low \u2014 dead-code deletion. Build break would only surface a missed caller; none expected."
       },
       "plan": ".bot/runtime2-cleanup/coder/v2/plan.md",
       "actions": [
@@ -612,7 +612,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Two deletions in one file: (1) the two-string WriteAsync(actorName, channelName, data, ct) overload (10 lines incl. doc); (2) the contentType-override branch + the contentType parameter from the single-string WriteAsync, plus a doc-comment rewrite to match the post-stage-1 reality. Surviving WriteAsync body is 5 lines. Three remaining `is Channel.Stream.@this sc` casts in WriteTextAsync/ReadChannelAsync/ReadTextAsync left in place — flagged in the brief as future-stage work."
+          "context": "Two deletions in one file: (1) the two-string WriteAsync(actorName, channelName, data, ct) overload (10 lines incl. doc); (2) the contentType-override branch + the contentType parameter from the single-string WriteAsync, plus a doc-comment rewrite to match the post-stage-1 reality. Surviving WriteAsync body is 5 lines. Three remaining `is Channel.Stream.@this sc` casts in WriteTextAsync/ReadChannelAsync/ReadTextAsync left in place \u2014 flagged in the brief as future-stage work."
         },
         {
           "paths": [
@@ -628,10 +628,42 @@
       ],
       "after": {
         "status": "complete",
-        "health": "green — both suites match baseline exactly",
+        "health": "green \u2014 both suites match baseline exactly",
         "notes": "C# 2755/2755 pass; PLang 199/199 pass. Greps all match the brief's DoD: zero `WriteAsync(string actorName`, zero `string? contentType`, three remaining `sc` casts (the explicitly-out-of-scope ones). Build clean."
       },
       "next_bot": "codeanalyzer"
+    },
+    {
+      "id": "ef5824b6-2f45-497d-a42d-3578ff5bf253",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-08T19:19:26Z",
+      "intent": "Codeanalyzer v2: review coder v2 (stage 2 \u2014 drop dead Channels v1 helpers).",
+      "before": {
+        "assumptions": "Stage 2 is dead-code deletion only: two-string WriteAsync(actorName, channelName, ...) overload + contentType-override branch + the contentType parameter. No new shape introduced. Three remaining `is Channel.Stream.@this sc` casts (ReadChannelAsync/WriteTextAsync/ReadTextAsync) explicitly out-of-scope per the architect.",
+        "risk": "Very low. Build break is the only realistic failure (unverified caller). Both DefaultHttpProvider sites at lines 852/907 use positional (channelName, data) form, source-compatible after parameter removal."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/codeanalyzer/v2/plan.md",
+            ".bot/runtime2-cleanup/codeanalyzer/v2/report.md",
+            ".bot/runtime2-cleanup/codeanalyzer/v2/verdict.json",
+            ".bot/runtime2-cleanup/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Five-pass review of coder v2 (stage 2 dead-code drop). PASS. Three grep gates clean; DefaultHttpProvider callers bind to new signature; surviving WriteAsync body collapsed from ~28 lines to ~5. No new findings; v1 carryovers correctly untouched."
+        }
+      ],
+      "plan": ".bot/runtime2-cleanup/codeanalyzer/v2/plan.md",
+      "after": {
+        "status": "PASS. Stage 2 lands the exact deletion architect scoped; no new findings.",
+        "health": "ok",
+        "notes": "Three out-of-scope `is Channel.Stream.@this sc` casts confirmed remaining at Channels/this.cs:169,198,218 \u2014 architect-flagged for a future Channel-polymorphism stage. v1 finding #2 (stale Stage 1 comment) still present; coder didn't touch the ctor. Trivial."
+      },
+      "timestamp_end": "2026-05-08T19:20:53Z",
+      "next_bot": "tester"
     }
   ]
 }
