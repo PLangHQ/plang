@@ -44,7 +44,7 @@ public class Ed25519Provider : ISigningProvider
             Algorithm = Name,
             Nonce = nonce,
             Created = now,
-            Expires = action.ExpiresInMs?.Value is int expiryMs ? now.AddMilliseconds(expiryMs) : null,
+            Expires = action.Expires?.Value is TimeSpan expiry ? now.Add(expiry) : null,
             Contracts = action.Contracts?.Value,
             Headers = action.Headers?.Value,
             Hash = hash

@@ -42,14 +42,14 @@ public class SignActionTests
     private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     private async Task<Data> SignData(object? data, List<string>? contracts = null,
-        int? expiresInMs = null, Dictionary<string, object>? headers = null)
+        TimeSpan? expires = null, Dictionary<string, object>? headers = null)
     {
         var action = new sign
         {
             Context = Ctx,
             Data = new Data("", data),
             Contracts = contracts,
-            ExpiresInMs = expiresInMs,
+            Expires = expires,
             Headers = headers
         };
         return await _app.RunAction<sign>(action, Ctx);
@@ -145,7 +145,7 @@ public class SignActionTests
     [Test]
     public async Task Sign_TTL_SetsExpires()
     {
-        var result = await SignData("test", expiresInMs: 5000);
+        var result = await SignData("test", expires: TimeSpan.FromSeconds(5));
 
         await Assert.That(result.Success).IsTrue();
         var sd = result.Signature!;

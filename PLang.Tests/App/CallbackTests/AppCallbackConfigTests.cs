@@ -13,17 +13,17 @@ public class AppCallbackConfigTests
     }
 
     [Test]
-    public async Task AppCallbackSignature_ExpiresInMs_DefaultsToNull()
+    public async Task AppCallbackSignature_Expires_DefaultsToNull()
     {
         var app = new global::App.@this("/test");
-        await Assert.That(app.Callback.Signature.ExpiresInMs).IsNull();
+        await Assert.That(app.Callback.Signature.Expires).IsNull();
     }
 
     [Test]
     public async Task AppCallbackSignature_AcceptsTimeoutValueInMs()
     {
         var app = new global::App.@this("/test");
-        app.Callback.Signature.ExpiresInMs = 300_000;
-        await Assert.That(app.Callback.Signature.ExpiresInMs).IsEqualTo(300_000);
+        app.Callback.Signature.Expires = TimeSpan.FromMinutes(5);
+        await Assert.That(app.Callback.Signature.Expires).IsEqualTo(TimeSpan.FromMinutes(5));
     }
 }

@@ -43,10 +43,10 @@ public class DataLazySignatureTests
     [Test]
     public async Task DataSignature_Expires_SeededFromAppCallbackConfig_OnlyForICallbackValues()
     {
-        // app.Callback.Signature.ExpiresInMs propagates into Data.Signature.Expires
+        // app.Callback.Signature.Expires propagates into Data.Signature.Expires
         // when the wrapped value is ICallback.
         var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
-        app.Callback.Signature.ExpiresInMs = 60_000;
+        app.Callback.Signature.Expires = TimeSpan.FromMinutes(1);
 
         var data = new Data("cb") { Value = new FakeCallback(), Context = app.User.Context };
         app.User.Context.Variables.Set(data);
@@ -64,7 +64,7 @@ public class DataLazySignatureTests
     public async Task DataSignature_Expires_NullForNonICallbackValues_EvenWhenConfigSet()
     {
         var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
-        app.Callback.Signature.ExpiresInMs = 60_000;
+        app.Callback.Signature.Expires = TimeSpan.FromMinutes(1);
 
         var data = new Data("payload") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);

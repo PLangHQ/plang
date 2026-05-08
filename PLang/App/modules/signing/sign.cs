@@ -21,8 +21,9 @@ public partial class sign : IContext
     /// <summary>Optional headers to include in the signature envelope.</summary>
     public partial Data.@this<Dictionary<string, object>>? Headers { get; init; }
 
-    /// <summary>Optional TTL in milliseconds. If set, Expires = Created + ExpiresInMs.</summary>
-    public partial Data.@this<int>? ExpiresInMs { get; init; }
+    /// <summary>Optional TTL. If set, signature.Expires = Created + this duration.
+    /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>
+    public partial Data.@this<TimeSpan>? Expires { get; init; }
 
     [Provider]
     public partial ISigningProvider Signer { get; }

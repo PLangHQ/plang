@@ -83,14 +83,14 @@ public partial class @this
                 "Data.Signature cannot be lazily populated without a Context — " +
                 "set Context (or use the Variables.Set path which wires it) before reading Signature.");
 
-        var expiresInMs = Value is ICallback
-            ? _context.App.Callback.Signature.ExpiresInMs
-            : (int?)null;
+        var expires = Value is ICallback
+            ? _context.App.Callback.Signature.Expires
+            : (TimeSpan?)null;
 
         var action = new App.modules.signing.sign
         {
             Data = this,
-            ExpiresInMs = expiresInMs.HasValue ? new @this<int>("", expiresInMs.Value) : null
+            Expires = expires.HasValue ? new @this<TimeSpan>("", expires.Value) : null
         };
         var result = _context.App.RunAction<App.modules.signing.sign>(action, _context)
             .GetAwaiter().GetResult();

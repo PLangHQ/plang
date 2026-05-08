@@ -42,14 +42,14 @@ public class VerifyActionTests
     private global::App.Actor.Context.@this Ctx => _app.System.Context;
 
     private async Task<Data> SignHelper(object data, List<string>? contracts = null,
-        int? expiresInMs = null, Dictionary<string, object>? headers = null)
+        TimeSpan? expires = null, Dictionary<string, object>? headers = null)
     {
         var action = new sign
         {
             Context = Ctx,
             Data = new Data("", data),
             Contracts = contracts,
-            ExpiresInMs = expiresInMs,
+            Expires = expires,
             Headers = headers
         };
         return await _app.RunAction<sign>(action, Ctx);
@@ -109,7 +109,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_Expired_Error()
     {
-        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, expiresInMs: 50);
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, expires: TimeSpan.FromMilliseconds(50));
         await Task.Delay(100);
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
@@ -372,7 +372,7 @@ public class VerifyActionTests
     [Test]
     public async Task Verify_ExpiredAndNonceReplay_ReturnsExpiredNotNonceReplay()
     {
-        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, expiresInMs: 50);
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" }, expires: TimeSpan.FromMilliseconds(50));
         // First verify — caches nonce
         var first = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         // Might succeed or already expired

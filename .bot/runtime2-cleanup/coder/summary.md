@@ -2,6 +2,8 @@
 
 ## Version
 
+v20 — Stage 20 (`channel-app-backref-drop`).
+v14 — Stage 14 (`timespan-iso-8601-sweep`).
 v13 — Stage 13 (`settings-collection-rework`).
 v12 — Stage 12 (`build-branch-to-build-this`).
 v11 — Stage 11 (`errors-app-backref-drop`).
@@ -15,6 +17,56 @@ v4 — Stage 4 (`dispose-self-owns`).
 v3 — Stage 3 (`keepalive-collection`).
 v2 — Stage 2 (`channels-v1-helpers-drop`).
 v1 — Stage 1 (`serializers-single-home`).
+
+---
+
+## v20 — Stage 20 (`channel-app-backref-drop`)
+
+After stage 1 added `Channel.@this.Channels` (parent collection back-ref),
+the existing `Channel.@this.App` was redundant — App reachable through
+the parent chain. Stage 20 drops the redundant ref.
+
+- Deleted `public global::App.@this? App { get; internal set; }` and its setter line in `Channels.Register`.
+- Updated **two** readers (the brief listed one — found a second at the diagnostic Write line 249): `App?.X` → `Channels?.App?.X`.
+
+The brief proposed `Channels.Actor.App` chain; running the cross-actor
+binding test surfaced that **Service-owned Channels have no Actor**
+(Service holds Channels but isn't an Actor). Exposed `Channels.@this.App`
+as a public property instead — always non-null, covers both
+actor-owned and service-owned cases. Internal `App.Data.*` /
+`App.Errors.*` references inside `Channels.this.cs` were qualified with
+`global::` because the new `App` property shadows the namespace within
+the class.
+
+C# 2752/2752 pass; PLang 199/199 pass.
+
+## v14 — Stage 14 (`timespan-iso-8601-sweep`)
+
+`int? ExpiresInMs` → `TimeSpan? Expires` on Callback.Signature and the
+`signing.sign` action. JSON wire form becomes ISO 8601 (`"PT5M"`) via
+the existing globally-wired `TimeSpanIso8601Converter`.
+
+### Changes
+
+- `Callback/Signature/this.cs` — `int? ExpiresInMs` → `TimeSpan? Expires`; doc refresh.
+- `modules/signing/sign.cs` — `Data.@this<int>? ExpiresInMs` → `Data.@this<TimeSpan>? Expires`.
+- `Data/this.Envelope.cs` — local typed `TimeSpan?`; envelope assignment uses `new @this<TimeSpan>("", expires.Value)`.
+- `Ed25519Provider.cs:47` — `now.AddMilliseconds(expiryMs)` → `now.Add(expiry)` (TimeSpan-typed).
+- `DefaultHttpProvider.cs:389` — `signOptions.ExpiresInMs` → `signOptions.Expires`.
+- Doc-comment refresh in `App/this.cs` and `Callback/this.cs`.
+
+### Test sweep (5 files)
+
+- `AppCallbackConfigTests` — values switch to `TimeSpan.FromMinutes(5)`; test renamed.
+- `DataLazySignatureTests`, `DataContextWiringTests` — values to `TimeSpan.FromSeconds(30)` / `TimeSpan.FromMinutes(1)`.
+- `SignActionTests`, `VerifyActionTests` — helper signatures `int? expiresInMs` → `TimeSpan? expires`; call sites use `TimeSpan.FromMilliseconds(50)` / `TimeSpan.FromSeconds(5)`.
+
+### Closes 2026-05-06 todos.md entry
+
+`Documentation/Runtime2/todos.md` marked RESOLVED with note about other
+`*Ms` properties flagged for future.
+
+C# 2752/2752 pass; PLang 199/199 pass.
 
 ---
 

@@ -187,7 +187,7 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// Callback subsystem config holder. NOT an ICallback — this is `app.Callback.*` config
-    /// (e.g. `app.Callback.Signature.ExpiresInMs`). Stage 4 expands the surface; Stage 3
+    /// (e.g. `app.Callback.Signature.Expires`). Stage 4 expands the surface; Stage 3
     /// ships only the signature config.
     /// </summary>
     public global::App.Callback.@this Callback { get; } = new();

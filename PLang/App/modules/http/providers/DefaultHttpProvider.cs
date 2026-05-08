@@ -386,7 +386,7 @@ public sealed class DefaultHttpProvider : IHttpProvider
                 ["method"] = method
             }),
             Contracts = signOptions?.Contracts,
-            ExpiresInMs = signOptions?.ExpiresInMs
+            Expires = signOptions?.Expires
         };
 
         return await context.App.RunAction<signing.sign>(httpSign, context);

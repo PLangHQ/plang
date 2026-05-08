@@ -7,9 +7,10 @@ namespace App.Callback.Signature;
 public sealed class @this
 {
     /// <summary>
-    /// Default signature lifetime in milliseconds for callback envelopes. <c>null</c> means
-    /// no expiry (the integrity guarantee is unconditional). PLang shorthand
-    /// <c>- set callback timeout to 5 minutes</c> writes 300000 here (Stage 4).
+    /// Default signature lifetime for callback envelopes. <c>null</c> means
+    /// no expiry (the integrity guarantee is unconditional). Serialised as
+    /// ISO 8601 duration on the wire (e.g. <c>"PT5M"</c>) via
+    /// <see cref="App.Channels.Serializers.TimeSpanIso8601Converter"/>.
     /// </summary>
-    public int? ExpiresInMs { get; set; }
+    public TimeSpan? Expires { get; set; }
 }

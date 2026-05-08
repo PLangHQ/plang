@@ -328,21 +328,16 @@ What to add when this lands:
 
 Defer until there's a real consumer driving the shape (a use case more concrete than "imagine if").
 
-## 2026-05-06 — migrate `ExpiresInMs` to ISO 8601 duration
+## 2026-05-06 — migrate `ExpiresInMs` to ISO 8601 duration  ✅ RESOLVED 2026-05-08 (runtime2-cleanup stage 14)
 
-Context: runtime2-channels chose ISO 8601 duration strings (e.g.
-`"PT30S"`) as the standard JSON form for time durations, with C# type
-`TimeSpan` plus a custom JsonConverter. Reason: LLM zero-counting risk
-on int milliseconds.
+Migrated. `Callback.Signature.@this.ExpiresInMs` (int?) →
+`.Expires` (TimeSpan?). Same on `App.modules.signing.sign`'s action
+property. JSON wire form is ISO 8601 (`"PT5M"`, `"PT30S"`) via the
+existing global `TimeSpanIso8601Converter`.
 
-Callback's `App.Callback.Signature.@this.ExpiresInMs` (int?) is
-inconsistent with this. Migrate it (and any other int-ms time fields
-that show up — search `*Ms` properties under `App/Callback/` and
-related) to the same ISO 8601 + TimeSpan + converter pattern. Touch is
-small per site but may exist in more places than expected.
-
-Do this when the channel branch's converter / catalog work has settled
-so the callback migration can copy the same shape.
+Other `*Ms` properties (`CacheSettings.DurationMs`, `RetryOverMs` in
+`error/handle`) have the same shape smell but were out of scope for
+stage 14 — flagged for future stages.
 
 ## 2026-05-07 — fork-site Variables isolation beyond parameters
 

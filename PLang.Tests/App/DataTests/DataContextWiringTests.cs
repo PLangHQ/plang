@@ -25,9 +25,9 @@ public class DataContextWiringTests
     [Test]
     public async Task Data_LazySignature_ReadsExpiryFromContextAppCallbackSignature()
     {
-        // The lazy Signature getter resolves expiry through ctx.App.Callback.Signature.ExpiresInMs.
+        // The lazy Signature getter resolves expiry through ctx.App.Callback.Signature.Expires.
         var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
-        app.Callback.Signature.ExpiresInMs = 30_000;
+        app.Callback.Signature.Expires = TimeSpan.FromSeconds(30);
 
         var data = new Data("cb") { Value = new FakeCallback(), Context = app.User.Context };
         app.User.Context.Variables.Set(data);
