@@ -22,8 +22,8 @@ public class AppSnapshotTests
     {
         var src = new global::App.@this("/src");
         src.User.Context.Variables.Set("x", 1);
-        src.Build.IsEnabled = true;
-        src.Testing.IsEnabled = true;
+        src.Builder.IsEnabled = true;
+        src.Tester.IsEnabled = true;
 
         var snap = src.Snapshot();
 
@@ -31,8 +31,8 @@ public class AppSnapshotTests
         dst.Restore(snap, dst.User.Context);
 
         await Assert.That(dst.User.Context.Variables.Get("x")?.Value).IsEqualTo(1);
-        await Assert.That(dst.Build.IsEnabled).IsTrue();
-        await Assert.That(dst.Testing.IsEnabled).IsTrue();
+        await Assert.That(dst.Builder.IsEnabled).IsTrue();
+        await Assert.That(dst.Tester.IsEnabled).IsTrue();
     }
 
     [Test]

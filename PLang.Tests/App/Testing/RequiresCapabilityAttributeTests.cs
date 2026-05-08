@@ -1,7 +1,7 @@
 using System.Reflection;
 using global::App.Attributes;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 3 — [RequiresCapability] attribute.

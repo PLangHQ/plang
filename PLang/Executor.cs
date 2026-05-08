@@ -30,9 +30,10 @@ namespace PLang
 		/// </summary>
 		internal (App.@this? Engine, App.Data.@this? Error) Configure(string[] args)
 		{
-			// Normalize: "build" or "--build" both become the --build flag
+			// Normalize: "build" or "--builder" both become the --builder flag.
+			// Legacy `plang build` form preserved as ergonomics; --builder is canonical.
 			if (args.Length > 0 && args[0].Equals("build", StringComparison.OrdinalIgnoreCase))
-				args = ["--build", .. args[1..]];
+				args = ["--builder", .. args[1..]];
 
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
@@ -52,16 +53,17 @@ namespace PLang
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 				engine.Debug.Apply(debugValue);
 
-			// Test mode
-			if (parameters.TryGetValue("!test", out var testValue) && testValue is not false)
+			// Tester mode (--tester or legacy --test)
+			if ((parameters.TryGetValue("!tester", out var testValue) && testValue is not false) ||
+			    (parameters.TryGetValue("!test", out testValue) && testValue is not false))
 			{
-				engine.Testing.IsEnabled = true;
+				engine.Tester.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
 
 				if (testValue is IDictionary<string, object?> testDict)
 				{
-					var applyResult = engine.Testing.Apply(testDict);
+					var applyResult = engine.Tester.Apply(testDict);
 					if (!applyResult.Success) return (null, applyResult);
 				}
 			}
@@ -70,23 +72,24 @@ namespace PLang
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
 				TypeMapping.Populate(engine, appDict);
 
-			// Build mode
-			if (parameters.TryGetValue("!build", out var buildValue) && buildValue is not false)
+			// Builder mode (--builder or legacy --build)
+			if ((parameters.TryGetValue("!builder", out var buildValue) && buildValue is not false) ||
+			    (parameters.TryGetValue("!build", out buildValue) && buildValue is not false))
 			{
-				engine.Build.IsEnabled = true;
+				engine.Builder.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", fileSystem.RootDirectory);
 
 				if (buildValue is IDictionary<string, object?> buildDict)
-					TypeMapping.Populate(engine.Build, buildDict);
+					TypeMapping.Populate(engine.Builder, buildDict);
 
 				// Sync cache flag to %!build.cache% for Build.goal
-				userVars.Set("!build.cache", engine.Build.Cache);
+				userVars.Set("!build.cache", engine.Builder.Cache);
 			}
 
 			// Set the goal file on system context — Start() reads it
-			// Test mode routes to system test runner instead of Start.goal
-			if (engine.Testing.IsEnabled && goalFile == "Start.goal")
+			// Tester mode routes to system test runner instead of Start.goal
+			if (engine.Tester.IsEnabled && goalFile == "Start.goal")
 			{
 				engine.System.Context.Variables.Set("goalFile", "/system/.build/test.pr");
 				return (engine, null);

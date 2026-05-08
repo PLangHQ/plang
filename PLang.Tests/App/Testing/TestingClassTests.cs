@@ -1,6 +1,6 @@
-using global::App.Test;
+using global::App.Tester;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 1 — Testing class shape and configuration.
@@ -23,66 +23,66 @@ public class TestingClassTests
     [Test]
     public async Task NewInstance_IsEnabled_FalseByDefault()
     {
-        await Assert.That(_app.Testing.IsEnabled).IsFalse();
+        await Assert.That(_app.Tester.IsEnabled).IsFalse();
     }
 
     // Testing owns a Results collection, initialized, empty on construction.
     [Test]
     public async Task NewInstance_Results_InitializedEmpty()
     {
-        await Assert.That(_app.Testing.Results).IsNotNull();
-        await Assert.That(_app.Testing.Results.Count).IsEqualTo(0);
+        await Assert.That(_app.Tester.Results).IsNotNull();
+        await Assert.That(_app.Tester.Results.Count).IsEqualTo(0);
     }
 
     // Testing owns a Coverage tracker, initialized with zero observed module.action and branch entries.
     [Test]
     public async Task NewInstance_Coverage_InitializedEmpty()
     {
-        await Assert.That(_app.Testing.Coverage).IsNotNull();
-        await Assert.That(_app.Testing.Coverage.ModuleActions.Any()).IsFalse();
-        await Assert.That(_app.Testing.Coverage.Branches.Count).IsEqualTo(0);
+        await Assert.That(_app.Tester.Coverage).IsNotNull();
+        await Assert.That(_app.Tester.Coverage.ModuleActions.Any()).IsFalse();
+        await Assert.That(_app.Tester.Coverage.Branches.Count).IsEqualTo(0);
     }
 
     // Per-test in-flight state slot starts null; test.run assigns it for the currently running test.
     [Test]
     public async Task NewInstance_CurrentTest_NullUntilAssigned()
     {
-        await Assert.That(_app.Testing.CurrentTest).IsNull();
+        await Assert.That(_app.Tester.CurrentTest).IsNull();
     }
 
     // Architect spec: TimeoutSeconds defaults to 30.
     [Test]
     public async Task NewInstance_TimeoutSeconds_DefaultIs30()
     {
-        await Assert.That(_app.Testing.TimeoutSeconds).IsEqualTo(30);
+        await Assert.That(_app.Tester.TimeoutSeconds).IsEqualTo(30);
     }
 
     // Architect spec: Parallel defaults to Environment.ProcessorCount.
     [Test]
     public async Task NewInstance_Parallel_DefaultIsProcessorCount()
     {
-        await Assert.That(_app.Testing.Parallel).IsEqualTo(Environment.ProcessorCount);
+        await Assert.That(_app.Tester.Parallel).IsEqualTo(Environment.ProcessorCount);
     }
 
     // No tag filter by default — Include is empty, meaning every discovered test matches.
     [Test]
     public async Task NewInstance_Include_DefaultIsEmpty()
     {
-        await Assert.That(_app.Testing.Include.Count).IsEqualTo(0);
+        await Assert.That(_app.Tester.Include.Count).IsEqualTo(0);
     }
 
     // No tag filter by default — Exclude is empty, meaning nothing is excluded.
     [Test]
     public async Task NewInstance_Exclude_DefaultIsEmpty()
     {
-        await Assert.That(_app.Testing.Exclude.Count).IsEqualTo(0);
+        await Assert.That(_app.Tester.Exclude.Count).IsEqualTo(0);
     }
 
     // Quiet mode by default — output.write is captured and shown only on failure.
     [Test]
     public async Task NewInstance_Verbose_DefaultIsFalse()
     {
-        await Assert.That(_app.Testing.Verbose).IsFalse();
+        await Assert.That(_app.Tester.Verbose).IsFalse();
     }
 
     // --test={"timeout":60,"parallel":4,"include":["fast"],"exclude":["slow"],"verbose":true}
@@ -99,14 +99,14 @@ public class TestingClassTests
             ["verbose"] = true
         };
 
-        var result = _app.Testing.Apply(config);
+        var result = _app.Tester.Apply(config);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_app.Testing.TimeoutSeconds).IsEqualTo(60);
-        await Assert.That(_app.Testing.Parallel).IsEqualTo(4);
-        await Assert.That(_app.Testing.Include.Contains("fast")).IsTrue();
-        await Assert.That(_app.Testing.Exclude.Contains("slow")).IsTrue();
-        await Assert.That(_app.Testing.Verbose).IsTrue();
+        await Assert.That(_app.Tester.TimeoutSeconds).IsEqualTo(60);
+        await Assert.That(_app.Tester.Parallel).IsEqualTo(4);
+        await Assert.That(_app.Tester.Include.Contains("fast")).IsTrue();
+        await Assert.That(_app.Tester.Exclude.Contains("slow")).IsTrue();
+        await Assert.That(_app.Tester.Verbose).IsTrue();
     }
 
     // Applying Include/Exclude is replace-semantics, not merge — a second Apply wipes
@@ -114,22 +114,22 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
     {
-        _app.Testing.Include.Add("oldInclude");
-        _app.Testing.Exclude.Add("oldExclude");
+        _app.Tester.Include.Add("oldInclude");
+        _app.Tester.Exclude.Add("oldExclude");
 
-        var result = _app.Testing.Apply(new Dictionary<string, object?>
+        var result = _app.Tester.Apply(new Dictionary<string, object?>
         {
             ["include"] = new List<object?> { "newInclude" },
             ["exclude"] = new List<object?> { "newExclude" }
         });
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_app.Testing.Include.Count).IsEqualTo(1);
-        await Assert.That(_app.Testing.Include.Contains("newInclude")).IsTrue();
-        await Assert.That(_app.Testing.Include.Contains("oldInclude")).IsFalse();
-        await Assert.That(_app.Testing.Exclude.Count).IsEqualTo(1);
-        await Assert.That(_app.Testing.Exclude.Contains("newExclude")).IsTrue();
-        await Assert.That(_app.Testing.Exclude.Contains("oldExclude")).IsFalse();
+        await Assert.That(_app.Tester.Include.Count).IsEqualTo(1);
+        await Assert.That(_app.Tester.Include.Contains("newInclude")).IsTrue();
+        await Assert.That(_app.Tester.Include.Contains("oldInclude")).IsFalse();
+        await Assert.That(_app.Tester.Exclude.Count).IsEqualTo(1);
+        await Assert.That(_app.Tester.Exclude.Contains("newExclude")).IsTrue();
+        await Assert.That(_app.Tester.Exclude.Contains("oldExclude")).IsFalse();
     }
 
     // Unknown config keys are silently ignored — forward-compat contract so users can
@@ -137,13 +137,13 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_UnknownKey_IgnoredReturnsOk()
     {
-        var result = _app.Testing.Apply(new Dictionary<string, object?>
+        var result = _app.Tester.Apply(new Dictionary<string, object?>
         {
             ["timeout"] = 10,
             ["futureOption"] = "not a valid key yet"
         });
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_app.Testing.TimeoutSeconds).IsEqualTo(10);
+        await Assert.That(_app.Tester.TimeoutSeconds).IsEqualTo(10);
     }
 }

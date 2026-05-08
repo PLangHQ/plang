@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace App.Test;
+namespace App.Tester;
 
 /// <summary>
 /// Tracks what executed during a test run. Two dimensions:

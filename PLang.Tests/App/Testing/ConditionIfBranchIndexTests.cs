@@ -1,6 +1,6 @@
 using global::App.modules.condition;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 7 — condition.if branch_index.

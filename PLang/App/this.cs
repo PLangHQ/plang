@@ -148,7 +148,7 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
-    /// (or in-memory under Testing.IsEnabled). One per app — actors share it.
+    /// (or in-memory under Tester.IsEnabled). One per app — actors share it.
     /// Modules own their tables (<c>encryption</c>, <c>settings</c>, <c>llm-cache</c>, etc.).
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.
@@ -178,12 +178,12 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
     /// </summary>
-    public Testing Testing { get; }
+    public global::App.Tester.@this Tester { get; }
 
     /// <summary>
     /// Builder mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
-    public global::App.Build.@this Build { get; }
+    public global::App.Builder.@this Builder { get; }
 
     /// <summary>
     /// Callback subsystem config holder. NOT an ICallback — this is `app.Callback.*` config
@@ -296,8 +296,8 @@ public sealed partial class @this : IAsyncDisposable
         StartedAt = DateTime.UtcNow;
         Events = new AppEvents();
         Debug = new Debugging(this);
-        Testing = new Testing(this);
-        Build = new global::App.Build.@this(this);
+        Tester = new global::App.Tester.@this(this);
+        Builder = new global::App.Builder.@this(this);
         Types = new Types.@this();
         Config = new Config.@this();
         _settingsStore = new Lazy<global::App.Settings.IStore>(CreateSettingsStore);
@@ -489,7 +489,7 @@ public sealed partial class @this : IAsyncDisposable
         CurrentActor = System;
 
         // Build → PLang builder (runs as User — user is building their code)
-        if (Build.IsEnabled) return await Build.RunAsync();
+        if (Builder.IsEnabled) return await Builder.RunAsync();
 
         // Resolve goal file
         var goalFile = context.Variables.GetValue("goalFile") as string;
@@ -547,7 +547,7 @@ public sealed partial class @this : IAsyncDisposable
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
-        if (Testing.IsEnabled)
+        if (Tester.IsEnabled)
             return global::App.Settings.Sqlite.InMemory($"system-{Id}");
 
         var dbDir = FileSystem.Path.Combine(AbsolutePath, ".db");

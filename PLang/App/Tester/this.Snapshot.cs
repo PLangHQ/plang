@@ -1,4 +1,4 @@
-namespace App.Test;
+namespace App.Tester;
 
 public sealed partial class @this : ISnapshotted
 {
@@ -11,8 +11,8 @@ public sealed partial class @this : ISnapshotted
     public void Capture(Snapshot.@this s) => s.Write("isEnabled", IsEnabled);
 
     /// <summary>
-    /// Restores the test-mode bit on the live App.Testing instance.
+    /// Restores the test-mode bit on the live App.Tester instance.
     /// </summary>
     public static void Restore(Snapshot.@this s, Actor.Context.@this ctx)
-        => ctx.App.Testing.IsEnabled = s.Read<bool>("isEnabled");
+        => ctx.App.Tester.IsEnabled = s.Read<bool>("isEnabled");
 }

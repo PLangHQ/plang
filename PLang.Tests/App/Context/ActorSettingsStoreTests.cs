@@ -33,13 +33,13 @@ public class ActorSettingsStoreTests
         // LLM cache and other persistent system data live across builds.
         await using (var engine = new global::App.@this(_testDir))
         {
-            engine.Build.IsEnabled = true;
+            engine.Builder.IsEnabled = true;
             await engine.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
         await using (var engine2 = new global::App.@this(_testDir))
         {
-            engine2.Build.IsEnabled = true;
+            engine2.Builder.IsEnabled = true;
             var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
             await Assert.That(result.Value).IsNotNull();
             await Assert.That(result.Value!.ToString()).IsEqualTo("cached_response");
@@ -54,13 +54,13 @@ public class ActorSettingsStoreTests
         // with identical DataSource names, so the App.Id scoping is load-bearing.
         await using (var engine = new global::App.@this(_testDir))
         {
-            engine.Testing.IsEnabled = true;
+            engine.Tester.IsEnabled = true;
             await engine.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
         await using (var engine2 = new global::App.@this(_testDir))
         {
-            engine2.Testing.IsEnabled = true;
+            engine2.Tester.IsEnabled = true;
             var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
             await Assert.That(result.Value).IsNull();
         }

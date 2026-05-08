@@ -125,7 +125,7 @@ public sealed class @this : IAsyncDisposable
         // lambda captures *this* actor's Context so per-actor ctx propagates.
         Context.Variables.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
 
-        // Register %!app% — navigates the App object graph (e.g., %!app.Testing.IsEnabled%)
+        // Register %!app% — navigates the App object graph (e.g., %!app.Tester.IsEnabled%)
         Context.Variables.Set("!app", new Data.DynamicData("!app", () => app));
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.

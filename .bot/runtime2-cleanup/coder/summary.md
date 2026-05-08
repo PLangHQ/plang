@@ -2,6 +2,8 @@
 
 ## Version
 
+v21 — Stage 21 (`navigators-to-variables`).
+v17 — Stage 17 (`builder-tester-rename`).
 v20 — Stage 20 (`channel-app-backref-drop`).
 v14 — Stage 14 (`timespan-iso-8601-sweep`).
 v13 — Stage 13 (`settings-collection-rework`).

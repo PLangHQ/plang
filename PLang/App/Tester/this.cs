@@ -1,10 +1,10 @@
 using App.Errors;
 
-namespace App.Test;
+namespace App.Tester;
 
 /// <summary>
 /// Test runner state and config. Owns the per-run Results collection, the per-run
-/// Coverage tracker, and the per-test in-flight TestRun slot. Configured via --test={...}.
+/// Coverage tracker, and the per-test in-flight Run slot. Configured via --test={...}.
 /// When IsEnabled is on, downstream systems can observe it (in-memory DBs, stub identity, etc.)
 /// and test.tag / assert handlers use the state on this object.
 /// Activated by: plang --test
@@ -14,14 +14,14 @@ public sealed partial class @this
     /// <summary>Whether test mode is active. Set by --test, read by subsystems that branch on test mode.</summary>
     public bool IsEnabled { get; set; }
 
-    /// <summary>Run-wide collection of TestRuns. Each test's App contributes one TestRun at completion.</summary>
+    /// <summary>Run-wide collection of TestRuns. Each test's App contributes one Run at completion.</summary>
     public Results Results { get; } = new();
 
     /// <summary>Run-wide coverage tracker. Per-test Apps populate their own, then Merge into the parent here.</summary>
     public Coverage Coverage { get; } = new();
 
     /// <summary>The test currently in flight on this App. null when no test is running. test.run assigns; test.tag reads.</summary>
-    public TestRun? CurrentTest { get; set; }
+    public Run? CurrentTest { get; set; }
 
     // --- Configuration fields (flat per architect spec — no nested Config class) ---
 

@@ -1,9 +1,9 @@
-namespace App.Test;
+namespace App.Tester;
 
 /// <summary>
 /// Lifecycle status of a discovered or executed test.
 /// </summary>
-public enum TestStatus
+public enum Status
 {
     /// <summary>Discovered, .pr fresh — ready to run.</summary>
     Ready,

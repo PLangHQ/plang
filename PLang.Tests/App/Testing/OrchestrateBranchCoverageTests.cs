@@ -1,8 +1,8 @@
 using global::App.modules.condition;
 using global::App.modules.condition.providers;
-using global::App.Test;
+using global::App.Tester;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Regression guard for the three-bug cluster fixed by commit d05c138d.

@@ -314,7 +314,7 @@ public class JsonStreamSerializerTests
     public async Task Serialize_Enum_UsesCamelCase()
     {
         var serializer = new JsonStreamSerializer();
-        var obj = new { Status = TestStatus.Active };
+        var obj = new { Status = LocalStatus.Active };
 
         var json = serializer.Serialize(obj);
 
@@ -350,7 +350,7 @@ public class JsonStreamSerializerTests
         public int? Value { get; set; }
     }
 
-    private enum TestStatus
+    private enum LocalStatus
     {
         Inactive,
         Active

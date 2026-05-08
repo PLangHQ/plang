@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using App.Errors;
-using App.Test;
+using App.Tester;
 using App.Variables;
 
 namespace App.modules.test;
@@ -23,13 +23,13 @@ namespace App.modules.test;
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {
-    public partial Data.@this<App.Test.Results>? Results { get; init; }
+    public partial Data.@this<App.Tester.Results>? Results { get; init; }
     public partial Data.@this<string>? Format { get; init; }
 
     public async Task<Data.@this> Run()
     {
-        var results = Results?.Value ?? Context.App!.Testing.Results;
-        var testing = Context.App!.Testing;
+        var results = Results?.Value ?? Context.App!.Tester.Results;
+        var testing = Context.App!.Tester;
         var format = Format?.Value ?? testing.Format;
 
         var console = new StringBuilder();
@@ -77,20 +77,20 @@ public partial class report : IContext
         result.Properties.Set("reportPath", reportFile);
         result.Properties.Set("content", content);
         result.Properties.Set("summaryTotal", results.Count);
-        result.Properties.Set("summaryPass", summary[TestStatus.Pass]);
-        result.Properties.Set("summaryFail", summary[TestStatus.Fail]);
+        result.Properties.Set("summaryPass", summary[global::App.Tester.Status.Pass]);
+        result.Properties.Set("summaryFail", summary[global::App.Tester.Status.Fail]);
         result.Properties.Set("variableSnapshotCount", variableSnapshotCount);
         return result;
     }
 
-    private static void RenderConsole(StringBuilder sb, App.Test.Results results, Test.@this testing)
+    private static void RenderConsole(StringBuilder sb, App.Tester.Results results, App.Tester.@this testing)
     {
         var summary = results.Summary();
         var total = results.Count;
         sb.AppendLine($"Test summary: {total} total, "
-            + $"{summary[TestStatus.Pass]} pass, {summary[TestStatus.Fail]} fail, "
-            + $"{summary[TestStatus.Timeout]} timeout, {summary[TestStatus.Stale]} stale, "
-            + $"{summary[TestStatus.Skipped]} skipped");
+            + $"{summary[global::App.Tester.Status.Pass]} pass, {summary[global::App.Tester.Status.Fail]} fail, "
+            + $"{summary[global::App.Tester.Status.Timeout]} timeout, {summary[global::App.Tester.Status.Stale]} stale, "
+            + $"{summary[global::App.Tester.Status.Skipped]} skipped");
 
         foreach (var run in results)
         {
@@ -102,12 +102,12 @@ public partial class report : IContext
             sb.AppendLine($"  [{run.Status}] {run.File.Path} ({run.Duration.TotalMilliseconds:F0}ms)"
                 + (drift ? " [builder drift]" : ""));
 
-            if (run.Status == TestStatus.Fail && run.Error != null)
+            if (run.Status == global::App.Tester.Status.Fail && run.Error != null)
                 RenderFailure(sb, run);
         }
     }
 
-    private static void RenderFailure(StringBuilder sb, TestRun run)
+    private static void RenderFailure(StringBuilder sb, global::App.Tester.Run run)
     {
         sb.AppendLine("    FAIL: " + run.File.Path);
         if (run.Error is AssertionError assert)
@@ -133,7 +133,7 @@ public partial class report : IContext
         }
     }
 
-    private static void RenderCoverageTables(StringBuilder sb, Test.@this testing, Modules.@this modules)
+    private static void RenderCoverageTables(StringBuilder sb, App.Tester.@this testing, Modules.@this modules)
     {
         sb.AppendLine();
         sb.AppendLine("Module.action coverage:");
@@ -239,7 +239,7 @@ public partial class report : IContext
         _ => label
     };
 
-    private static string BuildJson(App.Test.Results results, Test.@this testing)
+    private static string BuildJson(App.Tester.Results results, App.Tester.@this testing)
     {
         var runs = new List<object>();
         foreach (var run in results)
@@ -280,36 +280,36 @@ public partial class report : IContext
         return JsonSerializer.Serialize(envelope, App.Utils.Json.DiagnosticOutput);
     }
 
-    private static string BuildJUnit(App.Test.Results results, FileSystem.IPLangFileSystem fs)
+    private static string BuildJUnit(App.Tester.Results results, FileSystem.IPLangFileSystem fs)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == TestStatus.Fail)}\" errors=\"0\">");
+        sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::App.Tester.Status.Fail)}\" errors=\"0\">");
         var byPath = results.GroupBy(r => fs.Path.GetDirectoryName(r.File.Path) ?? "");
         foreach (var group in byPath)
         {
             var suiteTests = group.ToList();
-            var failures = suiteTests.Count(r => r.Status == TestStatus.Fail);
+            var failures = suiteTests.Count(r => r.Status == global::App.Tester.Status.Fail);
             var timeSec = suiteTests.Sum(r => r.Duration.TotalSeconds);
             sb.AppendLine($"  <testsuite name=\"{SecurityElement.Escape(group.Key)}\" tests=\"{suiteTests.Count}\" failures=\"{failures}\" time=\"{timeSec:F3}\">");
             foreach (var run in suiteTests)
             {
                 var name = SecurityElement.Escape(run.File.Path) ?? "";
                 sb.Append($"    <testcase name=\"{name}\" time=\"{run.Duration.TotalSeconds:F3}\"");
-                if (run.Status == TestStatus.Pass) sb.AppendLine(" />");
+                if (run.Status == global::App.Tester.Status.Pass) sb.AppendLine(" />");
                 else
                 {
                     sb.AppendLine(">");
                     switch (run.Status)
                     {
-                        case TestStatus.Fail:
+                        case global::App.Tester.Status.Fail:
                             sb.AppendLine($"      <failure>{SecurityElement.Escape(run.Error?.Message ?? "fail")}</failure>");
                             break;
-                        case TestStatus.Timeout:
+                        case global::App.Tester.Status.Timeout:
                             sb.AppendLine($"      <failure type=\"timeout\">timeout</failure>");
                             break;
-                        case TestStatus.Stale:
-                        case TestStatus.Skipped:
+                        case global::App.Tester.Status.Stale:
+                        case global::App.Tester.Status.Skipped:
                             sb.AppendLine($"      <skipped>{SecurityElement.Escape(run.File.StatusReason ?? run.Status.ToString())}</skipped>");
                             break;
                     }
@@ -322,7 +322,7 @@ public partial class report : IContext
         return sb.ToString();
     }
 
-    private static string? ResolveBuilderVersion(Test.@this testing) =>
+    private static string? ResolveBuilderVersion(App.Tester.@this testing) =>
         testing.App.Version;
 
     private static string FormatValue(object? value) => App.Utils.Json.FormatForDiagnostic(value);

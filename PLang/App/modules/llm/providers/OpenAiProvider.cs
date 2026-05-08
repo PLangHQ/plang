@@ -44,7 +44,7 @@ public sealed class OpenAiProvider : ILlmProvider
     public async Task<Data.@this> Query(query action)
     {
         // Safety limit — skip during testing (tests use mocked LLM calls)
-        if (!action.Context.App.Testing.IsEnabled
+        if (!action.Context.App.Tester.IsEnabled
             && Interlocked.Increment(ref _requestCount) > MaxRequestsPerProcess)
             return App.Data.@this.FromError(new Errors.ActionError(
                 $"LLM request limit reached ({MaxRequestsPerProcess}). Possible infinite loop. Restart to reset.",

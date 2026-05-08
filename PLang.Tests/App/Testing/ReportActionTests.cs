@@ -1,8 +1,8 @@
 using System.Xml.Linq;
 using global::App.Errors;
-using global::App.Test;
+using global::App.Tester;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 11 — test.report action.
@@ -43,9 +43,9 @@ public class ReportActionTests
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private static TestRun NewRun(string name, TestStatus status, IError? error = null, string? capturedOutput = null)
+    private static global::App.Tester.Run NewRun(string name, global::App.Tester.Status status, IError? error = null, string? capturedOutput = null)
     {
-        var run = new TestRun(new TestFile
+        var run = new global::App.Tester.Run(new global::App.Tester.File
         {
             Path = $"Tests/{name}.test.goal",
             EntryGoalName = name,
@@ -68,8 +68,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Console_AlwaysWritesSummary_RegardlessOfFormat()
     {
-        _app.Testing.Results.Add(NewRun("X", TestStatus.Pass));
-        _app.Testing.Format = "junit";
+        _app.Tester.Results.Add(NewRun("X", global::App.Tester.Status.Pass));
+        _app.Tester.Format = "junit";
 
         await Report();
 
@@ -83,7 +83,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_OutputDirectory_IsDotTestRelativeToDiscoveryPath()
     {
-        _app.Testing.Results.Add(NewRun("X", TestStatus.Pass));
+        _app.Tester.Results.Add(NewRun("X", global::App.Tester.Status.Pass));
 
         await Report();
 
@@ -96,7 +96,7 @@ public class ReportActionTests
     [Test]
     public async Task Report_Format_DefaultIsJson_WritesResultsJson()
     {
-        _app.Testing.Results.Add(NewRun("X", TestStatus.Pass));
+        _app.Tester.Results.Add(NewRun("X", global::App.Tester.Status.Pass));
 
         await Report();
 
@@ -111,8 +111,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Format_Junit_WritesJunitXml()
     {
-        _app.Testing.Format = "junit";
-        _app.Testing.Results.Add(NewRun("X", TestStatus.Pass));
+        _app.Tester.Format = "junit";
+        _app.Tester.Results.Add(NewRun("X", global::App.Tester.Status.Pass));
 
         await Report();
 
@@ -128,8 +128,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_JUnit_TestNameWithXmlSpecialChars_Escaped()
     {
-        _app.Testing.Format = "junit";
-        _app.Testing.Results.Add(NewRun("asserts <x> & <y>", TestStatus.Pass));
+        _app.Tester.Format = "junit";
+        _app.Tester.Results.Add(NewRun("asserts <x> & <y>", global::App.Tester.Status.Pass));
 
         await Report();
 
@@ -147,8 +147,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Coverage_ModuleActionTable_ShowsUniverseVsObserved()
     {
-        _app.Testing.Coverage.RecordModuleAction("variable", "set");
-        _app.Testing.Results.Add(NewRun("X", TestStatus.Pass));
+        _app.Tester.Coverage.RecordModuleAction("variable", "set");
+        _app.Tester.Results.Add(NewRun("X", global::App.Tester.Status.Pass));
 
         await Report();
 
@@ -165,9 +165,9 @@ public class ReportActionTests
     [Test]
     public async Task Report_Coverage_BranchTable_PerSiteShowsObservedIndices()
     {
-        _app.Testing.Coverage.RecordBranch("MyGoal:3", 0);
-        _app.Testing.Coverage.RecordBranch("MyGoal:3", 1);
-        _app.Testing.Results.Add(NewRun("X", TestStatus.Pass));
+        _app.Tester.Coverage.RecordBranch("MyGoal:3", 0);
+        _app.Tester.Coverage.RecordBranch("MyGoal:3", 1);
+        _app.Tester.Results.Add(NewRun("X", global::App.Tester.Status.Pass));
 
         await Report();
 
@@ -190,9 +190,9 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_FailStatus_EmitsFailureElement()
     {
-        _app.Testing.Format = "junit";
+        _app.Tester.Format = "junit";
         var err = new AssertionError(1, 2, "mismatch");
-        _app.Testing.Results.Add(NewRun("Failing", TestStatus.Fail, err));
+        _app.Tester.Results.Add(NewRun("Failing", global::App.Tester.Status.Fail, err));
 
         await Report();
 
@@ -209,8 +209,8 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_TimeoutStatus_EmitsFailureWithTypeTimeout()
     {
-        _app.Testing.Format = "junit";
-        _app.Testing.Results.Add(NewRun("SlowTest", TestStatus.Timeout));
+        _app.Tester.Format = "junit";
+        _app.Tester.Results.Add(NewRun("SlowTest", global::App.Tester.Status.Timeout));
 
         await Report();
 
@@ -226,10 +226,10 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_SkippedStatus_EmitsSkippedElement()
     {
-        _app.Testing.Format = "junit";
-        var run = NewRun("Filtered", TestStatus.Skipped);
+        _app.Tester.Format = "junit";
+        var run = NewRun("Filtered", global::App.Tester.Status.Skipped);
         run.File.StatusReason = "excluded by tag";
-        _app.Testing.Results.Add(run);
+        _app.Tester.Results.Add(run);
 
         await Report();
 
@@ -246,10 +246,10 @@ public class ReportActionTests
     [Test]
     public async Task Report_Junit_StaleStatus_EmitsSkippedWithReason()
     {
-        _app.Testing.Format = "junit";
-        var run = NewRun("StaleTest", TestStatus.Stale);
+        _app.Tester.Format = "junit";
+        var run = NewRun("StaleTest", global::App.Tester.Status.Stale);
         run.File.StatusReason = "goal hash changed since build";
-        _app.Testing.Results.Add(run);
+        _app.Tester.Results.Add(run);
 
         await Report();
 
@@ -276,7 +276,7 @@ public class ReportActionTests
                 ["maybe"] = null
             }
         };
-        _app.Testing.Results.Add(NewRun("Failing", TestStatus.Fail, err));
+        _app.Tester.Results.Add(NewRun("Failing", global::App.Tester.Status.Fail, err));
 
         await Report();
 

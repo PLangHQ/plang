@@ -1,7 +1,7 @@
-using global::App.Test;
+using global::App.Tester;
 using Tag = global::App.modules.test.Tag;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 9 — test.tag action.
@@ -24,15 +24,15 @@ public class TagActionTests
     [After(Test)]
     public async Task Teardown() => await _app.DisposeAsync();
 
-    private static TestRun NewRun() =>
-        new(new TestFile { Path = "Tests/T.test.goal", EntryGoalName = "T" });
+    private static global::App.Tester.Run NewRun() =>
+        new(new global::App.Tester.File { Path = "Tests/T.test.goal", EntryGoalName = "T" });
 
     // When Testing.CurrentTest is set (test in flight), test.tag with Tags=["http","fast"]
     // writes both tags into CurrentTest.UserTags.
     [Test]
     public async Task Tag_InsideTest_WritesToCurrentTestUserTags()
     {
-        _app.Testing.CurrentTest = NewRun();
+        _app.Tester.CurrentTest = NewRun();
 
         var action = new Tag
         {
@@ -42,8 +42,8 @@ public class TagActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_app.Testing.CurrentTest.UserTags.Contains("http")).IsTrue();
-        await Assert.That(_app.Testing.CurrentTest.UserTags.Contains("fast")).IsTrue();
+        await Assert.That(_app.Tester.CurrentTest.UserTags.Contains("http")).IsTrue();
+        await Assert.That(_app.Tester.CurrentTest.UserTags.Contains("fast")).IsTrue();
     }
 
     // test.tag always returns Data.Ok; does not write to MemoryStack, does not touch
@@ -51,8 +51,8 @@ public class TagActionTests
     [Test]
     public async Task Tag_ReturnsDataOk_NoSideEffectsBeyondTags()
     {
-        _app.Testing.CurrentTest = NewRun();
-        var beforeResultCount = _app.Testing.Results.Count;
+        _app.Tester.CurrentTest = NewRun();
+        var beforeResultCount = _app.Tester.Results.Count;
         var beforeVarCount = _app.User.Context.Variables.GetNames().Count();
 
         var action = new Tag
@@ -63,7 +63,7 @@ public class TagActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_app.Testing.Results.Count).IsEqualTo(beforeResultCount);
+        await Assert.That(_app.Tester.Results.Count).IsEqualTo(beforeResultCount);
         await Assert.That(_app.User.Context.Variables.GetNames().Count()).IsEqualTo(beforeVarCount);
     }
 
@@ -73,7 +73,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_OutsideTest_CurrentTestNull_NoOpsSafely()
     {
-        _app.Testing.CurrentTest = null;
+        _app.Tester.CurrentTest = null;
 
         var action = new Tag
         {
@@ -83,7 +83,7 @@ public class TagActionTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_app.Testing.CurrentTest).IsNull();
+        await Assert.That(_app.Tester.CurrentTest).IsNull();
     }
 
     // Two test.tag calls: ["http"], then ["fast","slow"] → CurrentTest.UserTags
@@ -92,7 +92,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_MultipleInvocations_TagsAccumulate()
     {
-        _app.Testing.CurrentTest = NewRun();
+        _app.Tester.CurrentTest = NewRun();
 
         await new Tag
         {
@@ -110,9 +110,9 @@ public class TagActionTests
             Tags = new global::App.Data.@this<string[]>("Tags", new[] { "http" }) // duplicate
         }.Run();
 
-        await Assert.That(_app.Testing.CurrentTest.UserTags.Count).IsEqualTo(3);
-        await Assert.That(_app.Testing.CurrentTest.UserTags.Contains("http")).IsTrue();
-        await Assert.That(_app.Testing.CurrentTest.UserTags.Contains("fast")).IsTrue();
-        await Assert.That(_app.Testing.CurrentTest.UserTags.Contains("slow")).IsTrue();
+        await Assert.That(_app.Tester.CurrentTest.UserTags.Count).IsEqualTo(3);
+        await Assert.That(_app.Tester.CurrentTest.UserTags.Contains("http")).IsTrue();
+        await Assert.That(_app.Tester.CurrentTest.UserTags.Contains("fast")).IsTrue();
+        await Assert.That(_app.Tester.CurrentTest.UserTags.Contains("slow")).IsTrue();
     }
 }

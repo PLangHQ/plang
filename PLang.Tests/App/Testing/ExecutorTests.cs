@@ -1,6 +1,6 @@
 using global::PLang;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Coverage for PLang.Executor.Configure — the CLI argv parsing and routing layer.
@@ -47,7 +47,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Testing.IsEnabled).IsTrue();
+        await Assert.That(engine!.Tester.IsEnabled).IsTrue();
         await Assert.That(engine.System.Context.Variables.Get<string>("goalFile"))
             .IsEqualTo("/system/.build/test.pr");
         await using var _ = engine;
@@ -63,9 +63,9 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Testing.IsEnabled).IsTrue();
-        await Assert.That(engine.Testing.TimeoutSeconds).IsEqualTo(5);
-        await Assert.That(engine.Testing.Parallel).IsEqualTo(3);
+        await Assert.That(engine!.Tester.IsEnabled).IsTrue();
+        await Assert.That(engine.Tester.TimeoutSeconds).IsEqualTo(5);
+        await Assert.That(engine.Tester.Parallel).IsEqualTo(3);
         await using var _ = engine;
     }
 
@@ -106,7 +106,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Build.IsEnabled).IsTrue();
+        await Assert.That(engine!.Builder.IsEnabled).IsTrue();
         var cacheVar = engine.User.Context.Variables.Get("!build.cache");
         await Assert.That(cacheVar).IsNotNull();
         await using var _ = engine;
@@ -121,7 +121,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Build.IsEnabled).IsTrue();
+        await Assert.That(engine!.Builder.IsEnabled).IsTrue();
         await using var _ = engine;
     }
 
@@ -151,9 +151,9 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Testing.IsEnabled).IsFalse();
+        await Assert.That(engine!.Tester.IsEnabled).IsFalse();
         await Assert.That(engine.Debug.IsEnabled).IsFalse();
-        await Assert.That(engine.Build.IsEnabled).IsFalse();
+        await Assert.That(engine.Builder.IsEnabled).IsFalse();
         await Assert.That(engine.System.Context.Variables.Get<string>("goalFile"))
             .IsEqualTo("/.build/start.pr");
         await using var _ = engine;
@@ -168,7 +168,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        await Assert.That(engine!.Testing.IsEnabled).IsTrue();
+        await Assert.That(engine!.Tester.IsEnabled).IsTrue();
         await Assert.That(engine.Debug.IsEnabled).IsTrue();
         await using var _ = engine;
     }

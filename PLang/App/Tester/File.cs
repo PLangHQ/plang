@@ -1,14 +1,14 @@
 using App.Attributes;
 using Goal = App.Goals.Goal.@this;
 
-namespace App.Test;
+namespace App.Tester;
 
 /// <summary>
 /// Metadata for a discovered *.test.goal file. Populated by test.discover.
-/// Consumed by test.run, which turns each Ready TestFile into a TestRun.
+/// Consumed by test.run, which turns each Ready File into a Run.
 /// </summary>
 [PlangType("testfile")]
-public sealed class TestFile
+public sealed class File
 {
     /// <summary>Relative path of the .test.goal file from the app root.</summary>
     [LlmBuilder] public string Path { get; init; } = "";
@@ -20,7 +20,7 @@ public sealed class TestFile
     [LlmBuilder] public string EntryGoalName { get; init; } = "";
 
     /// <summary>Lifecycle status at the end of discovery: Ready, Stale, or Skipped.</summary>
-    [LlmBuilder] public TestStatus Status { get; set; } = TestStatus.Ready;
+    [LlmBuilder] public Status Status { get; set; } = Status.Ready;
 
     /// <summary>Absolute path of the directory containing the .test.goal file. test.run uses this as the per-test App's working directory.</summary>
     public string Directory { get; init; } = "";

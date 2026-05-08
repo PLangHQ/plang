@@ -1,4 +1,4 @@
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Smoke guard for the Debug module's widened AfterAction/BeforeAction bindings.

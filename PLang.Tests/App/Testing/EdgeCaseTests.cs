@@ -1,7 +1,7 @@
 using System.Text.Json;
-using global::App.Test;
+using global::App.Tester;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 14 — safety net. Independent edge cases and security tests that don't
@@ -46,7 +46,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Timeout_Negative_RejectedWithError()
     {
-        var result = _app.Testing.Apply(new Dictionary<string, object?> { ["timeout"] = -5 });
+        var result = _app.Tester.Apply(new Dictionary<string, object?> { ["timeout"] = -5 });
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("timeout");
     }
@@ -57,10 +57,10 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_RejectedWithError()
     {
-        var zero = _app.Testing.Apply(new Dictionary<string, object?> { ["parallel"] = 0 });
+        var zero = _app.Tester.Apply(new Dictionary<string, object?> { ["parallel"] = 0 });
         await Assert.That(zero.Success).IsFalse();
 
-        var neg = _app.Testing.Apply(new Dictionary<string, object?> { ["parallel"] = -1 });
+        var neg = _app.Tester.Apply(new Dictionary<string, object?> { ["parallel"] = -1 });
         await Assert.That(neg.Success).IsFalse();
     }
 
@@ -77,18 +77,18 @@ public class EdgeCaseTests
         // test so the Results grow — verify count is from the outer action, not the
         // inner grandchild-runs).
 
-        var emptyList = new List<TestFile>();
+        var emptyList = new List<global::App.Tester.File>();
         var outerAction = new global::App.modules.test.run
         {
             Context = _app.User.Context,
-            Tests = new global::App.Data.@this<List<TestFile>>("Tests", emptyList),
+            Tests = new global::App.Data.@this<List<global::App.Tester.File>>("Tests", emptyList),
             Parallel = null,
             Timeout = null
         };
         var outerResult = await outerAction.Run();
 
         await Assert.That(outerResult.Success).IsTrue();
-        await Assert.That(_app.Testing.Results.Count).IsEqualTo(0);
+        await Assert.That(_app.Tester.Results.Count).IsEqualTo(0);
     }
 
     // --test={"path":"../../../etc"} → rejected. Discovery is constrained to
@@ -110,7 +110,7 @@ public class EdgeCaseTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as List<TestFile> ?? new List<TestFile>();
+        var files = result.Value as List<global::App.Tester.File> ?? new List<global::App.Tester.File>();
         await Assert.That(files.Count).IsEqualTo(0);
     }
 
@@ -122,10 +122,10 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new TestRun(new TestFile { Path = "Tests/X.test.goal", EntryGoalName = "X" });
+        var run = new global::App.Tester.Run(new global::App.Tester.File { Path = "Tests/X.test.goal", EntryGoalName = "X" });
         run.CapturedOutput = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
-        run.Complete(TestStatus.Fail, new global::App.Errors.AssertionError(1, 2));
-        _app.Testing.Results.Add(run);
+        run.Complete(global::App.Tester.Status.Fail, new global::App.Errors.AssertionError(1, 2));
+        _app.Tester.Results.Add(run);
 
         var action = new global::App.modules.test.report { Context = _app.User.Context };
         await action.Run();
@@ -153,9 +153,9 @@ public class EdgeCaseTests
                 ["nested"] = outer
             }
         };
-        var run = new TestRun(new TestFile { Path = "Tests/Nested.test.goal", EntryGoalName = "N" });
-        run.Complete(TestStatus.Fail, err);
-        _app.Testing.Results.Add(run);
+        var run = new global::App.Tester.Run(new global::App.Tester.File { Path = "Tests/Nested.test.goal", EntryGoalName = "N" });
+        run.Complete(global::App.Tester.Status.Fail, err);
+        _app.Tester.Results.Add(run);
 
         // Report rendering must not throw on nested Data.
         var action = new global::App.modules.test.report { Context = _app.User.Context };
@@ -174,7 +174,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
-        var result = _app.Testing.Apply(new Dictionary<string, object?> { ["format"] = "csv" });
+        var result = _app.Tester.Apply(new Dictionary<string, object?> { ["format"] = "csv" });
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("format");
     }

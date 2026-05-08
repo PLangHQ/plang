@@ -20,8 +20,8 @@ public sealed partial class @this
         Errors.Capture(s.Section("Errors"));
         Providers.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
-        Build.Capture(s.Section("Build"));
-        Testing.Capture(s.Section("Testing"));
+        Builder.Capture(s.Section("Build"));
+        Tester.Capture(s.Section("Testing"));
         CallStack.Capture(s.Section("CallStack"));
         return s;
     }
@@ -44,8 +44,8 @@ public sealed partial class @this
         if (s.HasSection("Variables")) global::App.Variables.@this.Restore(s.Section("Variables"), ctx);
         if (s.HasSection("Errors"))    global::App.Errors.@this.Restore(s.Section("Errors"), ctx);
         if (s.HasSection("Statics"))   global::App.Statics.@this.Restore(s.Section("Statics"), ctx);
-        if (s.HasSection("Build"))     global::App.Build.@this.Restore(s.Section("Build"), ctx);
-        if (s.HasSection("Testing"))   global::App.Test.@this.Restore(s.Section("Testing"), ctx);
+        if (s.HasSection("Build"))     global::App.Builder.@this.Restore(s.Section("Build"), ctx);
+        if (s.HasSection("Testing"))   global::App.Tester.@this.Restore(s.Section("Testing"), ctx);
         if (s.HasSection("CallStack")) global::App.CallStack.@this.Restore(s.Section("CallStack"), ctx);
     }
 }

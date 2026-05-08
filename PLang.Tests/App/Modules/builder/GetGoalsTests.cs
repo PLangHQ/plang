@@ -22,7 +22,7 @@ public class GetGoalsTests
             "plang_test_builder_getgoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        _app.Build.IsEnabled = true;
+        _app.Builder.IsEnabled = true;
     }
 
     [After(Test)]
@@ -145,7 +145,7 @@ public class GetGoalsTests
             "Other\n- write out 'other'");
 
         // Set files filter to only build Start.goal
-        _app.Build.Files.Add(new global::App.FileSystem.Path("Start.goal"));
+        _app.Builder.Files.Add(new global::App.FileSystem.Path("Start.goal"));
 
         var action = new goals { Context = _app.Context, Path = "." };
         var result = await _app.RunAction(action, _app.Context);
@@ -165,7 +165,7 @@ public class GetGoalsTests
             "MyGoal\n- step one");
 
         // Filter with different casing
-        _app.Build.Files.Add(new global::App.FileSystem.Path("mygoal.goal"));
+        _app.Builder.Files.Add(new global::App.FileSystem.Path("mygoal.goal"));
 
         var action = new goals { Context = _app.Context, Path = "." };
         var result = await _app.RunAction(action, _app.Context);
@@ -185,7 +185,7 @@ public class GetGoalsTests
             "Start\n- write out 'hello'");
 
         // Filter for a file that doesn't exist
-        _app.Build.Files.Add(new global::App.FileSystem.Path("NonExistent.goal"));
+        _app.Builder.Files.Add(new global::App.FileSystem.Path("NonExistent.goal"));
 
         var action = new goals { Context = _app.Context, Path = "." };
         var result = await _app.RunAction(action, _app.Context);
@@ -209,8 +209,8 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Third.goal"),
             "Third\n- step three");
 
-        _app.Build.Files.Add(new global::App.FileSystem.Path("First.goal"));
-        _app.Build.Files.Add(new global::App.FileSystem.Path("Third.goal"));
+        _app.Builder.Files.Add(new global::App.FileSystem.Path("First.goal"));
+        _app.Builder.Files.Add(new global::App.FileSystem.Path("Third.goal"));
 
         var action = new goals { Context = _app.Context, Path = "." };
         var result = await _app.RunAction(action, _app.Context);

@@ -367,7 +367,7 @@ public sealed class @this
 
     /// <summary>
     /// Returns the catalog's record/enum entries, keyed by name. Thin wrapper
-    /// around Catalog.Build(modules) for callers that want a dictionary view.
+    /// around Catalog.Builder(modules) for callers that want a dictionary view.
     /// </summary>
     public Dictionary<string, App.Modules.Schema.Entry> ComplexSchemas() =>
         Utils.TypeMapping.BuildTypeEntries(null).ToDictionary(e => e.Name, e => e);

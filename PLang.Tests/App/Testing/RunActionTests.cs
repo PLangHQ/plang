@@ -1,7 +1,7 @@
 using System.Text.Json;
-using global::App.Test;
+using global::App.Tester;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 10 — test.run action. The main loop.
@@ -35,10 +35,10 @@ public class RunActionTests
     }
 
     /// <summary>
-    /// Creates a .test.goal + .pr pair on disk at the temp dir. Returns a TestFile
+    /// Creates a .test.goal + .pr pair on disk at the temp dir. Returns a global::App.Tester.File
     /// ready for test.run (Status=Ready, Directory=abs, PrPath relative to Directory).
     /// </summary>
-    private TestFile BuildFixture(string relativePath, string goalName,
+    private global::App.Tester.File BuildFixture(string relativePath, string goalName,
         (string module, string actionName, List<Data> parameters)[] actions)
     {
         var absFile = System.IO.Path.Combine(_tempDir, relativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
@@ -79,7 +79,7 @@ public class RunActionTests
         var fileName = System.IO.Path.GetFileName(absFile);
         var prFileName = System.IO.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
 
-        return new TestFile
+        return new global::App.Tester.File
         {
             Path = relativePath,
             Directory = absDir,
@@ -87,16 +87,16 @@ public class RunActionTests
             Goal = goal,
             EntryGoalName = goalName,
             GoalHash = goal.Hash,
-            Status = TestStatus.Ready
+            Status = global::App.Tester.Status.Ready
         };
     }
 
-    private async Task<Results> RunTests(List<TestFile> tests, int? parallel = null, int? timeoutSec = null)
+    private async Task<Results> RunTests(List<global::App.Tester.File> tests, int? parallel = null, int? timeoutSec = null)
     {
         var action = new global::App.modules.test.run
         {
             Context = _app.User.Context,
-            Tests = new global::App.Data.@this<List<TestFile>>("Tests", tests),
+            Tests = new global::App.Data.@this<List<global::App.Tester.File>>("Tests", tests),
             Parallel = parallel.HasValue ? new global::App.Data.@this<int>("Parallel", parallel.Value) : null,
             Timeout = timeoutSec.HasValue ? new global::App.Data.@this<int>("Timeout", timeoutSec.Value) : null
         };
@@ -104,7 +104,7 @@ public class RunActionTests
         return (Results)result.Value!;
     }
 
-    // Each TestFile gets its own App.@this instance. Two tests cannot observe each
+    // Each global::App.Tester.File gets its own App.@this instance. Two tests cannot observe each
     // other's MemoryStack, SQLite, or provider state. Headline feature of the module.
     [Test]
     public async Task Run_FreshAppPerTest_IsolationBoundaryIsFileLevel()
@@ -128,11 +128,11 @@ public class RunActionTests
             })
         });
 
-        var results = await RunTests(new List<TestFile> { testA, testB }, parallel: 1);
+        var results = await RunTests(new List<global::App.Tester.File> { testA, testB }, parallel: 1);
         var runs = results.ToList();
 
         await Assert.That(runs.Count).IsEqualTo(2);
-        await Assert.That(runs.All(r => r.Status == TestStatus.Pass)).IsTrue();
+        await Assert.That(runs.All(r => r.Status == global::App.Tester.Status.Pass)).IsTrue();
     }
 
     // With Config.Parallel=2 and 4 tests, at most 2 tests run concurrently.
@@ -172,7 +172,7 @@ public class RunActionTests
         global::App.modules.test.run.ChildAppCreated += Probe;
         try
         {
-            var tests = new List<TestFile>();
+            var tests = new List<global::App.Tester.File>();
             for (int i = 0; i < 4; i++)
                 tests.Add(BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
                 {
@@ -183,7 +183,7 @@ public class RunActionTests
             var runs = results.ToList();
 
             await Assert.That(runs.Count).IsEqualTo(4);
-            await Assert.That(runs.All(r => r.Status == TestStatus.Pass)).IsTrue();
+            await Assert.That(runs.All(r => r.Status == global::App.Tester.Status.Pass)).IsTrue();
             // The semaphore caps concurrency at 2 — the delay forces overlap to prove it.
             // A regression to parallel=1 (serial) would drop maxDepth to 1; a regression
             // to unbounded parallelism would push it to 4.
@@ -195,7 +195,7 @@ public class RunActionTests
         }
     }
 
-    // A test that sleeps past the configured timeout → TestStatus.Timeout.
+    // A test that sleeps past the configured timeout → global::App.Tester.Status.Timeout.
     // Test App is disposed (CancellationToken fired; IAsyncDisposable chain
     // cancels actors, providers, channels, keep-alives).
     [Test]
@@ -212,10 +212,10 @@ public class RunActionTests
             })
         });
 
-        var results = await RunTests(new List<TestFile> { slow }, timeoutSec: 1);
+        var results = await RunTests(new List<global::App.Tester.File> { slow }, timeoutSec: 1);
         var run = results.Single();
 
-        await Assert.That(run.Status).IsEqualTo(TestStatus.Timeout);
+        await Assert.That(run.Status).IsEqualTo(global::App.Tester.Status.Timeout);
     }
 
     // The AfterAction subscription attached to each test's App.Events records every
@@ -229,14 +229,14 @@ public class RunActionTests
             ("variable", "set", new List<Data> { new("Name", "y"), new("Value", 2) })
         });
 
-        await RunTests(new List<TestFile> { test });
+        await RunTests(new List<global::App.Tester.File> { test });
 
-        var coverage = _app.Testing.Coverage;
+        var coverage = _app.Tester.Coverage;
         await Assert.That(coverage.ModuleActions.Any(x => x.Module == "variable" && x.Action == "set")).IsTrue();
     }
 
-    // After a test completes, its App.Testing.Coverage is merged into the parent
-    // App.Testing.Coverage via Coverage.Merge. Run-wide view accumulates observations
+    // After a test completes, its App.Tester.Coverage is merged into the parent
+    // App.Tester.Coverage via Coverage.Merge. Run-wide view accumulates observations
     // from all child tests (unions module.action pairs and branch-site indices).
     [Test]
     public async Task Run_TestChildCoverage_MergedIntoParentCoverage()
@@ -247,11 +247,11 @@ public class RunActionTests
         });
 
         // Pre-populate parent's coverage with something distinct
-        _app.Testing.Coverage.RecordModuleAction("output", "write");
+        _app.Tester.Coverage.RecordModuleAction("output", "write");
 
-        await RunTests(new List<TestFile> { test });
+        await RunTests(new List<global::App.Tester.File> { test });
 
-        var observed = _app.Testing.Coverage.ModuleActions.ToList();
+        var observed = _app.Tester.Coverage.ModuleActions.ToList();
         await Assert.That(observed.Any(x => x == ("output", "write"))).IsTrue();
         await Assert.That(observed.Any(x => x == ("variable", "set"))).IsTrue();
     }
@@ -281,7 +281,7 @@ public class RunActionTests
                 ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
             });
 
-            await RunTests(new List<TestFile> { test });
+            await RunTests(new List<global::App.Tester.File> { test });
 
             await Assert.That(observedChildOsDir).IsEqualTo("/some/os/dir");
             // Parent unchanged — the propagation is one-way (parent → child).
@@ -293,7 +293,7 @@ public class RunActionTests
         }
     }
 
-    // testApp.Testing.IsEnabled = true before the test starts. Subsystems that branch
+    // testApp.Tester.IsEnabled = true before the test starts. Subsystems that branch
     // on test mode (in-memory DBs, stubbed identity, etc.) observe the flag.
     // Uses the ChildAppCreated hook to snapshot IsEnabled directly on the child App.
     [Test]
@@ -304,7 +304,7 @@ public class RunActionTests
         void Probe(global::App.@this childApp)
         {
             if (childApp.AbsolutePath.StartsWith(_tempDir))
-                observed = childApp.Testing.IsEnabled;
+                observed = childApp.Tester.IsEnabled;
         }
         global::App.modules.test.run.ChildAppCreated += Probe;
         try
@@ -314,10 +314,10 @@ public class RunActionTests
                 ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
             });
 
-            var results = await RunTests(new List<TestFile> { test });
+            var results = await RunTests(new List<global::App.Tester.File> { test });
             var run = results.Single();
 
-            await Assert.That(run.Status).IsEqualTo(TestStatus.Pass);
+            await Assert.That(run.Status).IsEqualTo(global::App.Tester.Status.Pass);
             await Assert.That(observed).IsEqualTo(true);
         }
         finally
@@ -326,8 +326,8 @@ public class RunActionTests
         }
     }
 
-    // Tests with TestStatus.Stale or Skipped are NOT executed but are included in
-    // the returned TestRun[] results with their original status. Reporter shows the
+    // Tests with global::App.Tester.Status.Stale or Skipped are NOT executed but are included in
+    // the returned global::App.Tester.Run[] results with their original status. Reporter shows the
     // full surface — hiding filtered tests would hurt CI visibility.
     // Side-effect probe: count ChildAppCreated invocations — only the Ready test
     // should trigger a child App. Stale/Skipped take the early-return path.
@@ -348,18 +348,18 @@ public class RunActionTests
             {
                 ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
             });
-            var stale = new TestFile { Path = "Stale.test.goal", Directory = _tempDir,
-                PrPath = ".build/stale.test.pr", Status = TestStatus.Stale, StatusReason = "no .pr" };
-            var skipped = new TestFile { Path = "Skip.test.goal", Directory = _tempDir,
-                PrPath = ".build/skip.test.pr", Status = TestStatus.Skipped, StatusReason = "excluded by tag" };
+            var stale = new global::App.Tester.File { Path = "Stale.test.goal", Directory = _tempDir,
+                PrPath = ".build/stale.test.pr", Status = global::App.Tester.Status.Stale, StatusReason = "no .pr" };
+            var skipped = new global::App.Tester.File { Path = "Skip.test.goal", Directory = _tempDir,
+                PrPath = ".build/skip.test.pr", Status = global::App.Tester.Status.Skipped, StatusReason = "excluded by tag" };
 
-            var results = await RunTests(new List<TestFile> { ready, stale, skipped });
+            var results = await RunTests(new List<global::App.Tester.File> { ready, stale, skipped });
             var runs = results.ToList();
 
             await Assert.That(runs.Count).IsEqualTo(3);
-            await Assert.That(runs.Count(r => r.Status == TestStatus.Pass)).IsEqualTo(1);
-            await Assert.That(runs.Count(r => r.Status == TestStatus.Stale)).IsEqualTo(1);
-            await Assert.That(runs.Count(r => r.Status == TestStatus.Skipped)).IsEqualTo(1);
+            await Assert.That(runs.Count(r => r.Status == global::App.Tester.Status.Pass)).IsEqualTo(1);
+            await Assert.That(runs.Count(r => r.Status == global::App.Tester.Status.Stale)).IsEqualTo(1);
+            await Assert.That(runs.Count(r => r.Status == global::App.Tester.Status.Skipped)).IsEqualTo(1);
 
             // Only the one Ready test spun up a child App.
             await Assert.That(childAppsCreated).IsEqualTo(1);
@@ -370,7 +370,7 @@ public class RunActionTests
         }
     }
 
-    // A test that fails an assertion: TestRun.Status == Fail, error on the TestRun,
+    // A test that fails an assertion: global::App.Tester.Run.Status == Fail, error on the global::App.Tester.Run,
     // AssertionError.Variables populated (from Batch 5). test.run itself does not
     // throw — child failure is data, not exception. Keeps the main loop parallel-safe.
     [Test]
@@ -388,15 +388,15 @@ public class RunActionTests
             })
         });
 
-        var results = await RunTests(new List<TestFile> { test });
+        var results = await RunTests(new List<global::App.Tester.File> { test });
         var run = results.Single();
 
-        await Assert.That(run.Status).IsEqualTo(TestStatus.Fail);
+        await Assert.That(run.Status).IsEqualTo(global::App.Tester.Status.Fail);
         await Assert.That(run.Error).IsNotNull();
         await Assert.That(run.Error is global::App.Errors.AssertionError).IsTrue();
 
         // Variables snapshot flowed from assert handler → provider → test.run's
-        // failure path → TestRun.Error. Batch 5's headline feature.
+        // failure path → global::App.Tester.Run.Error. Batch 5's headline feature.
         var assertionError = (global::App.Errors.AssertionError)run.Error!;
         await Assert.That(assertionError.Variables).IsNotNull();
         await Assert.That(assertionError.Variables!.ContainsKey("score")).IsTrue();
@@ -405,12 +405,12 @@ public class RunActionTests
         await Assert.That(Convert.ToInt64(assertionError.Variables["score"])).IsEqualTo(42L);
     }
 
-    // Boundary: Tests=[] → TestRun[] is empty, no exception, no subscription
+    // Boundary: Tests=[] → global::App.Tester.Run[] is empty, no exception, no subscription
     // leakage. (independent — robustness)
     [Test]
     public async Task Run_EmptyTestList_ReturnsEmptyResults_NoError()
     {
-        var results = await RunTests(new List<TestFile>());
+        var results = await RunTests(new List<global::App.Tester.File>());
         await Assert.That(results.Count).IsEqualTo(0);
     }
 
@@ -437,32 +437,32 @@ public class RunActionTests
             })
         });
 
-        var results = await RunTests(new List<TestFile> { fixture });
+        var results = await RunTests(new List<global::App.Tester.File> { fixture });
         var run = results.Single();
-        await Assert.That(run.Status).IsEqualTo(TestStatus.Pass);
+        await Assert.That(run.Status).IsEqualTo(global::App.Tester.Status.Pass);
 
         // Site key format: "<goalPath>:<stepIndex>" — matches run.cs:91-95.
         var site = "/Cond.test.goal:0";
 
         // BranchLabels populated via the production subscriber reading
         // result.Properties["branchLabel"] and calling RecordBranchLabel.
-        await Assert.That(_app.Testing.Coverage.BranchLabels.ContainsKey(site)).IsTrue();
-        await Assert.That(_app.Testing.Coverage.BranchLabels[site].Contains("true")).IsTrue();
+        await Assert.That(_app.Tester.Coverage.BranchLabels.ContainsKey(site)).IsTrue();
+        await Assert.That(_app.Tester.Coverage.BranchLabels[site].Contains("true")).IsTrue();
 
         // BranchChains populated via the production subscriber reading
         // result.Properties["branchChain"] and calling RecordBranchChain.
-        await Assert.That(_app.Testing.Coverage.BranchChains.ContainsKey(site)).IsTrue();
-        var chain = _app.Testing.Coverage.BranchChains[site];
+        await Assert.That(_app.Tester.Coverage.BranchChains.ContainsKey(site)).IsTrue();
+        var chain = _app.Tester.Coverage.BranchChains[site];
         await Assert.That(chain.Count).IsEqualTo(2);
         await Assert.That(chain[0]).IsEqualTo("true");
         await Assert.That(chain[1]).IsEqualTo("false");
 
         // Indices map gets the simple-path 0 (condition was true).
-        await Assert.That(_app.Testing.Coverage.Branches[site].Contains(0)).IsTrue();
+        await Assert.That(_app.Tester.Coverage.Branches[site].Contains(0)).IsTrue();
     }
 
     // Covers RunSingleAsync's outer catch — a handler that throws an unexpected
-    // exception must not propagate out of test.run. The TestRun records Fail with
+    // exception must not propagate out of test.run. The global::App.Tester.Run records Fail with
     // the exception message preserved; subsequent tests in the same run continue.
     [Test]
     public async Task Run_FixtureThrowsUnexpectedException_CapturedAsFail_LoopContinues()
@@ -486,16 +486,16 @@ public class RunActionTests
             ("variable", "set", new List<Data> { new("Name", "y"), new("Value", 2) })
         });
 
-        var results = await RunTests(new List<TestFile> { throwing, healthy });
+        var results = await RunTests(new List<global::App.Tester.File> { throwing, healthy });
         var runs = results.ToList();
 
         await Assert.That(runs.Count).IsEqualTo(2);
         // Throwing fixture captured as Fail — no exception propagated.
         var failed = runs.Single(r => r.File.Path == "Throw.test.goal");
-        await Assert.That(failed.Status).IsEqualTo(TestStatus.Fail);
+        await Assert.That(failed.Status).IsEqualTo(global::App.Tester.Status.Fail);
         await Assert.That(failed.Error).IsNotNull();
         // Healthy fixture still ran — loop stayed parallel-safe.
         var passed = runs.Single(r => r.File.Path == "Healthy.test.goal");
-        await Assert.That(passed.Status).IsEqualTo(TestStatus.Pass);
+        await Assert.That(passed.Status).IsEqualTo(global::App.Tester.Status.Pass);
     }
 }

@@ -2,7 +2,7 @@ using System.IO;
 using System.Reflection;
 using App.Attributes;
 using App.Errors;
-using App.Test;
+using App.Tester;
 using App.Utils;
 using App.Variables;
 using Goal = App.Goals.Goal.@this;
@@ -16,10 +16,10 @@ namespace App.modules.test;
 /// on the action handlers referenced in the .pr, recursing through static goal.call
 /// chains), then applies the Testing.Include/Exclude tag filters. Filtered-out tests
 /// are returned with Status=Skipped; tests with hash mismatch or missing .pr are
-/// Status=Stale. Returns a List&lt;TestFile&gt; that test.run consumes.
+/// Status=Stale. Returns a List&lt;global::App.Tester.File&gt; that test.run consumes.
 /// </summary>
 [ModuleDescription("Discover, run, and report on PLang test goals with tag filtering and coverage tracking")]
-[System.ComponentModel.Description("Walk a directory for *.test.goal files and return a filtered list of TestFile descriptors")]
+[System.ComponentModel.Description("Walk a directory for *.test.goal files and return a filtered list of global::App.Tester.File descriptors")]
 [Example("discover tests in 'Tests/Foo' recursive=false, write to %tests%",
     "test.discover Path([string] Tests/Foo), Recursive([bool] false) | variable.set Name([string] %tests%), Value([object] %__data__%)")]
 [Action("discover")]
@@ -41,7 +41,7 @@ public partial class discover : IContext
     {
         var fs = Context.App!.FileSystem;
 
-        App.Data.@this empty = App.Data.@this.Ok(new List<TestFile>());
+        App.Data.@this empty = App.Data.@this.Ok(new List<global::App.Tester.File>());
 
         string absRoot;
         try { absRoot = fs.ValidatePath(Path.Value); }
@@ -58,10 +58,10 @@ public partial class discover : IContext
         var option = Recursive.Value ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
         var matches = fs.Directory.EnumerateFiles(absRoot, Pattern.Value, option);
 
-        var include = Context.App.Testing.Include;
-        var exclude = Context.App.Testing.Exclude;
+        var include = Context.App.Tester.Include;
+        var exclude = Context.App.Tester.Exclude;
 
-        var files = new List<TestFile>();
+        var files = new List<global::App.Tester.File>();
         foreach (var match in matches)
             files.Add(DiscoverOne(match, fs, include, exclude));
 
@@ -69,7 +69,7 @@ public partial class discover : IContext
     }
 
     /// <summary>Discovers metadata for a single .test.goal file.</summary>
-    private TestFile DiscoverOne(string absGoalPath, FileSystem.IPLangFileSystem fs,
+    private global::App.Tester.File DiscoverOne(string absGoalPath, FileSystem.IPLangFileSystem fs,
         HashSet<string> include, HashSet<string> exclude)
     {
         var dir = fs.Path.GetDirectoryName(absGoalPath) ?? fs.RootDirectory;
@@ -78,10 +78,10 @@ public partial class discover : IContext
         var prFileName = fs.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
         var absPrPath = fs.Path.Combine(dir, ".build", prFileName);
         // PrPath is relative to the test's own directory (not the parent app root) so
-        // the per-test child App — rooted at TestFile.Directory — can resolve it directly.
+        // the per-test child App — rooted at global::App.Tester.File.Directory — can resolve it directly.
         var relPrPath = ".build/" + prFileName;
 
-        var stub = new TestFile
+        var stub = new global::App.Tester.File
         {
             Path = relGoalPath,
             Directory = dir,
@@ -90,7 +90,7 @@ public partial class discover : IContext
 
         if (!fs.File.Exists(absPrPath))
         {
-            stub.Status = TestStatus.Stale;
+            stub.Status = global::App.Tester.Status.Stale;
             stub.StatusReason = "no .pr";
             return stub;
         }
@@ -106,14 +106,14 @@ public partial class discover : IContext
             prGoal = converted as Goal;
             if (prGoal == null)
             {
-                stub.Status = TestStatus.Stale;
+                stub.Status = global::App.Tester.Status.Stale;
                 stub.StatusReason = err?.Message ?? "pr corrupt";
                 return stub;
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         {
-            stub.Status = TestStatus.Stale;
+            stub.Status = global::App.Tester.Status.Stale;
             stub.StatusReason = "pr corrupt: " + ex.Message;
             return stub;
         }
@@ -128,14 +128,14 @@ public partial class discover : IContext
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            stub.Status = TestStatus.Stale;
+            stub.Status = global::App.Tester.Status.Stale;
             stub.StatusReason = "goal read error: " + ex.Message;
             return stub;
         }
 
         if (currentGoal == null || !string.Equals(currentGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
         {
-            stub.Status = TestStatus.Stale;
+            stub.Status = global::App.Tester.Status.Stale;
             stub.StatusReason = "rebuild needed";
             return stub;
         }
@@ -150,9 +150,9 @@ public partial class discover : IContext
         // tree — lets the report surface sites that exist in source but no test ever
         // reaches. Uses the same recursion as auto-tag traversal.
         var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        SeedBranchChains(prGoal, Context.App!.Testing.Coverage, chainVisited);
+        SeedBranchChains(prGoal, Context.App!.Tester.Coverage, chainVisited);
 
-        var file = new TestFile
+        var file = new global::App.Tester.File
         {
             Path = relGoalPath,
             Directory = dir,
@@ -167,17 +167,17 @@ public partial class discover : IContext
         // Filter: exclude wins over include (architect §5.6 / test-designer locked).
         if (exclude.Count > 0 && exclude.Overlaps(file.Tags))
         {
-            file.Status = TestStatus.Skipped;
+            file.Status = global::App.Tester.Status.Skipped;
             file.StatusReason = "excluded by tag";
         }
         else if (include.Count > 0 && !include.Overlaps(file.Tags))
         {
-            file.Status = TestStatus.Skipped;
+            file.Status = global::App.Tester.Status.Skipped;
             file.StatusReason = "no include match";
         }
         else
         {
-            file.Status = TestStatus.Ready;
+            file.Status = global::App.Tester.Status.Ready;
         }
 
         return file;
@@ -270,7 +270,7 @@ public partial class discover : IContext
     /// not standalone sites). Recurses static goal.call targets the same way
     /// auto-tag traversal does; dynamic %var% goal names are skipped.
     /// </summary>
-    private void SeedBranchChains(Goal goal, Test.Coverage coverage, HashSet<string> visited, int depth = 0)
+    private void SeedBranchChains(Goal goal, App.Tester.Coverage coverage, HashSet<string> visited, int depth = 0)
     {
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;

@@ -1,22 +1,22 @@
 using System.Diagnostics;
 using App.Errors;
 
-namespace App.Test;
+namespace App.Tester;
 
 /// <summary>
-/// Execution record for a single test. Created per Ready TestFile by test.run.
+/// Execution record for a single test. Created per Ready File by test.run.
 /// Lives on the per-test child App's Testing.CurrentTest during execution,
 /// then added to the parent's Testing.Results when the test completes.
 /// </summary>
-public sealed class TestRun
+public sealed class Run
 {
     private readonly Stopwatch _stopwatch;
 
-    /// <summary>The discovered TestFile this run is executing.</summary>
-    public TestFile File { get; }
+    /// <summary>The discovered File this run is executing.</summary>
+    public File File { get; }
 
     /// <summary>Current lifecycle status. Transitions on Complete().</summary>
-    public TestStatus Status { get; private set; }
+    public Status Status { get; private set; }
 
     /// <summary>Wall-clock duration from construction to Complete(). Zero until Complete() fires.</summary>
     public TimeSpan Duration { get; private set; }
@@ -30,15 +30,15 @@ public sealed class TestRun
     /// <summary>Tags added during the run via test.tag. Distinct from File.Tags (which is discovery-time).</summary>
     public HashSet<string> UserTags { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public TestRun(TestFile file)
+    public Run(File file)
     {
         File = file;
-        Status = file.Status == TestStatus.Ready ? TestStatus.Ready : file.Status;
+        Status = file.Status == Status.Ready ? Status.Ready : file.Status;
         _stopwatch = Stopwatch.StartNew();
     }
 
     /// <summary>Transitions to the given terminal status and records elapsed duration.</summary>
-    public void Complete(TestStatus status, IError? error = null)
+    public void Complete(Status status, IError? error = null)
     {
         if (_stopwatch.IsRunning) _stopwatch.Stop();
         Duration = _stopwatch.Elapsed;
@@ -52,7 +52,7 @@ public sealed class TestRun
     /// </summary>
     public void Complete(Data.@this result)
     {
-        if (result.Success) Complete(TestStatus.Pass);
-        else Complete(TestStatus.Fail, result.Error);
+        if (result.Success) Complete(Status.Pass);
+        else Complete(Status.Fail, result.Error);
     }
 }

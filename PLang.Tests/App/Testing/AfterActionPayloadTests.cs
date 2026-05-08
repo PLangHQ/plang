@@ -1,6 +1,6 @@
 using global::App.Actor.Context;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 6 — AfterAction event payload widening.

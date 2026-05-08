@@ -1,6 +1,6 @@
 using global::App.Variables;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 4 — Variables.Snapshot().

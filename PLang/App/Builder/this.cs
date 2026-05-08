@@ -1,6 +1,6 @@
 using Force.DeepCloner;
 
-namespace App.Build;
+namespace App.Builder;
 
 /// <summary>
 /// Builder mode controller. When enabled, actors use in-memory datasources

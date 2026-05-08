@@ -21,7 +21,7 @@ public class MathExamplesForLlmTests
     public void Setup()
     {
         _app = new PLangEngine("/test");
-        _app.Build.IsEnabled = true;
+        _app.Builder.IsEnabled = true;
     }
 
     [After(Test)]

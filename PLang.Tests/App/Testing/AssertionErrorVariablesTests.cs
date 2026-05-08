@@ -9,7 +9,7 @@ using AssertContains = global::App.modules.assert.Contains;
 using AssertGreaterThan = global::App.modules.assert.GreaterThan;
 using AssertLessThan = global::App.modules.assert.LessThan;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 5 — AssertionError.Variables + assert handlers.

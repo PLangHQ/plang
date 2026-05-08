@@ -5,7 +5,7 @@ namespace App.modules.test;
 /// <summary>
 /// Declares user tags for the running test. At discovery time, test.discover scans
 /// the .pr for these actions to build the test's tag set — the runtime path is a
-/// thin accumulator on the currently-running TestRun (if any). Outside test mode
+/// thin accumulator on the currently-running global::App.Tester.Run (if any). Outside test mode
 /// (Testing.CurrentTest == null, e.g. when a shared goal is reused in production),
 /// the action no-ops rather than erroring so shared goals work in both modes.
 /// </summary>
@@ -19,7 +19,7 @@ public partial class Tag : IContext
 
     public Task<Data.@this> Run()
     {
-        var currentTest = Context.App!.Testing.CurrentTest;
+        var currentTest = Context.App!.Tester.CurrentTest;
         if (currentTest != null && Tags.Value is { } tags)
         {
             foreach (var tag in tags)

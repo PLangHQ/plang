@@ -174,7 +174,7 @@ public sealed class Operator
         }
 
         // Enum compared with string → normalize to the enum's name so PLang can
-        // write `where Status equals 'Timeout'` against a TestStatus field.
+        // write `where Status equals 'Timeout'` against a global::App.Tester.Status field.
         if (left is Enum leEnum && right is string)
             return (leEnum.ToString(), right);
         if (right is Enum reEnum && left is string)

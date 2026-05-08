@@ -59,7 +59,7 @@ global using Flags = App.CallStack.Flags;
 // Call: not a global alias — App.modules.goal.Call (the goal.call action handler)
 // collides. Use App.CallStack.Call.@this fully qualified, or per-file alias.
 global using Debugging = App.Debug.@this;
-global using Testing = App.Test.@this;
+global using Tester = App.Tester.@this;
 global using Snapshot = App.Snapshot.@this;
 global using ISnapshotted = App.Snapshot.ISnapshotted;
 global using AppStatics = App.Statics.@this;

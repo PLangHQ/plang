@@ -1,11 +1,11 @@
 using System.Text.Json;
-using global::App.Test;
+using global::App.Tester;
 
-namespace PLang.Tests.App.Testing;
+namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 13 — per-test metadata.
-/// Every TestRun captures the builder version that produced its .pr, plus the
+/// Every global::App.Tester.Run captures the builder version that produced its .pr, plus the
 /// Goal.Hash from the .pr. Surfaced in results.json so tooling can correlate
 /// drift: if the current plang builder is a newer version than the one that
 /// produced a test's .pr, the report flags it. Drift is informational, not
@@ -41,21 +41,21 @@ public class TestMetadataTests
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private static TestRun NewRun(string name, string? builderVersion = null, string? goalHash = "deadbeef")
+    private static global::App.Tester.Run NewRun(string name, string? builderVersion = null, string? goalHash = "deadbeef")
     {
-        var run = new TestRun(new TestFile
+        var run = new global::App.Tester.Run(new global::App.Tester.File
         {
             Path = $"Tests/{name}.test.goal",
             EntryGoalName = name,
             GoalHash = goalHash,
             BuilderVersion = builderVersion
         });
-        run.Complete(TestStatus.Pass);
+        run.Complete(global::App.Tester.Status.Pass);
         return run;
     }
 
     // The .pr file carries a builder-version field (written at build time). At
-    // discovery, TestRun reads and stores it in its Metadata so the report can
+    // discovery, global::App.Tester.Run reads and stores it in its Metadata so the report can
     // surface "built by version X".
     [Test]
     public async Task Metadata_TestRun_CapturesBuilderVersionFromPr()
@@ -64,7 +64,7 @@ public class TestMetadataTests
         await Assert.That(run.File.BuilderVersion).IsEqualTo("v1.2.3");
     }
 
-    // TestRun captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
+    // global::App.Tester.Run captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
     // Combined with current-file Goal.Hash, enables drift correlation: "this
     // .pr was built from goal text at hash Y".
     [Test]
@@ -80,7 +80,7 @@ public class TestMetadataTests
     [Test]
     public async Task Metadata_Report_SurfacesBuilderVersion_InResultsJson()
     {
-        _app.Testing.Results.Add(NewRun("T", builderVersion: "v1.0"));
+        _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0"));
 
         var action = new global::App.modules.test.report { Context = _app.User.Context };
         await action.Run();
@@ -102,7 +102,7 @@ public class TestMetadataTests
     public async Task Metadata_Report_FlagsDriftWhenPrBuilderVersionMismatchesCurrent()
     {
         _app.Version = "v2.0"; // current app builder version
-        _app.Testing.Results.Add(NewRun("T", builderVersion: "v1.0")); // stale
+        _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0")); // stale
 
         var action = new global::App.modules.test.report { Context = _app.User.Context };
         await action.Run();

@@ -361,7 +361,7 @@ public class DataSourceTests
     public async Task App_UsesInMemory_WhenTestingEnabled()
     {
         await using var engine = new PLangEngine(_tempDir);
-        engine.Testing.IsEnabled = true;
+        engine.Tester.IsEnabled = true;
 
         // app.SettingsStore is in-memory under Testing — no .db directory created.
         var ds = engine.SettingsStore;

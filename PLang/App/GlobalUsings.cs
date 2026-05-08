@@ -60,16 +60,16 @@ global using AppStatics = App.Statics.@this;
 global using ICache = App.Cache.ICache;
 global using MemoryStepCache = App.Cache.MemoryStepCache;
 global using Debugging = App.Debug.@this;
-global using Testing = App.Test.@this;
+global using Tester = App.Tester.@this;
 
 // Call: not a global alias — App.modules.goal.Call (the goal.call action handler) collides.
 // Use App.CallStack.Call.@this fully qualified, or per-file alias.
 
-// Build: can't be global alias — v1 PLang.Build namespace conflict.
-// Inside App.@this: the `Build` property shadows the `Build` namespace, so
-// type references must be fully qualified (global::App.Build.@this).
-// Inside other App.*: Build.@this resolves naturally.
-// Outside App.*: use App.Build.@this or a per-file alias.
+// Builder: can't be global alias — v1 PLang.Builder namespace conflict (legacy).
+// Inside App.@this: the `Builder` property shadows the `Builder` namespace, so
+// type references must be fully qualified (global::App.Builder.@this).
+// Inside other App.*: Builder.@this resolves naturally.
+// Outside App.*: use App.Builder.@this or a per-file alias.
 
 // App: can't be global alias — App.@this IS the app root
 // Inside App.*: use App.@this (parent namespace resolves naturally)
