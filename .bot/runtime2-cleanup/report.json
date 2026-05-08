@@ -1122,6 +1122,53 @@
         "health": "plan + briefs + scope-map + summary all consistent",
         "notes": "Tier 4 remaining: 15, 16, 18, 19 each merit own session; 22 is caller-sweep, standalone."
       }
+    },
+    {
+      "id": "03b6cb9f-1cab-4f92-92c0-8e077fdcf354",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T07:00:00Z",
+      "timestamp_end": "2026-05-09T07:30:00Z",
+      "intent": "Pull stages 17+21; carve stages 18+22 (Tier 4 batch).",
+      "before": {
+        "assumptions": "Stages 17 and 21 landed clean. Stage 22 has been deferred multiple rounds; landing it clears the long-pending shortcut removal. Stage 18 turns out bigger than first sized (Types/this.cs MIME block is substantial).",
+        "risk": "Stage 18 medium risk (overload disambiguation, large data block move). Stage 22 low risk but per-site judgment for ~88 sites."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-22-app-shortcuts-drop.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-22-app-shortcuts-drop.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 22 brief \u2014 drop app.Variables / app.Context shortcuts. 2 production sites (Actor/this.cs:137 MyIdentity \u2192 System; Errors/Error.cs:265 fallback \u2192 System). 86 test sites with heuristic table for which actor applies (builder/test \u2192 User; errors/snapshot \u2192 System)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-18-mime-table-split.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Stage 18 brief \u2014 bigger than first sized. Forward methods + data tables move from Types/this.cs into new App/Formats/this.cs (mount app.Formats \u2014 corrected from earlier app.Serializers.Formats which would have failed). Reverse becomes Types.ClrFromMime(mimeType) overload. Utils/MimeTypes.cs deleted. Overload disambiguation flagged as risk."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 17 and 21 marked complete (with stage 17 Test*-prefix-drop bonus and stage 21 grep-miss caught by coder). Stages 18 and 22 link briefs."
+        }
+      ],
+      "after": {
+        "status": "stages 18 and 22 ready for coder",
+        "health": "plan + briefs + scope-map + summary all consistent",
+        "notes": "Tier 4 remaining: 15, 16, 19 each merit own session. After those, cleanup is done."
+      }
     }
   ]
 }

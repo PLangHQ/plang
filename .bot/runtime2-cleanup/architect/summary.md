@@ -1,5 +1,38 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+14) — stages 17+21 landed; stages 18+22 carved (Tier 4 batch)
+
+Stages 17 and 21 landed cleanly per coder.
+
+**Stage 17**: 2755/2755 + 199/199. Coder also dropped the `Test*` prefix on inner files (TestFile.cs → File.cs, TestRun.cs → Run.cs, TestStatus.cs → Status.cs) — bonus cleanup that fell naturally out of the folder rename.
+
+**Stage 21**: 2755/2755 + 199/199. Coder caught one extra production caller in `App/Data/this.Navigation.cs:281` (an unqualified `Navigators.ValueNavigators` reference that resolved to the old `App.Data.Navigators` namespace from inside `App.Data`). The brief's grep missed it because the grep targeted `App.Data.Navigators` qualified form; the unqualified form was invisible to that pattern.
+
+### Stages 18 + 22 carved
+
+**Stage 18** (`mime-table-split`) — bigger than first sized. Two MIME-table sources today: `Utils/MimeTypes.cs` (static) and `Types/this.cs:14, 215-315` (instance methods + data tables). Consolidate: forward I/O methods (ext → MIME, Kind, Compressible, KindOf, Add, Remove) move to new `App/Formats/this.cs` (mount: `app.Formats`); reverse type-resolution becomes `app.Types.ClrFromMime(mimeType)` overload. `Utils/MimeTypes.cs` deletes.
+
+**Mount path correction**: the plan one-liner originally said `app.Serializers.Formats`. After stage 1's per-actor Serializers reshape (`app.Serializers` no longer exists), the correct mount is `app.Formats` at App root. Brief carries the correction.
+
+**Stage 22** (`app-shortcuts-drop`) — 88 caller sweep (2 production + 86 test). Per-site judgment about which actor's Context applies. Brief includes a heuristic table for test directories (defaults: builder/ → User, errors/ → System, etc.).
+
+### Why batch 18 + 22
+
+- Both Tier 4 hygiene; different concerns; coherent.
+- Both medium-sized.
+- Independent — either order works.
+- Stage 22 has been deferred multiple rounds; landing it clears a long-pending item.
+
+### Tier 4 remaining after 18+22
+
+- Stage 15 (Rule A renames) — substantial enumerated rename list; own session.
+- Stage 16 (static-state-eviction) — multiple targets, mechanical-ish; own session.
+- Stage 19 (Provider→Code) — biggest sweep on this branch; own session.
+
+After all three land, the cleanup is done.
+
+---
+
 ## 2026-05-08 (latest+13) — stages 14+20 landed; stages 17+21 carved (Tier 4 rename batch)
 
 Stages 14 and 20 landed cleanly per coder.
