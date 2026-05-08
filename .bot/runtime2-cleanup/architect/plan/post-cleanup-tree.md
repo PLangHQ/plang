@@ -56,7 +56,7 @@ PLang/App/
 │   │   ├── Children/this.cs
 │   │   ├── Diffs/this.cs
 │   │   ├── Errors/this.cs
-│   │   ├── Position.cs                      (RENAMED ← ../RestoredFrame.cs; deserialized positional triple, sibling to Call snapshot — see open question)
+│   │   ├── Position.cs                      (RENAMED ← ../RestoredFrame.cs; settled per L19 review — Position reads better than RestoredFrame)
 │   │   ├── Tags/this.cs
 │   │   ├── this.Snapshot.cs
 │   │   └── this.cs                          (gains Call.ExecuteAsync(handler, context), stage 10)
@@ -83,7 +83,9 @@ PLang/App/
 │   │   │   └── this.cs                      (Mime(ext), Kind(ext), Compressible(kind), KindOf(typeValue), Add(ext, kind, mime), Remove(ext))
 │   │   ├── Serializer/
 │   │   │   ├── Json.cs                      (RENAMED ← JsonStreamSerializer.cs)
-│   │   │   ├── Plang.cs                     (RENAMED ← PlangSerializer.cs OR PlangDataSerializer.cs — see open question on which one survives)
+│   │   │   ├── Plang/                       (NEW subfolder; groups the plang-format serializers for future expansion — Protobuf etc.)
+│   │   │   │   ├── this.cs                  (RENAMED ← PlangSerializer.cs; application/plang transport)
+│   │   │   │   └── Data.cs                  (RENAMED ← PlangDataSerializer.cs; application/plang+data — the canonical envelope for callbacks)
 │   │   │   ├── Text.cs                      (RENAMED ← TextStreamSerializer.cs)
 │   │   │   └── this.cs
 │   │   ├── PropertyFilters/                 (NEW; collection — stage 14 / 16; three filters belong in a registry by Rule B)
@@ -169,7 +171,7 @@ PLang/App/
 │   │   │   ├── Action.cs                    (RENAMED ← Catalog/ActionSpec.cs; "Spec" suffix dropped, lives in Spec/)
 │   │   │   └── Example.cs                   (RENAMED ← Catalog/ExampleSpec.cs)
 │   │   ├── Entry.cs                         (RENAMED ← Catalog/TypeEntry.cs)
-│   │   ├── ExampleHelpers.cs                (kept as `using static …` ergonomic for action authors writing ExamplesForLlm())
+│   │   │   (App/Catalog/ExampleHelpers.cs DELETED — its single static factory is redundant; record positional constructor `new Example(...)` covers the same use case. Authors switch from `Example("intent", chain)` to `new Example("intent", chain)` — one-line migration per ExamplesForLlm() site.)
 │   │   ├── Render.cs                        (RENAMED ← Catalog/ExampleRenderer.cs; instance method navigating this.Modules — Rule E; absorbs the two static formatters in modules/builder/providers/{FluidProvider,DefaultBuilderProvider})
 │   │   └── this.cs                          (RENAMED ← Catalog/this.cs; instance method Build() — no parameter, navigates this.Modules — Rule E)
 │   └── this.cs                              (SHRUNK 464→~150; example-rendering call becomes local navigation Schema.Render(spec); self-disposes — stage 4)
@@ -210,7 +212,7 @@ PLang/App/
 │   └── StringDistance.cs
 │
 │   (DELETED → elsewhere:)
-│   • Json.cs                                → App/Json/this.cs (single home, stage 15)
+│   • Json.cs                                → DISPERSED to consumers, stage 15 (each consumer owns its own JsonSerializerOptions instance — Snapshot, Build PrWrite, Data.Envelope already do, the "shared" options were a junk-drawer artifact)
 │   • MimeTypes.cs                           → splits two ways, stage 17:
 │   │                                          • GetMimeType(ext) and friends → App/Channels/Serializers/Formats/this.cs
 │   │                                          • TryGetClrType(mimeType) → App/Types/this.cs as Clr(mimeType) overload
@@ -270,7 +272,7 @@ App/Modules/Schema/
 │   ├── Action.cs              (← Catalog/ActionSpec.cs)
 │   └── Example.cs             (← Catalog/ExampleSpec.cs)
 ├── Entry.cs                   (← Catalog/TypeEntry.cs)
-├── ExampleHelpers.cs          (kept as `using static …` for action authors)
+                                (ExampleHelpers.cs DELETED — record constructor covers the use case)
 ├── Render.cs                  (← Catalog/ExampleRenderer.cs; instance method, navigates this.Modules)
 └── this.cs                    (← Catalog/this.cs; instance method Build(), no parameter)
 ```
@@ -287,11 +289,24 @@ You're right; Data already owns signatures via the lazy `Signature` getter. The 
 
 Confirmed in the merge from runtime2: `MigrationEnvelope.cs` is deleted, `modules/channel/migrate.cs` is deleted, the Stage 14 list no longer references it.
 
-### Serializer naming — Json/Plang/Text
+### Serializer naming — Json/Plang/Text — RESOLVED: Plang/ subfolder
 
 Tree above renames `JsonStreamSerializer.cs → Json.cs`, `TextStreamSerializer.cs → Text.cs`. The "Stream" qualifier described an implementation detail (uses Streams) not the noun.
 
-The Plang vs PlangData distinction is real but smelly. PlangSerializer is `application/plang` (older PLang-to-PLang transport). PlangDataSerializer is `application/plang+data` (the newer wire shape callbacks ride on). If we genuinely need both mimetypes, two files; if `application/plang` is dead transport, drop it and keep `Plang.cs`. **Status: open** — which mimetypes are still in use? If only `application/plang+data`, the rename is `Plang.cs` and the older one goes.
+Per Ingi's L19 review: PLang has multiple plang-format serializers today (`application/plang` + `application/plang+data`) and likely more in the future (Protobuf serialization of plang Data). They group under their own folder:
+
+```
+Channels/Serializers/Serializer/
+├── Json.cs                     (← JsonStreamSerializer.cs)
+├── Plang/
+│   ├── this.cs                 (← PlangSerializer.cs; application/plang)
+│   ├── Data.cs                 (← PlangDataSerializer.cs; application/plang+data)
+│   └── (future: Protobuf.cs)
+├── Text.cs                     (← TextStreamSerializer.cs)
+└── this.cs
+```
+
+Plang gets a folder because it's a family with siblings. Json and Text are single files because there's only one of each. When/if Json or Text grow variants, they get folders too.
 
 ### `SensitivePropertyFilter` etc. — agreed
 
@@ -359,28 +374,38 @@ What do you mean? **Status: open** — flagged here as a design question to sett
 
 The questions below are still open. The previously-listed v1 questions are folded into the inline answers above when settled.
 
-### A. JsonSerializerOptions destination (stage 15)
+### A. JsonSerializerOptions destination (stage 15) — RESOLVED: disperse
 
-**Resolved direction:** This is a Rule C application (static fields are a missing `@this`) — the question isn't *whether* to evict them, it's *where they go*. Your concern about case-mismatch errors when options disperse to consumers shifts the architect's lean from v1's "(a) disperse" to **(b) single home: `App/Json/this.cs`** with options as instance properties (`app.Json.SnapshotClone`, `app.Json.PrWrite`, etc.). One source of truth; consumers reference, not duplicate. OBP is preserved because the data has an `@this` owner — `App.Json` — even though that owner is mostly configuration and will disagree in shape with most other `@this` types. The exotic-config home gives mismatch protection, which is the dominant concern.
+Per Ingi's L231 review: **`App/Json/` was wrong**. Json is a serialization format, not a domain entity — it doesn't deserve a root mount. v2's "single home" lean is dropped.
 
-**Action:** stage 15 creates `App/Json/this.cs` as the consolidated home; `Utils/Json.cs` is deleted; consumers (Snapshot, Build, Data.Envelope, etc.) reference `app.Json.<Name>`. The few options that genuinely vary by consumer (e.g. each Serializer's internal options) stay private to that consumer.
+**Settled:** Disperse to consumers. `Utils/Json.cs` is deleted; each consumer owns its own `JsonSerializerOptions` instance:
+- `App/Snapshot/this.cs` already inlines its own options for clone semantics
+- `App/Build/this.cs` (or wherever `PrWrite` lands) holds its own
+- `App/Data/this.Envelope.cs` already inlines `_envelopeJsonOptions`
+- Each `Channels/Serializers/Serializer/Json.cs`, `Plang/this.cs`, `Plang/Data.cs`, `Text.cs` holds its own internal options
+
+The "case-mismatch" risk I raised earlier is overblown — the options ARE mostly consumer-specific in their actual content; the "shared" feel was a code-organization artifact in `Utils/Json.cs`. When two consumers genuinely need identical options, that's a design conversation at that point, not a justification for a synthetic root home.
 
 ### B. Catalog placement — RESOLVED: dissolves into `app.Modules.Schema`
 
 Settled per the v3 thread (`origin/runtime2-obp-restructure`) and Ingi's confirm. See [the inline answer for `ActionSpec` / `ExampleSpec`](#actionspec--examplespec--settled-dissolve-into-appmodulesschema). Folded into stage 9 (renamed: `catalog-dissolve-to-modules-schema`).
 
-### C. PlangSerializer vs PlangDataSerializer
+### C. PlangSerializer vs PlangDataSerializer — RESOLVED: Plang/ subfolder
 
-Two mimetypes today: `application/plang` (older) and `application/plang+data` (newer; canonical envelope used by callbacks).
+Per Ingi's L19 review: PLang has multiple plang-format serializers and likely more in the future (Protobuf). Group them under `Channels/Serializers/Serializer/Plang/`:
 
-- **(a) Keep both** — file names become `Plang.cs` and `PlangData.cs`. The "+data" mimetype gets the cleaner name; the older one keeps the legacy name.
-- **(b) Drop the older** — only `Plang.cs` survives, mapped to `application/plang+data`. The `application/plang` mimetype goes away, with a migration/back-compat plan.
+```
+Plang/
+├── this.cs       (← PlangSerializer.cs; application/plang)
+├── Data.cs       (← PlangDataSerializer.cs; application/plang+data)
+└── (future: Protobuf.cs for protobuf-encoded Data)
+```
 
-**Status: open** — depends on whether `application/plang` is still in use anywhere (channels, http providers, settings store?). I'll trace usage when stage 1 (`serializers-stage-6-finish`) is approached and settle then.
+Json and Text stay flat files because there's only one of each. Plang gets the folder because it's a family. Stage-1 still traces whether `application/plang` is dead transport — if so, the `Plang/this.cs` may end up redundant — but the *structure* is settled.
 
-### D. RestoredFrame → Call/Position?
+### D. RestoredFrame → Call/Position — RESOLVED
 
-Tree above proposes renaming to `Call/Position.cs` (it identifies *where* in the call tree, not "a frame"). Alternative: nest as `Call.@this.Snapshot` partial. Either is fine; the Position rename reads a bit better in callers ("get the position from the callback") but breaks if Call snapshot file already owns positional structure. **Status: open, low priority** — nail down when stage 10 (`app-run-redesign`) lands and Call gets a closer look.
+Per Ingi's L19 review: Position.cs preferred. Rename folded into stage 10 (`app-run-redesign`) since Call gets a closer look there.
 
 ### E. Provider → Code rename
 
@@ -424,16 +449,16 @@ Per Ingi's recommendation 3 ("check couple of files there and see where it takes
 - `App/KeepAlive/` (stage 3)
 - `App/Channels/Serializers/Formats/` (stage 17; absorbs ext table from Utils/MimeTypes.cs + Types MIME block)
 - `App/Channels/Serializers/PropertyFilters/` (stage 14/16; Rule B collection)
+- `App/Channels/Serializers/Serializer/Plang/` (stage 14; groups plang-format serializers — Plang/this.cs + Plang/Data.cs, future Plang/Protobuf.cs)
 - `App/Modules/Schema/` (stage 9; absorbs former App/Catalog/)
 - `App/Modules/Schema/Spec/` (stage 9; record family Action.cs + Example.cs)
 - `App/Builder/Choices/` (★ tentative; MOVED ← App/Choices/)
-- `App/Json/` (stage 15; consolidated JsonSerializerOptions home)
 - `App/Builder/` (stage 16; RENAMED ← App/Build/, Rule D)
 - `App/Tester/` (stage 16; RENAMED ← App/Test/, Rule D)
 
 **Files deleted: 6**
 - `App/Utils/PlangTypeIndex.cs` (stage 15 → `App/Types/this.cs`)
-- `App/Utils/Json.cs` (stage 15 → `App/Json/this.cs`)
+- `App/Utils/Json.cs` (stage 15 → DISPERSED to consumers; each owns its own JsonSerializerOptions instance)
 - `App/Utils/ReservedKeywords.cs` (stage 15 → `App/Variables/Reserved.cs`)
 - `App/Callback/Signature/this.cs` (stage 13 → property on `App/Callback/this.cs`)
 - `App/Catalog/` whole folder (stage 9 → `App/Modules/Schema/`); ExampleHelpers.cs / ExampleRenderer.cs / TypeEntry.cs / ActionSpec.cs / ExampleSpec.cs / Catalog/this.cs all relocate
@@ -447,7 +472,9 @@ Per Ingi's recommendation 3 ("check couple of files there and see where it takes
 - `App/Test/TestStatus.cs` → `App/Tester/Status.cs`
 - `App/Channels/Serializers/Serializer/JsonStreamSerializer.cs` → `Json.cs`
 - `App/Channels/Serializers/Serializer/TextStreamSerializer.cs` → `Text.cs`
-- `App/Channels/Serializers/Serializer/PlangSerializer.cs` and `PlangDataSerializer.cs` → `Plang.cs` (single survivor) or both renamed (open question C)
+- `App/Channels/Serializers/Serializer/PlangSerializer.cs` → `Plang/this.cs`
+- `App/Channels/Serializers/Serializer/PlangDataSerializer.cs` → `Plang/Data.cs`
+- `App/CallStack/RestoredFrame.cs` → `App/CallStack/Call/Position.cs`
 - `App/Catalog/ActionSpec.cs` → `App/Modules/Schema/Spec/Action.cs`
 - `App/Catalog/ExampleSpec.cs` → `App/Modules/Schema/Spec/Example.cs`
 - `App/Catalog/TypeEntry.cs` → `App/Modules/Schema/Entry.cs`

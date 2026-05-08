@@ -102,6 +102,24 @@
       "ts": "2026-05-07T17:46:03"
     },
     {
+      "id": "9938434b89",
+      "line": 19,
+      "text": "Position.cs I like better than RestoredFrame.cs\nPlangSerializer vs PlangDataSerializer = in future we might have Protobuf serializer for plang but then we refactor that in to plang folder. \nlets talk about Provider => Code specially",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "9996a52698",
+      "ts": "2026-05-08T12:06:55"
+    },
+    {
+      "id": "bf6303b32a",
+      "line": 19,
+      "text": "Both folded:\n\n- **Position.cs** confirmed and applied. Open question D resolved.\n- **Plang/ subfolder for serializers** applied. Tree now has Channels/Serializers/Serializer/Plang/ with this.cs (application/plang) and Data.cs (application/plang+data); future Protobuf.cs sits there too. Json and Text stay flat files because there's only one of each. Open question C resolved with this structure.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "9938434b89",
+      "ts": "2026-05-08T12:18:44"
+    },
+    {
       "id": "3f529f45df",
       "line": 231,
       "text": "isn't it C, it's about how we (de)serialize stuff? unrelated to this folder structure, I feel like we are getting to many case differences errors, could that be?",
@@ -120,6 +138,24 @@
       "ts": "2026-05-07T17:46:14"
     },
     {
+      "id": "96c0679770",
+      "line": 231,
+      "text": "I dont like  App/Json   Json is a serialzation format it doesn't deserve to be root object, did I misunderstand this maybe?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "f43d86175d",
+      "ts": "2026-05-08T12:08:26"
+    },
+    {
+      "id": "127b7f8fc8",
+      "line": 231,
+      "text": "Right — you're correct. Json is a serialization format, not a domain entity. App/Json/ as a root mount was wrong; reverting that decision.\n\nUpdated tree: Utils/Json.cs is deleted; each consumer owns its own JsonSerializerOptions instance. Snapshot already inlines its options for clone semantics; Build/PrWrite holds its own; Data.Envelope already inlines _envelopeJsonOptions; each Serializer/{Json,Plang/this,Plang/Data,Text}.cs holds its own internals.\n\nMy earlier 'case-mismatch' worry was overblown — the options ARE mostly consumer-specific in their actual content; the 'shared' feel was a junk-drawer artifact in Utils/Json.cs. When two consumers genuinely need identical options, that's a design conversation at that point, not a justification for a synthetic root home.\n\nOpen question A resolved: disperse to consumers.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "96c0679770",
+      "ts": "2026-05-08T12:18:53"
+    },
+    {
       "id": "7cadb12b26",
       "line": 235,
       "text": "or Catalog/Spec/Example.cs and Action.cs?",
@@ -136,6 +172,24 @@
       "status": "open",
       "parent_id": "7cadb12b26",
       "ts": "2026-05-08T10:37:30"
+    },
+    {
+      "id": "4268f5999a",
+      "line": 235,
+      "text": "ExampleHelpers = is this right location? is it right name?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "4e0afaa646",
+      "ts": "2026-05-08T12:09:54"
+    },
+    {
+      "id": "8024f161bb",
+      "line": 235,
+      "text": "Both wrong, and the cleanest fix is delete it.\n\n**The name** — 'Helpers' is Rule A red flag (role suffix on a noun). **The location** — it's not its own concept; it just wraps the ExampleSpec record constructor.\n\nLooking at the existing code: ExampleHelpers has one static method `Example(intent, params chain)` that just calls `new ExampleSpec(intent, chain)`. C# records have positional constructors that work with `new` directly — the helper is leftover from pre-record-syntax convenience.\n\nFix: delete ExampleHelpers entirely. Authors switch from `Example(\"intent\", chain)` to `new Example(\"intent\", chain)`. One-line migration per ExamplesForLlm() site. Tree updated.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "4268f5999a",
+      "ts": "2026-05-08T12:18:59"
     },
     {
       "id": "c4aa52c02e",
@@ -190,6 +244,24 @@
       "status": "open",
       "parent_id": "000d10d61a",
       "ts": "2026-05-07T17:46:31"
+    },
+    {
+      "id": "3baca6ed2d",
+      "line": 273,
+      "text": "I think we need to improve this commenting tool, this text \"not sure what it's used for so cant answer\" is pointing to line 273 which doesn't seem to exist anymore so bit lost, maybe we should store the line text with the comment so we can at least know what it was about. what do you say?? this is the python webserver fix.\n\nregarding the code that comment applies, I think we can just leave it for now, unless you feel it's important to fix",
+      "author": "user",
+      "status": "open",
+      "parent_id": "1e8129dcc3",
+      "ts": "2026-05-08T12:13:07"
+    },
+    {
+      "id": "3cadd401e3",
+      "line": 273,
+      "text": "Tool issue noted — line-anchored comments drift when the doc changes. Two practical workarounds inside the current tool:\n\n1. **Quote a snippet of the line text** in the comment body (the original L273 was about App/Json/ + ReservedKeywords; with the App/Json/ revert, that area shifted).\n2. **Section-anchor** instead of line — comment on a heading line (the section name doesn't move as much as content lines).\n\nReal fix is on the tool side: store an anchor token (line content hash or section path) and re-locate the comment after edits. Not architect work but flagging here. As for the original ChildAppCreated comment (id 000d10d61a) — still open in stage 15's design queue; lean is test-runner-owned registry, settled when stage 15 carves.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "3baca6ed2d",
+      "ts": "2026-05-08T12:19:08"
     },
     {
       "id": "b6e1ab1adc",

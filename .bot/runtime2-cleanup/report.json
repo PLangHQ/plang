@@ -276,6 +276,51 @@
         "health": "ok",
         "notes": "Open question for Ingi: when to read through the lens suggestions and decide whether to formalize via proposal mechanism. My lean: end-of-refactor, when we have real cleanup-experience to validate the lens content against."
       }
+    },
+    {
+      "id": "a2c4e6f8-1b3d-5e7a-9c2b-4d6f8a1c3e5b",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T13:30:00Z",
+      "timestamp_end": "2026-05-08T14:30:00Z",
+      "intent": "Final review pass before context clear: address Ingi's new comments on the tree (Position.cs, Plang/ folder, App/Json/ pushback, ExampleHelpers, comment-tool issue) and update summary.md so re-onboarding is clean.",
+      "before": {
+        "assumptions": "Ingi wants to clear context. Plan needs to be in shape that a fresh architect can re-load cleanly. Five new comments on the tree to settle first. Most critical pushback: App/Json/ as root mount was wrong (Json is a format, not a domain) — must revert that v3 decision.",
+        "risk": "Low. All artifacts are durable. Only thing genuinely open after this session: Provider→Code rename (still needs Ingi's read), ChildAppCreated event shape (stage 15 design)."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan/post-cleanup-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tree updates: (1) App/Json/ removed — JsonSerializerOptions disperse to consumers (Ingi: format not domain). (2) Channels/Serializers/Serializer/Plang/ subfolder added with this.cs + Data.cs (room for Protobuf.cs later). (3) RestoredFrame → Call/Position.cs settled. (4) ExampleHelpers.cs deleted entirely (record constructor covers the use case). Open questions A, B, C, D all resolved; F still open (low priority); E (Provider→Code) still needs Ingi."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added new entry at top covering 2026-05-08 work: 5 rules (was 2), 17 stages (was 14), audit folder + per-bot lens artifacts, effectiveness audit results (rules catch ~5 of 17 stages mechanically), open questions resolved/remaining, re-onboarding path for post-clear architect."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/comments.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Posted 4 architect replies. Resolved 3 user comments (Position.cs + Plang folder; App/Json drop; ExampleHelpers delete). Left 1 open intentionally — the comment-tool meta-issue (line drift) is a real tool problem and the original ChildAppCreated comment underneath it stays open until stage 15."
+        }
+      ],
+      "after": {
+        "status": "Plan is ready for context clear. Durable artifacts cover everything: plan.md spine + 17 stages, principles.md with Rules A-E + foundational 4, post-cleanup-tree.md destination, audit folder, per-bot lens suggestions in /shared/, summary.md log with re-onboarding path. Stage 1 (serializers-stage-6-finish) ready to carve.",
+        "health": "ok",
+        "notes": "Two genuine opens remaining: Provider→Code rename (Ingi's call), ChildAppCreated event shape (stage 15 design TBD). Neither blocks stage 1. Comment-tool line-drift issue surfaced but isn't architect work."
+      }
     }
   ]
 }
