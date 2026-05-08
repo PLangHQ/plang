@@ -1,5 +1,38 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+13) — stages 14+20 landed; stages 17+21 carved (Tier 4 rename batch)
+
+Stages 14 and 20 landed cleanly per coder.
+
+**Stage 14**: 2752/2752 + 199/199 (3 ms-specific tests folded into Expires tests). Coder updated Ed25519Provider (uses `now.Add(expiry)` instead of `AddMilliseconds`) and DefaultHttpProvider's signing forwarder. Closed the 2026-05-06 todos.md entry.
+
+**Stage 20**: 2755/2755 + 199/199. Coder caught 2 things the brief missed:
+- Second reader at line 249 (diagnostic Write) — brief grep only found 1.
+- Service-owned Channels have null Actor (Service holds Channels but isn't an Actor) — the brief's `Channels.Actor.App` chain breaks for them. Coder corrected: made `Channels.@this.App` a public property, navigation via `Channels.App` instead. Smart fix.
+
+### Stages 17 + 21 carved as Tier 4 rename batch
+
+**Stage 17** (`builder-tester-rename`) — Rule D applied: `App/Build/` → `App/Builder/`, `App/Test/` → `App/Tester/`. Namespaces, properties, CLI form all follow. ~150 caller sweeps (29 Build + 124 Testing). The verb form `plang build` keeps working as legacy syntactic sugar.
+
+**Stage 21** (`navigators-to-variables`) — folder/namespace move; instance stays App-allocated and shared; Variables exposes via delegating property `Navigators => _context!.App.Navigators`. 7 files + 2 caller sites.
+
+### Why batch 17 + 21
+
+- Both Tier 4 hygiene work; no shape changes.
+- Both involve folder + namespace + caller sweep.
+- Independent (different folders, different concerns).
+- Stage 22 (`app-shortcuts-drop`, ~88 caller sweeps with per-call judgment about which actor's Context applies) deferred — its own focused session next round.
+
+### Tier 4 remaining after 17+21
+
+- 15 (Rule A renames) — substantial enumerated rename list; own session.
+- 16 (static-state-eviction) — Rule C statics; own session.
+- 18 (mime-table-split) — folder/structure split; own session.
+- 19 (Provider→Code) — biggest sweep on this branch; own session.
+- 22 (app-shortcuts-drop) — caller sweep; can carve standalone.
+
+---
+
 ## 2026-05-08 (latest+12) — stage 13 landed (Tier 3 done); stages 14+20 carved (Tier 4 batch)
 
 Stage 13 (Settings rework) landed cleanly per coder — 2755/2755 + 199/199. The largest design refactor on this branch came in cleanly. Coder noted two subtleties beyond the brief:

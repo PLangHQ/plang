@@ -1075,6 +1075,53 @@
         "health": "plan + briefs + scope-map + summary all consistent",
         "notes": "Tier 4 remaining after 14+20: 15/16/18/19 each merit own session; 17/21/22 can batch."
       }
+    },
+    {
+      "id": "30b1d537-e749-4ffc-b56b-576afc63104e",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T06:00:00Z",
+      "timestamp_end": "2026-05-09T06:30:00Z",
+      "intent": "Pull stages 14+20; carve stages 17+21 as Tier 4 rename batch.",
+      "before": {
+        "assumptions": "Stages 14 and 20 landed clean. Stages 17 and 21 are folder/namespace renames; sanctioned for batching.",
+        "risk": "Stage 17 has ~150 caller sweeps but mechanical. Stage 21 small."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-17-builder-tester-rename.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-17-builder-tester-rename.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 17 brief \u2014 Rule D rename: App/Build/ \u2192 App/Builder/, App/Test/ \u2192 App/Tester/. Namespaces, properties (Build \u2192 Builder, Testing \u2192 Tester), CLI flag (--builder, --tester). Verb-form plang build keeps working via legacy normalization. ~150 caller sweeps."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-21-navigators-to-variables.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 21 brief \u2014 folder relocation App/Data/Navigators \u2192 App/Variables/Navigators. Instance stays App-allocated and shared per scope-map; Variables exposes via delegating property. 7 files + 2 caller sites."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 14 and 20 marked complete (with stage 20 Service-owned-channel correction note). Stages 17 and 21 link briefs. Summary covers what coder caught beyond the briefs."
+        }
+      ],
+      "after": {
+        "status": "stages 17 and 21 ready for coder",
+        "health": "plan + briefs + scope-map + summary all consistent",
+        "notes": "Tier 4 remaining: 15, 16, 18, 19 each merit own session; 22 is caller-sweep, standalone."
+      }
     }
   ]
 }
