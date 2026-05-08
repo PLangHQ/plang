@@ -905,6 +905,44 @@
         "health": "plan + briefs + scope-map + summary all consistent",
         "notes": "After stage 9 lands, Tier 2 done (stages 1-9). Tier 3 next: stage 10 (app-run-redesign) is the headliner \u2014 likely needs its own session per plan principles."
       }
+    },
+    {
+      "id": "81be9bd2-bd96-4f02-9fd0-04079bb89a0b",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T01:00:00Z",
+      "timestamp_end": "2026-05-09T02:00:00Z",
+      "intent": "Pull stage 9 result; carve stage 10 (headliner) alone; add stage 22 for shortcut removal.",
+      "before": {
+        "assumptions": "Stage 9 (Catalog dissolution) landed clean. Stage 10 (App.Run redesign) is the headliner \u2014 per plan principles probably needs its own session. The shortcut removal earlier folded into stage 10 turns out to be a bigger sweep than expected (~25 callers); split out as stage 22.",
+        "risk": "Stage 10 has subtle behavior contracts (OCE handling, error stamping order, dispose order, anchor restoration). Brief is dense on behavior preservation. Risk medium; build + tests are the safety net."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-10-app-run-redesign.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-10-app-run-redesign.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 10 brief. Two new abstractions: Context.AnchorScope(action) (capture+restore Step/Goal/Event/Step.Context) and Call.ExecuteAsync(handler, context) (handler invocation + error stamping + audit + OCE swallow). App.Run from ~85 lines to ~10. Plus HandleOverflow private helper. Five behavior contracts named explicitly for preservation."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 9 marked complete (Tier 2 done). Stage 10 row links brief and replaces one-liner; shortcut removal explicitly removed from stage 10 scope. Stage 22 (app-shortcuts-drop) added to Tier 4 \u2014 caller sweep is the work; 2 production + ~20 test sites. Stage count 21 \u2192 22. Summary entry covers stage 9 lessons learned (action handler count, test file misses, type alias trick) and stage 10 carve strategy."
+        }
+      ],
+      "after": {
+        "status": "stage 10 ready for coder, single session focus",
+        "health": "plan + briefs + scope-map + summary all consistent at stage count 22, Tier 2 done",
+        "notes": "Per plan principles, stage 10 may need 2 sessions for the coder. Stages 11 + 12 batchable next round. Stage 22 placed in Tier 4 ordering."
+      }
     }
   ]
 }

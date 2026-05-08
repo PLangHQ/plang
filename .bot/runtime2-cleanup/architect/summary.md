@@ -1,5 +1,47 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+9) — stage 9 landed; stage 10 (the headliner) carved alone; stage 22 added
+
+Stage 9 (`catalog-dissolve-to-modules-schema`) landed cleanly per coder — 2755/2755 + 199/199. Coder noted lessons:
+- **6 action handlers, not 12 as I'd estimated.** My grep for `using static App.Catalog.ExampleHelpers` was right; the count of files was off.
+- **4 test files I missed** because they used `using App.Catalog;` namespace form (not the static-helper form).
+- **Type aliases used to disambiguate** — `using ExampleSpec = App.Modules.Schema.Spec.Example;` — to avoid `Action`/`Example` record names colliding with `System.Action` delegate, the `[Action]` attribute, and `Example` types elsewhere.
+- **Lazy semantics preserved** as the brief specified.
+
+**Tier 2 done** (stages 1–9 complete).
+
+### Stage 10 carved alone
+
+Brief at `stage-10-app-run-redesign.md`. The headliner: App.Run from ~85 lines + ~10 mutations to ~10 lines. Two new abstractions:
+
+- `Context.AnchorScope(action)` — disposable that captures + restores the 4 anchor values (Step, Goal, Event, Step.Context).
+- `Call.ExecuteAsync(handler, context)` — wraps handler invocation, error stamping (SnapshotParams + CallFrames), audit-collection, OCE swallowing.
+
+Plus a tight `HandleOverflow` private helper for the CallStackOverflow-at-Push case (overflow happens before the call frame exists, so it can't fold into ExecuteAsync).
+
+Brief is dense on **behavior preservation** — five subtle contracts that must stay precisely intact (CallStackOverflow catch tightness, OCE swallow scope, error stamping order, dispose order, anchor restoration). Risk medium.
+
+### Stage 22 added (`app-shortcuts-drop`)
+
+The earlier plan note that stage 10 might fold the `app.Variables` / `app.Context` shortcut removal is reversed. Sweep is bigger than expected:
+
+- 2 production callers (`Actor/this.cs:144`, `Errors/Error.cs:265`).
+- ~20+ test callers (PrPipelineTests.cs alone has 9, plus StartGoalTests.cs and others).
+
+Each call site decides which actor's Context applies (`engine.System.Context` for app-level, `engine.User.Context` for the dominant pattern). That's the work — not coupled to App.Run's structural refactor. Carved as stage 22 (Tier 4 placement; small caller-sweep stage).
+
+Stage count 21 → 22.
+
+### Why stage 10 alone
+
+Per plan principles: "Tier 3 stages (especially app-run-redesign) probably need more than one session each." Stage 10 has substantial design work (two new abstractions, contract preservation). Coder needs focused attention; not batched with stage 11 or 12.
+
+### After stage 10 lands
+
+Tier 3 progresses. Stages 11 (errors-app-backref-drop) and 12 (build-branch-to-build-this) likely batchable next round. Stage 22 can fit anywhere in Tier 4.
+
+---
+
 ## 2026-05-08 (latest+8) — stages 7+8 landed; stage 9 carved (Tier 2 finisher)
 
 Stages 7 and 8 landed cleanly per coder — 2755/2755 + 199/199 each. Stage 7's coder caught 2 caller sites I missed in the brief (Variables/this.SnapshotAt.cs and Errors/this.cs); 9 production callers + 9 test files total instead of the brief's 7. The brief's grep was thorough but not exhaustive — coder's final sweep is the safety net.
