@@ -16,7 +16,7 @@ namespace App;
 /// Executes goals and manages the execution lifecycle.
 /// Self-contained: owns all app-level state (environment, culture, shutdown, key-value store).
 /// </summary>
-public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
+public sealed partial class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly AppModules _modules;
@@ -56,11 +56,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     /// </summary>
     [JsonPropertyName("version")]
     public string? Version { get; set; }
-
-    /// <summary>
-    /// Relative root path, always "/".
-    /// </summary>
-    public new string Path => "/";
 
     /// <summary>
     /// The OS absolute path of the application (e.g. C:\myapp or /home/user/app).
@@ -272,7 +267,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         App.FileSystem.IPLangFileSystem? fileSystem = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
-        : base("!app")
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');

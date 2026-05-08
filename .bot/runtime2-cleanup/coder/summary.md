@@ -2,10 +2,39 @@
 
 ## Version
 
+v6 — Stage 6 (`app-data-inheritance-drop`).
+v5 — Stage 5 (`getstatic-shim-drop`).
 v4 — Stage 4 (`dispose-self-owns`).
 v3 — Stage 3 (`keepalive-collection`).
 v2 — Stage 2 (`channels-v1-helpers-drop`).
 v1 — Stage 1 (`serializers-single-home`).
+
+---
+
+## v6 — Stage 6 (`app-data-inheritance-drop`)
+
+App stops inheriting from `Data.@this<@this>`. The base list on
+`PLang/App/this.cs:19` becomes `: IAsyncDisposable`. The `public new string
+Path => "/"` shadow at line 63 is deleted (zero readers — the `new`
+keyword was only there because Data had a `Path` property to shadow).
+The primary ctor's `: base("!app")` initialiser is dropped (it was
+forwarding to Data's ctor).
+
+`this.Snapshot.cs` is the only secondary partial — it never repeated the
+base list, so no change there.
+
+Side effect: build warnings drop from 449 → 68 because the inherited-Data
+surface generated a flock of nullability warnings that are now gone.
+
+C# 2755/2755 pass; PLang 199/199 pass.
+
+## v5 — Stage 5 (`getstatic-shim-drop`)
+
+`App.GetStatic(string)` was a one-line internal shim delegating to
+`Statics.GetBag(key)`. Single caller in `Actor/Context/this.cs:248`
+migrated to `App.Statics.GetBag(key)`; shim deleted.
+
+C# 2755/2755 pass; PLang 199/199 pass.
 
 ---
 
