@@ -109,12 +109,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     public AppStatics Statics { get; } = new();
 
     /// <summary>
-    /// Backwards-compatible accessor for module callers that hold the bag.
-    /// Identical to <c>Statics.GetBag(key)</c>.
-    /// </summary>
-    internal ConcurrentDictionary<string, object?> GetStatic(string key) => Statics.GetBag(key);
-
-    /// <summary>
     /// Global event collection for the application.
     /// </summary>
     public AppEvents Events { get; }

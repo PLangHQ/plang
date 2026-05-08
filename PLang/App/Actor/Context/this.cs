@@ -245,7 +245,7 @@ public sealed class @this : IDisposable
         var key = $"__static_{moduleNamespace}__";
         return scope.ToLowerInvariant() switch
         {
-            "app" => App.GetStatic(key),
+            "app" => App.Statics.GetBag(key),
             _ => (ConcurrentDictionary<string, object?>)_data.GetOrAdd(key,
                 _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase))
         };
