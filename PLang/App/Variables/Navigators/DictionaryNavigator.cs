@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace App.Data.Navigators;
+namespace App.Variables.Navigators;
 
 /// <summary>
 /// Navigates dictionaries by case-insensitive key lookup. Three cases, in order

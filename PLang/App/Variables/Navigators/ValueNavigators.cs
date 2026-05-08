@@ -1,4 +1,4 @@
-namespace App.Data.Navigators;
+namespace App.Variables.Navigators;
 
 /// <summary>
 /// Static fallback chain of navigators in priority order.

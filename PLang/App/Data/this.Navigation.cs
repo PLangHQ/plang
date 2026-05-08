@@ -278,7 +278,7 @@ public partial class @this
             }
 
             // Fallback when no app context (e.g., during deserialization)
-            var fallbackResult = Navigators.ValueNavigators.Navigate(this, key);
+            var fallbackResult = Variables.Navigators.ValueNavigators.Navigate(this, key);
             if (fallbackResult.IsInitialized) return fallbackResult;
         }
 

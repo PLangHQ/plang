@@ -1,4 +1,4 @@
-namespace App.Data.Navigators;
+namespace App.Variables.Navigators;
 
 /// <summary>
 /// Navigates a Data object's content by key.

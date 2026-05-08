@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace App.Data.Navigators;
+namespace App.Variables.Navigators;
 
 /// <summary>
 /// Navigates lists by numeric index and special accessors (first, last, random, count/length).

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace App.Data.Navigators;
+namespace App.Variables.Navigators;
 
 /// <summary>
 /// Navigates string values that contain JSON objects or arrays.

@@ -1,4 +1,4 @@
-using global::App.Data.Navigators;
+using global::App.Variables.Navigators;
 using System.Text.Json.Nodes;
 
 namespace PLang.Tests.App.DataTests.Navigators;

@@ -123,7 +123,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Per-type navigator registry for Data navigation.
     /// </summary>
-    public Data.Navigators.@this Navigators { get; } = new();
+    public Variables.Navigators.@this Navigators { get; } = new();
 
     /// <summary>
     /// The loaded goals.

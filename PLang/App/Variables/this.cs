@@ -29,6 +29,15 @@ public partial class @this
         => _navigables[name] = resolver;
 
     /// <summary>
+    /// Per-type navigator registry for Data navigation. Delegates to the
+    /// shared App-level instance — navigators are app-wide infrastructure;
+    /// the property is exposed here so the canonical access path is
+    /// <c>app.Variables.Navigators</c> alongside other variable concerns.
+    /// </summary>
+    [JsonIgnore]
+    public Navigators.@this Navigators => _context!.App.Navigators;
+
+    /// <summary>
     /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before
     /// falling back to the actor-shared dictionary — that's how goal-call parameters
     /// (e.g. <c>%!data%</c> on a goal channel) avoid racing across concurrent calls on
