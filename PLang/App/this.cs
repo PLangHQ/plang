@@ -477,40 +477,7 @@ public sealed partial class @this : IAsyncDisposable
         CurrentActor = System;
 
         // Build → PLang builder (runs as User — user is building their code)
-        if (Build.IsEnabled)
-        {
-            // Safety check: confirm new app creation if no app.pr exists.
-            // --app={"create":true} skips the prompt. Headless/CI defaults to "no".
-            var appPrPath = FileSystem.ValidatePath(".build/app.pr");
-            if (!FileSystem.File.Exists(appPrPath) && !Create)
-            {
-                if (Console.IsInputRedirected)
-                    return Data.@this.FromError(new global::App.Errors.ServiceError(
-                        $"No app found at {AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
-
-                // Channels are wired by the entry point (PlangConsole) before Run.
-                // The User actor's "output"/"input" channels wrap stdout/stdin — write
-                // the prompt to output, then ReadLine off the input stream. Two-call
-                // because the default channels are direction-split (output write-only,
-                // input read-only) so Stream.AskCore can't bridge them.
-                var outputChannel = User.Channels.Get(global::App.Channels.@this.Output) as global::App.Channels.Channel.Stream.@this;
-                var inputChannel = User.Channels.Get(global::App.Channels.@this.Input) as global::App.Channels.Channel.Stream.@this;
-                if (outputChannel == null || inputChannel == null)
-                    return Data.@this.FromError(new global::App.Errors.ServiceError(
-                        "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
-
-                await outputChannel.WriteTextAsync($"No app found at {AbsolutePath}. Create new app? (y/n): ");
-                using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
-                var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
-                if (answer != "y" && answer != "yes")
-                    return Data.@this.FromError(new global::App.Errors.ServiceError(
-                        "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
-            }
-
-            CurrentActor = User;
-            var buildCall = new GoalCall { Name = "Build", PrPath = "/system/builder/.build/build.pr" };
-            return await RunGoalAsync(buildCall, User.Context);
-        }
+        if (Build.IsEnabled) return await Build.RunAsync();
 
         // Resolve goal file
         var goalFile = context.Variables.GetValue("goalFile") as string;

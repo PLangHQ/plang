@@ -2,6 +2,8 @@
 
 ## Version
 
+v12 — Stage 12 (`build-branch-to-build-this`).
+v11 — Stage 11 (`errors-app-backref-drop`).
 v10 — Stage 10 (`app-run-redesign`).
 v9 — Stage 9 (`catalog-dissolve-to-modules-schema`).
 v8 — Stage 8 (`read-file-off-channels`).
@@ -12,6 +14,46 @@ v4 — Stage 4 (`dispose-self-owns`).
 v3 — Stage 3 (`keepalive-collection`).
 v2 — Stage 2 (`channels-v1-helpers-drop`).
 v1 — Stage 1 (`serializers-single-home`).
+
+---
+
+## v12 — Stage 12 (`build-branch-to-build-this`)
+
+Build-mode bootstrap moves out of App.Start. Build.@this gains
+`RunAsync()` that owns the app.pr existence check, headless guard,
+interactive y/n prompt for new-app creation, channel-wiring guard,
+`CurrentActor = User` switch, and Build goal dispatch. All `app.X`
+reaches use Build's existing `_app` field.
+
+App.Start's build branch shrinks from 33 lines to:
+
+```csharp
+if (Build.IsEnabled) return await Build.RunAsync();
+```
+
+C# 2755/2755 pass; PLang 199/199 pass.
+
+## v11 — Stage 11 (`errors-app-backref-drop`)
+
+Eliminate the post-construction injection `Errors.App = this;` at
+`App.this.cs:297`. `Errors.@this` takes App via constructor:
+`public @this(App.@this app) { _app = app; }`. The `internal App.@this?
+App { get; set; }` property is gone; `_app` is `private readonly` and
+non-null.
+
+Inside Push, all `App?.CallStack` / `App!.Variables` / `e.App = App`
+references collapse to `_app.CallStack` / `_app.Variables` / `e.App = _app`
+— the `if (stack != null)` guard goes away with them.
+
+App's ctor allocates `Errors = new global::App.Errors.@this(this);` at
+the line where the post-construction setter used to be.
+
+Test sweep: `PLang.Tests/App/Errors/ErrorsScopeTests.cs` had 7 sites
+constructing `new Errors.@this()` directly. Each now creates a real
+App via `await using var app = new global::App.@this("/test");` and
+reads `app.Errors`. Per-test App, auto-disposed.
+
+C# 2755/2755 pass; PLang 199/199 pass.
 
 ---
 
