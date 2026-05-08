@@ -1,5 +1,37 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+11) — stages 11+12 landed; stage 13 (Settings rework) carved alone
+
+Stages 11 and 12 landed cleanly per coder — 2755/2755 + 199/199 each. Stage 11 had a small test-side sweep I'd missed (7 ErrorsScopeTests sites that constructed Errors directly with `new()`); coder caught it.
+
+Stage 13 carved as a focused single-stage session — biggest design refactor in this branch.
+
+### Stage 13 carve (`settings-collection-rework`)
+
+Brief at `stage-13-settings-collection-rework.md`. Three tightly-coupled changes that together close the SettingsVariable inheritance smell and move SettingsStore to its right scope:
+
+1. **Settings.@this becomes a collection over Data**, not a Data subclass. Two-method surface (`Get(path, context)`, `Set(key, data)`). Replaces `SettingsVariable` whose `: Data.@this` inheritance was mechanism-leaking-into-shape (existed only to fit through `GetChild` for `%Settings.X%` interception).
+
+2. **SettingsStore moves from per-actor (dead drift) to App level.** Zero User.SettingsStore consumers; all 10 real consumers use `app.System.SettingsStore`. Per-actor `Lazy<ISettingsStore>` allocation on Actor + `CreateSettingsStore` method delete. App gains `SettingsStore { get; }` backed by `system.sqlite`.
+
+3. **`Variables.@this.RegisterNavigable(name, resolver)` mechanism** — new hook on Variables. Each actor's Variables registers `"Settings"` with a resolver that delegates to `app.Settings.Get(path, Context)`. Replaces the Data-subclass `GetChild` interception path. Generalizable to any future non-Data navigable mount.
+
+Plus renames: `ISettingsStore.cs` → `IStore.cs`; `SqliteSettingsStore.cs` → `Sqlite.cs`. `SettingsVariable.cs` deleted.
+
+10-site caller sweep across Goals/Setup, identity provider, llm provider, settings module.
+
+**Risk medium-high** — largest design refactor on this branch. Brief is dense on the integration points (per-actor Context capture in lambda, dispose ordering, InMemory-Testing branch placement, SettingsVariable doc-comment cleanup).
+
+### Why stage 13 alone
+
+Per plan principles, this is the kind of stage that "probably needs more than one session each." Three intertwined design pieces. Coder gets focused attention; not batched.
+
+### After stage 13 lands
+
+Tier 3 done (stages 10, 11, 12, 13 all complete). Tier 4 next: stages 14-22 (timespan, compound-name, static, builder-tester, mime-table, provider-to-code, channel-app-backref, navigators-to-variables, app-shortcuts). Mostly hygiene sweeps; some can batch.
+
+---
+
 ## 2026-05-08 (latest+10) — stage 10 (headliner) landed; stages 11+12 carved as Tier 3 batch
 
 Stage 10 (`app-run-redesign`) — the headliner — landed cleanly per coder. 2755/2755 + 199/199. App.Run from 85 lines to ~15 via the two new abstractions (`Context.AnchorScope`, `Call.ExecuteAsync`). All five behavior contracts named in the brief preserved exactly. The expected "may need 2 sessions" landed in one — cleaner than expected.

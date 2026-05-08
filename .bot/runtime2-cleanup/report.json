@@ -990,6 +990,44 @@
         "health": "plan + briefs + scope-map + summary all consistent",
         "notes": "Stages 13 (settings) and 22 (shortcuts) deferred to later sessions. Stage 13 deserves focused attention; 22 is anywhere in Tier 4."
       }
+    },
+    {
+      "id": "82e70af9-958c-4d8a-97bd-d51ce9ebd79b",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T04:00:00Z",
+      "timestamp_end": "2026-05-09T04:45:00Z",
+      "intent": "Pull stages 11+12 results; carve stage 13 (Settings rework) alone.",
+      "before": {
+        "assumptions": "Stages 11 and 12 landed cleanly. Stage 13 is the largest design refactor on this branch \u2014 three tightly-coupled changes; deserves its own session.",
+        "risk": "Stage 13 risk medium-high. Multiple integration points: per-actor Context capture in lambda; dispose ordering; InMemory-Testing branch placement; SettingsVariable doc-comment cleanup; 10-site caller sweep."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-13-settings-collection-rework.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-13-settings-collection-rework.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 13 brief \u2014 three changes batched: (1) Settings.@this becomes collection-over-Data (no inheritance from Data); (2) SettingsStore moves from per-actor dead drift to app-level; (3) Variables.RegisterNavigable hook replaces Data-subclass GetChild interception. Plus renames (ISettingsStore\u2192IStore, SqliteSettingsStore\u2192Sqlite) and SettingsVariable.cs deletion. 10-site caller sweep documented."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 11 and 12 marked complete (with stage 11 ErrorsScopeTests sweep note). Stage 13 row links brief and replaces one-liner. Summary entry covers stages landing + stage 13 carve with focused-session rationale."
+        }
+      ],
+      "after": {
+        "status": "stage 13 ready for coder, single-session focus",
+        "health": "plan + briefs + scope-map + summary all consistent",
+        "notes": "After stage 13 lands, Tier 3 done. Tier 4 (stages 14-22) is mostly hygiene sweeps; some can batch."
+      }
     }
   ]
 }
