@@ -147,11 +147,22 @@ public sealed partial class @this : IAsyncDisposable
     public Config.@this Config { get; }
 
     /// <summary>
-    /// Shared SettingsVariable instance registered on every actor's Variables.
-    /// Provides %Settings.X% variable resolution from system DataSource.
-    /// Single instance — all actors share the same object.
+    /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
+    /// (or in-memory under Testing.IsEnabled). One per app — actors share it.
+    /// Modules own their tables (<c>encryption</c>, <c>settings</c>, <c>llm-cache</c>, etc.).
+    /// Created lazily on first access so tests with fictional paths and apps
+    /// that never touch settings don't pay for SQLite-file creation at boot.
     /// </summary>
-    internal SettingsVariable SettingsVariable { get; }
+    public global::App.Settings.IStore SettingsStore => _settingsStore.Value;
+    private Lazy<global::App.Settings.IStore> _settingsStore = null!;
+
+    /// <summary>
+    /// Shared (one per app) settings collection. Holds Data values keyed by
+    /// name, backed by <see cref="SettingsStore"/>. Registered on every actor's
+    /// Variables via <see cref="Variables.@this.RegisterNavigable"/> so
+    /// <c>%Settings.X%</c> resolution dispatches into <see cref="App.Settings.@this.Get"/>.
+    /// </summary>
+    public global::App.Settings.@this Settings { get; }
 
     /// <summary>
     /// Debug mode controller. Registers event handlers for step/goal debug output.
@@ -289,7 +300,8 @@ public sealed partial class @this : IAsyncDisposable
         Build = new global::App.Build.@this(this);
         Types = new Types.@this();
         Config = new Config.@this();
-        SettingsVariable = new SettingsVariable(this);
+        _settingsStore = new Lazy<global::App.Settings.IStore>(CreateSettingsStore);
+        Settings = new global::App.Settings.@this(this);
         _modules = modules ?? new AppModules();
         _goals = new AppGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
@@ -530,6 +542,19 @@ public sealed partial class @this : IAsyncDisposable
         return await goal.RunAsync(context);
     }
 
+    private global::App.Settings.IStore CreateSettingsStore()
+    {
+        // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
+        // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
+        // so the App.Id scoping is load-bearing.
+        if (Testing.IsEnabled)
+            return global::App.Settings.Sqlite.InMemory($"system-{Id}");
+
+        var dbDir = FileSystem.Path.Combine(AbsolutePath, ".db");
+        var dbPath = FileSystem.Path.Combine(dbDir, "system.sqlite");
+        return new global::App.Settings.Sqlite(dbPath, FileSystem);
+    }
+
     private static App.FileSystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)
     {
         try
@@ -565,5 +590,6 @@ public sealed partial class @this : IAsyncDisposable
         await _modules.DisposeAsync();
         await Providers.DisposeAsync();
         await KeepAlive.DisposeAsync();
+        if (_settingsStore.IsValueCreated) _settingsStore.Value.Dispose();
     }
 }

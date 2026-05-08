@@ -12,7 +12,21 @@ namespace App.Variables;
 public partial class @this
 {
     private readonly ConcurrentDictionary<string, Data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Func<string, Data.@this>> _navigables
+        = new(StringComparer.OrdinalIgnoreCase);
     private Actor.Context.@this? _context;
+
+    /// <summary>
+    /// Registers a navigable mount: when <see cref="Get"/> resolves <c>name.X</c>
+    /// and <c>name</c> isn't found in the regular variable scope, the resolver
+    /// is called with the full path remainder (e.g. <c>"X"</c> or <c>"X.Y"</c>)
+    /// and its result is returned. Used by Settings: each actor's Variables
+    /// registers <c>"Settings"</c> with a resolver that delegates to
+    /// <c>app.Settings.Get(path, this.Context)</c>. Generalises to any future
+    /// non-Data navigable mount.
+    /// </summary>
+    public void RegisterNavigable(string name, Func<string, Data.@this> resolver)
+        => _navigables[name] = resolver;
 
     /// <summary>
     /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before
@@ -489,6 +503,8 @@ public partial class @this
         }
         else if (!_variables.TryGetValue(rootName, out root))
         {
+            if (_navigables.TryGetValue(rootName, out var resolver))
+                return resolver(remaining ?? "");
             return Data.@this.NotFound(name);
         }
 
@@ -630,16 +646,12 @@ public partial class @this
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;
 
-            // SettingsVariable — share by reference (stateless, loads from DB each time)
-            if (kvp.Value is App.Settings.SettingsVariable)
-            {
-                clone._variables[kvp.Key] = kvp.Value;
-            }
-            else
-            {
-                clone._variables[kvp.Key] = kvp.Value.Clone();
-            }
+            clone._variables[kvp.Key] = kvp.Value.Clone();
         }
+        // Share navigable registrations by reference so the cloned Variables
+        // resolves %Settings.X% identically. The resolvers are stateless (they
+        // close over an actor + app); cloning them would be meaningless.
+        foreach (var nav in _navigables) clone._navigables[nav.Key] = nav.Value;
         clone.Context = Context;
         return clone;
     }
@@ -681,7 +693,7 @@ public partial class @this
     /// Excludes:
     ///  - infrastructure vars (!-prefixed, e.g. !app, !fileSystem)
     ///  - dynamic system vars (Now, NowUtc, GUID) — always-fresh, no diagnostic value
-    ///  - SettingsVariable — backed by the settings store, not in-scope state
+    /// (Settings is a navigable resolver, not a Data subclass — never appears in _variables.)
     /// Values are captured by reference (architect §5.7). Called from assert handlers
     /// on failure only; the App is about to be disposed, so by-ref is safe.
     /// ConcurrentDictionary enumeration is snapshot-style and safe during concurrent writes.
@@ -693,7 +705,6 @@ public partial class @this
         {
             if (kvp.Key.StartsWith("!")) continue;
             if (kvp.Value is Data.DynamicData) continue;
-            if (kvp.Value is App.Settings.SettingsVariable) continue;
             dict[kvp.Key] = kvp.Value.Value;
         }
         return dict;

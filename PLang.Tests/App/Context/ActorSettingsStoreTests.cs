@@ -1,9 +1,14 @@
 using global::App.Actor.Context;
 using global::App.Variables;
-using global::App.Settings;
 
 namespace PLang.Tests.App.Context;
 
+/// <summary>
+/// Coverage for the app-level SettingsStore. Per-actor allocation was dead drift
+/// — only System's store ever had real consumers. After stage 13's settings
+/// rework, there's a single shared <c>app.SettingsStore</c> backed by
+/// <c>.db/system.sqlite</c> (or in-memory under Testing).
+/// </summary>
 public class ActorSettingsStoreTests
 {
     private string _testDir = null!;
@@ -22,77 +27,41 @@ public class ActorSettingsStoreTests
     }
 
     [Test]
-    public async Task SystemActor_DuringBuilding_PersistsCacheAcrossEngineInstances()
+    public async Task SettingsStore_DuringBuilding_PersistsAcrossEngineInstances()
     {
-        // First engine — write to System settings store
+        // Build mode → on-disk system.sqlite — survives App lifetime so
+        // LLM cache and other persistent system data live across builds.
         await using (var engine = new global::App.@this(_testDir))
         {
             engine.Build.IsEnabled = true;
-            await engine.System.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
+            await engine.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
-        // Second engine — System should still have the data (on-disk)
         await using (var engine2 = new global::App.@this(_testDir))
         {
             engine2.Build.IsEnabled = true;
-            var result = await engine2.System.SettingsStore.Get("LlmCache", "testkey");
+            var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
             await Assert.That(result.Value).IsNotNull();
             await Assert.That(result.Value!.ToString()).IsEqualTo("cached_response");
         }
     }
 
     [Test]
-    public async Task UserActor_DuringBuilding_DoesNotPersistAcrossEngineInstances()
+    public async Task SettingsStore_DuringTesting_IsolatedPerEngineInstance()
     {
-        // First engine — write to User settings store
-        await using (var engine = new global::App.@this(_testDir))
-        {
-            engine.Build.IsEnabled = true;
-            await engine.User.SettingsStore.Set("TestTable", "key1", Data.Ok("temporary"));
-        }
-
-        // Second engine — User data should be gone (in-memory)
-        await using (var engine2 = new global::App.@this(_testDir))
-        {
-            engine2.Build.IsEnabled = true;
-            var result = await engine2.User.SettingsStore.Get("TestTable", "key1");
-            await Assert.That(result.Value).IsNull();
-        }
-    }
-
-    [Test]
-    public async Task SystemActor_DuringTesting_IsolatedPerEngineInstance()
-    {
-        // During testing, every actor — including System — gets a fresh in-memory
-        // store scoped by App.Id so tests don't inherit state from prior runs.
-        // (Wave 1: per-test isolation replaces the old shared-file System store.)
+        // During testing, the store is in-memory scoped by App.Id so per-test
+        // Apps never share state. SQLite's shared-cache merges in-memory dbs
+        // with identical DataSource names, so the App.Id scoping is load-bearing.
         await using (var engine = new global::App.@this(_testDir))
         {
             engine.Testing.IsEnabled = true;
-            await engine.System.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
+            await engine.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
         await using (var engine2 = new global::App.@this(_testDir))
         {
             engine2.Testing.IsEnabled = true;
-            var result = await engine2.System.SettingsStore.Get("LlmCache", "testkey");
-            await Assert.That(result.Value).IsNull();
-        }
-    }
-
-    [Test]
-    public async Task UserActor_DuringTesting_DoesNotPersistAcrossEngineInstances()
-    {
-        await using (var engine = new global::App.@this(_testDir))
-        {
-            engine.Testing.IsEnabled = true;
-            await engine.User.SettingsStore.Set("TestTable", "key1", Data.Ok("temporary"));
-        }
-
-        await using (var engine2 = new global::App.@this(_testDir))
-        {
-            engine2.Testing.IsEnabled = true;
-            var result = await engine2.User.SettingsStore.Get("TestTable", "key1");
+            var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
             await Assert.That(result.Value).IsNull();
         }
     }

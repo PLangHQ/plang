@@ -7,7 +7,7 @@ namespace App.Settings;
 /// Each actor owns a store. Modules own their tables (encryption → "encryption", settings → "settings").
 /// All methods accept and return Data, never throw.
 /// </summary>
-public interface ISettingsStore : IDisposable
+public interface IStore : IDisposable
 {
     /// <summary>
     /// Gets a single value by table and key.

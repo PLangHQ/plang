@@ -1,5 +1,4 @@
 using App.Variables;
-using App.Settings;
 
 namespace App.modules.settings;
 
@@ -16,8 +15,8 @@ public partial class Set : IContext
 
     public async Task<Data.@this> Run()
     {
-        var store = Context.App.System.SettingsStore;
-        var result = await store.Set("settings", Key.Value!, new SettingsVariable(Key.Value!, Value?.Value));
+        var store = Context.App.SettingsStore;
+        var result = await store.Set("settings", Key.Value!, new Data.@this(Key.Value!, Value?.Value));
 
         if (!result.Success)
             return result;

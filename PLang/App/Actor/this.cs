@@ -12,7 +12,6 @@ namespace App.Actor;
 public sealed class @this : IAsyncDisposable
 {
     private readonly CancellationTokenSource _cts;
-    private readonly Lazy<ISettingsStore> _dataSource;
 
     /// <summary>
     /// Name of the actor ("System", "Service", or "User").
@@ -83,12 +82,6 @@ public sealed class @this : IAsyncDisposable
     public App.@this App { get; }
 
     /// <summary>
-    /// Persistent key-value storage for this actor.
-    /// Created lazily on first access. Database stored at .db/{actorname}.sqlite.
-    /// </summary>
-    public ISettingsStore SettingsStore => _dataSource.Value;
-
-    /// <summary>
     /// Cancellation token for this actor. Cancel this to stop the actor and all its children.
     /// System is the root — cancelling System cascades to User and Service.
     /// User/Service can be cancelled independently.
@@ -123,14 +116,14 @@ public sealed class @this : IAsyncDisposable
         _cts = parentToken == default
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
-        _dataSource = new Lazy<ISettingsStore>(CreateSettingsStore);
         Context = new Context.@this(app, parentToken: _cts.Token);
         Context.Actor = this;
         _channels = new AppChannels(app) { Actor = this };
 
-        // Register shared SettingsVariable — same object for all actors.
-        // %Settings.ApiKey% resolves identically in User, Service, and System contexts.
-        Context.Variables.Set(app.SettingsVariable.Name, app.SettingsVariable);
+        // Register %Settings.X% as a navigable mount on this actor's Variables.
+        // Resolution dispatches to app.Settings.Get(path, this.Context); the
+        // lambda captures *this* actor's Context so per-actor ctx propagates.
+        Context.Variables.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
 
         // Register %!app% — navigates the App object graph (e.g., %!app.Testing.IsEnabled%)
         Context.Variables.Set("!app", new Data.DynamicData("!app", () => app));
@@ -146,24 +139,6 @@ public sealed class @this : IAsyncDisposable
         }));
     }
 
-    private ISettingsStore CreateSettingsStore()
-    {
-        // Testing: every actor (including System) gets an in-memory db scoped by App.Id
-        // so per-test Apps never share state. SQLite's shared-cache merges in-memory dbs
-        // with identical DataSource names, so the App.Id scoping is load-bearing.
-        if (App.Testing.IsEnabled)
-            return SqliteSettingsStore.InMemory($"{Name.ToLowerInvariant()}-{App.Id}");
-
-        // Building: User/Service in-memory (isolation); System on-disk so the LLM cache
-        // and other persistent system data survive across build invocations.
-        if (App.Build.IsEnabled && this != App.System)
-            return SqliteSettingsStore.InMemory($"{Name.ToLowerInvariant()}-{App.Id}");
-
-        var dbDir = App.FileSystem.Path.Combine(App.AbsolutePath, ".db");
-        var dbPath = App.FileSystem.Path.Combine(dbDir, $"{Name.ToLowerInvariant()}.sqlite");
-        return new SqliteSettingsStore(dbPath, App.FileSystem);
-    }
-
     /// <summary>
     /// Cancels this actor. If System, cascades to User and Service.
     /// </summary>
@@ -173,8 +148,6 @@ public sealed class @this : IAsyncDisposable
     {
         _cts.Cancel();
         _cts.Dispose();
-        if (_dataSource.IsValueCreated)
-            _dataSource.Value.Dispose();
         Context.Dispose();
         await _channels.DisposeAsync();
     }

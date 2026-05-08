@@ -107,19 +107,19 @@ public class SetupTests
         // Pre-record step1 with a distinctive marker value via raw DataSource.
         // Record() would overwrite with {goalPath, stepIndex, stepText, executedAt, error}.
         // If step1 is skipped, the marker survives.
-        await _app.System.SettingsStore.Set("setup", "skip_hash1", new Data("skip_hash1", "MARKER_NOT_RE_EXECUTED"));
+        await _app.SettingsStore.Set("setup", "skip_hash1", new Data("skip_hash1", "MARKER_NOT_RE_EXECUTED"));
 
         // Run setup — step1 should be skipped, step2 should run
         var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
         await Assert.That(result.Success).IsTrue();
 
         // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
-        var step1Data = await _app.System.SettingsStore.Get("setup", "skip_hash1");
+        var step1Data = await _app.SettingsStore.Get("setup", "skip_hash1");
         await Assert.That(step1Data.Success).IsTrue();
         await Assert.That(step1Data.Value?.ToString()).IsEqualTo("MARKER_NOT_RE_EXECUTED");
 
         // Verify step2 was executed and recorded (has executedAt metadata, not our marker)
-        var step2Data = await _app.System.SettingsStore.Get("setup", "skip_hash2");
+        var step2Data = await _app.SettingsStore.Get("setup", "skip_hash2");
         await Assert.That(step2Data.Success).IsTrue();
         await Assert.That(step2Data.Value?.ToString()).IsNotEqualTo("MARKER_NOT_RE_EXECUTED");
     }

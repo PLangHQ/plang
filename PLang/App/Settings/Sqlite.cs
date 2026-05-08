@@ -14,7 +14,7 @@ namespace App.Settings;
 /// WAL mode for concurrent reads. Tables auto-created on first write.
 /// Connection per operation (SQLite pools internally via connection string).
 /// </summary>
-public sealed class SqliteSettingsStore : ISettingsStore
+public sealed class Sqlite : IStore
 {
     private readonly string _connectionString;
     private readonly SqliteConnection? _sentinel;
@@ -22,10 +22,10 @@ public sealed class SqliteSettingsStore : ISettingsStore
     private bool _disposed;
 
     /// <summary>
-    /// Creates a SqliteSettingsStore at the specified database path.
+    /// Creates a Sqlite at the specified database path.
     /// Ensures the parent directory exists using the file system abstraction.
     /// </summary>
-    public SqliteSettingsStore(string dbPath, IPLangFileSystem fileSystem)
+    public Sqlite(string dbPath, IPLangFileSystem fileSystem)
     {
         var dir = fileSystem.Path.GetDirectoryName(dbPath);
         if (!string.IsNullOrEmpty(dir) && !fileSystem.Directory.Exists(dir))
@@ -42,10 +42,10 @@ public sealed class SqliteSettingsStore : ISettingsStore
     }
 
     /// <summary>
-    /// Creates an in-memory SqliteSettingsStore with a sentinel connection that keeps
+    /// Creates an in-memory Sqlite with a sentinel connection that keeps
     /// the database alive for the lifetime of this instance.
     /// </summary>
-    private SqliteSettingsStore(string name)
+    private Sqlite(string name)
     {
         _connectionString = new SqliteConnectionStringBuilder
         {
@@ -62,8 +62,8 @@ public sealed class SqliteSettingsStore : ISettingsStore
     /// Creates an in-memory SQLite settings store. The database lives as long as this instance.
     /// Different names produce isolated databases.
     /// </summary>
-    public static SqliteSettingsStore InMemory(string name)
-        => new SqliteSettingsStore(name);
+    public static Sqlite InMemory(string name)
+        => new Sqlite(name);
 
     private void EnableWalMode()
     {

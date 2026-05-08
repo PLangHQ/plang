@@ -31,10 +31,10 @@ public class DataSourceTests
         catch { /* best effort cleanup */ }
     }
 
-    private SqliteSettingsStore CreateDataSource()
+    private global::App.Settings.Sqlite CreateDataSource()
     {
         var dbPath = _app.FileSystem.Path.Combine(_tempDir, ".db", "test.sqlite");
-        return new SqliteSettingsStore(dbPath, _app.FileSystem);
+        return new global::App.Settings.Sqlite(dbPath, _app.FileSystem);
     }
 
     [Test]
@@ -175,7 +175,7 @@ public class DataSourceTests
     [Test]
     public async Task ResolveTableName_ReturnsLastNamespaceSegment()
     {
-        var result = ISettingsStore.ResolveTableName(typeof(global::App.modules.settings.Set));
+        var result = global::App.Settings.IStore.ResolveTableName(typeof(global::App.modules.settings.Set));
         await Assert.That(result).IsEqualTo("settings");
     }
 
@@ -277,7 +277,7 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_CrudOperations()
     {
-        using var ds = SqliteSettingsStore.InMemory("test_crud");
+        using var ds = global::App.Settings.Sqlite.InMemory("test_crud");
 
         // Set
         var setResult = await ds.Set("items", "key1", new Data("key1", "value1"));
@@ -309,7 +309,7 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_SchemaPersistsAcrossOperations()
     {
-        using var ds = SqliteSettingsStore.InMemory("test_schema");
+        using var ds = global::App.Settings.Sqlite.InMemory("test_schema");
 
         // First operation creates the table
         await ds.Set("persistent", "key1", new Data("key1", "value1"));
@@ -329,8 +329,8 @@ public class DataSourceTests
     [Test]
     public async Task InMemory_TwoNamesAreIsolated()
     {
-        using var ds1 = SqliteSettingsStore.InMemory("db_alpha");
-        using var ds2 = SqliteSettingsStore.InMemory("db_beta");
+        using var ds1 = global::App.Settings.Sqlite.InMemory("db_alpha");
+        using var ds2 = global::App.Settings.Sqlite.InMemory("db_beta");
 
         await ds1.Set("shared", "key", new Data("key", "alpha_value"));
         await ds2.Set("shared", "key", new Data("key", "beta_value"));
@@ -346,25 +346,25 @@ public class DataSourceTests
     public async Task InMemory_DisposeClosesDb()
     {
         // Create, populate, dispose
-        var ds1 = SqliteSettingsStore.InMemory("disposable_db");
+        var ds1 = global::App.Settings.Sqlite.InMemory("disposable_db");
         await ds1.Set("data", "key", new Data("key", "value"));
         ds1.Dispose();
 
         // New datasource with same name should start empty (sentinel closed → DB vanished)
-        using var ds2 = SqliteSettingsStore.InMemory("disposable_db");
+        using var ds2 = global::App.Settings.Sqlite.InMemory("disposable_db");
         var result = await ds2.Get("data", "key");
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsNull();
     }
 
     [Test]
-    public async Task Actor_UsesInMemory_WhenTestingEnabled()
+    public async Task App_UsesInMemory_WhenTestingEnabled()
     {
         await using var engine = new PLangEngine(_tempDir);
         engine.Testing.IsEnabled = true;
 
-        // Access DataSource — should be in-memory (no .db directory created)
-        var ds = engine.User.SettingsStore;
+        // app.SettingsStore is in-memory under Testing — no .db directory created.
+        var ds = engine.SettingsStore;
         var setResult = await ds.Set("test_table", "k", new Data("k", "v"));
         await Assert.That(setResult.Success).IsTrue();
 
@@ -377,30 +377,12 @@ public class DataSourceTests
     }
 
     [Test]
-    public async Task Actor_UsesInMemory_WhenBuildingEnabled()
+    public async Task App_UsesFileBacked_ByDefault()
     {
         await using var engine = new PLangEngine(_tempDir);
-        engine.Build.IsEnabled = true;
+        // Testing not enabled → file-backed system.sqlite.
 
-        var ds = engine.User.SettingsStore;
-        var setResult = await ds.Set("build_table", "k", new Data("k", "v"));
-        await Assert.That(setResult.Success).IsTrue();
-
-        var getResult = await ds.Get("build_table", "k");
-        await Assert.That(getResult.Value?.ToString()).IsEqualTo("v");
-
-        // Verify no .db directory was created on disk
-        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
-        await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
-    }
-
-    [Test]
-    public async Task Actor_UsesFileBacked_ByDefault()
-    {
-        await using var engine = new PLangEngine(_tempDir);
-        // Neither Testing nor Building enabled
-
-        var ds = engine.User.SettingsStore;
+        var ds = engine.SettingsStore;
         var setResult = await ds.Set("file_table", "k", new Data("k", "v"));
         await Assert.That(setResult.Success).IsTrue();
 

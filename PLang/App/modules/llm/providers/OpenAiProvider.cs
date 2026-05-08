@@ -55,7 +55,7 @@ public sealed class OpenAiProvider : ILlmProvider
         var config = app.Config.For<http.Config>(context);
 
         // --- Config ---
-        var settings = app.System.SettingsStore;
+        var settings = app.SettingsStore;
         var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
             "https://api.openai.com/v1/chat/completions");
         var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
@@ -834,7 +834,7 @@ public sealed class OpenAiProvider : ILlmProvider
 
     // --- Config resolution ---
 
-    private static async Task<string> ResolveConfigAsync(ISettingsStore settings, string settingKey,
+    private static async Task<string> ResolveConfigAsync(IStore settings, string settingKey,
         string? envVar, string? defaultValue)
     {
         // Try settings store

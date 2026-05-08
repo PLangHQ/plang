@@ -2,6 +2,7 @@
 
 ## Version
 
+v13 — Stage 13 (`settings-collection-rework`).
 v12 — Stage 12 (`build-branch-to-build-this`).
 v11 — Stage 11 (`errors-app-backref-drop`).
 v10 — Stage 10 (`app-run-redesign`).
@@ -14,6 +15,119 @@ v4 — Stage 4 (`dispose-self-owns`).
 v3 — Stage 3 (`keepalive-collection`).
 v2 — Stage 2 (`channels-v1-helpers-drop`).
 v1 — Stage 1 (`serializers-single-home`).
+
+---
+
+## v13 — Stage 13 (`settings-collection-rework`)
+
+### What this is
+
+Three tightly-coupled changes that close the SettingsVariable smell and
+move SettingsStore to its right scope:
+
+1. `Settings.@this` becomes a collection-over-Data, not a Data subclass.
+2. `SettingsStore` moves from per-actor to app-level.
+3. `Variables.RegisterNavigable(name, resolver)` — generalisable
+   non-Data navigable mount mechanism.
+
+Plus: `ISettingsStore` → `IStore`, `SqliteSettingsStore` → `Sqlite`,
+`SettingsVariable` deleted (absorbed into `Settings/this.cs`).
+
+### What was done
+
+**`PLang/App/Settings/`**:
+
+- `IStore.cs` (renamed from `ISettingsStore.cs`) — same contract,
+  shorter name; `IStore.ResolveTableName(System.Type)` static helper.
+- `Sqlite.cs` (renamed from `SqliteSettingsStore.cs`) — class becomes
+  `Sqlite : IStore`; `Sqlite.InMemory(name)` factory unchanged.
+- `this.cs` — NEW `Settings.@this` (sealed). Two-method surface:
+  `Get(path, context)` loads the first segment from the store and
+  navigates remainder via `Data.GetChild`; `Set(key, data)` writes
+  through. No inheritance.
+- `SettingsVariable.cs` — DELETED (its dual-mode `Data.@this` subclass
+  with overridden `GetChild` was the inheritance smell).
+
+**`PLang/App/this.cs`**:
+
+- `internal SettingsVariable SettingsVariable { get; }` deleted.
+- New `public IStore SettingsStore => _settingsStore.Value;` (lazy
+  `Lazy<IStore>` — preserves "create on first access" so tests with
+  bogus paths don't pay for SQLite-file creation at boot, and the
+  PLang test suite's path-rooted FS doesn't blow up during App ctor).
+- New `public Settings.@this Settings { get; }` allocated eagerly.
+- New `private IStore CreateSettingsStore()` — Testing → in-memory
+  scoped by App.Id; otherwise file-backed at `.db/system.sqlite`
+  (logic moved verbatim from `Actor.CreateSettingsStore`, hardcoded
+  "system" name per architect's settled decision).
+- `DisposeAsync` disposes the lazy if it was materialised.
+
+**`PLang/App/Actor/this.cs`**:
+
+- `_dataSource`, `SettingsStore` property, `CreateSettingsStore` method
+  all deleted.
+- `Context.Variables.Set(app.SettingsVariable.Name, app.SettingsVariable);`
+  → `Context.Variables.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));`.
+  The lambda captures *this* actor's Context so per-actor ctx propagates
+  into Settings.Get when the resolver fires.
+- `_dataSource.Value.Dispose()` removed from DisposeAsync (App owns it now).
+
+**`PLang/App/Variables/this.cs`**:
+
+- New `_navigables` dictionary + `public void RegisterNavigable(string name, Func<string, Data.@this> resolver)`.
+- `Get` — after `_variables.TryGetValue` fails, checks `_navigables` before returning NotFound.
+- `Clone` — shares `_navigables` by reference (resolvers are stateless closures; cloning meaningless). Without this, cloned Variables would NotFound on `%Settings.X%`.
+- `Snapshot()` and `this.Snapshot.cs.Capture` — drop the dead `is App.Settings.SettingsVariable` checks (Settings is no longer in `_variables`).
+
+**Production caller sweep (10 sites)**:
+
+- `Goals/Setup/this.cs:108, 143` — `app.System.SettingsStore` → `app.SettingsStore`.
+- `modules/identity/providers/DefaultIdentityProvider.cs` (4 sites).
+- `modules/llm/providers/OpenAiProvider.cs:58, 837` — and `ISettingsStore` → `IStore`.
+- `modules/settings/{get,set,remove}.cs` — store path; `get.cs` uses non-generic `store.Get`; `set.cs` uses `new Data.@this(...)` instead of `new SettingsVariable(...)`.
+- `Data/this.Navigation.cs:252` — comment refresh.
+
+**Test sweep (6 files)**:
+
+- `App/Goals/Setup/SetupTests.cs` — 3 sites swept.
+- `App/Modules/datasource/DataSourceTests.cs` — `SqliteSettingsStore` → `Sqlite`; `ISettingsStore.ResolveTableName` → `IStore.ResolveTableName`. Two tests on per-actor in-memory premise rewritten as app-level (`Actor_UsesInMemory_WhenBuildingEnabled` deleted — Build mode no longer differentiates).
+- `App/Modules/identity/IdentityErrorPathTests.cs` — `SwapDataSource` retargeted from Actor's `_dataSource` to App's `_settingsStore` Lazy field; 11 call sites changed to pass `_app` instead of `_app.System`; `ISettingsStore` → `IStore`.
+- `App/Modules/settings/SettingsDataTests.cs` — `new SettingsVariable(...)` → `new Data.@this(...)`; `Variables.Get("Settings").GetChild("X")` patterns rewritten as direct `Variables.Get("Settings.X")` (the navigable resolver dispatches through dot-notation only); `SameObjectAcrossAllActors` test re-purposed to assert app-level `app.Settings` identity + cross-actor read.
+- `App/VariablesTests/VariablesSnapshotTests.cs` — drop the dead `is SettingsVariable` assertion.
+- `App/Context/ActorSettingsStoreTests.cs` — substantially rewritten. The "User has its own store" premise is gone; tests narrowed to "app.SettingsStore is in-memory under Testing / file-backed by default". Two User-specific tests deleted.
+
+### Behaviour preserved
+
+- `%Settings.X%` resolves identically: load-from-store on first segment,
+  navigate via `Data.GetChild` on remainder, return `AskError` on unset.
+- Per-actor Context propagates through the resolver lambda capture.
+- Testing.IsEnabled → in-memory scoped by App.Id.
+- Default → file-backed at `.db/system.sqlite`.
+
+### Verification
+
+- `find PLang/App/Settings -name 'SettingsVariable.cs'` → empty.
+- `grep -rn "SettingsVariable\b" PLang/ PLang.Tests/ Tests/ --include='*.cs'` → 0.
+- `grep -rn "\.System\.SettingsStore" PLang/ PLang.Tests/ --include='*.cs'` → 0.
+- `grep -rn "_dataSource" PLang/App/Actor/this.cs` → 0.
+- `grep -rn "ISettingsStore\b" PLang/ PLang.Tests/ --include='*.cs'` → 0.
+- `grep -rn "SqliteSettingsStore\b" PLang/ PLang.Tests/ --include='*.cs'` → 0.
+- `dotnet build PlangConsole` clean.
+- C# **2752/2752** pass (3 fewer tests than baseline 2755 — User-specific tests deleted).
+- PLang **199/199** pass.
+
+### Notes for next stages
+
+- One subtle: App's SettingsStore had to be **lazy** (not eager) — eager
+  allocation in App's ctor breaks tests that pass fictional paths
+  (`/app`, `/test`) and never touch settings. The old per-actor `Lazy<>`
+  was load-bearing for that exact reason; keeping it on App preserves it.
+- The InMemory connection-sharing mechanism in `Sqlite.InMemory(name)`
+  is unchanged — sentinel connection still works at app level.
+- A clean rebuild was needed during this session — the PlangConsole
+  binary was stale after the in-place edits and reported a misleading
+  NRE inside `App..ctor` line 300; `rm -rf PlangConsole/bin obj && dotnet build`
+  fixed it. The CLAUDE.md "Stale-binary trap" note applies.
 
 ---
 

@@ -204,7 +204,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Loads a single identity by name from the settings store.</summary>
     internal async Task<Data.@this> LoadAsync(IContext action, string name)
     {
-        var store = action.Context.App.System.SettingsStore;
+        var store = action.Context.App.SettingsStore;
         var result = await store.Get(Table, name);
 
         if (!result.Success)
@@ -223,7 +223,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
     internal async Task<Data.@this> LoadAllAsync(IContext action)
     {
-        var store = action.Context.App.System.SettingsStore;
+        var store = action.Context.App.SettingsStore;
         var result = await store.GetAll(Table);
         if (!result.Success) return result;
 
@@ -274,7 +274,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Persists an identity to the settings store.</summary>
     private async Task<Data.@this> SaveAsync(IContext action, Identity identity)
     {
-        var store = action.Context.App.System.SettingsStore;
+        var store = action.Context.App.SettingsStore;
         var data = new Data.@this(identity.Name, identity);
         return await store.Set(Table, identity.Name, data);
     }
@@ -282,7 +282,7 @@ public sealed class DefaultIdentityProvider : IIdentityProvider
     /// <summary>Removes an identity from store.</summary>
     private async Task<Data.@this> RemoveAsync(IContext action, Identity identity)
     {
-        var store = action.Context.App.System.SettingsStore;
+        var store = action.Context.App.SettingsStore;
         return await store.Remove(Table, identity.Name);
     }
 

@@ -26,10 +26,11 @@ public class VariablesSnapshotTests
     }
 
     [Test]
-    public async Task Variables_Snapshot_ExcludesBangPrefixed_DynamicData_AndSettingsVariables()
+    public async Task Variables_Snapshot_ExcludesBangPrefixedAndDynamicData()
     {
-        // Existing partition: skip !-prefix, DynamicData (Now/GUID/!app/MyIdentity),
-        // SettingsVariable (sqlite-backed). All must be absent from captured payload.
+        // Existing partition: skip !-prefix, DynamicData (Now/GUID/!app/MyIdentity).
+        // Settings is now a navigable resolver (not in _variables) so it's absent
+        // by construction — no special-case needed.
         var src = new global::App.@this("/src");
         var vars = src.User.Context.Variables;
         vars.Set("user", "alice");        // user var — survives
@@ -41,12 +42,10 @@ public class VariablesSnapshotTests
 
         var names = captured!.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         await Assert.That(names.Contains("user")).IsTrue();
-        // None of the !-prefixed, DynamicData, or SettingsVariable-backed names appear.
         await Assert.That(names.Any(n => n.StartsWith("!"))).IsFalse();
         await Assert.That(names.Contains("Now")).IsFalse();
         await Assert.That(names.Contains("NowUtc")).IsFalse();
         await Assert.That(names.Contains("GUID")).IsFalse();
-        // Settings variable — captured Data.@this list shouldn't include any SettingsVariable.
-        await Assert.That(captured.Any(d => d is global::App.Settings.SettingsVariable)).IsFalse();
+        await Assert.That(names.Contains("Settings")).IsFalse();
     }
 }

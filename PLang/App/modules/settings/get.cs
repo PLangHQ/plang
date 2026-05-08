@@ -1,6 +1,5 @@
 using App.Errors;
 using App.Variables;
-using App.Settings;
 
 namespace App.modules.settings;
 
@@ -17,8 +16,8 @@ public partial class Get : IContext
 
     public async Task<Data.@this> Run()
     {
-        var store = Context.App.System.SettingsStore;
-        var result = await store.Get<SettingsVariable>("settings", Key.Value!);
+        var store = Context.App.SettingsStore;
+        var result = await store.Get("settings", Key.Value!);
 
         if (!result.Success)
             return result;
