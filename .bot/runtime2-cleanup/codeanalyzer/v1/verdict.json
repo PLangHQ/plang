@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Stage 1 lands the shape the brief scoped. Three minor findings — Snapshot back-ref aliasing (latent, defer to a future stage), stale comment, per-actor invariant under-asserted — none block stage 1."
+}

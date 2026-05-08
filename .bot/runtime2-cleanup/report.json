@@ -562,42 +562,36 @@
       }
     },
     {
-      "id": "01e4e50f-c28c-4345-87bb-8f1eded6cc9a",
-      "bot": "architect",
-      "timestamp_start": "2026-05-08T19:30:00Z",
-      "timestamp_end": "2026-05-08T20:00:00Z",
-      "intent": "Pull stage 1 result; carve stage 2 brief.",
+      "id": "139c4bab-8c67-4b73-bbcf-153f6943886d",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-08T19:04:17Z",
+      "intent": "Codeanalyzer v1: review coder v1 (stage 1 \u2014 per-actor Channels.Serializers as single home).",
       "before": {
-        "assumptions": "Stage 1 landed cleanly; coder completed serializers-single-home with full test pass. Stage 2 (channels-v1-helpers-drop) is next per the plan.",
-        "risk": "Stage 2 plan one-liner mentioned migrating DefaultHttpProvider callers \u2014 code dig may show migration is moot if the v1 surfaces are fully dead."
+        "assumptions": "Coder v1 just landed (commit c74be34e). Architect's stage 1 brief is canonical: delete App.Serializers, drop Stream._serializers, add Channels back-ref to Channel.@this base, route Stream.WriteCore through Channels!.Serializers, sweep 5 production callers + ~15 test sites. Stage 20 (drop Channel.App back-ref) is deferred.",
+        "risk": "Both back-refs (Channel.App + Channel.Channels) now coexist on Channel.@this \u2014 overlap that the architect explicitly punted to stage 20, so any redundancy finding here is a stage-20 callout, not a stage-1 fail. Latent risk: Snapshot() mutates back-refs on shared channel instances \u2014 unchanged from pre-stage-1, but the new back-ref makes the choreography more visible."
       },
-      "plan": ".bot/runtime2-cleanup/architect/stage-2-channels-v1-helpers-drop.md",
       "actions": [
         {
           "paths": [
-            ".bot/runtime2-cleanup/architect/stage-2-channels-v1-helpers-drop.md"
+            ".bot/runtime2-cleanup/codeanalyzer/v1/plan.md",
+            ".bot/runtime2-cleanup/codeanalyzer/v1/report.md",
+            ".bot/runtime2-cleanup/codeanalyzer/v1/verdict.json",
+            ".bot/runtime2-cleanup/codeanalyzer/summary.md"
           ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Stage 2 brief. Code dig confirmed: WriteAsync(actorName, channelName, ...) has zero callers; the contentType-override branch in WriteAsync(channelName, data, contentType, ...) has zero callers passing contentType (DefaultHttpProvider lines 852/907 do not). Both deletions are pure dead-code removal + parameter drop. Three other  casts in same file (ReadChannelAsync, WriteTextAsync, ReadTextAsync) are out of scope; flagged under Watch for. Risk: very low."
-        },
-        {
-          "paths": [
-            ".bot/runtime2-cleanup/architect/plan.md",
-            ".bot/runtime2-cleanup/architect/summary.md"
-          ],
-          "type": "modify",
-          "category": "doc",
-          "confidence": "high",
-          "context": "plan.md stage 1 row marked complete (2755/2755 + 199/199); stage 2 row links the brief and replaces the one-liner. summary.md latest+4 entry covering stage 1 landing + stage 2 carve."
+          "context": "Five-pass review of coder v1. Stage 1 scope: PASS. Three findings \u2014 (1) Snapshot back-ref aliasing latent footgun, (2) stale Stage 1 comment, (3) per-actor invariant under-asserted in renamed test. None block stage 1; #2/#3 are quick coder follow-ups, #1 is a design call for a future stage's brief."
         }
       ],
+      "plan": ".bot/runtime2-cleanup/codeanalyzer/v1/plan.md",
       "after": {
-        "status": "stage 2 ready for coder; plan + summary updated; tests baseline confirmed",
-        "health": "plan + tree + scope-map + summary all consistent at stages 1=complete, 2=ready",
-        "notes": "Stage 2 should be a small, low-risk session for the coder. Two methods touched in one file. No new types; no scope changes; no caller migrations."
-      }
+        "status": "PASS for stage-1 scope. Three findings logged in report.md (one latent, two trivial). Tester is next.",
+        "health": "ok",
+        "notes": "Architect's brief matched the diff line-for-line. The notable finding is in Snapshot \u2014 pre-existing choreography that the new Channels back-ref makes observable for the first time. Worth threading into the appropriate future stage rather than fixing inline."
+      },
+      "timestamp_end": "2026-05-08T19:06:50Z",
+      "next_bot": "tester"
     }
   ]
 }
