@@ -49,6 +49,40 @@ Three exceptions for state:
 
 **Quick screen**: `grep -rE "^\s+(public|private|internal|protected)\s+static\s+" PLang/ | grep -v 'static class\|static partial class'`. Filter out methods (`(`), `=>`-bodied factories, and `const`/`AsyncLocal` by hand. ~10 real hits today.
 
+### Rule D — Gerund-named app-graph properties are a wrong-shape name
+
+A property on `app.X` should name an **object you hold and navigate**, not a state the system is in. Gerunds (`-ing` endings) describe activity; nouns name the thing performing the activity. `app.Building` reads "the system is currently building" — that's a state. `app.Builder` reads "the thing that builds" — that's an object. The latter is OBP-shaped; the former is not.
+
+CLI follows: flag form moves to the noun (`--builder`, `--tester`). Verb commands stay verbs because commands *are* actions (`plang p build`, `plang p test`). Folder names follow the property: `App/Builder/`, not `App/Build/`.
+
+Three forms must all agree:
+
+| Form | Today (wrong) | After (correct) |
+|------|---------------|-----------------|
+| Folder | `App/Build/` | `App/Builder/` |
+| App property | `app.Building` | `app.Builder` |
+| CLI flag | `--build` | `--builder` |
+| CLI command | `plang p build` | unchanged (verb) |
+
+**Quick screen**: `grep -rE "(public|internal)\s+\w+ing\b" PLang/App/this.cs` — matches gerund property names on the App spine. Then read each: a state is the rare case; rename otherwise.
+
+### Rule E — Decomposed parameters that should navigate
+
+A method `B.X(spec, modules)` where `modules` is reachable from `B` (or from `B.Modules`, or from `spec.Owner.Modules`, or any other navigation chain rooted at the receiver) is a decomposition smell. The caller is being made to chop its own children off and pass them in; the OBP form is **the callee navigates the receiver for what it needs**.
+
+Worked example from the codebase:
+- `Catalog.@this.Build(modules)` called as `Catalog.Build(action.Context.App.Modules)` → caller decomposes its App graph
+- After: `app.Modules.Schema.Build()` — instance method on Modules.Schema, navigates `this.Modules` (the parent reference) internally
+
+Two side wins of the navigation form:
+
+1. **Owner is forced explicit** — to navigate, the method has to live where its data lives. Decomposed-parameter methods can live anywhere; navigated methods can only live on a node that *has* the data they need. This makes the OBP smell #4 ("allocate-here / mutate-there") harder to introduce.
+2. **API surface stops leaking caller structure** — `Render(spec, modules)` is two parameters wide; `Render(spec)` is one. Renames and refactors of the navigation chain don't change the public method signature.
+
+**Quick screen**: `grep -rnE "\.\w+\(.+\.App\.\w+" PLang/App/ --include='*.cs' | grep -v 'this\.\.\.'`. Surfaces every call site where the caller is reaching into `App.X` to pass it as a parameter. Each is a candidate — verify by reading whether the receiving method could navigate to the same data instead of receiving it.
+
+Refinement: not every parameter is decomposed. A method that takes data the receiver *cannot* navigate to (a fresh value computed by the caller, an opaque token, an unrelated entity) is correctly parameterized. The smell is specifically "parameter is a child of the receiver" or "parameter is reachable through the receiver's parent chain."
+
 ## Stage anatomy
 
 Every stage in this plan has the same shape:
@@ -81,7 +115,7 @@ The plan is "done" when:
 - `App.this.cs` is under ~300 lines (currently 681).
 - `Modules.this.cs` is under ~200 lines (currently 464).
 - `Channels.this.cs` is under ~150 lines (currently 277).
-- The two-capital screen, the `Get<Plural>()` screen, and the static-field screen on `PLang/App/` return zero must-fix hits (some unavoidable hits stay; they're documented in `claude-md-proposals.md`).
+- The two-capital screen, the `Get<Plural>()` screen, the static-field screen, the gerund-property screen, and the decomposed-parameter screen on `PLang/App/` return zero must-fix hits (some unavoidable hits stay; they're documented in `claude-md-proposals.md`).
 - `Documentation/v0.2/architecture.md` directory tree matches reality.
 - `/shared/app-tree/` is regenerated against the post-cleanup App surface (one-shot, not a stage in itself).
 

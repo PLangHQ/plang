@@ -120,6 +120,24 @@
       "ts": "2026-05-07T17:46:14"
     },
     {
+      "id": "7cadb12b26",
+      "line": 235,
+      "text": "or Catalog/Spec/Example.cs and Action.cs?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-07T19:35:23"
+    },
+    {
+      "id": "4e0afaa646",
+      "line": 235,
+      "text": "Yes — folded into the Modules.Schema shape. With Catalog dissolving (your runtime-uses-builder correction settled this), the records relocate as:\n\n```\nApp/Modules/Schema/\n├── Spec/\n│   ├── Action.cs              (← Catalog/ActionSpec.cs)\n│   └── Example.cs             (← Catalog/ExampleSpec.cs)\n├── Entry.cs                   (← Catalog/TypeEntry.cs)\n├── ExampleHelpers.cs          (kept for action-author ergonomics)\n├── Render.cs                  (← Catalog/ExampleRenderer.cs; instance, navigates this.Modules)\n└── this.cs                    (← Catalog/this.cs; instance Build(), no parameter)\n```\n\nFlat files inside Spec/ (matches the existing record-as-flat-file convention — CallStack/Diff.cs, CallStack/Flags.cs, Errors/Error.cs). If you want the full OBP nested form (Spec/Action/this.cs and Spec/Example/this.cs), happy to push there — just costlier in folder count for record types.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "7cadb12b26",
+      "ts": "2026-05-08T10:37:30"
+    },
+    {
       "id": "c4aa52c02e",
       "line": 237,
       "text": "should all be readonly, I kind like the app/variables/reserved.cs location",

@@ -181,6 +181,60 @@
         "health": "ok",
         "notes": "No code changes — pure planning. The Provider→Code question is the most consequential: my position is that it's only a good rename if it carries a story-level concept change ('runtime no longer talks about providers'), not a 88-file find-replace. Waiting on Ingi's read."
       }
+    },
+    {
+      "id": "b3a1c8d4-7e92-4f1b-a5c6-2d8e9f3a1b7c",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T09:00:00Z",
+      "timestamp_end": "2026-05-08T10:30:00Z",
+      "intent": "Audit the prior-attempt branch (origin/runtime2-obp-restructure architect v1-v3) for missed insights, then absorb the ones Ingi accepts into principles + tree + plan.",
+      "before": {
+        "assumptions": "Ingi's response to the audit was point-by-point: agree on Rules D and E, agree Catalog dissolves into Modules.Schema (he confirmed runtime uses builder via the builder module), agree on MIME table split, defer audit-methodology and additional gap categories ('lets talk about this after'), source-gen update is moot due to recent rewrite, agree on Modules-out-of-scope rationale, light-touch on /shared/app-tree audit.",
+        "risk": "Verified two facts before editing: (1) source generator no longer references App.Utils.* — confirmed by grep on PLang.Generators (Ingi was right, the LazyParamsGenerator.cs:638 reference is gone after the recent rewrite); (2) /shared/app-tree/ directory does NOT exist anywhere in the repo — never has — so v3's audit methodology is blocked on missing substrate."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan/principles.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added Rule D (gerund-named app-graph properties — Builder/Tester pattern with three-form table folder/property/CLI) and Rule E (decomposed parameters that should navigate — worked example Catalog.Build(modules) → app.Modules.Schema.Build()). Both with quick-screen greps. Updated definition-of-done to include both new screens."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan/post-cleanup-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Major v3-absorption pass: Catalog dissolves into App/Modules/Schema/ with Spec/Action.cs + Spec/Example.cs (per Ingi's L235 comment). Build → Builder, Test → Tester (Rule D). Channels/Serializers/Formats/ added (extension table). Types gains Clr(mimeType) overload; Registry.cs and Conversion.cs partial siblings. Choices marked tentative (★) for re-evaluation post-Catalog. Open question B resolved (Catalog dissolves into Schema). New open question I (audit substrate missing). Net stats updated: 9 folders added, 2 folders renamed, 14 files renamed, more files deleted via Catalog dissolve."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 9 renamed: 'modules-to-catalog-lift' → 'catalog-dissolve-to-modules-schema' (different shape: Catalog disappears, content goes under Modules/Schema/). Stage 16 added: builder-tester-rename. Stage 17 added: mime-table-split. Stages 1-15 → 1-17. Updated cross-cutting decision #3 to reference Rules A-E (was just 'two new rules')."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/comments.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Replied to Ingi's L235 ExampleSpec/ActionSpec comment (id 7cadb12b26) confirming the Spec/ subfolder shape, marked resolved. Two user comments still open: the big bullet comment (intentional) and ChildAppCreated (design TBD)."
+        }
+      ],
+      "after": {
+        "status": "v3 absorption complete. Five sharpened rules now active (A compound-name, B Get<Plural>, C static-fields, D gerund-property, E decomposed-parameters). Stage list grew to 17. Catalog dissolves into Modules.Schema; Build/Test → Builder/Tester; MIME table splits cleanly. Three open design questions remaining: Provider→Code rename (E), Plang vs PlangData mimetype (C in tree's open list), audit substrate (I).",
+        "health": "ok",
+        "notes": "Discovered /shared/app-tree/ doesn't exist — v3's audit methodology is blocked. Flagged in tree as open question I with three resolution paths. Architect lean: tightening rules covers a lot of what the audit would catch; (a) building the surface files is too much overhead unless we commit to a long-term doc artifact. Waiting on Ingi's call. Choices placement also flagged tentative (★) — re-evaluate after Catalog dissolves to see if the build/runtime border has shifted enough that Choices wants a different home."
+      }
     }
   ]
 }

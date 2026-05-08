@@ -18,7 +18,7 @@ The plan is a backlog. Stages are written as we approach them, not all up front 
 
 ## Stage index
 
-Stages 1–15 are ordered roughly by **impact × isolation** — biggest wins that don't entangle with future work go first. Each stage gets its own `stage-N-<slug>.md` file at the architect bot root *when carved*. Stage files don't exist yet; only the spine and `plan/principles.md` do.
+Stages 1–17 are ordered roughly by **impact × isolation** — biggest wins that don't entangle with future work go first. Each stage gets its own `stage-N-<slug>.md` file at the architect bot root *when carved*. Stage files don't exist yet; only the spine and `plan/principles.md` do.
 
 ### Tier 1 — close active drift, demonstrate the slice rhythm (small, isolated)
 
@@ -37,7 +37,7 @@ Stages 1–15 are ordered roughly by **impact × isolation** — biggest wins th
 |---|------|-----------|
 | 7 | `callstack-promote-app-property` | Promote `app.Debug.CallStack` to `app.CallStack`. The folder is already at App root; the property placement is the only thing that disagrees. |
 | 8 | `read-file-off-channels` | Move `Channels.ReadAsync<T>(filePath)` off Channels (it doesn't read from a channel). Goes to `app.Serializers` or FileSystem. |
-| 9 | `modules-to-catalog-lift` | Lift `Describe`, `GetDefaults`, `IsVariableNameSlot`, `DescribeReturnType`, `FormatDefault`, `GetChannelInventory` from `Modules.@this` to `Catalog.@this`. Modules drops to ~150 lines, Catalog grows the responsibility it's named for. Closes Rule-2 smells across both classes. |
+| 9 | `catalog-dissolve-to-modules-schema` | Catalog dissolves entirely. The whole `App/Catalog/` folder moves to `App/Modules/Schema/` (records under `Spec/`). `Build(modules)` and `Render(spec, modules)` become instance methods navigating `this.Modules` (Rule E). The two static formatters in `modules/builder/providers/{Fluid,DefaultBuilder}` collapse into `Schema.Render`. Modules drops to ~150 lines; Schema becomes the navigable home for "what every action looks like." Settled 2026-05-08 per `runtime2-obp-restructure` v3 thread. |
 
 ### Tier 3 — bigger refactors, design discussion required
 
@@ -53,7 +53,9 @@ Stages 1–15 are ordered roughly by **impact × isolation** — biggest wins th
 |---|------|-----------|
 | 13 | `timespan-iso-8601-sweep` | Sweep `*Ms` int properties → `TimeSpan?` with the ISO 8601 JsonConverter pattern channels established. Known target: `App.Callback.Signature.ExpiresInMs`. (Closes the 2026-05-06 TODO.) |
 | 14 | `compound-name-rename` | Rename compound-noun classes flagged by the two-capital test: `MigrationEnvelope` → `Migration.@this`, `EventContext` → `Channel.Event.@this`, etc. Each rename is mechanical. |
-| 15 | `static-state-eviction-sweep` | Move every `static` field (incl. `static readonly`) into the `@this` that should own it (Rule C). Mostly mechanical for caches and config singletons (`PlangTypeIndex` → `App.Types.@this`, `Json` options → an App-rooted home, `ReservedKeywords` → its owner). Two hits need a design note before the sweep runs: `OpenAiProvider._requestCount` (per-process counter on an actor-resolved provider — wrong scope) and `Test.run.ChildAppCreated` (static event for child-app discovery — wrong shape). Static *methods* and `const` stay. |
+| 15 | `static-state-eviction-sweep` | Move every `static` field (incl. `static readonly`) into the `@this` that should own it (Rule C). Mostly mechanical for caches and config singletons (`PlangTypeIndex` → `App.Types.@this`, `Json` options → `App.Json.@this`, `ReservedKeywords` → `App.Variables.Reserved`). Two hits need a design note before the sweep runs: `OpenAiProvider._requestCount` (per-process counter on an actor-resolved provider — wrong scope; per Ingi: delete, todo logged) and `Test.run.ChildAppCreated` (static event for child-app discovery — wrong shape). Static *methods* and `const` stay. |
+| 16 | `builder-tester-rename` | Rename `App/Build/` → `App/Builder/` and `App/Test/` → `App/Tester/`. Property `app.Building` → `app.Builder`, `app.Testing` → `app.Tester`. CLI flags `--build` → `--builder`, `--test` → `--tester` (commands `plang p build` / `plang p test` stay verbs). Rule D — gerund→noun on app-graph properties. Pure rename; no surface-shape change. |
+| 17 | `mime-table-split` | `Utils/MimeTypes.cs` does two jobs. Forward-lookup (extension → MIME) is I/O → moves to a new `App/Channels/Serializers/Formats/this.cs` (mount = `app.Channels.Serializers.Formats`). Reverse-lookup (MIME family → CLR type) is type resolution → becomes `app.Types.Clr(mimeType)` overload alongside `Clr(plangName)`. The MIME/Kind/Compressible block currently inside `App/Types/this.cs:215-315` moves out to Formats with the rest. Settled 2026-05-08 per the v3 thread. |
 
 ## What's deferred (architect flags, not stages)
 
@@ -75,7 +77,7 @@ This branch was forked off the `runtime2-channels` tip on 2026-05-07. The archit
 
 1. **One ownership realignment per stage.** No bundled refactors. "While I'm here" changes go in their own stage.
 2. **No new features.** This plan is cleanup. New behaviour goes in its own branch with its own plan.
-3. **The two new OBP rules apply to every stage.** Compound class names are red flags; `Get<Plural>()` methods that return lists are missing collection types. See [`plan/principles.md`](plan/principles.md).
+3. **The architect-sharpened OBP rules apply to every stage.** Rule A (compound class names), Rule B (`Get<Plural>()` is a missing collection type), Rule C (static fields are a missing `@this`), Rule D (gerund-named app-graph properties are a wrong-shape name), Rule E (decomposed parameters that should navigate). See [`plan/principles.md`](plan/principles.md).
 4. **Tests stay green.** Every stage rebuilds from clean and runs both the C# (`dotnet run --project PLang.Tests`) and the PLang (`cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test`) suites.
 5. **Stage docs are written when carved, not upfront.** The next 1–2 stages get full design docs; the rest stay as one-liners until we approach them. Every stage we land changes the design of the next.
 6. **CLAUDE.md proposals only when canonical.** This work will surface per-area conventions worth adding to `/PLang/App/CLAUDE.md`. They go in `.bot/runtime2-cleanup/claude-md-proposals.md`, not direct edits.

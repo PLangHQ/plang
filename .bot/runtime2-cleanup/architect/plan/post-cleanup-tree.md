@@ -6,6 +6,20 @@ The tree is annotated with what each stage does to it, and revised against Ingi'
 
 **Baseline:** trunk after the runtime2-channels merge (`origin/runtime2` at `260ba46f`). The merge already landed two pieces this doc had previously called "stage 14": `Channel/EventContext.cs` is now `Channel/Events/this.cs`, and `Channel/MigrationEnvelope.cs` is gone (the Migration concept dropped). Stage 14's table is updated accordingly.
 
+**v3 absorption (2026-05-08):** Reviewed `origin/runtime2-obp-restructure` architect/v1-v3 (the prior cleanup attempt that was deferred). Several insights folded into this doc and the principles file:
+
+1. **Catalog dissolves into `app.Modules.Schema`** — the catalog is "Modules describing itself to an LLM"; Modules is the owner. Builder/UI/trace-viewer are consumers. The v3 thread Ingi remembered. Open question B (Catalog placement) is now resolved.
+2. **MIME table splits two ways** — `Utils/MimeTypes.cs` does two jobs: `GetMimeType(ext)` is I/O (extension forward) → `app.Channels.Serializers.Formats`; `TryGetClrType(mimeType)` is type resolution (family rules) → `app.Types.Clr(mimeType)` overload alongside `Clr(plangName)`.
+3. **Build → Builder, Test → Tester** rename — gerunds describe state; nouns name objects. Tree below applies the rename throughout.
+4. **Two new sharpened rules**: Rule D (gerund-named app-graph properties) and Rule E (decomposed parameters → navigation) added to `plan/principles.md`. Both are detection rules with grep screens.
+5. **Modules out of scope** with sharper rationale: the source generator + handler pattern *forces* OBP shape on module action handlers — they can't drift OBP without compile breaks. Cleaner reason than v1's "handler-level cleanup is a separate plan."
+
+**v3 absorption — declined or revised:**
+
+- v3 wanted ReservedKeywords folded into `app.Types/Registry.cs`. ReservedKeywords are *variable names* (`!Test`, `!Signature`, etc.), not types. `app.Variables/Reserved.cs` is the right owner. Tree keeps the Variables placement.
+- v3's audit methodology (walk every `/shared/app-tree/*.md`) is **blocked**: that directory doesn't exist in the repo and never has. The methodology is moot until either those surface files get built (a meta-stage) or we pick a different diagnostic substrate (architecture.md, App/this.cs properties walked directly). Flagged in [Open judgment calls](#open-judgment-calls) as item I.
+- v3's source-generator update at `LazyParamsGenerator.cs:638` is moot: source gen has been rewritten and no longer references any `App.Utils.*` symbols. Confirmed by grep.
+
 ## Marker key
 
 | Marker | Meaning |
@@ -28,11 +42,11 @@ PLang/App/
 │   │   └── this.cs
 │   └── this.cs
 ├── Attributes/
-├── Build/
-│   ├── Choices/                             (MOVED ← App/Choices/; build-time vocabulary registry — see comment below)
+├── Builder/                                 (RENAMED ← Build/, stage 16; Rule D — gerund→noun; namespace App.Build → App.Builder)
+│   ├── Choices/                             (★ tentative — MOVED ← App/Choices/; re-evaluate after restructure lands; see open question)
 │   │   └── this.cs                          (private static _registry → instance, stage 15)
 │   ├── this.Snapshot.cs
-│   └── this.cs                              (SHRUNK; gains build-mode branch from App.Start, stage 12)
+│   └── this.cs                              (SHRUNK; gains build-mode branch from App.Start, stage 12; gains Choices subfolder if (★) confirmed)
 ├── Cache/
 │   ├── Memory.cs                            (RENAMED ← MemoryStepCache.cs; "StepCache" was role-suffix soup; per-impl-variant under Cache/)
 │   └── this.cs
@@ -50,13 +64,7 @@ PLang/App/
 │   ├── Flags.cs
 │   ├── this.Snapshot.cs
 │   └── this.cs                              (now exposed as app.CallStack, stage 7)
-├── Catalog/                                 (open: should this whole tree move under Build/? — see open question)
-│   ├── ActionSpec.cs
-│   ├── ExampleSpec.cs
-│   ├── Examples/                            (NEW; collection type, stage 14)
-│   │   └── this.cs                          (RENAMED ← ExampleHelpers.cs + ExampleRenderer.cs; "Helpers"/"Renderer" suffixes are Rule A red flags)
-│   ├── TypeEntry.cs
-│   └── this.cs                              (SHRUNK; gains Describe / GetDefaults / IsVariableNameSlot / DescribeReturnType / FormatDefault / GetChannelInventory, stage 9)
+│   (App/Catalog/ — DELETED entirely; content moves to App/Modules/Schema/, stage 9)
 ├── Callback/
 │   ├── AskCallback.cs
 │   ├── ErrorCallback.cs
@@ -71,6 +79,8 @@ PLang/App/
 │   │   ├── Stream/this.cs
 │   │   └── this.cs
 │   ├── Serializers/
+│   │   ├── Formats/                         (NEW; stage 17; mount = app.Channels.Serializers.Formats; absorbs the extension table from Utils/MimeTypes.cs and the MIME/Kind/Compressible block currently inside Types/this.cs)
+│   │   │   └── this.cs                      (Mime(ext), Kind(ext), Compressible(kind), KindOf(typeValue), Add(ext, kind, mime), Remove(ext))
 │   │   ├── Serializer/
 │   │   │   ├── Json.cs                      (RENAMED ← JsonStreamSerializer.cs)
 │   │   │   ├── Plang.cs                     (RENAMED ← PlangSerializer.cs OR PlangDataSerializer.cs — see open question on which one survives)
@@ -154,7 +164,15 @@ PLang/App/
 ├── KeepAlive/                               (NEW, stage 3)
 │   └── this.cs                              (collection — Add / Remove / IReadOnlyList<T> / DisposeAsync; replaces App._keepAlive private list)
 ├── Modules/
-│   └── this.cs                              (SHRUNK 464→~150; lifts six methods to Catalog — stage 9; self-disposes — stage 4)
+│   ├── Schema/                              (NEW; absorbs former App/Catalog/, stage 9; mount = app.Modules.Schema)
+│   │   ├── Spec/                            (per Ingi's review — record family for the structured shapes the renderer consumes)
+│   │   │   ├── Action.cs                    (RENAMED ← Catalog/ActionSpec.cs; "Spec" suffix dropped, lives in Spec/)
+│   │   │   └── Example.cs                   (RENAMED ← Catalog/ExampleSpec.cs)
+│   │   ├── Entry.cs                         (RENAMED ← Catalog/TypeEntry.cs)
+│   │   ├── ExampleHelpers.cs                (kept as `using static …` ergonomic for action authors writing ExamplesForLlm())
+│   │   ├── Render.cs                        (RENAMED ← Catalog/ExampleRenderer.cs; instance method navigating this.Modules — Rule E; absorbs the two static formatters in modules/builder/providers/{FluidProvider,DefaultBuilderProvider})
+│   │   └── this.cs                          (RENAMED ← Catalog/this.cs; instance method Build() — no parameter, navigates this.Modules — Rule E)
+│   └── this.cs                              (SHRUNK 464→~150; example-rendering call becomes local navigation Schema.Render(spec); self-disposes — stage 4)
 ├── Providers/                               (open: rename to Code/, see Provider→Code design discussion below)
 │   ├── IProvider.cs
 │   ├── this.Snapshot.cs
@@ -173,7 +191,7 @@ PLang/App/
 ├── Statics/
 │   ├── this.Snapshot.cs
 │   └── this.cs                              (App.GetStatic shim deleted — stage 5; the Statics @this is unchanged)
-├── Test/                                    (Test prefix dropped on the loose siblings; namespace is App.Test so the prefix was redundant)
+├── Tester/                                  (RENAMED ← Test/, stage 16; Rule D — gerund→noun; namespace App.Test → App.Tester; Test prefix dropped on loose siblings since namespace is App.Tester)
 │   ├── Coverage.cs
 │   ├── File.cs                              (RENAMED ← TestFile.cs)
 │   ├── Results.cs
@@ -182,20 +200,24 @@ PLang/App/
 │   ├── this.Snapshot.cs
 │   └── this.cs                              (handles ChildAppCreated differently — stage 15; design TBD, see comment below)
 ├── Types/
-│   └── this.cs                              (ABSORBS Utils/PlangTypeIndex.cs entirely — stage 15; ConcurrentDictionary caches become instance fields; locks gone because construction is deterministic at App.Start)
+│   ├── Conversion.cs                        (NEW partial; stage 15; absorbs Utils/TypeConverter.cs — instance ConvertTo<T> / TryConvertTo / Populate)
+│   ├── Registry.cs                          (NEW partial; stage 15; absorbs Utils/PlangTypeIndex.cs + Utils/TypeMapping.cs registry portion — name↔CLR maps as instance fields, [PlangType] scan in ctor)
+│   └── this.cs                              (becomes partial; stage 15; gains Clr(mimeType) overload — stage 17; the existing MIME/Kind/Compressible block at lines 215-315 moves out to Channels/Serializers/Formats/)
 ├── Utils/                                   (NEARLY EMPTY; only pure utilities and extension methods remain)
 │   ├── CommandLineParser.cs
-│   ├── MimeTypes.cs                         (deferred — could move under Channels/Serializers/)
-│   ├── PathExtension.cs
-│   ├── RegisterStartupParameters.cs         (deferred — likely belongs in Build/ or as App.Start helper)
-│   ├── StringDistance.cs
-│   ├── TypeConverter.cs
-│   └── TypeMapping.cs
+│   ├── PathExtension.cs                     (deferred — likely belongs in App/FileSystem/)
+│   ├── RegisterStartupParameters.cs         (deferred — likely belongs in Builder/ or as App.Start helper)
+│   └── StringDistance.cs
 │
-│   (DELETED → elsewhere, all stage 15 unless noted:)
-│   • Json.cs                                → JsonSerializerOptions consolidate (single home, see open question on case-mismatch concern)
-│   • PlangTypeIndex.cs                      → App/Types/this.cs
-│   • ReservedKeywords.cs                    → App/Variables/Reserved.cs (all const/readonly, no mutable static)
+│   (DELETED → elsewhere:)
+│   • Json.cs                                → App/Json/this.cs (single home, stage 15)
+│   • MimeTypes.cs                           → splits two ways, stage 17:
+│   │                                          • GetMimeType(ext) and friends → App/Channels/Serializers/Formats/this.cs
+│   │                                          • TryGetClrType(mimeType) → App/Types/this.cs as Clr(mimeType) overload
+│   • PlangTypeIndex.cs                      → App/Types/Registry.cs (partial, stage 15)
+│   • ReservedKeywords.cs                    → App/Variables/Reserved.cs (all const/readonly, no mutable static, stage 15)
+│   • TypeConverter.cs                       → App/Types/Conversion.cs (partial, stage 15)
+│   • TypeMapping.cs                         → App/Types/Registry.cs registry portion + App/Channels/Serializers/Formats forward-lookup callers (stage 15 + 17)
 ├── Variables/
 │   ├── Calls/                               (already in trunk — per-call scopes from channels merge)
 │   │   ├── Call/this.cs
@@ -230,11 +252,32 @@ It almost is. The hard difference is lifecycle: a live `Call.@this` has an Async
 
 So the type does have to exist as something distinct from `Call.@this`. But the *name* is a description, not a noun — "RestoredFrame" reads "a frame that was restored." Better candidates: `Call.Position.cs` (it identifies *where* in the call tree), or `Call.@this.Snapshot` as a nested type. The tree above proposes `Call/Position.cs`. That's a stage-15-adjacent rename, not a structural change; happy to fold it differently if the position-vs-frame distinction reads wrong.
 
-### `ActionSpec` / `ExampleSpec` — and the "remove Catalog" thread
+### `ActionSpec` / `ExampleSpec` — settled: dissolve into `app.Modules.Schema`
 
-`ActionSpec` is a structured node describing one action invocation in an `ExampleSpec` — the LLM-builder examples (`public static ExampleSpec[] ExamplesForLlm()`) are authored as data and rendered by ExampleRenderer into the formal-language string the LLM sees. So the names describe the role: "spec" = the structured shape the renderer consumes. `Spec` suffix is the OBP red-flag form (Rule A) — could become `Catalog/Action/this.cs` and `Catalog/Example/this.cs` if we want to push it.
+The thread Ingi remembered is on `origin/runtime2-obp-restructure` (architect v1-v3). The argument:
 
-On "remove Catalog" — I don't have memory of that thread. The current usage pattern is: `Catalog.Build(modules)` produces TypeEntry lists for the LLM; `Modules.Describe()` and `app.Types.ComplexSchemas()` both reach into Catalog data. Catalog is a build-time concept (the LLM only sees it during build) but the data structures are referenced at runtime by Types/Modules. *If* we move Catalog under Build/, those runtime references need a new home (probably move TypeEntry to Types/, and the Examples/ListActions surface stays under Build/Catalog/). I haven't pulled the trigger here because the move is non-trivial and your memory of the prior conversation matters. **Status: open** — please re-mention what the prior decision direction was and I'll fold it into the tree.
+- The catalog is *Modules describing itself to an LLM*. Builder/UI/trace-viewer all *consume* it.
+- OBP rule #1 = behavior on the owner, not the consumer. Modules owns "what every action looks like."
+- Precedent: `App/Modules/this.cs:252-257` already calls `ExampleRenderer.Render(s, this)` for action discovery — Modules already renders itself today, just from an awkward home (Catalog).
+- Side win (Rule E): `Render(spec, modules)` parameter decomposition vanishes — becomes `Schema.Render(spec)` navigating `this.Modules` internally; same fix for `Build(modules)` → `Build()`.
+- My v1 worry that "ActionSpec/ExampleSpec are LLM-prompt-only, never run at runtime" was wrong: the runtime *does* exercise the build path through the **builder module** (e.g. `app.modules.builder.providers.DefaultBuilderProvider.Types`), so Schema must be reachable from runtime. `app.Modules.Schema` is the home.
+
+Per Ingi's review: spec records group under `Spec/`, suffix dropped. Tree above:
+
+```
+App/Modules/Schema/
+├── Spec/
+│   ├── Action.cs              (← Catalog/ActionSpec.cs)
+│   └── Example.cs             (← Catalog/ExampleSpec.cs)
+├── Entry.cs                   (← Catalog/TypeEntry.cs)
+├── ExampleHelpers.cs          (kept as `using static …` for action authors)
+├── Render.cs                  (← Catalog/ExampleRenderer.cs; instance method, navigates this.Modules)
+└── this.cs                    (← Catalog/this.cs; instance method Build(), no parameter)
+```
+
+`App/Catalog/` namespace ceases to exist. The two static formatters in `App/modules/builder/providers/{FluidProvider,DefaultBuilderProvider}` collapse into `Schema.Render` (one rendering home, not three).
+
+Open: should `Spec/Action.cs` and `Spec/Example.cs` be flat files (current proposal) or `Spec/Action/this.cs` + `Spec/Example/this.cs` (full OBP nested form)? Ingi's comment was the flat form; I lean flat too because they're records and records often live as files next to a parent — same pattern as `App/CallStack/Diff.cs`, `App/CallStack/Flags.cs`, `App/Errors/Error.cs`.
 
 ### `Callback/Signature/this.cs` — folded
 
@@ -254,9 +297,11 @@ The Plang vs PlangData distinction is real but smelly. PlangSerializer is `appli
 
 Drop the `PropertyFilter` suffix. Tree above puts the three files in `PropertyFilters/` as `Sensitive.cs`, `Transport.cs`, `View.cs`. By Rule B (`Get<Plural>()` is a missing collection type) this also gets a parent `PropertyFilters/this.cs` registry. Three filters with the same shape are exactly the missing-collection smell.
 
-### Choices — moved under Build/
+### Choices — tentatively under Builder/, ★ re-evaluate
 
-Reading `Choices/this.cs` doc: "Build-time validator and catalog Describe() both go through here." Both consumers are build-time. Validator runs during `plang build`, catalog renders the LLM prompt during build. Runtime never touches Choices. Tree above moves it to `Build/Choices/`. The `[Choices]` attribute on action types stays in `App/Attributes/` (the attribute is the marker; the registry that scans for it is the build concern).
+Reading `Choices/this.cs` doc: "Build-time validator and catalog Describe() both go through here." Both consumers are build-time. Validator runs during `plang build`, Schema rendering happens at build (or at runtime via the builder module). Tree proposes `Builder/Choices/` as the destination.
+
+Per Ingi's review: ★ tentative. Re-evaluate after Catalog dissolves into `Modules.Schema` — once the build/runtime border is clearer, the right home for Choices may shift (it could land under Modules.Schema if "Choices is what an action declares," or stay under Builder if "Choices is what the builder validates"). Mark and revisit in the same review pass.
 
 ### `Config/ModuleView.cs` — what is it
 
@@ -320,14 +365,9 @@ The questions below are still open. The previously-listed v1 questions are folde
 
 **Action:** stage 15 creates `App/Json/this.cs` as the consolidated home; `Utils/Json.cs` is deleted; consumers (Snapshot, Build, Data.Envelope, etc.) reference `app.Json.<Name>`. The few options that genuinely vary by consumer (e.g. each Serializer's internal options) stay private to that consumer.
 
-### B. Catalog placement — under Build/?
+### B. Catalog placement — RESOLVED: dissolves into `app.Modules.Schema`
 
-Three options:
-- **(a) Catalog stays at App root** (current tree) — both build-time and runtime reach into it for type schemas
-- **(b) Catalog moves under Build/** — `App/Build/Catalog/` — and runtime references migrate to `App.Types.@this` (TypeEntry/Field types move with them)
-- **(c) Catalog splits** — Examples + ActionSpec + ExampleSpec move under Build (LLM-only); TypeEntry stays at App root or moves to Types
-
-**Status: open until you remember the prior thread.** The architect's lean if pressed: (b) full move under Build, with TypeEntry relocating to `App.Types`. That respects "Catalog is what the LLM sees during build" and removes the cross-tree references. But this is a meaningful refactor — wants its own stage if pursued.
+Settled per the v3 thread (`origin/runtime2-obp-restructure`) and Ingi's confirm. See [the inline answer for `ActionSpec` / `ExampleSpec`](#actionspec--examplespec--settled-dissolve-into-appmodulesschema). Folded into stage 9 (renamed: `catalog-dissolve-to-modules-schema`).
 
 ### C. PlangSerializer vs PlangDataSerializer
 
@@ -366,43 +406,67 @@ It's static because there's no other way for the test to *reach* the child App b
 
 Unchanged from v1: leave deferred. Cost-to-benefit too thin.
 
+### I. v3 audit methodology — blocked on missing substrate
+
+The `runtime2-obp-restructure` v3 plan proposed walking `/shared/app-tree/<surface>.md` against the code as a systematic OBP audit. **That directory doesn't exist in this repo and never has** (verified by file system search and git log on the path). The methodology is moot until either:
+
+- **(a) The surface files get built first.** A meta-stage that produces `app-tree/app.md`, `app-tree/types.md`, etc. — each describing what `app.<Surface>` *promises* (member list, type, structure). Then walk the audit. Substantial work; arguably its own plan.
+- **(b) Pick a different diagnostic substrate.** `Documentation/v0.2/architecture.md` and `good_to_know.md` exist and describe the App graph; `App/this.cs` itself enumerates the properties. These aren't surface-by-surface promise documents but they're navigable starting points.
+- **(c) Skip the methodology entirely.** Continue with stage-by-stage ownership realignments, knowing we miss the systematic coverage.
+
+**Status: open.** Architect's lean: (c) for now — tightening the rules (D, E added today) catches a lot of what the audit would catch. (a) is too much overhead unless we commit to a long-term `/shared/app-tree/` doc artifact.
+
+Per Ingi's recommendation 3 ("check couple of files there and see where it takes us"): we can't, the files don't exist. Question for Ingi: build the surface files as a pre-stage, or skip?
+
 ## Summary of net additions / removals (revised)
 
-**Folders added: 5**
+**Folders added: 9**
 - `App/KeepAlive/` (stage 3)
-- `App/Catalog/Examples/` (stage 14)
+- `App/Channels/Serializers/Formats/` (stage 17; absorbs ext table from Utils/MimeTypes.cs + Types MIME block)
 - `App/Channels/Serializers/PropertyFilters/` (stage 14/16; Rule B collection)
-- `App/Build/Choices/` (MOVED ← App/Choices/)
+- `App/Modules/Schema/` (stage 9; absorbs former App/Catalog/)
+- `App/Modules/Schema/Spec/` (stage 9; record family Action.cs + Example.cs)
+- `App/Builder/Choices/` (★ tentative; MOVED ← App/Choices/)
 - `App/Json/` (stage 15; consolidated JsonSerializerOptions home)
+- `App/Builder/` (stage 16; RENAMED ← App/Build/, Rule D)
+- `App/Tester/` (stage 16; RENAMED ← App/Test/, Rule D)
 
 **Files deleted: 6**
 - `App/Utils/PlangTypeIndex.cs` (stage 15 → `App/Types/this.cs`)
 - `App/Utils/Json.cs` (stage 15 → `App/Json/this.cs`)
 - `App/Utils/ReservedKeywords.cs` (stage 15 → `App/Variables/Reserved.cs`)
-- `App/Catalog/ExampleHelpers.cs` (stage 14 → `App/Catalog/Examples/this.cs`)
-- `App/Catalog/ExampleRenderer.cs` (stage 14 → `App/Catalog/Examples/this.cs`)
 - `App/Callback/Signature/this.cs` (stage 13 → property on `App/Callback/this.cs`)
+- `App/Catalog/` whole folder (stage 9 → `App/Modules/Schema/`); ExampleHelpers.cs / ExampleRenderer.cs / TypeEntry.cs / ActionSpec.cs / ExampleSpec.cs / Catalog/this.cs all relocate
 
-**Files renamed: 9**
+**Files renamed: 14**
 - `App/Cache/MemoryStepCache.cs` → `App/Cache/Memory.cs`
 - `App/Data/PlangTypeConverter.cs` → `App/Data/Converter.cs`
 - `App/Snapshot/ISnapshotted.cs` → `App/Snapshot/ISnapshot.cs`
-- `App/Test/TestFile.cs` → `App/Test/File.cs`
-- `App/Test/TestRun.cs` → `App/Test/Run.cs`
-- `App/Test/TestStatus.cs` → `App/Test/Status.cs`
+- `App/Test/TestFile.cs` → `App/Tester/File.cs` (folder rename via stage 16)
+- `App/Test/TestRun.cs` → `App/Tester/Run.cs`
+- `App/Test/TestStatus.cs` → `App/Tester/Status.cs`
 - `App/Channels/Serializers/Serializer/JsonStreamSerializer.cs` → `Json.cs`
 - `App/Channels/Serializers/Serializer/TextStreamSerializer.cs` → `Text.cs`
 - `App/Channels/Serializers/Serializer/PlangSerializer.cs` and `PlangDataSerializer.cs` → `Plang.cs` (single survivor) or both renamed (open question C)
+- `App/Catalog/ActionSpec.cs` → `App/Modules/Schema/Spec/Action.cs`
+- `App/Catalog/ExampleSpec.cs` → `App/Modules/Schema/Spec/Example.cs`
+- `App/Catalog/TypeEntry.cs` → `App/Modules/Schema/Entry.cs`
+- `App/Catalog/ExampleRenderer.cs` → `App/Modules/Schema/Render.cs`
+- `App/Catalog/this.cs` → `App/Modules/Schema/this.cs`
+
+**Folders renamed: 2** (stage 16, Rule D)
+- `App/Build/` → `App/Builder/`
+- `App/Test/` → `App/Tester/`
 
 **Files materially shrunk: 5**
 - `App/this.cs` 681 → <300 (multiple stages)
-- `App/Modules/this.cs` 464 → ~150 (stage 9)
+- `App/Modules/this.cs` 464 → ~150 (stage 9; example-rendering becomes local navigation `Schema.Render(spec)`)
 - `App/Channels/this.cs` 277 → <150 (stages 1, 2, 8)
-- `App/Build/this.cs` (gains content from App.Start, stage 12; gains Choices subfolder)
-- `App/Catalog/this.cs` (gains content from Modules, stage 9)
+- `App/Builder/this.cs` (gains content from App.Start, stage 12; gains Choices subfolder)
+- `App/Types/this.cs` (becomes partial; MIME block moves to Channels/Serializers/Formats; Registry.cs and Conversion.cs partial siblings absorb Utils content)
 
 **Folders unchanged:** Actor, Attributes, Cache (just a rename), Config, Data (mostly), Debug, Events (collapsed), FileSystem, Goals, Services, Settings, Snapshot (just a rename), Statics, Variables (gains Reserved.cs).
 
 ---
 
-This tree is the architect's destination, revised against your v1 review. Items still open are flagged in [Open judgment calls](#open-judgment-calls). Provider→Code and Catalog placement are the two design discussions that should settle before stage 9 or stage 15 carve their stage briefs.
+This tree is the architect's destination, revised against your v1 review and the v3 absorption pass (2026-05-08). Items still open are flagged in [Open judgment calls](#open-judgment-calls). Provider→Code (open question E) is the most consequential remaining discussion; the audit-substrate question (open question I) is the second.
