@@ -3,11 +3,13 @@ namespace PLang.Tests.App.Types;
 public class EngineTypesTests
 {
     private EngineTypes _types = null!;
+    private global::App.Formats.@this _formats = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _types = new EngineTypes();
+        _formats = new global::App.Formats.@this();
     }
 
     // --- Clr: PLang name → CLR type ---
@@ -202,74 +204,74 @@ public class EngineTypesTests
     [Test]
     public async Task Kind_Jpg_ReturnsImage()
     {
-        await Assert.That(_types.Kind(".jpg")).IsEqualTo("image");
+        await Assert.That(_formats.Kind(".jpg")).IsEqualTo("image");
     }
 
     [Test]
     public async Task Kind_Xlsx_ReturnsSpreadsheet()
     {
-        await Assert.That(_types.Kind(".xlsx")).IsEqualTo("spreadsheet");
+        await Assert.That(_formats.Kind(".xlsx")).IsEqualTo("spreadsheet");
     }
 
     [Test]
     public async Task Kind_Mp4_ReturnsVideo()
     {
-        await Assert.That(_types.Kind(".mp4")).IsEqualTo("video");
+        await Assert.That(_formats.Kind(".mp4")).IsEqualTo("video");
     }
 
     [Test]
     public async Task Kind_Mp3_ReturnsAudio()
     {
-        await Assert.That(_types.Kind(".mp3")).IsEqualTo("audio");
+        await Assert.That(_formats.Kind(".mp3")).IsEqualTo("audio");
     }
 
     [Test]
     public async Task Kind_Zip_ReturnsArchive()
     {
-        await Assert.That(_types.Kind(".zip")).IsEqualTo("archive");
+        await Assert.That(_formats.Kind(".zip")).IsEqualTo("archive");
     }
 
     [Test]
     public async Task Kind_Cs_ReturnsCode()
     {
-        await Assert.That(_types.Kind(".cs")).IsEqualTo("code");
+        await Assert.That(_formats.Kind(".cs")).IsEqualTo("code");
     }
 
     [Test]
     public async Task Kind_Pdf_ReturnsDocument()
     {
-        await Assert.That(_types.Kind(".pdf")).IsEqualTo("document");
+        await Assert.That(_formats.Kind(".pdf")).IsEqualTo("document");
     }
 
     [Test]
     public async Task Kind_Goal_ReturnsPlang()
     {
-        await Assert.That(_types.Kind(".goal")).IsEqualTo("plang");
+        await Assert.That(_formats.Kind(".goal")).IsEqualTo("plang");
     }
 
     [Test]
     public async Task Kind_WithoutDot_Works()
     {
-        await Assert.That(_types.Kind("jpg")).IsEqualTo("image");
+        await Assert.That(_formats.Kind("jpg")).IsEqualTo("image");
     }
 
     [Test]
     public async Task Kind_CaseInsensitive_Works()
     {
-        await Assert.That(_types.Kind(".JPG")).IsEqualTo("image");
+        await Assert.That(_formats.Kind(".JPG")).IsEqualTo("image");
     }
 
     [Test]
     public async Task Kind_UnknownExtension_ReturnsNull()
     {
-        await Assert.That(_types.Kind(".xyz123")).IsNull();
+        await Assert.That(_formats.Kind(".xyz123")).IsNull();
     }
 
     [Test]
     public async Task Kind_KeyExtension_ReturnsCertificate()
     {
         // .key conflict resolved: "certificate" wins over "presentation"
-        await Assert.That(_types.Kind(".key")).IsEqualTo("certificate");
+        await Assert.That(_formats.Kind(".key")).IsEqualTo("certificate");
     }
 
     // --- Mime: extension → MIME content type ---
@@ -277,32 +279,32 @@ public class EngineTypesTests
     [Test]
     public async Task Mime_Jpg_ReturnsImageJpeg()
     {
-        await Assert.That(_types.Mime(".jpg")).IsEqualTo("image/jpeg");
+        await Assert.That(_formats.Mime(".jpg")).IsEqualTo("image/jpeg");
     }
 
     [Test]
     public async Task Mime_Json_ReturnsApplicationJson()
     {
-        await Assert.That(_types.Mime(".json")).IsEqualTo("application/json");
+        await Assert.That(_formats.Mime(".json")).IsEqualTo("application/json");
     }
 
     [Test]
     public async Task Mime_Xlsx_ReturnsCorrectMime()
     {
-        await Assert.That(_types.Mime(".xlsx"))
+        await Assert.That(_formats.Mime(".xlsx"))
             .IsEqualTo("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     }
 
     [Test]
     public async Task Mime_UnknownExtension_ReturnsOctetStream()
     {
-        await Assert.That(_types.Mime(".xyz123")).IsEqualTo("application/octet-stream");
+        await Assert.That(_formats.Mime(".xyz123")).IsEqualTo("application/octet-stream");
     }
 
     [Test]
     public async Task Mime_WithoutDot_Works()
     {
-        await Assert.That(_types.Mime("jpg")).IsEqualTo("image/jpeg");
+        await Assert.That(_formats.Mime("jpg")).IsEqualTo("image/jpeg");
     }
 
     // --- Compressible: kind → compressible? ---
@@ -310,56 +312,56 @@ public class EngineTypesTests
     [Test]
     public async Task Compressible_Text_ReturnsTrue()
     {
-        await Assert.That(_types.Compressible("text")).IsTrue();
+        await Assert.That(_formats.Compressible("text")).IsTrue();
     }
 
     [Test]
     public async Task Compressible_Spreadsheet_ReturnsTrue()
     {
-        await Assert.That(_types.Compressible("spreadsheet")).IsTrue();
+        await Assert.That(_formats.Compressible("spreadsheet")).IsTrue();
     }
 
     [Test]
     public async Task Compressible_Code_ReturnsTrue()
     {
-        await Assert.That(_types.Compressible("code")).IsTrue();
+        await Assert.That(_formats.Compressible("code")).IsTrue();
     }
 
     [Test]
     public async Task Compressible_Document_ReturnsTrue()
     {
-        await Assert.That(_types.Compressible("document")).IsTrue();
+        await Assert.That(_formats.Compressible("document")).IsTrue();
     }
 
     [Test]
     public async Task Compressible_Image_ReturnsFalse()
     {
-        await Assert.That(_types.Compressible("image")).IsFalse();
+        await Assert.That(_formats.Compressible("image")).IsFalse();
     }
 
     [Test]
     public async Task Compressible_Video_ReturnsFalse()
     {
-        await Assert.That(_types.Compressible("video")).IsFalse();
+        await Assert.That(_formats.Compressible("video")).IsFalse();
     }
 
     [Test]
     public async Task Compressible_Audio_ReturnsFalse()
     {
-        await Assert.That(_types.Compressible("audio")).IsFalse();
+        await Assert.That(_formats.Compressible("audio")).IsFalse();
     }
 
     [Test]
     public async Task Compressible_Archive_ReturnsFalse()
     {
-        await Assert.That(_types.Compressible("archive")).IsFalse();
+        await Assert.That(_formats.Compressible("archive")).IsFalse();
     }
 
     [Test]
     public async Task Compressible_NullOrEmpty_ReturnsFalse()
     {
-        await Assert.That(_types.Compressible(null!)).IsFalse();
-        await Assert.That(_types.Compressible("")).IsFalse();
+        await Assert.That(_formats.Compressible(null!)).IsFalse();
+        await Assert.That(_formats.Compressible("")).IsFalse();
     }
 
     // --- Add/Remove: runtime extensibility ---
@@ -367,45 +369,45 @@ public class EngineTypesTests
     [Test]
     public async Task Add_NewExtension_IsAccessible()
     {
-        _types.Add(".plx", "plang-extension", "application/x-plang");
+        _formats.Add(".plx", "plang-extension", "application/x-plang");
 
-        await Assert.That(_types.Kind(".plx")).IsEqualTo("plang-extension");
-        await Assert.That(_types.Mime(".plx")).IsEqualTo("application/x-plang");
+        await Assert.That(_formats.Kind(".plx")).IsEqualTo("plang-extension");
+        await Assert.That(_formats.Mime(".plx")).IsEqualTo("application/x-plang");
     }
 
     [Test]
     public async Task Add_OverrideExisting_ReplacesPrevious()
     {
-        _types.Add(".txt", "custom-text", "text/x-custom");
+        _formats.Add(".txt", "custom-text", "text/x-custom");
 
-        await Assert.That(_types.Kind(".txt")).IsEqualTo("custom-text");
-        await Assert.That(_types.Mime(".txt")).IsEqualTo("text/x-custom");
+        await Assert.That(_formats.Kind(".txt")).IsEqualTo("custom-text");
+        await Assert.That(_formats.Mime(".txt")).IsEqualTo("text/x-custom");
     }
 
     [Test]
     public async Task Add_MimeOptional_OnlyUpdatesKind()
     {
-        var originalMime = _types.Mime(".txt");
+        var originalMime = _formats.Mime(".txt");
 
-        _types.Add(".txt", "custom-text");
+        _formats.Add(".txt", "custom-text");
 
-        await Assert.That(_types.Kind(".txt")).IsEqualTo("custom-text");
-        await Assert.That(_types.Mime(".txt")).IsEqualTo(originalMime);
+        await Assert.That(_formats.Kind(".txt")).IsEqualTo("custom-text");
+        await Assert.That(_formats.Mime(".txt")).IsEqualTo(originalMime);
     }
 
     [Test]
     public async Task Remove_ExistingExtension_RemovesBothKindAndMime()
     {
-        _types.Remove(".jpg");
+        _formats.Remove(".jpg");
 
-        await Assert.That(_types.Kind(".jpg")).IsNull();
-        await Assert.That(_types.Mime(".jpg")).IsEqualTo("application/octet-stream");
+        await Assert.That(_formats.Kind(".jpg")).IsNull();
+        await Assert.That(_formats.Mime(".jpg")).IsEqualTo("application/octet-stream");
     }
 
     [Test]
     public async Task Remove_NonexistentExtension_NoError()
     {
-        _types.Remove(".doesnotexist");
+        _formats.Remove(".doesnotexist");
         // No exception thrown
     }
 
@@ -414,51 +416,51 @@ public class EngineTypesTests
     [Test]
     public async Task KindOf_KnownKindName_ReturnsSelf()
     {
-        await Assert.That(_types.KindOf("image")).IsEqualTo("image");
-        await Assert.That(_types.KindOf("video")).IsEqualTo("video");
-        await Assert.That(_types.KindOf("text")).IsEqualTo("text");
-        await Assert.That(_types.KindOf("archive")).IsEqualTo("archive");
-        await Assert.That(_types.KindOf("code")).IsEqualTo("code");
+        await Assert.That(_formats.KindOf("image")).IsEqualTo("image");
+        await Assert.That(_formats.KindOf("video")).IsEqualTo("video");
+        await Assert.That(_formats.KindOf("text")).IsEqualTo("text");
+        await Assert.That(_formats.KindOf("archive")).IsEqualTo("archive");
+        await Assert.That(_formats.KindOf("code")).IsEqualTo("code");
     }
 
     [Test]
     public async Task KindOf_KnownKindName_CaseInsensitive()
     {
-        await Assert.That(_types.KindOf("IMAGE")).IsEqualTo("image");
-        await Assert.That(_types.KindOf("Video")).IsEqualTo("video");
+        await Assert.That(_formats.KindOf("IMAGE")).IsEqualTo("image");
+        await Assert.That(_formats.KindOf("Video")).IsEqualTo("video");
     }
 
     [Test]
     public async Task KindOf_MimeType_ReturnsKind()
     {
-        await Assert.That(_types.KindOf("image/jpeg")).IsEqualTo("image");
-        await Assert.That(_types.KindOf("video/mp4")).IsEqualTo("video");
-        await Assert.That(_types.KindOf("audio/mpeg")).IsEqualTo("audio");
-        await Assert.That(_types.KindOf("text/plain")).IsEqualTo("text");
-        await Assert.That(_types.KindOf("application/json")).IsEqualTo("text");
-        await Assert.That(_types.KindOf("application/pdf")).IsEqualTo("document");
+        await Assert.That(_formats.KindOf("image/jpeg")).IsEqualTo("image");
+        await Assert.That(_formats.KindOf("video/mp4")).IsEqualTo("video");
+        await Assert.That(_formats.KindOf("audio/mpeg")).IsEqualTo("audio");
+        await Assert.That(_formats.KindOf("text/plain")).IsEqualTo("text");
+        await Assert.That(_formats.KindOf("application/json")).IsEqualTo("text");
+        await Assert.That(_formats.KindOf("application/pdf")).IsEqualTo("document");
     }
 
     [Test]
     public async Task KindOf_PlangTypeName_ReturnsNull()
     {
-        await Assert.That(_types.KindOf("string")).IsNull();
-        await Assert.That(_types.KindOf("int")).IsNull();
-        await Assert.That(_types.KindOf("datetime")).IsNull();
-        await Assert.That(_types.KindOf("bool")).IsNull();
+        await Assert.That(_formats.KindOf("string")).IsNull();
+        await Assert.That(_formats.KindOf("int")).IsNull();
+        await Assert.That(_formats.KindOf("datetime")).IsNull();
+        await Assert.That(_formats.KindOf("bool")).IsNull();
     }
 
     [Test]
     public async Task KindOf_UnknownMime_ReturnsNull()
     {
-        await Assert.That(_types.KindOf("application/x-unknown-test")).IsNull();
+        await Assert.That(_formats.KindOf("application/x-unknown-test")).IsNull();
     }
 
     [Test]
     public async Task KindOf_NullOrEmpty_ReturnsNull()
     {
-        await Assert.That(_types.KindOf(null!)).IsNull();
-        await Assert.That(_types.KindOf("")).IsNull();
+        await Assert.That(_formats.KindOf(null!)).IsNull();
+        await Assert.That(_formats.KindOf("")).IsNull();
     }
 
     // --- Finding #1: Add() must update _allKinds/_mimeToKind for KindOf ---
@@ -466,37 +468,37 @@ public class EngineTypesTests
     [Test]
     public async Task Add_NewExtension_KindOfFindsNewKind()
     {
-        _types.Add(".custom", "custom-kind", "application/custom");
+        _formats.Add(".custom", "custom-kind", "application/custom");
 
-        await Assert.That(_types.KindOf("custom-kind")).IsEqualTo("custom-kind");
+        await Assert.That(_formats.KindOf("custom-kind")).IsEqualTo("custom-kind");
     }
 
     [Test]
     public async Task Add_NewExtension_KindOfFindsByMime()
     {
-        _types.Add(".custom", "custom-kind", "application/custom");
+        _formats.Add(".custom", "custom-kind", "application/custom");
 
-        await Assert.That(_types.KindOf("application/custom")).IsEqualTo("custom-kind");
+        await Assert.That(_formats.KindOf("application/custom")).IsEqualTo("custom-kind");
     }
 
     [Test]
     public async Task Remove_Extension_KindOfNoLongerFindsKind_WhenLastOfItsKind()
     {
-        _types.Add(".custom", "unique-kind", "application/unique");
+        _formats.Add(".custom", "unique-kind", "application/unique");
 
-        _types.Remove(".custom");
+        _formats.Remove(".custom");
 
-        await Assert.That(_types.KindOf("unique-kind")).IsNull();
-        await Assert.That(_types.KindOf("application/unique")).IsNull();
+        await Assert.That(_formats.KindOf("unique-kind")).IsNull();
+        await Assert.That(_formats.KindOf("application/unique")).IsNull();
     }
 
     [Test]
     public async Task Remove_Extension_KindOfStillFindsKind_WhenOtherExtensionSharesKind()
     {
         // .jpg and .jpeg both map to "image" — removing .jpg should NOT remove "image" from _allKinds
-        _types.Remove(".jpg");
+        _formats.Remove(".jpg");
 
-        await Assert.That(_types.KindOf("image")).IsEqualTo("image");
+        await Assert.That(_formats.KindOf("image")).IsEqualTo("image");
     }
 
     // --- Finding #2: Kind(null)/Mime(null) null guard ---
@@ -504,25 +506,25 @@ public class EngineTypesTests
     [Test]
     public async Task Kind_Null_ReturnsNull()
     {
-        await Assert.That(_types.Kind(null!)).IsNull();
+        await Assert.That(_formats.Kind(null!)).IsNull();
     }
 
     [Test]
     public async Task Kind_Empty_ReturnsNull()
     {
-        await Assert.That(_types.Kind("")).IsNull();
+        await Assert.That(_formats.Kind("")).IsNull();
     }
 
     [Test]
     public async Task Mime_Null_ReturnsOctetStream()
     {
-        await Assert.That(_types.Mime(null!)).IsEqualTo("application/octet-stream");
+        await Assert.That(_formats.Mime(null!)).IsEqualTo("application/octet-stream");
     }
 
     [Test]
     public async Task Mime_Empty_ReturnsOctetStream()
     {
-        await Assert.That(_types.Mime("")).IsEqualTo("application/octet-stream");
+        await Assert.That(_formats.Mime("")).IsEqualTo("application/octet-stream");
     }
 
     // --- Finding #3: Name() backtick fix for generics ---
@@ -609,7 +611,7 @@ public class EngineTypesTests
         var context = new global::App.Actor.Context.@this(engine);
 
         // Add a custom type mapping that static TypeMapping does NOT have
-        engine.Types.Add(".custom", "custom-kind", "application/custom");
+        engine.Formats.Add(".custom", "custom-kind", "application/custom");
 
         var data = new global::App.Data.@this("test", new byte[] { 1 },
             global::App.Data.Type.FromMime("application/custom"));

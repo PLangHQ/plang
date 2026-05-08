@@ -198,9 +198,16 @@ public sealed partial class @this : IAsyncDisposable
     public bool Create { get; set; }
 
     /// <summary>
-    /// Centralized type knowledge: PLang names ↔ CLR types, file extensions → Kind/MIME, compressibility.
+    /// Centralized type identity: PLang names ↔ CLR types. File-format
+    /// characteristics live on <see cref="Formats"/>.
     /// </summary>
     public Types.@this Types { get; }
+
+    /// <summary>
+    /// File-format characteristics: extension → Kind, extension → MIME,
+    /// Kind → compressibility. One per app.
+    /// </summary>
+    public Formats.@this Formats { get; } = new();
 
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.

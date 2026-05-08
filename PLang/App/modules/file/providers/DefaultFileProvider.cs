@@ -25,7 +25,7 @@ public class DefaultFileProvider : IFileProvider
             var snapshot = action.Context.App.Builder.GetPrSnapshot(path.Absolute);
             if (snapshot != null)
             {
-                var snapshotType = Data.Type.FromMime(TypeMapping.GetMimeType(path.Extension));
+                var snapshotType = Data.Type.FromMime(action.Context.App.Formats.Mime(path.Extension));
                 var snapshotClr = snapshotType.ClrType;
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
@@ -42,7 +42,7 @@ public class DefaultFileProvider : IFileProvider
 
         try
         {
-            var mime = TypeMapping.GetMimeType(path.Extension);
+            var mime = action.Context.App.Formats.Mime(path.Extension);
             var type = Data.Type.FromMime(mime);
             object content;
 

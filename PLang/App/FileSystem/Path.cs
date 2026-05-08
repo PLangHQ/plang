@@ -125,7 +125,7 @@ public class Path : modules.IContext
     [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= Fs.Path.GetFileNameWithoutExtension(_absolutePath);
     [LlmBuilder] public string Directory => _directory ??= Fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
-    [LlmBuilder] public string MimeType => TypeMapping.GetMimeType(Extension);
+    [LlmBuilder] public string MimeType => Context?.App?.Formats?.Mime(Extension) ?? "application/octet-stream";
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
     [LlmBuilder] public bool IsDirectory => string.IsNullOrEmpty(Extension);

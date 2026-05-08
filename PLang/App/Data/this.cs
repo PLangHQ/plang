@@ -32,12 +32,12 @@ public sealed class Type
     /// <summary>
     /// Kind of this type value (e.g. "image", "text"). Null for PLang type names like "string".
     /// </summary>
-    public string? Kind => Context?.App.Types.KindOf(Value);
+    public string? Kind => Context?.App.Formats.KindOf(Value);
 
     /// <summary>
     /// Whether content of this type benefits from compression.
     /// </summary>
-    public bool Compressible => Kind != null && (Context?.App.Types.Compressible(Kind) ?? false);
+    public bool Compressible => Kind != null && (Context?.App.Formats.Compressible(Kind) ?? false);
 
     public static Type String => new("string");
     public static Type Int => new("int");

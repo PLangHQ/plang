@@ -131,15 +131,13 @@ public static class TypeMapping
         var domainType = PlangTypeIndex.ResolveType(typeName);
         if (domainType != null) return domainType;
 
-        // MIME families (text/..., image/..., etc.) live in MimeTypes.
-        var mimeType = MimeTypes.TryGetClrType(typeName);
+        // MIME families (text/..., image/..., etc.) — pure logic, lives as a
+        // static on Types.@this so it's reachable from this static path.
+        var mimeType = App.Types.@this.ClrFromMime(typeName);
         if (mimeType != null) return mimeType;
 
         return null;
     }
-
-    /// <summary>Forwards to <see cref="MimeTypes.GetMimeType"/>. Prefer MimeTypes directly.</summary>
-    public static string GetMimeType(string extension) => MimeTypes.GetMimeType(extension);
 
     /// <summary>
     /// Gets the PLang type name for a .NET Type.
