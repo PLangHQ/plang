@@ -21,7 +21,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly AppModules _modules;
     private readonly AppGoals _goals;
-    private readonly List<object> _keepAlive = new();
     private bool _disposed;
 
     private Actor.@this? _system;
@@ -264,20 +263,11 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
     }
 
     /// <summary>
-    /// Promotes an object to app-level lifetime. Disposed on App.DisposeAsync.
-    /// Use for objects that must outlive their creating goal (e.g., background listeners).
+    /// App-level "keep alive" collection. Add disposable objects to extend their
+    /// lifetime to the app; removed-and-disposed via Remove(x); all entries
+    /// disposed on App.DisposeAsync.
     /// </summary>
-    public void KeepAlive(object instance) => _keepAlive.Add(instance);
-
-    /// <summary>
-    /// Removes and disposes a KeepAlive object.
-    /// </summary>
-    public void RemoveKeepAlive(object instance)
-    {
-        if (!_keepAlive.Remove(instance)) return;
-        if (instance is IAsyncDisposable ad) ad.DisposeAsync().AsTask().GetAwaiter().GetResult();
-        else if (instance is IDisposable d) d.Dispose();
-    }
+    public KeepAlive.@this KeepAlive { get; } = new();
 
     public @this(App.FileSystem.IPLangFileSystem fileSystem)
         : this(fileSystem.RootDirectory, fileSystem: fileSystem)
@@ -682,13 +672,6 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
                 disposableProv.Dispose();
         }
 
-        // Dispose KeepAlive objects
-        foreach (var d in _keepAlive)
-        {
-            if (d is IAsyncDisposable asyncKeep) await asyncKeep.DisposeAsync();
-            else if (d is IDisposable disposableKeep) disposableKeep.Dispose();
-        }
-        _keepAlive.Clear();
-
+        await KeepAlive.DisposeAsync();
     }
 }
