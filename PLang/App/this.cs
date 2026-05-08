@@ -162,7 +162,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
     /// audit list of every error pushed. Populated by error.handle.Wrap during recovery.
     /// </summary>
-    public global::App.Errors.@this Errors { get; } = new();
+    public global::App.Errors.@this Errors { get; }
 
     /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
@@ -294,7 +294,7 @@ public sealed partial class @this : IAsyncDisposable
         _goals = new AppGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
 
-        Errors.App = this;
+        Errors = new global::App.Errors.@this(this);
 
         Providers.RegisterDefaults();
         Types.RegisterDomainTypes();

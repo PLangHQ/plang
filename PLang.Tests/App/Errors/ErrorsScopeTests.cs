@@ -7,14 +7,16 @@ public class ErrorsScopeTests
     [Test]
     public async Task Error_NullOutsideAnyPushScope()
     {
-        var errors = new global::App.Errors.@this();
+        await using var app = new global::App.@this("/test");
+        var errors = app.Errors;
         await Assert.That(errors.Error).IsNull();
     }
 
     [Test]
     public async Task Push_SetsErrorToPushedValue()
     {
-        var errors = new global::App.Errors.@this();
+        await using var app = new global::App.@this("/test");
+        var errors = app.Errors;
         var err = new Error("Boom");
         using (errors.Push(err))
         {
@@ -25,7 +27,8 @@ public class ErrorsScopeTests
     [Test]
     public async Task Push_ReturnsDisposable_RestoresPreviousOnDispose()
     {
-        var errors = new global::App.Errors.@this();
+        await using var app = new global::App.@this("/test");
+        var errors = app.Errors;
         var err = new Error("Boom");
         using (errors.Push(err)) { }
         await Assert.That(errors.Error).IsNull();
@@ -34,7 +37,8 @@ public class ErrorsScopeTests
     [Test]
     public async Task Push_NestedScopes_LifoRestore()
     {
-        var errors = new global::App.Errors.@this();
+        await using var app = new global::App.@this("/test");
+        var errors = app.Errors;
         var a = new Error("A");
         var b = new Error("B");
         using (errors.Push(a))
@@ -52,7 +56,8 @@ public class ErrorsScopeTests
     [Test]
     public async Task Trail_AccumulatesEveryPushedError()
     {
-        var errors = new global::App.Errors.@this();
+        await using var app = new global::App.@this("/test");
+        var errors = app.Errors;
         var a = new Error("A");
         var b = new Error("B");
         using (errors.Push(a)) { using (errors.Push(b)) { } }
@@ -64,7 +69,8 @@ public class ErrorsScopeTests
     [Test]
     public async Task Error_FlowsAcrossAwait_ViaAsyncLocal()
     {
-        var errors = new global::App.Errors.@this();
+        await using var app = new global::App.@this("/test");
+        var errors = app.Errors;
         var err = new Error("X");
         using (errors.Push(err))
         {
@@ -76,7 +82,8 @@ public class ErrorsScopeTests
     [Test]
     public async Task Error_DoesNotLeakAcrossParallelBranches()
     {
-        var errors = new global::App.Errors.@this();
+        await using var app = new global::App.@this("/test");
+        var errors = app.Errors;
         var a = new Error("A");
         var b = new Error("B");
         IError? aSeen = null, bSeen = null;

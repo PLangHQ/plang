@@ -19,12 +19,14 @@ public sealed partial class @this
     private readonly AsyncLocal<IError?> _current = new();
 
     /// <summary>
-    /// Back-reference to the owning App. Set by <see cref="App.@this"/>'s constructor.
-    /// Used by <see cref="Push"/> to auto-flip <c>CallStack.Flags.Diff</c> on for the
-    /// duration of an error scope so <see cref="Variables.@this.SnapshotAt"/> can
-    /// reverse-apply post-throw mutations. Off everywhere else — pay-per-error cost.
+    /// Owning App, taken at construction. Used by <see cref="Push"/> to auto-flip
+    /// <c>CallStack.Flags.Diff</c> on for the duration of an error scope so
+    /// <see cref="Variables.@this.SnapshotAt"/> can reverse-apply post-throw mutations.
+    /// Off everywhere else — pay-per-error cost.
     /// </summary>
-    internal App.@this? App { get; set; }
+    private readonly App.@this _app;
+
+    public @this(App.@this app) { _app = app; }
 
     /// <summary>
     /// The current error in this async context. Null outside any <see cref="Push"/> scope.
@@ -60,20 +62,17 @@ public sealed partial class @this
         _current.Value = error;
         Trail.Add(error);
         // Wire App back-reference so error.Callback can materialise via app.Snapshot().
-        if (error is Error e && e.App == null) e.App = App;
+        if (error is Error e && e.App == null) e.App = _app;
 
         // Auto-flip Flags.Diff on for the duration of error processing so handler-time
         // mutations land on the diff stream — Variables.SnapshotAt(error) reverse-applies
         // them to project back to throw-time state. Also wire a CallStack-level OnSet
         // subscription so the stream actually populates regardless of when live Calls
         // were pushed (per-Call subscription is decided at Push time and can't backfill).
-        var stack = App?.CallStack;
-        var priorFlags = stack?.Flags;
-        if (stack != null)
-        {
-            stack.Flags = stack.Flags with { Diff = true };
-            stack.EnableDiffStream(App!.Variables);
-        }
+        var stack = _app.CallStack;
+        var priorFlags = stack.Flags;
+        stack.Flags = stack.Flags with { Diff = true };
+        stack.EnableDiffStream(_app.Variables);
 
         return new Restorer(_current, previous, stack, priorFlags);
     }
