@@ -25,7 +25,7 @@ public class ErrorCallbackTests
     {
         var app = NewApp();
         var (goal, action) = MakeAndRegister(app, "RTErr");
-        await using var call = app.Debug.CallStack.Push(action);
+        await using var call = app.CallStack.Push(action);
         app.User.Context.Variables.Set("v", 7);
 
         var snap = app.Snapshot();
@@ -53,7 +53,7 @@ public class ErrorCallbackTests
     {
         var src = NewApp();
         var (goal, action) = MakeAndRegister(src, "FreshErr");
-        await using (var call = src.Debug.CallStack.Push(action))
+        await using (var call = src.CallStack.Push(action))
         {
             src.User.Context.Variables.Set("flag", "before");
             var snap = src.Snapshot();
@@ -75,7 +75,7 @@ public class ErrorCallbackTests
     {
         var src = NewApp();
         var (goal, action) = MakeAndRegister(src, "LandErr");
-        await using (var call = src.Debug.CallStack.Push(action))
+        await using (var call = src.CallStack.Push(action))
         {
             var snap = src.Snapshot();
             var bytes = new ErrorCallback { AppSnapshot = snap }.Serialize(src.User.Context);
@@ -87,7 +87,7 @@ public class ErrorCallbackTests
             await restored.Run(dst.User.Context);
 
             // After Run, BottomFrame on the destination CallStack reflects the resumed position.
-            var bottom = dst.Debug.CallStack.BottomFrame;
+            var bottom = dst.CallStack.BottomFrame;
             await Assert.That(bottom).IsNotNull();
             await Assert.That(bottom!.Goal.PrPath).IsEqualTo(goal.PrPath);
         }

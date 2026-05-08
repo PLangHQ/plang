@@ -4,7 +4,7 @@ using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 namespace App.CallStack;
 
 /// <summary>
-/// Per-app call tree. Owned by <c>App.Debug.CallStack</c> — moved here from
+/// Per-app call tree. Owned by <c>App.CallStack</c> — moved here from
 /// <c>Actor.Context.CallStack</c> because it's an observability concern, not an actor one.
 ///
 /// Structural data (Action, Caller, Cause, Errors) is always populated — the cost of the

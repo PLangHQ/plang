@@ -76,7 +76,7 @@ public class FailureMatrixTests
     {
         var src = NewApp();
         var (goal, action) = MakeAndRegister(src, "DeletedGoal");
-        await using (var call = src.Debug.CallStack.Push(action))
+        await using (var call = src.CallStack.Push(action))
         {
             var snap = src.Snapshot();
             // Fresh App without the goal registered → CallbackGoalNotFound.
@@ -94,7 +94,7 @@ public class FailureMatrixTests
     {
         var src = NewApp();
         var (goal, action) = MakeAndRegister(src, "HashGoal2", "original prose");
-        await using (var call = src.Debug.CallStack.Push(action))
+        await using (var call = src.CallStack.Push(action))
         {
             var snap = src.Snapshot();
             var dst = NewApp();

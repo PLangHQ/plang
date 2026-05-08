@@ -46,7 +46,7 @@ public partial class ask : IContext
         }
 
         // Fresh path: capture position + the surviving variables, return AskCallback.
-        var stack = Context.App.Debug.CallStack;
+        var stack = Context.App.CallStack;
         var bottom = stack.BottomFrame;
         var captured = new List<Data.@this>();
         // Builder emits each entry either as a bare string ("x" / "%x%") or as

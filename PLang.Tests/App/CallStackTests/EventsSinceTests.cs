@@ -19,7 +19,7 @@ public class EventsSinceTests
     public async Task EventsSince_ReturnsDiffEvents_WithTimestampGreaterThan()
     {
         var (app, action) = BuildLive("EvtA");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         var vars = app.User.Context.Variables;
         stack.Variables = vars;
         stack.Flags = stack.Flags with { Diff = true };
@@ -41,7 +41,7 @@ public class EventsSinceTests
     public async Task EventsSince_EmptyWhenNoMutations()
     {
         var (app, action) = BuildLive("EvtB");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         stack.Flags = stack.Flags with { Diff = true };
         await using var call = stack.Push(action, app.User.Context.Variables);
 

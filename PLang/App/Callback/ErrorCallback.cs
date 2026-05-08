@@ -69,7 +69,7 @@ public sealed class ErrorCallback : ICallback
         // Restore onto the live App (caller's responsibility to provide a fresh-enough App).
         ctx.App.Restore(AppSnapshot, ctx);
 
-        var bottom = ctx.App.Debug.CallStack.BottomFrame;
+        var bottom = ctx.App.CallStack.BottomFrame;
         if (bottom == null)
             return global::App.Data.@this.FromError(
                 new global::App.Errors.ServiceError("ErrorCallback has no bottom frame after Restore", "NoPosition", 400));

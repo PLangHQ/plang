@@ -41,11 +41,10 @@ public sealed class @this : IDisposable
     public Variables.@this Variables { get; }
 
     /// <summary>
-    /// The app's call tree. Read-through to <c>App.Debug.CallStack</c> — moved there from
-    /// per-context ownership so it's a single tree per run, fork-safe via AsyncLocal.
-    /// PLang <c>%!callStack%</c> still resolves through this getter.
+    /// The app's call tree. Read-through to <c>App.CallStack</c> — single tree per run,
+    /// fork-safe via AsyncLocal. PLang <c>%!callStack%</c> still resolves through this getter.
     /// </summary>
-    public CallStack.@this? CallStack => App.Debug?.CallStack;
+    public CallStack.@this? CallStack => App?.CallStack;
 
     /// <summary>
     /// Whether this is an async execution.

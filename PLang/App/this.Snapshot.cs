@@ -22,7 +22,7 @@ public sealed partial class @this
         Statics.Capture(s.Section("Statics"));
         Build.Capture(s.Section("Build"));
         Testing.Capture(s.Section("Testing"));
-        Debug.CallStack.Capture(s.Section("CallStack"));
+        CallStack.Capture(s.Section("CallStack"));
         return s;
     }
 

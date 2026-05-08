@@ -67,7 +67,7 @@ public sealed partial class @this
         // them to project back to throw-time state. Also wire a CallStack-level OnSet
         // subscription so the stream actually populates regardless of when live Calls
         // were pushed (per-Call subscription is decided at Push time and can't backfill).
-        var stack = App?.Debug?.CallStack;
+        var stack = App?.CallStack;
         var priorFlags = stack?.Flags;
         if (stack != null)
         {

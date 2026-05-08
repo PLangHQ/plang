@@ -285,7 +285,7 @@ public sealed partial class @this : modules.IDataWrappable
 
         try
         {
-            await using var goalCall = context.App.Debug.CallStack.Push(goalEntryAction);
+            await using var goalCall = context.App.CallStack.Push(goalEntryAction);
 
             var result = await Steps.RunAsync(context);
 
@@ -309,7 +309,7 @@ public sealed partial class @this : modules.IDataWrappable
             // goal frame is on the stack. Convert to ServiceError so Goal.RunAsync's
             // contract (returns Data, never throws) holds — outer Step.RunAsync's broad
             // catch would otherwise produce a ServiceError without goal/step context.
-            var stack = context.App.Debug.CallStack;
+            var stack = context.App.CallStack;
             var caller = stack.Current;
             var chain = caller != null ? caller.SnapshotChain() : Array.Empty<CallStack.Call.@this>();
             var serviceErr = new Errors.ServiceError(

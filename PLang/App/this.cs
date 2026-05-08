@@ -258,6 +258,14 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public KeepAlive.@this KeepAlive { get; } = new();
 
+    /// <summary>
+    /// App-wide call tree. Structural data (Action / Caller / Cause / Errors)
+    /// is always captured; richer capture (timing, tags, history) is gated by
+    /// <see cref="CallStack.@this.Flags"/>, populated via Debug.Apply from
+    /// <c>--debug={callstack:{...}}</c>.
+    /// </summary>
+    public CallStack.@this CallStack { get; } = new();
+
     public @this(App.FileSystem.IPLangFileSystem fileSystem)
         : this(fileSystem.RootDirectory, fileSystem: fileSystem)
     {
@@ -420,7 +428,7 @@ public sealed partial class @this : IAsyncDisposable
             return Data.@this.FromError(error);
 
         var step = action.Step;
-        var stack = Debug.CallStack;
+        var stack = CallStack;
 
         // Push BEFORE the handler runs so call.SnapshotChain() inside the catch reflects
         // "self at index [0]" — the failing Call IS in the chain (behavior tweak vs old

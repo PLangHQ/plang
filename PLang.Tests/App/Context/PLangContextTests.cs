@@ -72,7 +72,7 @@ public class PLangContextTests
         await using var engine = new global::App.@this("/app");
         using var context = new global::App.Actor.Context.@this(engine);
 
-        await Assert.That(context.CallStack).IsEqualTo(engine.Debug.CallStack);
+        await Assert.That(context.CallStack).IsEqualTo(engine.CallStack);
     }
 
     [Test]

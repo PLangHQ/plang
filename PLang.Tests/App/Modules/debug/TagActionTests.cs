@@ -13,8 +13,8 @@ public class TagActionTests
         // not its own Call which pops immediately when Run returns. Otherwise the next
         // step's assertion can't see the tag.
         await using var app = new global::App.@this("/app");
-        await using var outer = app.Debug.CallStack.Push(MakeAction("Goal"));
-        await using var tagCall = app.Debug.CallStack.Push(MakeAction("TagDispatch", module: "debug", actionName: "tag"));
+        await using var outer = app.CallStack.Push(MakeAction("Goal"));
+        await using var tagCall = app.CallStack.Push(MakeAction("TagDispatch", module: "debug", actionName: "tag"));
         var action = new Tag
         {
             Context = app.Context,
@@ -35,7 +35,7 @@ public class TagActionTests
     public async Task Tag_LabelForm_SetsTagsLabelTrue()
     {
         await using var app = new global::App.@this("/app");
-        await using var call = app.Debug.CallStack.Push(MakeAction("Goal"));
+        await using var call = app.CallStack.Push(MakeAction("Goal"));
         var action = new Tag
         {
             Context = app.Context,
@@ -64,7 +64,7 @@ public class TagActionTests
     public async Task Tag_StartsEmpty_WriteGoesThroughTagsType()
     {
         await using var app = new global::App.@this("/app");
-        await using var call = app.Debug.CallStack.Push(MakeAction("Goal"));
+        await using var call = app.CallStack.Push(MakeAction("Goal"));
         await Assert.That(call.Tags.Count).IsEqualTo(0);
 
         var action = new Tag

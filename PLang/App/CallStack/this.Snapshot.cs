@@ -139,7 +139,7 @@ public sealed partial class @this : global::App.Snapshot.ISnapshotted
             restored.Add(new RestoredFrame(liveAction, liveGoal, stepIndex, actionIndex, id));
         }
 
-        ctx.App.Debug.CallStack._restoredChain = restored;
+        ctx.App.CallStack._restoredChain = restored;
     }
 
     /// <summary>

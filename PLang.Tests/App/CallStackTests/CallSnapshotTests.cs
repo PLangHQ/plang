@@ -24,7 +24,7 @@ public class CallSnapshotTests
     public async Task Call_Capture_EmitsGoalStub_PrPathPlusHash_NotFullGoal()
     {
         var (app, action) = BuildLiveAction("StubGoal");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         await using var call = stack.Push(action);
 
         var snap = new Snapshot();
@@ -41,7 +41,7 @@ public class CallSnapshotTests
     public async Task Call_Capture_IncludesStepIndexAndActionIndex()
     {
         var (app, action) = BuildLiveAction("PosGoal");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         await using var call = stack.Push(action);
 
         var snap = new Snapshot();
@@ -55,7 +55,7 @@ public class CallSnapshotTests
     public async Task Call_Restore_ResolvesGoalStubAgainstLiveRegistry()
     {
         var (src, action) = BuildLiveAction("ResolveGoal");
-        await using (var call = src.Debug.CallStack.Push(action))
+        await using (var call = src.CallStack.Push(action))
         {
             var snap = src.Snapshot();
 
@@ -75,7 +75,7 @@ public class CallSnapshotTests
 
             dst.Restore(snap, dst.User.Context);
 
-            var bottom = dst.Debug.CallStack.BottomFrame;
+            var bottom = dst.CallStack.BottomFrame;
             await Assert.That(bottom).IsNotNull();
             await Assert.That(bottom!.Goal.PrPath).IsEqualTo(dstGoal.PrPath);
             await Assert.That(bottom.Action).IsSameReferenceAs(dstAction);
@@ -86,7 +86,7 @@ public class CallSnapshotTests
     public async Task Call_Restore_HardErrors_OnGoalNotFound()
     {
         var (src, action) = BuildLiveAction("DisappearingGoal");
-        await using (var call = src.Debug.CallStack.Push(action))
+        await using (var call = src.CallStack.Push(action))
         {
             var snap = src.Snapshot();
             // Restore on a fresh App that never had this goal registered.
@@ -104,7 +104,7 @@ public class CallSnapshotTests
     public async Task Call_Restore_HardErrors_OnHashMismatch_RaisesCallbackGoalHashMismatch()
     {
         var (src, action) = BuildLiveAction("HashGoal", "original step text");
-        await using (var call = src.Debug.CallStack.Push(action))
+        await using (var call = src.CallStack.Push(action))
         {
             var snap = src.Snapshot();
 
@@ -130,7 +130,7 @@ public class CallSnapshotTests
     public async Task Call_Restore_DoesNotMutateLiveGoal()
     {
         var (src, action) = BuildLiveAction("PureGoal");
-        await using (var call = src.Debug.CallStack.Push(action))
+        await using (var call = src.CallStack.Push(action))
         {
             var snap = src.Snapshot();
 
@@ -171,8 +171,8 @@ public class CallSnapshotTests
     public async Task Call_Capture_OmitsTimingTier_AndInFlightNetworkState()
     {
         var (app, action) = BuildLiveAction("DropGoal");
-        app.Debug.CallStack.Flags = app.Debug.CallStack.Flags with { Timing = true };
-        await using var call = app.Debug.CallStack.Push(action);
+        app.CallStack.Flags = app.CallStack.Flags with { Timing = true };
+        await using var call = app.CallStack.Push(action);
 
         var snap = new Snapshot();
         call.Capture(snap);

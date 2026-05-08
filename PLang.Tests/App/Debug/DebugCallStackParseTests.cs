@@ -7,7 +7,7 @@ public class DebugCallStackParseTests
     {
         await using var app = new global::App.@this("/app");
         app.Debug.Apply(new Dictionary<string, object?> { ["verbose"] = true });
-        var f = app.Debug.CallStack.Flags;
+        var f = app.CallStack.Flags;
         await Assert.That(f.Timing).IsFalse();
         await Assert.That(f.Diff).IsFalse();
         await Assert.That(f.Tags).IsFalse();
@@ -20,7 +20,7 @@ public class DebugCallStackParseTests
     {
         await using var app = new global::App.@this("/app");
         app.Debug.Apply(new Dictionary<string, object?> { ["callstack"] = true });
-        var f = app.Debug.CallStack.Flags;
+        var f = app.CallStack.Flags;
         await Assert.That(f.Timing).IsTrue();
         await Assert.That(f.Tags).IsTrue();
         await Assert.That(f.Diff).IsFalse();
@@ -45,7 +45,7 @@ public class DebugCallStackParseTests
                 ["maxFrames"] = 500
             }
         });
-        var f = app.Debug.CallStack.Flags;
+        var f = app.CallStack.Flags;
         await Assert.That(f.Timing).IsTrue();
         await Assert.That(f.Diff).IsTrue();
         await Assert.That(f.DeepDiff).IsFalse();
@@ -62,7 +62,7 @@ public class DebugCallStackParseTests
         {
             ["callstack"] = new Dictionary<string, object?> { ["diff"] = true }
         });
-        var f = app.Debug.CallStack.Flags;
+        var f = app.CallStack.Flags;
         await Assert.That(f.Diff).IsTrue();
         await Assert.That(f.Timing).IsFalse();
         await Assert.That(f.Tags).IsFalse();
@@ -76,7 +76,7 @@ public class DebugCallStackParseTests
         {
             ["callstack"] = new Dictionary<string, object?> { ["history"] = true }
         });
-        await Assert.That(app.Debug.CallStack.Flags.MaxFrames).IsEqualTo(1000);
+        await Assert.That(app.CallStack.Flags.MaxFrames).IsEqualTo(1000);
     }
 
     [Test]
@@ -86,7 +86,7 @@ public class DebugCallStackParseTests
         // Junk value for the callstack key — neither bool nor dict. Defensive parser
         // must fall back to all-off rather than throw.
         app.Debug.Apply(new Dictionary<string, object?> { ["callstack"] = "garbage" });
-        var f = app.Debug.CallStack.Flags;
+        var f = app.CallStack.Flags;
         await Assert.That(f.Timing).IsFalse();
         await Assert.That(f.Diff).IsFalse();
         await Assert.That(f.Tags).IsFalse();

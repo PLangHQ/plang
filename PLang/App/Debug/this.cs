@@ -67,14 +67,6 @@ public sealed class @this
     /// </summary>
     public LlmDebug? Llm { get; set; }
 
-    /// <summary>
-    /// The app's call tree. Always allocated — structural data (Action/Caller/Cause/Errors)
-    /// is on by default. Richer capture (timing, diff, tags, history) is gated by
-    /// <see cref="App.CallStack.@this.Flags"/>, populated from
-    /// <c>--debug={callstack:{...}}</c> via <see cref="Apply"/>.
-    /// </summary>
-    public App.CallStack.@this CallStack { get; }
-
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
     private bool _applied;
@@ -98,7 +90,6 @@ public sealed class @this
     public @this(App.@this engine)
     {
         _engine = engine;
-        CallStack = new App.CallStack.@this();
     }
 
     /// <summary>
@@ -151,7 +142,7 @@ public sealed class @this
             // strip it before the generic Populate.
             if (dict.TryGetValue("callstack", out var rawCallstack))
             {
-                CallStack.Flags = App.CallStack.Flags.Parse(rawCallstack);
+                _engine.CallStack.Flags = App.CallStack.Flags.Parse(rawCallstack);
                 dict.Remove("callstack");
             }
 

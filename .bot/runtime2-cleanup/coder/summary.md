@@ -2,12 +2,46 @@
 
 ## Version
 
+v8 — Stage 8 (`read-file-off-channels`).
+v7 — Stage 7 (`callstack-promote-app-property`).
 v6 — Stage 6 (`app-data-inheritance-drop`).
 v5 — Stage 5 (`getstatic-shim-drop`).
 v4 — Stage 4 (`dispose-self-owns`).
 v3 — Stage 3 (`keepalive-collection`).
 v2 — Stage 2 (`channels-v1-helpers-drop`).
 v1 — Stage 1 (`serializers-single-home`).
+
+---
+
+## v8 — Stage 8 (`read-file-off-channels`)
+
+Pure dead-code deletion. `Channels.@this.ReadAsync<T>(string filePath, ...)`
+read a file from disk and deserialised — never touched a channel — and had
+zero callers across PLang/, PLang.Tests/, Tests/. Plan one-liner anticipated
+relocating to `app.Serializers` or FileSystem; both findings made relocation
+moot (zero callers + `app.Serializers` deleted in stage 1). Just deleted.
+
+C# 2755/2755 pass; PLang 199/199 pass.
+
+## v7 — Stage 7 (`callstack-promote-app-property`)
+
+`app.Debug.CallStack` promoted to `app.CallStack`. Same instance, same scope
+(one shared per app) — only the property location moves to align with the
+folder/namespace.
+
+Added `public CallStack.@this CallStack { get; } = new();` on App. Removed
+the property + ctor allocation from Debug; Debug's one internal use
+(`CallStack.Flags = ...` in `Apply`) reaches via its existing `_engine`
+field. Context's read-through accessor updated.
+
+Brief listed 7 production caller sites; grep surfaced 2 extras
+(`Variables/this.SnapshotAt.cs:19`, `Errors/this.cs:70`). Plus 11 test
+files swept (mainly `PLang.Tests/App/CallStackTests/`,
+`App/Debug/DebugCallStackParseTests.cs`,
+`App/Modules/debug/TagActionTests.cs`). One stale doc-comment in
+`App/CallStack/this.cs:7` refreshed.
+
+C# 2755/2755 pass; PLang 199/199 pass.
 
 ---
 

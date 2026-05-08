@@ -20,7 +20,7 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_ReturnsVariablesProjection_AtThrowTime()
     {
         var (app, action) = BuildLive("SAa");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         var vars = app.User.Context.Variables;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
@@ -43,7 +43,7 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_ConsultsCallStackEventsSince_AndReverseApplies()
     {
         var (app, action) = BuildLive("SAb");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         var vars = app.User.Context.Variables;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
@@ -64,7 +64,7 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_ExcludesPostErrorMutationsByHandler()
     {
         var (app, action) = BuildLive("SAc");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         var vars = app.User.Context.Variables;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
@@ -83,7 +83,7 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_NoMutations_ReturnsCurrentState()
     {
         var (app, action) = BuildLive("SAd");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         var vars = app.User.Context.Variables;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);
@@ -102,7 +102,7 @@ public class SnapshotAtErrorTests
     public async Task SnapshotAt_IsPure_SameInputsSameResult()
     {
         var (app, action) = BuildLive("SAe");
-        var stack = app.Debug.CallStack;
+        var stack = app.CallStack;
         var vars = app.User.Context.Variables;
         stack.Variables = vars;
         await using var call = stack.Push(action, vars);

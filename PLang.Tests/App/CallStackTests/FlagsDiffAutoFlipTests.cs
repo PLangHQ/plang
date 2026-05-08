@@ -8,11 +8,11 @@ public class FlagsDiffAutoFlipTests
     public async Task FlagsDiff_AutoFlipsOn_DuringErrorProcessing()
     {
         var app = new global::App.@this("/test");
-        await Assert.That(app.Debug.CallStack.Flags.Diff).IsFalse();
+        await Assert.That(app.CallStack.Flags.Diff).IsFalse();
 
         using (app.Errors.Push(new ServiceError("boom", "TestErr", 400)))
         {
-            await Assert.That(app.Debug.CallStack.Flags.Diff).IsTrue();
+            await Assert.That(app.CallStack.Flags.Diff).IsTrue();
         }
     }
 
@@ -21,14 +21,14 @@ public class FlagsDiffAutoFlipTests
     {
         var app = new global::App.@this("/test");
         // Off baseline.
-        await Assert.That(app.Debug.CallStack.Flags.Diff).IsFalse();
+        await Assert.That(app.CallStack.Flags.Diff).IsFalse();
 
         using (app.Errors.Push(new ServiceError("boom", "TestErr", 400))) { /* scoped */ }
-        await Assert.That(app.Debug.CallStack.Flags.Diff).IsFalse();
+        await Assert.That(app.CallStack.Flags.Diff).IsFalse();
 
         // Now with Diff already on — Push should not turn it off afterwards.
-        app.Debug.CallStack.Flags = app.Debug.CallStack.Flags with { Diff = true };
+        app.CallStack.Flags = app.CallStack.Flags with { Diff = true };
         using (app.Errors.Push(new ServiceError("boom2", "TestErr", 400))) { /* scoped */ }
-        await Assert.That(app.Debug.CallStack.Flags.Diff).IsTrue();
+        await Assert.That(app.CallStack.Flags.Diff).IsTrue();
     }
 }
