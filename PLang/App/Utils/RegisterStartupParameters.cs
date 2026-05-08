@@ -8,33 +8,33 @@ namespace App.Utils
 
 		public static (bool builder, bool runtime) Register(string[] args)
 		{
-			AppContext.SetData(ReservedKeywords.ParametersAtAppStart, args.Where(p => p.StartsWith("--")).ToArray());
+			AppContext.SetData(App.Variables.Reserved.ParametersAtAppStart, args.Where(p => p.StartsWith("--")).ToArray());
 			if (args.FirstOrDefault(p => p == "--debug") != null)
 			{
-				AppContext.SetSwitch(ReservedKeywords.Debug, true);
-				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
+				AppContext.SetSwitch(App.Variables.Reserved.Debug, true);
+				AppContext.SetSwitch(App.Variables.Reserved.DetailedError, true);
 			}
 			if (args.FirstOrDefault(p => p == "--env") != null)
 			{
-				AppContext.SetSwitch(ReservedKeywords.Environment, true);
+				AppContext.SetSwitch(App.Variables.Reserved.Environment, true);
 			}
 
 			var csdebug = args.FirstOrDefault(p => p == "--csdebug") != null;
 			if (csdebug && !Debugger.IsAttached)
 			{
 				Debugger.Launch();
-				AppContext.SetSwitch(ReservedKeywords.CSharpDebug, true);
-				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
+				AppContext.SetSwitch(App.Variables.Reserved.CSharpDebug, true);
+				AppContext.SetSwitch(App.Variables.Reserved.DetailedError, true);
 			}
 			var strictbuild = args.FirstOrDefault(p => p == "--strictbuild") != null;
 			if (strictbuild)
 			{
-				AppContext.SetSwitch(ReservedKeywords.StrictBuild, true);
+				AppContext.SetSwitch(App.Variables.Reserved.StrictBuild, true);
 			} 
 			var detailerror = args.FirstOrDefault(p => p == "--detailerror") != null;
 			if (detailerror) 
 			{
-				AppContext.SetSwitch(ReservedKeywords.DetailedError, true);
+				AppContext.SetSwitch(App.Variables.Reserved.DetailedError, true);
 			}
 			var loggerLovel = args.FirstOrDefault(p => p.StartsWith("--logger"));
 			if (loggerLovel != null)

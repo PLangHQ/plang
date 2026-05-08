@@ -20,7 +20,7 @@ public partial class @this
     /// </summary>
     private const long MaxDecompressedSize = 100 * 1024 * 1024;
 
-    private static readonly JsonSerializerOptions _envelopeJsonOptions = new()
+    private readonly JsonSerializerOptions _envelopeJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,

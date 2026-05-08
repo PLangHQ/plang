@@ -376,20 +376,11 @@ work lands.
 
 ---
 
-## 2026-05-07 — `OpenAiProvider._requestCount` static counter is a temporary blocker
+## 2026-05-07 — `OpenAiProvider._requestCount` static counter is a temporary blocker  ✅ RESOLVED 2026-05-08 (runtime2-cleanup stage 16)
 
-`PLang/App/modules/llm/providers/OpenAiProvider.cs:41` — `private static int _requestCount`
-guarded by `MaxRequestsPerProcess = 5000` (line 42), incremented atomically per LLM
-request, surfaces an error when the cap is reached: "LLM request limit reached. Possible
-infinite loop. Restart to reset."
-
-This is a temp safety net to prevent runaway LLM costs during dev. Ingi confirmed
-2026-05-07 it should be removed in the future, not promoted to instance scope or App-level
-metering. When stage 15 (`static-state-eviction-sweep`) lands, **delete the field, the
-const, and the increment-and-throw block.** No replacement.
-
-Context: this surfaced during the Rule C audit (`static fields are a missing @this`).
-The right fix is removal, not relocation.
+Field, cap const, and increment-and-throw block deleted per Ingi's
+2026-05-07 call. No replacement. If rate-limiting becomes a real
+need, design properly when the requirement is clear.
 
 ## 2026-05-08 — Events three-tier scoping needs a design pass
 

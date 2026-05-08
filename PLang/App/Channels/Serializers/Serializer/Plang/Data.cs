@@ -20,7 +20,7 @@ public sealed class Data : ISerializer
     public string ContentType => "application/plang+data";
     public string FileExtension => ".pdata";
 
-    private static readonly JsonSerializerOptions _options = new()
+    private readonly JsonSerializerOptions _options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
