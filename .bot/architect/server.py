@@ -100,12 +100,67 @@ def load_comments_normalized() -> dict:
 
 
 def normalize_comments(data: dict) -> dict:
-    """Backfill author/status/parent_id defaults on legacy entries."""
+    """Backfill author/status/parent_id defaults; re-anchor comments by content
+    when the file has shifted under them.
+
+    Each comment stores `anchor` (the line text it was created against).
+    On every load we re-locate: if current line at `line` matches `anchor`,
+    no drift. If not, search the file for the anchor — unique match wins.
+    Otherwise mark `drifted: true` and leave the stale line.
+
+    Legacy comments without `anchor` have it backfilled from the current line.
+    """
+    base = architect_dir()
+    file_cache: dict = {}
+
+    def lines_for(rel: str):
+        if rel not in file_cache:
+            p = base / rel
+            try:
+                file_cache[rel] = p.read_text(encoding="utf-8").splitlines()
+            except (FileNotFoundError, OSError, UnicodeDecodeError):
+                file_cache[rel] = None
+        return file_cache[rel]
+
     for f, arr in data.items():
         for c in arr:
             c.setdefault("author", "user")
             c.setdefault("status", "open")
             c.setdefault("parent_id", None)
+
+            lines = lines_for(f)
+            if lines is None:
+                continue
+
+            line_idx = int(c.get("line", 1)) - 1
+            current_text = lines[line_idx] if 0 <= line_idx < len(lines) else None
+
+            # Legacy: no anchor → backfill from current line, treat as not drifted.
+            if "anchor" not in c:
+                c["anchor"] = current_text or ""
+                c["drifted"] = False
+                continue
+
+            # Anchor present and current line matches → all good.
+            if current_text == c["anchor"]:
+                c["drifted"] = False
+                continue
+
+            # Drift detected — try to re-locate by exact line-text match.
+            anchor = c["anchor"]
+            if not anchor:
+                # Empty anchor (e.g. blank-line comment) — can't re-locate.
+                c["drifted"] = False
+                continue
+
+            matches = [i for i, ln in enumerate(lines) if ln == anchor]
+            if len(matches) == 1:
+                # Unique match — re-anchor cleanly.
+                c["line"] = matches[0] + 1
+                c["drifted"] = False
+            else:
+                # 0 or multiple matches — can't disambiguate; flag.
+                c["drifted"] = True
     return data
 
 
@@ -932,11 +987,24 @@ class Handler(http.server.BaseHTTPRequestHandler):
         f = body["file"]; line = int(body["line"]); text = body["text"]
         author = body.get("author", "user")
         parent_id = body.get("parent_id")
+
+        # Capture line text as anchor — used to re-locate the comment when the file shifts later.
+        anchor = ""
+        try:
+            file_path = architect_dir() / f
+            if file_path.exists():
+                file_lines = file_path.read_text(encoding="utf-8").splitlines()
+                if 0 < line <= len(file_lines):
+                    anchor = file_lines[line - 1]
+        except (OSError, UnicodeDecodeError):
+            pass
+
         import uuid, datetime
         entry = {
             "id": uuid.uuid4().hex[:10],
             "line": line,
             "text": text,
+            "anchor": anchor,
             "author": author,
             "status": "open",
             "parent_id": parent_id,

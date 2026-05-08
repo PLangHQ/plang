@@ -7,7 +7,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T12:29:56"
+      "ts": "2026-05-07T12:29:56",
+      "anchor": "## Why thin stages",
+      "drifted": false
     },
     {
       "id": "8d206af386",
@@ -16,7 +18,9 @@
       "author": "architect",
       "status": "resolved",
       "parent_id": "8604fac121",
-      "ts": "2026-05-07T12:33:29"
+      "ts": "2026-05-07T12:33:29",
+      "anchor": "## Why thin stages",
+      "drifted": false
     },
     {
       "id": "ff786639b5",
@@ -25,7 +29,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T12:01:51"
+      "ts": "2026-05-07T12:01:51",
+      "anchor": "",
+      "drifted": false
     },
     {
       "id": "d1a0b28c63",
@@ -34,7 +40,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T12:30:16"
+      "ts": "2026-05-07T12:30:16",
+      "anchor": "- **`Data` parameter-lifecycle (request-scoped vs pr-template)** — the `data.ResetResolution()` smell. Ingi explicitly deferred; not in this plan.",
+      "drifted": false
     },
     {
       "id": "8b4fd30ae7",
@@ -43,7 +51,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T12:30:35"
+      "ts": "2026-05-07T12:30:35",
+      "anchor": "",
+      "drifted": false
     },
     {
       "id": "e3178f0fda",
@@ -52,7 +62,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T12:44:07"
+      "ts": "2026-05-07T12:44:07",
+      "anchor": "- **First stage (architect's call 2026-05-07 — Ingi delegated)** — `serializers-stage-6-finish`. Closes drift introduced *during* the channels work and should happen before another stage touches Channels. `keepalive-collection` was the alternative starter (better as a pure pattern teacher); deferring to stage 3 means the same shape lesson lands but after the channels-drift items are out of the way.",
+      "drifted": false
     },
     {
       "id": "f8eb0e3046",
@@ -61,7 +73,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "e3178f0fda",
-      "ts": "2026-05-07T12:51:12"
+      "ts": "2026-05-07T12:51:12",
+      "anchor": "- **First stage (architect's call 2026-05-07 — Ingi delegated)** — `serializers-stage-6-finish`. Closes drift introduced *during* the channels work and should happen before another stage touches Channels. `keepalive-collection` was the alternative starter (better as a pure pattern teacher); deferring to stage 3 means the same shape lesson lands but after the channels-drift items are out of the way.",
+      "drifted": false
     },
     {
       "id": "88f8977703",
@@ -70,7 +84,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T12:44:41"
+      "ts": "2026-05-07T12:44:41",
+      "anchor": "- **Cadence (architect's call 2026-05-07 — Ingi delegated)** — default is one stage per session, but flexible. Tier 1 stages are small enough that two could fit in a session if appetite holds; Tier 3 stages (especially `app-run-redesign`) probably need more than one session each. Don't pre-commit to a rigid cadence; settle each one when carving its stage brief.",
+      "drifted": false
     },
     {
       "id": "6e7a115461",
@@ -79,7 +95,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "88f8977703",
-      "ts": "2026-05-07T12:51:12"
+      "ts": "2026-05-07T12:51:12",
+      "anchor": "- **Cadence (architect's call 2026-05-07 — Ingi delegated)** — default is one stage per session, but flexible. Tier 1 stages are small enough that two could fit in a session if appetite holds; Tier 3 stages (especially `app-run-redesign`) probably need more than one session each. Don't pre-commit to a rigid cadence; settle each one when carving its stage brief.",
+      "drifted": false
     }
   ],
   "plan/post-cleanup-tree.md": [
@@ -90,7 +108,9 @@
       "author": "user",
       "status": "open",
       "parent_id": null,
-      "ts": "2026-05-07T17:28:51"
+      "ts": "2026-05-07T17:28:51",
+      "anchor": "- v3 wanted ReservedKeywords folded into `app.Types/Registry.cs`. ReservedKeywords are *variable names* (`!Test`, `!Signature`, etc.), not types. `app.Variables/Reserved.cs` is the right owner. Tree keeps the Variables placement.",
+      "drifted": false
     },
     {
       "id": "9996a52698",
@@ -99,7 +119,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "907548f65b",
-      "ts": "2026-05-07T17:46:03"
+      "ts": "2026-05-07T17:46:03",
+      "anchor": "- v3 wanted ReservedKeywords folded into `app.Types/Registry.cs`. ReservedKeywords are *variable names* (`!Test`, `!Signature`, etc.), not types. `app.Variables/Reserved.cs` is the right owner. Tree keeps the Variables placement.",
+      "drifted": false
     },
     {
       "id": "9938434b89",
@@ -108,7 +130,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": "9996a52698",
-      "ts": "2026-05-08T12:06:55"
+      "ts": "2026-05-08T12:06:55",
+      "anchor": "- v3 wanted ReservedKeywords folded into `app.Types/Registry.cs`. ReservedKeywords are *variable names* (`!Test`, `!Signature`, etc.), not types. `app.Variables/Reserved.cs` is the right owner. Tree keeps the Variables placement.",
+      "drifted": false
     },
     {
       "id": "bf6303b32a",
@@ -117,7 +141,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "9938434b89",
-      "ts": "2026-05-08T12:18:44"
+      "ts": "2026-05-08T12:18:44",
+      "anchor": "- v3 wanted ReservedKeywords folded into `app.Types/Registry.cs`. ReservedKeywords are *variable names* (`!Test`, `!Signature`, etc.), not types. `app.Variables/Reserved.cs` is the right owner. Tree keeps the Variables placement.",
+      "drifted": false
     },
     {
       "id": "3f529f45df",
@@ -126,7 +152,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T17:30:15"
+      "ts": "2026-05-07T17:30:15",
+      "anchor": "│   ├── this.SnapshotAt.cs",
+      "drifted": false
     },
     {
       "id": "f43d86175d",
@@ -135,7 +163,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "3f529f45df",
-      "ts": "2026-05-07T17:46:14"
+      "ts": "2026-05-07T17:46:14",
+      "anchor": "│   ├── this.SnapshotAt.cs",
+      "drifted": false
     },
     {
       "id": "96c0679770",
@@ -144,7 +174,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": "f43d86175d",
-      "ts": "2026-05-08T12:08:26"
+      "ts": "2026-05-08T12:08:26",
+      "anchor": "│   ├── this.SnapshotAt.cs",
+      "drifted": false
     },
     {
       "id": "127b7f8fc8",
@@ -153,7 +185,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "96c0679770",
-      "ts": "2026-05-08T12:18:53"
+      "ts": "2026-05-08T12:18:53",
+      "anchor": "│   ├── this.SnapshotAt.cs",
+      "drifted": false
     },
     {
       "id": "7cadb12b26",
@@ -162,7 +196,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T19:35:23"
+      "ts": "2026-05-07T19:35:23",
+      "anchor": "│   • llm/providers/OpenAiProvider.cs        (private static int _requestCount → DELETED, stage 15; temp blocker confirmed by Ingi 2026-05-07; todo logged)",
+      "drifted": false
     },
     {
       "id": "4e0afaa646",
@@ -171,7 +207,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "7cadb12b26",
-      "ts": "2026-05-08T10:37:30"
+      "ts": "2026-05-08T10:37:30",
+      "anchor": "│   • llm/providers/OpenAiProvider.cs        (private static int _requestCount → DELETED, stage 15; temp blocker confirmed by Ingi 2026-05-07; todo logged)",
+      "drifted": false
     },
     {
       "id": "4268f5999a",
@@ -180,7 +218,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": "4e0afaa646",
-      "ts": "2026-05-08T12:09:54"
+      "ts": "2026-05-08T12:09:54",
+      "anchor": "│   • llm/providers/OpenAiProvider.cs        (private static int _requestCount → DELETED, stage 15; temp blocker confirmed by Ingi 2026-05-07; todo logged)",
+      "drifted": false
     },
     {
       "id": "8024f161bb",
@@ -189,7 +229,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "4268f5999a",
-      "ts": "2026-05-08T12:18:59"
+      "ts": "2026-05-08T12:18:59",
+      "anchor": "│   • llm/providers/OpenAiProvider.cs        (private static int _requestCount → DELETED, stage 15; temp blocker confirmed by Ingi 2026-05-07; todo logged)",
+      "drifted": false
     },
     {
       "id": "c4aa52c02e",
@@ -198,7 +240,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T17:31:33"
+      "ts": "2026-05-07T17:31:33",
+      "anchor": "├── GlobalUsings.cs",
+      "drifted": false
     },
     {
       "id": "45148de6d1",
@@ -207,7 +251,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "c4aa52c02e",
-      "ts": "2026-05-07T17:46:20"
+      "ts": "2026-05-07T17:46:20",
+      "anchor": "├── GlobalUsings.cs",
+      "drifted": false
     },
     {
       "id": "dc92b23d6e",
@@ -216,7 +262,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T17:31:54"
+      "ts": "2026-05-07T17:31:54",
+      "anchor": "### `MemoryStepCache` — should this live under Step/?",
+      "drifted": false
     },
     {
       "id": "4774ba84ad",
@@ -225,7 +273,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "dc92b23d6e",
-      "ts": "2026-05-07T17:46:21"
+      "ts": "2026-05-07T17:46:21",
+      "anchor": "### `MemoryStepCache` — should this live under Step/?",
+      "drifted": false
     },
     {
       "id": "000d10d61a",
@@ -234,7 +284,9 @@
       "author": "user",
       "status": "open",
       "parent_id": null,
-      "ts": "2026-05-07T17:32:48"
+      "ts": "2026-05-07T17:32:48",
+      "anchor": "│   └── Example.cs             (← Catalog/ExampleSpec.cs)",
+      "drifted": false
     },
     {
       "id": "1e8129dcc3",
@@ -243,7 +295,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "000d10d61a",
-      "ts": "2026-05-07T17:46:31"
+      "ts": "2026-05-07T17:46:31",
+      "anchor": "│   └── Example.cs             (← Catalog/ExampleSpec.cs)",
+      "drifted": false
     },
     {
       "id": "3baca6ed2d",
@@ -252,7 +306,9 @@
       "author": "user",
       "status": "open",
       "parent_id": "1e8129dcc3",
-      "ts": "2026-05-08T12:13:07"
+      "ts": "2026-05-08T12:13:07",
+      "anchor": "│   └── Example.cs             (← Catalog/ExampleSpec.cs)",
+      "drifted": false
     },
     {
       "id": "3cadd401e3",
@@ -261,7 +317,9 @@
       "author": "architect",
       "status": "open",
       "parent_id": "3baca6ed2d",
-      "ts": "2026-05-08T12:19:08"
+      "ts": "2026-05-08T12:19:08",
+      "anchor": "│   └── Example.cs             (← Catalog/ExampleSpec.cs)",
+      "drifted": false
     },
     {
       "id": "b6e1ab1adc",
@@ -270,7 +328,9 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-07T17:34:02"
+      "ts": "2026-05-07T17:34:02",
+      "anchor": "",
+      "drifted": false
     },
     {
       "id": "937b6c7f1f",
@@ -279,7 +339,22 @@
       "author": "architect",
       "status": "open",
       "parent_id": "b6e1ab1adc",
-      "ts": "2026-05-07T17:46:37"
+      "ts": "2026-05-07T17:46:37",
+      "anchor": "",
+      "drifted": false
+    }
+  ],
+  "plan/principles.md": [
+    {
+      "id": "878bf92cf6",
+      "line": 60,
+      "text": "plang p build does not exist, where did you find that?? plus I want the cli to just use \"plang --builder\", no \"plang build\"",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-08T12:25:50",
+      "anchor": "| Form | Today (wrong) | After (correct) |",
+      "drifted": false
     }
   ]
 }
