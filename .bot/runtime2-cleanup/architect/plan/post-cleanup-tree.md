@@ -1,6 +1,6 @@
 # `PLang/App/` — Post-Cleanup Target Tree
 
-What `PLang/App/` should look like after all 19 stages land. This is the *destination*, not a stage-by-stage trace — read this when you want to judge the end state at a glance instead of reading prose.
+What `PLang/App/` should look like after all 20 stages land. This is the *destination*, not a stage-by-stage trace — read this when you want to judge the end state at a glance instead of reading prose.
 
 The tree is annotated with what each stage does to it, and revised against Ingi's review of v1 (2026-05-07). Folders/files with no marker are unchanged.
 
@@ -96,7 +96,7 @@ PLang/App/
 │   │   ├── TimeSpanIso8601.cs                (RENAMED ← TimeSpanIso8601Converter.cs; Serializers folder owns the role)
 │   │   ├── UnregisteredMimeType.cs           (kept — typed exception, conventionally compound)
 │   │   └── this.cs                            (TypeJsonConverter relocates to App/Data/Json.cs — lives with the Type it serves)
-│   └── this.cs                              (SHRUNK; v1 helpers gone — stage 2; ReadAsync<T>(filePath) gone — stage 8; Serializers carry-over gone — stage 1)
+│   └── this.cs                              (SHRUNK; v1 helpers gone — stage 2; ReadAsync<T>(filePath) gone — stage 8; canonical Serializers owner — stage 1 consolidates the per-Channels and per-Stream duplicates here)
 ├── Config/
 │   ├── IConfig.cs
 │   ├── ModuleView.cs                        (per-module typed settings view returned by app.Config.For<T>(context); generic, used at runtime — see comment below)
@@ -525,7 +525,7 @@ Settled in the tree: `Events/Lifecycle/Bindings/Binding/` collapses to `Events/B
 - All `App/modules/X/providers/` → `App/modules/X/code/` (Provider→Code; ~10 modules)
 
 **Files materially shrunk: 5**
-- `App/this.cs` 681 → <300 (multiple stages)
+- `App/this.cs` 681 → <300 (multiple stages; also loses the `Serializers` shortcut property in stage 20 — `app.Channels.Serializers` becomes the only access path)
 - `App/Modules/this.cs` 464 → ~150 (stage 9; example-rendering becomes local navigation `Schema.Render(spec)`)
 - `App/Channels/this.cs` 277 → <150 (stages 1, 2, 8)
 - `App/Builder/this.cs` (gains content from App.Start, stage 12; gains Choices subfolder)

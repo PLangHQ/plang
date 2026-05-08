@@ -1,5 +1,29 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+1) — Serializers ownership clarified, stage 20 added, stage 1 reframed
+
+Ingi pushed back on a quiet inconsistency in stage 1's brief: it routed everything through `app.Serializers` while the destination tree had Serializers under Channels. His architectural argument: serialization only ever happens at I/O boundary crossings, and Channels IS the I/O boundary subsystem in PLang — so the registry belongs under Channels, full stop. The earlier framing (treating Serializers as a "general utility used by Channels among others") was wrong; the OBP-coherent shape is one I/O subsystem owning all I/O concerns.
+
+### What changed
+
+- **Stage 1 reframed.** Slug `serializers-stage-6-finish` (a lineage label from the prior channels plan, confusing for the coder) → `serializers-single-home`. New scope: consolidate to one Serializers instance owned by `Channels.@this`. Drop the per-Channels duplicate ctor allocation and the per-Stream lazy field. Stream channels reach the registry via `App.Channels.Serializers` using the inherited `Channel.@this.App` back-ref. `App.@this.Serializers` becomes a delegate `=> Channels.Serializers` — kept as an ergonomic shortcut, removed in stage 20.
+- **Stage 20 added** — `serializers-app-shortcut-drop` (Tier 4). Removes the App-root delegate, sweeps 5+ external callers (Goals, Setup, DefaultFileProvider, Actor.Context.DynamicData) to `app.Channels.Serializers`. Pure call-site sweep.
+- **Tree updated** — Channels/this.cs annotation reframed (no more "carry-over gone — stage 1" wording, since Channels is the canonical owner not a former site of carry-over). App/this.cs note added showing the `app.Serializers` shortcut goes away in stage 20.
+
+### Why split stage 1 and stage 20
+
+Two ownership realignments, separable:
+- Stage 1: which instance is the registry? (Channels owns the canonical one)
+- Stage 20: which path do consumers use? (only via Channels, no shortcut)
+
+The split keeps each stage at "one ownership realignment per stage" per the plan's discipline. The intermediate state between them (App.@this.Serializers as a delegate) is a single line of code that lives one stage — not load-bearing cruft.
+
+### Stage count
+
+19 → 20.
+
+---
+
 ## 2026-05-08 (latest) — coder-handoff cleanup pass
 
 Final pass before stage briefs carve. Two structural fixes to the plan, plus a sweep for stale references.

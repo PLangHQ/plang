@@ -350,14 +350,43 @@
           "category": "doc",
           "confidence": "high",
           "context": "Plan.md stage 1 row links to the carved brief and notes carve date."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/plan/post-cleanup-tree.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan revised \u2014 Channels owns Serializers (Ingi: serialization is at I/O boundary, Channels = the I/O subsystem). Stage 1 reframed (slug serializers-stage-6-finish \u2192 serializers-single-home; consolidate to Channels-owned single instance, App.Serializers becomes delegate). Stage 20 added (serializers-app-shortcut-drop): removes the delegate, sweeps external callers to app.Channels.Serializers. Stage count 19 \u2192 20."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-1-serializers-single-home.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Replaces stage-1-serializers-stage-6-finish.md (deleted). New brief built from the corrected plan: Channels owns the canonical Serializers instance; App allocates once and passes to Channels ctor (now required); Stream uses App!.Channels.Serializers via inherited back-ref; App.@this.Serializers becomes a delegate. Out-of-scope items name the relevant later stages (2, 8, 15, 20)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-1-serializers-stage-6-finish.md"
+          ],
+          "type": "delete",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Old file removed; stage 1 was renamed and rewritten."
         }
       ],
       "after": {
-        "status": "stage-1 brief carved and committed; ready for coder handoff",
-        "health": "plan + principles + tree + summary all consistent post-renumbering and audit; no unresolved planning questions",
-        "notes": "Stage 1 brief covers two file edits (Channels/this.cs, Channel/Stream/this.cs), one ctor-parameter removal, four internal call-site updates. Out-of-scope items explicitly named (v1 helpers \u2192 stage 2; ReadAsync<T> \u2192 stage 8; renames \u2192 stage 15). Coder reads plan.md \u2192 principles.md \u2192 stage-1 brief and starts."
+        "status": "plan corrected, stage 1 rewritten with Channels-owned ownership; stage 20 (serializers-app-shortcut-drop) carved as a follow-up",
+        "health": "plan/principles/tree/summary all consistent at 20 stages with revised Serializers ownership story",
+        "notes": "Outstanding: rewriting tree note about app.Serializers shortcut going away in stage 20; verifying summary entry chronology. Coder reads plan.md \u2192 principles.md \u2192 stage-1-serializers-single-home.md."
       },
-      "timestamp_end": "2026-05-08T14:30:00Z"
+      "timestamp_end": "2026-05-08T15:30:00Z"
     }
   ]
 }
