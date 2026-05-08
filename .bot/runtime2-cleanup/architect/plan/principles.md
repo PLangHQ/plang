@@ -25,7 +25,9 @@ A class named `{Noun}{RolePattern}` is wrong because the role-pattern suffix is 
 - The singular noun *is* the entity (`Actor`, not `ActorEntity`).
 - If you find yourself reaching for `Manager`, `Helper`, `Service`, `Handler`, `Loader`, `Holder`, `Wrapper`, `Container`, `Dispatcher`, `Builder`, `Coordinator`, `Controller`, `Mediator` — the type's name is wrong, and the role belongs *to* the noun.
 
-**Quick screen**: `grep -E "class [A-Z][a-z]+[A-Z]"`. Two capital letters in a class name is the red flag. Every hit needs human judgment (some compounds are unavoidable: `MemoryStepCache`, `SqliteSettingsStore` seal implementation variants and may be best handled by per-impl folders) but the screen surfaces the candidates.
+**Sub-rule: role suffix duplicates the parent folder.** If the class name's role-pattern suffix names the folder it lives in, drop the suffix — the folder already says it. `SensitivePropertyFilter.cs` in `PropertyFilters/` becomes `Sensitive.cs` in `Filters/`. `DefaultGrepProvider.cs` in `Providers/` becomes `Grep.cs` in `Code/`. `OpenAiProvider.cs` becomes `OpenAi.cs` in `code/`. `SqliteSettingsStore.cs` in `Settings/` becomes `Sqlite.cs`. The fully-qualified type read as `App.{Folder}.{File}` reads naturally — `App.Filters.Sensitive`, `App.Data.Code.Grep` — without the redundant decoration. Same logic for `Default*` prefixes when there's only one impl variant in the folder.
+
+**Quick screen**: `grep -E "class [A-Z][a-z]+[A-Z]"`. Two capital letters in a class name is the red flag. Every hit needs human judgment (typed exceptions are conventionally compound — `FileNotFoundException`, `UnregisteredMimeType` — and stay; some implementation-variant compounds may be best handled by per-impl folders) but the screen surfaces the candidates.
 
 ### Rule B — `Get<Plural>()` is a missing collection type
 
@@ -53,7 +55,7 @@ Three exceptions for state:
 
 A property on `app.X` should name an **object you hold and navigate**, not a state the system is in. Gerunds (`-ing` endings) describe activity; nouns name the thing performing the activity. `app.Building` reads "the system is currently building" — that's a state. `app.Builder` reads "the thing that builds" — that's an object. The latter is OBP-shaped; the former is not.
 
-CLI follows: flag form moves to the noun (`--builder`, `--tester`). Verb commands stay verbs because commands *are* actions (`plang p build`, `plang p test`). Folder names follow the property: `App/Builder/`, not `App/Build/`.
+CLI follows: the flag form is the only form, and it lives on the noun (`--builder`, `--tester`). Folder names follow the property: `App/Builder/`, not `App/Build/`.
 
 Three forms must all agree:
 
@@ -61,8 +63,7 @@ Three forms must all agree:
 |------|---------------|-----------------|
 | Folder | `App/Build/` | `App/Builder/` |
 | App property | `app.Building` | `app.Builder` |
-| CLI flag | `--build` | `--builder` |
-| CLI command | `plang p build` | unchanged (verb) |
+| CLI | `plang build` | `plang --builder` |
 
 **Quick screen**: `grep -rE "(public|internal)\s+\w+ing\b" PLang/App/this.cs` — matches gerund property names on the App spine. Then read each: a state is the rare case; rename otherwise.
 
@@ -127,10 +128,3 @@ The plan is "done" when:
 - Open more than one cleanup stage at a time without merging the previous.
 - Refactor inside `App.modules.*` (action handlers) at this layer. Handler-level cleanup is a separate plan if and when needed.
 
-## What changes between this plan and the channels plan
-
-The channels plan was a feature plan: nine stages of *new* functionality with a clear product goal. This plan is a refactor backlog: thirteen stages of *shape* improvements with no behavioural delta. The two formats differ:
-
-- Channels plan had stage files written upfront because the design needed to settle before any code landed. This plan writes stage files as we approach each one; the upfront design content is in this `plan/principles.md` and in `plan.md`'s stage one-liners.
-- Channels stages had inter-dependencies (Stage 4 depended on Stage 1's base abstraction). Cleanup stages are mostly independent — each closes its own smell.
-- Channels lived on one branch (`runtime2-channels`). This plan spawns one cleanup branch per stage to keep blast radius small; `runtime2-cleanup` is only the planning home.

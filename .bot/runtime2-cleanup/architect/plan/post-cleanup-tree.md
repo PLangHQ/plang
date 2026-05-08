@@ -1,10 +1,10 @@
 # `PLang/App/` — Post-Cleanup Target Tree
 
-What `PLang/App/` should look like after all 15 stages land. This is the *destination*, not a stage-by-stage trace — read this when you want to judge the end state at a glance instead of reading prose.
+What `PLang/App/` should look like after all 19 stages land. This is the *destination*, not a stage-by-stage trace — read this when you want to judge the end state at a glance instead of reading prose.
 
 The tree is annotated with what each stage does to it, and revised against Ingi's review of v1 (2026-05-07). Folders/files with no marker are unchanged.
 
-**Baseline:** trunk after the runtime2-channels merge (`origin/runtime2` at `260ba46f`). The merge already landed two pieces this doc had previously called "stage 14": `Channel/EventContext.cs` is now `Channel/Events/this.cs`, and `Channel/MigrationEnvelope.cs` is gone (the Migration concept dropped). Stage 14's table is updated accordingly.
+**Baseline:** trunk after the runtime2-channels merge (`origin/runtime2` at `260ba46f`). The merge already landed two pieces this doc had previously called "stage 15": `Channel/EventContext.cs` is now `Channel/Events/this.cs`, and `Channel/MigrationEnvelope.cs` is gone (the Migration concept dropped). Stage 15's table is updated accordingly.
 
 **v3 absorption (2026-05-08):** Reviewed `origin/runtime2-obp-restructure` architect/v1-v3 (the prior cleanup attempt that was deferred). Several insights folded into this doc and the principles file:
 
@@ -17,7 +17,7 @@ The tree is annotated with what each stage does to it, and revised against Ingi'
 **v3 absorption — declined or revised:**
 
 - v3 wanted ReservedKeywords folded into `app.Types/Registry.cs`. ReservedKeywords are *variable names* (`!Test`, `!Signature`, etc.), not types. `app.Variables/Reserved.cs` is the right owner. Tree keeps the Variables placement.
-- v3's audit methodology (walk every `/shared/app-tree/*.md`) is **blocked**: that directory doesn't exist in the repo and never has. The methodology is moot until either those surface files get built (a meta-stage) or we pick a different diagnostic substrate (architecture.md, App/this.cs properties walked directly). Flagged in [Open judgment calls](#open-judgment-calls) as item I.
+- v3's audit methodology (walk every `/shared/app-tree/*.md`) is **deferred to a follow-up branch**: that directory doesn't exist in the repo and never has, and building the surface promise-files for every public mount on `app` is substantial work in its own right. Listed under "What's deferred" in `plan.md` — not in scope for this plan.
 - v3's source-generator update at `LazyParamsGenerator.cs:638` is moot: source gen has been rewritten and no longer references any `App.Utils.*` symbols. Confirmed by grep.
 
 ## Marker key
@@ -42,9 +42,9 @@ PLang/App/
 │   │   └── this.cs
 │   └── this.cs
 ├── Attributes/
-├── Builder/                                 (RENAMED ← Build/, stage 16; Rule D — gerund→noun; namespace App.Build → App.Builder)
+├── Builder/                                 (RENAMED ← Build/, stage 17; Rule D — gerund→noun; namespace App.Build → App.Builder)
 │   ├── Choices/                             (★ tentative — MOVED ← App/Choices/; re-evaluate after restructure lands; see open question)
-│   │   └── this.cs                          (private static _registry → instance, stage 15)
+│   │   └── this.cs                          (private static _registry → instance, stage 16)
 │   ├── this.Snapshot.cs
 │   └── this.cs                              (SHRUNK; gains build-mode branch from App.Start, stage 12; gains Choices subfolder if (★) confirmed)
 ├── Cache/
@@ -69,7 +69,7 @@ PLang/App/
 │   ├── AskCallback.cs
 │   ├── ErrorCallback.cs
 │   ├── ICallback.cs
-│   └── this.cs                              (absorbs Signature/this.cs as a property — stage 13; ExpiresInMs → TimeSpan? Expires; the Signature subfolder goes away)
+│   └── this.cs                              (absorbs Signature/this.cs as a property — stage 14; ExpiresInMs → TimeSpan? Expires; the Signature subfolder goes away)
 ├── Channels/
 │   ├── Channel/
 │   │   ├── Events/this.cs                   (already in trunk — ex-EventContext.cs)
@@ -79,7 +79,7 @@ PLang/App/
 │   │   ├── Stream/this.cs
 │   │   └── this.cs
 │   ├── Serializers/
-│   │   ├── Formats/                         (NEW; stage 17; mount = app.Channels.Serializers.Formats; absorbs the extension table from Utils/MimeTypes.cs and the MIME/Kind/Compressible block currently inside Types/this.cs)
+│   │   ├── Formats/                         (NEW; stage 18; mount = app.Channels.Serializers.Formats; absorbs the extension table from Utils/MimeTypes.cs and the MIME/Kind/Compressible block currently inside Types/this.cs)
 │   │   │   └── this.cs                      (Mime(ext), Kind(ext), Compressible(kind), KindOf(typeValue), Add(ext, kind, mime), Remove(ext))
 │   │   ├── Serializer/
 │   │   │   ├── Json.cs                      (RENAMED ← JsonStreamSerializer.cs)
@@ -88,15 +88,14 @@ PLang/App/
 │   │   │   │   └── Data.cs                  (RENAMED ← PlangDataSerializer.cs; application/plang+data — the canonical envelope for callbacks)
 │   │   │   ├── Text.cs                      (RENAMED ← TextStreamSerializer.cs)
 │   │   │   └── this.cs
-│   │   ├── PropertyFilters/                 (NEW; collection — stage 14 / 16; three filters belong in a registry by Rule B)
-│   │   │   ├── Sensitive.cs                 (RENAMED ← SensitivePropertyFilter.cs; suffix dropped)
+│   │   ├── Filters/                         (NEW; collection — stage 15 / 16; three filters belong in a registry by Rule B)
+│   │   │   ├── Sensitive.cs                 (RENAMED ← SensitivePropertyFilter.cs; both Property and Filter suffix dropped — folder says it)
 │   │   │   ├── Transport.cs                 (RENAMED ← TransportPropertyFilter.cs)
 │   │   │   ├── View.cs                      (RENAMED ← ViewPropertyFilter.cs)
 │   │   │   └── this.cs
-│   │   ├── TimeSpanIso8601Converter.cs
-│   │   ├── TypeJsonConverter.cs
-│   │   ├── UnregisteredMimeType.cs
-│   │   └── this.cs
+│   │   ├── TimeSpanIso8601.cs                (RENAMED ← TimeSpanIso8601Converter.cs; Serializers folder owns the role)
+│   │   ├── UnregisteredMimeType.cs           (kept — typed exception, conventionally compound)
+│   │   └── this.cs                            (TypeJsonConverter relocates to App/Data/Json.cs — lives with the Type it serves)
 │   └── this.cs                              (SHRUNK; v1 helpers gone — stage 2; ReadAsync<T>(filePath) gone — stage 8; Serializers carry-over gone — stage 1)
 ├── Config/
 │   ├── IConfig.cs
@@ -104,14 +103,15 @@ PLang/App/
 │   ├── Scope.cs
 │   └── this.cs
 ├── Data/
-│   ├── Converter.cs                         (RENAMED ← PlangTypeConverter.cs; namespace is App.Data so the prefix is redundant)
+│   ├── Converter.cs                         (RENAMED ← PlangTypeConverter.cs; System.ComponentModel.TypeConverter for Type)
+│   ├── Json.cs                              (RELOCATED ← Channels/Serializers/TypeJsonConverter.cs; System.Text.Json JsonConverter for Type — lives with what it serves)
 │   ├── Navigators/...
 │   ├── Properties.cs
-│   ├── Providers/DefaultGrepProvider.cs
-│   ├── Providers/IGrepProvider.cs
+│   ├── Code/Grep.cs                         (RENAMED ← Providers/DefaultGrepProvider.cs; folder Code/, drop both Default and suffix)
+│   ├── Code/IGrep.cs                        (RENAMED ← Providers/IGrepProvider.cs; per-domain interface, suffix dropped)
 │   ├── TString.cs
 │   ├── this.Compare.cs
-│   ├── this.Envelope.cs                     (private static readonly _envelopeJsonOptions → instance, stage 15)
+│   ├── this.Envelope.cs                     (private static readonly _envelopeJsonOptions → instance, stage 16)
 │   ├── this.Navigation.cs
 │   ├── this.Result.cs
 │   └── this.cs
@@ -175,36 +175,35 @@ PLang/App/
 │   │   ├── Render.cs                        (RENAMED ← Catalog/ExampleRenderer.cs; instance method navigating this.Modules — Rule E; absorbs the two static formatters in modules/builder/providers/{FluidProvider,DefaultBuilderProvider})
 │   │   └── this.cs                          (RENAMED ← Catalog/this.cs; instance method Build() — no parameter, navigates this.Modules — Rule E)
 │   └── this.cs                              (SHRUNK 464→~150; example-rendering call becomes local navigation Schema.Render(spec); self-disposes — stage 4)
-├── Providers/                               (open: rename to Code/, see Provider→Code design discussion below)
-│   ├── IProvider.cs
+├── Code/                                    (RENAMED ← Providers/, settled 2026-05-08; see "Provider → Code" section below)
+│   ├── ICode.cs                             (RENAMED ← IProvider.cs; marker for runtime-overridable C# implementations — Name/IsDefault/IsBuiltIn/Source)
 │   ├── this.Snapshot.cs
 │   └── this.cs                              (self-disposes, stage 4)
 ├── Services/                                (in active use — App.Services owns per-outbound-call I/O scopes, see comment below)
 │   ├── Service/this.cs
 │   └── this.cs
-├── Settings/
-│   ├── ISettingsStore.cs
-│   ├── SettingsVariable.cs
-│   ├── SqliteSettingsStore.cs
-│   └── this.cs
+├── Settings/                                (REWORKED — stage 13; see "Settings — collection over Data" below)
+│   ├── IStore.cs                            (RENAMED ← ISettingsStore.cs; backend interface used by this.cs — stage 13)
+│   ├── Sqlite.cs                            (RENAMED ← SqliteSettingsStore.cs; SQLite impl of IStore — stage 13)
+│   └── this.cs                              (ABSORBS SettingsVariable; collection of Data values keyed by name, like Goals/this.cs — stage 13)
 ├── Snapshot/
 │   ├── ISnapshot.cs                         (RENAMED ← ISnapshotted.cs; past-participle interface naming is awkward; matches IDisposable/IEnumerable convention)
 │   └── this.cs
 ├── Statics/
 │   ├── this.Snapshot.cs
 │   └── this.cs                              (App.GetStatic shim deleted — stage 5; the Statics @this is unchanged)
-├── Tester/                                  (RENAMED ← Test/, stage 16; Rule D — gerund→noun; namespace App.Test → App.Tester; Test prefix dropped on loose siblings since namespace is App.Tester)
+├── Tester/                                  (RENAMED ← Test/, stage 17; Rule D — gerund→noun; namespace App.Test → App.Tester; Test prefix dropped on loose siblings since namespace is App.Tester)
 │   ├── Coverage.cs
 │   ├── File.cs                              (RENAMED ← TestFile.cs)
 │   ├── Results.cs
 │   ├── Run.cs                               (RENAMED ← TestRun.cs)
 │   ├── Status.cs                            (RENAMED ← TestStatus.cs)
 │   ├── this.Snapshot.cs
-│   └── this.cs                              (handles ChildAppCreated differently — stage 15; design TBD, see comment below)
+│   └── this.cs                              (gains ChildAppCreated replacement shape — stage 16; coder settles the exact shape during the stage, options ranged through during prior architect review)
 ├── Types/
-│   ├── Conversion.cs                        (NEW partial; stage 15; absorbs Utils/TypeConverter.cs — instance ConvertTo<T> / TryConvertTo / Populate)
-│   ├── Registry.cs                          (NEW partial; stage 15; absorbs Utils/PlangTypeIndex.cs + Utils/TypeMapping.cs registry portion — name↔CLR maps as instance fields, [PlangType] scan in ctor)
-│   └── this.cs                              (becomes partial; stage 15; gains Clr(mimeType) overload — stage 17; the existing MIME/Kind/Compressible block at lines 215-315 moves out to Channels/Serializers/Formats/)
+│   ├── Conversion.cs                        (NEW partial; stage 16; absorbs Utils/TypeConverter.cs — instance ConvertTo<T> / TryConvertTo / Populate)
+│   ├── Registry.cs                          (NEW partial; stage 16; absorbs Utils/PlangTypeIndex.cs + Utils/TypeMapping.cs registry portion — name↔CLR maps as instance fields, [PlangType] scan in ctor)
+│   └── this.cs                              (becomes partial; stage 16; gains Clr(mimeType) overload — stage 18; the existing MIME/Kind/Compressible block at lines 215-315 moves out to Channels/Serializers/Formats/)
 ├── Utils/                                   (NEARLY EMPTY; only pure utilities and extension methods remain)
 │   ├── CommandLineParser.cs
 │   ├── PathExtension.cs                     (deferred — likely belongs in App/FileSystem/)
@@ -212,31 +211,31 @@ PLang/App/
 │   └── StringDistance.cs
 │
 │   (DELETED → elsewhere:)
-│   • Json.cs                                → DISPERSED to consumers, stage 15 (each consumer owns its own JsonSerializerOptions instance — Snapshot, Build PrWrite, Data.Envelope already do, the "shared" options were a junk-drawer artifact)
-│   • MimeTypes.cs                           → splits two ways, stage 17:
+│   • Json.cs                                → DISPERSED to consumers, stage 16 (each consumer owns its own JsonSerializerOptions instance — Snapshot, Build PrWrite, Data.Envelope already do, the "shared" options were a junk-drawer artifact)
+│   • MimeTypes.cs                           → splits two ways, stage 18:
 │   │                                          • GetMimeType(ext) and friends → App/Channels/Serializers/Formats/this.cs
 │   │                                          • TryGetClrType(mimeType) → App/Types/this.cs as Clr(mimeType) overload
-│   • PlangTypeIndex.cs                      → App/Types/Registry.cs (partial, stage 15)
-│   • ReservedKeywords.cs                    → App/Variables/Reserved.cs (all const/readonly, no mutable static, stage 15)
-│   • TypeConverter.cs                       → App/Types/Conversion.cs (partial, stage 15)
-│   • TypeMapping.cs                         → App/Types/Registry.cs registry portion + App/Channels/Serializers/Formats forward-lookup callers (stage 15 + 17)
+│   • PlangTypeIndex.cs                      → App/Types/Registry.cs (partial, stage 16)
+│   • ReservedKeywords.cs                    → App/Variables/Reserved.cs (all const/readonly, no mutable static, stage 16)
+│   • TypeConverter.cs                       → App/Types/Conversion.cs (partial, stage 16)
+│   • TypeMapping.cs                         → App/Types/Registry.cs registry portion + App/Channels/Serializers/Formats forward-lookup callers (stage 16 + 17)
 ├── Variables/
 │   ├── Calls/                               (already in trunk — per-call scopes from channels merge)
 │   │   ├── Call/this.cs
 │   │   └── this.cs
 │   ├── IRawNameResolvable.cs
-│   ├── Reserved.cs                          (NEW or MOVED ← Utils/ReservedKeywords.cs, stage 15; well-known variable names belong with the Variables owner; all values const/readonly)
+│   ├── Reserved.cs                          (NEW or MOVED ← Utils/ReservedKeywords.cs, stage 16; well-known variable names belong with the Variables owner; all values const/readonly)
 │   ├── Variable.cs
 │   ├── this.Snapshot.cs
 │   ├── this.SnapshotAt.cs
 │   └── this.cs
 ├── modules/                                 (unchanged structure — per-handler files; internal cleanups only)
 │   └── ...
-│   • llm/providers/OpenAiProvider.cs        (private static int _requestCount → DELETED, stage 15; temp blocker confirmed by Ingi 2026-05-07; todo logged)
-│   • test/run.cs                            (internal static event ChildAppCreated → different shape, stage 15; design TBD, see comment below)
+│   • llm/code/OpenAi.cs                     (RENAMED ← llm/providers/OpenAiProvider.cs; folder code/, drop Provider suffix; private static int _requestCount → DELETED, stage 16; temp blocker confirmed by Ingi 2026-05-07; todo logged)
+│   • test/run.cs                            (internal static event ChildAppCreated → moves onto Tester/this.cs as a non-static registry, stage 16)
 ├── GlobalUsings.cs
-├── Info.cs                                  (deferred — small loose root, not in any current stage; could become Info/this.cs but trivial)
-├── View.cs                                  (deferred — enum loose at root; could move under Channels/Serializers/ since that's where the views are consumed)
+├── Info.cs                                  (unchanged — loose root; not in any current stage)
+├── View.cs                                  (unchanged — loose root; not in any current stage)
 └── this.cs                                  (SHRUNK 681→<300; the sum of stages 3, 4, 5, 6, 7, 10, 11, 12)
 ```
 
@@ -246,13 +245,13 @@ These are the questions Ingi raised on v1 of this doc that the tree above doesn'
 
 ### `MemoryStepCache` — should this live under Step/?
 
-The class caches `Data.@this` keyed by string — Step results, but the cached *thing* is Data, not Step. The owner is "the cache subsystem," not Step. Per OBP, the impl-variant pattern keeps `Cache/` as the type and the in-memory implementation as `Cache/Memory.cs`. If a SqliteStepCache or RedisCache lands later, it joins as `Cache/Sqlite.cs` / `Cache/Redis.cs` — same shape as `Settings/SqliteSettingsStore.cs`. Moving the file under `Steps/Step/Cache/` would couple a generic cache concept to the Step entity and complicate later re-use; keeping it at App root preserves the swap-the-impl pattern.
+The class caches `Data.@this` keyed by string — Step results, but the cached *thing* is Data, not Step. The owner is "the cache subsystem," not Step. Per OBP, the impl-variant pattern keeps `Cache/` as the type and the in-memory implementation as `Cache/Memory.cs`. If a SqliteStepCache or RedisCache lands later, it joins as `Cache/Sqlite.cs` / `Cache/Redis.cs` — same shape as `Settings/Sqlite.cs`. Moving the file under `Steps/Step/Cache/` would couple a generic cache concept to the Step entity and complicate later re-use; keeping it at App root preserves the swap-the-impl pattern.
 
 ### `RestoredFrame` — isn't it just a Call?
 
 It almost is. The hard difference is lifecycle: a live `Call.@this` has an AsyncLocal "current" pointer, push/pop discipline, and observable diffs. A restored frame can have *none* of that — it's a deserialized (Action, Goal, StepIndex, ActionIndex, Id) tuple used to identify *where* a callback should resume. The class doc explicitly forbids pushing it to the AsyncLocal current.
 
-So the type does have to exist as something distinct from `Call.@this`. But the *name* is a description, not a noun — "RestoredFrame" reads "a frame that was restored." Better candidates: `Call.Position.cs` (it identifies *where* in the call tree), or `Call.@this.Snapshot` as a nested type. The tree above proposes `Call/Position.cs`. That's a stage-15-adjacent rename, not a structural change; happy to fold it differently if the position-vs-frame distinction reads wrong.
+So the type does have to exist as something distinct from `Call.@this`. But the *name* is a description, not a noun — "RestoredFrame" reads "a frame that was restored." Better candidates: `Call.Position.cs` (it identifies *where* in the call tree), or `Call.@this.Snapshot` as a nested type. The tree above proposes `Call/Position.cs`. That's a stage-16-adjacent rename, not a structural change; happy to fold it differently if the position-vs-frame distinction reads wrong.
 
 ### `ActionSpec` / `ExampleSpec` — settled: dissolve into `app.Modules.Schema`
 
@@ -283,11 +282,11 @@ Open: should `Spec/Action.cs` and `Spec/Example.cs` be flat files (current propo
 
 ### `Callback/Signature/this.cs` — folded
 
-You're right; Data already owns signatures via the lazy `Signature` getter. The whole `Signature/` subfolder is just a 15-line config holder for `ExpiresInMs`. Tree above absorbs it as a property on `Callback/this.cs` (stage 13 carries the TimeSpan rename through). Subfolder goes away.
+You're right; Data already owns signatures via the lazy `Signature` getter. The whole `Signature/` subfolder is just a 15-line config holder for `ExpiresInMs`. Tree above absorbs it as a property on `Callback/this.cs` (stage 14 carries the TimeSpan rename through). Subfolder goes away.
 
 ### Channel/Migration — already gone
 
-Confirmed in the merge from runtime2: `MigrationEnvelope.cs` is deleted, `modules/channel/migrate.cs` is deleted, the Stage 14 list no longer references it.
+Confirmed in the merge from runtime2: `MigrationEnvelope.cs` is deleted, `modules/channel/migrate.cs` is deleted, the Stage 15 list no longer references it.
 
 ### Serializer naming — Json/Plang/Text — RESOLVED: Plang/ subfolder
 
@@ -310,7 +309,7 @@ Plang gets a folder because it's a family with siblings. Json and Text are singl
 
 ### `SensitivePropertyFilter` etc. — agreed
 
-Drop the `PropertyFilter` suffix. Tree above puts the three files in `PropertyFilters/` as `Sensitive.cs`, `Transport.cs`, `View.cs`. By Rule B (`Get<Plural>()` is a missing collection type) this also gets a parent `PropertyFilters/this.cs` registry. Three filters with the same shape are exactly the missing-collection smell.
+Drop both the `Property` prefix AND the `Filter` suffix — folder is `Filters/` (settled 2026-05-08, "Property" doesn't add anything; if a non-property filter concept appears later it co-locates here without renaming). Tree above puts the three files as `Filters/Sensitive.cs`, `Filters/Transport.cs`, `Filters/View.cs`. By Rule B (`Get<Plural>()` is a missing collection type) this also gets a parent `Filters/this.cs` registry. Three filters with the same shape are exactly the missing-collection smell.
 
 ### Choices — tentatively under Builder/, ★ re-evaluate
 
@@ -322,9 +321,29 @@ Per Ingi's review: ★ tentative. Re-evaluate after Catalog dissolves into `Modu
 
 Generic per-module settings view: `app.Config.For<archive.Config>(context)` returns a `ModuleView<archive.Config>` stamped with the current Actor.Context. Each `view.Resolve<T>("max", default)` walks the scope chain to find the right value. Used at runtime by handlers reading their own settings. Name is fine — it's a per-module view of settings — though `Config/View/this.cs` would be more OBP. Tree leaves it as `ModuleView.cs`; happy to push to `View/this.cs` if you want.
 
-### `PlangTypeConverter.cs` — agreed
+### Converters cluster — agreed (settled 2026-05-08)
 
-Renamed to `Data/Converter.cs` in the tree. Namespace is `App.Data` so the prefix is redundant.
+Three files, three different fixes:
+
+- `PlangTypeConverter.cs` → `Data/Converter.cs` — System.ComponentModel.TypeConverter for Type. Namespace `App.Data` so the prefix is redundant.
+- `TypeJsonConverter.cs` → `Data/Json.cs` — JsonConverter relocates to live with the Type it serves (was orphaned in `Channels/Serializers/`). The two files coexist in `App/Data/` because they target the same Type via different mechanisms (component-model vs System.Text.Json) — different consumers, different files.
+- `TimeSpanIso8601Converter.cs` → `Channels/Serializers/TimeSpanIso8601.cs` — flat rename, drops the Converter suffix. Stays in Serializers/ where the role is implicit.
+
+No top-level `App/Converters/` folder. Same logic as the rejected `App/Json/`: "Converter" is a mechanism, not a domain. A synthetic root mount for converters would be the same shape error.
+
+### `UnregisteredMimeType` — agreed (kept)
+
+Kept as-is. It's a typed exception (`: System.Exception`) thrown by the serializer registry. Exception names ARE compound by convention (`FileNotFoundException`, `KeyNotFoundException`) — not a Rule A hit. If a second sibling exception ever appears in `Serializers/`, fold them into an `Errors/` subfolder then.
+
+### `DefaultGrepProvider` → `Grep.cs` — agreed (settled 2026-05-08)
+
+Drop both `Default` and `Provider`. Folder is `Code/` (after the Provider→Code rename below) so both prefixes duplicate the parent. Renames:
+- `DefaultGrepProvider.cs` → `Code/Grep.cs`
+- `IGrepProvider.cs` → `Code/IGrep.cs`
+
+### `OpenAiProvider` → `OpenAi.cs` — agreed (settled 2026-05-08)
+
+Folder is `modules/llm/code/` — the role is in the path. File becomes `OpenAi.cs`. Same pattern as Grep above.
 
 ### Events folder — collapse the Lifecycle layer
 
@@ -334,15 +353,32 @@ Reading the code: `Events/this.cs` is the registry that owns event bindings. `Ev
 
 Tree above proposes the collapse: `Events/this.cs` (registry, gains Before/After properties), `Events/Bindings/this.cs` (collection), `Events/Binding/this.cs` (entity). The Lifecycle/ subfolder goes away. Three folder hops becomes two.
 
-Caveat: I haven't traced every consumer of `App.Events.Lifecycle.Bindings.Binding.@this` (used as an alias `EventBinding` everywhere). The collapse is a rename + alias re-target. Probably stage 14 territory — happy to defer to its own stage if the blast radius is bigger than expected.
+Caveat: I haven't traced every consumer of `App.Events.Lifecycle.Bindings.Binding.@this` (used as an alias `EventBinding` everywhere). The collapse is a rename + alias re-target. Probably stage 15 territory — happy to defer to its own stage if the blast radius is bigger than expected.
 
 ### Services — actively used
 
 Yes — `app.Services` is the per-outbound-call I/O scope collection. Each `Service` represents one outbound call's I/O scope (Channels, System Identity, Parent ref). It replaces the runtime1 "Service-as-actor" model — identity is always System; the Parent ref preserves "who triggered this." Used when an Actor makes outbound HTTP/TCP/WS calls; spawned via `app.Services.New(parent)`, `await using` for tear-down. Active referenced from `App.this.cs:229`. Tree leaves it unchanged — this was an architect oversight in v1 saying "what is it"; the answer is "it's the per-call I/O scope" and the OBP shape is correct.
 
-### Settings — no opinion to act on
+### Settings — collection over Data (settled 2026-05-08 with Ingi)
 
-I don't have a prior architect opinion on Settings classes that I dropped from this tree. Settings looks OBP-clean: `ISettingsStore` is the contract, `SqliteSettingsStore` is the impl variant (per-impl-variant under Settings/, same shape as `Cache/Memory.cs`), `SettingsVariable` is the runtime Data subclass. If you remember a specific opinion, point me at the conversation and I'll fold it in.
+Today's `SettingsVariable` carries an inheritance smell that this stage closes. It's a `Data.@this` subclass that wears two hats:
+
+1. **Runtime mode** (with `_app`) — mounted on Variables under `"Settings"`, intercepts `%Settings.ApiKey%` via `GetChild` override, calls into the store
+2. **Storage mode** (`JsonConstructor`) — represents a single loaded value, no navigation
+
+The `: Data.@this` inheritance exists only to fit through the variable-resolution interception path. Mechanism leaking into shape — exactly the inheritance-over-composition pattern App is moving away from elsewhere.
+
+**Reworked shape** (Ingi's call 2026-05-08):
+
+- `Settings/this.cs` — a collection (like `Goals/this.cs`), holds Data values keyed by name. Public surface is `Set(key, Data)` / `Get(key) → Data` / etc. **Not** a Data subclass.
+- `Settings/IStore.cs` — backend persistence interface used by `this.cs`. Rename of `ISettingsStore` (drops the `Settings` prefix that was duplicating the namespace).
+- `Settings/Sqlite.cs` — SQLite impl of `IStore`. Serializes Data values to JSON via `PlangSerializer`. Rename of `SqliteSettingsStore`.
+
+The `JsonConstructor`/runtime dual-mode disappears because the two responsibilities split: `this.cs` is the navigation+API root, `Sqlite.cs` is the load/save layer. Data is the value type — it's already what we want to store; no subclassing required.
+
+**Variable resolution** — `%Settings.ApiKey%` reaches `settings.Get("ApiKey")` via a new `Variables.RegisterNavigable(name, resolver)` hook. The variable resolver consults this map during compound-name resolution. Settings registers itself as `"Settings"` with a resolver that delegates to `settings.Get(path)`. The mechanism is general — any future non-Data navigable mount can register the same way; not a Settings-specific workaround.
+
+This carves as its own stage when reached. The `RegisterNavigable` mechanism on Variables is the load-bearing part — settle its exact signature when the stage opens.
 
 ### `ISnapshotted` → `ISnapshot` — agreed
 
@@ -352,29 +388,30 @@ Renamed in tree. `IDisposable` not `IDisposed`; `IEnumerable` not `IEnumerated`.
 
 Tree above renames to `File.cs`, `Run.cs`, `Status.cs`. Namespace is `App.Test` so the prefix is redundant.
 
-### Provider → Code — design discussion
+### Provider → Code — settled 2026-05-08
 
-Big rename and worth thinking through, not auto-agreeing.
+The runtime renames Provider → Code, end-to-end. Driving rationale (Ingi's framing): anything currently called a Provider is C# that an external developer can override by dropping in their own DLL. PLang's narrative is "everything is goals (plang), except where you need code" — the runtime's vocabulary aligns with the language by calling the escape hatch what the language calls it. `Provider` was technically precise (DI-flavored "provides an impl of a contract") but PLang-foreign; `Code` is technically loose but PLang-native, and the language designer gets to choose what concepts the runtime advertises.
 
-**The case for Code:** Providers are the C# escape hatch — places where PLang says "this needs to be code, not goals." Calling the namespace `Code` and the interface `ICode` describes literally what they are: code injected into the runtime. It's also philosophically aligned: "everything is plang, except Code" rolls off cleanly.
+**Concrete shape**:
 
-**The case against:** "Code" is too generic to be a type-system identifier. Every `.cs` file in this repo is "code." If `App/Code/` means "the kind of code you can swap out at runtime," readers without context will not infer that — they'll think it's the kitchen sink for anything not yet sorted. Provider has technical baggage (DI providers) but also technical precision: it *provides* an implementation of an interface that the runtime resolves by name. That's exactly what these are.
+- `App/Providers/` → `App/Code/` (the central registry, plus the marker)
+- `App/Providers/IProvider.cs` → `App/Code/ICode.cs` — marker interface for runtime-overridable implementations. Fields stay (`Name`, `IsDefault`, `IsBuiltIn`, `Source`); they map directly to the developer-registers-DLL flow (e.g. `- add 'claudeapi.dll' on llm module, set as default` populates these on the registered ICode).
+- All per-module `App/modules/X/providers/` → `App/modules/X/code/`
+- `App/Data/Providers/` → `App/Data/Code/` (Grep)
+- All per-module interfaces drop the `Provider` suffix entirely: `IBuilderProvider` → `IBuilder`, `ILlmProvider` → `ILlm`, `ICryptoProvider` → `ICrypto`, `IHttpProvider` → `IHttp`, `IIdentityProvider` → `IIdentity`, `IAssertProvider` → `IAssert`, `ITemplateProvider` → `ITemplate`. Each per-module interface extends `ICode`.
+- Implementations follow the rule "drop both `Default` and `Provider`":
+  - When the parent path doesn't already say the role, the impl name IS the variant: `OpenAi.cs`, `Fluid.cs`, `Grep.cs`, `Sqlite.cs`.
+  - When the parent path already says the role (the assert / builder / http / identity modules), the default impl is `Default.cs` to avoid `assert.code.Assert` redundancy. Custom DLLs from users carry their own variant names.
 
-**The deeper question:** PLang has two distinct kinds of "swappable code" today.
-1. **Internal pluggable defaults** — `DefaultHttpProvider`, `DefaultIdentityProvider`, `OpenAiProvider`. First-class implementations of internal contracts; not user-injected. The runtime ships with a default; you swap by registering a different one.
-2. **External user code** — DLLs the user drops in to override defaults (`use 'redis.dll' for caching` in Settings/this.cs).
+**Why the marker stays load-bearing**: today's `IProvider` carries `Name`, `IsDefault`, `IsBuiltIn`, `Source` — the runtime uses all four for registration, default-vs-override distinction, and snapshot/restore (DLL path). These are exactly the fields the user-facing flow exercises (`add ... set as default`). The rename keeps the fields; only the marker's name and folder change.
 
-These are two concepts wearing one name. "Provider" describes (1) accurately; "Code" describes (2) accurately. The cleanest rename might be: keep `Provider` for (1), introduce `Code` for the act of (2) loading an external DLL. But I'd want to check first whether there's actually any (2) infrastructure today that's distinct from (1) — `App/modules/provider/load.cs` suggests the load mechanism *is* provider-loading, which collapses the distinction.
+**Per-module interfaces are not uniform-shape**. Initial intuition was that modules would all expose a `Run` method via the marker. They don't — `IBuilder` has `Actions/Goals/Validate/...` methods, `ILlm` has `Query`, each per-module interface is shaped to its domain. The marker carries only the framework-tracking fields; the per-module interface carries the domain methods.
 
-**Architect's recommendation:** rename Provider → Code only if you're committed to also renaming the *concept*: the runtime no longer talks about "providers" — it talks about "code injected to override runtime behavior." That's a story-level change, not just a find-replace. If you mean the latter, I'm in. If you mean a 88-file find-replace with no concept change, the cost-to-benefit is poor; "Provider" carries technical weight that "Code" loses.
+## Judgment calls — all resolved
 
-What do you mean? **Status: open** — flagged here as a design question to settle before any rename starts.
+Audit trail of design questions raised during planning, with how each landed. All listed below are resolved or deferred-to-coder-execution; nothing in this section blocks the plan.
 
-## Open judgment calls (revised after v1 review)
-
-The questions below are still open. The previously-listed v1 questions are folded into the inline answers above when settled.
-
-### A. JsonSerializerOptions destination (stage 15) — RESOLVED: disperse
+### A. JsonSerializerOptions destination (stage 16) — RESOLVED: disperse
 
 Per Ingi's L231 review: **`App/Json/` was wrong**. Json is a serialization format, not a domain entity — it doesn't deserve a root mount. v2's "single home" lean is dropped.
 
@@ -407,67 +444,66 @@ Json and Text stay flat files because there's only one of each. Plang gets the f
 
 Per Ingi's L19 review: Position.cs preferred. Rename folded into stage 10 (`app-run-redesign`) since Call gets a closer look there.
 
-### E. Provider → Code rename
+### E. Provider → Code rename — RESOLVED: rename end-to-end
 
-See inline section above. **Status: open** — needs your read on whether this is a story-level rename or a find-replace.
+Settled 2026-05-08. The Provider concept becomes Code throughout — folder, marker interface, per-module folders, per-module interfaces (suffix dropped). `IProvider` → `ICode` keeps the framework-tracking fields (`Name`, `IsDefault`, `IsBuiltIn`, `Source`) which map directly to the developer-DLL-registration flow. Implementation naming follows "drop both `Default` and `Provider`" with the parent-path-says-the-role exception (assert/builder/http/identity modules use `Default.cs` to avoid redundancy; llm/ui/data/settings name impls after the variant: `OpenAi.cs`, `Fluid.cs`, `Grep.cs`, `Sqlite.cs`). See "Provider → Code" inline section above.
 
-### F. Events sub-foldering collapse
+### F. Events sub-foldering collapse — RESOLVED design; questions defer to coder
 
-Tree above proposes collapsing `Events/Lifecycle/Bindings/Binding/` to `Events/Binding/` + `Events/Bindings/`, with Before/After moving to properties on `Events/this.cs`. **Status: open** — the alias `App.Events.Lifecycle.Bindings.Binding.@this` is referenced widely as `EventBinding`; the rename is mechanical but the blast radius wants checking before pulling. Probably its own small stage.
+Settled in the tree: `Events/Lifecycle/Bindings/Binding/` collapses to `Events/Binding/` + `Events/Bindings/`, with Before/After moving to properties on `Events/this.cs`. The alias `App.Events.Lifecycle.Bindings.Binding.@this` (used widely as `EventBinding`) will need re-targeting; the rename is mechanical but the blast radius hasn't been measured yet. Open execution questions (sequencing within the stage, alias re-target order, whether to split off a separate stage) settle when the coder approaches the rename — likely folded into stage 15 (`compound-name-rename`) or its own small stage if blast radius warrants.
 
-### G. Test.ChildAppCreated event shape (stage 15)
-
-You couldn't recall the use case — here's what it is. `internal static event Action<App.@this>? ChildAppCreated` fires once per child App after the test runner constructs it (OsDirectory inherited, Testing.IsEnabled set, CurrentTest assigned), before the test's entry goal runs. Test code in `PLang.Tests/App/Testing/RunActionTests.cs` subscribes to probe child-App state for assertions (parallel count, OsDirectory, IsEnabled). Six test files attach to it.
-
-It's static because there's no other way for the test to *reach* the child App before the child's first goal runs — child Apps are constructed inside the test runner's parallel loop and aren't returned to the caller. The static event is the only point where probing code can hook in.
-
-**Two real options:**
-- **(a) Event on parent App `@this`** — `parentApp.OnChildAppCreated += probe` — parent App raises into subscribers when it spawns a child. Tests subscribe via the parent. Loses the "any test can probe any child app" capability if there are multiple parents.
-- **(b) Test-runner registry** — `App.Test.@this` (the test runner) owns a list of child-app callbacks. Static-ness moves onto the test runner (which is itself ~singleton per test process). Cleaner because the test runner is the natural owner.
-
-**Architect's lean: (b).** Test runner already owns child-App lifetime; owning the discovery callback is consistent with that. But this is stage-15 material and wants verification that no probe code expects cross-process or cross-runner subscription.
-
-### H. Loose root files Info.cs, View.cs
-
-Unchanged from v1: leave deferred. Cost-to-benefit too thin.
-
-### I. v3 audit methodology — blocked on missing substrate
-
-The `runtime2-obp-restructure` v3 plan proposed walking `/shared/app-tree/<surface>.md` against the code as a systematic OBP audit. **That directory doesn't exist in this repo and never has** (verified by file system search and git log on the path). The methodology is moot until either:
-
-- **(a) The surface files get built first.** A meta-stage that produces `app-tree/app.md`, `app-tree/types.md`, etc. — each describing what `app.<Surface>` *promises* (member list, type, structure). Then walk the audit. Substantial work; arguably its own plan.
-- **(b) Pick a different diagnostic substrate.** `Documentation/v0.2/architecture.md` and `good_to_know.md` exist and describe the App graph; `App/this.cs` itself enumerates the properties. These aren't surface-by-surface promise documents but they're navigable starting points.
-- **(c) Skip the methodology entirely.** Continue with stage-by-stage ownership realignments, knowing we miss the systematic coverage.
-
-**Status: open.** Architect's lean: (c) for now — tightening the rules (D, E added today) catches a lot of what the audit would catch. (a) is too much overhead unless we commit to a long-term `/shared/app-tree/` doc artifact.
-
-Per Ingi's recommendation 3 ("check couple of files there and see where it takes us"): we can't, the files don't exist. Question for Ingi: build the surface files as a pre-stage, or skip?
 
 ## Summary of net additions / removals (revised)
 
 **Folders added: 9**
 - `App/KeepAlive/` (stage 3)
-- `App/Channels/Serializers/Formats/` (stage 17; absorbs ext table from Utils/MimeTypes.cs + Types MIME block)
-- `App/Channels/Serializers/PropertyFilters/` (stage 14/16; Rule B collection)
-- `App/Channels/Serializers/Serializer/Plang/` (stage 14; groups plang-format serializers — Plang/this.cs + Plang/Data.cs, future Plang/Protobuf.cs)
+- `App/Channels/Serializers/Formats/` (stage 18; absorbs ext table from Utils/MimeTypes.cs + Types MIME block)
+- `App/Channels/Serializers/Filters/` (stage 15/16; Rule B collection — `Sensitive.cs`, `Transport.cs`, `View.cs`, `this.cs`)
+- `App/Channels/Serializers/Serializer/Plang/` (stage 15; groups plang-format serializers — Plang/this.cs + Plang/Data.cs, future Plang/Protobuf.cs)
 - `App/Modules/Schema/` (stage 9; absorbs former App/Catalog/)
 - `App/Modules/Schema/Spec/` (stage 9; record family Action.cs + Example.cs)
 - `App/Builder/Choices/` (★ tentative; MOVED ← App/Choices/)
-- `App/Builder/` (stage 16; RENAMED ← App/Build/, Rule D)
-- `App/Tester/` (stage 16; RENAMED ← App/Test/, Rule D)
+- `App/Builder/` (stage 17; RENAMED ← App/Build/, Rule D)
+- `App/Tester/` (stage 17; RENAMED ← App/Test/, Rule D)
 
 **Files deleted: 6**
-- `App/Utils/PlangTypeIndex.cs` (stage 15 → `App/Types/this.cs`)
-- `App/Utils/Json.cs` (stage 15 → DISPERSED to consumers; each owns its own JsonSerializerOptions instance)
-- `App/Utils/ReservedKeywords.cs` (stage 15 → `App/Variables/Reserved.cs`)
-- `App/Callback/Signature/this.cs` (stage 13 → property on `App/Callback/this.cs`)
+- `App/Utils/PlangTypeIndex.cs` (stage 16 → `App/Types/this.cs`)
+- `App/Utils/Json.cs` (stage 16 → DISPERSED to consumers; each owns its own JsonSerializerOptions instance)
+- `App/Utils/ReservedKeywords.cs` (stage 16 → `App/Variables/Reserved.cs`)
+- `App/Callback/Signature/this.cs` (stage 14 → property on `App/Callback/this.cs`)
 - `App/Catalog/` whole folder (stage 9 → `App/Modules/Schema/`); ExampleHelpers.cs / ExampleRenderer.cs / TypeEntry.cs / ActionSpec.cs / ExampleSpec.cs / Catalog/this.cs all relocate
 
-**Files renamed: 14**
+**Files renamed: ~40** (per-module providers vary; 25 named explicitly + 15+ in the Provider→Code sweep across modules/*/providers/ folders)
 - `App/Cache/MemoryStepCache.cs` → `App/Cache/Memory.cs`
 - `App/Data/PlangTypeConverter.cs` → `App/Data/Converter.cs`
+- `App/Channels/Serializers/TypeJsonConverter.cs` → `App/Data/Json.cs` (relocates — lives with the Type it serves)
+- `App/Channels/Serializers/TimeSpanIso8601Converter.cs` → `App/Channels/Serializers/TimeSpanIso8601.cs`
+- `App/Channels/Serializers/SensitivePropertyFilter.cs` → `App/Channels/Serializers/Filters/Sensitive.cs`
+- `App/Channels/Serializers/TransportPropertyFilter.cs` → `App/Channels/Serializers/Filters/Transport.cs`
+- `App/Channels/Serializers/ViewPropertyFilter.cs` → `App/Channels/Serializers/Filters/View.cs`
+- `App/Providers/IProvider.cs` → `App/Code/ICode.cs` (marker; folder rename Providers/ → Code/)
+- `App/Providers/this.cs` → `App/Code/this.cs` (registry; folder rename)
+- `App/Providers/this.Snapshot.cs` → `App/Code/this.Snapshot.cs`
+- `App/Data/Providers/DefaultGrepProvider.cs` → `App/Data/Code/Grep.cs`
+- `App/Data/Providers/IGrepProvider.cs` → `App/Data/Code/IGrep.cs`
+- `App/modules/llm/providers/OpenAiProvider.cs` → `App/modules/llm/code/OpenAi.cs`
+- `App/modules/llm/providers/ILlmProvider.cs` → `App/modules/llm/code/ILlm.cs`
+- `App/modules/builder/providers/IBuilderProvider.cs` → `App/modules/builder/code/IBuilder.cs`
+- `App/modules/builder/providers/DefaultBuilderProvider.cs` → `App/modules/builder/code/Default.cs`
+- `App/modules/crypto/providers/ICryptoProvider.cs` → `App/modules/crypto/code/ICrypto.cs`
+- `App/modules/crypto/providers/DefaultProvider.cs` → `App/modules/crypto/code/Default.cs`
+- `App/modules/assert/providers/IAssertProvider.cs` → `App/modules/assert/code/IAssert.cs`
+- `App/modules/assert/providers/DefaultAssertProvider.cs` → `App/modules/assert/code/Default.cs`
+- `App/modules/http/providers/IHttpProvider.cs` → `App/modules/http/code/IHttp.cs`
+- `App/modules/http/providers/DefaultHttpProvider.cs` → `App/modules/http/code/Default.cs`
+- `App/modules/ui/providers/ITemplateProvider.cs` → `App/modules/ui/code/ITemplate.cs`
+- `App/modules/ui/providers/FluidProvider.cs` → `App/modules/ui/code/Fluid.cs`
+- (any other `modules/X/providers/` follow the same pattern)
+- `App/Settings/ISettingsStore.cs` → `App/Settings/IStore.cs`
+- `App/Settings/SqliteSettingsStore.cs` → `App/Settings/Sqlite.cs`
+- `App/Settings/SettingsVariable.cs` → ABSORBED into `App/Settings/this.cs` (collection over Data; see Settings section)
 - `App/Snapshot/ISnapshotted.cs` → `App/Snapshot/ISnapshot.cs`
-- `App/Test/TestFile.cs` → `App/Tester/File.cs` (folder rename via stage 16)
+- `App/Test/TestFile.cs` → `App/Tester/File.cs` (folder rename via stage 17)
 - `App/Test/TestRun.cs` → `App/Tester/Run.cs`
 - `App/Test/TestStatus.cs` → `App/Tester/Status.cs`
 - `App/Channels/Serializers/Serializer/JsonStreamSerializer.cs` → `Json.cs`
@@ -481,9 +517,12 @@ Per Ingi's recommendation 3 ("check couple of files there and see where it takes
 - `App/Catalog/ExampleRenderer.cs` → `App/Modules/Schema/Render.cs`
 - `App/Catalog/this.cs` → `App/Modules/Schema/this.cs`
 
-**Folders renamed: 2** (stage 16, Rule D)
-- `App/Build/` → `App/Builder/`
-- `App/Test/` → `App/Tester/`
+**Folders renamed: 4+** (stage 17, Rule D + Provider→Code sweep)
+- `App/Build/` → `App/Builder/` (Rule D)
+- `App/Test/` → `App/Tester/` (Rule D)
+- `App/Providers/` → `App/Code/` (Provider→Code)
+- `App/Data/Providers/` → `App/Data/Code/` (Provider→Code)
+- All `App/modules/X/providers/` → `App/modules/X/code/` (Provider→Code; ~10 modules)
 
 **Files materially shrunk: 5**
 - `App/this.cs` 681 → <300 (multiple stages)
@@ -492,8 +531,10 @@ Per Ingi's recommendation 3 ("check couple of files there and see where it takes
 - `App/Builder/this.cs` (gains content from App.Start, stage 12; gains Choices subfolder)
 - `App/Types/this.cs` (becomes partial; MIME block moves to Channels/Serializers/Formats; Registry.cs and Conversion.cs partial siblings absorb Utils content)
 
-**Folders unchanged:** Actor, Attributes, Cache (just a rename), Config, Data (mostly), Debug, Events (collapsed), FileSystem, Goals, Services, Settings, Snapshot (just a rename), Statics, Variables (gains Reserved.cs).
+**Folders unchanged:** Actor, Attributes, Cache (just a rename), Config, Data (mostly), Debug, Events (collapsed), FileSystem, Goals, Services, Snapshot (just a rename), Statics, Variables (gains Reserved.cs).
+
+**Settings reworked:** `SettingsVariable` absorbed into `Settings/this.cs` as a collection over Data; `ISettingsStore` → `IStore.cs`; `SqliteSettingsStore` → `Sqlite.cs`; new `Variables.RegisterNavigable(name, resolver)` mechanism wires `%Settings.X%` resolution.
 
 ---
 
-This tree is the architect's destination, revised against your v1 review and the v3 absorption pass (2026-05-08). Items still open are flagged in [Open judgment calls](#open-judgment-calls). Provider→Code (open question E) is the most consequential remaining discussion; the audit-substrate question (open question I) is the second.
+This tree is the architect's destination, revised against your v1 review and the v3 absorption pass (2026-05-08). All naming/shape questions are settled; the audit trail lives under [Judgment calls — all resolved](#judgment-calls--all-resolved). Coder-side execution detail (e.g. F's Events sub-foldering blast-radius) is settled when each stage is approached.

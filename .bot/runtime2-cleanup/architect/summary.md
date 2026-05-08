@@ -1,5 +1,133 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest) — coder-handoff cleanup pass
+
+Final pass before stage briefs carve. Two structural fixes to the plan, plus a sweep for stale references.
+
+### Stage renumbering (settings moves to its proper tier position)
+
+Audit pass surfaced that `settings-collection-rework` was numbered 19 but is Tier 3 work (real shape change), so it sat after the Tier 4 hygiene sweeps in the run order. The plan's own ordering principle is "biggest wins × isolation first" with hygiene last — the position contradicted that.
+
+Renumbered:
+
+| Old | New | Slug |
+|-----|-----|------|
+| 13 | 14 | timespan-iso-8601-sweep |
+| 14 | 15 | compound-name-rename |
+| 15 | 16 | static-state-eviction-sweep |
+| 16 | 17 | builder-tester-rename |
+| 17 | 18 | mime-table-split |
+| 18 | 19 | provider-to-code-rename |
+| 19 | 13 | settings-collection-rework |
+
+All cross-references in plan.md, principles.md, and post-cleanup-tree.md updated. Two-pass placeholder substitution; no stage-number collisions left.
+
+### Audit gap closed
+
+Found three gaps where the destination tree promised shape changes that no stage owned:
+
+1. **Settings rework had no stage** → added stage 13 (`settings-collection-rework`) covering the collection-over-Data shape, IStore/Sqlite renames, and the new `Variables.RegisterNavigable(name, resolver)` mechanism.
+2. **Stage 14 (`compound-name-rename`)'s one-liner was too narrow** — named only `MigrationEnvelope` and `EventContext` while actually absorbing 8+ renames and a new `Filters/this.cs` collection. One-liner expanded to enumerate.
+3. **`TypeJsonConverter` cross-folder relocation had no clear owner** → folded into stage 15's expanded scope.
+
+### Final stage index
+
+| # | Tier | Slug | Status |
+|---|------|------|--------|
+| 1 | 1 | serializers-stage-6-finish | pending |
+| 2 | 1 | channels-v1-helpers-drop | pending |
+| 3 | 1 | keepalive-collection | pending |
+| 4 | 1 | dispose-self-owns | pending |
+| 5 | 1 | getstatic-shim-drop | pending |
+| 6 | 1 | app-data-inheritance-drop | pending |
+| 7 | 2 | callstack-promote-app-property | pending |
+| 8 | 2 | read-file-off-channels | pending |
+| 9 | 2 | catalog-dissolve-to-modules-schema | pending |
+| 10 | 3 | app-run-redesign | pending |
+| 11 | 3 | errors-app-backref-drop | pending |
+| 12 | 3 | build-branch-to-build-this | pending |
+| 13 | 3 | settings-collection-rework | pending |
+| 14 | 4 | timespan-iso-8601-sweep | pending |
+| 15 | 4 | compound-name-rename | pending |
+| 16 | 4 | static-state-eviction-sweep | pending |
+| 17 | 4 | builder-tester-rename | pending |
+| 18 | 4 | mime-table-split | pending |
+| 19 | 4 | provider-to-code-rename | pending |
+
+Ready to carve stage 1.
+
+---
+
+## 2026-05-08 (later) — v5 review pass: Settings reworked, Provider→Code settled, Rule A sub-rule added
+
+Walked the latest review thread end-to-end. Five small renames + two structural reworks now settled in the tree.
+
+### What changed
+
+**Tree edits (post-cleanup-tree.md):**
+- **PropertyFilters → Filters** — folder + file renames; `Sensitive.cs`, `Transport.cs`, `View.cs`, `this.cs` under `Channels/Serializers/Filters/`. Both `Property` prefix and `Filter` suffix dropped (folder says it).
+- **Converters cluster** — three different fixes. `TimeSpanIso8601Converter.cs` → flat `TimeSpanIso8601.cs` in `Serializers/`. `TypeJsonConverter.cs` relocates to `App/Data/Json.cs` (lives with the Type it serves). `UnregisteredMimeType.cs` kept (typed exceptions are conventionally compound — not a Rule A hit). No top-level `App/Converters/` folder (same logic as the rejected `App/Json/`: mechanism, not domain).
+- **Settings reworked** — `SettingsVariable` carried an inheritance smell (Data subclass acting as both runtime navigator AND storage value). New shape: `Settings/this.cs` is a collection over Data (like `Goals/this.cs`); `IStore.cs` is the persistence interface; `Sqlite.cs` is the impl. `%Settings.X%` resolution now goes through a new `Variables.RegisterNavigable(name, resolver)` mechanism — generalizable hook for any future non-Data navigable mount.
+- **Provider → Code, end-to-end** — settled the long-running open question. Driver is PLang-vocabulary coherence ("everything is goals, except where you need code"). `App/Providers/` → `App/Code/`; `IProvider` → `ICode` (fields stay — they map to developer-DLL-registration flow). All per-module `providers/` → `code/`. Per-module interfaces drop suffix (`IBuilder`, `ILlm`, `ICrypto`, `IHttp`, `IIdentity`, `IAssert`, `ITemplate`). Implementations drop both Default and Provider: variant-named where useful (`OpenAi.cs`, `Fluid.cs`, `Grep.cs`), `Default.cs` where the role is already in the parent path (assert/builder/http/identity modules).
+- **DefaultGrepProvider / OpenAiProvider** — folded into the Provider→Code sweep.
+
+**Principles edits (principles.md):**
+- **Rule A sub-rule added** — "If the class name's role-pattern suffix names the folder it lives in, drop the suffix." With the typed-exception carve-out so the screen doesn't false-positive on `: System.Exception` types.
+- **Rule D table fix** — corrected `plang p build` (fictional) → `plang build` as the today form, with `plang --builder` as the after form. Dropped the verb-commands-stay-verbs carve-out (no concrete anchor).
+
+**Plan edits (plan.md):**
+- **Stage 18 added** — `provider-to-code-rename`. End-to-end sweep across modules; the largest rename in the cleanup.
+- **Stage 16 fixed** — CLI line corrected to `plang build → plang --builder, plang --test → plang --tester` (no fictional verb commands).
+
+### Settled this session
+
+- A. JsonSerializerOptions: disperse to consumers (no synthetic root home)
+- B. Catalog placement: dissolves into Modules/Schema (already settled v3)
+- C. PlangSerializer naming: Plang/ subfolder (already settled v3)
+- D. RestoredFrame → Position (already settled v3)
+- E. **Provider → Code**: full rename (settled today)
+- F. PropertyFilters → Filters (settled today)
+- G. Converters cluster (settled today)
+- H. Settings shape: collection over Data, IStore + Sqlite + this.cs, RegisterNavigable mechanism (settled today)
+- I. ChildAppCreated (still open; settle when stage 15 carves)
+
+### Open after this session
+
+Nothing genuinely open in this plan. Three items deferred (parked in `plan.md` "What's deferred"):
+- `App.Statics` → goal-backed dynamic property
+- `Data` parameter-lifecycle (the `data.ResetResolution()` smell)
+- v3 audit methodology — its own follow-up cleanup branch when there's appetite
+
+ChildAppCreated, Info.cs / View.cs explicitly dropped (Ingi 2026-05-08).
+
+### Stage index (current)
+
+| # | Tier | Slug | Status |
+|---|------|------|--------|
+| 1 | 1 | serializers-stage-6-finish | pending |
+| 2 | 1 | channels-v1-helpers-drop | pending |
+| 3 | 1 | keepalive-collection | pending |
+| 4 | 1 | dispose-self-owns | pending |
+| 5 | 1 | getstatic-shim-drop | pending |
+| 6 | 1 | app-data-inheritance-drop | pending |
+| 7 | 2 | callstack-promote-app-property | pending |
+| 8 | 2 | read-file-off-channels | pending |
+| 9 | 2 | catalog-dissolve-to-modules-schema | pending |
+| 10 | 3 | app-run-redesign | pending |
+| 11 | 3 | errors-app-backref-drop | pending |
+| 12 | 3 | build-branch-to-build-this | pending |
+| 13 | 4 | timespan-iso-8601-sweep | pending |
+| 14 | 4 | compound-name-rename | pending |
+| 15 | 4 | static-state-eviction-sweep | pending |
+| 16 | 4 | builder-tester-rename | pending |
+| 17 | 4 | mime-table-split | pending |
+| 18 | 4 | provider-to-code-rename | pending (NEW) |
+| 19 | 3 | settings-collection-rework | pending (NEW) |
+
+Stage 1 (`serializers-stage-6-finish`) is still ready to carve. Stage 19 added retrospectively after the audit pass surfaced that the Settings tree-promised shape change had no stage owner.
+
+---
+
 ## 2026-05-08 — v4 round of review settled; plan ready for context clear
 
 Today's work absorbed the prior `runtime2-obp-restructure` branch (architect v1-v3) and walked Ingi's review comments end-to-end. Plan is now in a state where context can clear cleanly — durable artifacts cover everything important.

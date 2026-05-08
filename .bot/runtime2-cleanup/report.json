@@ -6,10 +6,10 @@
       "bot": "architect",
       "timestamp_start": "2026-05-07T11:00:00Z",
       "timestamp_end": "2026-05-07T13:30:00Z",
-      "intent": "v1 plan: OBP cleanup of PLang/App/ — sequence the refactor as thirteen independent shippable stages.",
+      "intent": "v1 plan: OBP cleanup of PLang/App/ \u2014 sequence the refactor as thirteen independent shippable stages.",
       "before": {
         "assumptions": "Channels work (runtime2-channels v1) is shipped and may or may not be merged to trunk. Walked PLang/App/this.cs (681 lines), Channels/this.cs (277 lines), Modules/this.cs (464 lines) on the latest tip. Identified persistent smells: App.Run god method (85 lines, 8 foreign mutations), KeepAlive private collection enforced from outside, Modules.Describe on the wrong owner, dual Serializers storage (Stage 6 not finished), v1 channel-write residue, app.Debug.CallStack placement, GetStatic shim, Errors.App injection. New OBP rules sharpened in conversation: compound class names red flag (Rule A), Get<Plural>() missing-collection (Rule B).",
-        "risk": "Plan churn if branch trunk question not settled. Stage ordering is opinionated — Ingi may reorder. This branch is the planning home only; implementation work will happen on per-stage cleanup-<slug> branches forked off the trunk."
+        "risk": "Plan churn if branch trunk question not settled. Stage ordering is opinionated \u2014 Ingi may reorder. This branch is the planning home only; implementation work will happen on per-stage cleanup-<slug> branches forked off the trunk."
       },
       "plan": ".bot/runtime2-cleanup/architect/plan.md",
       "actions": [
@@ -51,7 +51,7 @@
         }
       ],
       "after": {
-        "status": "v1 plan ready for Ingi review on the runtime2-cleanup branch. Spine + principles topic doc + summary + report. No stage files carved yet — those come per-stage when approached.",
+        "status": "v1 plan ready for Ingi review on the runtime2-cleanup branch. Spine + principles topic doc + summary + report. No stage files carved yet \u2014 those come per-stage when approached.",
         "health": "ok",
         "notes": "Four open questions block stage 1 carving. No code changes; pure planning session. Branch was forked from runtime2-channels tip on 2026-05-07; first attempt accidentally wrote into the channels branch's architect tree and was reverted before this branch was created."
       }
@@ -63,7 +63,7 @@
       "timestamp_end": "2026-05-07T14:30:00Z",
       "intent": "Add Rule C (static fields are a missing @this) to the OBP sharpened-rules and add a Tier 4 stage for the eviction sweep.",
       "before": {
-        "assumptions": "Rule A (compound names) and Rule B (Get<Plural>()) already in plan/principles.md. PLang/ tree has ~5 static mutable fields and 81 static readonly — most of the latter are caches, JsonSerializerOptions, lock objects. Static methods (factory methods, conversion operators) are not in scope.",
+        "assumptions": "Rule A (compound names) and Rule B (Get<Plural>()) already in plan/principles.md. PLang/ tree has ~5 static mutable fields and 81 static readonly \u2014 most of the latter are caches, JsonSerializerOptions, lock objects. Static methods (factory methods, conversion operators) are not in scope.",
         "risk": "Initial wording was too broad ('any static variable'); narrowed in conversation to fields-not-methods, with three carve-outs. Carve-outs need to stay tight or the rule becomes toothless. Walked PlangTypeIndex.cs to confirm the lock argument: lazy init creates the racing-thread problem the lock guards; once data has @this owner with deterministic construction, both the lock and the static-ness disappear."
       },
       "actions": [
@@ -74,7 +74,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Renamed section 'The two architect-sharpened rules' to 'The architect-sharpened rules' (prevents future churn when more land). Added Rule C — static fields are a missing @this. Three carve-outs: const, AsyncLocal<T>, lock objects whose guarded data is irreducibly static (empty set on this codebase). Quick-screen grep included. Updated definition-of-done to add the static-field screen alongside the two-capital and Get<Plural>() screens."
+          "context": "Renamed section 'The two architect-sharpened rules' to 'The architect-sharpened rules' (prevents future churn when more land). Added Rule C \u2014 static fields are a missing @this. Three carve-outs: const, AsyncLocal<T>, lock objects whose guarded data is irreducibly static (empty set on this codebase). Quick-screen grep included. Updated definition-of-done to add the static-field screen alongside the two-capital and Get<Plural>() screens."
         },
         {
           "paths": [
@@ -83,7 +83,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Updated 'Stages 1–13' → 'Stages 1–15'. Added Tier 4 stage 15: static-state-eviction-sweep. Stage description flags the two hits that need design notes before the sweep runs (OpenAiProvider._requestCount on an actor-resolved provider — wrong scope; Test.run.ChildAppCreated static event — wrong shape) and the mechanical targets (PlangTypeIndex → App.Types.@this, JsonSerializerOptions singletons, ReservedKeywords)."
+          "context": "Updated 'Stages 1\u201313' \u2192 'Stages 1\u201315'. Added Tier 4 stage 15: static-state-eviction-sweep. Stage description flags the two hits that need design notes before the sweep runs (OpenAiProvider._requestCount on an actor-resolved provider \u2014 wrong scope; Test.run.ChildAppCreated static event \u2014 wrong shape) and the mechanical targets (PlangTypeIndex \u2192 App.Types.@this, JsonSerializerOptions singletons, ReservedKeywords)."
         }
       ],
       "after": {
@@ -97,10 +97,10 @@
       "bot": "architect",
       "timestamp_start": "2026-05-07T14:35:00Z",
       "timestamp_end": "2026-05-07T15:10:00Z",
-      "intent": "Draw the post-cleanup destination tree for PLang/App/ — give Ingi a visual artifact to judge the end state instead of reading 15 stages of prose.",
+      "intent": "Draw the post-cleanup destination tree for PLang/App/ \u2014 give Ingi a visual artifact to judge the end state instead of reading 15 stages of prose.",
       "before": {
         "assumptions": "All 15 stages now defined. Walked PLang/App/ filesystem (full tree, 30+ folders), confirmed loose roots (Info.cs, View.cs), checked ambiguous files (Debug/this.cs is 748 lines and its scope survives stage 7 because only the property is promoted; Catalog has ExampleRenderer/ExampleHelpers as Rule A candidates not currently in stage 14's named list). Tree is best presented as a single annotated end-state, not two side-by-side trees, because the diff is what carries meaning.",
-        "risk": "Several judgment calls in the tree are architect's lean, not settled fact: JsonSerializerOptions destination (disperse vs single home vs Channels/Serializers), ReservedKeywords destination (Variables vs own folder), OpenAiProvider counter (delete vs instance vs App-level), Test.ChildAppCreated shape. All flagged as open in the doc. PropertyFilters/ collection and Goals/Goal/Methods.cs partial-class rename are deferred — flagged for Ingi to decide whether to add stages."
+        "risk": "Several judgment calls in the tree are architect's lean, not settled fact: JsonSerializerOptions destination (disperse vs single home vs Channels/Serializers), ReservedKeywords destination (Variables vs own folder), OpenAiProvider counter (delete vs instance vs App-level), Test.ChildAppCreated shape. All flagged as open in the doc. PropertyFilters/ collection and Goals/Goal/Methods.cs partial-class rename are deferred \u2014 flagged for Ingi to decide whether to add stages."
       },
       "actions": [
         {
@@ -125,7 +125,7 @@
       "after": {
         "status": "Destination tree written and linked from plan.md. Six open judgment calls surfaced for Ingi: JSON-options home, ReservedKeywords home, OpenAiProvider counter handling, Test.ChildAppCreated event shape, loose roots Info.cs/View.cs, PropertyFilters/ collection.",
         "health": "ok",
-        "notes": "No code changes. Doc is the architect's lean, not a contract — every stage we land may push back on the tree. Architect-side: ready to start carving stage 1 (serializers-stage-6-finish) once Ingi has reviewed the tree."
+        "notes": "No code changes. Doc is the architect's lean, not a contract \u2014 every stage we land may push back on the tree. Architect-side: ready to start carving stage 1 (serializers-stage-6-finish) once Ingi has reviewed the tree."
       }
     },
     {
@@ -136,7 +136,7 @@
       "intent": "Address Ingi's six review comments on post-cleanup-tree.md (v1) and pull latest runtime2 (channels merge + io-channels docs).",
       "before": {
         "assumptions": "Branch was on the pre-channels-merge runtime2 base. Ingi posted a big multi-bullet review comment plus five focused ones on the tree. The merge from runtime2 brings in the channels work which already realised parts of stage 14: EventContext.cs renamed to Channel/Events/this.cs, MigrationEnvelope.cs deleted, Variables/Calls/ added. Some review bullets were rendered moot by the merge (Migration removal); some were sharpened (case-mismatch concern on JSON options, with a Rule C frame).",
-        "risk": "The big bullet comment spans agree / disagree / clarify across 17 sub-points — single-status resolution wouldn't reflect reality. Posted comprehensive reply and left it open so Ingi can re-engage per bullet if anything in the rewrite missed. Provider→Code rename is a real design question parked as Open judgment call E. Catalog placement under Build/ is parked as B (waiting on Ingi to recall the prior thread)."
+        "risk": "The big bullet comment spans agree / disagree / clarify across 17 sub-points \u2014 single-status resolution wouldn't reflect reality. Posted comprehensive reply and left it open so Ingi can re-engage per bullet if anything in the rewrite missed. Provider\u2192Code rename is a real design question parked as Open judgment call E. Catalog placement under Build/ is parked as B (waiting on Ingi to recall the prior thread)."
       },
       "actions": [
         {
@@ -146,7 +146,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Full rewrite reflecting v1 review. Tree updated for: MemoryStepCache → Cache/Memory.cs; Callback/Signature/ folded into Callback/this.cs; Choices → Build/Choices/; PropertyFilters/{Sensitive,Transport,View}.cs collection; Json.cs/Text.cs renames; Data/Converter.cs; Snapshot/ISnapshot.cs; Test/{File,Run,Status}.cs; ReservedKeywords → Variables/Reserved.cs (all const/readonly); OpenAi counter → DELETE; Events/ collapsed (Lifecycle layer dropped). New 'Inline answers to v1 review questions' section walks each bullet. Open judgment calls revised: A (JSON home — shifted to single-home given case-mismatch concern), B (Catalog under Build/ — waiting on prior thread), C (Plang vs PlangData — depends on legacy mimetype usage), D (RestoredFrame → Call/Position low priority), E (Provider→Code design question), F (Events collapse blast radius), G (ChildAppCreated event shape), H (Info/View loose roots deferred unchanged)."
+          "context": "Full rewrite reflecting v1 review. Tree updated for: MemoryStepCache \u2192 Cache/Memory.cs; Callback/Signature/ folded into Callback/this.cs; Choices \u2192 Build/Choices/; PropertyFilters/{Sensitive,Transport,View}.cs collection; Json.cs/Text.cs renames; Data/Converter.cs; Snapshot/ISnapshot.cs; Test/{File,Run,Status}.cs; ReservedKeywords \u2192 Variables/Reserved.cs (all const/readonly); OpenAi counter \u2192 DELETE; Events/ collapsed (Lifecycle layer dropped). New 'Inline answers to v1 review questions' section walks each bullet. Open judgment calls revised: A (JSON home \u2014 shifted to single-home given case-mismatch concern), B (Catalog under Build/ \u2014 waiting on prior thread), C (Plang vs PlangData \u2014 depends on legacy mimetype usage), D (RestoredFrame \u2192 Call/Position low priority), E (Provider\u2192Code design question), F (Events collapse blast radius), G (ChildAppCreated event shape), H (Info/View loose roots deferred unchanged)."
         },
         {
           "paths": [
@@ -164,7 +164,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Posted six architect replies via the review server API. Four user comments resolved (JSON options, ReservedKeywords, OpenAi counter, PropertyFilters). Two left open intentionally — the big bullet comment (multi-status, can't be resolved as one) and ChildAppCreated (design TBD until stage 15 carves)."
+          "context": "Posted six architect replies via the review server API. Four user comments resolved (JSON options, ReservedKeywords, OpenAi counter, PropertyFilters). Two left open intentionally \u2014 the big bullet comment (multi-status, can't be resolved as one) and ChildAppCreated (design TBD until stage 15 carves)."
         },
         {
           "paths": [
@@ -177,9 +177,9 @@
         }
       ],
       "after": {
-        "status": "Tree v2 reflects all settled review feedback. Three substantive design questions parked open for Ingi: Provider→Code (concept change vs find-replace), Catalog placement (under Build/?), and Plang vs PlangData (legacy mimetype usage). Branch is up-to-date with runtime2; ready for stage 1 carve once design questions are settled.",
+        "status": "Tree v2 reflects all settled review feedback. Three substantive design questions parked open for Ingi: Provider\u2192Code (concept change vs find-replace), Catalog placement (under Build/?), and Plang vs PlangData (legacy mimetype usage). Branch is up-to-date with runtime2; ready for stage 1 carve once design questions are settled.",
         "health": "ok",
-        "notes": "No code changes — pure planning. The Provider→Code question is the most consequential: my position is that it's only a good rename if it carries a story-level concept change ('runtime no longer talks about providers'), not a 88-file find-replace. Waiting on Ingi's read."
+        "notes": "No code changes \u2014 pure planning. The Provider\u2192Code question is the most consequential: my position is that it's only a good rename if it carries a story-level concept change ('runtime no longer talks about providers'), not a 88-file find-replace. Waiting on Ingi's read."
       }
     },
     {
@@ -190,7 +190,7 @@
       "intent": "Audit the prior-attempt branch (origin/runtime2-obp-restructure architect v1-v3) for missed insights, then absorb the ones Ingi accepts into principles + tree + plan.",
       "before": {
         "assumptions": "Ingi's response to the audit was point-by-point: agree on Rules D and E, agree Catalog dissolves into Modules.Schema (he confirmed runtime uses builder via the builder module), agree on MIME table split, defer audit-methodology and additional gap categories ('lets talk about this after'), source-gen update is moot due to recent rewrite, agree on Modules-out-of-scope rationale, light-touch on /shared/app-tree audit.",
-        "risk": "Verified two facts before editing: (1) source generator no longer references App.Utils.* — confirmed by grep on PLang.Generators (Ingi was right, the LazyParamsGenerator.cs:638 reference is gone after the recent rewrite); (2) /shared/app-tree/ directory does NOT exist anywhere in the repo — never has — so v3's audit methodology is blocked on missing substrate."
+        "risk": "Verified two facts before editing: (1) source generator no longer references App.Utils.* \u2014 confirmed by grep on PLang.Generators (Ingi was right, the LazyParamsGenerator.cs:638 reference is gone after the recent rewrite); (2) /shared/app-tree/ directory does NOT exist anywhere in the repo \u2014 never has \u2014 so v3's audit methodology is blocked on missing substrate."
       },
       "actions": [
         {
@@ -200,7 +200,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Added Rule D (gerund-named app-graph properties — Builder/Tester pattern with three-form table folder/property/CLI) and Rule E (decomposed parameters that should navigate — worked example Catalog.Build(modules) → app.Modules.Schema.Build()). Both with quick-screen greps. Updated definition-of-done to include both new screens."
+          "context": "Added Rule D (gerund-named app-graph properties \u2014 Builder/Tester pattern with three-form table folder/property/CLI) and Rule E (decomposed parameters that should navigate \u2014 worked example Catalog.Build(modules) \u2192 app.Modules.Schema.Build()). Both with quick-screen greps. Updated definition-of-done to include both new screens."
         },
         {
           "paths": [
@@ -209,7 +209,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Major v3-absorption pass: Catalog dissolves into App/Modules/Schema/ with Spec/Action.cs + Spec/Example.cs (per Ingi's L235 comment). Build → Builder, Test → Tester (Rule D). Channels/Serializers/Formats/ added (extension table). Types gains Clr(mimeType) overload; Registry.cs and Conversion.cs partial siblings. Choices marked tentative (★) for re-evaluation post-Catalog. Open question B resolved (Catalog dissolves into Schema). New open question I (audit substrate missing). Net stats updated: 9 folders added, 2 folders renamed, 14 files renamed, more files deleted via Catalog dissolve."
+          "context": "Major v3-absorption pass: Catalog dissolves into App/Modules/Schema/ with Spec/Action.cs + Spec/Example.cs (per Ingi's L235 comment). Build \u2192 Builder, Test \u2192 Tester (Rule D). Channels/Serializers/Formats/ added (extension table). Types gains Clr(mimeType) overload; Registry.cs and Conversion.cs partial siblings. Choices marked tentative (\u2605) for re-evaluation post-Catalog. Open question B resolved (Catalog dissolves into Schema). New open question I (audit substrate missing). Net stats updated: 9 folders added, 2 folders renamed, 14 files renamed, more files deleted via Catalog dissolve."
         },
         {
           "paths": [
@@ -218,7 +218,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Stage 9 renamed: 'modules-to-catalog-lift' → 'catalog-dissolve-to-modules-schema' (different shape: Catalog disappears, content goes under Modules/Schema/). Stage 16 added: builder-tester-rename. Stage 17 added: mime-table-split. Stages 1-15 → 1-17. Updated cross-cutting decision #3 to reference Rules A-E (was just 'two new rules')."
+          "context": "Stage 9 renamed: 'modules-to-catalog-lift' \u2192 'catalog-dissolve-to-modules-schema' (different shape: Catalog disappears, content goes under Modules/Schema/). Stage 16 added: builder-tester-rename. Stage 17 added: mime-table-split. Stages 1-15 \u2192 1-17. Updated cross-cutting decision #3 to reference Rules A-E (was just 'two new rules')."
         },
         {
           "paths": [
@@ -231,9 +231,9 @@
         }
       ],
       "after": {
-        "status": "v3 absorption complete. Five sharpened rules now active (A compound-name, B Get<Plural>, C static-fields, D gerund-property, E decomposed-parameters). Stage list grew to 17. Catalog dissolves into Modules.Schema; Build/Test → Builder/Tester; MIME table splits cleanly. Three open design questions remaining: Provider→Code rename (E), Plang vs PlangData mimetype (C in tree's open list), audit substrate (I).",
+        "status": "v3 absorption complete. Five sharpened rules now active (A compound-name, B Get<Plural>, C static-fields, D gerund-property, E decomposed-parameters). Stage list grew to 17. Catalog dissolves into Modules.Schema; Build/Test \u2192 Builder/Tester; MIME table splits cleanly. Three open design questions remaining: Provider\u2192Code rename (E), Plang vs PlangData mimetype (C in tree's open list), audit substrate (I).",
         "health": "ok",
-        "notes": "Discovered /shared/app-tree/ doesn't exist — v3's audit methodology is blocked. Flagged in tree as open question I with three resolution paths. Architect lean: tightening rules covers a lot of what the audit would catch; (a) building the surface files is too much overhead unless we commit to a long-term doc artifact. Waiting on Ingi's call. Choices placement also flagged tentative (★) — re-evaluate after Catalog dissolves to see if the build/runtime border has shifted enough that Choices wants a different home."
+        "notes": "Discovered /shared/app-tree/ doesn't exist \u2014 v3's audit methodology is blocked. Flagged in tree as open question I with three resolution paths. Architect lean: tightening rules covers a lot of what the audit would catch; (a) building the surface files is too much overhead unless we commit to a long-term doc artifact. Waiting on Ingi's call. Choices placement also flagged tentative (\u2605) \u2014 re-evaluate after Catalog dissolves to see if the build/runtime border has shifted enough that Choices wants a different home."
       }
     },
     {
@@ -243,8 +243,8 @@
       "timestamp_end": "2026-05-08T13:00:00Z",
       "intent": "Split rule material per Ingi's distinction: audit recipes go in Documentation/v0.2/audit/; per-bot OBP lens suggestions go in mounted drive /shared/bots/obp/. Existing OBP docs unchanged.",
       "before": {
-        "assumptions": "Ingi's distinction between audit material (find smells in existing code) and authoring material (don't write smells in the first place) is structurally correct. The 5 sharpened rules with grep recipes are audit material; the foundational principles + per-bot workflow guidance is authoring material. Existing /CLAUDE.md and Documentation/v0.2/good_to_know.md already cover the foundational 4 smells and the OBP naming principle well — additive work, not restructure.",
-        "risk": "Per-bot lenses could drift from the shared core over time. Mitigated by keeping lenses small (~50 lines each, workflow framing only) and pointing at core.md for principles. Bot lens docs are suggestions in mounted drive, not committed proposals — Ingi's call on whether to formalize them through the proposal mechanism later."
+        "assumptions": "Ingi's distinction between audit material (find smells in existing code) and authoring material (don't write smells in the first place) is structurally correct. The 5 sharpened rules with grep recipes are audit material; the foundational principles + per-bot workflow guidance is authoring material. Existing /CLAUDE.md and Documentation/v0.2/good_to_know.md already cover the foundational 4 smells and the OBP naming principle well \u2014 additive work, not restructure.",
+        "risk": "Per-bot lenses could drift from the shared core over time. Mitigated by keeping lenses small (~50 lines each, workflow framing only) and pointing at core.md for principles. Bot lens docs are suggestions in mounted drive, not committed proposals \u2014 Ingi's call on whether to formalize them through the proposal mechanism later."
       },
       "actions": [
         {
@@ -255,7 +255,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Audit folder. README explains when to use (end-of-refactor sweep, onboarding, specific-smell investigation) and how to extend (new pattern → add the screen + filter + worked example). obp-rules.md has all 5 sharpened rules with full grep screens, filter recipes, today's signal/noise counts on PLang/App/, and worked examples linked to current cleanup stages."
+          "context": "Audit folder. README explains when to use (end-of-refactor sweep, onboarding, specific-smell investigation) and how to extend (new pattern \u2192 add the screen + filter + worked example). obp-rules.md has all 5 sharpened rules with full grep screens, filter recipes, today's signal/noise counts on PLang/App/, and worked examples linked to current cleanup stages."
         },
         {
           "paths": [
@@ -272,7 +272,7 @@
         }
       ],
       "after": {
-        "status": "Audit folder committed to Documentation/v0.2/audit/. Per-bot lens suggestions in /shared/bots/obp/ (5 files, mounted drive — not committed). Existing OBP docs unchanged. Branch ready for stage 1 carve when design questions settle.",
+        "status": "Audit folder committed to Documentation/v0.2/audit/. Per-bot lens suggestions in /shared/bots/obp/ (5 files, mounted drive \u2014 not committed). Existing OBP docs unchanged. Branch ready for stage 1 carve when design questions settle.",
         "health": "ok",
         "notes": "Open question for Ingi: when to read through the lens suggestions and decide whether to formalize via proposal mechanism. My lean: end-of-refactor, when we have real cleanup-experience to validate the lens content against."
       }
@@ -284,8 +284,8 @@
       "timestamp_end": "2026-05-08T14:30:00Z",
       "intent": "Final review pass before context clear: address Ingi's new comments on the tree (Position.cs, Plang/ folder, App/Json/ pushback, ExampleHelpers, comment-tool issue) and update summary.md so re-onboarding is clean.",
       "before": {
-        "assumptions": "Ingi wants to clear context. Plan needs to be in shape that a fresh architect can re-load cleanly. Five new comments on the tree to settle first. Most critical pushback: App/Json/ as root mount was wrong (Json is a format, not a domain) — must revert that v3 decision.",
-        "risk": "Low. All artifacts are durable. Only thing genuinely open after this session: Provider→Code rename (still needs Ingi's read), ChildAppCreated event shape (stage 15 design)."
+        "assumptions": "Ingi wants to clear context. Plan needs to be in shape that a fresh architect can re-load cleanly. Five new comments on the tree to settle first. Most critical pushback: App/Json/ as root mount was wrong (Json is a format, not a domain) \u2014 must revert that v3 decision.",
+        "risk": "Low. All artifacts are durable. Only thing genuinely open after this session: Provider\u2192Code rename (still needs Ingi's read), ChildAppCreated event shape (stage 15 design)."
       },
       "actions": [
         {
@@ -295,7 +295,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Tree updates: (1) App/Json/ removed — JsonSerializerOptions disperse to consumers (Ingi: format not domain). (2) Channels/Serializers/Serializer/Plang/ subfolder added with this.cs + Data.cs (room for Protobuf.cs later). (3) RestoredFrame → Call/Position.cs settled. (4) ExampleHelpers.cs deleted entirely (record constructor covers the use case). Open questions A, B, C, D all resolved; F still open (low priority); E (Provider→Code) still needs Ingi."
+          "context": "Tree updates: (1) App/Json/ removed \u2014 JsonSerializerOptions disperse to consumers (Ingi: format not domain). (2) Channels/Serializers/Serializer/Plang/ subfolder added with this.cs + Data.cs (room for Protobuf.cs later). (3) RestoredFrame \u2192 Call/Position.cs settled. (4) ExampleHelpers.cs deleted entirely (record constructor covers the use case). Open questions A, B, C, D all resolved; F still open (low priority); E (Provider\u2192Code) still needs Ingi."
         },
         {
           "paths": [
@@ -313,14 +313,51 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Posted 4 architect replies. Resolved 3 user comments (Position.cs + Plang folder; App/Json drop; ExampleHelpers delete). Left 1 open intentionally — the comment-tool meta-issue (line drift) is a real tool problem and the original ChildAppCreated comment underneath it stays open until stage 15."
+          "context": "Posted 4 architect replies. Resolved 3 user comments (Position.cs + Plang folder; App/Json drop; ExampleHelpers delete). Left 1 open intentionally \u2014 the comment-tool meta-issue (line drift) is a real tool problem and the original ChildAppCreated comment underneath it stays open until stage 15."
         }
       ],
       "after": {
         "status": "Plan is ready for context clear. Durable artifacts cover everything: plan.md spine + 17 stages, principles.md with Rules A-E + foundational 4, post-cleanup-tree.md destination, audit folder, per-bot lens suggestions in /shared/, summary.md log with re-onboarding path. Stage 1 (serializers-stage-6-finish) ready to carve.",
         "health": "ok",
-        "notes": "Two genuine opens remaining: Provider→Code rename (Ingi's call), ChildAppCreated event shape (stage 15 design TBD). Neither blocks stage 1. Comment-tool line-drift issue surfaced but isn't architect work."
+        "notes": "Two genuine opens remaining: Provider\u2192Code rename (Ingi's call), ChildAppCreated event shape (stage 15 design TBD). Neither blocks stage 1. Comment-tool line-drift issue surfaced but isn't architect work."
       }
+    },
+    {
+      "id": "1cea647c-31c6-4384-8733-7eee451c5664",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T14:00:00Z",
+      "intent": "Carve stage-1 brief (serializers-stage-6-finish) for coder handoff.",
+      "before": {
+        "assumptions": "Plan, principles, tree, summary all settled and renumbered post coder-handoff cleanup pass. Stage 1 = drop the Serializers carry-overs on Channels.@this and Channel.Stream.@this; route through App.Serializers (canonical singleton already exists at App.this.cs:154).",
+        "risk": "Stream channel needs App reference at WriteCore/ReadCore time \u2014 Channel base class already exposes App via internal setter, so the wiring works. v1 helpers in Channels.@this (also touch Serializers) get cleaned in stage 2; stage 1 routes them through App.Serializers in the meantime rather than deleting them."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-1-serializers-stage-6-finish.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-1-serializers-stage-6-finish.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage brief: drop Channels.@this.Serializers + Channel.Stream.@this.Serializers carry-overs; route 4 internal call sites through _app.Serializers / App.Serializers. External callers (Goals, DefaultFileProvider, Setup) already use app.Serializers \u2014 no migration. Smell #3 (same logical thing stored twice across types)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan.md stage 1 row links to the carved brief and notes carve date."
+        }
+      ],
+      "after": {
+        "status": "stage-1 brief carved and committed; ready for coder handoff",
+        "health": "plan + principles + tree + summary all consistent post-renumbering and audit; no unresolved planning questions",
+        "notes": "Stage 1 brief covers two file edits (Channels/this.cs, Channel/Stream/this.cs), one ctor-parameter removal, four internal call-site updates. Out-of-scope items explicitly named (v1 helpers \u2192 stage 2; ReadAsync<T> \u2192 stage 8; renames \u2192 stage 15). Coder reads plan.md \u2192 principles.md \u2192 stage-1 brief and starts."
+      },
+      "timestamp_end": "2026-05-08T14:30:00Z"
     }
   ]
 }
