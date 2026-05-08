@@ -1,5 +1,32 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+6) — stages 3 + 4 landed; stages 5 + 6 carved as the Tier 1 finisher
+
+Both stages 3 (`keepalive-collection`) and 4 (`dispose-self-owns`) landed cleanly — coder reported 2755/2755 + 199/199 for each. The Tier 1 batching pattern works.
+
+Carved stages 5 and 6 — the last two Tier 1 stages — as another batch:
+
+### Stage 5 carve (`getstatic-shim-drop`)
+
+Brief at `stage-5-getstatic-shim-drop.md`. Trivial: one-line internal shim with one caller. `App.GetStatic(string)` at App.this.cs:115 deletes; `Actor/Context/this.cs:248` migrates from `App.GetStatic(key)` to `App.Statics.GetBag(key)`. Risk very low.
+
+### Stage 6 carve (`app-data-inheritance-drop`)
+
+Brief at `stage-6-app-data-inheritance-drop.md`. Class hierarchy change: App stops inheriting from `Data.@this<@this>`. Verified by greps that nothing reads inherited surface on `app` (Properties, Type, Error, Success, OnChange/OnCreate/OnDelete — all zero hits) and that `app.Path` has no consumers (the `new string Path => "/"` shadow at line 63 has no readers — delete the property). `%!app%` resolution doesn't depend on inheritance; it goes through `DynamicData("!app", () => app)` wrapping pattern. Risk medium (class hierarchy change; build is the safety net for any caller dependency the greps missed).
+
+### Why batch 5 and 6
+
+- Both Tier 1.
+- Both touch App.this.cs (different lines: 115 for stage 5, 19+63 for stage 6).
+- Independent — either order works.
+- Together they finish the Tier 1 sequence (stages 1–6 all complete after this).
+
+### After stage 6 lands
+
+Tier 1 is done. App's surface is meaningfully smaller: per-actor Channels.Serializers (stage 1), no v1 helpers (stage 2), KeepAlive collection (stage 3), Modules+Providers self-dispose (stage 4), no GetStatic shim (stage 5), no Data inheritance (stage 6). Next session: Tier 2 (stages 7–9 — callstack-promote, read-file-off-channels, catalog-dissolve).
+
+---
+
 ## 2026-05-08 (latest+5) — stage 2 landed; stages 3 + 4 carved as a Tier 1 pair
 
 Stage 2 (`channels-v1-helpers-drop`) landed cleanly — coder reported 2755/2755 + 199/199. Codeanalyzer ran on stage 1 with PASS verdict (3 minor findings, none blocking). Pulled and carved stages 3 and 4 as a pair — both Tier 1, both touch `App.DisposeAsync` in different sections, sanctioned by the plan's "two could fit per session" cadence.

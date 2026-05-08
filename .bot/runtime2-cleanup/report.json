@@ -773,6 +773,53 @@
         "health": "plan + briefs + scope-map + summary all consistent",
         "notes": "Next session likely batches stages 5+6 similarly."
       }
+    },
+    {
+      "id": "2e545ebb-0217-46d9-89c0-792b267a3f24",
+      "bot": "architect",
+      "timestamp_start": "2026-05-08T22:00:00Z",
+      "timestamp_end": "2026-05-08T22:30:00Z",
+      "intent": "Pull stages 3+4 results; carve stages 5+6 as the Tier 1 finisher batch.",
+      "before": {
+        "assumptions": "Stages 3 and 4 landed cleanly (2755/2755 + 199/199 each). Stages 5 and 6 are both Tier 1, both touch App.this.cs in different sections, completion of the Tier 1 sequence.",
+        "risk": "Stage 5 trivial (single caller). Stage 6 medium-risk (class hierarchy change) \u2014 greps were thorough but build is the ultimate safety net."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-5-getstatic-shim-drop.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-5-getstatic-shim-drop.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 5 brief. Delete one-line App.GetStatic shim; migrate single caller at Actor/Context/this.cs:248 to App.Statics.GetBag(key). Verified single caller via grep across PLang/, PLang.Tests/, Tests/."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-6-app-data-inheritance-drop.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 6 brief. Drop Data.@this<@this> from App class declaration (line 19); delete the new string Path shadow (line 63 \u2014 zero readers). Verified zero usage of inherited Data surface on app (Properties, Type, Error, Success, OnChange/OnCreate/OnDelete). %!app% resolution via DynamicData wrapping is independent of inheritance."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 3 and 4 marked complete; stages 5 and 6 link briefs and replace one-liners. Summary entry covers stage 3+4 landing and 5+6 carving with notes on Tier 1 completion."
+        }
+      ],
+      "after": {
+        "status": "stages 5 and 6 ready for coder; both can land in either order; Tier 1 finishes when both complete",
+        "health": "plan + briefs + scope-map + summary all consistent",
+        "notes": "Next session: Tier 2 (stages 7-9 \u2014 callstack-promote, read-file-off-channels, catalog-dissolve)."
+      }
     }
   ]
 }
