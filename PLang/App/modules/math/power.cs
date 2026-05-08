@@ -1,5 +1,6 @@
 using App.Variables;
-using static App.Catalog.ExampleHelpers;
+using ExampleSpec = App.Modules.Schema.Spec.Example;
+using ActionSpec = App.Modules.Schema.Spec.Action;
 
 namespace App.modules.math;
 
@@ -7,18 +8,22 @@ namespace App.modules.math;
 [Action("power")]
 public partial class Power : IContext
 {
-    public static App.Catalog.ExampleSpec[] ExamplesForLlm() => new[]
+    public static ExampleSpec[] ExamplesForLlm() => new[]
     {
-        Example(
+        new ExampleSpec(
             "raise 2 to the power of 3, write to %pow%",
-            Action("math.power",   new() { ["Base"] = 2, ["Exponent"] = 3 }),
-            Action("variable.set", new() { ["Name"] = "%pow%", ["Value"] = "%__data__%" })
-        ),
-        Example(
+            new[]
+            {
+                new ActionSpec("math",     "power", new() { ["Base"] = 2, ["Exponent"] = 3 }),
+                new ActionSpec("variable", "set",   new() { ["Name"] = "%pow%", ["Value"] = "%__data__%" }),
+            }),
+        new ExampleSpec(
             "set %y% = %x% ^ 2",
-            Action("math.power",   new() { ["Base"] = "%x%", ["Exponent"] = 2 }),
-            Action("variable.set", new() { ["Name"] = "%y%", ["Value"] = "%__data__%" })
-        ),
+            new[]
+            {
+                new ActionSpec("math",     "power", new() { ["Base"] = "%x%", ["Exponent"] = 2 }),
+                new ActionSpec("variable", "set",   new() { ["Name"] = "%y%", ["Value"] = "%__data__%" }),
+            }),
     };
 
     public partial Data.@this Base { get; init; }

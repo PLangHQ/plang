@@ -5,11 +5,13 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using App.Utils;
+using ActionSpec = App.Modules.Schema.Spec.Action;
+using ExampleSpec = App.Modules.Schema.Spec.Example;
 
-namespace App.Catalog;
+namespace App.Modules.Schema;
 
 /// <summary>
-/// Renders an <see cref="ExampleSpec"/> into the formal-language string the
+/// Renders an <see cref="Example"/> into the formal-language string the
 /// catalog "e.g. ..." line carries. Type tags ([path], [string], [list&lt;action&gt;])
 /// are derived from reflection on each action class — the author never writes them.
 ///
@@ -18,24 +20,27 @@ namespace App.Catalog;
 /// goalFormatForLlm template). Nested action values (parameters typed
 /// <c>action</c> / <c>list&lt;action&gt;</c>) emit as JSON action records — same
 /// shape the LLM produces in its response.
+///
+/// Instance methods navigate <c>_modules</c> for type lookups; callers stop
+/// passing modules in (Rule E).
 /// </summary>
-public static class ExampleRenderer
+public sealed partial class @this
 {
-    public static string Render(ExampleSpec spec, App.Modules.@this modules)
+    public string Render(ExampleSpec spec)
     {
         var sb = new StringBuilder();
         for (int i = 0; i < spec.Chain.Length; i++)
         {
             if (i > 0) sb.Append(" | ");
-            RenderActionFormal(spec.Chain[i], modules, sb);
+            RenderActionFormal(spec.Chain[i], sb);
         }
         return sb.ToString();
     }
 
-    private static void RenderActionFormal(ActionSpec a, App.Modules.@this modules, StringBuilder sb)
+    private void RenderActionFormal(ActionSpec a, StringBuilder sb)
     {
         sb.Append(a.Module).Append('.').Append(a.Name);
-        var actionType = modules.GetActionType(a.Module, a.Name);
+        var actionType = _modules.GetActionType(a.Module, a.Name);
 
         if (a.Params.Count > 0)
         {
@@ -46,7 +51,7 @@ public static class ExampleRenderer
                 if (i++ > 0) sb.Append(", ");
                 var typeName = LookupParamTypeName(actionType, pname);
                 sb.Append(pname).Append("([").Append(typeName).Append("] ");
-                RenderValueFormal(pvalue, modules, sb);
+                RenderValueFormal(pvalue, sb);
                 sb.Append(')');
             }
         }
@@ -56,18 +61,18 @@ public static class ExampleRenderer
             foreach (var mod in a.Modifiers)
             {
                 sb.Append(" | ");
-                RenderActionFormal(mod, modules, sb);
+                RenderActionFormal(mod, sb);
             }
         }
     }
 
     /// <summary>
     /// Format a value the way the catalog Example does: %vars% bare, strings
-    /// with spaces or commas quoted, scalars literal, ActionSpec(s) as
+    /// with spaces or commas quoted, scalars literal, Action(s) as
     /// nested-action JSON records.
     /// Mirrors <c>FluidProvider.FormatFormalValue</c> for the simple cases.
     /// </summary>
-    private static void RenderValueFormal(object? value, App.Modules.@this modules, StringBuilder sb)
+    private void RenderValueFormal(object? value, StringBuilder sb)
     {
         if (value is null) { sb.Append("null"); return; }
 
@@ -83,17 +88,17 @@ public static class ExampleRenderer
 
         if (value is ActionSpec one)
         {
-            sb.Append(JsonSerializer.Serialize(BuildActionRecord(one, modules)));
+            sb.Append(JsonSerializer.Serialize(BuildActionRecord(one)));
             return;
         }
 
-        // Lists / arrays of ActionSpec — list<action> parameters
+        // Lists / arrays of Action — list<action> parameters
         if (value is IEnumerable enumerable && value is not string)
         {
             var items = enumerable.Cast<object?>().ToList();
             if (items.Count > 0 && items.All(x => x is ActionSpec))
             {
-                var records = items.Select(x => BuildActionRecord((ActionSpec)x!, modules)).ToList();
+                var records = items.Select(x => BuildActionRecord((ActionSpec)x!)).ToList();
                 sb.Append(JsonSerializer.Serialize(records));
                 return;
             }
@@ -113,11 +118,11 @@ public static class ExampleRenderer
     /// <summary>
     /// Builds the lower-cased JSON-record shape the LLM emits for nested actions:
     /// <c>{"module","action","parameters":[{"name","value","type"}]}</c>.
-    /// Recurses into modifier and ActionSpec-valued parameters.
+    /// Recurses into modifier and Action-valued parameters.
     /// </summary>
-    private static Dictionary<string, object?> BuildActionRecord(ActionSpec a, App.Modules.@this modules)
+    private Dictionary<string, object?> BuildActionRecord(ActionSpec a)
     {
-        var actionType = modules.GetActionType(a.Module, a.Name);
+        var actionType = _modules.GetActionType(a.Module, a.Name);
         var record = new Dictionary<string, object?>
         {
             ["module"] = a.Module,
@@ -132,7 +137,7 @@ public static class ExampleRenderer
                 paramList.Add(new Dictionary<string, object?>
                 {
                     ["name"] = pname,
-                    ["value"] = ConvertValueForJson(pvalue, modules),
+                    ["value"] = ConvertValueForJson(pvalue),
                     ["type"] = LookupParamTypeName(actionType, pname),
                 });
             }
@@ -142,22 +147,22 @@ public static class ExampleRenderer
         if (a.Modifiers != null && a.Modifiers.Length > 0)
         {
             record["modifiers"] = a.Modifiers
-                .Select(m => BuildActionRecord(m, modules))
+                .Select(m => BuildActionRecord(m))
                 .ToList();
         }
 
         return record;
     }
 
-    private static object? ConvertValueForJson(object? value, App.Modules.@this modules)
+    private object? ConvertValueForJson(object? value)
     {
-        if (value is ActionSpec one) return BuildActionRecord(one, modules);
+        if (value is ActionSpec one) return BuildActionRecord(one);
 
         if (value is IEnumerable enumerable && value is not string)
         {
             var items = enumerable.Cast<object?>().ToList();
             if (items.Count > 0 && items.All(x => x is ActionSpec))
-                return items.Select(x => BuildActionRecord((ActionSpec)x!, modules)).ToList();
+                return items.Select(x => BuildActionRecord((ActionSpec)x!)).ToList();
         }
 
         return value;

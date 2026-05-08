@@ -2,6 +2,7 @@
 
 ## Version
 
+v9 — Stage 9 (`catalog-dissolve-to-modules-schema`).
 v8 — Stage 8 (`read-file-off-channels`).
 v7 — Stage 7 (`callstack-promote-app-property`).
 v6 — Stage 6 (`app-data-inheritance-drop`).
@@ -10,6 +11,121 @@ v4 — Stage 4 (`dispose-self-owns`).
 v3 — Stage 3 (`keepalive-collection`).
 v2 — Stage 2 (`channels-v1-helpers-drop`).
 v1 — Stage 1 (`serializers-single-home`).
+
+---
+
+## v9 — Stage 9 (`catalog-dissolve-to-modules-schema`)
+
+### What this is
+
+`App/Catalog/` dissolves entirely into `App/Modules/Schema/`. The Catalog
+concept is "Modules describing itself to the LLM" — Modules has the data,
+Schema is now a property of Modules. Rule E refactor: callers stop
+decomposing `app.Modules` to pass it as a parameter; `Build()` and
+`Render(spec)` are instance methods that navigate `_modules` internally.
+
+### What was done
+
+**Folder relocations** (5 files moved, types renamed):
+
+- `App/Catalog/this.cs` → `App/Modules/Schema/this.cs` (`Schema.@this`)
+- `App/Catalog/ActionSpec.cs` → `App/Modules/Schema/Spec/Action.cs` (record renamed `ActionSpec` → `Action`)
+- `App/Catalog/ExampleSpec.cs` → `App/Modules/Schema/Spec/Example.cs` (record renamed `ExampleSpec` → `Example`)
+- `App/Catalog/TypeEntry.cs` → `App/Modules/Schema/Entry.cs` (`TypeEntry` → `Entry`, `TypeKind` → `EntryKind`, `Field` keeps name)
+- `App/Catalog/ExampleRenderer.cs` → `App/Modules/Schema/Render.cs` — folded as a `partial class @this`; all private statics converted to instance methods reading `_modules`
+
+**Deleted**: `App/Catalog/ExampleHelpers.cs` (the static `Example(intent, chain)`
+and `Action("module.action", ...)` helpers — callers switch to record positional
+ctors `new ExampleSpec(...)` / `new ActionSpec("module", "name", ...)`).
+
+**Modules.@this gains `Schema` property**:
+
+```csharp
+public Schema.@this Schema { get; }
+
+public @this()
+{
+    Schema = new Schema.@this(this);
+    Discover(typeof(@this).Assembly, "App.modules");
+}
+```
+
+The `this` passed to the Schema ctor is the back-reference Schema
+navigates for `_modules.GetActionType(...)` lookups.
+
+**Lazy semantics preserved**: `app.Modules.Schema` returns the unbuilt
+host instance (empty `PrimitiveNames` / `Types`). `Build()` returns a
+fresh Schema with both populated. `Render(spec)` works on the host
+without `Build` being called first (Render only needs `_modules`).
+
+### Caller sweeps
+
+**Production (4 files)**:
+
+- `Modules/this.cs:289-294` — `App.Catalog.ExampleSpec[]` →
+  `App.Modules.Schema.Spec.Example[]`; the static
+  `App.Catalog.ExampleRenderer.Render(s, this)` becomes `Schema.Render(s)`
+  (uses Modules' own held Schema).
+- `Types/this.cs:372` — type-name rename.
+- `Utils/TypeMapping.cs` — 10 sites: `TypeEntry`/`TypeKind`/`Field`
+  references renamed.
+- `modules/builder/providers/DefaultBuilderProvider.cs:37` —
+  `App.Catalog.@this.Build(action.Context.App.Modules)` →
+  `action.Context.App.Modules.Schema.Build()`. Rule E migration: caller
+  stops passing modules in.
+
+**Action handlers (6 files)** — `using static App.Catalog.ExampleHelpers;`
+dropped, `Example(...)` and `Action(...)` helper calls rewritten to
+positional ctors. Type aliases used to disambiguate `Action` (record)
+from `System.Action` (delegate) and from the `[Action]` attribute:
+
+```csharp
+using ExampleSpec = App.Modules.Schema.Spec.Example;
+using ActionSpec  = App.Modules.Schema.Spec.Action;
+
+new ExampleSpec("intent", new[]
+{
+    new ActionSpec("file", "read", new() { ["Path"] = "%path%" },
+        Modifiers: new[] { new ActionSpec("error", "handle", ...) }),
+});
+```
+
+The dot-split (`"file.read"` → `"file", "read"`) is now done by the
+caller — the helper that did it is gone.
+
+Files: `error/handle.cs`, `math/{add,subtract,multiply,divide,power}.cs`.
+
+**Tests (4 files)**:
+
+- `PLang.Tests/App/Catalog/CatalogTests.cs` → relocated as
+  `PLang.Tests/App/Modules/Schema/SchemaTests.cs`. Body updated to
+  `_app.Modules.Schema.Build()`, `EntryKind` references, etc.
+- `PLang.Tests/App/Modules/builder/ComplexTypeDiscoveryTests.cs` —
+  type-name sweep.
+- `PLang.Tests/App/Modules/builder/GetTypeInfoTests.cs` — `App.Catalog.@this`
+  → `App.Modules.Schema.@this`.
+- `PLang.Tests/App/Modules/math/MathExamplesForLlmTests.cs` — caller
+  swept (was missed by the brief's grep — `using App.Catalog;` form).
+  `ExampleRenderer.Render(spec, _app.Modules)` → `_app.Modules.Schema.Render(spec)`.
+
+### Verification
+
+- `find PLang/App/Catalog -type f` → empty (folder gone).
+- `find PLang.Tests/App/Catalog -type f` → empty (folder gone).
+- `grep -rn "App\.Catalog\." PLang/ PLang.Tests/ Tests/ --include='*.cs'` → 0.
+- `grep -rn "ExampleHelpers" PLang/ PLang.Tests/ Tests/ --include='*.cs'` → 0.
+- C# 2755/2755 pass; PLang 199/199 pass.
+
+### Notes
+
+- Architect anticipated 12 ExampleHelpers-using handlers; actual count
+  was 6 (`error/handle.cs` + 5 math files). Brief's grep was conservative.
+- One test file (`MathExamplesForLlmTests.cs`) was missed by the brief's
+  grep because it used `using App.Catalog;` (namespace import) rather
+  than `using static App.Catalog.ExampleHelpers;`. Caught at C# test run.
+- The static formatters in `DefaultBuilderProvider` (`FormatValue`,
+  `RenderActionFormal`) and `FluidProvider` (`FormatFormalValue`) — flagged
+  by the architect as out-of-scope — are still in place. Future stage.
 
 ---
 

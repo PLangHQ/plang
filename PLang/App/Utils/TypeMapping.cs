@@ -348,9 +348,9 @@ public static class TypeMapping
     ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
-    public static List<App.Catalog.TypeEntry> BuildTypeEntries(App.Modules.@this? modules)
+    public static List<App.Modules.Schema.Entry> BuildTypeEntries(App.Modules.@this? modules)
     {
-        var entries = new List<App.Catalog.TypeEntry>();
+        var entries = new List<App.Modules.Schema.Entry>();
         var seen = new HashSet<System.Type>();
         var queue = new Queue<System.Type>();
 
@@ -409,10 +409,10 @@ public static class TypeMapping
             var values = GetValidValues(type);
             if (values != null)
             {
-                entries.Add(new App.Catalog.TypeEntry
+                entries.Add(new App.Modules.Schema.Entry
                 {
                     Name = typeName,
-                    Kind = App.Catalog.TypeKind.Enum,
+                    Kind = App.Modules.Schema.EntryKind.Enum,
                     Values = values,
                     Description = plangAttr?.Description,
                     Example = plangAttr?.Example,
@@ -444,14 +444,14 @@ public static class TypeMapping
 
             // Read-only navigation properties — surfaced for both Scalar and Record types
             // that opt-in via [LlmBuilder]. Used by the LLM to write %var.Property% paths.
-            var llmProps = new List<App.Catalog.Field>();
+            var llmProps = new List<App.Modules.Schema.Field>();
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!prop.CanRead || prop.Name == "EqualityContract") continue;
                 if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
                 if (Attribute.IsDefined(prop, typeof(JsonIgnoreAttribute))) continue;
 
-                llmProps.Add(new App.Catalog.Field
+                llmProps.Add(new App.Modules.Schema.Field
                 {
                     Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
                     TypeName = GetTypeName(prop.PropertyType),
@@ -473,10 +473,10 @@ public static class TypeMapping
 
             if (isScalar)
             {
-                entries.Add(new App.Catalog.TypeEntry
+                entries.Add(new App.Modules.Schema.Entry
                 {
                     Name = typeName,
-                    Kind = App.Catalog.TypeKind.Scalar,
+                    Kind = App.Modules.Schema.EntryKind.Scalar,
                     Shape = derivedShape ?? plangAttr?.Shape ?? "string",
                     ConstructorSignature = constructorSignature,
                     Properties = llmProps.Count > 0 ? llmProps : null,
@@ -492,10 +492,10 @@ public static class TypeMapping
             // we keep the fallback for safety).
             if (llmProps.Count > 0)
             {
-                entries.Add(new App.Catalog.TypeEntry
+                entries.Add(new App.Modules.Schema.Entry
                 {
                     Name = typeName,
-                    Kind = App.Catalog.TypeKind.Record,
+                    Kind = App.Modules.Schema.EntryKind.Record,
                     Fields = llmProps,
                     Description = plangAttr?.Description,
                     Example = plangAttr?.Example,

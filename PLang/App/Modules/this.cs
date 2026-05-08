@@ -16,8 +16,17 @@ public sealed class @this : IAsyncDisposable
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ActionEntry>> _modules = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
+    /// <summary>
+    /// "What every action looks like, for the LLM." Describes the registered
+    /// actions' types, parameter schemas, and authored Examples. Built on
+    /// demand via <c>app.Modules.Schema.Build()</c>; <see cref="Schema.@this.Render"/>
+    /// works on the host instance directly without a Build call.
+    /// </summary>
+    public Schema.@this Schema { get; }
+
     public @this()
     {
+        Schema = new Schema.@this(this);
         Discover(typeof(@this).Assembly, "App.modules");
     }
 
@@ -286,12 +295,12 @@ public sealed class @this : IAsyncDisposable
                     BindingFlags.Public | BindingFlags.Static, binder: null,
                     types: System.Type.EmptyTypes, modifiers: null);
                 if (examplesForLlm != null
-                    && typeof(App.Catalog.ExampleSpec[]).IsAssignableFrom(examplesForLlm.ReturnType))
+                    && typeof(App.Modules.Schema.Spec.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
                 {
-                    var specs = (App.Catalog.ExampleSpec[]?)examplesForLlm.Invoke(null, null)
-                        ?? System.Array.Empty<App.Catalog.ExampleSpec>();
+                    var specs = (App.Modules.Schema.Spec.Example[]?)examplesForLlm.Invoke(null, null)
+                        ?? System.Array.Empty<App.Modules.Schema.Spec.Example>();
                     examples = specs
-                        .Select(s => new Data.@this(s.UserIntent, App.Catalog.ExampleRenderer.Render(s, this)))
+                        .Select(s => new Data.@this(s.UserIntent, Schema.Render(s)))
                         .ToList();
                 }
                 else

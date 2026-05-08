@@ -1,5 +1,6 @@
 using App.Variables;
-using static App.Catalog.ExampleHelpers;
+using ExampleSpec = App.Modules.Schema.Spec.Example;
+using ActionSpec = App.Modules.Schema.Spec.Action;
 
 namespace App.modules.math;
 
@@ -7,18 +8,22 @@ namespace App.modules.math;
 [Action("subtract")]
 public partial class Subtract : IContext
 {
-    public static App.Catalog.ExampleSpec[] ExamplesForLlm() => new[]
+    public static ExampleSpec[] ExamplesForLlm() => new[]
     {
-        Example(
+        new ExampleSpec(
             "subtract 3 from 10, write to %diff%",
-            Action("math.subtract", new() { ["A"] = 10, ["B"] = 3 }),
-            Action("variable.set",  new() { ["Name"] = "%diff%", ["Value"] = "%__data__%" })
-        ),
-        Example(
+            new[]
+            {
+                new ActionSpec("math",     "subtract", new() { ["A"] = 10, ["B"] = 3 }),
+                new ActionSpec("variable", "set",      new() { ["Name"] = "%diff%", ["Value"] = "%__data__%" }),
+            }),
+        new ExampleSpec(
             "set %total% = %total% - %discount%",
-            Action("math.subtract", new() { ["A"] = "%total%", ["B"] = "%discount%" }),
-            Action("variable.set",  new() { ["Name"] = "%total%", ["Value"] = "%__data__%" })
-        ),
+            new[]
+            {
+                new ActionSpec("math",     "subtract", new() { ["A"] = "%total%", ["B"] = "%discount%" }),
+                new ActionSpec("variable", "set",      new() { ["Name"] = "%total%", ["Value"] = "%__data__%" }),
+            }),
     };
 
     public partial Data.@this A { get; init; }

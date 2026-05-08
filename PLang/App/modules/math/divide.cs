@@ -1,5 +1,6 @@
 using App.Variables;
-using static App.Catalog.ExampleHelpers;
+using ExampleSpec = App.Modules.Schema.Spec.Example;
+using ActionSpec = App.Modules.Schema.Spec.Action;
 
 namespace App.modules.math;
 
@@ -7,18 +8,22 @@ namespace App.modules.math;
 [Action("divide")]
 public partial class Divide : IContext
 {
-    public static App.Catalog.ExampleSpec[] ExamplesForLlm() => new[]
+    public static ExampleSpec[] ExamplesForLlm() => new[]
     {
-        Example(
+        new ExampleSpec(
             "divide 10 by 4, write to %quotient%",
-            Action("math.divide",  new() { ["A"] = 10, ["B"] = 4 }),
-            Action("variable.set", new() { ["Name"] = "%quotient%", ["Value"] = "%__data__%" })
-        ),
-        Example(
+            new[]
+            {
+                new ActionSpec("math",     "divide", new() { ["A"] = 10, ["B"] = 4 }),
+                new ActionSpec("variable", "set",    new() { ["Name"] = "%quotient%", ["Value"] = "%__data__%" }),
+            }),
+        new ExampleSpec(
             "set %avg% = %total% / %count%",
-            Action("math.divide",  new() { ["A"] = "%total%", ["B"] = "%count%" }),
-            Action("variable.set", new() { ["Name"] = "%avg%", ["Value"] = "%__data__%" })
-        ),
+            new[]
+            {
+                new ActionSpec("math",     "divide", new() { ["A"] = "%total%", ["B"] = "%count%" }),
+                new ActionSpec("variable", "set",    new() { ["Name"] = "%avg%", ["Value"] = "%__data__%" }),
+            }),
     };
 
     public partial Data.@this A { get; init; }

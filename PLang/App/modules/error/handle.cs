@@ -1,8 +1,9 @@
 using App.Errors;
 using App.Variables;
-using static App.Catalog.ExampleHelpers;
 using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 using Call = App.CallStack.Call.@this;
+using ExampleSpec = App.Modules.Schema.Spec.Example;
+using ActionSpec = App.Modules.Schema.Spec.Action;
 
 namespace App.modules.error;
 
@@ -18,45 +19,49 @@ namespace App.modules.error;
 [Modifier(Order = 3)]
 public partial class Handle : IContext, IModifier
 {
-    public static App.Catalog.ExampleSpec[] ExamplesForLlm() => new[]
+    public static ExampleSpec[] ExamplesForLlm() => new[]
     {
         // Numeric error codes go to StatusCode (an int), regardless of whether
         // the source uses "on error 404" or "on error key 404" — `404` is
         // always a status code, not a string identifier.
-        Example(
+        new ExampleSpec(
             "read %path%, on error 404, write out \"missing\", read fallback.txt, write to %content%",
-            Action("file.read", new() { ["Path"] = "%path%" },
-                modifiers: new[]
-                {
-                    Action("error.handle", new()
+            new[]
+            {
+                new ActionSpec("file", "read", new() { ["Path"] = "%path%" },
+                    Modifiers: new[]
                     {
-                        ["StatusCode"] = 404,
-                        ["Actions"] = new[]
+                        new ActionSpec("error", "handle", new()
                         {
-                            Action("output.write", new() { ["Data"] = "missing" }),
-                            Action("file.read",    new() { ["Path"] = "fallback.txt" }),
-                            Action("variable.set", new() { ["Name"]  = "%content%",
-                                                            ["Value"] = "%__data__%" }),
-                        }
-                    })
-                })
-        ),
+                            ["StatusCode"] = 404,
+                            ["Actions"] = new[]
+                            {
+                                new ActionSpec("output",   "write", new() { ["Data"] = "missing" }),
+                                new ActionSpec("file",     "read",  new() { ["Path"] = "fallback.txt" }),
+                                new ActionSpec("variable", "set",   new() { ["Name"]  = "%content%",
+                                                                             ["Value"] = "%__data__%" }),
+                            }
+                        })
+                    }),
+            }),
         // Named error keys (non-numeric identifiers) go to Key.
-        Example(
+        new ExampleSpec(
             "save %doc%, on error key Conflict, write out \"already exists\"",
-            Action("file.write", new() { ["Path"] = "%doc%" },
-                modifiers: new[]
-                {
-                    Action("error.handle", new()
+            new[]
+            {
+                new ActionSpec("file", "write", new() { ["Path"] = "%doc%" },
+                    Modifiers: new[]
                     {
-                        ["Key"] = "Conflict",
-                        ["Actions"] = new[]
+                        new ActionSpec("error", "handle", new()
                         {
-                            Action("output.write", new() { ["Data"] = "already exists" }),
-                        }
-                    })
-                })
-        )
+                            ["Key"] = "Conflict",
+                            ["Actions"] = new[]
+                            {
+                                new ActionSpec("output", "write", new() { ["Data"] = "already exists" }),
+                            }
+                        })
+                    }),
+            }),
     };
 
     public partial global::App.Data.@this<int>? StatusCode { get; init; }

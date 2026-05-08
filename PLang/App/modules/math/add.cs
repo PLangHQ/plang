@@ -1,5 +1,6 @@
 using App.Variables;
-using static App.Catalog.ExampleHelpers;
+using ExampleSpec = App.Modules.Schema.Spec.Example;
+using ActionSpec = App.Modules.Schema.Spec.Action;
 
 namespace App.modules.math;
 
@@ -7,18 +8,22 @@ namespace App.modules.math;
 [Action("add")]
 public partial class Add : IContext
 {
-    public static App.Catalog.ExampleSpec[] ExamplesForLlm() => new[]
+    public static ExampleSpec[] ExamplesForLlm() => new[]
     {
-        Example(
+        new ExampleSpec(
             "add 5 and 3, write to %sum%",
-            Action("math.add",     new() { ["A"] = 5, ["B"] = 3 }),
-            Action("variable.set", new() { ["Name"] = "%sum%", ["Value"] = "%__data__%" })
-        ),
-        Example(
+            new[]
+            {
+                new ActionSpec("math",     "add", new() { ["A"] = 5, ["B"] = 3 }),
+                new ActionSpec("variable", "set", new() { ["Name"] = "%sum%", ["Value"] = "%__data__%" }),
+            }),
+        new ExampleSpec(
             "set %count% = %count% + 1",
-            Action("math.add",     new() { ["A"] = "%count%", ["B"] = 1 }),
-            Action("variable.set", new() { ["Name"] = "%count%", ["Value"] = "%__data__%" })
-        ),
+            new[]
+            {
+                new ActionSpec("math",     "add", new() { ["A"] = "%count%", ["B"] = 1 }),
+                new ActionSpec("variable", "set", new() { ["Name"] = "%count%", ["Value"] = "%__data__%" }),
+            }),
     };
 
     public partial Data.@this A { get; init; }

@@ -34,7 +34,7 @@ public class DefaultBuilderProvider : IBuilderProvider
         // discovered record/enum entries. It pre-renders TypeNames/TypeSchemas for
         // the Liquid template, and keeps Types/PrimitiveNames for introspection
         // (JSON, UI, trace viewer).
-        return Data.@this.Ok(global::App.Catalog.@this.Build(action.Context.App.Modules));
+        return Data.@this.Ok(action.Context.App.Modules.Schema.Build());
     }
 
     // --- Goals ---

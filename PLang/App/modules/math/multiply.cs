@@ -1,5 +1,6 @@
 using App.Variables;
-using static App.Catalog.ExampleHelpers;
+using ExampleSpec = App.Modules.Schema.Spec.Example;
+using ActionSpec = App.Modules.Schema.Spec.Action;
 
 namespace App.modules.math;
 
@@ -7,18 +8,22 @@ namespace App.modules.math;
 [Action("multiply")]
 public partial class Multiply : IContext
 {
-    public static App.Catalog.ExampleSpec[] ExamplesForLlm() => new[]
+    public static ExampleSpec[] ExamplesForLlm() => new[]
     {
-        Example(
+        new ExampleSpec(
             "multiply 6 by 7, write to %product%",
-            Action("math.multiply", new() { ["A"] = 6, ["B"] = 7 }),
-            Action("variable.set",  new() { ["Name"] = "%product%", ["Value"] = "%__data__%" })
-        ),
-        Example(
+            new[]
+            {
+                new ActionSpec("math",     "multiply", new() { ["A"] = 6, ["B"] = 7 }),
+                new ActionSpec("variable", "set",      new() { ["Name"] = "%product%", ["Value"] = "%__data__%" }),
+            }),
+        new ExampleSpec(
             "set %area% = %width% * %height%",
-            Action("math.multiply", new() { ["A"] = "%width%", ["B"] = "%height%" }),
-            Action("variable.set",  new() { ["Name"] = "%area%", ["Value"] = "%__data__%" })
-        ),
+            new[]
+            {
+                new ActionSpec("math",     "multiply", new() { ["A"] = "%width%", ["B"] = "%height%" }),
+                new ActionSpec("variable", "set",      new() { ["Name"] = "%area%", ["Value"] = "%__data__%" }),
+            }),
     };
 
     public partial Data.@this A { get; init; }

@@ -1,6 +1,6 @@
-using global::App.Catalog;
 using global::App.modules.math;
 using PLangEngine = global::App.@this;
+using ExampleSpec = global::App.Modules.Schema.Spec.Example;
 
 namespace PLang.Tests.App.actions.math;
 
@@ -30,7 +30,7 @@ public class MathExamplesForLlmTests
         try { await _app.DisposeAsync(); } catch { /* best effort */ }
     }
 
-    private string Render(ExampleSpec spec) => ExampleRenderer.Render(spec, _app.Modules);
+    private string Render(ExampleSpec spec) => _app.Modules.Schema.Render(spec);
 
     // --- Add ---
 

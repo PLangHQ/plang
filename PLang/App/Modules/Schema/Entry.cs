@@ -1,4 +1,4 @@
-namespace App.Catalog;
+namespace App.Modules.Schema;
 
 /// <summary>
 /// A type in the PLang catalog. Discriminated by <see cref="Kind"/>:
@@ -9,13 +9,13 @@ namespace App.Catalog;
 /// All kinds may carry a <see cref="Description"/> and <see cref="Example"/> declared
 /// on the type's <c>[PlangType]</c> attribute — the type teaches the LLM about itself.
 /// </summary>
-public sealed class TypeEntry
+public sealed class Entry
 {
     /// <summary>The type's PLang name (goal, step, operator, ...).</summary>
     public string Name { get; init; } = "";
 
     /// <summary>Record / Enum / Scalar — which side of the union is populated.</summary>
-    public TypeKind Kind { get; init; }
+    public EntryKind Kind { get; init; }
 
     /// <summary>Record fields. Null when Kind is not Record.</summary>
     public IReadOnlyList<Field>? Fields { get; init; }
@@ -60,7 +60,7 @@ public sealed class TypeEntry
     public System.Type? ClrType { get; init; }
 }
 
-/// <summary>A field on a Record-kind TypeEntry.</summary>
+/// <summary>A field on a Record-kind <see cref="Entry"/>.</summary>
 public sealed class Field
 {
     /// <summary>Field name, lower-camelCase in the catalog (e.g. "actionName").</summary>
@@ -70,7 +70,7 @@ public sealed class Field
     public string TypeName { get; init; } = "";
 }
 
-public enum TypeKind
+public enum EntryKind
 {
     Record,
     Enum,

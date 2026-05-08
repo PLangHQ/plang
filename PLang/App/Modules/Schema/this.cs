@@ -1,30 +1,40 @@
-using System.Reflection;
 using System.Text;
 using System.Text.Json.Serialization;
 using App.Attributes;
 using App.Utils;
 
-namespace App.Catalog;
+namespace App.Modules.Schema;
 
 /// <summary>
-/// The structured type catalog the builder publishes to the LLM. Holds the
-/// primitive names and the record/enum entries discovered from action parameters.
-/// Consumers: the builder prompt template (Liquid reads <see cref="TypeNames"/>
-/// and <see cref="TypeSchemas"/>), the trace viewer, future tooling.
+/// "What every action looks like, for the LLM." Owned by Modules; describes
+/// the registered actions' types, parameter schemas, and authored Examples.
 ///
-/// OBP: the catalog is a real object. You can hold it, pass it around, JSON it,
-/// or ask it to render itself. It owns its schema.
+/// Two roles in one type:
+///   - Host (the instance held at <c>app.Modules.Schema</c>) — has <c>_modules</c>
+///     and exposes <see cref="Build"/> + <see cref="Render"/>. Its
+///     <see cref="PrimitiveNames"/> / <see cref="Types"/> are empty arrays.
+///   - Built result (returned by <see cref="Build"/>) — same instance shape,
+///     populated PrimitiveNames + Types. Consumers (builder template, trace
+///     viewer) use the built result.
+///
+/// OBP: schema is a real object owned by Modules. Reach it via
+/// <c>app.Modules.Schema</c>; build a snapshot via
+/// <c>app.Modules.Schema.Build()</c>.
 /// </summary>
 [PlangType("catalog")]
-public sealed class @this
+public sealed partial class @this
 {
+    private readonly App.Modules.@this _modules;
+
+    public @this(App.Modules.@this modules) { _modules = modules; }
+
     /// <summary>Ordered list of primitive type names exposed to the builder.</summary>
     [LlmBuilder]
     public IReadOnlyList<string> PrimitiveNames { get; init; } = System.Array.Empty<string>();
 
     /// <summary>Record and enum entries referenced by the action catalog.</summary>
     [LlmBuilder]
-    public IReadOnlyList<TypeEntry> Types { get; init; } = System.Array.Empty<TypeEntry>();
+    public IReadOnlyList<Entry> Types { get; init; } = System.Array.Empty<Entry>();
 
     // ---- Template conveniences (pre-rendered views the Liquid prompt consumes) ----
 
@@ -47,11 +57,11 @@ public sealed class @this
             foreach (var t in Types)
             {
                 sb.Append("  ").Append(t.Name).Append(": ");
-                if (t.Kind == TypeKind.Enum && t.Values != null)
+                if (t.Kind == EntryKind.Enum && t.Values != null)
                 {
                     sb.Append(string.Join(" | ", t.Values));
                 }
-                else if (t.Kind == TypeKind.Record && t.Fields != null)
+                else if (t.Kind == EntryKind.Record && t.Fields != null)
                 {
                     sb.Append("{ ");
                     for (int i = 0; i < t.Fields.Count; i++)
@@ -61,7 +71,7 @@ public sealed class @this
                     }
                     sb.Append(" }");
                 }
-                else if (t.Kind == TypeKind.Scalar)
+                else if (t.Kind == EntryKind.Scalar)
                 {
                     if (t.ConstructorSignature != null)
                         sb.Append("constructor(").Append(t.ConstructorSignature).Append(')');
@@ -89,18 +99,18 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Builds a Catalog by walking the modules' action parameter types. Discovery is
-    /// transitive: every type referenced in a schema is itself surfaced.
+    /// Builds a fresh Schema by walking <c>_modules</c>' action parameter types.
+    /// Discovery is transitive: every type referenced in a schema is itself surfaced.
     /// The @this decision (OBP types are catalog-visible by convention), [PlangType]
     /// resolution, enum handling, and [LlmBuilder]-filtered fields all live in
-    /// TypeMapping — Catalog.Build just assembles the result.
+    /// TypeMapping — Build just assembles the result.
     /// </summary>
-    public static @this Build(App.Modules.@this? modules)
+    public @this Build()
     {
         var primitives = TypeMapping.GetBuilderTypeNames();
-        var types = TypeMapping.BuildTypeEntries(modules);
+        var types = TypeMapping.BuildTypeEntries(_modules);
 
-        return new @this
+        return new @this(_modules)
         {
             PrimitiveNames = primitives,
             Types = types,
@@ -108,8 +118,8 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Serializes the catalog as JSON — structured Types + PrimitiveNames, with
-    /// camelCase keys. ClrType is hidden (tagged JsonIgnore on TypeEntry). The
+    /// Serializes the schema as JSON — structured Types + PrimitiveNames, with
+    /// camelCase keys. ClrType is hidden (tagged JsonIgnore on Entry). The
     /// result is safe to expose to docs/UI/trace-viewer consumers.
     /// </summary>
     public string ToJson(bool indent = true)
@@ -120,7 +130,7 @@ public sealed class @this
             PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
         };
-        // TypeKind emits as "Record" / "Enum" — more useful than the numeric default.
+        // EntryKind emits as "Record" / "Enum" — more useful than the numeric default.
         options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
         return System.Text.Json.JsonSerializer.Serialize(this, options);
     }
