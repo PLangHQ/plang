@@ -1,5 +1,34 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+10) — stage 10 (headliner) landed; stages 11+12 carved as Tier 3 batch
+
+Stage 10 (`app-run-redesign`) — the headliner — landed cleanly per coder. 2755/2755 + 199/199. App.Run from 85 lines to ~15 via the two new abstractions (`Context.AnchorScope`, `Call.ExecuteAsync`). All five behavior contracts named in the brief preserved exactly. The expected "may need 2 sessions" landed in one — cleaner than expected.
+
+### Stages 11 + 12 carved as a Tier 3 batch
+
+Both small Tier 3 stages, both touch App.this.cs in different sections, independent of each other.
+
+**Stage 11** (`errors-app-backref-drop`) — minimal scope: fix the post-construction injection only. Errors.@this gets a ctor that takes App; field-init `new()` becomes `new(this)`; internal `App?.CallStack` references become `_app.CallStack` (null operators go away). Out of scope: the separate `Error.@this.App` back-ref via Error.Callback materialisation (deeper refactor; future stage).
+
+**Stage 12** (`build-branch-to-build-this`) — copy-paste extract of the 33-line `if (Build.IsEnabled) { ... }` block from App.Start into `Build.@this.RunAsync()`. Build already has an App back-ref via its ctor; the move uses that. App.Start's branch becomes one line. Risk low-medium (mostly mechanical extract).
+
+### Why batch 11 + 12
+
+- Both Tier 3 (real shape work, but small).
+- Both touch App.this.cs in different sections.
+- Independent — either order works.
+- Coherent narrative: "App stops doing things its sub-systems should own" (echoes stage 4's theme).
+
+Per plan principles, "Tier 1 stages are small enough that two could fit" — stage 11's minimal version is closer to Tier 1 size than the typical Tier 3, so the two-stage cadence still fits.
+
+### Stage 13 (settings-collection-rework) and 22 (app-shortcuts-drop) deferred
+
+Stage 13 is the bigger Tier 3 stage (Settings reshape + IStore + Sqlite + RegisterNavigable + SettingsStore relocation) — its own focused session next round.
+
+Stage 22 (caller-sweep, ~25 sites) can fit anywhere in Tier 4; carve when the time is right.
+
+---
+
 ## 2026-05-08 (latest+9) — stage 9 landed; stage 10 (the headliner) carved alone; stage 22 added
 
 Stage 9 (`catalog-dissolve-to-modules-schema`) landed cleanly per coder — 2755/2755 + 199/199. Coder noted lessons:

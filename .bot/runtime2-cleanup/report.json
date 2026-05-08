@@ -943,6 +943,53 @@
         "health": "plan + briefs + scope-map + summary all consistent at stage count 22, Tier 2 done",
         "notes": "Per plan principles, stage 10 may need 2 sessions for the coder. Stages 11 + 12 batchable next round. Stage 22 placed in Tier 4 ordering."
       }
+    },
+    {
+      "id": "d3cc6809-32e5-4ce7-b291-a6e8db8f6810",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T03:00:00Z",
+      "timestamp_end": "2026-05-09T03:30:00Z",
+      "intent": "Pull stage 10 result; carve stages 11+12 as a Tier 3 batch.",
+      "before": {
+        "assumptions": "Stage 10 (headliner) landed cleanly. Stages 11 and 12 are small Tier 3, both touch App.this.cs in different sections; sanctioned for batching.",
+        "risk": "Stage 11 minimal scope (~3-line ctor injection fix); stage 12 mostly copy-paste extract. Risk low."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-11-errors-app-backref-drop.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-11-errors-app-backref-drop.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 11 brief \u2014 minimal scope. Errors.@this takes App via ctor; field-init new() becomes new(this); internal usages drop null operators (_app.CallStack). Error.@this.App back-ref OUT OF SCOPE (requires moving Error.Callback materialisation; future stage)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-12-build-branch-to-build-this.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 12 brief \u2014 extract 33-line build branch from App.Start into Build.@this.RunAsync(). Build already has App back-ref via existing ctor."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 10 marked complete. Stages 11 and 12 link briefs and replace one-liners. Summary entry covers stage 10 landing + 11+12 carve with batching rationale + stage 13 / 22 deferral."
+        }
+      ],
+      "after": {
+        "status": "stages 11 and 12 ready for coder",
+        "health": "plan + briefs + scope-map + summary all consistent",
+        "notes": "Stages 13 (settings) and 22 (shortcuts) deferred to later sessions. Stage 13 deserves focused attention; 22 is anywhere in Tier 4."
+      }
     }
   ]
 }
