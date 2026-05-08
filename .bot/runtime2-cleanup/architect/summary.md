@@ -1,5 +1,43 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+16) — stages 15+16 landed (16 partially); stage 19 carved alone (the last)
+
+Stages 15 and 16 landed.
+
+**Stage 15**: 2752/2752 + 199/199. All 16 file renames + Filters/this.cs new collection landed cleanly. Mechanical sweep done.
+
+**Stage 16**: 2752/2752 + 199/199. 4 of 8 hits converted to instance; 1 deletion (OpenAi.requestCount); ReservedKeywords relocated. **4 sites deferred**: AskCallback._options, DefaultHttpProvider's 2 static JsonSerializerOptions, Choices' _gate/_registry, and all of PlangTypeIndex.cs. Coder's reasoning: each requires a higher-level refactor of the static-caller chain (e.g., make TypeMapping instance-bound, or pass context through static helpers). Reasonable judgment call — full eviction would have cascaded into a substantially bigger refactor. The deferred items are real Rule C smells; they become follow-up work rather than blocking stage 16's intended scope.
+
+### Stage 19 carved alone (the last)
+
+Brief at `stage-19-provider-to-code-rename.md`. The biggest sweep on this branch:
+
+- 12 folder relocations (App/Providers/, App/Data/Providers/, 10 per-module providers/ folders).
+- 22+ file renames.
+- Marker interface `IProvider` → `ICode` (fields preserved — they encode the developer-DLL-registration flow).
+- 11 per-module interfaces drop the `Provider` suffix (`IBuilderProvider` → `IBuilder`, etc.).
+- Implementations drop both `Default` and `Provider` suffixes — variant names where meaningful (`OpenAi.cs`, `Fluid.cs`, `Grep.cs`), `Default.cs` where the parent path says the role.
+- App property `app.Providers` → `app.Code`.
+- 100+ caller sweeps across PLang/ and PLang.Tests/.
+- Conditional: `modules/provider/` action folder rename pending .goal-file sweep.
+
+**Driver**: PLang vocabulary alignment. "Everything is goals, except where you need code." Provider was DI-flavored; Code matches the language's narrative.
+
+**Risk**: medium-high (volume). Behavior preserved everywhere.
+
+### After stage 19 lands
+
+**Cleanup complete.** All 22 stages done. The runtime2-cleanup branch can merge to runtime2 once stage 19 completes.
+
+Following work (not in this plan):
+- Deferred Rule C statics from stage 16 — own follow-up plan when the calling chains can be made instance-bound.
+- The deferred Error.@this.App back-ref (mentioned in stage 11 brief) — also follow-up.
+- The CallStack scope question (per-context vs shared) — filed in todos.md.
+- The Events three-tier writer-path question — filed in todos.md.
+- The audit-substrate question (v3 methodology) — own branch when there's appetite.
+
+---
+
 ## 2026-05-08 (latest+15) — stages 18+22 landed; stages 15+16 carved (penultimate Tier 4 batch)
 
 Stages 18 and 22 landed cleanly per coder.
