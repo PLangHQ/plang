@@ -2,127 +2,112 @@
 
 ## Version
 
+v4 — Stage 4 (`dispose-self-owns`).
+v3 — Stage 3 (`keepalive-collection`).
 v2 — Stage 2 (`channels-v1-helpers-drop`).
-Stage 1 (`serializers-single-home`) summary kept below as a v1 entry.
+v1 — Stage 1 (`serializers-single-home`).
 
-## v2 — Stage 2 (`channels-v1-helpers-drop`)
+---
+
+## v4 — Stage 4 (`dispose-self-owns`)
 
 ### What this is
 
-Dead-code deletion stage. Two surfaces on `Channels.@this` had outlived
-their purpose and were retained only by self-references and stale doc
-comments referring to a "Stage 4 / Stage 6" of the prior channels plan
-(not this cleanup plan). Stage 2 deletes them.
-
-1. `WriteAsync(string actorName, string channelName, object? data, ...)` —
-   v1 actor-routing helper. Zero external callers.
-2. The `contentType` override branch inside the single-string
-   `WriteAsync(channelName, data, contentType, ...)`. Zero callers ever
-   passed `contentType`. The parameter goes too.
+App.DisposeAsync stops reaching across class boundaries to dispose
+contents of `Modules.@this` and `Providers.@this`. Each subsystem owns
+its own teardown.
 
 ### What was done
 
-Single file edited: `PLang/App/Channels/this.cs`.
-
-- Deleted the two-string `WriteAsync` overload (10 lines incl. comment).
-- Dropped the `string? contentType = null` parameter from the surviving
-  `WriteAsync(channelName, data, ...)`.
-- Removed the ~20-line `if (!string.IsNullOrEmpty(contentType) && channel is Channel.Stream.@this sc) { ... }` block that re-serialised through the parent Channels' Serializers using the cast Stream.
-- Replaced the surviving WriteAsync's doc-comment with a per-actor
-  description that matches stage 1's reality (no "Stage 4" reference).
-
-Resulting surviving body is ~5 lines: `GetChannel` → wrap envelope →
-delegate to `channel.WriteAsync(envelope, ct)` (which fires Channel
-events and routes through `WriteCore`).
+- `PLang/App/Modules/this.cs` — `@this` now implements `IAsyncDisposable`.
+  Added `_disposed` guard and `DisposeAsync()` that iterates the same
+  projection `All` exposes (`_modules.Values.SelectMany(a => a.Values).Where(e => e.Instance != null)`).
+- `PLang/App/Providers/this.cs` — `partial @this` now implements `IAsyncDisposable`.
+  Same shape: `_disposed` guard + `DisposeAsync()` over `_providers.Values.SelectMany(p => p.Values)`.
+- `PLang/App/this.cs` — DisposeAsync's two ~8-line foreach blocks
+  collapse to:
+  ```csharp
+  await _modules.DisposeAsync();
+  await Providers.DisposeAsync();
+  await KeepAlive.DisposeAsync();
+  ```
+  Same dispose order, same fallback chain (IAsyncDisposable → IDisposable),
+  same handler filter as the prior in-place loops.
 
 ### Verification
 
-- `grep -n "WriteAsync(string actorName" PLang/App/Channels/this.cs` → 0.
-- `grep -n "string? contentType" PLang/App/Channels/this.cs` → 0.
-- `grep -n "channel is Channel.Stream.@this sc" PLang/App/Channels/this.cs` → 3 (the three remaining out-of-scope `sc` casts the brief flagged: `WriteTextAsync`, `ReadChannelAsync`, `ReadTextAsync`).
-- `dotnet build PlangConsole` clean (0 errors, 449 warnings — unchanged from trunk).
+- `grep -n "_modules\.All\|Providers\.All()" PLang/App/this.cs` → 0.
 - `dotnet run --project PLang.Tests` → **2755/2755 pass**.
 - `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test` → **199/199 pass**.
-
-### Code example — the shrink
-
-Before (~32 lines including doc comment, contentType branch, error path):
-
-```csharp
-public async Task<Data.@this> WriteAsync(string channelName, object? data,
-    string? contentType = null, CancellationToken cancellationToken = default)
-{
-    var (channel, error) = GetChannel(channelName, requireWrite: true);
-    if (error != null) return error;
-
-    var envelope = data is Data.@this d ? d : Data.@this.Ok(data);
-    if (!string.IsNullOrEmpty(contentType) && channel is Channel.Stream.@this sc)
-    {
-        try
-        {
-            await Serializers.SerializeAsync(new SerializeOptions
-            {
-                Stream = sc.Stream, Data = envelope.Value,
-                ContentType = contentType, CancellationToken = cancellationToken
-            });
-            return App.Data.@this.Ok();
-        }
-        catch (Exception ex) when (...) { return ServiceError(...); }
-    }
-    return await channel!.WriteAsync(envelope, cancellationToken);
-}
-```
-
-After (5-line body):
-
-```csharp
-public async Task<Data.@this> WriteAsync(string channelName, object? data,
-    CancellationToken cancellationToken = default)
-{
-    var (channel, error) = GetChannel(channelName, requireWrite: true);
-    if (error != null) return error;
-
-    var envelope = data is Data.@this d ? d : Data.@this.Ok(data);
-    return await channel!.WriteAsync(envelope, cancellationToken);
-}
-```
-
-The two-string overload deletion is mechanical — the method block goes
-entirely.
+- Build clean (0 errors).
 
 ### Notes for next stages
 
-The brief explicitly flagged the three remaining `is Channel.Stream.@this sc`
-casts — verified in place at `WriteTextAsync` (line 169 post-edit),
-`ReadChannelAsync` (line 198), `ReadTextAsync` (line 218). The first
-reaches into `sc.Stream` + `sc.Mime` (cross-class internal reach, same
-shape as the contentType branch); the latter two dispatch to
-Stream-specific public methods. None on stage 2; flagged for whichever
-future stage carves them.
+`Modules.All` / `Providers.All()` are now dead public readers (only the
+DisposeAsync iterations called them, and those now live on the owners).
+Architect explicitly left them as public surface — flagged for a future
+cleanup pass.
 
-DefaultHttpProvider's two callers at `app.System.Channels.WriteAsync(...)`
-(lines 852, 907) verified — both pass two positional args, none pass
-`contentType`. Removing the parameter was source-compatible.
+---
+
+## v3 — Stage 3 (`keepalive-collection`)
+
+### What this is
+
+`_keepAlive` private list + `KeepAlive(x)` + `RemoveKeepAlive(x)` + dispose
+loop merge into a single `App.KeepAlive.@this` collection that owns Add /
+Remove (with sync-dispose semantics) / DisposeAsync. App holds it as a
+property.
+
+### What was done
+
+- `PLang/App/KeepAlive/this.cs` — **new file**. `sealed class @this :
+  IAsyncDisposable` with private list, `Add(object)`, `Remove(object)` (sync
+  dispose preserved), `DisposeAsync()` + `_disposed` guard.
+- `PLang/App/this.cs`:
+  - Removed `private readonly List<object> _keepAlive = new();`.
+  - Removed `public void KeepAlive(object instance)` and
+    `public void RemoveKeepAlive(object instance)`.
+  - Added `public KeepAlive.@this KeepAlive { get; } = new();`.
+  - DisposeAsync's 7-line foreach + Clear → `await KeepAlive.DisposeAsync();`.
+
+### Verification
+
+- `grep -n "_keepAlive" PLang/App/` → 0.
+- `grep -n "RemoveKeepAlive" PLang/App/` → 0.
+- C# 2755/2755 pass; PLang 199/199 pass; build clean.
+
+### Caller-sweep note
+
+Verified zero external callers of `app.KeepAlive(x)` and
+`app.RemoveKeepAlive(x)` across PLang/, PLang.Tests/, Tests/. Methods
+deleted outright (no deprecation needed).
+
+---
+
+## v2 — Stage 2 (`channels-v1-helpers-drop`)
+
+Dead-code deletion: removed the two-string `WriteAsync(actorName,
+channelName, ...)` overload (zero callers) and the contentType-override
+branch + parameter from the single-string `WriteAsync` (zero callers ever
+passed contentType). Surviving body shrunk to ~5 lines.
+
+C# 2755/2755 pass; PLang 199/199 pass.
+
+Three remaining `is Channel.Stream.@this sc` casts in `WriteTextAsync`,
+`ReadChannelAsync`, `ReadTextAsync` left in place — flagged for future.
 
 ---
 
 ## v1 — Stage 1 (`serializers-single-home`)
 
-(Original v1 summary kept for context.)
+Per-actor `Channels.@this.Serializers` established as the single home;
+`App.@this.Serializers` deleted; `Channel.Stream.@this._serializers` field
+deleted; new `Channels` back-ref on `Channel.@this` set in
+`Channels.Register(channel)` so Stream's `WriteCore` reaches its parent
+Channels' Serializers.
 
-First commit on `runtime2-cleanup` after the architect carved Stage 1.
-Established per-actor `Channels.@this.Serializers` as the single home for
-the serializer registry by deleting the two surfaces that bypassed it:
+5 production callers + 6 test files swept; 7 unit tests updated for the
+new boot-ordering (construct-then-write → register-then-write).
 
-- `App.@this.Serializers` — App-root shortcut that bypassed the actor entirely.
-- `Channel.Stream.@this._serializers` — third copy lazily allocated per stream.
-
-Added `Channels` back-ref on `Channel.@this` (alongside `App`); set in
-`Channels.Register(channel)`. Stream's `WriteCore` routes through
-`Channels!.Serializers.SerializeAsync(...)`.
-
-Caller sweep covered 5 production sites + 6 test files + 7 unit tests
-that needed the new boot-ordering (construct-then-write was migrated to
-register-via-Channels.Register).
-
-Both suites passed: C# 2755/2755, PLang 199/199.
+C# 2755/2755 pass; PLang 199/199 pass.

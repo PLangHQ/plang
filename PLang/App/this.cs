@@ -654,24 +654,8 @@ public sealed partial class @this : Data.@this<@this>, IAsyncDisposable
         if (_user != null)
             await _user.DisposeAsync();
 
-        // Dispose any disposable handlers
-        foreach (var handler in _modules.All)
-        {
-            if (handler is IAsyncDisposable asyncDisposable)
-                await asyncDisposable.DisposeAsync();
-            else if (handler is IDisposable disposable)
-                disposable.Dispose();
-        }
-
-        // Dispose providers (HttpClient, etc.)
-        foreach (var provider in Providers.All())
-        {
-            if (provider is IAsyncDisposable asyncProv)
-                await asyncProv.DisposeAsync();
-            else if (provider is IDisposable disposableProv)
-                disposableProv.Dispose();
-        }
-
+        await _modules.DisposeAsync();
+        await Providers.DisposeAsync();
         await KeepAlive.DisposeAsync();
     }
 }

@@ -13,15 +13,33 @@ namespace App.Providers;
 /// First registered becomes default. Thread-safe via ConcurrentDictionary.
 /// Generic methods delegate to non-generic — single source of truth for all logic.
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<System.Type, ConcurrentDictionary<string, IProvider>> _providers = new();
+    private bool _disposed;
 
     // Remembers which provider RegisterDefaults marked as the type's default. Used by
     // Snapshot capture to decide whether the *current* default differs from what a
     // freshly-booted App would set. Without this, SetDefault() clearing the built-in's
     // IsDefault flag would erase the evidence needed to detect the override.
     private readonly ConcurrentDictionary<System.Type, string> _builtInDefaults = new();
+
+    /// <summary>
+    /// Disposes every registered provider instance (IAsyncDisposable preferred,
+    /// IDisposable fallback). Same projection as <see cref="All"/>.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        foreach (var provider in _providers.Values.SelectMany(p => p.Values))
+        {
+            if (provider is IAsyncDisposable asyncProv)
+                await asyncProv.DisposeAsync();
+            else if (provider is IDisposable disposableProv)
+                disposableProv.Dispose();
+        }
+    }
 
     // --- Generic convenience methods (delegate to non-generic) ---
 

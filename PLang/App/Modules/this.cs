@@ -11,13 +11,34 @@ namespace App.Modules;
 /// Built-in actions are discovered from the PLang assembly at construction.
 /// External DLLs add actions via Discover(assembly, namespace).
 /// </summary>
-public sealed class @this
+public sealed class @this : IAsyncDisposable
 {
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ActionEntry>> _modules = new(StringComparer.OrdinalIgnoreCase);
+    private bool _disposed;
 
     public @this()
     {
         Discover(typeof(@this).Assembly, "App.modules");
+    }
+
+    /// <summary>
+    /// Disposes every registered handler instance (IAsyncDisposable preferred,
+    /// IDisposable fallback). Same projection as <see cref="All"/>.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        foreach (var entry in _modules.Values
+                                      .SelectMany(a => a.Values)
+                                      .Where(e => e.Instance != null))
+        {
+            var handler = entry.Instance!;
+            if (handler is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync();
+            else if (handler is IDisposable disposable)
+                disposable.Dispose();
+        }
     }
 
     /// <summary>
