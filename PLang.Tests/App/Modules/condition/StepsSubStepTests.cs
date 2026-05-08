@@ -127,7 +127,7 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(0, 0, false),
             MakeOutputStep(1, 4, "should-be-skipped")
         };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
@@ -143,7 +143,7 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(0, 0, true),
             MakeOutputStep(1, 4, "child-executed")
         };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
@@ -160,7 +160,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(1, 4, "child-skipped"),
             MakeOutputStep(2, 0, "next-runs")
         };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
@@ -180,7 +180,7 @@ public class StepsSubStepTests : IDisposable
             MakeOutputStep(2, 8, "inner-skipped"), // inner child
             MakeOutputStep(3, 4, "outer-runs")     // outer child at indent 4
         };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
@@ -198,7 +198,7 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(0, 0, false),  // false but no indented children
             MakeOutputStep(1, 0, "next-runs") // same indent — not a child
         };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
@@ -216,7 +216,7 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(2, 0, true),
             MakeOutputStep(3, 4, "child-B-runs")
         };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
@@ -235,7 +235,7 @@ public class StepsSubStepTests : IDisposable
             MakeConditionStep(1, 4, true),
             MakeOutputStep(2, 8, "leaf-runs")
         };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
@@ -254,7 +254,7 @@ public class StepsSubStepTests : IDisposable
             MakeSetStep(0, 0, "myVar", false),
             MakeOutputStep(1, 4, "child-runs")
         };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();

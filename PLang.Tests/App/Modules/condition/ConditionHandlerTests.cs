@@ -34,7 +34,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
     {
-        var action = new If { Context = _app.Context, Left = Data.Ok(true), Operator = new Operator("=="), Right = Data.Ok(true) };
+        var action = new If { Context = _app.User.Context, Left = Data.Ok(true), Operator = new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -44,7 +44,7 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
     {
-        var action = new If { Context = _app.Context, Left = Data.Ok(false), Operator = new Operator("=="), Right = Data.Ok(true) };
+        var action = new If { Context = _app.User.Context, Left = Data.Ok(false), Operator = new Operator("=="), Right = Data.Ok(true) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -83,7 +83,7 @@ public class ConditionHandlerTests : IDisposable
         };
         condAction.Step = step;
 
-        var result = await step.RunAsync(_app.Context);
+        var result = await step.RunAsync(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
 
@@ -135,7 +135,7 @@ public class ConditionHandlerTests : IDisposable
         };
         condAction.Step = step;
 
-        var result = await step.RunAsync(_app.Context);
+        var result = await step.RunAsync(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
 

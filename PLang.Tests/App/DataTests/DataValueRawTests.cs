@@ -39,8 +39,8 @@ public class DataValueRawTests
     [Test]
     public async Task Value_StringWithVarPlaceholder_ReturnsRawNotSubstituted()
     {
-        _app.Context.Variables.Set("name", "world");
-        var data = new Data("greeting", "Hello %name%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("name", "world");
+        var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context };
 
         await Assert.That(data.Value).IsEqualTo("Hello %name%");
     }
@@ -49,9 +49,9 @@ public class DataValueRawTests
     [Test]
     public async Task Value_ListWithVarPlaceholders_ReturnsRawListUnchanged()
     {
-        _app.Context.Variables.Set("x", "actual");
+        _app.User.Context.Variables.Set("x", "actual");
         var raw = new List<object?> { "%x%", "literal", "%x%" };
-        var data = new Data("list", raw) { Context = _app.Context };
+        var data = new Data("list", raw) { Context = _app.User.Context };
 
         var read = data.Value;
         await Assert.That(ReferenceEquals(read, raw)).IsTrue();
@@ -63,9 +63,9 @@ public class DataValueRawTests
     [Test]
     public async Task Value_DictWithVarPlaceholders_ReturnsRawDictUnchanged()
     {
-        _app.Context.Variables.Set("user", "alice");
+        _app.User.Context.Variables.Set("user", "alice");
         var raw = new Dictionary<string, object?> { ["name"] = "%user%", ["role"] = "admin" };
-        var data = new Data("dict", raw) { Context = _app.Context };
+        var data = new Data("dict", raw) { Context = _app.User.Context };
 
         var read = data.Value;
         await Assert.That(ReferenceEquals(read, raw)).IsTrue();
@@ -121,7 +121,7 @@ public class DataValueRawTests
             Parameters = new List<Data> { stored }
         };
 
-        var found = action.GetParameter("greeting", _app.Context);
+        var found = action.GetParameter("greeting", _app.User.Context);
 
         await Assert.That(ReferenceEquals(found, stored)).IsTrue();
         await Assert.That(found.Value).IsEqualTo("Hello %name%");

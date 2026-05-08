@@ -58,7 +58,7 @@ public class PlangRuntimeTests : IDisposable
         };
 
         var steps = new GoalSteps { step };
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await steps.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
@@ -74,7 +74,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task Step_Event_Before_ReturnsEmptyWhenNoBindings()
     {
         var step = new Step { Index = 0, Text = "test step" };
-        var context = _app.Context;
+        var context = _app.User.Context;
 
         // Step implements IEvent — Event property should exist
         await Assert.That(step.Events).IsNotNull();
@@ -89,7 +89,7 @@ public class PlangRuntimeTests : IDisposable
     [Test]
     public async Task Step_Event_Before_ReturnsMatchingBindings()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
 
         // Register a before-step event
         var onAction = new global::App.modules.@event.On
@@ -144,7 +144,7 @@ public class PlangRuntimeTests : IDisposable
         };
         foreach (var s in goal.Steps) s.Goal = goal;
 
-        var context = _app.Context;
+        var context = _app.User.Context;
         var result = await _app.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();

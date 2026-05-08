@@ -27,7 +27,7 @@ public class GoalCallTests
     {
         var action = new Call
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             GoalName = new GoalCall { Name = "TestGoal" }
         };
         var result = await action.Run();
@@ -40,7 +40,7 @@ public class GoalCallTests
     {
         var action = new Call
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             GoalName = new GoalCall { Name = "NonExistent" }
         };
         var result = await action.Run();
@@ -53,7 +53,7 @@ public class GoalCallTests
     {
         var action = new Call
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             GoalName = new GoalCall
             {
                 Name = "TestGoal",
@@ -63,7 +63,7 @@ public class GoalCallTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var param = _app.Context.Variables.Get("myParam");
+        var param = _app.User.Context.Variables.Get("myParam");
         await Assert.That(param).IsNotNull();
         await Assert.That(param!.ToString()).IsEqualTo("myValue");
     }
@@ -71,10 +71,10 @@ public class GoalCallTests
     [Test]
     public async Task Call_NullActor_UsesCurrentContext()
     {
-        _app.Context.Variables.Set("marker", "fromCaller");
+        _app.User.Context.Variables.Set("marker", "fromCaller");
         var action = new Call
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             GoalName = new GoalCall { Name = "TestGoal" },
             Actor = null
         };
@@ -82,7 +82,7 @@ public class GoalCallTests
 
         await Assert.That(result.Success).IsTrue();
         // marker should still be visible on same context
-        var marker = _app.Context.Variables.Get("marker");
+        var marker = _app.User.Context.Variables.Get("marker");
         await Assert.That(marker).IsNotNull();
     }
 }

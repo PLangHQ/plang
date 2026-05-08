@@ -16,7 +16,7 @@ public sealed partial class @this
     public Snapshot.@this Snapshot()
     {
         var s = new Snapshot.@this();
-        Variables.Capture(s.Section("Variables"));
+        CurrentActor.Context.Variables.Capture(s.Section("Variables"));
         Errors.Capture(s.Section("Errors"));
         Providers.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
@@ -38,7 +38,7 @@ public sealed partial class @this
     /// </summary>
     public void Restore(Snapshot.@this s, Actor.Context.@this? context = null)
     {
-        var ctx = context ?? Context;
+        var ctx = context ?? CurrentActor.Context;
 
         if (s.HasSection("Providers")) global::App.Providers.@this.Restore(s.Section("Providers"), ctx);
         if (s.HasSection("Variables")) global::App.Variables.@this.Restore(s.Section("Variables"), ctx);

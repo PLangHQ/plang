@@ -31,7 +31,7 @@ public class ForeachErrorPropagationTests
     [Test]
     public async Task Foreach_BodyGoalCallFails_PropagatesError()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         context.Variables.Set("items", new List<object?> { "a", "b", "c" });
 
         var foreachAction = TestAction.Create("loop", "foreach",
@@ -68,7 +68,7 @@ public class ForeachErrorPropagationTests
     [Test]
     public async Task Foreach_BodyInnerGoalFailsInsideConditionIf_PropagatesError()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         context.Variables.Set("items", new List<object?> { "a", "b", "c" });
 
         // Inner goal with a single step: [condition.if(true), goal.call Missing]
@@ -139,7 +139,7 @@ public class ForeachErrorPropagationTests
     [Test]
     public async Task Foreach_BodySucceeds_CompletesAllIterations()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         context.Variables.Set("items", new List<object?> { "a", "b", "c" });
 
         var noop = new Goal

@@ -18,7 +18,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_OrchestatesGoalCall()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         var items = new List<object?> { "a", "b", "c" };
         context.Variables.Set("items", items);
 
@@ -53,7 +53,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_EmptyCollection_ReturnsZeroCount()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         context.Variables.Set("items", new List<object?>());
 
         var action = TestAction.Create("loop", "foreach",
@@ -69,7 +69,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_SetsItemVariable()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         context.Variables.Set("items", new List<object?> { "hello" });
 
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
@@ -98,7 +98,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_IteratesDictionary()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variables.Set("dict", dict);
 
@@ -127,7 +127,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_Dictionary_KeyIsStringNotIndex()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         // Use single-entry dict so final state = only iteration
         var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
         context.Variables.Set("dict", dict);
@@ -163,7 +163,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_NullCollection_ReturnsZeroCount()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", null), ("itemname", "%item%"));
@@ -178,7 +178,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_Cancellation_StopsIteration()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         context.Variables.Set("items", new List<object?> { "a", "b", "c", "d", "e" });
 
         var cts = new CancellationTokenSource();

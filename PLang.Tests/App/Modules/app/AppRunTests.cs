@@ -26,7 +26,7 @@ public class AppRunTests
     {
         var action = new run
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             GoalName = new GoalCall { Name = "RunTarget" }
         };
         var result = await action.Run();
@@ -39,7 +39,7 @@ public class AppRunTests
     {
         var action = new run
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             GoalName = new GoalCall { Name = "DoesNotExist" }
         };
         var result = await action.Run();
@@ -57,7 +57,7 @@ public class AppRunTests
         };
         var action = new run
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             Step = step
         };
         var result = await action.Run();
@@ -71,7 +71,7 @@ public class AppRunTests
     {
         var action = new run
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             GoalName = null,
             Step = null,
             Action = null

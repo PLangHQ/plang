@@ -228,12 +228,6 @@ public sealed partial class @this : IAsyncDisposable
     public Actor.@this CurrentActor { get; set; } = null!; // initialized to User in constructor
 
     /// <summary>
-    /// Context of the current executor.
-    /// </summary>
-    public Actor.Context.@this Context => CurrentActor.Context;
-    public Variables.@this Variables => Context.Variables;
-
-    /// <summary>
     /// Resolves an actor by name. Returns error instead of null — object reports its own errors.
     /// </summary>
     public (Actor.@this? Actor, IError? Error) GetActor(string? name)

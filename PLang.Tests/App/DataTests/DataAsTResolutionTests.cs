@@ -18,8 +18,8 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_AlreadyTypedData_ReturnsSelf()
     {
-        var typed = new global::App.Data.@this<int>("count", 42) { Context = _app.Context };
-        var result = typed.As<int>(_app.Context);
+        var typed = new global::App.Data.@this<int>("count", 42) { Context = _app.User.Context };
+        var result = typed.As<int>(_app.User.Context);
         await Assert.That(ReferenceEquals(result, typed)).IsTrue();
     }
 
@@ -27,8 +27,8 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ValueAlreadyT_FastPathWrap()
     {
-        var data = new Data("count", 42) { Context = _app.Context };
-        var result = data.As<int>(_app.Context);
+        var data = new Data("count", 42) { Context = _app.User.Context };
+        var result = data.As<int>(_app.User.Context);
         await Assert.That(result).IsTypeOf<global::App.Data.@this<int>>();
         await Assert.That(result.Value).IsEqualTo(42);
     }
@@ -37,10 +37,10 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_FullVarMatch_ReturnsVariableValue()
     {
-        _app.Context.Variables.Set("path", "/tmp/x.txt");
-        var data = new Data("p", "%path%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("path", "/tmp/x.txt");
+        var data = new Data("p", "%path%") { Context = _app.User.Context };
 
-        var result = data.As<string>(_app.Context);
+        var result = data.As<string>(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("/tmp/x.txt");
@@ -50,9 +50,9 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_FullVarMatch_MissingVariable_ReturnsErrorOrNotFound()
     {
-        var data = new Data("p", "%missing%") { Context = _app.Context };
+        var data = new Data("p", "%missing%") { Context = _app.User.Context };
 
-        var result = data.As<string>(_app.Context);
+        var result = data.As<string>(_app.User.Context);
 
         // Either Data.FromError (Success=false) or empty value — both are valid contract responses.
         await Assert.That(result).IsNotNull();
@@ -63,10 +63,10 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_Interpolation_CallsResolve()
     {
-        _app.Context.Variables.Set("name", "world");
-        var data = new Data("greeting", "Hello %name%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("name", "world");
+        var data = new Data("greeting", "Hello %name%") { Context = _app.User.Context };
 
-        var result = data.As<string>(_app.Context);
+        var result = data.As<string>(_app.User.Context);
 
         await Assert.That(result.Value).IsEqualTo("Hello world");
     }
@@ -75,11 +75,11 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ListWithNestedVars_DeepResolvesAndTypes()
     {
-        _app.Context.Variables.Set("greeting", "hello");
+        _app.User.Context.Variables.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "world" };
-        var data = new Data("list", raw) { Context = _app.Context };
+        var data = new Data("list", raw) { Context = _app.User.Context };
 
-        var result = data.As<List<string>>(_app.Context);
+        var result = data.As<List<string>>(_app.User.Context);
 
         await Assert.That(result.Value).IsNotNull();
         await Assert.That(result.Value![0]).IsEqualTo("hello");
@@ -90,11 +90,11 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DictWithNestedVars_DeepResolvesAndTypes()
     {
-        _app.Context.Variables.Set("prompt", "You are a compiler");
+        _app.User.Context.Variables.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
-        var data = new Data("dict", raw) { Context = _app.Context };
+        var data = new Data("dict", raw) { Context = _app.User.Context };
 
-        var result = data.As<Dictionary<string, object?>>(_app.Context);
+        var result = data.As<Dictionary<string, object?>>(_app.User.Context);
 
         await Assert.That(result.Value).IsNotNull();
         await Assert.That(result.Value!["content"]).IsEqualTo("You are a compiler");
@@ -104,9 +104,9 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_TypeWithStaticResolve_StringValue_DispatchesToResolve()
     {
-        var data = new Data("file", "subdir/file.txt") { Context = _app.Context };
+        var data = new Data("file", "subdir/file.txt") { Context = _app.User.Context };
 
-        var result = data.As<global::App.FileSystem.Path>(_app.Context);
+        var result = data.As<global::App.FileSystem.Path>(_app.User.Context);
 
         // FileSystem.Path.Resolve returned a Path instance — Value should be one.
         await Assert.That(result.Value).IsNotNull();
@@ -117,9 +117,9 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ConversionFailure_ReturnsFromError()
     {
-        var data = new Data("count", "not-a-number") { Context = _app.Context };
+        var data = new Data("count", "not-a-number") { Context = _app.User.Context };
 
-        var result = data.As<int>(_app.Context);
+        var result = data.As<int>(_app.User.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();
@@ -129,14 +129,14 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_CalledTwice_FreshResolutionEachCall()
     {
-        _app.Context.Variables.Set("x", "first");
-        var data = new Data("v", "%x%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("x", "first");
+        var data = new Data("v", "%x%") { Context = _app.User.Context };
 
-        var first = data.As<string>(_app.Context);
+        var first = data.As<string>(_app.User.Context);
         await Assert.That(first.Value).IsEqualTo("first");
 
-        _app.Context.Variables.Set("x", "second");
-        var second = data.As<string>(_app.Context);
+        _app.User.Context.Variables.Set("x", "second");
+        var second = data.As<string>(_app.User.Context);
         await Assert.That(second.Value).IsEqualTo("second");
 
         // Two distinct instances — neither is a cache.
@@ -147,10 +147,10 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DoesNotMutateOriginalDataValue()
     {
-        _app.Context.Variables.Set("x", "resolved");
-        var data = new Data("v", "%x%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("x", "resolved");
+        var data = new Data("v", "%x%") { Context = _app.User.Context };
 
-        var resolved = data.As<string>(_app.Context);
+        var resolved = data.As<string>(_app.User.Context);
         await Assert.That(resolved.Value).IsEqualTo("resolved");
 
         // Original .Value is still raw.
@@ -161,7 +161,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ActionListElements_NotRecursedInto()
     {
-        _app.Context.Variables.Set("comment", "should-NOT-substitute");
+        _app.User.Context.Variables.Set("comment", "should-NOT-substitute");
         // A list of action-template-shaped dictionaries; sub-actions hold raw %var% for deferred resolution.
         var raw = new List<object?>
         {
@@ -175,9 +175,9 @@ public class DataAsTResolutionTests
                 }
             }
         };
-        var data = new Data("actions", raw) { Context = _app.Context };
+        var data = new Data("actions", raw) { Context = _app.User.Context };
 
-        var result = data.As<List<PrAction>>(_app.Context);
+        var result = data.As<List<PrAction>>(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsNotNull();
@@ -194,12 +194,12 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_NonGenericArrayList_PassesThroughWithoutSubstitution()
     {
-        _app.Context.Variables.Set("x", "substituted");
+        _app.User.Context.Variables.Set("x", "substituted");
         var raw = new System.Collections.ArrayList { "%x%", "literal" };
-        var data = new Data("list", raw) { Context = _app.Context };
+        var data = new Data("list", raw) { Context = _app.User.Context };
 
         // Asks for object back so the conversion doesn't try to coerce ArrayList to anything.
-        var result = data.As<object>(_app.Context);
+        var result = data.As<object>(_app.User.Context);
 
         await Assert.That(result.Value).IsEqualTo(raw);
         // Raw element [0] is still "%x%" — no walk happened.
@@ -210,11 +210,11 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_NonGenericHashtable_PassesThroughWithoutSubstitution()
     {
-        _app.Context.Variables.Set("x", "substituted");
+        _app.User.Context.Variables.Set("x", "substituted");
         var raw = new System.Collections.Hashtable { ["key"] = "%x%" };
-        var data = new Data("dict", raw) { Context = _app.Context };
+        var data = new Data("dict", raw) { Context = _app.User.Context };
 
-        var result = data.As<object>(_app.Context);
+        var result = data.As<object>(_app.User.Context);
 
         await Assert.That(((System.Collections.Hashtable)result.Value!)["key"]).IsEqualTo("%x%");
     }
@@ -226,11 +226,11 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredFullVarRef_ReturnedVerbatim_NoChain()
     {
-        _app.Context.Variables.Set("a", "%b%");
-        _app.Context.Variables.Set("b", "%a%");
-        var data = new Data("ref", "%a%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("a", "%b%");
+        _app.User.Context.Variables.Set("b", "%a%");
+        var data = new Data("ref", "%a%") { Context = _app.User.Context };
 
-        var result = data.As<string>(_app.Context);
+        var result = data.As<string>(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("%b%");
@@ -243,10 +243,10 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredSelfRef_ReturnedVerbatim()
     {
-        _app.Context.Variables.Set("x", "%x%");
-        var data = new Data("ref", "%x%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("x", "%x%");
+        var data = new Data("ref", "%x%") { Context = _app.User.Context };
 
-        var result = data.As<string>(_app.Context);
+        var result = data.As<string>(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("%x%");
@@ -259,10 +259,10 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_PartialMatchInterpolatesOncesThenStops()
     {
-        _app.Context.Variables.Set("x", "%x%");
-        var data = new Data("greeting", "hello %x%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("x", "%x%");
+        var data = new Data("greeting", "hello %x%") { Context = _app.User.Context };
 
-        var result = data.As<string>(_app.Context);
+        var result = data.As<string>(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("hello %x%");
@@ -276,11 +276,11 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_StoredVarRefWithSurroundingText_NotReResolved()
     {
-        _app.Context.Variables.Set("a", "X-%b%");
-        _app.Context.Variables.Set("b", "Y-%a%");
-        var data = new Data("ref", "%a%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("a", "X-%b%");
+        _app.User.Context.Variables.Set("b", "Y-%a%");
+        var data = new Data("ref", "%a%") { Context = _app.User.Context };
 
-        var result = data.As<string>(_app.Context);
+        var result = data.As<string>(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("X-%b%");
@@ -293,14 +293,14 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_DeepChain_NoTransitiveResolution()
     {
-        _app.Context.Variables.Set("a", "%b%");
-        _app.Context.Variables.Set("b", "%c%");
-        _app.Context.Variables.Set("c", "%d%");
-        _app.Context.Variables.Set("d", "%e%");
-        _app.Context.Variables.Set("e", "leaf-value");
-        var data = new Data("chain", "%a%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("a", "%b%");
+        _app.User.Context.Variables.Set("b", "%c%");
+        _app.User.Context.Variables.Set("c", "%d%");
+        _app.User.Context.Variables.Set("d", "%e%");
+        _app.User.Context.Variables.Set("e", "leaf-value");
+        var data = new Data("chain", "%a%") { Context = _app.User.Context };
 
-        var result = data.As<string>(_app.Context);
+        var result = data.As<string>(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEqualTo("%b%");
@@ -313,9 +313,9 @@ public class DataAsTResolutionTests
         var data = new Data("v", "%x%");
 
         await using var app2 = new global::App.@this("/app2");
-        app2.Context.Variables.Set("x", "from-app2");
+        app2.User.Context.Variables.Set("x", "from-app2");
 
-        var result = data.As<string>(app2.Context);
+        var result = data.As<string>(app2.User.Context);
         await Assert.That(result.Value).IsEqualTo("from-app2");
     }
 
@@ -331,7 +331,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_TypedContainerSlot_StoredLeavesNotReResolved()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         ctx.Variables.Set("x", "BUILDER-X");
         ctx.Variables.Set("y", "BUILDER-Y");
 
@@ -366,7 +366,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_ListObjectSlot_AsListLlmMessage_StoredLeavesNotReResolved()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         ctx.Variables.Set("goal", new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { ["Name"] = "BuildGoal" });
         ctx.Variables.Set("buildStart", 999_999_999L);
 

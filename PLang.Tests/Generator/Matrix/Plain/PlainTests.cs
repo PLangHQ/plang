@@ -33,7 +33,7 @@ public class StringPlainTests
         // Touch property twice via Run() — Run returns Path which means the get fired.
         // Since Run is invoked through ExecuteAsync once, we assert reference equality
         // by inspecting the same handler's field via reflection.
-        var result1 = await handler.ExecuteAsync(action, app.Context);
+        var result1 = await handler.ExecuteAsync(action, app.User.Context);
         // Second read of the same property should return same instance — direct property access:
         var first = handler.Path;
         var second = handler.Path;

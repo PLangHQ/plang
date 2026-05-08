@@ -13,7 +13,7 @@ public class ModifierActionTests
         // Run the modifier in isolation to confirm it behaves as a [Modifier]-attributed
         // handler: the handler exists, ExecuteAsync runs without error.
         MatrixRunner.EnsureRegistered<ModifierAction>(app);
-        var currentBefore = app.Context.CallStack?.Current;
+        var currentBefore = app.User.Context.CallStack?.Current;
 
         var action = new PrAction
         {
@@ -21,9 +21,9 @@ public class ModifierActionTests
             ActionName = "modifieraction",
             Parameters = new List<Data> { new Data("tag", "X") }
         };
-        await app.Run(action, app.Context);
+        await app.Run(action, app.User.Context);
 
-        await Assert.That(app.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     [Test]
@@ -31,7 +31,7 @@ public class ModifierActionTests
     {
         await using var app = new global::App.@this("/app");
         MatrixRunner.EnsureRegistered<StringPlain>(app);
-        var currentBefore = app.Context.CallStack?.Current;
+        var currentBefore = app.User.Context.CallStack?.Current;
 
         var action = new PrAction
         {
@@ -40,10 +40,10 @@ public class ModifierActionTests
             Parameters = new List<Data> { new Data("path", "x") }
         };
         // Two dispatches simulate a retry-modifier wrapping the same action twice.
-        await app.Run(action, app.Context);
-        await app.Run(action, app.Context);
+        await app.Run(action, app.User.Context);
+        await app.Run(action, app.User.Context);
 
-        await Assert.That(app.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class ModifierActionTests
         // Test by setting up a BeforeAction binding that returns Handled=true.
         await using var app = new global::App.@this("/app");
         MatrixRunner.EnsureRegistered<StringPlain>(app);
-        var currentBefore = app.Context.CallStack?.Current;
+        var currentBefore = app.User.Context.CallStack?.Current;
 
         var action = new PrAction
         {
@@ -66,8 +66,8 @@ public class ModifierActionTests
         // Action.RunAsync level. We verify that the frame depth stays balanced after a
         // direct App.Run dispatch (the override path doesn't apply here, but the symmetric
         // push/pop still holds).
-        await app.Run(action, app.Context);
-        await Assert.That(app.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await app.Run(action, app.User.Context);
+        await Assert.That(app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     [Test]
@@ -85,7 +85,7 @@ public class ModifierActionTests
             ActionName = "stringplain",
             Parameters = new List<Data> { new Data("path", "x") }
         };
-        var result = await app.Run(action, app.Context);
+        var result = await app.Run(action, app.User.Context);
         await Assert.That(result.Success).IsTrue();
     }
 }

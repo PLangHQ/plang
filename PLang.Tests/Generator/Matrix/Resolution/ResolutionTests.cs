@@ -29,7 +29,7 @@ public class FullVarMatchTests
     {
         await using var app = new global::App.@this("/app");
         // Variables.Set wraps the value in Data; the variable's .Value should be unwrapped during As<T>.
-        app.Context.Variables.Set("count", 42);
+        app.User.Context.Variables.Set("count", 42);
         var result = await MatrixRunner.RunAsync<FullVarMatch>(app,
             parameters: new[] { ("path", (object?)"%count%") });
 
@@ -191,13 +191,13 @@ public class ReResolveAcrossCallsTests
     {
         await using var app = new global::App.@this("/app");
 
-        app.Context.Variables.Set("x", "first");
+        app.User.Context.Variables.Set("x", "first");
         var first = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
         var firstTyped = first.Data as global::App.Data.@this<string>;
         await Assert.That(firstTyped!.Value).IsEqualTo("first");
 
-        app.Context.Variables.Set("x", "second");
+        app.User.Context.Variables.Set("x", "second");
         var second = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
             parameters: new[] { ("value", (object?)"%x%") });
         var secondTyped = second.Data as global::App.Data.@this<string>;
@@ -211,7 +211,7 @@ public class ReResolveAcrossCallsTests
         await using var app = new global::App.@this("/app");
         var sharedData = new Data("value", "%x%");
 
-        app.Context.Variables.Set("x", "v1");
+        app.User.Context.Variables.Set("x", "v1");
         var action1 = new PrAction
         {
             Module = "matrix.resolution",
@@ -219,19 +219,19 @@ public class ReResolveAcrossCallsTests
             Parameters = new List<Data> { sharedData }
         };
         MatrixRunner.EnsureRegistered<ReResolveAcrossCalls>(app);
-        await app.Run(action1, app.Context);
+        await app.Run(action1, app.User.Context);
 
         // Raw .Value is still "%x%" — no in-place mutation
         await Assert.That(sharedData.Value).IsEqualTo("%x%");
 
-        app.Context.Variables.Set("x", "v2");
+        app.User.Context.Variables.Set("x", "v2");
         var action2 = new PrAction
         {
             Module = "matrix.resolution",
             ActionName = "reresolveacrosscalls",
             Parameters = new List<Data> { sharedData }
         };
-        await app.Run(action2, app.Context);
+        await app.Run(action2, app.User.Context);
 
         await Assert.That(sharedData.Value).IsEqualTo("%x%");
     }
@@ -244,7 +244,7 @@ public class ReResolveAcrossCallsTests
         var seen = new List<string?>();
         for (int i = 0; i < 3; i++)
         {
-            app.Context.Variables.Set("i", $"value-{i}");
+            app.User.Context.Variables.Set("i", $"value-{i}");
             var r = await MatrixRunner.RunAsync<ReResolveAcrossCalls>(app,
                 parameters: new[] { ("value", (object?)"%i%") });
             var typed = r.Data as global::App.Data.@this<string>;
@@ -263,7 +263,7 @@ public class ConcurrentHandlersTests
     public async Task ConcurrentHandlers_ParallelExecuteAsync_NoSharedState()
     {
         await using var app = new global::App.@this("/app");
-        app.Context.Variables.Set("x", "value");
+        app.User.Context.Variables.Set("x", "value");
 
         // Pre-register; run in parallel.
         MatrixRunner.EnsureRegistered<ConcurrentHandlers>(app);
@@ -277,7 +277,7 @@ public class ConcurrentHandlersTests
                 ActionName = "concurrenthandlers",
                 Parameters = new List<Data> { sharedData }
             };
-            var data = await app.Run(action, app.Context);
+            var data = await app.Run(action, app.User.Context);
             return data.Success && (data is global::App.Data.@this<string> typed) && typed.Value == "value";
         })).ToArray();
 
@@ -290,11 +290,11 @@ public class ConcurrentHandlersTests
     public async Task ConcurrentHandlers_ParallelAsT_IndependentResults()
     {
         await using var app = new global::App.@this("/app");
-        app.Context.Variables.Set("x", "shared");
-        var data = new Data("v", "%x%") { Context = app.Context };
+        app.User.Context.Variables.Set("x", "shared");
+        var data = new Data("v", "%x%") { Context = app.User.Context };
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
-            data.As<string>(app.Context))).ToArray();
+            data.As<string>(app.User.Context))).ToArray();
         var results = await Task.WhenAll(tasks);
 
         // Each should be independent and successful with the same resolved value.

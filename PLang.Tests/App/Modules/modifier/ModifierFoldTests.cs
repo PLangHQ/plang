@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Modules.modifier;
 public class ModifierFoldTests
 {
     private global::App.@this _app = null!;
-    private global::App.Actor.Context.@this Ctx => _app.Context;
+    private global::App.Actor.Context.@this Ctx => _app.User.Context;
 
     [Before(Test)]
     public void Setup()

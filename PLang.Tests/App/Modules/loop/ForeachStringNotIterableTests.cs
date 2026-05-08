@@ -27,7 +27,7 @@ public class ForeachStringNotIterableTests
     [Test]
     public async Task Foreach_StringCollection_RunsBodyExactlyOnce()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         ctx.Variables.Set("s", "hello");
 
         // Body goal runs once per iteration.
@@ -58,7 +58,7 @@ public class ForeachStringNotIterableTests
     [Test]
     public async Task Foreach_StringCollection_BodyReceivesWholeString()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         ctx.Variables.Set("s", "hello");
 
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };
@@ -86,7 +86,7 @@ public class ForeachStringNotIterableTests
     [Test]
     public async Task Foreach_NumberCollection_RunsBodyOnceWithNumber()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         ctx.Variables.Set("n", 42);
 
         var goal = new Goal { Name = "DoNothing", Path = "/DoNothing.goal", Steps = new GoalSteps() };

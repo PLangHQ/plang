@@ -45,8 +45,8 @@ public class ValidateActionsTests
             new Action { Module = "file", ActionName = "read", Parameters = new List<Data> { new("Path", "test.txt") } }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That((bool)result.Value!).IsTrue();
@@ -60,8 +60,8 @@ public class ValidateActionsTests
             new Action { Module = "nonexistent", ActionName = "fake" }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("nonexistent.fake");
@@ -96,8 +96,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         // Verify PrPath was actually resolved
@@ -122,8 +122,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
     }
@@ -142,8 +142,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         // Defaults should be filled for missing params
@@ -175,8 +175,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
@@ -202,8 +202,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         var rightParam = actions[0].Parameters.First(p => p.Name == "Right");
@@ -228,8 +228,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         // %flag% should NOT be converted — it's a variable reference
@@ -251,8 +251,8 @@ public class ValidateActionsTests
             }
         };
 
-        var action = new validate { Context = _app.Context, Actions = actions };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new validate { Context = _app.User.Context, Actions = actions };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         var httpConfigure = actions[0];

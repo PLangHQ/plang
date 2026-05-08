@@ -72,7 +72,7 @@ public class ConfigureActionTests
         await Assert.That(result.Success).IsTrue();
 
         // New context should still see the engine-level default
-        var newContext = _app.Context;
+        var newContext = _app.User.Context;
         var view = _app.Config.For<Config>(newContext);
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(120);
     }
@@ -90,7 +90,7 @@ public class ConfigureActionTests
         await Assert.That(view.Resolve("TimeoutInSec", 30)).IsEqualTo(90);
 
         // New context sees class default (30)
-        var newContext = _app.Context;
+        var newContext = _app.User.Context;
         var newView = _app.Config.For<Config>(newContext);
         await Assert.That(newView.Resolve("TimeoutInSec", 30)).IsEqualTo(30);
     }

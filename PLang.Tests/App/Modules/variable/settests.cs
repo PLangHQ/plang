@@ -17,7 +17,7 @@ public class SetTests
     [Test]
     public async Task Set_SetsVariable()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%testVar%"), ("value", "testValue"));
         var result = await _app.Run(action, context);
 
@@ -28,7 +28,7 @@ public class SetTests
     [Test]
     public async Task Set_WithType_SetsTypeInfo()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", "int"));
         var result = await _app.Run(action, context);
 
@@ -39,7 +39,7 @@ public class SetTests
     [Test]
     public async Task Set_ReturnsOk()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%testVar%"), ("value", "testValue"));
         var result = await _app.Run(action, context);
 
@@ -53,7 +53,7 @@ public class SetTests
     [Test]
     public async Task Set_WithType_SetsTypeOnStoredVariable()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", "int"));
         var result = await _app.Run(action, context);
 
@@ -64,7 +64,7 @@ public class SetTests
     [Test]
     public async Task Set_AsDefault_DoesNotOverwriteExisting()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
 
         // Set initial value
         var setAction = TestAction.Create("variable", "set", ("name", "%x%"), ("value", "original"));
@@ -84,7 +84,7 @@ public class SetTests
     [Test]
     public async Task Set_AsDefault_SetsWhenNotExists()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "default"), ("asdefault", true));
         var result = await _app.Run(action, context);
 
@@ -103,7 +103,7 @@ public class SetTests
         // Invariant: after RunAsync, %__data__% and the handler's own stored entry
         // must be the SAME reference, and the Data's Name must be whatever the
         // handler set it to — never overwritten to "__data__".
-        var context = _app.Context;
+        var context = _app.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%myVar%"), ("value", "hello"));
 

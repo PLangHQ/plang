@@ -21,7 +21,7 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_PercentWrapped_StripsAndFlags()
     {
-        var v = Variable.Resolve("%x%", _app.Context);
+        var v = Variable.Resolve("%x%", _app.User.Context);
 
         await Assert.That(v.Name).IsEqualTo("x");
         await Assert.That(v.RawValue).IsEqualTo("%x%");
@@ -31,7 +31,7 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_BareName_KeepsNameSurfacesFlag()
     {
-        var v = Variable.Resolve("x", _app.Context);
+        var v = Variable.Resolve("x", _app.User.Context);
 
         await Assert.That(v.Name).IsEqualTo("x");
         await Assert.That(v.RawValue).IsEqualTo("x");
@@ -41,7 +41,7 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_EmptyString_ProducesEmptyVariable()
     {
-        var v = Variable.Resolve("", _app.Context);
+        var v = Variable.Resolve("", _app.User.Context);
 
         await Assert.That(v.Name).IsEqualTo("");
         await Assert.That(v.RawValue).IsEqualTo("");
@@ -57,9 +57,9 @@ public class VariableResolveTests
     [Test]
     public async Task SlotData_PercentWrapped_AsVariable_NameIsX()
     {
-        var slot = new Data("Name", "%x%") { Context = _app.Context };
+        var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
-        var resolved = slot.As<Variable>(_app.Context);
+        var resolved = slot.As<Variable>(_app.User.Context);
 
         await Assert.That(resolved.Success).IsTrue();
         await Assert.That(resolved.Value).IsNotNull();
@@ -76,10 +76,10 @@ public class VariableResolveTests
     [Test]
     public async Task SlotData_PercentWrapped_AsVariable_IgnoresExistingValue()
     {
-        _app.Context.Variables.Set("x", 5);
-        var slot = new Data("Name", "%x%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("x", 5);
+        var slot = new Data("Name", "%x%") { Context = _app.User.Context };
 
-        var resolved = slot.As<Variable>(_app.Context);
+        var resolved = slot.As<Variable>(_app.User.Context);
 
         await Assert.That(resolved.Success).IsTrue();
         await Assert.That(resolved.Value!.Name).IsEqualTo("x");
@@ -91,9 +91,9 @@ public class VariableResolveTests
     [Test]
     public async Task SlotData_BareName_AsVariable_NameIsX()
     {
-        var slot = new Data("Name", "x") { Context = _app.Context };
+        var slot = new Data("Name", "x") { Context = _app.User.Context };
 
-        var resolved = slot.As<Variable>(_app.Context);
+        var resolved = slot.As<Variable>(_app.User.Context);
 
         await Assert.That(resolved.Success).IsTrue();
         await Assert.That(resolved.Value).IsNotNull();

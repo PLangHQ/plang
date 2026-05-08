@@ -45,7 +45,7 @@ public class ValidateResponseTests
     {
         return new validateResponse
         {
-            Context = app.Context,
+            Context = app.User.Context,
             StepResults = new global::App.Data.@this<BuildResponse>("", response),
             Goal = new global::App.Data.@this<Goal>("", goal)
         };
@@ -116,7 +116,7 @@ public class ValidateResponseTests
     {
         var action = new validateResponse
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             StepResults = new global::App.Data.@this<BuildResponse>(),
             Goal = new global::App.Data.@this<Goal>(),
         };

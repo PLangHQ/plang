@@ -19,7 +19,7 @@ public class AssertTests
     private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
     {
         var app = new global::App.@this("/app");
-        return (app.Context, app.Context.Variables);
+        return (app.User.Context, app.User.Context.Variables);
     }
 
     private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);

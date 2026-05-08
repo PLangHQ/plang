@@ -10,7 +10,7 @@ public class EventsTests
     private static global::App.Actor.Context.@this CreateContext()
     {
         var app = new global::App.@this("/app");
-        return app.Context;
+        return app.User.Context;
     }
 
     [Test]

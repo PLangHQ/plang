@@ -48,7 +48,7 @@ public static class MatrixRunner
             Step = step
         };
 
-        var context = app.Context;
+        var context = app.User.Context;
         if (variables != null)
         {
             foreach (var kv in variables)
@@ -85,7 +85,7 @@ public static class MatrixRunner
             Step = step
         };
 
-        var context = app.Context;
+        var context = app.User.Context;
         if (variables != null)
         {
             foreach (var kv in variables)

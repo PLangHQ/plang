@@ -32,17 +32,17 @@ public class FileHandlerTests : IDisposable
         _fs.Path.Combine(_tempDir, relativePath);
 
     private global::App.Data.@this<PLangPath> MakePath(string relativePath) =>
-        new("", new PLangPath(TempPath(relativePath)) { Context = _app.Context });
+        new("", new PLangPath(TempPath(relativePath)) { Context = _app.User.Context });
 
     private global::App.Data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
-        new("", new PLangPath(absolutePath) { Context = _app.Context });
+        new("", new PLangPath(absolutePath) { Context = _app.User.Context });
 
     // --- Save ---
 
     [Test]
     public async Task Save_ReturnsFileWithCorrectPaths()
     {
-        var action = new Save { Context = _app.Context, Path = MakePath("test.txt"), Value = Data.Ok("hello") };
+        var action = new Save { Context = _app.User.Context, Path = MakePath("test.txt"), Value = Data.Ok("hello") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -55,7 +55,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Save_FileExists_AfterSave()
     {
-        var action = new Save { Context = _app.Context, Path = MakePath("exists.txt"), Value = Data.Ok("data") };
+        var action = new Save { Context = _app.User.Context, Path = MakePath("exists.txt"), Value = Data.Ok("data") };
         await action.Run();
 
         await Assert.That(_fs.File.Exists(TempPath("exists.txt"))).IsTrue();
@@ -68,7 +68,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("read.txt"), "content here");
 
-        var action = new Read { Context = _app.Context, Path = MakePath("read.txt") };
+        var action = new Read { Context = _app.User.Context, Path = MakePath("read.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -80,7 +80,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
 
-        var action = new Read { Context = _app.Context, Path = MakePath("lazy.txt") };
+        var action = new Read { Context = _app.User.Context, Path = MakePath("lazy.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Value).IsEqualTo("lazy content");
@@ -89,7 +89,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_NonexistentFile_ReturnsError()
     {
-        var action = new Read { Context = _app.Context, Path = MakePath("nonexistent.txt") };
+        var action = new Read { Context = _app.User.Context, Path = MakePath("nonexistent.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -101,11 +101,11 @@ public class FileHandlerTests : IDisposable
     public async Task Read_ResolveVariablesTrue_ResolvesVariableInContent()
     {
         _fs.File.WriteAllText(TempPath("template.txt"), "Hello %name%, welcome");
-        _app.Context.Variables.Set("name", "Ingi");
+        _app.User.Context.Variables.Set("name", "Ingi");
 
         var action = new Read
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             Path = MakePath("template.txt"),
             ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", true)
         };
@@ -121,11 +121,11 @@ public class FileHandlerTests : IDisposable
         // Default value of ResolveVariables is false (per [Default(false)]). Even
         // when %var% is set, the literal must come back unresolved.
         _fs.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
-        _app.Context.Variables.Set("name", "Ingi");
+        _app.User.Context.Variables.Set("name", "Ingi");
 
         var action = new Read
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             Path = MakePath("literal.txt"),
             ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", false)
         };
@@ -145,7 +145,7 @@ public class FileHandlerTests : IDisposable
 
         var action = new Read
         {
-            Context = _app.Context,
+            Context = _app.User.Context,
             Path = MakePath("untrusted.txt"),
             ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", true)
         };
@@ -163,7 +163,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("src.txt"), "source data");
 
-        var action = new Copy { Context = _app.Context, Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
+        var action = new Copy { Context = _app.User.Context, Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -176,7 +176,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Copy_NonexistentSource_ReturnsFileNotFound()
     {
-        var action = new Copy { Context = _app.Context, Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
+        var action = new Copy { Context = _app.User.Context, Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -189,7 +189,7 @@ public class FileHandlerTests : IDisposable
         _fs.Directory.CreateDirectory(srcDir);
         _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "a");
 
-        var action = new Copy { Context = _app.Context, Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
+        var action = new Copy { Context = _app.User.Context, Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -203,7 +203,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("move_src.txt"), "move data");
 
-        var action = new Move { Context = _app.Context, Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
+        var action = new Move { Context = _app.User.Context, Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -216,7 +216,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Move_NonexistentSource_ReturnsFileNotFound()
     {
-        var action = new Move { Context = _app.Context, Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
+        var action = new Move { Context = _app.User.Context, Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -229,7 +229,7 @@ public class FileHandlerTests : IDisposable
         _fs.Directory.CreateDirectory(srcDir);
         _fs.File.WriteAllText(_fs.Path.Combine(srcDir, "a.txt"), "a");
 
-        var action = new Move { Context = _app.Context, Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
+        var action = new Move { Context = _app.User.Context, Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -244,7 +244,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("del.txt"), "delete me");
 
-        var action = new Delete { Context = _app.Context, Path = MakePath("del.txt") };
+        var action = new Delete { Context = _app.User.Context, Path = MakePath("del.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -256,7 +256,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Delete_NonexistentFile_ReturnsError()
     {
-        var action = new Delete { Context = _app.Context, Path = MakePath("nope.txt") };
+        var action = new Delete { Context = _app.User.Context, Path = MakePath("nope.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -265,7 +265,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
     {
-        var action = new Delete { Context = _app.Context, Path = MakePath("nope.txt"), IgnoreIfNotFound = true };
+        var action = new Delete { Context = _app.User.Context, Path = MakePath("nope.txt"), IgnoreIfNotFound = true };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -278,7 +278,7 @@ public class FileHandlerTests : IDisposable
         _fs.Directory.CreateDirectory(dir);
         _fs.File.WriteAllText(_fs.Path.Combine(dir, "child.txt"), "data");
 
-        var action = new Delete { Context = _app.Context, Path = MakeAbsPath(dir), Recursive = true };
+        var action = new Delete { Context = _app.User.Context, Path = MakeAbsPath(dir), Recursive = true };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -292,7 +292,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("check.txt"), "present");
 
-        var action = new Exists { Context = _app.Context, Path = MakePath("check.txt") };
+        var action = new Exists { Context = _app.User.Context, Path = MakePath("check.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -304,7 +304,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Exists_NonexistentFile_ReturnsFalse()
     {
-        var action = new Exists { Context = _app.Context, Path = MakePath("missing.txt") };
+        var action = new Exists { Context = _app.User.Context, Path = MakePath("missing.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -323,7 +323,7 @@ public class FileHandlerTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(subDir, "a.txt"), "a");
         _fs.File.WriteAllText(_fs.Path.Combine(subDir, "b.txt"), "b");
 
-        var action = new List { Context = _app.Context, Path = MakeAbsPath(subDir) };
+        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir) };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -340,7 +340,7 @@ public class FileHandlerTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(subDir, "a.txt"), "a");
         _fs.File.WriteAllText(_fs.Path.Combine(subDir, "b.md"), "b");
 
-        var action = new List { Context = _app.Context, Path = MakeAbsPath(subDir), Pattern = "*.txt" };
+        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Pattern = "*.txt" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -359,7 +359,7 @@ public class FileHandlerTests : IDisposable
         _fs.File.WriteAllText(_fs.Path.Combine(subDir, "top.txt"), "top");
         _fs.File.WriteAllText(_fs.Path.Combine(nested, "deep.txt"), "deep");
 
-        var action = new List { Context = _app.Context, Path = MakeAbsPath(subDir), Recursive = true };
+        var action = new List { Context = _app.User.Context, Path = MakeAbsPath(subDir), Recursive = true };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -371,7 +371,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task List_NonexistentDirectory_ReturnsError()
     {
-        var action = new List { Context = _app.Context, Path = MakePath("nodir") };
+        var action = new List { Context = _app.User.Context, Path = MakePath("nodir") };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -384,7 +384,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("doc.md"), "# Hello");
 
-        var action = new Read { Context = _app.Context, Path = MakePath("doc.md") };
+        var action = new Read { Context = _app.User.Context, Path = MakePath("doc.md") };
         var result = await action.Run();
 
         await Assert.That(result.Type!.Value).IsEqualTo("text/markdown");
@@ -395,7 +395,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("sized.txt"), "12345");
 
-        var action = new Read { Context = _app.Context, Path = MakePath("sized.txt") };
+        var action = new Read { Context = _app.User.Context, Path = MakePath("sized.txt") };
         var result = await action.Run();
         var content = result.Value as string;
 
@@ -407,7 +407,7 @@ public class FileHandlerTests : IDisposable
     {
         _fs.File.WriteAllText(TempPath("tostring.txt"), "file-content");
 
-        var action = new Read { Context = _app.Context, Path = MakePath("tostring.txt") };
+        var action = new Read { Context = _app.User.Context, Path = MakePath("tostring.txt") };
         var result = await action.Run();
 
         await Assert.That(result.Value!.ToString()).IsEqualTo("file-content");
@@ -474,7 +474,7 @@ public class FileHandlerTests : IDisposable
             }
         };
 
-        var context = _app.Context;
+        var context = _app.User.Context;
         var goalResult = await _app.RunGoalAsync(goal, context);
 
         await Assert.That(goalResult.Success).IsTrue();
@@ -551,7 +551,7 @@ public class FileHandlerTests : IDisposable
             }
         };
 
-        var context = _app.Context;
+        var context = _app.User.Context;
         var goalResult = await _app.RunGoalAsync(goal, context);
 
         await Assert.That(goalResult.Success).IsTrue();

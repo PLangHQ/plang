@@ -75,7 +75,7 @@ public class SnapshotParamsTests
     public async Task SnapshotEntry_AccessedProperty_BothPresent_Distinct()
     {
         await using var app = new global::App.@this("/app");
-        app.Context.Variables.Set("name", "world");
+        app.User.Context.Variables.Set("name", "world");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello %name%"), ("second", (object?)42) });
 

@@ -39,8 +39,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ReturnsAllModulesAndActions()
     {
-        var action = new GetActions { Context = _app.Context };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new GetActions { Context = _app.User.Context };
+        var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         var actions = result.Value as StepActions;
@@ -51,8 +51,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ParameterTypes_IncludeNullableMarkers()
     {
-        var action = new GetActions { Context = _app.Context };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new GetActions { Context = _app.User.Context };
+        var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)result.Value!;
 
         // Find an action with nullable parameters (e.g., file.read has optional properties)
@@ -65,8 +65,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_VariableNameParams_Marked()
     {
-        var action = new GetActions { Context = _app.Context };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new GetActions { Context = _app.User.Context };
+        var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)result.Value!;
 
         // variable.set has a Name property with Data<Variable> (renders as `%var% string`)
@@ -81,8 +81,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_DefaultValues_Included()
     {
-        var action = new GetActions { Context = _app.Context };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new GetActions { Context = _app.User.Context };
+        var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)result.Value!;
 
         // file.list has Pattern with [Default("*")]
@@ -97,8 +97,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_CacheableFlag_FromActionAttribute()
     {
-        var action = new GetActions { Context = _app.Context };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new GetActions { Context = _app.User.Context };
+        var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)result.Value!;
 
         // file.save has [Action("save", Cacheable = false)]
@@ -115,8 +115,8 @@ public class GetActionsTests
     [Test]
     public async Task GetActions_ExcludesProviderProperties()
     {
-        var action = new GetActions { Context = _app.Context };
-        var result = await _app.RunAction(action, _app.Context);
+        var action = new GetActions { Context = _app.User.Context };
+        var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)result.Value!;
 
         // No action should expose [Provider]-attributed interface properties

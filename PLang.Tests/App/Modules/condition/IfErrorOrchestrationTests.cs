@@ -65,7 +65,7 @@ public class IfErrorOrchestrationTests : IDisposable
         condAction.Step = step;
         goalCallAction.Step = step;
 
-        var result = await step.RunAsync(_app.Context);
+        var result = await step.RunAsync(_app.User.Context);
 
         // The 404 must surface. Handled=true on condition.if's result is a
         // control-flow signal to Step.RunAsync (don't re-iterate siblings),
@@ -108,7 +108,7 @@ public class IfErrorOrchestrationTests : IDisposable
         condAction.Step = step;
         writeAction.Step = step;
 
-        var result = await step.RunAsync(_app.Context);
+        var result = await step.RunAsync(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
 

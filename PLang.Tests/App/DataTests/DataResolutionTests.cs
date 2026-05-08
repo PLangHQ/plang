@@ -21,12 +21,12 @@ public class DataResolutionTests
     [Test]
     public async Task SharedParameterData_AsTBetweenChanges_YieldsTwoResults()
     {
-        var data = new Data("v", "%x%") { Context = _app.Context };
+        var data = new Data("v", "%x%") { Context = _app.User.Context };
 
-        _app.Context.Variables.Set("x", "first");
-        var first = data.As<string>(_app.Context);
-        _app.Context.Variables.Set("x", "second");
-        var second = data.As<string>(_app.Context);
+        _app.User.Context.Variables.Set("x", "first");
+        var first = data.As<string>(_app.User.Context);
+        _app.User.Context.Variables.Set("x", "second");
+        var second = data.As<string>(_app.User.Context);
 
         await Assert.That(first.Value).IsEqualTo("first");
         await Assert.That(second.Value).IsEqualTo("second");
@@ -36,11 +36,11 @@ public class DataResolutionTests
     [Test]
     public async Task AsT_DoesNotMutateOriginalRaw()
     {
-        _app.Context.Variables.Set("name", "world");
+        _app.User.Context.Variables.Set("name", "world");
         var raw = new List<object?> { "%name%", "literal" };
-        var data = new Data("list", raw) { Context = _app.Context };
+        var data = new Data("list", raw) { Context = _app.User.Context };
 
-        var resolved = data.As<List<string>>(_app.Context);
+        var resolved = data.As<List<string>>(_app.User.Context);
         await Assert.That(resolved.Value![0]).IsEqualTo("world");
 
         // Original raw is unchanged.
@@ -52,13 +52,13 @@ public class DataResolutionTests
     [Test]
     public async Task LoopIteration_PropertyResolvesPerCall()
     {
-        var data = new Data("v", "%i%") { Context = _app.Context };
+        var data = new Data("v", "%i%") { Context = _app.User.Context };
 
         var seen = new List<string?>();
         for (int i = 0; i < 3; i++)
         {
-            _app.Context.Variables.Set("i", $"value-{i}");
-            seen.Add(data.As<string>(_app.Context).Value);
+            _app.User.Context.Variables.Set("i", $"value-{i}");
+            seen.Add(data.As<string>(_app.User.Context).Value);
         }
 
         await Assert.That(seen[0]).IsEqualTo("value-0");
@@ -71,13 +71,13 @@ public class DataResolutionTests
     [Test]
     public async Task SubGoalCall_EachGoalSeesOwnResolvedView()
     {
-        var data = new Data("v", "%scope%") { Context = _app.Context };
-        _app.Context.Variables.Set("scope", "parent");
-        var parentView = data.As<string>(_app.Context);
+        var data = new Data("v", "%scope%") { Context = _app.User.Context };
+        _app.User.Context.Variables.Set("scope", "parent");
+        var parentView = data.As<string>(_app.User.Context);
 
         await using var subApp = new global::App.@this("/sub");
-        subApp.Context.Variables.Set("scope", "sub");
-        var subView = data.As<string>(subApp.Context);
+        subApp.User.Context.Variables.Set("scope", "sub");
+        var subView = data.As<string>(subApp.User.Context);
 
         await Assert.That(parentView.Value).IsEqualTo("parent");
         await Assert.That(subView.Value).IsEqualTo("sub");
@@ -89,10 +89,10 @@ public class DataResolutionTests
     [Test]
     public async Task FullVarMatch_VariableHoldsData_UnwrappedCleanly()
     {
-        _app.Context.Variables.Set("count", 42);
-        var data = new Data("c", "%count%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("count", 42);
+        var data = new Data("c", "%count%") { Context = _app.User.Context };
 
-        var result = data.As<int>(_app.Context);
+        var result = data.As<int>(_app.User.Context);
         await Assert.That(result.Value).IsEqualTo(42);
     }
 
@@ -104,14 +104,14 @@ public class DataResolutionTests
         {
             new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%comment%" }
         };
-        var data = new Data("messages", raw) { Context = _app.Context };
+        var data = new Data("messages", raw) { Context = _app.User.Context };
 
-        _app.Context.Variables.Set("comment", "value1");
-        var first = data.As<List<global::App.modules.llm.LlmMessage>>(_app.Context);
+        _app.User.Context.Variables.Set("comment", "value1");
+        var first = data.As<List<global::App.modules.llm.LlmMessage>>(_app.User.Context);
         await Assert.That(first.Value![0].Content).IsEqualTo("value1");
 
-        _app.Context.Variables.Set("comment", "value2");
-        var second = data.As<List<global::App.modules.llm.LlmMessage>>(_app.Context);
+        _app.User.Context.Variables.Set("comment", "value2");
+        var second = data.As<List<global::App.modules.llm.LlmMessage>>(_app.User.Context);
         await Assert.That(second.Value![0].Content).IsEqualTo("value2");
     }
 
@@ -119,14 +119,14 @@ public class DataResolutionTests
     [Test]
     public async Task ConcurrentAsT_OnSharedParameterData_NoRace()
     {
-        _app.Context.Variables.Set("x", "value");
-        var data = new Data("v", "%x%") { Context = _app.Context };
+        _app.User.Context.Variables.Set("x", "value");
+        var data = new Data("v", "%x%") { Context = _app.User.Context };
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
         {
             for (int i = 0; i < 100; i++)
             {
-                var r = data.As<string>(_app.Context);
+                var r = data.As<string>(_app.User.Context);
                 if (r.Value != "value") return false;
             }
             return true;

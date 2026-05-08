@@ -24,7 +24,7 @@ public class SkipActionTests
     [Test]
     public async Task SkipAction_SetsEventOverride()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
 
         var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", "override-value")};
         var result = await action.Run();
@@ -37,7 +37,7 @@ public class SkipActionTests
     [Test]
     public async Task SkipAction_NullValue_SetsOverrideWithNull()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
 
         var action = new SkipAction { Context = context, Value = null };
         var result = await action.Run();
@@ -50,7 +50,7 @@ public class SkipActionTests
     [Test]
     public async Task SkipAction_ReturnsValue()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
 
         var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", 42)};
         var result = await action.Run();
@@ -62,7 +62,7 @@ public class SkipActionTests
     [Test]
     public async Task SkipAction_ObjectValue_SetsOverride()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         var obj = new Dictionary<string, object> { ["status"] = 200 };
 
         var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", obj)};

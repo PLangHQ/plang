@@ -147,8 +147,8 @@ public class DataWrappedStringUsesCycleTests
     public async Task DataWrappedStringUses_CyclicVarRef_NoLongerForms_HandlerReadsVerbatimBytes()
     {
         await using var app = new global::App.@this("/app");
-        app.Context.Variables.Set("a", "%b%");
-        app.Context.Variables.Set("b", "%a%");
+        app.User.Context.Variables.Set("a", "%b%");
+        app.User.Context.Variables.Set("b", "%a%");
 
         var result = await MatrixRunner.RunAsync<DataWrappedStringUses>(app,
             parameters: new[] { ("body", (object?)"%a%") });
@@ -162,8 +162,8 @@ public class DataWrappedStringUsesCycleTests
     public async Task DataWrappedStringUses_StoredVarRefWithText_HandlerReadsVerbatimBytes()
     {
         await using var app = new global::App.@this("/app");
-        app.Context.Variables.Set("a", "X-%b%");
-        app.Context.Variables.Set("b", "Y-%a%");
+        app.User.Context.Variables.Set("a", "X-%b%");
+        app.User.Context.Variables.Set("b", "Y-%a%");
 
         var result = await MatrixRunner.RunAsync<DataWrappedStringUses>(app,
             parameters: new[] { ("body", (object?)"%a%") });

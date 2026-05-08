@@ -230,7 +230,7 @@ public class EngineTests
     {
         await using var engine = new global::App.@this("/app");
 
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         await Assert.That(context).IsNotNull();
         await Assert.That(context.App).IsEqualTo(engine);
@@ -292,7 +292,7 @@ public class EngineTests
         await using var engine = new global::App.@this("/app");
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
-        var context = engine.Context;
+        var context = engine.User.Context;
         await engine.RunGoalAsync(goal, context);
 
         // Goal is restored after execution, but during execution context.Goal was set.
@@ -308,7 +308,7 @@ public class EngineTests
         var goal = new Goal { Name = "TestGoal", Path = "/TestGoal.goal" };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         await engine.RunGoalAsync(goal, context);
 
         // After completion, AsyncLocal Current is restored to its pre-Push value (null).
@@ -333,7 +333,7 @@ public class EngineTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -367,7 +367,7 @@ public class EngineTests
     {
         await using var engine = new global::App.@this("/app");
         var step = MakeStep("nonexistent", "method");
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         var steps = new GoalSteps { step };
         var result = await steps.RunAsync(context);
@@ -384,7 +384,7 @@ public class EngineTests
         var step = MakeStep("variable", "set",
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var steps = new GoalSteps { step };
         await steps.RunAsync(context);
 
@@ -400,7 +400,7 @@ public class EngineTests
         engine.Modules.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         // v4: App.Run owns try/catch around handler dispatch — exceptions from a handler
         // are translated to ServiceError there, not at the Step level. Step.RunAsync's
@@ -420,7 +420,7 @@ public class EngineTests
         engine.Modules.Register("legacy", "do", nonGeneratedHandler);
 
         var step = MakeStep("legacy", "do");
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         var steps = new GoalSteps { step };
         var result = await steps.RunAsync(context);

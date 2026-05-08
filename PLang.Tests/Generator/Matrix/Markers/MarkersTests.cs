@@ -20,8 +20,8 @@ public class IContextHandlerTests
         await using var app = new global::App.@this("/app");
         var handler = new IContextHandler();
         var action = new PrAction { Module = "matrix.markers", ActionName = "icontexthandler" };
-        await handler.ExecuteAsync(action, app.Context);
-        await Assert.That(ReferenceEquals(handler.Context, app.Context)).IsTrue();
+        await handler.ExecuteAsync(action, app.User.Context);
+        await Assert.That(ReferenceEquals(handler.Context, app.User.Context)).IsTrue();
     }
 }
 

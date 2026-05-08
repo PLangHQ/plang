@@ -36,7 +36,7 @@ public partial class @this : ISnapshotted
         var captured = s.Read<List<Data.@this>>("variables");
         if (captured == null) return;
 
-        var target = ctx.App.Variables;
+        var target = ctx.Variables;
         foreach (var data in captured)
         {
             // Clone again so the snapshot can be re-Restored independently.

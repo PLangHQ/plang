@@ -178,7 +178,7 @@ public class LibrariesTests
     {
         var modules = new EngineModules();
         await using var engine = new global::App.@this("/app", modules);
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });
 
@@ -193,7 +193,7 @@ public class LibrariesTests
         var action = new MockCodeGenHandler();
         modules.Register("custom", "run", action);
         await using var engine = new global::App.@this("/app", modules);
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         var (result, error) = modules.GetCodeGenerated(new PrAction { Module = "custom", ActionName = "run" });
 
@@ -207,7 +207,7 @@ public class LibrariesTests
         var modules = new EngineModules();
         modules.Register("legacy", "do", new MockHandler());
         await using var engine = new global::App.@this("/app", modules);
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "legacy", ActionName = "do" });
 
@@ -221,7 +221,7 @@ public class LibrariesTests
     {
         var modules = new EngineModules();
         await using var engine = new global::App.@this("/app", modules);
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         var (action, error) = modules.GetCodeGenerated(new PrAction { Module = "nonexistent_xyz", ActionName = "nope" });
 
@@ -240,7 +240,7 @@ public class LibrariesTests
         modules.Register("custom", "run", handler2);
 
         await using var engine = new global::App.@this("/app", modules);
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         var (result, error) = modules.GetCodeGenerated(new PrAction { Module = "custom", ActionName = "run" });
 
@@ -253,7 +253,7 @@ public class LibrariesTests
     {
         var modules = new EngineModules();
         await using var engine = new global::App.@this("/app", modules);
-        var context = engine.Context;
+        var context = engine.User.Context;
 
         // variable.set is type-registered (discovered via [Action] attribute)
         var (action1, _) = modules.GetCodeGenerated(new PrAction { Module = "variable", ActionName = "set" });

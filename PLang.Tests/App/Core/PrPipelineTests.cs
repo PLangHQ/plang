@@ -29,7 +29,7 @@ public class PrPipelineTests
         await Assert.That(loadResult.Success).IsTrue();
 
         // Execute
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(new GoalCall { Name = "FullPipeline" }, context);
         await Assert.That(result.Success).IsTrue();
 
@@ -63,7 +63,7 @@ public class PrPipelineTests
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,"ReadFile.pr");
         await Assert.That(loadResult.Success).IsTrue();
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(new GoalCall { Name = "ReadFile" }, context);
         await Assert.That(result.Success).IsTrue();
 
@@ -89,7 +89,7 @@ public class PrPipelineTests
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
         await Assert.That(loadResult.Success).IsTrue();
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(new GoalCall { Name = "FilePathsFromRoot" }, context);
         await Assert.That(result.Success).IsTrue();
 
@@ -115,7 +115,7 @@ public class PrPipelineTests
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,Path.Combine("sub", "FilePathsFromSub.pr"));
         await Assert.That(loadResult.Success).IsTrue();
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(new GoalCall { Name = "FilePathsFromSub" }, context);
 
         // Step 0 (/testdata.txt) succeeds — absolute paths work from any goal location
@@ -157,7 +157,7 @@ public class PrPipelineTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         // File found — relative resolves to {root}/sub/subdata.txt (goal folder)
@@ -196,7 +196,7 @@ public class PrPipelineTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -234,7 +234,7 @@ public class PrPipelineTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -272,7 +272,7 @@ public class PrPipelineTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         // file/read returns Data.FromError for missing files
@@ -311,7 +311,7 @@ public class PrPipelineTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         // PLangFileSystem should block path escape — either throws FileAccessException or returns error

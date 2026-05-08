@@ -26,7 +26,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_StringValue_MintsDataOfString()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%s%"), ("value", "hello"));
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
@@ -37,7 +37,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_IntValue_MintsDataOfInt()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42));
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
@@ -53,7 +53,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_LongValue_MintsDataOfLong()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42L));
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
@@ -64,7 +64,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_DoubleValue_MintsDataOfDouble()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", 3.14));
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
@@ -75,7 +75,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_BoolValue_MintsDataOfBool()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%b%"), ("value", true));
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
@@ -86,7 +86,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_DateTimeValue_MintsDataOfDateTime()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var when = DateTime.UtcNow;
         var action = TestAction.Create("variable", "set", ("name", "%t%"), ("value", when));
         var result = await _app.Run(action, ctx);
@@ -98,7 +98,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ListValue_MintsDataOfListAndSnapshotClones()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var src = new List<object?> { "a", "b" };
         var action = TestAction.Create("variable", "set", ("name", "%list%"), ("value", src));
         var result = await _app.Run(action, ctx);
@@ -112,7 +112,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_DictValue_MintsDataOfDictionary()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var src = new Dictionary<string, object?> { ["k"] = "v" };
         var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", src));
         var result = await _app.Run(action, ctx);
@@ -125,7 +125,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ForcedType_String_ConvertsAndMintsDataOfString()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         // Source value is int 42; forced Type="string" should produce Data<string> "42".
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42), ("type", "string"));
         var result = await _app.Run(action, ctx);
@@ -138,7 +138,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ForcedType_ConversionFailure_ReturnsError()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         // "abc" can't convert to int → handler returns Data with Error.
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", "abc"), ("type", "int"));
         var result = await _app.Run(action, ctx);
@@ -148,7 +148,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_NullValue_MintsPlainDataNotGeneric()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", null));
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
@@ -160,7 +160,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_AsDefault_ExistingInitialized_DoesNotReplace()
     {
-        var ctx = _app.Context;
+        var ctx = _app.User.Context;
         await _app.Run(TestAction.Create("variable", "set", ("name", "%x%"), ("value", "first")), ctx);
         var result = await _app.Run(TestAction.Create("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)), ctx);
         await Assert.That(result.Success).IsTrue();

@@ -262,7 +262,7 @@ public class Error : IError
         if (app?.Debug?.Verbose == true)
         {
             var errorContext = (error as Error)?.Context;
-            var fallbackContext = app.Context;
+            var fallbackContext = app.System.Context;
             var ctx = errorContext ?? fallbackContext;
             var allVars = ctx?.Variables?.GetAll();
             if (allVars != null)

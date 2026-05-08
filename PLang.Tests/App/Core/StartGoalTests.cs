@@ -40,7 +40,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -79,7 +79,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -110,7 +110,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -138,7 +138,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -166,7 +166,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -191,7 +191,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -223,7 +223,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -254,7 +254,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();
@@ -282,7 +282,7 @@ public class StartGoalTests
         };
         engine.Goals.Add(goal);
 
-        var context = engine.Context;
+        var context = engine.User.Context;
         var result = await engine.RunGoalAsync(goal, context);
 
         await Assert.That(result.Success).IsTrue();

@@ -110,7 +110,7 @@ public class SetupTests
         await _app.SettingsStore.Set("setup", "skip_hash1", new Data("skip_hash1", "MARKER_NOT_RE_EXECUTED"));
 
         // Run setup — step1 should be skipped, step2 should run
-        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.User.Context);
         await Assert.That(result.Success).IsTrue();
 
         // Verify step1 was skipped: marker value should still be there (not overwritten by Record)
@@ -160,7 +160,7 @@ public class SetupTests
         };
         _app.Goals.Add(goal);
 
-        var context = _app.Context;
+        var context = _app.User.Context;
 
         await Assert.That(context.Setup).IsNull();
 
@@ -173,7 +173,7 @@ public class SetupTests
     [Test]
     public async Task Clone_PreservesSetup()
     {
-        var context = _app.Context;
+        var context = _app.User.Context;
         context.Setup = _app.Goals.Setup;
 
         var clone = context.Clone();
@@ -198,7 +198,7 @@ public class SetupTests
         step.Goal = goal;
         _app.Goals.Add(goal);
 
-        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.User.Context);
 
         // Setup should fail
         await Assert.That(result.Success).IsFalse();
@@ -225,7 +225,7 @@ public class SetupTests
         // Cancel via engine shutdown — Goal.RunAsync checks context.CancellationToken
         _app.RequestShutdown();
 
-        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.User.Context);
 
         // Setup should abort with cancellation error
         await Assert.That(result.Success).IsFalse();
@@ -249,7 +249,7 @@ public class SetupTests
             System.IO.Path.Combine(buildDir, "start.pr"),
             """{"name":"Start","isSetup":false,"path":"/Start.goal","steps":[]}""");
 
-        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         // Only the setup goal should be in the collection
@@ -275,7 +275,7 @@ public class SetupTests
             """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","steps":[]}""");
 
         // RunAsync discovers and runs setup goals internally
-        await _app.Goals.Setup.RunAsync(_app, _app.Context);
+        await _app.Goals.Setup.RunAsync(_app, _app.User.Context);
 
         // Non-setup goal should not be in collection yet
         await Assert.That(_app.Goals.Get("NormalGoal")).IsNull();
@@ -290,7 +290,7 @@ public class SetupTests
     public async Task RunAsync_HandlesEmptyDirectory()
     {
         // No .pr files at all — RunAsync discovers nothing and succeeds
-        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_app.Goals.Setup.Goals.Any()).IsFalse();
@@ -307,7 +307,7 @@ public class SetupTests
             System.IO.Path.Combine(setupBuildDir, "setup.pr"),
             """{"name":"Setup","isSetup":true,"path":"/Setup/Setup.goal","steps":[]}""");
 
-        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         var setupGoals = _app.Goals.Setup.Goals.ToList();
@@ -326,7 +326,7 @@ public class SetupTests
             System.IO.Path.Combine(customDir, "setup.pr"),
             """{"name":"CustomSetup","isSetup":true,"path":"/CustomFolder/CustomSetup.goal","steps":[]}""");
 
-        var result = await _app.Goals.Setup.RunAsync(_app, _app.Context);
+        var result = await _app.Goals.Setup.RunAsync(_app, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         // No setup goals discovered from non-convention path

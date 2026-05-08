@@ -17,7 +17,7 @@ public class TagActionTests
         await using var tagCall = app.CallStack.Push(MakeAction("TagDispatch", module: "debug", actionName: "tag"));
         var action = new Tag
         {
-            Context = app.Context,
+            Context = app.User.Context,
             Pairs = new global::App.Data.@this<Dictionary<string, string>>(
                 "Pairs",
                 new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" })
@@ -38,7 +38,7 @@ public class TagActionTests
         await using var call = app.CallStack.Push(MakeAction("Goal"));
         var action = new Tag
         {
-            Context = app.Context,
+            Context = app.User.Context,
             Label = new global::App.Data.@this<string>("Label", "manual-checkpoint")
         };
         await action.Run();
@@ -53,7 +53,7 @@ public class TagActionTests
         // No Push — Current is null.
         var action = new Tag
         {
-            Context = app.Context,
+            Context = app.User.Context,
             Label = new global::App.Data.@this<string>("Label", "x")
         };
         var result = await action.Run();
@@ -69,7 +69,7 @@ public class TagActionTests
 
         var action = new Tag
         {
-            Context = app.Context,
+            Context = app.User.Context,
             Label = new global::App.Data.@this<string>("Label", "x")
         };
         await action.Run();

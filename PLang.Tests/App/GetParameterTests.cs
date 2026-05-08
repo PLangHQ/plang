@@ -44,7 +44,7 @@ public class GetParameterTests
         var action = Action(("path", "hello"));
         var stored = action.Parameters[0];
 
-        var found = action.GetParameter("path", _app.Context);
+        var found = action.GetParameter("path", _app.User.Context);
 
         await Assert.That(ReferenceEquals(found, stored)).IsTrue();
     }
@@ -58,7 +58,7 @@ public class GetParameterTests
             defaults: new[] { ("b", (object?)"y") });
         var defaultData = action.Defaults![0];
 
-        var found = action.GetParameter("b", _app.Context);
+        var found = action.GetParameter("b", _app.User.Context);
 
         await Assert.That(ReferenceEquals(found, defaultData)).IsTrue();
         await Assert.That(found.Value).IsEqualTo("y");
@@ -70,7 +70,7 @@ public class GetParameterTests
     {
         var action = Action(("path", "hello"));
 
-        var result = action.GetParameter("missing", _app.Context);
+        var result = action.GetParameter("missing", _app.User.Context);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result.IsInitialized).IsFalse();
@@ -83,9 +83,9 @@ public class GetParameterTests
     {
         var action = Action(("Path", "hello"));
 
-        var lower = action.GetParameter("path", _app.Context);
-        var upper = action.GetParameter("PATH", _app.Context);
-        var mixed = action.GetParameter("PaTh", _app.Context);
+        var lower = action.GetParameter("path", _app.User.Context);
+        var upper = action.GetParameter("PATH", _app.User.Context);
+        var mixed = action.GetParameter("PaTh", _app.User.Context);
 
         await Assert.That(lower.IsInitialized).IsTrue();
         await Assert.That(upper.IsInitialized).IsTrue();
@@ -98,10 +98,10 @@ public class GetParameterTests
     [Test]
     public async Task GetParameter_NoResolutionSideEffect_ValueRemainsRaw()
     {
-        _app.Context.Variables.Set("name", "world");
+        _app.User.Context.Variables.Set("name", "world");
         var action = Action(("greeting", "Hello %name%"));
 
-        var found = action.GetParameter("greeting", _app.Context);
+        var found = action.GetParameter("greeting", _app.User.Context);
 
         // .Value is the raw string. Resolution lives in As<T>(context); GetParameter
         // is pure lookup with no side effect on the underlying Data.
@@ -120,7 +120,7 @@ public class GetParameterTests
     {
         var action = new PrAction { Module = "test", ActionName = "fixture" };
 
-        var result = action.GetParameter("anything", _app.Context);
+        var result = action.GetParameter("anything", _app.User.Context);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result.IsInitialized).IsFalse();

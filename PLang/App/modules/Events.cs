@@ -27,7 +27,7 @@ public class Events : IContext
         if (Context == null) return [];
 
         // Events are registered on the current actor's context
-        var actorContext = Context.App?.Context;
+        var actorContext = Context.App?.CurrentActor.Context;
         if (actorContext != null)
         {
             var bindings = actorContext.GetEventBindings(_owner, phase);

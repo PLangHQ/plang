@@ -36,12 +36,12 @@ public class AppRunScaffoldingTests
     public async Task AppRun_PushesAndPopsCallstackFrame_AroundHandler()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
-        var currentBefore = _app.Context.CallStack?.Current;
+        var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
-        await _app.Run(action, _app.Context);
+        await _app.Run(action, _app.User.Context);
 
-        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // App.Run sets Context.Step = action.Step before handler runs; restores prior Step after.
@@ -51,16 +51,16 @@ public class AppRunScaffoldingTests
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
 
         var stepBefore = new Step { Index = 9, Text = "before-step" };
-        _app.Context.Step = stepBefore;
+        _app.User.Context.Step = stepBefore;
 
         var dispatchStep = new Step { Index = 0, Text = "dispatch-step" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         action.Step = dispatchStep;
 
-        await _app.Run(action, _app.Context);
+        await _app.Run(action, _app.User.Context);
 
         // Restored after dispatch
-        await Assert.That(ReferenceEquals(_app.Context.Step, stepBefore)).IsTrue();
+        await Assert.That(ReferenceEquals(_app.User.Context.Step, stepBefore)).IsTrue();
     }
 
     // Context.Goal is preserved (saved + restored) across the handler call.
@@ -70,15 +70,15 @@ public class AppRunScaffoldingTests
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
 
         var goalBefore = new Goal { Name = "before-goal", Path = "/g.goal" };
-        _app.Context.Goal = goalBefore;
+        _app.User.Context.Goal = goalBefore;
 
         var step = new Step { Index = 0, Text = "s" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
         action.Step = step;
 
-        await _app.Run(action, _app.Context);
+        await _app.Run(action, _app.User.Context);
 
-        await Assert.That(ReferenceEquals(_app.Context.Goal, goalBefore)).IsTrue();
+        await Assert.That(ReferenceEquals(_app.User.Context.Goal, goalBefore)).IsTrue();
     }
 
     // Context.Event is preserved across the handler call.
@@ -86,12 +86,12 @@ public class AppRunScaffoldingTests
     public async Task AppRun_SavesAndRestoresContextEvent()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
-        var eventBefore = _app.Context.Event;
+        var eventBefore = _app.User.Context.Event;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
-        await _app.Run(action, _app.Context);
+        await _app.Run(action, _app.User.Context);
 
-        await Assert.That(_app.Context.Event).IsEqualTo(eventBefore);
+        await Assert.That(_app.User.Context.Event).IsEqualTo(eventBefore);
     }
 
     // Handler throws → catch translates to Data.FromError with a ServiceError, frame is popped.
@@ -103,14 +103,14 @@ public class AppRunScaffoldingTests
         var thrower = new ThrowingMatrixHandler();
         _app.Modules.Register("matrix.throwing", "throw", thrower);
 
-        var currentBefore = _app.Context.CallStack?.Current;
+        var currentBefore = _app.User.Context.CallStack?.Current;
         var action = MakeAction("matrix.throwing", "throw");
-        var result = await _app.Run(action, _app.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
 
-        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // Handler succeeds → finally still runs (frame popped, context restored).
@@ -118,13 +118,13 @@ public class AppRunScaffoldingTests
     public async Task AppRun_OnSuccess_FinallySnapshotsAndPops()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
-        var currentBefore = _app.Context.CallStack?.Current;
+        var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "ok"));
-        var result = await _app.Run(action, _app.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // Two consecutive App.Run calls → push/pop happens twice (no leakage).
@@ -133,13 +133,13 @@ public class AppRunScaffoldingTests
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
 
-        var currentBefore = _app.Context.CallStack?.Current;
+        var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "first"));
-        await _app.Run(action, _app.Context);
-        await _app.Run(action, _app.Context);
+        await _app.Run(action, _app.User.Context);
+        await _app.Run(action, _app.User.Context);
 
-        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 
     // App.Run DELIBERATELY catches OperationCanceledException and translates to ServiceError.
@@ -156,7 +156,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.oce", "throwoce");
 
         // Should NOT throw — OCE is caught and translated.
-        var result = await _app.Run(action, _app.Context);
+        var result = await _app.Run(action, _app.User.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
@@ -174,7 +174,7 @@ public class AppRunScaffoldingTests
     {
         var cts = new CancellationTokenSource();
         cts.Cancel();
-        _app.Context.PushCancellation(cts);
+        _app.User.Context.PushCancellation(cts);
 
         var action = TestAction.Create("matrix.plain", "stringplain", ("path", "x"));
         var step = new Step
@@ -185,7 +185,7 @@ public class AppRunScaffoldingTests
         };
         action.Step = step;
 
-        await Assert.That(async () => await step.RunAsync(_app.Context))
+        await Assert.That(async () => await step.RunAsync(_app.User.Context))
             .ThrowsExactly<OperationCanceledException>();
     }
 
@@ -195,11 +195,11 @@ public class AppRunScaffoldingTests
     {
         // The Handled-override path lives in Action.RunAsync, not App.Run. We exercise App.Run
         // directly here: not calling App.Run at all means no callstack frame is pushed.
-        var currentBefore = _app.Context.CallStack?.Current;
+        var currentBefore = _app.User.Context.CallStack?.Current;
 
         // Simulate the override path: Action.RunAsync would short-circuit before invoking App.Run.
         // Therefore the call we DON'T make should leave the call stack untouched.
-        await Assert.That(_app.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
 }
 

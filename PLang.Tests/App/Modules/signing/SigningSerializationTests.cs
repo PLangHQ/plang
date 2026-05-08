@@ -154,7 +154,7 @@ public class SigningSerializationTests
 
             var action = new verify
             {
-                Context = engine.Context,
+                Context = engine.User.Context,
                 Data = signedData,
                 Contracts = new List<string> { "C0" }
             };

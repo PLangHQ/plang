@@ -225,7 +225,7 @@ public sealed class @this
             catch (ArgumentException) { _grepRegex = new Regex(Regex.Escape(Grep), RegexOptions.IgnoreCase); }
         }
 
-        var events = _engine.Context.Events;
+        var events = _engine.CurrentActor.Context.Events;
 
         events.Register(new EventBinding(
             EventType.BeforeStep,
