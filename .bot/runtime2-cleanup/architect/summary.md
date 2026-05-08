@@ -1,5 +1,22 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+4) — stage 1 landed (coder); stage 2 carved
+
+Coder finished stage 1 (`serializers-single-home`) cleanly — 2755/2755 C# + 199/199 PLang, all five caller sites swept, the boot-ordering case the brief flagged caught and fixed in 7 unit tests. Pulled the work; carved stage 2.
+
+### Stage 2 carve (`channels-v1-helpers-drop`)
+
+Brief at `stage-2-channels-v1-helpers-drop.md`. Tighter than the plan one-liner suggested:
+
+- Code dig confirmed both target surfaces are dead. `WriteAsync(actorName, channelName, ...)` has zero external callers (only its own internal redirect references it). The `contentType` parameter on `WriteAsync(channelName, data, contentType, ...)` has zero callers passing a non-null value (DefaultHttpProvider's two call sites at lines 852/907 don't pass contentType).
+- DefaultHttpProvider migration that the plan one-liner mentioned isn't actually needed — its callers already use the simplified shape.
+- Three other `is Channel.Stream.@this sc` casts in the same file have the same shape smell but are out of stage 2's plan-stated scope (in ReadChannelAsync / WriteTextAsync / ReadTextAsync). Brief flags them under "Watch for" as future-stage candidates.
+- Stage 2 risk: very low (dead-code deletion + one parameter removal; build break would catch any missed caller).
+
+Plan.md stage 1 row marked complete; stage 2 row updated with brief link.
+
+---
+
 ## 2026-05-08 (latest+3) — scope map authored; six questions settled; two stages added; two todos filed
 
 After stage 1's brief settled, Ingi pushed for an explicit shared-vs-per-actor map for the App graph — "this distinction is very important; we should know what is shared and what is per-actor and agree on it." Authored `plan/scope-map.md` (~200 lines), reviewed across two rounds of comments, settled six scope questions and filed two architectural concerns to `Documentation/Runtime2/todos.md`.
