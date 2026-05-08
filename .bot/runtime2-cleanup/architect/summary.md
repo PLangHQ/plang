@@ -1,5 +1,27 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+12) — stage 13 landed (Tier 3 done); stages 14+20 carved (Tier 4 batch)
+
+Stage 13 (Settings rework) landed cleanly per coder — 2755/2755 + 199/199. The largest design refactor on this branch came in cleanly. Coder noted two subtleties beyond the brief:
+- Kept SettingsStore as `Lazy<IStore>` internally on App for boot efficiency (apps that never touch settings don't pay for SQLite-file creation at boot).
+- Variables.Clone needed to share `_navigables` by reference (resolvers are stateless closures; cloning meaningless) — caught a bug the brief didn't mention.
+
+**Tier 3 complete** (stages 10–13 all done).
+
+### Stages 14 + 20 carved as Tier 4 batch
+
+Both small mechanical cleanups, sanctioned for two-per-session.
+
+**Stage 14** (`timespan-iso-8601-sweep`) — `int? ExpiresInMs` → `TimeSpan? Expires` on `Callback.Signature.@this` and the `signing.sign` action record. The `TimeSpanIso8601` converter already exists; serialization auto-produces `"PT5M"`/`"PT1H"` forms. Other `*Ms` properties flagged out of scope (future stages). Closes the 2026-05-06 todos.md entry.
+
+**Stage 20** (`channel-app-backref-drop`) — drop the redundant `Channel.@this.App` back-ref now that stage 1 added `Channel.Channels`. One reader (`MatchingBindings` line 194) navigates via `Channels?.Actor?.App`. 3-line cleanup.
+
+### What remains
+
+Tier 4 stages 15, 16, 17, 18, 19, 21, 22 still to carve. The bigger ones (15: Rule A renames; 16: static eviction; 18: mime-table-split; 19: Provider→Code) merit own sessions. The smaller ones (17: builder-tester rename; 21: navigators-to-variables; 22: app-shortcuts-drop — though 22 has ~88 sites, mostly tests) can batch.
+
+---
+
 ## 2026-05-08 (latest+11) — stages 11+12 landed; stage 13 (Settings rework) carved alone
 
 Stages 11 and 12 landed cleanly per coder — 2755/2755 + 199/199 each. Stage 11 had a small test-side sweep I'd missed (7 ErrorsScopeTests sites that constructed Errors directly with `new()`); coder caught it.
