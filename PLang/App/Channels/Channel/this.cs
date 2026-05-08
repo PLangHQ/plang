@@ -71,9 +71,6 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// </summary>
     public global::App.Actor.@this? Actor { get; internal set; }
 
-    /// <summary>App backreference for general App access.</summary>
-    public global::App.@this? App { get; internal set; }
-
     /// <summary>
     /// The Channels collection this channel belongs to — set by
     /// <see cref="App.Channels.@this.Register"/>. Stream channels navigate through
@@ -191,9 +188,11 @@ public abstract class @this : IAsyncDisposable, IDisposable
 
         // App-level bindings — match across actors so one binding can cover
         // every channel-of-name "logger" regardless of which actor owns it.
-        if (App != null)
+        // Navigation: Channels (parent collection) → App. Service-owned
+        // Channels have no Actor, so we navigate through Channels.App directly.
+        if (Channels?.App is { } app)
         {
-            foreach (var b in App.Events.GetBindings(type))
+            foreach (var b in app.Events.GetBindings(type))
                 if (string.Equals(b.ChannelName, Name, StringComparison.OrdinalIgnoreCase))
                     yield return b;
         }
@@ -246,7 +245,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         // can be spotted in --debug output.
         var ctx = Actor?.Context;
         if (ctx == null)
-            _ = App?.Debug?.Write($"[Channel '{Name}'] binding {binding.Id} firing with no Actor — handlers receive null ctx");
+            _ = Channels?.App?.Debug?.Write($"[Channel '{Name}'] binding {binding.Id} firing with no Actor — handlers receive null ctx");
         return binding.Handler(ctx!, null, data);
     }
 
