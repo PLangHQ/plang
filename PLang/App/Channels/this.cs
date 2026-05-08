@@ -54,17 +54,6 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Reads a file and deserializes its content via the serializer registry.
-    /// </summary>
-    public async Task<T?> ReadAsync<T>(string filePath, CancellationToken cancellationToken = default)
-    {
-        var fs = _app.FileSystem;
-        var content = await fs.File.ReadAllTextAsync(filePath, cancellationToken);
-        var ext = fs.Path.GetExtension(filePath);
-        return Serializers.Deserialize<T>(new DeserializeOptions { Value = content, Extension = ext });
-    }
-
-    /// <summary>
     /// Resolves a channel by name. Empty/null falls back to the channel named
     /// <c>"output"</c>. Returns null when nothing is registered under the requested
     /// name — caller decides how to surface that (see e.g. source-generator-emitted
