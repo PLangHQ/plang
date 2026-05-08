@@ -1,5 +1,9 @@
 # Stage 1: `serializers-single-home`
 
+**Read first:**
+- `plan/principles.md` — the OBP discipline, especially the Context section ("Choosing what back-ref(s) a class holds" and "The smells").
+- `plan/scope-map.md` — what's shared (App-level) vs per-actor for the App graph. Channels is per-actor; the per-actor scope is what makes this stage's allocation pattern correct.
+
 **Goal:** Establish per-actor `Channels.@this.Serializers` as the single home for the serializer registry. Delete the `App.@this.Serializers` property (no replacement). Drop the per-Stream `Serializers` field. Stream channels reach their parent Channels' Serializers via a new `Channels` back-ref on the `Channel` base class.
 
 The "single home" is *per actor* — each actor's Channels has its own Serializers instance. Boot-time defaults (Json, Plang, Text) get registered identically per actor; any future runtime registration applies to the actor that registered it. This is not the smell — it's the intended shape.
@@ -14,7 +18,7 @@ The smell being closed is **Stream channels each lazy-allocating their own Seria
 - `PLang/App/this.cs` — line 154 (`public Serializers Serializers { get; } = new Serializers();`) deleted.
 - `PLang/App/Channels/Channel/this.cs` — gain a `Channels` back-ref alongside the existing `App` back-ref. Property: `public global::App.Channels.@this? Channels { get; internal set; }`. Set during `Channels.Register(channel)`, same point where `App` is set today.
 - `PLang/App/Channels/Channel/Stream/this.cs` — `_serializers` field and `Serializers` property removed. `WriteCore` and `ReadCore` use `Channels!.Serializers.X(...)`.
-- `PLang/App/Channels/this.cs` — `Channels.Register(...)` (or wherever channels get added to the registry today) sets `channel.Channels = this` alongside `channel.App = _app`. The two internal sites at lines 176 and 204 that read `sc.Serializers.X` change to `Serializers.X` (the same Channels' own property — `this.Serializers`).
+- `PLang/App/Channels/this.cs` — `Register(Channel.@this channel)` at line 110 today contains `channel.App = _app` at line 112. **Add `channel.Channels = this` immediately after.** That's the only registration path; `GetOrCreate(name, factory)` exists at line 104 but has zero callers, and `CreateMemoryChannel` at line 263 routes through `Register`. Verified by grep — no other code paths add channels to `_channels` directly. The two internal sites at lines 176 and 204 that read `sc.Serializers.X` change to `Serializers.X` (the same Channels' own property — `this.Serializers`).
 - External caller sweep:
   - `PLang/App/Goals/this.cs:320, 325` → `app.System.Channels.Serializers.Deserialize<...>(...)` (Goals is app-level shared infrastructure; using System actor as the canonical choice for app-level serialization)
   - `PLang/App/Goals/Setup/this.cs:56` → same pattern (`app.System.Channels.Serializers`)
@@ -91,6 +95,24 @@ This is the pattern the principles file flags: classes hold whatever back-refs t
 - `dotnet run --project PLang.Tests` green (no new failures vs trunk).
 - `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test` green from a fresh rebuild.
 - Greps return zero residual `app.Serializers` references and zero `_serializers` references inside Channel/Stream files.
+
+### Watch for (coder eyes-on for things we may not have caught)
+
+The architect has classified scope and back-ref patterns for the files this stage touches, but the code is the source of truth. While working through the touched files, flag anything that doesn't match the scope-map or principles:
+
+- **Multiple overlapping back-refs on a single class** — per `principles.md` "smells", a class with both `_app` and `_actor` and `_context` separately stored is a god-bag. If you see one, note it in the commit message — likely a future cleanup.
+- **A `_serializers` lazy field anywhere else in the channels subsystem.** Greps cleared `PLang/App/Channels/`, but verify as you read.
+- **A 6th `app.Serializers` reader I missed.** The four-file caller sweep is based on grep; if the build breaks at an unexpected site, that's a tell.
+- **Subtle dependency on Stream's old `init Serializers` setter.** Greps showed zero callers using the init-setter form. If you find one, flag it before deleting.
+- **`Channel.App` direct readers that aren't yet routed through `Channel.Channels`.** Today's code uses `channel.App` in places (e.g., `Channels.this.cs:176`'s contentType-override branch). Stage 1 leaves `Channel.App` in place; stage 20 (`channel-app-backref-drop`) sweeps the readers later. Don't preempt stage 20 — but if you find a reader that's *only* there because Channels back-ref didn't exist, that's worth a comment for stage 20's brief.
+- **Per-actor allocations that should be shared, or shared instances that should be per-actor.** The scope-map covers the major properties; smaller @this types may not be cataloged. If a smaller class allocates per-actor when no per-actor difference exists (or vice versa), flag it.
+
+The cleanup discipline is **don't fix in stage 1; flag for the appropriate later stage**. Stage 1 stays focused on the Serializers consolidation. Anything you find that's not stage 1's job goes in the commit message or as a comment in this branch.
+
+### Stages that follow this one
+
+- **Stage 20** (`channel-app-backref-drop`) — depends on stage 1's `Channel.Channels` back-ref. Once stage 1 lands, stage 20 sweeps the redundant `Channel.App` readers and removes the property. Don't preempt this in stage 1.
+- **Stage 21** (`navigators-to-variables`) — independent, not touched by stage 1.
 
 ### Out of scope
 
