@@ -867,6 +867,44 @@
         "health": "plan + briefs + scope-map + summary all consistent at Tier 1 done",
         "notes": "Stage 9 (catalog-dissolve-to-modules-schema) is substantially bigger \u2014 full folder relocation + Rule E refactor. Its own session after 7+8 land."
       }
+    },
+    {
+      "id": "c126882b-e074-4d5b-b613-daaaf5e6af76",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T00:00:00Z",
+      "timestamp_end": "2026-05-09T00:45:00Z",
+      "intent": "Pull stages 7+8 results; carve stage 9 (Catalog dissolution) as focused session.",
+      "before": {
+        "assumptions": "Stages 7 and 8 landed cleanly. Stage 7 coder caught 2 extra callers I missed (Variables/this.SnapshotAt.cs and Errors/this.cs) \u2014 brief had 7, actual sweep was 9. Stage 9 is the largest stage so far; carving as its own session not batched.",
+        "risk": "Stage 9 is medium-risk: ~16 files modified + 5 moved + 1 deleted. Rename collisions on Action and Example types. Lazy-vs-eager Schema build is a real design choice surfaced in the brief. Build catches misses; tests catch behavior changes."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/stage-9-catalog-dissolve-to-modules-schema.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-9-catalog-dissolve-to-modules-schema.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 9 brief. Folder relocation App/Catalog/ \u2192 App/Modules/Schema/. Type renames (ActionSpec\u2192Action, ExampleSpec\u2192Example, TypeEntry\u2192Entry, ExampleRenderer\u2192Render). Rule E refactor: Build/Render become instance methods navigating this.Modules. Modules.@this gains Schema property. ExampleHelpers.cs deleted; 12 action handlers migrate  \u2192 . Type-ref sweeps across 16+ files. Static formatters in builder/Fluid providers flagged OUT OF SCOPE (different layer, own design pass)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stages 7 and 8 marked complete (with note about stage 7 caller-count adjustment). Stage 9 row links the brief and replaces one-liner. Summary covers stages 7+8 lessons and stage 9 carve including risk note."
+        }
+      ],
+      "after": {
+        "status": "stage 9 ready for coder; biggest stage so far; should be its own session",
+        "health": "plan + briefs + scope-map + summary all consistent",
+        "notes": "After stage 9 lands, Tier 2 done (stages 1-9). Tier 3 next: stage 10 (app-run-redesign) is the headliner \u2014 likely needs its own session per plan principles."
+      }
     }
   ]
 }

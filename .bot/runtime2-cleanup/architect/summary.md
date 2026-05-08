@@ -1,5 +1,34 @@
 # architect — runtime2-cleanup
 
+## 2026-05-08 (latest+8) — stages 7+8 landed; stage 9 carved (Tier 2 finisher)
+
+Stages 7 and 8 landed cleanly per coder — 2755/2755 + 199/199 each. Stage 7's coder caught 2 caller sites I missed in the brief (Variables/this.SnapshotAt.cs and Errors/this.cs); 9 production callers + 9 test files total instead of the brief's 7. The brief's grep was thorough but not exhaustive — coder's final sweep is the safety net.
+
+Stage 9 carved as its own focused session (vs batched) because it's the biggest stage so far.
+
+### Stage 9 carve (`catalog-dissolve-to-modules-schema`)
+
+Brief at `stage-9-catalog-dissolve-to-modules-schema.md`. Substantial restructure:
+
+- **Folder relocation**: `App/Catalog/` (5 files) → `App/Modules/Schema/` with new `Spec/` subfolder for the record family.
+- **Type renames**: drop "Spec" suffix on records (`ActionSpec` → `Action`, `ExampleSpec` → `Example` under `Spec/`); `TypeEntry` → `Entry`; `ExampleRenderer` → `Render`.
+- **Rule E refactor** (the worked example): `Build(modules)` and `Render(spec, modules)` become instance methods. Schema holds `_modules` set at construction; callers stop passing modules in. `app.Modules.Schema.Build()` replaces `App.Catalog.@this.Build(action.Context.App.Modules)`.
+- **`Modules.@this.Schema` property** — Modules constructs Schema in its ctor (`Schema = new Schema.@this(this);`), passing `this` as the parent ref.
+- **`ExampleHelpers.cs` deletion** — records' positional ctors cover the use case. 12 action handlers migrate from `Example("intent", chain)` to `new Example("intent", chain)`.
+- **Caller sweeps** in Types, TypeMapping (multiple sites), Modules itself, DefaultBuilderProvider, plus the 12 handlers.
+
+**Out of scope, flagged as future work**: the static formatters in `DefaultBuilderProvider.cs` (`FormatValue`, `RenderActionFormal`) and `FluidProvider.cs` (`FormatFormalValue`). The plan one-liner mentioned absorbing them into `Schema.Render` but they're a different layer (value-token rendering, not example-string rendering). Unification needs its own design pass.
+
+### Risk note for stage 9
+
+Largest stage so far. Risk medium — building catches caller misses, tests catch behavior changes. The "Watch for" section names the most-likely failure modes: rename collisions on `Action` / `Example`, lazy-vs-eager Schema build, the 12-handler ExampleHelpers migration.
+
+### After stage 9 lands
+
+Tier 2 done. Tier 3 next (stages 10–12: app-run-redesign, errors-app-backref-drop, build-branch-to-build-this). Stage 10 (App.Run) is the headliner of the cleanup; per plan principles likely needs its own session.
+
+---
+
 ## 2026-05-08 (latest+7) — Tier 1 complete (stages 5+6 landed); Tier 2 begins (stages 7+8 carved)
 
 **Tier 1 finished.** Stages 5 and 6 landed cleanly per coder — 2755/2755 + 199/199 each. Notable side effect on stage 6: build warnings collapsed 449 → 68 (the inherited Data surface on App generated a flock of nullability warnings that are now gone).
