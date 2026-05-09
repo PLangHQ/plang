@@ -1,11 +1,11 @@
-using global::App.Providers;
+using global::App.Code;
 
 namespace PLang.Tests.App.SnapshotTests;
 
 public class ProvidersSnapshotTests
 {
     // Public + parameterless ctor so Restore can re-instantiate it from the test DLL.
-    public sealed class CustomGrep : global::App.Data.Providers.IGrepProvider
+    public sealed class CustomGrep : global::App.Data.Code.IGrep
     {
         public string Name => "custom";
         public bool IsDefault { get; set; }
@@ -23,14 +23,14 @@ public class ProvidersSnapshotTests
         var custom = new CustomGrep();
         // Stamp Source so the snapshot has a loadable origin (use this assembly's path).
         custom.Source = typeof(CustomGrep).Assembly.Location;
-        src.Providers.Register(typeof(global::App.Data.Providers.IGrepProvider), custom);
-        src.Providers.SetDefault(typeof(global::App.Data.Providers.IGrepProvider), "custom");
+        src.Code.Register(typeof(global::App.Data.Code.IGrep), custom);
+        src.Code.SetDefault(typeof(global::App.Data.Code.IGrep), "custom");
 
         var snap = src.Snapshot();
         var registrations = snap.Section("Providers")
-            .Read<List<global::App.Providers.@this.Registration>>("registrations");
+            .Read<List<global::App.Code.@this.Registration>>("registrations");
         var overrides = snap.Section("Providers")
-            .Read<List<global::App.Providers.@this.DefaultOverride>>("defaultOverrides");
+            .Read<List<global::App.Code.@this.DefaultOverride>>("defaultOverrides");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Any(r => r.ProviderName == "custom")).IsTrue();
@@ -47,14 +47,14 @@ public class ProvidersSnapshotTests
         // SetDefault would fire before Register and the restore would hard-error.
         var src = new global::App.@this("/src");
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
-        src.Providers.Register(typeof(global::App.Data.Providers.IGrepProvider), custom);
-        src.Providers.SetDefault(typeof(global::App.Data.Providers.IGrepProvider), "custom");
+        src.Code.Register(typeof(global::App.Data.Code.IGrep), custom);
+        src.Code.SetDefault(typeof(global::App.Data.Code.IGrep), "custom");
 
         var snap = src.Snapshot();
         var dst = new global::App.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        var defaultGrep = dst.Providers.Get<global::App.Data.Providers.IGrepProvider>();
+        var defaultGrep = dst.Code.Get<global::App.Data.Code.IGrep>();
         await Assert.That(defaultGrep.Success).IsTrue();
         await Assert.That(defaultGrep.Value!.Name).IsEqualTo("custom");
     }
@@ -65,13 +65,13 @@ public class ProvidersSnapshotTests
         // Captured runtime registration's DLL/source can't be loaded → referent-integrity
         // hard error. No silent fallback to system default.
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Providers.@this.Registration>
+        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>
         {
-            new(typeof(global::App.Data.Providers.IGrepProvider).AssemblyQualifiedName!,
+            new(typeof(global::App.Data.Code.IGrep).AssemblyQualifiedName!,
                 "ghost",
                 "/nonexistent/ghost-provider.dll")
         });
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Providers.@this.DefaultOverride>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>());
 
         var dst = new global::App.@this("/dst");
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
@@ -87,10 +87,10 @@ public class ProvidersSnapshotTests
         // Registrations succeed but default-selection name doesn't match any registered
         // provider → referent-integrity hard error.
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Providers.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Providers.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>
         {
-            new(typeof(global::App.Data.Providers.IGrepProvider).AssemblyQualifiedName!, "phantom")
+            new(typeof(global::App.Data.Code.IGrep).AssemblyQualifiedName!, "phantom")
         });
 
         var dst = new global::App.@this("/dst");
@@ -109,7 +109,7 @@ public class ProvidersSnapshotTests
         var app = new global::App.@this("/test");
         var snap = app.Snapshot();
         var registrations = snap.Section("Providers")
-            .Read<List<global::App.Providers.@this.Registration>>("registrations");
+            .Read<List<global::App.Code.@this.Registration>>("registrations");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Count).IsEqualTo(0);
@@ -124,15 +124,15 @@ public class ProvidersSnapshotTests
         // object graphs.
         var src = new global::App.@this("/src");
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
-        src.Providers.Register(typeof(global::App.Data.Providers.IGrepProvider), custom);
+        src.Code.Register(typeof(global::App.Data.Code.IGrep), custom);
 
         var snap = src.Snapshot();
         var registrations = snap.Section("Providers")
-            .Read<List<global::App.Providers.@this.Registration>>("registrations");
+            .Read<List<global::App.Code.@this.Registration>>("registrations");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Count).IsEqualTo(1);
-        // The wire entry is the metadata triple, not the IProvider instance graph.
+        // The wire entry is the metadata triple, not the ICode instance graph.
         await Assert.That(registrations[0].ProviderName).IsEqualTo("custom");
         await Assert.That(registrations[0].Source).IsNotNull();
     }

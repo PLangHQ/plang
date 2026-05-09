@@ -18,7 +18,7 @@ public sealed partial class @this
         var s = new Snapshot.@this();
         CurrentActor.Context.Variables.Capture(s.Section("Variables"));
         Errors.Capture(s.Section("Errors"));
-        Providers.Capture(s.Section("Providers"));
+        Code.Capture(s.Section("Providers"));
         Statics.Capture(s.Section("Statics"));
         Builder.Capture(s.Section("Build"));
         Tester.Capture(s.Section("Testing"));
@@ -40,7 +40,7 @@ public sealed partial class @this
     {
         var ctx = context ?? CurrentActor.Context;
 
-        if (s.HasSection("Providers")) global::App.Providers.@this.Restore(s.Section("Providers"), ctx);
+        if (s.HasSection("Providers")) global::App.Code.@this.Restore(s.Section("Providers"), ctx);
         if (s.HasSection("Variables")) global::App.Variables.@this.Restore(s.Section("Variables"), ctx);
         if (s.HasSection("Errors"))    global::App.Errors.@this.Restore(s.Section("Errors"), ctx);
         if (s.HasSection("Statics"))   global::App.Statics.@this.Restore(s.Section("Statics"), ctx);

@@ -2,7 +2,7 @@ using global::App.Actor.Context;
 using global::App.Errors;
 using global::App.Variables;
 using global::App.modules.crypto;
-using global::App.modules.crypto.providers;
+using global::App.modules.crypto.code;
 using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
@@ -38,8 +38,8 @@ public class ProviderResolutionTests
     public async Task Hash_UsesProviderFromSettings_NotDefault()
     {
         var mock = new MockCryptoProvider();
-        _app.Providers.Register<ICryptoProvider>(mock);
-        _app.Providers.SetDefault<ICryptoProvider>("mock");
+        _app.Code.Register<ICrypto>(mock);
+        _app.Code.SetDefault<ICrypto>("mock");
 
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
@@ -53,13 +53,13 @@ public class ProviderResolutionTests
     [Test]
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
-        // Fresh engine, no crypto settings — should use DefaultCryptoProvider
+        // Fresh engine, no crypto settings — should use global::App.modules.crypto.code.Default
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         var hash = (byte[])result.Value!;
-        // Should not be all zeros (DefaultCryptoProvider produces real keccak256)
+        // Should not be all zeros (global::App.modules.crypto.code.Default produces real keccak256)
         await Assert.That(hash).IsNotEquivalentTo(new byte[32]);
         await Assert.That(hash.Length).IsEqualTo(32);
     }
@@ -68,8 +68,8 @@ public class ProviderResolutionTests
     public async Task Verify_UsesProviderFromSettings()
     {
         var mock = new AlwaysTrueVerifier();
-        _app.Providers.Register<ICryptoProvider>(mock);
-        _app.Providers.SetDefault<ICryptoProvider>("always-true");
+        _app.Code.Register<ICrypto>(mock);
+        _app.Code.SetDefault<ICrypto>("always-true");
 
         // Even with garbage hash, mock returns true
         var action = new Verify { Context = Ctx, Data = Data.Ok("hello"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
@@ -79,7 +79,7 @@ public class ProviderResolutionTests
         await Assert.That((bool)result.Value!).IsTrue();
     }
 
-    private class MockCryptoProvider : ICryptoProvider
+    private class MockCryptoProvider : ICrypto
     {
         public string Name => "mock";
         public bool IsDefault { get; set; }
@@ -91,7 +91,7 @@ public class ProviderResolutionTests
         public Data Verify(Verify action) => Data.Ok(false);
     }
 
-    private class AlwaysTrueVerifier : ICryptoProvider
+    private class AlwaysTrueVerifier : ICrypto
     {
         public string Name => "always-true";
         public bool IsDefault { get; set; }

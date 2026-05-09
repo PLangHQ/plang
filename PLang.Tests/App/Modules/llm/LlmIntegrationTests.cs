@@ -4,9 +4,9 @@ using System.Text.Json;
 using global::App.Actor.Context;
 using global::App.Goals.Goal;
 using global::App.Variables;
-using global::App.modules.http.providers;
+using global::App.modules.http.code;
 using global::App.modules.llm;
-using global::App.modules.llm.providers;
+using global::App.modules.llm.code;
 using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.llm;
@@ -223,9 +223,9 @@ public class LlmIntegrationTests
         if (snapshot != null)
         {
             var handler = new SnapshotReplayHandler(new List<string> { snapshot });
-            var httpProvider = new DefaultHttpProvider(handler) { Name = "snapshot" };
-            _app.Providers.Register<IHttpProvider>(httpProvider);
-            _app.Providers.SetDefault<IHttpProvider>("snapshot");
+            var httpProvider = new Default(handler) { Name = "snapshot" };
+            _app.Code.Register<IHttp>(httpProvider);
+            _app.Code.SetDefault<IHttp>("snapshot");
         }
         else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
         {
@@ -257,9 +257,9 @@ public class LlmIntegrationTests
         if (multiSnapshot != null)
         {
             var handler = new SnapshotReplayHandler(multiSnapshot);
-            var httpProvider = new DefaultHttpProvider(handler) { Name = "snapshot" };
-            _app.Providers.Register<IHttpProvider>(httpProvider);
-            _app.Providers.SetDefault<IHttpProvider>("snapshot");
+            var httpProvider = new Default(handler) { Name = "snapshot" };
+            _app.Code.Register<IHttp>(httpProvider);
+            _app.Code.SetDefault<IHttp>("snapshot");
         }
         else if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("OPENAI_API_KEY")))
         {
@@ -269,9 +269,9 @@ public class LlmIntegrationTests
         {
             // Capture all responses during the live call
             captureHandler = new CaptureHandler();
-            var httpProvider = new DefaultHttpProvider(captureHandler) { Name = "capture" };
-            _app.Providers.Register<IHttpProvider>(httpProvider);
-            _app.Providers.SetDefault<IHttpProvider>("capture");
+            var httpProvider = new Default(captureHandler) { Name = "capture" };
+            _app.Code.Register<IHttp>(httpProvider);
+            _app.Code.SetDefault<IHttp>("capture");
         }
 
         var action = new query

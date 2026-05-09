@@ -1,4 +1,4 @@
-using global::App.modules.builder.providers;
+using global::App.modules.builder.code;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -19,39 +19,39 @@ public class IsCatalogDescriptionTests
 
     [Test]
     public async Task Bare_TypeName_Matches()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("int", "int")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("int", "int")).IsTrue();
 
     [Test]
     public async Task Nullable_Suffix_Matches()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("int?", "int")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("int?", "int")).IsTrue();
 
     [Test]
     public async Task TypeName_With_Default_Matches()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("int = 1", "int")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("int = 1", "int")).IsTrue();
 
     [Test]
     public async Task Nullable_With_Default_Matches()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("bool? = false", "bool")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("bool? = false", "bool")).IsTrue();
 
     [Test]
     public async Task Var_Prefix_Matches()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("%var% string", "string")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("%var% string", "string")).IsTrue();
 
     [Test]
     public async Task Var_Prefix_With_Default_Matches()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("%var% string = \"hi\"", "string")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("%var% string = \"hi\"", "string")).IsTrue();
 
     [Test]
     public async Task Generic_TypeName_Matches()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("list<int>", "list<int>")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("list<int>", "list<int>")).IsTrue();
 
     [Test]
     public async Task Generic_TypeName_Nullable_Matches()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("list<int>?", "list<int>")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("list<int>?", "list<int>")).IsTrue();
 
     [Test]
     public async Task Surrounding_Whitespace_Trimmed()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("  int = 1  ", "int")).IsTrue();
+        => await Assert.That(Default.IsCatalogDescription("  int = 1  ", "int")).IsTrue();
 
     // --- Match-false (real LLM values cannot trip the guard) ---
 
@@ -59,26 +59,26 @@ public class IsCatalogDescriptionTests
     public async Task LiteralValue_DoesNotMatch_StringSchema()
         // The LLM emits "hello" for a string-typed slot. Must not be classified
         // as a description — it's a value to coerce as-is.
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("hello", "string")).IsFalse();
+        => await Assert.That(Default.IsCatalogDescription("hello", "string")).IsFalse();
 
     [Test]
     public async Task TypeName_Mismatch_DoesNotMatch()
         // Value=description for `int` but schema slot is `string`. Cross-type
         // descriptions never match — typeName is the anchor.
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("int = 1", "string")).IsFalse();
+        => await Assert.That(Default.IsCatalogDescription("int = 1", "string")).IsFalse();
 
     [Test]
     public async Task Empty_TypeName_DoesNotMatch()
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("int", "")).IsFalse();
+        => await Assert.That(Default.IsCatalogDescription("int", "")).IsFalse();
 
     [Test]
     public async Task Trailing_Junk_After_TypeName_DoesNotMatch()
         // `intish` would prefix-match `int` if we ignored the trailing chars.
         // The shape grammar permits only "?", " = ...", or end-of-string.
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("intish", "int")).IsFalse();
+        => await Assert.That(Default.IsCatalogDescription("intish", "int")).IsFalse();
 
     [Test]
     public async Task Number_Value_DoesNotMatch_IntSchema()
         // The string "5" is a concrete value, not a description.
-        => await Assert.That(DefaultBuilderProvider.IsCatalogDescription("5", "int")).IsFalse();
+        => await Assert.That(Default.IsCatalogDescription("5", "int")).IsFalse();
 }

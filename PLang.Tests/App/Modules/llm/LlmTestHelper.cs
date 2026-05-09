@@ -2,9 +2,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using global::App.Variables;
-using global::App.modules.http.providers;
+using global::App.modules.http.code;
 using global::App.modules.llm;
-using global::App.modules.llm.providers;
+using global::App.modules.llm.code;
 using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.llm;
@@ -21,9 +21,9 @@ internal static class LlmTestHelper
     internal static MockHttpMessageHandler SetupMockHttp(PLangEngine engine)
     {
         var handler = new MockHttpMessageHandler();
-        var provider = new DefaultHttpProvider(handler) { Name = "test" };
-        engine.Providers.Register<IHttpProvider>(provider);
-        engine.Providers.SetDefault<IHttpProvider>("test");
+        var provider = new Default(handler) { Name = "test" };
+        engine.Code.Register<IHttp>(provider);
+        engine.Code.SetDefault<IHttp>("test");
         return handler;
     }
 

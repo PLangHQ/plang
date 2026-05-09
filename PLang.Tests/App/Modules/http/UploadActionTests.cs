@@ -4,14 +4,14 @@ using System.Text;
 using global::App.Actor.Context;
 using global::App.Variables;
 using global::App.modules.http;
-using global::App.modules.http.providers;
+using global::App.modules.http.code;
 using PLangEngine = global::App.@this;
 using HttpMethod = global::App.modules.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 
 /// <summary>
-/// Tests upload action with real DefaultHttpProvider + mock HTTP transport.
+/// Tests upload action with real Default + mock HTTP transport.
 /// </summary>
 public class UploadActionTests
 {
@@ -28,9 +28,9 @@ public class UploadActionTests
         _app = new PLangEngine(_tempDir);
 
         _handler = new MockHttpMessageHandler();
-        var provider = new DefaultHttpProvider(_handler) { Name = "test" };
-        _app.Providers.Register<IHttpProvider>(provider);
-        _app.Providers.SetDefault<IHttpProvider>("test");
+        var provider = new Default(_handler) { Name = "test" };
+        _app.Code.Register<IHttp>(provider);
+        _app.Code.SetDefault<IHttp>("test");
     }
 
     [After(Test)]

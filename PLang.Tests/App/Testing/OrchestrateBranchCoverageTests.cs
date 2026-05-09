@@ -1,5 +1,5 @@
 using global::App.modules.condition;
-using global::App.modules.condition.providers;
+using global::App.modules.condition.code;
 using global::App.Tester;
 
 namespace PLang.Tests.App.Tester;

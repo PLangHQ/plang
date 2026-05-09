@@ -1,7 +1,7 @@
 namespace EmptyProvider;
 
 /// <summary>
-/// A plain class — not an IProvider. Used to test the "no providers found" error path.
+/// A plain class — not an ICode. Used to test the "no providers found" error path.
 /// </summary>
 public class NotAProvider
 {

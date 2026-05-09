@@ -1,14 +1,14 @@
-using App.Providers;
+using App.Code;
 using App.modules.signing;
-using App.modules.signing.providers;
+using App.modules.signing.code;
 
 namespace TestProvider;
 
 /// <summary>
-/// A minimal ISigningProvider for testing the provider load action.
-/// Must have a parameterless constructor and implement ISigningProvider.
+/// A minimal ISigning for testing the provider load action.
+/// Must have a parameterless constructor and implement ISigning.
 /// </summary>
-public class TestSigningProvider : ISigningProvider
+public class TestSigningProvider : ISigning
 {
     public string Name => "test-signing";
     public bool IsDefault { get; set; }

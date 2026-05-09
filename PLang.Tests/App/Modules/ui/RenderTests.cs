@@ -2,7 +2,7 @@ using App;
 using global::App.Actor.Context;
 using global::App.Variables;
 using global::App.modules.ui;
-using global::App.modules.ui.providers;
+using global::App.modules.ui.code;
 
 namespace PLang.Tests.App.Modules.ui;
 
@@ -10,14 +10,14 @@ public class RenderTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly global::App.@this _app;
-    private readonly FluidProvider _provider;
+    private readonly global::App.modules.ui.code.Fluid _provider;
 
     public RenderTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_ui_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new global::App.@this(_tempDir);
-        _provider = new FluidProvider();
+        _provider = new global::App.modules.ui.code.Fluid();
     }
 
     public void Dispose()
@@ -710,7 +710,7 @@ public class RenderTests : IDisposable
 
     // --- Stub provider for swap test ---
 
-    private class StubTemplateProvider : ITemplateProvider
+    private class StubTemplateProvider : ITemplate
     {
         public string Name => "stub";
         public bool IsDefault { get; set; }

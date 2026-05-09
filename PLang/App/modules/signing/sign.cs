@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.signing.providers;
+using App.modules.signing.code;
 
 namespace App.modules.signing;
 
@@ -26,7 +26,7 @@ public partial class sign : IContext
     public partial Data.@this<TimeSpan>? Expires { get; init; }
 
     [Provider]
-    public partial ISigningProvider Signer { get; }
+    public partial ISigning Signer { get; }
 
     public async Task<Data.@this> Run() => await Signer.SignAsync(this);
 }

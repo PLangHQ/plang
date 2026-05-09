@@ -1,7 +1,7 @@
 using App.Attributes;
 using App.Goals.Goal;
 using App.Variables;
-using App.modules.http.providers;
+using App.modules.http.code;
 using App.modules.signing;
 
 namespace App.modules.http;
@@ -51,7 +51,7 @@ public partial class upload : IContext
     public partial Data.@this<GoalCall>? OnProgress { get; init; }
 
     [Provider]
-    public partial IHttpProvider Http { get; }
+    public partial IHttp Http { get; }
 
     public async Task<Data.@this> Run() => await Http.UploadAsync(this);
 }

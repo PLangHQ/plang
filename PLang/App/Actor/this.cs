@@ -2,7 +2,7 @@ using App;
 using App.Settings;
 using App.Variables;
 using App.modules.identity;
-using App.modules.identity.providers;
+using App.modules.identity.code;
 
 namespace App.Actor;
 
@@ -132,7 +132,7 @@ public sealed class @this : IAsyncDisposable
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
         Context.Variables.Set("MyIdentity", new Data.DynamicData("MyIdentity", () =>
         {
-            var provider = app.Providers.Get<IIdentityProvider>();
+            var provider = app.Code.Get<IIdentity>();
             if (!provider.Success) return null;
             var result = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = app.System.Context }).GetAwaiter().GetResult();
             return result.Success ? result.Value as Identity : null;

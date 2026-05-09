@@ -1,8 +1,8 @@
 using global::App.Actor.Context;
 using global::App.Errors;
 using global::App.Variables;
-using global::App.Providers;
-using global::App.modules.signing.providers;
+using global::App.Code;
+using global::App.modules.signing.code;
 using global::App.modules.crypto;
 using global::App.modules.identity;
 using global::App.modules.signing;
@@ -409,7 +409,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         // Register a throwing provider and point the signed data at it
         var throwing = new ThrowingProvider();
-        _app.Providers.Register<ISigningProvider>(throwing);
+        _app.Code.Register<ISigning>(throwing);
         signed.Signature!.Algorithm = "throwing";
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
@@ -462,7 +462,7 @@ public class VerifyActionTests
         };
 
         // Invalid base64 should fail at Convert.FromBase64String
-        var provider = new Ed25519Provider();
+        var provider = new Ed25519();
         byte[] sigBytes;
         try { sigBytes = Convert.FromBase64String(sd.Value); Assert.Fail("Expected FormatException"); }
         catch (FormatException) { /* expected */ }
@@ -474,7 +474,7 @@ public class VerifyActionTests
 
     #endregion
 
-    private class ThrowingProvider : ISigningProvider
+    private class ThrowingProvider : ISigning
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }

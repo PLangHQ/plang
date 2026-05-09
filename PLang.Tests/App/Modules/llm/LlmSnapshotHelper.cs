@@ -5,7 +5,7 @@ using System.Text.Json;
 using global::App.Goals.Goal;
 using global::App.Variables;
 using global::App.modules.llm;
-using global::App.modules.llm.providers;
+using global::App.modules.llm.code;
 
 namespace PLang.Tests.App.Modules.llm;
 
@@ -31,8 +31,8 @@ internal static class LlmSnapshotHelper
         typeof(ToolCall),
         typeof(GoalCall),
         typeof(query),
-        typeof(ILlmProvider),
-        typeof(OpenAiProvider)
+        typeof(ILlm),
+        typeof(OpenAi)
     };
 
     /// <summary>

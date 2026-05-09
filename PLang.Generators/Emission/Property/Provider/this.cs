@@ -5,8 +5,8 @@ namespace PLang.Generators.Emission.Property.Provider;
 
 /// <summary>
 /// Emits a [Provider]-attributed property — eagerly assigned in ExecuteAsync
-/// from app.Providers.Get&lt;T&gt;(). Lazy access pattern allows direct test
-/// usage too (Context.App.Providers.Get is invoked on first read if not pre-set).
+/// from app.Code.Get&lt;T&gt;(). Lazy access pattern allows direct test
+/// usage too (Context.App.Code.Get is invoked on first read if not pre-set).
 /// </summary>
 public sealed record @this(
     string Name,
@@ -20,7 +20,7 @@ public sealed record @this(
         sb.AppendLine($"    private {TypeName}? {Backing};");
         sb.AppendLine($"    public partial {TypeName} {Name}");
         sb.AppendLine("    {");
-        sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __e = {engineExpr}; if (__e != null) {{ var __r = __e.Providers.Get<{TypeName}>(); if (__r.Success) {Backing} = __r.Value; }} }} return {Backing}!; }}");
+        sb.AppendLine($"        get {{ if ({Backing} == null) {{ var __e = {engineExpr}; if (__e != null) {{ var __r = __e.Code.Get<{TypeName}>(); if (__r.Success) {Backing} = __r.Value; }} }} return {Backing}!; }}");
         sb.AppendLine("    }");
         sb.AppendLine();
     }

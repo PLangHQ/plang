@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.assert.providers;
+using App.modules.assert.code;
 
 namespace App.modules.assert;
 
@@ -11,7 +11,7 @@ public partial class IsNotNull : IContext
     public partial Data.@this<string>? Message { get; init; }
 
     [Provider]
-    public partial IAssertProvider Assert { get; }
+    public partial IAssert Assert { get; }
 
     public Task<Data.@this> Run() =>
         Task.FromResult(AssertSnapshot.WithVariables(Assert.IsNotNull(this), Context));

@@ -180,8 +180,8 @@ public sealed class @this
         // Subscribe to granular LLM tracing — each Llm.* flag emits its own block to stderr or file.
         if (Llm != null && (Llm.System || Llm.User || Llm.Response || Llm.Schema))
         {
-            var provider = _engine.Providers.Get<modules.llm.providers.ILlmProvider>();
-            if (provider.Success && provider.Value is modules.llm.providers.OpenAiProvider oai)
+            var provider = _engine.Code.Get<modules.llm.code.ILlm>();
+            if (provider.Success && provider.Value is modules.llm.code.OpenAi oai)
             {
                 var ctx = _engine.User.Context;
                 var toFile = string.Equals(Llm.Output, "file", StringComparison.OrdinalIgnoreCase);

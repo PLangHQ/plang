@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.builder.providers;
+using App.modules.builder.code;
 
 namespace App.modules.builder;
 
@@ -18,7 +18,7 @@ public partial class promoteGroups : IContext
     public partial Data.@this Steps { get; init; }
 
     [Provider]
-    public partial IBuilderProvider Builder { get; }
+    public partial IBuilder Builder { get; }
 
     public Task<Data.@this> Run() => Builder.PromoteGroups(this);
 }

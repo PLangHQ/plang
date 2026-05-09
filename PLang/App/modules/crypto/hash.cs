@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.crypto.providers;
+using App.modules.crypto.code;
 
 namespace App.modules.crypto;
 
@@ -17,7 +17,7 @@ public partial class Hash : IContext
     public partial Data.@this<string> Algorithm { get; init; }
 
     [Provider]
-    public partial ICryptoProvider Crypto { get; }
+    public partial ICrypto Crypto { get; }
 
     public async Task<Data.@this> Run() => Crypto.Hash(this);
 }

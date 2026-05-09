@@ -1,18 +1,18 @@
 using System.Text;
 using global::App.Variables;
-using global::App.Providers;
-using global::App.modules.signing.providers;
+using global::App.Code;
+using global::App.modules.signing.code;
 using global::App.modules.signing;
 
 namespace PLang.Tests.App.Modules.signing;
 
 /// <summary>
-/// Direct Ed25519Provider tests — no engine needed.
+/// Direct Ed25519 tests — no engine needed.
 /// Tests key generation, signing, and verification at the provider level.
 /// </summary>
 public class Ed25519ProviderTests
 {
-    private readonly Ed25519Provider _provider = new();
+    private readonly Ed25519 _provider = new();
 
     #region Identity & Interfaces
 
@@ -25,8 +25,8 @@ public class Ed25519ProviderTests
     [Test]
     public async Task ImplementsISigningProviderAndIKeyProvider()
     {
-        await Assert.That(_provider is ISigningProvider).IsTrue();
-        await Assert.That(_provider is IKeyProvider).IsTrue();
+        await Assert.That(_provider is ISigning).IsTrue();
+        await Assert.That(_provider is IKey).IsTrue();
     }
 
     #endregion

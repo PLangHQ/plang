@@ -184,7 +184,7 @@ public static class @this
         foreach (var prop in info.Properties.OfType<ProviderProperty>())
         {
             sb.Append($$"""
-                        var __{{prop.Name}}_result = app.Providers.Get<{{prop.TypeName}}>();
+                        var __{{prop.Name}}_result = app.Code.Get<{{prop.TypeName}}>();
                         if (!__{{prop.Name}}_result.Success) return __{{prop.Name}}_result;
                         __{{prop.Name}}_backing = __{{prop.Name}}_result.Value!;
 

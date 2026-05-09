@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.file.providers;
+using App.modules.file.code;
 
 namespace App.modules.file;
 
@@ -11,7 +11,7 @@ public partial class Save : IContext
     public partial Data.@this? Value { get; init; }
 
     [Provider]
-    public partial IFileProvider Files { get; }
+    public partial IFile Files { get; }
 
     public Task<Data.@this> Run() => Files.Save(this);
 }

@@ -6,9 +6,9 @@ using System.Text.Json;
 using global::App.Channels.Serializers;
 using global::App.Actor.Context;
 using global::App.Variables;
-using global::App.Providers;
+using global::App.Code;
 using global::App.modules.http;
-using global::App.modules.http.providers;
+using global::App.modules.http.code;
 using global::App.modules.signing;
 using PLangEngine = global::App.@this;
 using HttpMethod = global::App.modules.http.HttpMethod;
@@ -16,7 +16,7 @@ using HttpMethod = global::App.modules.http.HttpMethod;
 namespace PLang.Tests.App.Modules.http;
 
 /// <summary>
-/// Tests the request action + real DefaultHttpProvider.
+/// Tests the request action + real Default.
 /// Uses a MockHttpMessageHandler to control HTTP responses while exercising
 /// all real provider logic (URL resolution, body building, response parsing, etc.).
 /// </summary>
@@ -35,9 +35,9 @@ public class RequestActionTests
         _app = new PLangEngine(_tempDir);
 
         _handler = new MockHttpMessageHandler();
-        var provider = new DefaultHttpProvider(_handler) { Name = "test" };
-        _app.Providers.Register<IHttpProvider>(provider);
-        _app.Providers.SetDefault<IHttpProvider>("test");
+        var provider = new Default(_handler) { Name = "test" };
+        _app.Code.Register<IHttp>(provider);
+        _app.Code.SetDefault<IHttp>("test");
 
         // Register stub goals for streaming callbacks — GoalCall needs to find them
         foreach (var name in new[] { "HandleLine", "HandleSSE", "HandleBytes", "HandleChunk", "ProcessChunk" })

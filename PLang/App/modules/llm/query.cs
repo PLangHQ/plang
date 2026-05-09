@@ -1,7 +1,7 @@
 using App.Attributes;
 using App.Goals.Goal;
 using App.Variables;
-using App.modules.llm.providers;
+using App.modules.llm.code;
 
 namespace App.modules.llm;
 
@@ -103,7 +103,7 @@ public partial class query : IContext, IBuildValidatable
     public partial Data.@this<bool> Cache { get; init; }
 
     [Provider]
-    public partial ILlmProvider Llm { get; }
+    public partial ILlm Llm { get; }
 
     public async Task<Data.@this> Run() => await Llm.Query(this);
 }

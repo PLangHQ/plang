@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.builder.providers;
+using App.modules.builder.code;
 
 namespace App.modules.builder;
 
@@ -8,7 +8,7 @@ namespace App.modules.builder;
 public partial class types : IContext
 {
     [Provider]
-    public partial IBuilderProvider Builder { get; }
+    public partial IBuilder Builder { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Builder.Types(this));
 }

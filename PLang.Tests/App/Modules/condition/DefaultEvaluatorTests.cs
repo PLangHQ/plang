@@ -1,12 +1,12 @@
 using global::App.Variables;
 using global::App.modules.condition;
-using global::App.modules.condition.providers;
+using global::App.modules.condition.code;
 
 namespace PLang.Tests.App.Modules.condition;
 
 public class DefaultEvaluatorTests
 {
-    private readonly DefaultEvaluator _eval = new();
+    private readonly Default _eval = new();
 
     private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
 

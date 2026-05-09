@@ -2,7 +2,7 @@ using global::App.FileSystem.Default;
 using global::App.Variables;
 using PLangPath = global::App.FileSystem.Path;
 using global::App.modules.file;
-using global::App.modules.file.providers;
+using global::App.modules.file.code;
 
 namespace PLang.Tests.App.Modules.Path;
 
@@ -11,7 +11,7 @@ public class PathTests : IDisposable
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
     private readonly global::App.@this _app;
-    private readonly DefaultFileProvider _provider;
+    private readonly Default _provider;
 
     public PathTests()
     {
@@ -19,7 +19,7 @@ public class PathTests : IDisposable
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
         _app = new global::App.@this(_tempDir, fileSystem: _fs);
-        _provider = new DefaultFileProvider();
+        _provider = new Default();
     }
 
     public void Dispose()

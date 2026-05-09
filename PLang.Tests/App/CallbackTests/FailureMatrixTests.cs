@@ -1,7 +1,7 @@
 using global::App.Callback;
 using global::App.CallStack;
 using global::App.Errors;
-using global::App.Providers;
+using global::App.Code;
 using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
@@ -111,12 +111,12 @@ public class FailureMatrixTests
     public async Task FailureMatrix_ProviderDllMissing_RaisesReferentIntegrityError()
     {
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Providers.@this.Registration>
+        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>
         {
-            new(typeof(global::App.Data.Providers.IGrepProvider).AssemblyQualifiedName!,
+            new(typeof(global::App.Data.Code.IGrep).AssemblyQualifiedName!,
                 "ghost", "/nonexistent/missing.dll")
         });
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Providers.@this.DefaultOverride>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>());
 
         var dst = NewApp();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
@@ -130,10 +130,10 @@ public class FailureMatrixTests
     public async Task FailureMatrix_ProviderDefaultSelectionNameMissing_RaisesReferentIntegrityError()
     {
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Providers.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Providers.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>
         {
-            new(typeof(global::App.Data.Providers.IGrepProvider).AssemblyQualifiedName!, "phantom-name")
+            new(typeof(global::App.Data.Code.IGrep).AssemblyQualifiedName!, "phantom-name")
         });
 
         var dst = NewApp();
@@ -154,10 +154,10 @@ public class FailureMatrixTests
         // if the snapshot HAD an unresolvable identity reference, the underlying Providers
         // restore raises ProviderRestoreException. The shape mirrors the DLL-missing case.
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Providers.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Providers.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>
         {
-            new(typeof(global::App.modules.identity.providers.IIdentityProvider).AssemblyQualifiedName!, "unknown-identity-provider")
+            new(typeof(global::App.modules.identity.code.IIdentity).AssemblyQualifiedName!, "unknown-identity-provider")
         });
         var dst = NewApp();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>

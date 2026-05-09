@@ -120,7 +120,7 @@ public class GetActionsTests
         var actions = (StepActions)result.Value!;
 
         // No action should expose [Provider]-attributed interface properties
-        // (e.g., IBuilderProvider, IFileProvider, ILlmProvider)
+        // (e.g., IBuilder, IFile, ILlm)
         // Note: string params named "Provider" (like identity.create) are legitimate
         foreach (var a in actions)
         {

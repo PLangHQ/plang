@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.ui.providers;
+using App.modules.ui.code;
 
 namespace App.modules.ui;
 
@@ -26,7 +26,7 @@ public partial class Render : IContext
     public partial Data.@this<bool>? IsFile { get; init; }
 
     [Provider]
-    public partial ITemplateProvider Provider { get; }
+    public partial ITemplate Provider { get; }
 
     public async Task<Data.@this> Run() => await Provider.Render(this);
 }

@@ -118,7 +118,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Type-keyed provider registry for pluggable module implementations.
     /// Modules define provider interfaces, register defaults, PLang developers override via DLL.
     /// </summary>
-    public AppProviders Providers { get; } = new();
+    public AppCode Code { get; } = new();
 
     /// <summary>
     /// Per-type navigator registry for Data navigation.
@@ -309,7 +309,7 @@ public sealed partial class @this : IAsyncDisposable
 
         Errors = new global::App.Errors.@this(this);
 
-        Providers.RegisterDefaults();
+        Code.RegisterDefaults();
         Types.RegisterDomainTypes();
         Navigators.RegisterDefaults();
 
@@ -589,7 +589,7 @@ public sealed partial class @this : IAsyncDisposable
             await _user.DisposeAsync();
 
         await _modules.DisposeAsync();
-        await Providers.DisposeAsync();
+        await Code.DisposeAsync();
         await KeepAlive.DisposeAsync();
         if (_settingsStore.IsValueCreated) _settingsStore.Value.Dispose();
     }

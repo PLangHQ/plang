@@ -2,15 +2,15 @@ using System.Net;
 using System.Text;
 using global::App.Actor.Context;
 using global::App.Variables;
-using global::App.Providers;
+using global::App.Code;
 using global::App.modules.http;
-using global::App.modules.http.providers;
+using global::App.modules.http.code;
 using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.http;
 
 /// <summary>
-/// Tests configure action with real DefaultHttpProvider.
+/// Tests configure action with real Default.
 /// Configure doesn't need HTTP transport — it writes to the settings scope chain.
 /// </summary>
 public class ConfigureActionTests
@@ -100,9 +100,9 @@ public class ConfigureActionTests
     {
         // Create a handler and make a request to lock the client
         var handler = new MockHttpMessageHandler();
-        var provider = new DefaultHttpProvider(handler);
-        _app.Providers.Register<IHttpProvider>(provider);
-        _app.Providers.SetDefault<IHttpProvider>("default");
+        var provider = new Default(handler);
+        _app.Code.Register<IHttp>(provider);
+        _app.Code.SetDefault<IHttp>("default");
 
         var req = new request { Context = Ctx, Url = "https://example.com", Unsigned = true };
         await req.Run(); // locks the client
@@ -142,9 +142,9 @@ public class ConfigureActionTests
         // If timeout is respected, a slow handler will trigger Timeout error
         var handler = new MockHttpMessageHandler();
         handler.SlowDelay = 3000; // 3 seconds
-        var provider = new DefaultHttpProvider(handler) { Name = "timeout-test" };
-        _app.Providers.Register<IHttpProvider>(provider);
-        _app.Providers.SetDefault<IHttpProvider>("timeout-test");
+        var provider = new Default(handler) { Name = "timeout-test" };
+        _app.Code.Register<IHttp>(provider);
+        _app.Code.SetDefault<IHttp>("timeout-test");
 
         var requestAction = new request
         {

@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.file.providers;
+using App.modules.file.code;
 
 namespace App.modules.file;
 
@@ -18,7 +18,7 @@ public partial class Copy : IContext
     public partial Data.@this<bool> IncludeSubfolders { get; init; }
 
     [Provider]
-    public partial IFileProvider Files { get; }
+    public partial IFile Files { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Files.Copy(this));
 }

@@ -2,7 +2,7 @@ using global::App.Actor.Context;
 using global::App.Errors;
 using global::App.Variables;
 using global::App.modules.crypto;
-using global::App.modules.crypto.providers;
+using global::App.modules.crypto.code;
 using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
@@ -51,7 +51,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ObjectInput_ProducesDeterministicHash()
     {
-        var refHash = new DefaultCryptoProvider().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
+        var refHash = new global::App.modules.crypto.code.Default().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
 
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
@@ -117,8 +117,8 @@ public class HashActionTests
     [Test]
     public async Task Hash_ProviderReturnsError_RelaysError()
     {
-        _app.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
-        _app.Providers.SetDefault<ICryptoProvider>("failing");
+        _app.Code.Register<ICrypto>(new FailingCryptoProvider());
+        _app.Code.SetDefault<ICrypto>("failing");
 
         var action = new Hash { Context = Ctx, Data = Data.Ok("test"), Algorithm = "keccak256" };
         var result = await action.Run();
@@ -201,8 +201,8 @@ public class HashActionTests
     [Test]
     public async Task Verify_ProviderReturnsError_RelaysError()
     {
-        _app.Providers.Register<ICryptoProvider>(new FailingCryptoProvider());
-        _app.Providers.SetDefault<ICryptoProvider>("failing");
+        _app.Code.Register<ICrypto>(new FailingCryptoProvider());
+        _app.Code.SetDefault<ICrypto>("failing");
 
         var verifyAction = new Verify { Context = Ctx, Data = Data.Ok("test"), Hash = Convert.ToBase64String(new byte[32]), Algorithm = "keccak256" };
         var result = await verifyAction.Run();
@@ -212,7 +212,7 @@ public class HashActionTests
         await Assert.That(result.Error!.Key).IsEqualTo("ProviderError");
     }
 
-    private class FailingCryptoProvider : ICryptoProvider
+    private class FailingCryptoProvider : ICrypto
     {
         public string Name => "failing";
         public bool IsDefault { get; set; }

@@ -1,13 +1,13 @@
 using global::App.Actor.Context;
 using global::App.Variables;
 using global::App.modules.http;
-using global::App.modules.http.providers;
+using global::App.modules.http.code;
 using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.http;
 
 /// <summary>
-/// Tests DefaultHttpProvider directly — configure behavior, lifecycle.
+/// Tests Default directly — configure behavior, lifecycle.
 /// </summary>
 public class DefaultHttpProviderTests
 {
@@ -40,7 +40,7 @@ public class DefaultHttpProviderTests
     [Test]
     public async Task Provider_Configure_AcceptsValidConfig()
     {
-        var provider = new DefaultHttpProvider();
+        var provider = new Default();
         var action = new configure
         {
             Context = Ctx,
@@ -57,7 +57,7 @@ public class DefaultHttpProviderTests
     [Test]
     public async Task Provider_Configure_SetsTimeout()
     {
-        var provider = new DefaultHttpProvider();
+        var provider = new Default();
         var action = new configure
         {
             Context = Ctx,
@@ -77,7 +77,7 @@ public class DefaultHttpProviderTests
     [Test]
     public async Task Provider_Configure_SetsBaseUrl()
     {
-        var provider = new DefaultHttpProvider();
+        var provider = new Default();
         var action = new configure
         {
             Context = Ctx,
@@ -96,7 +96,7 @@ public class DefaultHttpProviderTests
     [Test]
     public async Task Provider_Dispose_DoesNotThrow()
     {
-        var provider = new DefaultHttpProvider();
+        var provider = new Default();
         provider.Dispose();
         // Double dispose should also be safe
         provider.Dispose();

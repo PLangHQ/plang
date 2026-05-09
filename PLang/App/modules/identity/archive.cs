@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.identity.providers;
+using App.modules.identity.code;
 
 namespace App.modules.identity;
 
@@ -21,7 +21,7 @@ public partial class Archive : IContext
     public partial Data.@this<bool> Force { get; init; }
 
     [Provider]
-    public partial IIdentityProvider Identity { get; }
+    public partial IIdentity Identity { get; }
 
     public async Task<Data.@this> Run() => await Identity.ArchiveAsync(this);
 }

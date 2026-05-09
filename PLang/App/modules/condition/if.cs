@@ -1,6 +1,6 @@
 using App;
 using App.Variables;
-using App.modules.condition.providers;
+using App.modules.condition.code;
 using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace App.modules.condition;

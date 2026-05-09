@@ -9,7 +9,7 @@ public class ProviderPropTests
     public async Task ProviderProp_Registered_InjectedBeforeRun()
     {
         await using var app = new global::App.@this("/app");
-        app.Providers.Register<IFakeProvider>(new FakeProvider());
+        app.Code.Register<IFakeProvider>(new FakeProvider());
 
         var result = await MatrixRunner.RunAsync<ProviderProp>(app);
         await Assert.That(result.Data.Success).IsTrue();
@@ -21,7 +21,7 @@ public class ProviderPropTests
     {
         await using var app = new global::App.@this("/app");
         var provider = new FakeProvider();
-        app.Providers.Register<IFakeProvider>(provider);
+        app.Code.Register<IFakeProvider>(provider);
 
         // Run handler — reads Provider once, returns echoed value
         var first = await MatrixRunner.RunAsync<ProviderProp>(app);

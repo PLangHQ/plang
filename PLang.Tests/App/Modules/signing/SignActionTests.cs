@@ -2,8 +2,8 @@ using System.Text.Json;
 using global::App.Actor.Context;
 using global::App.Errors;
 using global::App.Variables;
-using global::App.Providers;
-using global::App.modules.signing.providers;
+using global::App.Code;
+using global::App.modules.signing.code;
 using global::App.modules.crypto;
 using global::App.modules.identity;
 using global::App.modules.signing;
@@ -205,7 +205,7 @@ public class SignActionTests
         var sigBytes = Convert.FromBase64String(sd.Value!);
         var signingBytes = sd.ToSigningBytes();
 
-        var provider = new Ed25519Provider();
+        var provider = new Ed25519();
         var verifyResult = provider.Verify(signingBytes, sigBytes, sd.Identity);
         await Assert.That(verifyResult.Success).IsTrue();
         await Assert.That((bool)verifyResult.Value!).IsTrue();
@@ -222,8 +222,8 @@ public class SignActionTests
         await new Get { Context = Ctx, Name = null }.Run();
 
         var mock = new MockSigningProvider("mock");
-        _app.Providers.Register<ISigningProvider>(mock);
-        _app.Providers.SetDefault<ISigningProvider>("mock");
+        _app.Code.Register<ISigning>(mock);
+        _app.Code.SetDefault<ISigning>("mock");
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsTrue();
@@ -253,8 +253,8 @@ public class SignActionTests
     {
         // Register a key provider that throws to simulate identity creation failure
         var throwingProvider = new ThrowingKeyProvider();
-        _app.Providers.Register<IKeyProvider>(throwingProvider);
-        _app.Providers.SetDefault<IKeyProvider>("throwing-key");
+        _app.Code.Register<IKey>(throwingProvider);
+        _app.Code.SetDefault<IKey>("throwing-key");
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsFalse();
@@ -269,8 +269,8 @@ public class SignActionTests
         await new Get { Context = Ctx, Name = null }.Run();
 
         var throwing = new ThrowingSigningProvider();
-        _app.Providers.Register<ISigningProvider>(throwing);
-        _app.Providers.SetDefault<ISigningProvider>("throwing");
+        _app.Code.Register<ISigning>(throwing);
+        _app.Code.SetDefault<ISigning>("throwing");
 
         var result = await SignData("test");
         await Assert.That(result.Success).IsFalse();
@@ -279,9 +279,9 @@ public class SignActionTests
 
     #endregion
 
-    private class MockSigningProvider : ISigningProvider
+    private class MockSigningProvider : ISigning
     {
-        private readonly Ed25519Provider _inner = new();
+        private readonly Ed25519 _inner = new();
         public string Name { get; }
         public bool IsDefault { get; set; }
 
@@ -299,7 +299,7 @@ public class SignActionTests
         public Task<Data> VerifyAsync(verify action) => _inner.VerifyAsync(action);
     }
 
-    private class ThrowingSigningProvider : ISigningProvider
+    private class ThrowingSigningProvider : ISigning
     {
         public string Name => "throwing";
         public bool IsDefault { get; set; }
@@ -314,7 +314,7 @@ public class SignActionTests
         public Task<Data> VerifyAsync(verify action) => Task.FromResult(Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
     }
 
-    private class ThrowingKeyProvider : IKeyProvider
+    private class ThrowingKeyProvider : IKey
     {
         public string Name => "throwing-key";
         public bool IsDefault { get; set; }

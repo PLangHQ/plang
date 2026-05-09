@@ -2,7 +2,7 @@ using global::App.Actor.Context;
 using global::App.Goals.Goal;
 using global::App.Variables;
 using global::App.modules.llm;
-using global::App.modules.llm.providers;
+using global::App.modules.llm.code;
 using PLangEngine = global::App.@this;
 
 namespace PLang.Tests.App.Modules.llm;
@@ -162,9 +162,9 @@ public class QueryEdgeCaseTests
 
         try
         {
-            var providerResult = engine2.Providers.Get<ILlmProvider>();
+            var providerResult = engine2.Code.Get<ILlm>();
             await Assert.That(providerResult.Success).IsTrue();
-            await Assert.That(providerResult.Value).IsTypeOf<OpenAiProvider>();
+            await Assert.That(providerResult.Value).IsTypeOf<OpenAi>();
         }
         finally
         {

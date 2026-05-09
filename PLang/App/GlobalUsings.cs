@@ -39,8 +39,8 @@ global using ConfigScope = App.Config.Scope;
 // Type system
 global using AppTypes = App.Types.@this;
 
-// Providers subsystem
-global using AppProviders = App.Providers.@this;
+// Code subsystem (the runtime escape-hatch — was Providers)
+global using AppCode = App.Code.@this;
 
 // Variables (was MemoryStack)
 global using Variables = App.Variables.@this;

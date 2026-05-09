@@ -3,14 +3,14 @@ using System.Text.Json;
 using App;
 using global::App.Goals.Goal;
 using global::App.Variables;
-using global::App.Providers;
+using global::App.Code;
 using global::App.modules.llm;
-using global::App.modules.llm.providers;
+using global::App.modules.llm.code;
 
 namespace PLang.Tests.App.Modules.llm;
 
 /// <summary>
-/// Tests for LLM module types: LlmMessage, ToolCall, GoalCall changes, ILlmProvider.
+/// Tests for LLM module types: LlmMessage, ToolCall, GoalCall changes, ILlm.
 /// These validate the type contracts before any HTTP/provider logic.
 /// </summary>
 public class LlmTypeTests
@@ -102,12 +102,12 @@ public class LlmTypeTests
 
     #endregion
 
-    #region ILlmProvider
+    #region ILlm
 
     [Test]
     public async Task ILlmProvider_InheritsFromIProvider()
     {
-        await Assert.That(typeof(IProvider).IsAssignableFrom(typeof(ILlmProvider))).IsTrue();
+        await Assert.That(typeof(ICode).IsAssignableFrom(typeof(ILlm))).IsTrue();
     }
 
     #endregion

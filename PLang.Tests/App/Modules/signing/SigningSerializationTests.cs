@@ -1,7 +1,7 @@
 using System.Text.Json;
 using global::App.Variables;
-using global::App.Providers;
-using global::App.modules.signing.providers;
+using global::App.Code;
+using global::App.modules.signing.code;
 using global::App.modules.signing;
 
 namespace PLang.Tests.App.Modules.signing;
@@ -95,7 +95,7 @@ public class SigningSerializationTests
     public async Task Hash_IsBase64_NotHex()
     {
         // Hash some data using the crypto provider directly
-        var cryptoProvider = new global::App.modules.crypto.providers.DefaultCryptoProvider();
+        var cryptoProvider = new global::App.modules.crypto.code.Default();
         var hashResult = cryptoProvider.Hash(new global::App.modules.crypto.Hash
             { Data = Data.Ok(System.Text.Encoding.UTF8.GetBytes("test data")), Algorithm = "sha256" });
         var hashBytes = (byte[])hashResult.Value!;
@@ -111,7 +111,7 @@ public class SigningSerializationTests
     [Test]
     public async Task SignedData_Signature_IsBase64()
     {
-        var provider = new Ed25519Provider();
+        var provider = new Ed25519();
         var keys = provider.GenerateKeyPair().Value!;
 
         var data = System.Text.Encoding.UTF8.GetBytes("test");

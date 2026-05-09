@@ -1,5 +1,5 @@
 using App.Variables;
-using App.modules.http.providers;
+using App.modules.http.code;
 
 namespace App.modules.http;
 
@@ -42,7 +42,7 @@ public partial class configure : IContext, IConfigure<Config>
     public partial Data.@this<bool> Default { get; init; }
 
     [Provider]
-    public partial IHttpProvider Http { get; }
+    public partial IHttp Http { get; }
 
     public async Task<Data.@this> Run() => Http.Configure(this);
 }

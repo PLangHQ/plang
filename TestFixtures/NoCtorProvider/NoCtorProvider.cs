@@ -1,10 +1,10 @@
-using App.Providers;
+using App.Code;
 using App.modules.signing;
-using App.modules.signing.providers;
+using App.modules.signing.code;
 
 namespace NoCtorProvider;
 
-public class NoCtorSigningProvider : ISigningProvider
+public class NoCtorSigningProvider : ISigning
 {
     private readonly string _name;
 

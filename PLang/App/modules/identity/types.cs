@@ -6,7 +6,7 @@ namespace App.modules.identity;
 /// <summary>
 /// Represents a PLang identity (key pair with metadata).
 /// Plain domain class — wrapped in Data&lt;Identity&gt; by handlers.
-/// Persistence is owned by IIdentityProvider.
+/// Persistence is owned by IIdentity.
 /// </summary>
 [PlangType("identity")]
 public sealed class Identity

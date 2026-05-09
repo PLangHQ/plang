@@ -70,7 +70,7 @@ public sealed partial class @this
     /// Format a value the way the catalog Example does: %vars% bare, strings
     /// with spaces or commas quoted, scalars literal, Action(s) as
     /// nested-action JSON records.
-    /// Mirrors <c>FluidProvider.FormatFormalValue</c> for the simple cases.
+    /// Mirrors <c>Fluid.FormatFormalValue</c> for the simple cases.
     /// </summary>
     private void RenderValueFormal(object? value, StringBuilder sb)
     {

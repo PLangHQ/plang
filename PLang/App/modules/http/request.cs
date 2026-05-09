@@ -1,7 +1,7 @@
 using App.Attributes;
 using App.Goals.Goal;
 using App.Variables;
-using App.modules.http.providers;
+using App.modules.http.code;
 using App.modules.signing;
 
 namespace App.modules.http;
@@ -56,7 +56,7 @@ public partial class request : IContext
     public partial Data.@this<StreamFormat>? StreamAs { get; init; }
 
     [Provider]
-    public partial IHttpProvider Http { get; }
+    public partial IHttp Http { get; }
 
     public async Task<Data.@this> Run() => await Http.SendAsync(this);
 }
