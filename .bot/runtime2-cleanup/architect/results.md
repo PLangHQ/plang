@@ -1,11 +1,13 @@
 # runtime2-cleanup — Planned vs Delivered
 
 **Branch:** `runtime2-cleanup`
-**Span:** 22 architect sessions, 22 stage briefs, 22 coder commits
+**Span:** 27 stage briefs, 27 coder commits across two tiers (Tiers 1–4 + Tier 5)
 **Final test status:** C# 2752/2752 ✅ · PLang 199/199 ✅
-**Last commit:** `5de998d9 runtime2-cleanup stage 19: Provider → Code rename, end-to-end`
+**Last commit:** `6fa6dbda runtime2-cleanup stage 27: utils-empty-out — TypeConverter + Json disperse`
 
 This file compares the actual end state of `PLang/App/` against the destination tree in `plan/post-cleanup-tree.md`. It is read top-to-bottom: green-tick rows landed as planned, the deviation table at the end lists the few places where the delivered shape diverged from the planned one — each with the reason.
+
+**Update 2026-05-09 (Tier 5 close).** Tier 5 (stages 23–27) added five more stages addressing the deferred work originally flagged below. All landed green. The static-eviction tail and the cosmetic rename leftover are now complete; several deviations from the original Tier 1–4 audit were resolved by Tier 5 stages and the new state matches the destination tree more closely. Updated entries are marked **"resolved by Tier 5 stage N"** where applicable.
 
 ---
 
@@ -35,8 +37,13 @@ This file compares the actual end state of `PLang/App/` against the destination 
 | 20 | drop Channel.App redundant back-ref | d563bf2b | ✅ |
 | 21 | Navigators move from Data/ to Variables/ | 96b1d8a7 | ✅ |
 | 22 | drop app.Variables and app.Context shortcuts | cdc96a36 | ✅ |
+| 23 | RestoredFrame → CallStack/Call/Position rename | e96aa1ff | ✅ (Tier 5) |
+| 24 | AskCallback + ErrorCallback _options → Callback.Wire.Options | 63a9701a | ✅ (Tier 5; scope expanded — both callbacks) |
+| 25 | DefaultHttpProvider statics → instance + alias deletion | a0d6b4e3 | ✅ (Tier 5; brief miss caught — see deviation #11) |
+| 26 | Types keystone — TypeMapping + PlangTypeIndex + Choices | 82d82a58 | ✅ (Tier 5; combined keystone, was 2 stages — see deviation #12) |
+| 27 | utils-empty-out — TypeConverter + Json disperse | 6fa6dbda | ✅ (Tier 5; static-class outcome — see deviation #13) |
 
-All 22 stages landed. The branch is buildable and green throughout.
+All 27 stages landed. The branch is buildable and green throughout. Tier 5 (stages 23–27) closes the static-eviction tail and the cosmetic rename leftover.
 
 ---
 
@@ -128,30 +135,61 @@ The following landed differently than the post-cleanup-tree said. Each is a code
 **Delivered:** Stage 10 focused on the App.Run reduction (the headliner); the RestoredFrame rename was deferred.
 **Verdict:** Cosmetic. Single-file rename whenever the next pass touches CallStack.
 
-### 6. Stage 16 deferred 4 of 8 static-eviction sites
+### 6. Stage 16 deferred 4 of 8 static-eviction sites — **resolved by Tier 5**
 
 **Done (4):** Data/this.Envelope.cs, Plang/Data.cs serializer, builder provider's `_buildTimer`, OpenAi `_requestCount` (deleted entirely).
 **Deferred (4):** Callback/AskCallback.cs `_options`, DefaultHttpProvider's two statics, Choices/this.cs `_gate + _registry`, all of Utils/PlangTypeIndex.cs.
 **Why:** Each deferred site has a static-caller chain (~20 static helpers reach through them) that would cascade into a higher-level refactor. Coder's call: convert what's mechanical, defer what requires upper-level redesign (TypeMapping becoming instance-bound, etc.).
 **Verdict:** Right call. Each deferred site is a real Rule C smell, but the eviction is a separate piece of work — properly scoped, not skipped.
+**Resolution (Tier 5):** All 4 deferred sites closed. AskCallback._options + ErrorCallback._options (discovered duplicate) → stage 24 (`Callback.Wire.Options`). DefaultHttpProvider statics → stage 25 (instance + alias deletion). Choices `_gate + _registry` → stage 26 (instance under `app.Types.Choices`). PlangTypeIndex → stage 26 (`Types/Registry.cs` partial). All Rule C closed for the deferred sites.
 
-### 7. `App/Utils/` is not "nearly empty"
+### 7. `App/Utils/` is not "nearly empty" — **resolved by Tier 5**
 
 **Planned:** Only `CommandLineParser.cs`, `PathExtension.cs`, `RegisterStartupParameters.cs`, `StringDistance.cs` remain. Json/PlangTypeIndex/TypeConverter/TypeMapping all dispersed into proper homes.
-**Delivered:** All 8 files still in `Utils/` (the 4 planned dispersals were the deferred half of stage 16).
+**Delivered (Tiers 1–4):** All 8 files still in `Utils/` (the 4 planned dispersals were the deferred half of stage 16).
 **Verdict:** Direct consequence of (6). When the deferred Rule C work lands, Utils empties as planned.
+**Resolution (Tier 5):** Utils empties as planned. TypeMapping deleted (stage 26 — public API on `Types.@this`). PlangTypeIndex → `Types/Registry.cs` partial (stage 26). TypeConverter → `Types/Conversion.cs` partial (stage 27). Json.cs dispersed (stage 27): `CaseInsensitiveRead` → http/Default; `CamelCaseIndented` → App.@this + Data partial; `SnapshotClone` → Variables + Data partials; `DiagnosticOutput` + `FormatForDiagnostic` → new `App/Diagnostics/this.cs`; `PrWrite` + `StoreOnlyModifier` → Builder.@this; `JsonExtensions.ToJson` + `EmptyStringToNullEnumConverter` → new `App/Data/JsonString.cs`. **`App/Utils/` now has exactly 4 files** matching the destination tree.
 
-### 8. `App/Types/` did not gain `Registry.cs` or `Conversion.cs` partials
+### 8. `App/Types/` did not gain `Registry.cs` or `Conversion.cs` partials — **resolved by Tier 5**
 
 **Planned:** Stage 16 makes `Types.@this` partial; absorbs `PlangTypeIndex` into `Registry.cs`, `TypeConverter` into `Conversion.cs`.
-**Delivered:** `App/Types/this.cs` only. Stage 18 added the `Clr(mimeType)` overload as planned, but the partial split deferred with the rest of the static eviction.
+**Delivered (Tiers 1–4):** `App/Types/this.cs` only. Stage 18 added the `Clr(mimeType)` overload as planned, but the partial split deferred with the rest of the static eviction.
 **Verdict:** Same as (6) and (7).
+**Resolution (Tier 5):** `Types.@this` is now a partial across three files: `this.cs` (primary, public API absorbed from TypeMapping), `Registry.cs` (PlangTypeIndex internals — stage 26), `Conversion.cs` (TypeConverter — stage 27). Plus `Choices/this.cs` as a sub-`@this` mounted at `app.Types.Choices`. The full Types subsystem materialised as planned.
 
 ### 9. `App/Data/Code/Default.cs` instead of `Grep.cs`
 
 **Planned:** Drop both `Default` and `Provider` — file becomes `Grep.cs`.
 **Delivered:** `IGrep` declares a `Grep()` method; the implementing class can't share the name. Coder kept it as `Default.cs`.
 **Verdict:** Right call. C# class-and-method-name collision is a hard constraint the brief missed.
+
+### 11. Stage 25 brief miss — `_transportInOptions` read sites were inside private static helpers (Tier 5)
+
+**Planned:** `_transportInOptions` (full local options block) → instance field on `Default`. The 3 read sites become `this._transportInOptions` reads with no syntactic change.
+**Delivered:** Same realignment, but the 3 read sites turned out to be inside *private static async helpers* (`ParsePlangResponseAsync`, `TryExtractSignedErrorIdentity`, `StreamPlangAsync`), not instance methods as the brief assumed. Coder converted those helpers + their 2 callers (`ParseResponseAsync`, `HandleStreamingAsync`) from `static` to instance methods. Outer call sites unchanged because they were already in instance-method lambdas.
+**Verdict:** Same realignment, larger surface than the brief charted. Future-brief-carving lesson: read past the static field declaration line and check the methods that touch it.
+
+### 12. Stage 26 keystone — three pragmatic additions beyond the brief (Tier 5)
+
+The combined keystone (TypeMapping + PlangTypeIndex + Choices → `app.Types`) landed with three coder good-judgment additions:
+
+1. **Static-forwarder helpers on `Types.@this`** — `GetPrimitiveOrMime`, `GetPrimitiveName`, `GetTypeNameStatic`. Pure-reflection, no state. Exist for callers that legitimately have no App in scope (source generator lineage, some test paths). Per Rule C exception, static helpers are fine — they're behavior, not state. The instance form (`Name`, `Get`) routes through registered domain types when App is available; the static form is the pure-logic fallback. With-state / without-state pair, not duplication.
+2. **`Modules.@this` gains `App` back-ref** (`public global::App.@this? App { get; internal set; }`, set by App ctor after Modules construction). Needed so `Modules.Describe`, `Schema.Build`, `Render.LookupParamTypeName` can reach `app.Types` from instance methods. Per the Context principle this is correct — Modules is App-scoped and now actually navigates to App-level state, so the back-ref earns its keep.
+3. **`PLang.Tests/Support/TypeMappingTestFacade.cs`** — declares `namespace App.Utils; internal static class TypeMapping` that routes legacy static API through a shared per-process App fixture. Preserves ~150 test call sites without per-test rewrites. Pragmatic; can be deleted later as tests migrate to App fixtures directly.
+
+**Verdict:** All three are OBP-clean within the principles. The static forwarders use the Rule C exception correctly; the Modules back-ref earns its keep per the Context principle; the test facade preserves test stability without compromising production OBP.
+
+### 13. Stage 27 — `Diagnostics` landed as static class, not instance sub-`@this` (Tier 5)
+
+**Planned:** `App/Diagnostics/this.cs` instance sub-`@this` mounted as `app.Diagnostics`. Three consumers (Tester, Errors, modules/assert) reach `app.Diagnostics.Format(value)`. The brief argued for instance shape because `FormatForDiagnostic` embeds policy that would drift across per-consumer copies.
+**Delivered:** `App/Diagnostics/this.cs` static class with `Format(value)` + `Options`. Three callers (AssertionError, modules/assert, modules/test/report) are themselves in static contexts with no App in scope. The brief's escape clause said: "If Ingi prefers to skip the new subsystem, fall back to per-consumer copies." Coder took a third option: keep the consolidated home (avoiding 3 duplicate copies of the policy) but make it static.
+**Verdict:** OBP-clean within the Rule C exception list — pure-logic helper + static-readonly options bag with no instance variation. Same pattern as `Channels/Serializers/Filters/{Sensitive, Transport, View}.cs`. Coder made the practical call where the brief leaned theoretical; both readings are defensible. The consolidation goal (one implementation of `Format`) is achieved.
+
+### 14. Stage 27 — `Types/Conversion.cs` methods kept static, not instance (Tier 5)
+
+**Planned:** The 4 public methods (`ConvertTo<T>`, `ConvertTo`, `Populate`, `TryConvertTo`) become *instance* methods on `Types.@this`, replacing the delegating wrappers added in stage 26.
+**Delivered:** The 4 public methods stay `public static` on the Conversion partial. Coder's reasoning: many callers are in static contexts (the source-generator lineage, test paths, internal TypeMapping recursion); making them instance would force threading App. Keeping them static under Rule C exception (pure-logic helpers) is consistent with stage 26's pattern where TypeMapping's pure-logic methods stayed static (`GetTypeNameStatic`, `IsScalarPlangType`, etc.).
+**Verdict:** Internally consistent with stage 26's static/instance split (state-touching methods are instance; pure-logic methods are static). The realignment closes Rule C correctly — `_options` etc. are no longer `private static readonly` god-bag fields, they're now scoped state on the Conversion partial.
 
 ### 10. App spine shrunk less than planned
 
@@ -168,37 +206,41 @@ The following landed differently than the post-cleanup-tree said. Each is a code
 
 ## What's deferred to follow-up
 
-**Update 2026-05-09:** Items (1) and (2) below were carved into Tier 5 (stages 23–29) on the same branch — see `plan.md`. The Callback/Signature absorb that originally appeared under (2) was removed: it's OBP-correct as-is (see correction above). Item (3) stays deferred — bigger design passes that don't fit this branch.
+**Update 2026-05-09 (Tier 5 close).** Items (1) and (2) below were carved into Tier 5 and **all landed**. The Callback/Signature absorb that originally appeared under (2) was withdrawn: it's OBP-correct as-is (see correction above). Item (3) stays deferred — bigger design passes that don't fit this branch.
 
-1. **Static-eviction tail** (4 sites from stage 16) — *carved as stages 25–28 in Tier 5:*
-   - `Callback/AskCallback.cs._options` → stage 25
-   - `DefaultHttpProvider._jsonOptions + _transportInOptions` → stage 26
-   - `Choices.@this._gate + _registry` → stage 27
-   - `Utils/PlangTypeIndex.cs` (whole class) → stage 28 (with TypeMapping → instance keystone)
+1. **Static-eviction tail** (4 sites from stage 16) — **all closed by Tier 5:**
+   - `Callback/AskCallback.cs._options` → ✅ stage 24 (with ErrorCallback._options too — discovered duplicate)
+   - `DefaultHttpProvider._jsonOptions + _transportInOptions` → ✅ stage 25
+   - `Choices.@this._gate + _registry` → ✅ stage 26 (relocated under `app.Types.Choices`)
+   - `Utils/PlangTypeIndex.cs` (whole class) → ✅ stage 26 (absorbed as `Types/Registry.cs` partial)
 
-   Each requires the static-caller chain to flatten first (TypeMapping made instance-bound, or context threaded to all callers). Stage 28 does that flattening; stage 29 finishes the Utils/ empty-out (TypeConverter → Types/Conversion partial; Utils/Json disperses).
+   The combined keystone (stage 26) flattened the static-caller chain by making the entire type subsystem instance-bound. Stage 27 finished the Utils/ empty-out (TypeConverter → Types/Conversion partial; Utils/Json disperses).
 
-2. **Cosmetic rename leftovers** — *one carved into Tier 5, one withdrawn, one folded out:*
-   - `CallStack/RestoredFrame.cs` → `Call/Position.cs` → stage 23 (Tier 5)
-   - ~~`Events/Lifecycle/` layer collapses~~ — folded into the Events three-tier todo (2026-05-08, addendum 2026-05-09); the originally planned collapse was based on a misread of the structure.
+2. **Cosmetic rename leftovers** — *all addressed:*
+   - ✅ `CallStack/RestoredFrame.cs` → `Call/Position.cs` (stage 23)
+   - ~~`Events/Lifecycle/` layer collapses~~ — folded into the Events three-tier todo (`Documentation/Runtime2/todos.md` 2026-05-08, addendum 2026-05-09); the originally planned collapse was based on a misread of the structure.
    - ~~`Callback/Signature/this.cs` absorbs into `Callback/this.cs`~~ — withdrawn; current shape is OBP-correct.
 
-3. **Documented in `Documentation/Runtime2/todos.md`** (still deferred — not in Tier 5):
-   - Events three-tier writer wiring (per-channel / per-actor / app-level)
+3. **Documented in `Documentation/Runtime2/todos.md`** (still deferred — bigger design passes, not in Tier 5):
+   - Events three-tier writer wiring + structural shape (the 2026-05-08 todo with the 2026-05-09 addendum capturing the cleanup-pass finding on Lifecycle layering)
    - CallStack scope (per-context vs shared) — too big for this branch
+   - App.Statics → goal-backed dynamic property
+   - Data parameter-lifecycle / `data.ResetResolution()` smell
 
 ---
 
 ## Headline numbers
 
-- **22** stage briefs carved
-- **22** coder commits landed
-- **2** codeanalyzer reviews, both PASS
-- **354** `.cs` files under `PLang/App/` at end (vs 681 baseline lines in `App/this.cs` alone)
-- **9** new folders created (`KeepAlive/`, `Filters/`, `Plang/`, `Modules/Schema/`, `Modules/Schema/Spec/`, `Builder/`, `Tester/`, `Code/`, `Formats/`)
-- **4** folder renames (`Build/→Builder/`, `Test/→Tester/`, `Providers/→Code/`, `Data/Providers/→Data/Code/`)
+- **27** stage briefs carved (22 in Tiers 1–4 + 5 in Tier 5)
+- **27** coder commits landed
+- **2** codeanalyzer reviews on Tiers 1–4 (both PASS); Tier 5 ready for review
+- **13** new folders/sub-`@this` created across all tiers (`KeepAlive/`, `Filters/`, `Plang/`, `Modules/Schema/`, `Modules/Schema/Spec/`, `Builder/`, `Tester/`, `Code/`, `Formats/`, `Callback/Wire/`, `Types/Choices/` (relocated), `Diagnostics/`, plus `CallStack/Call/Position.cs` (relocation))
+- **4** folder renames Tiers 1–4 (`Build/→Builder/`, `Test/→Tester/`, `Providers/→Code/`, `Data/Providers/→Data/Code/`)
 - **10** module-folder renames (`modules/X/providers/→modules/X/code/`)
-- **40+** file renames across all stages
-- **0** test regressions throughout
+- **40+** file renames across Tiers 1–4
+- **3** files deleted in Tier 5 (Utils/TypeMapping.cs, Utils/PlangTypeIndex.cs (renamed away), Utils/TypeConverter.cs (renamed away), Utils/Json.cs)
+- **App/Choices/** root folder deleted in Tier 5 (relocated to `Types/Choices/`)
+- **App/Utils/** at exactly 4 files post-Tier 5 — destination tree achieved
+- **0** test regressions throughout (C# 2752/2752 + PLang 199/199 maintained across all 27 stages)
 
-The branch ships ready for review.
+**The branch ships ready for review and merge to runtime2.**

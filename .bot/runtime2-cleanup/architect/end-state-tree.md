@@ -1,6 +1,8 @@
-# `PLang/App/` — Actual End-State Tree (post-cleanup)
+# `PLang/App/` — Actual End-State Tree (post-cleanup, all 27 stages)
 
-What `PLang/App/` actually looks like as of `runtime2-cleanup` HEAD (commit `894a17ab`, after stage 19 landed). This is a snapshot of the delivered shape, with annotations showing what each subtree looked like before cleanup.
+What `PLang/App/` actually looks like as of `runtime2-cleanup` HEAD (commit `6fa6dbda`, after **all 27 stages** landed — Tiers 1–4 (stages 1–22) + Tier 5 (stages 23–27)). This is a snapshot of the delivered shape, with annotations showing what each subtree looked like before cleanup.
+
+**Update 2026-05-09 (Tier 5 close):** Tier 5 markers below have been resolved to their final landed shape. All deferred markers from the original Tier 1–4 audit are now closed.
 
 Compare side-by-side with `plan/post-cleanup-tree.md` (the planned destination) and `results.md` (the deviations audit).
 
@@ -44,7 +46,7 @@ PLang/App/
 │
 ├── Builder/                                     (RENAMED ← Build/, stage 17; Rule D — gerund→noun)
 │   ├── this.Snapshot.cs
-│   └── this.cs                                  (gains build-mode bootstrap from App.Start, stage 12)
+│   └── this.cs                                  (gains build-mode bootstrap from App.Start, stage 12; Tier 5 stage 27: gains internal-static PrWrite + StoreOnlyModifier from Utils/Json.cs)
 │
 ├── Cache/
 │   ├── Memory.cs                                (RENAMED ← MemoryStepCache.cs, stage 15)
@@ -56,21 +58,24 @@ PLang/App/
 │   │   ├── Children/this.cs
 │   │   ├── Diffs/this.cs
 │   │   ├── Errors/this.cs
+│   │   ├── Position.cs                          (RENAMED ← RestoredFrame.cs, Tier 5 stage 23; namespace App.CallStack → App.CallStack.Call)
 │   │   ├── Tags/this.cs
 │   │   ├── this.Snapshot.cs
 │   │   └── this.cs                              (gains Call.ExecuteAsync, stage 10)
 │   ├── Diff.cs
 │   ├── Flags.cs
-│   ├── RestoredFrame.cs                         (★ Tier 5 stage 23 — rename to Call/Position.cs)
+│   │   (RestoredFrame.cs — DELETED, relocated to Call/Position.cs in Tier 5 stage 23)
 │   ├── this.Snapshot.cs
 │   └── this.cs
 │
 ├── Callback/
-│   ├── AskCallback.cs                           (★ Tier 5 stage 24 — _options static, Rule C)
-│   ├── ErrorCallback.cs
+│   ├── AskCallback.cs                           (Tier 5 stage 24: _options static evicted, navigates ctx.App.Callback.Wire.Options)
+│   ├── ErrorCallback.cs                         (Tier 5 stage 24: _options static evicted; helpers thread options as parameter)
 │   ├── ICallback.cs
 │   ├── Signature/this.cs                        (kept — OBP-correct; navigation app.Callback.Signature.Expires is the right shape, see results.md correction 2026-05-09)
-│   └── this.cs                                  (ExpiresInMs → Expires/TimeSpan, stage 14)
+│   ├── Wire/                                    (NEW Tier 5 stage 24 — sub-@this for callback wire format)
+│   │   └── this.cs                              (holds Options: JsonSerializerOptions; mounted as app.Callback.Wire)
+│   └── this.cs                                  (ExpiresInMs → Expires/TimeSpan, stage 14; gains Wire property in Tier 5 stage 24)
 │
 ├── Channels/
 │   ├── Channel/
@@ -97,8 +102,7 @@ PLang/App/
 │   │   └── this.cs
 │   └── this.cs                                  (v1 helpers gone — stage 2; ReadAsync<T>(filePath) gone — stage 8)
 │
-├── Choices/                                     (★ Tier 5 stage 26 — moves under Types as Types/Choices/this.cs; root folder deleted)
-│   └── this.cs
+│   (App/Choices/ — DELETED Tier 5 stage 26; relocated under Types/Choices/)
 │
 ├── Code/                                        (RENAMED ← Providers/, stage 19)
 │   ├── ICode.cs                                 (RENAMED ← IProvider.cs; Name/IsDefault/IsBuiltIn/Source preserved)
@@ -117,9 +121,10 @@ PLang/App/
 │   │   └── IGrep.cs                             (RENAMED ← IGrepProvider.cs)
 │   ├── Converter.cs                             (RENAMED ← PlangTypeConverter.cs, stage 15)
 │   ├── Json.cs                                  (RELOCATED ← Channels/Serializers/TypeJsonConverter.cs, stage 15)
+│   ├── JsonString.cs                            (NEW Tier 5 stage 27 — ToJson extension + FixJsonStringValues + EmptyStringToNullEnumConverter; relocated from Utils/Json.cs)
 │   ├── Properties.cs
 │   ├── TString.cs
-│   ├── this.Compare.cs
+│   ├── this.Compare.cs                          (Tier 5 stage 27: gains static-readonly _camelCaseIndented for Compare's serialization)
 │   ├── this.Envelope.cs                         (_envelopeJsonOptions → instance, stage 16)
 │   ├── this.Navigation.cs
 │   ├── this.Result.cs
@@ -127,6 +132,9 @@ PLang/App/
 │
 ├── Debug/
 │   └── this.cs                                  (CallStack property moved out, stage 7)
+│
+├── Diagnostics/                                 (NEW Tier 5 stage 27 — static class)
+│   └── this.cs                                  (Format(value) helper + Options: JsonSerializerOptions; consumers: Errors/AssertionError, modules/assert, modules/test/report)
 │
 ├── Errors/                                      (App back-ref injection dropped, stage 11)
 │   ├── ActionError.cs
@@ -238,18 +246,22 @@ PLang/App/
 │   ├── this.Snapshot.cs
 │   └── this.cs
 │
-├── Types/
-│   └── this.cs                                  (gains Clr(mimeType) overload, stage 18; ★ Registry.cs/Conversion.cs partials deferred with stage 16)
+├── Types/                                       (Tier 5 stage 26 keystone: full type subsystem materialised)
+│   ├── Choices/                                 (RELOCATED ← App/Choices/, Tier 5 stage 26; static class became instance @this; mounted as app.Types.Choices)
+│   │   └── this.cs                              (_gate + _registry now instance fields)
+│   ├── Conversion.cs                            (RENAMED ← Utils/TypeConverter.cs, Tier 5 stage 27; partial of Types.@this; pure-logic helpers stay static under Rule C exception)
+│   ├── Registry.cs                              (RENAMED ← Utils/PlangTypeIndex.cs, Tier 5 stage 26; partial of Types.@this; static fields → instance state)
+│   └── this.cs                                  (gains Clr(mimeType) overload stage 18; REWRITTEN Tier 5 stage 26 to absorb TypeMapping public API — state-touching methods instance, pure-logic helpers static)
 │
-├── Utils/                                       (★ Tier 5 — empties out across stages 26+27; 4 files still here)
+├── Utils/                                       (Tier 5: empties out — destination tree achieved; exactly 4 files)
 │   ├── CommandLineParser.cs
-│   ├── Json.cs                                  (★ Tier 5 stage 27 — DISPERSE to consumers)
 │   ├── PathExtension.cs
-│   ├── PlangTypeIndex.cs                        (★ Tier 5 stage 26 — absorb into Types/Registry.cs partial)
 │   ├── RegisterStartupParameters.cs
-│   ├── StringDistance.cs
-│   ├── TypeConverter.cs                         (★ Tier 5 stage 27 — Types/Conversion.cs partial)
-│   └── TypeMapping.cs                           (★ Tier 5 stage 26 — instance-bound; combined keystone)
+│   └── StringDistance.cs
+│   (Utils/Json.cs — DELETED Tier 5 stage 27; dispersed across http/Default, App.@this, Variables, Data, Builder, Diagnostics, Data/JsonString.cs)
+│   (Utils/TypeMapping.cs — DELETED Tier 5 stage 26; public API absorbed into Types/this.cs)
+│   (Utils/PlangTypeIndex.cs — RENAMED → Types/Registry.cs Tier 5 stage 26)
+│   (Utils/TypeConverter.cs — RENAMED → Types/Conversion.cs Tier 5 stage 27)
 │
 │   (Utils/MimeTypes.cs — DELETED → split into Formats/this.cs + Types.Clr(mimeType), stage 18)
 │   (Utils/ReservedKeywords.cs — DELETED → Variables/Reserved.cs, stage 16)
@@ -271,7 +283,7 @@ PLang/App/
 │   ├── Variable.cs
 │   ├── this.Snapshot.cs
 │   ├── this.SnapshotAt.cs
-│   └── this.cs                                  (gains RegisterNavigable mechanism — stage 13)
+│   └── this.cs                                  (gains RegisterNavigable mechanism — stage 13; Tier 5 stage 27: gains static-readonly _snapshotClone from Utils/Json.cs)
 │
 ├── modules/                                     (per-handler files; only providers/→code/ relocation done in stage 19)
 │   ├── Attributes.cs
@@ -326,8 +338,8 @@ PLang/App/
 │   │   └── {copy, delete, exists, list, move, read, save}.cs
 │   ├── goal/{call, return}.cs
 │   ├── http/
-│   │   ├── code/                                (★ Tier 5 stage 25 — _jsonOptions, _transportInOptions still static, Rule C)
-│   │   │   ├── Default.cs                       (RENAMED ← DefaultHttpProvider.cs)
+│   │   ├── code/                                (Tier 5 stages 25 + 27: statics evicted, instance fields _transportInOptions + _caseInsensitiveRead)
+│   │   │   ├── Default.cs                       (RENAMED ← DefaultHttpProvider.cs; Tier 5 stage 25 _transportInOptions → instance, _jsonOptions deleted; Tier 5 stage 27 gains _caseInsensitiveRead instance from Utils/Json.cs)
 │   │   │   └── IHttp.cs                         (RENAMED ← IHttpProvider.cs)
 │   │   ├── Config.cs
 │   │   └── {configure, download, request, types, upload}.cs
@@ -373,7 +385,7 @@ PLang/App/
 ├── Info.cs
 ├── View.cs
 ├── this.Snapshot.cs
-└── this.cs                                      (681 → 596 lines; sum of stages 3, 4, 5, 6, 7, 10, 11, 12)
+└── this.cs                                      (681 → 596 lines; sum of stages 3, 4, 5, 6, 7, 10, 11, 12; Tier 5 stage 27 gains internal-static CamelCaseIndented from Utils/Json.cs)
 ```
 
 ## Comparison snapshot
@@ -390,16 +402,19 @@ PLang/App/
 | Settings reshape (collection-over-Data) | ✅ | ✅ |
 | Variables/Reserved.cs | ✅ | ✅ |
 | `app.Formats` mount | `Channels/Serializers/Formats/` | `App/Formats/` (root) |
-| Utils/ "nearly empty" | 4 files | 8 files (★ Tier 5 stages 26–27) |
-| Types/ partials (Registry, Conversion) | ✅ | ★ Tier 5 stages 26–27 |
-| Choices/ moved under Types/ | (new — added 2026-05-09) | ★ Tier 5 stage 26 |
+| Utils/ "nearly empty" | 4 files | ✅ 4 files (Tier 5 stages 26+27) |
+| Types/ partials (Registry, Conversion) | ✅ | ✅ Tier 5 stages 26+27 |
+| Choices/ moved under Types/ | (new direction — added 2026-05-09) | ✅ Tier 5 stage 26 |
 | Callback/Signature/ absorbed | ✅ | withdrawn — current shape is OBP-correct (Rule A would be violated by flattening) |
 | Events/Lifecycle/ collapse | ✅ | folded into Events three-tier todo 2026-05-09 — Lifecycle is per-target view, not redundant nesting; structure question deferred to that design pass |
-| CallStack/RestoredFrame.cs → Call/Position.cs | ✅ | ★ Tier 5 stage 23 |
-| Choices/ moved to Builder/Choices/ | ★ tentative | unchanged (correct call) |
+| CallStack/RestoredFrame.cs → Call/Position.cs | ✅ | ✅ Tier 5 stage 23 |
+| Choices/ moved to Builder/Choices/ | ★ tentative | unchanged → Choices/ ultimately moved to Types/Choices/ (Tier 5 stage 26) |
+| Callback/Wire/ subfolder | (new — added Tier 5) | ✅ Tier 5 stage 24 |
+| Diagnostics/ subsystem | (new — added Tier 5) | ✅ Tier 5 stage 27 |
+| Data/JsonString.cs | (new — added Tier 5) | ✅ Tier 5 stage 27 |
 
 Full deviation analysis with reasons in `results.md`.
 
 ---
 
-**Stats:** 354 `.cs` files under `PLang/App/` · 9 new folders · 14 folder renames · 40+ file renames. C# 2752/2752 + PLang 199/199 throughout.
+**Stats (final, all 27 stages):** 358 `.cs` files under `PLang/App/` · 13 new folders · 14 folder renames · 40+ file renames · 4 Utils files deleted in Tier 5 (Json.cs, TypeMapping.cs, PlangTypeIndex.cs renamed away, TypeConverter.cs renamed away) · 1 root folder deleted (Choices/, relocated). C# 2752/2752 + PLang 199/199 maintained across all 27 stages.

@@ -1,5 +1,37 @@
 # architect — runtime2-cleanup
 
+## 2026-05-09 (v27) — Tier 5 closes; branch ready for review/merge to runtime2
+
+Stage 27 landed (`6fa6dbda`). Tier 5 — and the entire runtime2-cleanup branch — is **complete**. C# 2752/2752 + PLang 199/199 maintained across all 27 stages.
+
+**Stage 27 outcome.** Three coder judgment calls beyond the brief, all OBP-clean:
+
+1. **`App/Diagnostics/this.cs` landed as static class, not instance sub-`@this`.** The brief leaned instance; coder went static because all three callers (AssertionError, modules/assert, modules/test/report) are themselves in static contexts. Static class with `Format(value)` + `Options` (private static readonly) is consistent with the Rule C exception for pure-logic helpers + config bags with no instance variation. Same pattern as `Channels/Serializers/Filters/{Sensitive, Transport, View}.cs`. Brief's escape clause anticipated this; coder made the practical call. Defensible reading either way.
+
+2. **`Types/Conversion.cs` methods kept static, not instance.** Coder's reasoning: many callers are in static contexts (source generator, test paths, internal recursion); making them instance would force threading App. Internally consistent with stage 26's static/instance split — state-touching methods are instance, pure-logic methods are static. Rule C is closed for the storage; the public API matches the static/instance pattern Types established.
+
+3. **Test facade extended** — `TypeMappingTestFacade.cs` from stage 26 grew to cover `App.Utils.TypeConverter` and `App.Utils.Json`. ~12 test sites unchanged.
+
+**Audit docs updated this session:**
+
+- `plan.md` — stage 27 row marked complete; Tier 5 closes.
+- `results.md` — Tier 5 stage delivery rows added (23–27); deviations 6, 7, 8 marked **resolved by Tier 5**; new deviations 11–14 added for Tier 5 coder calls (stage 25 brief miss, stage 26 three judgment calls, stage 27 Diagnostics + Conversion static decisions); deferred-to-follow-up section updated to show 4-of-4 static-eviction sites closed; headline numbers refreshed (27 stages, 0 regressions, Utils/ at 4 files).
+- `end-state-tree.md` — final shape across the whole tree: `Callback/Wire/` (NEW Tier 5 stage 24); `App/Diagnostics/` (NEW Tier 5 stage 27); `App/Data/JsonString.cs` (NEW Tier 5 stage 27); `App/Types/Choices/` (RELOCATED Tier 5 stage 26); `Types/Registry.cs` + `Conversion.cs` partials (Tier 5 stages 26+27); `App/Utils/` exactly 4 files; `App/Choices/` root deleted; old Utils files deleted/renamed away.
+
+**Final Tier 5 shape (5 stages, all complete):**
+
+| # | Slug | Status |
+|---|------|--------|
+| 23 | callstack-restoredframe-rename | ✅ landed (`e96aa1ff`) |
+| 24 | askcallback-options-evict | ✅ landed (`63a9701a`) |
+| 25 | http-default-statics-evict | ✅ landed (`a0d6b4e3`) |
+| 26 | types-keystone | ✅ landed (`82d82a58`) |
+| 27 | utils-empty-out | ✅ landed (`6fa6dbda`) — Tier 5 closes |
+
+**Total branch span: 27 stages, 27 coder commits, 0 test regressions.** The destination tree from `plan/post-cleanup-tree.md` is now a match for the actual tree (with the documented deviations explained in `results.md`).
+
+The runtime2-cleanup branch is **ready for review and merge to runtime2**.
+
 ## 2026-05-09 (v26) — Stages 24, 25, 26 landed in one push (coder)
 
 Coder shipped three stages back-to-back: `63a9701a` (24), `a0d6b4e3` (25), `82d82a58` (26 keystone). C# 2752/2752 + PLang 199/199 throughout.

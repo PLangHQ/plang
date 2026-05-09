@@ -1956,6 +1956,60 @@
         "health": "green",
         "notes": "C# 2752/2752; PLang 199/199. Utils/ at exactly 4 files. Tier 5 closes here \u2014 runtime2-cleanup branch ready for review/merge to runtime2."
       }
+    },
+    {
+      "id": "16442eb7-0659-4498-8cf6-7b2fabf9b47a",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T11:00:32Z",
+      "intent": "Tier 5 closure \u2014 confirm stage 27 land; refresh all audit docs (plan, results, end-state-tree, summary).",
+      "before": {
+        "assumptions": "Stage 27 landed (6fa6dbda). All 27 stages complete. Tests green. Branch ready for review/merge to runtime2."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 27 row marked Complete with commit ref. Tier 5 closes here annotation."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/results.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated header (27 stages, 27 commits, last commit 6fa6dbda); added Tier 5 rows 23-27 to stage delivery table; marked deviations 6, 7, 8 as 'resolved by Tier 5' with closure detail; added 4 new deviation entries (11-14) capturing Tier 5 coder calls \u2014 stage 25 brief miss (helpers were static, not instance), stage 26 three pragmatic additions (static forwarders, Modules App back-ref, test facade), stage 27 Diagnostics-as-static-class call, stage 27 Conversion methods kept static. Updated deferred-to-follow-up to show 4-of-4 static sites closed. Headline numbers refreshed."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/end-state-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated header to reflect all 27 stages landed. Tree updates: CallStack/Call/Position.cs (renamed-into); Callback/Wire/this.cs (NEW); Diagnostics/this.cs (NEW); Data/JsonString.cs (NEW); Data/this.Compare.cs annotation for static-readonly; Types/ section with Choices/, Registry.cs, Conversion.cs partials; Utils/ at exactly 4 files with deletion notes; App/Choices/ root removal note; Builder/ + Variables/ + http/code annotations for absorbed Json.cs pieces; comparison snapshot updated with all-\u2705 marks; final stats refreshed (358 cs files, 13 new folders, deletions enumerated)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v27 final entry. Tier 5 closes; branch ready for review/merge. Three coder judgment calls on stage 27 documented (Diagnostics static class, Conversion methods static, test facade extension). All audit docs updated this session listed. Final 5-stage table with all green."
+        }
+      ],
+      "after": {
+        "status": "Tier 5 complete. All 27 stages landed. C# 2752/2752 + PLang 199/199 throughout. runtime2-cleanup branch ready for review and merge to runtime2.",
+        "health": "All audit docs (plan, results, end-state-tree, summary) reflect the actual final state.",
+        "notes": "Branch state: 27 stages, 27 coder commits, 0 test regressions. Destination tree from plan/post-cleanup-tree.md matches actual tree with documented deviations explained. The .bot directory is included in the runtime2 PR (per project conventions); will be stripped before main."
+      },
+      "timestamp_end": "2026-05-09T11:00:32Z"
     }
   ]
 }
