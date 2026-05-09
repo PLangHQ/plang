@@ -1427,6 +1427,35 @@
         "health": "green",
         "notes": "C# 2752/2752 pass; PLang 199/199 pass. grep RestoredFrame across PLang/, PLang.Tests/, Tests/ returns zero. dotnet build PlangConsole clean."
       }
+    },
+    {
+      "id": "9a585314-9a3b-4261-b4ac-6df74c13d4a7",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T09:15:22Z",
+      "intent": "Carve stage 24 brief (askcallback-options-evict) after coder shipped stage 23.",
+      "before": {
+        "assumptions": "Stage 23 landed clean (commit e96aa1ff): file rename + 18 sites updated, C# 2752/2752 + PLang 199/199 green. Tier 5 6-stage shape settled. Pulled latest at session start.",
+        "scope": "Stage 24 brief only. AskCallback._options static eviction. Discovery during carving: ErrorCallback._options is identical \u2014 same shape, same modifiers. Smell #3 (duplicate state) joins Rule C as the same root realignment.",
+        "risk": "Low. Behaviour-preserving move from process-static to app-instance. Both callbacks already take Context, so navigation to Callback.WireOptions is straightforward."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-24-askcallback-options-evict.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 24 brief. Eviction target: Callback.@this.WireOptions (instance, internal). Both AskCallback._options and ErrorCallback._options included \u2014 flagged as scope expansion in the brief (smell #3 makes them one realignment, not two). Behaviour preserved exactly. Out-of-scope notes for the deeper Callback/Wire/this.cs refactor potential."
+        }
+      ],
+      "after": {
+        "status": "Stage 24 brief ready for coder. Includes the discovered ErrorCallback._options scope expansion with explicit reasoning so coder can split-or-accept on first read.",
+        "health": "All Tier 5 docs current.",
+        "notes": "If Ingi prefers stricter scope (AskCallback only), the brief makes that easy to revert \u2014 just delete the ErrorCallback section. Default is the expanded scope."
+      },
+      "timestamp_end": "2026-05-09T09:15:22Z"
     }
   ]
 }
