@@ -1,6 +1,10 @@
 # auditor v1 result — runtime2-cleanup
 
-## Verdict: PASS
+## Verdict: FAIL (coder fix pass before merge)
+
+Ingi elected to fix findings 1, 2, 3 on this branch rather than defer. Finding 4
+is process-only. See "Recommendations for coder" at the bottom — those become the
+fix list.
 
 A 27-stage, 107-commit structural refactor. Three reviewers already cleared it; my
 job was the seams. No critical or major findings. Four minor findings, all

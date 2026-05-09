@@ -37,11 +37,33 @@ Four minor — none block merge.
 | 3 | `test/report.cs:38` | `Console.Out.Write` — already flagged by codeanalyzer v3-2 / security #2 as "non-blocker / accepted-risk". I'd elevate: anti-thematic to a cleanup branch whose stated purpose includes channel discipline. One-line fix. |
 | 4 | (process) | No tester report on a 465-file branch. Most facade tests route to production, so real coverage exists, but advisory for next branch. |
 
-## Verdict: PASS
+## Verdict: FAIL — coder fix pass requested before merge
 
-Branch is in shape to merge to runtime2. The three findings on code (1, 2, 3)
-are quality follow-ups; finding 4 is a process note for next time. The
-architect's audit, codeanalyzer's verdict, and security's verdict all stand.
+Findings 1, 2, 3 are quality issues but Ingi opted to fix them pre-merge rather
+than carry them forward. Finding 4 (no tester report) is process-only and does
+not require a code change.
+
+**For the coder:**
+
+1. **Finding 1 — `TypeMappingTestFacade.cs:67`.** Route `Json.CaseInsensitiveRead`
+   to a production home so the facade tests pin the production options. Either:
+   (a) expose an `internal static JsonSerializerOptions CaseInsensitiveRead` on
+   `App.Types.Conversion` (or a similarly scoped sibling) and forward; or
+   (b) accept the duplication explicitly with a comment block at all three sites
+   naming the other two — but (a) is preferred.
+2. **Finding 2 — `Diagnostics/this.cs:21`.** Either rename the class away from
+   `@this` (e.g. `App/Diagnostics/Format.cs` with `static class Format`) so
+   `@this` stays reserved for instance navigation; or mount as `app.Diagnostics`
+   with an instance form so the convention is honoured. Coder/Ingi pick.
+3. **Finding 3 — `test/report.cs:38`.** Replace `Console.Out.Write(console.ToString())`
+   with `await Context.App.CurrentActor.Channels.WriteTextAsync(Output, console.ToString())`,
+   mirroring the pattern in `output/write.cs`. Single-line change.
+
+After fixes: keep both test suites green (2752/2752, 199/199), then auditor v2
+re-runs.
+
+Architect's audit, codeanalyzer's verdict, and security's verdict on the
+underlying refactor all stand — these are end-of-branch polish items.
 
 ## Files
 

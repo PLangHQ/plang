@@ -3,11 +3,11 @@
   "branch": "runtime2-cleanup",
   "timestamp": "2026-05-09T13:50:00Z",
   "reviewed_version": "v1",
-  "summary": "27-stage, 107-commit OBP cleanup. codeanalyzer v3 (PASS, 3 non-blockers) and security v1 (PASS, 2 low) cleared the file-level and trust-boundary checks. Auditor pass focused on the seams between reviewers and surfaced 4 minor findings: a JSON-options drift risk in the test facade, a Diagnostics `@this` convention dilution, an anti-thematic `Console.Out.Write` left in test/report.cs, and the process gap of no dedicated tester review. None block merge. Both test suites green on clean rebuild (C# 2752/2752, PLang 199/199).",
+  "summary": "FAIL \u2014 Ingi opted to fix the 3 code findings (1, 2, 3) on this branch before merge rather than defer. Finding 4 is process-only. Underlying refactor passes; these are end-of-branch polish items. Coder pass requested.",
   "previous_reviews_assessed": {
-    "codeanalyzer": "agree — file-level OBP sweep was thorough; v3-1/v3-2/v3-3 are all real; v3-2 worth re-elevating below as anti-thematic",
-    "tester": "missing — no tester report on file; ~111 tests still go through compatibility facade; recommend explicit tester pass on next branch",
-    "security": "agree — crypto/trust/serialization all preserve prior semantics; the two 'low' items are restatements of codeanalyzer v3 hygiene findings, correctly classified"
+    "codeanalyzer": "agree \u2014 file-level OBP sweep was thorough; v3-1/v3-2/v3-3 are all real; v3-2 worth re-elevating below as anti-thematic",
+    "tester": "missing \u2014 no tester report on file; ~111 tests still go through compatibility facade; recommend explicit tester pass on next branch",
+    "security": "agree \u2014 crypto/trust/serialization all preserve prior semantics; the two 'low' items are restatements of codeanalyzer v3 hygiene findings, correctly classified"
   },
   "findings": [
     {
@@ -16,9 +16,9 @@
       "category": "cross-file",
       "file": "PLang.Tests/Support/TypeMappingTestFacade.cs",
       "line": 67,
-      "issue": "Three byte-identical CaseInsensitiveRead JsonSerializerOptions exist (Conversion.cs:22, http/code/Default.cs:55, this facade:67). The two production sites are a deliberate per-consumer Rule C trade-off; the facade's bag is a fourth fork that is *not* routed to either production home. Tests using App.Utils.Json.CaseInsensitiveRead do not exercise the production options — silent drift on future converter additions.",
+      "issue": "Three byte-identical CaseInsensitiveRead JsonSerializerOptions exist (Conversion.cs:22, http/code/Default.cs:55, this facade:67). The two production sites are a deliberate per-consumer Rule C trade-off; the facade's bag is a fourth fork that is *not* routed to either production home. Tests using App.Utils.Json.CaseInsensitiveRead do not exercise the production options \u2014 silent drift on future converter additions.",
       "missed_by": "codeanalyzer",
-      "impact": "If a converter is added to one production bag and not the others, tests using the facade's CaseInsensitiveRead will not catch the omission. Other facade properties (CamelCaseIndented, PrWrite, DiagnosticOutput) all route to production homes — only this one is locally constructed because there is no shared production origin.",
+      "impact": "If a converter is added to one production bag and not the others, tests using the facade's CaseInsensitiveRead will not catch the omission. Other facade properties (CamelCaseIndented, PrWrite, DiagnosticOutput) all route to production homes \u2014 only this one is locally constructed because there is no shared production origin.",
       "suggestion": "Either route the facade's CaseInsensitiveRead to one production home (e.g. expose an internal getter on Conversion and forward), or add a 'see also: 2 other places' comment at all three sites so future contributors know the contract spans three files."
     },
     {
@@ -27,9 +27,9 @@
       "category": "architectural",
       "file": "PLang/App/Diagnostics/this.cs",
       "line": 21,
-      "issue": "Declared as `public static class @this`. The @this convention signals 'folder primary class navigated via parent.Folder' — but there is no `app.Diagnostics`; callers reach it as `global::App.Diagnostics.@this.Format`. Using @this for a static helper class adds no value over a normally-named static class and dilutes the convention's signal.",
+      "issue": "Declared as `public static class @this`. The @this convention signals 'folder primary class navigated via parent.Folder' \u2014 but there is no `app.Diagnostics`; callers reach it as `global::App.Diagnostics.@this.Format`. Using @this for a static helper class adds no value over a normally-named static class and dilutes the convention's signal.",
       "missed_by": "codeanalyzer",
-      "impact": "Convention drift — future contributors may take the static @this shape as a sanctioned pattern and replicate it where instance navigation would be cleaner.",
+      "impact": "Convention drift \u2014 future contributors may take the static @this shape as a sanctioned pattern and replicate it where instance navigation would be cleaner.",
       "suggestion": "Rename to App.Diagnostics.Format (or similar) so @this remains reserved for instance navigation. Alternatively, mount as app.Diagnostics with a small instance form so the convention is honoured."
     },
     {
@@ -40,8 +40,8 @@
       "line": 38,
       "issue": "`Console.Out.Write(console.ToString())` bypasses the Channels subsystem. Run() is async, has Context.App in scope, and should route through app.CurrentActor.Channels.WriteTextAsync(Output, ...). Already flagged by codeanalyzer v3-2 as 'non-blocker' and security #2 as 'accepted-risk'.",
       "missed_by": "none",
-      "impact": "Hygiene only — not a security or correctness issue. But the cleanup branch is built around channel discipline; leaving this in says the branch didn't finish what it started. Symbolic, not functional.",
-      "suggestion": "Replace with `await Context.App.CurrentActor.Channels.WriteTextAsync(Output, console.ToString())` — single-line change mirroring output/write.cs. Worth taking before merge for narrative coherence."
+      "impact": "Hygiene only \u2014 not a security or correctness issue. But the cleanup branch is built around channel discipline; leaving this in says the branch didn't finish what it started. Symbolic, not functional.",
+      "suggestion": "Replace with `await Context.App.CurrentActor.Channels.WriteTextAsync(Output, console.ToString())` \u2014 single-line change mirroring output/write.cs. Worth taking before merge for narrative coherence."
     },
     {
       "id": 4,
@@ -52,7 +52,9 @@
       "issue": "No tester report on file. Codeanalyzer v3 ran both test suites and confirmed counts (2752 + 199) but there was no specialised tester pass on a 465-file, 27-stage branch. ~111 PLang.Tests sites still go through TypeMappingTestFacade.",
       "missed_by": "none",
       "impact": "Most facade methods route to production paths, so coverage is real for those. The single drift risk is finding 1 above. Process advisory more than a code finding.",
-      "suggestion": "On the next large refactor, request an explicit tester pass even when codeanalyzer has run the suites — 'tests pass' and 'tests cover the new shape' are different questions."
+      "suggestion": "On the next large refactor, request an explicit tester pass even when codeanalyzer has run the suites \u2014 'tests pass' and 'tests cover the new shape' are different questions."
     }
-  ]
+  ],
+  "verdict": "fail",
+  "next_bot": "coder"
 }
