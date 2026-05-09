@@ -1780,6 +1780,42 @@
         "notes": "No corrections needed on coder's work. The judgment calls are all OBP-clean within the principles."
       },
       "timestamp_end": "2026-05-09T10:25:15Z"
+    },
+    {
+      "id": "6bbf3a7b-0991-448d-b215-b8c94c1b22c1",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T10:34:44Z",
+      "intent": "Carve final Tier 5 stage (utils-empty-out) \u2014 TypeConverter to Types/Conversion partial; Json.cs disperses to consumers.",
+      "before": {
+        "assumptions": "Stage 26 landed; Types is partial. TypeConverter has one production consumer (Types wrappers added in stage 26). Json.cs has 5 options bags, 2 helpers, 1 extension class, 2 internal converters across 12 files."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-27-utils-empty-out.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final Tier 5 stage brief. TypeConverter clean move to Types/Conversion.cs partial. Json.cs dispersal: per-consumer copies for shared bags with no policy drift risk; new App/Diagnostics/this.cs sub-@this for the cross-cutting FormatForDiagnostic helper (three consumers, real semantic identity). Surfaces design-tension question (per-consumer copies vs new sub-@this) explicitly so coder can adjust during implementation."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Updated stage 27 row to link the brief and summarize the dispersal shape."
+        }
+      ],
+      "after": {
+        "status": "All Tier 5 briefs carved. 23 landed, 24-26 landed, 27 ready for coder.",
+        "health": "Branch is one stage from Tier 5 close. After 27 lands, runtime2-cleanup is ready for review/merge.",
+        "notes": "Stage 27 has more judgment surface than the earlier stages because of the dispersal pattern. Brief surfaces the per-bag decisions explicitly; coder may adjust homes during implementation if an alternative reads better."
+      },
+      "timestamp_end": "2026-05-09T10:34:44Z"
     }
   ]
 }
