@@ -1,0 +1,109 @@
+{
+  "analyst": "security",
+  "branch": "runtime2-cleanup",
+  "timestamp": "2026-05-09T13:39:06Z",
+  "phase": "blue",
+  "attack_surface": [
+    {
+      "area": "signing",
+      "exposure": "PLang/App/modules/signing/{sign,verify}.cs and code/{Ed25519,KeyPair,IKey,ISigning,IIdentity}.cs — the cryptographic trust-boundary for inbound Data.",
+      "trust_boundary": "Verify() pipeline: type-check → timeout → expiry → nonce-replay → contracts → headers → hash → EdDSA byte verify.",
+      "mitigations": [
+        "EdDSA verification untouched on this branch.",
+        "Expiry still enforced after ExpiresInMs (int) → Expires (TimeSpan, ISO 8601) refactor.",
+        "Verified property remains read-only; only the verify pipeline can stamp it."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "channels-serialization",
+      "exposure": "PLang/App/Channels/Serializers/Plang/{this,Data}.cs + Filters/Sensitive.cs — transport boundary for cross-channel data.",
+      "trust_boundary": "Sensitive.Strip filters [Sensitive] members before write; Plang.Data round-trips signed envelopes.",
+      "mitigations": [
+        "Filter logic relocated by namespace only (SensitivePropertyFilter → Filters.Sensitive).",
+        "Envelope JsonOptions changed from static to instance scoping but remain read-only after construction."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "data-deserialization",
+      "exposure": "PLang/App/Data/JsonString.cs (new), PLang/App/Data/this.cs.",
+      "trust_boundary": "LLM-emitted strings parsed into JsonNode for variable resolution.",
+      "mitigations": [
+        "Uses System.Text.Json with no custom converters that resolve types from string names — no polymorphic gadget surface.",
+        "EmptyStringToNullEnumConverter<T> constrained at factory time to enum types only.",
+        "FixJsonStringValues escapes raw control chars defensively before re-parse; bounded by input length, no recursion."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "type-resolution",
+      "exposure": "PLang/App/Types/this.cs (927-line change: PlangTypeIndex+TypeConverter+TypeMapping+MimeTypes consolidation across stages 18/26/27).",
+      "trust_boundary": "Maps user-supplied PLang type names / MIME strings → CLR types used by action handler dispatch.",
+      "mitigations": [
+        "Resolution order preserved: primitives → domain registry → MIME → null.",
+        "Domain registry still keyed via concurrent dict with init lock.",
+        "Generic depth guard MaxGenericDepth = 20 retained (was already in place).",
+        "No reflection-by-name path that accepts a fully-qualified type string from untrusted input was added."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "settings-store",
+      "exposure": "PLang/App/Settings/Sqlite.cs (renamed from SqliteSettingsStore.cs).",
+      "trust_boundary": "Settings persistence — queries are parameterised; no string concatenation into SQL.",
+      "mitigations": [
+        "Pure rename; query bodies and binding remain identical."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "reserved-names",
+      "exposure": "PLang/App/Variables/Reserved.cs (new) replaces Utils/ReservedKeywords.cs.",
+      "trust_boundary": "Reserved variable name list (!Goal, !Step, !Identity, ...) prevents user-defined variables from shadowing internals.",
+      "mitigations": [
+        "List relocated, not narrowed. New IsReserved() helper centralises checks."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "callstack-restored-frames",
+      "exposure": "PLang/App/CallStack/Call/{Position,this}.cs — restored execution state after async resume.",
+      "trust_boundary": "Frame Position payload recovered from snapshot; influences which step executes next.",
+      "mitigations": [
+        "RestoredFrame → Call/Position rename (stage 23). New ExecuteAsync wraps handler invocation with error-stamping and cancellation containment but does not loosen frame validation."
+      ],
+      "gaps": []
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Registry.Assemblies remains a public mutable collection (codeanalyzer v3-1, kept open as latent surface).",
+      "preconditions": "Attacker would need in-process code already running with ability to mutate App-graph fields.",
+      "impact": "Low. By the time an attacker can reach Registry.Assemblies, they already have the app process; this is hygiene, not a barrier.",
+      "affected_files": ["PLang/App/Types/Registry.cs"],
+      "exploit_sketch": "Not exploitable from external input on this branch.",
+      "proposed_fix": "Wrap behind IReadOnlyCollection on the public surface; mutation through Add(...). Scheduled as cleanup follow-up.",
+      "status": "accepted-risk"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Console.Out.Write / Console.OpenStandardOutput residual writes (codeanalyzer v3-2, v3-3) bypass Channels.",
+      "preconditions": "User runs the affected test/report path; output appears on stdout instead of the wired output channel.",
+      "impact": "Diagnostic output may leak past channel filters that strip sensitive data on the proper Output stream. Test harness only at present.",
+      "affected_files": [
+        "PLang/App/modules/test/report.cs",
+        "PLang/App/Channels/this.cs"
+      ],
+      "exploit_sketch": "Not an external attack — internal hygiene.",
+      "proposed_fix": "Replace the two remaining writes with Channels Output write (existing convention).",
+      "status": "accepted-risk"
+    }
+  ],
+  "summary": "PASS. The runtime2-cleanup branch is a structural OBP refactor across 107 commits. No critical or high severity findings. Crypto, sensitive-data filtering, type resolution, settings persistence, reserved-name guards, and restored-frame trust all behave identically post-refactor — verified by line-level diff against origin/runtime2. The two carry-over codeanalyzer v3 items are quality follow-ups, not security gaps. No blockers to merge."
+}

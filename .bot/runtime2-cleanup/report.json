@@ -2010,6 +2010,117 @@
         "notes": "Branch state: 27 stages, 27 coder commits, 0 test regressions. Destination tree from plan/post-cleanup-tree.md matches actual tree with documented deviations explained. The .bot directory is included in the runtime2 PR (per project conventions); will be stripped before main."
       },
       "timestamp_end": "2026-05-09T11:00:32Z"
+    },
+    {
+      "id": "8dc584f7-f6fc-4a0b-8647-a09b2cd47a04",
+      "bot": "security",
+      "timestamp_start": "2026-05-09T13:38:00Z",
+      "timestamp_end": "2026-05-09T13:45:00Z",
+      "intent": "Security review of runtime2-cleanup \u2014 verify the OBP refactor preserves crypto, deserialization, type-resolution, and reserved-name invariants.",
+      "before": {
+        "assumptions": "Branch is structural OBP cleanup (27 stages, 107 commits) \u2014 renames + namespace moves + wrong-owner relocations. Coder, codeanalyzer, architect all done. No prior security review. Threat model: trust boundary = signed Data; Verified must remain non-settable; defend external/transport, not user.",
+        "risk": "Big diff (~218 files, ~2860/-2877 lines) \u2014 easy for a real semantics change to slip in under the rename camouflage. Highest-risk areas: signing pipeline (Expires arithmetic change in stage 14), 927-line Types/this.cs consolidation, Channels serializer relocations, restored-frame rename."
+      },
+      "plan": ".bot/runtime2-cleanup/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/signing/sign.cs",
+            "PLang/App/modules/signing/verify.cs",
+            "PLang/App/modules/signing/code/Ed25519.cs",
+            "PLang/App/modules/signing/code/KeyPair.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "EdDSA Verify pipeline (type-check \u2192 timeout \u2192 expiry \u2192 nonce \u2192 contracts \u2192 headers \u2192 hash \u2192 byte verify) line-for-line preserved. ExpiresInMs(int)\u2192Expires(TimeSpan) is arithmetic-equivalent (now.AddMilliseconds(int) \u2261 now.Add(TimeSpan)). Verified property still get;private set;. No risk."
+        },
+        {
+          "paths": [
+            "PLang/App/Channels/Serializers/Plang/Data.cs",
+            "PLang/App/Channels/Serializers/Plang/this.cs",
+            "PLang/App/Channels/Filters/Sensitive.cs",
+            "PLang/App/Channels/Filters/Transport.cs",
+            "PLang/App/Channels/Filters/View.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Namespace relocation only (SensitivePropertyFilter \u2192 Filters.Sensitive). Envelope JSON options moved static\u2192instance but stay read-only after construction. Sensitive-strip logic untouched."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/JsonString.cs",
+            "PLang/App/Data/this.cs",
+            "PLang/App/Data/this.Envelope.cs",
+            "PLang/App/Data/this.Navigation.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "JsonString uses System.Text.Json with no type-by-name converter; EmptyStringToNullEnumConverter<T> factory-constrained to enum types. FixJsonStringValues escapes raw control chars defensively, bounded, non-recursive. No polymorphic deserialization gadget surface."
+        },
+        {
+          "paths": [
+            "PLang/App/Settings/Sqlite.cs",
+            "PLang/App/Settings/IStore.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pure rename of SqliteSettingsStore \u2192 @this in namespace App.Settings.Sqlite. Parameterised queries unchanged."
+        },
+        {
+          "paths": [
+            "PLang/App/Types/this.cs",
+            "PLang/App/Types/Conversion.cs",
+            "PLang/App/Types/Registry.cs",
+            "PLang/App/Choices/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "927-line consolidation of TypeMapping + TypeConverter + MimeTypes + PlangTypeIndex. Resolution order preserved (primitives \u2192 domain registry \u2192 MIME \u2192 null). Domain registry still concurrent dict + init lock. Generic depth guard MaxGenericDepth=20 retained. No reflection-by-name path from untrusted input added \u2014 domain registration is internal."
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/Reserved.cs",
+            "PLang/App/Utils/ReservedKeywords.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "ReservedKeywords list relocated to Variables/Reserved.cs with new IsReserved() helper. List entries unchanged \u2014 no narrowing of guarded names."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/CallStack/Call/Position.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "RestoredFrame \u2192 Call/Position rename (stage 23). New ExecuteAsync wrapper adds error stamping and OperationCanceledException containment for timeout.after contract; does not loosen frame validation or trust path on resume."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/security/v1/plan.md",
+            ".bot/runtime2-cleanup/security/v1/result.md",
+            ".bot/runtime2-cleanup/security/v1/verdict.json",
+            ".bot/runtime2-cleanup/security/summary.md",
+            ".bot/runtime2-cleanup/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security review artifacts: per-area attack surface, two low-severity carry-over items (Registry.Assemblies public mutable, residual Console.Out writes) marked accepted-risk, PASS verdict."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 no critical or high open findings. Two low items carried over from codeanalyzer v3 are accepted-risk (not externally reachable / test-harness only).",
+        "health": "ok",
+        "notes": "Next bot: auditor. The branch is structurally invasive but security-load-bearing logic is line-for-line equivalent post-refactor; the one arithmetic change (Expires) is equivalent."
+      }
     }
   ]
 }
