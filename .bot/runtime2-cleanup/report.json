@@ -2218,11 +2218,13 @@
       "plan": ".bot/runtime2-cleanup/coder/v28/plan.md",
       "actions": [
         {
-          "paths": ["PLang/App/modules/test/report.cs"],
+          "paths": [
+            "PLang/App/modules/test/report.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Finding #3: replaced Console.Out.Write with await Context.App.CurrentActor.Channels.WriteTextAsync(Output, ...) — aligns the report module with the branch's channel-discipline thesis."
+          "context": "Finding #3: replaced Console.Out.Write with await Context.App.CurrentActor.Channels.WriteTextAsync(Output, ...) \u2014 aligns the report module with the branch's channel-discipline thesis."
         },
         {
           "paths": [
@@ -2235,7 +2237,7 @@
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "Finding #2: git mv this.cs → Format.cs; class @this → Format; method Format(value) → Value(value) to dodge collision. 5 callers updated. Doc comment now explains why the name dodges the @this convention."
+          "context": "Finding #2: git mv this.cs \u2192 Format.cs; class @this \u2192 Format; method Format(value) \u2192 Value(value) to dodge collision. 5 callers updated. Doc comment now explains why the name dodges the @this convention."
         },
         {
           "paths": [
@@ -2256,7 +2258,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Test capture migrated from Console.SetOut(StringWriter) to a StreamChannel(Output, MemoryStream) registered on _app.User.Channels — required because the production fix routes through the channel, not Console.Out. Dropped [NotInParallel] (per-app capture instead of process-wide)."
+          "context": "Test capture migrated from Console.SetOut(StringWriter) to a StreamChannel(Output, MemoryStream) registered on _app.User.Channels \u2014 required because the production fix routes through the channel, not Console.Out. Dropped [NotInParallel] (per-app capture instead of process-wide)."
         },
         {
           "paths": [
@@ -2274,6 +2276,71 @@
         "status": "complete",
         "health": "Clean rebuild + both suites green (C# 2752/2752, PLang 199/199). All three actionable auditor findings addressed; #4 was process-only.",
         "notes": "Branch ready to re-audit / merge."
+      }
+    },
+    {
+      "id": "d94cef26-26db-4c00-b3d2-aaaf394788f0",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-09T14:05:00Z",
+      "timestamp_end": "2026-05-09T14:12:00Z",
+      "intent": "Close out auditor v1 findings after coder v28 fix pass.",
+      "before": {
+        "assumptions": "Coder v28 shipped fixes for v1 findings 1, 2, 3.",
+        "risk": "Fix could introduce collateral damage; method renames could miss callers."
+      },
+      "plan": ".bot/runtime2-cleanup/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/coder/v28/plan.md",
+            ".bot/runtime2-cleanup/coder/v28/v27_review_summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read coder's plan and review summary."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/test/report.cs",
+            "PLang/App/Diagnostics/Format.cs",
+            "PLang/App/Errors/AssertionError.cs",
+            "PLang/App/modules/assert/code/Default.cs",
+            "PLang/App/Types/Conversion.cs",
+            "PLang.Tests/Support/TypeMappingTestFacade.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified each fix at right location in right shape; grep'd for stale Diagnostics.@this and Console.Out.Write \u2014 zero hits in production. Format(...) \u2192 Value(...) method rename was unbriefed but defensible (dodges Format.Format(...) collision)."
+        },
+        {
+          "paths": [
+            "PlangConsole",
+            "PLang.Tests",
+            "Tests"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + both suites: 2752/2752 + 199/199 green."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/auditor/v2/",
+            ".bot/runtime2-cleanup/auditor-report.json",
+            ".bot/runtime2-cleanup/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 outputs."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "All 3 v1 code findings closed; suites green; branch ready to merge.",
+        "notes": "Next: docs."
       }
     }
   ]

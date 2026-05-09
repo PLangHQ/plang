@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Coder v28 closed all 3 v1 findings cleanly: report.cs routed through Channels; Diagnostics renamed away from @this (and method renamed Format→Value to dodge name collision); TypeMappingTestFacade.Json.CaseInsensitiveRead now forwards to Conversion's bag via internal accessor. Both test suites green on clean rebuild." }
