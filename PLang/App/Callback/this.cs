@@ -12,4 +12,7 @@ public sealed class @this
 {
     /// <summary>Signature-related config — currently just <see cref="Signature.@this.Expires"/>.</summary>
     public Signature.@this Signature { get; } = new();
+
+    /// <summary>Wire-format config — JsonSerializerOptions shared by Ask + Error callbacks.</summary>
+    public Wire.@this Wire { get; } = new();
 }

@@ -1,7 +1,5 @@
 using System.Text.Json;
-using System.Text.Json.Serialization.Metadata;
 using App.CallStack;
-using App.Channels.Serializers;
 
 namespace App.Callback;
 
@@ -31,7 +29,7 @@ public sealed class AskCallback : ICallback
             Position = Position == null ? null : PositionWire.From(Position),
             Variables = Variables.Select(VariableWire.From).ToList()
         };
-        var bytes = JsonSerializer.SerializeToUtf8Bytes(wire, _options);
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(wire, ctx.App.Callback.Wire.Options);
         // crypto.encrypt v1 is identity; the call goes through the action handler so the
         // wiring is real (when the real impl lands, only the action body changes).
         var encrypted = ctx.App.RunAction<App.modules.crypto.encrypt>(
@@ -59,7 +57,7 @@ public sealed class AskCallback : ICallback
         if (plain.Length > MaxWireBytes)
             throw new InvalidOperationException(
                 $"AskCallback: decrypted payload exceeds size cap ({plain.Length} > {MaxWireBytes} bytes)");
-        var wire = JsonSerializer.Deserialize<Wire>(plain, _options)
+        var wire = JsonSerializer.Deserialize<Wire>(plain, ctx.App.Callback.Wire.Options)
                    ?? throw new InvalidOperationException("AskCallback: empty wire payload");
 
         return new AskCallback
@@ -102,19 +100,6 @@ public sealed class AskCallback : ICallback
     }
 
     // --- Wire shapes ---
-
-    private static readonly JsonSerializerOptions _options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-        // Strip [Sensitive]-marked properties from the wire — captured Variables can carry
-        // arbitrary objects whose typed properties may include secrets. Security v1 S-F4.
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver
-        {
-            Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Strip }
-        }
-    };
 
     internal sealed class Wire
     {

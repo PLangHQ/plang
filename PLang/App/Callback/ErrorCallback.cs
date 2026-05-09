@@ -1,6 +1,4 @@
-using System.Text.Json.Serialization.Metadata;
 using App.CallStack;
-using App.Channels.Serializers;
 
 namespace App.Callback;
 
@@ -35,7 +33,7 @@ public sealed class ErrorCallback : ICallback
 
     public byte[] Serialize(global::App.Actor.Context.@this ctx)
     {
-        var bytes = SerializeSnapshot(AppSnapshot);
+        var bytes = SerializeSnapshot(AppSnapshot, ctx.App.Callback.Wire.Options);
         var encrypted = ctx.App.RunAction<App.modules.crypto.encrypt>(
             new App.modules.crypto.encrypt { Input = global::App.Data.@this<byte[]>.Ok(bytes) }, ctx)
             .GetAwaiter().GetResult();
@@ -60,7 +58,7 @@ public sealed class ErrorCallback : ICallback
         if (plain.Length > MaxWireBytes)
             throw new InvalidOperationException(
                 $"ErrorCallback: decrypted payload exceeds size cap ({plain.Length} > {MaxWireBytes} bytes)");
-        var snap = DeserializeSnapshot(plain);
+        var snap = DeserializeSnapshot(plain, ctx.App.Callback.Wire.Options);
         return new ErrorCallback { AppSnapshot = snap };
     }
 
@@ -85,19 +83,19 @@ public sealed class ErrorCallback : ICallback
     // (Variables names + values, CallStack frames). v1 is intentionally narrow — Stage 4
     // tests assert structural round-trip, not full Snapshot.@this fidelity.
 
-    private static byte[] SerializeSnapshot(Snapshot.@this s)
+    private static byte[] SerializeSnapshot(Snapshot.@this s, System.Text.Json.JsonSerializerOptions options)
     {
         var wire = new SnapshotWire
         {
             Frames = ExtractFrames(s),
             Variables = ExtractVariables(s)
         };
-        return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(wire, _options);
+        return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(wire, options);
     }
 
-    private static Snapshot.@this DeserializeSnapshot(byte[] bytes)
+    private static Snapshot.@this DeserializeSnapshot(byte[] bytes, System.Text.Json.JsonSerializerOptions options)
     {
-        var wire = System.Text.Json.JsonSerializer.Deserialize<SnapshotWire>(bytes, _options)
+        var wire = System.Text.Json.JsonSerializer.Deserialize<SnapshotWire>(bytes, options)
                    ?? new SnapshotWire();
         var s = new Snapshot.@this();
         var stack = s.Section("CallStack");
@@ -159,20 +157,6 @@ public sealed class ErrorCallback : ICallback
             result.Add(new VarWire { Name = v.Name, Value = v.Value });
         return result;
     }
-
-    private static readonly System.Text.Json.JsonSerializerOptions _options = new()
-    {
-        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
-        // Strip [Sensitive]-marked properties from the wire — captured Variables in the
-        // snapshot can carry arbitrary objects whose typed properties may include secrets.
-        // Security v1 S-F4.
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver
-        {
-            Modifiers = { global::App.Channels.Serializers.Filters.Sensitive.Strip }
-        }
-    };
 
     internal sealed class SnapshotWire
     {
