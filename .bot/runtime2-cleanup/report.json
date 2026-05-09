@@ -2204,6 +2204,77 @@
         "health": "Branch ready for merge to runtime2. Both test suites green. Four minor findings recorded as quality follow-ups, none blocking.",
         "notes": "Optional pre-merge fixes the coder could take: route TypeMappingTestFacade.Json.CaseInsensitiveRead to a production home; rename Diagnostics/@this; replace Console.Out.Write in test/report.cs with channel write."
       }
+    },
+    {
+      "id": "774f9f9a-c2d3-4f8b-b789-75d0f708410a",
+      "bot": "coder",
+      "timestamp_start": "2026-05-09T13:57:01Z",
+      "timestamp_end": "2026-05-09T14:07:31Z",
+      "intent": "Address auditor v1 fix list (findings 1, 2, 3) before merge.",
+      "before": {
+        "assumptions": "Auditor verified 2752/2752 C# and 199/199 PLang at fb8eda3b. Findings are local; no broad ripple expected.",
+        "risk": "Diagnostics rename touches 4 callers across PLang + PLang.Tests; CaseInsensitiveRead routing requires test-asm visibility into an internal getter."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v28/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/App/modules/test/report.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Finding #3: replaced Console.Out.Write with await Context.App.CurrentActor.Channels.WriteTextAsync(Output, ...) — aligns the report module with the branch's channel-discipline thesis."
+        },
+        {
+          "paths": [
+            "PLang/App/Diagnostics/Format.cs",
+            "PLang/App/modules/test/report.cs",
+            "PLang/App/modules/assert/code/Default.cs",
+            "PLang/App/Errors/AssertionError.cs",
+            "PLang.Tests/Support/TypeMappingTestFacade.cs"
+          ],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "Finding #2: git mv this.cs → Format.cs; class @this → Format; method Format(value) → Value(value) to dodge collision. 5 callers updated. Doc comment now explains why the name dodges the @this convention."
+        },
+        {
+          "paths": [
+            "PLang/App/Types/Conversion.cs",
+            "PLang.Tests/Support/TypeMappingTestFacade.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Finding #1: exposed Conversion._caseInsensitiveRead via internal CaseInsensitiveRead getter; facade now forwards instead of forking. Pins test surface to one production source. http/code/Default's separate copy stays independent by design."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Testing/ReportActionTests.cs",
+            "PLang.Tests/App/Testing/EdgeCaseTests.cs",
+            "PLang.Tests/App/Testing/TestMetadataTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test capture migrated from Console.SetOut(StringWriter) to a StreamChannel(Output, MemoryStream) registered on _app.User.Channels — required because the production fix routes through the channel, not Console.Out. Dropped [NotInParallel] (per-app capture instead of process-wide)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/coder/v28/v27_review_summary.md",
+            ".bot/runtime2-cleanup/coder/v28/plan.md",
+            ".bot/runtime2-cleanup/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v28 session docs."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Clean rebuild + both suites green (C# 2752/2752, PLang 199/199). All three actionable auditor findings addressed; #4 was process-only.",
+        "notes": "Branch ready to re-audit / merge."
+      }
     }
   ]
 }

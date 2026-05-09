@@ -13,13 +13,11 @@ namespace PLang.Tests.App.Tester;
 /// File format is single-select; if users need both, they run twice (v1 decision).
 /// Failure rendering matches architect §4.6: Expected/Actual + Variables snapshot block.
 /// </summary>
-[NotInParallel] // Console.SetOut is process-wide — serialize these to avoid capture races.
 public class ReportActionTests
 {
     private string _tempDir = null!;
     private global::App.@this _app = null!;
-    private StringWriter _console = null!;
-    private TextWriter _originalConsole = null!;
+    private System.IO.MemoryStream _captureStream = null!;
 
     [Before(Test)]
     public void Setup()
@@ -29,19 +27,22 @@ public class ReportActionTests
         System.IO.Directory.CreateDirectory(_tempDir);
         var fs = new global::App.FileSystem.Default.PLangFileSystem(_tempDir, "");
         _app = new global::App.@this(fs);
-        _originalConsole = Console.Out;
-        _console = new StringWriter();
-        Console.SetOut(_console);
+        _captureStream = new System.IO.MemoryStream();
+        _app.User.Channels.Register(new StreamChannel(
+            EngineChannels.Output, _captureStream,
+            ChannelDirection.Output, ownsStream: true)
+        { Mime = "text/plain" });
     }
 
     [After(Test)]
     public async Task Teardown()
     {
-        Console.SetOut(_originalConsole);
         await _app.DisposeAsync();
         if (System.IO.Directory.Exists(_tempDir))
             System.IO.Directory.Delete(_tempDir, true);
     }
+
+    private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
     private static global::App.Tester.Run NewRun(string name, global::App.Tester.Status status, IError? error = null, string? capturedOutput = null)
     {
@@ -73,7 +74,7 @@ public class ReportActionTests
 
         await Report();
 
-        var output = _console.ToString();
+        var output = CapturedOutput();
         await Assert.That(output.Contains("Test summary")).IsTrue();
         await Assert.That(output.Contains("1 pass")).IsTrue();
     }
@@ -152,7 +153,7 @@ public class ReportActionTests
 
         await Report();
 
-        var output = _console.ToString();
+        var output = CapturedOutput();
         await Assert.That(output.Contains("Module.action coverage")).IsTrue();
         await Assert.That(output.Contains("variable.set")).IsTrue();
         // Some uncovered actions should appear too (universe)
@@ -171,7 +172,7 @@ public class ReportActionTests
 
         await Report();
 
-        var output = _console.ToString();
+        var output = CapturedOutput();
         await Assert.That(output.Contains("Branch coverage")).IsTrue();
         // Parse the site line to verify the exact rendered contents at MyGoal:3,
         // instead of the old loose Contains("0") / Contains("1") check that passed
@@ -280,7 +281,7 @@ public class ReportActionTests
 
         await Report();
 
-        var output = _console.ToString();
+        var output = CapturedOutput();
         await Assert.That(output.Contains("FAIL")).IsTrue();
         await Assert.That(output.Contains("Expected: 1")).IsTrue();
         await Assert.That(output.Contains("Actual:   2")).IsTrue();

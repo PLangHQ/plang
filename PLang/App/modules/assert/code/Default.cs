@@ -173,7 +173,7 @@ public class Default : IAssert
         return string.Compare(a.ToString(), b.ToString(), StringComparison.Ordinal);
     }
 
-    private static string FormatValue(object? value) => global::App.Diagnostics.@this.Format(value);
+    private static string FormatValue(object? value) => global::App.Diagnostics.Format.Value(value);
 
     private static bool IsNumeric(object? value)
         => value is int or long or double or float or decimal

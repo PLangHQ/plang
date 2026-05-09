@@ -18,13 +18,22 @@ public sealed partial class @this
     /// the former <c>Utils.Json.CaseInsensitiveRead</c> static — http/code/Default holds
     /// its own copy too. Per-consumer ownership keeps Rule C closed without inventing a
     /// shared "Json" god-bag.
+    ///
+    /// Exposed via <see cref="CaseInsensitiveRead"/> (<c>internal</c>) so the test
+    /// facade <c>App.Utils.Json.CaseInsensitiveRead</c> routes here instead of forking
+    /// a fourth copy. Adding a converter here updates both this conversion path and the
+    /// test surface in one place; <c>http/code/Default</c>'s separate copy stays
+    /// independent (different consumer, different concern).
     /// </summary>
-    private static readonly JsonSerializerOptions _caseInsensitiveRead = new()
+    internal static readonly JsonSerializerOptions _caseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
         Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new App.Data.EmptyStringToNullEnumConverterFactory(), new Channels.Serializers.TimeSpanIso8601() },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
+
+    /// <summary>Internal accessor for the test facade — see <see cref="_caseInsensitiveRead"/>.</summary>
+    internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;
 
     /// <summary>Attempts to convert a value to the specified type. Generic convenience overload.</summary>
     public static T? ConvertTo<T>(object? value) => (T?)ConvertTo(value, typeof(T));

@@ -62,14 +62,13 @@ internal static class TypeConverter
 /// </summary>
 internal static class Json
 {
-    public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead { get; } = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: true), new global::App.Data.EmptyStringToNullEnumConverterFactory(), new global::App.Channels.Serializers.TimeSpanIso8601() },
-        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
-    };
+    // Routes to the production conversion-path bag (via internal accessor on
+    // App.Types.@this). Keeps the test surface pinned to one production source so a
+    // converter added in Conversion.cs is exercised by tests automatically. The
+    // http/code/Default bag is independent and not covered here — by design.
+    public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead => global::App.Types.@this.CaseInsensitiveRead;
 
     public static System.Text.Json.JsonSerializerOptions CamelCaseIndented => global::App.@this.CamelCaseIndented;
     public static System.Text.Json.JsonSerializerOptions PrWrite => global::App.Builder.@this.PrWrite;
-    public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::App.Diagnostics.@this.Options;
+    public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::App.Diagnostics.Format.Options;
 }

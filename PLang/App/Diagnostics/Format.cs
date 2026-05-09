@@ -17,9 +17,10 @@ namespace App.Diagnostics;
 /// Static class because all three consumers (Tester reports, AssertionError messages,
 /// modules/assert) call from static contexts where no App is in scope. The state held is
 /// a single immutable JsonSerializerOptions — Rule C exception class for pure-config bags
-/// with no instance variation.
+/// with no instance variation. Not named <c>@this</c> because there is no
+/// <c>app.Diagnostics</c> mount; the folder-as-instance signal would be misleading.
 /// </summary>
-public static class @this
+public static class Format
 {
     private static readonly JsonSerializerOptions DiagnosticOutput = new()
     {
@@ -37,7 +38,7 @@ public static class @this
     /// JsonSerializer. Never falls back to <c>value.ToString()</c> on arbitrary objects —
     /// that bypasses the mask (a C# record's auto-ToString prints every field).
     /// </summary>
-    public static string Format(object? value)
+    public static string Value(object? value)
     {
         if (value == null) return "(null)";
         if (value is string s) return $"\"{s}\"";
@@ -53,7 +54,7 @@ public static class @this
     /// <summary>
     /// Direct access to the underlying JsonSerializerOptions for callers that need to
     /// drive the serializer themselves (e.g. test-report envelope serialization). Prefer
-    /// <see cref="Format"/> when the result is a single value.
+    /// <see cref="Value"/> when the result is a single value.
     /// </summary>
     public static JsonSerializerOptions Options => DiagnosticOutput;
 }

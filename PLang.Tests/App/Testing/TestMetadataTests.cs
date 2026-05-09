@@ -11,13 +11,11 @@ namespace PLang.Tests.App.Tester;
 /// produced a test's .pr, the report flags it. Drift is informational, not
 /// enforced — users decide when to rebuild.
 /// </summary>
-[NotInParallel]
 public class TestMetadataTests
 {
     private string _tempDir = null!;
     private global::App.@this _app = null!;
-    private StringWriter _console = null!;
-    private TextWriter _originalConsole = null!;
+    private System.IO.MemoryStream _captureStream = null!;
 
     [Before(Test)]
     public void Setup()
@@ -27,19 +25,22 @@ public class TestMetadataTests
         System.IO.Directory.CreateDirectory(_tempDir);
         var fs = new global::App.FileSystem.Default.PLangFileSystem(_tempDir, "");
         _app = new global::App.@this(fs);
-        _originalConsole = Console.Out;
-        _console = new StringWriter();
-        Console.SetOut(_console);
+        _captureStream = new System.IO.MemoryStream();
+        _app.User.Channels.Register(new StreamChannel(
+            EngineChannels.Output, _captureStream,
+            ChannelDirection.Output, ownsStream: true)
+        { Mime = "text/plain" });
     }
 
     [After(Test)]
     public async Task Teardown()
     {
-        Console.SetOut(_originalConsole);
         await _app.DisposeAsync();
         if (System.IO.Directory.Exists(_tempDir))
             System.IO.Directory.Delete(_tempDir, true);
     }
+
+    private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
     private static global::App.Tester.Run NewRun(string name, string? builderVersion = null, string? goalHash = "deadbeef")
     {
@@ -107,7 +108,7 @@ public class TestMetadataTests
         var action = new global::App.modules.test.report { Context = _app.User.Context };
         await action.Run();
 
-        var output = _console.ToString();
+        var output = CapturedOutput();
         await Assert.That(output.Contains("builder drift")).IsTrue();
     }
 }

@@ -35,7 +35,7 @@ public partial class report : IContext
         var console = new StringBuilder();
         RenderConsole(console, results, testing);
         RenderCoverageTables(console, testing, Context.App.Modules);
-        Console.Out.Write(console.ToString());
+        await Context.App.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output, console.ToString());
 
         // Write the file artefact. .test/ lives at the app root per Q4 decision.
         var fs = Context.App.FileSystem;
@@ -277,7 +277,7 @@ public partial class report : IContext
             runs,
             branchCoverage
         };
-        return JsonSerializer.Serialize(envelope, global::App.Diagnostics.@this.Options);
+        return JsonSerializer.Serialize(envelope, global::App.Diagnostics.Format.Options);
     }
 
     private static string BuildJUnit(App.Tester.Results results, FileSystem.IPLangFileSystem fs)
@@ -325,7 +325,7 @@ public partial class report : IContext
     private static string? ResolveBuilderVersion(App.Tester.@this testing) =>
         testing.App.Version;
 
-    private static string FormatValue(object? value) => global::App.Diagnostics.@this.Format(value);
+    private static string FormatValue(object? value) => global::App.Diagnostics.Format.Value(value);
 
     // Strips ANSI escape sequences to prevent forged output in captured
     // test stdout (test writes bold-green "ok" via ANSI — rendered literally instead).

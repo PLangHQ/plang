@@ -39,7 +39,7 @@ public class AssertionError : Error
         return msg;
     }
 
-    private static string FormatValue(object? value) => global::App.Diagnostics.@this.Format(value);
+    private static string FormatValue(object? value) => global::App.Diagnostics.Format.Value(value);
 
     protected override void FormatExtra(StringBuilder sb, string indent)
     {
