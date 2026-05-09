@@ -7,7 +7,8 @@ After delivering 22 of 22 stages, walked the audit with Ingi to decide what to d
 **Scope settled.**
 - Bucket A (cosmetic leftovers): stages 23–24.
 - Bucket B (Rule C static-eviction tail): stages 25–29.
-- Bucket C (Events writer wiring, CallStack scope, App.Statics, Data parameter-lifecycle, v3 audit): explicitly out of scope for this branch.
+- Bucket C (Events writer wiring, CallStack scope, App.Statics, Data parameter-lifecycle): explicitly out of scope for this branch.
+- Also dropped (Ingi 2026-05-09): the "v3 audit methodology / `/shared/app-tree/`" item that had been listed under "What's deferred" since plan v1. Pre-branch draft, unrelated to the OBP cleanup work — withdrawn, not deferred.
 
 **Branch decision.** Same branch (`runtime2-cleanup`). No new branch.
 

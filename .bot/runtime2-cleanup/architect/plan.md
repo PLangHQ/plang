@@ -64,7 +64,7 @@ Stages 1–22 are ordered roughly by **impact × isolation** — biggest wins th
 
 ### Tier 5 — deferred completion: cosmetic leftovers + Rule C static-eviction tail (added 2026-05-09)
 
-After stages 1–22 landed, the audit in `results.md` surfaced a tail of work that fell into one of two shapes: (i) two cosmetic rename leftovers from earlier stages that got scope-narrowed, and (ii) the four static-eviction sites stage 16 deferred because they need a foundational refactor (TypeMapping → instance-bound) before the cascade can land. Tier 5 carves those into stages 23–29. Bucket C items (Events three-tier writer wiring, CallStack scope, App.Statics, Data parameter-lifecycle, v3 audit) stay deferred — see "What's deferred" below.
+After stages 1–22 landed, the audit in `results.md` surfaced a tail of work that fell into one of two shapes: (i) two cosmetic rename leftovers from earlier stages that got scope-narrowed, and (ii) the four static-eviction sites stage 16 deferred because they need a foundational refactor (TypeMapping → instance-bound) before the cascade can land. Tier 5 carves those into stages 23–29. Bucket C items (Events three-tier writer wiring, CallStack scope, App.Statics, Data parameter-lifecycle) stay deferred — see "What's deferred" below.
 
 **Correction note on Callback/Signature.** `results.md` originally listed `Callback/Signature/this.cs absorbs into Callback/this.cs` as a deferred cleanup. That was wrong: the current shape is OBP-correct. Folding the single `Expires` knob into `Callback.@this` would create a compound property name (`Callback.SignatureExpires`) — a Rule A violation. The folder structure preserves the navigation chain (`app.Callback.Signature.Expires`), which *is* the right shape. **Removed from Tier 5; left as-is.**
 
@@ -88,7 +88,6 @@ After stages 1–22 landed, the audit in `results.md` surfaced a tail of work th
 - **`Data` parameter-lifecycle (request-scoped vs pr-template)** — the `data.ResetResolution()` smell. Ingi explicitly deferred; not in this plan.
 - **Events three-tier writer wiring** — per-channel / per-actor / app-level writer scoping. Documented in `todos.md` 2026-05-08; needs a design pass beyond shape cleanup.
 - **CallStack scope (per-context vs shared)** — `App.Debug.CallStack` was promoted to `App.CallStack` in stage 7 but the per-context-vs-shared semantics weren't settled. Documented in `todos.md` 2026-05-08; too big for this branch.
-- **v3 audit methodology / `/shared/app-tree/` surface files** — would require building a per-surface promise-document for every public mount on `app` and walking each against the code. Substantial work — its own follow-up cleanup branch when there's appetite. Not in this plan.
 
 ## Branch strategy
 

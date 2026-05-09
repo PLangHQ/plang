@@ -184,7 +184,6 @@ The plan is "done" when:
 - `Channels.this.cs` is under ~150 lines (currently 277).
 - The two-capital screen, the `Get<Plural>()` screen, the static-field screen, the gerund-property screen, and the decomposed-parameter screen on `PLang/App/` return zero must-fix hits (some unavoidable hits stay; they're documented in `claude-md-proposals.md`).
 - `Documentation/v0.2/architecture.md` directory tree matches reality.
-- `/shared/app-tree/` is regenerated against the post-cleanup App surface (one-shot, not a stage in itself).
 
 ## What this plan refuses to do
 

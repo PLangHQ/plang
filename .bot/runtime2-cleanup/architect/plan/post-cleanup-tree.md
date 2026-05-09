@@ -17,7 +17,7 @@ The tree is annotated with what each stage does to it, and revised against Ingi'
 **v3 absorption — declined or revised:**
 
 - v3 wanted ReservedKeywords folded into `app.Types/Registry.cs`. ReservedKeywords are *variable names* (`!Test`, `!Signature`, etc.), not types. `app.Variables/Reserved.cs` is the right owner. Tree keeps the Variables placement.
-- v3's audit methodology (walk every `/shared/app-tree/*.md`) is **deferred to a follow-up branch**: that directory doesn't exist in the repo and never has, and building the surface promise-files for every public mount on `app` is substantial work in its own right. Listed under "What's deferred" in `plan.md` — not in scope for this plan.
+- v3's audit methodology (walk every `/shared/app-tree/*.md`) — **dropped 2026-05-09**. That was a pre-branch draft suggestion; the directory doesn't exist in the repo and the methodology has nothing to do with the OBP cleanup work this branch carried out. Not deferred — withdrawn.
 - v3's source-generator update at `LazyParamsGenerator.cs:638` is moot: source gen has been rewritten and no longer references any `App.Utils.*` symbols. Confirmed by grep.
 
 ## Marker key
