@@ -39,13 +39,7 @@ public sealed class Default : IHttp
     /// </summary>
     public Default(HttpMessageHandler handler) => _handler = handler;
 
-    /// <summary>
-    /// Transport JSON options: overrides [JsonIgnore] for [In] properties (e.g., Signature).
-    /// Used when deserializing application/plang responses — Data arrives with Signature on the wire.
-    /// </summary>
-    private static readonly JsonSerializerOptions _jsonOptions = App.Utils.Json.CaseInsensitiveRead;
-
-    private static readonly JsonSerializerOptions _transportInOptions = new()
+    private readonly JsonSerializerOptions _transportInOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
@@ -394,7 +388,7 @@ public sealed class Default : IHttp
 
     private static void ApplySignature(HttpRequestMessage request, Data.@this signResult)
     {
-        var signatureJson = JsonSerializer.Serialize(signResult.Signature, _jsonOptions);
+        var signatureJson = JsonSerializer.Serialize(signResult.Signature, App.Utils.Json.CaseInsensitiveRead);
         request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/plang"));
     }
@@ -478,7 +472,7 @@ public sealed class Default : IHttp
 
     // --- Response parsing ---
 
-    private static async Task<Data.@this> ParseResponseAsync(
+    private async Task<Data.@this> ParseResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         bool unsigned,
@@ -524,7 +518,7 @@ public sealed class Default : IHttp
             object? parsed;
             try
             {
-                parsed = JsonSerializer.Deserialize<object>(json, _jsonOptions);
+                parsed = JsonSerializer.Deserialize<object>(json, App.Utils.Json.CaseInsensitiveRead);
             }
             catch (JsonException)
             {
@@ -564,7 +558,7 @@ public sealed class Default : IHttp
     /// Parses application/plang response: deserialize as Data.@this (with Signature via [In]),
     /// verify signature, set %!ServiceIdentity%.
     /// </summary>
-    private static async Task<Data.@this> ParsePlangResponseAsync(
+    private async Task<Data.@this> ParsePlangResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         AppType app,
@@ -620,7 +614,7 @@ public sealed class Default : IHttp
     /// Tries to extract identity from a signed error response body.
     /// The error body may be a Data with Signature, or have a "signature" field.
     /// </summary>
-    private static async Task TryExtractSignedErrorIdentity(
+    private async Task TryExtractSignedErrorIdentity(
         string errorBody, AppType app, Actor.Context.@this context)
     {
         // Try deserializing as Data.@this with transport options (may have Signature via [In])
@@ -712,7 +706,7 @@ public sealed class Default : IHttp
 
     // --- Streaming ---
 
-    private static async Task<Data.@this> HandleStreamingAsync(
+    private async Task<Data.@this> HandleStreamingAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         GoalCall onStream,
@@ -884,7 +878,7 @@ public sealed class Default : IHttp
         }
     }
 
-    private static async Task StreamPlangAsync(
+    private async Task StreamPlangAsync(
         Stream stream, GoalCall onStream,
         AppType app, Actor.Context.@this context, CancellationToken ct)
     {

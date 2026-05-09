@@ -1556,6 +1556,89 @@
         "notes": "The keystone is the largest brief (370 lines) and likely needs two coder sessions. Brief flags the natural breakpoint."
       },
       "timestamp_end": "2026-05-09T09:41:45Z"
+    },
+    {
+      "id": "77270814-9751-4bff-a2f1-6adcb8225e6d",
+      "bot": "coder",
+      "timestamp_start": "2026-05-09T01:00:00Z",
+      "timestamp_end": "2026-05-09T09:49:08Z",
+      "intent": "Stage 24: evict AskCallback._options + ErrorCallback._options statics into shared Callback.Wire.@this.",
+      "before": {
+        "assumptions": "Pure Rule C + smell #3 closure per architect's spec. Baseline 2752 + 199.",
+        "risk": "Low \u2014 private statics with no external readers; behavior preserved."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v24/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Callback/Wire/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New @this holding internal JsonSerializerOptions Options. Mirrors Callback/Signature/ subfolder shape."
+        },
+        {
+          "paths": [
+            "PLang/App/Callback/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mount Wire property alongside existing Signature."
+        },
+        {
+          "paths": [
+            "PLang/App/Callback/AskCallback.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Static _options block deleted; Serialize/Deserialize read ctx.App.Callback.Wire.Options. Two unused usings dropped (System.Text.Json.Serialization.Metadata, App.Channels.Serializers)."
+        },
+        {
+          "paths": [
+            "PLang/App/Callback/ErrorCallback.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Static _options block deleted; SerializeSnapshot/DeserializeSnapshot private static helpers gain JsonSerializerOptions parameter. Two unused usings dropped."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "C# 2752/2752; PLang 199/199. Zero `private static readonly JsonSerializerOptions` in either callback file."
+      }
+    },
+    {
+      "id": "68467cb6-e5a1-4c84-8f15-d9b412b5183c",
+      "bot": "coder",
+      "timestamp_start": "2026-05-09T01:30:00Z",
+      "timestamp_end": "2026-05-09T09:49:08Z",
+      "intent": "Stage 25: evict Default.cs _transportInOptions to instance + delete _jsonOptions alias.",
+      "before": {
+        "assumptions": "Architect's brief assumed 3 _transportInOptions read sites were in instance methods. Reading code: they're in private static helpers \u2014 needed extra step.",
+        "risk": "Low \u2014 same module-internal eviction; tests cover round-trip."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v25/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/http/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "_jsonOptions alias deleted (2 read sites switched to App.Utils.Json.CaseInsensitiveRead long-form, matching the third pre-existing site). _transportInOptions: static\u2192instance. Deviation from brief: 5 private static async helpers (ParseResponseAsync, ParsePlangResponseAsync, TryExtractSignedErrorIdentity, HandleStreamingAsync, StreamPlangAsync) converted to instance methods so the 3 read sites resolve against `this`. Callers are inside lambdas in instance methods, so call sites unchanged. Alternative was threading JsonSerializerOptions through 5 signatures + 5 call sites \u2014 instance conversion is the lighter touch."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "C# 2752/2752; PLang 199/199. Zero `private static readonly` in Default.cs; `_jsonOptions` gone; 7 hits (1 decl + 3 reads of `_transportInOptions`, 3 reads of `App.Utils.Json.CaseInsensitiveRead`)."
+      }
     }
   ]
 }
