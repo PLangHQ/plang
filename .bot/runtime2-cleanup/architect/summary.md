@@ -1,5 +1,27 @@
 # architect — runtime2-cleanup
 
+## 2026-05-09 (v25) — Tier 5 condensed to 5 stages; combined keystone carved (stage 26)
+
+Stage 23 landed clean (coder, commit `e96aa1ff`): RestoredFrame → Call/Position rename, 18 sites in 11 files, C# 2752/2752 + PLang 199/199.
+
+This session:
+
+- **Stage 24 carved + Rule A correction.** First draft used a flat `Callback.@this.WireOptions` property — Ingi caught that compounds owner+capability. Revised to `Callback/Wire/this.cs` subfolder mirroring `Callback/Signature/`. Navigation `app.Callback.Wire.Options`. Wire/@this is also now flagged as the natural future home for the size-cap + encrypt/decrypt round-trip dedup across both callbacks (out of scope this stage). Both AskCallback._options + ErrorCallback._options bundled into the same eviction (smell #3).
+- **Stage 25 carved.** DefaultHttpProvider's two statics aren't symmetric: `_transportInOptions` (full local options block) → instance field; `_jsonOptions` (degenerate alias for `Utils.Json.CaseInsensitiveRead`) → deleted, two read sites switch to long form (matching what line 646 already does). Both Rule C closures in one stage.
+- **Stage 26 (Choices) blocked finding.** Walking the code surfaced that Choices isn't independent of TypeMapping: `TypeMapping.GetValidValues(type, context)` calls `Choices.Get(type, context)`, and GetValidValues is itself called with context=null from 4 of 5 sites. Evicting Choices alone would cascade into threading Context through TypeMapping — heavier than the plan scoped.
+- **Combined into stage 26 (the keystone).** Ingi chose option (c) — fold Choices into the TypeMapping keystone. Same realignment ("the type subsystem becomes instance, with sub-types under `app.Types`"), one stage instead of two. Tier 5 condenses to 5 stages (was 6).
+- **Choices relocates under Types.** Ingi's instinct that "Choices at root is too important a location for what is a small build-time registry" — agreed. Moves to `App/Types/Choices/this.cs`, mounted as `app.Types.Choices`. Three observations support: keyed by Type (Type is the dimension), Types already has a `ValidValues(type)` surface (one layer instead of three), build-time-only use (root mount overstates weight). Old `App/Choices/` folder deleted.
+- **Combined stage 26 brief carved.** ~370 lines covering: (i) the three Rule C sites collapsing into Types.@this + Registry.cs partial + Choices/ sub-@this; (ii) full public API mapping (TypeMapping → Types methods); (iii) caller blast radius (21 files); (iv) design questions left to coder (eager vs lazy init; method renames deferred; static helper vs instance distinctions). The keystone — likely needs two sessions; brief flags the natural breakpoint.
+
+**Tier 5 final shape (5 stages):**
+| # | Slug | Status |
+|---|------|--------|
+| 23 | callstack-restoredframe-rename | landed (coder, e96aa1ff) |
+| 24 | askcallback-options-evict | brief carved (revised) — pending coder |
+| 25 | http-default-statics-evict | brief carved — pending coder |
+| 26 | types-keystone (combined) | brief carved — pending coder, the keystone |
+| 27 | utils-empty-out | one-liner only — depends on 26 |
+
 ## 2026-05-09 (v24) — Tier 5 carved (stages 23–28) extending the cleanup plan
 
 After delivering 22 of 22 stages, walked the audit with Ingi to decide what to do with the deferred tail. Outcome: extend the same branch with six more stages, organized as Tier 5.

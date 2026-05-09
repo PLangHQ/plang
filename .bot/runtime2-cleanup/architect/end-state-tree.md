@@ -97,7 +97,7 @@ PLang/App/
 │   │   └── this.cs
 │   └── this.cs                                  (v1 helpers gone — stage 2; ReadAsync<T>(filePath) gone — stage 8)
 │
-├── Choices/                                     (★ tentative-move-not-done — planned ★ optional move to Builder/Choices/)
+├── Choices/                                     (★ Tier 5 stage 26 — moves under Types as Types/Choices/this.cs; root folder deleted)
 │   └── this.cs
 │
 ├── Code/                                        (RENAMED ← Providers/, stage 19)
@@ -241,15 +241,15 @@ PLang/App/
 ├── Types/
 │   └── this.cs                                  (gains Clr(mimeType) overload, stage 18; ★ Registry.cs/Conversion.cs partials deferred with stage 16)
 │
-├── Utils/                                       (★ Tier 5 — empties out across stages 27+28; 4 files still here)
+├── Utils/                                       (★ Tier 5 — empties out across stages 26+27; 4 files still here)
 │   ├── CommandLineParser.cs
-│   ├── Json.cs                                  (★ Tier 5 stage 28 — DISPERSE to consumers)
+│   ├── Json.cs                                  (★ Tier 5 stage 27 — DISPERSE to consumers)
 │   ├── PathExtension.cs
-│   ├── PlangTypeIndex.cs                        (★ Tier 5 stage 27 — absorb into Types/Registry.cs partial)
+│   ├── PlangTypeIndex.cs                        (★ Tier 5 stage 26 — absorb into Types/Registry.cs partial)
 │   ├── RegisterStartupParameters.cs
 │   ├── StringDistance.cs
-│   ├── TypeConverter.cs                         (★ Tier 5 stage 28 — Types/Conversion.cs partial)
-│   └── TypeMapping.cs                           (★ Tier 5 stage 27 — instance-bound; keystone)
+│   ├── TypeConverter.cs                         (★ Tier 5 stage 27 — Types/Conversion.cs partial)
+│   └── TypeMapping.cs                           (★ Tier 5 stage 26 — instance-bound; combined keystone)
 │
 │   (Utils/MimeTypes.cs — DELETED → split into Formats/this.cs + Types.Clr(mimeType), stage 18)
 │   (Utils/ReservedKeywords.cs — DELETED → Variables/Reserved.cs, stage 16)
@@ -390,8 +390,9 @@ PLang/App/
 | Settings reshape (collection-over-Data) | ✅ | ✅ |
 | Variables/Reserved.cs | ✅ | ✅ |
 | `app.Formats` mount | `Channels/Serializers/Formats/` | `App/Formats/` (root) |
-| Utils/ "nearly empty" | 4 files | 8 files (★ Tier 5 stages 27–28) |
-| Types/ partials (Registry, Conversion) | ✅ | ★ Tier 5 stages 27–28 |
+| Utils/ "nearly empty" | 4 files | 8 files (★ Tier 5 stages 26–27) |
+| Types/ partials (Registry, Conversion) | ✅ | ★ Tier 5 stages 26–27 |
+| Choices/ moved under Types/ | (new — added 2026-05-09) | ★ Tier 5 stage 26 |
 | Callback/Signature/ absorbed | ✅ | withdrawn — current shape is OBP-correct (Rule A would be violated by flattening) |
 | Events/Lifecycle/ collapse | ✅ | folded into Events three-tier todo 2026-05-09 — Lifecycle is per-target view, not redundant nesting; structure question deferred to that design pass |
 | CallStack/RestoredFrame.cs → Call/Position.cs | ✅ | ★ Tier 5 stage 23 |

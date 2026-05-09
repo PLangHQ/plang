@@ -1502,6 +1502,60 @@
         "notes": "Tier 5 ordering may need to swap 26 and 27 (do TypeMapping keystone before Choices), or fold Choices into 27, or thread Context through GetValidValues (heavier scope)."
       },
       "timestamp_end": "2026-05-09T09:25:46Z"
+    },
+    {
+      "id": "c910b746-ac1d-4f4d-a642-109eb67df3c1",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T09:41:45Z",
+      "intent": "Carve combined stage 26 brief (types-keystone) after Ingi chose option (c) \u2014 fold Choices into TypeMapping keystone, with Choices relocating under Types.",
+      "before": {
+        "assumptions": "Tier 5 was 6 stages; stage 26 (Choices) and stage 27 (TypeMapping) were planned as separate. Discovery in previous session showed Choices isn't independent of TypeMapping \u2014 share static-caller chain. Ingi: combine; move Choices under Types since root mount overstates weight for a build-time registry."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Renumbered Tier 5 to 5 stages (was 6). Stage 26 is now the combined keystone (TypeMapping + PlangTypeIndex + Choices). Stage 27 is Utils empty-out (was 28). Added 'Why combined stage 26' rationale."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-26-types-keystone.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Combined keystone brief. ~370 lines. Three Rule C sites collapse into one Types.@this subsystem: TypeMapping public API \u2192 Types methods, PlangTypeIndex internals \u2192 Types/Registry.cs partial, Choices \u2192 Types/Choices/this.cs sub-@this. Public API mapping table, caller sweep guidance for 21 files, design questions flagged (eager vs lazy init, method renames deferred, static helpers preserved)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/end-state-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Renumbered Tier 5 markers (was stages 27/28, now 26/27). Choices marker switched from 'tentative-move-not-done' to 'Tier 5 stage 26 \u2014 moves under Types'. Comparison snapshot gains a new row for Choices/Types relocation."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v25 entry at top: stage 23 landed; stage 24 corrected (Rule A); stage 25 carved; stage 26 blocked finding + combined choice + Choices-under-Types reasoning; stage 26 brief carved; Tier 5 final 5-stage table."
+        }
+      ],
+      "after": {
+        "status": "Tier 5 in final 5-stage shape. Stages 23 (landed), 24, 25, 26 (combined keystone) all have briefs. Stage 27 (Utils empty-out) is a one-liner; carve when stage 26 lands.",
+        "health": "Plan, results, end-state-tree, summary all consistent on the 5-stage shape.",
+        "notes": "The keystone is the largest brief (370 lines) and likely needs two coder sessions. Brief flags the natural breakpoint."
+      },
+      "timestamp_end": "2026-05-09T09:41:45Z"
     }
   ]
 }
