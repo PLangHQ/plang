@@ -6,7 +6,7 @@ public class DataContextWiringTests
 {
     private sealed class FakeCallback : ICallback
     {
-        public global::App.CallStack.RestoredFrame? Position => null;
+        public global::App.CallStack.Call.Position? Position => null;
         public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
         public Task<Data> Run(global::App.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
     }

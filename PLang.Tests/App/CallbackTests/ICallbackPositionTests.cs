@@ -19,7 +19,7 @@ public class ICallbackPositionTests
     public async Task ICallback_Position_ReturnsCallFrame_OnAskCallback()
     {
         var (goal, action) = MakeFrame("AskPos");
-        var frame = new RestoredFrame(action, goal, 0, 0, "id1");
+        var frame = new global::App.CallStack.Call.Position(action, goal, 0, 0, "id1");
         var ask = new AskCallback { Position = frame };
         await Assert.That(ask.Position).IsSameReferenceAs(frame);
     }

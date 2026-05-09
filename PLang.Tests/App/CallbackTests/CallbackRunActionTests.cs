@@ -13,7 +13,7 @@ public class CallbackRunActionTests
 
     private sealed class StubCallback : ICallback
     {
-        public RestoredFrame? Position => null;
+        public global::App.CallStack.Call.Position? Position => null;
         public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
         public Task<global::App.Data.@this> Run(global::App.Actor.Context.@this ctx)
             => Task.FromResult(global::App.Data.@this.Ok("ran"));

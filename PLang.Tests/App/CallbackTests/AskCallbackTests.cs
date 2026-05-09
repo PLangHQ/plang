@@ -26,7 +26,7 @@ public class AskCallbackTests
     {
         var app = NewApp();
         var (goal, action) = MakeAndRegister(app, "RTAsk");
-        var frame = new RestoredFrame(action, goal, 0, 0, "id");
+        var frame = new global::App.CallStack.Call.Position(action, goal, 0, 0, "id");
         var src = new AskCallback
         {
             Position = frame,
@@ -53,7 +53,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "EncAsk");
         var src = new AskCallback
         {
-            Position = new RestoredFrame(action, goal, 0, 0, ""),
+            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
             ActorName = "User",
             Variables = new()
         };
@@ -71,7 +71,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "DecAsk");
         var src = new AskCallback
         {
-            Position = new RestoredFrame(action, goal, 0, 0, ""),
+            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
             ActorName = "Service",
             Variables = new() { new global::App.Data.@this("y", "two") }
         };
@@ -90,7 +90,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "RunAsk");
         var ask = new AskCallback
         {
-            Position = new RestoredFrame(action, goal, 0, 0, ""),
+            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
             Variables = new() { new global::App.Data.@this("bound", 42) }
         };
 
@@ -106,7 +106,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "ChainAsk");
         var ask = new AskCallback
         {
-            Position = new RestoredFrame(action, goal, 0, 0, ""),
+            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
             Variables = new()
         };
 
@@ -126,7 +126,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(src, "MissingAsk");
         var ask = new AskCallback
         {
-            Position = new RestoredFrame(action, goal, 0, 0, ""),
+            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
             Variables = new()
         };
         var bytes = ask.Serialize(src.User.Context);

@@ -1379,6 +1379,54 @@
       },
       "timestamp_end": "2026-05-09T09:01:51Z",
       "plan": ".bot/runtime2-cleanup/architect/plan.md"
+    },
+    {
+      "id": "f2609bb6-0b66-4a33-8e36-cc1bb0084968",
+      "bot": "coder",
+      "timestamp_start": "2026-05-09T00:00:00Z",
+      "timestamp_end": "2026-05-09T09:09:37Z",
+      "intent": "Stage 23: rename App.CallStack.RestoredFrame \u2192 App.CallStack.Call.Position; move file under Call/.",
+      "before": {
+        "assumptions": "Pure mechanical rename per architect's stage-23 spec. C# baseline 2752/2752; PLang 199/199.",
+        "risk": "Low \u2014 compiler catches every miss. Only namespace-resolution gotcha is that `using App.CallStack;` doesn't expose sub-namespace `Call`."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v23/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/CallStack/RestoredFrame.cs",
+            "PLang/App/CallStack/Call/Position.cs"
+          ],
+          "type": "move",
+          "category": "code",
+          "confidence": "high",
+          "context": "git mv plus rewrite of namespace + record name. Body unchanged."
+        },
+        {
+          "paths": [
+            "PLang/App/CallStack/this.Snapshot.cs",
+            "PLang/App/Callback/ICallback.cs",
+            "PLang/App/Callback/AskCallback.cs",
+            "PLang/App/Callback/ErrorCallback.cs",
+            "PLang.Tests/App/CallbackTests/AskCallbackTests.cs",
+            "PLang.Tests/App/CallbackTests/ICallbackPositionTests.cs",
+            "PLang.Tests/App/CallbackTests/FailureMatrixTests.cs",
+            "PLang.Tests/App/CallbackTests/CallbackRunActionTests.cs",
+            "PLang.Tests/App/DataTests/DataContextWiringTests.cs",
+            "PLang.Tests/App/DataTests/DataLazySignatureTests.cs",
+            "PLang.Tests/App/Serializers/PlangDataSerializerRoundTripTests.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Caller sweep. In this.Snapshot.cs (namespace App.CallStack) used short form Call.Position; in Callback files and tests used global::App.CallStack.Call.Position because `using App.CallStack;` doesn't import the Call sub-namespace by short name."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "C# 2752/2752 pass; PLang 199/199 pass. grep RestoredFrame across PLang/, PLang.Tests/, Tests/ returns zero. dotnet build PlangConsole clean."
+      }
     }
   ]
 }

@@ -15,13 +15,13 @@ public sealed class ErrorCallback : ICallback
     public Snapshot.@this AppSnapshot { get; init; } = new();
 
     /// <summary>Cached materialised position — null until first read.</summary>
-    private RestoredFrame? _position;
+    private global::App.CallStack.Call.Position? _position;
 
     /// <summary>
     /// Computed: walks the captured CallStack subsection's last "frames" entry and
     /// resolves the goal-stub triple against the current App's Goals registry.
     /// </summary>
-    public RestoredFrame? Position
+    public global::App.CallStack.Call.Position? Position
     {
         get
         {

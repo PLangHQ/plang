@@ -4,7 +4,7 @@ namespace App.CallStack;
 
 public sealed partial class @this : global::App.Snapshot.ISnapshot
 {
-    private List<RestoredFrame>? _restoredChain;
+    private List<Call.Position>? _restoredChain;
 
     // CallStack-level diff stream — populated by a single OnSet subscription wired by
     // EnableDiffStream. Independent of per-Call Diffs (which require Flags.Diff at Push
@@ -56,15 +56,15 @@ public sealed partial class @this : global::App.Snapshot.ISnapshot
     /// Null on a fresh App that hasn't been restored. Not maintained automatically by
     /// live Push/Pop — restored chains are read-only positional context for callbacks.
     /// </summary>
-    public IReadOnlyList<RestoredFrame>? RestoredChain => _restoredChain;
+    public IReadOnlyList<Call.Position>? RestoredChain => _restoredChain;
 
     /// <summary>
     /// The deepest frame on the resume path. On a *restored* CallStack this is the
     /// last entry of <see cref="RestoredChain"/> (the originally throwing/awaiting Call).
-    /// On a *live* CallStack it's a <see cref="RestoredFrame"/> view of <see cref="Current"/>
+    /// On a *live* CallStack it's a <see cref="Call.Position"/> view of <see cref="Current"/>
     /// — the API is uniform whether live or restored. Null when neither side has a frame.
     /// </summary>
-    public RestoredFrame? BottomFrame
+    public Call.Position? BottomFrame
     {
         get
         {
@@ -110,7 +110,7 @@ public sealed partial class @this : global::App.Snapshot.ISnapshot
     {
         var captured = s.Read<List<global::App.Snapshot.@this>>("frames")
                        ?? new List<global::App.Snapshot.@this>();
-        var restored = new List<RestoredFrame>(captured.Count);
+        var restored = new List<Call.Position>(captured.Count);
 
         foreach (var frame in captured)
         {
@@ -136,7 +136,7 @@ public sealed partial class @this : global::App.Snapshot.ISnapshot
                 throw new CallbackGoalNotFound($"{goalPrPath} (actionIndex {actionIndex} out of range at step {stepIndex})");
             var liveAction = liveStep.Actions[actionIndex];
 
-            restored.Add(new RestoredFrame(liveAction, liveGoal, stepIndex, actionIndex, id));
+            restored.Add(new Call.Position(liveAction, liveGoal, stepIndex, actionIndex, id));
         }
 
         ctx.App.CallStack._restoredChain = restored;
@@ -186,7 +186,7 @@ public sealed partial class @this : global::App.Snapshot.ISnapshot
             if (d.At > t) yield return d;
     }
 
-    private static RestoredFrame FrameFromLive(Call.@this call)
+    private static Call.Position FrameFromLive(Call.@this call)
     {
         var step = call.Action.Step;
         var goal = step?.Goal;
@@ -202,6 +202,6 @@ public sealed partial class @this : global::App.Snapshot.ISnapshot
                 }
         }
         // goal can be null in tests with hand-built actions; surface a synthetic empty Goal.
-        return new RestoredFrame(call.Action, goal!, stepIndex, actionIndex, call.Id);
+        return new Call.Position(call.Action, goal!, stepIndex, actionIndex, call.Id);
     }
 }

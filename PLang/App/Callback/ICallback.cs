@@ -14,7 +14,7 @@ namespace App.Callback;
 public interface ICallback
 {
     /// <summary>The Call frame at which the resumed run lands. Null only in degenerate cases.</summary>
-    global::App.CallStack.RestoredFrame? Position { get; }
+    global::App.CallStack.Call.Position? Position { get; }
 
     /// <summary>
     /// Encrypted ready-to-wire bytes. v1 crypto is identity pass-through, so the bytes

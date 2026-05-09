@@ -14,7 +14,7 @@ namespace App.Callback;
 public sealed class AskCallback : ICallback
 {
     /// <summary>The Call frame at which the resumed dispatch lands.</summary>
-    public RestoredFrame? Position { get; init; }
+    public global::App.CallStack.Call.Position? Position { get; init; }
 
     /// <summary>Name of the actor that issued the ask — "User" / "Service" / "System".</summary>
     public string ActorName { get; init; } = "User";
@@ -131,7 +131,7 @@ public sealed class AskCallback : ICallback
         public int StepIndex { get; set; }
         public int ActionIndex { get; set; }
 
-        public static PositionWire From(RestoredFrame f) => new()
+        public static PositionWire From(global::App.CallStack.Call.Position f) => new()
         {
             GoalPrPath = f.Goal?.PrPath ?? "",
             GoalHash = f.Goal?.Hash ?? "",
@@ -139,7 +139,7 @@ public sealed class AskCallback : ICallback
             ActionIndex = f.ActionIndex
         };
 
-        public RestoredFrame Resolve(global::App.Actor.Context.@this ctx)
+        public global::App.CallStack.Call.Position Resolve(global::App.Actor.Context.@this ctx)
         {
             var goal = ctx.App.Goals.Get(GoalPrPath)
                 ?? throw new global::App.Errors.CallbackGoalNotFound(GoalPrPath);
@@ -152,7 +152,7 @@ public sealed class AskCallback : ICallback
             if (ActionIndex < 0 || ActionIndex >= step.Actions.Count)
                 throw new global::App.Errors.CallbackGoalNotFound($"{GoalPrPath} (actionIndex {ActionIndex} out of range at step {StepIndex})");
             var action = step.Actions[ActionIndex];
-            return new RestoredFrame(action, goal, StepIndex, ActionIndex, "");
+            return new global::App.CallStack.Call.Position(action, goal, StepIndex, ActionIndex, "");
         }
     }
 
