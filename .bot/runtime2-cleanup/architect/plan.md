@@ -18,7 +18,7 @@ The plan is a backlog. Stages are written as we approach them, not all up front 
 
 ## Stage index
 
-Stages 1–22 are ordered roughly by **impact × isolation** — biggest wins that don't entangle with future work go first. Each stage gets its own `stage-N-<slug>.md` file at the architect bot root *when carved*. Stage files don't exist yet; only the spine and `plan/principles.md` do.
+Stages 1–22 are ordered roughly by **impact × isolation** — biggest wins that don't entangle with future work go first. Tier 5 (stages 23–29, added 2026-05-09) carves the deferred completion: cosmetic rename leftovers and the Rule C static-eviction tail stage 16 deferred. Each stage gets its own `stage-N-<slug>.md` file at the architect bot root *when carved*.
 
 ### Tier 1 — close active drift, demonstrate the slice rhythm (small, isolated)
 
@@ -62,10 +62,32 @@ Stages 1–22 are ordered roughly by **impact × isolation** — biggest wins th
 | 21 | [`navigators-to-variables`](stage-21-navigators-to-variables.md) | **Complete 2026-05-08 (coder).** Folder + namespace + property relocated. Tests 2755/2755 + 199/199. |
 | 22 | [`app-shortcuts-drop`](stage-22-app-shortcuts-drop.md) | **Complete 2026-05-08 (coder).** app.Variables and app.Context shortcuts dropped. Coder caught 4 more production sites the brief missed (unqualified Variables/Context inside App's own partials and adjacent subsystems). Tests 2752/2752 + 199/199. |
 
+### Tier 5 — deferred completion: cosmetic leftovers + Rule C static-eviction tail (added 2026-05-09)
+
+After stages 1–22 landed, the audit in `results.md` surfaced a tail of work that fell into one of two shapes: (i) two cosmetic rename leftovers from earlier stages that got scope-narrowed, and (ii) the four static-eviction sites stage 16 deferred because they need a foundational refactor (TypeMapping → instance-bound) before the cascade can land. Tier 5 carves those into stages 23–29. Bucket C items (Events three-tier writer wiring, CallStack scope, App.Statics, Data parameter-lifecycle, v3 audit) stay deferred — see "What's deferred" below.
+
+**Correction note on Callback/Signature.** `results.md` originally listed `Callback/Signature/this.cs absorbs into Callback/this.cs` as a deferred cleanup. That was wrong: the current shape is OBP-correct. Folding the single `Expires` knob into `Callback.@this` would create a compound property name (`Callback.SignatureExpires`) — a Rule A violation. The folder structure preserves the navigation chain (`app.Callback.Signature.Expires`), which *is* the right shape. **Removed from Tier 5; left as-is.**
+
+| # | Slug | One-liner |
+|---|------|-----------|
+| 23 | `callstack-restoredframe-rename` | Single-file rename — `App/CallStack/RestoredFrame.cs` → `App/CallStack/Call/Position.cs`. Cleanup leftover from stage 10 (which focused on the App.Run reduction headliner). Mechanical: file move, namespace adjust, caller sweep. Lowest-risk warm-up of Tier 5. |
+| 24 | `events-lifecycle-collapse` | Drop the `Lifecycle` layer in `App/Events/`. Structure becomes `Events/{Bindings/this.cs, Binding/this.cs, this.cs}` with `Before`/`After` as properties on `Events.@this`. Re-targets the widely-used `EventBinding` alias (currently `App.Events.Lifecycle.Bindings.Binding.@this`). Blast radius needs measuring during carving — was deferred from stage 15 for exactly this reason. |
+| 25 | `askcallback-options-evict` | `App/Callback/AskCallback.cs._options` (static `JsonSerializerOptions`) → instance field on the owning `@this`. Smallest of the static-eviction sites; independent of the others. Rule C. |
+| 26 | `http-default-statics-evict` | `App/modules/http/code/Default.cs._jsonOptions` + `_transportInOptions` (two static `JsonSerializerOptions` fields) → instance fields. Same shape as 25, slightly bigger surface. Rule C. |
+| 27 | `choices-registry-evict` | `App/Choices/this.cs._gate` + `_registry` (static SemaphoreSlim + static dictionary) → instance state. Roughly 20 static helpers reach through `_registry` — the real work is making the caller chain instance-callable. Rule C, medium weight. |
+| 28 | `typemapping-instance-keystone` | The keystone. `Utils/TypeMapping.cs` flattens to instance (or threads context to callers); `Utils/PlangTypeIndex.cs` absorbs into `Types/this.cs` as a partial (`Types/Registry.cs`). Unblocks every other Type-related cleanup. Probably needs its own session — design discussion required during carving. Rule C. |
+| 29 | `utils-empty-out` | The cleanup tail. `Utils/TypeConverter.cs` → `Types/Conversion.cs` partial; `Utils/Json.cs` disperses to its consumers (the planned move from the post-cleanup-tree). After this lands, `Utils/` ends up at the four files originally specified in the destination tree. Mechanical once 28 is in. |
+
+**Ordering rationale.** 23–24 first (cosmetic, mechanical, low risk — they clear the deviations table without touching the static-caller chains). 25–27 next as warm-ups for the static work; each is small and independent. 28 is the keystone — it must precede 29 because 29's dispersals depend on the partial structure 28 creates. Within Tier 5, stages must run sequentially from 28 onward; 23–27 can interleave if appetite allows.
+
+**Coder-todo guardrail.** When a coder approaching a Tier 5 stage finds a TODO from `Documentation/Runtime2/todos.md` sitting directly on the path of the refactor (i.e., the stage cannot land cleanly without touching it), fold that piece in for that stage. Otherwise leave it for follow-up. We are not extending Tier 5 to chase todos — the rule is "fold in only when the refactor *needs* it." This mirrors what coder did during stages 1–22 (e.g., stage 14 closed the `ExpiresInMs → ISO 8601` todo because it was load-bearing for the rename; stage 16 closed `OpenAi._requestCount` because the static was the eviction target).
+
 ## What's deferred (architect flags, not stages)
 
 - **`App.Statics` → goal-backed dynamic property** — open design, not yet driven by a real call site. Stays on `Documentation/Runtime2/todos.md`.
 - **`Data` parameter-lifecycle (request-scoped vs pr-template)** — the `data.ResetResolution()` smell. Ingi explicitly deferred; not in this plan.
+- **Events three-tier writer wiring** — per-channel / per-actor / app-level writer scoping. Documented in `todos.md` 2026-05-08; needs a design pass beyond shape cleanup.
+- **CallStack scope (per-context vs shared)** — `App.Debug.CallStack` was promoted to `App.CallStack` in stage 7 but the per-context-vs-shared semantics weren't settled. Documented in `todos.md` 2026-05-08; too big for this branch.
 - **v3 audit methodology / `/shared/app-tree/` surface files** — would require building a per-surface promise-document for every public mount on `app` and walking each against the code. Substantial work — its own follow-up cleanup branch when there's appetite. Not in this plan.
 
 ## Branch strategy

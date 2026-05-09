@@ -110,11 +110,11 @@ The following landed differently than the post-cleanup-tree said. Each is a code
 **Delivered:** Stayed at `App/Choices/`.
 **Verdict:** Correct call. The ★ marker said "re-evaluate after restructure lands"; the restructure didn't surface a stronger reason to move it. Build-time vs runtime border is fine where it is.
 
-### 3. `App/Callback/Signature/this.cs` not absorbed
+### 3. `App/Callback/Signature/this.cs` not absorbed (correction 2026-05-09: not a deviation)
 
 **Planned:** Stage 14 absorbs `Signature/this.cs` into `Callback/this.cs` as a property; subfolder goes away.
-**Delivered:** Stage 14 was scoped down to the `ExpiresInMs → Expires` rename only (the TimeSpan/ISO 8601 sweep). The Signature subfolder still exists.
-**Verdict:** The rename was the load-bearing piece; the absorption is cosmetic. Filed as follow-up — it's a 1-stage cleanup whenever the next pass touches Callback.
+**Delivered:** Stage 14 was scoped down to the `ExpiresInMs → Expires` rename only.
+**Verdict (revised 2026-05-09):** The original plan was wrong. Folding the single `Expires` knob into `Callback.@this` would create a compound property name (`Callback.SignatureExpires`) — exactly the Rule A violation the cleanup is closing elsewhere. The current shape preserves the navigation chain `app.Callback.Signature.Expires`, which *is* OBP-correct. Removed from the deferred list; the folder stays as-is.
 
 ### 4. `App/Events/Lifecycle/Bindings/Binding/` did not collapse
 
@@ -168,22 +168,22 @@ The following landed differently than the post-cleanup-tree said. Each is a code
 
 ## What's deferred to follow-up
 
-The branch closes 22 stages of OBP cleanup. The work explicitly carried into a follow-up branch:
+**Update 2026-05-09:** Items (1) and (2) below were carved into Tier 5 (stages 23–29) on the same branch — see `plan.md`. The Callback/Signature absorb that originally appeared under (2) was removed: it's OBP-correct as-is (see correction above). Item (3) stays deferred — bigger design passes that don't fit this branch.
 
-1. **Static-eviction tail** (4 sites from stage 16):
-   - `Callback/AskCallback.cs._options`
-   - `DefaultHttpProvider._jsonOptions + _transportInOptions`
-   - `Choices.@this._gate + _registry`
-   - `Utils/PlangTypeIndex.cs` (whole class)
+1. **Static-eviction tail** (4 sites from stage 16) — *carved as stages 25–28 in Tier 5:*
+   - `Callback/AskCallback.cs._options` → stage 25
+   - `DefaultHttpProvider._jsonOptions + _transportInOptions` → stage 26
+   - `Choices.@this._gate + _registry` → stage 27
+   - `Utils/PlangTypeIndex.cs` (whole class) → stage 28 (with TypeMapping → instance keystone)
 
-   Each requires the static-caller chain to flatten first (TypeMapping made instance-bound, or context threaded to all callers). Once that lands, Utils empties as planned and Types gets the Registry/Conversion partials.
+   Each requires the static-caller chain to flatten first (TypeMapping made instance-bound, or context threaded to all callers). Stage 28 does that flattening; stage 29 finishes the Utils/ empty-out (TypeConverter → Types/Conversion partial; Utils/Json disperses).
 
-2. **Cosmetic rename leftovers**:
-   - `Callback/Signature/this.cs` absorbs into `Callback/this.cs`
-   - `Events/Lifecycle/` layer collapses
-   - `CallStack/RestoredFrame.cs` → `Call/Position.cs`
+2. **Cosmetic rename leftovers** — *carved as stages 23–24 in Tier 5:*
+   - `CallStack/RestoredFrame.cs` → `Call/Position.cs` → stage 23
+   - `Events/Lifecycle/` layer collapses → stage 24
+   - ~~`Callback/Signature/this.cs` absorbs into `Callback/this.cs`~~ — withdrawn; current shape is OBP-correct.
 
-3. **Documented in `Documentation/Runtime2/todos.md`**:
+3. **Documented in `Documentation/Runtime2/todos.md`** (still deferred — not in Tier 5):
    - Events three-tier writer wiring (per-channel / per-actor / app-level)
    - CallStack scope (per-context vs shared) — too big for this branch
 

@@ -1281,6 +1281,74 @@
         "health": "branch ready for review",
         "notes": "All 22 stages landed. Tests 2752/2752 + 199/199. 4 deferred Rule-C sites + 3 cosmetic rename leftovers documented as follow-up."
       }
+    },
+    {
+      "id": "86d87336-43a6-4093-bcc4-313e2caf491f",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T08:42:38Z",
+      "intent": "Carve Tier 5 (stages 23\u201329) extending the cleanup plan with the deferred OBP work \u2014 buckets A (cosmetic leftovers) + B (Rule C static-eviction tail).",
+      "before": {
+        "assumptions": "Stages 1\u201322 landed; results.md flagged 6 deferred items. Initial read assumed Callback/Signature/this.cs was a deferred 'absorb into Callback/this.cs' \u2014 Ingi corrected that this would be an OBP Rule A violation (flattening Owner+Capability into a compound property name). The folder is OBP-correct as-is.",
+        "scope": "Buckets A (cosmetic) + B (Rule C static-eviction). Bucket C (Events writer wiring, CallStack scope, App.Statics, Data.ResetResolution, v3 audit) explicitly out of scope per Ingi.",
+        "branch_decision": "Continue on runtime2-cleanup; do not open a new branch.",
+        "stage_granularity": "Each item gets its own stage \u2014 no bundling.",
+        "risk": "Low. Stages 23\u201324 are mechanical renames. Stage 28 (TypeMapping \u2192 instance) is the keystone and may need its own session."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added Tier 5 section (stages 23\u201329). 7 one-liners, no stage briefs yet (carved when each stage is approached). Updated stage-index intro line. Added coder-todo guardrail and bucket-C deferred section. Added Callback/Signature OBP correction note inside Tier 5."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/results.md",
+            ".bot/runtime2-cleanup/architect/end-state-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Corrected the 'Callback/Signature absorb' deviation \u2014 flagged as OBP-correct, removed from deferred list. Re-pointed the deferred markers in end-state-tree.md from '\u2605 deferred' to '\u2605 Tier 5 stage N' for the items now in Tier 5 (RestoredFrame, Lifecycle collapse, http statics, Utils empty-out, Types partials)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v24 entry at top of summary: Tier 5 carved, branch decision (same branch), granularity decision (one stage per item), Callback/Signature correction logged."
+        },
+        {
+          "paths": [
+            "/home/claude/.claude/projects/-workspace-plang/memory/design_principles.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added bullet under OBP-Structure capturing the single-property-subfolder rule. Insight from Ingi's correction: navigation shape determines correctness, not size of the type."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/report.json"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session record."
+        }
+      ],
+      "after": {
+        "status": "Tier 5 carved into plan.md (7 stages, 23\u201329). Stage briefs not yet written \u2014 convention is carve when each stage is approached. Next session: stage 23 brief (RestoredFrame rename, smallest warm-up).",
+        "health": "plan.md, results.md, end-state-tree.md, summary.md all consistent; deferred-vs-Tier-5 markers re-pointed across all three.",
+        "notes": "Bucket C explicitly out of scope; coder-todo guardrail noted. Callback/Signature correction landed in 3 places (plan.md, results.md, end-state-tree.md). No code changes \u2014 design-only session."
+      },
+      "timestamp_end": "2026-05-09T08:48:10Z",
+      "plan": ".bot/runtime2-cleanup/architect/plan.md"
     }
   ]
 }

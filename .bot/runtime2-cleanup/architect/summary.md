@@ -1,5 +1,30 @@
 # architect — runtime2-cleanup
 
+## 2026-05-09 (v24) — Tier 5 carved (stages 23–29) extending the cleanup plan
+
+After delivering 22 of 22 stages, walked the audit with Ingi to decide what to do with the deferred tail. Outcome: extend the same branch with seven more stages, organized as Tier 5.
+
+**Scope settled.**
+- Bucket A (cosmetic leftovers): stages 23–24.
+- Bucket B (Rule C static-eviction tail): stages 25–29.
+- Bucket C (Events writer wiring, CallStack scope, App.Statics, Data parameter-lifecycle, v3 audit): explicitly out of scope for this branch.
+
+**Branch decision.** Same branch (`runtime2-cleanup`). No new branch.
+
+**Granularity decision.** Each Tier 5 item gets its own stage — no bundling. Seven separate stages, each with its own commit.
+
+**Correction landed.** `results.md` and `end-state-tree.md` originally listed `Callback/Signature/this.cs` as a "deferred — absorb into Callback/this.cs" cleanup. That was an OBP error: folding the `Expires` knob onto Callback creates a compound property name (`Callback.SignatureExpires`) — exactly the Rule A violation the cleanup is closing elsewhere. The current shape preserves the navigation chain `app.Callback.Signature.Expires`, which is OBP-correct. **Withdrawn from Tier 5; left as-is.** Note added to `results.md` deviation #3 and to the comparison snapshot in `end-state-tree.md`.
+
+**Coder-todo guardrail noted in plan.** Tier 5 stages don't go chasing items in `Documentation/Runtime2/todos.md` — the rule is "fold a todo in only when the refactor *needs* it" (mirroring stages 14 and 16 from the original plan, which closed two specific todos because they were load-bearing for those renames).
+
+**Stage 23 carve scheduled next session.** Order: 23 (RestoredFrame rename, smallest warm-up) → 24 (Events/Lifecycle collapse, alias re-target) → 25–27 (independent static-eviction warm-ups) → 28 (TypeMapping keystone, likely its own session) → 29 (Utils empty-out, mechanical once 28 lands).
+
+Stage status:
+| Tier | Stages | Status |
+|------|--------|--------|
+| 1–4 | 1–22 | complete |
+| 5 | 23–29 | pending — none carved yet |
+
 ## 2026-05-09 — stage 19 landed; full plan vs delivered audit (`results.md`)
 
 Stage 19 (the last) landed cleanly: Provider → Code rename, end-to-end. C# 2752/2752, PLang 199/199.

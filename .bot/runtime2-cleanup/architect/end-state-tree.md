@@ -61,15 +61,15 @@ PLang/App/
 │   │   └── this.cs                              (gains Call.ExecuteAsync, stage 10)
 │   ├── Diff.cs
 │   ├── Flags.cs
-│   ├── RestoredFrame.cs                         (★ deferred — planned rename to Call/Position.cs)
+│   ├── RestoredFrame.cs                         (★ Tier 5 stage 23 — rename to Call/Position.cs)
 │   ├── this.Snapshot.cs
 │   └── this.cs
 │
 ├── Callback/
-│   ├── AskCallback.cs                           (★ deferred — _options static, Rule C, see results.md)
+│   ├── AskCallback.cs                           (★ Tier 5 stage 25 — _options static, Rule C)
 │   ├── ErrorCallback.cs
 │   ├── ICallback.cs
-│   ├── Signature/this.cs                        (★ deferred — planned absorb into Callback/this.cs)
+│   ├── Signature/this.cs                        (kept — OBP-correct; navigation app.Callback.Signature.Expires is the right shape, see results.md correction 2026-05-09)
 │   └── this.cs                                  (ExpiresInMs → Expires/TimeSpan, stage 14)
 │
 ├── Channels/
@@ -153,7 +153,7 @@ PLang/App/
 │
 ├── Events/
 │   ├── EventType.cs
-│   ├── Lifecycle/                               (★ deferred — planned collapse: Lifecycle layer goes away)
+│   ├── Lifecycle/                               (★ Tier 5 stage 24 — collapse: Lifecycle layer goes away)
 │   │   ├── Bindings/
 │   │   │   ├── Binding/this.cs
 │   │   │   └── this.cs
@@ -241,15 +241,15 @@ PLang/App/
 ├── Types/
 │   └── this.cs                                  (gains Clr(mimeType) overload, stage 18; ★ Registry.cs/Conversion.cs partials deferred with stage 16)
 │
-├── Utils/                                       (★ deferred — planned to be nearly empty; 4 files still here pending stage 16 follow-up)
+├── Utils/                                       (★ Tier 5 — empties out across stages 28+29; 4 files still here)
 │   ├── CommandLineParser.cs
-│   ├── Json.cs                                  (★ deferred — planned DISPERSE to consumers)
+│   ├── Json.cs                                  (★ Tier 5 stage 29 — DISPERSE to consumers)
 │   ├── PathExtension.cs
-│   ├── PlangTypeIndex.cs                        (★ deferred — planned → Types/Registry.cs partial)
+│   ├── PlangTypeIndex.cs                        (★ Tier 5 stage 28 — absorb into Types/Registry.cs partial)
 │   ├── RegisterStartupParameters.cs
 │   ├── StringDistance.cs
-│   ├── TypeConverter.cs                         (★ deferred — planned → Types/Conversion.cs partial)
-│   └── TypeMapping.cs                           (★ deferred — planned → Types/Registry.cs + Formats)
+│   ├── TypeConverter.cs                         (★ Tier 5 stage 29 — Types/Conversion.cs partial)
+│   └── TypeMapping.cs                           (★ Tier 5 stage 28 — instance-bound; keystone)
 │
 │   (Utils/MimeTypes.cs — DELETED → split into Formats/this.cs + Types.Clr(mimeType), stage 18)
 │   (Utils/ReservedKeywords.cs — DELETED → Variables/Reserved.cs, stage 16)
@@ -326,7 +326,7 @@ PLang/App/
 │   │   └── {copy, delete, exists, list, move, read, save}.cs
 │   ├── goal/{call, return}.cs
 │   ├── http/
-│   │   ├── code/                                (★ deferred Rule C — _jsonOptions, _transportInOptions still static)
+│   │   ├── code/                                (★ Tier 5 stage 26 — _jsonOptions, _transportInOptions still static, Rule C)
 │   │   │   ├── Default.cs                       (RENAMED ← DefaultHttpProvider.cs)
 │   │   │   └── IHttp.cs                         (RENAMED ← IHttpProvider.cs)
 │   │   ├── Config.cs
@@ -390,11 +390,11 @@ PLang/App/
 | Settings reshape (collection-over-Data) | ✅ | ✅ |
 | Variables/Reserved.cs | ✅ | ✅ |
 | `app.Formats` mount | `Channels/Serializers/Formats/` | `App/Formats/` (root) |
-| Utils/ "nearly empty" | 4 files | 8 files (4 deferred) |
-| Types/ partials (Registry, Conversion) | ✅ | ★ deferred with stage 16 |
-| Callback/Signature/ absorbed | ✅ | ★ deferred (stage 14 scoped to rename only) |
-| Events/Lifecycle/ collapse | ✅ | ★ deferred |
-| CallStack/RestoredFrame.cs → Call/Position.cs | ✅ | ★ deferred |
+| Utils/ "nearly empty" | 4 files | 8 files (★ Tier 5 stages 28–29) |
+| Types/ partials (Registry, Conversion) | ✅ | ★ Tier 5 stages 28–29 |
+| Callback/Signature/ absorbed | ✅ | withdrawn — current shape is OBP-correct (Rule A would be violated by flattening) |
+| Events/Lifecycle/ collapse | ✅ | ★ Tier 5 stage 24 |
+| CallStack/RestoredFrame.cs → Call/Position.cs | ✅ | ★ Tier 5 stage 23 |
 | Choices/ moved to Builder/Choices/ | ★ tentative | unchanged (correct call) |
 
 Full deviation analysis with reasons in `results.md`.
