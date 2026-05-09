@@ -7,7 +7,7 @@ namespace App.modules.builder;
 [Action("types")]
 public partial class types : IContext
 {
-    [Provider]
+    [Code]
     public partial IBuilder Builder { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Builder.Types(this));

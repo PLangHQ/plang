@@ -113,7 +113,7 @@ public class SnapshotParamsTests
         // DataProperty.EmitSnapshotEntry produces a non-empty block; ProviderProperty
         // intentionally emits nothing (providers aren't parameter-sourced).
         var providerSrc = ReadGenerated("App.modules.matrix.provider.ProviderProp.Action.g.cs");
-        // ProviderProp has only a [Provider] property — __SnapshotParams body should be
+        // ProviderProp has only a [Code] property — __SnapshotParams body should be
         // empty (just an empty list).
         await Assert.That(providerSrc).Contains("__SnapshotParams()");
         // No ParamSnapshot entry for the Provider property.

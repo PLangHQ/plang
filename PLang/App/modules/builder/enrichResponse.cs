@@ -21,7 +21,7 @@ public partial class enrichResponse : IContext
     [IsNotNull]
     public partial Data.@this<Goal> Goal { get; init; }
 
-    [Provider]
+    [Code]
     public partial IBuilder Builder { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Builder.EnrichResponse(this));

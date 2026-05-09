@@ -17,7 +17,7 @@ public partial class Copy : IContext
     [Default(true)]
     public partial Data.@this<bool> IncludeSubfolders { get; init; }
 
-    [Provider]
+    [Code]
     public partial IFile Files { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Files.Copy(this));

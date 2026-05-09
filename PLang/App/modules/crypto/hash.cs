@@ -16,7 +16,7 @@ public partial class Hash : IContext
     [Default("keccak256")]
     public partial Data.@this<string> Algorithm { get; init; }
 
-    [Provider]
+    [Code]
     public partial ICrypto Crypto { get; }
 
     public async Task<Data.@this> Run() => Crypto.Hash(this);

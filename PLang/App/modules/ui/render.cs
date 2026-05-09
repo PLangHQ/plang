@@ -25,7 +25,7 @@ public partial class Render : IContext
     /// </summary>
     public partial Data.@this<bool>? IsFile { get; init; }
 
-    [Provider]
+    [Code]
     public partial ITemplate Provider { get; }
 
     public async Task<Data.@this> Run() => await Provider.Render(this);

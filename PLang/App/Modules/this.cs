@@ -249,7 +249,7 @@ public sealed class @this : IAsyncDisposable
                 {
                     if (prop.Name == "EqualityContract") continue;
                     if (capabilityProps.Contains(prop.Name)) continue;
-                    if (prop.GetCustomAttribute<modules.ProviderAttribute>() != null) continue;
+                    if (prop.GetCustomAttribute<modules.CodeAttribute>() != null) continue;
 
                     var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::App.Types.@this.GetTypeNameStatic(prop.PropertyType));
 

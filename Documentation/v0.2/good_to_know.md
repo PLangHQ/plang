@@ -608,7 +608,7 @@ PLang.Generators/this.cs                — IIncrementalGenerator entry, source-
       └ Property/
           ├ this.cs                     — abstract record (EmitProperty, EmitSnapshotEntry)
           ├ Data/this.cs                — Data<T> / plain Data
-          ├ Provider/this.cs            — [Provider]
+          ├ Code/this.cs                — [Code]
           └ Legacy/this.cs              — raw-scalar (transitional)
 ```
 
@@ -634,9 +634,9 @@ Do NOT create test namespaces matching these alias names — `PLang.Tests.App.Da
 Action handler properties are constrained at build time. `Discovery.IsValidActionProperty` accepts only:
 
 - **`Data<T>` / `Data`** — the standard form. Resolution flows through `Action.GetParameter(name, context).As<T>(Context)` lazily on first read.
-- **`[Provider] T`** — eagerly populated from `app.Providers.Get<T>()` at the start of `ExecuteAsync`. Used for pluggable infrastructure (HTTP, signing, LLM).
+- **`[Code] T`** — eagerly populated from `app.Code.Get<T>()` at the start of `ExecuteAsync`. Used for pluggable infrastructure (HTTP, signing, LLM).
 
-Anything else fails the build with `PLNG001: Property '{0}' on action '{1}' must be Data<T> or [Provider]. Raw scalars are not permitted.` The diagnostic carries the full identifier span so IDE squiggles underline the property name, not a one-character mark.
+Anything else fails the build with `PLNG001: Property '{0}' on action '{1}' must be Data<T> or [Code]. Raw scalars are not permitted.` The diagnostic carries the full identifier span so IDE squiggles underline the property name, not a one-character mark.
 
 **Why the gate exists.** The pre-v4 generator handled raw `partial string` / `partial int` / etc. with bespoke logic per kind — 700 lines of conditionals, hard to extend, easy to break. PLNG001 narrows the surface so emission lives on two Property leaves with one shape each (`Emission/Property/Data` and `Emission/Property/Provider`). The Legacy emitter and `[VariableName]` attribute that bridged this in v4–v6 are gone as of `runtime2-generator-obp` v7.
 
@@ -720,9 +720,9 @@ When a handler errors, `App.Run` stamps `ICodeGenerated.SnapshotParams()` onto `
 
 The null-guard on `FinalValue` (added in v6 nit #3) distinguishes **accessed-and-null** from **accessed-and-redacted**. A sensitive property the handler read but resolved to null reports `FinalValue: null`, not `FinalValue: "******"`. There is no secret to redact in the null case; reporting `"******"` is misleading.
 
-`Provider` properties are not parameter-sourced — they emit no snapshot entry. Match the convention if you add a new property kind.
+`[Code]` properties are not parameter-sourced — they emit no snapshot entry. Match the convention if you add a new property kind.
 
-**Attribute matching is short-name only.** `Discovery` matches `[Sensitive]` by `AttributeClass.Name == "SensitiveAttribute"` — same convention as `[Provider]`. A different `SensitiveAttribute` declared in another namespace would inadvertently trigger masking. Theoretical only; no current namespace collision in the codebase. If standardisation on fully-qualified attribute matching ever lands, do both at once or you create a different inconsistency.
+**Attribute matching is short-name only.** `Discovery` matches `[Sensitive]` by `AttributeClass.Name == "SensitiveAttribute"` — same convention as `[Code]` (`CodeAttribute`). A different `SensitiveAttribute` declared in another namespace would inadvertently trigger masking. Theoretical only; no current namespace collision in the codebase. If standardisation on fully-qualified attribute matching ever lands, do both at once or you create a different inconsistency.
 
 ---
 

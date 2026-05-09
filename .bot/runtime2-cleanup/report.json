@@ -2342,6 +2342,94 @@
         "health": "All 3 v1 code findings closed; suites green; branch ready to merge.",
         "notes": "Next: docs."
       }
+    },
+    {
+      "id": "bde13265-66a9-49f1-a90a-f185ff07ac9a",
+      "bot": "coder",
+      "timestamp_start": "2026-05-09T16:34:44Z",
+      "timestamp_end": "2026-05-09T16:44:52Z",
+      "intent": "Rename [Provider] attribute to [Code] to match the already-renamed App.Code runtime escape-hatch.",
+      "before": {
+        "assumptions": "Runtime call sites already use app.Code.Get<T>(); only the attribute, generator string-match, and docs lag.",
+        "risk": "Generator short-name attribute match is a string — won't fail at compile time, must verify via build + tests."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v29/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/Attributes.cs",
+            "PLang/App/Modules/this.cs",
+            "PLang/App/modules/builder/code/Default.cs",
+            "PLang/App/modules/**/*.cs"
+          ],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "ProviderAttribute → CodeAttribute. 50 [Provider] → [Code] usage sites swept; 2 reflection short-name lookups hand-fixed; XML doc rewritten to name app.Code.Get<T>()."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Generators/Emission/Property/Code/this.cs",
+            "PLang.Generators/Emission/Property/this.cs"
+          ],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "Generator: short-name match string ProviderAttribute → CodeAttribute (2 sites). PLNG001 title + messageFormat + 4 doc/comment sites. Folder Emission/Property/Provider/ → Code/ via git mv (namespace updated). Aliases ProviderProperty → CodeProperty in Discovery + Action emitter. Local var isProvider → isCode."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs",
+            "PLang.Tests/Generator/Matrix/Provider/Handlers.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs",
+            "PLang.Tests/Generator/SnapshotParamsTests.cs",
+            "PLang.Tests/App/Modules/builder/GetActionsTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test fixture stubs that synthesised App.modules.ProviderAttribute renamed to CodeAttribute (in-memory compilations). Matrix Handlers attribute usage updated. GeneratorValidationTests folder/file path checks Provider/ → Code/. ProviderProperty_BuildsSuccessfully renamed to CodeProperty_BuildsSuccessfully. Comments swept."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/architecture.md",
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/action-catalog.md",
+            "Documentation/v0.2/builder-self-rebuild-plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "All [Provider] references swept to [Code]; folder-tree references in architecture.md + good_to_know.md updated to Code/this.cs."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/claude-md-proposals.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "CLAUDE.md proposal for /CLAUDE.md:39 — replace [Provider] T with [Code] T (eagerly resolved from app.Code.Get<T>()). Docs picks up at merge."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/coder/v29/plan.md",
+            ".bot/runtime2-cleanup/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v29 session docs."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Clean rebuild + both suites green (C# 2752/2752, PLang 199/199). Attribute now matches the runtime registry name.",
+        "notes": "Branch ready to re-audit / merge. v28 + v29 bundled."
+      }
     }
   ]
 }

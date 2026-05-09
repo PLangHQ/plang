@@ -8,7 +8,7 @@ namespace App.modules.builder;
 [Action("actions")]
 public partial class GetActions : IContext
 {
-    [Provider]
+    [Code]
     public partial IBuilder Builder { get; }
 
     public async Task<Data.@this> Run() => await Builder.Actions(this);

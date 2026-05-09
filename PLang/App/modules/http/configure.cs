@@ -41,7 +41,7 @@ public partial class configure : IContext, IConfigure<Config>
     [Default(false)]
     public partial Data.@this<bool> Default { get; init; }
 
-    [Provider]
+    [Code]
     public partial IHttp Http { get; }
 
     public async Task<Data.@this> Run() => Http.Configure(this);

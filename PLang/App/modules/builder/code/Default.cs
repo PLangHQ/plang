@@ -280,7 +280,7 @@ public class Default : IBuilder
             // Required-parameter check. A property is required when:
             //   - non-nullable type (Data<T>, not Data<T>?, not <T?>)
             //   - has no [Default] attribute
-            //   - is not a [Provider], capability interface, or framework slot
+            //   - is not a [Code], capability interface, or framework slot
             // The LLM omitting a required param is a build-breaking mistake — without
             // the param, the runtime can't construct the action's parameter record.
             // Catch it at build time so LlmFixer / HandleValidationError can re-prompt.
@@ -297,7 +297,7 @@ public class Default : IBuilder
                         System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
                     {
                         if (prop.Name == "EqualityContract") continue;
-                        if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<modules.ProviderAttribute>(prop) != null) continue;
+                        if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<modules.CodeAttribute>(prop) != null) continue;
                         if (System.Reflection.CustomAttributeExtensions.GetCustomAttribute<modules.DefaultAttribute>(prop) != null) continue;
                         if (CapabilityPropName(prop)) continue;
 

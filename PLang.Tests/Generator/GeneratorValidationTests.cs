@@ -41,7 +41,7 @@ public class GeneratorValidationTests
     }
 
     // Post-v5: Discovery emits PLNG001 diagnostic when a property is not Data<T>
-    // or [Provider] T. ([VariableName] string was removed; Variable-name slots are
+    // or [Code] T. ([VariableName] string was removed; Variable-name slots are
     // now Data<Variable>.) Verified by the descriptor's existence and message
     // format in Discovery/this.cs.
     [Test]
@@ -69,7 +69,7 @@ public class GeneratorValidationTests
             namespace App.Test {
                 [App.modules.Action]
                 public partial class BadHandler {
-                    // Raw int — not Data<T>, not [Provider], not [VariableName]. Triggers PLNG001.
+                    // Raw int — not Data<T>, not [Code], not [VariableName]. Triggers PLNG001.
                     public partial int RawIntProperty { get; init; }
                 }
             }
@@ -115,13 +115,13 @@ public class GeneratorValidationTests
     }
 
     [Test]
-    public async Task ProviderProperty_BuildsSuccessfully()
+    public async Task CodeProperty_BuildsSuccessfully()
     {
-        // Verified by the Provider matrix handlers compiling green (matrix/provider/Handlers.cs).
-        // The Provider leaf lives at Emission/Property/Provider/this.cs as record @this (per OBP convention).
-        var providerSrc = ReadGeneratorSource("Emission/Property/Provider/this.cs");
-        await Assert.That(providerSrc).Contains("namespace PLang.Generators.Emission.Property.Provider");
-        await Assert.That(providerSrc).Contains("record @this");
+        // Verified by the [Code] matrix handlers compiling green (matrix/provider/Handlers.cs).
+        // The Code leaf lives at Emission/Property/Code/this.cs as record @this (per OBP convention).
+        var codeSrc = ReadGeneratorSource("Emission/Property/Code/this.cs");
+        await Assert.That(codeSrc).Contains("namespace PLang.Generators.Emission.Property.Code");
+        await Assert.That(codeSrc).Contains("record @this");
     }
 
     [Test]
@@ -211,11 +211,11 @@ public class GeneratorValidationTests
     [Test]
     public async Task PropertyHierarchy_TwoLeavesOnly()
     {
-        // Post-v5 contract: only two property leaves remain — Data and Provider.
+        // Post-v5 contract: only two property leaves remain — Data and Code.
         // Legacy/ is deleted along with [VariableName].
         var basePath = Path.Combine(RepoRoot, "PLang.Generators", "Emission", "Property");
         await Assert.That(Directory.Exists(Path.Combine(basePath, "Data"))).IsTrue();
-        await Assert.That(Directory.Exists(Path.Combine(basePath, "Provider"))).IsTrue();
+        await Assert.That(Directory.Exists(Path.Combine(basePath, "Code"))).IsTrue();
         await Assert.That(File.Exists(Path.Combine(basePath, "this.cs"))).IsTrue();
         await Assert.That(Directory.Exists(Path.Combine(basePath, "Legacy"))).IsFalse();
     }
@@ -234,8 +234,8 @@ public class GeneratorValidationTests
         await Assert.That(codeOnly.Contains("IPropertySymbol")).IsFalse();
         await Assert.That(codeOnly.Contains("ITypeSymbol")).IsFalse();
 
-        // Same check on the leaves (post-v5: Data + Provider only)
-        foreach (var leaf in new[] { "Data/this.cs", "Provider/this.cs" })
+        // Same check on the leaves (post-v5: Data + Code only)
+        foreach (var leaf in new[] { "Data/this.cs", "Code/this.cs" })
         {
             var leafSrc = ReadGeneratorSource($"Emission/Property/{leaf}");
             var leafCode = string.Join('\n', leafSrc.Split('\n')

@@ -63,7 +63,7 @@ All attributes live in `App.modules` (plus the built-in `System.ComponentModel.D
 |---|---|
 | `[IsNotNull]` | Fails validation if the parameter is missing at build time. The LLM sees this reflected implicitly — non-nullable properties render without the trailing `?`. |
 | `[Default(value)]` | Provides a default. Renders as `Name([type = default])` in the catalog so the LLM knows it's optional. |
-| `[Provider]` | Hides the property from the catalog — it's injected by the source generator at runtime from the provider registry. |
+| `[Code]` | Hides the property from the catalog — it's injected by the source generator at runtime from `app.Code.Get<T>()`. |
 | `[IsInitiated]` | Source-generator hint for Data properties that must be non-null before Run() (runtime concern, not catalog). |
 
 ### On the parameter's type

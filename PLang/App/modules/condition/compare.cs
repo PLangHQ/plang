@@ -14,7 +14,7 @@ public partial class Compare : IContext
     public partial Data.@this<Operator> Operator { get; init; }
     public partial Data.@this? Right { get; init; }
 
-    [Provider]
+    [Code]
     public partial IEvaluator Evaluator { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Evaluator.Evaluate(this));

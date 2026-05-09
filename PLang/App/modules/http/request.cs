@@ -55,7 +55,7 @@ public partial class request : IContext
     /// <summary>Stream format: Line (NDJSON), SSE (Server-Sent Events), or Bytes (raw chunks).</summary>
     public partial Data.@this<StreamFormat>? StreamAs { get; init; }
 
-    [Provider]
+    [Code]
     public partial IHttp Http { get; }
 
     public async Task<Data.@this> Run() => await Http.SendAsync(this);

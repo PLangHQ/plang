@@ -11,7 +11,7 @@ public partial class Equals : IContext
     public partial Data.@this? Actual { get; init; }
     public partial Data.@this<string>? Message { get; init; }
 
-    [Provider]
+    [Code]
     public partial IAssert Assert { get; }
 
     public Task<Data.@this> Run() =>

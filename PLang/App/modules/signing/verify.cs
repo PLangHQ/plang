@@ -22,7 +22,7 @@ public partial class verify : IContext
     /// <summary>Optional timeout override in milliseconds.</summary>
     public partial Data.@this<long>? TimeoutMs { get; init; }
 
-    [Provider]
+    [Code]
     public partial ISigning Signer { get; }
 
     public async Task<Data.@this> Run() => await Signer.VerifyAsync(this);

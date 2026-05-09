@@ -41,11 +41,12 @@ public sealed class GoalCallbackAttribute : Attribute
 }
 
 /// <summary>
-/// Marks a property for automatic provider injection via the source generator.
-/// The generated code resolves the provider from App.Code at execution time.
+/// Marks a property for automatic injection from the runtime escape-hatch
+/// <c>app.Code</c>. The source generator emits <c>app.Code.Get&lt;T&gt;()</c>
+/// in <c>ExecuteAsync</c> for each <c>[Code]</c> property.
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
-public sealed class ProviderAttribute : Attribute { }
+public sealed class CodeAttribute : Attribute { }
 
 /// <summary>
 /// Marks a Data? property that must be initialized (non-null) before Run() is called.

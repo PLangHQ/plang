@@ -36,7 +36,7 @@ Fix: skip `TryConvertTo` for Scalar PlangType targets (types with a `Resolve(inp
 
 `GoalsSave` now calls `validateResponse.ValidateGoalState(goal)` as the final safety net before persisting the `.pr` — closes the documented-but-unwired hook the validateResponse author had set up.
 
-`Validate` (`builder.validate`) now also enforces required parameters: any property that's non-nullable, has no `[Default]` attribute, and isn't a `[Provider]` or capability-interface slot must appear in the LLM-emitted `Parameters` list. Missing required params now produce a `BuildValidation(400)` error that triggers `LlmFixer` / `HandleValidationError` retry instead of slipping through to a saved-but-broken `.pr`. Verified by stress test (`read` step without `Path` correctly aborts the build).
+`Validate` (`builder.validate`) now also enforces required parameters: any property that's non-nullable, has no `[Default]` attribute, and isn't a `[Code]` or capability-interface slot must appear in the LLM-emitted `Parameters` list. Missing required params now produce a `BuildValidation(400)` error that triggers `LlmFixer` / `HandleValidationError` retry instead of slipping through to a saved-but-broken `.pr`. Verified by stress test (`read` step without `Path` correctly aborts the build).
 
 ### Schema-driven type tag on parameters
 

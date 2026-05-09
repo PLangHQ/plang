@@ -8,7 +8,7 @@ namespace PLang.Tests.Generator.Diagnostics;
 // Post-v5 PLNG001 contract — allowed shapes shrink to two:
 //   - Data<T>
 //   - plain Data
-//   - [Provider] T
+//   - [Code] T
 //
 // [VariableName] string was a transitional carve-out; it is deleted in v5.
 // Variable-name slots use Data<Variable> (App.Variables.Variable, with the
@@ -41,7 +41,7 @@ public class Plng001PostMigrationTests
         using System;
         namespace App.modules {
             public class ActionAttribute : Attribute {}
-            public class ProviderAttribute : Attribute {}
+            public class CodeAttribute : Attribute {}
             public interface IContext {}
             public interface ICodeGenerated {}
         }
@@ -85,16 +85,16 @@ public class Plng001PostMigrationTests
         await Assert.That(diagnostics.Any(d => d.Id == "PLNG001")).IsFalse();
     }
 
-    // [Provider] T property — for engine-resolved providers. NO PLNG001.
+    // [Code] T property — for engine-resolved code dependencies. NO PLNG001.
     [Test]
-    public async Task PLNG001_ProviderProperty_NoDiagnostic()
+    public async Task PLNG001_CodeProperty_NoDiagnostic()
     {
         var source = Stubs + """
             namespace App.Test {
                 public interface IFooProvider {}
                 [App.modules.Action]
                 public partial class GoodHandler {
-                    [App.modules.Provider]
+                    [App.modules.Code]
                     public partial IFooProvider Foo { get; init; }
                 }
             }
@@ -107,7 +107,7 @@ public class Plng001PostMigrationTests
     // [VariableName] string property — the transitional carve-out is REMOVED.
     // The attribute itself no longer exists in App.modules; if a handler still
     // declares a `partial string` (with the now-undefined [VariableName] decoration
-    // or without), PLNG001 fires because raw `string` doesn't match Data<T>/Data/[Provider].
+    // or without), PLNG001 fires because raw `string` doesn't match Data<T>/Data/[Code].
     [Test]
     public async Task PLNG001_VariableNameAttribute_NowReportsDiagnostic()
     {

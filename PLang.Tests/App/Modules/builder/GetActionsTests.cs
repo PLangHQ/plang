@@ -119,7 +119,7 @@ public class GetActionsTests
         var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)result.Value!;
 
-        // No action should expose [Provider]-attributed interface properties
+        // No action should expose [Code]-attributed interface properties
         // (e.g., IBuilder, IFile, ILlm)
         // Note: string params named "Provider" (like identity.create) are legitimate
         foreach (var a in actions)
@@ -129,7 +129,7 @@ public class GetActionsTests
                 p.Value.ToString()!.Contains("Provider"));
             await Assert.That(providerParam)
                 .IsNull()
-                .Because($"{a.Module}.{a.ActionName} should not expose [Provider] interface properties");
+                .Because($"{a.Module}.{a.ActionName} should not expose [Code] interface properties");
         }
     }
 }

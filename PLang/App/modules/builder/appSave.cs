@@ -7,7 +7,7 @@ namespace App.modules.builder;
 [Action("appSave")]
 public partial class appSave : IContext
 {
-    [Provider]
+    [Code]
     public partial IBuilder Builder { get; }
 
     public async Task<Data.@this> Run() => await Builder.AppSave(this);

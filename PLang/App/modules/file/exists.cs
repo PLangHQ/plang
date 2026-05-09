@@ -12,7 +12,7 @@ public partial class Exists : IContext
 {
     public partial Data.@this<FileSystem.Path> Path { get; init; }
 
-    [Provider]
+    [Code]
     public partial IFile Files { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Files.Exists(this));

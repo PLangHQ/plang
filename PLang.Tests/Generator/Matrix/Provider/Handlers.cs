@@ -23,7 +23,7 @@ public sealed class FakeProvider : IFakeProvider
 [global::App.modules.Action("providerprop")]
 public partial class ProviderProp : global::App.modules.IContext
 {
-    [global::App.modules.Provider]
+    [global::App.modules.Code]
     public partial IFakeProvider Fake { get; }
 
     public Task<global::App.Data.@this> Run() =>
@@ -33,7 +33,7 @@ public partial class ProviderProp : global::App.modules.IContext
 [global::App.modules.Action("providermissing")]
 public partial class ProviderMissing : global::App.modules.IContext
 {
-    [global::App.modules.Provider]
+    [global::App.modules.Code]
     public partial IUnregisteredProvider Missing { get; }
 
     public Task<global::App.Data.@this> Run() =>

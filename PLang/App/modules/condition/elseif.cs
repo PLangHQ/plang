@@ -16,7 +16,7 @@ public partial class Elseif : IContext, IStep
     [Default(false)]
     public partial Data.@this<bool> Negate { get; init; }
 
-    [Provider]
+    [Code]
     public partial IEvaluator Evaluator { get; }
 
     public Task<Data.@this> Run()

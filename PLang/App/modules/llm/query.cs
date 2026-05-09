@@ -102,7 +102,7 @@ public partial class query : IContext, IBuildValidatable
     [Default(true)]
     public partial Data.@this<bool> Cache { get; init; }
 
-    [Provider]
+    [Code]
     public partial ILlm Llm { get; }
 
     public async Task<Data.@this> Run() => await Llm.Query(this);

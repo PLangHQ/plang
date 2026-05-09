@@ -443,7 +443,7 @@ public sealed partial class @this : IAsyncDisposable
     /// CLR exceptions into ServiceError with the post-Push chain attached.
     ///
     /// The generated handler ExecuteAsync is thin — it sets markers, eagerly resolves
-    /// [Provider] properties, resets backing fields, validates [IsNotNull], then calls
+    /// [Code] properties, resets backing fields, validates [IsNotNull], then calls
     /// Run() directly. App.Run wraps it. Return variable mapping is owned by
     /// Action.RunAsync, not here.
     /// </summary>

@@ -13,7 +13,7 @@ public partial class Move : IContext
     [Default(false)]
     public partial Data.@this<bool> Overwrite { get; init; }
 
-    [Provider]
+    [Code]
     public partial IFile Files { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Files.Move(this));

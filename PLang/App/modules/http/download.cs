@@ -37,7 +37,7 @@ public partial class download : IContext
     [GoalCallback("progress")]
     public partial Data.@this<GoalCall>? OnProgress { get; init; }
 
-    [Provider]
+    [Code]
     public partial IHttp Http { get; }
 
     public async Task<Data.@this> Run() => await Http.DownloadAsync(this);

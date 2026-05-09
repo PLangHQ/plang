@@ -20,7 +20,7 @@ public partial class Create : IContext
     /// <summary>Optional provider name override. Uses default IKey if not specified.</summary>
     public partial Data.@this<string>? Provider { get; init; }
 
-    [Provider]
+    [Code]
     public partial IIdentity Identity { get; }
 
     public async Task<Data.@this> Run() => await Identity.CreateAsync(this);

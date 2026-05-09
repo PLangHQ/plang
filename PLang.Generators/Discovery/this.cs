@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using PLang.Generators.Emission.Property;
 using DataProperty = PLang.Generators.Emission.Property.Data.@this;
-using ProviderProperty = PLang.Generators.Emission.Property.Provider.@this;
+using CodeProperty = PLang.Generators.Emission.Property.Code.@this;
 using PropertyBase = PLang.Generators.Emission.Property.@this;
 
 namespace PLang.Generators.Discovery;
@@ -37,13 +37,13 @@ public static class @this
     /// <summary>
     /// Diagnostic descriptor for raw-scalar partial properties on [Action] handlers.
     /// Post-v5 contract: every action property must be <c>Data&lt;T&gt;</c>, plain <c>Data</c>,
-    /// or <c>[Provider]</c>-attributed. Variable-name slots use <c>Data&lt;Variable&gt;</c>
+    /// or <c>[Code]</c>-attributed. Variable-name slots use <c>Data&lt;Variable&gt;</c>
     /// (App.Variables.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
     /// </summary>
     internal static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
         id: "PLNG001",
-        title: "Action property must be Data<T> or [Provider]",
-        messageFormat: "Property '{0}' on action '{1}' must be Data<T> or [Provider] T. Raw scalars are not permitted.",
+        title: "Action property must be Data<T> or [Code]",
+        messageFormat: "Property '{0}' on action '{1}' must be Data<T> or [Code] T. Raw scalars are not permitted.",
         category: "PLang.Generators",
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -86,7 +86,7 @@ public static class @this
             if (implementsIEvent) ievents.Add(prop.Name);
 
             // Raw-scalar diagnostic: anything that doesn't qualify as Data<T>, plain Data,
-            // or [Provider] T is rejected. Variable-name slots are Data<Variable>.
+            // or [Code] T is rejected. Variable-name slots are Data<Variable>.
             if (!IsValidActionProperty(prop))
             {
                 var loc = prop.Locations.FirstOrDefault();
@@ -119,12 +119,12 @@ public static class @this
 
     /// <summary>
     /// Post-v5 contract gate: action property is valid iff it is plain <c>Data</c>,
-    /// <c>Data&lt;T&gt;</c>, or <c>[Provider] T</c>. Anything else (raw scalars,
+    /// <c>Data&lt;T&gt;</c>, or <c>[Code] T</c>. Anything else (raw scalars,
     /// the deleted <c>[VariableName] string</c>) reports a build-time diagnostic.
     /// </summary>
     private static bool IsValidActionProperty(IPropertySymbol prop)
     {
-        if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "ProviderAttribute"))
+        if (prop.GetAttributes().Any(a => a.AttributeClass?.Name == "CodeAttribute"))
             return true;
 
         // Data<T> or plain Data. Roslyn's IPropertySymbol.Name returns the bare identifier
@@ -144,16 +144,16 @@ public static class @this
     /// </summary>
     private static (PropertyBase? Prop, bool ImplementsIEvent) BuildProperty(IPropertySymbol prop)
     {
-        // [Provider] takes priority — these aren't parameter-sourced.
-        var isProvider = prop.GetAttributes().Any(a =>
-            a.AttributeClass?.Name == "ProviderAttribute");
-        if (isProvider)
+        // [Code] takes priority — these aren't parameter-sourced.
+        var isCode = prop.GetAttributes().Any(a =>
+            a.AttributeClass?.Name == "CodeAttribute");
+        if (isCode)
         {
             var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             // ImplementsIContext is used for the engine-resolution expression — read off the parent class.
             var parentImplsCtx = prop.ContainingType.AllInterfaces.Any(i =>
                 i.Name == "IContext" && i.ContainingNamespace.ToDisplayString() == "App.modules");
-            return (new ProviderProperty(prop.Name, typeName, parentImplsCtx), false);
+            return (new CodeProperty(prop.Name, typeName, parentImplsCtx), false);
         }
 
         // [Default] literal expression

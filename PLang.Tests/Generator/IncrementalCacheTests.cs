@@ -155,7 +155,7 @@ public class IncrementalCacheTests
         using System;
         namespace App.modules {
             public class ActionAttribute : Attribute {}
-            public class ProviderAttribute : Attribute {}
+            public class CodeAttribute : Attribute {}
             public interface IContext {}
             public interface IChannel {}
             public interface IAction {}

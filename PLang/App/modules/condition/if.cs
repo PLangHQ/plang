@@ -17,7 +17,7 @@ public partial class If : IContext, IStep
     [Default(false)]
     public partial Data.@this<bool> Negate { get; init; }
 
-    [Provider]
+    [Code]
     public partial IEvaluator Evaluator { get; }
 
     public async Task<Data.@this> Run()

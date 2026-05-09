@@ -23,7 +23,7 @@ public partial class merge : IContext
     [IsNotNull]
     public partial Data.@this<Step> StepFromLlm { get; init; }
 
-    [Provider]
+    [Code]
     public partial IBuilder Builder { get; }
 
     public Task<Data.@this> Run() => Task.FromResult(Builder.Merge(this));

@@ -10,7 +10,7 @@ public partial class Save : IContext
     public partial Data.@this<FileSystem.Path> Path { get; init; }
     public partial Data.@this? Value { get; init; }
 
-    [Provider]
+    [Code]
     public partial IFile Files { get; }
 
     public Task<Data.@this> Run() => Files.Save(this);

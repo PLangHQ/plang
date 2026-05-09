@@ -20,7 +20,7 @@ public partial class Archive : IContext
     [Default(false)]
     public partial Data.@this<bool> Force { get; init; }
 
-    [Provider]
+    [Code]
     public partial IIdentity Identity { get; }
 
     public async Task<Data.@this> Run() => await Identity.ArchiveAsync(this);

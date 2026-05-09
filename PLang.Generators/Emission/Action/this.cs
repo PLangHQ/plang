@@ -3,7 +3,7 @@ using System.Text;
 using PLang.Generators.Discovery;
 using PLang.Generators.Emission.Property;
 using DataProperty = PLang.Generators.Emission.Property.Data.@this;
-using ProviderProperty = PLang.Generators.Emission.Property.Provider.@this;
+using CodeProperty = PLang.Generators.Emission.Property.Code.@this;
 
 namespace PLang.Generators.Emission.Action;
 
@@ -140,7 +140,7 @@ public static class @this
         // Skip when action is null (direct C# composition via init keeps init values).
         foreach (var prop in info.Properties)
         {
-            if (prop is ProviderProperty) continue;
+            if (prop is CodeProperty) continue;
             sb.Append($$"""
                                 __{{prop.Name}}_backing = default;
                                 __{{prop.Name}}_set = false;
@@ -180,8 +180,8 @@ public static class @this
             sb.AppendLine($"        Static = context.GetModuleStatic(\"{moduleName}\");");
         }
 
-        // Eager [Provider] resolution
-        foreach (var prop in info.Properties.OfType<ProviderProperty>())
+        // Eager [Code] resolution
+        foreach (var prop in info.Properties.OfType<CodeProperty>())
         {
             sb.Append($$"""
                         var __{{prop.Name}}_result = app.Code.Get<{{prop.TypeName}}>();

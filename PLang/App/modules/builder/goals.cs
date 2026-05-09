@@ -9,7 +9,7 @@ public partial class goals : IContext
 {
     public partial Data.@this<string> Path { get; init; }
 
-    [Provider]
+    [Code]
     public partial IBuilder Builder { get; }
 
     public async Task<Data.@this> Run() => await Builder.Goals(this);

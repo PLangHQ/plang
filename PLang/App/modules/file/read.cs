@@ -18,7 +18,7 @@ public partial class Read : IContext
     [Default(false)]
     public partial Data.@this<bool> ResolveVariables { get; init; }
 
-    [Provider]
+    [Code]
     public partial IFile Files { get; }
 
     public Task<Data.@this> Run()

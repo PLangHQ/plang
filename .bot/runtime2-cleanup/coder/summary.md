@@ -1,86 +1,104 @@
 # coder — runtime2-cleanup
 
 ## Version
-v28 — Auditor v1 fix pass. Three minor findings addressed before merge.
+v29 — `[Provider]` attribute renamed to `[Code]` to match the runtime
+escape-hatch (`app.Code.Get<T>()`).
 
 ## What this is
 
-Auditor v1 cleared the 27-stage cleanup but flagged three pre-merge fixes
-(verdict: FAIL until fixed). v28 takes them all on the same branch:
+The runtime escape-hatch was renamed `App.Providers` → `App.Code` in an
+earlier sweep — call sites already use `app.Code.Get<T>()`. The attribute
+name lagged, leaving a contradictory shape:
 
-1. **Finding #3** — `test/report.cs` was still doing `Console.Out.Write` to emit
-   the run summary. The branch's own thesis is channel discipline; that line
-   was the one anti-thematic spot left.
-2. **Finding #2** — `App/Diagnostics/this.cs` was a `public static class @this`,
-   abusing the `@this` convention (which signals folder-as-instance reachable
-   via `parent.Folder`). There is no `app.Diagnostics`.
-3. **Finding #1** — `TypeMappingTestFacade.Json.CaseInsensitiveRead` was a 4th
-   independent fork of the case-insensitive-read JSON options bag, not routed
-   to either production home. Future converter additions in
-   `Types/Conversion.cs` would silently drift in tests.
+```csharp
+[Provider] IFoo Foo { get; init; }    // resolves through app.Code
+```
+
+v29 closes the gap so the attribute, the registry, and the generator's
+emitted call all use the same word.
 
 ## What was done
 
-### Fix #3 — report.cs channel write (1 line in source)
-- `PLang/App/modules/test/report.cs:38`: replaced
-  `Console.Out.Write(console.ToString());` with
-  `await Context.App.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output, console.ToString());`.
-- Tests in `PLang.Tests/App/Testing/{ReportActionTests,EdgeCaseTests,TestMetadataTests}.cs`
-  switched from `Console.SetOut(StringWriter)` capture to a
-  `StreamChannel(EngineChannels.Output, MemoryStream, ...)` registered on
-  `_app.User.Channels`. `[NotInParallel]` removed (no longer needed — the
-  capture is per-app, not process-wide). Helper `CapturedOutput()` reads the
-  memory stream as UTF-8.
+### Attribute + usage sweep
+- `PLang/App/modules/Attributes.cs:48`: class `ProviderAttribute` → `CodeAttribute`.
+  XML doc rewritten — names `app.Code.Get<T>()` explicitly.
+- 50 call sites in `PLang/App/modules/**`: `[Provider]` → `[Code]` (sed sweep).
+- 2 reflection short-name lookups missed by the sweep
+  (`PLang/App/Modules/this.cs:252`, `PLang/App/modules/builder/code/Default.cs:300`):
+  `<modules.ProviderAttribute>` → `<modules.CodeAttribute>`.
 
-### Fix #2 — Diagnostics rename
-- Renamed `PLang/App/Diagnostics/this.cs` → `PLang/App/Diagnostics/Format.cs`
-  (via `git mv`). Class `App.Diagnostics.@this` → `App.Diagnostics.Format`.
-  Public method `Format(value)` → `Value(value)` (avoids `Format.Format(...)`).
-  Doc comment now explicitly notes why the name dodges `@this`.
-- 5 caller updates: `test/report.cs:280, 328`, `assert/code/Default.cs:176`,
-  `Errors/AssertionError.cs:42`, `TypeMappingTestFacade.cs:74`.
-  Pattern: `Diagnostics.@this.Format(x)` → `Diagnostics.Format.Value(x)`,
-  `Diagnostics.@this.Options` → `Diagnostics.Format.Options`.
+### Source generator
+- `PLang.Generators/Discovery/this.cs`:
+  - Short-name attribute match `"ProviderAttribute"` → `"CodeAttribute"` at
+    both call sites (BuildProperty + IsValidActionProperty).
+  - PLNG001 title + messageFormat: `[Provider]` → `[Code]`.
+  - Local variable `isProvider` → `isCode`; alias
+    `using ProviderProperty = ...Provider.@this` →
+    `using CodeProperty = ...Code.@this`.
+  - Doc comments swept.
+- `PLang.Generators/Emission/Property/Provider/` →
+  `PLang.Generators/Emission/Property/Code/` (`git mv`); namespace
+  `PLang.Generators.Emission.Property.Provider` →
+  `PLang.Generators.Emission.Property.Code`.
+- `PLang.Generators/Emission/Action/this.cs`: alias and `OfType<...>`
+  references switched from `ProviderProperty` to `CodeProperty`.
+- `PLang.Generators/Emission/Property/this.cs`: doc reference swept.
 
-### Fix #1 — Route TypeMappingTestFacade to production
-- `PLang/App/Types/Conversion.cs`: `_caseInsensitiveRead` flipped from
-  `private` to `internal` and exposed via
-  `internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;`.
-  Doc comment updated to call out the test-surface route.
-  `InternalsVisibleTo("PLang.Tests")` was already wired (`PLang.csproj:44`).
-- `PLang.Tests/Support/TypeMappingTestFacade.cs:65-70`: 6-line locally-built
-  bag replaced with a one-line forwarder:
-  `public static JsonSerializerOptions CaseInsensitiveRead => global::App.Types.@this.CaseInsensitiveRead;`.
-  Comment names the asymmetry: `http/code/Default.cs` keeps its independent
-  copy by design (separate consumer).
+### Test fixtures
+- Two generator-test stubs that synthesised an `App.modules.ProviderAttribute`
+  for in-memory compilation (`Plng001PostMigrationTests.cs:44`,
+  `IncrementalCacheTests.cs:158`) → `CodeAttribute`.
+- `PLang.Tests/Generator/Matrix/Provider/Handlers.cs`: `[App.modules.Provider]`
+  → `[App.modules.Code]` (left the folder name alone — it's a test scenario
+  label, not a code name).
+- `GeneratorValidationTests.cs`:
+  - `ProviderProperty_BuildsSuccessfully` → `CodeProperty_BuildsSuccessfully`,
+    file path checks updated to `Emission/Property/Code/`.
+  - `PropertyHierarchy_TwoLeavesOnly` and
+    `ActionPropertyRecord_NoSymbolLeaks_IncrementalSafe`: directory + file
+    checks `Provider/` → `Code/`.
+- All `[Provider]` references in test comments swept.
+
+### Docs
+- `Documentation/v0.2/architecture.md` (4 references), `good_to_know.md` (4),
+  `action-catalog.md` (1), `builder-self-rebuild-plan.md` (1) — all updated.
+- `CLAUDE.md` line 39: NOT edited directly (docs-owned, per project rule).
+  Proposal appended to `.bot/runtime2-cleanup/claude-md-proposals.md`.
 
 ## Code example
 
-The pre-existing channel test pattern, now adopted by the test/report tests:
+Before:
 
 ```csharp
-_captureStream = new System.IO.MemoryStream();
-_app.User.Channels.Register(new StreamChannel(
-    EngineChannels.Output, _captureStream,
-    ChannelDirection.Output, ownsStream: true)
-{ Mime = "text/plain" });
-// ...
-private string CapturedOutput()
-    => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
+[Action("query")]
+public partial class Query : IContext
+{
+    [Provider]
+    public partial ILlmProvider Llm { get; init; }   // attribute lies; resolves via app.Code
+}
+```
+
+After:
+
+```csharp
+[Action("query")]
+public partial class Query : IContext
+{
+    [Code]
+    public partial ILlmProvider Llm { get; init; }   // matches the emitted app.Code.Get<ILlmProvider>()
+}
 ```
 
 ## Verification
 
-- Clean rebuild: `rm -rf */bin */obj && dotnet build PlangConsole` → 0 errors.
-- C#: `dotnet run --project PLang.Tests` → **2752 / 2752 pass**.
-- PLang: `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test`
-  → **199 / 199 pass**.
-
-Both suites match the auditor's verified baseline (fb8eda3b → unchanged after
-v28).
+- Clean rebuild: `rm -rf */bin */obj && dotnet build PlangConsole` → 0 errors
+  (after one round of fixing 2 reflection-string misses + the test-fixture
+  stubs the sweep didn't reach).
+- C# tests: `dotnet run --project PLang.Tests` → **2752 / 2752**.
+- PLang tests: `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test`
+  → **199 / 199**.
 
 ## What's next
 
-Branch is ready for merge to runtime2. All three actionable auditor findings
-addressed; finding #4 (process — no tester pass) was advisory for the next
-branch and stays as-is.
+Branch ready for re-audit + merge. v28 + v29 are bundled — auditor should
+re-clear both at once.

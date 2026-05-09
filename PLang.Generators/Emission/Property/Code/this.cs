@@ -1,10 +1,10 @@
 using System.Text;
 using Base = PLang.Generators.Emission.Property.@this;
 
-namespace PLang.Generators.Emission.Property.Provider;
+namespace PLang.Generators.Emission.Property.Code;
 
 /// <summary>
-/// Emits a [Provider]-attributed property — eagerly assigned in ExecuteAsync
+/// Emits a [Code]-attributed property — eagerly assigned in ExecuteAsync
 /// from app.Code.Get&lt;T&gt;(). Lazy access pattern allows direct test
 /// usage too (Context.App.Code.Get is invoked on first read if not pre-set).
 /// </summary>
@@ -27,6 +27,6 @@ public sealed record @this(
 
     public override void EmitSnapshotEntry(StringBuilder sb)
     {
-        // Providers are not parameter-sourced — no PrValue, no FinalValue. Skip the snapshot entry.
+        // [Code] slots are not parameter-sourced — no PrValue, no FinalValue. Skip the snapshot entry.
     }
 }

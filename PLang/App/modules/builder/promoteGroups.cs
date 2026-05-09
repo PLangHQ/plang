@@ -17,7 +17,7 @@ public partial class promoteGroups : IContext
     [IsNotNull]
     public partial Data.@this Steps { get; init; }
 
-    [Provider]
+    [Code]
     public partial IBuilder Builder { get; }
 
     public Task<Data.@this> Run() => Builder.PromoteGroups(this);

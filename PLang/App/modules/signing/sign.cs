@@ -25,7 +25,7 @@ public partial class sign : IContext
     /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>
     public partial Data.@this<TimeSpan>? Expires { get; init; }
 
-    [Provider]
+    [Code]
     public partial ISigning Signer { get; }
 
     public async Task<Data.@this> Run() => await Signer.SignAsync(this);

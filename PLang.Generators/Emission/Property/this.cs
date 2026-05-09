@@ -4,7 +4,7 @@ namespace PLang.Generators.Emission.Property;
 
 /// <summary>
 /// Abstract base for action-property emitters.
-/// Concrete leaves (DataProperty, ProviderProperty) carry the
+/// Concrete leaves (DataProperty, CodeProperty) carry the
 /// per-property metadata they need and emit two slots: the partial property body
 /// (EmitProperty) and the per-property __SnapshotParams entry (EmitSnapshotEntry).
 ///

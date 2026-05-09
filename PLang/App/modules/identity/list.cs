@@ -11,7 +11,7 @@ namespace App.modules.identity;
 [Action("list")]
 public partial class list : IContext
 {
-    [Provider]
+    [Code]
     public partial IIdentity Identity { get; }
 
     public async Task<Data.@this> Run() => await Identity.ListAsync(this);
