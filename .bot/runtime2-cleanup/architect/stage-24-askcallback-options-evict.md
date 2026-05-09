@@ -1,10 +1,12 @@
 # Stage 24: `askcallback-options-evict`
 
 **Read first:**
-- `plan/principles.md` — OBP discipline. Rule C (static fields are a missing `@this`); smell #3 (same logical thing stored twice across types).
+- `plan/principles.md` — OBP discipline. Rule A (compound class/property names), Rule C (static fields are a missing `@this`); smell #3 (same logical thing stored twice across types).
 - `results.md` deviation #6 — coder's note on the four sites stage 16 deferred.
 
-**Goal:** Evict the static `JsonSerializerOptions` field from `AskCallback.cs` to an instance-owned slot on `Callback.@this`. Discovery during carving: `ErrorCallback.cs` carries an identical static — same shape, same modifiers, same security purpose. Both move to one shared instance on `Callback.@this`. One realignment ("callback wire JSON options are owned by the callback subsystem"), two static fields evicted, one live slot.
+**Goal:** Evict the static `JsonSerializerOptions` field from `AskCallback.cs` to an instance-owned slot on a new `Callback.Wire.@this` (subfolder, mirrors the `Callback.Signature.@this` shape). Discovery during carving: `ErrorCallback.cs` carries an identical static — same shape, same modifiers, same security purpose. Both move to one shared instance on `Callback.Wire`. One realignment ("callback wire JSON options have an OBP-correct owner"), two static fields evicted, one live slot.
+
+**OBP correction (architect 2026-05-09).** First draft of this brief proposed `Callback.@this.WireOptions` as a flat property. That's a Rule A violation — `WireOptions` is a compound name (Wire + Options) jamming owner+capability into a single property. The correct shape is a `Callback/Wire/this.cs` subfolder with `Options` as the property, navigated as `app.Callback.Wire.Options` — same shape as `app.Callback.Signature.Expires`. Brief revised to propose the subfolder shape from the start.
 
 ## Scope expansion flagged
 
@@ -13,42 +15,43 @@ The Tier 5 one-liner named only `AskCallback.cs._options`. Reading the code whil
 ## Scope
 
 **Included:**
-- Add an instance-owned `WireOptions` slot on `App.Callback.@this` (initialised at construction).
-- Drop `AskCallback._options` static (file `AskCallback.cs:106-117`); both callers (Serialize, Deserialize) read `ctx.App.Callback.WireOptions` instead.
+- Create new `App/Callback/Wire/this.cs` subfolder + `@this`. One property: `Options` (instance-owned `JsonSerializerOptions`).
+- Add a `Wire` property on `Callback.@this` (alongside the existing `Signature` property).
+- Drop `AskCallback._options` static (file `AskCallback.cs:106-117`); both callers (Serialize, Deserialize) read `ctx.App.Callback.Wire.Options` instead.
 - Drop `ErrorCallback._options` static (file `ErrorCallback.cs:163-175`); both callers (private static `SerializeSnapshot` / `DeserializeSnapshot`, called from `Serialize` / `Deserialize`) take the options through.
 - Test sweep — both `AskCallbackTests` and `ErrorCallbackTests` already round-trip through `Serialize(ctx)` / `Deserialize(bytes, ctx)`, so they pick up the new path with no changes. Verify after rebuild.
 
 **Excluded:**
 - Any change to wire format, encryption flow, size caps, or the property/field shapes on either callback.
-- Pulling the encrypt/decrypt round-trip duplication out of Serialize/Deserialize — see "Out of scope, but noted" below.
-- Splitting `Callback.@this` into a `Callback/Wire/this.cs` sub-@this — same place, see "Out of scope, but noted."
+- Pulling the encrypt/decrypt round-trip duplication into `Wire.@this` — possible follow-up; see "Out of scope, but noted" below.
+- Adding any property to `Wire.@this` other than `Options` — keep this stage minimal.
 
 ## Deliverables
 
-### New slot on `Callback.@this`
+### New `Callback/Wire/this.cs`
 
-`PLang/App/Callback/this.cs` gains:
+Create the new file `PLang/App/Callback/Wire/this.cs`:
 
 ```csharp
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace App.Callback;
+namespace App.Callback.Wire;
 
+/// <summary>
+/// Wire-format configuration for the callback subsystem. Holds the JsonSerializerOptions
+/// used by both AskCallback and ErrorCallback for wire (de)serialization. JsonSerializerOptions
+/// becomes cache-frozen on first use, so one app-scoped instance is the canonical reuse pattern.
+/// The Filters.Sensitive modifier strips [Sensitive]-marked properties from the wire —
+/// captured Variables can carry arbitrary objects whose typed properties may include secrets
+/// (Security v1 S-F4).
+///
+/// Read as <c>app.Callback.Wire.Options</c>.
+/// </summary>
 public sealed class @this
 {
-    public Signature.@this Signature { get; } = new();
-
-    /// <summary>
-    /// JsonSerializerOptions used by both AskCallback and ErrorCallback for wire
-    /// (de)serialization. JsonSerializerOptions becomes cache-frozen on first use, so
-    /// one app-scoped instance is the canonical reuse pattern. The Filters.Sensitive
-    /// modifier strips [Sensitive]-marked properties from the wire — captured Variables
-    /// can carry arbitrary objects whose typed properties may include secrets
-    /// (Security v1 S-F4).
-    /// </summary>
-    internal JsonSerializerOptions WireOptions { get; } = new()
+    internal JsonSerializerOptions Options { get; } = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
@@ -61,16 +64,32 @@ public sealed class @this
 }
 ```
 
-Visibility: `internal` is right — only AskCallback and ErrorCallback should reach this. Public would invite reuse outside the callback subsystem, which is not intended.
+Visibility on `Options`: `internal` is right — only AskCallback and ErrorCallback should reach it. Public would invite reuse outside the callback subsystem, which is not intended.
 
-### AskCallback.cs — drop static, reach via context
+### Mount on `Callback.@this`
+
+`PLang/App/Callback/this.cs` gains a `Wire` property alongside the existing `Signature`:
+
+```csharp
+namespace App.Callback;
+
+public sealed class @this
+{
+    public Signature.@this Signature { get; } = new();
+    public Wire.@this Wire { get; } = new();
+}
+```
+
+The shape mirrors the existing `Signature` subfolder exactly. Same OBP discipline (subfolder + `@this` + navigation chain) for both subsystems.
+
+### AskCallback.cs — drop static, navigate to Wire.Options
 
 ```csharp
 // Line 34 — Serialize:
-var bytes = JsonSerializer.SerializeToUtf8Bytes(wire, ctx.App.Callback.WireOptions);
+var bytes = JsonSerializer.SerializeToUtf8Bytes(wire, ctx.App.Callback.Wire.Options);
 
 // Line 62 — Deserialize:
-var wire = JsonSerializer.Deserialize<Wire>(plain, ctx.App.Callback.WireOptions)
+var wire = JsonSerializer.Deserialize<Wire>(plain, ctx.App.Callback.Wire.Options)
            ?? throw new InvalidOperationException("AskCallback: empty wire payload");
 
 // Lines 106–117 — DELETE the entire `private static readonly JsonSerializerOptions _options = new() { ... };` block.
@@ -84,10 +103,10 @@ The private static helpers `SerializeSnapshot(Snapshot.@this s)` and `Deserializ
 
 ```csharp
 // Caller side — line 38 (Serialize):
-var bytes = SerializeSnapshot(AppSnapshot, ctx.App.Callback.WireOptions);
+var bytes = SerializeSnapshot(AppSnapshot, ctx.App.Callback.Wire.Options);
 
 // Caller side — line 63 (Deserialize):
-var snap = DeserializeSnapshot(plain, ctx.App.Callback.WireOptions);
+var snap = DeserializeSnapshot(plain, ctx.App.Callback.Wire.Options);
 
 // Helper signatures change:
 private static byte[] SerializeSnapshot(Snapshot.@this s, JsonSerializerOptions options) { ... uses options ... }
@@ -100,9 +119,9 @@ Alternatively, inline the helpers into `Serialize` / `Deserialize` directly (the
 
 ### Caller propagation
 
-External callers of `_options` on either callback: zero. The static is private; nothing outside the file reaches it. The eviction touches only the two callback files plus the new slot on `Callback.@this`.
+External callers of `_options` on either callback: zero. The static is private; nothing outside the file reaches it. The eviction touches only the two callback files plus the new `Wire/this.cs` and the new `Wire` property on `Callback.@this`.
 
-External tests: zero changes. Both `AskCallbackTests` and `ErrorCallbackTests` round-trip through `Serialize(ctx)` / `Deserialize(bytes, ctx)` and read no internal options. The context already exists; the navigation `ctx.App.Callback.WireOptions` works for them transparently.
+External tests: zero changes. Both `AskCallbackTests` and `ErrorCallbackTests` round-trip through `Serialize(ctx)` / `Deserialize(bytes, ctx)` and read no internal options. The context already exists; the navigation `ctx.App.Callback.Wire.Options` works for them transparently.
 
 ### Definition of done
 
@@ -110,8 +129,9 @@ External tests: zero changes. Both `AskCallbackTests` and `ErrorCallbackTests` r
 - `dotnet run --project PLang.Tests` green (baseline 2752/2752).
 - `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --tester` green from a fresh rebuild.
 - `grep -n "private static readonly JsonSerializerOptions\|private static readonly System.Text.Json.JsonSerializerOptions" PLang/App/Callback/AskCallback.cs PLang/App/Callback/ErrorCallback.cs` — zero hits.
-- `grep -n "WireOptions" PLang/App/Callback/this.cs` — one declaration.
-- `grep -n "ctx.App.Callback.WireOptions" PLang/App/Callback/AskCallback.cs PLang/App/Callback/ErrorCallback.cs` — used in both callbacks (4 sites total — Serialize + Deserialize on each).
+- `find PLang/App/Callback/Wire/this.cs` — present (new file).
+- `grep -n "Wire " PLang/App/Callback/this.cs` — `Wire` property declared.
+- `grep -n "ctx.App.Callback.Wire.Options" PLang/App/Callback/AskCallback.cs PLang/App/Callback/ErrorCallback.cs` — used in both callbacks (4 sites total — Serialize + Deserialize on each).
 
 **Dependencies:** None. Independent of every other Tier 5 stage.
 
@@ -131,11 +151,15 @@ Once allocated, `JsonSerializerOptions` is reused indefinitely — the class is 
 
 If a future change makes the two callbacks need different wire options (e.g. ErrorCallback wants different size handling), split them then. Today they don't.
 
-### Why `Callback.@this`, not `Channels.Serializers`
+### Why `Callback/Wire/`, not `Channels.Serializers`
 
-The options ride the callback wire, not a generic serialization wire. `Filters.Sensitive.Strip` is the bridge to `Channels.Serializers.Filters` (the cross-cutting filter), but the options bag itself is a callback-subsystem concern. Putting it under `app.Callback` keeps the callback wire policy local to the callback subsystem; putting it under `app.Channels.Serializers` would imply this is general-purpose serializer config, which it isn't (the sensitive-strip + camelCase combination is specifically the callback wire format).
+The options ride the callback wire, not a generic serialization wire. `Filters.Sensitive.Strip` is the bridge to `Channels.Serializers.Filters` (the cross-cutting filter), but the options bag itself is a callback-subsystem concern. Putting it under `app.Callback.Wire` keeps the callback wire policy local to the callback subsystem; putting it under `app.Channels.Serializers` would imply this is general-purpose serializer config, which it isn't (the sensitive-strip + camelCase combination is specifically the callback wire format).
 
-### Why instance, not `static readonly` on Callback.@this
+### Why a `Wire/` subfolder, not a flat property
+
+A flat property (`Callback.@this.WireOptions`) would compound owner+capability into a single property name — Rule A violation. The right shape is the navigation chain `app.Callback.Wire.Options`, mirroring `app.Callback.Signature.Expires` exactly. A subfolder with a single-property `@this` is OBP-correct (size of the type doesn't determine correctness; navigation shape does). Same insight that withdrew the planned `Callback/Signature/` collapse from Tier 5.
+
+### Why instance, not `static readonly` on Wire.@this
 
 Rule C's three exceptions for static state: `const`, `AsyncLocal<T>`, and irreducibly-static lock objects. JsonSerializerOptions doesn't fit any of them — it's allocated runtime state with no compile-time constness. The exception list is closed; "but JsonSerializerOptions is effectively read-only after first use" is not on it. Make it instance.
 
@@ -143,31 +167,32 @@ Rule C's three exceptions for static state: `const`, `AsyncLocal<T>`, and irredu
 
 ### Out of scope, but noted
 
-While reading the two callbacks, two further smells surface that this stage explicitly does NOT close:
+Once `Callback/Wire/` exists as a real `@this`, two further smells become natural to absorb into it later — but NOT in this stage:
 
-1. **Wire serialization duplication.** AskCallback.Serialize and ErrorCallback.Serialize both: `serialize → encrypt(via RunAction) → return bytes`. Symmetric on Deserialize. The size-cap constants (`MaxWireBytes` 1MB / 4MB) and encrypt/decrypt round-trip are duplicated. A clean factor would be a `Callback/Wire/this.cs` @this that owns Serialize/Deserialize as a typed boundary — both callbacks delegate to it.
+1. **Wire serialization duplication.** AskCallback.Serialize and ErrorCallback.Serialize both: `serialize → encrypt(via RunAction) → return bytes`. Symmetric on Deserialize. The size-cap constants (`MaxWireBytes` 1MB / 4MB) and encrypt/decrypt round-trip are duplicated. `Wire.@this` is the natural future home for these — Serialize/Deserialize as typed methods, with both callbacks delegating to it.
 
-2. **Position and Action navigation in Run.** Both callbacks dispatch via `await ctx.App.Run(Position.Action, ctx)` (or `bottom.Action`). That's fine, but the "look up Position, then dispatch action" sequence is the same shape; a `Wire.Resume(ctx, action)` helper could absorb it.
+2. **Position and Action navigation in Run.** Both callbacks dispatch via `await ctx.App.Run(Position.Action, ctx)` (or `bottom.Action`). The "look up Position, then dispatch action" sequence is the same shape; a `Wire.Resume(ctx, action)` helper could absorb it.
 
-Neither belongs in stage 24. Filed mentally as a follow-up "Wire @this" stage if appetite emerges; not added to Tier 5 unilaterally.
+Neither belongs in stage 24 — they're separate ownership realignments. Stage 24 *creates* `Wire.@this` and gives it the `Options` property; later stages can extend it. Listed here so the design intent is captured: `Wire.@this` will likely grow.
 
 ## Risk + dependencies
 
 **Risk: low.** The behaviour is exactly preserved — same options, same shape, same Filters.Sensitive modifier. The only change is the storage location.
 
 Possible failure modes:
-1. **Initialization ordering.** `Callback.@this`'s `WireOptions` allocation calls into `App.Channels.Serializers.Filters.Sensitive.Strip` — verify that Filters loads before App finishes constructing Callback. Currently both `Callback.@this` and Filters are constructed eagerly during App boot; the access pattern is the same as today's `_options` static (which references the same modifier). No ordering surprise expected.
+1. **Initialization ordering.** `Wire.@this`'s `Options` allocation calls into `App.Channels.Serializers.Filters.Sensitive.Strip` — verify that Filters loads before Callback finishes constructing Wire. Currently both `Callback.@this` and Filters are constructed eagerly during App boot; the access pattern is the same as today's `_options` static (which references the same modifier). No ordering surprise expected.
 2. **A hidden static caller.** Both `_options` are private — `grep -n "_options" PLang/App/Callback/AskCallback.cs PLang/App/Callback/ErrorCallback.cs` already returns the only sites. Sweep before deletion to confirm.
-3. **Test parallelism.** If multiple tests construct multiple Apps in parallel and each builds its own `WireOptions`, that's *more* allocation than today's process-static, not less. Allocation is cheap (the modifier is a delegate ref); not a functional concern.
+3. **Test parallelism.** If multiple tests construct multiple Apps in parallel and each builds its own `Wire.Options`, that's *more* allocation than today's process-static, not less. Allocation is cheap (the modifier is a delegate ref); not a functional concern.
 
 **Dependencies: none.** Independent of stages 23 and 25–28.
 
 ## Watch for (coder eyes-on)
 
-- **Both callbacks add `using App.Callback;` if not already present** — actually neither file does, since they're inside `namespace App.Callback`. The reach is `ctx.App.Callback` (already correctly typed). No new using.
-- **The `internal` visibility of `WireOptions`.** Internal in PLang.dll suffices because both callback files live in PLang. Tests that don't access `WireOptions` directly don't need `InternalsVisibleTo`.
+- **Namespace for the new file**: `namespace App.Callback.Wire;` — same convention as `namespace App.Callback.Signature;`.
+- **Mount on `Callback.@this`**: `public Wire.@this Wire { get; } = new();` — same shape as the existing `Signature` property. Field-init order: `Signature` then `Wire` (no dependency between them).
+- **The `internal` visibility of `Wire.Options`.** Internal in PLang.dll suffices because both callback files live in PLang. Tests that don't access `Options` directly don't need `InternalsVisibleTo`.
 - **The unused-using sweep on AskCallback.cs after the static is gone.** `using System.Text.Json.Serialization.Metadata;` was only there for `DefaultJsonTypeInfoResolver` in the static block — once the static is deleted, the using becomes dead. Same on ErrorCallback.cs. Compiler warning may surface; clean it up.
-- **`Callback.@this`'s field-init order.** `Signature` first, then `WireOptions`. Both get `= new()` so order is by source position only; no dependency.
+- **OBP shape parity check.** After landing, `app.Callback.Signature.Expires` and `app.Callback.Wire.Options` should read symmetrically — one navigation per dot, no compound names. If the brief surfaces a temptation to flatten ("just put it on Callback directly"), revisit Rule A and the OBP correction note above.
 
 ## Out of scope
 
@@ -179,10 +204,10 @@ Possible failure modes:
 ## Commit plan
 
 ```
-runtime2-cleanup stage 24: AskCallback._options + ErrorCallback._options → Callback.@this.WireOptions
+runtime2-cleanup stage 24: AskCallback + ErrorCallback _options → Callback.Wire.Options
 
-Two static JsonSerializerOptions evicted into one instance-owned slot on
-the callback subsystem's @this.
+Two static JsonSerializerOptions evicted into one instance-owned slot
+on a new Callback.Wire.@this subfolder.
 
 Both AskCallback and ErrorCallback held an identical private static
 JsonSerializerOptions configured with camelCase + case-insensitive +
@@ -190,13 +215,18 @@ WhenWritingNull + Filters.Sensitive.Strip. Smell #3 (same logical
 thing duplicated across types) made the two-static eviction one
 realignment, not two.
 
-After: app.Callback.WireOptions is the single home. Both callbacks
-reach it via ctx.App.Callback.WireOptions in Serialize and
-Deserialize. Behaviour unchanged — same options, same modifiers,
-same wire format.
+OBP shape: Callback/Wire/this.cs subfolder mirrors Callback/Signature/
+exactly. Navigation is app.Callback.Wire.Options — the natural
+extension of app.Callback.Signature.Expires. A flat property
+(WireOptions) would have been a Rule A compound-name violation.
+
+After: both callbacks reach options via ctx.App.Callback.Wire.Options
+in Serialize and Deserialize. Behaviour unchanged — same options,
+same modifiers, same wire format.
 
 Files touched:
-- PLang/App/Callback/this.cs — gains WireOptions property.
+- PLang/App/Callback/Wire/this.cs — NEW. Holds Options property.
+- PLang/App/Callback/this.cs — gains Wire property.
 - PLang/App/Callback/AskCallback.cs — static deleted; two read sites updated.
 - PLang/App/Callback/ErrorCallback.cs — static deleted; helpers thread options.
 
@@ -204,4 +234,6 @@ C# 2752/2752 + PLang 199/199 baseline preserved.
 
 Tier 5 stage 24. Rule C (static fields are a missing @this) +
 smell #3 (same logical thing stored twice across types) closure.
+Wire/@this is now the natural future home for Serialize/Deserialize
++ size-cap dedup across both callbacks (out of scope this stage).
 ```

@@ -1456,6 +1456,52 @@
         "notes": "If Ingi prefers stricter scope (AskCallback only), the brief makes that easy to revert \u2014 just delete the ErrorCallback section. Default is the expanded scope."
       },
       "timestamp_end": "2026-05-09T09:15:22Z"
+    },
+    {
+      "id": "b43f9159-7254-42a3-a4d4-e7959193d1c1",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T09:25:46Z",
+      "intent": "Carve stages 25-26 in parallel with stage 24 OBP correction.",
+      "before": {
+        "assumptions": "Tier 5 plan listed stages 24, 25, 26 as independent of each other. Carve them in parallel.",
+        "risk": "Found two issues during carving: (1) Stage 24 brief had a Rule A violation (WireOptions flat property) \u2014 Ingi caught it; corrected to Callback/Wire/this.cs subfolder. (2) Stage 26 (Choices) isn't actually independent of stage 27 (TypeMapping) because the Choices callers route through static TypeMapping helpers that can't navigate to app.Choices without Context \u2014 and Context is unavailable at several call sites today."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-24-askcallback-options-evict.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "OBP correction \u2014 Ingi caught the Rule A violation in the original brief (flat WireOptions property). Revised to propose a Callback/Wire/this.cs subfolder mirroring Callback/Signature/. Navigation is app.Callback.Wire.Options. Brief now also notes that Wire is the natural future home for size-cap + encrypt/decrypt round-trip dedup (out of scope this stage)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-25-http-default-statics-evict.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 25 brief. Discovery during carving: the two statics aren't symmetric. _transportInOptions is a real Rule C target (full local options block) \u2014 instance-evict to Default. _jsonOptions is a degenerate alias for App.Utils.Json.CaseInsensitiveRead \u2014 delete entirely; the 2 read sites use the long form (matching what line 646 already does). Both close Rule C for Default.cs in one stage."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-26-choices-registry-evict.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "BLOCKED before write. Choices._gate + _registry eviction depends on TypeMapping (stage 27) being instance-bound first, OR on threading Context through TypeMapping.GetValidValues. Today GetValidValues is called from 5 sites with Context=null in 4 of them (Types/this.cs:82 helper, internal TypeMapping use, validateResponse.cs:245, 2 test sites). Stage 26 isn't independent of 27 \u2014 needs design decision before carving. Surfacing to Ingi."
+        }
+      ],
+      "after": {
+        "status": "Stage 24 corrected and stage 25 carved. Stage 26 deferred \u2014 finding flagged for Ingi.",
+        "health": "Two stages ready for coder; one needs design discussion.",
+        "notes": "Tier 5 ordering may need to swap 26 and 27 (do TypeMapping keystone before Choices), or fold Choices into 27, or thread Context through GetValidValues (heavier scope)."
+      },
+      "timestamp_end": "2026-05-09T09:25:46Z"
     }
   ]
 }
