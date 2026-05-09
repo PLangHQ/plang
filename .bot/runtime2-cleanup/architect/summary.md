@@ -1,5 +1,29 @@
 # architect — runtime2-cleanup
 
+## 2026-05-09 (v26) — Stages 24, 25, 26 landed in one push (coder)
+
+Coder shipped three stages back-to-back: `63a9701a` (24), `a0d6b4e3` (25), `82d82a58` (26 keystone). C# 2752/2752 + PLang 199/199 throughout.
+
+**Stage 24** clean — `Callback/Wire/this.cs` with `Options` property; both callbacks navigate via `ctx.App.Callback.Wire.Options`. Mirrors `Callback/Signature/` exactly.
+
+**Stage 25** brief miss caught by coder. The 3 read sites of `_transportInOptions` were inside *private static async helpers* (ParsePlangResponseAsync, TryExtractSignedErrorIdentity, StreamPlangAsync), not instance methods as the brief assumed. Coder converted those + 2 callers (ParseResponseAsync, HandleStreamingAsync) static→instance. Outer call sites unchanged because they were already in instance-method lambdas. Same realignment, just larger surface than the brief charted. Worth recording as a future-brief-carving lesson: read past the static field declaration line and check the methods that touch it.
+
+**Stage 26 (the keystone)** landed in one push. ~600 lines of changes plus the rename machinery (TypeMapping.cs deleted; PlangTypeIndex → Types/Registry.cs; Choices → Types/Choices/). Three coder good-judgment additions worth recording:
+
+1. **Static-forwarder helpers on `Types.@this`** — `GetPrimitiveOrMime`, `GetPrimitiveName`, `GetTypeNameStatic`. Pure-reflection, no state. They exist for callers that legitimately have no App in scope (source generator lineage, some test paths). Per Rule C exception, static helpers are fine. The instance form (`Name`, `Get`) routes through registered domain types when App is available; the static form is the pure-logic fallback. With-state / without-state pair, not duplication.
+2. **`Modules.@this` gains `App` back-ref** (`public global::App.@this? App { get; internal set; }`, set by App ctor after Modules construction). Needed so Modules.Describe / Schema.Build / Render.LookupParamTypeName can reach `app.Types` from instance methods. Per the Context principle this is correct — Modules is App-scoped and now actually navigates to App-level state, so the back-ref earns its keep.
+3. **`PLang.Tests/Support/TypeMappingTestFacade.cs`** — declares `namespace App.Utils; internal static class TypeMapping` that routes legacy static API through a shared per-process App fixture. Preserves ~150 test call sites without per-test rewrites. Pragmatic; can be deleted after tests migrate to App fixtures directly.
+
+**Tier 5 status: 4 of 5 done.** Only stage 27 (Utils empty-out — TypeConverter → Types/Conversion partial; Utils/Json disperse) remains. Now mechanical: Types is already partial, so adding `Conversion.cs` is straightforward; Utils/Json dispersal is per-consumer cleanup.
+
+| # | Slug | Status |
+|---|------|--------|
+| 23 | callstack-restoredframe-rename | ✅ landed (`e96aa1ff`) |
+| 24 | askcallback-options-evict | ✅ landed (`63a9701a`) |
+| 25 | http-default-statics-evict | ✅ landed (`a0d6b4e3`) |
+| 26 | types-keystone | ✅ landed (`82d82a58`) |
+| 27 | utils-empty-out | one-liner — pending carve |
+
 ## 2026-05-09 (v25) — Tier 5 condensed to 5 stages; combined keystone carved (stage 26)
 
 Stage 23 landed clean (coder, commit `e96aa1ff`): RestoredFrame → Call/Position rename, 18 sites in 11 files, C# 2752/2752 + PLang 199/199.

@@ -1744,6 +1744,42 @@
         "health": "green",
         "notes": "C# 2752/2752; PLang 199/199. Three Rule C sites closed in one realignment. App/Utils/TypeMapping.cs, App/Utils/PlangTypeIndex.cs, App/Choices/ deleted. New shape: app.Types (primary), app.Types.Choices (sub-@this), Registry partial. Stage 27 (TypeConverter \u2192 Types/Conversion.cs partial; Utils/Json disperse) now unblocked."
       }
+    },
+    {
+      "id": "3a2071ca-d4ad-401b-8f12-ad2b55d27e50",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T10:25:15Z",
+      "intent": "Confirm coder's stages 24, 25, 26 landings; update plan/summary; flag judgment calls.",
+      "before": {
+        "assumptions": "Three stage briefs (24, 25, 26) issued. Coder implemented all three in one push (commits 63a9701a, a0d6b4e3, 82d82a58). All green: 2752/2752 + 199/199."
+      },
+      "plan": ".bot/runtime2-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Marked stages 24, 25, 26 as Complete with commit refs. Captured key coder good-judgment calls inline in the stage table: stage 25 brief-miss (helpers were static, not instance), stage 26 three pragmatic additions (static forwarders, Modules App back-ref, test facade)."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v26 entry at top documents the three landings. Future-brief-carving lesson recorded for stage 25's static-async-helper miss. Coder good-judgment calls on stage 26 detailed (with OBP-correctness rationale per the Context principle and Rule C exceptions)."
+        }
+      ],
+      "after": {
+        "status": "Tier 5 is 4/5 complete. Only stage 27 (utils-empty-out) remains. Now mechanical because Types is already partial.",
+        "health": "Plan and summary current. End-state-tree.md will need a refresh once stage 27 lands (Choices/Types and Utils/ shape both stabilise then).",
+        "notes": "No corrections needed on coder's work. The judgment calls are all OBP-clean within the principles."
+      },
+      "timestamp_end": "2026-05-09T10:25:15Z"
     }
   ]
 }
