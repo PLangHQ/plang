@@ -66,7 +66,7 @@ PLang/App/
 │   └── this.cs
 │
 ├── Callback/
-│   ├── AskCallback.cs                           (★ Tier 5 stage 25 — _options static, Rule C)
+│   ├── AskCallback.cs                           (★ Tier 5 stage 24 — _options static, Rule C)
 │   ├── ErrorCallback.cs
 │   ├── ICallback.cs
 │   ├── Signature/this.cs                        (kept — OBP-correct; navigation app.Callback.Signature.Expires is the right shape, see results.md correction 2026-05-09)
@@ -153,7 +153,7 @@ PLang/App/
 │
 ├── Events/
 │   ├── EventType.cs
-│   ├── Lifecycle/                               (★ Tier 5 stage 24 — collapse: Lifecycle layer goes away)
+│   ├── Lifecycle/                               (★ folded into Events three-tier todo 2026-05-09 — structure question deferred to that design pass; cleanup-pass discovered Lifecycle is a per-target view, not redundant nesting)
 │   │   ├── Bindings/
 │   │   │   ├── Binding/this.cs
 │   │   │   └── this.cs
@@ -241,15 +241,15 @@ PLang/App/
 ├── Types/
 │   └── this.cs                                  (gains Clr(mimeType) overload, stage 18; ★ Registry.cs/Conversion.cs partials deferred with stage 16)
 │
-├── Utils/                                       (★ Tier 5 — empties out across stages 28+29; 4 files still here)
+├── Utils/                                       (★ Tier 5 — empties out across stages 27+28; 4 files still here)
 │   ├── CommandLineParser.cs
-│   ├── Json.cs                                  (★ Tier 5 stage 29 — DISPERSE to consumers)
+│   ├── Json.cs                                  (★ Tier 5 stage 28 — DISPERSE to consumers)
 │   ├── PathExtension.cs
-│   ├── PlangTypeIndex.cs                        (★ Tier 5 stage 28 — absorb into Types/Registry.cs partial)
+│   ├── PlangTypeIndex.cs                        (★ Tier 5 stage 27 — absorb into Types/Registry.cs partial)
 │   ├── RegisterStartupParameters.cs
 │   ├── StringDistance.cs
-│   ├── TypeConverter.cs                         (★ Tier 5 stage 29 — Types/Conversion.cs partial)
-│   └── TypeMapping.cs                           (★ Tier 5 stage 28 — instance-bound; keystone)
+│   ├── TypeConverter.cs                         (★ Tier 5 stage 28 — Types/Conversion.cs partial)
+│   └── TypeMapping.cs                           (★ Tier 5 stage 27 — instance-bound; keystone)
 │
 │   (Utils/MimeTypes.cs — DELETED → split into Formats/this.cs + Types.Clr(mimeType), stage 18)
 │   (Utils/ReservedKeywords.cs — DELETED → Variables/Reserved.cs, stage 16)
@@ -326,7 +326,7 @@ PLang/App/
 │   │   └── {copy, delete, exists, list, move, read, save}.cs
 │   ├── goal/{call, return}.cs
 │   ├── http/
-│   │   ├── code/                                (★ Tier 5 stage 26 — _jsonOptions, _transportInOptions still static, Rule C)
+│   │   ├── code/                                (★ Tier 5 stage 25 — _jsonOptions, _transportInOptions still static, Rule C)
 │   │   │   ├── Default.cs                       (RENAMED ← DefaultHttpProvider.cs)
 │   │   │   └── IHttp.cs                         (RENAMED ← IHttpProvider.cs)
 │   │   ├── Config.cs
@@ -390,10 +390,10 @@ PLang/App/
 | Settings reshape (collection-over-Data) | ✅ | ✅ |
 | Variables/Reserved.cs | ✅ | ✅ |
 | `app.Formats` mount | `Channels/Serializers/Formats/` | `App/Formats/` (root) |
-| Utils/ "nearly empty" | 4 files | 8 files (★ Tier 5 stages 28–29) |
-| Types/ partials (Registry, Conversion) | ✅ | ★ Tier 5 stages 28–29 |
+| Utils/ "nearly empty" | 4 files | 8 files (★ Tier 5 stages 27–28) |
+| Types/ partials (Registry, Conversion) | ✅ | ★ Tier 5 stages 27–28 |
 | Callback/Signature/ absorbed | ✅ | withdrawn — current shape is OBP-correct (Rule A would be violated by flattening) |
-| Events/Lifecycle/ collapse | ✅ | ★ Tier 5 stage 24 |
+| Events/Lifecycle/ collapse | ✅ | folded into Events three-tier todo 2026-05-09 — Lifecycle is per-target view, not redundant nesting; structure question deferred to that design pass |
 | CallStack/RestoredFrame.cs → Call/Position.cs | ✅ | ★ Tier 5 stage 23 |
 | Choices/ moved to Builder/Choices/ | ★ tentative | unchanged (correct call) |
 

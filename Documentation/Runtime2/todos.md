@@ -416,6 +416,46 @@ When you pick this up:
 Filed alongside the scope-map (`.bot/runtime2-cleanup/architect/plan/scope-map.md`)
 which records the current state and Ingi's "keep as-is, file todo" call.
 
+### Addendum 2026-05-09 — structural shape under `Events/` to revisit in the same pass
+
+Surfaced when carving the runtime2-cleanup Tier 5 stage that was originally
+going to "drop the Lifecycle layer and make Before/After properties on
+Events.@this." That collapse was based on a misread of the structure:
+
+- `Events.@this` (per-actor) is the **registry** — flat `List<EventBinding>` with
+  Register/Unregister/Save/Restore/GetBindings/GetMatchingBindings/Count.
+- `Lifecycle.@this` is a **per-target view** — Before+After pair, built lazily
+  by `Actor/Context/this.cs:370–431` (`LifecycleFor(goal/step/action)`),
+  cached per-context.
+- `Bindings.@this` is the inner per-phase collection with the `Run(...)` dispatcher.
+- `Binding.@this` is the individual binding record.
+
+So Lifecycle and Events are different *scopes*, not redundant nesting — the
+planned "Before/After become properties on Events.@this" can't be right
+without conflating per-actor with per-target.
+
+There may still be cleanup worth doing here, but it's tangled with the
+three-tier scoping decision above:
+
+1. **Lift `Bindings/` and `Binding/` out from under `Lifecycle/`.** The deepest
+   namespace path today is `App.Events.Lifecycle.Bindings.Binding.@this`
+   (the `EventBinding` alias). `Bindings` and `Binding` aren't conceptually
+   under Lifecycle — Lifecycle is one *use* of them. Lifting them up would
+   shorten to `App.Events.Binding.@this`.
+2. **Move Lifecycle out of Events/ entirely.** It's created by Context, not
+   by Events itself. A natural home is `Actor/Context/Lifecycle/this.cs` —
+   closer to where it's actually instantiated. Bigger import-surface change.
+3. **Rule B smell on Events.@this.** `GetBindings(EventType)` and
+   `GetMatchingBindings(...)` return `IReadOnlyList<EventBinding>` — the
+   collection-as-method-call shape. Probably wants a typed sub-property or a
+   navigated query, but that's a redesign of the registry surface, not a
+   pure relocation.
+
+Pulled from runtime2-cleanup Tier 5 stages — keeping the structural shape
+question with the three-tier scoping decision so they get the same design pass.
+The shape choice may follow naturally once tier scoping is settled (per-context
+Lifecycle ⇄ Context-owned Lifecycle folder, etc).
+
 ## 2026-05-08 — CallStack scope: shared on App.Debug is wrong for parallel execution
 
 Context: `App/Debug/this.cs:101` allocates a single `App.CallStack.@this()` per app

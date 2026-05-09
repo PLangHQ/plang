@@ -116,11 +116,11 @@ The following landed differently than the post-cleanup-tree said. Each is a code
 **Delivered:** Stage 14 was scoped down to the `ExpiresInMs → Expires` rename only.
 **Verdict (revised 2026-05-09):** The original plan was wrong. Folding the single `Expires` knob into `Callback.@this` would create a compound property name (`Callback.SignatureExpires`) — exactly the Rule A violation the cleanup is closing elsewhere. The current shape preserves the navigation chain `app.Callback.Signature.Expires`, which *is* OBP-correct. Removed from the deferred list; the folder stays as-is.
 
-### 4. `App/Events/Lifecycle/Bindings/Binding/` did not collapse
+### 4. `App/Events/Lifecycle/Bindings/Binding/` did not collapse (revised 2026-05-09: not the right collapse)
 
 **Planned:** `Events/Lifecycle/` layer goes away; Before/After become properties on `Events/this.cs`; structure becomes `Events/{Bindings/this.cs, Binding/this.cs, this.cs}`.
 **Delivered:** Original three-layer nesting still in place.
-**Verdict:** Open question F in the tree noted blast radius hadn't been measured; the collapse was tentatively folded into stage 15 but ended up out of scope. Mechanical when revisited; the alias `App.Events.Lifecycle.Bindings.Binding.@this` (used widely as `EventBinding`) needs re-targeting.
+**Verdict (revised 2026-05-09):** The planned collapse was based on a misread of the structure. `Events.@this` is the per-actor *registry*; `Lifecycle.@this` is a per-target *view* built lazily by `Context.LifecycleFor(goal/step/action)`. They're different scopes — not redundant nesting — so "Before/After become properties on Events.@this" can't be right without conflating per-actor with per-target. There may still be a structural cleanup worth doing (lift `Bindings/`+`Binding/` out of `Lifecycle/`, or move `Lifecycle/` to `Actor/Context/`, or address the Rule B smell on `Events.GetBindings/GetMatchingBindings`), but it tangles with the existing Events three-tier scoping todo. Folded into that todo (`Documentation/Runtime2/todos.md` 2026-05-08, addendum 2026-05-09) for one combined design pass. **Removed from Tier 5; deferred to the same design pass.**
 
 ### 5. `App/CallStack/RestoredFrame.cs` not renamed to `Call/Position.cs`
 
@@ -178,9 +178,9 @@ The following landed differently than the post-cleanup-tree said. Each is a code
 
    Each requires the static-caller chain to flatten first (TypeMapping made instance-bound, or context threaded to all callers). Stage 28 does that flattening; stage 29 finishes the Utils/ empty-out (TypeConverter → Types/Conversion partial; Utils/Json disperses).
 
-2. **Cosmetic rename leftovers** — *carved as stages 23–24 in Tier 5:*
-   - `CallStack/RestoredFrame.cs` → `Call/Position.cs` → stage 23
-   - `Events/Lifecycle/` layer collapses → stage 24
+2. **Cosmetic rename leftovers** — *one carved into Tier 5, one withdrawn, one folded out:*
+   - `CallStack/RestoredFrame.cs` → `Call/Position.cs` → stage 23 (Tier 5)
+   - ~~`Events/Lifecycle/` layer collapses~~ — folded into the Events three-tier todo (2026-05-08, addendum 2026-05-09); the originally planned collapse was based on a misread of the structure.
    - ~~`Callback/Signature/this.cs` absorbs into `Callback/this.cs`~~ — withdrawn; current shape is OBP-correct.
 
 3. **Documented in `Documentation/Runtime2/todos.md`** (still deferred — not in Tier 5):

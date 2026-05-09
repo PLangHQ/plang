@@ -1340,14 +1340,44 @@
           "category": "doc",
           "confidence": "high",
           "context": "Session record."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/stage-23-callstack-restoredframe-rename.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 23 brief carved: RestoredFrame.cs -> Call/Position.cs rename. 18 hits in 11 files surveyed; mechanical record rename with no behaviour change. Ready for coder."
+        },
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Appended 'Addendum 2026-05-09 \u2014 structural shape under Events/' to the existing 2026-05-08 Events three-tier scoping todo. Captured the cleanup-pass finding (Lifecycle is per-target view, not redundant nesting) and three structural-cleanup options for the same future design pass."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/plan.md",
+            ".bot/runtime2-cleanup/architect/results.md",
+            ".bot/runtime2-cleanup/architect/end-state-tree.md",
+            ".bot/runtime2-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Pulled events-lifecycle-collapse out of Tier 5; renumbered stages 25-29 -> 24-28. Updated all four docs to reflect: 6-stage Tier 5 instead of 7, the Events folding into the existing todo, and renumbering across the deferred-marker callouts in end-state-tree.md."
         }
       ],
       "after": {
-        "status": "Tier 5 carved into plan.md (7 stages, 23\u201329). Stage briefs not yet written \u2014 convention is carve when each stage is approached. Next session: stage 23 brief (RestoredFrame rename, smallest warm-up).",
+        "status": "Stage 23 brief ready for coder. Stage 24 (Events/Lifecycle) pulled out of Tier 5 -- folded into existing Events three-tier todo for combined design pass. Tier 5 renumbered to 6 stages (23-28). Plan, results, end-state-tree, summary all updated.",
         "health": "plan.md, results.md, end-state-tree.md, summary.md all consistent; deferred-vs-Tier-5 markers re-pointed across all three.",
         "notes": "Bucket C explicitly out of scope; coder-todo guardrail noted. Callback/Signature correction landed in 3 places (plan.md, results.md, end-state-tree.md). No code changes \u2014 design-only session."
       },
-      "timestamp_end": "2026-05-09T08:48:10Z",
+      "timestamp_end": "2026-05-09T09:01:51Z",
       "plan": ".bot/runtime2-cleanup/architect/plan.md"
     }
   ]

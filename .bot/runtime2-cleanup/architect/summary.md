@@ -1,30 +1,35 @@
 # architect — runtime2-cleanup
 
-## 2026-05-09 (v24) — Tier 5 carved (stages 23–29) extending the cleanup plan
+## 2026-05-09 (v24) — Tier 5 carved (stages 23–28) extending the cleanup plan
 
-After delivering 22 of 22 stages, walked the audit with Ingi to decide what to do with the deferred tail. Outcome: extend the same branch with seven more stages, organized as Tier 5.
+After delivering 22 of 22 stages, walked the audit with Ingi to decide what to do with the deferred tail. Outcome: extend the same branch with six more stages, organized as Tier 5.
 
 **Scope settled.**
-- Bucket A (cosmetic leftovers): stages 23–24.
-- Bucket B (Rule C static-eviction tail): stages 25–29.
-- Bucket C (Events writer wiring, CallStack scope, App.Statics, Data parameter-lifecycle): explicitly out of scope for this branch.
+- Bucket A (cosmetic leftover): stage 23 — `CallStack/RestoredFrame` → `Call/Position` rename.
+- Bucket B (Rule C static-eviction tail): stages 24–28.
+- Bucket C (Events writer wiring + structural shape, CallStack scope, App.Statics, Data parameter-lifecycle): explicitly out of scope for this branch.
 - Also dropped (Ingi 2026-05-09): the "v3 audit methodology / `/shared/app-tree/`" item that had been listed under "What's deferred" since plan v1. Pre-branch draft, unrelated to the OBP cleanup work — withdrawn, not deferred.
 
 **Branch decision.** Same branch (`runtime2-cleanup`). No new branch.
 
-**Granularity decision.** Each Tier 5 item gets its own stage — no bundling. Seven separate stages, each with its own commit.
+**Granularity decision.** Each Tier 5 item gets its own stage — no bundling. Six separate stages, each with its own commit.
 
-**Correction landed.** `results.md` and `end-state-tree.md` originally listed `Callback/Signature/this.cs` as a "deferred — absorb into Callback/this.cs" cleanup. That was an OBP error: folding the `Expires` knob onto Callback creates a compound property name (`Callback.SignatureExpires`) — exactly the Rule A violation the cleanup is closing elsewhere. The current shape preserves the navigation chain `app.Callback.Signature.Expires`, which is OBP-correct. **Withdrawn from Tier 5; left as-is.** Note added to `results.md` deviation #3 and to the comparison snapshot in `end-state-tree.md`.
+**Correction #1 — Callback/Signature.** `results.md` and `end-state-tree.md` originally listed `Callback/Signature/this.cs` as a "deferred — absorb into Callback/this.cs" cleanup. That was an OBP error: folding the `Expires` knob onto Callback creates a compound property name (`Callback.SignatureExpires`) — exactly the Rule A violation the cleanup is closing elsewhere. The current shape preserves the navigation chain `app.Callback.Signature.Expires`, which is OBP-correct. **Withdrawn from Tier 5; left as-is.** Note added to `results.md` deviation #3 and to the comparison snapshot in `end-state-tree.md`.
+
+**Correction #2 — Events/Lifecycle/ collapse.** Originally carved as stage 24. Walking the code while preparing the brief surfaced that the planned collapse was based on a misread: `Events.@this` is the per-actor *registry*; `Lifecycle.@this` is a per-target *view* built lazily by `Context.LifecycleFor(goal/step/action)`. They're different scopes, not redundant nesting — "Before/After become properties on Events.@this" can't be right without conflating per-actor with per-target. There may still be structural cleanup worth doing (lift `Bindings/`+`Binding/` out of `Lifecycle/`, or move `Lifecycle/` under `Actor/Context/`, or close the Rule B smell on `Events.GetBindings/GetMatchingBindings`), but it tangles with the existing Events three-tier scoping todo. **Pulled out of Tier 5 and folded into `Documentation/Runtime2/todos.md` (2026-05-08, addendum 2026-05-09) for one combined design pass.** Tier 5 renumbered: stages 25–29 → 24–28.
 
 **Coder-todo guardrail noted in plan.** Tier 5 stages don't go chasing items in `Documentation/Runtime2/todos.md` — the rule is "fold a todo in only when the refactor *needs* it" (mirroring stages 14 and 16 from the original plan, which closed two specific todos because they were load-bearing for those renames).
 
-**Stage 23 carve scheduled next session.** Order: 23 (RestoredFrame rename, smallest warm-up) → 24 (Events/Lifecycle collapse, alias re-target) → 25–27 (independent static-eviction warm-ups) → 28 (TypeMapping keystone, likely its own session) → 29 (Utils empty-out, mechanical once 28 lands).
+**Stage 23 brief carved this session.** `stage-23-callstack-restoredframe-rename.md` is ready for coder. Mechanical rename + namespace change + 18-site caller sweep across 11 files. No behaviour change.
+
+**Order:** 23 (RestoredFrame rename, smallest warm-up) → 24 (AskCallback._options) → 25 (DefaultHttpProvider statics) → 26 (Choices registry) → 27 (TypeMapping keystone, likely its own session) → 28 (Utils empty-out, mechanical once 27 lands).
 
 Stage status:
 | Tier | Stages | Status |
 |------|--------|--------|
 | 1–4 | 1–22 | complete |
-| 5 | 23–29 | pending — none carved yet |
+| 5 | 23 | brief carved 2026-05-09 — ready for coder |
+| 5 | 24–28 | pending — one-liners in plan.md |
 
 ## 2026-05-09 — stage 19 landed; full plan vs delivered audit (`results.md`)
 
