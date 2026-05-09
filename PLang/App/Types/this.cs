@@ -409,20 +409,7 @@ public sealed partial class @this
             || underlying == typeof(Guid);
     }
 
-    // --- Conversion forwarders (stage 27 will absorb TypeConverter into Types/Conversion.cs) ---
-
-    /// <summary>Forwards to <see cref="Utils.TypeConverter.ConvertTo{T}"/>.</summary>
-    public static T? ConvertTo<T>(object? value) => Utils.TypeConverter.ConvertTo<T>(value);
-
-    /// <summary>Forwards to <see cref="Utils.TypeConverter.ConvertTo"/>.</summary>
-    public static object? ConvertTo(object? value, System.Type targetType) => Utils.TypeConverter.ConvertTo(value, targetType);
-
-    /// <summary>Forwards to <see cref="Utils.TypeConverter.Populate"/>.</summary>
-    public static void Populate(object target, IDictionary<string, object?> values) => Utils.TypeConverter.Populate(target, values);
-
-    /// <summary>Forwards to <see cref="Utils.TypeConverter.TryConvertTo"/>.</summary>
-    public static (object? Value, Errors.Error? Error) TryConvertTo(object? value, System.Type targetType, Actor.Context.@this? context = null)
-        => Utils.TypeConverter.TryConvertTo(value, targetType, context);
+    // --- Conversion methods now live in Types/Conversion.cs (the partial). ---
 
     // --- Catalog support ---
 

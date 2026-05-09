@@ -912,10 +912,19 @@ public partial class @this
     /// Throws on serialization failure — call sites that want a fallback (e.g. alias-mode
     /// degradation) wrap the call in their own try/catch.
     /// </summary>
+    // Per-Data static — symmetric write+read for snapshot cloning. Pure config bag,
+    // Data is allocated frequently so static-readonly avoids per-instance allocation.
+    // Stage 27 disperse-from-Json target.
+    private static readonly JsonSerializerOptions _snapshotClone = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+    };
+
     internal static object? SnapshotClone(object source)
     {
-        var json = JsonSerializer.Serialize(source, Utils.Json.SnapshotClone);
-        var deserialized = JsonSerializer.Deserialize<object?>(json, Utils.Json.SnapshotClone);
+        var json = JsonSerializer.Serialize(source, _snapshotClone);
+        var deserialized = JsonSerializer.Deserialize<object?>(json, _snapshotClone);
         return UnwrapJsonElement(deserialized);
     }
 

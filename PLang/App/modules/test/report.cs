@@ -277,7 +277,7 @@ public partial class report : IContext
             runs,
             branchCoverage
         };
-        return JsonSerializer.Serialize(envelope, App.Utils.Json.DiagnosticOutput);
+        return JsonSerializer.Serialize(envelope, global::App.Diagnostics.@this.Options);
     }
 
     private static string BuildJUnit(App.Tester.Results results, FileSystem.IPLangFileSystem fs)
@@ -325,7 +325,7 @@ public partial class report : IContext
     private static string? ResolveBuilderVersion(App.Tester.@this testing) =>
         testing.App.Version;
 
-    private static string FormatValue(object? value) => App.Utils.Json.FormatForDiagnostic(value);
+    private static string FormatValue(object? value) => global::App.Diagnostics.@this.Format(value);
 
     // Strips ANSI escape sequences to prevent forged output in captured
     // test stdout (test writes bold-green "ok" via ANSI — rendered literally instead).

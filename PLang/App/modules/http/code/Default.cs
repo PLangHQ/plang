@@ -50,6 +50,15 @@ public sealed class Default : IHttp
         }
     };
 
+    // Case-insensitive read for HTTP responses (signing, JSON body parsing, plang).
+    // Stage 27 disperse-from-Json target — was Utils.Json.CaseInsensitiveRead.
+    private readonly JsonSerializerOptions _caseInsensitiveRead = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new App.Data.EmptyStringToNullEnumConverterFactory(), new global::App.Channels.Serializers.TimeSpanIso8601() },
+        NumberHandling = JsonNumberHandling.AllowReadingFromString
+    };
+
     // --- IHttp: action-level methods ---
 
     public Task<Data.@this> SendAsync(request action) => ExecuteHttpAsync(async () =>
@@ -386,9 +395,9 @@ public sealed class Default : IHttp
         return await context.App.RunAction<signing.sign>(httpSign, context);
     }
 
-    private static void ApplySignature(HttpRequestMessage request, Data.@this signResult)
+    private void ApplySignature(HttpRequestMessage request, Data.@this signResult)
     {
-        var signatureJson = JsonSerializer.Serialize(signResult.Signature, App.Utils.Json.CaseInsensitiveRead);
+        var signatureJson = JsonSerializer.Serialize(signResult.Signature, _caseInsensitiveRead);
         request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/plang"));
     }
@@ -518,7 +527,7 @@ public sealed class Default : IHttp
             object? parsed;
             try
             {
-                parsed = JsonSerializer.Deserialize<object>(json, App.Utils.Json.CaseInsensitiveRead);
+                parsed = JsonSerializer.Deserialize<object>(json, _caseInsensitiveRead);
             }
             catch (JsonException)
             {
@@ -637,7 +646,7 @@ public sealed class Default : IHttp
             return;
 
         var signedData = JsonSerializer.Deserialize<Signature>(sigElement.GetRawText(),
-            App.Utils.Json.CaseInsensitiveRead);
+            _caseInsensitiveRead);
         if (signedData == null) return;
 
         var legacyData = new Data.@this("");

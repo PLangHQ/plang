@@ -1,59 +1,56 @@
 # coder — runtime2-cleanup
 
 ## Version
-v26 — Stage 26: Types keystone (TypeMapping + PlangTypeIndex + Choices collapsed into `app.Types`).
+v27 — Stage 27 (Tier 5 closer): Utils/ empty-out — TypeConverter + Json disperse.
 
 ## What this is
-The Tier 5 keystone. Three Rule C sites under one realignment:
+Final Tier 5 stage. Two pieces:
 
-- `Utils/TypeMapping.cs` — full static class with two static dictionaries and a flat surface of static methods. Today's `Types/this.cs` was a delegating wrapper around it; the wrapper existed *because* TypeMapping was static.
-- `Utils/PlangTypeIndex.cs` — full static class with 6 static fields including locks and lazy-init guards. Process-global indexing state.
-- `App/Choices/this.cs` — the static `@this` shape (already a contradiction). Two static fields with lazy-init via lock-double-check.
+1. **TypeConverter → Types/Conversion.cs partial.** Mechanical (Types is already a partial from stage 26). The 4 public methods (ConvertTo<T>, ConvertTo, Populate, TryConvertTo) and 4 private helpers (FormatTypeMismatch, TypeMismatchHint, FormatValuePreview, GetListElementType) move into the new partial. Public methods stay `public static` (pure logic, called from many static contexts); private helpers stay `private static`. The Conversion partial holds its own `_caseInsensitiveRead` for GoalCall + complex-type deserialization.
+2. **Utils/Json.cs disperses.** Five JsonSerializerOptions bags + 2 helpers + 1 extension + 2 internal converters. Each piece moves to where its consumer lives.
 
-After: one instance-shaped `app.Types` subsystem with three pieces: primary partial (`Types/this.cs`), Registry partial (`Types/Registry.cs`), and `Types/Choices/` sub-`@this`. Three folders/files vanish. Unblocks stage 27 (Utils empty-out — TypeConverter → Types/Conversion.cs partial; Utils/Json disperse).
+After: `App/Utils/` contains exactly 4 files — `CommandLineParser.cs`, `PathExtension.cs`, `RegisterStartupParameters.cs`, `StringDistance.cs`. The destination tree from `plan/post-cleanup-tree.md` matches reality. Tier 5 closes; runtime2-cleanup branch ready for review/merge to runtime2.
 
 ## What was done
 
 ### New shape
-- `Types/this.cs` — REWRITTEN as primary partial. Absorbs TypeMapping public surface. State-touching methods are instance (Get/Clr, GetTypeName/Name, Register, GetValidValues/ValidValues, BuildTypeEntries/ComplexSchemas, GetBuilderTypeNames/BuilderNames, RegisterDomainTypes). Pure-logic helpers stay static (ClrFromMime, IsScalarPlangType, IsPrimitive, ConvertTo/Populate/TryConvertTo forwarders to TypeConverter, GetPrimitiveOrMime, GetPrimitiveName, GetTypeNameStatic).
-- `Types/Registry.cs` — NEW partial. Absorbs PlangTypeIndex internals as instance state. Public methods all instance: IsClrTypeName, ResolveName, ResolveType, KnownTypes, RegisterRuntime.
-- `Types/Choices/this.cs` — NEW sub-`@this` (relocated from App/Choices/). Static class becomes instance; mounted as `app.Types.Choices`.
-- `Utils/TypeMapping.cs`, `Utils/PlangTypeIndex.cs`, `App/Choices/` — DELETED.
+- `App/Types/Conversion.cs` — NEW partial. Absorbs TypeConverter body.
+- `App/Data/JsonString.cs` — NEW. Holds `JsonString.ToJson()` extension + `FixJsonStringValues` + `EmptyStringToNullEnumConverterFactory` + `EmptyStringToNullEnumConverter<T>`.
+- `App/Diagnostics/this.cs` — NEW static class. Holds `Format(value)` + `Options` (the masked JsonSerializerOptions).
+- `App/Builder/this.cs` — gains `internal static readonly PrWrite` + private static `StoreOnlyModifier`.
+- `App/this.cs` — gains `internal static readonly CamelCaseIndented`.
+- `App/Data/this.Compare.cs` — gains `private static readonly _camelCaseIndented`.
+- `App/Data/this.cs` — gains `private static readonly _snapshotClone`.
+- `App/Variables/this.cs` — gains `private static readonly _snapshotClone`.
+- `App/modules/http/code/Default.cs` — gains `private readonly _caseInsensitiveRead` instance field; `ApplySignature` converted from static to instance.
 
-### Plumbing changes
+### Files deleted
+- `App/Utils/TypeConverter.cs`
+- `App/Utils/Json.cs`
 
-- **`Modules.@this` gains `App` back-reference** — `public global::App.@this? App { get; internal set; }`. App constructor sets `_modules.App = this` after Modules construction. Without this, `Modules.Describe`, `Modules.GetDefaults`, `Schema.Build`, `Schema/Render.LookupParamTypeName` couldn't reach `app.Types` from their instance methods.
-- **`Modules.DescribeReturnType` and `Schema/Render.LookupParamTypeName`** — converted from `private static` to instance to use `App?.Types.GetTypeName(...)`.
-- **`validateResponse.Validate`** — gains `App? app` parameter so callers with `Context.App` (Run) or `goal.App` (ValidateGoalState) can supply navigation when `goal.App` is null.
-- **`TypeConverter` (still in App.Utils for stage 27)** — its `PlangTypeIndex.IsClrTypeName(name)` calls become `context?.App.Types.IsClrTypeName(name) ?? false`; `TypeMapping.IsPrimitive(...)` becomes `global::App.Types.@this.IsPrimitive(...)` (kept static).
-- **3 static-friendly helpers added on Types.@this** for the few callers that legitimately have no App in scope:
-  - `GetPrimitiveOrMime(string)` — primitives + MIME (no registry). Used by `Data.Type.ClrType` fallback when Context is null.
-  - `GetPrimitiveName(Type)` — reverse primitive lookup. Used by `Data.@this.Type` lazy-derivation fallback.
-  - `GetTypeNameStatic(Type)` — full pure-reflection variant of `GetTypeName` (handles primitives, generics, arrays, `Data<T>`, [PlangType] attribute read, @this convention). Used by `Modules.Describe` fallback when Modules has no App backing (test fixtures that do `new AppModules()` directly).
+### Caller sweeps
+- `App/Errors/AssertionError.cs` + `App/modules/assert/code/Default.cs` + `App/modules/test/report.cs` — `FormatForDiagnostic` calls now route through `global::App.Diagnostics.@this.Format`/`.Options`.
+- `App/modules/builder/code/Default.cs` — `Json.PrWrite` → `global::App.Builder.@this.PrWrite`.
+- All Json.X / TypeConverter call sites in production updated to per-consumer/dispersed homes.
 
 ### Test compatibility
+`PLang.Tests/Support/TypeMappingTestFacade.cs` extended with two more facades:
+- `App.Utils.TypeConverter` static class — routes to `global::App.Types.@this.X`.
+- `App.Utils.Json` static class — exposes `CaseInsensitiveRead` (locally constructed), `CamelCaseIndented` (→ `App.@this.CamelCaseIndented`), `PrWrite` (→ `Builder.@this.PrWrite`), `DiagnosticOutput` (→ `Diagnostics.@this.Options`).
 
-Added `PLang.Tests/Support/TypeMappingTestFacade.cs` declaring `namespace App.Utils; internal static class TypeMapping { ... }` — preserves the legacy `TypeMapping.X(...)` test ergonomics by routing through a shared per-process App fixture. ~150 test call sites unchanged.
-
-### Caller sweep
-
-17 production files touched (Data/this, Settings/Sqlite, Variables/this, Debug/this, Modules/this, Modules/Schema/this, Modules/Schema/Render, Utils/TypeConverter, modules/builder/code/Default, modules/builder/validateResponse, modules/file/code/Default, modules/test/discover, modules/variable/set, Executor — plus the three deletes and the App.cs / Modules.cs plumbing). Test-side: only the new facade file (no per-test rewrite).
+~12 test sites unchanged. Their `using App.Utils;` keeps resolving via the facade.
 
 ## Brief deviations
 
-1. Brief table listed `IsScalarPlangType`, `IsPrimitive`, `ConvertTo`, `Populate`, `TryConvertTo` as instance methods. **Kept static** — pure logic or forwarders to still-static TypeConverter (stage 27 will absorb that). The brief's "static-context callers" admission covers this.
-2. Brief implied `Primitives`/`PrimitiveNames` would become instance fields. **Kept `private static readonly`** — they're constant lookup tables, fits Rule C exception class for const-style data.
-3. Brief left `Get`/`ResolveType` overlap as a coder call. **Kept separate**: `Get` is the rich entry path (primitives + generics + registry + MIME); `ResolveType`/`ResolveName` are bare registry lookups (used internally).
-4. **Added `Modules.App` back-reference** — the brief's caller sweep implicitly required this for instance-Types reach from Schema/Render/Modules without changing every caller.
+- **DiagnosticOutput home**: brief leaned new `App/Diagnostics/this.cs` sub-`@this` mounted as `app.Diagnostics`. **Went with static class** instead — all three callers (AssertionError.FormatValue, FormatValue helpers in assert + test handlers) are in static contexts with no App in scope. Per the brief's own escape ("Architect's leans toward instance but flags this as a coder/Ingi judgment call during implementation"), static is the pragmatic answer. The single Options bag is held statically — Rule C exception class for stateless config.
+- **CamelCaseIndented + SnapshotClone homes**: per-consumer `static readonly` rather than instance fields, matching the brief's noted exception for frequently-allocated types (Data) and stateless config bags.
+- **EmptyStringToNullEnum converters**: bundled into `App/Data/JsonString.cs` rather than a separate file under http/. They're used by both `http/Default._caseInsensitiveRead` and `Types/Conversion._caseInsensitiveRead`, so a shared home is correct.
 
 ## Stage closure
-
 - C# tests green: 2752/2752
 - PLang tests green: 199/199
-- `find PLang/App/Utils/TypeMapping.cs PLang/App/Utils/PlangTypeIndex.cs` — both gone
-- `find PLang/App/Choices` — directory absent
-- `find PLang/App/Types/Registry.cs PLang/App/Types/Choices/this.cs` — both present
-- `grep -rn "App\.Utils\.TypeMapping\b\|PlangTypeIndex\b\|App\.Choices\.@this" PLang/ --include='*.cs'` — only doc-comment mentions remain
-- Behaviour change: none. Pure shape change. Three Rule C sites closed in one realignment.
+- `App/Utils/` end state: exactly 4 files (CommandLineParser, PathExtension, RegisterStartupParameters, StringDistance) ✓
+- Zero `App.Utils.TypeConverter` / `App.Utils.Json` / `JsonExtensions` references in production
+- Behaviour change: none. Pure shape change.
 
-Stage 27 (TypeConverter → Types/Conversion.cs partial; Utils/Json disperse) now unblocked.
+**Tier 5 closes here.** runtime2-cleanup branch is ready for review and merge to runtime2.

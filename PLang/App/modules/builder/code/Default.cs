@@ -178,7 +178,7 @@ public class Default : IBuilder
         var validation = validateResponse.ValidateGoalState(goal);
         if (!validation.Success) return validation;
 
-        var json = JsonSerializer.Serialize(goal, Json.PrWrite);
+        var json = JsonSerializer.Serialize(goal, global::App.Builder.@this.PrWrite);
 
         var saveAction = new file.Save
         {

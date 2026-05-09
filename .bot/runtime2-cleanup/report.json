@@ -1816,6 +1816,146 @@
         "notes": "Stage 27 has more judgment surface than the earlier stages because of the dispersal pattern. Brief surfaces the per-bag decisions explicitly; coder may adjust homes during implementation if an alternative reads better."
       },
       "timestamp_end": "2026-05-09T10:34:44Z"
+    },
+    {
+      "id": "d432cf3b-fa59-46af-9542-ec8d2ca68791",
+      "bot": "coder",
+      "timestamp_start": "2026-05-09T03:00:00Z",
+      "timestamp_end": "2026-05-09T10:49:01Z",
+      "intent": "Stage 27 (Tier 5 closer): TypeConverter \u2192 Types/Conversion.cs partial; Utils/Json disperses to consumers; Utils/ down to 4 files.",
+      "before": {
+        "assumptions": "Mechanical TypeConverter move + judgment-call Json dispersal. Stage 26 already partial.",
+        "risk": "Low-medium \u2014 many move sites; build catches misplaced refs."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v27/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Types/Conversion.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New partial of Types.@this. Absorbs TypeConverter body (4 public static methods + 4 private static helpers). Holds private static _caseInsensitiveRead options."
+        },
+        {
+          "paths": [
+            "PLang/App/Types/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage-26 ConvertTo/Populate/TryConvertTo forwarders removed \u2014 bodies now in the Conversion partial."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/JsonString.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "JsonExtensions.ToJson() + FixJsonStringValues + EmptyStringToNullEnumConverter{Factory,<T>} relocated from Utils/Json.cs. Static class, extension method preserved."
+        },
+        {
+          "paths": [
+            "PLang/App/Diagnostics/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New static class for FormatForDiagnostic + DiagnosticOutput JsonSerializerOptions. Three callers in static contexts use `global::App.Diagnostics.@this.Format(value)` and `.Options`."
+        },
+        {
+          "paths": [
+            "PLang/App/Builder/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Gains `internal static readonly PrWrite` JsonSerializerOptions + private static StoreOnlyModifier method. Was Utils.Json.PrWrite."
+        },
+        {
+          "paths": [
+            "PLang/App/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Gains `internal static readonly CamelCaseIndented` (used by App.Save and tests)."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.Compare.cs",
+            "PLang/App/Data/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Each Data partial holds its own private static readonly options bag (CamelCaseIndented for Compare, SnapshotClone for clone path) \u2014 Data is allocated frequently so static-readonly avoids per-instance allocation."
+        },
+        {
+          "paths": [
+            "PLang/App/Variables/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Holds its own private static readonly _snapshotClone for SerializeToNode site."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/http/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Gains private readonly _caseInsensitiveRead instance field. ApplySignature converted from static to instance. 3 read sites updated."
+        },
+        {
+          "paths": [
+            "PLang/App/Errors/AssertionError.cs",
+            "PLang/App/modules/assert/code/Default.cs",
+            "PLang/App/modules/test/report.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "FormatValue helpers now route through global::App.Diagnostics.@this.Format/Options."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/builder/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Json.PrWrite reference \u2192 global::App.Builder.@this.PrWrite."
+        },
+        {
+          "paths": [
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/Utils/Json.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "Both files deleted. Utils/ now contains exactly 4 files (CommandLineParser, PathExtension, RegisterStartupParameters, StringDistance) \u2014 destination tree matches reality."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Support/TypeMappingTestFacade.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Extended with TypeConverter and Json static facades \u2014 routes legacy test API to the new homes (Diagnostics.Options, Builder.PrWrite, App.@this.CamelCaseIndented). ~12 test sites unchanged."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "C# 2752/2752; PLang 199/199. Utils/ at exactly 4 files. Tier 5 closes here \u2014 runtime2-cleanup branch ready for review/merge to runtime2."
+      }
     }
   ]
 }

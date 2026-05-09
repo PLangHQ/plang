@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace App.Data;
 
@@ -9,6 +10,14 @@ namespace App.Data;
 /// </summary>
 public partial class @this
 {
+    // Per-Data static — pure config bag, no instance variation, allocation efficiency
+    // matters because Data is allocated frequently. Stage 27 disperse-from-Json target.
+    private static readonly JsonSerializerOptions _camelCaseIndented = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        Converters = { new Channels.Serializers.TimeSpanIso8601() }
+    };
     /// <summary>
     /// Compares this Data with another by serializing both to JSON and walking the tree.
     /// Returns a Data whose Value is a dictionary with match result, field-level diffs,
@@ -29,7 +38,7 @@ public partial class @this
 
     private static string SerializeForComparison(@this data)
     {
-        return JsonSerializer.Serialize(data.Value, Utils.Json.CamelCaseIndented);
+        return JsonSerializer.Serialize(data.Value, _camelCaseIndented);
     }
 
     private static Dictionary<string, object?> CompareElements(

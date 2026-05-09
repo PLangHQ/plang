@@ -382,13 +382,25 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Saves app identity to .build/app.pr.
     /// </summary>
+    /// <summary>
+    /// CamelCase + indented JsonSerializerOptions. Pure config bag — `static readonly` is the
+    /// Rule C exception class for stateless option holders. Internal so tests can route
+    /// through it; production callers (App.Save, Data.Compare) use copies on their own type.
+    /// </summary>
+    internal static readonly JsonSerializerOptions CamelCaseIndented = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        Converters = { new Channels.Serializers.TimeSpanIso8601() }
+    };
+
     public async Task<Data.@this> Save()
     {
         Updated = DateTime.UtcNow;
         if (Created == default) Created = Updated;
         var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
-            Utils.Json.CamelCaseIndented);
+            CamelCaseIndented);
         var path = FileSystem.ValidatePath(".build/app.pr");
         var dir = global::System.IO.Path.GetDirectoryName(path);
         if (dir != null && !FileSystem.Directory.Exists(dir))

@@ -1,27 +1,35 @@
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using App;
+using App.Data;
 
-namespace App.Utils;
+namespace App.Types;
 
 /// <summary>
-/// Converts values between CLR types. Extracted from TypeMapping so that class
-/// can stay focused on name/type identity — this class owns the conversion rules
-/// (primitive widening, JSON de/serialization, list wrapping, enum parsing,
-/// IObject ctor, GoalCall reconstitution, …).
+/// Conversion partial of <see cref="@this"/> — absorbs the former <c>Utils.TypeConverter</c>.
+/// Public methods (ConvertTo, Populate, TryConvertTo) stay <c>public static</c>; pure-logic
+/// helpers stay <c>private static</c> (Rule C exception class for stateless behaviour).
 /// </summary>
-public static class TypeConverter
+public sealed partial class @this
 {
     /// <summary>
-    /// Attempts to convert a value to the specified type. Generic convenience overload.
+    /// Local case-insensitive read options for the conversion path. Stage 27 dispersed
+    /// the former <c>Utils.Json.CaseInsensitiveRead</c> static — http/code/Default holds
+    /// its own copy too. Per-consumer ownership keeps Rule C closed without inventing a
+    /// shared "Json" god-bag.
     /// </summary>
+    private static readonly JsonSerializerOptions _caseInsensitiveRead = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new App.Data.EmptyStringToNullEnumConverterFactory(), new Channels.Serializers.TimeSpanIso8601() },
+        NumberHandling = JsonNumberHandling.AllowReadingFromString
+    };
+
+    /// <summary>Attempts to convert a value to the specified type. Generic convenience overload.</summary>
     public static T? ConvertTo<T>(object? value) => (T?)ConvertTo(value, typeof(T));
 
-    /// <summary>
-    /// Attempts to convert a value to the specified type.
-    /// Returns null on failure — use TryConvertTo for error details.
-    /// </summary>
+    /// <summary>Attempts to convert a value to the specified type. Returns null on failure — use TryConvertTo for error details.</summary>
     public static object? ConvertTo(object? value, System.Type targetType)
     {
         var (result, _) = TryConvertTo(value, targetType);
@@ -82,10 +90,10 @@ public static class TypeConverter
         {
             try
             {
-                var jsonResult = System.Text.Json.JsonSerializer.Deserialize(jsonStr, targetType, Json.CaseInsensitiveRead);
+                var jsonResult = JsonSerializer.Deserialize(jsonStr, targetType, _caseInsensitiveRead);
                 if (jsonResult != null) return (jsonResult, null);
             }
-            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException || ex is ArgumentException)
+            catch (System.Exception ex) when (ex is JsonException || ex is NotSupportedException || ex is ArgumentException)
             {
                 // If target is a single object but JSON is an array, try deserializing as List<T> and take first
                 if (jsonStr.TrimStart().StartsWith('['))
@@ -93,12 +101,12 @@ public static class TypeConverter
                     try
                     {
                         var listType = typeof(List<>).MakeGenericType(targetType);
-                        var listResult = System.Text.Json.JsonSerializer.Deserialize(jsonStr, listType, Json.CaseInsensitiveRead)
+                        var listResult = JsonSerializer.Deserialize(jsonStr, listType, _caseInsensitiveRead)
                             as System.Collections.IList;
                         if (listResult != null && listResult.Count > 0)
                             return (listResult[0], null);
                     }
-                    catch (System.Exception inner) when (inner is System.Text.Json.JsonException || inner is NotSupportedException || inner is ArgumentException) { }
+                    catch (System.Exception inner) when (inner is JsonException || inner is NotSupportedException || inner is ArgumentException) { }
                 }
             }
         }
@@ -111,8 +119,8 @@ public static class TypeConverter
             // this, a JSON-roundtripped List (Variables.Set's deep-clone path) would
             // be treated as a single value and only the array's "wrapper" would land
             // in a single-element list.
-            if (value is System.Text.Json.JsonElement jeArr
-                && jeArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+            if (value is JsonElement jeArr
+                && jeArr.ValueKind == JsonValueKind.Array)
             {
                 var targetList = (System.Collections.IList)System.Activator.CreateInstance(targetType)!;
                 foreach (var elem in jeArr.EnumerateArray())
@@ -185,10 +193,6 @@ public static class TypeConverter
         }
 
         // Types with a constructor that accepts a single string (may have optional params).
-        // [Choices]-bearing wrapper types like Operator land here — their string ctor
-        // validates the chosen name against the type's own registry. Stateful runtime
-        // types like Actor have no usable construct-from-string path; the validator
-        // short-circuits via Choices membership before reaching TryConvertTo.
         if (value is string ctorStr)
         {
             var ctor = targetType.GetConstructors()
@@ -206,9 +210,6 @@ public static class TypeConverter
                     var ps = ctor.GetParameters();
                     var args = new object?[ps.Length];
                     args[0] = ctorStr;
-                    // Pass context to any optional Actor.Context.@this parameter so
-                    // runtime-aware types (Path, etc.) keep their Context wired
-                    // when reconstituted from strings during build/enrich.
                     for (int ci = 1; ci < ps.Length; ci++)
                     {
                         if (context != null && ps[ci].ParameterType == typeof(Actor.Context.@this))
@@ -273,13 +274,13 @@ public static class TypeConverter
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot." });
                 return (new App.Goals.Goal.GoalCall { Name = goalName }, null);
             }
-            if (value is System.Text.Json.JsonElement je)
+            if (value is JsonElement je)
             {
                 try
                 {
-                    return (System.Text.Json.JsonSerializer.Deserialize<App.Goals.Goal.GoalCall>(
+                    return (JsonSerializer.Deserialize<App.Goals.Goal.GoalCall>(
                         je.GetRawText(),
-                        Json.CaseInsensitiveRead), null);
+                        _caseInsensitiveRead), null);
                 }
                 catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
                 {
@@ -291,12 +292,6 @@ public static class TypeConverter
             if (value is IDictionary<string, object?> dict)
             {
                 var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
-                // Runtime guard: a CLR type FullName has no business being a goal name.
-                // Tripwire for a known leak vector (Fluid template rendering an object as
-                // ToString()) — left here defensively even though the rebuild that fixed
-                // buildstep.pr did not retrigger it. Remove once we've gone several
-                // bootstrap cycles without it firing and the original leak path is
-                // identified or proven extinct.
                 if (context?.App.Types.IsClrTypeName(name) ?? false)
                     return (null, new Errors.Error(
                         $"GoalCall.Name was set to a CLR type name '{name}'.",
@@ -319,10 +314,8 @@ public static class TypeConverter
         }
 
         // Primitives via Convert.ChangeType. InvariantCulture so JSON-shaped
-        // numbers ("3.14", "1000") parse identically regardless of the user's
-        // locale — without this, "3.14" → double FormatExceptions on it-IT,
-        // de-DE, etc. that expect "3,14".
-        if (global::App.Types.@this.IsPrimitive(targetType))
+        // numbers ("3.14", "1000") parse identically regardless of the user's locale.
+        if (IsPrimitive(targetType))
         {
             try
             {
@@ -337,17 +330,13 @@ public static class TypeConverter
         }
 
         // Complex types: dict/JsonElement/JsonNode/list → serialize to JSON → deserialize to target type.
-        // JsonNode covers JsonObject/JsonArray/JsonValue (the System.Text.Json mutable view) — without
-        // it, a value stored via `set ... type=json` (which mints Data<JsonNode>) cannot reach a
-        // strongly-typed handler property: JsonObject implements IDictionary<string, JsonNode?>, NOT
-        // IDictionary<string, object?>, so it slips past the first dispatch arm.
-        if (value is IDictionary<string, object?> or System.Text.Json.JsonElement or JsonNode or System.Collections.IList)
+        if (value is IDictionary<string, object?> or JsonElement or JsonNode or System.Collections.IList)
         {
             string json = "";
             try
             {
-                json = System.Text.Json.JsonSerializer.Serialize(value);
-                var result = System.Text.Json.JsonSerializer.Deserialize(json, targetType, Json.CaseInsensitiveRead);
+                json = JsonSerializer.Serialize(value);
+                var result = JsonSerializer.Deserialize(json, targetType, _caseInsensitiveRead);
                 return (result, null);
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))
@@ -384,23 +373,11 @@ public static class TypeConverter
         return (value, null);
     }
 
-    /// <summary>
-    /// Builds the headline TypeMismatch message: target FullName + a value preview so
-    /// the reader sees both *what shape was expected* and *what value couldn't satisfy
-    /// it*. The plain `Name` is uninformative for OBP types (every `@this` reads as
-    /// "this"); FullName disambiguates. The value preview pinpoints unsubstituted
-    /// `%var%` references — the dominant cause of this error in PLang.
-    /// </summary>
     private static string FormatTypeMismatch(object? value, System.Type sourceType, System.Type targetType)
     {
         return $"Cannot convert {sourceType.FullName} to {targetType.FullName}. Source value: {FormatValuePreview(value)}";
     }
 
-    /// <summary>
-    /// FixSuggestion text — string with `%` is almost always an unresolved variable
-    /// reference (the carve-out paths skipped substitution); flag that explicitly so
-    /// LlmFixer's retry prompt and any human reader land on the cause immediately.
-    /// </summary>
     private static string TypeMismatchHint(object? value, System.Type sourceType, System.Type targetType)
     {
         if (value is string s && s.Contains('%'))
@@ -408,13 +385,6 @@ public static class TypeConverter
         return $"Source: {sourceType.FullName}, Target: {targetType.FullName}";
     }
 
-    /// <summary>
-    /// Compact, single-line preview of a value for diagnostic messages. Strings carry
-    /// the most signal (they reveal unsubstituted vars), so they're shown in full up to
-    /// 100 chars. Collections collapse to a `&lt;TypeName @ N items&gt;` summary so the
-    /// message stays one line and doesn't dump 50KB of JSON. Other values render via
-    /// ToString with the same cap.
-    /// </summary>
     private static string FormatValuePreview(object? value)
     {
         if (value == null) return "(null)";
@@ -430,10 +400,6 @@ public static class TypeConverter
         return str.Length <= 100 ? $"{str} ({value.GetType().Name})" : $"{str[..100]}… ({value.GetType().Name})";
     }
 
-    /// <summary>
-    /// Finds the element type if targetType is List&lt;T&gt; or inherits from it.
-    /// Returns null if not a list type.
-    /// </summary>
     private static System.Type? GetListElementType(System.Type targetType)
     {
         if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))

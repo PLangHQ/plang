@@ -1,3 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+using App.Attributes;
 using Force.DeepCloner;
 
 namespace App.Builder;
@@ -33,6 +37,43 @@ public sealed partial class @this
     /// the snapshot provides the original content for re-deserialization.
     /// </summary>
     private readonly Dictionary<string, string> _prSnapshot = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// JsonSerializerOptions for .pr file writes — only properties marked with [Store] are
+    /// included. CamelCase, indented, nulls omitted. Stage 27 absorbed from Utils.Json.PrWrite.
+    /// Internal so the test fixture can reach it.
+    /// </summary>
+    internal static readonly JsonSerializerOptions PrWrite = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { StoreOnlyModifier }
+        }
+    };
+
+    private static void StoreOnlyModifier(JsonTypeInfo typeInfo)
+    {
+        // Only filter properties on our own types (Goal, Step, Action, etc.)
+        // Leave framework types (List, Dictionary, Data, etc.) alone.
+        if (typeInfo.Kind != JsonTypeInfoKind.Object) return;
+
+        var ns = typeInfo.Type.Namespace;
+        if (ns == null || !ns.StartsWith("App.Goals", StringComparison.Ordinal)) return;
+
+        foreach (var prop in typeInfo.Properties)
+        {
+            if (prop.AttributeProvider == null) continue;
+
+            var hasStore = prop.AttributeProvider
+                .GetCustomAttributes(typeof(StoreAttribute), inherit: true)
+                .Length > 0;
+
+            if (!hasStore)
+                prop.ShouldSerialize = (_, _) => false;
+        }
+    }
 
     /// <summary>
     /// Snapshots .pr file content if not already captured.
