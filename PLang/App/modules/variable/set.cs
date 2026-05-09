@@ -30,10 +30,11 @@ public partial class Set : IContext, IBuildValidatable
             // Skip validation when value contains %variable% references — they resolve at runtime
             if (value.HasVariableReference) return null;
 
-            var targetType = Utils.TypeMapping.GetType(value.Type.Value);
+            var targetType = value.Context?.App.Types.Get(value.Type.Value)
+                             ?? global::App.Types.@this.GetPrimitiveOrMime(value.Type.Value);
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {
-                var (_, error) = Utils.TypeMapping.TryConvertTo(value.Value, targetType);
+                var (_, error) = global::App.Types.@this.TryConvertTo(value.Value, targetType);
                 if (error != null)
                     return $"Parameter 'Value' has type={value.Type.Value} but value cannot be converted: {error.Message}";
             }
@@ -64,7 +65,7 @@ public partial class Set : IContext, IBuildValidatable
         // json` (mapped to variable.set Type=json) followed by foreach over the resulting dict.
         if (Type?.Value != null)
         {
-            var targetType = Utils.TypeMapping.GetType(Type.Value);
+            var targetType = Context.App.Types.Get(Type.Value);
             if (targetType == null)
             {
                 return Task.FromResult(global::App.Data.@this.FromError(
@@ -73,7 +74,7 @@ public partial class Set : IContext, IBuildValidatable
             object? converted = Value.Value;
             if (converted != null && !targetType.IsInstanceOfType(converted))
             {
-                var (c, err) = Utils.TypeMapping.TryConvertTo(converted, targetType, Context);
+                var (c, err) = global::App.Types.@this.TryConvertTo(converted, targetType, Context);
                 if (err != null)
                     return Task.FromResult(global::App.Data.@this.FromError(err));
                 converted = c;

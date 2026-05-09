@@ -16,6 +16,9 @@ public sealed class @this : IAsyncDisposable
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ActionEntry>> _modules = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
+    /// <summary>Owning App, set by App constructor after Modules construction.</summary>
+    public global::App.@this? App { get; internal set; }
+
     /// <summary>
     /// "What every action looks like, for the LLM." Describes the registered
     /// actions' types, parameter schemas, and authored Examples. Built on
@@ -248,7 +251,7 @@ public sealed class @this : IAsyncDisposable
                     if (capabilityProps.Contains(prop.Name)) continue;
                     if (prop.GetCustomAttribute<modules.ProviderAttribute>() != null) continue;
 
-                    var typeName = Utils.TypeMapping.GetTypeName(prop.PropertyType);
+                    var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::App.Types.@this.GetTypeNameStatic(prop.PropertyType));
 
                     bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
                     if (!isNullable && !prop.PropertyType.IsValueType)
@@ -374,7 +377,7 @@ public sealed class @this : IAsyncDisposable
     /// Reads the Run() method's return type. If it returns a concrete Data subtype,
     /// reflects its public properties for the builder summary. Returns null for plain Data.
     /// </summary>
-    private static List<Data.@this>? DescribeReturnType(System.Type actionType)
+    private List<Data.@this>? DescribeReturnType(System.Type actionType)
     {
         var runMethod = actionType.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
         if (runMethod == null) return null;
@@ -400,7 +403,7 @@ public sealed class @this : IAsyncDisposable
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
-            var typeName = Utils.TypeMapping.GetTypeName(prop.PropertyType);
+            var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::App.Types.@this.GetTypeNameStatic(prop.PropertyType));
             properties.Add(new Data.@this(prop.Name, typeName));
         }
 

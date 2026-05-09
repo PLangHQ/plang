@@ -294,10 +294,11 @@ public sealed class Sqlite : IStore
     {
         if (data.Value == null || data.Type == null) return;
 
-        var clrType = TypeMapping.GetType(data.Type.Value);
+        var clrType = data.Context?.App.Types.Get(data.Type.Value)
+                      ?? Types.@this.GetPrimitiveOrMime(data.Type.Value);
         if (clrType == null || clrType.IsAssignableFrom(data.Value.GetType())) return;
 
-        var converted = TypeMapping.ConvertTo(data.Value, clrType);
+        var converted = Types.@this.ConvertTo(data.Value, clrType);
         if (converted != null) data.Value = converted;
     }
 

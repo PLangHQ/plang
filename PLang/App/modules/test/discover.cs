@@ -102,7 +102,7 @@ public partial class discover : IContext
         try
         {
             var prText = fs.File.ReadAllText(absPrPath);
-            var (converted, err) = TypeMapping.TryConvertTo(prText, typeof(Goal));
+            var (converted, err) = global::App.Types.@this.TryConvertTo(prText, typeof(Goal));
             prGoal = converted as Goal;
             if (prGoal == null)
             {

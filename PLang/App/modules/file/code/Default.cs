@@ -29,7 +29,7 @@ public class Default : IFile
                 var snapshotClr = snapshotType.ClrType;
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
-                    var (converted, _) = TypeMapping.TryConvertTo(snapshot, snapshotClr);
+                    var (converted, _) = global::App.Types.@this.TryConvertTo(snapshot, snapshotClr);
                     if (converted != null)
                         return new App.Data.@this(path.Raw, converted, snapshotType);
                 }
@@ -62,7 +62,7 @@ public class Default : IFile
                 // If the type has a CLR mapping (not just string), deserialize
                 if (clr != null && clr != typeof(string))
                 {
-                    var (converted, convertError) = TypeMapping.TryConvertTo(text, clr);
+                    var (converted, convertError) = global::App.Types.@this.TryConvertTo(text, clr);
                     content = converted ?? text;
                 }
                 else

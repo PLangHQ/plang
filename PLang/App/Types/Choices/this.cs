@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace App.Choices;
+namespace App.Types.Choices;
 
 /// <summary>
 /// Registry for [Choices]-attributed vocabulary providers — the closed string lists
@@ -11,19 +11,19 @@ namespace App.Choices;
 /// The registry scans the PLang assembly once on first access and caches a
 /// Type → MethodInfo map. Look-up unwraps Nullable&lt;T&gt; and Data&lt;T&gt; before
 /// matching so callers can pass either the parameter declared type or the underlying
-/// constrained type.
+/// constrained type. Reachable as <c>app.Types.Choices</c>.
 /// </summary>
-public static class @this
+public sealed class @this
 {
-    private static readonly object _gate = new();
-    private static Dictionary<System.Type, MethodInfo>? _registry;
+    private readonly object _gate = new();
+    private Dictionary<System.Type, MethodInfo>? _registry;
 
     /// <summary>
     /// Returns the choices for <paramref name="type"/> if it (or its underlying
     /// constrained type — through Nullable and Data wrappers) has a [Choices] method.
     /// Returns null when no provider is registered.
     /// </summary>
-    public static string[]? Get(System.Type type, Actor.Context.@this? context = null)
+    public string[]? Get(System.Type type, Actor.Context.@this? context = null)
     {
         var underlying = Unwrap(type);
         var registry = EnsureRegistry();
@@ -36,7 +36,7 @@ public static class @this
     /// registered [Choices] provider. Used by the validator to decide between
     /// membership-check and the generic conversion path.
     /// </summary>
-    public static bool Has(System.Type type) =>
+    public bool Has(System.Type type) =>
         EnsureRegistry().ContainsKey(Unwrap(type));
 
     private static System.Type Unwrap(System.Type type)
@@ -48,7 +48,7 @@ public static class @this
         return type;
     }
 
-    private static Dictionary<System.Type, MethodInfo> EnsureRegistry()
+    private Dictionary<System.Type, MethodInfo> EnsureRegistry()
     {
         if (_registry != null) return _registry;
         lock (_gate)

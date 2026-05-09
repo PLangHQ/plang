@@ -27,7 +27,7 @@ public sealed class Type
     /// <summary>
     /// Derive CLR type: navigate through context to App.Types, fall back to static TypeMapping.
     /// </summary>
-    public System.Type? ClrType => Context?.App.Types.Clr(Value) ?? TypeMapping.GetType(Value);
+    public System.Type? ClrType => Context?.App.Types.Clr(Value) ?? Types.@this.GetPrimitiveOrMime(Value);
 
     /// <summary>
     /// Kind of this type value (e.g. "image", "text"). Null for PLang type names like "string".
@@ -70,7 +70,7 @@ public sealed class Type
         {
             "json" => JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }),
-            _ => TypeMapping.TryConvertTo(raw, ClrType ?? typeof(object)).Value
+            _ => Types.@this.TryConvertTo(raw, ClrType ?? typeof(object)).Value
         };
     }
 }
@@ -279,7 +279,8 @@ public partial class @this
             if (_type != null) return _type;
             if (_value == null) return null;
             var typeName = _context?.App.Types.Name(_value.GetType())
-                           ?? TypeMapping.GetTypeName(_value.GetType());
+                           ?? Types.@this.GetPrimitiveName(_value.GetType())
+                           ?? _value.GetType().Name.ToLowerInvariant();
             var derived = new Type(typeName);
             derived.Context = _context;
             _type = derived;
@@ -300,7 +301,7 @@ public partial class @this
         if (_value is T typed)
             return typed;
 
-        var converted = TypeMapping.ConvertTo(_value, typeof(T));
+        var converted = Types.@this.ConvertTo(_value, typeof(T));
         if (converted is T result)
             return result;
 
@@ -318,7 +319,7 @@ public partial class @this
         if (targetType.IsAssignableFrom(_value.GetType()))
             return _value;
 
-        return TypeMapping.ConvertTo(_value, targetType);
+        return Types.@this.ConvertTo(_value, targetType);
     }
 
     /// <summary>
@@ -742,7 +743,7 @@ public partial class @this
             return ConstructWrap<T>((T?)convertedEnum, ctx);
         }
 
-        var (converted, error) = TypeMapping.TryConvertTo(value, typeof(T), ctx);
+        var (converted, error) = Types.@this.TryConvertTo(value, typeof(T), ctx);
         if (error != null)
             return @this<T>.FromError(error);
         return ConstructWrap<T>((T?)converted, ctx);

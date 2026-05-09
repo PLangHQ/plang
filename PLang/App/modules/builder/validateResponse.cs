@@ -58,7 +58,7 @@ public partial class validateResponse : IContext
             return Task.FromResult(App.Data.@this.FromError(
                 new Errors.ActionError(string.Join("; ", problems), "ValidationError", 400)));
         }
-        return Task.FromResult(Validate(response, goal));
+        return Task.FromResult(Validate(response, goal, Context.App));
     }
 
     /// <summary>
@@ -76,7 +76,7 @@ public partial class validateResponse : IContext
                 Keep = false,  // post-build state: every step must stand on its own
             }.With(target => CopyActionsIfAny(s, target))).ToList()
         };
-        return Validate(response, goal);
+        return Validate(response, goal, goal.App);
     }
 
     private static Step CopyActionsIfAny(Step from, Step to)
@@ -88,7 +88,7 @@ public partial class validateResponse : IContext
     }
 
 
-    private static App.Data.@this Validate(BuildResponse response, Goal goal)
+    private static App.Data.@this Validate(BuildResponse response, Goal goal, global::App.@this? app)
     {
         // Auto-fill missing indexes with keep:true placeholders when prior has actions.
         // The LLM sometimes drops a step entirely (omits its index) when it intends
@@ -160,9 +160,9 @@ public partial class validateResponse : IContext
                 {
                     if (p.Type?.Value == null || p.Value == null) continue;
 
-                    var targetType = App.Utils.TypeMapping.GetType(p.Type.Value);
+                    var targetType = (goal.App ?? app)?.Types.Get(p.Type.Value);
                     if (targetType == null) continue;
-                    if (!App.Utils.TypeMapping.IsScalarPlangType(targetType)) continue;
+                    if (!global::App.Types.@this.IsScalarPlangType(targetType)) continue;
 
                     if (p.Value is not string)
                         errors.Add(
@@ -181,7 +181,7 @@ public partial class validateResponse : IContext
         // "module" key, lists of such), and types we can't resolve. Empty strings on
         // nullable parameters are normalized to null in-place so downstream stages
         // (NormalizeParameterTypes, runtime resolution) treat them like an unset slot.
-        var modules = goal.App?.Modules;
+        var modules = (goal.App ?? app)?.Modules;
         foreach (var step in response.Steps)
         {
             if (step.Keep) continue;
@@ -215,12 +215,12 @@ public partial class validateResponse : IContext
                         }
                     }
 
-                    var targetType = App.Utils.TypeMapping.GetType(p.Type.Value);
+                    var targetType = (goal.App ?? app)?.Types.Get(p.Type.Value);
                     if (targetType == null) continue;
                     // Scalar PlangTypes (path, tstring, ...) accept the raw primitive at
                     // build time — runtime wraps via Resolve. Already covered by the
                     // shape check above.
-                    if (App.Utils.TypeMapping.IsScalarPlangType(targetType)) continue;
+                    if (global::App.Types.@this.IsScalarPlangType(targetType)) continue;
 
                     // [Choices]-bearing types: vocabulary check, not type construction.
                     // Stateful runtime types (Actor) cannot honestly be constructed from
@@ -228,7 +228,7 @@ public partial class validateResponse : IContext
                     // in the Choices list is the build-time contract; runtime materializes
                     // the chosen name however the type prefers (App.GetActor for Actor,
                     // ctor registry for Operator, ...).
-                    var choices = App.Choices.@this.Get(targetType);
+                    var choices = (goal.App ?? app)?.Types.Choices.Get(targetType);
                     if (choices != null)
                     {
                         var sval = p.Value as string;
@@ -239,10 +239,10 @@ public partial class validateResponse : IContext
                         continue;
                     }
 
-                    var (_, error) = App.Utils.TypeMapping.TryConvertTo(p.Value, targetType);
+                    var (_, error) = global::App.Types.@this.TryConvertTo(p.Value, targetType);
                     if (error == null) continue;
 
-                    var validValues = App.Utils.TypeMapping.GetValidValues(targetType);
+                    var validValues = (goal.App ?? app)?.Types.GetValidValues(targetType);
                     var hint = validValues != null && validValues.Length > 0
                         ? $" Valid values: {string.Join(", ", validValues)}."
                         : "";

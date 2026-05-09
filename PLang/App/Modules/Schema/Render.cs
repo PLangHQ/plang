@@ -168,7 +168,7 @@ public sealed partial class @this
         return value;
     }
 
-    private static string LookupParamTypeName(System.Type? actionType, string paramName)
+    private string LookupParamTypeName(System.Type? actionType, string paramName)
     {
         if (actionType == null) return "object";
         var prop = actionType.GetProperty(paramName, BindingFlags.Public | BindingFlags.Instance);
@@ -178,7 +178,8 @@ public sealed partial class @this
         // type-marker token. Same convention as Modules.@this.Describe().
         if (typeof(App.Variables.IRawNameResolvable).IsAssignableFrom(unwrapped))
             return "string";
-        return TypeMapping.GetTypeName(unwrapped);
+        return _modules.App?.Types.GetTypeName(unwrapped)
+               ?? unwrapped.Name.ToLowerInvariant();
     }
 
     /// <summary>

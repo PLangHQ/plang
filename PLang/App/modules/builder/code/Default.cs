@@ -270,7 +270,7 @@ public class Default : IBuilder
                     // Hard reject CLR type names — these are the known leak vector
                     // (Fluid template rendering a typed object via ToString()). A goal
                     // Name can never legitimately match a loaded CLR type's FullName.
-                    if (Utils.PlangTypeIndex.IsClrTypeName(goalCall.Name))
+                    if (app.Types.IsClrTypeName(goalCall.Name))
                         validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' is a CLR type name. This is a build pipeline leak (likely a template rendering an object via ToString() instead of .Name). Use the actual goal name from the step text.");
                     else if (goalCall.Name.Contains('.'))
                         validationErrors.Add($"{a.Module}.{a.ActionName}: goal.call.Name '{goalCall.Name}' looks like a type name. Goal names are simple identifiers (e.g. 'BuildGoalCore', 'HandleValidationError'). Use the actual goal name from the @known mapping or the step text.");
@@ -601,7 +601,7 @@ public class Default : IBuilder
                     var schemaProp = props.FirstOrDefault(sp =>
                         string.Equals(sp.Name, p.Name, StringComparison.OrdinalIgnoreCase));
                     if (schemaProp == null) continue;
-                    var typeName = TypeMapping.GetTypeName(schemaProp.PropertyType);
+                    var typeName = context.App.Types.GetTypeName(schemaProp.PropertyType);
                     if (typeName != "object")
                         p.Type = new Data.Type(typeName);
                 }
@@ -632,7 +632,7 @@ public class Default : IBuilder
                 // smoke test). Skip — coercing a description string to its declared type fails.
                 if (p.Value is string desc && IsCatalogDescription(desc, p.Type.Value)) continue;
 
-                var targetType = TypeMapping.GetType(p.Type.Value);
+                var targetType = context.App.Types.Get(p.Type.Value);
                 if (targetType == null) continue;
 
                 // Scalar PlangType domain types (Path, etc.) carry their wire representation
@@ -641,14 +641,14 @@ public class Default : IBuilder
                 // fully reflected record (Raw, Absolute, FileName, ...) that round-trips
                 // poorly. Leave the primitive in the .pr; runtime auto-wraps via the source
                 // generator's Resolve convention when the action actually executes.
-                if (TypeMapping.IsScalarPlangType(targetType)) continue;
+                if (global::App.Types.@this.IsScalarPlangType(targetType)) continue;
 
                 // [Choices]-bearing types (Actor, Operator, ...) keep their string form in
                 // the .pr — runtime resolves the chosen name via the type's own path
                 // (App.GetActor, ctor registry, ...). Eagerly constructing here would
                 // either fail (Actor has no usable string ctor) or produce a stateful
                 // object that doesn't round-trip cleanly. Same shape as the scalar carve-out.
-                if (global::App.Choices.@this.Has(targetType)) continue;
+                if (context.App.Types.Choices.Has(targetType)) continue;
 
                 // Already correctly typed? Skip (e.g. value is bool, target is bool).
                 if (targetType.IsInstanceOfType(p.Value)) continue;
@@ -656,7 +656,7 @@ public class Default : IBuilder
                 // Convert in either direction: string → bool/int/double/etc., or
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var (converted, error) = TypeMapping.TryConvertTo(p.Value, targetType, context);
+                var (converted, error) = global::App.Types.@this.TryConvertTo(p.Value, targetType, context);
                 if (converted != null)
                     p.Value = converted;
                 else if (error != null)
@@ -805,6 +805,6 @@ public class Default : IBuilder
     private static GoalCall? ToGoalCall(object? value)
     {
         if (value is GoalCall gc) return gc;
-        return TypeMapping.ConvertTo<GoalCall>(value);
+        return global::App.Types.@this.ConvertTo<GoalCall>(value);
     }
 }

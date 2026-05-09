@@ -1639,6 +1639,111 @@
         "health": "green",
         "notes": "C# 2752/2752; PLang 199/199. Zero `private static readonly` in Default.cs; `_jsonOptions` gone; 7 hits (1 decl + 3 reads of `_transportInOptions`, 3 reads of `App.Utils.Json.CaseInsensitiveRead`)."
       }
+    },
+    {
+      "id": "8c693a8d-85c2-4bb2-a392-744ae058ae17",
+      "bot": "coder",
+      "timestamp_start": "2026-05-09T02:00:00Z",
+      "timestamp_end": "2026-05-09T10:18:25Z",
+      "intent": "Stage 26 keystone: collapse Utils/TypeMapping + Utils/PlangTypeIndex + App/Choices into instance-shaped app.Types subsystem.",
+      "before": {
+        "assumptions": "Architect's combined keystone. Three Rule C sites under one realignment. ~21 caller files.",
+        "risk": "Medium \u2014 keystone touches many files; behavior must be preserved everywhere; static-context callers (Schema/Render, TypeConverter, AppModules-without-App tests) are the tactical hot spots."
+      },
+      "plan": ".bot/runtime2-cleanup/coder/v26/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Types/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Rewritten as primary partial. Absorbs TypeMapping public surface (Get/Clr, GetTypeName/Name, Register, RegisterDomainTypes, GetValidValues/ValidValues, BuildTypeEntries/ComplexSchemas, GetBuilderTypeNames/BuilderNames as instance; ClrFromMime, IsScalarPlangType, IsPrimitive, ConvertTo, Populate, TryConvertTo as static). Mounts Choices sub-property. Adds 3 static-friendly helpers (GetPrimitiveOrMime, GetPrimitiveName, GetTypeNameStatic) for callers without App."
+        },
+        {
+          "paths": [
+            "PLang/App/Types/Registry.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "New partial of Types.@this. Absorbs PlangTypeIndex internals as instance state (locks, dictionaries, init flag, _clrTypeFullNames, Assemblies). Public methods instance: IsClrTypeName, ResolveName, ResolveType, KnownTypes, RegisterRuntime."
+        },
+        {
+          "paths": [
+            "PLang/App/Types/Choices/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Relocated from App/Choices/this.cs. Static class becomes instance @this; _gate, _registry become instance fields; Get/Has become instance methods. Mounted as app.Types.Choices."
+        },
+        {
+          "paths": [
+            "PLang/App/Utils/TypeMapping.cs",
+            "PLang/App/Utils/PlangTypeIndex.cs",
+            "PLang/App/Choices/this.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "All three files deleted (App/Choices folder removed)."
+        },
+        {
+          "paths": [
+            "PLang/App/Modules/this.cs",
+            "PLang/App/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Modules.@this gains `public App.@this? App { get; internal set; }` back-reference. App constructor sets `_modules.App = this` after Modules construction. Lets Modules.Describe / Schema.Build reach app.Types. Modules.DescribeReturnType changed from static to instance for the same reason."
+        },
+        {
+          "paths": [
+            "PLang/App/Modules/Schema/Render.cs",
+            "PLang/App/Modules/Schema/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Render.LookupParamTypeName changed from private static to instance; uses _modules.App?.Types.GetTypeName(...) with Types.@this.GetTypeNameStatic fallback. Schema.Build reads via _modules.App?.Types.GetBuilderTypeNames / BuildTypeEntries."
+        },
+        {
+          "paths": [
+            "PLang/App/Data/this.cs",
+            "PLang/App/Settings/Sqlite.cs",
+            "PLang/App/Variables/this.cs",
+            "PLang/App/Debug/this.cs",
+            "PLang/App/Utils/TypeConverter.cs",
+            "PLang/App/modules/builder/code/Default.cs",
+            "PLang/App/modules/builder/validateResponse.cs",
+            "PLang/App/modules/file/code/Default.cs",
+            "PLang/App/modules/test/discover.cs",
+            "PLang/App/modules/variable/set.cs",
+            "PLang/Executor.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Caller sweep across production. TypeMapping.X \u2192 app.Types.X (instance) where context/app available, \u2192 global::App.Types.@this.X (static forwarders) for static-context callers. PlangTypeIndex.IsClrTypeName(name) in TypeConverter \u2192 context?.App.Types.IsClrTypeName(name) ?? false. App.Choices.@this.X \u2192 context.App.Types.Choices.X. validateResponse.Validate gains an `App? app` parameter so static-call sites can supply navigation when goal.App is null."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Support/TypeMappingTestFacade.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test-only compatibility facade declaring `namespace App.Utils; internal static class TypeMapping` \u2014 routes the legacy static API through a shared per-process App fixture so the ~150 test call sites continue to work without per-test rewrites. Production code never touches this; tests resolve the symbol via their existing `using global::App.Utils;`."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "green",
+        "notes": "C# 2752/2752; PLang 199/199. Three Rule C sites closed in one realignment. App/Utils/TypeMapping.cs, App/Utils/PlangTypeIndex.cs, App/Choices/ deleted. New shape: app.Types (primary), app.Types.Choices (sub-@this), Registry partial. Stage 27 (TypeConverter \u2192 Types/Conversion.cs partial; Utils/Json disperse) now unblocked."
+      }
     }
   ]
 }

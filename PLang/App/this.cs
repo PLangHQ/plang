@@ -304,6 +304,7 @@ public sealed partial class @this : IAsyncDisposable
         _settingsStore = new Lazy<global::App.Settings.IStore>(CreateSettingsStore);
         Settings = new global::App.Settings.@this(this);
         _modules = modules ?? new AppModules();
+        _modules.App = this;
         _goals = new AppGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
 

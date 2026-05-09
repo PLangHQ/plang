@@ -266,7 +266,7 @@ public static class TypeConverter
         {
             if (value is string goalName)
             {
-                if (PlangTypeIndex.IsClrTypeName(goalName))
+                if (context?.App.Types.IsClrTypeName(goalName) ?? false)
                     return (null, new Errors.Error(
                         $"GoalCall.Name was set to a CLR type name '{goalName}' from a string source.",
                         "ClrTypeNameInGoalSlot", 500)
@@ -297,7 +297,7 @@ public static class TypeConverter
                 // buildstep.pr did not retrigger it. Remove once we've gone several
                 // bootstrap cycles without it firing and the original leak path is
                 // identified or proven extinct.
-                if (PlangTypeIndex.IsClrTypeName(name))
+                if (context?.App.Types.IsClrTypeName(name) ?? false)
                     return (null, new Errors.Error(
                         $"GoalCall.Name was set to a CLR type name '{name}'.",
                         "ClrTypeNameInGoalSlot", 500)
@@ -322,7 +322,7 @@ public static class TypeConverter
         // numbers ("3.14", "1000") parse identically regardless of the user's
         // locale — without this, "3.14" → double FormatExceptions on it-IT,
         // de-DE, etc. that expect "3,14".
-        if (TypeMapping.IsPrimitive(targetType))
+        if (global::App.Types.@this.IsPrimitive(targetType))
         {
             try
             {

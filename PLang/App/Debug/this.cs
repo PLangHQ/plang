@@ -146,7 +146,7 @@ public sealed class @this
                 dict.Remove("callstack");
             }
 
-            App.Utils.TypeMapping.Populate(this, dict);
+            global::App.Types.@this.Populate(this, dict);
         }
 
         // Strip % from variable names
