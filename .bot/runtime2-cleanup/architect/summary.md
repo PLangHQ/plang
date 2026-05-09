@@ -1,5 +1,19 @@
 # architect — runtime2-cleanup
 
+## 2026-05-09 — stage 19 landed; full plan vs delivered audit (`results.md`)
+
+Stage 19 (the last) landed cleanly: Provider → Code rename, end-to-end. C# 2752/2752, PLang 199/199.
+
+All 22 stages have shipped. Wrote `results.md` at the architect root: side-by-side audit of post-cleanup-tree vs actual end state. Headlines:
+
+- **22 of 22 stages delivered.** All committed, all tested green.
+- **9 deviations** from the planned tree, each annotated with reason and verdict. None are regressions.
+- **Major deviations**: stage 16 partial (4 of 8 Rule-C sites deferred — static-caller chains require upper-level refactor); `app.Formats` mounts at root not under Channels/Serializers/ (mount path settled later than tree was written); App spine shrunk less than the aggressive line-count target (responsibility slice landed; bulk shrink lags).
+- **Cosmetic leftovers** (single-file renames the next pass picks up): `Callback/Signature/` absorption, `Events/Lifecycle/` collapse, `RestoredFrame.cs` → `Call/Position.cs`.
+- **One judgment call**: `Data/Code/Default.cs` instead of `Grep.cs` — class can't share a name with `IGrep.Grep()` method. Coder caught the C# constraint the brief missed.
+
+The branch is ready for review. Deferred work itemized in `results.md` and `Documentation/Runtime2/todos.md`.
+
 ## 2026-05-08 (latest+16) — stages 15+16 landed (16 partially); stage 19 carved alone (the last)
 
 Stages 15 and 16 landed.

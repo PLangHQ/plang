@@ -1254,6 +1254,33 @@
         "health": "plan + briefs + scope-map + summary all consistent; ready for the final stage",
         "notes": "Follow-up work outside this plan: deferred Rule C statics from stage 16; Error.@this.App back-ref (stage 11 deferred piece); CallStack scope (todos.md); Events three-tier writer (todos.md); v3 audit methodology (own branch)."
       }
+    },
+    {
+      "id": "1c5673ca-ded5-43c8-b464-a6c5f31b01bc",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T00:21:50.734499Z",
+      "timestamp_end": "2026-05-09T00:21:50.734499Z",
+      "intent": "Compare end state against post-cleanup-tree; produce results.md for UI.",
+      "before": {
+        "assumptions": "Stage 19 was the last to land; 22 stages all delivered; tests green throughout.",
+        "risk": "low \u2014 read-only audit, single MD output."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/runtime2-cleanup/architect/results.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Side-by-side audit. 9 deviations identified, each annotated with reason and verdict. Spine line counts captured (App 596, Modules 494, Channels 242 vs aggressive plan targets). Deferred work itemized. All 22 stage commits cross-checked against briefs."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "branch ready for review",
+        "notes": "All 22 stages landed. Tests 2752/2752 + 199/199. 4 deferred Rule-C sites + 3 cosmetic rename leftovers documented as follow-up."
+      }
     }
   ]
 }
