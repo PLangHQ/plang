@@ -1,14 +1,10 @@
 # `code.run` — Test Coverage
 
-The reference test-designer reads top-to-bottom. One row per behavior
-this branch commits to. Test-designer writes one test per row.
+The reference test-designer reads top-to-bottom. One row per behavior this branch commits to. Test-designer writes one test per row.
 
-Layers: **C#** = `PLang.Tests` TUnit suite. **goal** = PLang
-`Tests/**/*.test.goal`. **integ** = end-to-end goal test exercising
-the full `code.run` path with a real `.cs` file on disk.
+Layers: **C#** = `PLang.Tests` TUnit suite. **goal** = PLang `Tests/**/*.test.goal`. **integ** = end-to-end goal test exercising the full `code.run` path with a real `.cs` file on disk.
 
-Sense: **green** = positive path. **negative** = the failure shape it
-asserts.
+Sense: **green** = positive path. **negative** = the failure shape it asserts.
 
 ---
 
@@ -79,9 +75,7 @@ asserts.
 
 ## Failure matrix
 
-Consolidated negative paths. Each row is a failure mode the system
-*should* fail on; the test asserts the failure is hard, typed, and at
-the right layer.
+Consolidated negative paths. Each row is a failure mode the system *should* fail on; the test asserts the failure is hard, typed, and at the right layer.
 
 | Failure mode | Detected by | Error code | Layer |
 |--------------|-------------|------------|-------|
@@ -97,21 +91,12 @@ the right layer.
 | Method throws while running | Runtime | `RuntimeError.InvocationFailed` (inner exception in detail) | C# |
 | Handler invoked without `Path` | Generator-emitted pre-`Run` guard | `MissingRequiredParameter` | C# |
 
-Negative paths NOT in this matrix because they're impossible by
-design:
+Negative paths NOT in this matrix because they're impossible by design:
 
-- "Method has wrong arg types" — args are `List<Data>?`; coercion via
-  `Data.As<T>(Context)` succeeds or returns its own typed
-  `ConversionError`. That error path is owned by `Data.As<T>`, not by
-  `Runtime`.
-- "Two `Start` methods" — covered by `OverloadedMethod`. No separate
-  test.
-- "Race between two concurrent `code.run` calls on the same path" —
-  Compiler holds an internal lock around cache mutation; testing the
-  lock is testing implementation, not contract. Skip.
-- "Script class is in a non-default namespace" — irrelevant; the
-  Compiler's class search is namespace-blind, takes the only public
-  class. If we add namespace constraints later, then test.
+- "Method has wrong arg types" — args are `List<Data>?`; coercion via `Data.As<T>(Context)` succeeds or returns its own typed `ConversionError`. That error path is owned by `Data.As<T>`, not by `Runtime`.
+- "Two `Start` methods" — covered by `OverloadedMethod`. No separate test.
+- "Race between two concurrent `code.run` calls on the same path" — Compiler holds an internal lock around cache mutation; testing the lock is testing implementation, not contract. Skip.
+- "Script class is in a non-default namespace" — irrelevant; the Compiler's class search is namespace-blind, takes the only public class. If we add namespace constraints later, then test.
 
 ---
 
@@ -167,10 +152,6 @@ What test-designer uses to name tests against without spelunking.
 
 ### Existing surfaces this branch does NOT touch
 
-- `App.Code.@this` and the provider registry — completely untouched.
-  No new entries, no filter relaxation, no API additions.
+- `App.Code.@this` and the provider registry — completely untouched. No new entries, no filter relaxation, no API additions.
 - `App.modules.code.{load, list, remove, setDefault}` — unchanged.
-- `App.modules.module.add` — unchanged. (The two systems are
-  intentionally parallel: `module.add` registers a DLL of *modules*
-  into the action catalog; `code.run` compiles a single class file
-  and invokes a method by name. Different verbs, different shapes.)
+- `App.modules.module.add` — unchanged. (The two systems are intentionally parallel: `module.add` registers a DLL of *modules* into the action catalog; `code.run` compiles a single class file and invokes a method by name. Different verbs, different shapes.)

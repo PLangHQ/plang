@@ -1,30 +1,18 @@
 # Stage 1: `App.Compiler.Runtime.@this`
 
-**Goal:** Define the live object that wraps a compiled assembly +
-entry type and exposes `Start`/`Invoke`/`DisposeAsync`. This is the
-leaf of the design — Stage 2's `Compiler` produces instances of this,
-so build the consumer-facing shape first.
+**Goal:** Define the live object that wraps a compiled assembly + entry type and exposes `Start`/`Invoke`/`DisposeAsync`. This is the leaf of the design — Stage 2's `Compiler` produces instances of this, so build the consumer-facing shape first.
 
 **Scope:**
 - New class: `PLang/App/Compiler/Runtime/this.cs`.
-- Owns: `AssemblyLoadContext`, the entry `System.Type`, and a
-  pre-computed flag indicating whether the entry's ctor takes
-  `Context`.
-- Exposes: `Start(Context)`, `Invoke(string, IReadOnlyList<Data>,
-  Context)`, `DisposeAsync()`.
-- Owns its own typed errors: `App.Errors.RuntimeError` factory file
-  next to it.
-- Excluded: source reading, hashing, Roslyn, the cache. All of that
-  lives in Stage 2's `Compiler`.
+- Owns: `AssemblyLoadContext`, the entry `System.Type`, and a pre-computed flag indicating whether the entry's ctor takes `Context`.
+- Exposes: `Start(Context)`, `Invoke(string, IReadOnlyList<Data>, Context)`, `DisposeAsync()`.
+- Owns its own typed errors: `App.Errors.RuntimeError` factory file next to it.
+- Excluded: source reading, hashing, Roslyn, the cache. All of that lives in Stage 2's `Compiler`.
 
 **Deliverables:**
 - `PLang/App/Compiler/Runtime/this.cs` — the class.
-- `PLang/App/Errors/RuntimeError.cs` — the typed error factory with
-  `MethodNotFound`, `ArityMismatch`, `InvocationFailed`.
-- `PLang.Tests/App/Compiler/RuntimeTests/` — TUnit tests for rows 1.1
-  through 1.11 in [plan/test-coverage.md](plan/test-coverage.md). Tests
-  construct `Runtime` directly with a hand-built assembly (Roslyn or
-  pre-baked `.dll` fixture); no `Compiler` dependency yet.
+- `PLang/App/Errors/RuntimeError.cs` — the typed error factory with `MethodNotFound`, `ArityMismatch`, `InvocationFailed`.
+- `PLang.Tests/App/Compiler/RuntimeTests/` — TUnit tests for rows 1.1 through 1.11 in [plan/test-coverage.md](plan/test-coverage.md). Tests construct `Runtime` directly with a hand-built assembly (Roslyn or pre-baked `.dll` fixture); no `Compiler` dependency yet.
 
 **Dependencies:** none. Stage 1 ships independently.
 
@@ -143,54 +131,28 @@ public static class RuntimeError
 }
 ```
 
-(Use whatever `ActionError`/`Data.FromError` shape the rest of the
-codebase uses. Match `App/modules/code/load.cs` for style — it's the
-sibling that already does `Data.@this.FromError(new ActionError(...))`
-in the same module.)
+(Use whatever `ActionError`/`Data.FromError` shape the rest of the codebase uses. Match `App/modules/code/load.cs` for style — it's the sibling that already does `Data.@this.FromError(new ActionError(...))` in the same module.)
 
 ### Why these decisions
 
-**Why pre-compute `_takesContextCtor` instead of probing per call.**
-The probe is a reflection scan of constructors — cheap, but it's
-information that doesn't change for the lifetime of the Runtime. Hoist
-it once at construction. Stage 2 will compute it when building the
-Runtime and pass it in.
+**Why pre-compute `_takesContextCtor` instead of probing per call.** The probe is a reflection scan of constructors — cheap, but it's information that doesn't change for the lifetime of the Runtime. Hoist it once at construction. Stage 2 will compute it when building the Runtime and pass it in.
 
-**Why `Start(ctx)` is just `Invoke("Start", [], ctx)`.** No special
-case. The default-entry behavior is "method named Start, zero args."
-If the script has no `Start`, the same `MethodNotFound` error fires as
-for any other missing method. Single code path, single error shape.
+**Why `Start(ctx)` is just `Invoke("Start", [], ctx)`.** No special case. The default-entry behavior is "method named Start, zero args." If the script has no `Start`, the same `MethodNotFound` error fires as for any other missing method. Single code path, single error shape.
 
-**Why `IReadOnlyList<Data>` not `List<Data>`.** The handler hands us
-`Args ?? new()`. We don't mutate the list. Match the contract to the
-need.
+**Why `IReadOnlyList<Data>` not `List<Data>`.** The handler hands us `Args ?? new()`. We don't mutate the list. Match the contract to the need.
 
-**Why `Activator.CreateInstance` per call.** Fresh instance per
-invocation is the design (see plan.md "Lifetime and caching"). Cheap.
-Don't cache instances — they'd race across concurrent goals.
+**Why `Activator.CreateInstance` per call.** Fresh instance per invocation is the design (see plan.md "Lifetime and caching"). Cheap. Don't cache instances — they'd race across concurrent goals.
 
-**Why `_alc.Unload()` is fire-and-forget in `DisposeAsync`.**
-`Unload()` marks the ALC for collection but the actual unload happens
-when the GC runs. That's the BCL contract; tests must not assert
-"the assembly is gone immediately after Dispose." They can assert
-"`Unload` was called," which is what test 1.11 covers (use a
-subclass-friendly hook or a custom ALC type if the test needs to
-observe the unload signal).
+**Why `_alc.Unload()` is fire-and-forget in `DisposeAsync`.** `Unload()` marks the ALC for collection but the actual unload happens when the GC runs. That's the BCL contract; tests must not assert "the assembly is gone immediately after Dispose." They can assert "`Unload` was called," which is what test 1.11 covers (use a subclass-friendly hook or a custom ALC type if the test needs to observe the unload signal).
 
 ### Test fixtures
 
-Tests in `PLang.Tests/App/Compiler/RuntimeTests/` need pre-cooked
-assemblies for the entry type. Two paths:
+Tests in `PLang.Tests/App/Compiler/RuntimeTests/` need pre-cooked assemblies for the entry type. Two paths:
 
-1. **Inline Roslyn at test setup.** Each test compiles its source
-   string into an in-memory assembly and hands the resulting `Type`
-   to `Runtime`. Heaviest, but no Compiler dependency. Use this.
-2. **Pre-baked test DLLs.** Faster but couples test to build artifacts
-   on disk. Skip for Stage 1.
+1. **Inline Roslyn at test setup.** Each test compiles its source string into an in-memory assembly and hands the resulting `Type` to `Runtime`. Heaviest, but no Compiler dependency. Use this.
+2. **Pre-baked test DLLs.** Faster but couples test to build artifacts on disk. Skip for Stage 1.
 
-The inline-Roslyn helper can live in `PLang.Tests/App/Compiler/Support/
-ScriptCompileFixture.cs`. Stage 2 may end up reusing it; if so, lift
-to shared scope then.
+The inline-Roslyn helper can live in `PLang.Tests/App/Compiler/Support/ ScriptCompileFixture.cs`. Stage 2 may end up reusing it; if so, lift to shared scope then.
 
 ### Files
 
@@ -214,6 +176,4 @@ PLang.Tests/
                 └── ScriptCompileFixture.cs NEW
 ```
 
-No existing files modified. No global usings added. No registrations
-added. Stage 1 is purely additive at the leaf of the dependency
-graph.
+No existing files modified. No global usings added. No registrations added. Stage 1 is purely additive at the leaf of the dependency graph.

@@ -2,8 +2,7 @@
 
 ## 2026-05-10 (v1) — Branch carved; plan delivered to test-designer + coder
 
-This branch holds the design and plan for a new PLang action: `code.run`.
-A developer types `- run mycode.cs` (or `- run SumList %x%, %y% in mycode.cs, write to %sum%`); PLang reads the file, compiles it, instantiates the entry class, and invokes the named method (or `Start` if none is named) with the supplied positional args. The result flows back through the standard `%__data__%` path.
+This branch holds the design and plan for a new PLang action: `code.run`. A developer types `- run mycode.cs` (or `- run SumList %x%, %y% in mycode.cs, write to %sum%`); PLang reads the file, compiles it, instantiates the entry class, and invokes the named method (or `Start` if none is named) with the supplied positional args. The result flows back through the standard `%__data__%` path.
 
 **Origin.** The design was carved during a session on `runtime2-cleanup` and originally landed there as a single commit (`3c7c827d`). On Ingi's call, that scope-creep was reverted from `runtime2-cleanup` and re-rooted here on its own branch off `a9791ad5`. The session transcript — including what was rejected and why — is preserved at `plan/transcript.md`.
 

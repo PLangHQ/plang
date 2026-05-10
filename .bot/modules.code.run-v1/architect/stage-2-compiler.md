@@ -1,27 +1,19 @@
 # Stage 2: `App.Compiler.@this`
 
-**Goal:** The compile-and-cache service that produces `Runtime`
-instances. Privately owns source-read, hash, the Roslyn invocation,
-the cache, and eviction. Adds `App.Compiler` as a property on
-`App.@this` (peer of `App.Code`).
+**Goal:** The compile-and-cache service that produces `Runtime` instances. Privately owns source-read, hash, the Roslyn invocation, the cache, and eviction. Adds `App.Compiler` as a property on `App.@this` (peer of `App.Code`).
 
 **Scope:**
 - New class: `PLang/App/Compiler/this.cs`.
-- New error factory: `PLang/App/Errors/CompileError.cs` with
-  `NoEntryClass`, `MultipleEntryClasses`, `MustReturnTask`,
-  `OverloadedMethod`, `UnsupportedConstructor`, `CompileFailed`.
-- New `App.Compiler` property on `App.@this`, constructed in the App
-  ctor, disposed in `App.DisposeAsync`.
+- New error factory: `PLang/App/Errors/CompileError.cs` with `NoEntryClass`, `MultipleEntryClasses`, `MustReturnTask`, `OverloadedMethod`, `UnsupportedConstructor`, `CompileFailed`.
+- New `App.Compiler` property on `App.@this`, constructed in the App ctor, disposed in `App.DisposeAsync`.
 - Excluded: anything user-facing. The action handler is Stage 3.
 
 **Deliverables:**
 - `PLang/App/Compiler/this.cs` — the class.
 - `PLang/App/Errors/CompileError.cs` — typed error factory.
-- One-line addition to `PLang/App/this.cs`:
-  `public Compiler.@this Compiler { get; }` and ctor wiring.
+- One-line addition to `PLang/App/this.cs`: `public Compiler.@this Compiler { get; }` and ctor wiring.
 - Disposal hook in `App.DisposeAsync`: `await Compiler.DisposeAsync()`.
-- `PLang.Tests/App/Compiler/CompilerTests/` — TUnit tests for rows
-  2.1 through 2.13 in [plan/test-coverage.md](plan/test-coverage.md).
+- `PLang.Tests/App/Compiler/CompilerTests/` — TUnit tests for rows 2.1 through 2.13 in [plan/test-coverage.md](plan/test-coverage.md).
 
 **Dependencies:** Stage 1 (`Runtime.@this` and `RuntimeError`).
 
@@ -249,43 +241,17 @@ public static class CompileError
 
 ### Why these decisions
 
-**Why two cache maps (`_byHash` and `_pathToHash`) instead of one
-keyed by path.** Two reasons. First: content-addressed cache lets
-two paths with identical content share the same `Runtime` (cheap and
-correct). Second: the path-to-hash side-table is what makes eviction
-*work* — when the file at `mycode.cs` changes from hash A to hash B,
-we need to know what the *previous* hash was so we can drop A's
-runtime. A single path-keyed cache loses that history.
+**Why two cache maps (`_byHash` and `_pathToHash`) instead of one keyed by path.** Two reasons. First: content-addressed cache lets two paths with identical content share the same `Runtime` (cheap and correct). Second: the path-to-hash side-table is what makes eviction *work* — when the file at `mycode.cs` changes from hash A to hash B, we need to know what the *previous* hash was so we can drop A's runtime. A single path-keyed cache loses that history.
 
-**Why the build runs outside the lock.** Roslyn compilation is
-slow (tens to hundreds of ms). Holding the lock during compile would
-serialize concurrent calls to different files. Releasing the lock
-during build introduces the race that the second `if
-(_byHash.TryGetValue(hash, out var raceWinner))` check handles —
-prefer the winner's runtime, dispose ours.
+**Why the build runs outside the lock.** Roslyn compilation is slow (tens to hundreds of ms). Holding the lock during compile would serialize concurrent calls to different files. Releasing the lock during build introduces the race that the second `if (_byHash.TryGetValue(hash, out var raceWinner))` check handles — prefer the winner's runtime, dispose ours.
 
-**Why `ValidateShape` walks the syntax tree before Roslyn compile.**
-Shape errors (multiple public classes, sync method, overloaded
-method) are violations of *PLang's* contract, not C#. Surfacing them
-as Roslyn diagnostics would bury the message in compile output and
-sometimes wouldn't surface at all (overloaded methods are valid C#).
-A pre-Roslyn walk gives clean, PLang-flavored error messages.
+**Why `ValidateShape` walks the syntax tree before Roslyn compile.** Shape errors (multiple public classes, sync method, overloaded method) are violations of *PLang's* contract, not C#. Surfacing them as Roslyn diagnostics would bury the message in compile output and sometimes wouldn't surface at all (overloaded methods are valid C#). A pre-Roslyn walk gives clean, PLang-flavored error messages.
 
-**Why `ReferenceSet` is "every loaded assembly" in v1.** This is
-permissive on purpose — it's the only way to make `var goal =
-context.Goal` work without per-assembly opt-in. Tightening this is
-the sandboxing pass; baking restrictions in now would force us to
-loosen them later. The doc note "Out of scope: sandboxing" is the
-record.
+**Why `ReferenceSet` is "every loaded assembly" in v1.** This is permissive on purpose — it's the only way to make `var goal = context.Goal` work without per-assembly opt-in. Tightening this is the sandboxing pass; baking restrictions in now would force us to loosen them later. The doc note "Out of scope: sandboxing" is the record.
 
-**Why `isCollectible: true` on the ALC.** Required for `Unload()` to
-do anything. Without it, the assembly stays loaded for the App's
-lifetime — the cache never actually evicts.
+**Why `isCollectible: true` on the ALC.** Required for `Unload()` to do anything. Without it, the assembly stays loaded for the App's lifetime — the cache never actually evicts.
 
-**Why `ServiceError` for file-not-found instead of `CompileError`.**
-File-not-found is a filesystem error, not a compile error. `module/
-add.cs` uses `ServiceError` for the same shape ("module not found:
-..."). Match the sibling.
+**Why `ServiceError` for file-not-found instead of `CompileError`.** File-not-found is a filesystem error, not a compile error. `module/ add.cs` uses `ServiceError` for the same shape ("module not found: ..."). Match the sibling.
 
 ### App wiring
 
@@ -301,9 +267,7 @@ Compiler = new Compiler.@this(this);
 await Compiler.DisposeAsync();
 ```
 
-Initialisation order: after `FileSystem` is set (Compiler doesn't
-read at construction, but the back-ref is consistent with how `Code`
-and friends are wired).
+Initialisation order: after `FileSystem` is set (Compiler doesn't read at construction, but the back-ref is consistent with how `Code` and friends are wired).
 
 ### Files
 
@@ -327,6 +291,4 @@ PLang.Tests/
             └── DisposeTests.cs           NEW   (row 2.13)
 ```
 
-`Support/ScriptCompileFixture.cs` from Stage 1 may now be unnecessary
-for some tests — Compiler IS the fixture for those. Keep it for
-Runtime tests that want to skip Compiler.
+`Support/ScriptCompileFixture.cs` from Stage 1 may now be unnecessary for some tests — Compiler IS the fixture for those. Keep it for Runtime tests that want to skip Compiler.
