@@ -1,0 +1,61 @@
+{
+  "branch": "modules.code.run/v1",
+  "sessions": [
+    {
+      "id": "21647dd0-3f75-4942-99af-a609ffd9d279",
+      "bot": "architect",
+      "timestamp_start": "2026-05-09T17:21:45.229817Z",
+      "timestamp_end": "2026-05-10T00:00:00Z",
+      "intent": "Carve plan for new code.run feature: Compiler/Runtime split + action handler + test plan handoff. Re-rooted from runtime2-cleanup onto its own branch off a9791ad5.",
+      "before": {
+        "assumptions": "code.run is a new PLang action that compiles a .cs file at runtime and invokes a method in it. App.Code (provider registry) stays untouched; new App.Compiler peer owns compile+cache. Roslyn already a transitive dep via Microsoft.CodeAnalysis.CSharp.Scripting 4.13.0 in PLang.csproj. The runtime2-cleanup branch already has the [Provider]→[Code] attribute rename (a9791ad5), which is why this branch bases there rather than on origin/runtime2 directly — the writing-modules doc references [Code].",
+        "risk": "Sandboxing / signed-script trust is deferred to a separate pass and explicitly noted. Without it, code.run runs with the App's full trust — fine for trusted contexts, not for untrusted goal sources."
+      },
+      "plan": ".bot/modules.code.run-v1/architect/plan.md",
+      "actions": [
+        {
+          "paths": ["Documentation/v0.2/writing-modules.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New living doc: how to write a PLang module. There was no module-authoring doc when the session opened. Aligned with [Code] attribute (formerly [Provider]) per coder v29 rename. Live-additions tail logs two entries from this session (Path-as-string miss, ScriptEntry OBP smell)."
+        },
+        {
+          "paths": [
+            ".bot/modules.code.run-v1/architect/plan.md",
+            ".bot/modules.code.run-v1/architect/stage-1-runtime.md",
+            ".bot/modules.code.run-v1/architect/stage-2-compiler.md",
+            ".bot/modules.code.run-v1/architect/stage-3-code-run-action.md",
+            ".bot/modules.code.run-v1/architect/plan/transcript.md",
+            ".bot/modules.code.run-v1/architect/plan/test-strategy.md",
+            ".bot/modules.code.run-v1/architect/plan/test-coverage.md",
+            ".bot/modules.code.run-v1/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan tree in canonical architect layout: spine + stages at the architect root, deep-dives under plan/. Three stages: Runtime leaf → Compiler with cache → action handler. Test strategy + coverage matrix + new-surfaces inventory for test-designer. Turn-by-turn design transcript (preserves the rejected paths and the why)."
+        },
+        {
+          "paths": [
+            "PLang/App/Compiler/Runtime/this.cs",
+            "PLang/App/Compiler/this.cs",
+            "PLang/App/Errors/CompileError.cs",
+            "PLang/App/Errors/RuntimeError.cs",
+            "PLang/App/modules/code/run.cs",
+            "PLang/App/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Coder file plan (NOT written this session — they are the deliverables for stages 1–3). Compiler/Runtime split is the OBP-correct shape after the design pivot in turn 9 of the transcript. App.Code is intentionally untouched."
+        }
+      ],
+      "after": {
+        "status": "plan delivered to test-designer and coder; pending implementation",
+        "health": "green — branch self-contained, rooted off a9791ad5 so [Code] attribute and the runtime2-cleanup foundation are in place",
+        "notes": "Two architect misses caught and logged as living-doc entries (Path-as-string miss, ScriptEntry OBP smell). Sandboxing/trust deferred to a separate design pass."
+      }
+    }
+  ]
+}
