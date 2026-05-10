@@ -1,0 +1,3 @@
+Start
+- [code] run scripts/sum.cs, write to %answer%
+- assert %answer% equals 42

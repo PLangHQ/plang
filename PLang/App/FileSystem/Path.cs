@@ -34,17 +34,23 @@ public class Path : modules.IContext
             "Path requires Context with App.FileSystem — wire it before accessing filesystem-dependent properties");
 
     /// <summary>
-    /// Creates a Path. Context is optional at construction so utilities that
-    /// build Paths before runtime is up (CLI parser, source generators) can
-    /// construct them; Context arrives via the IContext setter when the Path
-    /// is wrapped in Data&lt;Path&gt; or set on a runtime object.
+    /// Creates a Path. Accepts either an absolute path or a relative one — when
+    /// the input is relative AND <paramref name="context"/> is supplied, it's
+    /// resolved against the goal's runtime directory the same way the source
+    /// generator does. Absolute paths are stored as-is. Context is optional so
+    /// boot-time utilities (CLI parser, generators) can still construct Paths
+    /// before runtime is up; in that case Context arrives later via IContext.
     /// </summary>
-    public Path(string absolutePath, Actor.Context.@this? context = null, object? content = null, string? source = null)
+    public Path(string path, Actor.Context.@this? context = null, object? content = null, string? source = null)
     {
-        _absolutePath = absolutePath;
+        Raw = path;
         Context = context;
         Content = content;
         Source = source;
+
+        _absolutePath = (context != null && IsRelative(path))
+            ? ResolveRelative(path, context)
+            : path;
     }
 
     /// <summary>
@@ -61,42 +67,46 @@ public class Path : modules.IContext
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
+        return new Path(rawPath, context);
+    }
 
+    private static bool IsRelative(string path)
+        => !path.StartsWith('/') && !path.StartsWith('\\') && !path.Contains("://");
+
+    /// <summary>
+    /// Resolves a relative path against the goal's runtime directory (preferred,
+    /// derived from the .pr's on-disk location) or falls back to Goal.Path's
+    /// directory for in-memory goals. Validated through the FileSystem before
+    /// being stored as the absolute path.
+    /// </summary>
+    private static string ResolveRelative(string rawPath, Actor.Context.@this context)
+    {
         var fs = context.App.FileSystem;
         var resolved = rawPath;
 
-        // Relative paths resolve against the goal's folder. Prefer the runtime
-        // directory derived from the .pr's on-disk location — Goal.Path is the
-        // build-time identity (parent-perspective in child Apps) and would
-        // mis-resolve. Fall back to Goal.Path's directory for in-memory goals
-        // that have no LoadedFromPrPath.
-        if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://"))
+        var goal = context.Goal;
+        var runtimeDir = goal?.GetRuntimeDirectory();
+        if (!string.IsNullOrEmpty(runtimeDir))
         {
-            var goal = context.Goal;
-            var runtimeDir = goal?.GetRuntimeDirectory();
-            if (!string.IsNullOrEmpty(runtimeDir))
+            resolved = fs.Path.Combine(runtimeDir, rawPath);
+        }
+        else
+        {
+            var goalPath = goal?.Path;
+            if (!string.IsNullOrEmpty(goalPath))
             {
-                resolved = fs.Path.Combine(runtimeDir, rawPath);
-            }
-            else
-            {
-                var goalPath = goal?.Path;
-                if (!string.IsNullOrEmpty(goalPath))
-                {
-                    var goalDir = fs.Path.GetDirectoryName(goalPath);
-                    if (!string.IsNullOrEmpty(goalDir))
-                        resolved = fs.Path.Combine(goalDir, rawPath);
-                }
+                var goalDir = fs.Path.GetDirectoryName(goalPath);
+                if (!string.IsNullOrEmpty(goalDir))
+                    resolved = fs.Path.Combine(goalDir, rawPath);
             }
         }
 
-        var path = new Path(fs.ValidatePath(resolved), context) { Raw = rawPath };
-        return path;
+        return fs.ValidatePath(resolved);
     }
 
     // --- Path properties ---
 
-    public string Raw { get; init; } = "";
+    public string Raw { get; private init; } = "";
     public string Absolute => _absolutePath;
 
     public string Relative
@@ -162,6 +172,37 @@ public class Path : modules.IContext
     // --- Content (file content when set by provider, e.g., after file.read) ---
 
     public object? Content { get; set; }
+
+    /// <summary>
+    /// Reads the file at this path, routed through the registered <c>file.read</c>
+    /// provider (<see cref="modules.file.code.IFile"/>). The result is the standard
+    /// <see cref="App.Data.@this"/> envelope — <c>.Value</c> is typically a string.
+    /// First successful read memoises into <see cref="Content"/>; subsequent calls
+    /// return the cached value without re-reading.
+    ///
+    /// Path owns this. Scripts say <c>await path.GetContent()</c> — they don't
+    /// look up <c>IFile</c>, don't construct a <c>file.read</c> action record.
+    /// </summary>
+    public Task<App.Data.@this> GetContent()
+    {
+        if (Content != null) return Task.FromResult(App.Data.@this.Ok(Content));
+
+        var ctx = Context ?? throw new InvalidOperationException(
+            "Path.GetContent requires Context — wire it before reading");
+
+        var action = new modules.file.Read
+        {
+            Path    = new App.Data.@this<Path>(value: this),
+            Context = ctx,
+        };
+
+        var provider = ctx.App.Code.Get<modules.file.code.IFile>().Value
+            ?? throw new InvalidOperationException("No file provider registered");
+
+        var result = provider.Read(action);
+        if (result.Success && result.Value is not null) Content = result.Value;
+        return Task.FromResult(result);
+    }
 
     // --- Copy/move source tracking ---
 

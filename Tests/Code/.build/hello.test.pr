@@ -1,0 +1,105 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "[code] run scripts/hello.cs, write to %msg%",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "code",
+          "action": "run",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "scripts/hello.cs",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%msg%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use code.run to execute the C# script and capture its return value into %__data__%, then assign it to %msg% via variable.set.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %msg% equals \u0022hello plang world\u0022",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "hello plang world",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%msg%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition check: assert that %msg% equals the literal expected value.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Code/Hello.test.goal",
+  "prPath": "/Tests/Code/.build/hello.test.pr",
+  "hash": "a2b760b52ba202f5c7a4201f7281ec12328792faf4c6448906527244a3e8a46f",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

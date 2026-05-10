@@ -56,6 +56,102 @@
         "health": "green — branch self-contained, rooted off a9791ad5 so [Code] attribute and the runtime2-cleanup foundation are in place",
         "notes": "Two architect misses caught and logged as living-doc entries (Path-as-string miss, ScriptEntry OBP smell). Sandboxing/trust deferred to a separate design pass."
       }
+    },
+    {
+      "id": "5e7c0a1f-2a4b-4c66-b8d0-6f3a91e0c001",
+      "bot": "coder",
+      "timestamp_start": "2026-05-09T00:00:00Z",
+      "timestamp_end": "2026-05-10T12:00:00Z",
+      "intent": "Implement code.run with the minimal shape Ingi sketched live. Architect's larger Compiler/Runtime/Cache plan was deliberately set aside in conversation — coder followed Ingi's pseudocode (Runner facade + Path.GetContent + Path-stays-in-envelope) instead.",
+      "before": {
+        "baseline_csharp": "2752/2752 pass (PLang.Tests)",
+        "baseline_plang": "199/199 pass (Tests, plang --test)",
+        "branch_base": "started on code-run off runtime2-cleanup @ 3c7c827d; moved here onto modules.code.run/v1 (off a9791ad5 + architect plan) at session end",
+        "assumptions": [
+          "Ingi's pseudocode is the contract: var code = new Runner(Path); return await code.Start(data)",
+          "Path stays in its Data<Path> envelope — never decomposed via .Value at the caller",
+          "Roslyn (Microsoft.CodeAnalysis.CSharp.Scripting 4.13.0) already a dep of PLang.csproj",
+          "Path constructor should accept relative paths and self-resolve when Context is supplied — Resolve becomes a one-liner"
+        ]
+      },
+      "plan": ".bot/modules.code.run-v1/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/Code/PluginLoadContext.cs",
+            "PLang/App/Code/Compiled/this.cs",
+            "PLang/App/Code/Runtime/this.cs",
+            "PLang/App/Code/Runner/this.cs",
+            "PLang/App/Code/this.Load.cs",
+            "PLang/App/modules/code/run.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five new files + one new partial under App.Code. PluginLoadContext is a collectible ALC. Compiled wraps bytes and owns Load() → Data<Runtime>. Runtime wraps assembly + entry type, exposes Start(Data, Context) + Invoke(name, args, Context). Runner is a path-aware facade — one method, Start(Data) — so the action handler is two real lines. this.Load.cs is a partial on App.Code.@this that takes Data<Path> and dispatches .cs (compile via Roslyn) vs .dll (raw bytes). Action handler at modules/code/run.cs."
+        },
+        {
+          "paths": ["PLang/App/FileSystem/Path.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Two changes: (1) Path constructor now accepts relative paths and self-resolves when Context is supplied, so scripts can write `new Path(\"notes.md\", Context)`. Resolve() static remains as a thin delegating one-liner for the source generator. (2) New Path.GetContent() — Path owns reading itself, routing through the registered IFile provider. Scripts say `await path.GetContent()` instead of looking up IFile and constructing a file.read action."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Code/CodeRunTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "10 TUnit tests: Start no-args, Start with Data, Invoke named method + positional args, Task non-generic unwrap, MethodNotFound, ArityMismatch, FileNotFound, CompileFailed, double-load independence, and Path.GetContent through IFile."
+        },
+        {
+          "paths": [
+            "Tests/Code/Hello.test.goal",
+            "Tests/Code/RunDefault.test.goal",
+            "Tests/Code/scripts/hello.cs",
+            "Tests/Code/scripts/sum.cs",
+            "Tests/Code/.build/hello.test.pr",
+            "Tests/Code/.build/rundefault.test.pr"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "End-to-end PLang integration: `- run scripts/hello.cs, write to %msg%` resolves through builder → code.run handler → Runner → Compiled → Runtime → script's Start() → returns 'hello plang world'. Both .test.goal files pass."
+        },
+        {
+          "paths": [
+            ".bot/modules.code.run-v1/coder/v1/plan.md",
+            ".bot/modules.code.run-v1/coder/v1/baseline-tests.md",
+            ".bot/modules.code.run-v1/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Coder bot dir migrated from .bot/code-run/ when the architect rebased onto modules.code.run/v1. plan.md reflects the live-designed minimal shape (not the architect's spec)."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/code/run.cs",
+            "PLang/App/Code/Runtime/this.cs",
+            "PLang/App/Code/Runner/this.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Architect's design (Compiler+Runtime split as App peers, hash cache, eviction race, ValidateShape, ProbeConstructor, error factory files) was deliberately not implemented. Ingi pushed back live: 'why all this code?' → collapsed to the Runner facade, no cache (registry IS the cache when we want it), no pre-Roslyn shape walk, no constructor probe (try (Context), fall back to ()), no separate error factory. Method/Options dispatch was dropped in favor of a single Start(Data) contract — variation lives inside the script. If named-method dispatch is needed later, Runtime.Invoke is still public; only the action handler currently doesn't expose it."
+        }
+      ],
+      "after": {
+        "status": "code.run end-to-end working; both test suites green",
+        "health": "C# 2762/2762 pass (baseline 2752 + 10 new); PLang 201/201 pass (baseline 199 + Hello + RunDefault)",
+        "notes": [
+          "Branch was code-run during the build, moved to modules.code.run/v1 at the end so the architect's plan and the implementation share one branch tree.",
+          "Two design lessons logged: (1) don't decompose Data envelopes at caller — pass Data<Path> through, unwrap at the work site only; (2) async state machines run as Task<VoidTaskResult> internally so use the declared MethodInfo.ReturnType, not task.GetType(), to decide Task vs Task<T> unwrap.",
+          "Out of scope (still): named-method dispatch from the action handler, sandboxing/signed-script trust, programmatic facades for other modules (file.Save, llm.Query)."
+        ]
+      }
     }
   ]
 }

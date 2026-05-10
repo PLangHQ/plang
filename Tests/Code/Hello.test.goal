@@ -1,0 +1,3 @@
+Start
+- [code] run scripts/hello.cs, write to %msg%
+- assert %msg% equals "hello plang world"
