@@ -11,15 +11,18 @@ public sealed class @this
 {
     private readonly byte[] _bytes;
     private readonly string _name;
+    private readonly string _hash;
 
-    public @this(byte[] bytes, string name)
+    public @this(byte[] bytes, string name, string hash)
     {
         _bytes = bytes;
         _name = name;
+        _hash = hash;
     }
 
     public string Name => _name;
     public int Size => _bytes.Length;
+    public string Hash => _hash;
 
     public Data.@this<Runtime.@this> Load()
     {

@@ -18,7 +18,7 @@ public sealed class @this
         var loaded = await ctx.App.Code.Load(_path);
         if (!loaded.Success) return loaded;
 
-        await using var runtime = loaded.Value!;
-        return await runtime.Start(data, ctx);
+        // Runtime is owned by the App.Code cache — not disposed per call.
+        return await loaded.Value!.Start(data, ctx);
     }
 }

@@ -85,7 +85,7 @@ public sealed class CodeRunTests : IDisposable
 
         var loaded = await _app.Code.Load(pathData);
         await Assert.That(loaded.Success).IsTrue();
-        await using var runtime = loaded.Value!;
+        var runtime = loaded.Value!;
 
         var sumResult = await runtime.Invoke("Sum", new List<global::App.Data.@this>
         {
@@ -106,7 +106,7 @@ public sealed class CodeRunTests : IDisposable
         """);
 
         var loaded = await _app.Code.Load(pathData);
-        await using var runtime = loaded.Value!;
+        var runtime = loaded.Value!;
 
         var result = await runtime.Invoke("DoWork", new List<global::App.Data.@this>(), _app.User.Context);
         await Assert.That(result.Success).IsTrue();
@@ -123,7 +123,7 @@ public sealed class CodeRunTests : IDisposable
         """);
 
         var loaded = await _app.Code.Load(pathData);
-        await using var runtime = loaded.Value!;
+        var runtime = loaded.Value!;
         var result = await runtime.Invoke("DoesNotExist", new List<global::App.Data.@this>(), _app.User.Context);
 
         await Assert.That(result.Success).IsFalse();
@@ -140,7 +140,7 @@ public sealed class CodeRunTests : IDisposable
         """);
 
         var loaded = await _app.Code.Load(pathData);
-        await using var runtime = loaded.Value!;
+        var runtime = loaded.Value!;
         var result = await runtime.Invoke(
             "Sum",
             new List<global::App.Data.@this> { global::App.Data.@this.Ok(1) },
@@ -190,7 +190,7 @@ public sealed class CodeRunTests : IDisposable
     }
 
     [Test]
-    public async Task Compiled_LoadTwice_ProducesIndependentRuntimes()
+    public async Task Load_SameSourceTwice_ReturnsCachedRuntime()
     {
         var pathData = WriteScript("""
             public class MyCode {
@@ -202,13 +202,44 @@ public sealed class CodeRunTests : IDisposable
         var b = await _app.Code.Load(pathData);
         await Assert.That(a.Success).IsTrue();
         await Assert.That(b.Success).IsTrue();
-        await Assert.That(ReferenceEquals(a.Value, b.Value)).IsFalse();
 
-        await using var ra = a.Value!;
-        await using var rb = b.Value!;
-        var resA = await ra.Start(global::App.Data.@this.Ok(null), _app.User.Context);
-        var resB = await rb.Start(global::App.Data.@this.Ok(null), _app.User.Context);
+        // Compile-once-per-app: same source-hash → same Runtime.
+        await Assert.That(ReferenceEquals(a.Value, b.Value)).IsTrue();
+
+        var resA = await a.Value!.Start(global::App.Data.@this.Ok(null), _app.User.Context);
+        var resB = await b.Value!.Start(global::App.Data.@this.Ok(null), _app.User.Context);
         await Assert.That(resA.Value).IsEqualTo(99);
         await Assert.That(resB.Value).IsEqualTo(99);
+        // Cache owns disposal — App.Dispose evicts.
+    }
+
+    [Test]
+    public async Task Load_SourceChanges_CompilesFreshRuntime()
+    {
+        var pathData = WriteScript("""
+            public class MyCode {
+                public async System.Threading.Tasks.Task<int> Start() => await System.Threading.Tasks.Task.FromResult(1);
+            }
+        """, name: "Mutable.cs");
+
+        var first = await _app.Code.Load(pathData);
+        await Assert.That(first.Success).IsTrue();
+
+        // Rewrite the file with different source — new hash, new Runtime.
+        var abs = System.IO.Path.Combine(_tempDir, "Mutable.cs");
+        System.IO.File.WriteAllText(abs, """
+            public class MyCode {
+                public async System.Threading.Tasks.Task<int> Start() => await System.Threading.Tasks.Task.FromResult(2);
+            }
+        """);
+
+        var second = await _app.Code.Load(pathData);
+        await Assert.That(second.Success).IsTrue();
+        await Assert.That(ReferenceEquals(first.Value, second.Value)).IsFalse();
+
+        var firstResult = await first.Value!.Start(global::App.Data.@this.Ok(null), _app.User.Context);
+        var secondResult = await second.Value!.Start(global::App.Data.@this.Ok(null), _app.User.Context);
+        await Assert.That(firstResult.Value).IsEqualTo(1);
+        await Assert.That(secondResult.Value).IsEqualTo(2);
     }
 }

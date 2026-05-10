@@ -39,6 +39,10 @@ public sealed partial class @this : IAsyncDisposable
             else if (provider is IDisposable disposableProv)
                 disposableProv.Dispose();
         }
+        // Cached Runtimes from Code.Load — owned for the App's lifetime.
+        foreach (var runtime in _runtimesByHash.Values)
+            await runtime.DisposeAsync();
+        _runtimesByHash.Clear();
     }
 
     // --- Generic convenience methods (delegate to non-generic) ---
