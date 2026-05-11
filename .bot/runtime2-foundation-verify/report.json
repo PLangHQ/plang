@@ -1,0 +1,59 @@
+{
+  "branch": "runtime2-foundation-verify",
+  "sessions": [
+    {
+      "id": "aa557e0b-4be9-4271-a8cf-6909b002316f",
+      "bot": "architect",
+      "timestamp_start": "2026-05-11T17:37:18Z",
+      "timestamp_end": "2026-05-11T17:43:30Z",
+      "intent": "Reconcile Documentation/Runtime2/todos.md against the actual runtime2 state; verify foundation areas (snapshots, identity, settings, keepalive) are solid before module-port work begins.",
+      "before": {
+        "assumptions": "Initial pass against runtime2 read todos.md as authoritative and proposed branches for CallStack wiring (item 1) and lazy generator OBP cleanup (item 3). Ingi pushed back. Verification in the code showed both items are DONE — App.Run/Goal.Run push frames, generator decomposed into Discovery + Emission/{Action,Property/{Data,Code}}, [VariableName] migration resolved. The todo file never got updated when the cleanup branch closed these.",
+        "risk": "Other todo entries may be similarly stale. Other foundation areas (snapshots, identity, settings, keepalive) have not been depth-checked and may have quiet gaps that would surface when we start porting modules on top of them. We need to settle what is actually solid before claiming foundation done."
+      },
+      "plan": ".bot/runtime2-foundation-verify/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["Documentation/Runtime2/todos.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Marked 3 entries resolved with branch/commit pointers (2026-04-24 lazy generator, 2026-04-27 CallStack wiring, 2026-05-05 App._statics partially-resolved). Added audit header at top stating the file was re-verified 2026-05-11. Appended 2 new todos surfaced by the verification sweep: Settings encryption-at-rest decision, end-to-end Snapshot PLang tests (deferred to ask-user work). Conservative edit policy — only marked resolved when the closing commit/branch was identifiable."
+        },
+        {
+          "paths": [".bot/runtime2-foundation-verify/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan spine for the branch — why this exists (todos.md drift), scope (audit + depth-check four foundation areas), stage index (6 stages), cross-cutting decisions (what counts as solid, what counts as quiet gap, conservative edit policy)."
+        },
+        {
+          "paths": [".bot/runtime2-foundation-verify/architect/v1/verification.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Depth-check report. Snapshots: SOLID for current scope (7 sections round-trip, partial = no full-app PLang test). Identity: SOLID for day-one (12 .goal tests, partial = first-run/recovery/multi-actor crosstalk not pinned). Settings: SOLID for storage, story-incomplete for sensitive data (encryption-at-rest decision needed). KeepAlive: QUIET SURFACE — built, zero consumers, ready for Webserver. Cross-cutting observation: nothing else in the verified areas showed the documentation/code drift pattern that motivated this branch."
+        },
+        {
+          "paths": [".bot/runtime2-foundation-verify/architect/stage-6-error-handle-recovery-value-tests.md"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test brief for the still-open 2026-04-27 todo (the only remaining real item from the foundation list). Three .test.goal files: GoalFirst returns recovery value, RetryFirst returns recovery value after retry exhausts, multi-action recovery chain's last action propagates. Behavior is correct in code today (verified handle.cs lines 109-134, 167-185); tests pin the symmetry against future regression. Ready for test-designer or coder hand-off."
+        },
+        {
+          "paths": [".bot/runtime2-foundation-verify/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session summary. Captures what landed, foundation state going forward (7 open items in priority order), and recommends handing stage 6 to coder then starting first module port (DbModule lean)."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Branch ready for review. No code changes — pure docs hygiene + verification report + test brief. Three resolved entries marked in todos.md, two new todos added with current-state context. Foundation deemed solid for module-port work to begin.",
+        "notes": "Process lesson for future architect sessions: do NOT trust todos.md without verifying against current code. The CallStack and lazy-generator entries had been resolved for weeks but the file never reflected it. Reading the code first, then todos, would have caught this immediately. The 2026-05-11 audit header makes this less likely to recur. Open items for follow-up sessions: hand stage 6 to coder (small, ~half-day), revisit Settings encryption-at-rest decision before Webserver/LLM modules port, then start module porting."
+      }
+    }
+  ]
+}
