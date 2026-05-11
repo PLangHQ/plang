@@ -1,0 +1,6 @@
+TestRetryFirstReturnsRecoveryValueAfterRetryExhausts
+/ Order=RetryFirst with retry=1: retry runs once (re-throws), then recovery's chain runs and its value propagates (handle.cs:120-131). This is the symmetry the 2026-04-27 fix unblocked — before that, this branch returned Ok() instead of recoveryResult, Handled was not set, and the value was lost. Asserting %!error% null after the scope is the symmetry pin.
+
+- throw error "boom", on error set %content% = "from-recovery", order RetryFirst, retry 1
+- assert %content% equals "from-recovery", "recovery's variable.set must have executed after retry exhausted"
+- assert %!error% is null, "Handled flag must be set in the RetryFirst path too — symmetric with GoalFirst"

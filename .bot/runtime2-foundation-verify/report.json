@@ -54,6 +54,75 @@
         "health": "Branch ready for review. No code changes — pure docs hygiene + verification report + test brief. Three resolved entries marked in todos.md, two new todos added with current-state context. Foundation deemed solid for module-port work to begin.",
         "notes": "Process lesson for future architect sessions: do NOT trust todos.md without verifying against current code. The CallStack and lazy-generator entries had been resolved for weeks but the file never reflected it. Reading the code first, then todos, would have caught this immediately. The 2026-05-11 audit header makes this less likely to recur. Open items for follow-up sessions: hand stage 6 to coder (small, ~half-day), revisit Settings encryption-at-rest decision before Webserver/LLM modules port, then start module porting."
       }
+    },
+    {
+      "id": "c79b1f02-6a2f-4d0e-bb8d-90df6e21a3c4",
+      "bot": "coder",
+      "timestamp_start": "2026-05-11T18:05:00Z",
+      "timestamp_end": null,
+      "intent": "Implement architect's stage 6: write three .test.goal files pinning error.handle recovery-value semantics (GoalFirst, RetryFirst, multi-action last-action-wins).",
+      "before": {
+        "assumptions": "Architect's brief is correct: handle.cs lines 109-134 and 167-185 implement the recovery-value path correctly today. The tests are pure regression pins, not bug fixes. No C# changes. Pre-existing pretest baseline: 199/200 plang tests pass (Code/HelloPlain.test.goal fails — unrelated, modules.code.run leftover).",
+        "risk": "Builder LLM may not map 'order GoalFirst' / 'order RetryFirst, retry 1' the way I expect. Mitigation: read each .pr after plang build and verify Order/RetryCount parameters before trusting test results."
+      },
+      "plan": ".bot/runtime2-foundation-verify/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/runtime2-foundation-verify/coder/v1/baseline-tests.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Baseline before any changes: plang 199/200 (one pre-existing fail, Code/HelloPlain.test.goal, unrelated modules.code.run leftover); C# 2752/2752. Any new red outside HelloPlain would be my regression."
+        },
+        {
+          "paths": [".bot/runtime2-foundation-verify/coder/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage 6 plan: three .test.goal files pinning handle.cs recovery-value paths (GoalFirst/RetryFirst/multi-action chain). Self-contained .test.goal pattern (matching Tests/App/CallStack/*) rather than the Start.goal-without-asserts pattern of Tests/Errors/SimpleRecovery/. Trigger is `throw error \"boom\"` instead of architect's `read 'missing.txt'` — same recovery semantic, no filesystem dependency."
+        },
+        {
+          "paths": [
+            "Tests/Errors/GoalFirstReturnsRecoveryValue.test.goal",
+            "Tests/Errors/RetryFirstReturnsRecoveryValue.test.goal",
+            "Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Three self-contained .test.goal files. Each asserts (a) recovery side-effect landed (variable.set observable outside) and (b) %!error% is null outside the recovery scope — the second assertion is the symmetry pin, because erroredCall.Handled=true and `return recoveryResult` live in the same branch of handle.cs (lines 111-113, 128-130). A regression to `return Ok()` (the pre-2026-04-27 bug) would leave %!error% surfaced, even though the side-effect still landed. Test 3 also asserts each intermediate %first%/%second% set to prove the chain ran in order, not just that the last action ran."
+        },
+        {
+          "paths": [
+            "Tests/Errors/.build/goalfirstreturnsrecoveryvalue.test.pr",
+            "Tests/Errors/.build/retryfirstreturnsrecoveryvalue.test.pr",
+            "Tests/Errors/.build/multiactionrecoverylastactionpropagates.test.pr"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Built .pr files. Verified each by reading: Order=GoalFirst / RetryFirst+RetryCount=1 resolved correctly; Actions list shapes match (single variable.set for tests 1+2, three sequential variable.sets %first%→%second%→%content% for test 3). Builder was non-deterministic on first try for test 1 (LLM emitted three steps all with index 0); retry built clean."
+        },
+        {
+          "paths": [".bot/runtime2-foundation-verify/coder/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session summary. Captures intent, code-example shape, test deltas (203 total, 202 pass, 1 pre-existing fail), and codeanalyzer hand-off (no new modules/actions, so no builder step needed)."
+        },
+        {
+          "paths": ["Tests/Errors/", "Tests/Code/HelloPlain.test.goal", "Tests/Code/.build/helloplain.test.pr"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test results: plang 203 total, 202 pass, 1 fail (Code/HelloPlain.test.goal — pre-existing, modules.code.run/v1 branch leftover, NOT my regression). C# suite 2752/2752 unchanged. Delta on this branch: +3 tests, +3 pass, zero regression."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "Stage 6 deliverables shipped. Three .test.goal files green, no regressions. Behavior pinned: GoalFirst returns recovery value, RetryFirst returns recovery value after retry exhausts (symmetry), multi-action recovery chain's last action's value is what propagates. Branch ready for codeanalyzer review.",
+        "notes": "Builder non-determinism observation: the LLM occasionally emits all steps with index 0 for a multi-step .test.goal — the builder validation correctly catches it (\"Step indexes must be 0..2 with no gaps\"), and a retry builds clean. Worth filing as a builder reliability todo if it keeps biting. Not gating this stage."
+      }
     }
   ]
 }

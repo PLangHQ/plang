@@ -1,0 +1,169 @@
+{
+  "name": "TestGoalFirstReturnsRecoveryValue",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022boom\u0022, on error set %content% = \u0022from-recovery\u0022, order GoalFirst",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "boom",
+              "type": "string"
+            },
+            {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Order",
+                  "value": "GoalFirst",
+                  "type": "errororder"
+                },
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%content%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": "from-recovery",
+                          "type": "string"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u00601"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Throw the error \u0027boom\u0027 in the step. Then apply on-error recovery: set %content% to \u0027from-recovery\u0027 with error.handle using GoalFirst order so the recovery actions run before any other error-first behavior.",
+      "level": "high",
+      "confidence": 78,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %content% equals \u0022from-recovery\u0022, \u0022recovery\u0027s variable.set must have executed in GoalFirst path\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "from-recovery",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "recovery\u0027s variable.set must have executed in GoalFirst path",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %content% equals the recovery value.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!error% is null, \u0022Handled flag suppresses the error \u2014 proves the recoveryResult-return branch was taken\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!error%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Handled flag suppresses the error \u2014 proves the recoveryResult-return branch was taken",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %!error% is null, proving the handled flag suppressed the error after recovery.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Errors/GoalFirstReturnsRecoveryValue.test.goal",
+  "prPath": "/Tests/Errors/.build/goalfirstreturnsrecoveryvalue.test.pr",
+  "hash": "240cd22f97f1575ce685151f51ce87c1658954fbadba36a2b0ab821f864b63b2",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
