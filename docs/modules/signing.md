@@ -1,6 +1,6 @@
 # Signing Module
 
-Create and verify signed data envelopes using Ed25519 (or any pluggable signing provider). Signing attaches a cryptographic signature to data; verification confirms the data hasn't been tampered with and was signed by the claimed identity.
+Create and verify signed data envelopes using Ed25519 (or any pluggable `ISigning` implementation registered on `app.Code`). Signing attaches a cryptographic signature to data; verification confirms the data hasn't been tampered with and was signed by the claimed identity.
 
 ## Actions
 
@@ -20,7 +20,7 @@ Sign data and attach a signature envelope.
 | Data | object | yes | — | Data to sign |
 | Contracts | list | no | ["C0"] | Contract identifiers attached to the signature |
 | Headers | dictionary | no | — | Optional headers included in the envelope |
-| ExpiresInMs | int | no | — | Signature TTL in milliseconds |
+| Expires | TimeSpan | no | — | Signature TTL (e.g., `PT5M` ISO 8601 duration). When set, `signature.Expires = Created + this`. |
 
 **Returns:** The data with a `.Signature` property containing the signed envelope (nonce, timestamp, identity, hash, and cryptographic signature).
 

@@ -205,6 +205,6 @@ When rebuilding, the builder preserves LLM work from previous builds:
 
 ### Build mode and runtime mode
 
-Builder actions are **callable at runtime**, not just during `plang build`. There is no per-action `Build.IsEnabled` guard; the file-provider read path consults `App.Build.IsEnabled` for snapshot logic, but the builder actions themselves run whenever a signed `.pr` calls them. In other words: the trust boundary is the goal signature, not a build/runtime mode flag. A signed third-party goal can invoke `builder.goals.save` at runtime and rewrite sibling `.pr` files; this is intentional (the user authorised the goal by trusting its signature) and consistent with PLang's user-sovereign threat model.
+Builder actions are **callable at runtime**, not just during `plang build`. There is no per-action `Builder.IsEnabled` guard; the file module's default `IFile` consults `App.Builder.IsEnabled` on the read path for snapshot logic, but the builder actions themselves run whenever a signed `.pr` calls them. In other words: the trust boundary is the goal signature, not a build/runtime mode flag. A signed third-party goal can invoke `builder.goals.save` at runtime and rewrite sibling `.pr` files; this is intentional (the user authorised the goal by trusting its signature) and consistent with PLang's user-sovereign threat model.
 
 If you are reviewing or extending the builder pipeline, treat each builder action as a normal callable handler — there is no out-of-band gate above it.

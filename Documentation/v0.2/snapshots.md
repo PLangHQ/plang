@@ -18,7 +18,7 @@ public interface ISnapshotted
 
 The type system is the bucket assignment. Subsystems that implement `ISnapshotted` participate in snapshot/restore. Subsystems that don't are reconstructed on App build instead — Modules, Goals, Channels, Cache, the action registry. There is no third bucket and no per-call opt-in.
 
-Implementers in v1: `App.@this`, `App.CallStack.@this`, `App.CallStack.Call.@this`, `App.Variables.@this`, `App.Errors.@this`, `App.Errors.Trail.@this`, `App.Providers.@this`, `App.Statics.@this`, `App.Build.@this`, `App.Test.@this`.
+Implementers in v1: `App.@this`, `App.CallStack.@this`, `App.CallStack.Call.@this`, `App.Variables.@this`, `App.Errors.@this`, `App.Errors.Trail.@this`, `App.Code.@this`, `App.Statics.@this`, `App.Builder.@this`, `App.Tester.@this`.
 
 ## The container — `Snapshot.@this`
 
@@ -87,10 +87,10 @@ Each `*.Snapshot.cs` partial in `PLang/App/` owns one subsystem's subtree. Quick
 | Variables | `App/Variables/this.Snapshot.cs` | name → value, plus `Variables.SnapshotAt` for time-travel reads at a captured point |
 | Errors | `App/Errors/this.Snapshot.cs` | current error + Errors.Trail subtree |
 | Errors.Trail | `App/Errors/Trail/this.Snapshot.cs` | append-only error history |
-| Providers | `App/Providers/this.Snapshot.cs` | named provider registrations (by name + type assembly-qualified) |
+| Code | `App/Code/this.Snapshot.cs` | named code registrations (by name + type assembly-qualified) |
 | Statics | `App/Statics/this.Snapshot.cs` | per-goal static bag |
-| Build | `App/Build/this.Snapshot.cs` | build-time provenance (hashes, source map) |
-| Test | `App/Test/this.Snapshot.cs` | test-runner mode bag |
+| Builder | `App/Builder/this.Snapshot.cs` | build-time provenance (hashes, source map) |
+| Tester | `App/Tester/this.Snapshot.cs` | test-runner mode bag |
 
 `Variables.SnapshotAt` deserves a callout: it's a *time-travel* read, not a separate subsystem. Given a captured `Variables` subtree it answers "what was variable %x% at this point in the run?" — used by `ErrorCallback` to reconstruct local variables visible at error issue time.
 

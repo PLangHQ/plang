@@ -133,12 +133,12 @@ Unsafe:
 
 If you need to render user-provided markup, treat it as a variable *inside* a template you control — never as the template itself.
 
-## Custom Provider
+## Custom Engine
 
-The template engine is swappable. Load a DLL that implements `ITemplateProvider` to replace Fluid with another engine:
+The template engine is swappable. Load a DLL that implements `ITemplate` to replace Fluid with another engine:
 
 ```plang
-- load provider 'my-template-engine.dll'
+- load code 'my-template-engine.dll'
 ```
 
 ## Examples

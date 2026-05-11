@@ -1,6 +1,6 @@
 # LLM Module
 
-Query large language models with tool calling, streaming, structured output, conversation continuity, and caching. The default provider is OpenAI-compatible and works with any API that follows the OpenAI chat completions format.
+Query large language models with tool calling, streaming, structured output, conversation continuity, and caching. The default implementation is OpenAI-compatible and works with any API that follows the OpenAI chat completions format.
 
 ## Actions
 
@@ -201,7 +201,7 @@ The returned value carries metadata accessible via `%!` syntax:
 | `PromptTokens` | int | Total prompt tokens across all API calls |
 | `CompletionTokens` | int | Total completion tokens |
 | `TotalTokens` | int | PromptTokens + CompletionTokens |
-| `Cost` | double? | Estimated cost (null if provider has no pricing data) |
+| `Cost` | double? | Estimated cost (null if the implementation has no pricing data) |
 | `ToolCallCount` | int | Total tool calls executed |
 | `ValidationRetries` | int | Number of validation retries |
 | `Format` | string? | Effective format used |
@@ -216,9 +216,9 @@ The returned value carries metadata accessible via `%!` syntax:
 - write out 'Tokens: %result!TotalTokens%, Cost: %result!Cost%'
 ```
 
-## Provider Configuration
+## Configuration
 
-The default OpenAI provider reads settings from:
+The default OpenAI implementation reads settings from:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -233,7 +233,7 @@ To use a different OpenAI-compatible API (e.g., Azure OpenAI, local models):
 - set setting 'llm.apiKey' to %myKey%
 ```
 
-The provider is swappable via the standard `provider.set` action.
+The implementation is swappable via the standard `code.setDefault` action (see [code module](code.md)).
 
 ## Examples
 

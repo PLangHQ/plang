@@ -110,7 +110,7 @@ It is **not pushable** into the AsyncLocal `Current`. It has no Stopwatch, no `O
 ## Configuration
 
 ```csharp
-app.Callback.Signature.ExpiresInMs   // default expiry (ms) for callback envelopes;
+app.Callback.Signature.Expires       // default expiry (TimeSpan) for callback envelopes;
                                      // null = no expiry; integrity is unconditional
 ```
 
@@ -120,7 +120,7 @@ Read by the lazy signature getter when the wrapped value is an `ICallback`. The 
 
 - **HTTP wire transport** for `ask-user` resume across an HTTP boundary. The in-process resume in `AskCallback.Run` is the only path today.
 - **Real symmetric crypto** for `crypto.encrypt`/`decrypt`. v1 = identity pass-through.
-- **Stale `.test.goal`** scenarios depending on the above: `AskVarsOnNonAsk` (builder-validator), `CallbackTimeoutSetting` (PLang verb to write `ExpiresInMs`), `DurabilityRoundTrip` (mime-tagged file write/read), `TamperedSignature` (byte-mutation reach into raw bytes).
+- **Stale `.test.goal`** scenarios depending on the above: `AskVarsOnNonAsk` (builder-validator), `CallbackTimeoutSetting` (PLang verb to write `Expires`), `DurabilityRoundTrip` (mime-tagged file write/read), `TamperedSignature` (byte-mutation reach into raw bytes).
 
 ## See also
 

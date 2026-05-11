@@ -300,12 +300,12 @@ See `PLang/App/modules/identity/types.cs` for the class definition.
 `%MyIdentity%` is registered on every actor's Variables as a `DynamicData`:
 
 ```csharp
-Context.Variables.Put(new DynamicData("MyIdentity", () =>
+Context.Variables.Set("MyIdentity", new Data.DynamicData("MyIdentity", () =>
 {
-    var provider = app.Providers.Get<IIdentityProvider>();
+    var provider = app.Code.Get<IIdentity>();
     if (!provider.Success) return null;
-    var identity = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = app.Context }).GetAwaiter().GetResult();
-    return identity.Success ? identity : null;
+    var result = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = app.System.Context }).GetAwaiter().GetResult();
+    return result.Success ? result.Value as Identity : null;
 }));
 ```
 
@@ -319,44 +319,44 @@ This means:
 
 ---
 
-## App.Providers — Pluggable Module Implementations
+## App.Code — Pluggable Module Implementations
 
-`App.Providers` (`App.Providers.@this`) is a named provider registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, IProvider>>`. Each provider type can have multiple named implementations. First registered becomes default.
+`App.Code` (`App.Code.@this`) is a named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each interface type can have multiple named implementations. First registered becomes default.
 
 Each module:
-1. Defines a provider interface (e.g., `ICryptoProvider`, `ISigningProvider`)
-2. Ships a default implementation (e.g., `DefaultProvider`, `Ed25519Provider`)
-3. Resolves at runtime via `App.Providers.Get<T>(name?)` or `GetOrDefault<T>(fallback)`
+1. Defines a code interface (e.g., `ICrypto`, `ISigning`) under `App/modules/<m>/code/`
+2. Ships a default implementation under the same `code/` folder (e.g., `Default.cs`, `Ed25519.cs`)
+3. Resolves at runtime via `app.Code.Get<T>(name?)` or `GetOrDefault<T>(fallback)`
 
 PLang developers override by loading a DLL that implements the interface:
 ```
-load provider 'my-crypto.dll'
+load code 'my-crypto.dll'
 ```
-→ `provider.load` discovers all `IProvider` implementations, registers each for its derived interfaces.
+→ `code.load` discovers all `ICode` implementations, registers each for its derived interfaces.
 
 **Design decisions:**
-- **Type-keyed + name-keyed** — each provider interface can have multiple named implementations (e.g., "ed25519" and "rsa" both implementing `ISigningProvider`).
+- **Type-keyed + name-keyed** — each interface can have multiple named implementations (e.g., "ed25519" and "rsa" both implementing `ISigning`).
 - **First-registered-is-default** — no explicit default-setting needed for the common case.
 - **Thread-safe** — `ConcurrentDictionary` for both levels. `SetDefault` sets the new default first, then clears old — avoids a window where `Get<T>()` finds no default.
-- **No audit trail for replacement** — by design. Provider swapping is a user-sovereign operation. The security review accepted this.
-- **Generic methods delegate to non-generic** — single source of truth for all logic. Non-generic methods use `System.Type` for runtime-resolved types (needed by `provider.load` which discovers types via reflection).
+- **No audit trail for replacement** — by design. Implementation swapping is a user-sovereign operation. The security review accepted this.
+- **Generic methods delegate to non-generic** — single source of truth for all logic. Non-generic methods use `System.Type` for runtime-resolved types (needed by `code.load` which discovers types via reflection).
 
 **API:**
-- `Register<T>(T provider)` — registers by name. First for a type becomes default. Returns error if name already taken.
+- `Register<T>(T code)` — registers by name. First for a type becomes default. Returns error if name already taken.
 - `Get<T>(name?)` — by name, or returns default if name is null/empty. Returns `Data<T>` with error if not found.
-- `GetOrDefault<T>(T fallback)` — returns default provider or the provided fallback instance.
-- `SetDefault<T>(name)` — changes which provider is the default for type T.
+- `GetOrDefault<T>(T fallback)` — returns default implementation or the provided fallback instance.
+- `SetDefault<T>(name)` — changes which implementation is the default for type T.
 - `Remove<T>(name)` — unregisters by name. Cannot remove the default.
-- `List<T>()` / `List()` — lists providers for a type or all providers.
-- `Has<T>()` — checks if any provider is registered for type T.
+- `List<T>()` / `List()` — lists implementations for a type or all implementations.
+- `Has<T>()` — checks if any implementation is registered for type T.
 - `ResolveType(typeName)` — maps PLang type names ("signing", "crypto", "identity", "key") to CLR interfaces.
 
-**Provider interfaces:**
-- `IProvider` — base: `Name`, `IsDefault`
-- `IKeyProvider : IProvider` — `GenerateKeyPair()` → `Data<KeyPair>`
-- `ISigningProvider : IKeyProvider` — `Sign(bytes, privateKey)`, `Verify(bytes, signature, publicKey)`
-- `ICryptoProvider : IProvider` — `Hash(bytes, algorithm)`, `VerifyHash(bytes, hash, algorithm)`
-- `IIdentityProvider : IProvider` — full CRUD for identity management
+**Code interfaces:**
+- `ICode` — base: `Name`, `IsDefault`, `IsBuiltIn`, `Source`
+- `IKey : ICode` — `GenerateKeyPair()` → `Data<KeyPair>`
+- `ISigning : IKey` — `Sign(bytes, privateKey)`, `Verify(bytes, signature, publicKey)`
+- `ICrypto : ICode` — `Hash(bytes, algorithm)`, `VerifyHash(bytes, hash, algorithm)`
+- `IIdentity : ICode` — full CRUD for identity management
 
 ---
 
@@ -384,7 +384,7 @@ The signing module (`signing.sign`, `signing.verify`) creates and verifies signe
 
 **Nonce replay protection.** Uses `ICache.TryAddAsync` with a TTL matching the signature timeout. Atomic — first use succeeds, replays fail. Single-process only; distributed deployments need a shared ICache implementation (Redis).
 
-**Provider resolution chain.** Three levels: (1) explicit `Provider` parameter on the sign action, (2) `SigningSettings.Provider` from module settings, (3) registry default. Verification resolves the provider from the envelope's `Algorithm` field — no override needed.
+**Implementation resolution.** The `sign` and `verify` actions both declare `[Code] ISigning Signer` — the source generator emits eager `app.Code.Get<ISigning>()` (registry default). To swap algorithms, register a different `ISigning` and promote it via `code.setDefault`. Verification reads the algorithm from the envelope's `Algorithm` field — the wire envelope carries its own identity, not the caller's.
 
 **Contracts.** Lightweight agreement mechanism. Signer attaches contract identifiers (e.g., `["C0"]`), verifier checks they match. Both null/empty = match. Both present = case-insensitive set equality.
 
@@ -402,50 +402,50 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ---
 
-## ILlmProvider — LLM Provider in App.Providers
+## ILlm — LLM Implementation in App.Code
 
-`ILlmProvider` follows the same provider pattern as other module providers. Single method: `Task<Data> Query(query action)`. The provider owns the full lifecycle: config resolution, message formatting, HTTP calls (via the http module), tool execution loop, caching, streaming, validation, and conversation continuity.
+`ILlm` follows the same `ICode` pattern as other module interfaces. Single method: `Task<Data> Query(query action)`. The implementation owns the full lifecycle: config resolution, message formatting, HTTP calls (via the http module), tool execution loop, caching, streaming, validation, and conversation continuity.
 
-**Default provider:** `OpenAiProvider` — works with any OpenAI-compatible API (configurable endpoint). Registered on `App.Providers` during construction. Switchable via `provider.set`.
+**Default implementation:** `OpenAi` (`App/modules/llm/code/OpenAi.cs`) — works with any OpenAI-compatible API (configurable endpoint). Registered on `app.Code` during construction. Switchable via `code.setDefault`.
 
-**PLang type name mapping:** `"llm"` / `"illmprovider"` → `ILlmProvider`.
+**PLang type name mapping:** `"llm"` / `"illm"` → `ILlm`.
 
 **Config resolution:** `llm.endpoint` / `llm.apiKey` / `llm.model` read from SettingsStore → environment variables (`OPENAI_API_KEY`, `OPENAI_API_ENDPOINT`) → hard defaults (`gpt-4.1-mini`).
 
-**Tool execution loop:** The provider calls `app.RunGoalAsync(GoalCall)` for each tool the LLM requests. Tool errors are sent back to the LLM as tool result text ("Error: ..."), letting the LLM decide how to proceed. `MaxToolCalls` is a hard budget — tool calls are sliced to the remaining budget before execution.
+**Tool execution loop:** The implementation calls `app.RunGoalAsync(GoalCall)` for each tool the LLM requests. Tool errors are sent back to the LLM as tool result text ("Error: ..."), letting the LLM decide how to proceed. `MaxToolCalls` is a hard budget — tool calls are sliced to the remaining budget before execution.
 
 **Conversation continuity:** Stores/restores message history in `PLangContext` (`__llm_conversation__`, `__llm_schema__`). Original messages (before format mutation) are stored so format instructions don't compound across turns.
 
 **Cache:** Persistent via `SettingsStore` (SQLite). Hash of messages + model + temperature + schema + format. Skipped when tools are present. Cached results carry `Cached=true` property.
 
-**GoalCall extensions for LLM tools:** `GoalCall.Description` tells the LLM what the goal does. `GoalCall.Parallel` (default false) marks the tool safe for concurrent execution. When all tools in a batch have `Parallel=true`, the provider runs them with `Task.WhenAll`.
+**GoalCall extensions for LLM tools:** `GoalCall.Description` tells the LLM what the goal does. `GoalCall.Parallel` (default false) marks the tool safe for concurrent execution. When all tools in a batch have `Parallel=true`, they run with `Task.WhenAll`.
 
 ---
 
-## IHttpProvider — HTTP Provider in App.Providers
+## IHttp — HTTP Implementation in App.Code
 
-`IHttpProvider` follows the same provider pattern as `ISigningProvider`, `ICryptoProvider`, etc. Registered on `App.Providers` during app construction. `DefaultHttpProvider` is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
+`IHttp` follows the same `ICode` pattern as `ISigning`, `ICrypto`, etc. Registered on `app.Code` during app construction. `Default` (`App/modules/http/code/Default.cs`) is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
 
-Add `IHttpProvider` to the provider interfaces list:
-- `IProvider` — base: `Name`, `IsDefault`
-- `IKeyProvider : IProvider`
-- `ISigningProvider : IKeyProvider`
-- `ICryptoProvider : IProvider`
-- `IIdentityProvider : IProvider`
-- `IHttpProvider : IProvider, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
-- `ITemplateProvider : IProvider` — template rendering (default: `FluidProvider` using Liquid syntax)
-- `ILlmProvider : IProvider` — LLM queries (default: `OpenAiProvider`)
-- `IBuilderProvider : IProvider` — build-time goal parsing, validation, merge, persistence (default: `DefaultBuilderProvider`)
+Full code-interface roster:
+- `ICode` — base: `Name`, `IsDefault`, `IsBuiltIn`, `Source`
+- `IKey : ICode`
+- `ISigning : IKey`
+- `ICrypto : ICode`
+- `IIdentity : ICode`
+- `IHttp : ICode, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
+- `ITemplate : ICode` — template rendering (default: `Fluid` using Liquid syntax)
+- `ILlm : ICode` — LLM queries (default: `OpenAi`)
+- `IBuilder : ICode` — build-time goal parsing, validation, merge, persistence (default: `Default` under `App/modules/builder/code/`)
 
-PLang type name mapping: `"http"` / `"ihttpprovider"` → `IHttpProvider`, `"template"` / `"itemplateprovider"` → `ITemplateProvider`, `"llm"` / `"illmprovider"` → `ILlmProvider`.
+PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"itemplate"` → `ITemplate`, `"llm"` / `"illm"` → `ILlm`.
 
 ---
 
-## IBuilderProvider — Builder Provider in App.Providers
+## IBuilder — Builder Implementation in App.Code
 
-`IBuilderProvider` follows the same provider pattern as other module providers. Owns all build-time logic — action records are thin one-line delegates. The default `DefaultBuilderProvider` handles goal parsing, `.pr` file merging, action validation, and persistence.
+`IBuilder` follows the same `ICode` pattern as other module interfaces. Owns all build-time logic — action records are thin one-line delegates. The default implementation under `App/modules/builder/code/Default.cs` handles goal parsing, `.pr` file merging, action validation, and persistence.
 
-**No per-action BuildingGuard.** Earlier revisions had a static `BuildingGuard(IContext)` called first in every provider method to gate builder actions on `App.Build.IsEnabled`. That guard was deliberately removed (commit `4633674c`) — builder actions are callable at runtime as well as build time. The trust boundary is the goal signature: a signed `.pr` may legitimately invoke `builder.goals.save` and rewrite sibling `.pr` files, and the user is sovereign over which signatures to trust. `App.Build.IsEnabled` is still consulted by `DefaultFileProvider` on the read path for snapshot logic, but no per-action guard exists on the write path. If you are reasoning about the threat model, the docs file [`docs/modules/builder.md`](../../docs/modules/builder.md) summarises the same posture.
+**No per-action BuildingGuard.** Earlier revisions had a static `BuildingGuard(IContext)` called first in every method to gate builder actions on `App.Builder.IsEnabled`. That guard was deliberately removed (commit `4633674c`) — builder actions are callable at runtime as well as build time. The trust boundary is the goal signature: a signed `.pr` may legitimately invoke `builder.goals.save` and rewrite sibling `.pr` files, and the user is sovereign over which signatures to trust. `App.Builder.IsEnabled` is still consulted by the file module's default `IFile` on the read path for snapshot logic, but no per-action guard exists on the write path. If you are reasoning about the threat model, the docs file [`docs/modules/builder.md`](../../docs/modules/builder.md) summarises the same posture.
 
 **Goal.Parse() + MergeFrom()**: The builder module adds two key methods to the Goal entity:
 - `Goal.Parse(text, path)` — line-by-line parser for `.goal` text format. Produces `List<Goal>` with structural data (Name, Steps with Text/Index/Indent, Visibility, Comments). Supports multi-goal files, `/` and `/* */` comments, `\` escape, continuation lines.
@@ -499,7 +499,7 @@ This separates the configure action's nullable properties (only non-null values 
 
 ## PathData — Data Subclass in App/FileSystem/
 
-`PathData` extends `Data` — a path IS a Data. It was moved from `App/Memory/` to `App/FileSystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by a file provider (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
+`PathData` extends `Data` — a path IS a Data. It was moved from `App/Memory/` to `App/FileSystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by the file module (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
 
 The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the app root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
 
@@ -513,7 +513,7 @@ Error handling, caching, and timeouts are **not step-level properties** — they
 
 **Runtime.** `Action.RunAsync` hands its dispatch delegate to `Action.Modifiers.RunAsync(innermost, context)`, which walks the list right-to-left. Each action resolves its own handler via `Action.WrapAround` and wraps the running delegate. First in the list = outermost wrapper.
 
-**Builder.** `DefaultBuilderProvider.GoalsSave` calls `step.Actions.GroupModifiers(app.Modules)` before serialization. The LLM returns a flat list; grouping attaches every `[Modifier]` action to the nearest preceding executable action and sorts each cluster by `Order`. A leading modifier with no preceding executable is dropped and recorded as `DroppedLeadingModifier` in `step.Warnings` so the builder author notices.
+**Builder.** The default `IBuilder.GoalsSave` (`App/modules/builder/code/Default.cs`) calls `step.Actions.GroupModifiers(app.Modules)` before serialization. The LLM returns a flat list; grouping attaches every `[Modifier]` action to the nearest preceding executable action and sorts each cluster by `Order`. A leading modifier with no preceding executable is dropped and recorded as `DroppedLeadingModifier` in `step.Warnings` so the builder author notices.
 
 **Ordering today:** `timeout=1` (outermost — caps everything including cache lookup), `cache=2` (skip the rest on a hit), `error=3` (innermost — closest to the action).
 
@@ -558,7 +558,7 @@ Three accepted-but-unresolved items from security v1 on the modifier feature. No
 
 ## Test Module — Cross-Cutting Invariants
 
-The test runner lives in `PLang/App/modules/test/` (`discover.cs`, `run.cs`, `tag.cs`, `report.cs`) and stores run state on `App.Testing` (`PLang/App/Test/this.cs`). Facts future devs won't see in any single file:
+The test runner lives in `PLang/App/modules/test/` (`discover.cs`, `run.cs`, `tag.cs`, `report.cs`) and stores run state on `app.Tester` (`PLang/App/Tester/this.cs`). Facts future devs won't see in any single file:
 
 ### App boundary = file boundary
 Each `.test.goal` file gets its own child `App` rooted at that file's directory — not per-goal, not per-step. `test.run` spins up one App via `await using` per `TestFile`, runs the entry goal, then disposes. Multiple goals inside the same file share state within that test's run. Don't "optimise" this by pooling Apps across tests — isolation is the entire point of the module existing.
@@ -638,7 +638,7 @@ Action handler properties are constrained at build time. `Discovery.IsValidActio
 
 Anything else fails the build with `PLNG001: Property '{0}' on action '{1}' must be Data<T> or [Code]. Raw scalars are not permitted.` The diagnostic carries the full identifier span so IDE squiggles underline the property name, not a one-character mark.
 
-**Why the gate exists.** The pre-v4 generator handled raw `partial string` / `partial int` / etc. with bespoke logic per kind — 700 lines of conditionals, hard to extend, easy to break. PLNG001 narrows the surface so emission lives on two Property leaves with one shape each (`Emission/Property/Data` and `Emission/Property/Provider`). The Legacy emitter and `[VariableName]` attribute that bridged this in v4–v6 are gone as of `runtime2-generator-obp` v7.
+**Why the gate exists.** The pre-v4 generator handled raw `partial string` / `partial int` / etc. with bespoke logic per kind — 700 lines of conditionals, hard to extend, easy to break. PLNG001 narrows the surface so emission lives on two Property leaves with one shape each (`Emission/Property/Data` and `Emission/Property/Code`). The Legacy emitter and `[VariableName]` attribute that bridged this in v4–v6 are gone as of `runtime2-generator-obp` v7.
 
 ---
 
@@ -844,7 +844,7 @@ Three call sites: `As<T>` variance fast path (so `Data<string>` doesn't variance
 
 Fix lives at `TypeConverter.cs` (~line 336): `JsonNode` joins `IDictionary<string, object?>`, `JsonElement`, `IList` in the complex-source check (so the JSON-roundtrip serialize→deserialize-to-target arm picks it up); `JsonArray` gets its own element-iteration arm parallel to `JsonElement`-array. Pinned by `TypeMappingDictConversionTests`.
 
-**Why this matters cross-cuttingly**: the LLM builder pipeline does `set %messages% = [...], type=json` then passes `%messages%` to a typed handler expecting `List<LlmMessage>`. Without the JsonNode/JsonArray arms, `JsonObject` slipped past every dispatch arm and landed at `TypeMismatch`, which surfaced as an NRE further down in `OpenAiProvider.Query`. Anyone touching the type-conversion dispatch should keep these four arms (`IDictionary`, `JsonElement`, `JsonNode`, `IList`) symmetric — adding a new complex source means adding a parallel arm.
+**Why this matters cross-cuttingly**: the LLM builder pipeline does `set %messages% = [...], type=json` then passes `%messages%` to a typed handler expecting `List<LlmMessage>`. Without the JsonNode/JsonArray arms, `JsonObject` slipped past every dispatch arm and landed at `TypeMismatch`, which surfaced as an NRE further down in `OpenAi.Query`. Anyone touching the type-conversion dispatch should keep these four arms (`IDictionary`, `JsonElement`, `JsonNode`, `IList`) symmetric — adding a new complex source means adding a parallel arm.
 
 ---
 

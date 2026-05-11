@@ -71,7 +71,7 @@ When the LLM returns its action mapping, the builder's `validate` step should:
 - Look at each parameter in the LLM response
 - Match it against the action schema (from `Modules.GetActionType`)
 - If the schema property is `Data<Path>`, stamp `type: "path"` on the parameter
-- This happens in `DefaultBuilderProvider.Validate()` or `NormalizeParameterTypes()`
+- This happens in the default `IBuilder.Validate()` (`App/modules/builder/code/Default.cs`) or `NormalizeParameterTypes()`
 
 Currently `NormalizeParameterTypes` converts string values like `"false"` → `false`.
 Extend it to also stamp the correct PLang type name from the schema.

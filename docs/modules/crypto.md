@@ -56,7 +56,7 @@ Verify data against a known hash.
 | `keccak256` | Nethereum Sha3Keccack (default) |
 | `sha256` | System.Security.Cryptography |
 
-Custom algorithms can be added by loading a provider DLL that implements `ICryptoProvider`.
+Custom algorithms can be added by loading a code DLL that implements `ICrypto` (see [code.load](code.md#load)).
 
 ## Examples
 

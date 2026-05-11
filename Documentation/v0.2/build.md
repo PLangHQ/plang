@@ -2,9 +2,9 @@
 
 PLang transforms `.goal` files (natural language) into `.pr` files (JSON) using an LLM. Build mode is activated via `plang build` or `--build`.
 
-All build options are passed as JSON via `--build={...}`. The JSON properties map directly to `Build.@this` class properties.
+All build options are passed as JSON via `--build={...}`. The JSON properties map directly to `Builder.@this` class properties.
 
-Code: `PLang/App/Build/this.cs`
+Code: `PLang/App/Builder/this.cs`
 
 ## Usage
 

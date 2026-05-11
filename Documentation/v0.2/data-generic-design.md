@@ -62,7 +62,7 @@ The LLM guesses `"type": "string"` because it sees a string literal. That's fine
 
 ### 3. Builder validates and formalizes
 
-**DefaultBuilderProvider.Validate()** reflects on the `file.read` action class:
+**The default `IBuilder.Validate()`** (`App/modules/builder/code/Default.cs`) reflects on the `file.read` action class:
 
 ```csharp
 public partial class read : IContext
