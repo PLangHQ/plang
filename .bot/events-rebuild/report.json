@@ -1,0 +1,62 @@
+{
+  "branch": "events-rebuild",
+  "sessions": [
+    {
+      "id": "0c695028-d92a-4e57-8b04-8d8c69c877a0",
+      "bot": "architect",
+      "timestamp_start": "2026-05-12T17:08:46Z",
+      "timestamp_end": "2026-05-12T17:45:00Z",
+      "intent": "Rebuild the event subsystem: singular `Event` naming inside the events area, drop EventType enum + Lifecycle/Bindings folder chain, universal Data.Value firing for variable events, On enum across categories, two-tier scope (app+context), scope:goal|app on event.on.",
+      "before": {
+        "assumptions": "Today: EventType enum with 11+ values, EventBinding with 5 match fields, deep folder chain App.Events.Lifecycle.Bindings.Binding.@this, three-tier registry walk (channel/actor/app), per-class lifecycle calls via lifecycle.Before.Run(EventType.BeforeStep). All discussed with Ingi 2026-05-12, design settled.",
+        "risk": "Big change touching engine fire sites, Data.cs, the registry shape, the source generator (catalog for builder type validation), and the PLang event.on action. Cross-cutting; needs careful staging."
+      },
+      "plan": ".bot/events-rebuild/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/events-rebuild/architect/v1/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Spine plan — design narrative, key decisions, stage index, invariants, risks, test outline, success criteria."
+        },
+        {
+          "paths": [
+            ".bot/events-rebuild/architect/plan/data-value-firing.md",
+            ".bot/events-rebuild/architect/plan/registry-internals.md",
+            ".bot/events-rebuild/architect/plan/on-enum-semantics.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Topic deep-dives. data-value-firing covers where Name/Path get set and sync-vs-async. registry-internals covers storage shape, indexing, fast-path mask, two-tier walk. on-enum-semantics defines per-On contract for name/path fields."
+        },
+        {
+          "paths": [
+            ".bot/events-rebuild/architect/stage-1-event-registry.md",
+            ".bot/events-rebuild/architect/stage-2-on-enum-and-eventon.md",
+            ".bot/events-rebuild/architect/stage-3-engine-fire-sites.md",
+            ".bot/events-rebuild/architect/stage-4-data-value-firing.md",
+            ".bot/events-rebuild/architect/stage-5-cleanup.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Five stages. 1=new registry (parallel, isolated). 2=event.on writes to new shape with scope param. 3=engine fire sites migrate. 4=Data.Value fires variable events. 5=cleanup deletes old shapes. Each independently buildable + testable."
+        },
+        {
+          "paths": [".bot/events-rebuild/architect/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Branch entry point — design summary, stage index, carry-forward notes (parked branches, deferred Threads, broader rename). Written for someone unfamiliar to pick up next session."
+        }
+      ],
+      "after": {
+        "status": "Plan complete. Five-stage redesign laid out. Coder can start at Stage 1 (net-new code in PLang/App/Event/) — Stage 1 has no coupling to old code.",
+        "health": "Design settled with Ingi through extensive whiteboard conversation. Two coder-side decisions flagged (sync-vs-async for Data.Value, whether to ship the catalog mechanism in Stage 2 or defer) — clearly documented in stage files.",
+        "notes": "Branch is sized for ~5 stages. Thread 3 (BeforeAppStart firing + Events.goal loading) is explicitly out of scope — becomes a small follow-up after this lands. Broader codebase rename (Goals/Steps/Actions/Channels → singular) also out of scope, parked in todos.md."
+      }
+    }
+  ]
+}
