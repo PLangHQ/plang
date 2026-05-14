@@ -159,6 +159,162 @@ Fix: the collection becomes its own type with the lock private and `Add(...)` as
 
 ---
 
+## OBP Variant Design — When a Concept Has Multiple Configurable Modes
+
+When you have a single concept that can take several mutually-distinct shapes, each carrying its own configuration (e.g. a filesystem `Verb` that is Read *or* Write *or* Delete, each with its own boolean knobs), the temptation from other languages is a flags enum plus an option bag:
+
+```csharp
+// ANTI-PATTERN
+[Flags] public enum Verb { None=0, Read=1, Write=2, Delete=4 }
+
+public record Permission(
+    string Subject,
+    string Resource,
+    Verb Verbs,                            // bitfield says which
+    VerbRead? Read,                        // anonymous payloads alongside
+    VerbWrite? Write,
+    VerbDelete? Delete);
+
+public record VerbRead(bool Recursive, bool Metadata);
+public record VerbWrite(bool Create, bool Overwrite, bool Append, bool Mkdir);
+public record VerbDelete(bool Recursive, bool Permanent);
+```
+
+Three things are wrong with this shape:
+
+1. **The variants have no owner of their own.** `VerbRead` lives wherever it's declared, but no folder *owns* the question "what is Read?". The flag enum implies one thing, the payload records imply another, and the truth is reconstructed by the consumer every time.
+2. **The enum and payloads can disagree.** `Verbs = Read | Write` with `Write == null` is a representable nonsense state. The compiler can't catch it.
+3. **Serialization is two-pass.** A reader has to interpret the bitfield, then go fetch the matching payload. An LLM looking at the JSON sees `"Verbs": 3` and has nothing useful to chew on.
+
+**The correct shape: a folder per concept (singular name), a file per variant, always-present records with sub-option booleans defaulting to true, and each owner does its own coverage check.**
+
+```
+Permission/
+  this.cs              -- @this manager + the Permission record (both live here)
+  Verb/
+    this.cs            -- Verb @this: composes Read/Write/Delete coverage
+    Read.cs            -- record Read(bool Recursive = true, bool Metadata = true)
+    Write.cs           -- record Write(bool Create = true, bool Overwrite = true, bool Append = true, bool Mkdir = true)
+    Delete.cs          -- record Delete(bool Recursive = true, bool Permanent = true)
+```
+
+Singular namespace: `App.FileSystem.Permission`. The full type name `App.FileSystem.Permission.Permission` is the doubled-name cost of singular OBP — C# wasn't designed for this pattern, and the consistency of every folder being singular is worth the small awkwardness.
+
+**`Verb/this.cs`** — variants are always-present, defaulted to full capability:
+
+```csharp
+namespace App.FileSystem.Permission.Verb;
+
+public class @this
+{
+    public Read   Read   { get; init; } = new Read();
+    public Write  Write  { get; init; } = new Write();
+    public Delete Delete { get; init; } = new Delete();
+
+    public bool Covers(@this requested) =>
+        Read.Covers(requested.Read) &&
+        Write.Covers(requested.Write) &&
+        Delete.Covers(requested.Delete);
+}
+```
+
+**Each variant owns its own coverage rule** — Read knows what "this Read covers that Read" means; Verb only composes:
+
+```csharp
+public record Read(bool Recursive = true, bool Metadata = true)
+{
+    public bool Covers(Read r) => (!r.Recursive || Recursive) && (!r.Metadata || Metadata);
+}
+
+public record Write(bool Create = true, bool Overwrite = true, bool Append = true, bool Mkdir = true)
+{
+    public bool Covers(Write w) =>
+        (!w.Create    || Create)    &&
+        (!w.Overwrite || Overwrite) &&
+        (!w.Append    || Append)    &&
+        (!w.Mkdir     || Mkdir);
+}
+
+public record Delete(bool Recursive = true, bool Permanent = true)
+{
+    public bool Covers(Delete d) => (!d.Recursive || Recursive) && (!d.Permanent || Permanent);
+}
+```
+
+The coverage rule reads naturally: *"if the request needs feature X, the grant must have X."*
+
+**`Permission/this.cs` — the record and the manager together. Note: methods take whole domain objects (`Path`), not pre-decomposed primitives (`string`), and use verb-named implementation methods (`HasAccess`, `Covers`) which are real-work methods, not property-shaped getters:**
+
+```csharp
+namespace App.FileSystem.Permission;
+
+public enum Match { Exact, Glob, Regex }
+
+public record Permission(string AppId, string Path, Verb.@this Verb, Match Match)
+{
+    public bool HasAccess(Path path, Verb.@this requested)
+    {
+        if (!PathMatches(path)) return false;
+        return Verb.Covers(requested);
+    }
+
+    private bool PathMatches(Path path) => Match switch
+    {
+        Match.Exact => string.Equals(Path, path.Absolute, StringComparison.OrdinalIgnoreCase),
+        Match.Glob  => Glob.IsMatch(Path, path.Absolute),
+        Match.Regex => System.Text.RegularExpressions.Regex.IsMatch(path.Absolute, Path),
+        _           => false
+    };
+}
+
+public class @this
+{
+    // State lives in the app's system variables, not in a private list here.
+    // Permission/@this is a typed view over that variable.
+    public IEnumerable<Permission> List() => /* read system variable, unwrap Data<Permission> values */;
+
+    public Data Check(Path path, Verb.@this requested) =>
+        List().Any(p => p.HasAccess(path, requested))
+            ? Data.Ok()
+            : Data.Fail(new PermissionRequired(path, requested));
+}
+```
+
+**Why `HasAccess(Path path, ...)` and not `HasAccess(string absolutePath, ...)`:** caller doesn't pre-decompose. The record decides which field of `Path` it needs (absolute, raw, the originating goal — whatever). Passing the whole object hides information; passing `path.Absolute` leaks the receiver's internal preference into the call site.
+
+**Why `HasAccess` / `Covers` are fine method names:** they do real work. The OBP rule against verb-prefixed methods (`GetX`, `IsX`) is about property-shaped questions disguised as methods. When the method has actual logic, verbs are how English describes work and method names can read like prose.
+
+Construction reads naturally — the default is full capability, narrowing is an explicit record copy:
+
+```csharp
+// Append-only write, no destructive delete
+var loggerVerb = new Verb.@this
+{
+    Write  = new Write(Overwrite: false),
+    Delete = new Delete(Recursive: false, Permanent: false),
+};
+```
+
+What this fixes:
+
+- **Each variant has a single owner** — `Read.cs` owns what "read" is *and* what "read covers read" means. `Write.cs` owns the same for write. There is no ambiguity about where to add a new field or change a default.
+- **No representable nonsense.** No flag enum to disagree with payloads, no nullable records to null-check. The state space is exactly the legal one: every variant is always present, allowance is the booleans inside.
+- **Coverage logic lives with the data.** `Permission/@this.Check` is four lines because every comparison is delegated to the type that owns the fields being compared. The manager iterates and composes; it doesn't implement matching itself.
+- **Serialization is one-pass and LLM-legible.** JSON is `{"read":{"recursive":true,"metadata":true},"write":{"create":true,"overwrite":false,"append":true,"mkdir":true},"delete":{...}}` — every field is a domain word the LLM can read top-to-bottom.
+
+**The rules, stated tightly:**
+
+> 1. **Folders are singular.** `Permission/`, not `Permissions/`. The doubled type name (`App.FileSystem.Permission.Permission`) is the accepted cost.
+> 2. **A concept with N variants, each carrying its own configuration, is one folder.** Each variant is one file owning its record with sensible defaults (default-allow when granted) *and* its own `Covers(other)` rule.
+> 3. **Variants are always-present, non-nullable properties on the parent `@this`.** Narrowing is a record copy with explicit `false` on the sub-options you want to revoke. Never a flag enum with parallel option records; never nullable variants used as "granted/not-granted" signaling.
+> 4. **Managers compose, they don't implement.** `Check` on a manager calls `record.HasAccess(...)` and `variant.Covers(...)`; it never reaches into a record to apply matching logic from outside.
+> 5. **Methods take whole domain objects, not pre-decomposed primitives.** `HasAccess(Path, ...)` not `HasAccess(string absolutePath, ...)`. The receiver decides which field it needs.
+> 6. **Verb-named methods are fine when they do real work.** `HasAccess`, `Covers`, `Resolve`, `Open` — all valid. The `GetX`/`IsX` smell is about property-shaped questions dressed up as methods, not about verbs in general.
+
+This is the same OBP move as the collection-promotion smell: choreography that requires reading three files collapses into one folder where each piece has a named owner. The smell checklist (above) catches it for collections; this rule catches it for variant configurations.
+
+---
+
 ## Libraries Replaces ActionRegistry
 
 `ActionRegistry` was replaced by `app.Modules` (flat action registry). The key changes:

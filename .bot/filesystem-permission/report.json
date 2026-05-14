@@ -1,0 +1,50 @@
+{
+  "branch": "filesystem-permission",
+  "sessions": [
+    {
+      "id": "8bd8a24e-e4b9-49db-a1c7-44d01674c525",
+      "bot": "architect",
+      "timestamp_start": "2026-05-14T23:25:38Z",
+      "intent": "Design the filesystem permission system: signed per-app grants on paths, with read/write/delete verbs each carrying sub-options. Path-shaped rewrite of IPLangFileSystem.",
+      "before": {
+        "assumptions": "Current FileAccessControl is runtime-only (in-memory FileAccessControl record, populated by yes/no/always prompt at exception time). No signature, no expiry, no audit. IPLangFileSystem inherits System.IO.Abstractions.IFileSystem (string-only). Cross-app reads (e.g. a messages app reading every app's system.sqlite) are not modelable today.",
+        "risk": "Big surface rewrite — every action that touches the FS and every runtime internal that does the same. Signature work has to walk the full call graph. Goal-mapped FS provider is deliberately deferred."
+      },
+      "plan": ".bot/filesystem-permission/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["Documentation/v0.2/good_to_know.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added new section 'OBP Variant Design — When a Concept Has Multiple Configurable Modes'. Codifies four rules drawn from this design pass: singular folders, variant records with default-allow, owners-do-their-own-coverage, methods take whole domain objects. Also added a refinement to existing OBP guidance: verb-named methods are fine when they do real work — the GetX/IsX smell is about property-shaped questions, not verbs in general."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/v1/plan.md",
+            ".bot/filesystem-permission/architect/v1/plan/permission-design.md",
+            ".bot/filesystem-permission/architect/v1/plan/filesystem-surface.md",
+            ".bot/filesystem-permission/architect/v1/plan/storage.md",
+            ".bot/filesystem-permission/architect/v1/plan/open-questions.md",
+            ".bot/filesystem-permission/architect/stage-1-permission-types.md",
+            ".bot/filesystem-permission/architect/stage-2-storage-binding.md",
+            ".bot/filesystem-permission/architect/stage-3-filesystem-surface.md",
+            ".bot/filesystem-permission/architect/stage-4-permission-required-error.md",
+            ".bot/filesystem-permission/architect/stage-5-messages-end-to-end.md",
+            ".bot/filesystem-permission/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan for filesystem permission system. Spine + four topic deep-dives + five stage files + summary. Design settled in conversation with Ingi; three open conversation gates documented before stage 3."
+        }
+      ],
+      "after": {
+        "status": "plan written; awaiting Ingi to settle the three open gates (app-side cascade, Content sub-option on Read, process-only grant distinction) before stage 3 starts. Stage 1 can begin in parallel — pure types are independent.",
+        "health": "good — design walked end-to-end (file.read from Messages to Email/system.sqlite), every concept has a named owner, no choreography across files.",
+        "notes": "Branch newly created from origin/runtime2. good_to_know.md edit is real codification work, not session noise — captures lessons that should outlast this branch."
+      },
+      "timestamp_end": "2026-05-14T23:45:00Z"
+    }
+  ]
+}
