@@ -11,9 +11,9 @@ namespace app.modules.timer;
 [Action("end", Cacheable = false)]
 public partial class End : IContext, IStatic
 {
-    public partial Data.@this<string>? Name { get; init; }
+    public partial data.@this<string>? Name { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         // If no name given, use the last started timer
         var key = Name?.Value;

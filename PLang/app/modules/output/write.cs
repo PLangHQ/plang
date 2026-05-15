@@ -12,15 +12,15 @@ namespace app.modules.output;
 [Action("write", Cacheable = false)]
 public partial class Write : IContext, IChannel
 {
-    public partial Data.@this Data { get; init; }
+    public partial data.@this Data { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
-        var envelope = Data ?? app.Data.@this.Ok();
+        var envelope = Data ?? app.data.@this.Ok();
         if (envelope.Value is string str && str.Contains('%'))
         {
             var resolved = Context.Variables.Resolve(str, skipInfrastructure: true);
-            envelope = app.Data.@this.Ok(resolved);
+            envelope = app.data.@this.Ok(resolved);
         }
         return await Channel.WriteAsync(envelope);
     }

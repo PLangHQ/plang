@@ -12,10 +12,10 @@ public partial class Render : IContext
 {
     /// <summary>Template content (inline Liquid) or file path. Determined by IsFile.</summary>
     [IsNotNull]
-    public partial Data.@this<string> Template { get; init; }
+    public partial data.@this<string> Template { get; init; }
 
     /// <summary>Explicit parameters that override Variables in the template.</summary>
-    public partial Data.@this<List<Data.@this>>? Parameters { get; init; }
+    public partial data.@this<List<data.@this>>? Parameters { get; init; }
 
     /// <summary>
     /// Force file/inline interpretation.
@@ -23,10 +23,10 @@ public partial class Render : IContext
     /// false = treat Template as inline content.
     /// null (default) = auto-detect via file existence check.
     /// </summary>
-    public partial Data.@this<bool>? IsFile { get; init; }
+    public partial data.@this<bool>? IsFile { get; init; }
 
     [Code]
     public partial ITemplate Provider { get; }
 
-    public async Task<Data.@this> Run() => await Provider.Render(this);
+    public async Task<data.@this> Run() => await Provider.Render(this);
 }

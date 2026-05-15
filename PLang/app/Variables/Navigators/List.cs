@@ -8,20 +8,20 @@ namespace app.Variables.Navigators;
 /// </summary>
 public sealed class List : INavigator
 {
-    public bool CanNavigate(Data.@this data)
+    public bool CanNavigate(global::app.data.@this data)
         => data.Value is IList || IsGenericList(data.Value);
 
-    public Data.@this Navigate(Data.@this data, string key)
+    public global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
         var value = data.Value;
         var list = value as IList ?? WrapGenericList(value);
         if (list == null || list.Count == 0)
-            return Data.@this.NotFound(key);
+            return global::app.data.@this.NotFound(key);
 
         // Special accessors
         if (string.Equals(key, "count", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(key, "length", StringComparison.OrdinalIgnoreCase))
-            return new Data.@this(key, list.Count, parent: data);
+            return new data.@this(key, list.Count, parent: data);
 
         if (string.Equals(key, "first", StringComparison.OrdinalIgnoreCase))
             return Element(list[0], key, data);
@@ -37,7 +37,7 @@ public sealed class List : INavigator
         {
             if (index >= 0 && index < list.Count)
                 return Element(list[index], key, data);
-            return Data.@this.NotFound(key);
+            return global::app.data.@this.NotFound(key);
         }
 
         // Implicit first: delegate to first element's navigator
@@ -51,10 +51,10 @@ public sealed class List : INavigator
     /// the whole Data), return it as-is — don't double-wrap — so callers get the
     /// element's original type, context, and metadata intact.
     /// </summary>
-    private static Data.@this Element(object? raw, string key, Data.@this parent)
+    private static global::app.data.@this Element(object? raw, string key, global::app.data.@this parent)
     {
-        if (raw is Data.@this inner) return inner;
-        return new Data.@this(key, raw, parent: parent);
+        if (raw is global::app.data.@this inner) return inner;
+        return new data.@this(key, raw, parent: parent);
     }
 
     private static bool IsGenericList(object? value)

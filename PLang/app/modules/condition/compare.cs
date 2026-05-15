@@ -10,12 +10,12 @@ namespace app.modules.condition;
 [Action("compare")]
 public partial class Compare : IContext
 {
-    public partial Data.@this? Left { get; init; }
-    public partial Data.@this<Operator> Operator { get; init; }
-    public partial Data.@this? Right { get; init; }
+    public partial data.@this? Left { get; init; }
+    public partial data.@this<Operator> Operator { get; init; }
+    public partial data.@this? Right { get; init; }
 
     [Code]
     public partial IEvaluator Evaluator { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Evaluator.Evaluate(this));
+    public Task<data.@this> Run() => Task.FromResult(Evaluator.Evaluate(this));
 }

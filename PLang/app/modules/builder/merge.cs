@@ -17,14 +17,14 @@ public partial class merge : IContext
 {
     /// <summary>Target step from the parser — keeps its Text, Index, Indent, LineNumber.</summary>
     [IsNotNull]
-    public partial Data.@this<Step> Step { get; init; }
+    public partial data.@this<Step> Step { get; init; }
 
     /// <summary>Source step from the LLM — its Actions/Errors/Warnings overwrite the target's.</summary>
     [IsNotNull]
-    public partial Data.@this<Step> StepFromLlm { get; init; }
+    public partial data.@this<Step> StepFromLlm { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Builder.Merge(this));
+    public Task<data.@this> Run() => Task.FromResult(Builder.Merge(this));
 }

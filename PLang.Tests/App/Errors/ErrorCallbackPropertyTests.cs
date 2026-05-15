@@ -29,7 +29,7 @@ public class ErrorCallbackPropertyTests
         var err = new global::app.Errors.Error("typed");
         using var scope = app.Errors.Push(err);
 
-        global::app.Data.@this<ErrorCallback> data = err.Callback;
+        global::app.data.@this<ErrorCallback> data = err.Callback;
         await Assert.That(data).IsNotNull();
         await Assert.That(data.RawSignature).IsNull();
     }

@@ -6,13 +6,13 @@ namespace app.modules.list;
 [Action("split")]
 public partial class Split : IContext
 {
-    public partial Data.@this<string> Value { get; init; }
+    public partial data.@this<string> Value { get; init; }
     [Default(",")]
-    public partial Data.@this<string> Separator { get; init; }
+    public partial data.@this<string> Separator { get; init; }
     [Default(false)]
-    public partial Data.@this<bool> RemoveEmpty { get; init; }
+    public partial data.@this<bool> RemoveEmpty { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var options = RemoveEmpty.Value
             ? StringSplitOptions.RemoveEmptyEntries
@@ -21,6 +21,6 @@ public partial class Split : IContext
         var parts = Value.Value!.Split(new[] { Separator.Value! }, options);
         var list = parts.Cast<object?>().ToList();
 
-        return Task.FromResult(Data(list, app.Data.Type.FromName("list")));
+        return Task.FromResult(Data(list, app.data.type.FromName("list")));
     }
 }

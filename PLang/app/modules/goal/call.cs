@@ -13,14 +13,14 @@ namespace app.modules.goal;
 [Action("call")]
 public partial class Call : IContext
 {
-    public partial Data.@this<GoalCall> GoalName { get; init; }
+    public partial data.@this<GoalCall> GoalName { get; init; }
 
     /// <summary>
     /// Target actor to run the goal on. If null, runs on the current context.
     /// </summary>
-    public partial Data.@this<Actor.@this>? Actor { get; init; }
+    public partial data.@this<Actor.@this>? Actor { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var goalCall = GoalName.Value!;
         // Stamp THIS action as the anchor so GetGoalAsync can navigate step → goal → sub-goals.

@@ -10,13 +10,13 @@ namespace app.modules.settings;
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
-    public partial Data.@this<string> Key { get; init; }
-    public partial Data.@this? Value { get; init; }
+    public partial data.@this<string> Key { get; init; }
+    public partial data.@this? Value { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var store = Context.App.SettingsStore;
-        var result = await store.Set("settings", Key.Value!, new Data.@this(Key.Value!, Value?.Value));
+        var result = await store.Set("settings", Key.Value!, new data.@this(Key.Value!, Value?.Value));
 
         if (!result.Success)
             return result;

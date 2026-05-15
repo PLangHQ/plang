@@ -13,22 +13,22 @@ namespace app.modules.file;
 [Action("read")]
 public partial class Read : IContext
 {
-    public partial Data.@this<FileSystem.Path> Path { get; init; }
+    public partial data.@this<FileSystem.Path> Path { get; init; }
 
     [Default(false)]
-    public partial Data.@this<bool> ResolveVariables { get; init; }
+    public partial data.@this<bool> ResolveVariables { get; init; }
 
     [Code]
     public partial IFile Files { get; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var result = Files.Read(this);
         if (ResolveVariables.Value && result.Success && result.Value is string content)
         {
             // skipInfrastructure: file content is untrusted — don't resolve %!app% etc.
             var resolved = Context.Variables.Resolve(content, skipInfrastructure: true);
-            return Task.FromResult(new Data.@this(result.Name, resolved, result.Type));
+            return Task.FromResult(new data.@this(result.Name, resolved, result.Type));
         }
         return Task.FromResult(result);
     }

@@ -16,7 +16,7 @@ public class DataContextWiringTests
     {
         // Per Ingi's Q1: keep the existing settable Context property — Data already has Context
         // wired through Variables.Set, Step/Action/Goal dispatch, Envelope, Clone. The pattern
-        // is `new Data.@this(...) { Context = ctx }`. Pin that pattern + storage round-trip.
+        // is `new data.@this(...) { Context = ctx }`. Pin that pattern + storage round-trip.
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var data = new Data("v") { Value = 1, Context = app.User.Context };
         await Assert.That(data.Context).IsSameReferenceAs(app.User.Context);

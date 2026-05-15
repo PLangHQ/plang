@@ -11,12 +11,12 @@ namespace app.modules.code;
 public partial class setDefault : IContext
 {
     /// <summary>Name of the provider to set as default.</summary>
-    public partial Data.@this<string> Name { get; init; }
+    public partial data.@this<string> Name { get; init; }
 
     /// <summary>Provider type name (e.g., "signing", "crypto", "identity", "key").</summary>
-    public partial Data.@this<string>? Type { get; init; }
+    public partial data.@this<string>? Type { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var providerType = Context.App.Code.ResolveType(Type?.Value);
         if (providerType == null)

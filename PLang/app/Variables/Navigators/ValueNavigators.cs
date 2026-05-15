@@ -15,13 +15,13 @@ internal static class ValueNavigators
         new global::app.Variables.Navigators.Object(),
     ];
 
-    public static Data.@this Navigate(Data.@this data, string key)
+    public static global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
         foreach (var nav in _navigators)
         {
             if (nav.CanNavigate(data))
                 return nav.Navigate(data, key);
         }
-        return Data.@this.NotFound(key);
+        return global::app.data.@this.NotFound(key);
     }
 }

@@ -10,10 +10,10 @@ namespace app.modules.file;
 [Action("exists")]
 public partial class Exists : IContext
 {
-    public partial Data.@this<FileSystem.Path> Path { get; init; }
+    public partial data.@this<FileSystem.Path> Path { get; init; }
 
     [Code]
     public partial IFile Files { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Files.Exists(this));
+    public Task<data.@this> Run() => Task.FromResult(Files.Exists(this));
 }

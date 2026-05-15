@@ -21,7 +21,7 @@ public class ErrorHandleTests
     private static PrAction Throw(string message, int? statusCode = null, string? key = null,
         ActionModifiers? modifiers = null)
     {
-        var parameters = new List<global::app.Data.@this> { new("message", message) };
+        var parameters = new List<global::app.data.@this> { new("message", message) };
         if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value));
         if (key != null) parameters.Add(new("key", key));
         return new PrAction
@@ -34,7 +34,7 @@ public class ErrorHandleTests
 
     private static PrAction ErrorHandler(params (string name, object? value)[] parameters)
     {
-        var list = new List<global::app.Data.@this>();
+        var list = new List<global::app.data.@this>();
         foreach (var p in parameters) list.Add(new(p.name, p.value));
         return new PrAction
         {
@@ -49,7 +49,7 @@ public class ErrorHandleTests
         new PrAction
         {
             Module = "goal", ActionName = "call",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("goalname", new Dictionary<string, object?> { ["name"] = goalName })
             }
@@ -62,7 +62,7 @@ public class ErrorHandleTests
         var action = new PrAction
         {
             Module = "variable", ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%ok%"), new("value", "v")
             },
@@ -190,10 +190,10 @@ public class ErrorHandleTests
         // RetryCount=2, no goal, persistent failure → retries exhaust, error propagates.
         // Stateful lambda counts calls so a regression in the retry loop fails this test.
         int callCount = 0;
-        Func<Task<global::app.Data.@this>> persistentlyFailing = () =>
+        Func<Task<global::app.data.@this>> persistentlyFailing = () =>
         {
             callCount++;
-            return Task.FromResult(global::app.Data.@this.FromError(
+            return Task.FromResult(global::app.data.@this.FromError(
                 new global::app.Errors.ServiceError("persistent failure", "TransientError", 503)));
         };
 
@@ -214,10 +214,10 @@ public class ErrorHandleTests
     {
         // Order=GoalFirst, no goal + retryCount=1, persistent failure → 1 initial + 1 retry.
         int callCount = 0;
-        Func<Task<global::app.Data.@this>> persistentlyFailing = () =>
+        Func<Task<global::app.data.@this>> persistentlyFailing = () =>
         {
             callCount++;
-            return Task.FromResult(global::app.Data.@this.FromError(
+            return Task.FromResult(global::app.data.@this.FromError(
                 new global::app.Errors.ServiceError("failure", "TransientError", 503)));
         };
 
@@ -237,10 +237,10 @@ public class ErrorHandleTests
     {
         // RetryCount=3, persistent failure → 1 initial + 3 retries = 4 calls total.
         int callCount = 0;
-        Func<Task<global::app.Data.@this>> persistentlyFailing = () =>
+        Func<Task<global::app.data.@this>> persistentlyFailing = () =>
         {
             callCount++;
-            return Task.FromResult(global::app.Data.@this.FromError(
+            return Task.FromResult(global::app.data.@this.FromError(
                 new global::app.Errors.ServiceError("always fails", "TransientError", 503)));
         };
 
@@ -258,13 +258,13 @@ public class ErrorHandleTests
         // Stateful lambda: fails on first call, succeeds on second.
         // Tests the retry-success path that error.throw can't cover.
         int callCount = 0;
-        Func<Task<global::app.Data.@this>> statefulNext = () =>
+        Func<Task<global::app.data.@this>> statefulNext = () =>
         {
             callCount++;
             if (callCount == 1)
-                return Task.FromResult(global::app.Data.@this.FromError(
+                return Task.FromResult(global::app.data.@this.FromError(
                     new global::app.Errors.ServiceError("transient failure", "TransientError", 503)));
-            return Task.FromResult(global::app.Data.@this.Ok());
+            return Task.FromResult(global::app.data.@this.Ok());
         };
 
         var modifiers = new ActionModifiers
@@ -289,7 +289,7 @@ public class ErrorHandleTests
         var prAction = new PrAction
         {
             Module = module, ActionName = actionName,
-            Parameters = parameters.Select(p => new global::app.Data.@this(p.name, p.value)).ToList()
+            Parameters = parameters.Select(p => new global::app.data.@this(p.name, p.value)).ToList()
         };
         var step = new Step { Text = $"test step for {name}" };
         step.Actions.Add(prAction);

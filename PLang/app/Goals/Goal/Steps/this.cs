@@ -133,9 +133,9 @@ public sealed class @this : IList<Step.@this>, IContext
     /// Runs all steps in sequence. Owns the iteration loop (OBP rule 5).
     /// Handles sub-step skipping (condition-gated), cancellation, and return propagation.
     /// </summary>
-    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
+    public async Task<data.@this> RunAsync(Actor.Context.@this context)
     {
-        Data.@this result = Data.@this.Ok();
+        data.@this result = data.@this.Ok();
         int? skipBelowIndent = null;
 
         for (int i = 0; i < _items.Count; i++)
@@ -166,7 +166,7 @@ public sealed class @this : IList<Step.@this>, IContext
             }
 
             if (context.CancellationToken.IsCancellationRequested)
-                return Data.@this.FromError(new app.Errors.Error("Operation was cancelled", "Cancelled", 499));
+                return data.@this.FromError(new app.Errors.Error("Operation was cancelled", "Cancelled", 499));
         }
 
         return result;

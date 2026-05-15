@@ -9,10 +9,10 @@ namespace app.modules.builder;
 public partial class goalsSave : IContext
 {
     [IsNotNull]
-    public partial Data.@this<Goal> Goal { get; init; }
+    public partial data.@this<Goal> Goal { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<Data.@this> Run() => await Builder.GoalsSave(this);
+    public async Task<data.@this> Run() => await Builder.GoalsSave(this);
 }

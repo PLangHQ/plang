@@ -40,8 +40,8 @@ public sealed class @this : IList<PrAction>
     /// through Action.RunAsync (they're wrapping, not standalone executables),
     /// so we emit the event here — once per modifier, carrying the chain's result.
     /// </summary>
-    public async Task<Data.@this> RunAsync(
-        Func<Task<Data.@this>> innermost,
+    public async Task<data.@this> RunAsync(
+        Func<Task<data.@this>> innermost,
         Actor.Context.@this context)
     {
         if (_items.Count == 0) return await innermost();
@@ -50,7 +50,7 @@ public sealed class @this : IList<PrAction>
         for (int i = _items.Count - 1; i >= 0; i--)
         {
             var (wrapped, error) = await _items[i].WrapAround(execute, context);
-            if (error != null) return Data.@this.FromError(error);
+            if (error != null) return data.@this.FromError(error);
             execute = wrapped!;
         }
         var result = await execute();

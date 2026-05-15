@@ -1,7 +1,7 @@
 using System.Text;
 using app.Attributes;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// Translatable string with PLang variable resolution.

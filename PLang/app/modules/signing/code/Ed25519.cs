@@ -22,7 +22,7 @@ public class Ed25519 : ISigning
 
     // --- High-level pipeline ---
 
-    public virtual async Task<Data.@this> SignAsync(sign action)
+    public virtual async Task<data.@this> SignAsync(sign action)
     {
         var app = action.Context.App;
 
@@ -32,7 +32,7 @@ public class Ed25519 : ISigning
         var identity = (Identity)identityResult.Value!;
 
         // Hash the data
-        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new Data.@this<string>("", "keccak256") }, action.Context);
+        var hash = await app.RunAction<Hash>(new Hash { Data = action.Data, Algorithm = new data.@this<string>("", "keccak256") }, action.Context);
         if (!hash.Success) return hash;
 
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
@@ -60,10 +60,10 @@ public class Ed25519 : ISigning
         return action.Data;
     }
 
-    public virtual async Task<Data.@this> VerifyAsync(verify action)
+    public virtual async Task<data.@this> VerifyAsync(verify action)
     {
         if (action.Data?.RawSignature == null)
-            return global::app.Data.@this.FromError(new ActionError("Data has no signature", "NoSignature", 400));
+            return global::app.data.@this.FromError(new ActionError("Data has no signature", "NoSignature", 400));
 
         var signedData = action.Data.RawSignature;
         var app = action.Context.App;
@@ -73,75 +73,75 @@ public class Ed25519 : ISigning
 
         // 1. Type check
         if (signedData.Type != "signature")
-            return global::app.Data.@this.FromError(new ActionError($"Invalid signed data type: '{signedData.Type}'", "InvalidType", 400));
+            return global::app.data.@this.FromError(new ActionError($"Invalid signed data type: '{signedData.Type}'", "InvalidType", 400));
 
         // 2. Timeout check (Created too old)
         var age = now - signedData.Created;
         if (age.TotalMilliseconds > effectiveTimeout)
-            return global::app.Data.@this.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
+            return global::app.data.@this.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
 
         // 3. Expiry check
         if (signedData.Expires.HasValue && now > signedData.Expires.Value)
-            return global::app.Data.@this.FromError(new ActionError("Signature has expired", "Expired", 400));
+            return global::app.data.@this.FromError(new ActionError("Signature has expired", "Expired", 400));
 
         // 4. Nonce replay check
         // Cache TTL matches effectiveTimeout. After restart, the timeout check (step 2)
         // rejects signatures older than effectiveTimeout, so nonce replay is bounded.
         var nonceCacheKey = $"nonce:{signedData.Nonce}";
         var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
-        var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, global::app.Data.@this.Ok(true), cacheSettings);
+        var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, global::app.data.@this.Ok(true), cacheSettings);
         if (!nonceAdded)
-            return global::app.Data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
+            return global::app.data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
         // 5. Contract matching
         if (!ContractsMatch(signedData.Contracts, action.Contracts?.Value))
-            return global::app.Data.@this.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
+            return global::app.data.@this.FromError(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
         // 6. Header matching
         if (action.Headers?.Value != null)
         {
             if (signedData.Headers == null)
-                return global::app.Data.@this.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
+                return global::app.data.@this.FromError(new ActionError("Signed data has no headers but verification expects headers", "HeaderMismatch", 400));
 
             foreach (var kvp in action.Headers.Value)
             {
                 if (!signedData.Headers.TryGetValue(kvp.Key, out var signedValue))
-                    return global::app.Data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
+                    return global::app.data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
 
                 // Constant-time comparison to prevent timing side-channel attacks
                 var expectedBytes = System.Text.Encoding.UTF8.GetBytes(kvp.Value?.ToString() ?? "");
                 var actualBytes = System.Text.Encoding.UTF8.GetBytes(signedValue?.ToString() ?? "");
                 if (!CryptographicOperations.FixedTimeEquals(expectedBytes, actualBytes))
-                    return global::app.Data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
+                    return global::app.data.@this.FromError(new ActionError($"Header mismatch for '{kvp.Key}'", "HeaderMismatch", 400));
             }
         }
 
         // 7. Data hash verification
         if (signedData.Hash?.Value is not byte[] storedHash || storedHash.Length == 0)
-            return global::app.Data.@this.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
+            return global::app.data.@this.FromError(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
         if (action.Data?.Value != null)
         {
             var rehash = await app.RunAction<Hash>(
-                new Hash { Data = action.Data, Algorithm = new Data.@this<string>("", signedData.Hash!.Type?.Value ?? "keccak256") }, action.Context);
+                new Hash { Data = action.Data, Algorithm = new data.@this<string>("", signedData.Hash!.Type?.Value ?? "keccak256") }, action.Context);
             if (!rehash.Success) return rehash;
             if (rehash.Value is not byte[] rehashBytes || !rehashBytes.AsSpan().SequenceEqual(storedHash))
-                return global::app.Data.@this.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
+                return global::app.data.@this.FromError(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
         }
 
         // 8. Signature verification
         if (string.IsNullOrEmpty(signedData.Value))
-            return global::app.Data.@this.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
+            return global::app.data.@this.FromError(new ActionError("Missing signature", "SignatureInvalid", 400));
 
         byte[] signatureBytes;
         try { signatureBytes = Convert.FromBase64String(signedData.Value); }
-        catch (FormatException) { return global::app.Data.@this.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
+        catch (FormatException) { return global::app.data.@this.FromError(new ActionError("Invalid base64 signature", "SignatureInvalid", 400)); }
 
         var signingBytes = signedData.ToSigningBytes();
         var verifyResult = Verify(signingBytes, signatureBytes, signedData.Identity);
         if (!verifyResult.Success) return verifyResult;
 
-        return global::app.Data.@this.Ok(true);
+        return global::app.data.@this.Ok(true);
     }
 
     private static bool ContractsMatch(List<string>? signed, List<string>? required)
@@ -156,7 +156,7 @@ public class Ed25519 : ISigning
 
     // --- Low-level crypto ---
 
-    public Data.@this<KeyPair> GenerateKeyPair()
+    public data.@this<KeyPair> GenerateKeyPair()
     {
         try
         {
@@ -170,18 +170,18 @@ public class Ed25519 : ISigning
             var publicKeyBytes = key.Export(KeyBlobFormat.RawPublicKey);
             var privateKeyBytes = key.Export(KeyBlobFormat.RawPrivateKey);
 
-            return Data.@this<KeyPair>.Ok(new KeyPair(
+            return data.@this<KeyPair>.Ok(new KeyPair(
                 Convert.ToBase64String(publicKeyBytes),
                 Convert.ToBase64String(privateKeyBytes)
             ));
         }
         catch (Exception ex)
         {
-            return Data.@this<KeyPair>.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
+            return data.@this<KeyPair>.FromError(ActionError.FromException(ex, "KeyGenerationError", 500));
         }
     }
 
-    public Data.@this Sign(byte[] data, string privateKeyBase64)
+    public data.@this Sign(byte[] data, string privateKeyBase64)
     {
         try
         {
@@ -192,15 +192,15 @@ public class Ed25519 : ISigning
                 new KeyCreationParameters { ExportPolicy = KeyExportPolicies.AllowPlaintextExport });
 
             var signature = algorithm.Sign(key, data);
-            return global::app.Data.@this.Ok(signature);
+            return global::app.data.@this.Ok(signature);
         }
         catch (Exception ex)
         {
-            return global::app.Data.@this.FromError(ActionError.FromException(ex, "SigningError", 500));
+            return global::app.data.@this.FromError(ActionError.FromException(ex, "SigningError", 500));
         }
     }
 
-    public Data.@this Verify(byte[] data, byte[] signature, string publicKeyBase64)
+    public data.@this Verify(byte[] data, byte[] signature, string publicKeyBase64)
     {
         try
         {
@@ -211,14 +211,14 @@ public class Ed25519 : ISigning
             var isValid = algorithm.Verify(publicKey, data, signature);
 
             if (!isValid)
-                return global::app.Data.@this.FromError(new ActionError("Signature verification failed", "SignatureInvalid", 400));
+                return global::app.data.@this.FromError(new ActionError("Signature verification failed", "SignatureInvalid", 400));
 
-            return global::app.Data.@this.Ok(true);
+            return global::app.data.@this.Ok(true);
         }
         catch (Exception ex) when (ex is FormatException or ArgumentException
             or System.Security.Cryptography.CryptographicException or InvalidOperationException)
         {
-            return global::app.Data.@this.FromError(ActionError.FromException(ex, "SignatureInvalid", 400));
+            return global::app.data.@this.FromError(ActionError.FromException(ex, "SignatureInvalid", 400));
         }
     }
 }

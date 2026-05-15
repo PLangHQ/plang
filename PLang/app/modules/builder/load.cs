@@ -8,10 +8,10 @@ namespace app.modules.builder;
 public partial class load : IContext
 {
     [Default(".")]
-    public partial Data.@this<string> Path { get; init; }
+    public partial data.@this<string> Path { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<Data.@this> Run() => await Builder.Load(this);
+    public async Task<data.@this> Run() => await Builder.Load(this);
 }

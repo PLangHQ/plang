@@ -20,7 +20,7 @@ public class CacheWrapTests
 
     private static PrAction CacheModifier(long durationMs, string? key = null, bool sliding = false)
     {
-        var parameters = new List<global::app.Data.@this>
+        var parameters = new List<global::app.data.@this>
         {
             new("durationMs", durationMs),
             new("sliding", sliding)
@@ -40,7 +40,7 @@ public class CacheWrapTests
         var action = new PrAction
         {
             Module = "variable", ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%x%"), new("value", "first")
             },
@@ -61,7 +61,7 @@ public class CacheWrapTests
     public async Task Wrap_CacheHit_ReturnsCachedSkipsAction()
     {
         // Pre-populate the cache with a known Data value
-        var stashed = global::app.Data.@this.Ok("cached-value");
+        var stashed = global::app.data.@this.Ok("cached-value");
         await Ctx.App!.Cache.SetAsync("hit-key", stashed,
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
@@ -69,7 +69,7 @@ public class CacheWrapTests
         var action = new PrAction
         {
             Module = "variable", ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%y%"), new("value", "fresh-value")
             },
@@ -90,7 +90,7 @@ public class CacheWrapTests
         var action = new PrAction
         {
             Module = "error", ActionName = "throw",
-            Parameters = new List<global::app.Data.@this> { new("message", "boom") },
+            Parameters = new List<global::app.data.@this> { new("message", "boom") },
             Modifiers = new ActionModifiers { CacheModifier(60_000, "fail-key") }
         };
 
@@ -109,7 +109,7 @@ public class CacheWrapTests
         var action = new PrAction
         {
             Module = "variable", ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%a%"), new("value", "v")
             },
@@ -133,7 +133,7 @@ public class CacheWrapTests
         var action = new PrAction
         {
             Module = "variable", ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%b%"), new("value", "v")
             },
@@ -156,7 +156,7 @@ public class CacheWrapTests
         var action = new PrAction
         {
             Module = "variable", ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%c%"), new("value", "slide")
             },
@@ -174,14 +174,14 @@ public class CacheWrapTests
     {
         // Pre-cache a value, then execute — the handler should put the cached Data
         // into Variables under name __data__ so the next action can read it via %__data__%.
-        var stashed = global::app.Data.@this.Ok("restored");
+        var stashed = global::app.data.@this.Ok("restored");
         await Ctx.App!.Cache.SetAsync("restore-key", stashed,
             new CacheSettings { DurationMs = 60_000, Sliding = false });
 
         var action = new PrAction
         {
             Module = "variable", ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%d%"), new("value", "fresh")
             },

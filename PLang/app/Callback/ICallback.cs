@@ -27,5 +27,5 @@ public interface ICallback
     /// caller can chain. Assumes the consumer has already verified the wire signature
     /// (callback.run does this via signing.verify before dispatching here).
     /// </summary>
-    System.Threading.Tasks.Task<global::app.Data.@this> Run(global::app.Actor.Context.@this ctx);
+    System.Threading.Tasks.Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx);
 }

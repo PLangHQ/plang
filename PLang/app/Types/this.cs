@@ -92,7 +92,7 @@ public sealed partial class @this
     /// <summary>
     /// Static-friendly subset of <see cref="GetTypeName"/> covering the primitive table only —
     /// returns null for domain/[Choices]/array/generic types. Used as a no-context fallback by
-    /// <see cref="Data.@this"/> when inferring a Type from a value without an active Context.
+    /// <see cref="data.@this"/> when inferring a Type from a value without an active Context.
     /// </summary>
     public static string? GetPrimitiveName(System.Type type)
     {
@@ -117,7 +117,7 @@ public sealed partial class @this
         if (type.IsGenericType)
         {
             var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(Data.@this<>))
+            if (generic == typeof(data.@this<>))
                 return GetTypeNameStatic(type.GetGenericArguments()[0]);
             if (generic == typeof(List<>) || generic == typeof(IList<>)
                 || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
@@ -131,7 +131,7 @@ public sealed partial class @this
             }
         }
 
-        if (type == typeof(Data.@this)) return "object";
+        if (type == typeof(data.@this)) return "object";
 
         if (type.IsArray)
         {
@@ -255,7 +255,7 @@ public sealed partial class @this
         if (type.IsGenericType)
         {
             var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(Data.@this<>))
+            if (generic == typeof(data.@this<>))
                 return GetTypeName(type.GetGenericArguments()[0]);
             if (generic == typeof(List<>) || generic == typeof(IList<>)
                 || generic == typeof(IEnumerable<>) || generic == typeof(ICollection<>)
@@ -279,7 +279,7 @@ public sealed partial class @this
             }
         }
 
-        if (type == typeof(Data.@this))
+        if (type == typeof(data.@this))
             return "object";
 
         if (type.IsArray)
@@ -349,7 +349,7 @@ public sealed partial class @this
         var underlying = Nullable.GetUnderlyingType(type);
         if (underlying != null) type = underlying;
 
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Data.@this<>))
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
             type = type.GetGenericArguments()[0];
 
         if (type.IsEnum)
@@ -587,7 +587,7 @@ public sealed partial class @this
         if (type.IsGenericType)
         {
             var generic = type.GetGenericTypeDefinition();
-            if (generic == typeof(Data.@this<>))
+            if (generic == typeof(data.@this<>))
                 return UnwrapType(type.GetGenericArguments()[0]);
             if (generic == typeof(List<>) || generic == typeof(IList<>))
                 return UnwrapType(type.GetGenericArguments()[0]);

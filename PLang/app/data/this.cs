@@ -8,21 +8,21 @@ using app.Errors;
 using app.Actor.Context;
 using app.Utils;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// PLang type descriptor. Value is a type string: "string", "long", "text/markdown", "image/jpeg", etc.
 /// CLR type is derived on the fly via TypeMapping.
 /// </summary>
-[System.ComponentModel.TypeConverter(typeof(global::app.Data.Converter))]
-public sealed class Type
+[System.ComponentModel.TypeConverter(typeof(global::app.data.Converter))]
+public sealed class type
 {
     public string Value { get; }
 
     [JsonIgnore]
     internal Actor.Context.@this? Context { get; set; }
 
-    public Type(string value) { Value = value; }
+    public type(string value) { Value = value; }
 
     /// <summary>
     /// Derive CLR type: navigate through context to App.Types, fall back to static TypeMapping.
@@ -39,23 +39,23 @@ public sealed class Type
     /// </summary>
     public bool Compressible => Kind != null && (Context?.App.Formats.Compressible(Kind) ?? false);
 
-    public static Type String => new("string");
-    public static Type Int => new("int");
-    public static Type Long => new("long");
-    public static Type Double => new("double");
-    public static Type Bool => new("bool");
-    public static Type DateTime => new("datetime");
-    public static Type Object => new("object");
+    public static type String => new("string");
+    public static type Int => new("int");
+    public static type Long => new("long");
+    public static type Double => new("double");
+    public static type Bool => new("bool");
+    public static type DateTime => new("datetime");
+    public static type Object => new("object");
 
     /// <summary>
     /// Factory from MIME type (used by file handlers).
     /// </summary>
-    public static Type FromMime(string mimeType) => new(mimeType);
+    public static type FromMime(string mimeType) => new(mimeType);
 
     /// <summary>
     /// Factory from PLang type name.
     /// </summary>
-    public static Type FromName(string typeName) => new(typeName);
+    public static type FromName(string typeName) => new(typeName);
 
     public override string ToString() => Value;
 
@@ -79,13 +79,13 @@ public sealed class Type
 /// Wraps a variable value in App with metadata.
 /// Name is the variable/parameter name, Value is the data accessed via %name%.
 /// Also serves as the universal result type (replaces Return).
-/// Partial class — split by concern: Data.cs (core), Data.Result.cs, Data.Navigation.cs, Data.Envelope.cs.
+/// Partial class — split by concern: data.cs (core), data.Result.cs, data.Navigation.cs, data.Envelope.cs.
 /// </summary>
 public partial class @this
 {
     private object? _value;
     private Func<object?>? _valueFactory;
-    private Type? _type;
+    private type? _type;
     private Actor.Context.@this? _context;
 
     /// <summary>Cache for As&lt;T&gt;() Resolve method lookups — avoids per-call reflection.</summary>
@@ -187,7 +187,7 @@ public partial class @this
     public Properties Properties { get; set; } = new();
 
     [JsonConstructor]
-    public @this(string name, object? value = null, Type? type = null, @this? parent = null)
+    public @this(string name, object? value = null, type? type = null, @this? parent = null)
     {
         Name = CleanName(name);
         _value = UnwrapJsonElement(value);
@@ -271,8 +271,8 @@ public partial class @this
 
     [JsonPropertyName("type")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    [JsonConverter(typeof(global::app.Data.Json))]
-    public Type? Type
+    [JsonConverter(typeof(global::app.data.Json))]
+    public type? Type
     {
         get
         {
@@ -281,7 +281,7 @@ public partial class @this
             var typeName = _context?.App.Types.Name(_value.GetType())
                            ?? Types.@this.GetPrimitiveName(_value.GetType())
                            ?? _value.GetType().Name.ToLowerInvariant();
-            var derived = new Type(typeName);
+            var derived = new type(typeName);
             derived.Context = _context;
             _type = derived;
             return _type;
@@ -486,7 +486,7 @@ public partial class @this
 
         // Containers with potential nested %var% — walk via the shared helper so plain
         // Data and Data<T> resolve nested vars by the same rule. Without this, handlers
-        // that take plain `Data.@this` (e.g. variable.set) see literal "%var%" strings
+        // that take plain `data.@this` (e.g. variable.set) see literal "%var%" strings
         // inside lists/dicts loaded from the .pr.
         if (ctx != null && IsWalkableContainer(raw))
         {
@@ -1041,13 +1041,13 @@ public class @this<T> : @this
         set => base.Value = value;
     }
 
-    public @this(string name = "", T? value = default, Type? type = null, @this? parent = null)
+    public @this(string name = "", T? value = default, type? type = null, @this? parent = null)
         : base(name, value, type, parent) { }
 
-    public static @this<T> Ok(T value, Type? type = null) => new("", value, type);
+    public static @this<T> Ok(T value, type? type = null) => new("", value, type);
     public new static @this<T> FromError(IError error) => new() { Error = error };
 
-    /// <summary>Allows direct assignment of T values to Data.@this&lt;T&gt; properties.</summary>
+    /// <summary>Allows direct assignment of T values to data.@this&lt;T&gt; properties.</summary>
     public static implicit operator @this<T>(T value) => new("", value);
 }
 
@@ -1058,7 +1058,7 @@ public class DynamicData : @this
 {
     private readonly Func<object?> _valueFactory;
 
-    public DynamicData(string name, Func<object?> valueFactory, Type? type = null)
+    public DynamicData(string name, Func<object?> valueFactory, type? type = null)
         : base(name, null, type)
     {
         _valueFactory = valueFactory;

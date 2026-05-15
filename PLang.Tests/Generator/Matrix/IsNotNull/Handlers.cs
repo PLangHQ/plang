@@ -4,7 +4,7 @@ namespace app.modules.matrix.isnotnull;
 public partial class IsNotNullProp : global::app.modules.IContext
 {
     [global::app.modules.IsNotNull]
-    public partial global::app.Data.@this<string> Required { get; init; }
+    public partial global::app.data.@this<string> Required { get; init; }
 
-    public Task<global::app.Data.@this> Run() => Task.FromResult<global::app.Data.@this>(Required);
+    public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Required);
 }

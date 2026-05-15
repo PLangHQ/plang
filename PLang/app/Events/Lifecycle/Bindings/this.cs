@@ -19,18 +19,18 @@ public sealed class @this
 
     public IReadOnlyList<EventBinding> ToList() => _bindings.ToList();
 
-    public Task<Data.@this> Run(Actor.Context.@this context) => RunBindings(_bindings, context, null, null);
+    public Task<data.@this> Run(Actor.Context.@this context) => RunBindings(_bindings, context, null, null);
 
     /// <summary>
     /// Dispatches matching bindings. Payload-carrying events (AfterAction) pass the
     /// action and its result; other events leave action/result null.
     /// </summary>
-    public Task<Data.@this> Run(Actor.Context.@this context, EventType type,
-        Action? action = null, Data.@this? result = null)
+    public Task<data.@this> Run(Actor.Context.@this context, EventType type,
+        Action? action = null, data.@this? result = null)
         => RunBindings(_bindings.Where(b => b.Type == type), context, action, result);
 
-    private static async Task<Data.@this> RunBindings(IEnumerable<EventBinding> bindings,
-        Actor.Context.@this context, Action? action, Data.@this? actionResult)
+    private static async Task<data.@this> RunBindings(IEnumerable<EventBinding> bindings,
+        Actor.Context.@this context, Action? action, data.@this? actionResult)
     {
         foreach (var binding in bindings.OrderByDescending(b => b.Priority))
         {
@@ -38,6 +38,6 @@ public sealed class @this
             if (!result.Success) return result;
             if (result.Handled) return result;
         }
-        return Data.@this.Ok();
+        return data.@this.Ok();
     }
 }

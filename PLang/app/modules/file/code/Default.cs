@@ -15,7 +15,7 @@ public class Default : IFile
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public Data.@this Read(Read action)
+    public data.@this Read(Read action)
     {
         var fs = action.Context.App.FileSystem;
         var path = action.Path.Value!;
@@ -25,25 +25,25 @@ public class Default : IFile
             var snapshot = action.Context.App.Builder.GetPrSnapshot(path.Absolute);
             if (snapshot != null)
             {
-                var snapshotType = Data.Type.FromMime(action.Context.App.Formats.Mime(path.Extension));
+                var snapshotType = data.type.FromMime(action.Context.App.Formats.Mime(path.Extension));
                 var snapshotClr = snapshotType.ClrType;
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
                     var (converted, _) = global::app.Types.@this.TryConvertTo(snapshot, snapshotClr);
                     if (converted != null)
-                        return new global::app.Data.@this(path.Raw, converted, snapshotType);
+                        return new global::app.data.@this(path.Raw, converted, snapshotType);
                 }
-                return new global::app.Data.@this(path.Raw, snapshot, snapshotType);
+                return new global::app.data.@this(path.Raw, snapshot, snapshotType);
             }
         }
 
         if (!fs.File.Exists(path.Absolute))
-            return global::app.Data.@this.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
+            return global::app.data.@this.FromError(new ServiceError($"File not found: {path.Raw}", "NotFound", 404));
 
         try
         {
             var mime = action.Context.App.Formats.Mime(path.Extension);
-            var type = Data.Type.FromMime(mime);
+            var type = data.type.FromMime(mime);
             object content;
 
             if (type.ClrType == typeof(byte[]))
@@ -71,15 +71,15 @@ public class Default : IFile
                 }
             }
 
-            return new global::app.Data.@this(path.Raw, content, Data.Type.FromMime(mime));
+            return new global::app.data.@this(path.Raw, content, data.type.FromMime(mime));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return global::app.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return global::app.data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
-    public async Task<Data.@this> Save(Save action)
+    public async Task<data.@this> Save(Save action)
     {
         var fs = action.Context.App.FileSystem;
         var path = action.Path.Value!;
@@ -101,19 +101,19 @@ public class Default : IFile
             }
 
             var resultPath = new FileSystem.Path(path.Absolute, action.Context);
-            return Data.@this<FileSystem.Path>.Ok(resultPath);
+            return data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return global::app.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return global::app.data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
         catch (Exception ex) when (ex is System.Text.Json.JsonException or NotSupportedException)
         {
-            return global::app.Data.@this.FromError(new ServiceError(ex.Message, "SerializationError", 500));
+            return global::app.data.@this.FromError(new ServiceError(ex.Message, "SerializationError", 500));
         }
     }
 
-    public Data.@this Delete(Delete action)
+    public data.@this Delete(Delete action)
     {
         var fs = action.Context.App.FileSystem;
         var path = action.Path.Value!;
@@ -124,29 +124,29 @@ public class Default : IFile
             else if (fs.Directory.Exists(path.Absolute))
             {
                 if (!action.Recursive.Value && fs.Directory.GetFileSystemEntries(path.Absolute).Length > 0)
-                    return global::app.Data.@this.FromError(new ServiceError(
+                    return global::app.data.@this.FromError(new ServiceError(
                         $"Directory is not empty: {path.Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
 
                 fs.Directory.Delete(path.Absolute, action.Recursive.Value);
             }
             else if (!action.IgnoreIfNotFound.Value)
-                return global::app.Data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
+                return global::app.data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
             var resultPath = new FileSystem.Path(path.Absolute, action.Context);
-            return Data.@this<FileSystem.Path>.Ok(resultPath);
+            return data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return global::app.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return global::app.data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
-    public Data.@this Copy(Copy action)
+    public data.@this Copy(Copy action)
     {
         var fs = action.Context.App.FileSystem;
         var source = action.Source.Value!;
         if (!source.Exists)
-            return global::app.Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
+            return global::app.data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
@@ -160,20 +160,20 @@ public class Default : IFile
                 CopyDirectory(fs, source.Absolute, destPath, action.Overwrite.Value, action.IncludeSubfolders.Value);
 
             var resultPath = new FileSystem.Path(destPath, action.Context, source: source.Absolute);
-            return Data.@this<FileSystem.Path>.Ok(resultPath);
+            return data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return global::app.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return global::app.data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
-    public Data.@this Move(Move action)
+    public data.@this Move(Move action)
     {
         var fs = action.Context.App.FileSystem;
         var source = action.Source.Value!;
         if (!source.Exists)
-            return global::app.Data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
+            return global::app.data.@this.FromError(new ServiceError($"Not found: {source.Raw}", "NotFound", 404));
 
         try
         {
@@ -192,20 +192,20 @@ public class Default : IFile
             }
 
             var resultPath = new FileSystem.Path(destPath, action.Context, source: source.Absolute);
-            return Data.@this<FileSystem.Path>.Ok(resultPath);
+            return data.@this<FileSystem.Path>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return global::app.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return global::app.data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
-    public Data.@this List(List action)
+    public data.@this List(List action)
     {
         var fs = action.Context.App.FileSystem;
         var path = action.Path.Value!;
         if (!fs.Directory.Exists(path.Absolute))
-            return global::app.Data.@this.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
+            return global::app.data.@this.FromError(new ServiceError($"Directory not found: {path.Raw}", "NotFound", 404));
 
         try
         {
@@ -213,19 +213,19 @@ public class Default : IFile
             var files = fs.Directory.GetFiles(path.Absolute, action.Pattern.Value!, option)
                 .Select(f => new FileSystem.Path(f, action.Context))
                 .ToArray();
-            return global::app.Data.@this.Ok(files);
+            return global::app.data.@this.Ok(files);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return global::app.Data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+            return global::app.data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
         }
     }
 
-    public Data.@this Exists(Exists action)
+    public data.@this Exists(Exists action)
     {
         var path = action.Path.Value!;
         var result = new FileSystem.Path(path.Absolute, action.Context);
-        return Data.@this<FileSystem.Path>.Ok(result);
+        return data.@this<FileSystem.Path>.Ok(result);
     }
 
     // --- Helpers ---

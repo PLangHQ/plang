@@ -10,16 +10,16 @@ namespace app.modules.condition;
 [Action("elseif")]
 public partial class Elseif : IContext, IStep
 {
-    public partial Data.@this? Left { get; init; }
-    public partial Data.@this<Operator> Operator { get; init; }
-    public partial Data.@this? Right { get; init; }
+    public partial data.@this? Left { get; init; }
+    public partial data.@this<Operator> Operator { get; init; }
+    public partial data.@this? Right { get; init; }
     [Default(false)]
-    public partial Data.@this<bool> Negate { get; init; }
+    public partial data.@this<bool> Negate { get; init; }
 
     [Code]
     public partial IEvaluator Evaluator { get; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var evalResult = Evaluator.Evaluate(this);
         if (!evalResult.Success) return Task.FromResult(evalResult);

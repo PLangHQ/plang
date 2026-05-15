@@ -11,13 +11,13 @@ namespace app.modules.crypto;
 public partial class Hash : IContext
 {
     [IsNotNull]
-    public partial Data.@this Data { get; init; }
+    public partial data.@this Data { get; init; }
 
     [Default("keccak256")]
-    public partial Data.@this<string> Algorithm { get; init; }
+    public partial data.@this<string> Algorithm { get; init; }
 
     [Code]
     public partial ICrypto Crypto { get; }
 
-    public async Task<Data.@this> Run() => Crypto.Hash(this);
+    public async Task<data.@this> Run() => Crypto.Hash(this);
 }

@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Type = app.Data.Type;
+using Type = app.data.type;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// Serializes <see cref="Type"/> as a plain JSON string (e.g. "string", "int").

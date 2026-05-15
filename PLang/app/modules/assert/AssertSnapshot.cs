@@ -10,7 +10,7 @@ namespace app.modules.assert;
 /// </summary>
 internal static class AssertSnapshot
 {
-    public static Data.@this WithVariables(Data.@this result, Actor.Context.@this context)
+    public static data.@this WithVariables(data.@this result, Actor.Context.@this context)
     {
         if (result.Success) return result;
         if (result.Error is AssertionError err && err.Variables == null)

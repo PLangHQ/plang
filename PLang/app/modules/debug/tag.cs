@@ -23,19 +23,19 @@ public partial class Tag : IContext
     /// Mutually exclusive with <see cref="Label"/> — the LLM picks the shape based on
     /// whether the user wrote <c>- tag k=v, ...</c> or <c>- tag "label"</c>.
     /// </summary>
-    public partial global::app.Data.@this<Dictionary<string, string>>? Pairs { get; init; }
+    public partial global::app.data.@this<Dictionary<string, string>>? Pairs { get; init; }
 
     /// <summary>
     /// Bare-string label form. Sets <c>Tags[Label] = "true"</c>.
     /// </summary>
-    public partial global::app.Data.@this<string>? Label { get; init; }
+    public partial global::app.data.@this<string>? Label { get; init; }
 
-    public Task<global::app.Data.@this> Run()
+    public Task<global::app.data.@this> Run()
     {
         // Tag the CALLER's Call, not our own — see class summary. Falls back to Current
         // if there's no caller (we're already at the root, e.g. a single-action scope).
         var target = Context.CallStack?.Current?.Caller ?? Context.CallStack?.Current;
-        if (target == null) return Task.FromResult(global::app.Data.@this.Ok());
+        if (target == null) return Task.FromResult(global::app.data.@this.Ok());
 
         if (Pairs?.Value is { } pairs)
         {
@@ -47,6 +47,6 @@ public partial class Tag : IContext
             target.Tag(label, "true");
         }
 
-        return Task.FromResult(global::app.Data.@this.Ok());
+        return Task.FromResult(global::app.data.@this.Ok());
     }
 }

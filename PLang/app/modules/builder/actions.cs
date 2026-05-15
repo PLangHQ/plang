@@ -11,5 +11,5 @@ public partial class GetActions : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<Data.@this> Run() => await Builder.Actions(this);
+    public async Task<data.@this> Run() => await Builder.Actions(this);
 }

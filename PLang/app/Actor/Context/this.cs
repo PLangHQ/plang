@@ -104,14 +104,14 @@ public sealed class @this : IDisposable
     /// Set by event.skipAction to override the current action's result.
     /// Cleared by EventBinding.Run after reading.
     /// </summary>
-    public Data.@this? EventOverride { get; set; }
+    public data.@this? EventOverride { get; set; }
 
     /// <summary>
     /// Test context — a Data with Properties for results, summary, etc.
     /// Set when --test flag is active. Accessible via %!test%.
     /// Properties are extensible — results, summary can be GoalCalls.
     /// </summary>
-    public Data.@this? Test { get; set; }
+    public data.@this? Test { get; set; }
 
     /// <summary>
     /// The current event context. Set by the source generator when a parameter implements IEvent.
@@ -161,24 +161,24 @@ public sealed class @this : IDisposable
         var vars = Variables;
 
         // All context variables are lazy — context has app, fetch at request time
-        vars.Set(new Data.DynamicData("!app", () => App));
-        vars.Set(new Data.DynamicData("!context", () => this));
-        vars.Set(new Data.DynamicData("!variables", () => Variables));
-        vars.Set(new Data.DynamicData("!fileSystem", () => App.FileSystem));
-        vars.Set(new Data.DynamicData("!callStack", () => CallStack));
-        vars.Set(new Data.DynamicData("!trace", () => Trace));
-        vars.Set(new Data.DynamicData("!channels", () => Actor?.Channels));
-        vars.Set(new Data.DynamicData("!serializers", () => Actor!.Channels.Serializers));
-        vars.Set(new Data.DynamicData("!goal", () => Goal));
-        vars.Set(new Data.DynamicData("!step", () => Step));
+        vars.Set(new data.DynamicData("!app", () => App));
+        vars.Set(new data.DynamicData("!context", () => this));
+        vars.Set(new data.DynamicData("!variables", () => Variables));
+        vars.Set(new data.DynamicData("!fileSystem", () => App.FileSystem));
+        vars.Set(new data.DynamicData("!callStack", () => CallStack));
+        vars.Set(new data.DynamicData("!trace", () => Trace));
+        vars.Set(new data.DynamicData("!channels", () => Actor?.Channels));
+        vars.Set(new data.DynamicData("!serializers", () => Actor!.Channels.Serializers));
+        vars.Set(new data.DynamicData("!goal", () => Goal));
+        vars.Set(new data.DynamicData("!step", () => Step));
         // %!error% reads from App.Errors.@this — an AsyncLocal scope managed by
         // error.handle.Wrap via using(app.Errors.Push(caught)) { ... }. Null outside any
         // active recovery scope; in nested handlers each scope sees its own caught error
         // (LIFO restore on dispose). AsyncLocal is parallelism-safe by construction.
-        vars.Set(new Data.DynamicData("!error", () => App.Errors.Error));
-        vars.Set(new Data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
-        vars.Set(new Data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
-        vars.Set(new Data.DynamicData("!test", () => Test));
+        vars.Set(new data.DynamicData("!error", () => App.Errors.Error));
+        vars.Set(new data.DynamicData("!data", () => App.System.Context.Variables.GetValue("data")));
+        vars.Set(new data.DynamicData("!event", () => Event ?? App.System?.Context?.Event));
+        vars.Set(new data.DynamicData("!test", () => Test));
     }
 
     /// <summary>
@@ -332,16 +332,16 @@ public sealed class @this : IDisposable
 
     // --- Data wrapper cache for structural types (Goal, Step, Action) ---
     // Per-execution: same domain object → same Data wrapper within this context.
-    private readonly ConcurrentDictionary<object, Data.@this> _wrapperCache = new();
+    private readonly ConcurrentDictionary<object, data.@this> _wrapperCache = new();
 
     /// <summary>
     /// Gets or creates a cached Data&lt;T&gt; wrapper for a structural domain object.
     /// Ensures identity: same object → same wrapper within this execution context.
     /// </summary>
-    public Data.@this<T> GetOrCreate<T>(T key, Func<Data.@this<T>> factory) where T : class
+    public data.@this<T> GetOrCreate<T>(T key, Func<data.@this<T>> factory) where T : class
     {
         var data = _wrapperCache.GetOrAdd(key, _ => factory());
-        return (Data.@this<T>)data;
+        return (data.@this<T>)data;
     }
 
     private readonly ConcurrentDictionary<object, object> _eventContainers = new();

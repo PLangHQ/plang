@@ -14,7 +14,7 @@ namespace PLang
 			this.fileSystem = fileSystem;
 		}
 
-		public async Task<app.Data.@this> Run(string[] args, CancellationToken cancellationToken = default)
+		public async Task<app.data.@this> Run(string[] args, CancellationToken cancellationToken = default)
 		{
 			var (engine, configError) = Configure(args);
 			if (configError != null) return configError;
@@ -28,7 +28,7 @@ namespace PLang
 		/// Returns (engine, null) on success, (null, errorData) if --test= config is invalid.
 		/// Separated from Run() so tests can observe configuration without executing Start().
 		/// </summary>
-		internal (app.@this? Engine, app.Data.@this? Error) Configure(string[] args)
+		internal (app.@this? Engine, app.data.@this? Error) Configure(string[] args)
 		{
 			// Normalize: "build" or "--builder" both become the --builder flag.
 			// Legacy `plang build` form preserved as ergonomics; --builder is canonical.

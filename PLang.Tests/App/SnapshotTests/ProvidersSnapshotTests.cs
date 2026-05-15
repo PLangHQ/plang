@@ -5,7 +5,7 @@ namespace PLang.Tests.App.SnapshotTests;
 public class ProvidersSnapshotTests
 {
     // Public + parameterless ctor so Restore can re-instantiate it from the test DLL.
-    public sealed class CustomGrep : global::app.Data.Code.IGrep
+    public sealed class CustomGrep : global::app.data.Code.IGrep
     {
         public string Name => "custom";
         public bool IsDefault { get; set; }
@@ -23,8 +23,8 @@ public class ProvidersSnapshotTests
         var custom = new CustomGrep();
         // Stamp Source so the snapshot has a loadable origin (use this assembly's path).
         custom.Source = typeof(CustomGrep).Assembly.Location;
-        src.Code.Register(typeof(global::app.Data.Code.IGrep), custom);
-        src.Code.SetDefault(typeof(global::app.Data.Code.IGrep), "custom");
+        src.Code.Register(typeof(global::app.data.Code.IGrep), custom);
+        src.Code.SetDefault(typeof(global::app.data.Code.IGrep), "custom");
 
         var snap = src.Snapshot();
         var registrations = snap.Section("Providers")
@@ -47,14 +47,14 @@ public class ProvidersSnapshotTests
         // SetDefault would fire before Register and the restore would hard-error.
         var src = new global::app.@this("/src");
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
-        src.Code.Register(typeof(global::app.Data.Code.IGrep), custom);
-        src.Code.SetDefault(typeof(global::app.Data.Code.IGrep), "custom");
+        src.Code.Register(typeof(global::app.data.Code.IGrep), custom);
+        src.Code.SetDefault(typeof(global::app.data.Code.IGrep), "custom");
 
         var snap = src.Snapshot();
         var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        var defaultGrep = dst.Code.Get<global::app.Data.Code.IGrep>();
+        var defaultGrep = dst.Code.Get<global::app.data.Code.IGrep>();
         await Assert.That(defaultGrep.Success).IsTrue();
         await Assert.That(defaultGrep.Value!.Name).IsEqualTo("custom");
     }
@@ -67,7 +67,7 @@ public class ProvidersSnapshotTests
         var snap = new Snapshot();
         snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>
         {
-            new(typeof(global::app.Data.Code.IGrep).AssemblyQualifiedName!,
+            new(typeof(global::app.data.Code.IGrep).AssemblyQualifiedName!,
                 "ghost",
                 "/nonexistent/ghost-provider.dll")
         });
@@ -90,7 +90,7 @@ public class ProvidersSnapshotTests
         snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>());
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>
         {
-            new(typeof(global::app.Data.Code.IGrep).AssemblyQualifiedName!, "phantom")
+            new(typeof(global::app.data.Code.IGrep).AssemblyQualifiedName!, "phantom")
         });
 
         var dst = new global::app.@this("/dst");
@@ -124,7 +124,7 @@ public class ProvidersSnapshotTests
         // object graphs.
         var src = new global::app.@this("/src");
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
-        src.Code.Register(typeof(global::app.Data.Code.IGrep), custom);
+        src.Code.Register(typeof(global::app.data.Code.IGrep), custom);
 
         var snap = src.Snapshot();
         var registrations = snap.Section("Providers")

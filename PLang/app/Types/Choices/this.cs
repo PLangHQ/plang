@@ -43,7 +43,7 @@ public sealed class @this
     {
         var n = Nullable.GetUnderlyingType(type);
         if (n != null) type = n;
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Data.@this<>))
+        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(data.@this<>))
             type = type.GetGenericArguments()[0];
         return type;
     }

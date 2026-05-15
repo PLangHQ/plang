@@ -10,8 +10,8 @@ public partial class decrypt : IContext
 {
     /// <summary>The bytes to decrypt.</summary>
     [IsNotNull]
-    public partial Data.@this<byte[]> Input { get; init; }
+    public partial data.@this<byte[]> Input { get; init; }
 
-    public Task<Data.@this> Run() =>
-        Task.FromResult(global::app.Data.@this.Ok(Input.Value));
+    public Task<data.@this> Run() =>
+        Task.FromResult(global::app.data.@this.Ok(Input.Value));
 }

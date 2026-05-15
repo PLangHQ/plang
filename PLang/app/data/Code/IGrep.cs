@@ -1,6 +1,6 @@
 using app.Code;
 
-namespace app.Data.Code;
+namespace app.data.Code;
 
 /// <summary>
 /// Provider interface for grep operations on Data.

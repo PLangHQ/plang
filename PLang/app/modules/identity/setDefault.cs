@@ -11,10 +11,10 @@ namespace app.modules.identity;
 [Action("setDefault", Cacheable = false)]
 public partial class SetDefault : IContext
 {
-    public partial Data.@this<string> Name { get; init; }
+    public partial data.@this<string> Name { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<Data.@this> Run() => await Identity.SetDefaultAsync(this);
+    public async Task<data.@this> Run() => await Identity.SetDefaultAsync(this);
 }

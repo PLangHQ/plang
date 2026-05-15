@@ -12,16 +12,16 @@ namespace app.modules.identity;
 public partial class Create : IContext
 {
     [Default("default")]
-    public partial Data.@this<string> Name { get; init; }
+    public partial data.@this<string> Name { get; init; }
 
     [Default(false)]
-    public partial Data.@this<bool> SetAsDefault { get; init; }
+    public partial data.@this<bool> SetAsDefault { get; init; }
 
     /// <summary>Optional provider name override. Uses default IKey if not specified.</summary>
-    public partial Data.@this<string>? Provider { get; init; }
+    public partial data.@this<string>? Provider { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<Data.@this> Run() => await Identity.CreateAsync(this);
+    public async Task<data.@this> Run() => await Identity.CreateAsync(this);
 }

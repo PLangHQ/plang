@@ -10,7 +10,7 @@ namespace app.modules;
 /// </summary>
 public interface ICodeGenerated
 {
-    Task<Data.@this> ExecuteAsync(ActionType action, Actor.Context.@this context);
+    Task<data.@this> ExecuteAsync(ActionType action, Actor.Context.@this context);
 
     /// <summary>
     /// Per-property snapshot of pr-side and final-resolved values.

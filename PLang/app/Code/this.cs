@@ -46,32 +46,32 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Registers a named provider. First registered for a type becomes default.
     /// </summary>
-    public Data.@this Register<T>(T provider) where T : class, ICode
+    public data.@this Register<T>(T provider) where T : class, ICode
         => Register(typeof(T), provider);
 
     /// <summary>
     /// Gets a provider by name, or the default if name is null/empty.
     /// Returns typed Data&lt;T&gt; with error if not found.
     /// </summary>
-    public Data.@this<T> Get<T>(string? name = null) where T : class, ICode
+    public data.@this<T> Get<T>(string? name = null) where T : class, ICode
     {
         if (!_providers.TryGetValue(typeof(T), out var typeDict))
-            return Data.@this<T>.FromError(new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+            return data.@this<T>.FromError(new ActionError($"No {typeof(T).Name} provider registered", "ProviderNotFound", 404));
 
         if (!string.IsNullOrEmpty(name))
         {
             if (!typeDict.TryGetValue(name, out var provider))
-                return Data.@this<T>.FromError(new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
-            return Data.@this<T>.Ok((T)provider);
+                return data.@this<T>.FromError(new ActionError($"Provider '{name}' not found for {typeof(T).Name}", "ProviderNotFound", 404));
+            return data.@this<T>.Ok((T)provider);
         }
 
         foreach (var kvp in typeDict)
         {
             if (kvp.Value.IsDefault)
-                return Data.@this<T>.Ok((T)kvp.Value);
+                return data.@this<T>.Ok((T)kvp.Value);
         }
 
-        return Data.@this<T>.FromError(new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
+        return data.@this<T>.FromError(new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
     }
 
     /// <summary>
@@ -86,13 +86,13 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Removes a provider by name. Cannot remove the default.
     /// </summary>
-    public Data.@this Remove<T>(string name) where T : class, ICode
+    public data.@this Remove<T>(string name) where T : class, ICode
         => Remove(typeof(T), name);
 
     /// <summary>
     /// Sets a named provider as the default for its type.
     /// </summary>
-    public Data.@this SetDefault<T>(string name) where T : class, ICode
+    public data.@this SetDefault<T>(string name) where T : class, ICode
         => SetDefault(typeof(T), name);
 
     /// <summary>
@@ -137,64 +137,64 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Registers a provider by runtime-resolved type. First registered for a type becomes default.
     /// </summary>
-    public Data.@this Register(System.Type providerType, ICode provider)
+    public data.@this Register(System.Type providerType, ICode provider)
     {
         var typeDict = _providers.GetOrAdd(providerType, _ => new ConcurrentDictionary<string, ICode>(StringComparer.OrdinalIgnoreCase));
 
         if (!typeDict.TryAdd(provider.Name, provider))
-            return app.Data.@this.FromError(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
+            return app.data.@this.FromError(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
         if (typeDict.Count == 1)
             provider.IsDefault = true;
 
-        return app.Data.@this.Ok(provider);
+        return app.data.@this.Ok(provider);
     }
 
     /// <summary>
     /// Lists all providers for a runtime-resolved type.
     /// </summary>
-    public Data.@this List(System.Type providerType)
+    public data.@this List(System.Type providerType)
     {
         if (!_providers.TryGetValue(providerType, out var typeDict))
-            return app.Data.@this.Ok(Array.Empty<ICode>());
+            return app.data.@this.Ok(Array.Empty<ICode>());
 
-        return app.Data.@this.Ok(typeDict.Values.ToList());
+        return app.data.@this.Ok(typeDict.Values.ToList());
     }
 
     /// <summary>
     /// Removes a named provider by runtime-resolved type. Cannot remove the default.
     /// </summary>
-    public Data.@this Remove(System.Type providerType, string name)
+    public data.@this Remove(System.Type providerType, string name)
     {
         if (string.IsNullOrEmpty(name))
-            return app.Data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
+            return app.data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
 
         if (!_providers.TryGetValue(providerType, out var typeDict))
-            return app.Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return app.data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var provider))
-            return app.Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return app.data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (provider.IsDefault)
-            return app.Data.@this.FromError(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
+            return app.data.@this.FromError(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
         typeDict.TryRemove(name, out _);
-        return app.Data.@this.Ok();
+        return app.data.@this.Ok();
     }
 
     /// <summary>
     /// Sets a named provider as default by runtime-resolved type.
     /// </summary>
-    public Data.@this SetDefault(System.Type providerType, string name)
+    public data.@this SetDefault(System.Type providerType, string name)
     {
         if (string.IsNullOrEmpty(name))
-            return app.Data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
+            return app.data.@this.FromError(new ActionError("Provider name is required", "ValidationError", 400));
 
         if (!_providers.TryGetValue(providerType, out var typeDict))
-            return app.Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return app.data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         if (!typeDict.TryGetValue(name, out var newDefault))
-            return app.Data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
+            return app.data.@this.FromError(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
         // Set new default first, then clear old — avoids window where Get<T>() returns null
         newDefault.IsDefault = true;
@@ -203,7 +203,7 @@ public sealed partial class @this : IAsyncDisposable
             if (kvp.Value != newDefault)
                 kvp.Value.IsDefault = false;
         }
-        return app.Data.@this.Ok();
+        return app.data.@this.Ok();
     }
 
     /// <summary>
@@ -251,7 +251,7 @@ public sealed partial class @this : IAsyncDisposable
         RegisterBuiltIn<ITemplate>(new modules.ui.code.Fluid());
         RegisterBuiltIn<modules.llm.code.ILlm>(new modules.llm.code.OpenAi());
         RegisterBuiltIn<modules.builder.code.IBuilder>(new modules.builder.code.Default());
-        RegisterBuiltIn<global::app.Data.Code.IGrep>(new global::app.Data.Code.Default());
+        RegisterBuiltIn<global::app.data.Code.IGrep>(new global::app.data.Code.Default());
     }
 
     private void RegisterBuiltIn<T>(T provider) where T : class, ICode

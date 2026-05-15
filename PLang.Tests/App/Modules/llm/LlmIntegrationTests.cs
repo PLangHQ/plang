@@ -192,7 +192,7 @@ public class LlmIntegrationTests
                 Name = "GetWeather",
                 Parameters = new List<Data>
                 {
-                    new Data("city", null, global::app.Data.Type.String)
+                    new Data("city", null, global::app.data.type.String)
                 }
             }
         };

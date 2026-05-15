@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// Data — comparison concern.

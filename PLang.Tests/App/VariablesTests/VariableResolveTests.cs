@@ -51,7 +51,7 @@ public class VariableResolveTests
     // Slot Data carrying "%x%" must resolve through As<Variable>(ctx) to a Variable
     // whose Name is "x". This is the load-bearing contract for the migration:
     // every former [VariableName] slot will be Data<Variable> after Phase 2. The
-    // raw-name carve-out in Data.AsT_Impl bypasses %var% substitution for
+    // raw-name carve-out in data.AsT_Impl bypasses %var% substitution for
     // IRawNameResolvable Ts so this works even when "x" is uninitialized (the
     // common case for variable.set creating a new variable).
     [Test]

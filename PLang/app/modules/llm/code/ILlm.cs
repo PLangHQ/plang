@@ -10,5 +10,5 @@ namespace app.modules.llm.code;
 /// </summary>
 public interface ILlm : ICode
 {
-    Task<Data.@this> Query(query action);
+    Task<data.@this> Query(query action);
 }

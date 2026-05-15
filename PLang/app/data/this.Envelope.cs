@@ -6,7 +6,7 @@ using app;
 using app.Channels.Serializers;
 using app.Errors;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// Data — envelope/transport concern.
@@ -25,7 +25,7 @@ public partial class @this
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         PropertyNameCaseInsensitive = true,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new global::app.Data.Json() },
+        Converters = { new global::app.data.Json() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
             Modifiers = { global::app.Channels.Serializers.Filters.Sensitive.Strip }
@@ -115,7 +115,7 @@ public partial class @this
         if (kind == null)
             return this;
 
-        var envelope = new @this("", this, Type.FromName(kind));
+        var envelope = new @this("", this, type.FromName(kind));
         envelope.Context = _context;
         return envelope;
     }
@@ -140,10 +140,10 @@ public partial class @this
         var json = JsonSerializer.SerializeToUtf8Bytes(this, typeof(@this), _envelopeJsonOptions);
         var compressed = GZipCompress(json);
 
-        var inner = new @this("", compressed, Type.FromName("gzip"));
+        var inner = new @this("", compressed, type.FromName("gzip"));
         inner.Context = _context;
 
-        var envelope = new @this("", inner, Type.FromName("archived"));
+        var envelope = new @this("", inner, type.FromName("archived"));
         envelope.Context = _context;
         return envelope;
     }
@@ -254,9 +254,9 @@ public partial class @this
         {
             var name = dict.TryGetValue("name", out var n) ? n?.ToString() ?? "" : "";
             var value = dict.TryGetValue("value", out var v) ? v : null;
-            Type? type = null;
+            type? type = null;
             if (dict.TryGetValue("type", out var t) && t is string typeStr)
-                type = new Type(typeStr);
+                type = new type(typeStr);
 
             var inner = new @this(name, value, type);
             RehydrateNestedData(inner, depth + 1);

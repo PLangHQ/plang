@@ -7,13 +7,13 @@ namespace app.modules.assert;
 [Action("lessThan")]
 public partial class LessThan : IContext
 {
-    public partial Data.@this? A { get; init; }
-    public partial Data.@this? B { get; init; }
-    public partial Data.@this<string>? Message { get; init; }
+    public partial data.@this? A { get; init; }
+    public partial data.@this? B { get; init; }
+    public partial data.@this<string>? Message { get; init; }
 
     [Code]
     public partial IAssert Assert { get; }
 
-    public Task<Data.@this> Run() =>
+    public Task<data.@this> Run() =>
         Task.FromResult(AssertSnapshot.WithVariables(Assert.LessThan(this), Context));
 }

@@ -12,7 +12,7 @@ namespace PLang.Tests.Generator.Diagnostics;
 //
 // [VariableName] string was a transitional carve-out; it is deleted in v5.
 // Variable-name slots use Data<Variable> (App.Variables.Variable, with the
-// IRawNameResolvable marker that bypasses %var% substitution in Data.As<T>).
+// IRawNameResolvable marker that bypasses %var% substitution in data.As<T>).
 //
 // PLNG001 still rejects raw scalars (the original purpose of the diagnostic).
 //
@@ -45,8 +45,8 @@ public class Plng001PostMigrationTests
             public interface IContext {}
             public interface ICodeGenerated {}
         }
-        namespace app.Data {
-            public partial class @this { public class Type {} }
+        namespace app.data {
+            public partial class @this { public class type {} }
             public partial class @this<T> : @this {}
         }
         """;
@@ -59,7 +59,7 @@ public class Plng001PostMigrationTests
             namespace app.Test {
                 [app.modules.Action]
                 public partial class GoodHandler {
-                    public partial app.Data.@this<int> Count { get; init; }
+                    public partial app.data.@this<int> Count { get; init; }
                 }
             }
             """;
@@ -76,7 +76,7 @@ public class Plng001PostMigrationTests
             namespace app.Test {
                 [app.modules.Action]
                 public partial class GoodHandler {
-                    public partial app.Data.@this Value { get; init; }
+                    public partial app.data.@this Value { get; init; }
                 }
             }
             """;

@@ -7,11 +7,11 @@ namespace app.modules.math;
 public partial class Random : IContext
 {
     [Default(0)]
-    public partial Data.@this<int> Min { get; init; }
+    public partial data.@this<int> Min { get; init; }
     [Default(100)]
-    public partial Data.@this<int> Max { get; init; }
+    public partial data.@this<int> Max { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var rng = System.Random.Shared;
         var result = rng.Next(Min.Value, Max.Value + 1);

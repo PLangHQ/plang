@@ -6,5 +6,5 @@ namespace app.modules.condition;
 [Action("else")]
 public partial class Else : IContext, IStep
 {
-    public Task<Data.@this> Run() => Task.FromResult(Data(true));
+    public Task<data.@this> Run() => Task.FromResult(Data(true));
 }

@@ -6,9 +6,9 @@ namespace app.modules.list;
 [Action("flatten")]
 public partial class Flatten : IContext
 {
-    public partial Data.@this<Variable> ListName { get; init; }
+    public partial data.@this<Variable> ListName { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var existing = Context.Variables.Get(ListName.Value).Value;
         if (existing is not System.Collections.IList list)
@@ -18,7 +18,7 @@ public partial class Flatten : IContext
         var result = new List<object?>();
         FlattenRecursive(list, result);
 
-        return Task.FromResult(Data(new types.list { count = result.Count, value = result }, app.Data.Type.FromName("list")));
+        return Task.FromResult(Data(new types.list { count = result.Count, value = result }, app.data.type.FromName("list")));
     }
 
     private static void FlattenRecursive(System.Collections.IList source, List<object?> target)

@@ -4,7 +4,7 @@ namespace app.modules.callback;
 
 /// <summary>
 /// PLang's <c>- run %callback%</c> verb. Always seals the Data (lazy-signs if not already
-/// signed via <see cref="Data.@this.EnsureSigned"/>), verifies via <c>signing.verify</c>,
+/// signed via <see cref="data.@this.EnsureSigned"/>), verifies via <c>signing.verify</c>,
 /// then dispatches into the typed Callback's own <c>Run(ctx)</c>. In-process and wire paths
 /// look identical to the gate: absence-of-signature is rejected, never trusted (S-F1).
 /// </summary>
@@ -15,15 +15,15 @@ public partial class run : IContext
 {
     /// <summary>The callback envelope to run. Must wrap an ICallback value.</summary>
     [IsNotNull]
-    public partial Data.@this Callback { get; init; }
+    public partial data.@this Callback { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         if (Callback.Value is not global::app.Callback.ICallback cb)
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 "- run %x% requires an ICallback value", "TypeError", 400));
 
-        // Seal first. In-process callback values get signed locally (Data.Context provides
+        // Seal first. In-process callback values get signed locally (data.Context provides
         // the identity); wire-deserialized values that already carry a signature short-circuit
         // (EnsureSigned no-ops); wire values with no Context throw — that path is rejected
         // below with MissingCallbackSignature, never trusted (auditor v2 / security v1 S-F1).
@@ -33,20 +33,20 @@ public partial class run : IContext
         }
         catch (System.InvalidOperationException ex)
         {
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Callback cannot be sealed for verification: {ex.Message}",
                 "MissingCallbackSignature", 400));
         }
 
         if (Callback.RawSignature == null)
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 "Callback has no signature after EnsureSigned — cannot verify",
                 "MissingCallbackSignature", 400));
 
         var verifyResult = await Context.App.RunAction<global::app.modules.signing.verify>(
             new global::app.modules.signing.verify { Data = Callback }, Context);
         if (!verifyResult.Success)
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Callback signature verification failed: {verifyResult.Error?.Message ?? "unknown"}",
                 "CallbackSignatureMismatch", 400));
 
@@ -60,17 +60,17 @@ public partial class run : IContext
         }
         catch (CallbackGoalNotFound ex)
         {
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 ex.Message, "CallbackGoalNotFound", 404));
         }
         catch (CallbackGoalHashMismatch ex)
         {
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 ex.Message, "CallbackGoalHashMismatch", 409));
         }
         catch (System.InvalidOperationException ex)
         {
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Callback dispatch failed: {ex.Message}", "CallbackDispatchError", 500));
         }
     }

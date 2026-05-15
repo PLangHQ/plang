@@ -50,7 +50,7 @@ public sealed class Run
     /// Completes based on a Data result: success → Pass; failure → Fail carrying the error.
     /// Skipped/Stale/Timeout have dedicated Complete(status) calls.
     /// </summary>
-    public void Complete(Data.@this result)
+    public void Complete(data.@this result)
     {
         if (result.Success) Complete(Status.Pass);
         else Complete(Status.Fail, result.Error);

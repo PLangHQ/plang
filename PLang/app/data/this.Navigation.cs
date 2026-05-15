@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using app.Errors;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// Data — navigation concern.
@@ -168,15 +168,15 @@ public partial class @this
         return provider.GrepCount(this, ParseStringArg(args) ?? "");
     }
 
-    private app.Data.Code.IGrep ResolveGrepProvider()
+    private app.data.Code.IGrep ResolveGrepProvider()
     {
         var app = _context?.App;
         if (app != null)
         {
-            var result = app.Code.Get<app.Data.Code.IGrep>();
-            if (result?.Value is app.Data.Code.IGrep provider) return provider;
+            var result = app.Code.Get<app.data.Code.IGrep>();
+            if (result?.Value is app.data.Code.IGrep provider) return provider;
         }
-        return new app.Data.Code.Default();
+        return new app.data.Code.Default();
     }
 
     private static (string? pattern, int contextLines) ParseGrepArgs(string args)

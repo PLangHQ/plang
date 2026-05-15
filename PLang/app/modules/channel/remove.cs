@@ -13,24 +13,24 @@ namespace app.modules.channel;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    public partial Data.@this<string> Name { get; init; }
-    public partial Data.@this<global::app.Actor.@this>? Actor { get; init; }
+    public partial data.@this<string> Name { get; init; }
+    public partial data.@this<global::app.Actor.@this>? Actor { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var name = Name.Value;
         if (string.IsNullOrEmpty(name))
-            return global::app.Data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
+            return global::app.data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 
         if (global::app.Channels.@this.Defaults.Any(d => string.Equals(d, name, StringComparison.OrdinalIgnoreCase)))
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
                 "ChannelInvariantViolation", 400));
 
         var actor = Actor?.Value ?? Context.Actor;
         var removed = await actor.Channels.RemoveAsync(name);
         if (!removed)
-            return global::app.Data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
-        return global::app.Data.@this.Ok();
+            return global::app.data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404));
+        return global::app.data.@this.Ok();
     }
 }

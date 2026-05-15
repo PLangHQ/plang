@@ -192,7 +192,7 @@ public sealed partial class @this
         var underlying = System.Nullable.GetUnderlyingType(t);
         if (underlying != null) t = underlying;
 
-        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Data.@this<>))
+        if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(data.@this<>))
             t = t.GetGenericArguments()[0];
 
         return t;

@@ -23,10 +23,10 @@ namespace app.modules.test;
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {
-    public partial Data.@this<app.Tester.Results>? Results { get; init; }
-    public partial Data.@this<string>? Format { get; init; }
+    public partial data.@this<app.Tester.Results>? Results { get; init; }
+    public partial data.@this<string>? Format { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var results = Results?.Value ?? Context.App!.Tester.Results;
         var testing = Context.App!.Tester;
@@ -72,7 +72,7 @@ public partial class report : IContext
                 variableSnapshotCount++;
         }
 
-        var result = app.Data.@this.Ok(results);
+        var result = app.data.@this.Ok(results);
         result.Properties.Set("format", format);
         result.Properties.Set("reportPath", reportFile);
         result.Properties.Set("content", content);

@@ -54,7 +54,7 @@ public class PlangAssignabilityTests
     [Test]
     public async Task AsT_StringToIEnumerable_WrapsAsSingleElementList()
     {
-        var source = new global::app.Data.@this<string>("text", "hello") { Context = _app.User.Context };
+        var source = new global::app.data.@this<string>("text", "hello") { Context = _app.User.Context };
         var wrapped = source.As<IEnumerable>();
         var items = new List<object?>();
         foreach (var item in wrapped.Value!) items.Add(item);
@@ -67,7 +67,7 @@ public class PlangAssignabilityTests
     [Test]
     public async Task AsT_IntToIEnumerable_WrapsAsSingleElementList()
     {
-        var source = new global::app.Data.@this<int>("n", 42) { Context = _app.User.Context };
+        var source = new global::app.data.@this<int>("n", 42) { Context = _app.User.Context };
         var wrapped = source.As<IEnumerable>();
         var items = new List<object?>();
         foreach (var item in wrapped.Value!) items.Add(item);

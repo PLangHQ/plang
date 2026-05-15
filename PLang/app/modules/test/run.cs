@@ -30,12 +30,12 @@ public partial class run : IContext
     internal static event Action<app.@this>? ChildAppCreated;
 
     [IsNotNull]
-    public partial Data.@this<List<global::app.Tester.File>> Tests { get; init; }
+    public partial data.@this<List<global::app.Tester.File>> Tests { get; init; }
 
-    public partial Data.@this<int>? Parallel { get; init; }
-    public partial Data.@this<int>? Timeout { get; init; }
+    public partial data.@this<int>? Parallel { get; init; }
+    public partial data.@this<int>? Timeout { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var tests = Tests.Value ?? new List<global::app.Tester.File>();
         var parentApp = Context.App!;
@@ -44,7 +44,7 @@ public partial class run : IContext
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         if (tests.Count == 0)
-            return app.Data.@this.Ok(parentApp.Tester.Results);
+            return app.data.@this.Ok(parentApp.Tester.Results);
 
         if (parallel < 1) parallel = 1;
 
@@ -57,7 +57,7 @@ public partial class run : IContext
         });
 
         await Task.WhenAll(tasks);
-        return app.Data.@this.Ok(parentApp.Tester.Results);
+        return app.data.@this.Ok(parentApp.Tester.Results);
     }
 
     private async Task RunSingleAsync(global::app.Tester.File test, TimeSpan timeout, app.@this parentApp)
@@ -113,7 +113,7 @@ public partial class run : IContext
                         }
                     }
                 }
-                return Task.FromResult(app.Data.@this.Ok());
+                return Task.FromResult(app.data.@this.Ok());
             },
             priority: int.MaxValue,
             stopOnError: false);

@@ -6,12 +6,12 @@ namespace app.modules.list;
 [Action("range")]
 public partial class Range : IContext
 {
-    public partial Data.@this<int> Start { get; init; }
-    public partial Data.@this<int> End { get; init; }
+    public partial data.@this<int> Start { get; init; }
+    public partial data.@this<int> End { get; init; }
     [Default(1)]
-    public partial Data.@this<int> Step { get; init; }
+    public partial data.@this<int> Step { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         if (Step.Value == 0)
             return Task.FromResult(Error(
@@ -29,6 +29,6 @@ public partial class Range : IContext
                 list.Add(i);
         }
 
-        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.Data.Type.FromName("list")));
+        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
     }
 }

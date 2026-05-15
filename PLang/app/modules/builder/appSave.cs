@@ -10,5 +10,5 @@ public partial class appSave : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<Data.@this> Run() => await Builder.AppSave(this);
+    public async Task<data.@this> Run() => await Builder.AppSave(this);
 }

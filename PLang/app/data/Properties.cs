@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// A collection of Data properties.
@@ -65,7 +65,7 @@ public class Properties : IList<@this>
     /// <summary>
     /// Sets a property value by name.
     /// </summary>
-    public void Set(string name, object? value, Type? type = null)
+    public void Set(string name, object? value, type? type = null)
     {
         var existing = this[name];
         if (existing != null)

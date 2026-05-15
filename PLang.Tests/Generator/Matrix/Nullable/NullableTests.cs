@@ -20,7 +20,7 @@ public class StringNullableTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringNullable>(app,
             parameters: new[] { ("tag", (object?)"hello") });
-        var typed = result.Data as global::app.Data.@this<string>;
+        var typed = result.Data as global::app.data.@this<string>;
         await Assert.That(typed!.Value).IsEqualTo("hello");
     }
 
@@ -50,7 +50,7 @@ public class IntNullableTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<IntNullable>(app,
             parameters: new[] { ("maybe", (object?)42) });
-        var typed = result.Data as global::app.Data.@this<int>;
+        var typed = result.Data as global::app.data.@this<int>;
         await Assert.That(typed!.Value).IsEqualTo(42);
     }
 }

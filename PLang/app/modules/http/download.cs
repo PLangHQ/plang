@@ -17,28 +17,28 @@ namespace app.modules.http;
 public partial class download : IContext
 {
     /// <summary>URL to download from. Relative URLs resolve against Config.BaseUrl.</summary>
-    public partial Data.@this<string> Url { get; init; }
+    public partial data.@this<string> Url { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
-    public partial Data.@this<Dictionary<string, object>>? Headers { get; init; }
+    public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
 
     /// <summary>Download timeout in seconds. Default: 30.</summary>
     [Default(30)]
-    public partial Data.@this<int> TimeoutInSec { get; init; }
+    public partial data.@this<int> TimeoutInSec { get; init; }
 
     /// <summary>When true, skips request signing. Default: false.</summary>
     [Default(false)]
-    public partial Data.@this<bool> Unsigned { get; init; }
+    public partial data.@this<bool> Unsigned { get; init; }
 
     /// <summary>Custom signing options for the download request.</summary>
-    public partial Data.@this<sign>? SignOptions { get; init; }
+    public partial data.@this<sign>? SignOptions { get; init; }
 
     /// <summary>Goal to call with TransferProgress updates during download.</summary>
     [GoalCallback("progress")]
-    public partial Data.@this<GoalCall>? OnProgress { get; init; }
+    public partial data.@this<GoalCall>? OnProgress { get; init; }
 
     [Code]
     public partial IHttp Http { get; }
 
-    public async Task<Data.@this> Run() => await Http.DownloadAsync(this);
+    public async Task<data.@this> Run() => await Http.DownloadAsync(this);
 }

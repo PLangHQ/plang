@@ -13,20 +13,20 @@ public partial class sign : IContext
 {
     /// <summary>The data to sign.</summary>
     [IsInitiated]
-    public partial Data.@this? Data { get; init; }
+    public partial data.@this? Data { get; init; }
 
     /// <summary>Contracts for this signature. Default: ["C0"].</summary>
-    public partial Data.@this<List<string>>? Contracts { get; init; }
+    public partial data.@this<List<string>>? Contracts { get; init; }
 
     /// <summary>Optional headers to include in the signature envelope.</summary>
-    public partial Data.@this<Dictionary<string, object>>? Headers { get; init; }
+    public partial data.@this<Dictionary<string, object>>? Headers { get; init; }
 
     /// <summary>Optional TTL. If set, signature.Expires = Created + this duration.
     /// Wire form is ISO 8601 (e.g. <c>"PT5M"</c>) via the global TimeSpan converter.</summary>
-    public partial Data.@this<TimeSpan>? Expires { get; init; }
+    public partial data.@this<TimeSpan>? Expires { get; init; }
 
     [Code]
     public partial ISigning Signer { get; }
 
-    public async Task<Data.@this> Run() => await Signer.SignAsync(this);
+    public async Task<data.@this> Run() => await Signer.SignAsync(this);
 }

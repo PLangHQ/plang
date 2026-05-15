@@ -6,11 +6,11 @@ namespace app.modules.list;
 [Action("group")]
 public partial class Group : IContext
 {
-    public partial Data.@this<Variable> ListName { get; init; }
+    public partial data.@this<Variable> ListName { get; init; }
     [IsNotNull]
-    public partial Data.@this<string> Key { get; init; }
+    public partial data.@this<string> Key { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var key = Key.Value!;
@@ -34,6 +34,6 @@ public partial class Group : IContext
             ["steps"] = g.Value
         }).ToList();
 
-        return Task.FromResult(Data(result, app.Data.Type.FromName("list")));
+        return Task.FromResult(Data(result, app.data.type.FromName("list")));
     }
 }

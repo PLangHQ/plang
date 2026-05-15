@@ -10,16 +10,16 @@ namespace app.modules.crypto;
 public partial class Verify : IContext
 {
     [IsNotNull]
-    public partial Data.@this Data { get; init; }
+    public partial data.@this Data { get; init; }
 
     [IsNotNull]
-    public partial Data.@this<string> Hash { get; init; }
+    public partial data.@this<string> Hash { get; init; }
 
     [Default("keccak256")]
-    public partial Data.@this<string> Algorithm { get; init; }
+    public partial data.@this<string> Algorithm { get; init; }
 
     [Code]
     public partial ICrypto Crypto { get; }
 
-    public async Task<Data.@this> Run() => Crypto.Verify(this);
+    public async Task<data.@this> Run() => Crypto.Verify(this);
 }

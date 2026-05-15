@@ -12,10 +12,10 @@ namespace app.modules.identity;
 [Action("unarchive", Cacheable = false)]
 public partial class Unarchive : IContext
 {
-    public partial Data.@this<string> Name { get; init; }
+    public partial data.@this<string> Name { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<Data.@this> Run() => await Identity.UnarchiveAsync(this);
+    public async Task<data.@this> Run() => await Identity.UnarchiveAsync(this);
 }

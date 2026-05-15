@@ -40,8 +40,8 @@ public class PathTests : IDisposable
     private PLangPath MakePath(string path) => new PLangPath(path) { Context = _app.User.Context };
 
     /// <summary>Wraps a Path in Data&lt;Path&gt; for action parameters.</summary>
-    private global::app.Data.@this<PLangPath> WrapPath(PLangPath p) => new("", p);
-    private global::app.Data.@this<PLangPath> WrapPath(string path) => WrapPath(MakePath(path));
+    private global::app.data.@this<PLangPath> WrapPath(PLangPath p) => new("", p);
+    private global::app.data.@this<PLangPath> WrapPath(string path) => WrapPath(MakePath(path));
 
     /// <summary>Resolves a relative path through the engine context.</summary>
     private PLangPath ResolvePath(string rawPath) => PLangPath.Resolve(rawPath, _app.User.Context);
@@ -474,7 +474,7 @@ public class PathTests : IDisposable
     {
         var filePath = TempFile("asfile.txt");
         var p = MakePath(filePath);
-        var result = _provider.Exists(new Exists { Context = _app.User.Context, Path = new global::app.Data.@this<PLangPath>("", p) });
+        var result = _provider.Exists(new Exists { Context = _app.User.Context, Path = new global::app.data.@this<PLangPath>("", p) });
 
         await Assert.That(result.Success).IsTrue();
         var f = result.Value as PLangPath;

@@ -8,10 +8,10 @@ namespace app.modules.builder;
 [Action("validate")]
 public partial class validate : IContext
 {
-    public partial Data.@this<Actions>? Actions { get; init; }
+    public partial data.@this<Actions>? Actions { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }
 
-    public async Task<Data.@this> Run() => await Builder.Validate(this);
+    public async Task<data.@this> Run() => await Builder.Validate(this);
 }

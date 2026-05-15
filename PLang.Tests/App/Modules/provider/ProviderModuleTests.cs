@@ -377,7 +377,7 @@ public class ProviderModuleTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public global::app.Data.@this<KeyPair> GenerateKeyPair() => global::app.Data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
+        public global::app.data.@this<KeyPair> GenerateKeyPair() => global::app.data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
         public Data Sign(byte[] data, string privateKey) => Data.Ok(new byte[64]);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.Ok());

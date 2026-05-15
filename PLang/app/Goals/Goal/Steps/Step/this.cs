@@ -135,7 +135,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// Runs this step: lifecycle events → actions.
     /// Error handling, caching, and timeouts are per-action modifiers, not step-level.
     /// </summary>
-    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
+    public async Task<data.@this> RunAsync(Actor.Context.@this context)
     {
         context.Step = this;
         var lifecycle = context.LifecycleFor(this);
@@ -144,7 +144,7 @@ public sealed partial class @this : modules.IDataWrappable
         if (!beforeResult.Success) return beforeResult;
         if (beforeResult.Handled) return beforeResult;
 
-        Data.@this result = Data.@this.Ok();
+        data.@this result = data.@this.Ok();
         try
         {
             foreach (var action in Actions)
@@ -166,7 +166,7 @@ public sealed partial class @this : modules.IDataWrappable
                 : (typeName.EndsWith("Exception", StringComparison.Ordinal)
                     ? typeName[..^"Exception".Length]
                     : typeName);
-            result = Data.@this.FromError(new Errors.ServiceError(
+            result = data.@this.FromError(new Errors.ServiceError(
                 ex.Message, key, 400) { Exception = ex });
         }
 
@@ -180,11 +180,11 @@ public sealed partial class @this : modules.IDataWrappable
     /// OBP: Step is responsible for its own Data representation.
     /// Returns a cached per-execution Data&lt;Step&gt; wrapper from the context.
     /// </summary>
-    public Data.@this AsData(Actor.Context.@this context)
+    public data.@this AsData(Actor.Context.@this context)
     {
         return context.GetOrCreate(this, () =>
         {
-            var data = new Data.@this<@this>("", this);
+            var data = new data.@this<@this>("", this);
             data.Context = context;
             return data;
         });
@@ -203,16 +203,16 @@ public sealed partial class @this : modules.IDataWrappable
             {
                 Module = a.Module,
                 ActionName = a.ActionName,
-                Parameters = new List<Data.@this>(a.Parameters),
-                Defaults = a.Defaults != null ? new List<Data.@this>(a.Defaults) : null,
+                Parameters = new List<data.@this>(a.Parameters),
+                Defaults = a.Defaults != null ? new List<data.@this>(a.Defaults) : null,
                 Errors = new List<Info>(a.Errors),
                 Warnings = new List<Info>(a.Warnings),
                 Modifiers = new ActionModifiers(a.Modifiers.Select(m => new Action
                 {
                     Module = m.Module,
                     ActionName = m.ActionName,
-                    Parameters = new List<Data.@this>(m.Parameters),
-                    Defaults = m.Defaults != null ? new List<Data.@this>(m.Defaults) : null,
+                    Parameters = new List<data.@this>(m.Parameters),
+                    Defaults = m.Defaults != null ? new List<data.@this>(m.Defaults) : null,
                     Errors = new List<Info>(m.Errors),
                     Warnings = new List<Info>(m.Warnings)
                 }))

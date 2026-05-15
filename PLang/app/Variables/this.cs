@@ -19,8 +19,8 @@ public partial class @this
         PropertyNameCaseInsensitive = true,
     };
 
-    private readonly ConcurrentDictionary<string, Data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
-    private readonly Dictionary<string, Func<string, Data.@this>> _navigables
+    private readonly ConcurrentDictionary<string, data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, Func<string, data.@this>> _navigables
         = new(StringComparer.OrdinalIgnoreCase);
     private Actor.Context.@this? _context;
 
@@ -33,7 +33,7 @@ public partial class @this
     /// <c>app.Settings.Get(path, this.Context)</c>. Generalises to any future
     /// non-Data navigable mount.
     /// </summary>
-    public void RegisterNavigable(string name, Func<string, Data.@this> resolver)
+    public void RegisterNavigable(string name, Func<string, data.@this> resolver)
         => _navigables[name] = resolver;
 
     /// <summary>
@@ -86,21 +86,21 @@ public partial class @this
     public @this()
     {
         // Register system variables
-        Set("Now", new Data.DynamicData("Now", () => DateTimeOffset.Now, Data.Type.DateTime));
-        Set("NowUtc", new Data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, Data.Type.DateTime));
-        Set("GUID", new Data.DynamicData("GUID", () => Guid.NewGuid(), Data.Type.FromName("guid")));
+        Set("Now", new data.DynamicData("Now", () => DateTimeOffset.Now, data.type.DateTime));
+        Set("NowUtc", new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, data.type.DateTime));
+        Set("GUID", new data.DynamicData("GUID", () => Guid.NewGuid(), data.type.FromName("guid")));
     }
 
     /// <summary>
     /// Stores a Data under its own Data.Name.
     /// Convenience wrapper — the name comes from value.Name.
     /// </summary>
-    public Data.@this Set(Data.@this value) => Set(value.Name, value);
+    public data.@this Set(data.@this value) => Set(value.Name, value);
 
     /// <summary>
     /// Stores a value under the given name and returns the stored Data.
     /// Semantics by `value` type:
-    ///  - `Data.@this` → aliased under `name` as-is (no clone, no rename). The dictionary
+    ///  - `data.@this` → aliased under `name` as-is (no clone, no rename). The dictionary
     ///    key is the source of truth for lookups; `Data.Name` stays advisory — whatever the
     ///    producing handler set it to. Same object is reachable under both keys.
     ///  - non-Data → wrapped in a new `Data` named `name`. Existing entry, if any, is updated
@@ -108,7 +108,7 @@ public partial class @this
     /// For dot/bracket paths (e.g. "user.name"), the root Data is returned.
     /// Returns NotFound when the dot-path parent is absent or null.
     /// </summary>
-    public Data.@this Set(string name, object? value, Data.Type? type = null)
+    public data.@this Set(string name, object? value, data.type? type = null)
     {
         name = CleanName(name);
 
@@ -134,7 +134,7 @@ public partial class @this
             // Data may be aliased under multiple keys (e.g. Action stores the step result
             // both under its own name AND under "__data__"), so mutating prev would bleed
             // across keys.
-            if (value is Data.@this dv)
+            if (value is data.@this dv)
             {
                 dv.Context = _context;
 
@@ -206,7 +206,7 @@ public partial class @this
                 // Either nothing visible, or only visible via Caller chain — mint a
                 // fresh local entry that shadows. Mutating an inherited Data would
                 // bleed the write up to the caller's scope.
-                var data = new Data.@this(name, value, type);
+                var data = new data.@this(name, value, type);
                 data.Context = _context;
                 if (frame.TryGet(name, out var inherited))
                 {
@@ -232,7 +232,7 @@ public partial class @this
             }
             else
             {
-                var data = new Data.@this(name, value, type);
+                var data = new data.@this(name, value, type);
                 data.Context = _context;
                 data.FireOnCreate();
                 _variables[name] = data;
@@ -246,7 +246,7 @@ public partial class @this
         {
             // Root doesn't exist — create it as a dictionary so dot-path properties work
             var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-            root = new Data.@this(rootName, dict);
+            root = new data.@this(rootName, dict);
             root.Context = _context;
             _variables[rootName] = root;
         }
@@ -257,7 +257,7 @@ public partial class @this
 
         // Split remaining into parent path + final property name
         var lastDot = remaining.LastIndexOf('.');
-        Data.@this parent;
+        data.@this parent;
         string propertyName;
 
         if (lastDot >= 0)
@@ -272,7 +272,7 @@ public partial class @this
         }
 
         if (!parent.IsInitialized && parent.Value == null)
-            return Data.@this.NotFound(name);
+            return data.@this.NotFound(name);
 
         // Lazy convert if parent is a typed string (e.g., json) — must happen before navigation
         parent.ConvertValue();
@@ -284,12 +284,12 @@ public partial class @this
         // aliased %currentPass%._value and got overwritten by every sub-goal build).
         // JSON roundtrip honors [JsonIgnore] so cyclic runtime types (Goal↔Step↔Action)
         // don't deadlock the deep-clone pass.
-        var rawValue = value is Data.@this dv2 ? dv2.Value : value;
+        var rawValue = value is data.@this dv2 ? dv2.Value : value;
         if (rawValue is System.Collections.IDictionary || (rawValue is System.Collections.IList && rawValue is not string))
         {
             try
             {
-                rawValue = Data.@this.SnapshotClone(rawValue!);
+                rawValue = data.@this.SnapshotClone(rawValue!);
             }
             catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
             {
@@ -300,7 +300,7 @@ public partial class @this
             }
         }
         var target = parent.Value;
-        if (target == null) return Data.@this.NotFound(name);
+        if (target == null) return data.@this.NotFound(name);
         var result = SetValueOnObject(target, propertyName, rawValue);
         if (!ReferenceEquals(result, target))
             parent.Value = result;
@@ -485,10 +485,10 @@ public partial class @this
     /// <summary>
     /// Gets a variable by name (supports dot notation path).
     /// </summary>
-    public Data.@this Get(string name)
+    public data.@this Get(string name)
     {
         if (string.IsNullOrEmpty(name))
-            return Data.@this.NotFound(name ?? "");
+            return data.@this.NotFound(name ?? "");
 
         name = CleanName(name);
 
@@ -513,7 +513,7 @@ public partial class @this
         }
 
         // Per-call parameter scope wins over actor-shared variables — see Calls.@this.
-        Data.@this? root;
+        data.@this? root;
         if (Calls.Current is { } frame && frame.TryGet(rootName, out var framed))
         {
             root = framed;
@@ -522,7 +522,7 @@ public partial class @this
         {
             if (_navigables.TryGetValue(rootName, out var resolver))
                 return resolver(remaining ?? "");
-            return Data.@this.NotFound(name);
+            return data.@this.NotFound(name);
         }
 
         if (string.IsNullOrEmpty(remaining))
@@ -625,7 +625,7 @@ public partial class @this
     /// <summary>
     /// Gets all variables ordered by last update.
     /// </summary>
-    public IEnumerable<KeyValuePair<string, Data.@this>> GetAll()
+    public IEnumerable<KeyValuePair<string, data.@this>> GetAll()
     {
         return _variables
             .Where(kvp => !kvp.Key.StartsWith("!"))
@@ -638,7 +638,7 @@ public partial class @this
     public void Clear()
     {
         var toRemove = _variables
-            .Where(kvp => !kvp.Key.StartsWith("!") && kvp.Value is not Data.DynamicData)
+            .Where(kvp => !kvp.Key.StartsWith("!") && kvp.Value is not data.DynamicData)
             .Select(kvp => kvp.Key)
             .ToList();
 
@@ -658,7 +658,7 @@ public partial class @this
         foreach (var kvp in _variables)
         {
             // Data.DynamicData (Now, GUID, etc.) — already in clone from constructor
-            if (kvp.Value is Data.DynamicData) continue;
+            if (kvp.Value is data.DynamicData) continue;
 
             // System context vars (! prefix) — skip, they're per-execution
             if (kvp.Key.StartsWith("!")) continue;
@@ -721,7 +721,7 @@ public partial class @this
         foreach (var kvp in _variables)
         {
             if (kvp.Key.StartsWith("!")) continue;
-            if (kvp.Value is Data.DynamicData) continue;
+            if (kvp.Value is data.DynamicData) continue;
             dict[kvp.Key] = kvp.Value.Value;
         }
         return dict;

@@ -15,8 +15,8 @@ public class CallbackRunActionTests
     {
         public global::app.CallStack.Call.Position? Position => null;
         public byte[] Serialize(global::app.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<global::app.Data.@this> Run(global::app.Actor.Context.@this ctx)
-            => Task.FromResult(global::app.Data.@this.Ok("ran"));
+        public Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx)
+            => Task.FromResult(global::app.data.@this.Ok("ran"));
     }
 
     [Test]

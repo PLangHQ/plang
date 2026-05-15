@@ -6,9 +6,9 @@ namespace app.modules.variable;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    public partial Data.@this<Variable> Name { get; init; }
+    public partial data.@this<Variable> Name { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         Context.Variables.Remove(Name.Value);
         return Task.FromResult(Data());

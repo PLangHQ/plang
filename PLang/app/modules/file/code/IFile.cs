@@ -6,11 +6,11 @@ namespace app.modules.file.code;
 
 public interface IFile : ICode
 {
-    Data.@this Read(Read action);
-    Task<Data.@this> Save(Save action);
-    Data.@this Delete(Delete action);
-    Data.@this Copy(Copy action);
-    Data.@this Move(Move action);
-    Data.@this List(List action);
-    Data.@this Exists(Exists action);
+    data.@this Read(Read action);
+    Task<data.@this> Save(Save action);
+    data.@this Delete(Delete action);
+    data.@this Copy(Copy action);
+    data.@this Move(Move action);
+    data.@this List(List action);
+    data.@this Exists(Exists action);
 }

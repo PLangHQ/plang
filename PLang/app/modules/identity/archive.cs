@@ -14,14 +14,14 @@ namespace app.modules.identity;
 [Action("archive", Cacheable = false)]
 public partial class Archive : IContext
 {
-    public partial Data.@this<string> Name { get; init; }
+    public partial data.@this<string> Name { get; init; }
 
     /// <summary>When true, allows archiving even if it's the default identity.</summary>
     [Default(false)]
-    public partial Data.@this<bool> Force { get; init; }
+    public partial data.@this<bool> Force { get; init; }
 
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<Data.@this> Run() => await Identity.ArchiveAsync(this);
+    public async Task<data.@this> Run() => await Identity.ArchiveAsync(this);
 }

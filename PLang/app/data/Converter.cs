@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// Standard TypeConverter for <see cref="Type"/>.
@@ -16,7 +16,7 @@ public sealed class Converter : TypeConverter
     public override object? ConvertFrom(ITypeDescriptorContext? context, CultureInfo? culture, object value)
     {
         if (value is string s)
-            return new Type(s);
+            return new type(s);
 
         return base.ConvertFrom(context, culture, value);
     }
@@ -26,7 +26,7 @@ public sealed class Converter : TypeConverter
 
     public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, System.Type destinationType)
     {
-        if (destinationType == typeof(string) && value is Type t)
+        if (destinationType == typeof(string) && value is type t)
             return t.Value;
 
         return base.ConvertTo(context, culture, value, destinationType);

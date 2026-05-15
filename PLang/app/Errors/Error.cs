@@ -43,7 +43,7 @@ public class Error : IError
     [System.Text.Json.Serialization.JsonIgnore]
     internal global::app.@this? App { get; set; }
 
-    private global::app.Data.@this<global::app.Callback.ErrorCallback>? _callback;
+    private global::app.data.@this<global::app.Callback.ErrorCallback>? _callback;
 
     /// <summary>
     /// PLang surface <c>%!error.callback%</c> resolves through here. First read invokes
@@ -52,7 +52,7 @@ public class Error : IError
     /// per Error instance — reading twice returns the same Data reference.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.Data.@this<global::app.Callback.ErrorCallback> Callback
+    public global::app.data.@this<global::app.Callback.ErrorCallback> Callback
     {
         get
         {
@@ -62,7 +62,7 @@ public class Error : IError
                     "Error.Callback requires App reference; ensure the error went through Errors.Push.");
             var snap = App.Snapshot();
             var cb = new global::app.Callback.ErrorCallback { AppSnapshot = snap };
-            _callback = global::app.Data.@this<global::app.Callback.ErrorCallback>.Ok(cb);
+            _callback = global::app.data.@this<global::app.Callback.ErrorCallback>.Ok(cb);
             _callback.Context = App.User.Context;
             return _callback;
         }

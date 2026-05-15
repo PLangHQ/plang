@@ -27,7 +27,7 @@ public sealed class @this
     /// payload-carrying events (AfterAction); null for all other event types. Subscribers
     /// that don't use the payload should take the arguments as (_, _, _) — architect §4.4.
     /// </summary>
-    public Func<Actor.Context.@this, Action?, Data.@this?, Task<Data.@this>> Handler { get; }
+    public Func<Actor.Context.@this, Action?, data.@this?, Task<data.@this>> Handler { get; }
     public Goals.Goal.GoalCall? GoalToCall { get; }
     public int Priority { get; }
     public bool StopOnError { get; }
@@ -39,12 +39,12 @@ public sealed class @this
     /// Runs this binding's handler, skipping if already executing (re-entry guard).
     /// Payload-carrying events pass the action that just ran and its result; other events pass null.
     /// </summary>
-    public async Task<Data.@this> Run(Actor.Context.@this context, Action? action = null, Data.@this? result = null)
+    public async Task<data.@this> Run(Actor.Context.@this context, Action? action = null, data.@this? result = null)
     {
         if (!context.TryEnterEvent(Id))
-            return Data.@this.Ok();
+            return data.@this.Ok();
 
-        Data.@this handlerResult;
+        data.@this handlerResult;
         try
         {
             handlerResult = await Handler(context, action, result);
@@ -69,14 +69,14 @@ public sealed class @this
         }
 
         if (!handlerResult.Success && !StopOnError)
-            return Data.@this.Ok();
+            return data.@this.Ok();
 
         return handlerResult;
     }
 
     public @this(
         EventType type,
-        Func<Actor.Context.@this, Action?, Data.@this?, Task<Data.@this>> handler,
+        Func<Actor.Context.@this, Action?, data.@this?, Task<data.@this>> handler,
         string? goalNamePattern = null,
         string? stepPattern = null,
         string? actionPattern = null,

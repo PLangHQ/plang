@@ -72,7 +72,7 @@ public interface IBuildValidatable
     /// Validates LLM-generated parameters. Returns null if valid,
     /// or an error message describing what's wrong so the LLM can fix it.
     /// </summary>
-    static abstract string? ValidateBuild(List<Data.@this> parameters);
+    static abstract string? ValidateBuild(List<data.@this> parameters);
 }
 
 /// <summary>

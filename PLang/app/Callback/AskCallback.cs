@@ -18,7 +18,7 @@ public sealed class AskCallback : ICallback
     public string ActorName { get; init; } = "User";
 
     /// <summary>The variables the developer annotated as surviving the ask.</summary>
-    public List<global::app.Data.@this> Variables { get; init; } = new();
+    public List<global::app.data.@this> Variables { get; init; } = new();
 
     public byte[] Serialize(global::app.Actor.Context.@this ctx)
     {
@@ -33,7 +33,7 @@ public sealed class AskCallback : ICallback
         // crypto.encrypt v1 is identity; the call goes through the action handler so the
         // wiring is real (when the real impl lands, only the action body changes).
         var encrypted = ctx.App.RunAction<app.modules.crypto.encrypt>(
-            new app.modules.crypto.encrypt { Input = global::app.Data.@this<byte[]>.Ok(bytes) }, ctx)
+            new app.modules.crypto.encrypt { Input = global::app.data.@this<byte[]>.Ok(bytes) }, ctx)
             .GetAwaiter().GetResult();
         return (byte[])(encrypted.Value ?? bytes);
     }
@@ -51,7 +51,7 @@ public sealed class AskCallback : ICallback
             throw new InvalidOperationException(
                 $"AskCallback: wire payload exceeds size cap ({bytes.Length} > {MaxWireBytes} bytes)");
         var decrypted = ctx.App.RunAction<app.modules.crypto.decrypt>(
-            new app.modules.crypto.decrypt { Input = global::app.Data.@this<byte[]>.Ok(bytes) }, ctx)
+            new app.modules.crypto.decrypt { Input = global::app.data.@this<byte[]>.Ok(bytes) }, ctx)
             .GetAwaiter().GetResult();
         var plain = (byte[])(decrypted.Value ?? bytes);
         if (plain.Length > MaxWireBytes)
@@ -75,10 +75,10 @@ public sealed class AskCallback : ICallback
     /// </summary>
     public object? Answer { get; init; }
 
-    public async Task<global::app.Data.@this> Run(global::app.Actor.Context.@this ctx)
+    public async Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx)
     {
         if (Position == null)
-            return global::app.Data.@this.FromError(
+            return global::app.data.@this.FromError(
                 new global::app.Errors.ServiceError("AskCallback has no Position", "NoPosition", 400));
 
         // Bind surviving variables onto the resumed context's Variables.
@@ -146,15 +146,15 @@ public sealed class AskCallback : ICallback
         public string Name { get; set; } = "";
         public object? Value { get; set; }
 
-        public static VariableWire From(global::app.Data.@this d) => new()
+        public static VariableWire From(global::app.data.@this d) => new()
         {
             Name = d.Name,
             Value = d.Value
         };
 
-        public global::app.Data.@this ToData(global::app.Actor.Context.@this ctx)
+        public global::app.data.@this ToData(global::app.Actor.Context.@this ctx)
         {
-            var d = new global::app.Data.@this(Name, Value);
+            var d = new global::app.data.@this(Name, Value);
             d.Context = ctx;
             return d;
         }

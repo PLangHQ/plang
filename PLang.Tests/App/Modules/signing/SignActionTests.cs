@@ -292,7 +292,7 @@ public class SignActionTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public global::app.Data.@this<KeyPair> GenerateKeyPair() => _inner.GenerateKeyPair();
+        public global::app.data.@this<KeyPair> GenerateKeyPair() => _inner.GenerateKeyPair();
         public Data Sign(byte[] data, string privateKey) => _inner.Sign(data, privateKey);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => _inner.Verify(data, signature, publicKey);
         public async Task<Data> SignAsync(sign action) { SignCalled = true; return await _inner.SignAsync(action); }
@@ -307,7 +307,7 @@ public class SignActionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public global::app.Data.@this<KeyPair> GenerateKeyPair() => global::app.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::app.data.@this<KeyPair> GenerateKeyPair() => global::app.data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.FromError(new ActionError("Sign failed", "SigningError", 500)));
@@ -322,6 +322,6 @@ public class SignActionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public global::app.Data.@this<KeyPair> GenerateKeyPair() => global::app.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::app.data.@this<KeyPair> GenerateKeyPair() => global::app.data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

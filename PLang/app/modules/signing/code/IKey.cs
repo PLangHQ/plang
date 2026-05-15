@@ -10,5 +10,5 @@ namespace app.modules.signing.code;
 /// </summary>
 public interface IKey : ICode
 {
-    Data.@this<KeyPair> GenerateKeyPair();
+    data.@this<KeyPair> GenerateKeyPair();
 }

@@ -35,7 +35,7 @@ public sealed class ErrorCallback : ICallback
     {
         var bytes = SerializeSnapshot(AppSnapshot, ctx.App.Callback.Wire.Options);
         var encrypted = ctx.App.RunAction<app.modules.crypto.encrypt>(
-            new app.modules.crypto.encrypt { Input = global::app.Data.@this<byte[]>.Ok(bytes) }, ctx)
+            new app.modules.crypto.encrypt { Input = global::app.data.@this<byte[]>.Ok(bytes) }, ctx)
             .GetAwaiter().GetResult();
         return (byte[])(encrypted.Value ?? bytes);
     }
@@ -52,7 +52,7 @@ public sealed class ErrorCallback : ICallback
             throw new InvalidOperationException(
                 $"ErrorCallback: wire payload exceeds size cap ({bytes.Length} > {MaxWireBytes} bytes)");
         var decrypted = ctx.App.RunAction<app.modules.crypto.decrypt>(
-            new app.modules.crypto.decrypt { Input = global::app.Data.@this<byte[]>.Ok(bytes) }, ctx)
+            new app.modules.crypto.decrypt { Input = global::app.data.@this<byte[]>.Ok(bytes) }, ctx)
             .GetAwaiter().GetResult();
         var plain = (byte[])(decrypted.Value ?? bytes);
         if (plain.Length > MaxWireBytes)
@@ -62,14 +62,14 @@ public sealed class ErrorCallback : ICallback
         return new ErrorCallback { AppSnapshot = snap };
     }
 
-    public async Task<global::app.Data.@this> Run(global::app.Actor.Context.@this ctx)
+    public async Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx)
     {
         // Restore onto the live App (caller's responsibility to provide a fresh-enough App).
         ctx.App.Restore(AppSnapshot, ctx);
 
         var bottom = ctx.App.CallStack.BottomFrame;
         if (bottom == null)
-            return global::app.Data.@this.FromError(
+            return global::app.data.@this.FromError(
                 new global::app.Errors.ServiceError("ErrorCallback has no bottom frame after Restore", "NoPosition", 400));
         _position = bottom;
 
@@ -116,7 +116,7 @@ public sealed class ErrorCallback : ICallback
 
         var varsSection = s.Section("Variables");
         var captured = (wire.Variables ?? new())
-            .Select(v => new global::app.Data.@this(v.Name, v.Value))
+            .Select(v => new global::app.data.@this(v.Name, v.Value))
             .ToList();
         varsSection.Write("variables", captured);
 
@@ -151,7 +151,7 @@ public sealed class ErrorCallback : ICallback
         var result = new List<VarWire>();
         if (!s.HasSection("Variables")) return result;
         var varsSection = s.Section("Variables");
-        var vars = varsSection.Read<List<global::app.Data.@this>>("variables");
+        var vars = varsSection.Read<List<global::app.data.@this>>("variables");
         if (vars == null) return result;
         foreach (var v in vars)
             result.Add(new VarWire { Name = v.Name, Value = v.Value });

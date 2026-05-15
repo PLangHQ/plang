@@ -236,7 +236,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Returns the handler's result (or a ServiceError-wrapped result on
     /// caught exception).
     /// </summary>
-    public async Task<Data.@this> ExecuteAsync(modules.ICodeGenerated handler, Actor.Context.@this context)
+    public async Task<data.@this> ExecuteAsync(modules.ICodeGenerated handler, Actor.Context.@this context)
     {
         try
         {
@@ -268,7 +268,7 @@ public sealed partial class @this : IAsyncDisposable
             serviceErr.Params = handler.SnapshotParams();
             Errors.Add(serviceErr);
             _stack.Audit.Add(serviceErr);
-            return Data.@this.FromError(serviceErr);
+            return data.@this.FromError(serviceErr);
         }
     }
 

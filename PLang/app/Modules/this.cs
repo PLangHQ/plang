@@ -243,7 +243,7 @@ public sealed class @this : IAsyncDisposable
                         .SelectMany(iface => iface.GetProperties().Select(p => p.Name)),
                     StringComparer.OrdinalIgnoreCase);
 
-                var parameters = new List<Data.@this>();
+                var parameters = new List<data.@this>();
 
                 foreach (var prop in parameterType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
@@ -273,14 +273,14 @@ public sealed class @this : IAsyncDisposable
                     if (defaultAttr != null)
                         desc += $" = {FormatDefault(defaultAttr.Value)}";
 
-                    parameters.Add(new Data.@this(prop.Name, desc));
+                    parameters.Add(new data.@this(prop.Name, desc));
                 }
 
                 // IChannel actions: source-gen reads action.Parameters["channel"] to resolve
                 // the Channel slot. Surface that parameter to the LLM so it can emit a name
                 // from the actor's channel inventory.
                 if (typeof(modules.IChannel).IsAssignableFrom(parameterType))
-                    parameters.Add(new Data.@this("channel", "string?"));
+                    parameters.Add(new data.@this("channel", "string?"));
 
                 bool cacheable = true;
                 var actionAttr = parameterType.GetCustomAttribute<modules.ActionAttribute>();
@@ -293,7 +293,7 @@ public sealed class @this : IAsyncDisposable
                 // (which action, which parameter, what value) — never raw type tags or
                 // hand-built JSON. Falls back to [Example] attributes for not-yet-migrated
                 // actions; the two coexist during transition.
-                List<Data.@this> examples;
+                List<data.@this> examples;
                 var examplesForLlm = parameterType.GetMethod("ExamplesForLlm",
                     BindingFlags.Public | BindingFlags.Static, binder: null,
                     types: System.Type.EmptyTypes, modifiers: null);
@@ -303,13 +303,13 @@ public sealed class @this : IAsyncDisposable
                     var specs = (app.Modules.Schema.Spec.Example[]?)examplesForLlm.Invoke(null, null)
                         ?? System.Array.Empty<app.Modules.Schema.Spec.Example>();
                     examples = specs
-                        .Select(s => new Data.@this(s.UserIntent, Schema.Render(s)))
+                        .Select(s => new data.@this(s.UserIntent, Schema.Render(s)))
                         .ToList();
                 }
                 else
                 {
                     examples = parameterType.GetCustomAttributes<modules.ExampleAttribute>()
-                        .Select(e => new Data.@this(e.Plang, e.Mapping))
+                        .Select(e => new data.@this(e.Plang, e.Mapping))
                         .ToList();
                 }
 
@@ -377,7 +377,7 @@ public sealed class @this : IAsyncDisposable
     /// Reads the Run() method's return type. If it returns a concrete Data subtype,
     /// reflects its public properties for the builder summary. Returns null for plain Data.
     /// </summary>
-    private List<Data.@this>? DescribeReturnType(System.Type actionType)
+    private List<data.@this>? DescribeReturnType(System.Type actionType)
     {
         var runMethod = actionType.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
         if (runMethod == null) return null;
@@ -389,22 +389,22 @@ public sealed class @this : IAsyncDisposable
             returnType = returnType.GetGenericArguments()[0];
 
         // Plain Data — no extra properties to describe
-        if (returnType == typeof(Data.@this)) return null;
+        if (returnType == typeof(data.@this)) return null;
 
         // Must be a Data subclass
-        if (!typeof(Data.@this).IsAssignableFrom(returnType)) return null;
+        if (!typeof(data.@this).IsAssignableFrom(returnType)) return null;
 
         // Collect public properties that are NOT on the base Data class
-        var baseProps = typeof(Data.@this).GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        var baseProps = typeof(data.@this).GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Select(p => p.Name)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var properties = new List<Data.@this>();
+        var properties = new List<data.@this>();
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
             var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.Types.@this.GetTypeNameStatic(prop.PropertyType));
-            properties.Add(new Data.@this(prop.Name, typeName));
+            properties.Add(new data.@this(prop.Name, typeName));
         }
 
         return properties.Count > 0 ? properties : null;
@@ -414,7 +414,7 @@ public sealed class @this : IAsyncDisposable
     /// Returns default values for an action's parameters that aren't already provided.
     /// Checks IConfigure&lt;TConfig&gt; first, falls back to [Default] attributes.
     /// </summary>
-    public List<Data.@this>? GetDefaults(string module, string actionName, HashSet<string> excludeParams)
+    public List<data.@this>? GetDefaults(string module, string actionName, HashSet<string> excludeParams)
     {
         var actionType = GetActionType(module, actionName);
         if (actionType == null) return null;
@@ -430,26 +430,26 @@ public sealed class @this : IAsyncDisposable
                 catch (MissingMethodException) { break; } // No parameterless constructor — fall through to [Default] attributes
                 if (instance == null) break;
 
-                var defaults = new List<Data.@this>();
+                var defaults = new List<data.@this>();
                 foreach (var prop in configType.GetProperties())
                 {
                     if (excludeParams.Contains(prop.Name)) continue;
                     var value = prop.GetValue(instance);
                     if (value == null) continue;
-                    defaults.Add(new Data.@this(prop.Name.ToLowerInvariant(), value));
+                    defaults.Add(new data.@this(prop.Name.ToLowerInvariant(), value));
                 }
                 return defaults;
             }
         }
 
         // [Default] attributes
-        var attrDefaults = new List<Data.@this>();
+        var attrDefaults = new List<data.@this>();
         foreach (var prop in actionType.GetProperties())
         {
             if (excludeParams.Contains(prop.Name)) continue;
             var attrs = prop.GetCustomAttributes(typeof(modules.DefaultAttribute), false);
             if (attrs.Length == 0) continue;
-            attrDefaults.Add(new Data.@this(prop.Name.ToLowerInvariant(),
+            attrDefaults.Add(new data.@this(prop.Name.ToLowerInvariant(),
                 ((modules.DefaultAttribute)attrs[0]).Value));
         }
         return attrDefaults.Count > 0 ? attrDefaults : null;
@@ -473,7 +473,7 @@ public sealed class @this : IAsyncDisposable
     {
         var underlying = Nullable.GetUnderlyingType(propType) ?? propType;
         if (!underlying.IsGenericType) return false;
-        if (underlying.GetGenericTypeDefinition() != typeof(Data.@this<>)) return false;
+        if (underlying.GetGenericTypeDefinition() != typeof(data.@this<>)) return false;
         var inner = underlying.GetGenericArguments()[0];
         return typeof(app.Variables.IRawNameResolvable).IsAssignableFrom(inner);
     }

@@ -18,7 +18,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_AlreadyTypedData_ReturnsSelf()
     {
-        var typed = new global::app.Data.@this<int>("count", 42) { Context = _app.User.Context };
+        var typed = new global::app.data.@this<int>("count", 42) { Context = _app.User.Context };
         var result = typed.As<int>(_app.User.Context);
         await Assert.That(ReferenceEquals(result, typed)).IsTrue();
     }
@@ -29,7 +29,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("count", 42) { Context = _app.User.Context };
         var result = data.As<int>(_app.User.Context);
-        await Assert.That(result).IsTypeOf<global::app.Data.@this<int>>();
+        await Assert.That(result).IsTypeOf<global::app.data.@this<int>>();
         await Assert.That(result.Value).IsEqualTo(42);
     }
 
@@ -345,7 +345,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %x% and %y% inside"
             }
         };
-        ctx.Variables.Set(new global::app.Data.@this<List<object?>>("messages", stored) { Context = ctx });
+        ctx.Variables.Set(new global::app.data.@this<List<object?>>("messages", stored) { Context = ctx });
 
         var paramData = new Data("Messages", "%messages%") { Context = ctx };
         var result = paramData.As<List<Dictionary<string, object?>>>(ctx);
@@ -380,7 +380,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
             }
         };
-        ctx.Variables.Set(new global::app.Data.@this<List<object?>>("fixerMessages", stored) { Context = ctx });
+        ctx.Variables.Set(new global::app.data.@this<List<object?>>("fixerMessages", stored) { Context = ctx });
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%") { Context = ctx };

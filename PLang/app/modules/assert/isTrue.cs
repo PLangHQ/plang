@@ -7,12 +7,12 @@ namespace app.modules.assert;
 [Action("isTrue")]
 public partial class IsTrue : IContext
 {
-    public partial Data.@this? Value { get; init; }
-    public partial Data.@this<string>? Message { get; init; }
+    public partial data.@this? Value { get; init; }
+    public partial data.@this<string>? Message { get; init; }
 
     [Code]
     public partial IAssert Assert { get; }
 
-    public Task<Data.@this> Run() =>
+    public Task<data.@this> Run() =>
         Task.FromResult(AssertSnapshot.WithVariables(Assert.IsTrue(this), Context));
 }

@@ -11,14 +11,14 @@ namespace app.modules.signing.code;
 public interface ISigning : IKey
 {
     /// <summary>Full signing pipeline: get identity, hash, build envelope, sign.</summary>
-    Task<Data.@this> SignAsync(sign action);
+    Task<data.@this> SignAsync(sign action);
 
     /// <summary>Full verification pipeline: type check, timeout, nonce, contracts, hash, verify.</summary>
-    Task<Data.@this> VerifyAsync(verify action);
+    Task<data.@this> VerifyAsync(verify action);
 
     /// <summary>Low-level: signs bytes with the given private key. Returns signature bytes.</summary>
-    Data.@this Sign(byte[] data, string privateKey);
+    data.@this Sign(byte[] data, string privateKey);
 
     /// <summary>Low-level: verifies a signature against data and public key.</summary>
-    Data.@this Verify(byte[] data, byte[] signature, string publicKey);
+    data.@this Verify(byte[] data, byte[] signature, string publicKey);
 }

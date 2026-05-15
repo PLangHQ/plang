@@ -28,25 +28,25 @@ public class @this : Session.@this
         Direction = direction;
     }
 
-    public override async Task<Data.@this> WriteCore(Data.@this data, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
     {
         return await InvokeGoal(data, ct);
     }
 
-    public override async Task<Data.@this> ReadCore(CancellationToken ct = default)
+    public override async Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
     {
-        return await InvokeGoal(Data.@this.Ok((object?)null), ct);
+        return await InvokeGoal(global::app.data.@this.Ok((object?)null), ct);
     }
 
-    public override async Task<Data.@this> AskCore(Data.@this prompt, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> AskCore(global::app.data.@this prompt, CancellationToken ct = default)
     {
         return await InvokeGoal(prompt, ct);
     }
 
-    private async Task<Data.@this> InvokeGoal(Data.@this data, CancellationToken ct)
+    private async Task<global::app.data.@this> InvokeGoal(global::app.data.@this data, CancellationToken ct)
     {
         if (!IsOpen)
-            return Data.@this.FromError(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
+            return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' is closed", "ChannelClosed", 400));
 
         var app = Actor.App;
         var foundational = Actor.FoundationalChannels;
@@ -63,7 +63,7 @@ public class @this : Session.@this
         // and AsyncLocal carries it down to here. Variables.Set("!data", ...)
         // lands in that overlay if there is one, in the actor-shared dict
         // otherwise — and either way subsequent goal-body sets behave the same.
-        ctx.Variables.Set("!data", new Data.@this("!data", data.Value, data.Type));
+        ctx.Variables.Set("!data", new data.@this("!data", data.Value, data.Type));
 
         try
         {
@@ -71,7 +71,7 @@ public class @this : Session.@this
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Goal channel '{Name}' failed: {ex.Message}", "GoalChannelError") { Exception = ex });
         }
     }

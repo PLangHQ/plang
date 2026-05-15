@@ -23,18 +23,18 @@ public partial class ask : IContext
 {
     /// <summary>The question text shown to the user.</summary>
     [IsNotNull]
-    public partial Data.@this<string> Question { get; init; }
+    public partial data.@this<string> Question { get; init; }
 
     /// <summary>
     /// Names of variables whose current values survive into the AskCallback (per
     /// <c>vars:</c> annotation). Empty list = no extra state crosses the suspend.
     /// </summary>
-    public partial Data.@this? Variables { get; init; }
+    public partial data.@this? Variables { get; init; }
 
     /// <summary>Resume sentinel — variable name used by AskCallback.Run to inject the answer.</summary>
     public const string AnswerVariableName = "!ask.answer";
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         // Resume path: AskCallback.Run pre-bound the answer under !ask.answer.
         var answer = Context.Variables.Get(AnswerVariableName);
@@ -42,13 +42,13 @@ public partial class ask : IContext
         {
             // Consume the marker so a subsequent ask isn't accidentally short-circuited.
             Context.Variables.Remove(AnswerVariableName);
-            return Task.FromResult(global::app.Data.@this.Ok(answer.Value));
+            return Task.FromResult(global::app.data.@this.Ok(answer.Value));
         }
 
         // Fresh path: capture position + the surviving variables, return AskCallback.
         var stack = Context.App.CallStack;
         var bottom = stack.BottomFrame;
-        var captured = new List<Data.@this>();
+        var captured = new List<data.@this>();
         // Builder emits each entry either as a bare string ("x" / "%x%") or as
         // {"name":"%x%","type":"variable"} — accept both.
         if (Variables?.Value is System.Collections.IEnumerable items)
@@ -75,8 +75,8 @@ public partial class ask : IContext
             ActorName = Context.Actor?.Name ?? "User",
             Variables = captured
         };
-        var data = new Data.@this<global::app.Callback.AskCallback>("", cb);
+        var data = new data.@this<global::app.Callback.AskCallback>("", cb);
         data.Context = Context;
-        return Task.FromResult<Data.@this>(data);
+        return Task.FromResult<data.@this>(data);
     }
 }

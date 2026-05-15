@@ -104,13 +104,13 @@ public sealed partial class @this
     /// Headless / CI-redirected stdin returns NoAppFound rather than blocking on a
     /// prompt nobody can answer.
     /// </summary>
-    public async Task<Data.@this> RunAsync()
+    public async Task<data.@this> RunAsync()
     {
         var appPrPath = _app.FileSystem.ValidatePath(".build/app.pr");
         if (!_app.FileSystem.File.Exists(appPrPath) && !_app.Create)
         {
             if (Console.IsInputRedirected)
-                return Data.@this.FromError(new global::app.Errors.ServiceError(
+                return data.@this.FromError(new global::app.Errors.ServiceError(
                     $"No app found at {_app.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
             // Channels are wired by the entry point (PlangConsole) before Run.
@@ -121,14 +121,14 @@ public sealed partial class @this
             var outputChannel = _app.User.Channels.Get(global::app.Channels.@this.Output) as global::app.Channels.Channel.Stream.@this;
             var inputChannel = _app.User.Channels.Get(global::app.Channels.@this.Input) as global::app.Channels.Channel.Stream.@this;
             if (outputChannel == null || inputChannel == null)
-                return Data.@this.FromError(new global::app.Errors.ServiceError(
+                return data.@this.FromError(new global::app.Errors.ServiceError(
                     "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
 
             await outputChannel.WriteTextAsync($"No app found at {_app.AbsolutePath}. Create new app? (y/n): ");
             using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
             var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
             if (answer != "y" && answer != "yes")
-                return Data.@this.FromError(new global::app.Errors.ServiceError(
+                return data.@this.FromError(new global::app.Errors.ServiceError(
                     "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
         }
 

@@ -18,7 +18,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Pairs = new global::app.Data.@this<Dictionary<string, string>>(
+            Pairs = new global::app.data.@this<Dictionary<string, string>>(
                 "Pairs",
                 new Dictionary<string, string> { ["k1"] = "v1", ["k2"] = "v2" })
         };
@@ -39,7 +39,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Label = new global::app.Data.@this<string>("Label", "manual-checkpoint")
+            Label = new global::app.data.@this<string>("Label", "manual-checkpoint")
         };
         await action.Run();
 
@@ -54,7 +54,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Label = new global::app.Data.@this<string>("Label", "x")
+            Label = new global::app.data.@this<string>("Label", "x")
         };
         var result = await action.Run();
         await Assert.That(result.Success).IsTrue();
@@ -70,7 +70,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = app.User.Context,
-            Label = new global::app.Data.@this<string>("Label", "x")
+            Label = new global::app.data.@this<string>("Label", "x")
         };
         await action.Run();
         await Assert.That(call.Tags.Count).IsEqualTo(1);

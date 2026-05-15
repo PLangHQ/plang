@@ -15,9 +15,9 @@ namespace app.modules.test;
 [Action("tag")]
 public partial class Tag : IContext
 {
-    public partial Data.@this<string[]> Tags { get; init; }
+    public partial data.@this<string[]> Tags { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var currentTest = Context.App!.Tester.CurrentTest;
         if (currentTest != null && Tags.Value is { } tags)
@@ -31,6 +31,6 @@ public partial class Tag : IContext
         var snapshot = currentTest != null
             ? currentTest.UserTags.ToList()
             : new List<string>();
-        return Task.FromResult(app.Data.@this.Ok(snapshot));
+        return Task.FromResult(app.data.@this.Ok(snapshot));
     }
 }

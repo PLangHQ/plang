@@ -37,7 +37,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.Data.@this<string[]>("Tags", new[] { "http", "fast" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http", "fast" })
         };
         var result = await action.Run();
 
@@ -58,7 +58,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.Data.@this<string[]>("Tags", new[] { "t1" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "t1" })
         };
         var result = await action.Run();
 
@@ -78,7 +78,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.Data.@this<string[]>("Tags", new[] { "ignored" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "ignored" })
         };
         var result = await action.Run();
 
@@ -97,17 +97,17 @@ public class TagActionTests
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.Data.@this<string[]>("Tags", new[] { "http" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http" })
         }.Run();
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.Data.@this<string[]>("Tags", new[] { "fast", "slow" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "fast", "slow" })
         }.Run();
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::app.Data.@this<string[]>("Tags", new[] { "http" }) // duplicate
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http" }) // duplicate
         }.Run();
 
         await Assert.That(_app.Tester.CurrentTest.UserTags.Count).IsEqualTo(3);

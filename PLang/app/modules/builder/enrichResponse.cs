@@ -16,13 +16,13 @@ namespace app.modules.builder;
 public partial class enrichResponse : IContext
 {
     [IsNotNull]
-    public partial Data.@this<BuildResponse> StepResults { get; init; }
+    public partial data.@this<BuildResponse> StepResults { get; init; }
 
     [IsNotNull]
-    public partial Data.@this<Goal> Goal { get; init; }
+    public partial data.@this<Goal> Goal { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Builder.EnrichResponse(this));
+    public Task<data.@this> Run() => Task.FromResult(Builder.EnrichResponse(this));
 }

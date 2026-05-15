@@ -7,16 +7,16 @@ namespace app.modules.file;
 [Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {
-    public partial Data.@this<FileSystem.Path> Path { get; init; }
+    public partial data.@this<FileSystem.Path> Path { get; init; }
 
     [Default(false)]
-    public partial Data.@this<bool> IgnoreIfNotFound { get; init; }
+    public partial data.@this<bool> IgnoreIfNotFound { get; init; }
 
     [Default(false)]
-    public partial Data.@this<bool> Recursive { get; init; }
+    public partial data.@this<bool> Recursive { get; init; }
 
     [Code]
     public partial IFile Files { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Files.Delete(this));
+    public Task<data.@this> Run() => Task.FromResult(Files.Delete(this));
 }

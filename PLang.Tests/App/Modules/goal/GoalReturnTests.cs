@@ -26,7 +26,7 @@ public class GoalReturnTests
     public async Task Return_WithData_PropagatesValue()
     {
         var (context, _) = CreateContext();
-        var data = global::app.Data.@this.Ok("hello");
+        var data = global::app.data.@this.Ok("hello");
         var action = new Return { Context = context, Data = data };
         var result = await action.Run();
 
@@ -39,7 +39,7 @@ public class GoalReturnTests
     public async Task Return_DepthGreaterThanOne_SetsReturnDepth()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = global::app.Data.@this.Ok(), Depth = 3 };
+        var action = new Return { Context = context, Data = global::app.data.@this.Ok(), Depth = 3 };
         var result = await action.Run();
 
         await Assert.That(result.Returned).IsTrue();
@@ -50,7 +50,7 @@ public class GoalReturnTests
     public async Task Return_DepthZero_DefaultsToOne()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = global::app.Data.@this.Ok(), Depth = 0 };
+        var action = new Return { Context = context, Data = global::app.data.@this.Ok(), Depth = 0 };
         var result = await action.Run();
 
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
@@ -60,7 +60,7 @@ public class GoalReturnTests
     public async Task Return_NegativeDepth_DefaultsToOne()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = global::app.Data.@this.Ok(), Depth = -5 };
+        var action = new Return { Context = context, Data = global::app.data.@this.Ok(), Depth = -5 };
         var result = await action.Run();
 
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
@@ -70,7 +70,7 @@ public class GoalReturnTests
     public async Task Return_FailingData_PropagatesError()
     {
         var (context, _) = CreateContext();
-        var error = global::app.Data.@this.FromError(
+        var error = global::app.data.@this.FromError(
             new global::app.Errors.Error("something broke", "TestError", 500));
         var action = new Return { Context = context, Data = error };
         var result = await action.Run();

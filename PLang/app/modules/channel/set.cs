@@ -18,30 +18,30 @@ namespace app.modules.channel;
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {
-    public partial Data.@this<string> Name { get; init; }
-    public partial Data.@this<GoalCall> Goal { get; init; }
-    public partial Data.@this<global::app.Actor.@this>? Actor { get; init; }
-    public partial Data.@this<long>? Buffer { get; init; }
-    public partial Data.@this<TimeSpan>? Timeout { get; init; }
-    public partial Data.@this<string>? Mime { get; init; }
-    public partial Data.@this<string>? Encoding { get; init; }
+    public partial data.@this<string> Name { get; init; }
+    public partial data.@this<GoalCall> Goal { get; init; }
+    public partial data.@this<global::app.Actor.@this>? Actor { get; init; }
+    public partial data.@this<long>? Buffer { get; init; }
+    public partial data.@this<TimeSpan>? Timeout { get; init; }
+    public partial data.@this<string>? Mime { get; init; }
+    public partial data.@this<string>? Encoding { get; init; }
     /// <summary>"input", "output", or "bidirectional". Default: bidirectional unless
     /// the channel name is "input" or "output", in which case the name decides.</summary>
-    public partial Data.@this<string>? Direction { get; init; }
-    public partial Data.@this<app.Variables.Variable>? Encryption { get; init; }
-    public partial Data.@this<app.Variables.Variable>? Signing { get; init; }
+    public partial data.@this<string>? Direction { get; init; }
+    public partial data.@this<app.Variables.Variable>? Encryption { get; init; }
+    public partial data.@this<app.Variables.Variable>? Signing { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var name = Name.Value;
         if (string.IsNullOrEmpty(name))
-            return app.Data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
+            return app.data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 
         var actor = Actor?.Value ?? Context.Actor;
 
         var goalCall = Goal.Value;
         if (goalCall == null || string.IsNullOrEmpty(goalCall.Name) && string.IsNullOrEmpty(goalCall.PrPath))
-            return app.Data.@this.FromError(new ServiceError("Goal is required", "ValueRequired", 400));
+            return app.data.@this.FromError(new ServiceError("Goal is required", "ValueRequired", 400));
 
         var goalResult = await goalCall.GetGoalAsync(Context.App, Context);
         if (!goalResult.Success) return goalResult;
@@ -62,7 +62,7 @@ public partial class Set : IContext
             Signing = Signing?.Value?.Name ?? "auto"
         };
         actor.Channels.Register(ch);
-        return app.Data.@this.Ok(ch);
+        return app.data.@this.Ok(ch);
     }
 
     /// <summary>

@@ -19,35 +19,35 @@ public partial class On : IContext
 {
     /// <summary>Event type: BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction.</summary>
     [IsNotNull]
-    public partial Data.@this<EventType> Type { get; init; }
+    public partial data.@this<EventType> Type { get; init; }
     /// <summary>Goal to execute when the event fires.</summary>
-    public partial Data.@this<GoalCall> GoalToCall { get; init; }
+    public partial data.@this<GoalCall> GoalToCall { get; init; }
     /// <summary>Glob or regex pattern to match goal names. Null matches all goals.</summary>
-    public partial Data.@this<string>? GoalPattern { get; init; }
+    public partial data.@this<string>? GoalPattern { get; init; }
     /// <summary>Glob or regex pattern to match step text. Only for step-level events.</summary>
-    public partial Data.@this<string>? StepPattern { get; init; }
+    public partial data.@this<string>? StepPattern { get; init; }
     /// <summary>Glob or regex pattern to match action names (e.g., "http.*"). Only for action-level events.</summary>
-    public partial Data.@this<string>? ActionPattern { get; init; }
+    public partial data.@this<string>? ActionPattern { get; init; }
     /// <summary>When true, patterns are treated as regular expressions instead of glob patterns.</summary>
     [Default(false)]
-    public partial Data.@this<bool> IsRegex { get; init; }
+    public partial data.@this<bool> IsRegex { get; init; }
     /// <summary>Execution priority — higher values run first. Default is 0.</summary>
     [Default(0)]
-    public partial Data.@this<int> Priority { get; init; }
+    public partial data.@this<int> Priority { get; init; }
 
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
-    public partial Data.@this<Actor.@this>? Actor { get; init; }
+    public partial data.@this<Actor.@this>? Actor { get; init; }
 
     /// <summary>Channel-name filter for channel lifecycle events (BeforeWrite/AfterWrite/BeforeRead/AfterRead/OnAsk). Null = no filter.</summary>
-    public partial Data.@this<string>? ChannelName { get; init; }
+    public partial data.@this<string>? ChannelName { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         // Resolve target actor — default to current context's actor
         var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
 
         var goalToCall = GoalToCall.Value!;
-        Func<Actor.Context.@this, Goals.Goal.Steps.Step.Actions.Action.@this?, Data.@this?, Task<Data.@this>> handler =
+        Func<Actor.Context.@this, Goals.Goal.Steps.Step.Actions.Action.@this?, data.@this?, Task<data.@this>> handler =
             async (ctx, _, _) => await ctx.App!.RunGoalAsync(goalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(

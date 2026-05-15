@@ -9,8 +9,8 @@ namespace app.modules.http.code;
 /// </summary>
 public interface IHttp : ICode, IDisposable
 {
-    Task<Data.@this> SendAsync(request action);
-    Task<Data.@this> DownloadAsync(download action);
-    Task<Data.@this> UploadAsync(upload action);
-    Data.@this Configure(configure action);
+    Task<data.@this> SendAsync(request action);
+    Task<data.@this> DownloadAsync(download action);
+    Task<data.@this> UploadAsync(upload action);
+    data.@this Configure(configure action);
 }

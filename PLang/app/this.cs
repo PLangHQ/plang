@@ -385,7 +385,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// CamelCase + indented JsonSerializerOptions. Pure config bag — `static readonly` is the
     /// Rule C exception class for stateless option holders. Internal so tests can route
-    /// through it; production callers (App.Save, Data.Compare) use copies on their own type.
+    /// through it; production callers (App.Save, data.Compare) use copies on their own type.
     /// </summary>
     internal static readonly JsonSerializerOptions CamelCaseIndented = new()
     {
@@ -394,7 +394,7 @@ public sealed partial class @this : IAsyncDisposable
         Converters = { new Channels.Serializers.TimeSpanIso8601() }
     };
 
-    public async Task<Data.@this> Save()
+    public async Task<data.@this> Save()
     {
         Updated = DateTime.UtcNow;
         if (Created == default) Created = Updated;
@@ -406,7 +406,7 @@ public sealed partial class @this : IAsyncDisposable
         if (dir != null && !FileSystem.Directory.Exists(dir))
             FileSystem.Directory.CreateDirectory(dir);
         await FileSystem.File.WriteAllTextAsync(path, json);
-        return app.Data.@this.Ok(this);
+        return app.data.@this.Ok(this);
     }
 
     /// <summary>
@@ -418,19 +418,19 @@ public sealed partial class @this : IAsyncDisposable
     /// Runs a strongly-typed action. Properties are already set via init.
     /// Used by C# code composing actions (providers, tests).
     /// </summary>
-    public async Task<Data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Actor.Context.@this context)
+    public async Task<data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Actor.Context.@this context)
         where TAction : ICodeGenerated
     {
         var result = await action.ExecuteAsync(null!, context);
-        if (!result.Success) return Data.@this<TResult>.FromError(result.Error!);
-        return Data.@this<TResult>.Ok((TResult)result.Value!);
+        if (!result.Success) return data.@this<TResult>.FromError(result.Error!);
+        return data.@this<TResult>.Ok((TResult)result.Value!);
     }
 
     /// <summary>
     /// Runs a strongly-typed action and returns the raw Data result.
     /// Used by C# code composing actions (providers, tests).
     /// </summary>
-    public async Task<Data.@this> RunAction<TAction>(TAction action, Actor.Context.@this context)
+    public async Task<data.@this> RunAction<TAction>(TAction action, Actor.Context.@this context)
         where TAction : ICodeGenerated
     {
         return await action.ExecuteAsync(null!, context);
@@ -447,10 +447,10 @@ public sealed partial class @this : IAsyncDisposable
     /// Run() directly. App.Run wraps it. Return variable mapping is owned by
     /// Action.RunAsync, not here.
     /// </summary>
-    public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context, CallStack.Call.@this? cause = null)
+    public async Task<data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context, CallStack.Call.@this? cause = null)
     {
         var (handler, error) = Modules.GetCodeGenerated(action);
-        if (error != null) return Data.@this.FromError(error);
+        if (error != null) return data.@this.FromError(error);
 
         // CallStackOverflowException (depth limit or ContainsGoal cycle) trips at Push,
         // before the call frame is on the stack — catch it here so App.Run's contract
@@ -469,20 +469,20 @@ public sealed partial class @this : IAsyncDisposable
         return await call.ExecuteAsync(handler!, context);
     }
 
-    private static Data.@this HandleOverflow(Errors.CallStackOverflowException ex, Step? step, CallStack.@this stack)
+    private static data.@this HandleOverflow(Errors.CallStackOverflowException ex, Step? step, CallStack.@this stack)
     {
         var caller = stack.Current;
         var chain = caller != null ? caller.SnapshotChain() : Array.Empty<CallStack.Call.@this>();
         var overflowErr = new Errors.ServiceError(ex.Message, step!, chain, "CallStackOverflow", 500) { Exception = ex };
         stack.Audit.Add(overflowErr);
-        return Data.@this.FromError(overflowErr);
+        return data.@this.FromError(overflowErr);
     }
 
     /// <summary>
     /// Bootstrap: loads app identity, resolves the goal file, runs it.
     /// Building is routed to the PLang builder (system/builder/).
     /// </summary>
-    public async Task<Data.@this> Start(Actor.Context.@this? context = null)
+    public async Task<data.@this> Start(Actor.Context.@this? context = null)
     {
         await Load();
 
@@ -508,7 +508,7 @@ public sealed partial class @this : IAsyncDisposable
         // Resolve goal file
         var goalFile = context.Variables.GetValue("goalFile") as string;
         if (string.IsNullOrEmpty(goalFile))
-            return app.Data.@this.FromError(new global::app.Errors.ServiceError(
+            return app.data.@this.FromError(new global::app.Errors.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
         var goalCall = new GoalCall { PrPath = goalFile };
@@ -525,7 +525,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Runs a goal via GoalCall. Resolves the goal then delegates to Goal.RunAsync.
     /// </summary>
-    public async Task<Data.@this> RunGoalAsync(GoalCall goalCall, Actor.Context.@this? context = null, CancellationToken ct = default)
+    public async Task<data.@this> RunGoalAsync(GoalCall goalCall, Actor.Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
         var goalResult = await goalCall.GetGoalAsync(this, context);
@@ -550,7 +550,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Runs a goal already in memory. Delegates to Goal.RunAsync.
     /// </summary>
-    public async Task<Data.@this> RunGoalAsync(Goal goal, Actor.Context.@this? context = null, CancellationToken ct = default)
+    public async Task<data.@this> RunGoalAsync(Goal goal, Actor.Context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
         return await goal.RunAsync(context);

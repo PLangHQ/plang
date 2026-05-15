@@ -31,10 +31,10 @@ public class FileHandlerTests : IDisposable
     private string TempPath(string relativePath) =>
         _fs.Path.Combine(_tempDir, relativePath);
 
-    private global::app.Data.@this<PLangPath> MakePath(string relativePath) =>
+    private global::app.data.@this<PLangPath> MakePath(string relativePath) =>
         new("", new PLangPath(TempPath(relativePath)) { Context = _app.User.Context });
 
-    private global::app.Data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
+    private global::app.data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
         new("", new PLangPath(absolutePath) { Context = _app.User.Context });
 
     // --- Save ---
@@ -107,7 +107,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("template.txt"),
-            ResolveVariables = new global::app.Data.@this<bool>("ResolveVariables", true)
+            ResolveVariables = new global::app.data.@this<bool>("ResolveVariables", true)
         };
         var result = await action.Run();
 
@@ -127,7 +127,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("literal.txt"),
-            ResolveVariables = new global::app.Data.@this<bool>("ResolveVariables", false)
+            ResolveVariables = new global::app.data.@this<bool>("ResolveVariables", false)
         };
         var result = await action.Run();
 
@@ -147,7 +147,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("untrusted.txt"),
-            ResolveVariables = new global::app.Data.@this<bool>("ResolveVariables", true)
+            ResolveVariables = new global::app.data.@this<bool>("ResolveVariables", true)
         };
         var result = await action.Run();
 
@@ -441,17 +441,17 @@ public class FileHandlerTests : IDisposable
                         {
                             Module = "file",
                             ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
-                                { new global::app.Data.@this("path", TempPath("real.txt")) },
+                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
+                                { new global::app.data.@this("path", TempPath("real.txt")) },
                         },
                         new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
-                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
+                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
                             {
-                                new global::app.Data.@this("Name", "fileResult"),
-                                new global::app.Data.@this("Value", "%__data__%")
+                                new global::app.data.@this("Name", "fileResult"),
+                                new global::app.data.@this("Value", "%__data__%")
                             }
                         }
                     }
@@ -466,8 +466,8 @@ public class FileHandlerTests : IDisposable
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
-                                { new global::app.Data.@this("Data", "%fileResult.Exists%") },
+                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
+                                { new global::app.data.@this("Data", "%fileResult.Exists%") },
                         }
                     }
                 }
@@ -518,17 +518,17 @@ public class FileHandlerTests : IDisposable
                         {
                             Module = "file",
                             ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
-                                { new global::app.Data.@this("path", TempPath("ghost.txt")) },
+                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
+                                { new global::app.data.@this("path", TempPath("ghost.txt")) },
                         },
                         new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
-                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
+                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
                             {
-                                new global::app.Data.@this("Name", "fileResult"),
-                                new global::app.Data.@this("Value", "%__data__%")
+                                new global::app.data.@this("Name", "fileResult"),
+                                new global::app.data.@this("Value", "%__data__%")
                             }
                         }
                     }
@@ -543,8 +543,8 @@ public class FileHandlerTests : IDisposable
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
-                                { new global::app.Data.@this("Data", "%fileResult.Exists%") },
+                            Parameters = new System.Collections.Generic.List<global::app.data.@this>
+                                { new global::app.data.@this("Data", "%fileResult.Exists%") },
                         }
                     }
                 }

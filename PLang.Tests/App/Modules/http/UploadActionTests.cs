@@ -71,7 +71,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", "Hello upload"),
+            Content = new global::app.data.@this("", "Hello upload"),
             As = ContentAs.Text,
             Unsigned = true
         };
@@ -94,7 +94,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", "upload.txt"),
+            Content = new global::app.data.@this("", "upload.txt"),
             As = ContentAs.File,
             Unsigned = true
         };
@@ -116,7 +116,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", b64),
+            Content = new global::app.data.@this("", b64),
             As = ContentAs.Base64,
             Unsigned = true
         };
@@ -138,7 +138,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", "auto.txt"),
+            Content = new global::app.data.@this("", "auto.txt"),
             Unsigned = true
         };
 
@@ -157,7 +157,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", "just a string, not a file path"),
+            Content = new global::app.data.@this("", "just a string, not a file path"),
             Unsigned = true
         };
 
@@ -175,7 +175,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", "data"),
+            Content = new global::app.data.@this("", "data"),
             Method = HttpMethod.PUT,
             As = ContentAs.Text,
             Unsigned = true
@@ -199,7 +199,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", "data"),
+            Content = new global::app.data.@this("", "data"),
             As = ContentAs.Text,
             Unsigned = true
         };
@@ -222,7 +222,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" }),
+            Content = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice", ["age"] = "30" }),
             Unsigned = true
         };
 
@@ -246,7 +246,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }),
+            Content = new global::app.data.@this("", new Dictionary<string, object> { ["field1"] = "value1" }),
             As = ContentAs.Form,
             Unsigned = true
         };
@@ -273,7 +273,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }),
+            Content = new global::app.data.@this("", new Dictionary<string, object> { ["title"] = "My Doc", ["file"] = "@document.pdf" }),
             As = ContentAs.Form,
             Unsigned = true
         };
@@ -307,7 +307,7 @@ public class UploadActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/upload",
-            Content = new global::app.Data.@this("", new List<string> { "a", "b", "c" }),
+            Content = new global::app.data.@this("", new List<string> { "a", "b", "c" }),
             Unsigned = true
         };
 

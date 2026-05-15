@@ -4,7 +4,7 @@ namespace app.Callback;
 /// App-scoped configuration holder for the callback subsystem. Reachable as <c>app.Callback</c>.
 /// NOT an <see cref="ICallback"/> — this is the config @this for the callback feature, not a
 /// callback instance. Two distinct things share the word "Signature":
-///   - <c>Data.@this.Signature</c> — wire envelope (the cryptographic seal on a Data payload)
+///   - <c>data.@this.Signature</c> — wire envelope (the cryptographic seal on a Data payload)
 ///   - <c>app.Callback.Signature.Expires</c> — config (default expiry seeded onto callbacks
 ///     when <c>Data.Signature</c> is lazily populated for an <see cref="ICallback"/> value)
 /// </summary>

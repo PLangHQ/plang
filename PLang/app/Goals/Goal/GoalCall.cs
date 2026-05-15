@@ -26,7 +26,7 @@ public sealed class GoalCall : modules.IEvent
 
     /// <summary>Parameters to pass to the goal, each as a named Data value.</summary>
     [Store, LlmBuilder]
-    public List<Data.@this>? Parameters { get; set; }
+    public List<data.@this>? Parameters { get; set; }
     /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
     [Store]
     public string? PrPath { get; set; }
@@ -40,7 +40,7 @@ public sealed class GoalCall : modules.IEvent
     /// Otherwise: action chain → app.Goals → file.read fallback.
     /// Returns Data with the Goal as Value, or Data with Error if not found.
     /// </summary>
-    public async Task<Data.@this> GetGoalAsync(app.@this app, Actor.Context.@this context)
+    public async Task<data.@this> GetGoalAsync(app.@this app, Actor.Context.@this context)
     {
         // PrPath is authoritative — load from file, no name-based search
         if (!string.IsNullOrEmpty(PrPath))
@@ -51,18 +51,18 @@ public sealed class GoalCall : modules.IEvent
         while (currentGoal != null)
         {
             if (string.Equals(currentGoal.Name, Name, StringComparison.OrdinalIgnoreCase))
-                return Data.@this.Ok(currentGoal);
+                return data.@this.Ok(currentGoal);
 
             var subGoal = currentGoal.Goals.FirstOrDefault(g =>
                 string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
-            if (subGoal != null) return Data.@this.Ok(subGoal);
+            if (subGoal != null) return data.@this.Ok(subGoal);
 
             currentGoal = currentGoal.Parent;
         }
 
         // 2. Check app's loaded goals
         var loaded = app.Goals.Get(Name);
-        if (loaded != null) return Data.@this.Ok(loaded);
+        if (loaded != null) return data.@this.Ok(loaded);
 
         // 3. Derive PrPath from Name and file.read
         var prFile = $".build/{Name.ToLowerInvariant()}.pr";
@@ -88,18 +88,18 @@ public sealed class GoalCall : modules.IEvent
         return await LoadFromFile(prFile, app, context);
     }
 
-    private async Task<Data.@this> LoadFromFile(string prPath, app.@this app, Actor.Context.@this context)
+    private async Task<data.@this> LoadFromFile(string prPath, app.@this app, Actor.Context.@this context)
     {
         var readAction = new modules.file.Read
         {
             Context = context,
-            Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context))
+            Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context))
         };
         var result = await app.RunAction(readAction, context);
         if (!result.Success) return result;
 
         if (result.Value is not @this goal)
-            return Data.@this.FromError(new Errors.ActionError(
+            return data.@this.FromError(new Errors.ActionError(
                 $"File '{prPath}' did not deserialize to a Goal", "InvalidPrFile", 400));
 
         // Wire back-references: Goal.App, Step.Goal for root and sub-goals
@@ -130,9 +130,9 @@ public sealed class GoalCall : modules.IEvent
             found = goal.Goals.FirstOrDefault(g => string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
 
         if (found == null)
-            return Data.@this.FromError(new Errors.ActionError(
+            return data.@this.FromError(new Errors.ActionError(
                 $"Goal '{Name}' not found in '{prPath}'", "GoalNotFound", 404));
 
-        return Data.@this.Ok(found);
+        return data.@this.Ok(found);
     }
 }

@@ -73,7 +73,7 @@ public class ModifierFoldTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%y%"), new("value", "wrapped")
             },
@@ -82,7 +82,7 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::app.Data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
                 }
             }
         };
@@ -102,7 +102,7 @@ public class ModifierFoldTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%z%"), new("value", "nested")
             },
@@ -111,12 +111,12 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::app.Data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
                 },
                 new PrAction
                 {
                     Module = "error", ActionName = "handle",
-                    Parameters = new List<global::app.Data.@this> { new("ignoreError", true) }
+                    Parameters = new List<global::app.data.@this> { new("ignoreError", true) }
                 }
             }
         };
@@ -135,7 +135,7 @@ public class ModifierFoldTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%q%"), new("value", "full")
             },
@@ -144,12 +144,12 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::app.Data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
                 },
                 new PrAction
                 {
                     Module = "cache", ActionName = "wrap",
-                    Parameters = new List<global::app.Data.@this>
+                    Parameters = new List<global::app.data.@this>
                     {
                         new("durationMs", 60_000L),
                         new("key", "fold-test-key")
@@ -158,7 +158,7 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "error", ActionName = "handle",
-                    Parameters = new List<global::app.Data.@this> { new("ignoreError", true) }
+                    Parameters = new List<global::app.data.@this> { new("ignoreError", true) }
                 }
             }
         };
@@ -177,7 +177,7 @@ public class ModifierFoldTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%nope%"), new("value", "x")
             },
@@ -187,7 +187,7 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "variable", ActionName = "set",
-                    Parameters = new List<global::app.Data.@this>
+                    Parameters = new List<global::app.data.@this>
                     {
                         new("name", "%bad%"), new("value", "no")
                     }

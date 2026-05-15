@@ -5,14 +5,14 @@ namespace app.modules.assert.code;
 
 public interface IAssert : ICode
 {
-    Data.@this Equals(Equals action);
-    Data.@this NotEquals(NotEquals action);
-    Data.@this IsTrue(IsTrue action);
-    Data.@this IsFalse(IsFalse action);
-    Data.@this IsNull(IsNull action);
-    Data.@this IsNotNull(IsNotNull action);
-    Data.@this Contains(Contains action);
-    Data.@this NotContains(NotContains action);
-    Data.@this GreaterThan(GreaterThan action);
-    Data.@this LessThan(LessThan action);
+    data.@this Equals(Equals action);
+    data.@this NotEquals(NotEquals action);
+    data.@this IsTrue(IsTrue action);
+    data.@this IsFalse(IsFalse action);
+    data.@this IsNull(IsNull action);
+    data.@this IsNotNull(IsNotNull action);
+    data.@this Contains(Contains action);
+    data.@this NotContains(NotContains action);
+    data.@this GreaterThan(GreaterThan action);
+    data.@this LessThan(LessThan action);
 }

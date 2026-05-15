@@ -9,7 +9,7 @@ namespace app.Channels.Serializers.Serializer.Plang;
 /// envelope: <c>Type</c> + <c>Value</c> + <c>Signature</c>. Unlike <see cref="global::app.Channels.Serializers.Serializer.Plang.@this"/>
 /// (which targets <c>application/plang</c> for the older PLang-to-PLang transport) this one
 /// is the wire shape callbacks ride on. Reading <c>data.Signature</c> on Write triggers lazy
-/// signing via <see cref="global::app.Data.@this.EnsureSigned"/> when not already populated.
+/// signing via <see cref="global::app.data.@this.EnsureSigned"/> when not already populated.
 ///
 /// Read does NOT auto-verify — verification is the consumer's explicit step (callback.run
 /// invokes <c>signing.verify</c> before dispatching). The reconstructed Data has its
@@ -28,7 +28,7 @@ public sealed class Data : ISerializer
         WriteIndented = false,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
         // Strip [Sensitive]-marked properties from the envelope's Value object —
-        // mirrors global::app.Data.@this._envelopeJsonOptions. Security v1 S-F4.
+        // mirrors global::app.data.@this._envelopeJsonOptions. Security v1 S-F4.
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
             Modifiers = { global::app.Channels.Serializers.Filters.Sensitive.Strip }
@@ -38,7 +38,7 @@ public sealed class Data : ISerializer
     public async Task SerializeAsync(Stream stream, object? value, Type? type = null,
         CancellationToken cancellationToken = default)
     {
-        if (value is global::app.Data.@this data)
+        if (value is global::app.data.@this data)
         {
             data.EnsureSigned();
             var envelope = new Envelope
@@ -61,7 +61,7 @@ public sealed class Data : ISerializer
     public async Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
     {
         if (stream.Length == 0) return null;
-        if (type == typeof(global::app.Data.@this))
+        if (type == typeof(global::app.data.@this))
         {
             var env = await JsonSerializer.DeserializeAsync<Envelope>(stream, _options, cancellationToken);
             return env != null ? FromEnvelope(env) : null;
@@ -72,7 +72,7 @@ public sealed class Data : ISerializer
     public async Task<T?> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
     {
         if (stream.Length == 0) return default;
-        if (typeof(T) == typeof(global::app.Data.@this))
+        if (typeof(T) == typeof(global::app.data.@this))
         {
             var env = await JsonSerializer.DeserializeAsync<Envelope>(stream, _options, cancellationToken);
             return env != null ? (T)(object)FromEnvelope(env) : default;
@@ -82,7 +82,7 @@ public sealed class Data : ISerializer
 
     public string Serialize(object? value, Type? type = null)
     {
-        if (value is global::app.Data.@this data)
+        if (value is global::app.data.@this data)
         {
             data.EnsureSigned();
             var envelope = new Envelope
@@ -100,7 +100,7 @@ public sealed class Data : ISerializer
     public object? Deserialize(string data, Type type)
     {
         if (string.IsNullOrEmpty(data) || data == "null") return null;
-        if (type == typeof(global::app.Data.@this))
+        if (type == typeof(global::app.data.@this))
         {
             var env = JsonSerializer.Deserialize<Envelope>(data, _options);
             return env != null ? FromEnvelope(env) : null;
@@ -111,7 +111,7 @@ public sealed class Data : ISerializer
     public T? Deserialize<T>(string data)
     {
         if (string.IsNullOrEmpty(data) || data == "null") return default;
-        if (typeof(T) == typeof(global::app.Data.@this))
+        if (typeof(T) == typeof(global::app.data.@this))
         {
             var env = JsonSerializer.Deserialize<Envelope>(data, _options);
             return env != null ? (T)(object)FromEnvelope(env) : default;
@@ -119,10 +119,10 @@ public sealed class Data : ISerializer
         return JsonSerializer.Deserialize<T>(data, _options);
     }
 
-    private static global::app.Data.@this FromEnvelope(Envelope env)
+    private static global::app.data.@this FromEnvelope(Envelope env)
     {
-        var d = new global::app.Data.@this("", env.Value,
-            string.IsNullOrEmpty(env.Type) ? null : global::app.Data.Type.FromName(env.Type));
+        var d = new global::app.data.@this("", env.Value,
+            string.IsNullOrEmpty(env.Type) ? null : global::app.data.type.FromName(env.Type));
         d.Signature = env.Signature;
         return d;
     }

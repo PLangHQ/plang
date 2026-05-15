@@ -14,5 +14,5 @@ public partial class list : IContext
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<Data.@this> Run() => await Identity.ListAsync(this);
+    public async Task<data.@this> Run() => await Identity.ListAsync(this);
 }

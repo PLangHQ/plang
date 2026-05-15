@@ -7,11 +7,11 @@ namespace app.modules.file;
 [Action("save", Cacheable = false)]
 public partial class Save : IContext
 {
-    public partial Data.@this<FileSystem.Path> Path { get; init; }
-    public partial Data.@this? Value { get; init; }
+    public partial data.@this<FileSystem.Path> Path { get; init; }
+    public partial data.@this? Value { get; init; }
 
     [Code]
     public partial IFile Files { get; }
 
-    public Task<Data.@this> Run() => Files.Save(this);
+    public Task<data.@this> Run() => Files.Save(this);
 }

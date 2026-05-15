@@ -13,49 +13,49 @@ public interface IStore : IDisposable
     /// Gets a single value by table and key.
     /// Returns Data with the value, or Data with null value if not found.
     /// </summary>
-    Task<Data.@this> Get(string table, string key);
+    Task<data.@this> Get(string table, string key);
 
     /// <summary>
     /// Gets a single value by table and key, deserializing the value to T.
     /// Returns Data with a typed Value, or Data with null value if not found.
     /// </summary>
-    Task<Data.@this> Get<T>(string table, string key) where T : Data.@this;
+    Task<data.@this> Get<T>(string table, string key) where T : data.@this;
 
     /// <summary>
     /// Gets all key-value pairs in a table.
     /// Returns Data with List&lt;Data&gt; value (each item has Name=key, Value=stored value).
     /// </summary>
-    Task<Data.@this> GetAll(string table);
+    Task<data.@this> GetAll(string table);
 
     /// <summary>
     /// Gets all key-value pairs in a table, deserializing each value to T.
     /// Returns Data with List&lt;T&gt; value, or Data with error on failure.
     /// </summary>
-    Task<Data.@this<List<T>>> GetAll<T>(string table) where T : Data.@this;
+    Task<data.@this<List<T>>> GetAll<T>(string table) where T : data.@this;
 
     /// <summary>
     /// Sets a Data value by table and key. Creates the table if it doesn't exist.
     /// The full Data envelope (value, type, signature) is persisted.
     /// </summary>
-    Task<Data.@this> Set(string table, string key, Data.@this data);
+    Task<data.@this> Set(string table, string key, data.@this data);
 
     /// <summary>
     /// Removes a value by table and key.
     /// Returns success even if the key didn't exist.
     /// </summary>
-    Task<Data.@this> Remove(string table, string key);
+    Task<data.@this> Remove(string table, string key);
 
     /// <summary>
     /// Checks if a key exists in a table.
     /// Returns Data with bool value.
     /// </summary>
-    Task<Data.@this> Exists(string table, string key);
+    Task<data.@this> Exists(string table, string key);
 
     /// <summary>
     /// Lists all tables in this store.
     /// Returns Data with List&lt;string&gt; value.
     /// </summary>
-    Task<Data.@this> Tables();
+    Task<data.@this> Tables();
 
     /// <summary>
     /// Resolves the table name from a System.Type.

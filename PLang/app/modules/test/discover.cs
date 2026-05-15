@@ -27,21 +27,21 @@ public partial class discover : IContext
 {
     /// <summary>Directory to walk. Resolved under the app root; traversal outside the root is rejected.</summary>
     [Default(".")]
-    public partial Data.@this<string> Path { get; init; }
+    public partial data.@this<string> Path { get; init; }
 
     /// <summary>Filename pattern. Default matches PLang test convention.</summary>
     [Default("*.test.goal")]
-    public partial Data.@this<string> Pattern { get; init; }
+    public partial data.@this<string> Pattern { get; init; }
 
     /// <summary>Walk subdirectories. Default true.</summary>
     [Default(true)]
-    public partial Data.@this<bool> Recursive { get; init; }
+    public partial data.@this<bool> Recursive { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var fs = Context.App!.FileSystem;
 
-        app.Data.@this empty = app.Data.@this.Ok(new List<global::app.Tester.File>());
+        app.data.@this empty = app.data.@this.Ok(new List<global::app.Tester.File>());
 
         string absRoot;
         try { absRoot = fs.ValidatePath(Path.Value); }
@@ -65,7 +65,7 @@ public partial class discover : IContext
         foreach (var match in matches)
             files.Add(DiscoverOne(match, fs, include, exclude));
 
-        return Task.FromResult(app.Data.@this.Ok(files));
+        return Task.FromResult(app.data.@this.Ok(files));
     }
 
     /// <summary>Discovers metadata for a single .test.goal file.</summary>

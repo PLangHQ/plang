@@ -14,9 +14,9 @@ namespace app.modules.@event;
 public partial class SkipAction : IContext
 {
     /// <summary>Value to return instead of the action's real result. Null returns empty success.</summary>
-    public partial Data.@this Value { get; init; }
+    public partial data.@this Value { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         Context.EventOverride = Data(Value?.Value);
         return Task.FromResult(Data(Value?.Value));

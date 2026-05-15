@@ -19,27 +19,27 @@ public class Default : IBuilder
 
     // --- Actions ---
 
-    public Task<Data.@this> Actions(GetActions action)
+    public Task<data.@this> Actions(GetActions action)
     {
 
-        return Task.FromResult(Data.@this.Ok(action.Context.App.Modules.Describe()));
+        return Task.FromResult(data.@this.Ok(action.Context.App.Modules.Describe()));
     }
 
     // --- Types ---
 
-    public Data.@this Types(types action)
+    public data.@this Types(types action)
     {
 
         // The catalog is a structured object now — Build assembles primitives and
         // discovered record/enum entries. It pre-renders TypeNames/TypeSchemas for
         // the Liquid template, and keeps Types/PrimitiveNames for introspection
         // (JSON, UI, trace viewer).
-        return Data.@this.Ok(action.Context.App.Modules.Schema.Build());
+        return data.@this.Ok(action.Context.App.Modules.Schema.Build());
     }
 
     // --- Goals ---
 
-    public async Task<Data.@this> Goals(goals action)
+    public async Task<data.@this> Goals(goals action)
     {
 
         var app = action.Context.App;
@@ -49,9 +49,9 @@ public class Default : IBuilder
         var listAction = new file.List
         {
             Context = context,
-            Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(searchPath, context)),
-            Pattern = new Data.@this<string>("", "*.goal"),
-            Recursive = new Data.@this<bool>("", true)
+            Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(searchPath, context)),
+            Pattern = new data.@this<string>("", "*.goal"),
+            Recursive = new data.@this<bool>("", true)
         };
         var listResult = await app.RunAction(listAction, context);
         if (!listResult.Success)
@@ -59,7 +59,7 @@ public class Default : IBuilder
 
         var files = listResult.Value as FileSystem.Path[];
         if (files == null || files.Length == 0)
-            return Data.@this.Ok(new List<Goal>());
+            return data.@this.Ok(new List<Goal>());
 
         // Filter by app.Builder.Files if set (--build={"files":[...]})
         // Honor the user's specified order — building has bootstrapping concerns
@@ -100,7 +100,7 @@ public class Default : IBuilder
             }
             files = ordered.ToArray();
             if (files.Length == 0)
-                return Data.@this.Ok(new List<Goal>());
+                return data.@this.Ok(new List<Goal>());
         }
 
         var allGoals = new List<Goal>();
@@ -108,7 +108,7 @@ public class Default : IBuilder
 
         foreach (var file in files)
         {
-            var readAction = new file.Read { Context = context, Path = Data.@this<FileSystem.Path>.Ok(file) };
+            var readAction = new file.Read { Context = context, Path = data.@this<FileSystem.Path>.Ok(file) };
             var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
@@ -138,13 +138,13 @@ public class Default : IBuilder
 
         _buildTimer.Restart();
 
-        var result = Data.@this.Ok(allGoals);
+        var result = data.@this.Ok(allGoals);
         if (allErrors.Count > 0)
             result.Warnings = allErrors;
         return result;
     }
 
-    public async Task<Data.@this> GoalsSave(goalsSave action)
+    public async Task<data.@this> GoalsSave(goalsSave action)
     {
 
         var app = action.Context.App;
@@ -163,7 +163,7 @@ public class Default : IBuilder
 
         var prPath = goal.PrPath;
         if (string.IsNullOrEmpty(prPath))
-            return Data.@this.FromError(new Errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return data.@this.FromError(new Errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Group modifier actions onto their preceding executable action — recursive so
         // sub-goals are grouped too. Without this, sub-goal steps serialize with flat
@@ -183,8 +183,8 @@ public class Default : IBuilder
         var saveAction = new file.Save
         {
             Context = context,
-            Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context)),
-            Value = new Data.@this("", json)
+            Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context)),
+            Value = new data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
 
@@ -193,12 +193,12 @@ public class Default : IBuilder
             $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
         _buildTimer.Restart();
 
-        return saveResult.Success ? Data.@this.Ok(true) : saveResult;
+        return saveResult.Success ? data.@this.Ok(true) : saveResult;
     }
 
     // --- Validate ---
 
-    public async Task<Data.@this> Validate(validate action)
+    public async Task<data.@this> Validate(validate action)
     {
 
         var app = action.Context.App;
@@ -206,7 +206,7 @@ public class Default : IBuilder
         var modules = app.Modules;
 
         if (action.Actions?.Value == null)
-            return Data.@this.Ok(true);
+            return data.@this.Ok(true);
 
         var actions = action.Actions!.Value!;
         var notFound = new List<string>();
@@ -232,7 +232,7 @@ public class Default : IBuilder
 
         if (notFound.Count > 0)
         {
-            return Data.@this.FromError(new Errors.ActionError(
+            return data.@this.FromError(new Errors.ActionError(
                 $"Actions not found: {string.Join("; ", notFound)}",
                 "ActionNotFound", 400));
         }
@@ -331,17 +331,17 @@ public class Default : IBuilder
 
         if (validationErrors.Count > 0)
         {
-            return Data.@this.FromError(new Errors.ActionError(
+            return data.@this.FromError(new Errors.ActionError(
                 string.Join("; ", validationErrors),
                 "BuildValidation", 400));
         }
 
-        return Data.@this.Ok(true);
+        return data.@this.Ok(true);
     }
 
     // --- Merge ---
 
-    public Data.@this Merge(merge action)
+    public data.@this Merge(merge action)
     {
 
         // Diagnostic — gated by app.Debug.IsEnabled, drops on the floor in production.
@@ -354,18 +354,18 @@ public class Default : IBuilder
             $"from.Index={from?.Index} from.Keep={from?.Keep} from.Actions={from?.Actions.Count}");
 
         action.Step.Value!.Merge(action.StepFromLlm.Value!);
-        return Data.@this.Ok(action.Step.Value);
+        return data.@this.Ok(action.Step.Value);
     }
 
     // --- Enrich Response ---
 
-    public Data.@this EnrichResponse(enrichResponse action)
+    public data.@this EnrichResponse(enrichResponse action)
     {
 
         var response = action.StepResults.Value;
         var goal = action.Goal.Value;
         if (response == null || goal == null)
-            return Data.@this.Ok(response);
+            return data.@this.Ok(response);
 
         foreach (var step in response.Steps)
         {
@@ -403,7 +403,7 @@ public class Default : IBuilder
             }
         }
 
-        return Data.@this.Ok(response);
+        return data.@this.Ok(response);
     }
 
     private static string RenderFormal(Actions actions)
@@ -453,15 +453,15 @@ public class Default : IBuilder
 
     // --- App ---
 
-    public async Task<Data.@this> Load(load action)
+    public async Task<data.@this> Load(load action)
     {
 
         var app = action.Context.App;
         // App loads its identity from app.pr at Start() — just return it
-        return Data.@this.Ok(app);
+        return data.@this.Ok(app);
     }
 
-    public async Task<Data.@this> AppSave(appSave action)
+    public async Task<data.@this> AppSave(appSave action)
     {
 
         return await action.Context.App.Save();
@@ -469,12 +469,12 @@ public class Default : IBuilder
 
     // --- Promote Groups ---
 
-    public async Task<Data.@this> PromoteGroups(promoteGroups action)
+    public async Task<data.@this> PromoteGroups(promoteGroups action)
     {
 
         var steps = ToStepList(action.Steps.Value);
         if (steps == null || steps.Count == 0)
-            return Data.@this.Ok(action.Steps.Value);
+            return data.@this.Ok(action.Steps.Value);
 
         // Collect groups and find the lowest level in each
         var groupLevels = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -508,7 +508,7 @@ public class Default : IBuilder
             if (string.Equals(currentLevel, "high", StringComparison.OrdinalIgnoreCase))
             {
                 if (!SetValue(step, "level", groupLevel))
-                    return Data.@this.FromError(new Errors.ActionError(
+                    return data.@this.FromError(new Errors.ActionError(
                         $"PromoteGroups received a step as JsonElement (immutable) — expected IDictionary. " +
                         $"Step type: {step.GetType().FullName}. Group: '{group}'.",
                         "PromoteGroupsImmutableStep", 500));
@@ -520,7 +520,7 @@ public class Default : IBuilder
             await action.Context.App.CurrentActor.Channels.WriteTextAsync(global::app.Channels.@this.Output,
                 $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
 
-        return Data.@this.Ok(action.Steps.Value);
+        return data.@this.Ok(action.Steps.Value);
     }
 
     private static string LowestLevel(string a, string b)
@@ -603,7 +603,7 @@ public class Default : IBuilder
                     if (schemaProp == null) continue;
                     var typeName = context.App.Types.GetTypeName(schemaProp.PropertyType);
                     if (typeName != "object")
-                        p.Type = new Data.Type(typeName);
+                        p.Type = new data.type(typeName);
                 }
             }
 
@@ -729,7 +729,7 @@ public class Default : IBuilder
         var readAction = new file.Read
         {
             Context = context,
-            Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context))
+            Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context))
         };
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
@@ -788,7 +788,7 @@ public class Default : IBuilder
                     var existsAction = new file.Exists
                     {
                         Context = context,
-                        Path = Data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(expectedPrPath, context))
+                        Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(expectedPrPath, context))
                     };
                     var existsResult = await app.RunAction(existsAction, context);
                     if (existsResult.Success && existsResult.Value is FileSystem.Path pathData && pathData.Exists)

@@ -36,7 +36,7 @@ public sealed class OpenAi : ILlm
     private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
-    public async Task<Data.@this> Query(query action)
+    public async Task<data.@this> Query(query action)
     {
         var app = action.Context.App;
         var context = action.Context;
@@ -52,7 +52,7 @@ public sealed class OpenAi : ILlm
 
         // --- Validate ---
         if (action.Messages.Value!.Count == 0)
-            return global::app.Data.@this.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
+            return global::app.data.@this.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
 
         // --- Build messages ---
         var messages = CloneMessages(action.Messages.Value!);
@@ -167,17 +167,17 @@ public sealed class OpenAi : ILlm
             var httpAction = new request
             {
                 Context = context,
-                Url = new Data.@this<string>("", endpoint),
-                Method = new Data.@this<PlangHttpMethod>("", PlangHttpMethod.POST),
-                Body = new Data.@this("", body),
-                Headers = new Data.@this<Dictionary<string, object>>("", headers),
-                Unsigned = new Data.@this<bool>("", true),
-                TimeoutInSec = new Data.@this<int>("", 120),
+                Url = new data.@this<string>("", endpoint),
+                Method = new data.@this<PlangHttpMethod>("", PlangHttpMethod.POST),
+                Body = new data.@this("", body),
+                Headers = new data.@this<Dictionary<string, object>>("", headers),
+                Unsigned = new data.@this<bool>("", true),
+                TimeoutInSec = new data.@this<int>("", 120),
                 OnStream = action.OnStream,
-                StreamAs = action.OnStream?.Value != null ? new Data.@this<StreamFormat>("", StreamFormat.SSE) : default
+                StreamAs = action.OnStream?.Value != null ? new data.@this<StreamFormat>("", StreamFormat.SSE) : default
             };
 
-            Data.@this httpResult = await app.RunAction(httpAction, context);
+            data.@this httpResult = await app.RunAction(httpAction, context);
             if (action.OnStream?.Value != null)
             {
                 // TODO: streaming tool call accumulation needs work
@@ -193,8 +193,8 @@ public sealed class OpenAi : ILlm
             if (responseJson == null)
             {
                 if (parseEx != null)
-                    return global::app.Data.@this.FromError(ActionError.FromException(parseEx, "ParseError", 500));
-                return global::app.Data.@this.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
+                    return global::app.data.@this.FromError(ActionError.FromException(parseEx, "ParseError", 500));
+                return global::app.data.@this.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
             }
 
             // Extract usage
@@ -207,7 +207,7 @@ public sealed class OpenAi : ILlm
 
             // Get first choice
             if (!responseJson.Value.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
-                return global::app.Data.@this.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
+                return global::app.data.@this.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
 
             var choice = choices[0];
             var message = choice.GetProperty("message");
@@ -238,7 +238,7 @@ public sealed class OpenAi : ILlm
                     : finishReason == "content_filter"
                     ? "LLM refused the request via content filter."
                     : $"LLM response ended abnormally (finish_reason={finishReason}).";
-                return global::app.Data.@this.FromError(new ActionError(msg, key, 400)
+                return global::app.data.@this.FromError(new ActionError(msg, key, 400)
                 {
                     Details = new Dictionary<string, object?>
                     {
@@ -328,7 +328,7 @@ public sealed class OpenAi : ILlm
                         parsed = TryParseJson(fromBlock);
 
                     if (parsed == null)
-                        return global::app.Data.@this.FromError(new ActionError(
+                        return global::app.data.@this.FromError(new ActionError(
                             "Response is not valid JSON", "JsonParseError", 400)
                         {
                             Details = new Dictionary<string, object?>
@@ -350,7 +350,7 @@ public sealed class OpenAi : ILlm
                 {
                     Name = action.OnValidateResponse.Value.Name,
                     PrPath = action.OnValidateResponse.Value.PrPath,
-                    Parameters = new List<Data.@this> { new Data.@this("response", extracted) }
+                    Parameters = new List<data.@this> { new data.@this("response", extracted) }
                 };
                 var validationResult = await app.RunGoalAsync(validationCall, context);
 
@@ -362,7 +362,7 @@ public sealed class OpenAi : ILlm
                     {
                         await app.CurrentActor.Channels.WriteTextAsync(global::app.Channels.@this.Output,
                             $"  Validation failed (no retries left): {validationError}{Environment.NewLine}");
-                        return global::app.Data.@this.FromError(new ActionError(
+                        return global::app.data.@this.FromError(new ActionError(
                             $"LLM validation failed: {validationError}",
                             "ValidationFailed", 400));
                     }
@@ -390,7 +390,7 @@ public sealed class OpenAi : ILlm
 
             // --- Build result ---
             object? resultValue = effectiveFormat == "json" ? TryParseJson(extracted) : (object?)extracted;
-            var result = global::app.Data.@this.Ok(resultValue);
+            var result = global::app.data.@this.Ok(resultValue);
 
             // --- Cache store ---
             // Properties are [JsonIgnore] on Data, so store metadata as the value itself
@@ -410,7 +410,7 @@ public sealed class OpenAi : ILlm
                     ["Format"] = effectiveFormat,
                     ["Schema"] = schema
                 };
-                await settings.Set(CacheTable, cacheKey, new Data.@this("cache", cacheEntry));
+                await settings.Set(CacheTable, cacheKey, new data.@this("cache", cacheEntry));
             }
 
             // --- Populate response properties ---
@@ -433,7 +433,7 @@ public sealed class OpenAi : ILlm
         }
 
         // Loop exited via break (MaxToolCalls or streaming)
-        var exitResult = global::app.Data.@this.Ok(lastContent);
+        var exitResult = global::app.data.@this.Ok(lastContent);
         SetProp(exitResult, "Model", model);
         SetProp(exitResult, "ToolCallCount", toolCallCount);
         SetProp(exitResult, "PromptTokens", totalPromptTokens);
@@ -457,11 +457,11 @@ public sealed class OpenAi : ILlm
             {
                 Name = action.OnToolCall.Value.Name,
                 PrPath = action.OnToolCall.Value.PrPath,
-                Parameters = new List<Data.@this>
+                Parameters = new List<data.@this>
                 {
-                    new Data.@this("name", toolCall.Name),
-                    new Data.@this("arguments", toolCall.Arguments),
-                    new Data.@this("status", "starting")
+                    new data.@this("name", toolCall.Name),
+                    new data.@this("arguments", toolCall.Arguments),
+                    new data.@this("status", "starting")
                 }
             };
             await app.RunGoalAsync(startCall, context);
@@ -506,12 +506,12 @@ public sealed class OpenAi : ILlm
             {
                 Name = action.OnToolCall.Value.Name,
                 PrPath = action.OnToolCall.Value.PrPath,
-                Parameters = new List<Data.@this>
+                Parameters = new List<data.@this>
                 {
-                    new Data.@this("name", toolCall.Name),
-                    new Data.@this("arguments", toolCall.Arguments),
-                    new Data.@this("result", result),
-                    new Data.@this("status", "completed")
+                    new data.@this("name", toolCall.Name),
+                    new data.@this("arguments", toolCall.Arguments),
+                    new data.@this("result", result),
+                    new data.@this("status", "completed")
                 }
             };
             await app.RunGoalAsync(endCall, context);
@@ -523,9 +523,9 @@ public sealed class OpenAi : ILlm
     /// <summary>
     /// Parses the LLM's JSON arguments string into List&lt;Data&gt; matching the GoalCall's parameter definitions.
     /// </summary>
-    private static List<Data.@this> ParseToolArguments(string argumentsJson, List<Data.@this>? parameterDefs)
+    private static List<data.@this> ParseToolArguments(string argumentsJson, List<data.@this>? parameterDefs)
     {
-        var result = new List<Data.@this>();
+        var result = new List<data.@this>();
 
         if (string.IsNullOrEmpty(argumentsJson))
             return result;
@@ -545,15 +545,15 @@ public sealed class OpenAi : ILlm
                     JsonValueKind.Null => null,
                     _ => prop.Value.GetRawText()
                 };
-                result.Add(new Data.@this(prop.Name, value));
+                result.Add(new data.@this(prop.Name, value));
             }
         }
         catch (JsonException ex)
         {
             // Return error Data so the caller sees the parse failure with full exception
-            return new List<Data.@this>
+            return new List<data.@this>
             {
-                global::app.Data.@this.FromError(ActionError.FromException(ex, "JsonParseError", 400))
+                global::app.data.@this.FromError(ActionError.FromException(ex, "JsonParseError", 400))
             };
         }
 
@@ -563,7 +563,7 @@ public sealed class OpenAi : ILlm
             foreach (var def in parameterDefs)
             {
                 if (!result.Any(r => r.Name == def.Name) && def.Value != null)
-                    result.Add(new Data.@this(def.Name, def.Value));
+                    result.Add(new data.@this(def.Name, def.Value));
             }
         }
 
@@ -752,7 +752,7 @@ public sealed class OpenAi : ILlm
 
     // --- Parameter schema ---
 
-    private static Dictionary<string, object> BuildParamSchema(List<Data.@this>? parameters)
+    private static Dictionary<string, object> BuildParamSchema(List<data.@this>? parameters)
     {
         if (parameters == null || parameters.Count == 0)
             return new Dictionary<string, object>
@@ -829,7 +829,7 @@ public sealed class OpenAi : ILlm
         var result = await settings.Get("LlmConfig", settingKey);
         if (result.Success && result.Value != null)
         {
-            var val = result.Value is Data.@this d ? d.Value?.ToString() : result.Value.ToString();
+            var val = result.Value is data.@this d ? d.Value?.ToString() : result.Value.ToString();
             if (!string.IsNullOrEmpty(val)) return val;
         }
 
@@ -885,7 +885,7 @@ public sealed class OpenAi : ILlm
     /// Restores a cached result from the SettingsStore.
     /// The cache stores metadata as a dictionary since Data.Properties is [JsonIgnore].
     /// </summary>
-    private static Data.@this RestoreFromCache(Data.@this cached)
+    private static data.@this RestoreFromCache(data.@this cached)
     {
         // The cached value is a dictionary with Value + metadata
         object? resultValue = null;
@@ -924,16 +924,16 @@ public sealed class OpenAi : ILlm
             resultValue = cached.Value;
         }
 
-        var result = global::app.Data.@this.Ok(resultValue);
+        var result = global::app.data.@this.Ok(resultValue);
         SetProp(result, "Cached", true);
         foreach (var kvp in props)
             SetProp(result, kvp.Key, kvp.Value);
         return result;
     }
 
-    private static void SetProp(Data.@this data, string name, object? value)
+    private static void SetProp(data.@this data, string name, object? value)
     {
-        data.Properties[name] = new Data.@this(name, value);
+        data.Properties[name] = new data.@this(name, value);
     }
 
     private static List<LlmMessage> CloneMessages(List<LlmMessage> messages)

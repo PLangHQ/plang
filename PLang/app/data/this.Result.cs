@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using app.Errors;
 
-namespace app.Data;
+namespace app.data;
 
 /// <summary>
 /// Data — result/error concern.
@@ -42,7 +42,7 @@ public partial class @this
     // --- Static helpers (replace Return helpers) ---
 
     public static @this Ok() => new("");
-    public static @this Ok(object? value, Type? type = null) => new("", value, type);
+    public static @this Ok(object? value, type? type = null) => new("", value, type);
     public static @this FromError(IError error) => new("") { Error = error };
     public static T FromError<T>(IError error) where T : @this, new() => new() { Error = error };
 

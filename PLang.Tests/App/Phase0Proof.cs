@@ -2,7 +2,7 @@ using app;
 using global::app.Errors;
 using global::app.Variables;
 using global::app.Utils;
-using R2 = global::app.Data;
+using R2 = global::app.data;
 
 namespace PLang.Tests.App;
 
@@ -45,8 +45,8 @@ public class Phase0Proof
     [Test]
     public async Task Phase01_GenericDataFromError()
     {
-        // INPUT: generic global::app.Data.@this<T>.FromError
-        var result = global::app.Data.@this<string>.FromError(new Error("oops"));
+        // INPUT: generic global::app.data.@this<T>.FromError
+        var result = global::app.data.@this<string>.FromError(new Error("oops"));
 
         // OUTPUT: typed error result
         await Assert.That(result.Success).IsFalse();
@@ -150,7 +150,7 @@ public class Phase0Proof
             count = 3,
             value = new List<object?> { 1, 2, 3 }
         };
-        var result = Data.Ok(listValue, R2.Type.FromName("list"));
+        var result = Data.Ok(listValue, R2.type.FromName("list"));
 
         // OUTPUT: Type is "list", not the CLR type name
         await Assert.That(result.Type).IsNotNull();

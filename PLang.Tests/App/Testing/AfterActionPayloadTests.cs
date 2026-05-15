@@ -182,7 +182,7 @@ public class AfterActionPayloadTests
         await Assert.That(seenResult).IsNull();
     }
 
-    // Failed action (Data.Success == false) still triggers AfterAction — the error is
+    // Failed action (data.Success == false) still triggers AfterAction — the error is
     // visible to the user so the action "threw" from their perspective, and coverage
     // tracks attempted execution. (independent — architect flagged as open question §5.6)
     [Test]

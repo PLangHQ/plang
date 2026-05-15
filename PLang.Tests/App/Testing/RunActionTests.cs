@@ -96,9 +96,9 @@ public class RunActionTests
         var action = new global::app.modules.test.run
         {
             Context = _app.User.Context,
-            Tests = new global::app.Data.@this<List<global::app.Tester.File>>("Tests", tests),
-            Parallel = parallel.HasValue ? new global::app.Data.@this<int>("Parallel", parallel.Value) : null,
-            Timeout = timeoutSec.HasValue ? new global::app.Data.@this<int>("Timeout", timeoutSec.Value) : null
+            Tests = new global::app.data.@this<List<global::app.Tester.File>>("Tests", tests),
+            Parallel = parallel.HasValue ? new global::app.data.@this<int>("Parallel", parallel.Value) : null,
+            Timeout = timeoutSec.HasValue ? new global::app.data.@this<int>("Timeout", timeoutSec.Value) : null
         };
         var result = await action.Run();
         return (Results)result.Value!;

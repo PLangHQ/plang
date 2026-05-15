@@ -46,8 +46,8 @@ public class ValidateResponseTests
         return new validateResponse
         {
             Context = app.User.Context,
-            StepResults = new global::app.Data.@this<BuildResponse>("", response),
-            Goal = new global::app.Data.@this<Goal>("", goal)
+            StepResults = new global::app.data.@this<BuildResponse>("", response),
+            Goal = new global::app.data.@this<Goal>("", goal)
         };
     }
 
@@ -117,8 +117,8 @@ public class ValidateResponseTests
         var action = new validateResponse
         {
             Context = _app.User.Context,
-            StepResults = new global::app.Data.@this<BuildResponse>(),
-            Goal = new global::app.Data.@this<Goal>(),
+            StepResults = new global::app.data.@this<BuildResponse>(),
+            Goal = new global::app.data.@this<Goal>(),
         };
         var result = await action.Run();
 
@@ -167,7 +167,7 @@ public class ValidateResponseTests
     {
         var step = new Step { Index = 0 };
         var act = new PrAction { Module = "output", ActionName = "write" };
-        act.Parameters.Add(new Data("Data", "Hello %name%", new global::app.Data.Type("tstring")));
+        act.Parameters.Add(new Data("Data", "Hello %name%", new global::app.data.type("tstring")));
         step.Actions.Add(act);
 
         var response = new BuildResponse { Steps = new() { step } };
@@ -186,7 +186,7 @@ public class ValidateResponseTests
             ["value"] = "Hello %name%",
             ["key"] = null,
         };
-        act.Parameters.Add(new Data("Data", record, new global::app.Data.Type("tstring")));
+        act.Parameters.Add(new Data("Data", record, new global::app.data.type("tstring")));
         step.Actions.Add(act);
 
         var response = new BuildResponse { Steps = new() { step } };
@@ -207,7 +207,7 @@ public class ValidateResponseTests
             ["raw"] = "/tmp/x.txt",
             ["absolute"] = "/tmp/x.txt",
         };
-        act.Parameters.Add(new Data("Path", record, new global::app.Data.Type("path")));
+        act.Parameters.Add(new Data("Path", record, new global::app.data.type("path")));
         step.Actions.Add(act);
 
         var response = new BuildResponse { Steps = new() { step } };
@@ -226,7 +226,7 @@ public class ValidateResponseTests
         var act = new PrAction { Module = "output", ActionName = "write" };
         act.Parameters.Add(new Data("Data",
             new Dictionary<string, object?> { ["value"] = "x" },
-            new global::app.Data.Type("tstring")));
+            new global::app.data.type("tstring")));
         step.Actions.Add(act);
 
         var response = new BuildResponse { Steps = new() { step } };

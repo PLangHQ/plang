@@ -22,7 +22,7 @@ public partial class @this
         // Latest first — undo each mutation by writing its Before value.
         var events = stack.EventsSince(error.CreatedUtc).Reverse();
         foreach (var diff in events)
-            clone._variables[diff.Name] = new Data.@this(diff.Name, diff.Before) { Context = _context };
+            clone._variables[diff.Name] = new data.@this(diff.Name, diff.Before) { Context = _context };
         return clone;
     }
 

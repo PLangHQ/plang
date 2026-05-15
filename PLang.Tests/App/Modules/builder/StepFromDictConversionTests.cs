@@ -125,7 +125,7 @@ public class StepFromDictConversionTests
         using var doc = JsonDocument.Parse(json);
         var rootEl = doc.RootElement.Clone();
 
-        // Wrap in Data as llm.query does: Data.@this.Ok(resultValue)
+        // Wrap in Data as llm.query does: data.@this.Ok(resultValue)
         var stepData = Data.Ok(rootEl);
         var dictValue = stepData.Value; // UnwrapJsonElement runs in ctor
 

@@ -16,14 +16,14 @@ namespace app.Variables.Calls.Call;
 /// </summary>
 public sealed class @this : IAsyncDisposable
 {
-    private readonly Dictionary<string, Data.@this> _entries =
+    private readonly Dictionary<string, data.@this> _entries =
         new(StringComparer.OrdinalIgnoreCase);
     private readonly Calls.@this _owner;
 
     /// <summary>Outer Call (the one that was Current when this was pushed). Null at root.</summary>
     public @this? Caller { get; }
 
-    internal @this(IEnumerable<Data.@this>? parameters, @this? caller, Calls.@this owner)
+    internal @this(IEnumerable<data.@this>? parameters, @this? caller, Calls.@this owner)
     {
         Caller = caller;
         _owner = owner;
@@ -39,7 +39,7 @@ public sealed class @this : IAsyncDisposable
     /// Looks up <paramref name="name"/> in this overlay, walking up <see cref="Caller"/>
     /// so an inner scope shadows an outer one. Case-insensitive.
     /// </summary>
-    public bool TryGet(string name, out Data.@this value)
+    public bool TryGet(string name, out data.@this value)
     {
         var node = this;
         while (node != null)
@@ -59,7 +59,7 @@ public sealed class @this : IAsyncDisposable
     /// Writes <paramref name="value"/> into this overlay under <paramref name="name"/>.
     /// Does not propagate to <see cref="Caller"/> — siblings are isolated.
     /// </summary>
-    public void Set(string name, Data.@this value)
+    public void Set(string name, data.@this value)
     {
         _entries[name] = value;
     }

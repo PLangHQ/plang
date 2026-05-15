@@ -17,13 +17,13 @@ public partial class validateResponse : IContext
 {
     /// <summary>The LLM response. Framework deserializes the raw JsonElement to BuildResponse.</summary>
     [IsNotNull]
-    public partial Data.@this<BuildResponse> StepResults { get; init; }
+    public partial data.@this<BuildResponse> StepResults { get; init; }
 
     /// <summary>The goal being built — used to verify step count and prior actions.</summary>
     [IsNotNull]
-    public partial Data.@this<Goal> Goal { get; init; }
+    public partial data.@this<Goal> Goal { get; init; }
 
-    public Task<app.Data.@this> Run()
+    public Task<app.data.@this> Run()
     {
         var response = StepResults.Value;
         var goal = Goal.Value;
@@ -55,7 +55,7 @@ public partial class validateResponse : IContext
                             ? $"Goal.Value is null but Data was initialized. Raw value type: {g.RawValue?.GetType().Name ?? "null"}"
                             : "Goal parameter is uninitialized (%goal% not in scope when builder.validateResponse ran)");
             }
-            return Task.FromResult(app.Data.@this.FromError(
+            return Task.FromResult(app.data.@this.FromError(
                 new Errors.ActionError(string.Join("; ", problems), "ValidationError", 400)));
         }
         return Task.FromResult(Validate(response, goal, Context.App));
@@ -65,7 +65,7 @@ public partial class validateResponse : IContext
     /// Public so SaveGoal can re-run validation as a safety net before persisting.
     /// Builds a fresh BuildResponse from the goal's current Steps and validates.
     /// </summary>
-    public static app.Data.@this ValidateGoalState(Goal goal)
+    public static app.data.@this ValidateGoalState(Goal goal)
     {
         var response = new BuildResponse
         {
@@ -88,7 +88,7 @@ public partial class validateResponse : IContext
     }
 
 
-    private static app.Data.@this Validate(BuildResponse response, Goal goal, global::app.@this? app)
+    private static app.data.@this Validate(BuildResponse response, Goal goal, global::app.@this? app)
     {
         // Auto-fill missing indexes with keep:true placeholders when prior has actions.
         // The LLM sometimes drops a step entirely (omits its index) when it intends
@@ -255,10 +255,10 @@ public partial class validateResponse : IContext
         if (errors.Count > 0)
         {
             var message = string.Join("\n", errors.Select(e => $"- {e}"));
-            return global::app.Data.@this.FromError(new Errors.ActionError(message, "ValidationErrors", 400));
+            return global::app.data.@this.FromError(new Errors.ActionError(message, "ValidationErrors", 400));
         }
 
-        return global::app.Data.@this.Ok(true);
+        return global::app.data.@this.Ok(true);
     }
 }
 

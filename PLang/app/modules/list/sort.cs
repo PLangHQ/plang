@@ -6,11 +6,11 @@ namespace app.modules.list;
 [Action("sort", Cacheable = false)]
 public partial class Sort : IContext
 {
-    public partial Data.@this<Variable> ListName { get; init; }
+    public partial data.@this<Variable> ListName { get; init; }
     [Default(false)]
-    public partial Data.@this<bool> Descending { get; init; }
+    public partial data.@this<bool> Descending { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         if (data.Value is not List<object?> list)
@@ -22,6 +22,6 @@ public partial class Sort : IContext
         else
             list.Sort((a, b) => Comparer<object>.Default.Compare(a, b));
 
-        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.Data.Type.FromName("list")));
+        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
     }
 }

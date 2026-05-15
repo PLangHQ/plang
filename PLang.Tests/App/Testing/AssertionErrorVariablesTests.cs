@@ -86,7 +86,7 @@ public class AssertionErrorVariablesTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        // On success, Data.Error is null — nothing to populate.
+        // On success, data.Error is null — nothing to populate.
         await Assert.That(result.Error).IsNull();
     }
 

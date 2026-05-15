@@ -6,11 +6,11 @@ namespace app.modules.math;
 [Action("round")]
 public partial class Round : IContext
 {
-    public partial Data.@this Value { get; init; }
+    public partial data.@this Value { get; init; }
     [Default(0)]
-    public partial Data.@this<int> Decimals { get; init; }
+    public partial data.@this<int> Decimals { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var result = Math.Round(MathHelper.ToDouble(Value.Value), Decimals.Value, MidpointRounding.AwayFromZero);
         if (Decimals.Value == 0)

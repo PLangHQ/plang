@@ -14,12 +14,12 @@ namespace app.modules.code;
 public partial class load : IContext
 {
     /// <summary>Path to the DLL to load (relative to app root or absolute).</summary>
-    public partial Data.@this<string>? Path { get; init; }
+    public partial data.@this<string>? Path { get; init; }
 
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
-    public partial Data.@this<string>? Name { get; init; }
+    public partial data.@this<string>? Name { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         if (string.IsNullOrEmpty(Path?.Value))
             return Error(new ActionError("Provider path is required", "ValidationError", 400));

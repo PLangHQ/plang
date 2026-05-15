@@ -8,12 +8,12 @@ namespace app.modules.error;
 public partial class Throw : IContext
 {
     [IsNotNull]
-    public partial Data.@this<string> Message { get; init; }
+    public partial data.@this<string> Message { get; init; }
     [Default(500)]
-    public partial Data.@this<int> StatusCode { get; init; }
-    public partial Data.@this<string>? Key { get; init; }
+    public partial data.@this<int> StatusCode { get; init; }
+    public partial data.@this<string>? Key { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         return Task.FromResult(Error(
             new ServiceError(Message.Value!, Key?.Value ?? "UserError", StatusCode.Value)));

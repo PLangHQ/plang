@@ -10,10 +10,10 @@ public interface INavigator
     /// <summary>
     /// Whether this navigator can handle the given Data (based on its Value type).
     /// </summary>
-    bool CanNavigate(Data.@this data);
+    bool CanNavigate(data.@this data);
 
     /// <summary>
     /// Navigate into the data's content by key. Returns Data.Null(key) if the key doesn't exist.
     /// </summary>
-    Data.@this Navigate(Data.@this data, string key);
+    data.@this Navigate(data.@this data, string key);
 }

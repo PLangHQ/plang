@@ -1,6 +1,6 @@
 using global::app.Errors;
 using global::app.Variables;
-using Type = global::app.Data.Type;
+using Type = global::app.data.type;
 
 namespace PLang.Tests.App.DataTests;
 
@@ -9,7 +9,7 @@ public class DataGenericTests
     [Test]
     public async Task Ok_StoresTypedValue()
     {
-        var data = global::app.Data.@this<string>.Ok("hello");
+        var data = global::app.data.@this<string>.Ok("hello");
 
         await Assert.That(data.Value).IsEqualTo("hello");
         await Assert.That(data.Success).IsTrue();
@@ -18,7 +18,7 @@ public class DataGenericTests
     [Test]
     public async Task Ok_WithType_SetsType()
     {
-        var data = global::app.Data.@this<int>.Ok(42, Type.Int);
+        var data = global::app.data.@this<int>.Ok(42, Type.Int);
 
         await Assert.That(data.Value).IsEqualTo(42);
         await Assert.That(data.Type).IsNotNull();
@@ -28,7 +28,7 @@ public class DataGenericTests
     [Test]
     public async Task Value_ReturnsTypedValue()
     {
-        var data = global::app.Data.@this<string>.Ok("world");
+        var data = global::app.data.@this<string>.Ok("world");
 
         string? typed = data.Value;
 
@@ -38,8 +38,8 @@ public class DataGenericTests
     [Test]
     public async Task Value_WrongType_ReturnsDefault()
     {
-        // Create a global::app.Data.@this<int> then set base value to a string via base class
-        var data = new global::app.Data.@this<int>("test", 42);
+        // Create a global::app.data.@this<int> then set base value to a string via base class
+        var data = new global::app.data.@this<int>("test", 42);
         ((Data)data).Value = "not an int";
 
         await Assert.That(data.Value).IsEqualTo(default(int));
@@ -49,7 +49,7 @@ public class DataGenericTests
     public async Task Fail_CreatesErrorResult()
     {
         var error = new ServiceError("something failed", "TestError", 500);
-        var data = global::app.Data.@this<string>.FromError(error);
+        var data = global::app.data.@this<string>.FromError(error);
 
         await Assert.That(data.Success).IsFalse();
         await Assert.That(data.Error).IsNotNull();
@@ -59,7 +59,7 @@ public class DataGenericTests
     [Test]
     public async Task IsAssignableToData()
     {
-        global::app.Data.@this<string> typed = global::app.Data.@this<string>.Ok("test");
+        global::app.data.@this<string> typed = global::app.data.@this<string>.Ok("test");
         Data untyped = typed;
 
         await Assert.That(untyped.Success).IsTrue();
@@ -69,7 +69,7 @@ public class DataGenericTests
     [Test]
     public async Task TaskOfData_WorksWithGeneric()
     {
-        Task<Data> task = Task.FromResult<Data>(global::app.Data.@this<int>.Ok(99));
+        Task<Data> task = Task.FromResult<Data>(global::app.data.@this<int>.Ok(99));
         var result = await task;
 
         await Assert.That(result.Success).IsTrue();

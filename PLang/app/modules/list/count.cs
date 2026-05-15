@@ -6,9 +6,9 @@ namespace app.modules.list;
 [Action("count")]
 public partial class Count : IContext
 {
-    public partial Data.@this<Variable> ListName { get; init; }
+    public partial data.@this<Variable> ListName { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var countData = data.GetChild("Count");

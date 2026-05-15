@@ -22,9 +22,9 @@ public sealed class @this
     /// segment from the store and navigate the result via Data.GetChild.
     /// Returns AskError when the value is unset.
     /// </summary>
-    public Data.@this Get(string path, Actor.Context.@this context)
+    public data.@this Get(string path, Actor.Context.@this context)
     {
-        if (string.IsNullOrEmpty(path)) return Data.@this.NotFound("Settings");
+        if (string.IsNullOrEmpty(path)) return data.@this.NotFound("Settings");
 
         var dotIndex = path.IndexOf('.');
         var key = dotIndex >= 0 ? path[..dotIndex] : path;
@@ -36,7 +36,7 @@ public sealed class @this
         if (!result.Success) return result;
 
         if (result.Value == null)
-            return Data.@this.FromError(new AskError(
+            return data.@this.FromError(new AskError(
                 $"Settings value '{key}' is not set. Please provide a value.",
                 SettingsTable, key));
 
@@ -48,6 +48,6 @@ public sealed class @this
     }
 
     /// <summary>Stores a Data value under the given key in the settings table.</summary>
-    public Task<Data.@this> Set(string key, Data.@this value)
+    public Task<data.@this> Set(string key, data.@this value)
         => _app.SettingsStore.Set(SettingsTable, key, value);
 }

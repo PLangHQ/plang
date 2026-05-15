@@ -9,11 +9,11 @@ namespace app.modules.timer;
 [Action("start", Cacheable = false)]
 public partial class Start : IContext, IStatic
 {
-    public partial Data.@this<string>? Name { get; init; }
+    public partial data.@this<string>? Name { get; init; }
     [Default("goal")]
-    public partial Data.@this<string> Scope { get; init; }
+    public partial data.@this<string> Scope { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var key = Name?.Value ?? "default";
         var entry = new TimerEntry(DateTimeOffset.UtcNow, Scope.Value!);

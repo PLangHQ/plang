@@ -7,9 +7,9 @@ namespace app.modules.mock;
 [Action("reset", Cacheable = false)]
 public partial class Reset : IContext
 {
-    public partial Data.@this<types.MockHandle>? Mock { get; init; }
+    public partial data.@this<types.MockHandle>? Mock { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         if (Mock?.Value != null)
         {

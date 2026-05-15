@@ -15,11 +15,11 @@ public partial class @this : ISnapshot
     /// </summary>
     public void Capture(Snapshot.@this s)
     {
-        var captured = new List<Data.@this>();
+        var captured = new List<data.@this>();
         foreach (var kvp in _variables)
         {
             if (kvp.Key.StartsWith("!")) continue;
-            if (kvp.Value is Data.DynamicData) continue;
+            if (kvp.Value is data.DynamicData) continue;
             captured.Add(kvp.Value.Clone());
         }
         s.Write("variables", captured);
@@ -33,7 +33,7 @@ public partial class @this : ISnapshot
     /// </summary>
     public static void Restore(Snapshot.@this s, Actor.Context.@this ctx)
     {
-        var captured = s.Read<List<Data.@this>>("variables");
+        var captured = s.Read<List<data.@this>>("variables");
         if (captured == null) return;
 
         var target = ctx.Variables;

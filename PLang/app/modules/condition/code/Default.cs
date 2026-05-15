@@ -10,12 +10,12 @@ public sealed class Default : IEvaluator
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public Data.@this Evaluate(If action)
+    public data.@this Evaluate(If action)
     {
         try
         {
             bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
-            return global::app.Data.@this.Ok(result);
+            return global::app.data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -23,12 +23,12 @@ public sealed class Default : IEvaluator
         }
     }
 
-    public Data.@this Evaluate(Elseif action)
+    public data.@this Evaluate(Elseif action)
     {
         try
         {
             bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
-            return global::app.Data.@this.Ok(result);
+            return global::app.data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -36,12 +36,12 @@ public sealed class Default : IEvaluator
         }
     }
 
-    public Data.@this Evaluate(Compare action)
+    public data.@this Evaluate(Compare action)
     {
         try
         {
             bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
-            return global::app.Data.@this.Ok(result);
+            return global::app.data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -49,12 +49,12 @@ public sealed class Default : IEvaluator
         }
     }
 
-    private static Data.@this EvaluationError(Data.@this? left, Operator op, Data.@this? right, Exception ex)
+    private static data.@this EvaluationError(data.@this? left, Operator op, data.@this? right, Exception ex)
     {
         var leftType = left?.Value?.GetType().Name ?? "null";
         var rightType = right?.Value?.GetType().Name ?? "null";
 
-        return global::app.Data.@this.FromError(new ValidationError(
+        return global::app.data.@this.FromError(new ValidationError(
             $"Condition evaluation failed: '{left?.Value}' ({leftType}) {op.Value} '{right?.Value}' ({rightType}) — {ex.Message}",
             "EvaluationError")
         {

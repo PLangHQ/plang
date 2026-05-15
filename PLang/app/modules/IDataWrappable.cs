@@ -6,5 +6,5 @@ namespace app.modules;
 /// </summary>
 public interface IDataWrappable
 {
-    Data.@this AsData(Actor.Context.@this context);
+    data.@this AsData(Actor.Context.@this context);
 }

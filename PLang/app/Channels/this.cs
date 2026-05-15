@@ -75,16 +75,16 @@ public sealed class @this : IAsyncDisposable
     /// Returns Ok or a Data error with key <c>MissingRequiredChannelAtBoot</c>.
     /// Replaces the role-channel enforcement that lived in App.EnsureRoleChannels.
     /// </summary>
-    public Data.@this Verify()
+    public data.@this Verify()
     {
         foreach (var name in Defaults)
         {
             if (!_channels.ContainsKey(name))
-                return global::app.Data.@this.FromError(new ServiceError(
+                return global::app.data.@this.FromError(new ServiceError(
                     $"Channel '{name}' not registered. Default channels ({string.Join(", ", Defaults)}) must be wired before goals run.",
                     "MissingRequiredChannelAtBoot", 500));
         }
-        return global::app.Data.@this.Ok();
+        return global::app.data.@this.Ok();
     }
 
     public Channel.@this GetOrCreate(string name, Func<Channel.@this> factory)
@@ -127,17 +127,17 @@ public sealed class @this : IAsyncDisposable
         return copy;
     }
 
-    private (Channel.@this? Channel, Data.@this? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
+    private (Channel.@this? Channel, data.@this? Error) GetChannel(string name, bool? requireRead = null, bool? requireWrite = null)
     {
         var channel = Get(name);
         if (channel == null)
-            return (null, global::app.Data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
+            return (null, global::app.data.@this.FromError(new ServiceError($"Channel '{name}' not found", "ChannelNotFound", 404)));
 
         if (requireRead == true && !channel.CanRead)
-            return (null, global::app.Data.@this.FromError(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
+            return (null, global::app.data.@this.FromError(new ServiceError($"Channel '{name}' does not support reading", "ChannelWriteOnly", 400)));
 
         if (requireWrite == true && !channel.CanWrite)
-            return (null, global::app.Data.@this.FromError(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
+            return (null, global::app.data.@this.FromError(new ServiceError($"Channel '{name}' does not support writing", "ChannelReadOnly", 400)));
 
         return (channel, null);
     }
@@ -147,17 +147,17 @@ public sealed class @this : IAsyncDisposable
     /// envelope if needed, and delegates to the channel's own WriteAsync (which
     /// fires events and routes through WriteCore + the per-actor Serializers).
     /// </summary>
-    public async Task<Data.@this> WriteAsync(string channelName, object? data, CancellationToken cancellationToken = default)
+    public async Task<data.@this> WriteAsync(string channelName, object? data, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
 
-        var envelope = data is Data.@this d ? d : Data.@this.Ok(data);
+        var envelope = data is global::app.data.@this d ? d : global::app.data.@this.Ok(data);
         return await channel!.WriteAsync(envelope, cancellationToken);
     }
 
     /// <summary>Reads typed data from a channel.</summary>
-    public async Task<Data.@this> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
+    public async Task<data.@this> ReadChannelAsync<T>(string channelName, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;
@@ -172,11 +172,11 @@ public sealed class @this : IAsyncDisposable
                     ContentType = sc.Mime,
                     CancellationToken = cancellationToken
                 });
-                return global::app.Data.@this.Ok(result);
+                return global::app.data.@this.Ok(result);
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
-                return global::app.Data.@this.FromError(new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
+                return global::app.data.@this.FromError(new ServiceError($"Failed to read from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
             }
         }
 
@@ -184,7 +184,7 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>Convenience text write.</summary>
-    public async Task<Data.@this> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
+    public async Task<data.@this> WriteTextAsync(string channelName, string text, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireWrite: true);
         if (error != null) return error;
@@ -194,17 +194,17 @@ public sealed class @this : IAsyncDisposable
             if (channel is Channel.Stream.@this sc)
                 await sc.WriteTextAsync(text, cancellationToken);
             else
-                await channel!.WriteAsync(global::app.Data.@this.Ok(text), cancellationToken);
-            return global::app.Data.@this.Ok();
+                await channel!.WriteAsync(global::app.data.@this.Ok(text), cancellationToken);
+            return global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return global::app.Data.@this.FromError(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
+            return global::app.data.@this.FromError(new ServiceError($"Failed to write text to channel '{channelName}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
     /// <summary>Convenience text read.</summary>
-    public async Task<Data.@this> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
+    public async Task<data.@this> ReadTextAsync(string channelName, CancellationToken cancellationToken = default)
     {
         var (channel, error) = GetChannel(channelName, requireRead: true);
         if (error != null) return error;
@@ -214,14 +214,14 @@ public sealed class @this : IAsyncDisposable
             if (channel is Channel.Stream.@this sc)
             {
                 var text = await sc.ReadAllTextAsync(cancellationToken);
-                return global::app.Data.@this.Ok(text);
+                return global::app.data.@this.Ok(text);
             }
             var read = await channel!.ReadAsync(cancellationToken);
             return read;
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return global::app.Data.@this.FromError(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
+            return global::app.data.@this.FromError(new ServiceError($"Failed to read text from channel '{channelName}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 

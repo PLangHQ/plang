@@ -67,13 +67,13 @@ public class IncrementalCacheTests
     {
         var propsA = new PropertyBase[]
         {
-            new DataProperty("First", "global::app.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
-            new DataProperty("Second", "global::app.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("First", "global::app.data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("Second", "global::app.data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
         };
         var propsB = new PropertyBase[]
         {
-            new DataProperty("First", "global::app.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
-            new DataProperty("Second", "global::app.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("First", "global::app.data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("Second", "global::app.data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
         };
 
         var a = MakeInfo("X", propsA);
@@ -86,8 +86,8 @@ public class IncrementalCacheTests
     [Test]
     public async Task ActionClassInfo_DifferentPropertyOrder_AreNotEqual()
     {
-        var p1 = new DataProperty("A", "global::app.Data.@this<string>", false, false, "string", null, false, false);
-        var p2 = new DataProperty("B", "global::app.Data.@this<int>", false, false, "int", null, false, false);
+        var p1 = new DataProperty("A", "global::app.data.@this<string>", false, false, "string", null, false, false);
+        var p2 = new DataProperty("B", "global::app.data.@this<int>", false, false, "int", null, false, false);
 
         var a = MakeInfo("X", p1, p2);
         var b = MakeInfo("X", p2, p1);
@@ -192,9 +192,9 @@ public class IncrementalCacheTests
                                 public partial class Action {
                                     public partial class @this {
                                         public Steps.Step.@this? Step;
-                                        public System.Collections.Generic.List<Data.@this>? Parameters;
-                                        public System.Collections.Generic.List<Data.@this>? Defaults;
-                                        public Data.@this? GetParameter(string name, Actor.Context.@this ctx) => null;
+                                        public System.Collections.Generic.List<data.@this>? Parameters;
+                                        public System.Collections.Generic.List<data.@this>? Defaults;
+                                        public data.@this? GetParameter(string name, Actor.Context.@this ctx) => null;
                                     }
                                 }
                             }
@@ -210,7 +210,7 @@ public class IncrementalCacheTests
         namespace app.Test {
             [app.modules.Action]
             public partial class TestHandler {
-                public partial app.Data.@this<string> Foo { get; init; }
+                public partial app.data.@this<string> Foo { get; init; }
             }
         }
         """;
@@ -350,8 +350,8 @@ public class IncrementalCacheTests
 
         // Replace TestHandler's property type so ActionClassInfo's Properties array changes.
         var modifiedSource = MinimalSource.Replace(
-            "public partial app.Data.@this<string> Foo { get; init; }",
-            "public partial app.Data.@this<int> Foo { get; init; }");
+            "public partial app.data.@this<string> Foo { get; init; }",
+            "public partial app.data.@this<int> Foo { get; init; }");
         var compilation2 = CreateCompilation(modifiedSource);
         driver = driver.RunGenerators(compilation2);
 

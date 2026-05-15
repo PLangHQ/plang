@@ -93,17 +93,17 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// Core write — concrete subtypes implement. Receives the full Data envelope (Rule 7,
     /// relay don't repackage); the channel's serializer decides how to render.
     /// </summary>
-    public abstract Task<Data.@this> WriteCore(Data.@this data, CancellationToken ct = default);
+    public abstract Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default);
 
     /// <summary>
     /// Core read — concrete subtypes implement.
     /// </summary>
-    public abstract Task<Data.@this> ReadCore(CancellationToken ct = default);
+    public abstract Task<global::app.data.@this> ReadCore(CancellationToken ct = default);
 
     /// <summary>
     /// Core ask — concrete subtypes implement. Session blocks until answer; Message returns Suspend.
     /// </summary>
-    public abstract Task<Data.@this> AskCore(Data.@this prompt, CancellationToken ct = default);
+    public abstract Task<global::app.data.@this> AskCore(global::app.data.@this prompt, CancellationToken ct = default);
 
     /// <summary>
     /// Public write entry. Wraps WriteCore in BeforeWrite / AfterWrite event firing.
@@ -111,17 +111,17 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// AfterWrite is suppressed). After-handler always fires when WriteCore was
     /// reached (success or error); their throws are suppressed.
     /// </summary>
-    public virtual async Task<Data.@this> WriteAsync(Data.@this data, CancellationToken ct = default)
+    public virtual async Task<global::app.data.@this> WriteAsync(global::app.data.@this data, CancellationToken ct = default)
     {
         // Fire BeforeWrite — abort on throw.
         var beforeAborted = await FireBefore(global::app.Events.EventType.BeforeWrite, data, null);
         if (beforeAborted != null) return beforeAborted;
 
-        Data.@this result;
+        global::app.data.@this result;
         try { result = await WriteCore(data, ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            result = Data.@this.FromError(new global::app.Errors.ServiceError(
+            result = global::app.data.@this.FromError(new global::app.Errors.ServiceError(
                 $"Channel '{Name}' write failed: {ex.Message}", "WriteError") { Exception = ex });
         }
 
@@ -133,16 +133,16 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// <summary>
     /// Public read entry. Wraps ReadCore in BeforeRead / AfterRead event firing.
     /// </summary>
-    public virtual async Task<Data.@this> ReadAsync(CancellationToken ct = default)
+    public virtual async Task<global::app.data.@this> ReadAsync(CancellationToken ct = default)
     {
-        var beforeAborted = await FireBefore(global::app.Events.EventType.BeforeRead, Data.@this.Ok(), null);
+        var beforeAborted = await FireBefore(global::app.Events.EventType.BeforeRead, global::app.data.@this.Ok(), null);
         if (beforeAborted != null) return beforeAborted;
 
-        Data.@this result;
+        global::app.data.@this result;
         try { result = await ReadCore(ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            result = Data.@this.FromError(new global::app.Errors.ServiceError(
+            result = global::app.data.@this.FromError(new global::app.Errors.ServiceError(
                 $"Channel '{Name}' read failed: {ex.Message}", "ReadError") { Exception = ex });
         }
 
@@ -154,13 +154,13 @@ public abstract class @this : IAsyncDisposable, IDisposable
     /// Public ask entry. Fires OnAsk after the Core completes (Session: post-answer;
     /// Message: pre-suspend — the channel kind decides timing).
     /// </summary>
-    public virtual async Task<Data.@this> Ask(Data.@this prompt, CancellationToken ct = default)
+    public virtual async Task<global::app.data.@this> Ask(global::app.data.@this prompt, CancellationToken ct = default)
     {
-        Data.@this result;
+        global::app.data.@this result;
         try { result = await AskCore(prompt, ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            result = Data.@this.FromError(new global::app.Errors.ServiceError(
+            result = global::app.data.@this.FromError(new global::app.Errors.ServiceError(
                 $"Channel '{Name}' ask failed: {ex.Message}", "AskError") { Exception = ex });
         }
 
@@ -198,7 +198,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         }
     }
 
-    private async Task<Data.@this?> FireBefore(global::app.Events.EventType type, Data.@this data, Callback.AskCallback? ask)
+    private async Task<global::app.data.@this?> FireBefore(global::app.Events.EventType type, global::app.data.@this data, Callback.AskCallback? ask)
     {
         foreach (var binding in MatchingBindings(type))
         {
@@ -211,7 +211,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
             }
             catch (Exception ex)
             {
-                return Data.@this.FromError(new global::app.Errors.ServiceError(
+                return global::app.data.@this.FromError(new global::app.Errors.ServiceError(
                     $"Channel event handler for {type} on '{Name}' threw: {ex.Message}",
                     "ChannelEventAborted") { Exception = ex });
             }
@@ -219,7 +219,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         return null;
     }
 
-    private async Task FireAfter(global::app.Events.EventType type, Data.@this data, Callback.AskCallback? ask)
+    private async Task FireAfter(global::app.Events.EventType type, global::app.data.@this data, Callback.AskCallback? ask)
     {
         foreach (var binding in MatchingBindings(type))
         {
@@ -230,9 +230,9 @@ public abstract class @this : IAsyncDisposable, IDisposable
         }
     }
 
-    private Task<Data.@this> InvokeChannelHandler(
+    private Task<global::app.data.@this> InvokeChannelHandler(
         global::app.Events.Lifecycle.Bindings.Binding.@this binding,
-        Data.@this data,
+        global::app.data.@this data,
         Callback.AskCallback? ask)
     {
         // Bindings receive (context, action=null, result=data). The context comes

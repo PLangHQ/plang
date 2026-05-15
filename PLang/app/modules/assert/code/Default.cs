@@ -11,60 +11,60 @@ public class Default : IAssert
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public Data.@this Equals(Equals action)
+    public data.@this Equals(Equals action)
     {
         if (AreEqual(action.Expected?.Value, action.Actual?.Value))
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value, action.Message?.Value));
+        return app.data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value, action.Message?.Value));
     }
 
-    public Data.@this NotEquals(NotEquals action)
+    public data.@this NotEquals(NotEquals action)
     {
         if (!AreEqual(action.Expected?.Value, action.Actual?.Value))
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value,
+        return app.data.@this.FromError(new AssertionError(action.Expected?.Value, action.Actual?.Value,
             action.Message?.Value ?? "Values should not be equal"));
     }
 
-    public Data.@this IsTrue(IsTrue action)
+    public data.@this IsTrue(IsTrue action)
     {
         if (IsTruthy(action.Value?.Value))
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(true, action.Value?.Value,
+        return app.data.@this.FromError(new AssertionError(true, action.Value?.Value,
             action.Message?.Value ?? "Expected truthy value"));
     }
 
-    public Data.@this IsFalse(IsFalse action)
+    public data.@this IsFalse(IsFalse action)
     {
         if (!IsTruthy(action.Value?.Value))
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(false, action.Value?.Value,
+        return app.data.@this.FromError(new AssertionError(false, action.Value?.Value,
             action.Message?.Value ?? "Expected falsy value"));
     }
 
-    public Data.@this IsNull(IsNull action)
+    public data.@this IsNull(IsNull action)
     {
         if (action.Value?.Value == null)
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(null, action.Value?.Value,
+        return app.data.@this.FromError(new AssertionError(null, action.Value?.Value,
             action.Message?.Value ?? "Expected null"));
     }
 
-    public Data.@this IsNotNull(IsNotNull action)
+    public data.@this IsNotNull(IsNotNull action)
     {
         if (action.Value?.Value != null)
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError("(not null)", null,
+        return app.data.@this.FromError(new AssertionError("(not null)", null,
             action.Message?.Value ?? "Expected non-null value"));
     }
 
-    public Data.@this Contains(Contains action)
+    public data.@this Contains(Contains action)
     {
         var v = action.Value?.Value;
         var c = action.Container?.Value;
@@ -75,14 +75,14 @@ public class Default : IAssert
         // side contains the other. Both sides must be non-null to avoid
         // string.Contains("") trivially passing on every haystack.
         if (v != null && c != null && (ContainsValue(v, c) || ContainsValue(c, v)))
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(
+        return app.data.@this.FromError(new AssertionError(
             FormatValue(c), v,
             action.Message?.Value ?? "Container does not contain value"));
     }
 
-    public Data.@this NotContains(NotContains action)
+    public data.@this NotContains(NotContains action)
     {
         var v = action.Value?.Value;
         var c = action.Container?.Value;
@@ -92,29 +92,29 @@ public class Default : IAssert
         // make this assertion silently pass). If either side is null we
         // can't claim containment, so assertion passes vacuously.
         if (v == null || c == null || (!ContainsValue(v, c) && !ContainsValue(c, v)))
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(
+        return app.data.@this.FromError(new AssertionError(
             $"absent: {FormatValue(c)}", v,
             action.Message?.Value ?? "Container contains value but should not"));
     }
 
-    public Data.@this GreaterThan(GreaterThan action)
+    public data.@this GreaterThan(GreaterThan action)
     {
         if (Compare(action.A?.Value, action.B?.Value) > 0)
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(
+        return app.data.@this.FromError(new AssertionError(
             $"> {FormatValue(action.B?.Value)}", action.A?.Value,
             action.Message?.Value ?? $"Expected {FormatValue(action.A?.Value)} > {FormatValue(action.B?.Value)}"));
     }
 
-    public Data.@this LessThan(LessThan action)
+    public data.@this LessThan(LessThan action)
     {
         if (Compare(action.A?.Value, action.B?.Value) < 0)
-            return app.Data.@this.Ok(true);
+            return app.data.@this.Ok(true);
 
-        return app.Data.@this.FromError(new AssertionError(
+        return app.data.@this.FromError(new AssertionError(
             $"< {FormatValue(action.B?.Value)}", action.A?.Value,
             action.Message?.Value ?? $"Expected {FormatValue(action.A?.Value)} < {FormatValue(action.B?.Value)}"));
     }

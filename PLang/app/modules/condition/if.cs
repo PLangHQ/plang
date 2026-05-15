@@ -11,16 +11,16 @@ namespace app.modules.condition;
 [Action("if")]
 public partial class If : IContext, IStep
 {
-    public partial Data.@this? Left { get; init; }
-    public partial Data.@this<Operator> Operator { get; init; }
-    public partial Data.@this? Right { get; init; }
+    public partial data.@this? Left { get; init; }
+    public partial data.@this<Operator> Operator { get; init; }
+    public partial data.@this? Right { get; init; }
     [Default(false)]
-    public partial Data.@this<bool> Negate { get; init; }
+    public partial data.@this<bool> Negate { get; init; }
 
     [Code]
     public partial IEvaluator Evaluator { get; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var evalResult = Evaluator.Evaluate(this);
         // Evaluation errored → leave branchIndex unpublished (architect §5.7 / Batch 7 #6).
@@ -74,7 +74,7 @@ public partial class If : IContext, IStep
     /// Groups the step's actions into branches: [condition, actions...], [condition, actions...], [else actions...]
     /// Then evaluates conditions in order and runs the first matching branch.
     /// </summary>
-    private async Task<Data.@this> Orchestrate(
+    private async Task<data.@this> Orchestrate(
         app.Goals.Goal.Steps.Step.Actions.@this actions, bool firstConditionResult)
     {
         int myIndex = actions.IndexOf(__action);
@@ -114,7 +114,7 @@ public partial class If : IContext, IStep
 
             if (branchResult)
             {
-                Data.@this lastResult = Data(true);
+                data.@this lastResult = Data(true);
                 foreach (var action in body)
                 {
                     lastResult = await action.RunAsync(Context);

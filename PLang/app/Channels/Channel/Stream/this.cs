@@ -42,10 +42,10 @@ public sealed class @this : Session.@this
     public override bool CanRead => IsOpen && Direction != ChannelDirection.Output && Stream.CanRead;
     public override bool CanWrite => IsOpen && Direction != ChannelDirection.Input && Stream.CanWrite;
 
-    public override async Task<Data.@this> WriteCore(Data.@this data, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
     {
         if (!CanWrite)
-            return Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Channel '{Name}' does not support writing", "ChannelReadOnly", 400));
 
         try
@@ -57,34 +57,34 @@ public sealed class @this : Session.@this
                 ContentType = Mime,
                 CancellationToken = ct
             });
-            return Data.@this.Ok();
+            return global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Failed to write to channel '{Name}': {ex.Message}", "WriteError") { Exception = ex });
         }
     }
 
-    public override async Task<Data.@this> ReadCore(CancellationToken ct = default)
+    public override async Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
     {
         if (!CanRead)
-            return Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400));
 
         try
         {
             var text = await ReadAllTextAsync(ct);
-            return Data.@this.Ok(text);
+            return global::app.data.@this.Ok(text);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Failed to read from channel '{Name}': {ex.Message}", "ReadError") { Exception = ex });
         }
     }
 
-    public override async Task<Data.@this> AskCore(Data.@this prompt, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> AskCore(global::app.data.@this prompt, CancellationToken ct = default)
     {
         // Session-style ask: write the prompt (if any), then read a line.
         // Timeout enforced via the per-channel Timeout config.
@@ -95,7 +95,7 @@ public sealed class @this : Session.@this
         }
 
         if (!CanRead)
-            return Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Channel '{Name}' does not support reading", "ChannelWriteOnly", 400));
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -106,16 +106,16 @@ public sealed class @this : Session.@this
             using var reader = new StreamReader(Stream, ResolveEncoding(),
                 detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
             var line = await reader.ReadLineAsync(timeoutCts.Token);
-            return Data.@this.Ok(line ?? string.Empty);
+            return global::app.data.@this.Ok(line ?? string.Empty);
         }
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
         {
-            return Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Channel '{Name}' ask timed out after {Timeout}", "AskTimeout", 408));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            return Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 $"Failed to ask on channel '{Name}': {ex.Message}", "AskError") { Exception = ex });
         }
     }

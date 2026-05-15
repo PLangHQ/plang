@@ -37,14 +37,14 @@ public class Signature
 
     [JsonPropertyOrder(9), JsonPropertyName("hash"), JsonInclude]
     [JsonConverter(typeof(HashDataConverter))]
-    public Data.@this Hash { get; internal set; } = app.Data.@this.Ok("");
+    public data.@this Hash { get; internal set; } = app.data.@this.Ok("");
 
     /// <summary>
     /// Serializes Data as { "type": "algorithm", "value": "base64hash" } in the signing envelope.
     /// </summary>
-    internal class HashDataConverter : JsonConverter<Data.@this>
+    internal class HashDataConverter : JsonConverter<data.@this>
     {
-        public override Data.@this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
+        public override data.@this Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
         {
             string type = "", value = "";
             while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
@@ -55,13 +55,13 @@ public class Signature
                 if (prop == "type") type = reader.GetString() ?? "";
                 else if (prop == "value") value = reader.GetString() ?? "";
             }
-            var typeObj = string.IsNullOrEmpty(type) ? null : Data.Type.FromName(type);
+            var typeObj = string.IsNullOrEmpty(type) ? null : data.type.FromName(type);
             byte[] bytes;
             try { bytes = Convert.FromBase64String(value); } catch (FormatException) { bytes = Array.Empty<byte>(); }
-            return app.Data.@this.Ok(bytes, typeObj);
+            return app.data.@this.Ok(bytes, typeObj);
         }
 
-        public override void Write(Utf8JsonWriter writer, Data.@this value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, data.@this value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
             writer.WriteString("type", value.Type?.Value ?? "");

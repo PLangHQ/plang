@@ -140,9 +140,9 @@ public class DiscoverActionTests
         var action = new global::app.modules.test.discover
         {
             Context = _app.User.Context,
-            Path = new global::app.Data.@this<string>("Path", path),
-            Pattern = new global::app.Data.@this<string>("Pattern", "*.test.goal"),
-            Recursive = new global::app.Data.@this<bool>("Recursive", recursive)
+            Path = new global::app.data.@this<string>("Path", path),
+            Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
+            Recursive = new global::app.data.@this<bool>("Recursive", recursive)
         };
         var result = await action.Run();
         return result.Value as List<global::app.Tester.File> ?? new List<global::app.Tester.File>();
@@ -269,7 +269,7 @@ public class DiscoverActionTests
             {
                 ("goal", "call", new List<Data>
                 {
-                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.Data.Type.FromName("goal.call"))
+                    new("GoalName", new GoalCall { Name = "Helper" }, global::app.data.type.FromName("goal.call"))
                 })
             });
 

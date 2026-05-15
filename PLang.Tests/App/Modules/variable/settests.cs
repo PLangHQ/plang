@@ -141,7 +141,7 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", "%myVar%", global::app.Data.Type.FromName("int"))
+            new Data("Value", "%myVar%", global::app.data.type.FromName("int"))
         };
         var result = global::app.modules.variable.Set.ValidateBuild(parameters);
 
@@ -153,7 +153,7 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", "not a number", global::app.Data.Type.FromName("int"))
+            new Data("Value", "not a number", global::app.data.type.FromName("int"))
         };
         var result = global::app.modules.variable.Set.ValidateBuild(parameters);
 
@@ -166,7 +166,7 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", 42, global::app.Data.Type.FromName("int"))
+            new Data("Value", 42, global::app.data.type.FromName("int"))
         };
         var result = global::app.modules.variable.Set.ValidateBuild(parameters);
 

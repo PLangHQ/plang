@@ -113,7 +113,7 @@ public class FailureMatrixTests
         var snap = new Snapshot();
         snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>
         {
-            new(typeof(global::app.Data.Code.IGrep).AssemblyQualifiedName!,
+            new(typeof(global::app.data.Code.IGrep).AssemblyQualifiedName!,
                 "ghost", "/nonexistent/missing.dll")
         });
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>());
@@ -133,7 +133,7 @@ public class FailureMatrixTests
         snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>());
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>
         {
-            new(typeof(global::app.Data.Code.IGrep).AssemblyQualifiedName!, "phantom-name")
+            new(typeof(global::app.data.Code.IGrep).AssemblyQualifiedName!, "phantom-name")
         });
 
         var dst = NewApp();
@@ -189,7 +189,7 @@ public class FailureMatrixTests
     {
         public global::app.CallStack.Call.Position? Position => null;
         public byte[] Serialize(global::app.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<global::app.Data.@this> Run(global::app.Actor.Context.@this ctx)
-            => Task.FromResult(global::app.Data.@this.Ok(true));
+        public Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx)
+            => Task.FromResult(global::app.data.@this.Ok(true));
     }
 }

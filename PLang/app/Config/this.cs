@@ -88,7 +88,7 @@ public sealed class @this
 
             // Action properties are Data<T> — unwrap to plain value for the scope chain
             var raw = prop.GetValue(source);
-            var value = raw is Data.@this data ? data.Value : raw;
+            var value = raw is data.@this data ? data.Value : raw;
             if (value == null) continue;
 
             Set($"{prefix}.{prop.Name}", value, context, isDefault);

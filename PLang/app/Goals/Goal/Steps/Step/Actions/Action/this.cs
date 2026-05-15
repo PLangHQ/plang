@@ -12,11 +12,11 @@ public sealed partial class @this : modules.IDataWrappable
     /// OBP: Action is responsible for its own Data representation.
     /// Returns a cached per-execution Data&lt;Action&gt; wrapper from the context.
     /// </summary>
-    public Data.@this AsData(Actor.Context.@this context)
+    public global::app.data.@this AsData(Actor.Context.@this context)
     {
         return context.GetOrCreate(this, () =>
         {
-            var data = new Data.@this<@this>("", this);
+            var data = new global::app.data.@this<@this>("", this);
             data.Context = context;
             return data;
         });
@@ -35,10 +35,10 @@ public sealed partial class @this : modules.IDataWrappable
     public string ActionName { get; init; } = "";
 
     [Store, LlmBuilder, Debug, Default]
-    public List<Data.@this> Parameters { get; init; } = new();
+    public List<global::app.data.@this> Parameters { get; init; } = new();
 
     [Store, Debug, Default]
-    public List<Data.@this>? Defaults { get; set; }
+    public List<global::app.data.@this>? Defaults { get; set; }
 
     [Store, Debug, Default]
     public Modifiers.@this Modifiers { get; init; } = new();
@@ -91,7 +91,7 @@ public sealed partial class @this : modules.IDataWrappable
         get => _events ??= new modules.Events(this);
     }
 
-    public List<Data.@this> Examples { get; init; } = new();
+    public List<global::app.data.@this> Examples { get; init; } = new();
 
     /// <summary>
     /// One-sentence description of what this action does, sourced from
@@ -126,14 +126,14 @@ public sealed partial class @this : modules.IDataWrappable
     /// contract for symmetry with As&lt;T&gt;(context); kept as a hook even though
     /// today's lookup is context-free.
     /// </summary>
-    public Data.@this GetParameter(string name, Actor.Context.@this context)
+    public global::app.data.@this GetParameter(string name, Actor.Context.@this context)
     {
         var data = Parameters?.FirstOrDefault(p =>
             string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
         if (data != null) return data;
         data = Defaults?.FirstOrDefault(p =>
             string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
-        return data ?? Data.@this.NotFound(name);
+        return data ?? global::app.data.@this.NotFound(name);
     }
 
     /// <summary>
@@ -142,14 +142,14 @@ public sealed partial class @this : modules.IDataWrappable
     /// <paramref name="cause"/> is threaded through to <c>App.Run</c> so recovery-body
     /// dispatches stamp the resulting Call's <c>Cause</c> (the errored sibling).
     /// </summary>
-    public async Task<Data.@this> RunAsync(Actor.Context.@this context, global::app.CallStack.Call.@this? cause = null)
+    public async Task<global::app.data.@this> RunAsync(Actor.Context.@this context, global::app.CallStack.Call.@this? cause = null)
     {
         var lifecycle = context.LifecycleFor(this);
 
         var beforeResult = await lifecycle.Before.Run(context, app.Events.EventType.BeforeAction);
         if (!beforeResult.Success) return beforeResult;
 
-        Data.@this result;
+        global::app.data.@this result;
         if (beforeResult.Handled)
         {
             // Override path: the BeforeAction binding supplied this action's result
@@ -161,7 +161,7 @@ public sealed partial class @this : modules.IDataWrappable
         }
         else
         {
-            Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context, cause);
+            Func<Task<global::app.data.@this>> dispatch = () => context.App!.Run(this, context, cause);
             result = await Modifiers.RunAsync(dispatch, context);
         }
 
@@ -186,8 +186,8 @@ public sealed partial class @this : modules.IDataWrappable
     /// handler, verifies it implements IModifier, and runs ExecuteAsync so the source-generated
     /// properties are populated before Wrap() reads them. Called by Modifiers.RunAsync.
     /// </summary>
-    public async Task<(Func<Task<Data.@this>>? Wrapped, Errors.IError? Error)> WrapAround(
-        Func<Task<Data.@this>> next,
+    public async Task<(Func<Task<global::app.data.@this>>? Wrapped, Errors.IError? Error)> WrapAround(
+        Func<Task<global::app.data.@this>> next,
         Actor.Context.@this context)
     {
         var (handler, error) = context.App!.Modules.GetCodeGenerated(this);
@@ -204,5 +204,5 @@ public sealed partial class @this : modules.IDataWrappable
     /// Return type properties for the builder summary. Null when Run() returns plain Data.
     /// Derived from the concrete return type of Run() via reflection in Describe().
     /// </summary>
-    public List<Data.@this>? ReturnType { get; init; }
+    public List<global::app.data.@this>? ReturnType { get; init; }
 }

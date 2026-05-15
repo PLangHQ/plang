@@ -107,7 +107,7 @@ public sealed class @this
         var ch = _engine.System.Channels.Resolve(app.Channels.@this.Debug)
               ?? _engine.System.Channels.Resolve(app.Channels.@this.Error);
         if (ch == null) return Task.CompletedTask;
-        var envelope = message is app.Data.@this d ? d : app.Data.@this.Ok(message);
+        var envelope = message is app.data.@this d ? d : app.data.@this.Ok(message);
         return ch.WriteAsync(envelope);
     }
 
@@ -159,7 +159,7 @@ public sealed class @this
             var vars = _engine.User.Context.Variables;
             foreach (var v in Variables.Where(v => v.Event.HasValue))
             {
-                var placeholder = Data.@this.Uninitialized(v.Name);
+                var placeholder = data.@this.Uninitialized(v.Name);
                 if (v.Event == DebugEvent.OnCreate)
                     placeholder.OnCreate.Add((data) => LogEvent(v.Name, "CREATED", data));
                 if (v.Event == DebugEvent.OnChange)
@@ -267,7 +267,7 @@ public sealed class @this
     }
 
 
-    public void LogMutation(string name, Data.@this oldData, Data.@this newData)
+    public void LogMutation(string name, data.@this oldData, data.@this newData)
     {
         var context = _engine.User.Context;
         var goalName = context?.Goal?.Name ?? "?";
@@ -295,7 +295,7 @@ public sealed class @this
         _ = Write(sb.ToString());
     }
 
-    public void LogEvent(string name, string eventType, Data.@this data)
+    public void LogEvent(string name, string eventType, data.@this data)
     {
         var context = _engine.User.Context;
         var goalName = context?.Goal?.Name ?? "?";
@@ -304,11 +304,11 @@ public sealed class @this
         _ = Write($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Value?.GetType().Name ?? "null"} ==={Environment.NewLine}");
     }
 
-    private static async Task<Data.@this> BeforeStepHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<data.@this> BeforeStepHandler(Actor.Context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return app.Data.@this.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.Data.@this.Ok();
+        if (step == null) return app.data.@this.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.data.@this.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -345,14 +345,14 @@ public sealed class @this
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
-        return app.Data.@this.Ok();
+        return app.data.@this.Ok();
     }
 
-    private static async Task<Data.@this> AfterStepHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<data.@this> AfterStepHandler(Actor.Context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return app.Data.@this.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.Data.@this.Ok();
+        if (step == null) return app.data.@this.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.data.@this.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -363,7 +363,7 @@ public sealed class @this
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
-        return app.Data.@this.Ok();
+        return app.data.@this.Ok();
     }
 
     /// <summary>
@@ -515,20 +515,20 @@ public sealed class @this
         return context.App?.Debug?.Write(output) ?? Task.CompletedTask;
     }
 
-    private static async Task<Data.@this> AfterGoalHandler(Actor.Context.@this context)
+    private static async Task<data.@this> AfterGoalHandler(Actor.Context.@this context)
     {
         var goalName = context.Goal?.Name ?? "?";
         var debug = context.App?.Debug;
         if (debug != null)
             await debug.Write($"--- DEBUG: Goal '{goalName}' completed ---{Environment.NewLine}");
-        return app.Data.@this.Ok();
+        return app.data.@this.Ok();
     }
 
-    private static async Task<Data.@this> BeforeActionHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<data.@this> BeforeActionHandler(Actor.Context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return app.Data.@this.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.Data.@this.Ok();
+        if (step == null) return app.data.@this.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.data.@this.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -537,14 +537,14 @@ public sealed class @this
         AppendStepVariables(sb, context);
 
         await WriteFiltered(sb, context);
-        return app.Data.@this.Ok();
+        return app.data.@this.Ok();
     }
 
-    private static async Task<Data.@this> AfterActionHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<data.@this> AfterActionHandler(Actor.Context.@this context, int? stepFilter)
     {
         var step = context.Step;
-        if (step == null) return app.Data.@this.Ok();
-        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.Data.@this.Ok();
+        if (step == null) return app.data.@this.Ok();
+        if (stepFilter.HasValue && step.Index != stepFilter.Value) return app.data.@this.Ok();
 
         var goalName = context.Goal?.Name ?? "?";
         var sb = new StringBuilder();
@@ -553,7 +553,7 @@ public sealed class @this
         AppendStepVariables(sb, context);
 
         await WriteFiltered(sb, context);
-        return app.Data.@this.Ok();
+        return app.data.@this.Ok();
     }
 
     private static readonly Regex VarRefPattern = new(@"%([^%]+)%", RegexOptions.Compiled);

@@ -7,12 +7,12 @@ namespace app.modules.list;
 [Action("add", Cacheable = false)]
 public partial class Add : IContext
 {
-    public partial Data.@this<Variable> ListName { get; init; }
-    public partial Data.@this Value { get; init; }
+    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this Value { get; init; }
     [Default(-1)]
-    public partial Data.@this<int> AtIndex { get; init; }
+    public partial data.@this<int> AtIndex { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var existing = data.Value;
@@ -41,7 +41,7 @@ public partial class Add : IContext
         // `add %x% to %list%` stores an alias and later `set %x% = ...` mutates
         // every list entry. Data.SnapshotClone breaks cyclic runtime types
         // (Goal↔Step↔Action) via [JsonIgnore] — see Data.SnapshotClone.
-        Data.@this snapshot;
+        data.@this snapshot;
         var rawValue = Value.Value;
         if (rawValue is null || rawValue is string || rawValue is bool || rawValue is System.IConvertible)
         {
@@ -52,8 +52,8 @@ public partial class Add : IContext
         {
             try
             {
-                var cloned = global::app.Data.@this.SnapshotClone(rawValue);
-                snapshot = new Data.@this(Value.Name, cloned, Value.Type) { Context = Context };
+                var cloned = global::app.data.@this.SnapshotClone(rawValue);
+                snapshot = new data.@this(Value.Name, cloned, Value.Type) { Context = Context };
             }
             catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException)
             {
@@ -69,6 +69,6 @@ public partial class Add : IContext
         else
             list.Add(snapshot);
 
-        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.Data.Type.FromName("list")));
+        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
     }
 }

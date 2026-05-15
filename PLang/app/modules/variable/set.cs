@@ -19,7 +19,7 @@ namespace app.modules.variable;
     "variable.set Name([string] %data%), Value([json] {\"name\":\"%user%\",\"age\":30}), Type([string] json)")]
 public partial class Set : IContext, IBuildValidatable
 {
-    public static string? ValidateBuild(List<Data.@this> parameters)
+    public static string? ValidateBuild(List<data.@this> parameters)
     {
         var value = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
@@ -42,13 +42,13 @@ public partial class Set : IContext, IBuildValidatable
         return null;
     }
 
-    public partial Data.@this<Variable> Name { get; init; }
-    public partial Data.@this Value { get; init; }
-    public partial Data.@this<string>? Type { get; init; }
+    public partial data.@this<Variable> Name { get; init; }
+    public partial data.@this Value { get; init; }
+    public partial data.@this<string>? Type { get; init; }
     [Default(false)]
-    public partial Data.@this<bool> AsDefault { get; init; }
+    public partial data.@this<bool> AsDefault { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         if (AsDefault.Value)
         {
@@ -68,7 +68,7 @@ public partial class Set : IContext, IBuildValidatable
             var targetType = Context.App.Types.Get(Type.Value);
             if (targetType == null)
             {
-                return Task.FromResult(global::app.Data.@this.FromError(
+                return Task.FromResult(global::app.data.@this.FromError(
                     new Errors.ServiceError($"Unknown type '{Type.Value}'", "UnknownType", 400)));
             }
             object? converted = Value.Value;
@@ -76,7 +76,7 @@ public partial class Set : IContext, IBuildValidatable
             {
                 var (c, err) = global::app.Types.@this.TryConvertTo(converted, targetType, Context);
                 if (err != null)
-                    return Task.FromResult(global::app.Data.@this.FromError(err));
+                    return Task.FromResult(global::app.data.@this.FromError(err));
                 converted = c;
             }
             var typedData = ConstructDataOfT(Name.Value, targetType, converted, Context);
@@ -88,7 +88,7 @@ public partial class Set : IContext, IBuildValidatable
         // int, long, double, bool, decimal, DateTime, Guid, byte[], List, Dict) take the
         // if-chain; cold types fall through to reflection.
         var raw = Value.Value;
-        Data.@this minted = MintTyped(Name.Value, raw, Context);
+        data.@this minted = MintTyped(Name.Value, raw, Context);
         CopyProperties(Value, minted);
         return Task.FromResult(Context.Variables.Set(minted));
     }
@@ -101,7 +101,7 @@ public partial class Set : IContext, IBuildValidatable
     /// Variables.Set which aliased the Data and kept Properties; the binding-mint refactor
     /// (runtime2-data-share-state) lost that property-survival path.
     /// </summary>
-    private static void CopyProperties(Data.@this source, Data.@this target)
+    private static void CopyProperties(data.@this source, data.@this target)
     {
         if (source.Properties.Count == 0 || ReferenceEquals(source, target)) return;
         foreach (var p in source.Properties)
@@ -113,24 +113,24 @@ public partial class Set : IContext, IBuildValidatable
     /// Mutable refs (List, Dict) snapshot-cloned via JSON roundtrip so later mutation of
     /// the source doesn't bleed through. null produces plain Data (un-typed).
     /// </summary>
-    private static Data.@this MintTyped(string name, object? raw, Actor.Context.@this ctx)
+    private static data.@this MintTyped(string name, object? raw, Actor.Context.@this ctx)
     {
         return raw switch
         {
-            null                                 => new Data.@this(name, null) { Context = ctx },
-            string s                             => new Data.@this<string>(name, s) { Context = ctx },
-            bool b                               => new Data.@this<bool>(name, b) { Context = ctx },
-            int i                                => new Data.@this<int>(name, i) { Context = ctx },
-            long l                               => new Data.@this<long>(name, l) { Context = ctx },
-            double d                             => new Data.@this<double>(name, d) { Context = ctx },
-            decimal m                            => new Data.@this<decimal>(name, m) { Context = ctx },
-            float f                              => new Data.@this<float>(name, f) { Context = ctx },
-            DateTime t                           => new Data.@this<DateTime>(name, t) { Context = ctx },
-            DateTimeOffset to                    => new Data.@this<DateTimeOffset>(name, to) { Context = ctx },
-            Guid g                               => new Data.@this<Guid>(name, g) { Context = ctx },
-            byte[] ba                            => new Data.@this<byte[]>(name, ba) { Context = ctx },
-            List<object?> list                   => new Data.@this<List<object?>>(name, (List<object?>?)global::app.Data.@this.SnapshotClone(list) ?? new List<object?>()) { Context = ctx },
-            Dictionary<string, object?> dict     => new Data.@this<Dictionary<string, object?>>(name, (Dictionary<string, object?>?)global::app.Data.@this.SnapshotClone(dict) ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)) { Context = ctx },
+            null                                 => new data.@this(name, null) { Context = ctx },
+            string s                             => new data.@this<string>(name, s) { Context = ctx },
+            bool b                               => new data.@this<bool>(name, b) { Context = ctx },
+            int i                                => new data.@this<int>(name, i) { Context = ctx },
+            long l                               => new data.@this<long>(name, l) { Context = ctx },
+            double d                             => new data.@this<double>(name, d) { Context = ctx },
+            decimal m                            => new data.@this<decimal>(name, m) { Context = ctx },
+            float f                              => new data.@this<float>(name, f) { Context = ctx },
+            DateTime t                           => new data.@this<DateTime>(name, t) { Context = ctx },
+            DateTimeOffset to                    => new data.@this<DateTimeOffset>(name, to) { Context = ctx },
+            Guid g                               => new data.@this<Guid>(name, g) { Context = ctx },
+            byte[] ba                            => new data.@this<byte[]>(name, ba) { Context = ctx },
+            List<object?> list                   => new data.@this<List<object?>>(name, (List<object?>?)global::app.data.@this.SnapshotClone(list) ?? new List<object?>()) { Context = ctx },
+            Dictionary<string, object?> dict     => new data.@this<Dictionary<string, object?>>(name, (Dictionary<string, object?>?)global::app.data.@this.SnapshotClone(dict) ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)) { Context = ctx },
             _                                    => ConstructDataOfT(name, raw.GetType(), raw, ctx)
         };
     }
@@ -138,10 +138,10 @@ public partial class Set : IContext, IBuildValidatable
     /// <summary>
     /// Reflection construction of Data&lt;T&gt; for a runtime type not in the hot if-chain.
     /// </summary>
-    private static Data.@this ConstructDataOfT(string name, System.Type t, object? value, Actor.Context.@this ctx)
+    private static data.@this ConstructDataOfT(string name, System.Type t, object? value, Actor.Context.@this ctx)
     {
-        var generic = typeof(Data.@this<>).MakeGenericType(t);
-        var instance = (Data.@this)Activator.CreateInstance(generic, name, value, null, null)!;
+        var generic = typeof(data.@this<>).MakeGenericType(t);
+        var instance = (data.@this)Activator.CreateInstance(generic, name, value, null, null)!;
         instance.Context = ctx;
         return instance;
     }

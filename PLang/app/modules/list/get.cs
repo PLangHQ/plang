@@ -6,10 +6,10 @@ namespace app.modules.list;
 [Action("get")]
 public partial class Get : IContext
 {
-    public partial Data.@this<Variable> ListName { get; init; }
-    public partial Data.@this<int> Index { get; init; }
+    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this<int> Index { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var item = data.GetChild($"[{Index.Value}]");

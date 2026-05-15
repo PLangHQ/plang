@@ -12,7 +12,7 @@ public class IsNotNullPropTests
         var result = await MatrixRunner.RunAsync<IsNotNullProp>(app,
             parameters: new[] { ("required", (object?)"value") });
         await Assert.That(result.Data.Success).IsTrue();
-        var typed = result.Data as global::app.Data.@this<string>;
+        var typed = result.Data as global::app.data.@this<string>;
         await Assert.That(typed!.Value).IsEqualTo("value");
     }
 

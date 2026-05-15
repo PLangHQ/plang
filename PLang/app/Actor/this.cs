@@ -126,11 +126,11 @@ public sealed class @this : IAsyncDisposable
         Context.Variables.RegisterNavigable("Settings", path => app.Settings.Get(path, Context));
 
         // Register %!app% — navigates the App object graph (e.g., %!app.Tester.IsEnabled%)
-        Context.Variables.Set("!app", new Data.DynamicData("!app", () => app));
+        Context.Variables.Set("!app", new data.DynamicData("!app", () => app));
 
         // Register lazy %MyIdentity% — resolves to the System actor's default identity.
         // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
-        Context.Variables.Set("MyIdentity", new Data.DynamicData("MyIdentity", () =>
+        Context.Variables.Set("MyIdentity", new data.DynamicData("MyIdentity", () =>
         {
             var provider = app.Code.Get<IIdentity>();
             if (!provider.Success) return null;

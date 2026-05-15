@@ -64,25 +64,25 @@ public partial class Handle : IContext, IModifier
             }),
     };
 
-    public partial global::app.Data.@this<int>? StatusCode { get; init; }
-    public partial global::app.Data.@this<string>? Key { get; init; }
-    public partial global::app.Data.@this<string>? Message { get; init; }
+    public partial global::app.data.@this<int>? StatusCode { get; init; }
+    public partial global::app.data.@this<string>? Key { get; init; }
+    public partial global::app.data.@this<string>? Message { get; init; }
     /// <summary>
     /// Action chain to run when the error matches. Preferred over Goal — lets a
     /// developer express "on error, log + fall back + notify" inline without
     /// wrapping it in a goal. Actions execute in order; %__data__% flows between
     /// them just like the main step chain.
     /// </summary>
-    public partial global::app.Data.@this<List<ActionEntity>>? Actions { get; init; }
-    public partial global::app.Data.@this<int>? RetryCount { get; init; }
-    public partial global::app.Data.@this<int>? RetryOverMs { get; init; }
-    public partial global::app.Data.@this<ErrorOrder>? Order { get; init; }
+    public partial global::app.data.@this<List<ActionEntity>>? Actions { get; init; }
+    public partial global::app.data.@this<int>? RetryCount { get; init; }
+    public partial global::app.data.@this<int>? RetryOverMs { get; init; }
+    public partial global::app.data.@this<ErrorOrder>? Order { get; init; }
     [Default(false)]
-    public partial global::app.Data.@this<bool> IgnoreError { get; init; }
+    public partial global::app.data.@this<bool> IgnoreError { get; init; }
 
-    public Task<global::app.Data.@this> Run() => Task.FromResult(global::app.Data.@this.Ok());
+    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 
-    public Func<Task<global::app.Data.@this>> Wrap(Func<Task<global::app.Data.@this>> next, Actor.Context.@this context)
+    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, Actor.Context.@this context)
     {
         return async () =>
         {
@@ -134,7 +134,7 @@ public partial class Handle : IContext, IModifier
             }
 
             // IgnoreError is the final fallback — after retry and recovery are exhausted
-            if (IgnoreError.Value) return global::app.Data.@this.Ok();
+            if (IgnoreError.Value) return global::app.data.@this.Ok();
 
             return result;
         };
@@ -147,7 +147,7 @@ public partial class Handle : IContext, IModifier
     /// <paramref name="erroredCall"/> as Cause — so renderers see "this happened because
     /// of that errored sibling."
     /// </summary>
-    private static async Task<global::app.Data.@this> RunRecoveryWithErrorScope(
+    private static async Task<global::app.data.@this> RunRecoveryWithErrorScope(
         List<ActionEntity> actions,
         Actor.Context.@this context,
         app.Errors.IError caughtError,
@@ -164,7 +164,7 @@ public partial class Handle : IContext, IModifier
     /// <c>App.Run</c> with <paramref name="cause"/> threaded through so the resulting Call
     /// has <c>Cause = erroredCall</c> in addition to its sync Caller (the goal-level Call).
     /// </summary>
-    private static async Task<global::app.Data.@this> RunRecovery(
+    private static async Task<global::app.data.@this> RunRecovery(
         List<ActionEntity> actions,
         Actor.Context.@this context,
         Call? cause)
@@ -173,7 +173,7 @@ public partial class Handle : IContext, IModifier
         // Stamp the enclosing step so navigation — goal.call → GetGoalAsync → sibling
         // sub-goals — works the same as for actions placed directly in a step.
         var enclosingStep = context.Step;
-        global::app.Data.@this last = global::app.Data.@this.Ok();
+        global::app.data.@this last = global::app.data.@this.Ok();
         foreach (var action in actions)
         {
             if (action.Step == null && enclosingStep != null)
@@ -202,7 +202,7 @@ public partial class Handle : IContext, IModifier
         return true;
     }
 
-    private async Task<global::app.Data.@this?> Retry(Func<Task<global::app.Data.@this>> next, Actor.Context.@this context)
+    private async Task<global::app.data.@this?> Retry(Func<Task<global::app.data.@this>> next, Actor.Context.@this context)
     {
         var count = RetryCount?.Value;
         if (count == null || count <= 0) return null;

@@ -131,8 +131,8 @@ public class CommandLineParser
 			var element = doc.RootElement;
 			return element.ValueKind switch
 			{
-				JsonValueKind.Object => Data.@this.UnwrapJsonElement(element),
-				JsonValueKind.Array => Data.@this.UnwrapJsonElement(element),
+				JsonValueKind.Object => data.@this.UnwrapJsonElement(element),
+				JsonValueKind.Array => data.@this.UnwrapJsonElement(element),
 				JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
 				JsonValueKind.True => true,
 				JsonValueKind.False => false,

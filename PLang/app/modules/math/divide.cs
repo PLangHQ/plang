@@ -26,10 +26,10 @@ public partial class Divide : IContext
             }),
     };
 
-    public partial Data.@this A { get; init; }
-    public partial Data.@this B { get; init; }
+    public partial data.@this A { get; init; }
+    public partial data.@this B { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var divisor = MathHelper.ToDouble(B.Value);
         if (divisor == 0)

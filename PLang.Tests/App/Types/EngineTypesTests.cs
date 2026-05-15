@@ -613,8 +613,8 @@ public class EngineTypesTests
         // Add a custom type mapping that static TypeMapping does NOT have
         engine.Formats.Add(".custom", "custom-kind", "application/custom");
 
-        var data = new global::app.Data.@this("test", new byte[] { 1 },
-            global::app.Data.Type.FromMime("application/custom"));
+        var data = new global::app.data.@this("test", new byte[] { 1 },
+            global::app.data.type.FromMime("application/custom"));
         data.Context = context;
 
         // Type.Kind goes through Engine.Types.KindOf — which sees our custom mapping

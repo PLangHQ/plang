@@ -15,10 +15,10 @@ namespace app.modules.builder;
 public partial class promoteGroups : IContext
 {
     [IsNotNull]
-    public partial Data.@this Steps { get; init; }
+    public partial data.@this Steps { get; init; }
 
     [Code]
     public partial IBuilder Builder { get; }
 
-    public Task<Data.@this> Run() => Builder.PromoteGroups(this);
+    public Task<data.@this> Run() => Builder.PromoteGroups(this);
 }

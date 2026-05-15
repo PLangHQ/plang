@@ -16,7 +16,7 @@ public sealed class JsonString : INavigator
     /// <summary>Maximum nesting depth for JSON unwrap. Defense-in-depth alongside JsonDocument's own depth limit.</summary>
     private const int MaxDepth = 64;
 
-    public bool CanNavigate(Data.@this data)
+    public bool CanNavigate(global::app.data.@this data)
     {
         if (data.Value is not string str)
             return false;
@@ -28,24 +28,24 @@ public sealed class JsonString : INavigator
         return trimmed.Length > 0 && (trimmed[0] == '{' || trimmed[0] == '[');
     }
 
-    public Data.@this Navigate(Data.@this data, string key)
+    public global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
         if (data.Value is not string str)
-            return Data.@this.NotFound(key);
+            return global::app.data.@this.NotFound(key);
 
         try
         {
             var doc = JsonDocument.Parse(str);
             int elementCount = 0;
             var parsed = UnwrapElement(doc.RootElement, 0, ref elementCount);
-            if (parsed == null) return Data.@this.NotFound(key);
+            if (parsed == null) return global::app.data.@this.NotFound(key);
 
-            var parsedData = new Data.@this(data.Name, parsed, parent: data);
+            var parsedData = new data.@this(data.Name, parsed, parent: data);
             return ValueNavigators.Navigate(parsedData, key);
         }
         catch (JsonException)
         {
-            return Data.@this.NotFound(key);
+            return global::app.data.@this.NotFound(key);
         }
     }
 

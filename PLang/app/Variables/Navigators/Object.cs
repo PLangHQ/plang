@@ -7,12 +7,12 @@ namespace app.Variables.Navigators;
 /// </summary>
 public sealed class Object : INavigator
 {
-    public bool CanNavigate(Data.@this data) => data.Value != null;
+    public bool CanNavigate(global::app.data.@this data) => data.Value != null;
 
-    public Data.@this Navigate(Data.@this data, string key)
+    public global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
         var value = data.Value;
-        if (value == null) return Data.@this.NotFound(key);
+        if (value == null) return global::app.data.@this.NotFound(key);
 
         // Walk the inheritance chain bottom-up so properties shadowed in a
         // derived type win over the base — GetProperty(name, IgnoreCase) throws
@@ -25,15 +25,15 @@ public sealed class Object : INavigator
                 BindingFlags.Public | BindingFlags.Instance |
                 BindingFlags.IgnoreCase | BindingFlags.DeclaredOnly);
         }
-        if (prop == null) return Data.@this.NotFound(key);
+        if (prop == null) return global::app.data.@this.NotFound(key);
 
         try
         {
-            return new Data.@this(key, prop.GetValue(value), parent: data);
+            return new data.@this(key, prop.GetValue(value), parent: data);
         }
         catch (TargetInvocationException ex)
         {
-            return Data.@this.FromError(new Errors.ServiceError(
+            return global::app.data.@this.FromError(new Errors.ServiceError(
                 $"Failed to read '{key}': {(ex.InnerException ?? ex).Message}",
                 "NavigationError", 500) { Exception = ex });
         }

@@ -14,14 +14,14 @@ namespace app.modules.cache;
 public partial class CacheWrap : IContext, IModifier
 {
     [IsNotNull]
-    public partial global::app.Data.@this<long> DurationMs { get; init; }
+    public partial global::app.data.@this<long> DurationMs { get; init; }
     [Default(false)]
-    public partial global::app.Data.@this<bool> Sliding { get; init; }
-    public partial global::app.Data.@this<string>? Key { get; init; }
+    public partial global::app.data.@this<bool> Sliding { get; init; }
+    public partial global::app.data.@this<string>? Key { get; init; }
 
-    public Task<global::app.Data.@this> Run() => Task.FromResult(global::app.Data.@this.Ok());
+    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 
-    public Func<Task<global::app.Data.@this>> Wrap(Func<Task<global::app.Data.@this>> next, Actor.Context.@this context)
+    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, Actor.Context.@this context)
     {
         var cacheKey = !string.IsNullOrEmpty(Key?.Value) ? Key.Value! : DefaultKey(context);
         var durationMs = DurationMs.Value;

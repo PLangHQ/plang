@@ -82,7 +82,7 @@ public class EdgeCaseTests
         var outerAction = new global::app.modules.test.run
         {
             Context = _app.User.Context,
-            Tests = new global::app.Data.@this<List<global::app.Tester.File>>("Tests", emptyList),
+            Tests = new global::app.data.@this<List<global::app.Tester.File>>("Tests", emptyList),
             Parallel = null,
             Timeout = null
         };
@@ -101,9 +101,9 @@ public class EdgeCaseTests
         var action = new global::app.modules.test.discover
         {
             Context = _app.User.Context,
-            Path = new global::app.Data.@this<string>("Path", "../../../etc"),
-            Pattern = new global::app.Data.@this<string>("Pattern", "*.test.goal"),
-            Recursive = new global::app.Data.@this<bool>("Recursive", true)
+            Path = new global::app.data.@this<string>("Path", "../../../etc"),
+            Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
+            Recursive = new global::app.data.@this<bool>("Recursive", true)
         };
 
         // discover catches traversal and returns an empty list — does not throw,
@@ -144,8 +144,8 @@ public class EdgeCaseTests
     [Test]
     public async Task Snapshot_DataContainingData_RenderedCorrectly_NoCircularReference()
     {
-        var inner = new global::app.Data.@this("inner", 42);
-        var outer = new global::app.Data.@this("outer", inner);
+        var inner = new global::app.data.@this("inner", 42);
+        var outer = new global::app.data.@this("outer", inner);
 
         var err = new global::app.Errors.AssertionError(1, 2)
         {

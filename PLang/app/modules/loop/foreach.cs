@@ -16,11 +16,11 @@ namespace app.modules.loop;
 [Action("foreach")]
 public partial class Foreach : IContext, IStep
 {
-    public partial Data.@this Collection { get; init; }
-    public partial Data.@this<Variable>? ItemName { get; init; }
-    public partial Data.@this<Variable>? KeyName { get; init; }
+    public partial data.@this Collection { get; init; }
+    public partial data.@this<Variable>? ItemName { get; init; }
+    public partial data.@this<Variable>? KeyName { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         if (Collection.Value == null)
             return Data(new types.loop { itemCount = 0, completed = true });

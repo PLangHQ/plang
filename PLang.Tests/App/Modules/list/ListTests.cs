@@ -20,14 +20,14 @@ public class ListTests
     // so each element keeps its name/type/context. Readers (global::app.Variables.Navigators.List,
     // EnumerateItems) unwrap on access; low-level tests look at the Data wrapper.
     private static object? Unwrap(object? slot) =>
-        slot is global::app.Data.@this d ? d.Value : slot;
+        slot is global::app.data.@this d ? d.Value : slot;
 
     [Test]
     public async Task Add_CreatesNewList()
     {
         var (context, memory) = CreateContext();
 
-        var action = new Add { Context = context, ListName = new Variable("myList"), Value = new global::app.Data.@this("", "first")};
+        var action = new Add { Context = context, ListName = new Variable("myList"), Value = new global::app.data.@this("", "first")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -43,7 +43,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Add { Context = context, ListName = new Variable("myList"), Value = new global::app.Data.@this("", "c")};
+        var action = new Add { Context = context, ListName = new Variable("myList"), Value = new global::app.data.@this("", "c")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -58,7 +58,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "c" });
 
-        var action = new Add { Context = context, ListName = new Variable("myList"), Value = new global::app.Data.@this("", "b"), AtIndex = 1 };
+        var action = new Add { Context = context, ListName = new Variable("myList"), Value = new global::app.data.@this("", "b"), AtIndex = 1 };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -74,7 +74,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove { Context = context, ListName = new Variable("myList"), Value = new global::app.Data.@this("", "b")};
+        var action = new Remove { Context = context, ListName = new Variable("myList"), Value = new global::app.data.@this("", "b")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -148,7 +148,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains { Context = context, ListName = new Variable("myList"), Value = new global::app.Data.@this("", "a")};
+        var action = new Contains { Context = context, ListName = new Variable("myList"), Value = new global::app.data.@this("", "a")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -161,7 +161,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Contains { Context = context, ListName = new Variable("myList"), Value = new global::app.Data.@this("", "z")};
+        var action = new Contains { Context = context, ListName = new Variable("myList"), Value = new global::app.data.@this("", "z")};
         var result = await action.Run();
 
         await Assert.That(result.Value).IsEqualTo(false);
@@ -201,7 +201,7 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new IndexOf { Context = context, ListName = new Variable("myList"), Value = new global::app.Data.@this("", "b")};
+        var action = new IndexOf { Context = context, ListName = new Variable("myList"), Value = new global::app.data.@this("", "b")};
         var result = await action.Run();
 
         await Assert.That(result.Value).IsEqualTo(1);
@@ -320,7 +320,7 @@ public class ListTests
             ListName = new Variable("items"),
             Key = "level",
             Operator = new global::app.modules.condition.Operator("=="),
-            Value = new global::app.Data.@this("", "high")
+            Value = new global::app.data.@this("", "high")
         };
         var result = await action.Run();
 
@@ -344,7 +344,7 @@ public class ListTests
             ListName = new Variable("items"),
             Key = "level",
             Operator = new global::app.modules.condition.Operator("=="),
-            Value = new global::app.Data.@this("", "high")
+            Value = new global::app.data.@this("", "high")
         };
         var result = await action.Run();
 
@@ -364,7 +364,7 @@ public class ListTests
             ListName = new Variable("items"),
             Key = "level",
             Operator = new global::app.modules.condition.Operator("=="),
-            Value = new global::app.Data.@this("", "high")
+            Value = new global::app.data.@this("", "high")
         };
         var result = await action.Run();
 
@@ -388,7 +388,7 @@ public class ListTests
             ListName = new Variable("items"),
             Key = "status",
             Operator = new global::app.modules.condition.Operator("!="),
-            Value = new global::app.Data.@this("", "active")
+            Value = new global::app.data.@this("", "active")
         };
         var result = await action.Run();
 

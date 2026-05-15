@@ -11,9 +11,9 @@ namespace app.modules.module;
 public partial class Remove : IContext
 {
     /// <summary>Module name to unregister (e.g., "mymodule").</summary>
-    public partial Data.@this<string> Name { get; init; }
+    public partial data.@this<string> Name { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var app = Context.App!;
         if (!app.Modules.Contains(Name.Value!))

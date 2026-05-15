@@ -12,12 +12,12 @@ namespace app.modules.environment;
 [Action("run")]
 public partial class run : IContext
 {
-    public partial Data.@this<GoalCall>? GoalName { get; init; }
-    public partial Data.@this<Step>? Step { get; init; }
-    public partial Data.@this<Goals.Goal.Steps.Step.Actions.Action.@this>? Action { get; init; }
-    public partial Data.@this<Actor.@this>? Actor { get; init; }
+    public partial data.@this<GoalCall>? GoalName { get; init; }
+    public partial data.@this<Step>? Step { get; init; }
+    public partial data.@this<Goals.Goal.Steps.Step.Actions.Action.@this>? Action { get; init; }
+    public partial data.@this<Actor.@this>? Actor { get; init; }
 
-    public async Task<Data.@this> Run()
+    public async Task<data.@this> Run()
     {
         if (GoalName?.Value != null)
             return await Context.App!.RunGoalAsync(GoalName.Value, Context);

@@ -252,13 +252,13 @@ public sealed partial class @this : modules.IDataWrappable
     /// Runs this goal: lifecycle events → Steps.RunAsync → return handling.
     /// Context travels as parameter — goals may be cached/shared.
     /// </summary>
-    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
+    public async Task<data.@this> RunAsync(Actor.Context.@this context)
     {
         var previousGoal = context.Goal;
         context.Goal = this;
 
         if (context.CancellationToken.IsCancellationRequested)
-            return Data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
+            return data.@this.FromError(new Errors.Error("Operation was cancelled", "Cancelled", 499));
 
         var lifecycle = context.LifecycleFor(this);
 
@@ -315,7 +315,7 @@ public sealed partial class @this : modules.IDataWrappable
             var serviceErr = new Errors.ServiceError(
                 ex.Message, goalEntryAction.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
             stack.Audit.Add(serviceErr);
-            return Data.@this.FromError(serviceErr);
+            return data.@this.FromError(serviceErr);
         }
         finally
         {
@@ -327,11 +327,11 @@ public sealed partial class @this : modules.IDataWrappable
     /// OBP: Goal is responsible for its own Data representation.
     /// Returns a cached per-execution Data&lt;Goal&gt; wrapper from the context.
     /// </summary>
-    public Data.@this AsData(Actor.Context.@this context)
+    public data.@this AsData(Actor.Context.@this context)
     {
         return context.GetOrCreate(this, () =>
         {
-            var data = new Data.@this<@this>("", this);
+            var data = new data.@this<@this>("", this);
             data.Context = context;
             return data;
         });

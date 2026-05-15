@@ -31,7 +31,7 @@ public class AskCallbackTests
         {
             Position = frame,
             ActorName = "User",
-            Variables = new() { new global::app.Data.@this("x", 1) }
+            Variables = new() { new global::app.data.@this("x", 1) }
         };
 
         var bytes = src.Serialize(app.User.Context);
@@ -73,7 +73,7 @@ public class AskCallbackTests
         {
             Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
             ActorName = "Service",
-            Variables = new() { new global::app.Data.@this("y", "two") }
+            Variables = new() { new global::app.data.@this("y", "two") }
         };
 
         var bytes = src.Serialize(app.User.Context);
@@ -91,7 +91,7 @@ public class AskCallbackTests
         var ask = new AskCallback
         {
             Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
-            Variables = new() { new global::app.Data.@this("bound", 42) }
+            Variables = new() { new global::app.data.@this("bound", 42) }
         };
 
         await ask.Run(app.User.Context);

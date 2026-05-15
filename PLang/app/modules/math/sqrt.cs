@@ -6,9 +6,9 @@ namespace app.modules.math;
 [Action("sqrt")]
 public partial class Sqrt : IContext
 {
-    public partial Data.@this Value { get; init; }
+    public partial data.@this Value { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var input = MathHelper.ToDouble(Value.Value);
         if (input < 0)

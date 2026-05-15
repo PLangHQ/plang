@@ -26,7 +26,7 @@ public sealed class @this : ISerializer
             PropertyNameCaseInsensitive = true,
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.Data.Json() },
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.data.Json() },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { global::app.Channels.Serializers.Filters.Transport.ForOutbound }
@@ -38,7 +38,7 @@ public sealed class @this : ISerializer
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.Data.Json() },
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.data.Json() },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { global::app.Channels.Serializers.Filters.Transport.ForInbound }

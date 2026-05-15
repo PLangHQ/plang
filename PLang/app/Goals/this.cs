@@ -304,7 +304,7 @@ public sealed class @this
     /// <summary>
     /// Loads a goal from a .pr file, deserializes and adds to this collection.
     /// </summary>
-    public async Task<Data.@this> LoadFromFileAsync(app.@this app, string prFilePath, Actor.Context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<data.@this> LoadFromFileAsync(app.@this app, string prFilePath, Actor.Context.@this? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -329,7 +329,7 @@ public sealed class @this
             }
 
             if (goals == null || goals.Count == 0)
-                return Data.@this.FromError(new Error($"Failed to parse goal file: {prFilePath}"));
+                return data.@this.FromError(new Error($"Failed to parse goal file: {prFilePath}"));
 
             Goal.@this? primary = null;
             foreach (var goal in goals)
@@ -341,18 +341,18 @@ public sealed class @this
                 primary ??= goal;
             }
 
-            return Data.@this.Ok(primary!);
+            return data.@this.Ok(primary!);
         }
         catch (Exception ex)
         {
-            return Data.@this.FromError(Error.FromException(ex));
+            return data.@this.FromError(Error.FromException(ex));
         }
     }
 
     /// <summary>
     /// Loads all goals from a directory.
     /// </summary>
-    public async Task<Data.@this> LoadFromDirectoryAsync(app.@this app, string directory, string pattern = "*.pr", Actor.Context.@this? context = null, CancellationToken cancellationToken = default)
+    public async Task<data.@this> LoadFromDirectoryAsync(app.@this app, string directory, string pattern = "*.pr", Actor.Context.@this? context = null, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -368,11 +368,11 @@ public sealed class @this
                     loadedCount++;
             }
 
-            return Data.@this.Ok(loadedCount);
+            return data.@this.Ok(loadedCount);
         }
         catch (Exception ex)
         {
-            return Data.@this.FromError(Error.FromException(ex));
+            return data.@this.FromError(Error.FromException(ex));
         }
     }
 }

@@ -71,7 +71,7 @@ public class QueryToolTests
             },
             Tools = new List<GoalCall>
             {
-                new GoalCall { Name = "GetWeather", Parameters = new List<Data> { new Data("city", null, global::app.Data.Type.String) } }
+                new GoalCall { Name = "GetWeather", Parameters = new List<Data> { new Data("city", null, global::app.data.type.String) } }
             }
         };
         var result = await action.Run();
@@ -333,8 +333,8 @@ public class QueryToolTests
                     Name = "TestTool",
                     Parameters = new List<Data>
                     {
-                        new Data("city", null, global::app.Data.Type.String),     // required (no default)
-                        new Data("units", "metric", global::app.Data.Type.String) // optional (has default)
+                        new Data("city", null, global::app.data.type.String),     // required (no default)
+                        new Data("units", "metric", global::app.data.type.String) // optional (has default)
                     }
                 }
             }
@@ -367,7 +367,7 @@ public class QueryToolTests
                     Name = "TestTool",
                     Parameters = new List<Data>
                     {
-                        new Data("query", null, global::app.Data.Type.String)
+                        new Data("query", null, global::app.data.type.String)
                     }
                 }
             }
@@ -443,8 +443,8 @@ public class QueryToolTests
                     Name = "GetWeather",
                     Parameters = new List<Data>
                     {
-                        new Data("city", null, global::app.Data.Type.String),       // required
-                        new Data("units", "metric", global::app.Data.Type.String)   // optional, default "metric"
+                        new Data("city", null, global::app.data.type.String),       // required
+                        new Data("units", "metric", global::app.data.type.String)   // optional, default "metric"
                     }
                 }
             }
@@ -484,11 +484,11 @@ public class QueryToolTests
                     Name = "TypedTool",
                     Parameters = new List<Data>
                     {
-                        new Data("name", null, global::app.Data.Type.String),
-                        new Data("count", null, new global::app.Data.Type("int")),
-                        new Data("enabled", null, new global::app.Data.Type("bool")),
-                        new Data("items", null, new global::app.Data.Type("list")),
-                        new Data("config", null, new global::app.Data.Type("object"))
+                        new Data("name", null, global::app.data.type.String),
+                        new Data("count", null, new global::app.data.type("int")),
+                        new Data("enabled", null, new global::app.data.type("bool")),
+                        new Data("items", null, new global::app.data.type("list")),
+                        new Data("config", null, new global::app.data.type("object"))
                     }
                 }
             }

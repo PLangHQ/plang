@@ -6,11 +6,11 @@ namespace app.modules.list;
 [Action("join")]
 public partial class Join : IContext
 {
-    public partial Data.@this<Variable> ListName { get; init; }
+    public partial data.@this<Variable> ListName { get; init; }
     [Default(",")]
-    public partial Data.@this<string> Separator { get; init; }
+    public partial data.@this<string> Separator { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var strings = new List<string>();
@@ -19,6 +19,6 @@ public partial class Join : IContext
             strings.Add(item.Value?.ToString() ?? "");
 
         var result = string.Join(Separator.Value!, strings);
-        return Task.FromResult(Data(result, app.Data.Type.String));
+        return Task.FromResult(Data(result, app.data.type.String));
     }
 }

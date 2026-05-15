@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using app.Data;
+using app.data;
 
 namespace app.Types;
 
@@ -28,7 +28,7 @@ public sealed partial class @this
     internal static readonly JsonSerializerOptions _caseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.Data.EmptyStringToNullEnumConverterFactory(), new Channels.Serializers.TimeSpanIso8601() },
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new Channels.Serializers.TimeSpanIso8601() },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
@@ -76,9 +76,9 @@ public sealed partial class @this
         if (targetType.IsAssignableFrom(sourceType))
             return (value, null);
 
-        // Data.@this is the universal value wrapper — any value can become Data
-        if (targetType == typeof(Data.@this) && value is not Data.@this)
-            return (new Data.@this("", value), null);
+        // data.@this is the universal value wrapper — any value can become Data
+        if (targetType == typeof(data.@this) && value is not data.@this)
+            return (new data.@this("", value), null);
 
         // Handle nullable target types
         var underlying = System.Nullable.GetUnderlyingType(targetType);
@@ -308,12 +308,12 @@ public sealed partial class @this
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
                             "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
                 var prPath = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
-                List<Data.@this>? parameters = null;
+                List<data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
                 {
                     parameters = pList
                         .OfType<IDictionary<string, object?>>()
-                        .Select(d => new Data.@this(
+                        .Select(d => new data.@this(
                             d.TryGetValue("name", out var dn) ? dn?.ToString() ?? "" : "",
                             d.TryGetValue("value", out var dv) ? dv : null))
                         .ToList();

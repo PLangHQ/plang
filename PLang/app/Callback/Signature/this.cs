@@ -1,7 +1,7 @@
 namespace app.Callback.Signature;
 
 /// <summary>
-/// Signature config for the callback subsystem. Read by <see cref="Data.@this"/>'s lazy
+/// Signature config for the callback subsystem. Read by <see cref="data.@this"/>'s lazy
 /// signature getter when the wrapped value is an <see cref="ICallback"/>.
 /// </summary>
 public sealed class @this

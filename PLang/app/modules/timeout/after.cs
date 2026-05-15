@@ -13,11 +13,11 @@ namespace app.modules.timeout;
 public partial class After : IContext, IModifier
 {
     [IsNotNull]
-    public partial global::app.Data.@this<int> Ms { get; init; }
+    public partial global::app.data.@this<int> Ms { get; init; }
 
-    public Task<global::app.Data.@this> Run() => Task.FromResult(global::app.Data.@this.Ok());
+    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 
-    public Func<Task<global::app.Data.@this>> Wrap(Func<Task<global::app.Data.@this>> next, Actor.Context.@this context)
+    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, Actor.Context.@this context)
     {
         var ms = Ms.Value;
         return async () =>
@@ -39,7 +39,7 @@ public partial class After : IContext, IModifier
                 // Our timeout fired. Inner action's generated ExecuteAsync swallows OCE into a
                 // ServiceError result, so we detect the timeout via CTS state + failed result.
                 if (cts.IsCancellationRequested && !result.Success)
-                    return global::app.Data.@this.FromError(new ServiceError(
+                    return global::app.data.@this.FromError(new ServiceError(
                         $"Timed out after {ms}ms", "Timeout", 408));
 
                 return result;
@@ -49,7 +49,7 @@ public partial class After : IContext, IModifier
             {
                 // Fallback path: if an inner action re-throws OCE (some handlers don't wrap),
                 // convert to Timeout error here.
-                return global::app.Data.@this.FromError(new ServiceError(
+                return global::app.data.@this.FromError(new ServiceError(
                     $"Timed out after {ms}ms", "Timeout", 408));
             }
             finally

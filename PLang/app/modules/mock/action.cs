@@ -11,12 +11,12 @@ namespace app.modules.mock;
 [Action("intercept", Cacheable = false)]
 public partial class MockAction : IContext
 {
-    public partial Data.@this<string> ActionPattern { get; init; }
-    public partial Data.@this? ReturnValue { get; init; }
-    public partial Data.@this<GoalCall>? GoalToCall { get; init; }
-    public partial Data.@this<Dictionary<string, object?>>? Parameters { get; init; }
+    public partial data.@this<string> ActionPattern { get; init; }
+    public partial data.@this? ReturnValue { get; init; }
+    public partial data.@this<GoalCall>? GoalToCall { get; init; }
+    public partial data.@this<Dictionary<string, object?>>? Parameters { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var handle = new types.MockHandle
         {
@@ -29,7 +29,7 @@ public partial class MockAction : IContext
         var goalToCall = GoalToCall?.Value;
         var paramMatchers = Parameters?.Value;
 
-        Func<Actor.Context.@this, Goals.Goal.Steps.Step.Actions.Action.@this?, Data.@this?, Task<Data.@this>> handler = async (ctx, _, _) =>
+        Func<Actor.Context.@this, Goals.Goal.Steps.Step.Actions.Action.@this?, data.@this?, Task<data.@this>> handler = async (ctx, _, _) =>
         {
             // Find the current action being executed from the step
             var currentAction = FindCurrentAction(ctx);
@@ -119,7 +119,7 @@ public partial class MockAction : IContext
         return true;
     }
 
-    private static object? ResolveParamValue(Data.@this param, Variables.@this variables)
+    private static object? ResolveParamValue(data.@this param, Variables.@this variables)
     {
         if (param.Value is string s && s.Contains('%'))
             return variables.Resolve(s);

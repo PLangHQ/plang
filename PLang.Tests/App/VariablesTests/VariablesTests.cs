@@ -1,5 +1,5 @@
 using global::app.Variables;
-using Type = global::app.Data.Type;
+using Type = global::app.data.type;
 
 namespace PLang.Tests.App.VariablesTests;
 
@@ -1042,7 +1042,7 @@ public class VariablesAccessorTests
         await Assert.That(object.ReferenceEquals(retrieved!.Value, goal)).IsTrue();
     }
 
-    // ResolveDeep was deleted in v4 (resolution lives in Data.As<T>(context) per call).
+    // ResolveDeep was deleted in v4 (resolution lives in data.As<T>(context) per call).
     // Equivalent behaviour is covered by DataAsTResolutionTests + the matrix Resolution group.
 }
 

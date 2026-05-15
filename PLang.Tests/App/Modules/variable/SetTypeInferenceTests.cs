@@ -31,7 +31,7 @@ public class SetTypeInferenceTests
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("s");
-        await Assert.That(stored).IsTypeOf<global::app.Data.@this<string>>();
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<string>>();
     }
 
     [Test]
@@ -45,8 +45,8 @@ public class SetTypeInferenceTests
         // The .pr/JSON pipeline normalizes integers to long; that's consistent with the
         // architect's hot-types if-chain (long arm fires for the LLM-emitted form).
         var t = stored.GetType();
-        var isInt = t == typeof(global::app.Data.@this<int>);
-        var isLong = t == typeof(global::app.Data.@this<long>);
+        var isInt = t == typeof(global::app.data.@this<int>);
+        var isLong = t == typeof(global::app.data.@this<long>);
         await Assert.That(isInt || isLong).IsTrue();
     }
 
@@ -58,7 +58,7 @@ public class SetTypeInferenceTests
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("n");
-        await Assert.That(stored).IsTypeOf<global::app.Data.@this<long>>();
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<long>>();
     }
 
     [Test]
@@ -69,7 +69,7 @@ public class SetTypeInferenceTests
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("d");
-        await Assert.That(stored).IsTypeOf<global::app.Data.@this<double>>();
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<double>>();
     }
 
     [Test]
@@ -80,7 +80,7 @@ public class SetTypeInferenceTests
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("b");
-        await Assert.That(stored).IsTypeOf<global::app.Data.@this<bool>>();
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<bool>>();
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class SetTypeInferenceTests
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("t");
-        await Assert.That(stored).IsTypeOf<global::app.Data.@this<DateTime>>();
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<DateTime>>();
     }
 
     [Test]
@@ -104,7 +104,7 @@ public class SetTypeInferenceTests
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("list");
-        await Assert.That(stored).IsTypeOf<global::app.Data.@this<List<object?>>>();
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<List<object?>>>();
         // Snapshot-clone: stored.Value is a separate list instance.
         await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
     }
@@ -118,7 +118,7 @@ public class SetTypeInferenceTests
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("d");
-        await Assert.That(stored).IsTypeOf<global::app.Data.@this<Dictionary<string, object?>>>();
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<Dictionary<string, object?>>>();
         await Assert.That(ReferenceEquals(stored.Value, src)).IsFalse();
     }
 
@@ -131,7 +131,7 @@ public class SetTypeInferenceTests
         var result = await _app.Run(action, ctx);
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("n");
-        await Assert.That(stored).IsTypeOf<global::app.Data.@this<string>>();
+        await Assert.That(stored).IsTypeOf<global::app.data.@this<string>>();
         await Assert.That(stored.Value).IsEqualTo("42");
     }
 
@@ -154,7 +154,7 @@ public class SetTypeInferenceTests
         await Assert.That(result.Success).IsTrue();
         var stored = ctx.Variables.Get("x");
         // Plain Data (not Data<T>) — null can't be type-inferred.
-        await Assert.That(stored.GetType()).IsEqualTo(typeof(global::app.Data.@this));
+        await Assert.That(stored.GetType()).IsEqualTo(typeof(global::app.data.@this));
     }
 
     [Test]

@@ -24,7 +24,7 @@ public class TimeoutAfterTests
     {
         Module = "timeout",
         ActionName = "after",
-        Parameters = new List<global::app.Data.@this> { new("ms", ms) }
+        Parameters = new List<global::app.data.@this> { new("ms", ms) }
     };
 
     [Test]
@@ -34,7 +34,7 @@ public class TimeoutAfterTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::app.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%fast%"), new("value", "done")
             },
@@ -54,7 +54,7 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.Data.@this> { new("ms", 5000) },
+            Parameters = new List<global::app.data.@this> { new("ms", 5000) },
             Modifiers = new ActionModifiers { TimeoutModifier(50) }
         };
 
@@ -73,7 +73,7 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.Data.@this> { new("ms", 10_000) },
+            Parameters = new List<global::app.data.@this> { new("ms", 10_000) },
             Modifiers = new ActionModifiers { TimeoutModifier(30) }
         };
 
@@ -98,7 +98,7 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.Data.@this> { new("ms", 10_000) },
+            Parameters = new List<global::app.data.@this> { new("ms", 10_000) },
             Modifiers = new ActionModifiers { TimeoutModifier(5000) }
         };
 
@@ -115,7 +115,7 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.Data.@this> { new("ms", 1000) },
+            Parameters = new List<global::app.data.@this> { new("ms", 1000) },
             Modifiers = new ActionModifiers { TimeoutModifier(0) }
         };
 
@@ -135,11 +135,11 @@ public class TimeoutAfterTests
             new PrAction
             {
                 Module = "timeout", ActionName = "after",
-                Parameters = new List<global::app.Data.@this> { new("ms", 1) }
+                Parameters = new List<global::app.data.@this> { new("ms", 1) }
             }
         };
 
-        Func<Task<global::app.Data.@this>> throwingInner = async () =>
+        Func<Task<global::app.data.@this>> throwingInner = async () =>
         {
             await Task.Delay(500); // long enough for the 1ms timeout to fire
             throw new OperationCanceledException();
@@ -162,14 +162,14 @@ public class TimeoutAfterTests
         {
             Module = "timer",
             ActionName = "sleep",
-            Parameters = new List<global::app.Data.@this> { new("ms", 5000) },
+            Parameters = new List<global::app.data.@this> { new("ms", 5000) },
             Modifiers = new ActionModifiers
             {
                 TimeoutModifier(50),
                 new PrAction
                 {
                     Module = "error", ActionName = "handle",
-                    Parameters = new List<global::app.Data.@this> { new("ignoreError", true) }
+                    Parameters = new List<global::app.data.@this> { new("ignoreError", true) }
                 }
             }
         };

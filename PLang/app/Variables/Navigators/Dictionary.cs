@@ -17,7 +17,7 @@ namespace app.Variables.Navigators;
 /// </summary>
 public sealed class Dictionary : INavigator
 {
-    public bool CanNavigate(Data.@this data)
+    public bool CanNavigate(global::app.data.@this data)
     {
         var v = data.Value;
         if (v is null) return false;
@@ -26,10 +26,10 @@ public sealed class Dictionary : INavigator
         return GetStringKeyedDictType(v) != null;
     }
 
-    public Data.@this Navigate(Data.@this data, string key)
+    public global::app.data.@this Navigate(global::app.data.@this data, string key)
     {
         var value = data.Value;
-        if (value == null) return Data.@this.NotFound(key);
+        if (value == null) return global::app.data.@this.NotFound(key);
 
         // Rule across all three arms: user keys win — "Count" only resolves to dict.Count
         // when no key with that name exists. Otherwise a dict literal `{count: "x"}`
@@ -40,11 +40,11 @@ public sealed class Dictionary : INavigator
             foreach (var kvp in generic)
             {
                 if (string.Equals(kvp.Key, key, StringComparison.OrdinalIgnoreCase))
-                    return new Data.@this(key, kvp.Value, parent: data);
+                    return new data.@this(key, kvp.Value, parent: data);
             }
             if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
-                return new Data.@this(key, generic.Count, parent: data);
-            return Data.@this.NotFound(key);
+                return new data.@this(key, generic.Count, parent: data);
+            return global::app.data.@this.NotFound(key);
         }
 
         if (value is IDictionary dict)
@@ -52,11 +52,11 @@ public sealed class Dictionary : INavigator
             foreach (DictionaryEntry entry in dict)
             {
                 if (entry.Key is string k && string.Equals(k, key, StringComparison.OrdinalIgnoreCase))
-                    return new Data.@this(key, entry.Value, parent: data);
+                    return new data.@this(key, entry.Value, parent: data);
             }
             if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
-                return new Data.@this(key, dict.Count, parent: data);
-            return Data.@this.NotFound(key);
+                return new data.@this(key, dict.Count, parent: data);
+            return global::app.data.@this.NotFound(key);
         }
 
         // IDictionary<string, T> for arbitrary T (JsonObject and friends).
@@ -75,14 +75,14 @@ public sealed class Dictionary : INavigator
                 var valProp = entryType.GetProperty("Value");
                 if (keyProp?.GetValue(entry) is string k
                     && string.Equals(k, key, StringComparison.OrdinalIgnoreCase))
-                    return new Data.@this(key, valProp?.GetValue(entry), parent: data);
+                    return new data.@this(key, valProp?.GetValue(entry), parent: data);
             }
             if (string.Equals(key, "Count", StringComparison.OrdinalIgnoreCase))
-                return new Data.@this(key, count, parent: data);
-            return Data.@this.NotFound(key);
+                return new data.@this(key, count, parent: data);
+            return global::app.data.@this.NotFound(key);
         }
 
-        return Data.@this.NotFound(key);
+        return global::app.data.@this.NotFound(key);
     }
 
     /// <summary>

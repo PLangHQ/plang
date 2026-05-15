@@ -129,7 +129,7 @@ public class RequestActionTests
             Context = Ctx,
             Url = "https://api.example.com/users",
             Method = HttpMethod.POST,
-            Body = new global::app.Data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }),
+            Body = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }),
             Unsigned = true
         };
         var result = await action.Run();
@@ -149,7 +149,7 @@ public class RequestActionTests
             Url = "https://api.example.com/login",
             Method = HttpMethod.POST,
             ContentType = "application/x-www-form-urlencoded",
-            Body = new global::app.Data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }),
+            Body = new global::app.data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }),
             Unsigned = true
         };
         var result = await action.Run();
@@ -778,7 +778,7 @@ public class RequestActionTests
             Context = Ctx,
             Url = "https://api.example.com/content",
             Method = HttpMethod.POST,
-            Body = new global::app.Data.@this("", "test body"),
+            Body = new global::app.data.@this("", "test body"),
             Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" },
             Unsigned = true
         };

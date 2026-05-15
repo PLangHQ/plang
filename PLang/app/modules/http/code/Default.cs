@@ -9,7 +9,7 @@ using app.Actor.Context;
 using app.Errors;
 using app.Goals.Goal;
 using app.Variables;
-using PlangType = app.Data.Type;
+using PlangType = app.data.type;
 using app.Config;
 using app.modules.signing;
 using AppType = app.@this;
@@ -55,13 +55,13 @@ public sealed class Default : IHttp
     private readonly JsonSerializerOptions _caseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.Data.EmptyStringToNullEnumConverterFactory(), new global::app.Channels.Serializers.TimeSpanIso8601() },
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new global::app.Channels.Serializers.TimeSpanIso8601() },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
     // --- IHttp: action-level methods ---
 
-    public Task<Data.@this> SendAsync(request action) => ExecuteHttpAsync(async () =>
+    public Task<data.@this> SendAsync(request action) => ExecuteHttpAsync(async () =>
     {
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
@@ -134,7 +134,7 @@ public sealed class Default : IHttp
         }
     });
 
-    public Task<Data.@this> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
+    public Task<data.@this> DownloadAsync(download action) => ExecuteHttpAsync(async () =>
     {
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
@@ -175,10 +175,10 @@ public sealed class Default : IHttp
         await StreamWithProgressAsync(
             responseStream, buffer, totalBytes, maxDownloadSize, action.OnProgress?.Value, app, action.Context, cts.Token);
 
-        return global::app.Data.@this.Ok(buffer.ToArray());
+        return global::app.data.@this.Ok(buffer.ToArray());
     });
 
-    public Task<Data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
+    public Task<data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
     {
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
@@ -220,21 +220,21 @@ public sealed class Default : IHttp
         return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize);
     });
 
-    public Data.@this Configure(configure action)
+    public data.@this Configure(configure action)
     {
         // Redirect config can't change after first request (SocketsHttpHandler is immutable)
         if (_client != null && (action.FollowRedirects?.Value != null || action.MaxRedirects?.Value != null))
-            return global::app.Data.@this.FromError(new ServiceError(
+            return global::app.data.@this.FromError(new ServiceError(
                 "Cannot change FollowRedirects/MaxRedirects after first HTTP request",
                 "ConfigLocked", 409));
 
         action.Context.App.Config.Apply<Config>(action, action.Context, action.Default.Value);
-        return global::app.Data.@this.Ok();
+        return global::app.data.@this.Ok();
     }
 
     // --- Unified error handling ---
 
-    private async Task<Data.@this> ExecuteHttpAsync(Func<Task<Data.@this>> operation)
+    private async Task<data.@this> ExecuteHttpAsync(Func<Task<data.@this>> operation)
     {
         try
         {
@@ -253,7 +253,7 @@ public sealed class Default : IHttp
                 FormatException => ("InvalidContent", 400),
                 _ => ("HttpError", 500)
             };
-            return global::app.Data.@this.FromError(new ServiceError(ex.Message, key, statusCode));
+            return global::app.data.@this.FromError(new ServiceError(ex.Message, key, statusCode));
         }
     }
 
@@ -369,7 +369,7 @@ public sealed class Default : IHttp
     /// Signs a request via app.RunAction&lt;sign&gt;().
     /// Returns null if unsigned, the sign result Data on success (navigate .Signature for Signature).
     /// </summary>
-    private static async Task<Data.@this?> SignRequestAsync(
+    private static async Task<data.@this?> SignRequestAsync(
         Actor.Context.@this context,
         bool unsigned,
         signing.sign? signOptions,
@@ -382,8 +382,8 @@ public sealed class Default : IHttp
         var httpSign = new signing.sign
         {
             Context = context,
-            Data = new Data.@this("", bodyContent ?? ""),
-            Headers = new Data.@this<Dictionary<string, object>>("", new Dictionary<string, object>
+            Data = new data.@this("", bodyContent ?? ""),
+            Headers = new data.@this<Dictionary<string, object>>("", new Dictionary<string, object>
             {
                 ["url"] = url,
                 ["method"] = method
@@ -395,7 +395,7 @@ public sealed class Default : IHttp
         return await context.App.RunAction<signing.sign>(httpSign, context);
     }
 
-    private void ApplySignature(HttpRequestMessage request, Data.@this signResult)
+    private void ApplySignature(HttpRequestMessage request, data.@this signResult)
     {
         var signatureJson = JsonSerializer.Serialize(signResult.Signature, _caseInsensitiveRead);
         request.Headers.TryAddWithoutValidation("X-Signature", signatureJson);
@@ -449,19 +449,19 @@ public sealed class Default : IHttp
 
     // --- URL resolution ---
 
-    private static Data.@this<string> ResolveUrl(string url, ModuleView<Config> config)
+    private static data.@this<string> ResolveUrl(string url, ModuleView<Config> config)
     {
         var baseUrl = config.Resolve<string?>("BaseUrl", null);
 
         if (url.StartsWith('/'))
         {
             if (string.IsNullOrEmpty(baseUrl))
-                return Data.@this<string>.FromError(new ServiceError(
+                return data.@this<string>.FromError(new ServiceError(
                     "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
                     "NoBaseUrl", 400));
 
             baseUrl = baseUrl.TrimEnd('/');
-            return Data.@this<string>.Ok(baseUrl + url);
+            return data.@this<string>.Ok(baseUrl + url);
         }
 
         if (!url.Contains("://"))
@@ -471,17 +471,17 @@ public sealed class Default : IHttp
         if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
             if (uri.Scheme != "http" && uri.Scheme != "https")
-                return Data.@this<string>.FromError(new ServiceError(
+                return data.@this<string>.FromError(new ServiceError(
                     $"Only http:// and https:// URLs are allowed, got {uri.Scheme}://",
                     "InvalidUrlScheme", 400));
         }
 
-        return Data.@this<string>.Ok(url);
+        return data.@this<string>.Ok(url);
     }
 
     // --- Response parsing ---
 
-    private async Task<Data.@this> ParseResponseAsync(
+    private async Task<data.@this> ParseResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         bool unsigned,
@@ -510,7 +510,7 @@ public sealed class Default : IHttp
         {
             if (unsigned)
             {
-                var err = global::app.Data.@this.FromError(new ServiceError(
+                var err = global::app.data.@this.FromError(new ServiceError(
                     "Unsigned request received application/plang response — this is not allowed",
                     "UnsignedPlang", 403));
                 BuildProperties(err, request, response);
@@ -533,7 +533,7 @@ public sealed class Default : IHttp
             {
                 parsed = json;
             }
-            var result = global::app.Data.@this.Ok(parsed);
+            var result = global::app.data.@this.Ok(parsed);
             BuildProperties(result, request, response);
             return result;
         }
@@ -542,7 +542,7 @@ public sealed class Default : IHttp
         if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
         {
             var xml = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = global::app.Data.@this.Ok(xml, Data.Type.FromMime("application/xml"));
+            var result = global::app.data.@this.Ok(xml, data.type.FromMime("application/xml"));
             BuildProperties(result, request, response);
             return result;
         }
@@ -551,23 +551,23 @@ public sealed class Default : IHttp
         if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
         {
             var text = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = global::app.Data.@this.Ok(text);
+            var result = global::app.data.@this.Ok(text);
             BuildProperties(result, request, response);
             return result;
         }
 
         // Binary response
         var bytes = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
-        var binaryResult = global::app.Data.@this.Ok(bytes);
+        var binaryResult = global::app.data.@this.Ok(bytes);
         BuildProperties(binaryResult, request, response);
         return binaryResult;
     }
 
     /// <summary>
-    /// Parses application/plang response: deserialize as Data.@this (with Signature via [In]),
+    /// Parses application/plang response: deserialize as data.@this (with Signature via [In]),
     /// verify signature, set %!ServiceIdentity%.
     /// </summary>
-    private async Task<Data.@this> ParsePlangResponseAsync(
+    private async Task<data.@this> ParsePlangResponseAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         AppType app,
@@ -576,14 +576,14 @@ public sealed class Default : IHttp
     {
         var body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
 
-        Data.@this? data;
+        data.@this? data;
         try
         {
-            data = JsonSerializer.Deserialize<Data.@this>(body, _transportInOptions);
+            data = JsonSerializer.Deserialize<data.@this>(body, _transportInOptions);
         }
         catch (JsonException ex)
         {
-            var err = global::app.Data.@this.FromError(new ServiceError(
+            var err = global::app.data.@this.FromError(new ServiceError(
                 $"Failed to deserialize application/plang response: {ex.Message}",
                 "PlangDeserializeError", 400));
             BuildProperties(err, request, response);
@@ -592,7 +592,7 @@ public sealed class Default : IHttp
 
         if (data == null)
         {
-            var err = global::app.Data.@this.FromError(new ServiceError(
+            var err = global::app.data.@this.FromError(new ServiceError(
                 "application/plang response deserialized to null",
                 "PlangDeserializeError", 400));
             BuildProperties(err, request, response);
@@ -626,10 +626,10 @@ public sealed class Default : IHttp
     private async Task TryExtractSignedErrorIdentity(
         string errorBody, AppType app, Actor.Context.@this context)
     {
-        // Try deserializing as Data.@this with transport options (may have Signature via [In])
-        Data.@this? data = null;
-        try { data = JsonSerializer.Deserialize<Data.@this>(errorBody, _transportInOptions); }
-        catch (JsonException) { /* not valid Data.@this JSON — try legacy format below */ }
+        // Try deserializing as data.@this with transport options (may have Signature via [In])
+        data.@this? data = null;
+        try { data = JsonSerializer.Deserialize<data.@this>(errorBody, _transportInOptions); }
+        catch (JsonException) { /* not valid data.@this JSON — try legacy format below */ }
 
         if (data?.Signature != null)
         {
@@ -649,7 +649,7 @@ public sealed class Default : IHttp
             _caseInsensitiveRead);
         if (signedData == null) return;
 
-        var legacyData = new Data.@this("");
+        var legacyData = new data.@this("");
         legacyData.Signature = signedData;
 
         var legacyVerify = new signing.verify { Context = context, Data = legacyData };
@@ -662,13 +662,13 @@ public sealed class Default : IHttp
     /// Reads an error HTTP response and builds a Data error with properties.
     /// Returns the error Data and the raw error body (for signed error extraction).
     /// </summary>
-    private static async Task<(Data.@this Error, string Body)> ReadErrorResponseAsync(
+    private static async Task<(data.@this Error, string Body)> ReadErrorResponseAsync(
         HttpResponseMessage response, HttpRequestMessage request, CancellationToken ct = default)
     {
         var errorBody = "";
         try { errorBody = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — body too large or read failed, proceed with empty */ }
-        var err = global::app.Data.@this.FromError(new ServiceError(
+        var err = global::app.data.@this.FromError(new ServiceError(
             $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
             "HttpError", (int)response.StatusCode));
         BuildProperties(err, request, response);
@@ -677,45 +677,45 @@ public sealed class Default : IHttp
 
     // --- Response metadata ---
 
-    private static void BuildProperties(Data.@this data, HttpRequestMessage request, HttpResponseMessage response)
+    private static void BuildProperties(data.@this data, HttpRequestMessage request, HttpResponseMessage response)
     {
         var props = data.Properties;
 
-        props.Add(new Data.@this("Url", request.RequestUri?.ToString()));
-        props.Add(new Data.@this("Method", request.Method.Method));
+        props.Add(new data.@this("Url", request.RequestUri?.ToString()));
+        props.Add(new data.@this("Method", request.Method.Method));
 
         var reqHeaders = new Dictionary<string, string>();
         foreach (var h in request.Headers)
             reqHeaders[h.Key] = string.Join(", ", h.Value);
-        props.Add(new Data.@this("RequestHeaders", reqHeaders));
+        props.Add(new data.@this("RequestHeaders", reqHeaders));
 
         if (request.Content != null)
         {
-            props.Add(new Data.@this("ContentType", request.Content.Headers.ContentType?.ToString()));
-            props.Add(new Data.@this("ContentLength", request.Content.Headers.ContentLength));
+            props.Add(new data.@this("ContentType", request.Content.Headers.ContentType?.ToString()));
+            props.Add(new data.@this("ContentLength", request.Content.Headers.ContentLength));
         }
 
-        props.Add(new Data.@this("StatusCode", (int)response.StatusCode));
-        props.Add(new Data.@this("Status", response.ReasonPhrase));
-        props.Add(new Data.@this("IsSuccess", response.IsSuccessStatusCode));
+        props.Add(new data.@this("StatusCode", (int)response.StatusCode));
+        props.Add(new data.@this("Status", response.ReasonPhrase));
+        props.Add(new data.@this("IsSuccess", response.IsSuccessStatusCode));
 
         var respHeaders = new Dictionary<string, string>();
         foreach (var h in response.Headers)
             respHeaders[h.Key] = string.Join(", ", h.Value);
-        props.Add(new Data.@this("Headers", respHeaders));
+        props.Add(new data.@this("Headers", respHeaders));
 
         var contentHeaders = new Dictionary<string, string>();
         foreach (var h in response.Content.Headers)
             contentHeaders[h.Key] = string.Join(", ", h.Value);
-        props.Add(new Data.@this("ContentHeaders", contentHeaders));
+        props.Add(new data.@this("ContentHeaders", contentHeaders));
 
         if (response.Content.Headers.ContentType?.CharSet != null)
-            props.Add(new Data.@this("Charset", response.Content.Headers.ContentType.CharSet));
+            props.Add(new data.@this("Charset", response.Content.Headers.ContentType.CharSet));
     }
 
     // --- Streaming ---
 
-    private async Task<Data.@this> HandleStreamingAsync(
+    private async Task<data.@this> HandleStreamingAsync(
         HttpResponseMessage response,
         HttpRequestMessage request,
         GoalCall onStream,
@@ -743,7 +743,7 @@ public sealed class Default : IHttp
         {
             using (response)
             {
-                var err = global::app.Data.@this.FromError(new ServiceError(
+                var err = global::app.data.@this.FromError(new ServiceError(
                     "Unsigned request received application/plang streaming response — this is not allowed",
                     "UnsignedPlang", 403));
                 BuildProperties(err, request, response);
@@ -773,7 +773,7 @@ public sealed class Default : IHttp
                     break;
             }
 
-            var result = global::app.Data.@this.Ok();
+            var result = global::app.data.@this.Ok();
             BuildProperties(result, request, response);
             return result;
         }
@@ -792,7 +792,7 @@ public sealed class Default : IHttp
         {
             Name = template.Name,
             PrPath = template.PrPath,
-            Parameters = new List<Data.@this> { new Data.@this(paramName, value, type) }
+            Parameters = new List<data.@this> { new data.@this(paramName, value, type) }
         };
         var result = await app.RunGoalAsync(call, context, ct);
         if (!result.Success)
@@ -853,7 +853,7 @@ public sealed class Default : IHttp
                             $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
 
                     await app.System.Channels.WriteAsync(AppChannels.Error,
-                        global::app.Data.@this.FromError(new ServiceError(
+                        global::app.data.@this.FromError(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
                             "SSEBufferOverflow", 413)));
                     dataBuffer.Clear();
@@ -899,16 +899,16 @@ public sealed class Default : IHttp
             if (line == null) break;
             if (string.IsNullOrEmpty(line)) continue;
 
-            // Each NDJSON line is a Data object with Signature populated via [In]
-            Data.@this? data;
+            // Each NDJSON line is a data object with Signature populated via [In]
+            data.@this? data;
             try
             {
-                data = JsonSerializer.Deserialize<Data.@this>(line, _transportInOptions);
+                data = JsonSerializer.Deserialize<data.@this>(line, _transportInOptions);
             }
             catch (JsonException)
             {
                 await app.System.Channels.WriteAsync(AppChannels.Error,
-                    global::app.Data.@this.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
+                    global::app.data.@this.FromError(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
                 continue;
             }
             if (data == null) continue;

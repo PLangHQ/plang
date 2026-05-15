@@ -12,14 +12,14 @@ namespace app.modules.builder.code;
 /// </summary>
 public interface IBuilder : ICode
 {
-    Task<Data.@this> Actions(GetActions action);
-    Data.@this Types(types action);
-    Task<Data.@this> Goals(goals action);
-    Task<Data.@this> GoalsSave(goalsSave action);
-    Task<Data.@this> Validate(validate action);
-    Data.@this Merge(merge action);
-    Task<Data.@this> PromoteGroups(promoteGroups action);
-    Data.@this EnrichResponse(enrichResponse action);
-    Task<Data.@this> Load(load action);
-    Task<Data.@this> AppSave(appSave action);
+    Task<data.@this> Actions(GetActions action);
+    data.@this Types(types action);
+    Task<data.@this> Goals(goals action);
+    Task<data.@this> GoalsSave(goalsSave action);
+    Task<data.@this> Validate(validate action);
+    data.@this Merge(merge action);
+    Task<data.@this> PromoteGroups(promoteGroups action);
+    data.@this EnrichResponse(enrichResponse action);
+    Task<data.@this> Load(load action);
+    Task<data.@this> AppSave(appSave action);
 }

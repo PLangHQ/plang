@@ -87,7 +87,7 @@ public static class @this
         sb.Append("""
                 private global::app.Goals.Goal.Steps.Step.Actions.Action.@this? __action;
                 private global::app.@this? __app;
-                private global::app.Data.@this? __resolutionError;
+                private global::app.data.@this? __resolutionError;
 
             """);
     }
@@ -104,9 +104,9 @@ public static class @this
         if (!hasDataProp)
         {
             sb.Append("""
-                    protected static global::app.Data.@this Data() => global::app.Data.@this.Ok();
-                    protected static global::app.Data.@this Data(object? value) => global::app.Data.@this.Ok(value);
-                    protected static global::app.Data.@this Data(object? value, global::app.Data.Type? type) => global::app.Data.@this.Ok(value, type);
+                    protected static global::app.data.@this Data() => global::app.data.@this.Ok();
+                    protected static global::app.data.@this Data(object? value) => global::app.data.@this.Ok(value);
+                    protected static global::app.data.@this Data(object? value, global::app.data.type? type) => global::app.data.@this.Ok(value, type);
 
                 """);
         }
@@ -114,7 +114,7 @@ public static class @this
         if (!hasErrorProp)
         {
             sb.Append("""
-                    protected static global::app.Data.@this Error(global::app.Errors.IError error) => global::app.Data.@this.FromError(error);
+                    protected static global::app.data.@this Error(global::app.Errors.IError error) => global::app.data.@this.FromError(error);
 
                 """);
         }
@@ -124,7 +124,7 @@ public static class @this
     private static void EmitExecuteAsync(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                public async System.Threading.Tasks.Task<global::app.Data.@this> ExecuteAsync(
+                public async System.Threading.Tasks.Task<global::app.data.@this> ExecuteAsync(
                     global::app.Goals.Goal.Steps.Step.Actions.Action.@this action, global::app.Actor.Context.@this context)
                 {
                     __action = action;
@@ -163,7 +163,7 @@ public static class @this
                             var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
                             Channel = (context.Actor ?? app.User).Channels.Resolve(__channelName);
                             if (Channel == null)
-                                return global::app.Data.@this.FromError(new global::app.Errors.ServiceError(
+                                return global::app.data.@this.FromError(new global::app.Errors.ServiceError(
                                     $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404));
                         }
 
@@ -212,7 +212,7 @@ public static class @this
                 var lower = name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
-                                    return global::app.Data.@this.FromError(new global::app.Errors.ServiceError(
+                                    return global::app.data.@this.FromError(new global::app.Errors.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
                     """);
@@ -240,7 +240,7 @@ public static class @this
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
-                                    return global::app.Data.@this.FromError(new global::app.Errors.ServiceError(
+                                    return global::app.data.@this.FromError(new global::app.Errors.ServiceError(
                                         "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 
                     """);
@@ -279,10 +279,10 @@ public static class @this
         // (which used __Resolve<T>, __HasParam, __StripPercent) is gone — Variable-name
         // slots are Data<Variable> and route through the Data emitter's __ResolveData.
         sb.Append("""
-                private global::app.Data.@this __ResolveData(string name)
+                private global::app.data.@this __ResolveData(string name)
                 {
                     var data = __action?.GetParameter(name, Context!);
-                    if (data == null) return global::app.Data.@this.NotFound(name);
+                    if (data == null) return global::app.data.@this.NotFound(name);
                     data.Context = Context;
                     return data;
                 }

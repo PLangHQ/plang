@@ -6,12 +6,12 @@ namespace app.modules.list;
 [Action("remove", Cacheable = false)]
 public partial class Remove : IContext
 {
-    public partial Data.@this<Variable> ListName { get; init; }
-    public partial Data.@this Value { get; init; }
+    public partial data.@this<Variable> ListName { get; init; }
+    public partial data.@this Value { get; init; }
     [Default(-1)]
-    public partial Data.@this<int> AtIndex { get; init; }
+    public partial data.@this<int> AtIndex { get; init; }
 
-    public Task<Data.@this> Run()
+    public Task<data.@this> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         if (data.Value is not List<object?> list)
@@ -28,6 +28,6 @@ public partial class Remove : IContext
             list.Remove(Value.Value);
         }
 
-        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.Data.Type.FromName("list")));
+        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
     }
 }
