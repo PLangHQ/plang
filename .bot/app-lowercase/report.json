@@ -1,0 +1,31 @@
+{
+  "branch": "app-lowercase",
+  "sessions": [
+    {
+      "id": "ff1d5448-167e-4ab2-9707-98db92c3c097",
+      "bot": "architect",
+      "timestamp_start": "2026-05-15T01:34:47Z",
+      "timestamp_end": "2026-05-15T01:35:00Z",
+      "intent": "Set up the rename plan for Ingi to critique — take ownership from coder's v1 draft, fix bisection hygiene, define Phase 4 groupings, scope Builder in.",
+      "before": {
+        "assumptions": "Coder wrote a v1 plan + captured baseline; Ingi wants the architect to own the plan shape so he can critique it. The branch already has a settled goal (lowercase PLang vocabulary, keep C# infra PascalCase).",
+        "risk": "Plan reads as a draft pulled from coder rather than a designed structure. Mixing semantic change (Modules merge) with cosmetic rename poisons bisection."
+      },
+      "plan": ".bot/app-lowercase/architect/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/app-lowercase/architect/plan.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect spine. Six phases: root, Data/Type, Path, vocabulary sweep (4a-4d grouped by blast radius), Builder, close. Modules merge pulled out per Ingi's call. Builder lowercased per Ingi's call. Phase 4 groupings defined by blast radius not coupling — execution core / I/O / state-lifecycle / control-diagnostics."
+        }
+      ],
+      "after": {
+        "status": "Plan written, awaiting Ingi's critique. No code changes yet.",
+        "health": "green",
+        "notes": "Coder's v1 plan + baseline remain in .bot/app-lowercase/coder/v1/ as reference. Once Ingi signs off, this plan replaces coder's as the source of truth."
+      }
+    }
+  ]
+}
