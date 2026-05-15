@@ -1,5 +1,5 @@
 using app.Attributes;
-using app.Variables;
+using app.variables;
 
 namespace app.modules.variable;
 
@@ -31,10 +31,10 @@ public partial class Set : IContext, IBuildValidatable
             if (value.HasVariableReference) return null;
 
             var targetType = value.Context?.App.Types.Get(value.Type.Value)
-                             ?? global::app.Types.@this.GetPrimitiveOrMime(value.Type.Value);
+                             ?? global::app.types.@this.GetPrimitiveOrMime(value.Type.Value);
             if (targetType != null && !targetType.IsInstanceOfType(value.Value))
             {
-                var (_, error) = global::app.Types.@this.TryConvertTo(value.Value, targetType);
+                var (_, error) = global::app.types.@this.TryConvertTo(value.Value, targetType);
                 if (error != null)
                     return $"Parameter 'Value' has type={value.Type.Value} but value cannot be converted: {error.Message}";
             }
@@ -69,12 +69,12 @@ public partial class Set : IContext, IBuildValidatable
             if (targetType == null)
             {
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new Errors.ServiceError($"Unknown type '{Type.Value}'", "UnknownType", 400)));
+                    new errors.ServiceError($"Unknown type '{Type.Value}'", "UnknownType", 400)));
             }
             object? converted = Value.Value;
             if (converted != null && !targetType.IsInstanceOfType(converted))
             {
-                var (c, err) = global::app.Types.@this.TryConvertTo(converted, targetType, Context);
+                var (c, err) = global::app.types.@this.TryConvertTo(converted, targetType, Context);
                 if (err != null)
                     return Task.FromResult(global::app.data.@this.FromError(err));
                 converted = c;
@@ -113,7 +113,7 @@ public partial class Set : IContext, IBuildValidatable
     /// Mutable refs (List, Dict) snapshot-cloned via JSON roundtrip so later mutation of
     /// the source doesn't bleed through. null produces plain Data (un-typed).
     /// </summary>
-    private static data.@this MintTyped(string name, object? raw, Actor.Context.@this ctx)
+    private static data.@this MintTyped(string name, object? raw, actor.context.@this ctx)
     {
         return raw switch
         {
@@ -138,7 +138,7 @@ public partial class Set : IContext, IBuildValidatable
     /// <summary>
     /// Reflection construction of Data&lt;T&gt; for a runtime type not in the hot if-chain.
     /// </summary>
-    private static data.@this ConstructDataOfT(string name, System.Type t, object? value, Actor.Context.@this ctx)
+    private static data.@this ConstructDataOfT(string name, System.Type t, object? value, actor.context.@this ctx)
     {
         var generic = typeof(data.@this<>).MakeGenericType(t);
         var instance = (data.@this)Activator.CreateInstance(generic, name, value, null, null)!;

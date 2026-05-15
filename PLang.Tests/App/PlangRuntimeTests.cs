@@ -1,8 +1,8 @@
 using app;
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.FileSystem;
-using global::app.FileSystem.Default;
+using global::app.filesystem.Default;
 
 namespace PLang.Tests.App;
 
@@ -48,7 +48,7 @@ public class PlangRuntimeTests : IDisposable
             Text = "write hello",
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = "output",
                     ActionName = "write",
@@ -95,7 +95,7 @@ public class PlangRuntimeTests : IDisposable
         var onAction = new global::app.modules.@event.On
         {
             Context = context,
-            Type = global::app.Events.EventType.BeforeStep,
+            Type = global::app.events.EventType.BeforeStep,
             GoalToCall = new GoalCall { Name = "LogBefore" },
             StepPattern = "*"
         };
@@ -132,7 +132,7 @@ public class PlangRuntimeTests : IDisposable
                     Text = "write hello",
                     Actions = new StepActions
                     {
-                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "output",
                             ActionName = "write",

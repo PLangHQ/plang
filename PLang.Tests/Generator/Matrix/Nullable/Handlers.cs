@@ -1,6 +1,6 @@
 namespace app.modules.matrix.nullables;
 
-[global::app.modules.Action("stringnullable")]
+[global::app.modules.action("stringnullable")]
 public partial class StringNullable : global::app.modules.IContext
 {
     public partial global::app.data.@this<string>? Tag { get; init; }
@@ -8,7 +8,7 @@ public partial class StringNullable : global::app.modules.IContext
         Task.FromResult<global::app.data.@this>(Tag ?? global::app.data.@this.Null("tag"));
 }
 
-[global::app.modules.Action("intnullable")]
+[global::app.modules.action("intnullable")]
 public partial class IntNullable : global::app.modules.IContext
 {
     public partial global::app.data.@this<int>? Maybe { get; init; }

@@ -14,18 +14,18 @@ namespace app.Callback;
 public interface ICallback
 {
     /// <summary>The Call frame at which the resumed run lands. Null only in degenerate cases.</summary>
-    global::app.CallStack.Call.Position? Position { get; }
+    global::app.callstack.call.Position? Position { get; }
 
     /// <summary>
     /// Encrypted ready-to-wire bytes. v1 crypto is identity pass-through, so the bytes
     /// are JSON for now; the real symmetric crypto will land via the same surface.
     /// </summary>
-    byte[] Serialize(global::app.Actor.Context.@this ctx);
+    byte[] Serialize(global::app.actor.context.@this ctx);
 
     /// <summary>
     /// Reconstruct + bind + jump + run. Returns the resumed action's Data result so the
     /// caller can chain. Assumes the consumer has already verified the wire signature
     /// (callback.run does this via signing.verify before dispatching here).
     /// </summary>
-    System.Threading.Tasks.Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx);
+    System.Threading.Tasks.Task<global::app.data.@this> Run(global::app.actor.context.@this ctx);
 }

@@ -1,7 +1,7 @@
 using global::app.Callback;
 using global::app.CallStack;
 using global::app.Errors;
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -17,7 +17,7 @@ public class AskCallbackTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "variable", ActionName = "set" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.goals.Add(goal);
         return (goal, action);
     }
 
@@ -26,7 +26,7 @@ public class AskCallbackTests
     {
         var app = NewApp();
         var (goal, action) = MakeAndRegister(app, "RTAsk");
-        var frame = new global::app.CallStack.Call.Position(action, goal, 0, 0, "id");
+        var frame = new global::app.callstack.call.Position(action, goal, 0, 0, "id");
         var src = new AskCallback
         {
             Position = frame,
@@ -53,7 +53,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "EncAsk");
         var src = new AskCallback
         {
-            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.callstack.call.Position(action, goal, 0, 0, ""),
             ActorName = "User",
             Variables = new()
         };
@@ -71,7 +71,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "DecAsk");
         var src = new AskCallback
         {
-            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.callstack.call.Position(action, goal, 0, 0, ""),
             ActorName = "Service",
             Variables = new() { new global::app.data.@this("y", "two") }
         };
@@ -90,7 +90,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "RunAsk");
         var ask = new AskCallback
         {
-            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.callstack.call.Position(action, goal, 0, 0, ""),
             Variables = new() { new global::app.data.@this("bound", 42) }
         };
 
@@ -106,7 +106,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "ChainAsk");
         var ask = new AskCallback
         {
-            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.callstack.call.Position(action, goal, 0, 0, ""),
             Variables = new()
         };
 
@@ -126,7 +126,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(src, "MissingAsk");
         var ask = new AskCallback
         {
-            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.callstack.call.Position(action, goal, 0, 0, ""),
             Variables = new()
         };
         var bytes = ask.Serialize(src.User.Context);

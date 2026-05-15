@@ -1,5 +1,5 @@
-using app.Errors;
-using app.Variables;
+using app.errors;
+using app.variables;
 
 namespace app.modules.environment;
 
@@ -14,8 +14,8 @@ public partial class run : IContext
 {
     public partial data.@this<GoalCall>? GoalName { get; init; }
     public partial data.@this<Step>? Step { get; init; }
-    public partial data.@this<Goals.Goal.Steps.Step.Actions.Action.@this>? Action { get; init; }
-    public partial data.@this<Actor.@this>? Actor { get; init; }
+    public partial data.@this<goals.goal.steps.step.actions.action.@this>? Action { get; init; }
+    public partial data.@this<actor.@this>? Actor { get; init; }
 
     public async Task<data.@this> Run()
     {

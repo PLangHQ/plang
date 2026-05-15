@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Tester;
 /// <summary>
 /// Batch 8 — test.discover action.
 /// C# handler: filesystem walk + .pr parsing. Inputs: Path (default "."), Pattern
-/// (default "*.test.goal"). Returns List&lt;global::app.Tester.File&gt; with file path, entry goal,
+/// (default "*.test.goal"). Returns List&lt;global::app.tester.File&gt; with file path, entry goal,
 /// .pr path, tags, status.
 ///
 /// Freshness uses Goal.Hash (SHA-256 over Name + Steps.Text, [Store]-persisted in
@@ -29,7 +29,7 @@ public class DiscoverActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-discover-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        var fs = new global::app.FileSystem.Default.PLangFileSystem(_tempDir, "");
+        var fs = new global::app.filesystem.Default.PLangFileSystem(_tempDir, "");
         _app = new global::app.@this(fs);
     }
 
@@ -135,7 +135,7 @@ public class DiscoverActionTests
         return relativePath;
     }
 
-    private async Task<List<global::app.Tester.File>> Discover(string path = ".", bool recursive = true)
+    private async Task<List<global::app.tester.File>> Discover(string path = ".", bool recursive = true)
     {
         var action = new global::app.modules.test.discover
         {
@@ -145,11 +145,11 @@ public class DiscoverActionTests
             Recursive = new global::app.data.@this<bool>("Recursive", recursive)
         };
         var result = await action.Run();
-        return result.Value as List<global::app.Tester.File> ?? new List<global::app.Tester.File>();
+        return result.Value as List<global::app.tester.File> ?? new List<global::app.tester.File>();
     }
 
     // Walks the tree of *.test.goal files under the target path; every match surfaces
-    // in the returned List<global::app.Tester.File>.
+    // in the returned List<global::app.tester.File>.
     [Test]
     public async Task Discover_RecursiveWalk_FindsAllTestGoalFiles()
     {
@@ -165,7 +165,7 @@ public class DiscoverActionTests
         await Assert.That(files.Any(f => f.Path.EndsWith("Baz.test.goal"))).IsTrue();
     }
 
-    // A .goal with no matching .pr in .build/ → global::app.Tester.Status.Stale with reason "no .pr".
+    // A .goal with no matching .pr in .build/ → global::app.tester.Status.Stale with reason "no .pr".
     [Test]
     public async Task Discover_NoPrFile_MarksStaleWithReasonNoPr()
     {
@@ -174,12 +174,12 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await Assert.That(file.Status).IsEqualTo(global::app.Tester.Status.Stale);
+        await Assert.That(file.Status).IsEqualTo(global::app.tester.Status.Stale);
         await Assert.That(file.StatusReason).IsEqualTo("no .pr");
     }
 
     // Fresh Goal.Hash (from current .goal) differs from the hash stored in the .pr
-    // (Name or Step.Text changed since last build) → global::app.Tester.Status.Stale with reason
+    // (Name or Step.Text changed since last build) → global::app.tester.Status.Stale with reason
     // "rebuild needed". Comment-only edits do NOT trigger stale.
     [Test]
     public async Task Discover_GoalAndPrHashMismatch_MarksStaleRebuildNeeded()
@@ -189,7 +189,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await Assert.That(file.Status).IsEqualTo(global::app.Tester.Status.Stale);
+        await Assert.That(file.Status).IsEqualTo(global::app.tester.Status.Stale);
         await Assert.That(file.StatusReason).IsEqualTo("rebuild needed");
     }
 
@@ -280,7 +280,7 @@ public class DiscoverActionTests
     }
 
     // Config.Include=["fast"]: tests without the "fast" tag are returned as
-    // global::app.Tester.Status.Skipped — not removed from the list, so the run reports them as
+    // global::app.tester.Status.Skipped — not removed from the list, so the run reports them as
     // skipped (CI visibility).
     [Test]
     public async Task Discover_IncludeFilter_NonMatchingTests_MarkedSkipped()
@@ -291,11 +291,11 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await Assert.That(file.Status).IsEqualTo(global::app.Tester.Status.Skipped);
+        await Assert.That(file.Status).IsEqualTo(global::app.tester.Status.Skipped);
     }
 
     // Config.Exclude=["slow"]: tests carrying the "slow" tag are returned as
-    // global::app.Tester.Status.Skipped.
+    // global::app.tester.Status.Skipped.
     [Test]
     public async Task Discover_ExcludeFilter_MatchingTests_MarkedSkipped()
     {
@@ -311,7 +311,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await Assert.That(file.Status).IsEqualTo(global::app.Tester.Status.Skipped);
+        await Assert.That(file.Status).IsEqualTo(global::app.tester.Status.Skipped);
     }
 
     // Filter composition: Include=["http"], Exclude=["slow"]. A test tagged
@@ -333,7 +333,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await Assert.That(file.Status).IsEqualTo(global::app.Tester.Status.Skipped);
+        await Assert.That(file.Status).IsEqualTo(global::app.tester.Status.Skipped);
     }
 
     // Robustness: a path that doesn't exist does not throw; returns empty list.

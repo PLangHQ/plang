@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.math;
 
@@ -13,7 +13,7 @@ public partial class Sqrt : IContext
         var input = MathHelper.ToDouble(Value.Value);
         if (input < 0)
             return Task.FromResult(Error(
-                new app.Errors.ValidationError("Cannot take square root of negative number", "InvalidInput")));
+                new app.errors.ValidationError("Cannot take square root of negative number", "InvalidInput")));
 
         var result = Math.Sqrt(input);
         return Task.FromResult(Data(result));

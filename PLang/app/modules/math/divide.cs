@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 using ExampleSpec = app.Modules.Schema.Spec.Example;
 using ActionSpec = app.Modules.Schema.Spec.Action;
 
@@ -34,7 +34,7 @@ public partial class Divide : IContext
         var divisor = MathHelper.ToDouble(B.Value);
         if (divisor == 0)
             return Task.FromResult(Error(
-                new app.Errors.ValidationError("Division by zero", "DivisionByZero")));
+                new app.errors.ValidationError("Division by zero", "DivisionByZero")));
 
         var result = MathHelper.ToDouble(A.Value) / divisor;
         return Task.FromResult(Data(MathHelper.PreserveType(result, A.Value, B.Value)));

@@ -28,7 +28,7 @@ public static class Format
         WriteIndented = true,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { app.Channels.Serializers.Filters.Sensitive.Mask }
+            Modifiers = { app.channels.serializers.filters.Sensitive.Mask }
         }
     };
 

@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 using app.modules.builder.code;
 
 namespace app.modules.builder;

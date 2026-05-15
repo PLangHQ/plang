@@ -6,10 +6,10 @@ namespace PLang.Tests;
 /// </summary>
 public static class TestAction
 {
-    public static global::app.Goals.Goal.Steps.Step.Actions.Action.@this Create(string module, string action,
+    public static global::app.goals.goal.steps.step.actions.action.@this Create(string module, string action,
         params (string name, object? value)[] parameters)
     {
-        return new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+        return new global::app.goals.goal.steps.step.actions.action.@this
         {
             Module = module,
             ActionName = action,

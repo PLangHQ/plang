@@ -1,4 +1,4 @@
-using app.Actor.Context;
+using app.actor.context;
 
 namespace app.modules;
 
@@ -8,5 +8,5 @@ namespace app.modules;
 /// </summary>
 public interface IContext
 {
-    Actor.Context.@this Context { get; set; }
+    actor.context.@this Context { get; set; }
 }

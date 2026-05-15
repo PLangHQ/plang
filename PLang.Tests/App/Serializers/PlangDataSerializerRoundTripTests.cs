@@ -1,5 +1,5 @@
-using global::app.Channels.Serializers;
-using global::app.Channels.Serializers.Serializer;
+using global::app.channels.serializers;
+using global::app.channels.serializers.serializer;
 using global::app.Callback;
 
 namespace PLang.Tests.App.Serializers;
@@ -8,9 +8,9 @@ public class PlangDataSerializerRoundTripTests
 {
     private sealed class FakeCallback : ICallback
     {
-        public global::app.CallStack.Call.Position? Position => null;
-        public byte[] Serialize(global::app.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<Data> Run(global::app.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
+        public global::app.callstack.call.Position? Position => null;
+        public byte[] Serialize(global::app.actor.context.@this ctx) => Array.Empty<byte>();
+        public Task<Data> Run(global::app.actor.context.@this ctx) => Task.FromResult(Data.Ok(true));
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class PlangDataSerializerRoundTripTests
     {
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
-        await Assert.That(s).IsTypeOf<global::app.Channels.Serializers.Serializer.Plang.Data>();
+        await Assert.That(s).IsTypeOf<global::app.channels.serializers.serializer.plang.Data>();
         await Assert.That(s.ContentType).IsEqualTo("application/plang+data");
     }
 }

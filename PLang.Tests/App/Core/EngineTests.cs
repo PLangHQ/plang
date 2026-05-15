@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules;
 
@@ -14,7 +14,7 @@ public class EngineTests
             Text = text,
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -34,7 +34,7 @@ public class EngineTests
             Text = text,
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -42,7 +42,7 @@ public class EngineTests
                         ? dict.Select(kv => new Data(kv.Key, kv.Value)).ToList()
                         : new List<Data>(),
                 },
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = "variable",
                     ActionName = "set",
@@ -550,25 +550,25 @@ public class EngineTests
     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it
     private class NonGeneratedHandler : IAction
     {
-        public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
-        public global::app.Actor.Context.@this Context { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(global::app.@this engine, global::app.Actor.Context.@this context) { App = engine; Context = context; }
+        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
         public Task<Data> ExecuteAsync(object? parameters) => Task.FromResult(Data.Ok());
     }
 
     private class DisposableHandler : IAction, ICodeGenerated, IDisposable
     {
-        public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
-        public global::app.Actor.Context.@this Context { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(global::app.@this engine, global::app.Actor.Context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(global::app.Goals.Goal.Steps.Step.Actions.Action.@this action, global::app.Actor.Context.@this context)
+        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
+        public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             Initialize(context.App!, context);
             return Task.FromResult(Data.Ok());
@@ -578,14 +578,14 @@ public class EngineTests
 
     private class AsyncDisposableHandler : IAction, ICodeGenerated, IAsyncDisposable
     {
-        public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
-        public global::app.Actor.Context.@this Context { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
         public bool IsDisposed { get; private set; }
 
-        public void Initialize(global::app.@this engine, global::app.Actor.Context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(global::app.Goals.Goal.Steps.Step.Actions.Action.@this action, global::app.Actor.Context.@this context)
+        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
+        public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             Initialize(context.App!, context);
             return Task.FromResult(Data.Ok());
@@ -595,13 +595,13 @@ public class EngineTests
 
     private class ThrowingHandler : IAction, ICodeGenerated
     {
-        public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
-        public global::app.Actor.Context.@this Context { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public void Initialize(global::app.@this engine, global::app.Actor.Context.@this context) { App = engine; Context = context; }
-        public Task<Data> ExecuteAsync(global::app.Goals.Goal.Steps.Step.Actions.Action.@this action, global::app.Actor.Context.@this context)
+        public void Initialize(global::app.@this engine, global::app.actor.context.@this context) { App = engine; Context = context; }
+        public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             throw new InvalidOperationException("Test exception");
         }

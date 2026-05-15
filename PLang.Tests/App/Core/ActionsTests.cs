@@ -17,7 +17,7 @@ public class ActionsTests
     [Test]
     public async Task Constructor_WithEnumerable_PopulatesList()
     {
-        var list = new List<global::app.Goals.Goal.Steps.Step.Actions.Action.@this>
+        var list = new List<global::app.goals.goal.steps.step.actions.action.@this>
         {
             new() { Module = "variable", ActionName = "set" },
             new() { Module = "file", ActionName = "save" }
@@ -32,7 +32,7 @@ public class ActionsTests
     public async Task Value_ReturnsSelf()
     {
         var actions = new StepActions();
-        actions.Add(new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "variable", ActionName = "set" });
+        actions.Add(new global::app.goals.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" });
 
         await Assert.That(actions.Value).IsEquivalentTo(actions);
     }
@@ -40,7 +40,7 @@ public class ActionsTests
     [Test]
     public async Task ParameterSchema_SetOnAction_IsPreserved()
     {
-        var action = new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+        var action = new global::app.goals.goal.steps.step.actions.action.@this
         {
             Module = "variable",
             ActionName = "set",
@@ -53,7 +53,7 @@ public class ActionsTests
     [Test]
     public async Task ParameterSchema_DefaultIsNull()
     {
-        var action = new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+        var action = new global::app.goals.goal.steps.step.actions.action.@this
         {
             Module = "variable",
             ActionName = "set"
@@ -169,8 +169,8 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "variable", ActionName = "set" },
-            new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "file", ActionName = "save" }
+            new global::app.goals.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" },
+            new global::app.goals.goal.steps.step.actions.action.@this { Module = "file", ActionName = "save" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -184,7 +184,7 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "bogus", ActionName = "nope" }
+            new global::app.goals.goal.steps.step.actions.action.@this { Module = "bogus", ActionName = "nope" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -199,9 +199,9 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "variable", ActionName = "set" },
-            new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "bogus", ActionName = "nope" },
-            new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "fake", ActionName = "missing" }
+            new global::app.goals.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" },
+            new global::app.goals.goal.steps.step.actions.action.@this { Module = "bogus", ActionName = "nope" },
+            new global::app.goals.goal.steps.step.actions.action.@this { Module = "fake", ActionName = "missing" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -247,7 +247,7 @@ public class ActionsTests
         {
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "variable", ActionName = "set" }
+                new global::app.goals.goal.steps.step.actions.action.@this { Module = "variable", ActionName = "set" }
             }
         };
 
@@ -268,7 +268,7 @@ public class ActionsTests
         {
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "output", ActionName = "write" }
+                new global::app.goals.goal.steps.step.actions.action.@this { Module = "output", ActionName = "write" }
             }
         };
 
@@ -309,7 +309,7 @@ public class ActionsTests
             Text = "test",
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this { Module = "old", ActionName = "action" }
+                new global::app.goals.goal.steps.step.actions.action.@this { Module = "old", ActionName = "action" }
             }
         };
         var stepFromLlm = new Step { Actions = new StepActions() };
@@ -323,12 +323,12 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.MergeStep logic for unit testing without DI.
     /// </summary>
-    private static (Step? step, global::app.Errors.IError? error) MergeStep(Step step, Step stepFromLlm)
+    private static (Step? step, global::app.errors.IError? error) MergeStep(Step step, Step stepFromLlm)
     {
         if (step == null)
-            return (null, new global::app.Errors.ProgramError("Step cannot be null", key: "MergeError"));
+            return (null, new global::app.errors.ProgramError("Step cannot be null", key: "MergeError"));
         if (stepFromLlm == null)
-            return (null, new global::app.Errors.ProgramError("Step result from LLM cannot be null", key: "MergeError"));
+            return (null, new global::app.errors.ProgramError("Step result from LLM cannot be null", key: "MergeError"));
 
         step.Actions.Clear();
         step.Actions.AddRange(stepFromLlm.Actions);
@@ -350,10 +350,10 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.ValidateActions logic for unit testing without DI.
     /// </summary>
-    private static (bool isValid, global::app.Errors.IError? error) ValidateActions(StepActions actions)
+    private static (bool isValid, global::app.errors.IError? error) ValidateActions(StepActions actions)
     {
         if (actions == null || actions.Count == 0)
-            return (false, new global::app.Errors.ProgramError("No actions provided", key: "NoActionsProvided"));
+            return (false, new global::app.errors.ProgramError("No actions provided", key: "NoActionsProvided"));
 
         var modules = new EngineModules();
 
@@ -365,7 +365,7 @@ public class ActionsTests
         }
 
         if (notFound.Count > 0)
-            return (false, new global::app.Errors.ProgramError(
+            return (false, new global::app.errors.ProgramError(
                 $"Actions not found: {string.Join(", ", notFound)}", key: "ActionNotFound"));
 
         return (true, null);
@@ -385,7 +385,7 @@ public class ActionsTests
             foreach (var actionName in modules.GetActions(ns))
             {
                 var actionType = modules.GetActionType(ns, actionName);
-                actions.Add(new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                actions.Add(new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = ns,
                     ActionName = actionName,

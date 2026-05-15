@@ -2,8 +2,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Nethereum.Util;
-using app.Errors;
-using app.Variables;
+using app.errors;
+using app.variables;
 
 namespace app.modules.crypto.code;
 

@@ -10,7 +10,7 @@ public sealed class @this
     /// Default signature lifetime for callback envelopes. <c>null</c> means
     /// no expiry (the integrity guarantee is unconditional). Serialised as
     /// ISO 8601 duration on the wire (e.g. <c>"PT5M"</c>) via
-    /// <see cref="app.Channels.Serializers.TimeSpanIso8601"/>.
+    /// <see cref="app.channels.serializers.TimeSpanIso8601"/>.
     /// </summary>
     public TimeSpan? Expires { get; set; }
 }

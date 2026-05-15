@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 using app.modules.file.code;
 
 namespace app.modules.file;
@@ -7,7 +7,7 @@ namespace app.modules.file;
 [Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {
-    public partial data.@this<FileSystem.path> Path { get; init; }
+    public partial data.@this<filesystem.path> Path { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> IgnoreIfNotFound { get; init; }

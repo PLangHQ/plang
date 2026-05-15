@@ -1,6 +1,6 @@
 using global::app.Callback;
 using global::app.Errors;
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -16,7 +16,7 @@ public class ErrorCallbackTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.goals.Add(goal);
         return (goal, action);
     }
 
@@ -25,7 +25,7 @@ public class ErrorCallbackTests
     {
         var app = NewApp();
         var (goal, action) = MakeAndRegister(app, "RTErr");
-        await using var call = app.CallStack.Push(action);
+        await using var call = app.callstack.Push(action);
         app.User.Context.Variables.Set("v", 7);
 
         var snap = app.Snapshot();

@@ -1,5 +1,5 @@
-using app.FileSystem;
-using app.FileSystem.Default;
+using app.filesystem;
+using app.filesystem.Default;
 using app.Utils;
 using System.Reflection;
 
@@ -70,7 +70,7 @@ namespace PLang
 
 			// App settings (--app={"create":true})
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
-				global::app.Types.@this.Populate(engine, appDict);
+				global::app.types.@this.Populate(engine, appDict);
 
 			// Builder mode (--builder or legacy --build)
 			if ((parameters.TryGetValue("!builder", out var buildValue) && buildValue is not false) ||
@@ -81,7 +81,7 @@ namespace PLang
 					userVars.Set("path", fileSystem.RootDirectory);
 
 				if (buildValue is IDictionary<string, object?> buildDict)
-					global::app.Types.@this.Populate(engine.Builder, buildDict);
+					global::app.types.@this.Populate(engine.Builder, buildDict);
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", engine.Builder.Cache);

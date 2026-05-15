@@ -3,8 +3,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using app;
-using app.Channels.Serializers;
-using app.Errors;
+using app.channels.serializers;
+using app.errors;
 
 namespace app.data;
 
@@ -28,7 +28,7 @@ public partial class @this
         Converters = { new global::app.data.Json() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { global::app.Channels.Serializers.Filters.Sensitive.Strip }
+            Modifiers = { global::app.channels.serializers.filters.Sensitive.Strip }
         }
     };
 
@@ -72,7 +72,7 @@ public partial class @this
     /// <summary>
     /// Explicitly populates <see cref="Signature"/> via the configured signing pipeline if
     /// not already set. No-op when a signature is already present. Called by serializers
-    /// that need to seal a non-callback Data for wire transport (e.g. global::app.Channels.Serializers.Serializer.Plang.Data).
+    /// that need to seal a non-callback Data for wire transport (e.g. global::app.channels.serializers.serializer.plang.Data).
     /// Throws <see cref="InvalidOperationException"/> when this Data has no Context.
     /// </summary>
     public void EnsureSigned()

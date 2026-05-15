@@ -1,9 +1,9 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using app;
 using global::app.Variables;
 using global::app.modules.file;
-using global::app.FileSystem.Default;
-using PLangPath = global::app.FileSystem.path;
+using global::app.filesystem.Default;
+using PLangPath = global::app.filesystem.path;
 
 namespace PLang.Tests.App.actions.file;
 
@@ -426,25 +426,25 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new global::app.Goals.Goal.@this
+        var goal = new global::app.goals.goal.@this
         {
             Name = "TestFileExistsFlow",
-            Steps = new global::app.Goals.Goal.Steps.@this
+            Steps = new global::app.goals.goal.steps.@this
             {
-                new global::app.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new global::app.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
                             Parameters = new System.Collections.Generic.List<global::app.data.@this>
                                 { new global::app.data.@this("path", TempPath("real.txt")) },
                         },
-                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -456,13 +456,13 @@ public class FileHandlerTests : IDisposable
                         }
                     }
                 },
-                new global::app.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new global::app.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -503,25 +503,25 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new global::app.Goals.Goal.@this
+        var goal = new global::app.goals.goal.@this
         {
             Name = "TestFileNotExistsFlow",
-            Steps = new global::app.Goals.Goal.Steps.@this
+            Steps = new global::app.goals.goal.steps.@this
             {
-                new global::app.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new global::app.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
                             Parameters = new System.Collections.Generic.List<global::app.data.@this>
                                 { new global::app.data.@this("path", TempPath("ghost.txt")) },
                         },
-                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
@@ -533,13 +533,13 @@ public class FileHandlerTests : IDisposable
                         }
                     }
                 },
-                new global::app.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new global::app.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "output",
                             ActionName = "write",

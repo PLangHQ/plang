@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 using app.modules.crypto.code;
 
 namespace app.modules.crypto;

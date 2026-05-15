@@ -1,4 +1,4 @@
-using app.CallStack;
+using app.callstack;
 
 namespace app.Callback;
 
@@ -10,16 +10,16 @@ namespace app.Callback;
 public sealed class ErrorCallback : ICallback
 {
     /// <summary>The captured App tree.</summary>
-    public Snapshot.@this AppSnapshot { get; init; } = new();
+    public Snapshot AppSnapshot { get; init; } = new();
 
     /// <summary>Cached materialised position — null until first read.</summary>
-    private global::app.CallStack.Call.Position? _position;
+    private global::app.callstack.call.Position? _position;
 
     /// <summary>
     /// Computed: walks the captured CallStack subsection's last "frames" entry and
     /// resolves the goal-stub triple against the current App's Goals registry.
     /// </summary>
-    public global::app.CallStack.Call.Position? Position
+    public global::app.callstack.call.Position? Position
     {
         get
         {
@@ -31,7 +31,7 @@ public sealed class ErrorCallback : ICallback
         }
     }
 
-    public byte[] Serialize(global::app.Actor.Context.@this ctx)
+    public byte[] Serialize(global::app.actor.context.@this ctx)
     {
         var bytes = SerializeSnapshot(AppSnapshot, ctx.App.Callback.Wire.Options);
         var encrypted = ctx.App.RunAction<app.modules.crypto.encrypt>(
@@ -46,7 +46,7 @@ public sealed class ErrorCallback : ICallback
     /// </summary>
     internal const int MaxWireBytes = 4 * 1024 * 1024;
 
-    public static ErrorCallback Deserialize(byte[] bytes, global::app.Actor.Context.@this ctx)
+    public static ErrorCallback Deserialize(byte[] bytes, global::app.actor.context.@this ctx)
     {
         if (bytes.Length > MaxWireBytes)
             throw new InvalidOperationException(
@@ -62,7 +62,7 @@ public sealed class ErrorCallback : ICallback
         return new ErrorCallback { AppSnapshot = snap };
     }
 
-    public async Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx)
+    public async Task<global::app.data.@this> Run(global::app.actor.context.@this ctx)
     {
         // Restore onto the live App (caller's responsibility to provide a fresh-enough App).
         ctx.App.Restore(AppSnapshot, ctx);
@@ -70,20 +70,20 @@ public sealed class ErrorCallback : ICallback
         var bottom = ctx.App.CallStack.BottomFrame;
         if (bottom == null)
             return global::app.data.@this.FromError(
-                new global::app.Errors.ServiceError("ErrorCallback has no bottom frame after Restore", "NoPosition", 400));
+                new global::app.errors.ServiceError("ErrorCallback has no bottom frame after Restore", "NoPosition", 400));
         _position = bottom;
 
         // Re-execute the failing action — bind already happened via Restore (Variables section).
         return await ctx.App.Run(bottom.Action, ctx);
     }
 
-    // --- Snapshot.@this wire shape ---
-    // The Snapshot.@this tree is in-process state (Dictionaries of typed objects). For wire,
+    // --- Snapshot wire shape ---
+    // The Snapshot tree is in-process state (Dictionaries of typed objects). For wire,
     // we use a JSON projection that captures only the keys we actually round-trip
     // (Variables names + values, CallStack frames). v1 is intentionally narrow — Stage 4
-    // tests assert structural round-trip, not full Snapshot.@this fidelity.
+    // tests assert structural round-trip, not full Snapshot fidelity.
 
-    private static byte[] SerializeSnapshot(Snapshot.@this s, System.Text.Json.JsonSerializerOptions options)
+    private static byte[] SerializeSnapshot(Snapshot s, System.Text.Json.JsonSerializerOptions options)
     {
         var wire = new SnapshotWire
         {
@@ -93,16 +93,16 @@ public sealed class ErrorCallback : ICallback
         return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(wire, options);
     }
 
-    private static Snapshot.@this DeserializeSnapshot(byte[] bytes, System.Text.Json.JsonSerializerOptions options)
+    private static Snapshot DeserializeSnapshot(byte[] bytes, System.Text.Json.JsonSerializerOptions options)
     {
         var wire = System.Text.Json.JsonSerializer.Deserialize<SnapshotWire>(bytes, options)
                    ?? new SnapshotWire();
-        var s = new Snapshot.@this();
+        var s = new Snapshot();
         var stack = s.Section("CallStack");
-        var frames = new List<Snapshot.@this>();
+        var frames = new List<Snapshot>();
         foreach (var f in wire.Frames ?? new())
         {
-            var frame = new Snapshot.@this();
+            var frame = new Snapshot();
             frame.Write("goalPrPath", f.GoalPrPath);
             frame.Write("goalHash", f.GoalHash);
             frame.Write("stepIndex", f.StepIndex);
@@ -123,12 +123,12 @@ public sealed class ErrorCallback : ICallback
         return s;
     }
 
-    private static List<FrameWire> ExtractFrames(Snapshot.@this s)
+    private static List<FrameWire> ExtractFrames(Snapshot s)
     {
         var result = new List<FrameWire>();
         if (!s.HasSection("CallStack")) return result;
         var stack = s.Section("CallStack");
-        var frames = stack.Read<List<Snapshot.@this>>("frames");
+        var frames = stack.Read<List<Snapshot>>("frames");
         if (frames == null) return result;
         foreach (var f in frames)
         {
@@ -146,7 +146,7 @@ public sealed class ErrorCallback : ICallback
         return result;
     }
 
-    private static List<VarWire> ExtractVariables(Snapshot.@this s)
+    private static List<VarWire> ExtractVariables(Snapshot s)
     {
         var result = new List<VarWire>();
         if (!s.HasSection("Variables")) return result;

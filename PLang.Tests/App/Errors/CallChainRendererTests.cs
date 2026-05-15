@@ -1,5 +1,5 @@
 using global::app.Errors;
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Errors;
 
@@ -17,7 +17,7 @@ public class CallChainRendererTests
     [Test]
     public async Task Render_EmptyChain_ReturnsEmptyList()
     {
-        var lines = CallChainRenderer.Render(Array.Empty<global::app.CallStack.Call.@this>());
+        var lines = CallChainRenderer.Render(Array.Empty<global::app.callstack.call.@this>());
         await Assert.That(lines.Count).IsEqualTo(0);
     }
 
@@ -69,7 +69,7 @@ public class CallChainRendererTests
         await using var outerA = stack.Push(action);
         await using var outerB = stack.Push(action);
         await using var failing = stack.Push(action);
-        failing.Errors.Add(new global::app.Errors.Error("boom", "Crash", 500));
+        failing.Errors.Add(new global::app.errors.Error("boom", "Crash", 500));
 
         var lines = CallChainRenderer.Render(failing.SnapshotChain());
         await Assert.That(lines.Count).IsEqualTo(2);

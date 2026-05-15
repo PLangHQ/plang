@@ -81,5 +81,96 @@
         "notes": "The StoreOnlyModifier bug was not in the original task description but was discovered during test runs. Fixed as part of this session."
       }
     }
+  ,
+    {
+      "id": "c39ff45a-966e-44ea-a5a1-4b249b5d8488",
+      "bot": "coder",
+      "timestamp_start": "2026-05-15T13:00:00Z",
+      "timestamp_end": "2026-05-15T14:00:00Z",
+      "intent": "Phase 4 namespace rename: fix ~80 source files where type-position bare references use old PascalCase names after top-level app/ folders renamed to lowercase.",
+      "before": {
+        "assumptions": "Directories already renamed. ~1260 build errors in source files using old PascalCase namespace references in type positions.",
+        "risk": "sed-based replacement may hit expression-position property accesses (app.Goals.X) which must stay PascalCase. Global aliases (Snapshot, Variables, Step, Channel, Serializers) make Alias.@this invalid — must use alias alone."
+      },
+      "plan": ".bot/app-lowercase/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/snapshot/ISnapshot.cs",
+            "PLang/app/modules/IContext.cs",
+            "PLang/app/modules/ICodeGenerated.cs",
+            "PLang/app/Builder/this.Snapshot.cs",
+            "PLang/app/Statics/this.Snapshot.cs",
+            "PLang/app/Code/this.Snapshot.cs",
+            "PLang/app/Settings/this.cs",
+            "PLang/app/config/this.cs",
+            "PLang/app/config/ModuleView.cs",
+            "PLang/app/Debug/this.cs",
+            "PLang/app/events/lifecycle/bindings/binding/this.cs",
+            "PLang/app/events/lifecycle/bindings/this.cs",
+            "PLang/app/events/lifecycle/this.cs",
+            "PLang/app/data/JsonString.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/data/this.Compare.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/actor/context/this.cs",
+            "PLang/app/actor/this.cs",
+            "PLang/app/callstack/this.cs",
+            "PLang/app/callstack/this.Snapshot.cs",
+            "PLang/app/callstack/call/this.cs",
+            "PLang/app/channels/this.cs",
+            "PLang/app/channels/channel/this.cs",
+            "PLang/app/channels/channel/message/this.cs",
+            "PLang/app/channels/channel/session/this.cs",
+            "PLang/app/channels/channel/stream/this.cs",
+            "PLang/app/channels/channel/goal/this.cs",
+            "PLang/app/Builder/this.cs",
+            "PLang/app/Modules/this.cs",
+            "PLang/app/goals/goal/Methods.cs",
+            "PLang/app/goals/goal/GoalCall.cs",
+            "PLang/app/goals/goal/this.cs",
+            "PLang/app/goals/goal/steps/step/this.cs",
+            "PLang/app/goals/goal/steps/step/actions/action/this.cs",
+            "PLang/app/goals/goal/steps/step/actions/action/modifiers/this.cs",
+            "PLang/app/goals/goal/steps/step/actions/this.cs",
+            "PLang/app/goals/goal/steps/this.cs",
+            "PLang/app/goals/this.cs",
+            "PLang/app/goals/setup/this.cs",
+            "PLang/app/Callback/ErrorCallback.cs",
+            "PLang/app/Settings/Sqlite.cs",
+            "PLang/app/errors/this.Snapshot.cs",
+            "PLang/app/errors/trail/this.Snapshot.cs",
+            "PLang/app/errors/ActionError.cs",
+            "PLang/app/errors/Error.cs",
+            "PLang/app/errors/GoalError.cs",
+            "PLang/app/errors/ProgramError.cs",
+            "PLang/app/errors/ServiceError.cs",
+            "PLang/app/errors/SettingsError.cs",
+            "PLang/app/errors/StepError.cs",
+            "PLang/app/errors/ValidationError.cs",
+            "PLang/app/filesystem/path.cs",
+            "PLang/app/this.cs",
+            "PLang/app/types/Conversion.cs",
+            "PLang/app/variables/navigators/Object.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs",
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/modules/test/discover.cs",
+            "PLang/app/modules/ui/code/Fluid.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Fixed all type-position references after top-level app/ folder rename to lowercase. Key rules: Alias.@this is invalid (use alias alone); expression-position property accesses stay PascalCase; app.callstack.call.Errors namespace stayed PascalCase (exception); global:: qualifier required when relative resolution fails."
+        }
+      ],
+      "after": {
+        "status": "Build clean: 0 errors, 46 warnings. PLang.csproj and PLangConsole.csproj both build successfully.",
+        "health": "green",
+        "notes": "Discovered: (1) Global alias Foo.@this is always wrong — alias IS the @this type. (2) sed replaced expression-position property accesses (app.Goals, app.FileSystem) which needed reverting. (3) app.callstack.call.Errors is PascalCase namespace (exception). (4) Variables.Navigators.ValueNavigators needed global:: path since Variables is a type alias not a namespace."
+      }
+    }
   ]
 }

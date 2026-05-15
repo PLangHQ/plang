@@ -49,7 +49,7 @@ public class Stage7_AppServicesTests
     {
         await using var app = new global::app.@this("/tmp/s7e");
         AppService captured;
-        global::app.Channels.Channel.@this disposedCh;
+        global::app.channels.channel.@this disposedCh;
         {
             await using var s = app.Services.New(parent: app.User);
             captured = s;
@@ -75,7 +75,7 @@ public class Stage7_AppServicesTests
     [Test]
     public async Task ActorChoices_DropsToUserAndSystem()
     {
-        var values = global::app.Actor.@this.Choices(null);
+        var values = global::app.actor.@this.Choices(null);
         await Assert.That(values).Contains("user");
         await Assert.That(values).Contains("system");
         await Assert.That(values).DoesNotContain("service");
@@ -118,7 +118,7 @@ public class Stage7_AppServicesTests
     [Test]
     public async Task Actor_NoLongerHasEscalationLevel()
     {
-        var prop = typeof(global::app.Actor.@this).GetProperty("EscalationLevel",
+        var prop = typeof(global::app.actor.@this).GetProperty("EscalationLevel",
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         await Assert.That(prop).IsNull();
     }

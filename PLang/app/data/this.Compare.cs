@@ -16,7 +16,7 @@ public partial class @this
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
-        Converters = { new Channels.Serializers.TimeSpanIso8601() }
+        Converters = { new global::app.channels.serializers.TimeSpanIso8601() }
     };
     /// <summary>
     /// Compares this Data with another by serializing both to JSON and walking the tree.

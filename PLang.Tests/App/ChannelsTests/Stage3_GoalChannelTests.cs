@@ -1,5 +1,5 @@
-using GoalChannel = global::app.Channels.Channel.Goal.@this;
-using EngineGoal = global::app.Goals.Goal.@this;
+using GoalChannel = global::app.channels.channel.Goal.@this;
+using EngineGoal = global::app.goals.goal.@this;
 
 namespace PLang.Tests.App.ChannelsTests;
 

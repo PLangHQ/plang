@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.cache;
 
@@ -21,7 +21,7 @@ public partial class CacheWrap : IContext, IModifier
 
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 
-    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, Actor.Context.@this context)
+    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
         var cacheKey = !string.IsNullOrEmpty(Key?.Value) ? Key.Value! : DefaultKey(context);
         var durationMs = DurationMs.Value;
@@ -48,7 +48,7 @@ public partial class CacheWrap : IContext, IModifier
         };
     }
 
-    private static string DefaultKey(Actor.Context.@this context)
+    private static string DefaultKey(actor.context.@this context)
     {
         var step = context.Step;
         var goalPath = step?.Goal?.Path ?? "unknown";

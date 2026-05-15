@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using global::app.Actor.Context;
-using global::app.Goals.Goal;
+using global::app.actor.context;
+using global::app.goals.goal;
 using global::app.Variables;
 using global::app.modules.http.code;
 using global::app.modules.llm;
@@ -43,7 +43,7 @@ public class LlmIntegrationTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     // --- Test 1: Simple arithmetic ---
 

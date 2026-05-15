@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
-using app.Errors;
-using app.Variables;
+using app.errors;
+using app.variables;
 using app.modules.crypto.code;
 using app.modules.identity.code;
 using app.modules.signing.code;

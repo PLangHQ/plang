@@ -1,5 +1,5 @@
 using app;
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules.ui;
 using global::app.modules.ui.code;
@@ -696,7 +696,7 @@ public class RenderTests : IDisposable
             Text = text,
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = actionClass,
                     ActionName = method,

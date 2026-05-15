@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using app;
 using global::app.Errors;
 using global::app.Variables;
@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Modules.mock;
 
 public class MockTests
 {
-    private (global::app.Actor.Context.@this context, Variables memory, global::app.@this app) CreateContext()
+    private (global::app.actor.context.@this context, Variables memory, global::app.@this app) CreateContext()
     {
         var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variables, app);

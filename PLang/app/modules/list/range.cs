@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.list;
 
@@ -15,7 +15,7 @@ public partial class Range : IContext
     {
         if (Step.Value == 0)
             return Task.FromResult(Error(
-                new app.Errors.ValidationError("Step cannot be zero", "InvalidStep")));
+                new app.errors.ValidationError("Step cannot be zero", "InvalidStep")));
 
         var list = new List<object?>();
         if (Step.Value > 0)

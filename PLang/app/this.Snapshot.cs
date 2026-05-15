@@ -13,9 +13,9 @@ public sealed partial class @this
     /// Adding a new subsystem to the snapshot is just implementing ISnapshot
     /// and adding a one-liner here — no central registry, no ordering coupling.
     /// </summary>
-    public Snapshot.@this Snapshot()
+    public snapshot.@this Snapshot()
     {
-        var s = new Snapshot.@this();
+        var s = new snapshot.@this();
         CurrentActor.Context.Variables.Capture(s.Section("Variables"));
         Errors.Capture(s.Section("Errors"));
         Code.Capture(s.Section("Providers"));
@@ -36,16 +36,16 @@ public sealed partial class @this
     /// the App is left in a partially-restored state and the caller is responsible
     /// for treating the failure as a referent-integrity violation.
     /// </summary>
-    public void Restore(Snapshot.@this s, Actor.Context.@this? context = null)
+    public void Restore(snapshot.@this s, actor.context.@this? context = null)
     {
         var ctx = context ?? CurrentActor.Context;
 
         if (s.HasSection("Providers")) global::app.Code.@this.Restore(s.Section("Providers"), ctx);
-        if (s.HasSection("Variables")) global::app.Variables.@this.Restore(s.Section("Variables"), ctx);
-        if (s.HasSection("Errors"))    global::app.Errors.@this.Restore(s.Section("Errors"), ctx);
+        if (s.HasSection("Variables")) global::app.variables.@this.Restore(s.Section("Variables"), ctx);
+        if (s.HasSection("Errors"))    global::app.errors.@this.Restore(s.Section("Errors"), ctx);
         if (s.HasSection("Statics"))   global::app.Statics.@this.Restore(s.Section("Statics"), ctx);
         if (s.HasSection("Build"))     global::app.Builder.@this.Restore(s.Section("Build"), ctx);
-        if (s.HasSection("Testing"))   global::app.Tester.@this.Restore(s.Section("Testing"), ctx);
-        if (s.HasSection("CallStack")) global::app.CallStack.@this.Restore(s.Section("CallStack"), ctx);
+        if (s.HasSection("Testing"))   global::app.tester.@this.Restore(s.Section("Testing"), ctx);
+        if (s.HasSection("CallStack")) global::app.callstack.@this.Restore(s.Section("CallStack"), ctx);
     }
 }

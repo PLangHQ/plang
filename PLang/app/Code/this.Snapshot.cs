@@ -1,5 +1,5 @@
 using System.Reflection;
-using app.Errors;
+using app.errors;
 
 namespace app.Code;
 
@@ -27,7 +27,7 @@ public sealed partial class @this : ISnapshot
     /// Built-in registrations stay out of the snapshot — App boot's RegisterDefaults
     /// reproduces them on the fresh side.
     /// </summary>
-    public void Capture(Snapshot.@this s)
+    public void Capture(global::app.snapshot.@this s)
     {
         var registrations = new List<Registration>();
         var overrides = new List<DefaultOverride>();
@@ -69,7 +69,7 @@ public sealed partial class @this : ISnapshot
     ///   2) Apply default-selection overrides — hard error if the named provider isn't registered.
     /// The fresh App boot has already run RegisterDefaults so built-ins are present.
     /// </summary>
-    public static void Restore(Snapshot.@this s, Actor.Context.@this ctx)
+    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
     {
         var providers = ctx.App.Code;
 

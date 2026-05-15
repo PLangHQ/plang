@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.code;
 
@@ -21,7 +21,7 @@ public partial class list : IContext
 
         var providerType = Context.App.Code.ResolveType(Type.Value!);
         if (providerType == null)
-            return Error(new Errors.ActionError($"Unknown provider type '{Type.Value}'", "UnknownType", 400));
+            return Error(new errors.ActionError($"Unknown provider type '{Type.Value}'", "UnknownType", 400));
 
         return Context.App.Code.List(providerType);
     }

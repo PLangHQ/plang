@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.list;
 
@@ -16,7 +16,7 @@ public partial class Remove : IContext
         var data = Context.Variables.Get(ListName.Value);
         if (data.Value is not List<object?> list)
             return Task.FromResult(Error(
-                new app.Errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         if (AtIndex.Value >= 0)
         {

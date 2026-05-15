@@ -5,30 +5,30 @@
 
 namespace app.modules.matrix.plain;
 
-[global::app.modules.Action("stringplain")]
+[global::app.modules.action("stringplain")]
 public partial class StringPlain : global::app.modules.IContext
 {
     public partial global::app.data.@this<string> Path { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Path);
 }
 
-[global::app.modules.Action("intplain")]
+[global::app.modules.action("intplain")]
 public partial class IntPlain : global::app.modules.IContext
 {
     public partial global::app.data.@this<int> Count { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Count);
 }
 
-[global::app.modules.Action("boolplain")]
+[global::app.modules.action("boolplain")]
 public partial class BoolPlain : global::app.modules.IContext
 {
     public partial global::app.data.@this<bool> Flag { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(Flag);
 }
 
-[global::app.modules.Action("pathplain")]
+[global::app.modules.action("pathplain")]
 public partial class PathPlain : global::app.modules.IContext
 {
-    public partial global::app.data.@this<global::app.FileSystem.path> File { get; init; }
+    public partial global::app.data.@this<global::app.filesystem.path> File { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(File);
 }

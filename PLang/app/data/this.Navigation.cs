@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using app.Errors;
+using app.errors;
 
 namespace app.data;
 
@@ -278,7 +278,7 @@ public partial class @this
             }
 
             // Fallback when no app context (e.g., during deserialization)
-            var fallbackResult = Variables.Navigators.ValueNavigators.Navigate(this, key);
+            var fallbackResult = global::app.variables.navigators.ValueNavigators.Navigate(this, key);
             if (fallbackResult.IsInitialized) return fallbackResult;
         }
 

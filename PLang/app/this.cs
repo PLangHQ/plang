@@ -2,12 +2,12 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using app.Actor.Context;
+using app.actor.context;
 using app.Settings;
-using app.Errors;
-using app.Variables;
+using app.errors;
+using app.variables;
 using app.modules;
-using Goal = app.Goals.Goal.@this;
+using Goal = app.goals.goal.@this;
 
 namespace app;
 
@@ -23,8 +23,8 @@ public sealed partial class @this : IAsyncDisposable
     private readonly AppGoals _goals;
     private bool _disposed;
 
-    private Actor.@this? _system;
-    private Actor.@this? _user;
+    private actor.@this? _system;
+    private actor.@this? _user;
     private global::app.Services.@this? _services;
 
     /// <summary>
@@ -123,7 +123,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Per-type navigator registry for Data navigation.
     /// </summary>
-    public Variables.Navigators.@this Navigators { get; } = new();
+    public variables.navigators.@this Navigators { get; } = new();
 
     /// <summary>
     /// The loaded goals.
@@ -133,7 +133,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// The file system abstraction.
     /// </summary>
-    public app.FileSystem.IPLangFileSystem FileSystem { get; set; }
+    public app.filesystem.IPLangFileSystem FileSystem { get; set; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -142,9 +142,9 @@ public sealed partial class @this : IAsyncDisposable
 
     /// <summary>
     /// Strongly typed, goal-scoped module config.
-    /// Navigation: app.Config.For&lt;archive.Config&gt;(context).Max
+    /// Navigation: app.config.For&lt;archive.Config&gt;(context).Max
     /// </summary>
-    public Config.@this Config { get; }
+    public config.@this Config { get; }
 
     /// <summary>
     /// App-level persistent key-value store backed by <c>.db/system.sqlite</c>
@@ -173,12 +173,12 @@ public sealed partial class @this : IAsyncDisposable
     /// Run-wide error scope. AsyncLocal-flowed current error (PLang <c>%!error%</c>) +
     /// audit list of every error pushed. Populated by error.handle.Wrap during recovery.
     /// </summary>
-    public global::app.Errors.@this Errors { get; }
+    public global::app.errors.@this Errors { get; }
 
     /// <summary>
     /// Test runner. Discovers and runs *.test.goal files with assertion tracking.
     /// </summary>
-    public global::app.Tester.@this Tester { get; }
+    public global::app.tester.@this Tester { get; }
 
     /// <summary>
     /// Builder mode controller. When enabled, actors use in-memory datasources.
@@ -201,25 +201,25 @@ public sealed partial class @this : IAsyncDisposable
     /// Centralized type identity: PLang names ↔ CLR types. File-format
     /// characteristics live on <see cref="Formats"/>.
     /// </summary>
-    public Types.@this Types { get; }
+    public types.@this Types { get; }
 
     /// <summary>
     /// File-format characteristics: extension → Kind, extension → MIME,
     /// Kind → compressibility. One per app.
     /// </summary>
-    public Formats.@this Formats { get; } = new();
+    public formats.@this Formats { get; } = new();
 
     /// <summary>
     /// System actor — the root of the cancellation hierarchy.
     /// Cancelling System cascades to User and Service.
     /// Links to App's shutdown token so RequestShutdown() cascades through everything.
     /// </summary>
-    public Actor.@this System => _system ??= new Actor.@this("System", this, _shutdownCts.Token);
+    public actor.@this System => _system ??= new actor.@this("System", this, _shutdownCts.Token);
 
     /// <summary>
     /// User actor for end user operations. Links to System's cancellation token.
     /// </summary>
-    public Actor.@this User => _user ??= new Actor.@this("User", this, System.CancellationToken);
+    public actor.@this User => _user ??= new actor.@this("User", this, System.CancellationToken);
 
     /// <summary>
     /// Flat per-call Service collection. Each Service is one outbound call's I/O
@@ -232,12 +232,12 @@ public sealed partial class @this : IAsyncDisposable
     /// The currently executing actor. Defaults to User. Changed to System during bootstrap (Start).
     /// app.execute switches temporarily for context-crossing dispatch.
     /// </summary>
-    public Actor.@this CurrentActor { get; set; } = null!; // initialized to User in constructor
+    public actor.@this CurrentActor { get; set; } = null!; // initialized to User in constructor
 
     /// <summary>
     /// Resolves an actor by name. Returns error instead of null — object reports its own errors.
     /// </summary>
-    public (Actor.@this? Actor, IError? Error) GetActor(string? name)
+    public (actor.@this? Actor, IError? Error) GetActor(string? name)
     {
         if (string.IsNullOrEmpty(name))
             return (null, new ActionError("Actor name is required", "ActorRequired", 400));
@@ -246,7 +246,7 @@ public sealed partial class @this : IAsyncDisposable
         {
             "system" => System,
             "user" => User,
-            _ => (Actor.@this?)null
+            _ => (actor.@this?)null
         };
 
         if (actor == null)
@@ -268,23 +268,23 @@ public sealed partial class @this : IAsyncDisposable
     /// lifetime to the app; removed-and-disposed via Remove(x); all entries
     /// disposed on App.DisposeAsync.
     /// </summary>
-    public KeepAlive.@this KeepAlive { get; } = new();
+    public keepalive.@this KeepAlive { get; } = new();
 
     /// <summary>
     /// App-wide call tree. Structural data (Action / Caller / Cause / Errors)
     /// is always captured; richer capture (timing, tags, history) is gated by
-    /// <see cref="CallStack.@this.Flags"/>, populated via Debug.Apply from
+    /// <see cref="callstack.@this.Flags"/>, populated via Debug.Apply from
     /// <c>--debug={callstack:{...}}</c>.
     /// </summary>
-    public CallStack.@this CallStack { get; } = new();
+    public callstack.@this CallStack { get; } = new();
 
-    public @this(app.FileSystem.IPLangFileSystem fileSystem)
+    public @this(app.filesystem.IPLangFileSystem fileSystem)
         : this(fileSystem.RootDirectory, fileSystem: fileSystem)
     {
     }
 
     public @this(string absolutePath, AppModules? modules = null,
-        app.FileSystem.IPLangFileSystem? fileSystem = null,
+        app.filesystem.IPLangFileSystem? fileSystem = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {
@@ -297,10 +297,10 @@ public sealed partial class @this : IAsyncDisposable
         StartedAt = DateTime.UtcNow;
         Events = new AppEvents();
         Debug = new Debugging(this);
-        Tester = new global::app.Tester.@this(this);
+        Tester = new global::app.tester.@this(this);
         Builder = new global::app.Builder.@this(this);
-        Types = new Types.@this();
-        Config = new Config.@this();
+        Types = new types.@this();
+        Config = new config.@this();
         _settingsStore = new Lazy<global::app.Settings.IStore>(CreateSettingsStore);
         Settings = new global::app.Settings.@this(this);
         _modules = modules ?? new AppModules();
@@ -308,7 +308,7 @@ public sealed partial class @this : IAsyncDisposable
         _goals = new AppGoals { App = this };
         FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
 
-        Errors = new global::app.Errors.@this(this);
+        Errors = new global::app.errors.@this(this);
 
         Code.RegisterDefaults();
         Types.RegisterDomainTypes();
@@ -340,20 +340,20 @@ public sealed partial class @this : IAsyncDisposable
     /// the well-known names ("output", "error", "input"). PlangConsole calls
     /// this for System and User after constructing the App.
     /// </summary>
-    public static void WireDefaultConsoleChannels(global::app.Actor.@this actor)
+    public static void WireDefaultConsoleChannels(global::app.actor.@this actor)
     {
-        if (!actor.Channels.Contains(global::app.Channels.@this.Output))
-            actor.Channels.Register(new global::app.Channels.Channel.Stream.@this(
-                global::app.Channels.@this.Output, Console.OpenStandardOutput(),
-                global::app.Channels.Channel.ChannelDirection.Output, ownsStream: false));
-        if (!actor.Channels.Contains(global::app.Channels.@this.Error))
-            actor.Channels.Register(new global::app.Channels.Channel.Stream.@this(
-                global::app.Channels.@this.Error, Console.OpenStandardError(),
-                global::app.Channels.Channel.ChannelDirection.Output, ownsStream: false));
-        if (!actor.Channels.Contains(global::app.Channels.@this.Input))
-            actor.Channels.Register(new global::app.Channels.Channel.Stream.@this(
-                global::app.Channels.@this.Input, Console.OpenStandardInput(),
-                global::app.Channels.Channel.ChannelDirection.Input, ownsStream: false));
+        if (!actor.Channels.Contains(global::app.channels.@this.Output))
+            actor.Channels.Register(new global::app.channels.channel.stream.@this(
+                global::app.channels.@this.Output, Console.OpenStandardOutput(),
+                global::app.channels.channel.ChannelDirection.Output, ownsStream: false));
+        if (!actor.Channels.Contains(global::app.channels.@this.Error))
+            actor.Channels.Register(new global::app.channels.channel.stream.@this(
+                global::app.channels.@this.Error, Console.OpenStandardError(),
+                global::app.channels.channel.ChannelDirection.Output, ownsStream: false));
+        if (!actor.Channels.Contains(global::app.channels.@this.Input))
+            actor.Channels.Register(new global::app.channels.channel.stream.@this(
+                global::app.channels.@this.Input, Console.OpenStandardInput(),
+                global::app.channels.channel.ChannelDirection.Input, ownsStream: false));
     }
 
     /// <summary>
@@ -391,7 +391,7 @@ public sealed partial class @this : IAsyncDisposable
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
-        Converters = { new Channels.Serializers.TimeSpanIso8601() }
+        Converters = { new global::app.channels.serializers.TimeSpanIso8601() }
     };
 
     public async Task<data.@this> Save()
@@ -418,7 +418,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Runs a strongly-typed action. Properties are already set via init.
     /// Used by C# code composing actions (providers, tests).
     /// </summary>
-    public async Task<data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Actor.Context.@this context)
+    public async Task<data.@this<TResult>> RunAction<TAction, TResult>(TAction action, actor.context.@this context)
         where TAction : ICodeGenerated
     {
         var result = await action.ExecuteAsync(null!, context);
@@ -430,7 +430,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Runs a strongly-typed action and returns the raw Data result.
     /// Used by C# code composing actions (providers, tests).
     /// </summary>
-    public async Task<data.@this> RunAction<TAction>(TAction action, Actor.Context.@this context)
+    public async Task<data.@this> RunAction<TAction>(TAction action, actor.context.@this context)
         where TAction : ICodeGenerated
     {
         return await action.ExecuteAsync(null!, context);
@@ -447,7 +447,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Run() directly. App.Run wraps it. Return variable mapping is owned by
     /// Action.RunAsync, not here.
     /// </summary>
-    public async Task<data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context, CallStack.Call.@this? cause = null)
+    public async Task<data.@this> Run(goals.goal.steps.step.actions.action.@this action, actor.context.@this context, callstack.call.@this? cause = null)
     {
         var (handler, error) = Modules.GetCodeGenerated(action);
         if (error != null) return data.@this.FromError(error);
@@ -456,9 +456,9 @@ public sealed partial class @this : IAsyncDisposable
         // before the call frame is on the stack — catch it here so App.Run's contract
         // (returns Data, never throws) holds. Once Push succeeds the Call owns its
         // own try/catch via ExecuteAsync.
-        CallStack.Call.@this call;
+        callstack.call.@this call;
         try { call = CallStack.Push(action, context.Variables, cause); }
-        catch (Errors.CallStackOverflowException ex) { return HandleOverflow(ex, action.Step, CallStack); }
+        catch (global::app.errors.CallStackOverflowException ex) { return HandleOverflow(ex, action.Step, CallStack); }
 
         // Dispose order matters: anchor restore must run BEFORE Call's await-using
         // dispose (AsyncLocal restore, Children removal, Variables.OnSet unsubscribe).
@@ -469,11 +469,11 @@ public sealed partial class @this : IAsyncDisposable
         return await call.ExecuteAsync(handler!, context);
     }
 
-    private static data.@this HandleOverflow(Errors.CallStackOverflowException ex, Step? step, CallStack.@this stack)
+    private static data.@this HandleOverflow(errors.CallStackOverflowException ex, Step? step, callstack.@this stack)
     {
         var caller = stack.Current;
-        var chain = caller != null ? caller.SnapshotChain() : Array.Empty<CallStack.Call.@this>();
-        var overflowErr = new Errors.ServiceError(ex.Message, step!, chain, "CallStackOverflow", 500) { Exception = ex };
+        var chain = caller != null ? caller.SnapshotChain() : Array.Empty<callstack.call.@this>();
+        var overflowErr = new errors.ServiceError(ex.Message, step!, chain, "CallStackOverflow", 500) { Exception = ex };
         stack.Audit.Add(overflowErr);
         return data.@this.FromError(overflowErr);
     }
@@ -482,7 +482,7 @@ public sealed partial class @this : IAsyncDisposable
     /// Bootstrap: loads app identity, resolves the goal file, runs it.
     /// Building is routed to the PLang builder (system/builder/).
     /// </summary>
-    public async Task<data.@this> Start(Actor.Context.@this? context = null)
+    public async Task<data.@this> Start(actor.context.@this? context = null)
     {
         await Load();
 
@@ -508,7 +508,7 @@ public sealed partial class @this : IAsyncDisposable
         // Resolve goal file
         var goalFile = context.Variables.GetValue("goalFile") as string;
         if (string.IsNullOrEmpty(goalFile))
-            return app.data.@this.FromError(new global::app.Errors.ServiceError(
+            return app.data.@this.FromError(new global::app.errors.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
         var goalCall = new GoalCall { PrPath = goalFile };
@@ -525,14 +525,14 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Runs a goal via GoalCall. Resolves the goal then delegates to Goal.RunAsync.
     /// </summary>
-    public async Task<data.@this> RunGoalAsync(GoalCall goalCall, Actor.Context.@this? context = null, CancellationToken ct = default)
+    public async Task<data.@this> RunGoalAsync(GoalCall goalCall, actor.context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
         // Inject parameters — GetGoalAsync only injects when loading from file,
-        // but goals found in memory (app.Goals.Get) need parameters too.
+        // but goals found in memory (app.goals.Get) need parameters too.
         // Goal-call is *not* a fork: it stays in the caller's flow. Variables.Set
         // is overlay-aware — if a fork operator above us (channel fire, parallel
         // foreach iteration) pushed a Calls scope, these writes land in that
@@ -550,7 +550,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Runs a goal already in memory. Delegates to Goal.RunAsync.
     /// </summary>
-    public async Task<data.@this> RunGoalAsync(Goal goal, Actor.Context.@this? context = null, CancellationToken ct = default)
+    public async Task<data.@this> RunGoalAsync(Goal goal, actor.context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
         return await goal.RunAsync(context);
@@ -569,18 +569,18 @@ public sealed partial class @this : IAsyncDisposable
         return new global::app.Settings.Sqlite(dbPath, FileSystem);
     }
 
-    private static app.FileSystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)
+    private static app.filesystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)
     {
         try
         {
             var fullPath = global::System.IO.Path.GetFullPath(rootPath);
-            return new app.FileSystem.Default.PLangFileSystem(fullPath, "");
+            return new app.filesystem.Default.PLangFileSystem(fullPath, "");
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             // If rootPath is not a valid filesystem path (e.g., "/app" in tests),
             // fall back to PLangFileSystem with current directory
-            return new app.FileSystem.Default.PLangFileSystem(global::System.IO.Directory.GetCurrentDirectory(), "");
+            return new app.filesystem.Default.PLangFileSystem(global::System.IO.Directory.GetCurrentDirectory(), "");
         }
     }
 

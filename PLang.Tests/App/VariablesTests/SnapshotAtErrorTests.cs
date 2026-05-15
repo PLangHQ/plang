@@ -1,5 +1,5 @@
 using global::app.Errors;
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
@@ -12,7 +12,7 @@ public class SnapshotAtErrorTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.goals.Add(goal);
         return (app, action);
     }
 
@@ -28,13 +28,13 @@ public class SnapshotAtErrorTests
         // Establish %x%=1 *before* the error fires.
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.errors.Push(error))
         {
             // Handler-time mutation post-throw.
             vars.Set("x", 2);
 
             var projection = vars.SnapshotAt(error);
-            await Assert.That(projection).IsTypeOf<global::app.Variables.@this>();
+            await Assert.That(projection).IsTypeOf<global::app.variables.@this>();
             await Assert.That(projection.Get("x")?.Value).IsEqualTo(1);
         }
     }
@@ -50,7 +50,7 @@ public class SnapshotAtErrorTests
 
         vars.Set("a", "before");
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.errors.Push(error))
         {
             vars.Set("a", "after");
             vars.Set("b", "added");
@@ -71,7 +71,7 @@ public class SnapshotAtErrorTests
 
         vars.Set("x", 1);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.errors.Push(error))
         {
             vars.Set("x", 2); // handler mutation
             var projection = vars.SnapshotAt(error);
@@ -90,7 +90,7 @@ public class SnapshotAtErrorTests
 
         vars.Set("x", "stable");
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.errors.Push(error))
         {
             // No post-throw mutations.
             var projection = vars.SnapshotAt(error);
@@ -109,7 +109,7 @@ public class SnapshotAtErrorTests
 
         vars.Set("v", 10);
         var error = new ServiceError("boom", "TestErr", 400);
-        using (app.Errors.Push(error))
+        using (app.errors.Push(error))
         {
             vars.Set("v", 20);
             var p1 = vars.SnapshotAt(error);

@@ -1,4 +1,4 @@
-using Goal = app.Goals.Goal.@this;
+using Goal = app.goals.goal.@this;
 
 namespace app.modules.builder;
 
@@ -56,7 +56,7 @@ public partial class validateResponse : IContext
                             : "Goal parameter is uninitialized (%goal% not in scope when builder.validateResponse ran)");
             }
             return Task.FromResult(app.data.@this.FromError(
-                new Errors.ActionError(string.Join("; ", problems), "ValidationError", 400)));
+                new errors.ActionError(string.Join("; ", problems), "ValidationError", 400)));
         }
         return Task.FromResult(Validate(response, goal, Context.App));
     }
@@ -162,7 +162,7 @@ public partial class validateResponse : IContext
 
                     var targetType = (goal.App ?? app)?.Types.Get(p.Type.Value);
                     if (targetType == null) continue;
-                    if (!global::app.Types.@this.IsScalarPlangType(targetType)) continue;
+                    if (!global::app.types.@this.IsScalarPlangType(targetType)) continue;
 
                     if (p.Value is not string)
                         errors.Add(
@@ -220,7 +220,7 @@ public partial class validateResponse : IContext
                     // Scalar PlangTypes (path, tstring, ...) accept the raw primitive at
                     // build time — runtime wraps via Resolve. Already covered by the
                     // shape check above.
-                    if (global::app.Types.@this.IsScalarPlangType(targetType)) continue;
+                    if (global::app.types.@this.IsScalarPlangType(targetType)) continue;
 
                     // [Choices]-bearing types: vocabulary check, not type construction.
                     // Stateful runtime types (Actor) cannot honestly be constructed from
@@ -239,7 +239,7 @@ public partial class validateResponse : IContext
                         continue;
                     }
 
-                    var (_, error) = global::app.Types.@this.TryConvertTo(p.Value, targetType);
+                    var (_, error) = global::app.types.@this.TryConvertTo(p.Value, targetType);
                     if (error == null) continue;
 
                     var validValues = (goal.App ?? app)?.Types.GetValidValues(targetType);
@@ -255,7 +255,7 @@ public partial class validateResponse : IContext
         if (errors.Count > 0)
         {
             var message = string.Join("\n", errors.Select(e => $"- {e}"));
-            return global::app.data.@this.FromError(new Errors.ActionError(message, "ValidationErrors", 400));
+            return global::app.data.@this.FromError(new errors.ActionError(message, "ValidationErrors", 400));
         }
 
         return global::app.data.@this.Ok(true);

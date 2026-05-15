@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Errors;
 using global::app.Variables;
 using global::app.modules.crypto;
@@ -32,7 +32,7 @@ public class ProviderResolutionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Hash_UsesProviderFromSettings_NotDefault()
@@ -53,13 +53,13 @@ public class ProviderResolutionTests
     [Test]
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
-        // Fresh engine, no crypto settings — should use global::app.modules.crypto.code.Default
+        // Fresh engine, no crypto settings — should use global::app.modules.crypto.code.default
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
         var hash = (byte[])result.Value!;
-        // Should not be all zeros (global::app.modules.crypto.code.Default produces real keccak256)
+        // Should not be all zeros (global::app.modules.crypto.code.default produces real keccak256)
         await Assert.That(hash).IsNotEquivalentTo(new byte[32]);
         await Assert.That(hash.Length).IsEqualTo(32);
     }

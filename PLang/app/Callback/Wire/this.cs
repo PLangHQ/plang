@@ -23,7 +23,7 @@ public sealed class @this
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { app.Channels.Serializers.Filters.Sensitive.Strip }
+            Modifiers = { app.channels.serializers.filters.Sensitive.Strip }
         }
     };
 }

@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Modules.modifier;
 public class ErrorHandleTests
 {
     private global::app.@this _app = null!;
-    private global::app.Actor.Context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.User.Context;
 
     [Before(Test)]
     public void Setup()
@@ -194,7 +194,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.Errors.ServiceError("persistent failure", "TransientError", 503)));
+                new global::app.errors.ServiceError("persistent failure", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers
@@ -218,7 +218,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.Errors.ServiceError("failure", "TransientError", 503)));
+                new global::app.errors.ServiceError("failure", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers
@@ -241,7 +241,7 @@ public class ErrorHandleTests
         {
             callCount++;
             return Task.FromResult(global::app.data.@this.FromError(
-                new global::app.Errors.ServiceError("always fails", "TransientError", 503)));
+                new global::app.errors.ServiceError("always fails", "TransientError", 503)));
         };
 
         var modifiers = new ActionModifiers { ErrorHandler(("retryCount", 3)) };
@@ -263,7 +263,7 @@ public class ErrorHandleTests
             callCount++;
             if (callCount == 1)
                 return Task.FromResult(global::app.data.@this.FromError(
-                    new global::app.Errors.ServiceError("transient failure", "TransientError", 503)));
+                    new global::app.errors.ServiceError("transient failure", "TransientError", 503)));
             return Task.FromResult(global::app.data.@this.Ok());
         };
 
@@ -281,7 +281,7 @@ public class ErrorHandleTests
     // --- Goal path tests (CallErrorGoal coverage) ---
 
     /// <summary>
-    /// Creates an in-memory goal with a single action step and registers it in app.Goals.
+    /// Creates an in-memory goal with a single action step and registers it in app.goals.
     /// </summary>
     private Goal RegisterGoal(string name, string module, string actionName,
         params (string name, object? value)[] parameters)

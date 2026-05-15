@@ -8,7 +8,7 @@ public class DiffCaptureTests
     public async Task Diff_FlagOff_DiffsListIsNull()
     {
         var stack = new CallStack();
-        var vars = new global::app.Variables.@this();
+        var vars = new global::app.variables.@this();
         await using var call = stack.Push(MakeAction("A"), vars);
         await Assert.That(call.Diffs).IsNull();
     }
@@ -17,7 +17,7 @@ public class DiffCaptureTests
     public async Task Diff_FlagOn_VariableSetAppendsDiffEntry()
     {
         var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
-        var vars = new global::app.Variables.@this();
+        var vars = new global::app.variables.@this();
         vars.Set("name", "old");
 
         await using var call = stack.Push(MakeAction("A"), vars);
@@ -31,7 +31,7 @@ public class DiffCaptureTests
     public async Task Diff_RecordCarriesNameBeforeAt()
     {
         var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
-        var vars = new global::app.Variables.@this();
+        var vars = new global::app.variables.@this();
         vars.Set("name", "ingi");
 
         await using var call = stack.Push(MakeAction("A"), vars);
@@ -48,7 +48,7 @@ public class DiffCaptureTests
     public async Task Diff_ScalarOnlyByDefault_NonScalarRendersAsSummary()
     {
         var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
-        var vars = new global::app.Variables.@this();
+        var vars = new global::app.variables.@this();
         var list = new List<int> { 1, 2, 3 };
         vars.Set("items", list);
 
@@ -68,7 +68,7 @@ public class DiffCaptureTests
         {
             Flags = Flags.Default with { Diff = true, DeepDiff = true }
         };
-        var vars = new global::app.Variables.@this();
+        var vars = new global::app.variables.@this();
         var list = new List<int> { 1, 2, 3 };
         vars.Set("items", list);
 
@@ -87,7 +87,7 @@ public class DiffCaptureTests
     public async Task Diff_DisposeUnsubscribesFromVariablesOnSet()
     {
         var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
-        var vars = new global::app.Variables.@this();
+        var vars = new global::app.variables.@this();
         vars.Set("x", 1);
 
         var call = stack.Push(MakeAction("A"), vars);
@@ -106,7 +106,7 @@ public class DiffCaptureTests
         // 100 iterations × 1MB list under Diff:true (no DeepDiff). GC delta stays low
         // because Before captures a summary string, not a clone.
         var stack = new CallStack { Flags = Flags.Default with { Diff = true } };
-        var vars = new global::app.Variables.@this();
+        var vars = new global::app.variables.@this();
         // Seed with a 1MB-ish list.
         vars.Set("big", new List<byte>(new byte[1024 * 1024]));
 

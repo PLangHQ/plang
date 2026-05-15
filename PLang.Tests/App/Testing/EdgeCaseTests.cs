@@ -23,7 +23,7 @@ public class EdgeCaseTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-edge-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        var fs = new global::app.FileSystem.Default.PLangFileSystem(_tempDir, "");
+        var fs = new global::app.filesystem.Default.PLangFileSystem(_tempDir, "");
         _app = new global::app.@this(fs);
         _captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
@@ -78,11 +78,11 @@ public class EdgeCaseTests
         // test so the Results grow — verify count is from the outer action, not the
         // inner grandchild-runs).
 
-        var emptyList = new List<global::app.Tester.File>();
+        var emptyList = new List<global::app.tester.File>();
         var outerAction = new global::app.modules.test.run
         {
             Context = _app.User.Context,
-            Tests = new global::app.data.@this<List<global::app.Tester.File>>("Tests", emptyList),
+            Tests = new global::app.data.@this<List<global::app.tester.File>>("Tests", emptyList),
             Parallel = null,
             Timeout = null
         };
@@ -111,7 +111,7 @@ public class EdgeCaseTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as List<global::app.Tester.File> ?? new List<global::app.Tester.File>();
+        var files = result.Value as List<global::app.tester.File> ?? new List<global::app.tester.File>();
         await Assert.That(files.Count).IsEqualTo(0);
     }
 
@@ -123,9 +123,9 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.Tester.Run(new global::app.Tester.File { Path = "Tests/X.test.goal", EntryGoalName = "X" });
+        var run = new global::app.tester.Run(new global::app.tester.File { Path = "Tests/X.test.goal", EntryGoalName = "X" });
         run.CapturedOutput = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
-        run.Complete(global::app.Tester.Status.Fail, new global::app.Errors.AssertionError(1, 2));
+        run.Complete(global::app.tester.Status.Fail, new global::app.errors.AssertionError(1, 2));
         _app.Tester.Results.Add(run);
 
         var action = new global::app.modules.test.report { Context = _app.User.Context };
@@ -147,15 +147,15 @@ public class EdgeCaseTests
         var inner = new global::app.data.@this("inner", 42);
         var outer = new global::app.data.@this("outer", inner);
 
-        var err = new global::app.Errors.AssertionError(1, 2)
+        var err = new global::app.errors.AssertionError(1, 2)
         {
             Variables = new Dictionary<string, object?>
             {
                 ["nested"] = outer
             }
         };
-        var run = new global::app.Tester.Run(new global::app.Tester.File { Path = "Tests/Nested.test.goal", EntryGoalName = "N" });
-        run.Complete(global::app.Tester.Status.Fail, err);
+        var run = new global::app.tester.Run(new global::app.tester.File { Path = "Tests/Nested.test.goal", EntryGoalName = "N" });
+        run.Complete(global::app.tester.Status.Fail, err);
         _app.Tester.Results.Add(run);
 
         // Report rendering must not throw on nested Data.

@@ -1,9 +1,9 @@
 using app;
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules.condition;
 using global::app.FileSystem;
-using global::app.FileSystem.Default;
+using global::app.filesystem.Default;
 
 namespace PLang.Tests.App.Modules.condition;
 
@@ -40,7 +40,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"if condition = {conditionResult}",
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = "condition",
                     ActionName = "if",
@@ -67,7 +67,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"write {marker}",
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = "output",
                     ActionName = "write",
@@ -89,7 +89,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"set {varName} = {value}",
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = "variable",
                     ActionName = "set",

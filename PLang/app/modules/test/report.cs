@@ -2,9 +2,9 @@ using System.Security;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using app.Errors;
-using app.Tester;
-using app.Variables;
+using app.errors;
+using app.tester;
+using app.variables;
 
 namespace app.modules.test;
 
@@ -23,7 +23,7 @@ namespace app.modules.test;
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {
-    public partial data.@this<app.Tester.Results>? Results { get; init; }
+    public partial data.@this<app.tester.Results>? Results { get; init; }
     public partial data.@this<string>? Format { get; init; }
 
     public async Task<data.@this> Run()
@@ -35,7 +35,7 @@ public partial class report : IContext
         var console = new StringBuilder();
         RenderConsole(console, results, testing);
         RenderCoverageTables(console, testing, Context.App.Modules);
-        await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.Channels.@this.Output, console.ToString());
+        await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, console.ToString());
 
         // Write the file artefact. .test/ lives at the app root per Q4 decision.
         var fs = Context.App.FileSystem;
@@ -77,20 +77,20 @@ public partial class report : IContext
         result.Properties.Set("reportPath", reportFile);
         result.Properties.Set("content", content);
         result.Properties.Set("summaryTotal", results.Count);
-        result.Properties.Set("summaryPass", summary[global::app.Tester.Status.Pass]);
-        result.Properties.Set("summaryFail", summary[global::app.Tester.Status.Fail]);
+        result.Properties.Set("summaryPass", summary[global::app.tester.Status.Pass]);
+        result.Properties.Set("summaryFail", summary[global::app.tester.Status.Fail]);
         result.Properties.Set("variableSnapshotCount", variableSnapshotCount);
         return result;
     }
 
-    private static void RenderConsole(StringBuilder sb, app.Tester.Results results, app.Tester.@this testing)
+    private static void RenderConsole(StringBuilder sb, app.tester.Results results, app.tester.@this testing)
     {
         var summary = results.Summary();
         var total = results.Count;
         sb.AppendLine($"Test summary: {total} total, "
-            + $"{summary[global::app.Tester.Status.Pass]} pass, {summary[global::app.Tester.Status.Fail]} fail, "
-            + $"{summary[global::app.Tester.Status.Timeout]} timeout, {summary[global::app.Tester.Status.Stale]} stale, "
-            + $"{summary[global::app.Tester.Status.Skipped]} skipped");
+            + $"{summary[global::app.tester.Status.Pass]} pass, {summary[global::app.tester.Status.Fail]} fail, "
+            + $"{summary[global::app.tester.Status.Timeout]} timeout, {summary[global::app.tester.Status.Stale]} stale, "
+            + $"{summary[global::app.tester.Status.Skipped]} skipped");
 
         foreach (var run in results)
         {
@@ -102,12 +102,12 @@ public partial class report : IContext
             sb.AppendLine($"  [{run.Status}] {run.File.Path} ({run.Duration.TotalMilliseconds:F0}ms)"
                 + (drift ? " [builder drift]" : ""));
 
-            if (run.Status == global::app.Tester.Status.Fail && run.Error != null)
+            if (run.Status == global::app.tester.Status.Fail && run.Error != null)
                 RenderFailure(sb, run);
         }
     }
 
-    private static void RenderFailure(StringBuilder sb, global::app.Tester.Run run)
+    private static void RenderFailure(StringBuilder sb, global::app.tester.Run run)
     {
         sb.AppendLine("    FAIL: " + run.File.Path);
         if (run.Error is AssertionError assert)
@@ -133,7 +133,7 @@ public partial class report : IContext
         }
     }
 
-    private static void RenderCoverageTables(StringBuilder sb, app.Tester.@this testing, Modules.@this modules)
+    private static void RenderCoverageTables(StringBuilder sb, app.tester.@this testing, Modules.@this modules)
     {
         sb.AppendLine();
         sb.AppendLine("Module.action coverage:");
@@ -239,7 +239,7 @@ public partial class report : IContext
         _ => label
     };
 
-    private static string BuildJson(app.Tester.Results results, app.Tester.@this testing)
+    private static string BuildJson(app.tester.Results results, app.tester.@this testing)
     {
         var runs = new List<object>();
         foreach (var run in results)
@@ -280,36 +280,36 @@ public partial class report : IContext
         return JsonSerializer.Serialize(envelope, global::app.Diagnostics.Format.Options);
     }
 
-    private static string BuildJUnit(app.Tester.Results results, FileSystem.IPLangFileSystem fs)
+    private static string BuildJUnit(app.tester.Results results, filesystem.IPLangFileSystem fs)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::app.Tester.Status.Fail)}\" errors=\"0\">");
+        sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::app.tester.Status.Fail)}\" errors=\"0\">");
         var byPath = results.GroupBy(r => fs.Path.GetDirectoryName(r.File.Path) ?? "");
         foreach (var group in byPath)
         {
             var suiteTests = group.ToList();
-            var failures = suiteTests.Count(r => r.Status == global::app.Tester.Status.Fail);
+            var failures = suiteTests.Count(r => r.Status == global::app.tester.Status.Fail);
             var timeSec = suiteTests.Sum(r => r.Duration.TotalSeconds);
             sb.AppendLine($"  <testsuite name=\"{SecurityElement.Escape(group.Key)}\" tests=\"{suiteTests.Count}\" failures=\"{failures}\" time=\"{timeSec:F3}\">");
             foreach (var run in suiteTests)
             {
                 var name = SecurityElement.Escape(run.File.Path) ?? "";
                 sb.Append($"    <testcase name=\"{name}\" time=\"{run.Duration.TotalSeconds:F3}\"");
-                if (run.Status == global::app.Tester.Status.Pass) sb.AppendLine(" />");
+                if (run.Status == global::app.tester.Status.Pass) sb.AppendLine(" />");
                 else
                 {
                     sb.AppendLine(">");
                     switch (run.Status)
                     {
-                        case global::app.Tester.Status.Fail:
+                        case global::app.tester.Status.Fail:
                             sb.AppendLine($"      <failure>{SecurityElement.Escape(run.Error?.Message ?? "fail")}</failure>");
                             break;
-                        case global::app.Tester.Status.Timeout:
+                        case global::app.tester.Status.Timeout:
                             sb.AppendLine($"      <failure type=\"timeout\">timeout</failure>");
                             break;
-                        case global::app.Tester.Status.Stale:
-                        case global::app.Tester.Status.Skipped:
+                        case global::app.tester.Status.Stale:
+                        case global::app.tester.Status.Skipped:
                             sb.AppendLine($"      <skipped>{SecurityElement.Escape(run.File.StatusReason ?? run.Status.ToString())}</skipped>");
                             break;
                     }
@@ -322,7 +322,7 @@ public partial class report : IContext
         return sb.ToString();
     }
 
-    private static string? ResolveBuilderVersion(app.Tester.@this testing) =>
+    private static string? ResolveBuilderVersion(app.tester.@this testing) =>
         testing.App.Version;
 
     private static string FormatValue(object? value) => global::app.Diagnostics.Format.Value(value);

@@ -1,6 +1,6 @@
 using System.Text.Json;
-using global::app.Actor.Context;
-using global::app.Goals.Goal;
+using global::app.actor.context;
+using global::app.goals.goal;
 using global::app.Variables;
 using global::app.modules.llm;
 using global::app.modules.llm.code;
@@ -42,7 +42,7 @@ public class QueryCallbackTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     #region OnToolCall
 

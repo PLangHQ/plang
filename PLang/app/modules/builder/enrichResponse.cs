@@ -1,6 +1,6 @@
-using app.Variables;
+using app.variables;
 using app.modules.builder.code;
-using Goal = app.Goals.Goal.@this;
+using Goal = app.goals.goal.@this;
 
 namespace app.modules.builder;
 

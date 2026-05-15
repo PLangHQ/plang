@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text;
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.Code;
 using global::app.modules.http;
@@ -39,7 +39,7 @@ public class ConfigureActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Configure_SetsTimeoutOnScopeChain()

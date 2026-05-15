@@ -16,7 +16,7 @@ public static class JsonString
     /// Parses the string as JSON. If parsing fails, attempts to fix common issues
     /// (unescaped newlines/tabs in string values) and retries. Returns error if both fail.
     /// </summary>
-    public static (JsonNode? result, Errors.IError? error) ToJson(this string str)
+    public static (JsonNode? result, errors.IError? error) ToJson(this string str)
     {
         try { return (JsonNode.Parse(str), null); }
         catch (JsonException) { }
@@ -28,7 +28,7 @@ public static class JsonString
         }
         catch (JsonException ex)
         {
-            return (null, new Errors.ActionError(
+            return (null, new errors.ActionError(
                 $"Invalid JSON: {ex.Message}", "JsonParseError", 400) { Exception = ex });
         }
     }
@@ -61,7 +61,7 @@ public static class JsonString
 /// <summary>
 /// Handles empty strings for nullable enum properties during JSON deserialization.
 /// LLMs produce "" for unset enum fields — this converts them to null instead of failing.
-/// Used by <see cref="app.Types.@this"/>'s case-insensitive read options and by HTTP transport.
+/// Used by <see cref="app.types.@this"/>'s case-insensitive read options and by HTTP transport.
 /// </summary>
 public class EmptyStringToNullEnumConverterFactory : JsonConverterFactory
 {

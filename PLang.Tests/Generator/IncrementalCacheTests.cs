@@ -208,7 +208,7 @@ public class IncrementalCacheTests
         }
 
         namespace app.Test {
-            [app.modules.Action]
+            [app.modules.action]
             public partial class TestHandler {
                 public partial app.data.@this<string> Foo { get; init; }
             }

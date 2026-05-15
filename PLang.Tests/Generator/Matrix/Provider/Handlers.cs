@@ -20,7 +20,7 @@ public sealed class FakeProvider : IFakeProvider
     public string Echo(string s) => $"echo:{s}";
 }
 
-[global::app.modules.Action("providerprop")]
+[global::app.modules.action("providerprop")]
 public partial class ProviderProp : global::app.modules.IContext
 {
     [global::app.modules.Code]
@@ -30,7 +30,7 @@ public partial class ProviderProp : global::app.modules.IContext
         Task.FromResult(global::app.data.@this.Ok(Fake.Echo("hi")));
 }
 
-[global::app.modules.Action("providermissing")]
+[global::app.modules.action("providermissing")]
 public partial class ProviderMissing : global::app.modules.IContext
 {
     [global::app.modules.Code]

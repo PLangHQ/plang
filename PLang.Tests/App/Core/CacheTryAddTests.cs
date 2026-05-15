@@ -1,5 +1,5 @@
 using global::app.modules.cache;
-using global::app.Goals.Goal.Steps.Step;
+using global::app.goals.goal.steps.step;
 using global::app.Variables;
 
 namespace PLang.Tests.App.Core;

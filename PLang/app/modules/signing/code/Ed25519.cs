@@ -1,8 +1,8 @@
 using System.Security.Cryptography;
 using NSec.Cryptography;
-using app.Errors;
-using app.Variables;
-using app.Config;
+using app.errors;
+using app.variables;
+using app.config;
 using app.Code;
 using app.modules.crypto;
 using app.modules.identity;

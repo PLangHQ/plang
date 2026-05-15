@@ -1,5 +1,5 @@
 using System.Reflection;
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Settings;
 using global::app.Errors;
 using global::app.Variables;
@@ -41,7 +41,7 @@ public class IdentityErrorPathTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     // --- GetOrCreateDefaultAsync: auto-create save failure (via Get action) ---
 

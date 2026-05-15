@@ -54,35 +54,35 @@ public class DescribeTests
 }
 
 // Fake action with Data<T> wrapped property
-[global::app.modules.Action("datapath")]
+[global::app.modules.action("datapath")]
 public record FakeDataPathAction : global::app.modules.ICodeGenerated
 {
-    public global::app.data.@this<global::app.FileSystem.path> Path { get; init; }
+    public global::app.data.@this<global::app.filesystem.path> Path { get; init; }
 
     public Task<Data> Run() => Task.FromResult(Data.Ok());
 
-    public Task<Data> ExecuteAsync(global::app.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::app.Actor.Context.@this context) => Task.FromResult(Data.Ok());
+    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action with concrete return type
-[global::app.modules.Action("getpath")]
+[global::app.modules.action("getpath")]
 public class FakeGetPath : global::app.modules.ICodeGenerated
 {
     public Task<FakePathResult> Run() => Task.FromResult(new FakePathResult());
 
-    public Task<Data> ExecuteAsync(global::app.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::app.Actor.Context.@this context) => Task.FromResult(Data.Ok());
+    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake action returning plain Data
-[global::app.modules.Action("basic")]
+[global::app.modules.action("basic")]
 public class FakeBasicAction : global::app.modules.ICodeGenerated
 {
     public Task<Data> Run() => Task.FromResult(Data.Ok("hello"));
 
-    public Task<Data> ExecuteAsync(global::app.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::app.Actor.Context.@this context) => Task.FromResult(Data.Ok());
+    public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.actor.context.@this context) => Task.FromResult(Data.Ok());
 }
 
 // Fake return type simulating Path-like properties

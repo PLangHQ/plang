@@ -1,10 +1,10 @@
-using app.Variables;
+using app.variables;
 
 using System.Text;
 using System.Text.RegularExpressions;
-using app.Actor.Context;
-using app.Events;
-using EventBinding = app.Events.Lifecycle.Bindings.Binding.@this;
+using app.actor.context;
+using app.events;
+using EventBinding = app.events.lifecycle.bindings.binding.@this;
 
 namespace app.Debug;
 
@@ -103,9 +103,9 @@ public sealed class @this
     {
         if (!IsEnabled) return Task.CompletedTask;
         // Debug surface routes via System actor's "error" channel (stderr equivalent).
-        // Stage 6: was app.Channels.WriteAsync; now per-actor.
-        var ch = _engine.System.Channels.Resolve(app.Channels.@this.Debug)
-              ?? _engine.System.Channels.Resolve(app.Channels.@this.Error);
+        // Stage 6: was app.channels.WriteAsync; now per-actor.
+        var ch = _engine.System.Channels.Resolve(app.channels.@this.Debug)
+              ?? _engine.System.Channels.Resolve(app.channels.@this.Error);
         if (ch == null) return Task.CompletedTask;
         var envelope = message is app.data.@this d ? d : app.data.@this.Ok(message);
         return ch.WriteAsync(envelope);
@@ -142,11 +142,11 @@ public sealed class @this
             // strip it before the generic Populate.
             if (dict.TryGetValue("callstack", out var rawCallstack))
             {
-                _engine.CallStack.Flags = app.CallStack.Flags.Parse(rawCallstack);
+                _engine.CallStack.Flags = app.callstack.Flags.Parse(rawCallstack);
                 dict.Remove("callstack");
             }
 
-            global::app.Types.@this.Populate(this, dict);
+            global::app.types.@this.Populate(this, dict);
         }
 
         // Strip % from variable names
@@ -304,7 +304,7 @@ public sealed class @this
         _ = Write($"=== WATCH [{name}] {eventType} in {goalName}[{stepIndex}] type={data.Value?.GetType().Name ?? "null"} ==={Environment.NewLine}");
     }
 
-    private static async Task<data.@this> BeforeStepHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<data.@this> BeforeStepHandler(actor.context.@this context, int? stepFilter)
     {
         var step = context.Step;
         if (step == null) return app.data.@this.Ok();
@@ -348,7 +348,7 @@ public sealed class @this
         return app.data.@this.Ok();
     }
 
-    private static async Task<data.@this> AfterStepHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<data.@this> AfterStepHandler(actor.context.@this context, int? stepFilter)
     {
         var step = context.Step;
         if (step == null) return app.data.@this.Ok();
@@ -371,7 +371,7 @@ public sealed class @this
     /// the same filter/truncate pipeline as the rest of debug output. Used by the
     /// granular Llm.* flag handlers — each flag fires its own block independently.
     /// </summary>
-    private static Task WriteLlmBlock(string title, IEnumerable<string> chunks, Actor.Context.@this context)
+    private static Task WriteLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"=== {title} ===");
@@ -387,7 +387,7 @@ public sealed class @this
     /// the maxLength truncation and stderr — the whole point of file mode is to
     /// capture the full untruncated content for callers that exceed the terminal limit.
     /// </summary>
-    private void EmitLlmBlock(string title, IEnumerable<string> chunks, Actor.Context.@this context, bool toFile)
+    private void EmitLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context, bool toFile)
     {
         if (toFile && _currentLlmFilePath != null)
         {
@@ -415,7 +415,7 @@ public sealed class @this
 
     /// <summary>
     /// Builds the file path for the current LLM call. Reads:
-    /// - <c>trace.id</c> from <see cref="Actor.Context.@this.Trace"/> (C#-owned, born with Context).
+    /// - <c>trace.id</c> from <see cref="actor.context.@this.Trace"/> (C#-owned, born with Context).
     /// - <c>%goal%</c> PLang variable (the user goal being built — set by the builder).
     ///   Different from <c>ctx.Goal</c>, which is the *runtime* goal currently executing
     ///   (typically the builder's own goal, e.g. BuildGoal — not what we want to label by).
@@ -424,7 +424,7 @@ public sealed class @this
     /// - <c>_llmCallCounter</c> appended when the same (goal, step) fires more than once
     ///   in this process (LlmFixer retries reuse the same key).
     /// </summary>
-    private string ResolveLlmFilePath(Actor.Context.@this context)
+    private string ResolveLlmFilePath(actor.context.@this context)
     {
         _llmCallCounter++;
 
@@ -480,7 +480,7 @@ public sealed class @this
         return sb.ToString();
     }
 
-    private static Task WriteFiltered(StringBuilder sb, Actor.Context.@this context)
+    private static Task WriteFiltered(StringBuilder sb, actor.context.@this context)
     {
         var debug = context.App?.Debug;
         var maxLen = debug?.MaxLength ?? 500;
@@ -515,7 +515,7 @@ public sealed class @this
         return context.App?.Debug?.Write(output) ?? Task.CompletedTask;
     }
 
-    private static async Task<data.@this> AfterGoalHandler(Actor.Context.@this context)
+    private static async Task<data.@this> AfterGoalHandler(actor.context.@this context)
     {
         var goalName = context.Goal?.Name ?? "?";
         var debug = context.App?.Debug;
@@ -524,7 +524,7 @@ public sealed class @this
         return app.data.@this.Ok();
     }
 
-    private static async Task<data.@this> BeforeActionHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<data.@this> BeforeActionHandler(actor.context.@this context, int? stepFilter)
     {
         var step = context.Step;
         if (step == null) return app.data.@this.Ok();
@@ -540,7 +540,7 @@ public sealed class @this
         return app.data.@this.Ok();
     }
 
-    private static async Task<data.@this> AfterActionHandler(Actor.Context.@this context, int? stepFilter)
+    private static async Task<data.@this> AfterActionHandler(actor.context.@this context, int? stepFilter)
     {
         var step = context.Step;
         if (step == null) return app.data.@this.Ok();
@@ -558,7 +558,7 @@ public sealed class @this
 
     private static readonly Regex VarRefPattern = new(@"%([^%]+)%", RegexOptions.Compiled);
 
-    private static void AppendStepVariables(StringBuilder sb, Actor.Context.@this context)
+    private static void AppendStepVariables(StringBuilder sb, actor.context.@this context)
     {
         var step = context.Step;
         if (step == null) return;
@@ -608,7 +608,7 @@ public sealed class @this
         }
     }
 
-    private static string FormatValue(object? value, Actor.Context.@this context)
+    private static string FormatValue(object? value, actor.context.@this context)
     {
         // Always format full content — truncation happens at WriteFiltered via maxLength.
         // Dictionaries/lists serialize to JSON so diagnostic output carries full structure;
@@ -653,7 +653,7 @@ public sealed class @this
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
         {
-            Modifiers = { global::app.Channels.Serializers.Filters.Sensitive.Strip }
+            Modifiers = { global::app.channels.serializers.filters.Sensitive.Strip }
         }
     };
 

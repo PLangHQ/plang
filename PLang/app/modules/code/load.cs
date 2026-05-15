@@ -1,6 +1,6 @@
 using System.Reflection;
-using app.Errors;
-using app.Variables;
+using app.errors;
+using app.variables;
 using app.Code;
 
 namespace app.modules.code;

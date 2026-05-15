@@ -21,7 +21,7 @@ public static class MatrixRunner
     /// </summary>
     public sealed record Result(
         Data Data,
-        IReadOnlyList<global::app.Errors.ParamSnapshot>? Snapshot);
+        IReadOnlyList<global::app.errors.ParamSnapshot>? Snapshot);
 
     /// <summary>
     /// Runs the matrix handler TAction through App.Run. Parameters and defaults are
@@ -56,7 +56,7 @@ public static class MatrixRunner
         }
 
         var data = await app.Run(action, context);
-        var snapshot = (data.Error as global::app.Errors.Error)?.Params;
+        var snapshot = (data.Error as global::app.errors.Error)?.Params;
         return new Result(data, snapshot);
     }
 
@@ -94,7 +94,7 @@ public static class MatrixRunner
 
         var handler = new TAction();
         var data = await handler.ExecuteAsync(action, context);
-        var snapshot = (data.Error as global::app.Errors.Error)?.Params;
+        var snapshot = (data.Error as global::app.errors.Error)?.Params;
         return new Result(data, snapshot);
     }
 

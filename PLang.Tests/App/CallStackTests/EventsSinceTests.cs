@@ -1,4 +1,4 @@
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallStackTests;
 
@@ -11,7 +11,7 @@ public class EventsSinceTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.goals.Add(goal);
         return (app, action);
     }
 

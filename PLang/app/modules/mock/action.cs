@@ -1,8 +1,8 @@
 using System.Text.RegularExpressions;
 using app;
-using app.Variables;
-using app.Events;
-using EventBinding = app.Events.Lifecycle.Bindings.Binding.@this;
+using app.variables;
+using app.events;
+using EventBinding = app.events.lifecycle.bindings.binding.@this;
 
 namespace app.modules.mock;
 
@@ -29,7 +29,7 @@ public partial class MockAction : IContext
         var goalToCall = GoalToCall?.Value;
         var paramMatchers = Parameters?.Value;
 
-        Func<Actor.Context.@this, Goals.Goal.Steps.Step.Actions.Action.@this?, data.@this?, Task<data.@this>> handler = async (ctx, _, _) =>
+        Func<actor.context.@this, app.goals.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler = async (ctx, _, _) =>
         {
             // Find the current action being executed from the step
             var currentAction = FindCurrentAction(ctx);
@@ -75,7 +75,7 @@ public partial class MockAction : IContext
         return Task.FromResult(Data(handle));
     }
 
-    private static Goals.Goal.Steps.Step.Actions.Action.@this? FindCurrentAction(Actor.Context.@this ctx)
+    private static app.goals.goal.steps.step.actions.action.@this? FindCurrentAction(actor.context.@this ctx)
     {
         var step = ctx.Step;
         if (step == null) return null;
@@ -90,7 +90,7 @@ public partial class MockAction : IContext
         return null;
     }
 
-    private static Dictionary<string, object?> CaptureParameters(Goals.Goal.Steps.Step.Actions.Action.@this? action, Variables.@this variables)
+    private static Dictionary<string, object?> CaptureParameters(app.goals.goal.steps.step.actions.action.@this? action, variables.@this variables)
     {
         var result = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         if (action == null) return result;
@@ -104,7 +104,7 @@ public partial class MockAction : IContext
     }
 
     private static bool ParametersMatch(
-        Goals.Goal.Steps.Step.Actions.Action.@this action, Variables.@this variables, Dictionary<string, object?> matchers)
+        app.goals.goal.steps.step.actions.action.@this action, variables.@this variables, Dictionary<string, object?> matchers)
     {
         foreach (var (name, expected) in matchers)
         {
@@ -119,7 +119,7 @@ public partial class MockAction : IContext
         return true;
     }
 
-    private static object? ResolveParamValue(data.@this param, Variables.@this variables)
+    private static object? ResolveParamValue(data.@this param, variables.@this variables)
     {
         if (param.Value is string s && s.Contains('%'))
             return variables.Resolve(s);

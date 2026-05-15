@@ -1,5 +1,5 @@
-using app.Events;
-using app.Events.Lifecycle.Bindings.Binding;
+using app.events;
+using app.events.lifecycle.bindings.binding;
 
 namespace PLang.Tests.App.ChannelsTests.Integration;
 
@@ -45,7 +45,7 @@ public class IntegrationCutsTests
         // captures invocation count and writes to the foundational stream
         // directly (the override scope makes this safe).
         int loggerInvocations = 0;
-        var loggerGoal = new global::app.Goals.Goal.@this { Name = "Logger", Path = "L.goal", PrPath = "/L.pr" };
+        var loggerGoal = new global::app.goals.goal.@this { Name = "Logger", Path = "L.goal", PrPath = "/L.pr" };
         var logger = new GoalChannelProbe("output", loggerGoal, app.User, () => loggerInvocations++);
         app.User.Channels.Register(logger);
 
@@ -99,10 +99,10 @@ public class IntegrationCutsTests
         await Assert.That(metricsText.Contains("+1")).IsTrue();
     }
 
-    private sealed class GoalChannelProbe : global::app.Channels.Channel.Goal.@this
+    private sealed class GoalChannelProbe : global::app.channels.channel.Goal.@this
     {
         private readonly Action _onInvoke;
-        public GoalChannelProbe(string name, global::app.Goals.Goal.@this goal, global::app.Actor.@this actor, Action onInvoke)
+        public GoalChannelProbe(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor, Action onInvoke)
             : base(name, goal, actor) { _onInvoke = onInvoke; }
         public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
         {

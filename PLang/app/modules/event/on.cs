@@ -1,7 +1,7 @@
 using app;
-using app.Variables;
-using app.Events;
-using EventBinding = app.Events.Lifecycle.Bindings.Binding.@this;
+using app.variables;
+using app.events;
+using EventBinding = app.events.lifecycle.bindings.binding.@this;
 
 namespace app.modules.@event;
 
@@ -36,7 +36,7 @@ public partial class On : IContext
     public partial data.@this<int> Priority { get; init; }
 
     /// <summary>Actor to bind the event to. If null, uses current actor.</summary>
-    public partial data.@this<Actor.@this>? Actor { get; init; }
+    public partial data.@this<actor.@this>? Actor { get; init; }
 
     /// <summary>Channel-name filter for channel lifecycle events (BeforeWrite/AfterWrite/BeforeRead/AfterRead/OnAsk). Null = no filter.</summary>
     public partial data.@this<string>? ChannelName { get; init; }
@@ -47,7 +47,7 @@ public partial class On : IContext
         var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
 
         var goalToCall = GoalToCall.Value!;
-        Func<Actor.Context.@this, Goals.Goal.Steps.Step.Actions.Action.@this?, data.@this?, Task<data.@this>> handler =
+        Func<actor.context.@this, goals.goal.steps.step.actions.action.@this?, data.@this?, Task<data.@this>> handler =
             async (ctx, _, _) => await ctx.App!.RunGoalAsync(goalToCall, targetActor.Context, ctx.CancellationToken);
 
         var binding = new EventBinding(

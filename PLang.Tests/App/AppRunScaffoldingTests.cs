@@ -206,17 +206,17 @@ public class AppRunScaffoldingTests
 // Hand-written handler that throws — used to exercise App.Run's catch path.
 internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.modules.ICodeGenerated
 {
-    public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+    public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
-    public global::app.Actor.Context.@this Context { get; private set; } = null!;
+    public global::app.actor.context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
 
-    public void Initialize(global::app.@this engine, global::app.Actor.Context.@this context)
+    public void Initialize(global::app.@this engine, global::app.actor.context.@this context)
     { App = engine; Context = context; }
 
     public Task<global::app.data.@this> ExecuteAsync(
-        global::app.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::app.Actor.Context.@this context)
+        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.actor.context.@this context)
     {
         throw new InvalidOperationException("forced throw");
     }
@@ -225,17 +225,17 @@ internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.
 // Hand-written handler that throws OperationCanceledException — pins the timeout.after contract.
 internal class OceThrowingHandler : global::app.modules.IAction, global::app.modules.ICodeGenerated
 {
-    public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+    public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
     public global::app.@this App { get; private set; } = null!;
-    public global::app.Actor.Context.@this Context { get; private set; } = null!;
+    public global::app.actor.context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
 
-    public void Initialize(global::app.@this engine, global::app.Actor.Context.@this context)
+    public void Initialize(global::app.@this engine, global::app.actor.context.@this context)
     { App = engine; Context = context; }
 
     public Task<global::app.data.@this> ExecuteAsync(
-        global::app.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::app.Actor.Context.@this context)
+        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.actor.context.@this context)
     {
         throw new OperationCanceledException("simulated cancellation");
     }

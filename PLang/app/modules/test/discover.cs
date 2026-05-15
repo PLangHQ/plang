@@ -1,11 +1,11 @@
 using System.IO;
 using System.Reflection;
 using app.Attributes;
-using app.Errors;
-using app.Tester;
+using app.errors;
+using app.tester;
 using app.Utils;
-using app.Variables;
-using Goal = app.Goals.Goal.@this;
+using app.variables;
+using Goal = app.goals.goal.@this;
 
 namespace app.modules.test;
 
@@ -16,10 +16,10 @@ namespace app.modules.test;
 /// on the action handlers referenced in the .pr, recursing through static goal.call
 /// chains), then applies the Testing.Include/Exclude tag filters. Filtered-out tests
 /// are returned with Status=Skipped; tests with hash mismatch or missing .pr are
-/// Status=Stale. Returns a List&lt;global::app.Tester.File&gt; that test.run consumes.
+/// Status=Stale. Returns a List&lt;global::app.tester.File&gt; that test.run consumes.
 /// </summary>
 [ModuleDescription("Discover, run, and report on PLang test goals with tag filtering and coverage tracking")]
-[System.ComponentModel.Description("Walk a directory for *.test.goal files and return a filtered list of global::app.Tester.File descriptors")]
+[System.ComponentModel.Description("Walk a directory for *.test.goal files and return a filtered list of global::app.tester.File descriptors")]
 [Example("discover tests in 'Tests/Foo' recursive=false, write to %tests%",
     "test.discover Path([string] Tests/Foo), Recursive([bool] false) | variable.set Name([string] %tests%), Value([object] %__data__%)")]
 [Action("discover")]
@@ -41,7 +41,7 @@ public partial class discover : IContext
     {
         var fs = Context.App!.FileSystem;
 
-        app.data.@this empty = app.data.@this.Ok(new List<global::app.Tester.File>());
+        app.data.@this empty = app.data.@this.Ok(new List<global::app.tester.File>());
 
         string absRoot;
         try { absRoot = fs.ValidatePath(Path.Value); }
@@ -61,7 +61,7 @@ public partial class discover : IContext
         var include = Context.App.Tester.Include;
         var exclude = Context.App.Tester.Exclude;
 
-        var files = new List<global::app.Tester.File>();
+        var files = new List<global::app.tester.File>();
         foreach (var match in matches)
             files.Add(DiscoverOne(match, fs, include, exclude));
 
@@ -69,7 +69,7 @@ public partial class discover : IContext
     }
 
     /// <summary>Discovers metadata for a single .test.goal file.</summary>
-    private global::app.Tester.File DiscoverOne(string absGoalPath, FileSystem.IPLangFileSystem fs,
+    private global::app.tester.File DiscoverOne(string absGoalPath, filesystem.IPLangFileSystem fs,
         HashSet<string> include, HashSet<string> exclude)
     {
         var dir = fs.Path.GetDirectoryName(absGoalPath) ?? fs.RootDirectory;
@@ -78,10 +78,10 @@ public partial class discover : IContext
         var prFileName = fs.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
         var absPrPath = fs.Path.Combine(dir, ".build", prFileName);
         // PrPath is relative to the test's own directory (not the parent app root) so
-        // the per-test child App — rooted at global::app.Tester.File.Directory — can resolve it directly.
+        // the per-test child App — rooted at global::app.tester.File.Directory — can resolve it directly.
         var relPrPath = ".build/" + prFileName;
 
-        var stub = new global::app.Tester.File
+        var stub = new global::app.tester.File
         {
             Path = relGoalPath,
             Directory = dir,
@@ -90,7 +90,7 @@ public partial class discover : IContext
 
         if (!fs.File.Exists(absPrPath))
         {
-            stub.Status = global::app.Tester.Status.Stale;
+            stub.Status = global::app.tester.Status.Stale;
             stub.StatusReason = "no .pr";
             return stub;
         }
@@ -102,18 +102,18 @@ public partial class discover : IContext
         try
         {
             var prText = fs.File.ReadAllText(absPrPath);
-            var (converted, err) = global::app.Types.@this.TryConvertTo(prText, typeof(Goal));
+            var (converted, err) = global::app.types.@this.TryConvertTo(prText, typeof(Goal));
             prGoal = converted as Goal;
             if (prGoal == null)
             {
-                stub.Status = global::app.Tester.Status.Stale;
+                stub.Status = global::app.tester.Status.Stale;
                 stub.StatusReason = err?.Message ?? "pr corrupt";
                 return stub;
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         {
-            stub.Status = global::app.Tester.Status.Stale;
+            stub.Status = global::app.tester.Status.Stale;
             stub.StatusReason = "pr corrupt: " + ex.Message;
             return stub;
         }
@@ -128,14 +128,14 @@ public partial class discover : IContext
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            stub.Status = global::app.Tester.Status.Stale;
+            stub.Status = global::app.tester.Status.Stale;
             stub.StatusReason = "goal read error: " + ex.Message;
             return stub;
         }
 
         if (currentGoal == null || !string.Equals(currentGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
         {
-            stub.Status = global::app.Tester.Status.Stale;
+            stub.Status = global::app.tester.Status.Stale;
             stub.StatusReason = "rebuild needed";
             return stub;
         }
@@ -152,7 +152,7 @@ public partial class discover : IContext
         var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         SeedBranchChains(prGoal, Context.App!.Tester.Coverage, chainVisited);
 
-        var file = new global::app.Tester.File
+        var file = new global::app.tester.File
         {
             Path = relGoalPath,
             Directory = dir,
@@ -167,17 +167,17 @@ public partial class discover : IContext
         // Filter: exclude wins over include (architect §5.6 / test-designer locked).
         if (exclude.Count > 0 && exclude.Overlaps(file.Tags))
         {
-            file.Status = global::app.Tester.Status.Skipped;
+            file.Status = global::app.tester.Status.Skipped;
             file.StatusReason = "excluded by tag";
         }
         else if (include.Count > 0 && !include.Overlaps(file.Tags))
         {
-            file.Status = global::app.Tester.Status.Skipped;
+            file.Status = global::app.tester.Status.Skipped;
             file.StatusReason = "no include match";
         }
         else
         {
-            file.Status = global::app.Tester.Status.Ready;
+            file.Status = global::app.tester.Status.Ready;
         }
 
         return file;
@@ -242,14 +242,14 @@ public partial class discover : IContext
             ExtractAutoTags(sub, tags, visited, depth + 1);
     }
 
-    private static string? ResolveStaticGoalName(Goals.Goal.Steps.Step.Actions.Action.@this action)
+    private static string? ResolveStaticGoalName(app.goals.goal.steps.step.actions.action.@this action)
     {
         var nameParam = action.Parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "GoalName", StringComparison.OrdinalIgnoreCase));
         var value = nameParam?.Value;
         var name = value switch
         {
-            Goals.Goal.GoalCall gc => gc.Name,
+            GoalCall gc => gc.Name,
             string s => s,
             System.Text.Json.JsonElement je when je.ValueKind == System.Text.Json.JsonValueKind.Object
                 && je.TryGetProperty("Name", out var np) => np.GetString(),
@@ -270,7 +270,7 @@ public partial class discover : IContext
     /// not standalone sites). Recurses static goal.call targets the same way
     /// auto-tag traversal does; dynamic %var% goal names are skipped.
     /// </summary>
-    private void SeedBranchChains(Goal goal, app.Tester.Coverage coverage, HashSet<string> visited, int depth = 0)
+    private void SeedBranchChains(Goal goal, app.tester.Coverage coverage, HashSet<string> visited, int depth = 0)
     {
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;

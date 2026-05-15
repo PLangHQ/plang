@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using global::app.Goals.Goal;
+using global::app.goals.goal;
 using global::app.Variables;
 using global::app.modules.llm;
 using global::app.modules.llm.code;

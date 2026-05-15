@@ -1,10 +1,10 @@
-using app.Errors;
+using app.errors;
 
 namespace app.modules.channel;
 
 /// <summary>
 /// Unregisters a channel by name. Refuses for the default channels
-/// (<see cref="app.Channels.@this.Defaults"/> — output/error/input) which the
+/// (<see cref="app.channels.@this.Defaults"/> — output/error/input) which the
 /// boot invariant requires; use <c>channel.set</c> to re-bind their backing.
 /// PLang surface:
 ///   - remove channel "logger"
@@ -14,7 +14,7 @@ namespace app.modules.channel;
 public partial class Remove : IContext
 {
     public partial data.@this<string> Name { get; init; }
-    public partial data.@this<global::app.Actor.@this>? Actor { get; init; }
+    public partial data.@this<global::app.actor.@this>? Actor { get; init; }
 
     public async Task<data.@this> Run()
     {
@@ -22,7 +22,7 @@ public partial class Remove : IContext
         if (string.IsNullOrEmpty(name))
             return global::app.data.@this.FromError(new ServiceError("Channel name is required", "ValueRequired", 400));
 
-        if (global::app.Channels.@this.Defaults.Any(d => string.Equals(d, name, StringComparison.OrdinalIgnoreCase)))
+        if (global::app.channels.@this.Defaults.Any(d => string.Equals(d, name, StringComparison.OrdinalIgnoreCase)))
             return global::app.data.@this.FromError(new ServiceError(
                 $"Channel '{name}' is a default channel and cannot be removed (use channel.set to replace its backing).",
                 "ChannelInvariantViolation", 400));

@@ -4,7 +4,7 @@ namespace app.modules.matrix.snapshot;
 // one. The snapshot captured on error must mask the sensitive one's PrValue and
 // FinalValue while leaving the non-sensitive one in plaintext.
 
-[global::app.modules.Action("sensitivesnapshot")]
+[global::app.modules.action("sensitivesnapshot")]
 public partial class SensitiveSnapshot : global::app.modules.IContext
 {
     [global::app.SensitiveAttribute]
@@ -17,6 +17,6 @@ public partial class SensitiveSnapshot : global::app.modules.IContext
         var _ = ApiKey.Value;
         var __ = Endpoint.Value;
         return Task.FromResult(global::app.data.@this.FromError(
-            new global::app.Errors.ServiceError("forced failure", "TestError", 500)));
+            new global::app.errors.ServiceError("forced failure", "TestError", 500)));
     }
 }

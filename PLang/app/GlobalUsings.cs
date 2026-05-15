@@ -1,18 +1,18 @@
 
 // Goals subsystem
-global using AppGoals = app.Goals.@this;
-global using GoalCall = app.Goals.Goal.GoalCall;
-global using GoalSteps = app.Goals.Goal.Steps.@this;
-global using Step = app.Goals.Goal.Steps.Step.@this;
-global using ErrorOrder = app.Goals.Goal.Steps.Step.ErrorOrder;
-global using CacheSettings = app.Goals.Goal.Steps.Step.CacheSettings;
-global using StepActions = app.Goals.Goal.Steps.Step.Actions.@this;
-global using ActionModifiers = app.Goals.Goal.Steps.Step.Actions.Action.Modifiers.@this;
+global using AppGoals = app.goals.@this;
+global using GoalCall = app.goals.goal.GoalCall;
+global using GoalSteps = app.goals.goal.steps.@this;
+global using Step = app.goals.goal.steps.step.@this;
+global using ErrorOrder = app.goals.goal.steps.step.ErrorOrder;
+global using CacheSettings = app.goals.goal.steps.step.CacheSettings;
+global using StepActions = app.goals.goal.steps.step.actions.@this;
+global using ActionModifiers = app.goals.goal.steps.step.actions.action.modifiers.@this;
 
 // Event types
-global using AppEvents = app.Events.@this;
-global using Lifecycle = app.Events.Lifecycle.@this;
-global using Bindings = app.Events.Lifecycle.Bindings.@this;
+global using AppEvents = app.events.@this;
+global using Lifecycle = app.events.lifecycle.@this;
+global using Bindings = app.events.lifecycle.bindings.@this;
 
 // Event types WITH conflicts — require per-file handling:
 // AppEvents alias (not "Events") avoids collision with PLang.Events namespace
@@ -23,31 +23,31 @@ global using Bindings = app.Events.Lifecycle.Bindings.@this;
 global using AppModules = app.Modules.@this;
 
 // Channels subsystem
-global using AppChannels = app.Channels.@this;
-global using Channel = app.Channels.Channel.@this;
-global using ChannelDirection = app.Channels.Channel.ChannelDirection;
-global using Serializers = app.Channels.Serializers.@this;
-global using SerializeOptions = app.Channels.Serializers.SerializeOptions;
-global using DeserializeOptions = app.Channels.Serializers.DeserializeOptions;
+global using AppChannels = app.channels.@this;
+global using Channel = app.channels.channel.@this;
+global using ChannelDirection = app.channels.channel.ChannelDirection;
+global using Serializers = app.channels.serializers.@this;
+global using SerializeOptions = app.channels.serializers.SerializeOptions;
+global using DeserializeOptions = app.channels.serializers.DeserializeOptions;
 
 // FileSystem types
 
 // Config subsystem
-global using AppConfig = app.Config.@this;
-global using ConfigScope = app.Config.Scope;
+global using AppConfig = app.config.@this;
+global using ConfigScope = app.config.Scope;
 
 // Type system
-global using AppTypes = app.Types.@this;
+global using AppTypes = app.types.@this;
 
 // Code subsystem (the runtime escape-hatch — was Providers)
 global using AppCode = app.Code.@this;
 
 // Variables (was MemoryStack)
-global using Variables = app.Variables.@this;
+global using Variables = app.variables.@this;
 
 // Snapshot subsystem
-global using Snapshot = app.Snapshot.@this;
-global using ISnapshot = app.Snapshot.ISnapshot;
+global using Snapshot = app.snapshot.@this;
+global using ISnapshot = app.snapshot.ISnapshot;
 
 // Callback subsystem
 global using AppCallback = app.Callback.@this;
@@ -59,7 +59,7 @@ global using AppStatics = app.Statics.@this;
 // Standalone concepts
 global using ICache = app.modules.cache.ICache;
 global using Debugging = app.Debug.@this;
-global using Tester = app.Tester.@this;
+global using Tester = app.tester.@this;
 
 // Call: not a global alias — App.modules.goal.Call (the goal.call action handler) collides.
 // Use App.CallStack.Call.@this fully qualified, or per-file alias.

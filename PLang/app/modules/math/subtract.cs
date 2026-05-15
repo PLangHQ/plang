@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 using ExampleSpec = app.Modules.Schema.Spec.Example;
 using ActionSpec = app.Modules.Schema.Spec.Action;
 

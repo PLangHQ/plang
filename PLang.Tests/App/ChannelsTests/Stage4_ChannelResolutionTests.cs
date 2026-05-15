@@ -1,4 +1,4 @@
-using app.Channels;
+using app.channels;
 
 namespace PLang.Tests.App.ChannelsTests;
 
@@ -15,7 +15,7 @@ public class Stage4_ChannelResolutionTests
         var writeType = typeof(global::app.modules.output.Write);
         var prop = writeType.GetProperty("Channel");
         await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.Channels.Channel.@this));
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.channels.channel.@this));
     }
 
     [Test]

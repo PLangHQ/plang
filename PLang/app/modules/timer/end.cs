@@ -3,7 +3,7 @@ namespace app.modules.timer;
 /// <summary>
 /// Stops a previously started timer and returns the elapsed <see cref="TimeSpan"/>.
 /// If Name is omitted, ends the most recently started timer. Returns a
-/// <see cref="app.Errors.ValidationError"/> if no timer has been started or the
+/// <see cref="app.errors.ValidationError"/> if no timer has been started or the
 /// named timer is unknown.
 /// </summary>
 [ModuleDescription("Named stopwatch timers for measuring elapsed time across steps")]
@@ -21,13 +21,13 @@ public partial class End : IContext, IStatic
         {
             if (!Static.TryGetValue("__last__", out var lastObj) || lastObj is not string lastKey)
                 return Task.FromResult(Error(
-                    new app.Errors.ValidationError("No timer has been started")));
+                    new app.errors.ValidationError("No timer has been started")));
             key = lastKey;
         }
 
         if (!Static.TryGetValue(key, out var entryObj) || entryObj is not TimerEntry entry)
             return Task.FromResult(Error(
-                new app.Errors.ValidationError($"Timer '{key}' was not started")));
+                new app.errors.ValidationError($"Timer '{key}' was not started")));
 
         var elapsed = DateTimeOffset.UtcNow - entry.StartedAt;
         Static.TryRemove(key, out _);

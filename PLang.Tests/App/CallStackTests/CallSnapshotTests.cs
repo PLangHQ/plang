@@ -1,5 +1,5 @@
 using global::app.Errors;
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallStackTests;
 
@@ -16,7 +16,7 @@ public class CallSnapshotTests
         action.Step = step;
         step.Actions.Add(action);
         goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.goals.Add(goal);
         return (app, action);
     }
 
@@ -161,7 +161,7 @@ public class CallSnapshotTests
     {
         // The restore path raises a typed exception — there is no boolean Success / Failure
         // bubbling up. The shape of CallStack.Restore is `void`; failures throw.
-        var restoreMethod = typeof(global::app.CallStack.@this).GetMethod("Restore",
+        var restoreMethod = typeof(global::app.callstack.@this).GetMethod("Restore",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
         await Assert.That(restoreMethod).IsNotNull();
         await Assert.That(restoreMethod!.ReturnType).IsEqualTo(typeof(void));
@@ -171,8 +171,8 @@ public class CallSnapshotTests
     public async Task Call_Capture_OmitsTimingTier_AndInFlightNetworkState()
     {
         var (app, action) = BuildLiveAction("DropGoal");
-        app.CallStack.Flags = app.CallStack.Flags with { Timing = true };
-        await using var call = app.CallStack.Push(action);
+        app.callstack.Flags = app.callstack.Flags with { Timing = true };
+        await using var call = app.callstack.Push(action);
 
         var snap = new Snapshot();
         call.Capture(snap);

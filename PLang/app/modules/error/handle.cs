@@ -1,7 +1,7 @@
-using app.Errors;
-using app.Variables;
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
-using Call = app.CallStack.Call.@this;
+using app.errors;
+using app.variables;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
+using Call = app.callstack.call.@this;
 using ExampleSpec = app.Modules.Schema.Spec.Example;
 using ActionSpec = app.Modules.Schema.Spec.Action;
 
@@ -82,7 +82,7 @@ public partial class Handle : IContext, IModifier
 
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 
-    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, Actor.Context.@this context)
+    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
         return async () =>
         {
@@ -93,7 +93,7 @@ public partial class Handle : IContext, IModifier
             // Failing Call comes from the error's CallFrames snapshot — App.Run pushed and
             // popped the action's Call inside next(), so we can't read it from stack.Current
             // anymore. CallFrames[0] is the failing Call itself (post-Push snapshot).
-            var erroredCall = result.Error is global::app.Errors.Error errWithFrames
+            var erroredCall = result.Error is global::app.errors.Error errWithFrames
                 && errWithFrames.CallFrames.Count > 0
                 ? errWithFrames.CallFrames[0]
                 : null;
@@ -149,8 +149,8 @@ public partial class Handle : IContext, IModifier
     /// </summary>
     private static async Task<global::app.data.@this> RunRecoveryWithErrorScope(
         List<ActionEntity> actions,
-        Actor.Context.@this context,
-        app.Errors.IError caughtError,
+        actor.context.@this context,
+        app.errors.IError caughtError,
         Call? erroredCall)
     {
         using (context.App.Errors.Push(caughtError))
@@ -166,7 +166,7 @@ public partial class Handle : IContext, IModifier
     /// </summary>
     private static async Task<global::app.data.@this> RunRecovery(
         List<ActionEntity> actions,
-        Actor.Context.@this context,
+        actor.context.@this context,
         Call? cause)
     {
         // Nested actions live as parameter values with no Step reference of their own.
@@ -202,7 +202,7 @@ public partial class Handle : IContext, IModifier
         return true;
     }
 
-    private async Task<global::app.data.@this?> Retry(Func<Task<global::app.data.@this>> next, Actor.Context.@this context)
+    private async Task<global::app.data.@this?> Retry(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
         var count = RetryCount?.Value;
         if (count == null || count <= 0) return null;

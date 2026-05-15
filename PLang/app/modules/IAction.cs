@@ -7,5 +7,5 @@ namespace app.modules;
 /// </summary>
 public interface IAction
 {
-    app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; }
+    app.goals.goal.steps.step.actions.action.@this Action { get; set; }
 }

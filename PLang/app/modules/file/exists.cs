@@ -1,5 +1,5 @@
-using app.FileSystem;
-using app.Variables;
+using app.filesystem;
+using app.variables;
 using app.modules.file.code;
 
 namespace app.modules.file;
@@ -10,7 +10,7 @@ namespace app.modules.file;
 [Action("exists")]
 public partial class Exists : IContext
 {
-    public partial data.@this<FileSystem.path> Path { get; init; }
+    public partial data.@this<filesystem.path> Path { get; init; }
 
     [Code]
     public partial IFile Files { get; }

@@ -47,8 +47,8 @@ public class TypeMismatchMessageTests
         // The motivating case: `App.Goals.Goal.Steps.Step.Actions.@this` has Name=="this",
         // useless. FullName disambiguates which `@this` it actually is.
         var (_, error) = TypeConverter.TryConvertTo(42L,
-            typeof(global::app.Goals.Goal.Steps.Step.Actions.@this));
-        await Assert.That(error!.Message).Contains("app.Goals.Goal.Steps.Step.Actions");
+            typeof(global::app.goals.goal.steps.step.actions.@this));
+        await Assert.That(error!.Message).Contains("app.goals.goal.steps.step.actions");
     }
 
     [Test]

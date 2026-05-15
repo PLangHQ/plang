@@ -3,13 +3,13 @@ namespace PLang.Tests.App.Types;
 public class EngineTypesTests
 {
     private EngineTypes _types = null!;
-    private global::app.Formats.@this _formats = null!;
+    private global::app.formats.@this _formats = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _types = new EngineTypes();
-        _formats = new global::app.Formats.@this();
+        _formats = new global::app.formats.@this();
     }
 
     // --- Clr: PLang name → CLR type ---
@@ -608,7 +608,7 @@ public class EngineTypesTests
     public async Task Add_CustomType_LazyDerivationUsesEngineTypes()
     {
         await using var engine = new global::app.@this("/test");
-        var context = new global::app.Actor.Context.@this(engine);
+        var context = new global::app.actor.context.@this(engine);
 
         // Add a custom type mapping that static TypeMapping does NOT have
         engine.Formats.Add(".custom", "custom-kind", "application/custom");

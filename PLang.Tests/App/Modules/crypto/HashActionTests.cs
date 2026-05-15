@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Errors;
 using global::app.Variables;
 using global::app.modules.crypto;
@@ -32,7 +32,7 @@ public class HashActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     // --- Hash action ---
 
@@ -51,7 +51,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ObjectInput_ProducesDeterministicHash()
     {
-        var refHash = new global::app.modules.crypto.code.Default().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
+        var refHash = new global::app.modules.crypto.code.default().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
 
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();

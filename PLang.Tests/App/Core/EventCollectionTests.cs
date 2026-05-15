@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using app;
 using global::app.Errors;
 using global::app.Variables;
@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Core;
 
 public class EventsTests
 {
-    private static global::app.Actor.Context.@this CreateContext()
+    private static global::app.actor.context.@this CreateContext()
     {
         var app = new global::app.@this("/app");
         return app.User.Context;
@@ -188,7 +188,7 @@ public class EventBindingTests
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        Func<global::app.Actor.Context.@this, PrAction?, Data?, Task<Data>> handler =
+        Func<global::app.actor.context.@this, PrAction?, Data?, Task<Data>> handler =
             (_, _, _) => Task.FromResult(Data.Ok());
         var binding = new EventBinding(EventType.AfterStep, handler, "TestGoal", "http", null, 10, false);
 

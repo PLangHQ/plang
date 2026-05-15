@@ -2,13 +2,13 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using app.Actor.Context;
-using app.Errors;
-using app.Goals.Goal;
-using app.Variables;
+using app.actor.context;
+using app.errors;
+using app.goals.goal;
+using app.variables;
 using app.Settings;
-using app.FileSystem;
-using app.FileSystem.Default;
+using app.filesystem;
+using app.filesystem.Default;
 using app.modules.http;
 using PlangHttpMethod = app.modules.http.HttpMethod;
 
@@ -360,7 +360,7 @@ public sealed class OpenAi : ILlm
 
                     if (validationRetries >= action.MaxValidationRetries.Value)
                     {
-                        await app.CurrentActor.Channels.WriteTextAsync(global::app.Channels.@this.Output,
+                        await app.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output,
                             $"  Validation failed (no retries left): {validationError}{Environment.NewLine}");
                         return global::app.data.@this.FromError(new ActionError(
                             $"LLM validation failed: {validationError}",
@@ -368,7 +368,7 @@ public sealed class OpenAi : ILlm
                     }
 
                     validationRetries++;
-                    await app.CurrentActor.Channels.WriteTextAsync(global::app.Channels.@this.Output,
+                    await app.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output,
                         $"  Validation failed (retry {validationRetries}/{action.MaxValidationRetries.Value}): {validationError}{Environment.NewLine}");
                     messages.Add(new LlmMessage
                     {

@@ -2,38 +2,38 @@
 global using App = app.@this;
 
 // Goals subsystem — mirrors PLang/App/GlobalUsings.cs
-global using EngineGoals = app.Goals.@this;
-global using GoalCall = app.Goals.Goal.GoalCall;
-global using GoalSteps = app.Goals.Goal.Steps.@this;
-global using Step = app.Goals.Goal.Steps.Step.@this;
-global using ErrorOrder = app.Goals.Goal.Steps.Step.ErrorOrder;
-global using CacheSettings = app.Goals.Goal.Steps.Step.CacheSettings;
-global using StepActions = app.Goals.Goal.Steps.Step.Actions.@this;
-global using PrAction = app.Goals.Goal.Steps.Step.Actions.Action.@this;
-global using ActionModifiers = app.Goals.Goal.Steps.Step.Actions.Action.Modifiers.@this;
+global using EngineGoals = app.goals.@this;
+global using GoalCall = app.goals.goal.GoalCall;
+global using GoalSteps = app.goals.goal.steps.@this;
+global using Step = app.goals.goal.steps.step.@this;
+global using ErrorOrder = app.goals.goal.steps.step.ErrorOrder;
+global using CacheSettings = app.goals.goal.steps.step.CacheSettings;
+global using StepActions = app.goals.goal.steps.step.actions.@this;
+global using PrAction = app.goals.goal.steps.step.actions.action.@this;
+global using ActionModifiers = app.goals.goal.steps.step.actions.action.modifiers.@this;
 
 // Types that have v1 conflicts in PLang project but NOT in PLang.Tests (no Building.Model here)
-global using Goal = app.Goals.Goal.@this;
-global using Visibility = app.Goals.Goal.Visibility;
+global using Goal = app.goals.goal.@this;
+global using Visibility = app.goals.goal.Visibility;
 
 // Event types
-global using EventType = app.Events.EventType;
-global using EngineEvents = app.Events.@this;
-global using EventBinding = app.Events.Lifecycle.Bindings.Binding.@this;
-global using Lifecycle = app.Events.Lifecycle.@this;
-global using Bindings = app.Events.Lifecycle.Bindings.@this;
+global using EventType = app.events.EventType;
+global using EngineEvents = app.events.@this;
+global using EventBinding = app.events.lifecycle.bindings.binding.@this;
+global using Lifecycle = app.events.lifecycle.@this;
+global using Bindings = app.events.lifecycle.bindings.@this;
 
 // Modules subsystem (action registry)
 global using EngineModules = app.Modules.@this;
 
 // Channels subsystem
-global using EngineChannels = app.Channels.@this;
-global using Channel = app.Channels.Channel.@this;
-global using StreamChannel = app.Channels.Channel.Stream.@this;
-global using ChannelDirection = app.Channels.Channel.ChannelDirection;
-global using Serializers = app.Channels.Serializers.@this;
-global using SerializeOptions = app.Channels.Serializers.SerializeOptions;
-global using DeserializeOptions = app.Channels.Serializers.DeserializeOptions;
+global using EngineChannels = app.channels.@this;
+global using Channel = app.channels.channel.@this;
+global using StreamChannel = app.channels.channel.stream.@this;
+global using ChannelDirection = app.channels.channel.ChannelDirection;
+global using Serializers = app.channels.serializers.@this;
+global using SerializeOptions = app.channels.serializers.SerializeOptions;
+global using DeserializeOptions = app.channels.serializers.DeserializeOptions;
 
 // Data (universal type)
 global using Data = global::app.data.@this;
@@ -42,23 +42,23 @@ global using DynamicData = global::app.data.DynamicData;
 global using TString = global::app.data.TString;
 
 // Variables (was MemoryStack)
-global using Variables = app.Variables.@this;
+global using Variables = app.variables.@this;
 
 // FileSystem types
 global using FileSystem = app.FileSystem;
-global using PLangFileSystem = app.FileSystem.Default.PLangFileSystem;
+global using PLangFileSystem = app.filesystem.Default.PLangFileSystem;
 
 // Type system
-global using EngineTypes = app.Types.@this;
+global using EngineTypes = app.types.@this;
 
 // Standalone concepts (no v1 conflicts in tests)
 global using ICache = app.modules.cache.ICache;
-global using CallStack = app.CallStack.@this;
-global using Flags = app.CallStack.Flags;
+global using CallStack = app.callstack.@this;
+global using Flags = app.callstack.Flags;
 // Call: not a global alias — App.modules.goal.Call (the goal.call action handler)
 // collides. Use App.CallStack.Call.@this fully qualified, or per-file alias.
 global using Debugging = app.Debug.@this;
-global using Tester = app.Tester.@this;
-global using Snapshot = app.Snapshot.@this;
-global using ISnapshot = app.Snapshot.ISnapshot;
+global using Tester = app.tester.@this;
+global using Snapshot = app.snapshot.@this;
+global using ISnapshot = app.snapshot.ISnapshot;
 global using AppStatics = app.Statics.@this;

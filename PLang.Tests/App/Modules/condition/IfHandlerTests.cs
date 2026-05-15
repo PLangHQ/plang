@@ -1,10 +1,10 @@
 using app;
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules.condition;
 using global::app.FileSystem;
-using global::app.FileSystem.Default;
-using Action = global::app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using global::app.filesystem.Default;
+using Action = global::app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Modules.condition;
 

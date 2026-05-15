@@ -1,5 +1,5 @@
 using app;
-using app.Variables;
+using app.variables;
 
 namespace app.modules.module;
 
@@ -19,7 +19,7 @@ public partial class Add : IContext
 
         if (!fs.File.Exists(absPath))
             return Task.FromResult(Error(
-                new app.Errors.ServiceError($"Module not found: {Path.Value}")));
+                new app.errors.ServiceError($"Module not found: {Path.Value}")));
 
         var assembly = System.Reflection.Assembly.LoadFrom(absPath);
         var count = app.Modules.Discover(assembly, Namespace?.Value);

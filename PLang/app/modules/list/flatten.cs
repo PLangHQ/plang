@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.list;
 
@@ -13,7 +13,7 @@ public partial class Flatten : IContext
         var existing = Context.Variables.Get(ListName.Value).Value;
         if (existing is not System.Collections.IList list)
             return Task.FromResult(Error(
-                new app.Errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         var result = new List<object?>();
         FlattenRecursive(list, result);

@@ -12,7 +12,7 @@ public class ServiceErrorChainTests
         await using var call = stack.Push(MakeAction("A"));
         var chain = call.SnapshotChain();
         var sv = new ServiceError("crash", call.Action.Step!, chain);
-        IReadOnlyList<global::app.CallStack.Call.@this> typed = sv.CallFrames;
+        IReadOnlyList<global::app.callstack.call.@this> typed = sv.CallFrames;
         await Assert.That(typed).IsNotNull();
     }
 

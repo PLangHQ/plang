@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.Settings;
 

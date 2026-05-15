@@ -42,7 +42,7 @@ public sealed class InAttribute : Attribute { }
 
 /// <summary>
 /// Marks properties that contain sensitive data (e.g., private keys).
-/// Excluded from all output serialization (global::app.Channels.Serializers.Serializer.Json).
+/// Excluded from all output serialization (global::app.channels.serializers.serializer.Json).
 /// Included in storage serialization (raw JsonSerializer for DataSource).
 /// Does NOT block code-level access — %MyIdentity.PrivateKey% still works.
 /// </summary>

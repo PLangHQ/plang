@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules.llm;
 using global::app.modules.llm.code;
@@ -38,7 +38,7 @@ public class QueryConversationTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Query_ContinueConversation_PrependsPreviousMessages()

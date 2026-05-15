@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using app.Utils;
 using System.Text.Json;
-using app.Goals.Goal;
-using app.Variables;
-using Goal = app.Goals.Goal.@this;
-using Actions = app.Goals.Goal.Steps.Step.Actions.@this;
+using app.goals.goal;
+using app.variables;
+using Goal = app.goals.goal.@this;
+using Actions = app.goals.goal.steps.step.actions.@this;
 
 namespace app.modules.builder.code;
 
@@ -49,7 +49,7 @@ public class Default : IBuilder
         var listAction = new file.List
         {
             Context = context,
-            Path = data.@this<FileSystem.path>.Ok(FileSystem.path.Resolve(searchPath, context)),
+            Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(searchPath, context)),
             Pattern = new data.@this<string>("", "*.goal"),
             Recursive = new data.@this<bool>("", true)
         };
@@ -57,7 +57,7 @@ public class Default : IBuilder
         if (!listResult.Success)
             return listResult;
 
-        var files = listResult.Value as FileSystem.path[];
+        var files = listResult.Value as filesystem.path[];
         if (files == null || files.Length == 0)
             return data.@this.Ok(new List<Goal>());
 
@@ -72,7 +72,7 @@ public class Default : IBuilder
             foreach (var bf in buildFiles)
                 bf.Context ??= context;
 
-            bool MatchesPattern(FileSystem.path f, FileSystem.path bf)
+            bool MatchesPattern(filesystem.path f, filesystem.path bf)
             {
                 // Use bf.Relative as the source of truth — bf.Raw is only set when a
                 // Path is built via Path.Resolve, but TypeConverter constructs paths
@@ -88,7 +88,7 @@ public class Default : IBuilder
                 return f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase);
             }
 
-            var ordered = new List<FileSystem.path>();
+            var ordered = new List<filesystem.path>();
             var seen = new HashSet<string>();
             foreach (var bf in buildFiles)
             {
@@ -108,7 +108,7 @@ public class Default : IBuilder
 
         foreach (var file in files)
         {
-            var readAction = new file.Read { Context = context, Path = data.@this<FileSystem.path>.Ok(file) };
+            var readAction = new file.Read { Context = context, Path = data.@this<filesystem.path>.Ok(file) };
             var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
@@ -163,7 +163,7 @@ public class Default : IBuilder
 
         var prPath = goal.PrPath;
         if (string.IsNullOrEmpty(prPath))
-            return data.@this.FromError(new Errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
+            return data.@this.FromError(new errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Group modifier actions onto their preceding executable action — recursive so
         // sub-goals are grouped too. Without this, sub-goal steps serialize with flat
@@ -183,13 +183,13 @@ public class Default : IBuilder
         var saveAction = new file.Save
         {
             Context = context,
-            Path = data.@this<FileSystem.path>.Ok(FileSystem.path.Resolve(prPath, context)),
+            Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(prPath, context)),
             Value = new data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
 
         var elapsed = _buildTimer.Elapsed;
-        await app.CurrentActor.Channels.WriteTextAsync(global::app.Channels.@this.Output,
+        await app.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output,
             $"  Saved {goal.Name} ({elapsed.TotalSeconds:F1}s){Environment.NewLine}");
         _buildTimer.Restart();
 
@@ -232,7 +232,7 @@ public class Default : IBuilder
 
         if (notFound.Count > 0)
         {
-            return data.@this.FromError(new Errors.ActionError(
+            return data.@this.FromError(new errors.ActionError(
                 $"Actions not found: {string.Join("; ", notFound)}",
                 "ActionNotFound", 400));
         }
@@ -251,7 +251,7 @@ public class Default : IBuilder
             // goal.call sanity — goal names are simple identifiers (BuildGoalCore,
             // HandleValidationError) or slash-paths (Setup/Init). They never contain
             // dots. The LLM occasionally hallucinates a CLR type name into the slot
-            // (Fluid.Values.ObjectDictionaryFluidIndexable, App.Goals.Goal.GoalCall);
+            // (Fluid.Values.ObjectDictionaryFluidIndexable, App.GoalCall);
             // catch those here so LlmFixer retries instead of writing a dead .pr.
             if (a.Parameters != null)
             {
@@ -331,7 +331,7 @@ public class Default : IBuilder
 
         if (validationErrors.Count > 0)
         {
-            return data.@this.FromError(new Errors.ActionError(
+            return data.@this.FromError(new errors.ActionError(
                 string.Join("; ", validationErrors),
                 "BuildValidation", 400));
         }
@@ -418,7 +418,7 @@ public class Default : IBuilder
         return string.Join(" | ", segments);
     }
 
-    private static string RenderActionFormal(Goals.Goal.Steps.Step.Actions.Action.@this a)
+    private static string RenderActionFormal(app.goals.goal.steps.step.actions.action.@this a)
     {
         var sb = new System.Text.StringBuilder();
         sb.Append(a.Module).Append('.').Append(a.ActionName);
@@ -508,7 +508,7 @@ public class Default : IBuilder
             if (string.Equals(currentLevel, "high", StringComparison.OrdinalIgnoreCase))
             {
                 if (!SetValue(step, "level", groupLevel))
-                    return data.@this.FromError(new Errors.ActionError(
+                    return data.@this.FromError(new errors.ActionError(
                         $"PromoteGroups received a step as JsonElement (immutable) — expected IDictionary. " +
                         $"Step type: {step.GetType().FullName}. Group: '{group}'.",
                         "PromoteGroupsImmutableStep", 500));
@@ -517,7 +517,7 @@ public class Default : IBuilder
         }
 
         if (promoted > 0)
-            await action.Context.App.CurrentActor.Channels.WriteTextAsync(global::app.Channels.@this.Output,
+            await action.Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output,
                 $"  Group promotion: {promoted} step(s) promoted to detail pass{Environment.NewLine}");
 
         return data.@this.Ok(action.Steps.Value);
@@ -581,7 +581,7 @@ public class Default : IBuilder
     /// would silently keep the wrong-typed value and the runtime would fail later.
     /// </summary>
     private static List<string> NormalizeParameterTypes(Actions actions, app.Modules.@this modules,
-        Actor.Context.@this context)
+        actor.context.@this context)
     {
         var errors = new List<string>();
         foreach (var a in actions)
@@ -641,7 +641,7 @@ public class Default : IBuilder
                 // fully reflected record (Raw, Absolute, FileName, ...) that round-trips
                 // poorly. Leave the primitive in the .pr; runtime auto-wraps via the source
                 // generator's Resolve convention when the action actually executes.
-                if (global::app.Types.@this.IsScalarPlangType(targetType)) continue;
+                if (global::app.types.@this.IsScalarPlangType(targetType)) continue;
 
                 // [Choices]-bearing types (Actor, Operator, ...) keep their string form in
                 // the .pr — runtime resolves the chosen name via the type's own path
@@ -656,7 +656,7 @@ public class Default : IBuilder
                 // Convert in either direction: string → bool/int/double/etc., or
                 // numeric/bool → string when the parameter is declared string. The LLM
                 // emitting `Key=404 (int)` for a string-declared Key gets normalized here.
-                var (converted, error) = global::app.Types.@this.TryConvertTo(p.Value, targetType, context);
+                var (converted, error) = global::app.types.@this.TryConvertTo(p.Value, targetType, context);
                 if (converted != null)
                     p.Value = converted;
                 else if (error != null)
@@ -720,7 +720,7 @@ public class Default : IBuilder
     /// Merges existing .pr data into a goal. Returns any errors encountered (corrupt .pr files).
     /// </summary>
     private static async Task<List<Info>> MergePrData(Goal goal, app.@this app,
-        Actor.Context.@this context)
+        actor.context.@this context)
     {
         var errors = new List<Info>();
         var prPath = goal.PrPath;
@@ -729,7 +729,7 @@ public class Default : IBuilder
         var readAction = new file.Read
         {
             Context = context,
-            Path = data.@this<FileSystem.path>.Ok(FileSystem.path.Resolve(prPath, context))
+            Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(prPath, context))
         };
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
@@ -752,7 +752,7 @@ public class Default : IBuilder
     }
 
     private static async Task ResolveGoalCallPaths(Actions actions, app.@this app,
-        Actor.Context.@this context)
+        actor.context.@this context)
     {
         foreach (var action in actions)
         {
@@ -788,10 +788,10 @@ public class Default : IBuilder
                     var existsAction = new file.Exists
                     {
                         Context = context,
-                        Path = data.@this<FileSystem.path>.Ok(FileSystem.path.Resolve(expectedPrPath, context))
+                        Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(expectedPrPath, context))
                     };
                     var existsResult = await app.RunAction(existsAction, context);
-                    if (existsResult.Success && existsResult.Value is FileSystem.path pathData && pathData.Exists)
+                    if (existsResult.Success && existsResult.Value is filesystem.path pathData && pathData.Exists)
                     {
                         goalCall.PrPath = expectedPrPath;
                     }
@@ -805,6 +805,6 @@ public class Default : IBuilder
     private static GoalCall? ToGoalCall(object? value)
     {
         if (value is GoalCall gc) return gc;
-        return global::app.Types.@this.ConvertTo<GoalCall>(value);
+        return global::app.types.@this.ConvertTo<GoalCall>(value);
     }
 }

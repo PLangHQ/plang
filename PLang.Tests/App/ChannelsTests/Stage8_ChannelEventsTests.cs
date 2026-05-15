@@ -1,5 +1,5 @@
-using app.Events;
-using app.Events.Lifecycle.Bindings.Binding;
+using app.events;
+using app.events.lifecycle.bindings.binding;
 
 namespace PLang.Tests.App.ChannelsTests;
 
@@ -213,7 +213,7 @@ public class Stage8_ChannelEventsTests
         svc.Channels.Register(serviceLogger);
 
         var hits = 0;
-        app.Events.Register(new EventBinding(EventType.BeforeWrite,
+        app.events.Register(new EventBinding(EventType.BeforeWrite,
             (_, _, _) => { hits++; return Task.FromResult(Data.Ok()); },
             channelName: "logger"));
 
@@ -230,7 +230,7 @@ public class Stage8_ChannelEventsTests
         app.User.Channels.Register(ch);
 
         bool goalFired = false;
-        app.Events.Register(new EventBinding(EventType.BeforeGoal,
+        app.events.Register(new EventBinding(EventType.BeforeGoal,
             (_, _, _) => { goalFired = true; return Task.FromResult(Data.Ok()); }));
 
         await ch.WriteAsync(Data.Ok("x"));
@@ -242,8 +242,8 @@ public class Stage8_ChannelEventsTests
     {
         // Regression probe for B1: `_active` is an instance field, not static.
         // If it ever becomes static, evB sees evA's active set.
-        var evA = new global::app.Channels.Channel.Events.@this();
-        var evB = new global::app.Channels.Channel.Events.@this();
+        var evA = new global::app.channels.channel.Events.@this();
+        var evB = new global::app.channels.channel.Events.@this();
         using var _ = evA.Enter("X");
         await Assert.That(evA.IsActive("X")).IsTrue();
         await Assert.That(evB.IsActive("X")).IsFalse();
@@ -256,7 +256,7 @@ public class Stage8_ChannelEventsTests
         // If a child mutates the parent's HashSet in place, the parent flow
         // sees the child's id while the child is still inside its scope.
         // (Naive Task.WhenAll passes either way — children Add then Remove.)
-        var ev = new global::app.Channels.Channel.Events.@this();
+        var ev = new global::app.channels.channel.Events.@this();
         using var _ = ev.Enter("A");
         var inside = new TaskCompletionSource();
         var release = new TaskCompletionSource();
@@ -282,7 +282,7 @@ public class Stage8_ChannelEventsTests
         public override Task<Data> AskCore(Data prompt, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
-    private sealed class MessageProbeChannel : global::app.Channels.Channel.Message.@this
+    private sealed class MessageProbeChannel : global::app.channels.channel.message.@this
     {
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> WriteCore(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());

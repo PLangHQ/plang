@@ -110,8 +110,8 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task SessionVsMessage_AbstractsExist_WithDistinctSemantics()
     {
-        var session = typeof(global::app.Channels.Channel.Session.@this);
-        var message = typeof(global::app.Channels.Channel.Message.@this);
+        var session = typeof(global::app.channels.channel.session.@this);
+        var message = typeof(global::app.channels.channel.message.@this);
         await Assert.That(session.IsAbstract).IsTrue();
         await Assert.That(message.IsAbstract).IsTrue();
         await Assert.That(session.IsSubclassOf(typeof(Channel))).IsTrue();

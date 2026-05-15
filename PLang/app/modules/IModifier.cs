@@ -6,5 +6,5 @@ namespace app.modules;
 /// </summary>
 public interface IModifier
 {
-    Func<Task<data.@this>> Wrap(Func<Task<data.@this>> next, Actor.Context.@this context);
+    Func<Task<data.@this>> Wrap(Func<Task<data.@this>> next, actor.context.@this context);
 }

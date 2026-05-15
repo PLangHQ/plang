@@ -3,9 +3,9 @@ using System.Text.Json.Serialization;
 using Force.DeepCloner;
 using app.Attributes;
 using app;
-using app.Channels.Serializers;
-using app.Errors;
-using app.Actor.Context;
+using app.channels.serializers;
+using app.errors;
+using app.actor.context;
 using app.Utils;
 
 namespace app.data;
@@ -20,14 +20,14 @@ public sealed class type
     public string Value { get; }
 
     [JsonIgnore]
-    internal Actor.Context.@this? Context { get; set; }
+    internal actor.context.@this? Context { get; set; }
 
     public type(string value) { Value = value; }
 
     /// <summary>
     /// Derive CLR type: navigate through context to App.Types, fall back to static TypeMapping.
     /// </summary>
-    public System.Type? ClrType => Context?.App.Types.Clr(Value) ?? Types.@this.GetPrimitiveOrMime(Value);
+    public System.Type? ClrType => Context?.App.Types.Clr(Value) ?? AppTypes.GetPrimitiveOrMime(Value);
 
     /// <summary>
     /// Kind of this type value (e.g. "image", "text"). Null for PLang type names like "string".
@@ -70,7 +70,7 @@ public sealed class type
         {
             "json" => JsonSerializer.Deserialize<Dictionary<string, object?>>(raw,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }),
-            _ => Types.@this.TryConvertTo(raw, ClrType ?? typeof(object)).Value
+            _ => AppTypes.TryConvertTo(raw, ClrType ?? typeof(object)).Value
         };
     }
 }
@@ -86,7 +86,7 @@ public partial class @this
     private object? _value;
     private Func<object?>? _valueFactory;
     private type? _type;
-    private Actor.Context.@this? _context;
+    private actor.context.@this? _context;
 
     /// <summary>Cache for As&lt;T&gt;() Resolve method lookups — avoids per-call reflection.</summary>
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Reflection.MethodInfo?>
@@ -135,7 +135,7 @@ public partial class @this
     public string Name { get; set; }
 
     [JsonIgnore]
-    public Actor.Context.@this? Context
+    public actor.context.@this? Context
     {
         get => _context;
         set
@@ -279,7 +279,7 @@ public partial class @this
             if (_type != null) return _type;
             if (_value == null) return null;
             var typeName = _context?.App.Types.Name(_value.GetType())
-                           ?? Types.@this.GetPrimitiveName(_value.GetType())
+                           ?? AppTypes.GetPrimitiveName(_value.GetType())
                            ?? _value.GetType().Name.ToLowerInvariant();
             var derived = new type(typeName);
             derived.Context = _context;
@@ -301,7 +301,7 @@ public partial class @this
         if (_value is T typed)
             return typed;
 
-        var converted = Types.@this.ConvertTo(_value, typeof(T));
+        var converted = AppTypes.ConvertTo(_value, typeof(T));
         if (converted is T result)
             return result;
 
@@ -319,7 +319,7 @@ public partial class @this
         if (targetType.IsAssignableFrom(_value.GetType()))
             return _value;
 
-        return Types.@this.ConvertTo(_value, targetType);
+        return AppTypes.ConvertTo(_value, targetType);
     }
 
     /// <summary>
@@ -438,7 +438,7 @@ public partial class @this
     /// Every call resolves freshly against the current context — there is nothing
     /// to cache and nothing to invalidate. Caching, if any, lives on the caller.
     /// </summary>
-    public @this<T> As<T>(Actor.Context.@this? context = null)
+    public @this<T> As<T>(actor.context.@this? context = null)
     {
         var ctx = context ?? _context;
         var raw = Value; // factory-resolved if any; never %var% substituted
@@ -456,7 +456,7 @@ public partial class @this
     ///    and `this`'s Name (slot name preserved; Properties and event lists aliased).
     ///  - For unset `%var%`: a not-initialized Data with the variable's name.
     /// </summary>
-    public @this AsCanonical(Actor.Context.@this? context = null)
+    public @this AsCanonical(actor.context.@this? context = null)
     {
         var ctx = context ?? _context;
         var raw = Value;
@@ -514,7 +514,7 @@ public partial class @this
     // allocate). Strings are NOT handled here — full-match vs. partial-interpolation
     // semantics differ between AsCanonical (returns live var Data) and AsT_Impl (recurses
     // typed), so each owns its own string path.
-    private static object? WalkContainerVars(object? raw, Actor.Context.@this ctx)
+    private static object? WalkContainerVars(object? raw, actor.context.@this ctx)
     {
         if (raw is IList<object?> list) return WalkList(list, ctx);
         if (raw is IDictionary<string, object?> dict) return WalkDict(dict, ctx);
@@ -538,7 +538,7 @@ public partial class @this
     private const int ResolveDepthLimit = 32;
     private static readonly AsyncLocal<HashSet<string>?> _resolvingValues = new();
 
-    private @this<T> AsT_Impl<T>(object? raw, Actor.Context.@this? ctx)
+    private @this<T> AsT_Impl<T>(object? raw, actor.context.@this? ctx)
     {
         // Action-destination carve-out: when T is or contains Action.@this, sub-actions
         // hold raw %var% for deferred resolution at their own dispatch time. Skip the walk
@@ -557,12 +557,12 @@ public partial class @this
         // Variable.Resolve strips the % and produces { Name="x" } regardless of whether
         // x is initialized — symmetric for both `%x%` and bare `x` slot forms.
         if (raw is string rawNameStr && ctx != null
-            && typeof(app.Variables.IRawNameResolvable).IsAssignableFrom(typeof(T)))
+            && typeof(app.variables.IRawNameResolvable).IsAssignableFrom(typeof(T)))
         {
             var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
                 t.GetMethod("Resolve",
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
+                    null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
                 var resolvedObj = resolveMethod.Invoke(null, new object[] { rawNameStr, ctx });
@@ -658,7 +658,7 @@ public partial class @this
             var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
                 t.GetMethod("Resolve",
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
+                    null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
                 var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
@@ -679,14 +679,14 @@ public partial class @this
     /// Keeps the static-Resolve(string) carve-out for Path-style domain types, then delegates to
     /// WrapAs for identity-preserving wrap + conversion.
     /// </summary>
-    private @this<T> AsT_Convert<T>(object? raw, Actor.Context.@this? ctx)
+    private @this<T> AsT_Convert<T>(object? raw, actor.context.@this? ctx)
     {
         if (raw is string srStr && ctx != null && raw is not T)
         {
             var resolveMethod = ResolveMethodCache.GetOrAdd(typeof(T), t =>
                 t.GetMethod("Resolve",
                     System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
-                    null, new[] { typeof(string), typeof(Actor.Context.@this) }, null));
+                    null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
                 var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
@@ -710,7 +710,7 @@ public partial class @this
     /// Caller passes the substituted/walked `value` separately because raw value is what we wrap,
     /// while `this` is the canonical Data whose Name + Properties + event lists we propagate.
     /// </summary>
-    private @this<T> WrapAs<T>(object? value, Actor.Context.@this? ctx)
+    private @this<T> WrapAs<T>(object? value, actor.context.@this? ctx)
     {
         // Rule 1 — same-type fast path. If `this` is already Data<T> AND its raw value is T,
         // return `this`. No allocation, full identity (Name, Properties, events all native).
@@ -743,7 +743,7 @@ public partial class @this
             return ConstructWrap<T>((T?)convertedEnum, ctx);
         }
 
-        var (converted, error) = Types.@this.TryConvertTo(value, typeof(T), ctx);
+        var (converted, error) = AppTypes.TryConvertTo(value, typeof(T), ctx);
         if (error != null)
             return @this<T>.FromError(error);
         return ConstructWrap<T>((T?)converted, ctx);
@@ -754,7 +754,7 @@ public partial class @this
     /// inherited; Properties + the three event lists are aliased by reference (shared list refs
     /// so subscribers and metadata mutations are visible through both source and view).
     /// </summary>
-    private @this<T> ConstructWrap<T>(T? value, Actor.Context.@this? ctx)
+    private @this<T> ConstructWrap<T>(T? value, actor.context.@this? ctx)
     {
         var wrapped = new @this<T>(Name, value, _type, Parent) { Context = ctx };
         wrapped.Properties = Properties;
@@ -764,7 +764,7 @@ public partial class @this
         return wrapped;
     }
 
-    private static List<object?> WalkList(IList<object?> list, Actor.Context.@this ctx)
+    private static List<object?> WalkList(IList<object?> list, actor.context.@this ctx)
     {
         var result = new List<object?>(list.Count);
         foreach (var item in list)
@@ -772,7 +772,7 @@ public partial class @this
         return result;
     }
 
-    private static Dictionary<string, object?> WalkDict(IDictionary<string, object?> dict, Actor.Context.@this ctx)
+    private static Dictionary<string, object?> WalkDict(IDictionary<string, object?> dict, actor.context.@this ctx)
     {
         var result = new Dictionary<string, object?>(dict.Count, StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in dict)
@@ -785,7 +785,7 @@ public partial class @this
     // or IDictionary (Hashtable) passes through to the fall-through and is returned as-is —
     // no %var% substitution. JSON ingestion is normalized to the typed forms via
     // UnwrapJsonElement / UnwrapNewtonsoftToken upstream, so this is safe in practice.
-    private static object? SubstitutePrimitive(object? value, Actor.Context.@this ctx)
+    private static object? SubstitutePrimitive(object? value, actor.context.@this ctx)
     {
         if (value == null) return null;
 
@@ -817,17 +817,17 @@ public partial class @this
         // Non-recursion guards: don't walk into Data, Action templates, or typed Action lists.
         // Action templates retain raw %var% for deferred resolution at their own dispatch.
         if (value is @this) return value;
-        if (value is Goals.Goal.Steps.Step.Actions.Action.@this) return value;
-        if (value is IEnumerable<Goals.Goal.Steps.Step.Actions.Action.@this>) return value;
+        if (value is global::app.goals.goal.steps.step.actions.action.@this) return value;
+        if (value is global::System.Collections.Generic.IEnumerable<global::app.goals.goal.steps.step.actions.action.@this>) return value;
 
         return value;
     }
 
     private static bool IsActionDestination(System.Type t)
     {
-        var actionType = typeof(Goals.Goal.Steps.Step.Actions.Action.@this);
+        var actionType = typeof(global::app.goals.goal.steps.step.actions.action.@this);
         if (t == actionType) return true;
-        return typeof(IEnumerable<Goals.Goal.Steps.Step.Actions.Action.@this>).IsAssignableFrom(t);
+        return typeof(global::System.Collections.Generic.IEnumerable<global::app.goals.goal.steps.step.actions.action.@this>).IsAssignableFrom(t);
     }
 
     /// <summary>

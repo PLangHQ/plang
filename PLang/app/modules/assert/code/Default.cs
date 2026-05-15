@@ -1,6 +1,6 @@
 using System.Collections;
-using app.Errors;
-using app.Variables;
+using app.errors;
+using app.variables;
 
 namespace app.modules.assert.code;
 

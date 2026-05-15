@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Modules.goal;
 
 public class GoalReturnTests
 {
-    private (global::app.Actor.Context.@this context, global::app.Variables.@this memory) CreateContext()
+    private (global::app.actor.context.@this context, global::app.variables.@this memory) CreateContext()
     {
         var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variables);
@@ -71,7 +71,7 @@ public class GoalReturnTests
     {
         var (context, _) = CreateContext();
         var error = global::app.data.@this.FromError(
-            new global::app.Errors.Error("something broke", "TestError", 500));
+            new global::app.errors.Error("something broke", "TestError", 500));
         var action = new Return { Context = context, Data = error };
         var result = await action.Run();
 

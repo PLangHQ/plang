@@ -1,7 +1,7 @@
 using global::app.Callback;
 using global::app.CallStack;
 using global::app.modules.callback;
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -13,9 +13,9 @@ public class CallbackRunActionTests
 
     private sealed class StubCallback : ICallback
     {
-        public global::app.CallStack.Call.Position? Position => null;
-        public byte[] Serialize(global::app.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx)
+        public global::app.callstack.call.Position? Position => null;
+        public byte[] Serialize(global::app.actor.context.@this ctx) => Array.Empty<byte>();
+        public Task<global::app.data.@this> Run(global::app.actor.context.@this ctx)
             => Task.FromResult(global::app.data.@this.Ok("ran"));
     }
 

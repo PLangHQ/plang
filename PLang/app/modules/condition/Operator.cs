@@ -30,7 +30,7 @@ public sealed class Operator
         };
 
     [app.Attributes.Choices]
-    public static string[] Choices(Actor.Context.@this? ctx) => [.. Registry.Keys];
+    public static string[] Choices(actor.context.@this? ctx) => [.. Registry.Keys];
 
     public string Value { get; }
     public Func<data.@this?, data.@this?, bool> Evaluate { get; }
@@ -174,7 +174,7 @@ public sealed class Operator
         }
 
         // Enum compared with string → normalize to the enum's name so PLang can
-        // write `where Status equals 'Timeout'` against a global::app.Tester.Status field.
+        // write `where Status equals 'Timeout'` against a global::app.tester.Status field.
         if (left is Enum leEnum && right is string)
             return (leEnum.ToString(), right);
         if (right is Enum reEnum && left is string)

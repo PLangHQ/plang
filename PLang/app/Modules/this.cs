@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using app.modules;
-using app.Actor.Context;
-using app.Errors;
+using app.actor.context;
+using app.errors;
 
 namespace app.Modules;
 
@@ -107,7 +107,7 @@ public sealed class @this : IAsyncDisposable
     /// Resolves a handler for a .pr action. Navigates the action for module/actionName.
     /// </summary>
     public (ICodeGenerated? Handler, IError? Error) GetCodeGenerated(
-        Goals.Goal.Steps.Step.Actions.Action.@this action)
+        global::app.goals.goal.steps.step.actions.action.@this action)
     {
         if (!_modules.TryGetValue(action.Module, out var actions) ||
             !actions.TryGetValue(action.ActionName, out var entry))
@@ -205,7 +205,7 @@ public sealed class @this : IAsyncDisposable
     /// (registered on actor.Channels). The builder catalog passes this to the LLM so it
     /// can pick a channel from real names — no `to <name>` pattern parsing.
     /// </summary>
-    public IReadOnlyList<string> GetChannelInventory(global::app.Actor.@this actor)
+    public IReadOnlyList<string> GetChannelInventory(global::app.actor.@this actor)
         => actor.Channels.ChannelNames.ToList();
 
     // Capability interfaces — their declared properties are wired by the source generator
@@ -221,9 +221,9 @@ public sealed class @this : IAsyncDisposable
         typeof(modules.IStatic),
     };
 
-    public Goals.Goal.Steps.Step.Actions.@this Describe()
+    public StepActions Describe()
     {
-        var result = new Goals.Goal.Steps.Step.Actions.@this();
+        var result = new StepActions();
         var nCtx = new NullabilityInfoContext();
         // Cache module descriptions by namespace — populated on first encounter per namespace
         var moduleDescriptionCache = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
@@ -251,7 +251,7 @@ public sealed class @this : IAsyncDisposable
                     if (capabilityProps.Contains(prop.Name)) continue;
                     if (prop.GetCustomAttribute<modules.CodeAttribute>() != null) continue;
 
-                    var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.Types.@this.GetTypeNameStatic(prop.PropertyType));
+                    var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.types.@this.GetTypeNameStatic(prop.PropertyType));
 
                     bool isNullable = Nullable.GetUnderlyingType(prop.PropertyType) != null;
                     if (!isNullable && !prop.PropertyType.IsValueType)
@@ -338,7 +338,7 @@ public sealed class @this : IAsyncDisposable
                 // Per-action modifier classification from [Modifier] on the class
                 bool isModifier = parameterType.GetCustomAttribute<modules.ModifierAttribute>() != null;
 
-                result.Add(new Goals.Goal.Steps.Step.Actions.Action.@this
+                result.Add(new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = ns,
                     ActionName = actionName,
@@ -403,7 +403,7 @@ public sealed class @this : IAsyncDisposable
         foreach (var prop in returnType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (baseProps.Contains(prop.Name)) continue;
-            var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.Types.@this.GetTypeNameStatic(prop.PropertyType));
+            var typeName = (App?.Types.GetTypeName(prop.PropertyType) ?? global::app.types.@this.GetTypeNameStatic(prop.PropertyType));
             properties.Add(new data.@this(prop.Name, typeName));
         }
 
@@ -465,7 +465,7 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// True when <paramref name="propType"/> is <c>Data&lt;T&gt;</c> (or its nullable
-    /// wrap) for a T that implements <see cref="app.Variables.IRawNameResolvable"/>.
+    /// wrap) for a T that implements <see cref="app.variables.IRawNameResolvable"/>.
     /// The property type is the carrier of "this slot names a variable" — the catalog
     /// builder uses this to mark <c>%var%</c>-shape parameters in the LLM prompt.
     /// </summary>
@@ -475,7 +475,7 @@ public sealed class @this : IAsyncDisposable
         if (!underlying.IsGenericType) return false;
         if (underlying.GetGenericTypeDefinition() != typeof(data.@this<>)) return false;
         var inner = underlying.GetGenericArguments()[0];
-        return typeof(app.Variables.IRawNameResolvable).IsAssignableFrom(inner);
+        return typeof(app.variables.IRawNameResolvable).IsAssignableFrom(inner);
     }
 }
 

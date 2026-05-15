@@ -1,4 +1,4 @@
-using app.Config;
+using app.config;
 
 namespace app.modules.http;
 

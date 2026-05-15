@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.list;
 
@@ -13,7 +13,7 @@ public partial class Reverse : IContext
         var data = Context.Variables.Get(ListName.Value);
         if (data.Value is not List<object?> list)
             return Task.FromResult(Error(
-                new app.Errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
+                new app.errors.ValidationError($"Variable '{ListName.Value}' is not a list")));
 
         list.Reverse();
         return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));

@@ -9,7 +9,7 @@ public sealed partial class @this : ISnapshot
     /// Values are emitted by reference — Statics is provisional (see todos.md), so
     /// the value-shape contract here matches what callers already store.
     /// </summary>
-    public void Capture(Snapshot.@this s)
+    public void Capture(global::app.snapshot.@this s)
     {
         var snap = new Dictionary<string, Dictionary<string, object?>>(StringComparer.OrdinalIgnoreCase);
         foreach (var (key, bag) in _bags)
@@ -24,7 +24,7 @@ public sealed partial class @this : ISnapshot
     /// <summary>
     /// Replaces the live App's Statics bag tree with the captured one.
     /// </summary>
-    public static void Restore(Snapshot.@this s, Actor.Context.@this ctx)
+    public static void Restore(global::app.snapshot.@this s, global::app.actor.context.@this ctx)
     {
         var target = ctx.App.Statics;
         target._bags.Clear();

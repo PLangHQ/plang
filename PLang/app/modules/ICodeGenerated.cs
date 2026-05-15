@@ -1,6 +1,6 @@
-using app.Actor.Context;
-using app.Errors;
-using ActionType = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using app.actor.context;
+using app.errors;
+using ActionType = app.goals.goal.steps.step.actions.action.@this;
 
 namespace app.modules;
 
@@ -10,7 +10,7 @@ namespace app.modules;
 /// </summary>
 public interface ICodeGenerated
 {
-    Task<data.@this> ExecuteAsync(ActionType action, Actor.Context.@this context);
+    Task<data.@this> ExecuteAsync(ActionType action, actor.context.@this context);
 
     /// <summary>
     /// Per-property snapshot of pr-side and final-resolved values.

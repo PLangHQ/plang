@@ -24,8 +24,8 @@ public class TagActionTests
     [After(Test)]
     public async Task Teardown() => await _app.DisposeAsync();
 
-    private static global::app.Tester.Run NewRun() =>
-        new(new global::app.Tester.File { Path = "Tests/T.test.goal", EntryGoalName = "T" });
+    private static global::app.tester.Run NewRun() =>
+        new(new global::app.tester.File { Path = "Tests/T.test.goal", EntryGoalName = "T" });
 
     // When Testing.CurrentTest is set (test in flight), test.tag with Tags=["http","fast"]
     // writes both tags into CurrentTest.UserTags.

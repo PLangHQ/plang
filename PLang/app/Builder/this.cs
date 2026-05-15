@@ -24,7 +24,7 @@ public sealed partial class @this
     /// Optional file filter. When set, only these files are built — IN ORDER.
     /// Set via --build={"files":"test.goal"} or --build={"files":["test.goal","run.goal"]}
     /// </summary>
-    public List<FileSystem.path> Files { get; set; } = new();
+    public List<global::app.filesystem.path> Files { get; set; } = new();
 
     /// <summary>
     /// Whether to use LLM cache. Default true. Set via --build={"cache":false}
@@ -110,7 +110,7 @@ public sealed partial class @this
         if (!_app.FileSystem.File.Exists(appPrPath) && !_app.Create)
         {
             if (Console.IsInputRedirected)
-                return data.@this.FromError(new global::app.Errors.ServiceError(
+                return data.@this.FromError(new global::app.errors.ServiceError(
                     $"No app found at {_app.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
             // Channels are wired by the entry point (PlangConsole) before Run.
@@ -118,17 +118,17 @@ public sealed partial class @this
             // the prompt to output, then ReadLine off the input stream. Two-call
             // because the default channels are direction-split (output write-only,
             // input read-only) so Stream.AskCore can't bridge them.
-            var outputChannel = _app.User.Channels.Get(global::app.Channels.@this.Output) as global::app.Channels.Channel.Stream.@this;
-            var inputChannel = _app.User.Channels.Get(global::app.Channels.@this.Input) as global::app.Channels.Channel.Stream.@this;
+            var outputChannel = _app.User.Channels.Get(global::app.channels.@this.Output) as global::app.channels.channel.stream.@this;
+            var inputChannel = _app.User.Channels.Get(global::app.channels.@this.Input) as global::app.channels.channel.stream.@this;
             if (outputChannel == null || inputChannel == null)
-                return data.@this.FromError(new global::app.Errors.ServiceError(
+                return data.@this.FromError(new global::app.errors.ServiceError(
                     "Default channels not wired — cannot prompt for app creation.", "MissingRequiredChannelAtBoot", 500));
 
             await outputChannel.WriteTextAsync($"No app found at {_app.AbsolutePath}. Create new app? (y/n): ");
             using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true);
             var answer = (await reader.ReadLineAsync())?.Trim().ToLowerInvariant();
             if (answer != "y" && answer != "yes")
-                return data.@this.FromError(new global::app.Errors.ServiceError(
+                return data.@this.FromError(new global::app.errors.ServiceError(
                     "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
         }
 

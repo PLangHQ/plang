@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules.list;
 
@@ -6,7 +6,7 @@ namespace PLang.Tests.App.actions.list;
 
 public class ListSetTests
 {
-    private (global::app.Actor.Context.@this context, Variables memory) CreateContext()
+    private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variables);

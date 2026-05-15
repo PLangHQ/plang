@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using app;
 using global::app.Errors;
 
@@ -346,7 +346,7 @@ public class StepErrorTests
     {
         var ex = new Exception("Step crashed");
         await using var engine = new global::app.@this("/app");
-        using var context = new global::app.Actor.Context.@this(engine);
+        using var context = new global::app.actor.context.@this(engine);
         var step = new Step { Text = "test step" };
         context.Step = step;
 

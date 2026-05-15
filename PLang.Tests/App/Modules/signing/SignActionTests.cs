@@ -1,5 +1,5 @@
 using System.Text.Json;
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Errors;
 using global::app.Variables;
 using global::app.Code;
@@ -39,7 +39,7 @@ public class SignActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     private async Task<Data> SignData(object? data, List<string>? contracts = null,
         TimeSpan? expires = null, Dictionary<string, object>? headers = null)

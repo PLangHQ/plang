@@ -2,7 +2,7 @@ using global::app.Callback;
 using global::app.CallStack;
 using global::app.Errors;
 using global::app.Code;
-using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -18,7 +18,7 @@ public class FailureMatrixTests
         var step = new Step { Index = 0, Text = text, Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.Goals.Add(goal);
+        app.goals.Add(goal);
         return (goal, action);
     }
 
@@ -170,7 +170,7 @@ public class FailureMatrixTests
     [Test]
     public async Task FailureMatrix_DataReadDoesNotAutoVerify_AssertsAbsenceOfVerifyCall()
     {
-        // Reading a Data instance (deserialize through global::app.Channels.Serializers.Serializer.Plang.Data) does NOT
+        // Reading a Data instance (deserialize through global::app.channels.serializers.serializer.plang.Data) does NOT
         // invoke signing.verify — verification is the consumer's explicit step. Pin
         // this by checking that a deserialized Data has signature populated but the
         // app's signing module wasn't called as part of the read.
@@ -187,9 +187,9 @@ public class FailureMatrixTests
 
     private sealed class StubCallback : ICallback
     {
-        public global::app.CallStack.Call.Position? Position => null;
-        public byte[] Serialize(global::app.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx)
+        public global::app.callstack.call.Position? Position => null;
+        public byte[] Serialize(global::app.actor.context.@this ctx) => Array.Empty<byte>();
+        public Task<global::app.data.@this> Run(global::app.actor.context.@this ctx)
             => Task.FromResult(global::app.data.@this.Ok(true));
     }
 }

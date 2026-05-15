@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules.http;
 using global::app.modules.http.code;
@@ -35,7 +35,7 @@ public class DefaultHttpProviderTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Provider_Configure_AcceptsValidConfig()

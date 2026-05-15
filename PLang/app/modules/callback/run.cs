@@ -1,4 +1,4 @@
-using app.Errors;
+using app.errors;
 
 namespace app.modules.callback;
 

@@ -1,4 +1,4 @@
-using app.Errors;
+using app.errors;
 
 namespace app.modules.timeout;
 
@@ -17,7 +17,7 @@ public partial class After : IContext, IModifier
 
     public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
 
-    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, Actor.Context.@this context)
+    public Func<Task<global::app.data.@this>> Wrap(Func<Task<global::app.data.@this>> next, actor.context.@this context)
     {
         var ms = Ms.Value;
         return async () =>

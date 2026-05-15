@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using app;
 using global::app.Variables;
 using global::app.modules;
@@ -12,7 +12,7 @@ public class ModuleAddTests
     /// Creates an engine rooted at the directory containing the PLang assembly,
     /// so the sandboxed filesystem can find the assembly file via fs.File.Exists.
     /// </summary>
-    private static (global::app.Actor.Context.@this context, global::app.@this app, string assemblyPath) CreateContextWithAssembly()
+    private static (global::app.actor.context.@this context, global::app.@this app, string assemblyPath) CreateContextWithAssembly()
     {
         var assemblyPath = typeof(global::app.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;

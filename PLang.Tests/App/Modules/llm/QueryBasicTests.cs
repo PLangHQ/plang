@@ -1,5 +1,5 @@
 using System.Text.Json;
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.Code;
 using global::app.modules.llm;
@@ -40,7 +40,7 @@ public class QueryBasicTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     #region Happy Path
 

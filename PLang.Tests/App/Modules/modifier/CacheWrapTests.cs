@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Modules.modifier;
 public class CacheWrapTests
 {
     private global::app.@this _app = null!;
-    private global::app.Actor.Context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.User.Context;
 
     [Before(Test)]
     public void Setup()

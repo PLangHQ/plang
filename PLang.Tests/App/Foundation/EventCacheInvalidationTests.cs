@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using app;
 using global::app.Variables;
 
@@ -16,7 +16,7 @@ public class EventCacheInvalidationTests
     public async Task EventsFor_Goal_PicksUpNewlyRegisteredEvent()
     {
         await using var engine = new global::app.@this("/app");
-        using var context = new global::app.Actor.Context.@this(engine);
+        using var context = new global::app.actor.context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register first event
@@ -44,7 +44,7 @@ public class EventCacheInvalidationTests
     public async Task EventsFor_Step_PicksUpNewlyRegisteredEvent()
     {
         await using var engine = new global::app.@this("/app");
-        using var context = new global::app.Actor.Context.@this(engine);
+        using var context = new global::app.actor.context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
         var step = new Step { Text = "do something" };
         step.Goal = goal;
@@ -76,8 +76,8 @@ public class EventCacheInvalidationTests
     public async Task EventsFor_Action_PicksUpNewlyRegisteredEvent()
     {
         await using var engine = new global::app.@this("/app");
-        using var context = new global::app.Actor.Context.@this(engine);
-        var action = new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+        using var context = new global::app.actor.context.@this(engine);
+        var action = new global::app.goals.goal.steps.step.actions.action.@this
         {
             Module = "variable",
             ActionName = "set"
@@ -108,7 +108,7 @@ public class EventCacheInvalidationTests
     public async Task EventsFor_ManualInvalidation_Works()
     {
         await using var engine = new global::app.@this("/app");
-        using var context = new global::app.Actor.Context.@this(engine);
+        using var context = new global::app.actor.context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register and cache

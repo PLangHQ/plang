@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.list;
 
@@ -16,7 +16,7 @@ public partial class Get : IContext
 
         if (!item.IsInitialized)
             return Task.FromResult(Error(
-                new app.Errors.ValidationError($"Index {Index.Value} out of range for '{ListName.Value}'")));
+                new app.errors.ValidationError($"Index {Index.Value} out of range for '{ListName.Value}'")));
 
         return Task.FromResult(Data(item.Value));
     }

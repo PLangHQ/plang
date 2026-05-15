@@ -1,8 +1,8 @@
-using app.Variables;
+using app.variables;
 using app.Code;
 using app.Utils;
-using Goal = app.Goals.Goal.@this;
-using Actions = app.Goals.Goal.Steps.Step.Actions.@this;
+using Goal = app.goals.goal.@this;
+using Actions = app.goals.goal.steps.step.actions.@this;
 
 namespace app.modules.builder.code;
 

@@ -4,13 +4,13 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using app.Channels.Serializers;
-using app.Actor.Context;
-using app.Errors;
-using app.Goals.Goal;
-using app.Variables;
+using app.channels.serializers;
+using app.actor.context;
+using app.errors;
+using app.goals.goal;
+using app.variables;
 using PlangType = app.data.type;
-using app.Config;
+using app.config;
 using app.modules.signing;
 using AppType = app.@this;
 using SysHttpMethod = System.Net.Http.HttpMethod;
@@ -46,7 +46,7 @@ public sealed class Default : IHttp
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
-            Modifiers = { global::app.Channels.Serializers.Filters.Transport.ForInbound }
+            Modifiers = { global::app.channels.serializers.filters.Transport.ForInbound }
         }
     };
 
@@ -55,7 +55,7 @@ public sealed class Default : IHttp
     private readonly JsonSerializerOptions _caseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new global::app.Channels.Serializers.TimeSpanIso8601() },
+        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new global::app.channels.serializers.TimeSpanIso8601() },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
@@ -370,7 +370,7 @@ public sealed class Default : IHttp
     /// Returns null if unsigned, the sign result Data on success (navigate .Signature for Signature).
     /// </summary>
     private static async Task<data.@this?> SignRequestAsync(
-        Actor.Context.@this context,
+        actor.context.@this context,
         bool unsigned,
         signing.sign? signOptions,
         string? bodyContent,
@@ -486,7 +486,7 @@ public sealed class Default : IHttp
         HttpRequestMessage request,
         bool unsigned,
         AppType app,
-        Actor.Context.@this context,
+        actor.context.@this context,
         long maxResponseSize = DefaultMaxResponseSize)
     {
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
@@ -571,7 +571,7 @@ public sealed class Default : IHttp
         HttpResponseMessage response,
         HttpRequestMessage request,
         AppType app,
-        Actor.Context.@this context,
+        actor.context.@this context,
         long maxResponseSize = DefaultMaxResponseSize)
     {
         var body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
@@ -624,7 +624,7 @@ public sealed class Default : IHttp
     /// The error body may be a Data with Signature, or have a "signature" field.
     /// </summary>
     private async Task TryExtractSignedErrorIdentity(
-        string errorBody, AppType app, Actor.Context.@this context)
+        string errorBody, AppType app, actor.context.@this context)
     {
         // Try deserializing as data.@this with transport options (may have Signature via [In])
         data.@this? data = null;
@@ -722,7 +722,7 @@ public sealed class Default : IHttp
         StreamFormat? streamAs,
         bool unsigned,
         AppType app,
-        Actor.Context.@this context,
+        actor.context.@this context,
         long maxSSEBufferSize,
         CancellationToken ct)
     {
@@ -785,7 +785,7 @@ public sealed class Default : IHttp
     /// </summary>
     private static async Task RunCallbackAsync(
         GoalCall template, object? value, PlangType? type, string defaultName,
-        AppType app, Actor.Context.@this context, CancellationToken ct)
+        AppType app, actor.context.@this context, CancellationToken ct)
     {
         var paramName = template.Parameters?.Count > 0 ? template.Parameters[0].Name : defaultName;
         var call = new GoalCall
@@ -808,7 +808,7 @@ public sealed class Default : IHttp
 
     private static async Task StreamLinesAsync(
         Stream stream, GoalCall onStream,
-        AppType app, Actor.Context.@this context, CancellationToken ct)
+        AppType app, actor.context.@this context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         while (!ct.IsCancellationRequested)
@@ -823,7 +823,7 @@ public sealed class Default : IHttp
 
     private static async Task StreamSSEAsync(
         Stream stream, GoalCall onStream,
-        AppType app, Actor.Context.@this context, long maxBufferSize, CancellationToken ct)
+        AppType app, actor.context.@this context, long maxBufferSize, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
         var dataBuffer = new StringBuilder();
@@ -874,7 +874,7 @@ public sealed class Default : IHttp
 
     private static async Task StreamBytesAsync(
         Stream stream, GoalCall onStream,
-        AppType app, Actor.Context.@this context, CancellationToken ct)
+        AppType app, actor.context.@this context, CancellationToken ct)
     {
         var buffer = new byte[8192];
         int bytesRead;
@@ -889,7 +889,7 @@ public sealed class Default : IHttp
 
     private async Task StreamPlangAsync(
         Stream stream, GoalCall onStream,
-        AppType app, Actor.Context.@this context, CancellationToken ct)
+        AppType app, actor.context.@this context, CancellationToken ct)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);
 
@@ -941,7 +941,7 @@ public sealed class Default : IHttp
         long maxBytes,
         GoalCall? onProgress,
         AppType app,
-        Actor.Context.@this context,
+        actor.context.@this context,
         CancellationToken ct)
     {
         var buffer = new byte[8192];
@@ -998,7 +998,7 @@ public sealed class Default : IHttp
     // --- Upload content resolution ---
 
     private static async Task<HttpContent> ResolveUploadContentAsync(
-        upload action, app.FileSystem.IPLangFileSystem fs, string encoding)
+        upload action, app.filesystem.IPLangFileSystem fs, string encoding)
     {
         var content = action.Content.Value;
         if (action.As?.Value is ContentAs contentAs)
@@ -1037,7 +1037,7 @@ public sealed class Default : IHttp
             "application/json");
     }
 
-    private static async Task<HttpContent> CreateFileContentAsync(app.FileSystem.IPLangFileSystem fs, string path)
+    private static async Task<HttpContent> CreateFileContentAsync(app.filesystem.IPLangFileSystem fs, string path)
     {
         var validPath = fs.ValidatePath(path);
         var bytes = await fs.File.ReadAllBytesAsync(validPath);
@@ -1054,7 +1054,7 @@ public sealed class Default : IHttp
         return content;
     }
 
-    private static async Task<HttpContent> CreateFormContentAsync(app.FileSystem.IPLangFileSystem fs, object content)
+    private static async Task<HttpContent> CreateFormContentAsync(app.filesystem.IPLangFileSystem fs, object content)
     {
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;

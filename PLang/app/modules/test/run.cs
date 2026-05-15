@@ -1,15 +1,15 @@
-using app.Errors;
-using app.Tester;
-using app.Variables;
-using EventBinding = app.Events.Lifecycle.Bindings.Binding.@this;
+using app.errors;
+using app.tester;
+using app.variables;
+using EventBinding = app.events.lifecycle.bindings.binding.@this;
 
 namespace app.modules.test;
 
 /// <summary>
 /// Main test-runner loop. C# handler — NOT a PLang foreach, immune to the silent-skip
-/// bug that motivated this module. For each Ready global::app.Tester.File, spins up a fresh App
+/// bug that motivated this module. For each Ready global::app.tester.File, spins up a fresh App
 /// instance (file boundary = App boundary), subscribes AfterAction for coverage,
-/// runs the test's entry goal under a timeout CancellationToken, records a global::app.Tester.Run,
+/// runs the test's entry goal under a timeout CancellationToken, records a global::app.tester.Run,
 /// merges the child's Coverage into the parent, then releases the App.
 /// Parallel execution is throttled by a SemaphoreSlim (Parallel / Testing.Parallel).
 /// Never throws for child-test failures — failure is data, loop stays parallel-safe.
@@ -30,14 +30,14 @@ public partial class run : IContext
     internal static event Action<app.@this>? ChildAppCreated;
 
     [IsNotNull]
-    public partial data.@this<List<global::app.Tester.File>> Tests { get; init; }
+    public partial data.@this<List<global::app.tester.File>> Tests { get; init; }
 
     public partial data.@this<int>? Parallel { get; init; }
     public partial data.@this<int>? Timeout { get; init; }
 
     public async Task<data.@this> Run()
     {
-        var tests = Tests.Value ?? new List<global::app.Tester.File>();
+        var tests = Tests.Value ?? new List<global::app.tester.File>();
         var parentApp = Context.App!;
         var parallel = Parallel?.Value ?? parentApp.Tester.Parallel;
         var timeoutSeconds = Timeout?.Value ?? parentApp.Tester.TimeoutSeconds;
@@ -60,14 +60,14 @@ public partial class run : IContext
         return app.data.@this.Ok(parentApp.Tester.Results);
     }
 
-    private async Task RunSingleAsync(global::app.Tester.File test, TimeSpan timeout, app.@this parentApp)
+    private async Task RunSingleAsync(global::app.tester.File test, TimeSpan timeout, app.@this parentApp)
     {
         // Non-ready tests (Stale, Skipped, etc.) are recorded but not executed —
         // the report surfaces them with their discovery-time status. Hiding them
         // would hurt CI visibility.
-        if (test.Status != global::app.Tester.Status.Ready)
+        if (test.Status != global::app.tester.Status.Ready)
         {
-            var skipRun = new global::app.Tester.Run(test);
+            var skipRun = new global::app.tester.Run(test);
             skipRun.Complete(test.Status, skipRun.Error);
             parentApp.Tester.Results.Add(skipRun);
             return;
@@ -76,13 +76,13 @@ public partial class run : IContext
         await using var childApp = new app.@this(test.Directory);
         childApp.OsDirectory = parentApp.OsDirectory;
         childApp.Tester.IsEnabled = true;
-        var testRun = new global::app.Tester.Run(test);
+        var testRun = new global::app.tester.Run(test);
         childApp.Tester.CurrentTest = testRun;
 
         // Coverage subscriber — records every handler fire and every branch index observed.
         // Site key for branches = "goalName:stepIndex"; matches what the report renders.
         var coverageBinding = new EventBinding(
-            app.Events.EventType.AfterAction,
+            app.events.EventType.AfterAction,
             (ctx, action, result) =>
             {
                 if (action != null)
@@ -132,20 +132,20 @@ public partial class run : IContext
 
         try
         {
-            var goalCall = new Goals.Goal.GoalCall { PrPath = test.PrPath };
+            var goalCall = new GoalCall { PrPath = test.PrPath };
             var result = await childApp.RunGoalAsync(goalCall, childApp.User.Context, cts.Token);
             if (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
-                testRun.Complete(global::app.Tester.Status.Timeout);
+                testRun.Complete(global::app.tester.Status.Timeout);
             else
                 testRun.Complete(result);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
         {
-            testRun.Complete(global::app.Tester.Status.Timeout);
+            testRun.Complete(global::app.tester.Status.Timeout);
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
-            testRun.Complete(global::app.Tester.Status.Fail,
+            testRun.Complete(global::app.tester.Status.Fail,
                 new ServiceError(ex.Message, "TestRunError", 500) { Exception = ex });
         }
         finally

@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 using app.modules.ui.code;
 
 namespace app.modules.ui;

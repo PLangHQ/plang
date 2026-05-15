@@ -1,5 +1,5 @@
 using System.Text.Json;
-using app.CallStack;
+using app.callstack;
 
 namespace app.Callback;
 
@@ -12,7 +12,7 @@ namespace app.Callback;
 public sealed class AskCallback : ICallback
 {
     /// <summary>The Call frame at which the resumed dispatch lands.</summary>
-    public global::app.CallStack.Call.Position? Position { get; init; }
+    public global::app.callstack.call.Position? Position { get; init; }
 
     /// <summary>Name of the actor that issued the ask — "User" / "Service" / "System".</summary>
     public string ActorName { get; init; } = "User";
@@ -20,7 +20,7 @@ public sealed class AskCallback : ICallback
     /// <summary>The variables the developer annotated as surviving the ask.</summary>
     public List<global::app.data.@this> Variables { get; init; } = new();
 
-    public byte[] Serialize(global::app.Actor.Context.@this ctx)
+    public byte[] Serialize(global::app.actor.context.@this ctx)
     {
         var wire = new Wire
         {
@@ -45,7 +45,7 @@ public sealed class AskCallback : ICallback
     /// </summary>
     internal const int MaxWireBytes = 1 * 1024 * 1024;
 
-    public static AskCallback Deserialize(byte[] bytes, global::app.Actor.Context.@this ctx)
+    public static AskCallback Deserialize(byte[] bytes, global::app.actor.context.@this ctx)
     {
         if (bytes.Length > MaxWireBytes)
             throw new InvalidOperationException(
@@ -75,11 +75,11 @@ public sealed class AskCallback : ICallback
     /// </summary>
     public object? Answer { get; init; }
 
-    public async Task<global::app.data.@this> Run(global::app.Actor.Context.@this ctx)
+    public async Task<global::app.data.@this> Run(global::app.actor.context.@this ctx)
     {
         if (Position == null)
             return global::app.data.@this.FromError(
-                new global::app.Errors.ServiceError("AskCallback has no Position", "NoPosition", 400));
+                new global::app.errors.ServiceError("AskCallback has no Position", "NoPosition", 400));
 
         // Bind surviving variables onto the resumed context's Variables.
         // Skip !-prefixed names — infra variables are not user state and must not be injected from wire.
@@ -116,7 +116,7 @@ public sealed class AskCallback : ICallback
         public int StepIndex { get; set; }
         public int ActionIndex { get; set; }
 
-        public static PositionWire From(global::app.CallStack.Call.Position f) => new()
+        public static PositionWire From(global::app.callstack.call.Position f) => new()
         {
             GoalPrPath = f.Goal?.PrPath ?? "",
             GoalHash = f.Goal?.Hash ?? "",
@@ -124,20 +124,20 @@ public sealed class AskCallback : ICallback
             ActionIndex = f.ActionIndex
         };
 
-        public global::app.CallStack.Call.Position Resolve(global::app.Actor.Context.@this ctx)
+        public global::app.callstack.call.Position Resolve(global::app.actor.context.@this ctx)
         {
             var goal = ctx.App.Goals.Get(GoalPrPath)
-                ?? throw new global::app.Errors.CallbackGoalNotFound(GoalPrPath);
+                ?? throw new global::app.errors.CallbackGoalNotFound(GoalPrPath);
             var liveHash = goal.Hash ?? "";
             if (!string.Equals(liveHash, GoalHash, StringComparison.OrdinalIgnoreCase))
-                throw new global::app.Errors.CallbackGoalHashMismatch(GoalPrPath, GoalHash, liveHash);
+                throw new global::app.errors.CallbackGoalHashMismatch(GoalPrPath, GoalHash, liveHash);
             if (StepIndex < 0 || StepIndex >= goal.Steps.Count)
-                throw new global::app.Errors.CallbackGoalNotFound($"{GoalPrPath} (stepIndex {StepIndex} out of range)");
+                throw new global::app.errors.CallbackGoalNotFound($"{GoalPrPath} (stepIndex {StepIndex} out of range)");
             var step = goal.Steps[StepIndex];
             if (ActionIndex < 0 || ActionIndex >= step.Actions.Count)
-                throw new global::app.Errors.CallbackGoalNotFound($"{GoalPrPath} (actionIndex {ActionIndex} out of range at step {StepIndex})");
+                throw new global::app.errors.CallbackGoalNotFound($"{GoalPrPath} (actionIndex {ActionIndex} out of range at step {StepIndex})");
             var action = step.Actions[ActionIndex];
-            return new global::app.CallStack.Call.Position(action, goal, StepIndex, ActionIndex, "");
+            return new global::app.callstack.call.Position(action, goal, StepIndex, ActionIndex, "");
         }
     }
 
@@ -152,7 +152,7 @@ public sealed class AskCallback : ICallback
             Value = d.Value
         };
 
-        public global::app.data.@this ToData(global::app.Actor.Context.@this ctx)
+        public global::app.data.@this ToData(global::app.actor.context.@this ctx)
         {
             var d = new global::app.data.@this(Name, Value);
             d.Context = ctx;

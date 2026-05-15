@@ -1,4 +1,4 @@
-using app.Variables;
+using app.variables;
 using app.modules.file.code;
 
 namespace app.modules.file;
@@ -9,7 +9,7 @@ namespace app.modules.file;
 [Action("list")]
 public partial class List : IContext
 {
-    public partial data.@this<FileSystem.path> Path { get; init; }
+    public partial data.@this<filesystem.path> Path { get; init; }
 
     [Default("*")]
     public partial data.@this<string> Pattern { get; init; }

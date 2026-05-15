@@ -1,7 +1,7 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules.builder;
-using Action = global::app.Goals.Goal.Steps.Step.Actions.Action.@this;
+using Action = global::app.goals.goal.steps.step.actions.action.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
@@ -82,7 +82,7 @@ public class ValidateActionsTests
         });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
 
-        var goalCallData = new Data("GoalName", new global::app.Goals.Goal.GoalCall { Name = "DoSomething" });
+        var goalCallData = new Data("GoalName", new global::app.goals.goal.GoalCall { Name = "DoSomething" });
         goalCallData.Type = new global::app.data.type("goal.call");
 
         var actions = new StepActions
@@ -101,7 +101,7 @@ public class ValidateActionsTests
 
         await Assert.That(result.Success).IsTrue();
         // Verify PrPath was actually resolved
-        var resolvedCall = actions[0].Parameters[0].Value as global::app.Goals.Goal.GoalCall;
+        var resolvedCall = actions[0].Parameters[0].Value as global::app.goals.goal.GoalCall;
         await Assert.That(resolvedCall).IsNotNull();
         await Assert.That(resolvedCall!.PrPath).IsEqualTo("/.build/dosomething.pr");
     }
@@ -109,7 +109,7 @@ public class ValidateActionsTests
     [Test]
     public async Task ValidateActions_DynamicNames_Skipped()
     {
-        var goalCallData = new Data("GoalName", new global::app.Goals.Goal.GoalCall { Name = "%dynamicGoal%" });
+        var goalCallData = new Data("GoalName", new global::app.goals.goal.GoalCall { Name = "%dynamicGoal%" });
         goalCallData.Type = new global::app.data.type("goal.call");
 
         var actions = new StepActions

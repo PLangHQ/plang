@@ -1,5 +1,5 @@
 using global::app.modules.goal;
-using global::app.Goals.Goal;
+using global::app.goals.goal;
 
 namespace PLang.Tests.App.Modules.goal;
 
@@ -12,7 +12,7 @@ public class GoalCallTests
     {
         _app = new global::app.@this("/app");
         // Register a stub goal that call.cs can find
-        _app.Goals.Add(new global::app.Goals.Goal.@this
+        _app.Goals.Add(new global::app.goals.goal.@this
         {
             Name = "TestGoal",
             Path = "/TestGoal.goal"

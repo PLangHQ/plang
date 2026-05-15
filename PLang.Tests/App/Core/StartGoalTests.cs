@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Variables;
 using global::app.modules;
 using Path = System.IO.Path;
@@ -311,7 +311,7 @@ public class StartGoalTests
             Text = text,
             Actions = new StepActions
             {
-                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = actionClass,
                     ActionName = method,
@@ -330,12 +330,12 @@ public class StartGoalTests
     {
         public List<string> Lines { get; } = new();
 
-        public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+        public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
         public global::app.@this App { get; private set; } = null!;
-        public global::app.Actor.Context.@this Context { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public Task<Data> ExecuteAsync(global::app.Goals.Goal.Steps.Step.Actions.Action.@this action, global::app.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             App = context.App!;
             Context = context;

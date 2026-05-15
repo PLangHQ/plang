@@ -19,10 +19,10 @@ public sealed class @this : IAsyncDisposable
     public Guid Id { get; } = Guid.NewGuid();
 
     /// <summary>The actor that spawned this Service (audit / tracing).</summary>
-    public global::app.Actor.@this Parent { get; }
+    public global::app.actor.@this Parent { get; }
 
     /// <summary>This service's per-call channel set.</summary>
-    public global::app.Channels.@this Channels { get; }
+    public global::app.channels.@this Channels { get; }
 
     /// <summary>
     /// Always the System actor's identity. Outbound calls go under the app's
@@ -30,11 +30,11 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public Identity? Identity => Parent.App.System.Identity;
 
-    internal @this(app.Services.@this collection, global::app.Actor.@this parent)
+    internal @this(app.Services.@this collection, global::app.actor.@this parent)
     {
         _collection = collection;
         Parent = parent;
-        Channels = new global::app.Channels.@this(parent.App);
+        Channels = new global::app.channels.@this(parent.App);
     }
 
     public async ValueTask DisposeAsync()

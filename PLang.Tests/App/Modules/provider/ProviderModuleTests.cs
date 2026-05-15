@@ -1,4 +1,4 @@
-using global::app.Actor.Context;
+using global::app.actor.context;
 using global::app.Errors;
 using global::app.Variables;
 using global::app.Code;
@@ -38,7 +38,7 @@ public class ProviderModuleTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     // Fixture DLL paths — pre-built DLLs committed under PLang.Tests/App/Fixtures/dlls/
     private static readonly string FixtureBase = System.IO.Path.GetFullPath(

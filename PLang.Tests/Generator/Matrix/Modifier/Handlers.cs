@@ -1,6 +1,6 @@
 namespace app.modules.matrix.modifier;
 
-[global::app.modules.Action("modifieraction", Cacheable = false)]
+[global::app.modules.action("modifieraction", Cacheable = false)]
 [global::app.modules.Modifier(Order = 1)]
 public partial class ModifierAction : global::app.modules.IContext, global::app.modules.IModifier
 {
@@ -10,7 +10,7 @@ public partial class ModifierAction : global::app.modules.IContext, global::app.
 
     public Func<Task<global::app.data.@this>> Wrap(
         Func<Task<global::app.data.@this>> next,
-        global::app.Actor.Context.@this context)
+        global::app.actor.context.@this context)
     {
         return async () =>
         {

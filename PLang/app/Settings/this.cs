@@ -1,4 +1,4 @@
-using app.Errors;
+using app.errors;
 
 namespace app.Settings;
 
@@ -22,7 +22,7 @@ public sealed class @this
     /// segment from the store and navigate the result via Data.GetChild.
     /// Returns AskError when the value is unset.
     /// </summary>
-    public data.@this Get(string path, Actor.Context.@this context)
+    public data.@this Get(string path, actor.context.@this context)
     {
         if (string.IsNullOrEmpty(path)) return data.@this.NotFound("Settings");
 

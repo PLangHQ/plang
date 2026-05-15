@@ -1,11 +1,11 @@
-using app.Variables;
+using app.variables;
 
 namespace app.modules.test;
 
 /// <summary>
 /// Declares user tags for the running test. At discovery time, test.discover scans
 /// the .pr for these actions to build the test's tag set — the runtime path is a
-/// thin accumulator on the currently-running global::app.Tester.Run (if any). Outside test mode
+/// thin accumulator on the currently-running global::app.tester.Run (if any). Outside test mode
 /// (Testing.CurrentTest == null, e.g. when a shared goal is reused in production),
 /// the action no-ops rather than erroring so shared goals work in both modes.
 /// </summary>

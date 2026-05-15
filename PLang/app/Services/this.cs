@@ -20,7 +20,7 @@ public sealed class @this : IEnumerable<global::app.Services.Service.@this>
     /// Spawns a new Service whose Parent is <paramref name="parent"/>. Caller
     /// disposes when the call completes (await using).
     /// </summary>
-    public global::app.Services.Service.@this New(global::app.Actor.@this parent)
+    public global::app.Services.Service.@this New(global::app.actor.@this parent)
     {
         var service = new global::app.Services.Service.@this(this, parent);
         _services.TryAdd(service.Id, service);

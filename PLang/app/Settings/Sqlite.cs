@@ -1,16 +1,16 @@
 using Microsoft.Data.Sqlite;
-using app.FileSystem;
-using app.FileSystem.Default;
-using app.Channels.Serializers.Serializer;
-using app.Errors;
-using app.Variables;
+using app.filesystem;
+using app.filesystem.Default;
+using app.channels.serializers.serializer;
+using app.errors;
+using app.variables;
 using app.Utils;
 
 namespace app.Settings;
 
 /// <summary>
 /// SQLite-backed persistent settings store.
-/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data envelope via global::app.Channels.Serializers.Serializer.Plang.@this).
+/// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (Data envelope via global::app.channels.serializers.serializer.plang.@this).
 /// WAL mode for concurrent reads. Tables auto-created on first write.
 /// Connection per operation (SQLite pools internally via connection string).
 /// </summary>
@@ -18,7 +18,7 @@ public sealed class Sqlite : IStore
 {
     private readonly string _connectionString;
     private readonly SqliteConnection? _sentinel;
-    private readonly global::app.Channels.Serializers.Serializer.Plang.@this _serializer = new();
+    private readonly global::app.channels.serializers.serializer.plang.@this _serializer = new();
     private bool _disposed;
 
     /// <summary>
@@ -295,10 +295,10 @@ public sealed class Sqlite : IStore
         if (data.Value == null || data.Type == null) return;
 
         var clrType = data.Context?.App.Types.Get(data.Type.Value)
-                      ?? Types.@this.GetPrimitiveOrMime(data.Type.Value);
+                      ?? AppTypes.GetPrimitiveOrMime(data.Type.Value);
         if (clrType == null || clrType.IsAssignableFrom(data.Value.GetType())) return;
 
-        var converted = Types.@this.ConvertTo(data.Value, clrType);
+        var converted = AppTypes.ConvertTo(data.Value, clrType);
         if (converted != null) data.Value = converted;
     }
 
