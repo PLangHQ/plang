@@ -1,10 +1,10 @@
 using app.Variables;
 
-namespace app.Cache;
+namespace app.modules.cache;
 
 /// <summary>
 /// Pluggable cache interface for step result caching.
-/// Default: global::app.Cache.Memory. Swap via: - use 'redis.dll' for caching
+/// Default: global::app.modules.cache.Memory. Swap via: - use 'redis.dll' for caching
 /// </summary>
 public interface ICache
 {

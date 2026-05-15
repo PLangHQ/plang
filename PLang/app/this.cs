@@ -138,7 +138,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
     /// </summary>
-    public ICache Cache { get; set; } = new global::app.Cache.Memory();
+    public ICache Cache { get; set; } = new global::app.modules.cache.Memory();
 
     /// <summary>
     /// Strongly typed, goal-scoped module config.

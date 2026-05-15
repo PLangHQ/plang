@@ -52,7 +52,7 @@ global using PLangFileSystem = app.FileSystem.Default.PLangFileSystem;
 global using EngineTypes = app.Types.@this;
 
 // Standalone concepts (no v1 conflicts in tests)
-global using ICache = app.Cache.ICache;
+global using ICache = app.modules.cache.ICache;
 global using CallStack = app.CallStack.@this;
 global using Flags = app.CallStack.Flags;
 // Call: not a global alias — App.modules.goal.Call (the goal.call action handler)

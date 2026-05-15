@@ -57,7 +57,7 @@ global using ICallback = app.Callback.ICallback;
 global using AppStatics = app.Statics.@this;
 
 // Standalone concepts
-global using ICache = app.Cache.ICache;
+global using ICache = app.modules.cache.ICache;
 global using Debugging = app.Debug.@this;
 global using Tester = app.Tester.@this;
 

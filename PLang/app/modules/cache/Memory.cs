@@ -1,7 +1,7 @@
 using System.Runtime.Caching;
 using app.Variables;
 
-namespace app.Cache;
+namespace app.modules.cache;
 
 /// <summary>
 /// Default in-memory ICache implementation using System.Runtime.Caching.MemoryCache.
