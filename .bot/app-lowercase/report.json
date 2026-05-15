@@ -26,6 +26,60 @@
         "health": "green",
         "notes": "Coder's v1 plan + baseline remain in .bot/app-lowercase/coder/v1/ as reference. Once Ingi signs off, this plan replaces coder's as the source of truth."
       }
+    },
+    {
+      "id": "a3e91b27-5f44-4c8a-9d12-7c8b34f5e001",
+      "bot": "coder",
+      "timestamp_start": "2026-05-15T12:00:00Z",
+      "timestamp_end": "2026-05-15T12:30:00Z",
+      "intent": "Fix all 'App.' string literals in test files and production code after the App → app namespace rename.",
+      "before": {
+        "assumptions": "Branch already has the namespace rename in production C#. Test files have hardcoded 'App.' strings in reflection calls, assertions, and Roslyn stub sources.",
+        "risk": "Generator tests use inline Roslyn source that must use 'app.modules' for the generator to recognize [Action] attributes. Fixture DLLs need rebuilding."
+      },
+      "plan": ".bot/app-lowercase/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/signing/SignatureRenameTests.cs",
+            "PLang.Tests/App/Utility/TypeMismatchExample.cs",
+            "PLang.Tests/App/Utility/TypeMismatchMessageTests.cs",
+            "PLang.Tests/App/Fixtures/MatrixRunner.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs",
+            "PLang.Tests/Generator/SnapshotParamsTests.cs",
+            "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Changed 'App.' string literals to 'app.' in reflection GetType() calls, assertions, generated file names, and inline Roslyn compilation stubs."
+        },
+        {
+          "paths": [
+            "TestFixtures/TestProvider/TestSigningProvider.cs",
+            "TestFixtures/NoCtorProvider/NoCtorProvider.cs",
+            "PLang.Tests/App/Fixtures/dlls/TestProvider.dll",
+            "PLang.Tests/App/Fixtures/dlls/NoCtorProvider.dll"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated fixture source files using directives from App.* to app.*, rebuilt DLLs and committed them."
+        },
+        {
+          "paths": ["PLang/app/Builder/this.cs"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Fixed StoreOnlyModifier namespace check from 'App.Goals' to 'app.Goals' — caused SaveGoal_CamelCase_StoreOnly to fail because non-[Store] properties (Errors, Warnings) were no longer filtered out of .pr JSON."
+        }
+      ],
+      "after": {
+        "status": "All 2752 tests passing. Both the original 16 string-literal failures and a hidden production bug in StoreOnlyModifier are fixed.",
+        "health": "green",
+        "notes": "The StoreOnlyModifier bug was not in the original task description but was discovered during test runs. Fixed as part of this session."
+      }
     }
   ]
 }

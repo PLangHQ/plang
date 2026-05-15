@@ -1,8 +1,8 @@
 using System.IO;
 using System.Linq;
 using PLang.Tests.App.Fixtures;
-using App.modules.matrix.snapshot;
-using App.modules.matrix.plain;
+using app.modules.matrix.snapshot;
+using app.modules.matrix.plain;
 
 namespace PLang.Tests.Generator;
 
@@ -35,32 +35,32 @@ public class SnapshotParamsTests
     [Test]
     public async Task SnapshotParams_OneEntryPerProperty()
     {
-        var snapshotSrc = ReadGenerated("App.modules.matrix.snapshot.SnapshotOnError.Action.g.cs");
+        var snapshotSrc = ReadGenerated("app.modules.matrix.snapshot.SnapshotOnError.Action.g.cs");
         // SnapshotOnError has two parameter properties (First, Second). __SnapshotParams should
         // contain two ParamSnapshot entries.
-        var entryCount = (snapshotSrc.Length - snapshotSrc.Replace("new global::App.Errors.ParamSnapshot", "").Length)
-            / "new global::App.Errors.ParamSnapshot".Length;
+        var entryCount = (snapshotSrc.Length - snapshotSrc.Replace("new global::app.Errors.ParamSnapshot", "").Length)
+            / "new global::app.Errors.ParamSnapshot".Length;
         await Assert.That(entryCount).IsEqualTo(2);
     }
 
     [Test]
     public async Task SnapshotEntry_PrValue_FromGetParameterValue()
     {
-        var snapshotSrc = ReadGenerated("App.modules.matrix.snapshot.SnapshotOnError.Action.g.cs");
+        var snapshotSrc = ReadGenerated("app.modules.matrix.snapshot.SnapshotOnError.Action.g.cs");
         await Assert.That(snapshotSrc).Contains("PrValue = __pr?.Value");
     }
 
     [Test]
     public async Task SnapshotEntry_FinalValue_FromBackingFieldValue()
     {
-        var snapshotSrc = ReadGenerated("App.modules.matrix.snapshot.SnapshotOnError.Action.g.cs");
+        var snapshotSrc = ReadGenerated("app.modules.matrix.snapshot.SnapshotOnError.Action.g.cs");
         await Assert.That(snapshotSrc).Contains("FinalValue = __First_set ? (object?)__First_backing : null");
     }
 
     [Test]
     public async Task SnapshotEntry_UnaccessedProperty_PrValueOnly()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
 
@@ -74,7 +74,7 @@ public class SnapshotParamsTests
     [Test]
     public async Task SnapshotEntry_AccessedProperty_BothPresent_Distinct()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         app.User.Context.Variables.Set("name", "world");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello %name%"), ("second", (object?)42) });
@@ -90,7 +90,7 @@ public class SnapshotParamsTests
     [Test]
     public async Task Snapshot_AttachedToError_OnFailure()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
         await Assert.That(result.Data.Success).IsFalse();
@@ -100,7 +100,7 @@ public class SnapshotParamsTests
     [Test]
     public async Task Snapshot_NotAttached_OnSuccess()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
         await Assert.That(result.Data.Success).IsTrue();
@@ -112,12 +112,12 @@ public class SnapshotParamsTests
     {
         // DataProperty.EmitSnapshotEntry produces a non-empty block; ProviderProperty
         // intentionally emits nothing (providers aren't parameter-sourced).
-        var providerSrc = ReadGenerated("App.modules.matrix.provider.ProviderProp.Action.g.cs");
+        var providerSrc = ReadGenerated("app.modules.matrix.provider.ProviderProp.Action.g.cs");
         // ProviderProp has only a [Code] property — __SnapshotParams body should be
         // empty (just an empty list).
         await Assert.That(providerSrc).Contains("__SnapshotParams()");
         // No ParamSnapshot entry for the Provider property.
-        var entryCount = providerSrc.Split(new[] { "new global::App.Errors.ParamSnapshot" },
+        var entryCount = providerSrc.Split(new[] { "new global::app.Errors.ParamSnapshot" },
             System.StringSplitOptions.None).Length - 1;
         await Assert.That(entryCount).IsEqualTo(0);
     }

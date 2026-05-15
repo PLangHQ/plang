@@ -31,9 +31,9 @@ public class IncrementalCacheTests
     private static ActionClassInfo MakeInfo(string name = "Handler",
         params PropertyBase[] props)
         => new(
-            Namespace: "App.modules.test",
+            Namespace: "app.modules.test",
             ClassName: name,
-            FullName: $"App.modules.test.{name}",
+            FullName: $"app.modules.test.{name}",
             ImplementsIContext: true,
             ImplementsIChannel: false,
             ImplementsIAction: true,
@@ -67,13 +67,13 @@ public class IncrementalCacheTests
     {
         var propsA = new PropertyBase[]
         {
-            new DataProperty("First", "global::App.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
-            new DataProperty("Second", "global::App.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("First", "global::app.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("Second", "global::app.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
         };
         var propsB = new PropertyBase[]
         {
-            new DataProperty("First", "global::App.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
-            new DataProperty("Second", "global::App.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("First", "global::app.Data.@this<string>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
+            new DataProperty("Second", "global::app.Data.@this<int>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsRawNameResolvable: false),
         };
 
         var a = MakeInfo("X", propsA);
@@ -86,8 +86,8 @@ public class IncrementalCacheTests
     [Test]
     public async Task ActionClassInfo_DifferentPropertyOrder_AreNotEqual()
     {
-        var p1 = new DataProperty("A", "global::App.Data.@this<string>", false, false, "string", null, false, false);
-        var p2 = new DataProperty("B", "global::App.Data.@this<int>", false, false, "int", null, false, false);
+        var p1 = new DataProperty("A", "global::app.Data.@this<string>", false, false, "string", null, false, false);
+        var p2 = new DataProperty("B", "global::app.Data.@this<int>", false, false, "int", null, false, false);
 
         var a = MakeInfo("X", p1, p2);
         var b = MakeInfo("X", p2, p1);
@@ -153,7 +153,7 @@ public class IncrementalCacheTests
 
     private const string MinimalSource = """
         using System;
-        namespace App.modules {
+        namespace app.modules {
             public class ActionAttribute : Attribute {}
             public class CodeAttribute : Attribute {}
             public interface IContext {}
@@ -164,7 +164,7 @@ public class IncrementalCacheTests
             public interface IEvent {}
             public interface ICodeGenerated {}
         }
-        namespace App.Data {
+        namespace app.Data {
             public partial class @this {
                 public static @this Ok() => null!;
                 public static @this Ok(object? v) => null!;
@@ -176,7 +176,7 @@ public class IncrementalCacheTests
             }
             public partial class @this<T> : @this {}
         }
-        namespace App {
+        namespace app {
             public partial class @this {}
             namespace Actor.Context { public partial class @this {} }
             namespace Errors {
@@ -207,10 +207,10 @@ public class IncrementalCacheTests
             }
         }
 
-        namespace App.Test {
-            [App.modules.Action]
+        namespace app.Test {
+            [app.modules.Action]
             public partial class TestHandler {
-                public partial App.Data.@this<string> Foo { get; init; }
+                public partial app.Data.@this<string> Foo { get; init; }
             }
         }
         """;
@@ -350,8 +350,8 @@ public class IncrementalCacheTests
 
         // Replace TestHandler's property type so ActionClassInfo's Properties array changes.
         var modifiedSource = MinimalSource.Replace(
-            "public partial App.Data.@this<string> Foo { get; init; }",
-            "public partial App.Data.@this<int> Foo { get; init; }");
+            "public partial app.Data.@this<string> Foo { get; init; }",
+            "public partial app.Data.@this<int> Foo { get; init; }");
         var compilation2 = CreateCompilation(modifiedSource);
         driver = driver.RunGenerators(compilation2);
 

@@ -1,4 +1,4 @@
-using global::App.Utils;
+using global::app.Utils;
 
 namespace PLang.Tests.App.Utility;
 
@@ -47,8 +47,8 @@ public class TypeMismatchMessageTests
         // The motivating case: `App.Goals.Goal.Steps.Step.Actions.@this` has Name=="this",
         // useless. FullName disambiguates which `@this` it actually is.
         var (_, error) = TypeConverter.TryConvertTo(42L,
-            typeof(global::App.Goals.Goal.Steps.Step.Actions.@this));
-        await Assert.That(error!.Message).Contains("App.Goals.Goal.Steps.Step.Actions");
+            typeof(global::app.Goals.Goal.Steps.Step.Actions.@this));
+        await Assert.That(error!.Message).Contains("app.Goals.Goal.Steps.Step.Actions");
     }
 
     [Test]
