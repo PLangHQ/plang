@@ -100,17 +100,17 @@ public class DataAsTResolutionTests
         await Assert.That(result.Value!["content"]).IsEqualTo("You are a compiler");
     }
 
-    // T has static Resolve(string, Context) (e.g., FileSystem.Path) → As<T> dispatches to it for string Values.
+    // T has static Resolve(string, Context) (e.g., FileSystem.path) → As<T> dispatches to it for string Values.
     [Test]
     public async Task AsT_TypeWithStaticResolve_StringValue_DispatchesToResolve()
     {
         var data = new Data("file", "subdir/file.txt") { Context = _app.User.Context };
 
-        var result = data.As<global::app.FileSystem.Path>(_app.User.Context);
+        var result = data.As<global::app.FileSystem.path>(_app.User.Context);
 
-        // FileSystem.Path.Resolve returned a Path instance — Value should be one.
+        // FileSystem.path.Resolve returned a Path instance — Value should be one.
         await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value).IsTypeOf<global::app.FileSystem.Path>();
+        await Assert.That(result.Value).IsTypeOf<global::app.FileSystem.path>();
     }
 
     // TypeMapping conversion failure → Data.FromError with structured error.

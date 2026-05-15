@@ -7,7 +7,7 @@ namespace app.modules.file;
 [Action("save", Cacheable = false)]
 public partial class Save : IContext
 {
-    public partial data.@this<FileSystem.Path> Path { get; init; }
+    public partial data.@this<FileSystem.path> Path { get; init; }
     public partial data.@this? Value { get; init; }
 
     [Code]

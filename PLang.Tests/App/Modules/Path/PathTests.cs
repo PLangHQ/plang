@@ -1,6 +1,6 @@
 using global::app.FileSystem.Default;
 using global::app.Variables;
-using PLangPath = global::app.FileSystem.Path;
+using PLangPath = global::app.FileSystem.path;
 using global::app.modules.file;
 using global::app.modules.file.code;
 

@@ -9,7 +9,7 @@ namespace app.modules.file;
 [Action("list")]
 public partial class List : IContext
 {
-    public partial data.@this<FileSystem.Path> Path { get; init; }
+    public partial data.@this<FileSystem.path> Path { get; init; }
 
     [Default("*")]
     public partial data.@this<string> Pattern { get; init; }

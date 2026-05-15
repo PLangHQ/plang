@@ -10,7 +10,7 @@ namespace app.FileSystem;
 /// </summary>
 [PlangType("path",
     Example = "/some/file.json")]
-public class Path : modules.IContext
+public class path : modules.IContext
 {
     private readonly string _absolutePath;
 
@@ -39,7 +39,7 @@ public class Path : modules.IContext
     /// construct them; Context arrives via the IContext setter when the Path
     /// is wrapped in Data&lt;Path&gt; or set on a runtime object.
     /// </summary>
-    public Path(string absolutePath, Actor.Context.@this? context = null, object? content = null, string? source = null)
+    public path(string absolutePath, Actor.Context.@this? context = null, object? content = null, string? source = null)
     {
         _absolutePath = absolutePath;
         Context = context;
@@ -57,7 +57,7 @@ public class Path : modules.IContext
     public Actor.Context.@this? Context { get; set; }
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
-    public static Path Resolve(string rawPath, Actor.Context.@this context)
+    public static path Resolve(string rawPath, Actor.Context.@this context)
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
@@ -90,8 +90,8 @@ public class Path : modules.IContext
             }
         }
 
-        var path = new Path(fs.ValidatePath(resolved), context) { Raw = rawPath };
-        return path;
+        var p = new path(fs.ValidatePath(resolved), context) { Raw = rawPath };
+        return p;
     }
 
     // --- Path properties ---
@@ -173,7 +173,7 @@ public class Path : modules.IContext
 
     public override bool Equals(object? obj) => obj switch
     {
-        Path other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
+        path other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
         string str => string.Equals(_absolutePath, str, StringComparison.OrdinalIgnoreCase),
         _ => false
     };

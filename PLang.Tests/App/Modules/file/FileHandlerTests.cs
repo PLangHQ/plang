@@ -3,7 +3,7 @@ using app;
 using global::app.Variables;
 using global::app.modules.file;
 using global::app.FileSystem.Default;
-using PLangPath = global::app.FileSystem.Path;
+using PLangPath = global::app.FileSystem.path;
 
 namespace PLang.Tests.App.actions.file;
 

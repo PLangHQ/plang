@@ -9,7 +9,7 @@ namespace app.Variables;
 /// Default flow for a slot whose value is <c>"%x%"</c>: <c>Data.AsT_Impl</c> intercepts
 /// at the substitution branch (TryFullVarMatch → Variables.Get), expecting the
 /// referenced variable's <em>value</em> in T form. That's correct for value-typed Ts
-/// (string, int, FileSystem.Path) where <c>%x%</c> means "interpolate the value of x".
+/// (string, int, FileSystem.path) where <c>%x%</c> means "interpolate the value of x".
 /// </para>
 /// <para>
 /// For name-like Ts (Variable), <c>%x%</c> means "the variable named x" — the slot is

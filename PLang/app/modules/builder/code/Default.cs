@@ -49,7 +49,7 @@ public class Default : IBuilder
         var listAction = new file.List
         {
             Context = context,
-            Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(searchPath, context)),
+            Path = data.@this<FileSystem.path>.Ok(FileSystem.path.Resolve(searchPath, context)),
             Pattern = new data.@this<string>("", "*.goal"),
             Recursive = new data.@this<bool>("", true)
         };
@@ -57,7 +57,7 @@ public class Default : IBuilder
         if (!listResult.Success)
             return listResult;
 
-        var files = listResult.Value as FileSystem.Path[];
+        var files = listResult.Value as FileSystem.path[];
         if (files == null || files.Length == 0)
             return data.@this.Ok(new List<Goal>());
 
@@ -72,7 +72,7 @@ public class Default : IBuilder
             foreach (var bf in buildFiles)
                 bf.Context ??= context;
 
-            bool MatchesPattern(FileSystem.Path f, FileSystem.Path bf)
+            bool MatchesPattern(FileSystem.path f, FileSystem.path bf)
             {
                 // Use bf.Relative as the source of truth — bf.Raw is only set when a
                 // Path is built via Path.Resolve, but TypeConverter constructs paths
@@ -88,7 +88,7 @@ public class Default : IBuilder
                 return f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase);
             }
 
-            var ordered = new List<FileSystem.Path>();
+            var ordered = new List<FileSystem.path>();
             var seen = new HashSet<string>();
             foreach (var bf in buildFiles)
             {
@@ -108,7 +108,7 @@ public class Default : IBuilder
 
         foreach (var file in files)
         {
-            var readAction = new file.Read { Context = context, Path = data.@this<FileSystem.Path>.Ok(file) };
+            var readAction = new file.Read { Context = context, Path = data.@this<FileSystem.path>.Ok(file) };
             var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
@@ -183,7 +183,7 @@ public class Default : IBuilder
         var saveAction = new file.Save
         {
             Context = context,
-            Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context)),
+            Path = data.@this<FileSystem.path>.Ok(FileSystem.path.Resolve(prPath, context)),
             Value = new data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
@@ -729,7 +729,7 @@ public class Default : IBuilder
         var readAction = new file.Read
         {
             Context = context,
-            Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(prPath, context))
+            Path = data.@this<FileSystem.path>.Ok(FileSystem.path.Resolve(prPath, context))
         };
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
@@ -788,10 +788,10 @@ public class Default : IBuilder
                     var existsAction = new file.Exists
                     {
                         Context = context,
-                        Path = data.@this<FileSystem.Path>.Ok(FileSystem.Path.Resolve(expectedPrPath, context))
+                        Path = data.@this<FileSystem.path>.Ok(FileSystem.path.Resolve(expectedPrPath, context))
                     };
                     var existsResult = await app.RunAction(existsAction, context);
-                    if (existsResult.Success && existsResult.Value is FileSystem.Path pathData && pathData.Exists)
+                    if (existsResult.Success && existsResult.Value is FileSystem.path pathData && pathData.Exists)
                     {
                         goalCall.PrPath = expectedPrPath;
                     }

@@ -10,7 +10,7 @@ namespace app.modules.file;
 [Action("exists")]
 public partial class Exists : IContext
 {
-    public partial data.@this<FileSystem.Path> Path { get; init; }
+    public partial data.@this<FileSystem.path> Path { get; init; }
 
     [Code]
     public partial IFile Files { get; }

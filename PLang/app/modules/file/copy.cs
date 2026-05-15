@@ -8,8 +8,8 @@ namespace app.modules.file;
 [Action("copy", Cacheable = false)]
 public partial class Copy : IContext
 {
-    public partial data.@this<FileSystem.Path> Source { get; init; }
-    public partial data.@this<FileSystem.Path> Destination { get; init; }
+    public partial data.@this<FileSystem.path> Source { get; init; }
+    public partial data.@this<FileSystem.path> Destination { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> Overwrite { get; init; }
