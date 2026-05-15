@@ -9,7 +9,7 @@ public class Stage4_BuilderCatalogTests
     [Test]
     public async Task BuilderCatalog_DescribesChannelParameter_OnIChannelActions()
     {
-        var app = new global::App.@this("/tmp/s4cat-a");
+        var app = new global::app.@this("/tmp/s4cat-a");
         var actions = app.Modules.Describe();
         var write = actions.FirstOrDefault(a => a.Module == "output" && a.ActionName == "write");
         await Assert.That(write).IsNotNull();
@@ -20,8 +20,8 @@ public class Stage4_BuilderCatalogTests
     [Test]
     public async Task BuilderCatalog_PassesPerActorChannelInventory_AtBuildTime()
     {
-        var app = new global::App.@this("/tmp/s4cat-b");
-        global::App.@this.WireDefaultConsoleChannels(app.User);
+        var app = new global::app.@this("/tmp/s4cat-b");
+        global::app.@this.WireDefaultConsoleChannels(app.User);
         app.User.Channels.Register(StreamChannel.Memory("logger"));
 
         var inventory = app.Modules.GetChannelInventory(app.User);
@@ -39,7 +39,7 @@ public class Stage4_BuilderCatalogTests
         // inventory lists registered names. Real-LLM verification is integration-
         // level. Here we verify the structural pre-condition: no syntactic-pattern
         // hint appears in the channel parameter description.
-        var app = new global::App.@this("/tmp/s4cat-c");
+        var app = new global::app.@this("/tmp/s4cat-c");
         var actions = app.Modules.Describe();
         var write = actions.First(a => a.Module == "output" && a.ActionName == "write");
         var channelParam = write.Parameters.First(p => p.Name == "channel");

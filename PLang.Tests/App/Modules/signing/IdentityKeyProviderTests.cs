@@ -1,10 +1,10 @@
-using global::App.Actor.Context;
-using global::App.Errors;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.signing.code;
-using global::App.modules.identity;
-using PLangEngine = global::App.@this;
+using global::app.Actor.Context;
+using global::app.Errors;
+using global::app.Variables;
+using global::app.Code;
+using global::app.modules.signing.code;
+using global::app.modules.identity;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -36,7 +36,7 @@ public class IdentityKeyProviderTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.Actor.Context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Create_UsesKeyProviderFromRegistry()
@@ -140,7 +140,7 @@ public class IdentityKeyProviderTests
             _privKey = privKey;
         }
 
-        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.Ok(new KeyPair(_pubKey, _privKey));
+        public global::app.Data.@this<KeyPair> GenerateKeyPair() => global::app.Data.@this<KeyPair>.Ok(new KeyPair(_pubKey, _privKey));
     }
 
     private class ThrowingKeyProvider : IKey
@@ -151,6 +151,6 @@ public class IdentityKeyProviderTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::app.Data.@this<KeyPair> GenerateKeyPair() => global::app.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

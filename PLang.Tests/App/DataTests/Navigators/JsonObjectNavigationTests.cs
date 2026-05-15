@@ -1,10 +1,10 @@
-using global::App.Variables.Navigators;
+using global::app.Variables.Navigators;
 using System.Text.Json.Nodes;
 
 namespace PLang.Tests.App.DataTests.Navigators;
 
 // JsonObject implements IDictionary<string, JsonNode?> (NOT IDictionary<string, object?>
-// and NOT non-generic IDictionary), so the canonical-shape arms in global::App.Variables.Navigators.Dictionary
+// and NOT non-generic IDictionary), so the canonical-shape arms in global::app.Variables.Navigators.Dictionary
 // don't see it. Without the generic IDictionary<string, T> arm, dot-path navigation
 // through `set ... type=json` values fell through to the reflection navigator and
 // surfaced only the JsonObject CLR properties (Count, Options, Parent, Root) — never
@@ -21,7 +21,7 @@ public class JsonObjectNavigationTests
     [Test]
     public async Task CanNavigate_JsonObject_ReturnsTrue()
     {
-        var nav = new global::App.Variables.Navigators.Dictionary();
+        var nav = new global::app.Variables.Navigators.Dictionary();
         var jo = new JsonObject { ["goal"] = new JsonObject { ["name"] = "Hello" } };
         await Assert.That(nav.CanNavigate(MakeData(jo))).IsTrue();
     }
@@ -29,7 +29,7 @@ public class JsonObjectNavigationTests
     [Test]
     public async Task Navigate_TopLevelKey_ReturnsValue()
     {
-        var nav = new global::App.Variables.Navigators.Dictionary();
+        var nav = new global::app.Variables.Navigators.Dictionary();
         var jo = new JsonObject { ["id"] = "abc123" };
         var result = nav.Navigate(MakeData(jo), "id");
         await Assert.That(result.IsInitialized).IsTrue();
@@ -50,7 +50,7 @@ public class JsonObjectNavigationTests
         };
         var data = MakeData(jo);
         // Simulate dot-path: Navigate to "goal" then to "name".
-        var nav = new global::App.Variables.Navigators.Dictionary();
+        var nav = new global::app.Variables.Navigators.Dictionary();
         var goalResult = nav.Navigate(data, "goal");
         await Assert.That(goalResult.IsInitialized).IsTrue();
 
@@ -63,7 +63,7 @@ public class JsonObjectNavigationTests
     [Test]
     public async Task Navigate_CaseInsensitiveKey()
     {
-        var nav = new global::App.Variables.Navigators.Dictionary();
+        var nav = new global::app.Variables.Navigators.Dictionary();
         var jo = new JsonObject { ["Name"] = "Hello" };
         var result = nav.Navigate(MakeData(jo), "name");
         await Assert.That(result.Value?.ToString()).IsEqualTo("Hello");
@@ -72,7 +72,7 @@ public class JsonObjectNavigationTests
     [Test]
     public async Task Navigate_MissingKey_ReturnsNotFound()
     {
-        var nav = new global::App.Variables.Navigators.Dictionary();
+        var nav = new global::app.Variables.Navigators.Dictionary();
         var jo = new JsonObject { ["goal"] = "Hello" };
         var result = nav.Navigate(MakeData(jo), "nonexistent");
         await Assert.That(result.IsInitialized).IsFalse();
@@ -81,7 +81,7 @@ public class JsonObjectNavigationTests
     [Test]
     public async Task Navigate_Count_ReturnsItemCount()
     {
-        var nav = new global::App.Variables.Navigators.Dictionary();
+        var nav = new global::app.Variables.Navigators.Dictionary();
         var jo = new JsonObject { ["a"] = 1, ["b"] = 2, ["c"] = 3 };
         var result = nav.Navigate(MakeData(jo), "Count");
         await Assert.That(result.Value).IsEqualTo(3);
@@ -92,7 +92,7 @@ public class JsonObjectNavigationTests
     {
         // Regression guard: the prior IDictionary<string,object?> and non-generic
         // IDictionary paths must not have been broken by the third arm.
-        var nav = new global::App.Variables.Navigators.Dictionary();
+        var nav = new global::app.Variables.Navigators.Dictionary();
 
         var canonical = new Dictionary<string, object?> { ["k"] = "v" };
         var d1 = new Data("");

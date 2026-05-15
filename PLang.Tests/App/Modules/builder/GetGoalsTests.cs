@@ -1,8 +1,8 @@
 using System.Text.Json;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.builder;
-using PLangEngine = global::App.@this;
+using global::app.Actor.Context;
+using global::app.Variables;
+using global::app.modules.builder;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -108,7 +108,7 @@ public class GetGoalsTests
                     Text = "write out 'hello'",
                     Actions = new StepActions(new[]
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
@@ -118,7 +118,7 @@ public class GetGoalsTests
                 }
             }
         };
-        var prJson = JsonSerializer.Serialize(new List<Goal> { prGoal }, global::App.Utils.Json.PrWrite);
+        var prJson = JsonSerializer.Serialize(new List<Goal> { prGoal }, global::app.Utils.Json.PrWrite);
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "start.pr"), prJson);
 
         var action = new goals { Context = _app.User.Context, Path = "." };
@@ -145,7 +145,7 @@ public class GetGoalsTests
             "Other\n- write out 'other'");
 
         // Set files filter to only build Start.goal
-        _app.Builder.Files.Add(new global::App.FileSystem.Path("Start.goal"));
+        _app.Builder.Files.Add(new global::app.FileSystem.Path("Start.goal"));
 
         var action = new goals { Context = _app.User.Context, Path = "." };
         var result = await _app.RunAction(action, _app.User.Context);
@@ -165,7 +165,7 @@ public class GetGoalsTests
             "MyGoal\n- step one");
 
         // Filter with different casing
-        _app.Builder.Files.Add(new global::App.FileSystem.Path("mygoal.goal"));
+        _app.Builder.Files.Add(new global::app.FileSystem.Path("mygoal.goal"));
 
         var action = new goals { Context = _app.User.Context, Path = "." };
         var result = await _app.RunAction(action, _app.User.Context);
@@ -185,7 +185,7 @@ public class GetGoalsTests
             "Start\n- write out 'hello'");
 
         // Filter for a file that doesn't exist
-        _app.Builder.Files.Add(new global::App.FileSystem.Path("NonExistent.goal"));
+        _app.Builder.Files.Add(new global::app.FileSystem.Path("NonExistent.goal"));
 
         var action = new goals { Context = _app.User.Context, Path = "." };
         var result = await _app.RunAction(action, _app.User.Context);
@@ -209,8 +209,8 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Third.goal"),
             "Third\n- step three");
 
-        _app.Builder.Files.Add(new global::App.FileSystem.Path("First.goal"));
-        _app.Builder.Files.Add(new global::App.FileSystem.Path("Third.goal"));
+        _app.Builder.Files.Add(new global::app.FileSystem.Path("First.goal"));
+        _app.Builder.Files.Add(new global::app.FileSystem.Path("Third.goal"));
 
         var action = new goals { Context = _app.User.Context, Path = "." };
         var result = await _app.RunAction(action, _app.User.Context);

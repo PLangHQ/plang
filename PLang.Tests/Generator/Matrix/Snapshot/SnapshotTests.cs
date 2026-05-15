@@ -1,6 +1,6 @@
 using PLang.Tests.App.Fixtures;
-using App.modules.matrix.snapshot;
-using App.modules.matrix.plain;
+using app.modules.matrix.snapshot;
+using app.modules.matrix.plain;
 
 namespace PLang.Tests.Generator.Matrix.Snapshot;
 
@@ -9,7 +9,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_ErrorMidRun_AttachesParamsToError()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"a"), ("second", (object?)42) });
 
@@ -21,7 +21,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_AccessedProperty_FinalValuePresent()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello"), ("second", (object?)42) });
 
@@ -33,7 +33,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_UnaccessedProperty_FinalValueNull()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello"), ("second", (object?)42) });
 
@@ -47,7 +47,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_PrValueIsRaw_NoResolution()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SnapshotOnError>(app,
             parameters: new[] { ("first", (object?)"hello-raw"), ("second", (object?)42) });
 
@@ -59,7 +59,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_HandlerSucceeds_NoSnapshotAttached()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<StringPlain>(app,
             parameters: new[] { ("path", (object?)"hello") });
         await Assert.That(result.Data.Success).IsTrue();
@@ -73,7 +73,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_SensitiveProperty_MasksPrValueAndFinalValue()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SensitiveSnapshot>(app,
             parameters: new[]
             {
@@ -104,7 +104,7 @@ public class SnapshotOnErrorTests
     [Test]
     public async Task SnapshotOnError_SensitiveProperty_NullPrValue_StaysNull()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<SensitiveSnapshot>(app,
             parameters: new[]
             {

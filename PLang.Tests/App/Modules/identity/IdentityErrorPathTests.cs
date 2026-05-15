@@ -1,10 +1,10 @@
 using System.Reflection;
-using global::App.Actor.Context;
-using global::App.Settings;
-using global::App.Errors;
-using global::App.Variables;
-using global::App.modules.identity;
-using PLangEngine = global::App.@this;
+using global::app.Actor.Context;
+using global::app.Settings;
+using global::app.Errors;
+using global::app.Variables;
+using global::app.modules.identity;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.identity;
 
@@ -41,7 +41,7 @@ public class IdentityErrorPathTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.Actor.Context.@this Ctx => _app.System.Context;
 
     // --- GetOrCreateDefaultAsync: auto-create save failure (via Get action) ---
 
@@ -327,25 +327,25 @@ public class IdentityErrorPathTests
     /// backing field. After stage 13's settings rework the store moved from
     /// per-actor to app-level — there's a single shared <c>app.SettingsStore</c>.
     /// </summary>
-    private static void SwapDataSource(global::App.@this app, global::App.Settings.IStore newDataSource)
+    private static void SwapDataSource(global::app.@this app, global::app.Settings.IStore newDataSource)
     {
-        var field = typeof(global::App.@this).GetField("_settingsStore",
+        var field = typeof(global::app.@this).GetField("_settingsStore",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.SetValue(app, new Lazy<global::App.Settings.IStore>(() => newDataSource));
+        field!.SetValue(app, new Lazy<global::app.Settings.IStore>(() => newDataSource));
     }
 
     /// <summary>
     /// DataSource wrapper that delegates all operations except Set, which always fails.
     /// </summary>
-    private class FailingSaveDataSource : global::App.Settings.IStore
+    private class FailingSaveDataSource : global::app.Settings.IStore
     {
-        private readonly global::App.Settings.IStore _inner;
-        public FailingSaveDataSource(global::App.Settings.IStore inner) => _inner = inner;
+        private readonly global::app.Settings.IStore _inner;
+        public FailingSaveDataSource(global::app.Settings.IStore inner) => _inner = inner;
 
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<global::App.Data.@this<List<T>>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
+        public Task<global::app.Data.@this<List<T>>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated save failure", "IOError", 500)
@@ -359,15 +359,15 @@ public class IdentityErrorPathTests
     /// <summary>
     /// Settings store wrapper that delegates all operations except Remove, which always fails.
     /// </summary>
-    private class FailingRemoveDataSource : global::App.Settings.IStore
+    private class FailingRemoveDataSource : global::app.Settings.IStore
     {
-        private readonly global::App.Settings.IStore _inner;
-        public FailingRemoveDataSource(global::App.Settings.IStore inner) => _inner = inner;
+        private readonly global::app.Settings.IStore _inner;
+        public FailingRemoveDataSource(global::app.Settings.IStore inner) => _inner = inner;
 
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
         public Task<Data> GetAll(string table) => _inner.GetAll(table);
-        public Task<global::App.Data.@this<List<T>>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
+        public Task<global::app.Data.@this<List<T>>> GetAll<T>(string table) where T : Data => _inner.GetAll<T>(table);
         public Task<Data> Set(string table, string key, Data data) => _inner.Set(table, key, data);
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(
@@ -381,15 +381,15 @@ public class IdentityErrorPathTests
     /// <summary>
     /// Settings store where GetAll always returns an error.
     /// </summary>
-    private class FailingGetAllDataSource : global::App.Settings.IStore
+    private class FailingGetAllDataSource : global::app.Settings.IStore
     {
         public Task<Data> Get(string table, string key)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
         public Task<Data> Get<T>(string table, string key) where T : Data => Get(table, key);
         public Task<Data> GetAll(string table)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated GetAll failure")));
-        public Task<global::App.Data.@this<List<T>>> GetAll<T>(string table) where T : Data
-            => Task.FromResult(global::App.Data.@this<List<T>>.FromError(new SettingsError("Simulated GetAll failure")));
+        public Task<global::app.Data.@this<List<T>>> GetAll<T>(string table) where T : Data
+            => Task.FromResult(global::app.Data.@this<List<T>>.FromError(new SettingsError("Simulated GetAll failure")));
         public Task<Data> Set(string table, string key, Data data)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
         public Task<Data> Remove(string table, string key)

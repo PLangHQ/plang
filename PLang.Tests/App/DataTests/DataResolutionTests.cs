@@ -9,10 +9,10 @@ namespace PLang.Tests.App.DataTests;
 
 public class DataResolutionTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/app");
+    public void Setup() => _app = new global::app.@this("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -75,7 +75,7 @@ public class DataResolutionTests
         _app.User.Context.Variables.Set("scope", "parent");
         var parentView = data.As<string>(_app.User.Context);
 
-        await using var subApp = new global::App.@this("/sub");
+        await using var subApp = new global::app.@this("/sub");
         subApp.User.Context.Variables.Set("scope", "sub");
         var subView = data.As<string>(subApp.User.Context);
 
@@ -107,11 +107,11 @@ public class DataResolutionTests
         var data = new Data("messages", raw) { Context = _app.User.Context };
 
         _app.User.Context.Variables.Set("comment", "value1");
-        var first = data.As<List<global::App.modules.llm.LlmMessage>>(_app.User.Context);
+        var first = data.As<List<global::app.modules.llm.LlmMessage>>(_app.User.Context);
         await Assert.That(first.Value![0].Content).IsEqualTo("value1");
 
         _app.User.Context.Variables.Set("comment", "value2");
-        var second = data.As<List<global::App.modules.llm.LlmMessage>>(_app.User.Context);
+        var second = data.As<List<global::app.modules.llm.LlmMessage>>(_app.User.Context);
         await Assert.That(second.Value![0].Content).IsEqualTo("value2");
     }
 

@@ -1,11 +1,11 @@
-using global::App.Code;
+using global::app.Code;
 
 namespace PLang.Tests.App.SnapshotTests;
 
 public class ProvidersSnapshotTests
 {
     // Public + parameterless ctor so Restore can re-instantiate it from the test DLL.
-    public sealed class CustomGrep : global::App.Data.Code.IGrep
+    public sealed class CustomGrep : global::app.Data.Code.IGrep
     {
         public string Name => "custom";
         public bool IsDefault { get; set; }
@@ -19,18 +19,18 @@ public class ProvidersSnapshotTests
     public async Task Providers_RoundTrip_PreservesDefaultSelectionsAndRuntimeRegistrations()
     {
         // Default selections per type + runtime (type, name, source) tuples both survive.
-        var src = new global::App.@this("/src");
+        var src = new global::app.@this("/src");
         var custom = new CustomGrep();
         // Stamp Source so the snapshot has a loadable origin (use this assembly's path).
         custom.Source = typeof(CustomGrep).Assembly.Location;
-        src.Code.Register(typeof(global::App.Data.Code.IGrep), custom);
-        src.Code.SetDefault(typeof(global::App.Data.Code.IGrep), "custom");
+        src.Code.Register(typeof(global::app.Data.Code.IGrep), custom);
+        src.Code.SetDefault(typeof(global::app.Data.Code.IGrep), "custom");
 
         var snap = src.Snapshot();
         var registrations = snap.Section("Providers")
-            .Read<List<global::App.Code.@this.Registration>>("registrations");
+            .Read<List<global::app.Code.@this.Registration>>("registrations");
         var overrides = snap.Section("Providers")
-            .Read<List<global::App.Code.@this.DefaultOverride>>("defaultOverrides");
+            .Read<List<global::app.Code.@this.DefaultOverride>>("defaultOverrides");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Any(r => r.ProviderName == "custom")).IsTrue();
@@ -45,16 +45,16 @@ public class ProvidersSnapshotTests
         // names that don't exist yet. We assert the contract by capturing an override that
         // names a registration that only exists post-step-1; if the order were inverted,
         // SetDefault would fire before Register and the restore would hard-error.
-        var src = new global::App.@this("/src");
+        var src = new global::app.@this("/src");
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
-        src.Code.Register(typeof(global::App.Data.Code.IGrep), custom);
-        src.Code.SetDefault(typeof(global::App.Data.Code.IGrep), "custom");
+        src.Code.Register(typeof(global::app.Data.Code.IGrep), custom);
+        src.Code.SetDefault(typeof(global::app.Data.Code.IGrep), "custom");
 
         var snap = src.Snapshot();
-        var dst = new global::App.@this("/dst");
+        var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        var defaultGrep = dst.Code.Get<global::App.Data.Code.IGrep>();
+        var defaultGrep = dst.Code.Get<global::app.Data.Code.IGrep>();
         await Assert.That(defaultGrep.Success).IsTrue();
         await Assert.That(defaultGrep.Value!.Name).IsEqualTo("custom");
     }
@@ -65,15 +65,15 @@ public class ProvidersSnapshotTests
         // Captured runtime registration's DLL/source can't be loaded → referent-integrity
         // hard error. No silent fallback to system default.
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>
+        snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>
         {
-            new(typeof(global::App.Data.Code.IGrep).AssemblyQualifiedName!,
+            new(typeof(global::app.Data.Code.IGrep).AssemblyQualifiedName!,
                 "ghost",
                 "/nonexistent/ghost-provider.dll")
         });
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>());
 
-        var dst = new global::App.@this("/dst");
+        var dst = new global::app.@this("/dst");
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
             dst.Restore(snap, dst.User.Context);
@@ -87,13 +87,13 @@ public class ProvidersSnapshotTests
         // Registrations succeed but default-selection name doesn't match any registered
         // provider → referent-integrity hard error.
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>
         {
-            new(typeof(global::App.Data.Code.IGrep).AssemblyQualifiedName!, "phantom")
+            new(typeof(global::app.Data.Code.IGrep).AssemblyQualifiedName!, "phantom")
         });
 
-        var dst = new global::App.@this("/dst");
+        var dst = new global::app.@this("/dst");
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
             dst.Restore(snap, dst.User.Context);
@@ -106,10 +106,10 @@ public class ProvidersSnapshotTests
     {
         // RegisterDefaults output is reconstructed on App boot — only post-defaults
         // registrations end up in the captured payload.
-        var app = new global::App.@this("/test");
+        var app = new global::app.@this("/test");
         var snap = app.Snapshot();
         var registrations = snap.Section("Providers")
-            .Read<List<global::App.Code.@this.Registration>>("registrations");
+            .Read<List<global::app.Code.@this.Registration>>("registrations");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Count).IsEqualTo(0);
@@ -122,13 +122,13 @@ public class ProvidersSnapshotTests
         // layer (selections + registrations) is in the snapshot. We confirm by inspecting
         // the wire shape: only Registration tuples + DefaultOverride records, no provider
         // object graphs.
-        var src = new global::App.@this("/src");
+        var src = new global::app.@this("/src");
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
-        src.Code.Register(typeof(global::App.Data.Code.IGrep), custom);
+        src.Code.Register(typeof(global::app.Data.Code.IGrep), custom);
 
         var snap = src.Snapshot();
         var registrations = snap.Section("Providers")
-            .Read<List<global::App.Code.@this.Registration>>("registrations");
+            .Read<List<global::app.Code.@this.Registration>>("registrations");
 
         await Assert.That(registrations).IsNotNull();
         await Assert.That(registrations!.Count).IsEqualTo(1);

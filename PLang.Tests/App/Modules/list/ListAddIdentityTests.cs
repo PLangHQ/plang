@@ -1,7 +1,7 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
-using global::App.modules.list;
+using global::app.Actor.Context;
+using app;
+using global::app.Variables;
+using global::app.modules.list;
 
 namespace PLang.Tests.App.actions.list;
 
@@ -17,15 +17,15 @@ namespace PLang.Tests.App.actions.list;
 
 public class ListAddIdentityTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/app");
+    public void Setup() => _app = new global::app.@this("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private (global::App.Actor.Context.@this ctx, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variables);
+    private (global::app.Actor.Context.@this ctx, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variables);
 
     // Mutation IS visible through Variables.Get because list.add mutates the live
     // List<object?> reference held by the variable's Data. No Variables.Set("products", list)

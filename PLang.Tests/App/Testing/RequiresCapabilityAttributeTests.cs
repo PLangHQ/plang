@@ -1,5 +1,5 @@
 using System.Reflection;
-using global::App.Attributes;
+using global::app.Attributes;
 
 namespace PLang.Tests.App.Tester;
 
@@ -72,10 +72,10 @@ public class RequiresCapabilityAttributeTests
     [Test]
     public async Task RealHandlers_HaveExpectedCapabilities_VerifiedByReflection()
     {
-        var request = typeof(global::App.modules.http.request).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var download = typeof(global::App.modules.http.download).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var upload = typeof(global::App.modules.http.upload).GetCustomAttribute<RequiresCapabilityAttribute>();
-        var llm = typeof(global::App.modules.llm.query).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var request = typeof(global::app.modules.http.request).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var download = typeof(global::app.modules.http.download).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var upload = typeof(global::app.modules.http.upload).GetCustomAttribute<RequiresCapabilityAttribute>();
+        var llm = typeof(global::app.modules.llm.query).GetCustomAttribute<RequiresCapabilityAttribute>();
 
         await Assert.That(request?.Capabilities).IsEquivalentTo(new[] { "network" });
         await Assert.That(download?.Capabilities).IsEquivalentTo(new[] { "network" });

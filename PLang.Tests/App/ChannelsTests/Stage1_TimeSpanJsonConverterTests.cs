@@ -1,5 +1,5 @@
 using System.Text.Json;
-using App.Channels.Serializers;
+using app.Channels.Serializers;
 
 namespace PLang.Tests.App.ChannelsTests;
 

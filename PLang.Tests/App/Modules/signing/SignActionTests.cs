@@ -1,13 +1,13 @@
 using System.Text.Json;
-using global::App.Actor.Context;
-using global::App.Errors;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.signing.code;
-using global::App.modules.crypto;
-using global::App.modules.identity;
-using global::App.modules.signing;
-using PLangEngine = global::App.@this;
+using global::app.Actor.Context;
+using global::app.Errors;
+using global::app.Variables;
+using global::app.Code;
+using global::app.modules.signing.code;
+using global::app.modules.crypto;
+using global::app.modules.identity;
+using global::app.modules.signing;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -39,7 +39,7 @@ public class SignActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.Actor.Context.@this Ctx => _app.System.Context;
 
     private async Task<Data> SignData(object? data, List<string>? contracts = null,
         TimeSpan? expires = null, Dictionary<string, object>? headers = null)
@@ -292,7 +292,7 @@ public class SignActionTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public global::App.Data.@this<KeyPair> GenerateKeyPair() => _inner.GenerateKeyPair();
+        public global::app.Data.@this<KeyPair> GenerateKeyPair() => _inner.GenerateKeyPair();
         public Data Sign(byte[] data, string privateKey) => _inner.Sign(data, privateKey);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => _inner.Verify(data, signature, publicKey);
         public async Task<Data> SignAsync(sign action) { SignCalled = true; return await _inner.SignAsync(action); }
@@ -307,7 +307,7 @@ public class SignActionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::app.Data.@this<KeyPair> GenerateKeyPair() => global::app.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.FromError(new ActionError("Sign failed", "SigningError", 500)));
@@ -322,6 +322,6 @@ public class SignActionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::app.Data.@this<KeyPair> GenerateKeyPair() => global::app.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
     }
 }

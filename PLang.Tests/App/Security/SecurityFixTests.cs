@@ -6,12 +6,12 @@ namespace PLang.Tests.App.Security;
 /// </summary>
 public class SecurityFixTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/app");
+        _app = new global::app.@this("/app");
     }
 
     [After(Test)]

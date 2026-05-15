@@ -3,13 +3,13 @@ namespace PLang.Tests.App.Types;
 public class EngineTypesTests
 {
     private EngineTypes _types = null!;
-    private global::App.Formats.@this _formats = null!;
+    private global::app.Formats.@this _formats = null!;
 
     [Before(Test)]
     public void Setup()
     {
         _types = new EngineTypes();
-        _formats = new global::App.Formats.@this();
+        _formats = new global::app.Formats.@this();
     }
 
     // --- Clr: PLang name → CLR type ---
@@ -607,14 +607,14 @@ public class EngineTypesTests
     [Test]
     public async Task Add_CustomType_LazyDerivationUsesEngineTypes()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.Actor.Context.@this(engine);
 
         // Add a custom type mapping that static TypeMapping does NOT have
         engine.Formats.Add(".custom", "custom-kind", "application/custom");
 
-        var data = new global::App.Data.@this("test", new byte[] { 1 },
-            global::App.Data.Type.FromMime("application/custom"));
+        var data = new global::app.Data.@this("test", new byte[] { 1 },
+            global::app.Data.Type.FromMime("application/custom"));
         data.Context = context;
 
         // Type.Kind goes through Engine.Types.KindOf — which sees our custom mapping
@@ -626,7 +626,7 @@ public class EngineTypesTests
     [Test]
     public async Task Engine_HasTypesProperty()
     {
-        await using var engine = new global::App.@this("/test");
+        await using var engine = new global::app.@this("/test");
 
         await Assert.That(engine.Types).IsNotNull();
         await Assert.That(engine.Types.Clr("string")).IsEqualTo(typeof(string));

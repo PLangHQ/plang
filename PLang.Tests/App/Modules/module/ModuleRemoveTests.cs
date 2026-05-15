@@ -1,6 +1,6 @@
-using global::App.Variables;
-using global::App.modules.module;
-using PLangEngine = global::App.@this;
+using global::app.Variables;
+using global::app.modules.module;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.module;
 

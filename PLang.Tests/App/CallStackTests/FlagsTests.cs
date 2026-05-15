@@ -45,7 +45,7 @@ public class FlagsTests
     {
         var on = new CallStack { Flags = Flags.Default with { Diff = true } };
         var off = new CallStack();
-        var vars = new global::App.Variables.@this();
+        var vars = new global::app.Variables.@this();
 
         await using var withDiff = on.Push(MakeAction("A"), vars);
         await using var noDiff = off.Push(MakeAction("A"), vars);
@@ -58,7 +58,7 @@ public class FlagsTests
     {
         // DeepDiff with Diff off → no diff machinery at all (no clones, no list).
         var stack = new CallStack { Flags = Flags.Default with { DeepDiff = true } };
-        var vars = new global::App.Variables.@this();
+        var vars = new global::app.Variables.@this();
         await using var call = stack.Push(MakeAction("A"), vars);
         await Assert.That(call.Diffs).IsNull();
     }

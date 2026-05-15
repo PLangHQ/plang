@@ -1,6 +1,6 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Errors;
+using global::app.Actor.Context;
+using app;
+using global::app.Errors;
 
 namespace PLang.Tests.App.Errors;
 
@@ -345,8 +345,8 @@ public class StepErrorTests
     public async Task FromException_CreatesStepErrorWithStep()
     {
         var ex = new Exception("Step crashed");
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         var step = new Step { Text = "test step" };
         context.Step = step;
 

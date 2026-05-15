@@ -1,7 +1,7 @@
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.identity;
-using PLangEngine = global::App.@this;
+using global::app.Actor.Context;
+using global::app.Variables;
+using global::app.modules.identity;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.identity;
 
@@ -30,7 +30,7 @@ public class IdentityHandlerTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.Actor.Context.@this Ctx => _app.System.Context;
 
     // --- create ---
 

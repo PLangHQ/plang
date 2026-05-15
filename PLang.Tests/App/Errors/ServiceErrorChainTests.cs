@@ -1,4 +1,4 @@
-using global::App.Errors;
+using global::app.Errors;
 using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.Errors;
@@ -12,7 +12,7 @@ public class ServiceErrorChainTests
         await using var call = stack.Push(MakeAction("A"));
         var chain = call.SnapshotChain();
         var sv = new ServiceError("crash", call.Action.Step!, chain);
-        IReadOnlyList<global::App.CallStack.Call.@this> typed = sv.CallFrames;
+        IReadOnlyList<global::app.CallStack.Call.@this> typed = sv.CallFrames;
         await Assert.That(typed).IsNotNull();
     }
 

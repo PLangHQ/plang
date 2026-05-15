@@ -86,7 +86,7 @@ public class CauseLinkageTests
         // documents the type at the source level — `IsTypeOf` runtime check is redundant.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction("A"));
-        global::App.CallStack.Call.@this? cause = call.Cause;
+        global::app.CallStack.Call.@this? cause = call.Cause;
         await Assert.That(cause).IsNull();
     }
 }

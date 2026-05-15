@@ -1,8 +1,8 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
-using global::App.modules;
-using global::App.modules.module;
+using global::app.Actor.Context;
+using app;
+using global::app.Variables;
+using global::app.modules;
+using global::app.modules.module;
 
 namespace PLang.Tests.App.Modules.module;
 
@@ -12,18 +12,18 @@ public class ModuleAddTests
     /// Creates an engine rooted at the directory containing the PLang assembly,
     /// so the sandboxed filesystem can find the assembly file via fs.File.Exists.
     /// </summary>
-    private static (global::App.Actor.Context.@this context, global::App.@this app, string assemblyPath) CreateContextWithAssembly()
+    private static (global::app.Actor.Context.@this context, global::app.@this app, string assemblyPath) CreateContextWithAssembly()
     {
-        var assemblyPath = typeof(global::App.@this).Assembly.Location;
+        var assemblyPath = typeof(global::app.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
-        var app = new global::App.@this(assemblyDir);
+        var app = new global::app.@this(assemblyDir);
         return (app.User.Context, app, assemblyPath);
     }
 
     [Test]
     public async Task Add_NonexistentPath_ReturnsError()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         var context = app.User.Context;
 
         var add = new Add
@@ -49,7 +49,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "App.modules"
+                Namespace = "app.modules"
             };
 
             var countBefore = app.Modules.Count;
@@ -71,7 +71,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "App.modules"
+                Namespace = "app.modules"
             };
 
             var result = await add.Run();
@@ -113,7 +113,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "App.modules"
+                Namespace = "app.modules"
             };
 
             var result = await add.Run();
@@ -154,7 +154,7 @@ public class ModuleAddTests
             {
                 Context = context,
                 Path = assemblyPath,
-                Namespace = "App.modules"
+                Namespace = "app.modules"
             };
 
             var result = await add.Run();

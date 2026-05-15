@@ -1,6 +1,6 @@
-using global::App.Channels.Serializers;
-using global::App.Channels.Serializers.Serializer;
-using global::App.Callback;
+using global::app.Channels.Serializers;
+using global::app.Channels.Serializers.Serializer;
+using global::app.Callback;
 
 namespace PLang.Tests.App.Serializers;
 
@@ -8,16 +8,16 @@ public class PlangDataSerializerRoundTripTests
 {
     private sealed class FakeCallback : ICallback
     {
-        public global::App.CallStack.Call.Position? Position => null;
-        public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<Data> Run(global::App.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
+        public global::app.CallStack.Call.Position? Position => null;
+        public byte[] Serialize(global::app.Actor.Context.@this ctx) => Array.Empty<byte>();
+        public Task<Data> Run(global::app.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
     }
 
     [Test]
     public async Task PlangDataSerializer_Write_EmitsTypePlusValuePlusSignature()
     {
         // application/plang+data wire shape is the full envelope: Type + Value + Signature.
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
@@ -33,7 +33,7 @@ public class PlangDataSerializerRoundTripTests
     public async Task PlangDataSerializer_Write_TriggersLazySigning_OnFirstSignatureRead()
     {
         // Write reads data.Signature → first access populates via signing.SignAsync.
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
@@ -48,7 +48,7 @@ public class PlangDataSerializerRoundTripTests
     [Test]
     public async Task PlangDataSerializer_RoundTrip_SignaturePopulatedUnverifiedOnRead()
     {
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
@@ -67,7 +67,7 @@ public class PlangDataSerializerRoundTripTests
         // The reconstructed Data has signature populated but unchecked. This is a
         // structural pin — Read returns a Data whose RawSignature is set; nothing
         // calls Verify implicitly.
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var data = new Data("v") { Value = "hello", Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
@@ -85,9 +85,9 @@ public class PlangDataSerializerRoundTripTests
     [Test]
     public async Task PlangDataSerializer_HandlesApplicationPlangDataMimeType()
     {
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var s = app.User.Channels.Serializers.GetByMimeType("application/plang+data");
-        await Assert.That(s).IsTypeOf<global::App.Channels.Serializers.Serializer.Plang.Data>();
+        await Assert.That(s).IsTypeOf<global::app.Channels.Serializers.Serializer.Plang.Data>();
         await Assert.That(s.ContentType).IsEqualTo("application/plang+data");
     }
 }

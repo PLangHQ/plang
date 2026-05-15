@@ -1,33 +1,33 @@
-namespace App.modules.matrix.datawrapped;
+namespace app.modules.matrix.datawrapped;
 
-[global::App.modules.Action("datawrappedstring")]
-public partial class DataWrappedString : global::App.modules.IContext
+[global::app.modules.Action("datawrappedstring")]
+public partial class DataWrappedString : global::app.modules.IContext
 {
-    public partial global::App.Data.@this<string> Body { get; init; }
-    public Task<global::App.Data.@this> Run() => Task.FromResult<global::App.Data.@this>(Body);
+    public partial global::app.Data.@this<string> Body { get; init; }
+    public Task<global::app.Data.@this> Run() => Task.FromResult<global::app.Data.@this>(Body);
 }
 
-[global::App.modules.Action("datawrappedlist")]
-public partial class DataWrappedList : global::App.modules.IContext
+[global::app.modules.Action("datawrappedlist")]
+public partial class DataWrappedList : global::app.modules.IContext
 {
-    public partial global::App.Data.@this<List<global::App.modules.llm.LlmMessage>> Messages { get; init; }
-    public Task<global::App.Data.@this> Run() => Task.FromResult<global::App.Data.@this>(Messages);
+    public partial global::app.Data.@this<List<global::app.modules.llm.LlmMessage>> Messages { get; init; }
+    public Task<global::app.Data.@this> Run() => Task.FromResult<global::app.Data.@this>(Messages);
 }
 
-[global::App.modules.Action("datawrappeddict")]
-public partial class DataWrappedDict : global::App.modules.IContext
+[global::app.modules.Action("datawrappeddict")]
+public partial class DataWrappedDict : global::app.modules.IContext
 {
-    public partial global::App.Data.@this<Dictionary<string, object?>> Headers { get; init; }
-    public Task<global::App.Data.@this> Run() => Task.FromResult<global::App.Data.@this>(Headers);
+    public partial global::app.Data.@this<Dictionary<string, object?>> Headers { get; init; }
+    public Task<global::app.Data.@this> Run() => Task.FromResult<global::app.Data.@this>(Headers);
 }
 
-[global::App.modules.Action("datawrappedactionlist")]
-public partial class DataWrappedActionList : global::App.modules.IContext
+[global::app.modules.Action("datawrappedactionlist")]
+public partial class DataWrappedActionList : global::app.modules.IContext
 {
     // Verifies that As<T> does NOT walk into Action.@this — sub-actions retain raw %var%
     // for nested resolution at their own dispatch time.
-    public partial global::App.Data.@this<List<global::App.Goals.Goal.Steps.Step.Actions.Action.@this>> Actions { get; init; }
-    public Task<global::App.Data.@this> Run() => Task.FromResult<global::App.Data.@this>(Actions);
+    public partial global::app.Data.@this<List<global::app.Goals.Goal.Steps.Step.Actions.Action.@this>> Actions { get; init; }
+    public Task<global::app.Data.@this> Run() => Task.FromResult<global::app.Data.@this>(Actions);
 }
 
 // Cycle / depth-trip contract handler: reads .Value rather than returning the Data wrapper
@@ -35,13 +35,13 @@ public partial class DataWrappedActionList : global::App.modules.IContext
 // FromError because the FromError-Data IS the result. This handler instead consumes .Value
 // and produces a derived result — exercises the post-Run __resolutionError check that surfaces
 // resolution failures captured during property access.
-[global::App.modules.Action("datawrappedstringuses")]
-public partial class DataWrappedStringUses : global::App.modules.IContext
+[global::app.modules.Action("datawrappedstringuses")]
+public partial class DataWrappedStringUses : global::app.modules.IContext
 {
-    public partial global::App.Data.@this<string> Body { get; init; }
-    public Task<global::App.Data.@this> Run()
+    public partial global::app.Data.@this<string> Body { get; init; }
+    public Task<global::app.Data.@this> Run()
     {
         var len = Body.Value?.Length ?? 0;
-        return Task.FromResult(global::App.Data.@this.Ok(len));
+        return Task.FromResult(global::app.Data.@this.Ok(len));
     }
 }

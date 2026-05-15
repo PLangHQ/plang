@@ -1,17 +1,17 @@
-namespace App.modules.matrix.nullables;
+namespace app.modules.matrix.nullables;
 
-[global::App.modules.Action("stringnullable")]
-public partial class StringNullable : global::App.modules.IContext
+[global::app.modules.Action("stringnullable")]
+public partial class StringNullable : global::app.modules.IContext
 {
-    public partial global::App.Data.@this<string>? Tag { get; init; }
-    public Task<global::App.Data.@this> Run() =>
-        Task.FromResult<global::App.Data.@this>(Tag ?? global::App.Data.@this.Null("tag"));
+    public partial global::app.Data.@this<string>? Tag { get; init; }
+    public Task<global::app.Data.@this> Run() =>
+        Task.FromResult<global::app.Data.@this>(Tag ?? global::app.Data.@this.Null("tag"));
 }
 
-[global::App.modules.Action("intnullable")]
-public partial class IntNullable : global::App.modules.IContext
+[global::app.modules.Action("intnullable")]
+public partial class IntNullable : global::app.modules.IContext
 {
-    public partial global::App.Data.@this<int>? Maybe { get; init; }
-    public Task<global::App.Data.@this> Run() =>
-        Task.FromResult<global::App.Data.@this>(Maybe ?? global::App.Data.@this.Null("maybe"));
+    public partial global::app.Data.@this<int>? Maybe { get; init; }
+    public Task<global::app.Data.@this> Run() =>
+        Task.FromResult<global::app.Data.@this>(Maybe ?? global::app.Data.@this.Null("maybe"));
 }

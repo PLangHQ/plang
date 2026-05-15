@@ -1,10 +1,10 @@
-namespace App.modules.matrix.isnotnull;
+namespace app.modules.matrix.isnotnull;
 
-[global::App.modules.Action("isnotnullprop")]
-public partial class IsNotNullProp : global::App.modules.IContext
+[global::app.modules.Action("isnotnullprop")]
+public partial class IsNotNullProp : global::app.modules.IContext
 {
-    [global::App.modules.IsNotNull]
-    public partial global::App.Data.@this<string> Required { get; init; }
+    [global::app.modules.IsNotNull]
+    public partial global::app.Data.@this<string> Required { get; init; }
 
-    public Task<global::App.Data.@this> Run() => Task.FromResult<global::App.Data.@this>(Required);
+    public Task<global::app.Data.@this> Run() => Task.FromResult<global::app.Data.@this>(Required);
 }

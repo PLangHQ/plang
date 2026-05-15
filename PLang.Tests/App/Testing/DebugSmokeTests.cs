@@ -10,20 +10,20 @@ namespace PLang.Tests.App.Tester;
 /// </summary>
 public class DebugSmokeTests
 {
-    private global::App.@this _app = null!;
-    private global::App.Channels.Channel.Stream.@this _capture = null!;
+    private global::app.@this _app = null!;
+    private global::app.Channels.Channel.Stream.@this _capture = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _app = new global::app.@this("/test");
         // Debug.Write routes via System.Channels.Resolve("debug") ?? Resolve("error").
         // Register a memory channel as "error" on System so debug output lands in a
         // capture buffer instead of the real stderr stream the channel was wired to.
-        _app.System.Channels.Register(global::App.Channels.Channel.Stream.@this.Memory(
-            global::App.Channels.@this.Error));
-        _capture = (global::App.Channels.Channel.Stream.@this)
-            _app.System.Channels.Get(global::App.Channels.@this.Error)!;
+        _app.System.Channels.Register(global::app.Channels.Channel.Stream.@this.Memory(
+            global::app.Channels.@this.Error));
+        _capture = (global::app.Channels.Channel.Stream.@this)
+            _app.System.Channels.Get(global::app.Channels.@this.Error)!;
     }
 
     [After(Test)]

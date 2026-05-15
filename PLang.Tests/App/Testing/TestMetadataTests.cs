@@ -1,11 +1,11 @@
 using System.Text.Json;
-using global::App.Tester;
+using global::app.Tester;
 
 namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 13 — per-test metadata.
-/// Every global::App.Tester.Run captures the builder version that produced its .pr, plus the
+/// Every global::app.Tester.Run captures the builder version that produced its .pr, plus the
 /// Goal.Hash from the .pr. Surfaced in results.json so tooling can correlate
 /// drift: if the current plang builder is a newer version than the one that
 /// produced a test's .pr, the report flags it. Drift is informational, not
@@ -14,7 +14,7 @@ namespace PLang.Tests.App.Tester;
 public class TestMetadataTests
 {
     private string _tempDir = null!;
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
     private System.IO.MemoryStream _captureStream = null!;
 
     [Before(Test)]
@@ -23,8 +23,8 @@ public class TestMetadataTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-meta-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        var fs = new global::App.FileSystem.Default.PLangFileSystem(_tempDir, "");
-        _app = new global::App.@this(fs);
+        var fs = new global::app.FileSystem.Default.PLangFileSystem(_tempDir, "");
+        _app = new global::app.@this(fs);
         _captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
             EngineChannels.Output, _captureStream,
@@ -42,21 +42,21 @@ public class TestMetadataTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    private static global::App.Tester.Run NewRun(string name, string? builderVersion = null, string? goalHash = "deadbeef")
+    private static global::app.Tester.Run NewRun(string name, string? builderVersion = null, string? goalHash = "deadbeef")
     {
-        var run = new global::App.Tester.Run(new global::App.Tester.File
+        var run = new global::app.Tester.Run(new global::app.Tester.File
         {
             Path = $"Tests/{name}.test.goal",
             EntryGoalName = name,
             GoalHash = goalHash,
             BuilderVersion = builderVersion
         });
-        run.Complete(global::App.Tester.Status.Pass);
+        run.Complete(global::app.Tester.Status.Pass);
         return run;
     }
 
     // The .pr file carries a builder-version field (written at build time). At
-    // discovery, global::App.Tester.Run reads and stores it in its Metadata so the report can
+    // discovery, global::app.Tester.Run reads and stores it in its Metadata so the report can
     // surface "built by version X".
     [Test]
     public async Task Metadata_TestRun_CapturesBuilderVersionFromPr()
@@ -65,7 +65,7 @@ public class TestMetadataTests
         await Assert.That(run.File.BuilderVersion).IsEqualTo("v1.2.3");
     }
 
-    // global::App.Tester.Run captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
+    // global::app.Tester.Run captures Goal.Hash (Name + Steps.Text SHA-256) from the .pr.
     // Combined with current-file Goal.Hash, enables drift correlation: "this
     // .pr was built from goal text at hash Y".
     [Test]
@@ -83,7 +83,7 @@ public class TestMetadataTests
     {
         _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0"));
 
-        var action = new global::App.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.modules.test.report { Context = _app.User.Context };
         await action.Run();
 
         var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");
@@ -105,7 +105,7 @@ public class TestMetadataTests
         _app.Version = "v2.0"; // current app builder version
         _app.Tester.Results.Add(NewRun("T", builderVersion: "v1.0")); // stale
 
-        var action = new global::App.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.modules.test.report { Context = _app.User.Context };
         await action.Run();
 
         var output = CapturedOutput();

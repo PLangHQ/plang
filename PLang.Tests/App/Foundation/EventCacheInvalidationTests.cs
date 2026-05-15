@@ -1,6 +1,6 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
+using global::app.Actor.Context;
+using app;
+using global::app.Variables;
 
 namespace PLang.Tests.App.Foundation;
 
@@ -15,8 +15,8 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Goal_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register first event
@@ -43,8 +43,8 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Step_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
         var step = new Step { Text = "do something" };
         step.Goal = goal;
@@ -75,9 +75,9 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_Action_PicksUpNewlyRegisteredEvent()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
-        var action = new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
+        var action = new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
         {
             Module = "variable",
             ActionName = "set"
@@ -107,8 +107,8 @@ public class EventCacheInvalidationTests
     [Test]
     public async Task EventsFor_ManualInvalidation_Works()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         var goal = new Goal { Name = "TestGoal", Path = "\\TestGoal.goal" };
 
         // Register and cache

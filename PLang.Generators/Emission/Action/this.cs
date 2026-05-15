@@ -35,7 +35,7 @@ public static class @this
 
             namespace {{info.Namespace}};
 
-            partial class {{info.ClassName}} : global::App.modules.ICodeGenerated
+            partial class {{info.ClassName}} : global::app.modules.ICodeGenerated
             {
 
             """);
@@ -57,22 +57,22 @@ public static class @this
     {
         if (info.ImplementsIContext)
             sb.Append("""
-                    public global::App.Actor.Context.@this Context { get; set; } = null!;
+                    public global::app.Actor.Context.@this Context { get; set; } = null!;
 
                 """);
         if (info.ImplementsIChannel)
             sb.Append("""
-                    public global::App.Channels.Channel.@this Channel { get; set; } = null!;
+                    public global::app.Channels.Channel.@this Channel { get; set; } = null!;
 
                 """);
         if (info.ImplementsIAction)
             sb.Append("""
-                    public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+                    public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
 
                 """);
         if (info.ImplementsIStep)
             sb.Append("""
-                    public global::App.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;
+                    public global::app.Goals.Goal.Steps.Step.@this Step { get; set; } = null!;
 
                 """);
         if (info.ImplementsIStatic)
@@ -85,9 +85,9 @@ public static class @this
     private static void EmitResolutionState(StringBuilder sb)
     {
         sb.Append("""
-                private global::App.Goals.Goal.Steps.Step.Actions.Action.@this? __action;
-                private global::App.@this? __app;
-                private global::App.Data.@this? __resolutionError;
+                private global::app.Goals.Goal.Steps.Step.Actions.Action.@this? __action;
+                private global::app.@this? __app;
+                private global::app.Data.@this? __resolutionError;
 
             """);
     }
@@ -104,9 +104,9 @@ public static class @this
         if (!hasDataProp)
         {
             sb.Append("""
-                    protected static global::App.Data.@this Data() => global::App.Data.@this.Ok();
-                    protected static global::App.Data.@this Data(object? value) => global::App.Data.@this.Ok(value);
-                    protected static global::App.Data.@this Data(object? value, global::App.Data.Type? type) => global::App.Data.@this.Ok(value, type);
+                    protected static global::app.Data.@this Data() => global::app.Data.@this.Ok();
+                    protected static global::app.Data.@this Data(object? value) => global::app.Data.@this.Ok(value);
+                    protected static global::app.Data.@this Data(object? value, global::app.Data.Type? type) => global::app.Data.@this.Ok(value, type);
 
                 """);
         }
@@ -114,7 +114,7 @@ public static class @this
         if (!hasErrorProp)
         {
             sb.Append("""
-                    protected static global::App.Data.@this Error(global::App.Errors.IError error) => global::App.Data.@this.FromError(error);
+                    protected static global::app.Data.@this Error(global::app.Errors.IError error) => global::app.Data.@this.FromError(error);
 
                 """);
         }
@@ -124,8 +124,8 @@ public static class @this
     private static void EmitExecuteAsync(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                public async System.Threading.Tasks.Task<global::App.Data.@this> ExecuteAsync(
-                    global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.Actor.Context.@this context)
+                public async System.Threading.Tasks.Task<global::app.Data.@this> ExecuteAsync(
+                    global::app.Goals.Goal.Steps.Step.Actions.Action.@this action, global::app.Actor.Context.@this context)
                 {
                     __action = action;
                     __app = context.App;
@@ -151,7 +151,7 @@ public static class @this
         sb.Append("""
                     }
                     var __step = __action?.Step;
-                    var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::App.CallStack.Call.@this>)System.Array.Empty<global::App.CallStack.Call.@this>();
+                    var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.CallStack.Call.@this>)System.Array.Empty<global::app.CallStack.Call.@this>();
 
             """);
 
@@ -163,7 +163,7 @@ public static class @this
                             var __channelName = __action?.Parameters?.FirstOrDefault(d => string.Equals(d.Name, "channel", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
                             Channel = (context.Actor ?? app.User).Channels.Resolve(__channelName);
                             if (Channel == null)
-                                return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(
+                                return global::app.Data.@this.FromError(new global::app.Errors.ServiceError(
                                     $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404));
                         }
 
@@ -212,7 +212,7 @@ public static class @this
                 var lower = name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
-                                    return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(
+                                    return global::app.Data.@this.FromError(new global::app.Errors.ServiceError(
                                         "'{{lower}}' must have a value", __step, __callFrames, "ValueRequired", 400));
 
                     """);
@@ -240,7 +240,7 @@ public static class @this
                 var lower = prop.Name.ToLowerInvariant();
                 sb.Append($$"""
                                 if (__action?.Parameters.FirstOrDefault(d => string.Equals(d.Name, "{{lower}}", StringComparison.OrdinalIgnoreCase))?.Value == null)
-                                    return global::App.Data.@this.FromError(new global::App.Errors.ServiceError(
+                                    return global::app.Data.@this.FromError(new global::app.Errors.ServiceError(
                                         "Required parameter '{{lower}}' is missing or null", __step, __callFrames, "MissingRequiredParameter", 400));
 
                     """);
@@ -267,7 +267,7 @@ public static class @this
     {
         // Public surface for App.Run's catch path.
         sb.Append("""
-                public System.Collections.Generic.List<global::App.Errors.ParamSnapshot> SnapshotParams()
+                public System.Collections.Generic.List<global::app.Errors.ParamSnapshot> SnapshotParams()
                     => __SnapshotParams();
 
             """);
@@ -279,10 +279,10 @@ public static class @this
         // (which used __Resolve<T>, __HasParam, __StripPercent) is gone — Variable-name
         // slots are Data<Variable> and route through the Data emitter's __ResolveData.
         sb.Append("""
-                private global::App.Data.@this __ResolveData(string name)
+                private global::app.Data.@this __ResolveData(string name)
                 {
                     var data = __action?.GetParameter(name, Context!);
-                    if (data == null) return global::App.Data.@this.NotFound(name);
+                    if (data == null) return global::app.Data.@this.NotFound(name);
                     data.Context = Context;
                     return data;
                 }
@@ -293,9 +293,9 @@ public static class @this
     private static void EmitSnapshotInternal(StringBuilder sb, ActionClassInfo info)
     {
         sb.Append("""
-                private System.Collections.Generic.List<global::App.Errors.ParamSnapshot> __SnapshotParams()
+                private System.Collections.Generic.List<global::app.Errors.ParamSnapshot> __SnapshotParams()
                 {
-                    var __list = new System.Collections.Generic.List<global::App.Errors.ParamSnapshot>();
+                    var __list = new System.Collections.Generic.List<global::app.Errors.ParamSnapshot>();
             """);
         sb.AppendLine();
         foreach (var prop in info.Properties)

@@ -3,15 +3,15 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using global::App.Channels.Serializers;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.http;
-using global::App.modules.http.code;
-using global::App.modules.signing;
-using PLangEngine = global::App.@this;
-using HttpMethod = global::App.modules.http.HttpMethod;
+using global::app.Channels.Serializers;
+using global::app.Actor.Context;
+using global::app.Variables;
+using global::app.Code;
+using global::app.modules.http;
+using global::app.modules.http.code;
+using global::app.modules.signing;
+using PLangEngine = global::app.@this;
+using HttpMethod = global::app.modules.http.HttpMethod;
 
 namespace PLang.Tests.App.Modules.http;
 
@@ -41,7 +41,7 @@ public class RequestActionTests
 
         // Register stub goals for streaming callbacks — GoalCall needs to find them
         foreach (var name in new[] { "HandleLine", "HandleSSE", "HandleBytes", "HandleChunk", "ProcessChunk" })
-            _app.Goals.Add(new global::App.Goals.Goal.@this { Name = name, Path = $"/{name}.goal" });
+            _app.Goals.Add(new global::app.Goals.Goal.@this { Name = name, Path = $"/{name}.goal" });
     }
 
     [After(Test)]
@@ -56,7 +56,7 @@ public class RequestActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.Actor.Context.@this Ctx => _app.System.Context;
 
     #region Test Infrastructure
 
@@ -129,7 +129,7 @@ public class RequestActionTests
             Context = Ctx,
             Url = "https://api.example.com/users",
             Method = HttpMethod.POST,
-            Body = new global::App.Data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }),
+            Body = new global::app.Data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }),
             Unsigned = true
         };
         var result = await action.Run();
@@ -149,7 +149,7 @@ public class RequestActionTests
             Url = "https://api.example.com/login",
             Method = HttpMethod.POST,
             ContentType = "application/x-www-form-urlencoded",
-            Body = new global::App.Data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }),
+            Body = new global::app.Data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }),
             Unsigned = true
         };
         var result = await action.Run();
@@ -382,7 +382,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "ProcessChunk" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "ProcessChunk" },
             Unsigned = true
         };
 
@@ -492,7 +492,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleLine" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandleLine" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -518,7 +518,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -542,7 +542,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse-multi",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -568,7 +568,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/bytes",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleBytes" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandleBytes" },
             StreamAs = StreamFormat.Bytes,
             Unsigned = true
         };
@@ -595,7 +595,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream-err",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleLine" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandleLine" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -617,7 +617,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/stream",
-            OnStream = new global::App.Goals.Goal.GoalCall
+            OnStream = new global::app.Goals.Goal.GoalCall
             {
                 Name = "HandleChunk",
                 Parameters = new List<Data> { new Data("myChunk") }
@@ -644,7 +644,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-stream",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandlePlang" },
             Unsigned = true
         };
         var result = await action.Run();
@@ -663,7 +663,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
+                Modifiers = { global::app.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
 
@@ -689,7 +689,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-stream",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandlePlang" },
             Unsigned = false
         };
         var result = await action.Run();
@@ -711,7 +711,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
+                Modifiers = { global::app.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
 
@@ -728,7 +728,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/plang-bad-stream",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandlePlang" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandlePlang" },
             Unsigned = false
         };
         var result = await action.Run();
@@ -778,7 +778,7 @@ public class RequestActionTests
             Context = Ctx,
             Url = "https://api.example.com/content",
             Method = HttpMethod.POST,
-            Body = new global::App.Data.@this("", "test body"),
+            Body = new global::app.Data.@this("", "test body"),
             Headers = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" },
             Unsigned = true
         };
@@ -853,7 +853,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
+                Modifiers = { global::app.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
         var responseBody = JsonSerializer.Serialize(responseData, transportOptions);
@@ -894,7 +894,7 @@ public class RequestActionTests
             DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
             TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
             {
-                Modifiers = { global::App.Channels.Serializers.Filters.Transport.ForOutbound }
+                Modifiers = { global::app.Channels.Serializers.Filters.Transport.ForOutbound }
             }
         };
         var responseBody = JsonSerializer.Serialize(responseData, transportOptions);
@@ -993,7 +993,7 @@ public class RequestActionTests
         {
             Context = Ctx,
             Url = "https://api.example.com/sse-overflow",
-            OnStream = new global::App.Goals.Goal.GoalCall { Name = "HandleSSE" },
+            OnStream = new global::app.Goals.Goal.GoalCall { Name = "HandleSSE" },
             Unsigned = true
         };
         var result = await action.Run();

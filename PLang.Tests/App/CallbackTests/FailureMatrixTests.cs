@@ -1,18 +1,18 @@
-using global::App.Callback;
-using global::App.CallStack;
-using global::App.Errors;
-using global::App.Code;
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using global::app.Callback;
+using global::app.CallStack;
+using global::app.Errors;
+using global::app.Code;
+using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
 public class FailureMatrixTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fm-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private static (Goal goal, ActionEntity action) MakeAndRegister(global::App.@this app, string name, string text = "step")
+    private static (Goal goal, ActionEntity action) MakeAndRegister(global::app.@this app, string name, string text = "step")
     {
         var goal = new Goal { Name = name, Path = $"/{name}.goal" };
         var step = new Step { Index = 0, Text = text, Goal = goal };
@@ -32,7 +32,7 @@ public class FailureMatrixTests
         {
             Value = new StubCallback(),
             Context = app.User.Context,
-            Signature = new global::App.modules.signing.Signature
+            Signature = new global::app.modules.signing.Signature
             {
                 Type = "signature",
                 Algorithm = "ed25519",
@@ -40,8 +40,8 @@ public class FailureMatrixTests
                 Value = "AAAA-not-a-valid-sig"
             }
         };
-        var result = await app.RunAction<global::App.modules.callback.run>(
-            new global::App.modules.callback.run { Callback = data }, app.User.Context);
+        var result = await app.RunAction<global::app.modules.callback.run>(
+            new global::app.modules.callback.run { Callback = data }, app.User.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("CallbackSignatureMismatch");
     }
@@ -54,7 +54,7 @@ public class FailureMatrixTests
         {
             Value = new StubCallback(),
             Context = app.User.Context,
-            Signature = new global::App.modules.signing.Signature
+            Signature = new global::app.modules.signing.Signature
             {
                 Type = "signature",
                 Algorithm = "ed25519",
@@ -64,8 +64,8 @@ public class FailureMatrixTests
                 Value = "any"
             }
         };
-        var result = await app.RunAction<global::App.modules.callback.run>(
-            new global::App.modules.callback.run { Callback = data }, app.User.Context);
+        var result = await app.RunAction<global::app.modules.callback.run>(
+            new global::app.modules.callback.run { Callback = data }, app.User.Context);
         await Assert.That(result.Success).IsFalse();
         // Verify produces an "Expired" or similar key inside the wrapped CallbackSignatureMismatch.
         await Assert.That(result.Error!.Key).IsEqualTo("CallbackSignatureMismatch");
@@ -111,12 +111,12 @@ public class FailureMatrixTests
     public async Task FailureMatrix_ProviderDllMissing_RaisesReferentIntegrityError()
     {
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>
+        snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>
         {
-            new(typeof(global::App.Data.Code.IGrep).AssemblyQualifiedName!,
+            new(typeof(global::app.Data.Code.IGrep).AssemblyQualifiedName!,
                 "ghost", "/nonexistent/missing.dll")
         });
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>());
 
         var dst = NewApp();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
@@ -130,10 +130,10 @@ public class FailureMatrixTests
     public async Task FailureMatrix_ProviderDefaultSelectionNameMissing_RaisesReferentIntegrityError()
     {
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>
         {
-            new(typeof(global::App.Data.Code.IGrep).AssemblyQualifiedName!, "phantom-name")
+            new(typeof(global::app.Data.Code.IGrep).AssemblyQualifiedName!, "phantom-name")
         });
 
         var dst = NewApp();
@@ -154,10 +154,10 @@ public class FailureMatrixTests
         // if the snapshot HAD an unresolvable identity reference, the underlying Providers
         // restore raises ProviderRestoreException. The shape mirrors the DLL-missing case.
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::App.Code.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::App.Code.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>
         {
-            new(typeof(global::App.modules.identity.code.IIdentity).AssemblyQualifiedName!, "unknown-identity-provider")
+            new(typeof(global::app.modules.identity.code.IIdentity).AssemblyQualifiedName!, "unknown-identity-provider")
         });
         var dst = NewApp();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
@@ -170,7 +170,7 @@ public class FailureMatrixTests
     [Test]
     public async Task FailureMatrix_DataReadDoesNotAutoVerify_AssertsAbsenceOfVerifyCall()
     {
-        // Reading a Data instance (deserialize through global::App.Channels.Serializers.Serializer.Plang.Data) does NOT
+        // Reading a Data instance (deserialize through global::app.Channels.Serializers.Serializer.Plang.Data) does NOT
         // invoke signing.verify — verification is the consumer's explicit step. Pin
         // this by checking that a deserialized Data has signature populated but the
         // app's signing module wasn't called as part of the read.
@@ -187,9 +187,9 @@ public class FailureMatrixTests
 
     private sealed class StubCallback : ICallback
     {
-        public global::App.CallStack.Call.Position? Position => null;
-        public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<global::App.Data.@this> Run(global::App.Actor.Context.@this ctx)
-            => Task.FromResult(global::App.Data.@this.Ok(true));
+        public global::app.CallStack.Call.Position? Position => null;
+        public byte[] Serialize(global::app.Actor.Context.@this ctx) => Array.Empty<byte>();
+        public Task<global::app.Data.@this> Run(global::app.Actor.Context.@this ctx)
+            => Task.FromResult(global::app.Data.@this.Ok(true));
     }
 }

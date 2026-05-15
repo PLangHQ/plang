@@ -1,8 +1,8 @@
-using global::App.FileSystem.Default;
-using global::App.Variables;
-using PLangPath = global::App.FileSystem.Path;
-using global::App.modules.file;
-using global::App.modules.file.code;
+using global::app.FileSystem.Default;
+using global::app.Variables;
+using PLangPath = global::app.FileSystem.Path;
+using global::app.modules.file;
+using global::app.modules.file.code;
 
 namespace PLang.Tests.App.Modules.Path;
 
@@ -10,7 +10,7 @@ public class PathTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly global::App.@this _app;
+    private readonly global::app.@this _app;
     private readonly Default _provider;
 
     public PathTests()
@@ -18,7 +18,7 @@ public class PathTests : IDisposable
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_path_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _app = new global::App.@this(_tempDir, fileSystem: _fs);
+        _app = new global::app.@this(_tempDir, fileSystem: _fs);
         _provider = new Default();
     }
 
@@ -40,8 +40,8 @@ public class PathTests : IDisposable
     private PLangPath MakePath(string path) => new PLangPath(path) { Context = _app.User.Context };
 
     /// <summary>Wraps a Path in Data&lt;Path&gt; for action parameters.</summary>
-    private global::App.Data.@this<PLangPath> WrapPath(PLangPath p) => new("", p);
-    private global::App.Data.@this<PLangPath> WrapPath(string path) => WrapPath(MakePath(path));
+    private global::app.Data.@this<PLangPath> WrapPath(PLangPath p) => new("", p);
+    private global::app.Data.@this<PLangPath> WrapPath(string path) => WrapPath(MakePath(path));
 
     /// <summary>Resolves a relative path through the engine context.</summary>
     private PLangPath ResolvePath(string rawPath) => PLangPath.Resolve(rawPath, _app.User.Context);
@@ -71,7 +71,7 @@ public class PathTests : IDisposable
         var path = TempFile("truthy.txt");
         var pd = MakePath(path);
 
-        await Assert.That(global::App.modules.condition.Operator.IsTruthy(new Data("", pd.Exists))).IsTrue();
+        await Assert.That(global::app.modules.condition.Operator.IsTruthy(new Data("", pd.Exists))).IsTrue();
     }
 
     [Test]
@@ -79,7 +79,7 @@ public class PathTests : IDisposable
     {
         var pd = MakePath(_fs.Path.Combine(_tempDir,"missing.txt"));
 
-        await Assert.That(global::App.modules.condition.Operator.IsTruthy(new Data("", pd.Exists))).IsFalse();
+        await Assert.That(global::app.modules.condition.Operator.IsTruthy(new Data("", pd.Exists))).IsFalse();
     }
 
     // --- Constructor & Absolute ---
@@ -474,7 +474,7 @@ public class PathTests : IDisposable
     {
         var filePath = TempFile("asfile.txt");
         var p = MakePath(filePath);
-        var result = _provider.Exists(new Exists { Context = _app.User.Context, Path = new global::App.Data.@this<PLangPath>("", p) });
+        var result = _provider.Exists(new Exists { Context = _app.User.Context, Path = new global::app.Data.@this<PLangPath>("", p) });
 
         await Assert.That(result.Success).IsTrue();
         var f = result.Value as PLangPath;

@@ -1,14 +1,14 @@
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.list;
+using global::app.Actor.Context;
+using global::app.Variables;
+using global::app.modules.list;
 
 namespace PLang.Tests.App.actions.list;
 
 public class ListSetTests
 {
-    private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
+    private (global::app.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::App.@this("/app");
+        var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variables);
     }
 
@@ -18,7 +18,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Set { Context = context, ListName = new Variable("myList"), Index = 1, Value = new global::App.Data.@this("", "replaced")};
+        var action = new Set { Context = context, ListName = new Variable("myList"), Index = 1, Value = new global::app.Data.@this("", "replaced")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -32,7 +32,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "old", "keep" });
 
-        var action = new Set { Context = context, ListName = new Variable("myList"), Index = 0, Value = new global::App.Data.@this("", "new")};
+        var action = new Set { Context = context, ListName = new Variable("myList"), Index = 0, Value = new global::app.Data.@this("", "new")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -47,7 +47,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b" });
 
-        var action = new Set { Context = context, ListName = new Variable("myList"), Index = 5, Value = new global::App.Data.@this("", "x")};
+        var action = new Set { Context = context, ListName = new Variable("myList"), Index = 5, Value = new global::app.Data.@this("", "x")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -60,7 +60,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a" });
 
-        var action = new Set { Context = context, ListName = new Variable("myList"), Index = -1, Value = new global::App.Data.@this("", "x")};
+        var action = new Set { Context = context, ListName = new Variable("myList"), Index = -1, Value = new global::app.Data.@this("", "x")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -73,7 +73,7 @@ public class ListSetTests
         var (context, memory) = CreateContext();
         memory.Set("myList", "not a list");
 
-        var action = new Set { Context = context, ListName = new Variable("myList"), Index = 0, Value = new global::App.Data.@this("", "x")};
+        var action = new Set { Context = context, ListName = new Variable("myList"), Index = 0, Value = new global::app.Data.@this("", "x")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -85,7 +85,7 @@ public class ListSetTests
     {
         var (context, _) = CreateContext();
 
-        var action = new Set { Context = context, ListName = new Variable("missing"), Index = 0, Value = new global::App.Data.@this("", "x")};
+        var action = new Set { Context = context, ListName = new Variable("missing"), Index = 0, Value = new global::app.Data.@this("", "x")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsFalse();

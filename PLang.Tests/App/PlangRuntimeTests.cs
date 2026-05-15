@@ -1,8 +1,8 @@
-using App;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.FileSystem;
-using global::App.FileSystem.Default;
+using app;
+using global::app.Actor.Context;
+using global::app.Variables;
+using global::app.FileSystem;
+using global::app.FileSystem.Default;
 
 namespace PLang.Tests.App;
 
@@ -14,14 +14,14 @@ public class PlangRuntimeTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly global::App.@this _app;
+    private readonly global::app.@this _app;
 
     public PlangRuntimeTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_runtime_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _app = new global::App.@this(_tempDir, fileSystem: _fs);
+        _app = new global::app.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
@@ -48,7 +48,7 @@ public class PlangRuntimeTests : IDisposable
             Text = "write hello",
             Actions = new StepActions
             {
-                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = "output",
                     ActionName = "write",
@@ -92,10 +92,10 @@ public class PlangRuntimeTests : IDisposable
         var context = _app.User.Context;
 
         // Register a before-step event
-        var onAction = new global::App.modules.@event.On
+        var onAction = new global::app.modules.@event.On
         {
             Context = context,
-            Type = global::App.Events.EventType.BeforeStep,
+            Type = global::app.Events.EventType.BeforeStep,
             GoalToCall = new GoalCall { Name = "LogBefore" },
             StepPattern = "*"
         };
@@ -132,7 +132,7 @@ public class PlangRuntimeTests : IDisposable
                     Text = "write hello",
                     Actions = new StepActions
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",

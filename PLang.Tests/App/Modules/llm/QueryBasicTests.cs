@@ -1,10 +1,10 @@
 using System.Text.Json;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.llm;
-using global::App.modules.llm.code;
-using PLangEngine = global::App.@this;
+using global::app.Actor.Context;
+using global::app.Variables;
+using global::app.Code;
+using global::app.modules.llm;
+using global::app.modules.llm.code;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.llm;
 
@@ -40,7 +40,7 @@ public class QueryBasicTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.Actor.Context.@this Ctx => _app.System.Context;
 
     #region Happy Path
 

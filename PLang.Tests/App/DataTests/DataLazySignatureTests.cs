@@ -1,4 +1,4 @@
-using global::App.Callback;
+using global::app.Callback;
 
 namespace PLang.Tests.App.DataTests;
 
@@ -6,9 +6,9 @@ public class DataLazySignatureTests
 {
     private sealed class FakeCallback : ICallback
     {
-        public global::App.CallStack.Call.Position? Position => null;
-        public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<Data> Run(global::App.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
+        public global::app.CallStack.Call.Position? Position => null;
+        public byte[] Serialize(global::app.Actor.Context.@this ctx) => Array.Empty<byte>();
+        public Task<Data> Run(global::app.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
     }
 
     [Test]
@@ -16,7 +16,7 @@ public class DataLazySignatureTests
     {
         // First read of data.Signature triggers signing.SignAsync; before that, the
         // backing field is null. Verified via RawSignature (no auto-populate) before access.
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var data = new Data("cb") { Value = new FakeCallback(), Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
@@ -31,7 +31,7 @@ public class DataLazySignatureTests
     [Test]
     public async Task DataSignature_CachedAfterFirstPopulate_ReturnsSameInstance()
     {
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var data = new Data("cb") { Value = new FakeCallback(), Context = app.User.Context };
         app.User.Context.Variables.Set(data);
 
@@ -45,7 +45,7 @@ public class DataLazySignatureTests
     {
         // app.Callback.Signature.Expires propagates into Data.Signature.Expires
         // when the wrapped value is ICallback.
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         app.Callback.Signature.Expires = TimeSpan.FromMinutes(1);
 
         var data = new Data("cb") { Value = new FakeCallback(), Context = app.User.Context };
@@ -63,7 +63,7 @@ public class DataLazySignatureTests
     [Test]
     public async Task DataSignature_Expires_NullForNonICallbackValues_EvenWhenConfigSet()
     {
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         app.Callback.Signature.Expires = TimeSpan.FromMinutes(1);
 
         var data = new Data("payload") { Value = "hello", Context = app.User.Context };

@@ -1,6 +1,6 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
+using global::app.Actor.Context;
+using app;
+using global::app.Variables;
 
 namespace PLang.Tests.App.Context;
 
@@ -9,8 +9,8 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         await Assert.That(context.App).IsEqualTo(engine);
         await Assert.That(context.Variables).IsNotNull();
@@ -20,8 +20,8 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         await Assert.That(context.Id).IsNotNull();
         await Assert.That(context.Id.Length).IsEqualTo(12);
@@ -30,10 +30,10 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_SetsCreatedAt()
     {
-        await using var engine = new global::App.@this("/app");
+        await using var engine = new global::app.@this("/app");
         var before = DateTime.UtcNow;
 
-        using var context = new global::App.Actor.Context.@this(engine);
+        using var context = new global::app.Actor.Context.@this(engine);
 
         var after = DateTime.UtcNow;
         await Assert.That(context.CreatedAt).IsGreaterThanOrEqualTo(before);
@@ -43,11 +43,11 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_AcceptsCustomVariables()
     {
-        await using var engine = new global::App.@this("/app");
+        await using var engine = new global::app.@this("/app");
         var variables = new Variables();
         variables.Set("test", "value");
 
-        using var context = new global::App.Actor.Context.@this(engine, variables);
+        using var context = new global::app.Actor.Context.@this(engine, variables);
 
         await Assert.That(context.Variables).IsEqualTo(variables);
     }
@@ -55,10 +55,10 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_WithParent_SetsParent()
     {
-        await using var engine = new global::App.@this("/app");
-        using var parent = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var parent = new global::app.Actor.Context.@this(engine);
 
-        using var child = new global::App.Actor.Context.@this(engine, parent: parent);
+        using var child = new global::app.Actor.Context.@this(engine, parent: parent);
 
         await Assert.That(child.Parent).IsEqualTo(parent);
     }
@@ -69,8 +69,8 @@ public class PLangContextTests
         // Architectural shift: ownership moved from Context to App.Debug. The Context
         // exposes a getter that proxies through so PLang %!callStack% still resolves;
         // there's no per-context allocation.
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         await Assert.That(context.CallStack).IsEqualTo(engine.CallStack);
     }
@@ -78,8 +78,8 @@ public class PLangContextTests
     [Test]
     public async Task IsAsync_DefaultsFalse()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         await Assert.That(context.IsAsync).IsFalse();
     }
@@ -87,8 +87,8 @@ public class PLangContextTests
     [Test]
     public async Task IsAsync_CanBeSet()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         context.IsAsync = true;
 
@@ -98,8 +98,8 @@ public class PLangContextTests
     [Test]
     public async Task CancellationToken_LinkedToAppShutdown()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         engine.RequestShutdown();
 
@@ -109,8 +109,8 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_SetsAndGetsValue()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         context["key"] = "value";
 
@@ -120,8 +120,8 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_SetNull_RemovesKey()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         context["key"] = "value";
 
         context["key"] = null;
@@ -132,8 +132,8 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_CaseInsensitive()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         context["Key"] = "value";
 
         await Assert.That(context["key"]).IsEqualTo("value");
@@ -143,8 +143,8 @@ public class PLangContextTests
     [Test]
     public async Task Get_ReturnsTypedValue()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         context["count"] = 42;
 
         var value = context.Get<int>("count");
@@ -155,8 +155,8 @@ public class PLangContextTests
     [Test]
     public async Task Get_NonexistentKey_ReturnsDefault()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         var value = context.Get<int>("nonexistent");
 
@@ -166,8 +166,8 @@ public class PLangContextTests
     [Test]
     public async Task Set_StoresTypedValue()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         context.Set("count", 42);
 
@@ -177,8 +177,8 @@ public class PLangContextTests
     [Test]
     public async Task Set_Null_RemovesKey()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         context.Set<string>("key", "value");
 
         context.Set<string>("key", null!);
@@ -189,8 +189,8 @@ public class PLangContextTests
     [Test]
     public async Task ContainsKey_ExistingKey_ReturnsTrue()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         context["key"] = "value";
 
         await Assert.That(context.ContainsKey("key")).IsTrue();
@@ -199,8 +199,8 @@ public class PLangContextTests
     [Test]
     public async Task ContainsKey_NonexistentKey_ReturnsFalse()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         await Assert.That(context.ContainsKey("nonexistent")).IsFalse();
     }
@@ -208,8 +208,8 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_CreatesWithClonedVariables()
     {
-        await using var engine = new global::App.@this("/app");
-        using var parent = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var parent = new global::app.Actor.Context.@this(engine);
         parent.Variables.Set("test", "value");
 
         using var child = parent.CreateChild();
@@ -221,8 +221,8 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_SetsParent()
     {
-        await using var engine = new global::App.@this("/app");
-        using var parent = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var parent = new global::app.Actor.Context.@this(engine);
 
         using var child = parent.CreateChild();
 
@@ -232,8 +232,8 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_AcceptsCustomVariables()
     {
-        await using var engine = new global::App.@this("/app");
-        using var parent = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var parent = new global::app.Actor.Context.@this(engine);
         var customStack = new Variables();
         customStack.Set("custom", "value");
 
@@ -245,8 +245,8 @@ public class PLangContextTests
     [Test]
     public async Task Clone_CreatesIndependentCopy()
     {
-        await using var engine = new global::App.@this("/app");
-        using var original = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var original = new global::app.Actor.Context.@this(engine);
         original["key"] = "value";
         original.IsAsync = true;
 
@@ -259,8 +259,8 @@ public class PLangContextTests
     [Test]
     public async Task Clone_IndependentData()
     {
-        await using var engine = new global::App.@this("/app");
-        using var original = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var original = new global::app.Actor.Context.@this(engine);
         original["key"] = "value";
 
         using var clone = original.Clone();
@@ -273,8 +273,8 @@ public class PLangContextTests
     [Test]
     public async Task Clone_AcceptsCustomVariables()
     {
-        await using var engine = new global::App.@this("/app");
-        using var original = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var original = new global::app.Actor.Context.@this(engine);
         var customStack = new Variables();
         customStack.Set("custom", "value");
 
@@ -286,8 +286,8 @@ public class PLangContextTests
     [Test]
     public async Task Cancel_CancelsCancellationToken()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         context.Cancel();
 
@@ -297,8 +297,8 @@ public class PLangContextTests
     [Test]
     public async Task Duration_ReturnsPositiveTimeSpan()
     {
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         await Task.Delay(10);
 
         var duration = context.Duration;
@@ -309,8 +309,8 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_CancelsToken()
     {
-        await using var engine = new global::App.@this("/app");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        var context = new global::app.Actor.Context.@this(engine);
         var token = context.CancellationToken;
 
         context.Dispose();
@@ -321,8 +321,8 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_ClearsData()
     {
-        await using var engine = new global::App.@this("/app");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        var context = new global::app.Actor.Context.@this(engine);
         context["key"] = "value";
 
         context.Dispose();
@@ -333,8 +333,8 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_DisposesDisposableValues()
     {
-        await using var engine = new global::App.@this("/app");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        var context = new global::app.Actor.Context.@this(engine);
         var disposable = new TestDisposable();
         context["disposable"] = disposable;
 
@@ -346,8 +346,8 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_CalledTwice_DoesNotThrow()
     {
-        await using var engine = new global::App.@this("/app");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/app");
+        var context = new global::app.Actor.Context.@this(engine);
 
         context.Dispose();
         context.Dispose();
@@ -371,7 +371,7 @@ public class PLangContextAccessorTests
     [Test]
     public async Task Current_ReturnsNullInitially()
     {
-        var accessor = new global::App.Actor.Context.@thisAccessor();
+        var accessor = new global::app.Actor.Context.@thisAccessor();
 
         await Assert.That(accessor.Current).IsNull();
     }
@@ -379,9 +379,9 @@ public class PLangContextAccessorTests
     [Test]
     public async Task Current_SetAndGet_ReturnsSameContext()
     {
-        var accessor = new global::App.Actor.Context.@thisAccessor();
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        var accessor = new global::app.Actor.Context.@thisAccessor();
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
 
         accessor.Current = context;
 
@@ -391,9 +391,9 @@ public class PLangContextAccessorTests
     [Test]
     public async Task Current_SetNull_ReturnsNull()
     {
-        var accessor = new global::App.Actor.Context.@thisAccessor();
-        await using var engine = new global::App.@this("/app");
-        using var context = new global::App.Actor.Context.@this(engine);
+        var accessor = new global::app.Actor.Context.@thisAccessor();
+        await using var engine = new global::app.@this("/app");
+        using var context = new global::app.Actor.Context.@this(engine);
         accessor.Current = context;
 
         accessor.Current = null;

@@ -86,7 +86,7 @@ public class Stage1_ChannelBaseTests
     {
         // Mime drives serializer selection. Default "text/plain" → text serializer.
         // Switching Mime to "application/json" → JSON serializer.
-        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
 
         var captureA = new MemoryStream();
         var jsonCh = new StreamChannel("json", captureA, ChannelDirection.Output, ownsStream: false)
@@ -110,8 +110,8 @@ public class Stage1_ChannelBaseTests
     [Test]
     public async Task SessionVsMessage_AbstractsExist_WithDistinctSemantics()
     {
-        var session = typeof(global::App.Channels.Channel.Session.@this);
-        var message = typeof(global::App.Channels.Channel.Message.@this);
+        var session = typeof(global::app.Channels.Channel.Session.@this);
+        var message = typeof(global::app.Channels.Channel.Message.@this);
         await Assert.That(session.IsAbstract).IsTrue();
         await Assert.That(message.IsAbstract).IsTrue();
         await Assert.That(session.IsSubclassOf(typeof(Channel))).IsTrue();

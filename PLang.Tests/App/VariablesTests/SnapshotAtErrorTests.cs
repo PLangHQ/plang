@@ -1,13 +1,13 @@
-using global::App.Errors;
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using global::app.Errors;
+using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
 public class SnapshotAtErrorTests
 {
-    private static (global::App.@this app, ActionEntity action) BuildLive(string name)
+    private static (global::app.@this app, ActionEntity action) BuildLive(string name)
     {
-        var app = new global::App.@this("/test");
+        var app = new global::app.@this("/test");
         var goal = new Goal { Name = name, Path = $"/{name}.goal" };
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
@@ -34,7 +34,7 @@ public class SnapshotAtErrorTests
             vars.Set("x", 2);
 
             var projection = vars.SnapshotAt(error);
-            await Assert.That(projection).IsTypeOf<global::App.Variables.@this>();
+            await Assert.That(projection).IsTypeOf<global::app.Variables.@this>();
             await Assert.That(projection.Get("x")?.Value).IsEqualTo(1);
         }
     }

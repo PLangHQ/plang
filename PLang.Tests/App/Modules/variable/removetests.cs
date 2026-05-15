@@ -1,15 +1,15 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
-using global::App.modules.variable;
+using global::app.Actor.Context;
+using app;
+using global::app.Variables;
+using global::app.modules.variable;
 
 namespace PLang.Tests.App.actions.variable;
 
 public class RemoveTests
 {
-    private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
+    private (global::app.Actor.Context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::App.@this("/app");
+        var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variables);
     }
 

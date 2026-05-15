@@ -1,9 +1,9 @@
-using global::App.Actor.Context;
-using global::App.Goals.Goal;
-using global::App.Variables;
-using global::App.modules.llm;
-using global::App.modules.llm.code;
-using PLangEngine = global::App.@this;
+using global::app.Actor.Context;
+using global::app.Goals.Goal;
+using global::app.Variables;
+using global::app.modules.llm;
+using global::app.modules.llm.code;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.llm;
 
@@ -39,7 +39,7 @@ public class QueryEdgeCaseTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.Actor.Context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Query_EmptyMessages_ReturnsError()

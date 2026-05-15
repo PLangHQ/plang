@@ -1,5 +1,5 @@
-using global::App.Variables;
-using Type = global::App.Data.Type;
+using global::app.Variables;
+using Type = global::app.Data.Type;
 
 namespace PLang.Tests.App.DataTests;
 

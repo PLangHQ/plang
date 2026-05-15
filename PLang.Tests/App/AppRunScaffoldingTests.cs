@@ -1,7 +1,7 @@
 using PLang.Tests.App.Fixtures;
-using App.modules.matrix.plain;
-using App.modules.matrix.markers;
-using App.modules.matrix.modifier;
+using app.modules.matrix.plain;
+using app.modules.matrix.markers;
+using app.modules.matrix.modifier;
 
 namespace PLang.Tests.App;
 
@@ -12,10 +12,10 @@ namespace PLang.Tests.App;
 
 public class AppRunScaffoldingTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/app");
+    public void Setup() => _app = new global::app.@this("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -204,38 +204,38 @@ public class AppRunScaffoldingTests
 }
 
 // Hand-written handler that throws — used to exercise App.Run's catch path.
-internal class ThrowingMatrixHandler : global::App.modules.IAction, global::App.modules.ICodeGenerated
+internal class ThrowingMatrixHandler : global::app.modules.IAction, global::app.modules.ICodeGenerated
 {
-    public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-    public global::App.@this App { get; private set; } = null!;
-    public global::App.Actor.Context.@this Context { get; private set; } = null!;
+    public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+    public global::app.@this App { get; private set; } = null!;
+    public global::app.Actor.Context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
 
-    public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context)
+    public void Initialize(global::app.@this engine, global::app.Actor.Context.@this context)
     { App = engine; Context = context; }
 
-    public Task<global::App.Data.@this> ExecuteAsync(
-        global::App.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::App.Actor.Context.@this context)
+    public Task<global::app.Data.@this> ExecuteAsync(
+        global::app.Goals.Goal.Steps.Step.Actions.Action.@this action,
+        global::app.Actor.Context.@this context)
     {
         throw new InvalidOperationException("forced throw");
     }
 }
 
 // Hand-written handler that throws OperationCanceledException — pins the timeout.after contract.
-internal class OceThrowingHandler : global::App.modules.IAction, global::App.modules.ICodeGenerated
+internal class OceThrowingHandler : global::app.modules.IAction, global::app.modules.ICodeGenerated
 {
-    public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-    public global::App.@this App { get; private set; } = null!;
-    public global::App.Actor.Context.@this Context { get; private set; } = null!;
+    public global::app.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
+    public global::app.@this App { get; private set; } = null!;
+    public global::app.Actor.Context.@this Context { get; private set; } = null!;
     public System.Type? ParameterType => null;
 
-    public void Initialize(global::App.@this engine, global::App.Actor.Context.@this context)
+    public void Initialize(global::app.@this engine, global::app.Actor.Context.@this context)
     { App = engine; Context = context; }
 
-    public Task<global::App.Data.@this> ExecuteAsync(
-        global::App.Goals.Goal.Steps.Step.Actions.Action.@this action,
-        global::App.Actor.Context.@this context)
+    public Task<global::app.Data.@this> ExecuteAsync(
+        global::app.Goals.Goal.Steps.Step.Actions.Action.@this action,
+        global::app.Actor.Context.@this context)
     {
         throw new OperationCanceledException("simulated cancellation");
     }

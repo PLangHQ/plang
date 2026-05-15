@@ -1,4 +1,4 @@
-using global::App.Config;
+using global::app.Config;
 
 namespace PLang.Tests.App.Settings;
 

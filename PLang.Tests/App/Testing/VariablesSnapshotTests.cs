@@ -1,4 +1,4 @@
-using global::App.Variables;
+using global::app.Variables;
 
 namespace PLang.Tests.App.Tester;
 
@@ -12,12 +12,12 @@ namespace PLang.Tests.App.Tester;
 /// </summary>
 public class VariablesSnapshotTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _app = new global::app.@this("/test");
     }
 
     // Fresh Variables — after filtering system vars (!app, Now, GUID, etc.) — snapshots to an empty dict.

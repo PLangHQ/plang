@@ -14,10 +14,10 @@ namespace PLang.Tests.App.DataTests;
 
 public class NamePropagationTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/app");
+    public void Setup() => _app = new global::app.@this("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -29,7 +29,7 @@ public class NamePropagationTests
     public async Task Name_FullVarMatch_PropagatesLiveVariableName()
     {
         var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::App.Data.@this<List<object?>>("products", new List<object?> { "a" }) { Context = ctx });
+        ctx.Variables.Set(new global::app.Data.@this<List<object?>>("products", new List<object?> { "a" }) { Context = ctx });
 
         var paramData = new Data("List", "%products%") { Context = ctx };
         var result = paramData.As<System.Collections.IEnumerable>();
@@ -55,7 +55,7 @@ public class NamePropagationTests
     public async Task Name_PartialInterpolation_KeepsSlotName()
     {
         var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::App.Data.@this<string>("name", "world") { Context = ctx });
+        ctx.Variables.Set(new global::app.Data.@this<string>("name", "world") { Context = ctx });
 
         var paramData = new Data("Greeting", "hello %name%!") { Context = ctx };
         var result = paramData.As<string>();
@@ -82,7 +82,7 @@ public class NamePropagationTests
     public async Task Name_NestedListResolution_PreservesSlotName()
     {
         var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::App.Data.@this<string>("b", "expanded") { Context = ctx });
+        ctx.Variables.Set(new global::app.Data.@this<string>("b", "expanded") { Context = ctx });
 
         var paramData = new Data("Items", new List<object?> { "a", "%b%", "c" }) { Context = ctx };
         var result = paramData.As<System.Collections.IEnumerable>();
@@ -97,8 +97,8 @@ public class NamePropagationTests
     public async Task Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain()
     {
         var ctx = _app.User.Context;
-        ctx.Variables.Set(new global::App.Data.@this<int>("b", 42) { Context = ctx });
-        ctx.Variables.Set(new global::App.Data.@this<string>("a", "%b%") { Context = ctx });
+        ctx.Variables.Set(new global::app.Data.@this<int>("b", 42) { Context = ctx });
+        ctx.Variables.Set(new global::app.Data.@this<string>("a", "%b%") { Context = ctx });
 
         var paramData = new Data("Slot", "%a%") { Context = ctx };
         var result = paramData.As<string>();

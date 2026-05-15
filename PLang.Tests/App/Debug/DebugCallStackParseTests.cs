@@ -5,7 +5,7 @@ public class DebugCallStackParseTests
     [Test]
     public async Task Parse_NoCallstackKey_AllFalse()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         app.Debug.Apply(new Dictionary<string, object?> { ["verbose"] = true });
         var f = app.CallStack.Flags;
         await Assert.That(f.Timing).IsFalse();
@@ -18,7 +18,7 @@ public class DebugCallStackParseTests
     [Test]
     public async Task Parse_ShorthandTrue_TimingAndTagsOnOthersOff()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         app.Debug.Apply(new Dictionary<string, object?> { ["callstack"] = true });
         var f = app.CallStack.Flags;
         await Assert.That(f.Timing).IsTrue();
@@ -32,7 +32,7 @@ public class DebugCallStackParseTests
     [Test]
     public async Task Parse_FullObject_AllFlagsHonored()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         app.Debug.Apply(new Dictionary<string, object?>
         {
             ["callstack"] = new Dictionary<string, object?>
@@ -57,7 +57,7 @@ public class DebugCallStackParseTests
     [Test]
     public async Task Parse_PartialObject_UnspecifiedFlagsDefaultFalse()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         app.Debug.Apply(new Dictionary<string, object?>
         {
             ["callstack"] = new Dictionary<string, object?> { ["diff"] = true }
@@ -71,7 +71,7 @@ public class DebugCallStackParseTests
     [Test]
     public async Task Parse_MaxFramesDefaults1000_WhenOmitted()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         app.Debug.Apply(new Dictionary<string, object?>
         {
             ["callstack"] = new Dictionary<string, object?> { ["history"] = true }
@@ -82,7 +82,7 @@ public class DebugCallStackParseTests
     [Test]
     public async Task Parse_BadJson_FallsBackToAllFalse()
     {
-        await using var app = new global::App.@this("/app");
+        await using var app = new global::app.@this("/app");
         // Junk value for the callstack key — neither bool nor dict. Defensive parser
         // must fall back to all-off rather than throw.
         app.Debug.Apply(new Dictionary<string, object?> { ["callstack"] = "garbage" });

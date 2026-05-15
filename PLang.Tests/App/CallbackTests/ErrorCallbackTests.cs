@@ -1,16 +1,16 @@
-using global::App.Callback;
-using global::App.Errors;
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using global::app.Callback;
+using global::app.Errors;
+using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
 public class ErrorCallbackTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-err-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private static (Goal goal, ActionEntity action) MakeAndRegister(global::App.@this app, string name)
+    private static (Goal goal, ActionEntity action) MakeAndRegister(global::app.@this app, string name)
     {
         var goal = new Goal { Name = name, Path = $"/{name}.goal" };
         var step = new Step { Index = 0, Text = "step", Goal = goal };

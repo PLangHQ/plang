@@ -1,7 +1,7 @@
-using App;
-using global::App.Goals.Goal;
-using global::App.FileSystem;
-using global::App.FileSystem.Default;
+using app;
+using global::app.Goals.Goal;
+using global::app.FileSystem;
+using global::app.FileSystem.Default;
 
 namespace PLang.Tests.App.Core;
 
@@ -322,7 +322,7 @@ public class GoalsTests
         try
         {
             var fs = new PLangFileSystem(tempDir, "");
-            await using var engine = new global::App.@this(fs);
+            await using var engine = new global::app.@this(fs);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
@@ -349,7 +349,7 @@ public class GoalsTests
         try
         {
             var fs = new PLangFileSystem(tempDir, "");
-            await using var engine = new global::App.@this(fs);
+            await using var engine = new global::app.@this(fs);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);
@@ -377,7 +377,7 @@ public class GoalsTests
         try
         {
             var fs = new PLangFileSystem(tempDir, "");
-            await using var engine = new global::App.@this(fs);
+            await using var engine = new global::app.@this(fs);
 
             var buildDir = System.IO.Path.Combine(tempDir, ".build");
             System.IO.Directory.CreateDirectory(buildDir);

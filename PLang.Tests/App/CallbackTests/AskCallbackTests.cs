@@ -1,17 +1,17 @@
-using global::App.Callback;
-using global::App.CallStack;
-using global::App.Errors;
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using global::app.Callback;
+using global::app.CallStack;
+using global::app.Errors;
+using ActionEntity = app.Goals.Goal.Steps.Step.Actions.Action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
 public class AskCallbackTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-ask-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private static (Goal goal, ActionEntity action) MakeAndRegister(global::App.@this app, string name)
+    private static (Goal goal, ActionEntity action) MakeAndRegister(global::app.@this app, string name)
     {
         var goal = new Goal { Name = name, Path = $"/{name}.goal" };
         var step = new Step { Index = 0, Text = "step", Goal = goal };
@@ -26,12 +26,12 @@ public class AskCallbackTests
     {
         var app = NewApp();
         var (goal, action) = MakeAndRegister(app, "RTAsk");
-        var frame = new global::App.CallStack.Call.Position(action, goal, 0, 0, "id");
+        var frame = new global::app.CallStack.Call.Position(action, goal, 0, 0, "id");
         var src = new AskCallback
         {
             Position = frame,
             ActorName = "User",
-            Variables = new() { new global::App.Data.@this("x", 1) }
+            Variables = new() { new global::app.Data.@this("x", 1) }
         };
 
         var bytes = src.Serialize(app.User.Context);
@@ -53,7 +53,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "EncAsk");
         var src = new AskCallback
         {
-            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
             ActorName = "User",
             Variables = new()
         };
@@ -71,9 +71,9 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "DecAsk");
         var src = new AskCallback
         {
-            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
             ActorName = "Service",
-            Variables = new() { new global::App.Data.@this("y", "two") }
+            Variables = new() { new global::app.Data.@this("y", "two") }
         };
 
         var bytes = src.Serialize(app.User.Context);
@@ -90,8 +90,8 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "RunAsk");
         var ask = new AskCallback
         {
-            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
-            Variables = new() { new global::App.Data.@this("bound", 42) }
+            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Variables = new() { new global::app.Data.@this("bound", 42) }
         };
 
         await ask.Run(app.User.Context);
@@ -106,7 +106,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(app, "ChainAsk");
         var ask = new AskCallback
         {
-            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
             Variables = new()
         };
 
@@ -126,7 +126,7 @@ public class AskCallbackTests
         var (goal, action) = MakeAndRegister(src, "MissingAsk");
         var ask = new AskCallback
         {
-            Position = new global::App.CallStack.Call.Position(action, goal, 0, 0, ""),
+            Position = new global::app.CallStack.Call.Position(action, goal, 0, 0, ""),
             Variables = new()
         };
         var bytes = ask.Serialize(src.User.Context);

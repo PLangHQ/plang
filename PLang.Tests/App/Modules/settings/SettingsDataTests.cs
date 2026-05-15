@@ -1,8 +1,8 @@
-using global::App.Actor.Context;
+using global::app.Actor.Context;
 
-using global::App.Errors;
-using global::App.Variables;
-using PLangEngine = global::App.@this;
+using global::app.Errors;
+using global::app.Variables;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.settings;
 
@@ -35,7 +35,7 @@ public class SettingsDataTests
     public async Task Settings_DotNotation_ReturnsStoredValue()
     {
         // Store a setting in the app-level store
-        await _app.SettingsStore.Set("settings", "ApiKey", new global::App.Data.@this("ApiKey", "sk-test-123"));
+        await _app.SettingsStore.Set("settings", "ApiKey", new global::app.Data.@this("ApiKey", "sk-test-123"));
 
         // %Settings.ApiKey% goes through Variables.RegisterNavigable("Settings", ...)
         var resolved = _app.User.Context.Variables.Get("Settings.ApiKey");
@@ -61,7 +61,7 @@ public class SettingsDataTests
     public async Task SettingsData_ViaVariables_DotNotation()
     {
         // Store via DataSource
-        await _app.SettingsStore.Set("settings", "TestKey", new global::App.Data.@this("TestKey", "TestValue"));
+        await _app.SettingsStore.Set("settings", "TestKey", new global::app.Data.@this("TestKey", "TestValue"));
 
         // Resolve via User Variables dot notation (simulates %Settings.TestKey% in PLang code)
         var result = _app.User.Context.Variables.Get("Settings.TestKey");
@@ -83,11 +83,11 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsData_SetThenGetChild_ReflectsLatestValue()
     {
-        await _app.SettingsStore.Set("settings", "ApiKey", new global::App.Data.@this("ApiKey", "old-value"));
+        await _app.SettingsStore.Set("settings", "ApiKey", new global::app.Data.@this("ApiKey", "old-value"));
         var first = _app.User.Context.Variables.Get("Settings.ApiKey");
         await Assert.That(first!.Value?.ToString()).IsEqualTo("old-value");
 
-        await _app.SettingsStore.Set("settings", "ApiKey", new global::App.Data.@this("ApiKey", "new-value"));
+        await _app.SettingsStore.Set("settings", "ApiKey", new global::app.Data.@this("ApiKey", "new-value"));
         var second = _app.User.Context.Variables.Get("Settings.ApiKey");
         await Assert.That(second!.Value?.ToString()).IsEqualTo("new-value");
     }
@@ -97,11 +97,11 @@ public class SettingsDataTests
     {
         // Use the settings.set action handler
         var context = _app.System.Context;
-        var handler = new global::App.modules.settings.Set
+        var handler = new global::app.modules.settings.Set
         {
             Context = context,
             Key = "HandlerKey",
-            Value = new global::App.Data.@this("", "HandlerValue")        };
+            Value = new global::app.Data.@this("", "HandlerValue")        };
 
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
@@ -115,9 +115,9 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_ExistingKey_ReturnsValue()
     {
-        await _app.SettingsStore.Set("settings", "TestKey", new global::App.Data.@this("TestKey", "TestValue"));
+        await _app.SettingsStore.Set("settings", "TestKey", new global::app.Data.@this("TestKey", "TestValue"));
 
-        var handler = new global::App.modules.settings.Get
+        var handler = new global::app.modules.settings.Get
         {
             Context = _app.System.Context,
             Key = "TestKey"
@@ -131,7 +131,7 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Get_MissingKey_ReturnsAskError()
     {
-        var handler = new global::App.modules.settings.Get
+        var handler = new global::app.modules.settings.Get
         {
             Context = _app.System.Context,
             Key = "MissingKey"
@@ -145,9 +145,9 @@ public class SettingsDataTests
     [Test]
     public async Task SettingsHandler_Remove_DeletesKey()
     {
-        await _app.SettingsStore.Set("settings", "ToRemove", new global::App.Data.@this("ToRemove", "value"));
+        await _app.SettingsStore.Set("settings", "ToRemove", new global::app.Data.@this("ToRemove", "value"));
 
-        var handler = new global::App.modules.settings.Remove
+        var handler = new global::app.modules.settings.Remove
         {
             Context = _app.System.Context,
             Key = "ToRemove"
@@ -179,7 +179,7 @@ public class SettingsDataTests
     {
         // Store a JSON object as a setting
         var config = new Dictionary<string, object> { ["SubKey"] = "nested-value", ["Other"] = 42 };
-        await _app.SettingsStore.Set("settings", "Config", new global::App.Data.@this("Config", config));
+        await _app.SettingsStore.Set("settings", "Config", new global::app.Data.@this("Config", config));
 
         // Resolve %Settings.Config.SubKey% via User Variables
         var result = _app.User.Context.Variables.Get("Settings.Config.SubKey");
@@ -194,7 +194,7 @@ public class SettingsDataTests
     public async Task Variables_Clone_PreservesSettingsData()
     {
         // Store a setting
-        await _app.SettingsStore.Set("settings", "CloneKey", new global::App.Data.@this("CloneKey", "clone-value"));
+        await _app.SettingsStore.Set("settings", "CloneKey", new global::app.Data.@this("CloneKey", "clone-value"));
 
         // Clone the User Variables
         var cloned = _app.User.Context.Variables.Clone();
@@ -248,7 +248,7 @@ public class SettingsDataTests
     [Test]
     public async Task ErrorPropagation_VariablesGet_SettingsExists_ReturnsSuccess()
     {
-        await _app.SettingsStore.Set("settings", "ApiKey", new global::App.Data.@this("ApiKey", "sk-real-key"));
+        await _app.SettingsStore.Set("settings", "ApiKey", new global::app.Data.@this("ApiKey", "sk-real-key"));
         var variables = _app.User.Context.Variables;
 
         // Same call path as generated code
@@ -289,7 +289,7 @@ public class SettingsDataTests
         // Variables registers closes over it. Identity is the test.
         await Assert.That(ReferenceEquals(_app.Settings, _app.Settings)).IsTrue();
         // Both actors' Variables resolve %Settings.X% through the same app.Settings.
-        await _app.SettingsStore.Set("settings", "SharedKey", new global::App.Data.@this("SharedKey", "shared-value"));
+        await _app.SettingsStore.Set("settings", "SharedKey", new global::app.Data.@this("SharedKey", "shared-value"));
         var fromUser = _app.User.Context.Variables.Get("Settings.SharedKey");
         var fromSystem = _app.System.Context.Variables.Get("Settings.SharedKey");
         await Assert.That(fromUser?.Value?.ToString()).IsEqualTo("shared-value");
@@ -300,7 +300,7 @@ public class SettingsDataTests
     public async Task SettingsData_SetViaSystem_ReadableFromUserContext()
     {
         // Store via System DataSource (the backing store)
-        await _app.SettingsStore.Set("settings", "SharedKey", new global::App.Data.@this("SharedKey", "shared-value"));
+        await _app.SettingsStore.Set("settings", "SharedKey", new global::app.Data.@this("SharedKey", "shared-value"));
 
         // Read from User context (what PLang code actually uses)
         var result = _app.User.Context.Variables.Get("Settings.SharedKey");

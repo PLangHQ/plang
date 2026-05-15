@@ -1,36 +1,36 @@
-namespace App.modules.matrix.markers;
+namespace app.modules.matrix.markers;
 
-[global::App.modules.Action("icontexthandler")]
-public partial class IContextHandler : global::App.modules.IContext
+[global::app.modules.Action("icontexthandler")]
+public partial class IContextHandler : global::app.modules.IContext
 {
-    public Task<global::App.Data.@this> Run() =>
-        Task.FromResult(global::App.Data.@this.Ok(Context != null));
+    public Task<global::app.Data.@this> Run() =>
+        Task.FromResult(global::app.Data.@this.Ok(Context != null));
 }
 
-[global::App.modules.Action("ichannelhandler")]
-public partial class IChannelHandler : global::App.modules.IContext, global::App.modules.IChannel
+[global::app.modules.Action("ichannelhandler")]
+public partial class IChannelHandler : global::app.modules.IContext, global::app.modules.IChannel
 {
-    public Task<global::App.Data.@this> Run() =>
-        Task.FromResult(global::App.Data.@this.Ok(Channel != null));
+    public Task<global::app.Data.@this> Run() =>
+        Task.FromResult(global::app.Data.@this.Ok(Channel != null));
 }
 
-[global::App.modules.Action("iactionhandler")]
-public partial class IActionHandler : global::App.modules.IContext, global::App.modules.IAction
+[global::app.modules.Action("iactionhandler")]
+public partial class IActionHandler : global::app.modules.IContext, global::app.modules.IAction
 {
-    public Task<global::App.Data.@this> Run() =>
-        Task.FromResult(global::App.Data.@this.Ok(Action != null));
+    public Task<global::app.Data.@this> Run() =>
+        Task.FromResult(global::app.Data.@this.Ok(Action != null));
 }
 
-[global::App.modules.Action("istephandler")]
-public partial class IStepHandler : global::App.modules.IContext, global::App.modules.IStep
+[global::app.modules.Action("istephandler")]
+public partial class IStepHandler : global::app.modules.IContext, global::app.modules.IStep
 {
-    public Task<global::App.Data.@this> Run() =>
-        Task.FromResult(global::App.Data.@this.Ok(Step != null));
+    public Task<global::app.Data.@this> Run() =>
+        Task.FromResult(global::app.Data.@this.Ok(Step != null));
 }
 
-[global::App.modules.Action("istatichandler")]
-public partial class IStaticHandler : global::App.modules.IContext, global::App.modules.IStatic
+[global::app.modules.Action("istatichandler")]
+public partial class IStaticHandler : global::app.modules.IContext, global::app.modules.IStatic
 {
-    public Task<global::App.Data.@this> Run() =>
-        Task.FromResult(global::App.Data.@this.Ok(Static != null));
+    public Task<global::app.Data.@this> Run() =>
+        Task.FromResult(global::app.Data.@this.Ok(Static != null));
 }

@@ -1,5 +1,5 @@
-using global::App.Variables;
-using Variable = global::App.Variables.Variable;
+using global::app.Variables;
+using Variable = global::app.Variables.Variable;
 
 namespace PLang.Tests.App.VariablesTests;
 
@@ -10,10 +10,10 @@ namespace PLang.Tests.App.VariablesTests;
 
 public class VariableResolveTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/test");
+    public void Setup() => _app = new global::app.@this("/test");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

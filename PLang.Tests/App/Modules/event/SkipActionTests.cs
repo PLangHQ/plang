@@ -1,7 +1,7 @@
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.@event;
-using PLangEngine = global::App.@this;
+using global::app.Actor.Context;
+using global::app.Variables;
+using global::app.modules.@event;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.EventTests;
 
@@ -26,7 +26,7 @@ public class SkipActionTests
     {
         var context = _app.User.Context;
 
-        var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", "override-value")};
+        var action = new SkipAction { Context = context, Value = new global::app.Data.@this("", "override-value")};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -52,7 +52,7 @@ public class SkipActionTests
     {
         var context = _app.User.Context;
 
-        var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", 42)};
+        var action = new SkipAction { Context = context, Value = new global::app.Data.@this("", 42)};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
@@ -65,7 +65,7 @@ public class SkipActionTests
         var context = _app.User.Context;
         var obj = new Dictionary<string, object> { ["status"] = 200 };
 
-        var action = new SkipAction { Context = context, Value = new global::App.Data.@this("", obj)};
+        var action = new SkipAction { Context = context, Value = new global::app.Data.@this("", obj)};
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();

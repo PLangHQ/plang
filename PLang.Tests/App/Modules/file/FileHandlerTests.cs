@@ -1,9 +1,9 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
-using global::App.modules.file;
-using global::App.FileSystem.Default;
-using PLangPath = global::App.FileSystem.Path;
+using global::app.Actor.Context;
+using app;
+using global::app.Variables;
+using global::app.modules.file;
+using global::app.FileSystem.Default;
+using PLangPath = global::app.FileSystem.Path;
 
 namespace PLang.Tests.App.actions.file;
 
@@ -11,14 +11,14 @@ public class FileHandlerTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly global::App.@this _app;
+    private readonly global::app.@this _app;
 
     public FileHandlerTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _app = new global::App.@this(_tempDir, fileSystem: _fs);
+        _app = new global::app.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
@@ -31,10 +31,10 @@ public class FileHandlerTests : IDisposable
     private string TempPath(string relativePath) =>
         _fs.Path.Combine(_tempDir, relativePath);
 
-    private global::App.Data.@this<PLangPath> MakePath(string relativePath) =>
+    private global::app.Data.@this<PLangPath> MakePath(string relativePath) =>
         new("", new PLangPath(TempPath(relativePath)) { Context = _app.User.Context });
 
-    private global::App.Data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
+    private global::app.Data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
         new("", new PLangPath(absolutePath) { Context = _app.User.Context });
 
     // --- Save ---
@@ -107,7 +107,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("template.txt"),
-            ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", true)
+            ResolveVariables = new global::app.Data.@this<bool>("ResolveVariables", true)
         };
         var result = await action.Run();
 
@@ -127,7 +127,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("literal.txt"),
-            ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", false)
+            ResolveVariables = new global::app.Data.@this<bool>("ResolveVariables", false)
         };
         var result = await action.Run();
 
@@ -147,7 +147,7 @@ public class FileHandlerTests : IDisposable
         {
             Context = _app.User.Context,
             Path = MakePath("untrusted.txt"),
-            ResolveVariables = new global::App.Data.@this<bool>("ResolveVariables", true)
+            ResolveVariables = new global::app.Data.@this<bool>("ResolveVariables", true)
         };
         var result = await action.Run();
 
@@ -426,48 +426,48 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new global::App.Goals.Goal.@this
+        var goal = new global::app.Goals.Goal.@this
         {
             Name = "TestFileExistsFlow",
-            Steps = new global::App.Goals.Goal.Steps.@this
+            Steps = new global::app.Goals.Goal.Steps.@this
             {
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
-                                { new global::App.Data.@this("path", TempPath("real.txt")) },
+                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
+                                { new global::app.Data.@this("path", TempPath("real.txt")) },
                         },
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
-                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
+                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
                             {
-                                new global::App.Data.@this("Name", "fileResult"),
-                                new global::App.Data.@this("Value", "%__data__%")
+                                new global::app.Data.@this("Name", "fileResult"),
+                                new global::app.Data.@this("Value", "%__data__%")
                             }
                         }
                     }
                 },
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.Goals.Goal.Steps.Step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
-                                { new global::App.Data.@this("Data", "%fileResult.Exists%") },
+                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
+                                { new global::app.Data.@this("Data", "%fileResult.Exists%") },
                         }
                     }
                 }
@@ -503,48 +503,48 @@ public class FileHandlerTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = new global::App.Goals.Goal.@this
+        var goal = new global::app.Goals.Goal.@this
         {
             Name = "TestFileNotExistsFlow",
-            Steps = new global::App.Goals.Goal.Steps.@this
+            Steps = new global::app.Goals.Goal.Steps.@this
             {
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.Goals.Goal.Steps.Step.@this
                 {
                     Index = 0,
                     Text = "check if file exists",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "file",
                             ActionName = "exists",
-                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
-                                { new global::App.Data.@this("path", TempPath("ghost.txt")) },
+                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
+                                { new global::app.Data.@this("path", TempPath("ghost.txt")) },
                         },
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "variable",
                             ActionName = "set",
-                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
+                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
                             {
-                                new global::App.Data.@this("Name", "fileResult"),
-                                new global::App.Data.@this("Value", "%__data__%")
+                                new global::app.Data.@this("Name", "fileResult"),
+                                new global::app.Data.@this("Value", "%__data__%")
                             }
                         }
                     }
                 },
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.Goals.Goal.Steps.Step.@this
                 {
                     Index = 1,
                     Text = "write exists result",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.Goals.Goal.Steps.Step.Actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                         {
                             Module = "output",
                             ActionName = "write",
-                            Parameters = new System.Collections.Generic.List<global::App.Data.@this>
-                                { new global::App.Data.@this("Data", "%fileResult.Exists%") },
+                            Parameters = new System.Collections.Generic.List<global::app.Data.@this>
+                                { new global::app.Data.@this("Data", "%fileResult.Exists%") },
                         }
                     }
                 }

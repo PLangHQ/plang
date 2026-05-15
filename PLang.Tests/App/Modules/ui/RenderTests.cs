@@ -1,23 +1,23 @@
-using App;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.ui;
-using global::App.modules.ui.code;
+using app;
+using global::app.Actor.Context;
+using global::app.Variables;
+using global::app.modules.ui;
+using global::app.modules.ui.code;
 
 namespace PLang.Tests.App.Modules.ui;
 
 public class RenderTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly global::App.@this _app;
-    private readonly global::App.modules.ui.code.Fluid _provider;
+    private readonly global::app.@this _app;
+    private readonly global::app.modules.ui.code.Fluid _provider;
 
     public RenderTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_ui_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = new global::App.@this(_tempDir);
-        _provider = new global::App.modules.ui.code.Fluid();
+        _app = new global::app.@this(_tempDir);
+        _provider = new global::app.modules.ui.code.Fluid();
     }
 
     public void Dispose()
@@ -696,7 +696,7 @@ public class RenderTests : IDisposable
             Text = text,
             Actions = new StepActions
             {
-                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.Goals.Goal.Steps.Step.Actions.Action.@this
                 {
                     Module = actionClass,
                     ActionName = method,

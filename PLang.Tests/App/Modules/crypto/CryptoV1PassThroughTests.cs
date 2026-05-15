@@ -1,11 +1,11 @@
-using global::App.modules.crypto;
+using global::app.modules.crypto;
 
 namespace PLang.Tests.App.Modules.crypto;
 
 public class CryptoV1PassThroughTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-crypto-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test]
@@ -14,7 +14,7 @@ public class CryptoV1PassThroughTests
         var app = NewApp();
         var input = new byte[] { 1, 2, 3, 4 };
         var result = await app.RunAction<encrypt>(
-            new encrypt { Input = global::App.Data.@this<byte[]>.Ok(input) }, app.User.Context);
+            new encrypt { Input = global::app.Data.@this<byte[]>.Ok(input) }, app.User.Context);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEquivalentTo(input);
     }
@@ -25,7 +25,7 @@ public class CryptoV1PassThroughTests
         var app = NewApp();
         var input = new byte[] { 9, 8, 7 };
         var result = await app.RunAction<decrypt>(
-            new decrypt { Input = global::App.Data.@this<byte[]>.Ok(input) }, app.User.Context);
+            new decrypt { Input = global::app.Data.@this<byte[]>.Ok(input) }, app.User.Context);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsEquivalentTo(input);
     }
@@ -36,10 +36,10 @@ public class CryptoV1PassThroughTests
         var app = NewApp();
         var input = new byte[] { 11, 22, 33, 44, 55 };
         var encrypted = await app.RunAction<encrypt>(
-            new encrypt { Input = global::App.Data.@this<byte[]>.Ok(input) }, app.User.Context);
+            new encrypt { Input = global::app.Data.@this<byte[]>.Ok(input) }, app.User.Context);
         var encryptedBytes = (byte[])encrypted.Value!;
         var decrypted = await app.RunAction<decrypt>(
-            new decrypt { Input = global::App.Data.@this<byte[]>.Ok(encryptedBytes) }, app.User.Context);
+            new decrypt { Input = global::app.Data.@this<byte[]>.Ok(encryptedBytes) }, app.User.Context);
         await Assert.That(decrypted.Value).IsEquivalentTo(input);
     }
 
