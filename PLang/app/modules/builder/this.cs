@@ -4,7 +4,7 @@ using System.Text.Json.Serialization.Metadata;
 using app.Attributes;
 using Force.DeepCloner;
 
-namespace app.Builder;
+namespace app.modules.builder;
 
 /// <summary>
 /// Builder mode controller. When enabled, actors use in-memory datasources

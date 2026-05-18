@@ -69,6 +69,6 @@ internal static class Json
     public static System.Text.Json.JsonSerializerOptions CaseInsensitiveRead => global::app.types.@this.CaseInsensitiveRead;
 
     public static System.Text.Json.JsonSerializerOptions CamelCaseIndented => global::app.@this.CamelCaseIndented;
-    public static System.Text.Json.JsonSerializerOptions PrWrite => global::app.Builder.@this.PrWrite;
+    public static System.Text.Json.JsonSerializerOptions PrWrite => global::app.modules.builder.@this.PrWrite;
     public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::app.Diagnostics.Format.Options;
 }

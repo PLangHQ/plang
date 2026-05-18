@@ -44,7 +44,7 @@ public sealed partial class @this
         if (s.HasSection("Variables")) global::app.variables.@this.Restore(s.Section("Variables"), ctx);
         if (s.HasSection("Errors"))    global::app.errors.@this.Restore(s.Section("Errors"), ctx);
         if (s.HasSection("Statics"))   global::app.Statics.@this.Restore(s.Section("Statics"), ctx);
-        if (s.HasSection("Build"))     global::app.Builder.@this.Restore(s.Section("Build"), ctx);
+        if (s.HasSection("Build"))     global::app.modules.builder.@this.Restore(s.Section("Build"), ctx);
         if (s.HasSection("Testing"))   global::app.tester.@this.Restore(s.Section("Testing"), ctx);
         if (s.HasSection("CallStack")) global::app.callstack.@this.Restore(s.Section("CallStack"), ctx);
     }

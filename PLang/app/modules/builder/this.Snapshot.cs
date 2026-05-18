@@ -1,4 +1,4 @@
-namespace app.Builder;
+namespace app.modules.builder;
 
 public sealed partial class @this : ISnapshot
 {

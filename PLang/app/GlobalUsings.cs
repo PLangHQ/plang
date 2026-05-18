@@ -66,7 +66,7 @@ global using Tester = app.tester.@this;
 
 // Builder: can't be global alias — v1 PLang.Builder namespace conflict (legacy).
 // Inside App.@this: the `Builder` property shadows the `Builder` namespace, so
-// type references must be fully qualified (global::app.Builder.@this).
+// type references must be fully qualified (global::app.modules.builder.@this).
 // Inside other App.*: Builder.@this resolves naturally.
 // Outside App.*: use App.Builder.@this or a per-file alias.
 

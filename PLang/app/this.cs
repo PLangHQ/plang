@@ -183,7 +183,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Builder mode controller. When enabled, actors use in-memory datasources.
     /// </summary>
-    public global::app.Builder.@this Builder { get; }
+    public global::app.modules.builder.@this Builder { get; }
 
     /// <summary>
     /// Callback subsystem config holder. NOT an ICallback — this is `app.Callback.*` config
@@ -298,7 +298,7 @@ public sealed partial class @this : IAsyncDisposable
         Events = new AppEvents();
         Debug = new Debugging(this);
         Tester = new global::app.tester.@this(this);
-        Builder = new global::app.Builder.@this(this);
+        Builder = new global::app.modules.builder.@this(this);
         Types = new types.@this();
         Config = new config.@this();
         _settingsStore = new Lazy<global::app.Settings.IStore>(CreateSettingsStore);
