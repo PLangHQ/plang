@@ -30,8 +30,34 @@ Lifecycle/Bindings/Binding folder chain disappears, the binding is a
 private record inside `Event.@this` with no public `Binding.@this`
 type. PLang surface reads as `%app.event%`, `%context.event%`.
 
-The `scope:goal|app` parameter from Thread 1 folds in naturally — it
-selects which `Event.@this` (App or Context) the binding registers on.
+The `scope:goal|app` parameter (originally drafted on the
+`events-scope-binary` branch, now absorbed here) is part of this
+branch, not a separate one. In the old design it was the smallest
+shippable change — one parameter, one branch in the handler, no new
+types. In the new design it's a natural consequence of having two
+named registries: `Scope` simply selects which `Event.@this` the
+binding lands in. The old "release valve" framing is gone; the scope
+parameter ships as part of stage 2.
+
+Decisions inherited from the scope-binary plan and preserved here:
+
+- Default scope is `goal` — current behaviour unchanged for any goal
+  that doesn't pass `scope`.
+- `Actor` + `scope:app` are mutually exclusive (build-time check
+  preferred, runtime fallback acceptable).
+- Lifetime semantics are implicit in the registry choice:
+  `scope:app` bindings live for the App, `scope:goal` bindings live
+  for the actor's context. No extra teardown.
+- The third tier (`Channel.Events`) was never exposed through the
+  parameter and stays internal — in this redesign it doesn't exist
+  at all (channels fire, don't store).
+- Naming: `scope` (not `level`); values `goal` / `app` in PLang,
+  `EventScope.Goal` / `EventScope.App` in C#.
+
+`events-scope-binary` is closed by this branch.
+`events-architecture` is closed without merging — its only useful
+artefact (an `Actor.Developer` sub-object) is being solved
+differently.
 
 Boot-time `Events.goal` loading and `BeforeAppStart`/`AfterAppStart`
 firing (Thread 3) is **out of scope** for this branch — same writeup

@@ -1,3 +1,7 @@
+## 2026-05-18 — Absorb scope-binary, close events-architecture
+
+Ingi confirmed the events plan: `events-scope-binary` is rolled into this branch (not a separate ship), `events-architecture` is closed without merging (the `Actor.Developer` sub-object on it is no longer wanted — to be solved differently). Updated `v1/plan.md` to make the scope absorption explicit and to record both closures. No code or stage changes.
+
 ## 2026-05-12 — Events rebuild
 
 Full redesign of the event subsystem. Replaces the 11-value `EventType` enum, five-field heterogeneous `EventBinding`, and three-tier registry walk with a flat `On` enum (8 values), unified `Binding` record (private inside `Event.@this`), and two-tier scope walk (App + Context). Singular naming applied **inside the event area only** — `App.Event.@this`, `Context.Event.@this`, no `.Lifecycle.Bindings.Binding.` chain. The broader codebase rename (`Goals/Steps/Actions/Channels` → singular) is filed separately and out of scope.
