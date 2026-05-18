@@ -1,6 +1,17 @@
 # Runtime2 TODOs
 
-## 2026-04-24 — cleanup lazy generator, get it to OBP
+> **Audited 2026-05-11** (`runtime2-foundation-verify` v1, architect). Every
+> entry in this file was checked against the current code. Resolved entries
+> are marked inline (`✅ RESOLVED`). Entries still open were re-verified and
+> kept as-is. Next reader: trust the inline markers, not the dates.
+
+## 2026-04-24 — cleanup lazy generator, get it to OBP  ✅ RESOLVED 2026-05-01 (`runtime2-generator-obp`) + 2026-05-09 (`runtime2-cleanup`)
+
+`LazyParamsGenerator.cs` is gone. Generator decomposed into `PLang.Generators/this.cs` (entry) → `Discovery/this.cs` (Roslyn boundary) + `Emission/Action/this.cs` (per-handler) + `Emission/Property/{Data,Code}/this.cs` (polymorphic per-property). The `ResetResolution` patching was replaced by clean per-call backing-field reset emitted at `Emission/Action/this.cs:139` (`__<prop>_backing = default; __<prop>_set = false`). The deeper "request-scoped vs pr-template Data" lifecycle question dissolved with the backing-field shape — Data isn't reused across executions; the backing fields are.
+
+The `[VariableName]` → `Data<App.Variables.Variable>` migration was also part of the same arc (see 2026-04-30 entry, marked resolved 2026-05-01).
+
+### Original entry (archived)
 
 Context: `PLang.Generators/LazyParamsGenerator.cs` ballooned with special cases
 (full-match/interpolate strings, `As<T>`, `ResetResolution`, default values,
@@ -10,7 +21,19 @@ revisit the parameter Data lifecycle: the per-execution reset we now emit
 (`data.ResetResolution()`) signals that Parameter Data semantics need a cleaner
 model (request-scoped Data vs. pr-template Data) rather than reset-patching.
 
-## 2026-04-27 — wire dormant CallStack into the runtime
+## 2026-04-27 — wire dormant CallStack into the runtime  ✅ RESOLVED on `runtime2-callback` + `runtime2-cleanup` (stage 7)
+
+CallStack is now wired:
+- `App.Run` pushes a frame for every action at `PLang/App/this.cs:460` (handles `CallStackOverflowException` outside the try).
+- `Goal.Run` pushes a goal-entry frame at `PLang/App/Goals/Goal/this.cs:288`.
+- The source generator captures `__callFrames` from `context.CallStack?.Current?.SnapshotChain()` at `PLang.Generators/Emission/Action/this.cs:154`.
+- `!callStack` is registered as `DynamicData` at `PLang/App/Actor/Context/this.cs:168`.
+- Depth limits and audit accumulation work (`Tests/App/CallStack/` has 16 `.test.goal` files covering cycle detection, audit, cause links, timeout, recovery).
+- `app.Debug.CallStack` was promoted to `app.CallStack` on `runtime2-cleanup` stage 7.
+
+The parallel-execution scope concern (2026-05-08 entry below) is the remaining piece — `_current` is `AsyncLocal` (fork-safe) but `_root` and `Audit` are instance-level. Fine for sequential CLI; revisit when Webserver lands.
+
+### Original entry (archived)
 
 Context: `App/CallStack/this.cs` defines `Push`, `PopAsync`, `PushError`,
 `Errors`, `Current`, `GetStackTrace`, etc. — none are called by the runtime.
@@ -40,7 +63,16 @@ Proper fix:
 Probably surfaces other bugs (Push/Pop balancing in async paths, frame
 disposal, snapshot handling) — budget time accordingly.
 
-## 2026-04-27 — PLang tests for error.handle recovery-value path
+## 2026-04-27 — PLang tests for error.handle recovery-value path  ✅ RESOLVED 2026-05-11 (`runtime2-foundation-verify` stage 6)
+
+Three `.test.goal` regression pins landed in `Tests/Errors/`:
+- `GoalFirstReturnsRecoveryValue.test.goal` pins `handle.cs:109-114` (GoalFirst returns `recoveryResult`, sets `Handled=true`).
+- `RetryFirstReturnsRecoveryValue.test.goal` pins `handle.cs:120-131` — the 2026-04-27 symmetry fix.
+- `MultiActionRecoveryLastActionPropagates.test.goal` pins `handle.cs:177-184` (chain ordering, RunRecovery returns `last`).
+
+Each test asserts both the recovery side-effect (`%content% equals "from-recovery"`) and `%!error% is null` outside the scope — the latter only holds if the `recoveryResult`-return branch ran with `Handled=true`. The auditor flagged one minor gap (Test 3 cannot distinguish `return last` from `return Ok()` because `variable.set` returns `Ok()` with no `Value`); defer-with-consumer — augment when a downstream surface actually reads the recovery's terminal `Value`.
+
+### Original entry (archived)
 
 Context: codeanalyzer v1 flagged that `error.handle.Wrap` line 109 (RetryFirst
 path with recovery) returned `Ok()` while line 96 (GoalFirst) returned
@@ -209,7 +241,13 @@ runtime." Confirm what those are before starting.
 **Migration:** none needed. Pass-through callbacks issued under v1 will
 not decrypt under real keys, but nothing has shipped to users yet.
 
-## 2026-05-05 — replace `App._statics` with goal-backed dynamic property
+## 2026-05-05 — replace `App._statics` with goal-backed dynamic property  ⚠️ PARTIALLY RESOLVED — shape carved, deep replacement still pending
+
+Shape carve done: the field is now its own `@this` at `PLang/App/Statics/this.cs` (separate type, OBP-shaped, snapshot-aware). The flat module-keyed `ConcurrentDictionary<string, ConcurrentDictionary<string, object?>>` is no longer inline on `App.@this`.
+
+**Still open:** the deeper design target — "goal-backed dynamic property, addressable by dot-path" — is not implemented. `App/Statics/this.cs` still exposes `GetBag(key)` returning a flat `ConcurrentDictionary<string, object?>` and carries the same `TODO: replace with goal-backed dynamic property` comment. Callback's snapshot fidelity still depends on this bag structure. Pick up when there's a real use case driving the dynamic-property design (probably the callback ratification sweep or app.X.Y dot-path work).
+
+### Original entry (archived)
 
 `PLang/App/this.cs:108` carries a private
 `ConcurrentDictionary<string, ConcurrentDictionary<string, object?>>`
@@ -493,3 +531,28 @@ When you pick this up:
 
 **Not touched in the runtime2-cleanup branch** (Ingi 2026-05-08). Stage 7
 stays as a property-promotion only.
+
+## 2026-05-11 — Settings encryption-at-rest decision before secrets-bearing modules port
+
+Surfaced during the foundation verification sweep (`.bot/runtime2-foundation-verify/architect/v1/verification.md`).
+
+Context: `PLang/App/Settings/Sqlite.cs` is plain SQLite — values stored as-is. Settings will hold LLM API keys, HTTP credentials, signing keys (once they aren't on disk separately), and webserver session secrets when those modules port from main. Whether encryption-at-rest is the Settings layer's job (transparent to callers) or the caller's job (`crypto.encrypt` the value before `settings.write`) is not decided.
+
+**Pick up when:** before the first secrets-bearing module ports — likely Webserver, LLM provider config, or Db connection strings. Cheap to design pre-port; expensive to retrofit once dozens of secrets are written under one model and need migrating to another.
+
+**Design questions for that pass:**
+1. Layer responsibility: transparent encryption in `Sqlite.cs` keyed by `IKey`, vs. caller-side `crypto.encrypt` per value.
+2. Key rotation: how does a re-keyed identity migrate existing encrypted values?
+3. Migration story: how does an in-flight settings DB transition between "plain" and "encrypted" modes?
+4. PLang surface: does `settings.write key=X value=Y` flag encryption per-call, or by namespace?
+
+## 2026-05-11 — End-to-end PLang tests for full-app Snapshot save+restore round-trip
+
+Surfaced during the foundation verification sweep (`.bot/runtime2-foundation-verify/architect/v1/verification.md`).
+
+Context: All 7 snapshot subsystems have C# TUnit round-trip tests. No `Tests/Snapshot/*.test.goal` exists that pauses an app, dehydrates state, rehydrates a fresh app, and asserts behaviour continues. The single `.test.goal` covering snapshots (`Tests/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal`) tests assertion-time capture, not full-app pause/resume.
+
+**Pick up when:** the ask-user HTTP wire transport lands (2026-05-05 callback todo, item 14). That's the first real consumer of full-app pause/resume — ask-user's resume flow IS the snapshot round-trip in production. Couple the tests to that work; designing them in isolation now would over-specify a shape the transport will refine.
+
+**No standalone branch needed.** Folds naturally into the ask-user transport architect pass.
+

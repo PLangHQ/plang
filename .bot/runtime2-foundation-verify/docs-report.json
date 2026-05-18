@@ -1,0 +1,30 @@
+{
+  "reviewer": "docs",
+  "branch": "runtime2-foundation-verify",
+  "timestamp": "2026-05-18T00:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Test-only branch (three .test.goal regression pins for error.handle recovery-value semantics + a todos.md reconciliation by architect). No production C# changed, no new modules, no new API surface. One doc-hygiene gap found and fixed: the 2026-04-27 todo entry in Documentation/Runtime2/todos.md described exactly the work this branch shipped but lacked the resolution-marker its peer entries had. Marked resolved with pointers to the three test files, handle.cs line refs, and the auditor's minor caveat. All other doc surfaces (good_to_know.md:176 on ErrorOrder=GoalFirst, debug.md:296-307 on %!callStack.Current.Handled%, callbacks.md:108 on error.App back-ref) already cover the behavior these tests pin — no drift. The .test.goal files carry strong inline / comments naming the exact handle.cs line ranges; no further example or architecture doc work needed.",
+  "stats": { "gaps_found": 1, "gaps_filled": 1, "docs_updated": 1, "docs_created": 0 },
+  "changes": [
+    {
+      "id": 1,
+      "type": "consistency",
+      "action": "updated",
+      "file": "Documentation/Runtime2/todos.md",
+      "description": "Marked the 2026-04-27 'PLang tests for error.handle recovery-value path' entry ✅ RESOLVED 2026-05-11 (runtime2-foundation-verify stage 6). Added short close-out paragraph listing the three Tests/Errors/*.test.goal files with handle.cs line refs and the auditor's minor caveat (Test 3 can't distinguish 'return last' from 'return Ok()' under variable.set — defer-with-consumer). Original entry preserved under '### Original entry (archived)' to match the convention used by the resolved entries above it."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "stale-doc",
+      "file": "Documentation/Runtime2/todos.md",
+      "issue": "The 2026-04-27 'PLang tests for error.handle recovery-value path' entry was the exact work shipped on this branch but had no ✅ RESOLVED marker, unlike its peer entries (2026-04-24 lazy-generator OBP, 2026-04-27 CallStack wiring) which use the marker convention.",
+      "resolution": "filled",
+      "detail": "Resolution header + close-out paragraph added; original entry archived in place."
+    }
+  ],
+  "claude_md_proposals": [],
+  "character_proposals": []
+}
