@@ -6,7 +6,7 @@
       "bot": "architect",
       "timestamp_start": "2026-05-15T01:34:47Z",
       "timestamp_end": "2026-05-15T01:35:00Z",
-      "intent": "Set up the rename plan for Ingi to critique — take ownership from coder's v1 draft, fix bisection hygiene, define Phase 4 groupings, scope Builder in.",
+      "intent": "Set up the rename plan for Ingi to critique \u2014 take ownership from coder's v1 draft, fix bisection hygiene, define Phase 4 groupings, scope Builder in.",
       "before": {
         "assumptions": "Coder wrote a v1 plan + captured baseline; Ingi wants the architect to own the plan shape so he can critique it. The branch already has a settled goal (lowercase PLang vocabulary, keep C# infra PascalCase).",
         "risk": "Plan reads as a draft pulled from coder rather than a designed structure. Mixing semantic change (Modules merge) with cosmetic rename poisons bisection."
@@ -14,11 +14,13 @@
       "plan": ".bot/app-lowercase/architect/plan.md",
       "actions": [
         {
-          "paths": [".bot/app-lowercase/architect/plan.md"],
+          "paths": [
+            ".bot/app-lowercase/architect/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Architect spine. Six phases: root, Data/Type, Path, vocabulary sweep (4a-4d grouped by blast radius), Builder, close. Modules merge pulled out per Ingi's call. Builder lowercased per Ingi's call. Phase 4 groupings defined by blast radius not coupling — execution core / I/O / state-lifecycle / control-diagnostics."
+          "context": "Architect spine. Six phases: root, Data/Type, Path, vocabulary sweep (4a-4d grouped by blast radius), Builder, close. Modules merge pulled out per Ingi's call. Builder lowercased per Ingi's call. Phase 4 groupings defined by blast radius not coupling \u2014 execution core / I/O / state-lifecycle / control-diagnostics."
         }
       ],
       "after": {
@@ -32,7 +34,7 @@
       "bot": "coder",
       "timestamp_start": "2026-05-15T12:00:00Z",
       "timestamp_end": "2026-05-15T12:30:00Z",
-      "intent": "Fix all 'App.' string literals in test files and production code after the App → app namespace rename.",
+      "intent": "Fix all 'App.' string literals in test files and production code after the App \u2192 app namespace rename.",
       "before": {
         "assumptions": "Branch already has the namespace rename in production C#. Test files have hardcoded 'App.' strings in reflection calls, assertions, and Roslyn stub sources.",
         "risk": "Generator tests use inline Roslyn source that must use 'app.modules' for the generator to recognize [Action] attributes. Fixture DLLs need rebuilding."
@@ -68,11 +70,13 @@
           "context": "Updated fixture source files using directives from App.* to app.*, rebuilt DLLs and committed them."
         },
         {
-          "paths": ["PLang/app/Builder/this.cs"],
+          "paths": [
+            "PLang/app/Builder/this.cs"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Fixed StoreOnlyModifier namespace check from 'App.Goals' to 'app.Goals' — caused SaveGoal_CamelCase_StoreOnly to fail because non-[Store] properties (Errors, Warnings) were no longer filtered out of .pr JSON."
+          "context": "Fixed StoreOnlyModifier namespace check from 'App.Goals' to 'app.Goals' \u2014 caused SaveGoal_CamelCase_StoreOnly to fail because non-[Store] properties (Errors, Warnings) were no longer filtered out of .pr JSON."
         }
       ],
       "after": {
@@ -80,8 +84,7 @@
         "health": "green",
         "notes": "The StoreOnlyModifier bug was not in the original task description but was discovered during test runs. Fixed as part of this session."
       }
-    }
-  ,
+    },
     {
       "id": "c39ff45a-966e-44ea-a5a1-4b249b5d8488",
       "bot": "coder",
@@ -90,7 +93,7 @@
       "intent": "Phase 4 namespace rename: fix ~80 source files where type-position bare references use old PascalCase names after top-level app/ folders renamed to lowercase.",
       "before": {
         "assumptions": "Directories already renamed. ~1260 build errors in source files using old PascalCase namespace references in type positions.",
-        "risk": "sed-based replacement may hit expression-position property accesses (app.Goals.X) which must stay PascalCase. Global aliases (Snapshot, Variables, Step, Channel, Serializers) make Alias.@this invalid — must use alias alone."
+        "risk": "sed-based replacement may hit expression-position property accesses (app.Goals.X) which must stay PascalCase. Global aliases (Snapshot, Variables, Step, Channel, Serializers) make Alias.@this invalid \u2014 must use alias alone."
       },
       "plan": ".bot/app-lowercase/coder/v3/plan.md",
       "actions": [
@@ -169,7 +172,7 @@
       "after": {
         "status": "Build clean: 0 errors, 46 warnings. PLang.csproj and PLangConsole.csproj both build successfully.",
         "health": "green",
-        "notes": "Discovered: (1) Global alias Foo.@this is always wrong — alias IS the @this type. (2) sed replaced expression-position property accesses (app.Goals, app.FileSystem) which needed reverting. (3) app.callstack.call.Errors is PascalCase namespace (exception). (4) Variables.Navigators.ValueNavigators needed global:: path since Variables is a type alias not a namespace."
+        "notes": "Discovered: (1) Global alias Foo.@this is always wrong \u2014 alias IS the @this type. (2) sed replaced expression-position property accesses (app.Goals, app.FileSystem) which needed reverting. (3) app.callstack.call.Errors is PascalCase namespace (exception). (4) Variables.Navigators.ValueNavigators needed global:: path since Variables is a type alias not a namespace."
       }
     }
   ]
