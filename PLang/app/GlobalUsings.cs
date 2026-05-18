@@ -16,8 +16,8 @@ global using Bindings = app.events.lifecycle.bindings.@this;
 
 // Event types WITH conflicts — require per-file handling:
 // AppEvents alias (not "Events") avoids collision with PLang.Events namespace
-// EventType: v1 PLang.Events conflict — use: using App.Events; or per-file alias
-// EventBinding: v1 PLang.Events conflict — use: using EventBinding = App.Events.Lifecycle.Bindings.Binding.@this;
+// EventType: v1 PLang.Events conflict — use: using app.events; or per-file alias
+// EventBinding: v1 PLang.Events conflict — use: using EventBinding = app.events.lifecycle.bindings.binding.@this;
 
 // Modules subsystem (action registry)
 global using AppModules = app.modules.@this;
@@ -53,7 +53,7 @@ global using ISnapshot = app.snapshot.ISnapshot;
 global using AppCallback = app.modules.callback.@this;
 global using ICallback = app.modules.callback.ICallback;
 
-// Statics — App-scoped key/value store extracted from App._statics
+// Statics — app-scoped key/value store extracted from app._statics
 global using AppStatics = app.Statics.@this;
 
 // Standalone concepts
@@ -61,22 +61,22 @@ global using ICache = app.modules.cache.ICache;
 global using Debugging = app.modules.debug.@this;
 global using Tester = app.tester.@this;
 
-// Call: not a global alias — App.modules.goal.Call (the goal.call action handler) collides.
-// Use App.CallStack.Call.@this fully qualified, or per-file alias.
+// Call: not a global alias — app.modules.goal.Call (the goal.call action handler) collides.
+// Use app.callstack.call.@this fully qualified, or per-file alias.
 
 // Builder: can't be global alias — v1 PLang.Builder namespace conflict (legacy).
-// Inside App.@this: the `Builder` property shadows the `Builder` namespace, so
+// Inside app.@this: the `Builder` property shadows the `builder` namespace, so
 // type references must be fully qualified (global::app.modules.builder.@this).
-// Inside other App.*: Builder.@this resolves naturally.
-// Outside App.*: use App.Builder.@this or a per-file alias.
+// Inside other app.*: builder.@this resolves naturally.
+// Outside app.*: use app.modules.builder.@this or a per-file alias.
 
-// App: can't be global alias — App.@this IS the app root
-// Inside App.*: use App.@this (parent namespace resolves naturally)
-// Outside App.*: use App.@this or per-file alias
+// App: can't be global alias — app.@this IS the app root
+// Inside app.*: use app.@this (parent namespace resolves naturally)
+// Outside app.*: use app.@this or per-file alias
 
 // CallStack: can't be global alias — v1 PLang.Runtime.CallStack conflict
-// Inside App.*: use CallStack.@this (namespace resolves to child)
-// Outside App.*: use App.CallStack.@this or per-file alias
+// Inside app.*: use callstack.@this (namespace resolves to child)
+// Outside app.*: use app.callstack.@this or per-file alias
 
 // Types WITH v1 conflicts — require per-file handling:
 // Goal: use Goals.Goal.@this or per-file alias

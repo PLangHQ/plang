@@ -4,7 +4,7 @@ PLang transforms `.goal` files (natural language) into `.pr` files (JSON) using 
 
 All build options are passed as JSON via `--build={...}`. The JSON properties map directly to `Builder.@this` class properties.
 
-Code: `PLang/App/Builder/this.cs`
+Code: `PLang/app/modules/builder/this.cs`
 
 ## Usage
 

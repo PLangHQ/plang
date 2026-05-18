@@ -398,6 +398,86 @@
         "health": "clean",
         "notes": "No security findings. 664-file rename + 7 OBP merges preserve all trust boundaries, hardening guards, and crypto-setter visibility. Branch ready for auditor."
       }
+    },
+    {
+      "id": "db1955cc-e5eb-4b9a-9e00-66cebc0a6c44",
+      "bot": "docs",
+      "timestamp_start": "2026-05-18T16:11:06Z",
+      "timestamp_end": "2026-05-18T16:35:00Z",
+      "intent": "Final docs gate for app-lowercase: apply CLAUDE.md proposal, scrub leftover App.X drift in docstrings/per-folder CLAUDE.md, write verdict.",
+      "before": {
+        "assumptions": "Coder already swept Documentation/v0.2 + Runtime2/data-spec.md in commit a146aa9d9 and filed a CLAUDE.md proposal. Codeanalyzer flagged 8 stale App.X docstrings (R1) and asked to document the Default carve-out (S2). Tester + security + codeanalyzer all PASS.",
+        "risk": "Per-folder CLAUDE.md files (/PLang/App/CLAUDE.md, /PLang.Tests/CLAUDE.md, /Tests/CLAUDE.md) and Documentation/Runtime2/plang_object_based_pattern.md may still carry stale PascalCase namespace references."
+      },
+      "plan": ".bot/app-lowercase/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied coder v3 proposal: 3 stale-line fixes + new Runtime2 Conventions bullet documenting lowercase rule, 7 merged engine concepts, property-name PascalCase carve-out, Default keyword carve-out, action renames."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/GlobalUsings.cs",
+            "PLang/app/channels/channel/events/this.cs",
+            "PLang/app/types/Registry.cs",
+            "PLang/app/callstack/call/Position.cs",
+            "PLang/app/modules/settings/IStore.cs",
+            "PLang/app/errors/CallbackGoalErrors.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Tests/GlobalUsings.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Scrubbed R1+R2 docstring/comment drift: namespace-position App.X.Y -> app.x.y. Property-position references preserved."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Substantive rewrite: top-level tree remapped to reflect 7 OBP merges (Cache/Builder/Callback/Settings/Modules/Code/Debug now under app/modules/), all paths lowercased, added Case-Convention section, renamed module app -> environment, noted builder.app -> builder.load."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/build.md",
+            "Documentation/v0.2/build_process.md",
+            "Documentation/v0.2/builder-data-t-roadmap.md",
+            "Documentation/v0.2/todos.md",
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Path references lowercased; merged-folder paths remapped. Mid-session fix: todos.md:422 builder/providers/DefaultBuilderProvider.cs (bogus) -> builder/code/Default.cs (real)."
+        },
+        {
+          "paths": [
+            ".bot/app-lowercase/docs-report.json",
+            ".bot/app-lowercase/docs/v1/plan.md",
+            ".bot/app-lowercase/docs/v1/result.md",
+            ".bot/app-lowercase/docs/v1/verdict.json",
+            ".bot/app-lowercase/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Docs gate artefacts: plan, result detail, verdict, summary, and structured docs-report with proposal decisions and findings."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "docs complete; CLAUDE.md proposal applied; all upstream verdicts PASS; build clean",
+        "notes": "Branch ready to merge into runtime2. Non-blocking follow-ups: S1 (app/data/Code/ -> app/data/code/), S3 (deliberate naming pass for environment.run / builder.load)."
+      }
     }
   ]
 }

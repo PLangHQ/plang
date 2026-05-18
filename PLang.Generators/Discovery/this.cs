@@ -38,7 +38,7 @@ public static class @this
     /// Diagnostic descriptor for raw-scalar partial properties on [Action] handlers.
     /// Post-v5 contract: every action property must be <c>Data&lt;T&gt;</c>, plain <c>Data</c>,
     /// or <c>[Code]</c>-attributed. Variable-name slots use <c>Data&lt;Variable&gt;</c>
-    /// (App.Variables.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
+    /// (app.variables.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
     /// </summary>
     internal static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
         id: "PLNG001",

@@ -551,7 +551,7 @@ public partial class @this
             && !(raw is string actStr && actStr.Contains('%') && ctx?.Variables != null))
             return WrapAs<T>(raw, ctx);
 
-        // Raw-name carve-out: types like App.Variables.Variable want the literal slot
+        // Raw-name carve-out: types like app.variables.Variable want the literal slot
         // string — `%x%` means "the variable named x" not "x's value". Bypass the
         // %var% substitution branch and dispatch to T.Resolve(raw, ctx) directly.
         // Variable.Resolve strips the % and produces { Name="x" } regardless of whether

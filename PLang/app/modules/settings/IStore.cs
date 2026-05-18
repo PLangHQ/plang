@@ -60,7 +60,7 @@ public interface IStore : IDisposable
     /// <summary>
     /// Resolves the table name from a System.Type.
     /// Convention: last namespace segment, lowercased.
-    /// e.g., App.modules.encryption → "encryption"
+    /// e.g., app.modules.encryption → "encryption"
     /// </summary>
     static string ResolveTableName(System.Type type)
     {

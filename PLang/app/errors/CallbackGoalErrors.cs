@@ -24,7 +24,7 @@ public sealed class CallbackGoalHashMismatch : System.Exception
 
 /// <summary>
 /// Hard referent-integrity error raised when a captured frame's <c>GoalPrPath</c>
-/// resolves to no goal in the live <c>App.Goals</c> registry (file moved/deleted
+/// resolves to no goal in the live <c>app.goals</c> registry (file moved/deleted
 /// between callback issue and resume). Sibling of <see cref="CallbackGoalHashMismatch"/>;
 /// the difference is "goal not found" vs "found but different content."
 /// </summary>

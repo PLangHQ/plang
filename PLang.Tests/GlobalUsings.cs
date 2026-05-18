@@ -55,8 +55,8 @@ global using EngineTypes = app.types.@this;
 global using ICache = app.modules.cache.ICache;
 global using CallStack = app.callstack.@this;
 global using Flags = app.callstack.Flags;
-// Call: not a global alias — App.modules.goal.Call (the goal.call action handler)
-// collides. Use App.CallStack.Call.@this fully qualified, or per-file alias.
+// Call: not a global alias — app.modules.goal.Call (the goal.call action handler)
+// collides. Use app.callstack.call.@this fully qualified, or per-file alias.
 global using Debugging = app.modules.debug.@this;
 global using Tester = app.tester.@this;
 global using Snapshot = app.snapshot.@this;

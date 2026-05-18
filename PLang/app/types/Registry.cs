@@ -36,7 +36,7 @@ public sealed partial class @this
     /// <summary>
     /// True if <paramref name="name"/> matches the FullName of any type in any loaded assembly.
     /// Used to defend goal-name slots against CLR-type-name leaks (a known builder bug:
-    /// e.g. <c>App.Goals.Goal.GoalCall</c> getting written as a goal Name during prompt rendering).
+    /// e.g. <c>app.goals.goal.GoalCall</c> getting written as a goal Name during prompt rendering).
     /// A goal Name is a user-authored identifier — it can never legitimately equal a CLR type name.
     /// </summary>
     public bool IsClrTypeName(string? name)
