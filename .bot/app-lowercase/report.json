@@ -249,6 +249,102 @@
         "health": "green",
         "notes": "Branch ships two workstreams together (rename + 7 OBP merges). The merges resolved real prior smell-#3 violations and introduced no new shape smells. Branch is ready for tester."
       }
+    },
+    {
+      "id": "c8701c85-f626-4cd8-9109-99127517f670",
+      "bot": "tester",
+      "timestamp_start": "2026-05-18T15:38:48Z",
+      "timestamp_end": "2026-05-18T15:41:03Z",
+      "intent": "First tester pass on app-lowercase after merging origin/runtime2 (foundation-verify error.handle tests). Validate that the rename + the new tests compose, no regressions, and the 3 new .pr files are not builder false greens.",
+      "before": {
+        "assumptions": "Coder v1 baseline (pre-rename, on 199b4997) was 2752/2752 C# and 203 pass + 6 expected-fail fixtures plang. Merge brought in 3 new Errors/*RecoveryValue*.test.goal files. Codeanalyzer already PASSed on the rename shape.",
+        "risk": "Reflection-driven action discovery could miss renamed namespaces silently. The 3 new tests could be builder false greens \u2014 action shifted under the same step text would still pass on assertions that don't pin enough. The 2026-04-27 recovery-value fix only matters if tests pin both the side-effect AND %!error% suppression."
+      },
+      "plan": ".bot/app-lowercase/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "decision",
+          "category": "config",
+          "confidence": "high",
+          "context": "Reset staged harness-injected CLAUDE.md diff before switching branches \u2014 that diff is per-agent preamble that doesn't belong in the tracked repo file. The /CLAUDE.md proposal workflow exists for genuine canonical additions."
+        },
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "git merge origin/runtime2 --no-edit on app-lowercase. 5 commits, no conflicts. Merge commit f24356380. Brought in runtime2-foundation-verify error.handle recovery-value tests + todos.md reconciliation. Pushed to origin."
+        },
+        {
+          "paths": [
+            "PlangConsole/bin",
+            "PlangConsole/obj",
+            "PLang/bin",
+            "PLang/obj",
+            "PLang.Tests/bin",
+            "PLang.Tests/obj",
+            "PLang.Generators/bin",
+            "PLang.Generators/obj"
+          ],
+          "type": "delete",
+          "category": "config",
+          "confidence": "high",
+          "context": "Clean rebuild from zero before running plang --test. Stale-binary trap rule from CLAUDE.md: phantom 'Action not found' errors on a renamed surface like app-lowercase are the exact pattern stale binaries produce; rebuild kills that risk."
+        },
+        {
+          "paths": [
+            "PLang.Tests/**",
+            "Tests/**"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Full C# + PLang test runs. C# 2752/2752 pass, identical to coder v1 baseline at 199b4997. PLang 206 real passes + 6 pre-existing expected-fail fixtures (delta +3 from baseline = the 3 new Errors/*RecoveryValue*.test.goal merged in)."
+        },
+        {
+          "paths": [
+            "Tests/Errors/.build/goalfirstreturnsrecoveryvalue.test.pr",
+            "Tests/Errors/.build/retryfirstreturnsrecoveryvalue.test.pr",
+            "Tests/Errors/.build/multiactionrecoverylastactionpropagates.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Builder false-green check. Every step's text semantically matches actions[*].module.action. error.handle lands as a modifier on error.throw with the right Order / RetryCount / Actions parameters in each. No shift, no shadow."
+        },
+        {
+          "paths": [
+            "Tests/Errors/GoalFirstReturnsRecoveryValue.test.goal",
+            "Tests/Errors/RetryFirstReturnsRecoveryValue.test.goal",
+            "Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Assertion quality check. Each test pins both side-effect (%content%/%first%/%second%) AND %!error% is null. The second is the symmetry pin for the 2026-04-27 handle.cs fix \u2014 without it an Ok()-without-Handled regression slips by; with it, deletion test catches the bug."
+        },
+        {
+          "paths": [
+            ".bot/app-lowercase/tester/v1/plan.md",
+            ".bot/app-lowercase/tester/v1/result.md",
+            ".bot/app-lowercase/tester/v1/verdict.json",
+            ".bot/app-lowercase/tester/summary.md",
+            ".bot/app-lowercase/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester deliverables for v1. Verdict: PASS, no findings."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Merge result is healthy. C# 2752/2752, PLang 206/206 real passes, 3 new tests are honestly green (no builder false greens, strong assertions). Pre-existing deserialize warning's namespace flipped lowercase exactly as coder v1 baseline predicted \u2014 shape unchanged.",
+        "notes": "Coder v3 has no baseline-tests.md (only v1 does). For this version, v1's baseline is the correct comparison since it captures pre-vs-post the entire rename arc. Did not raise this as a finding."
+      }
     }
   ]
 }
