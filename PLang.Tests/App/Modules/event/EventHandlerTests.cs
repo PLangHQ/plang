@@ -1,7 +1,7 @@
 using global::app.actor.context;
 using app;
-using global::app.Variables;
-using global::app.Events;
+using global::app.variables;
+using global::app.events;
 using global::app.modules.@event;
 
 namespace PLang.Tests.App.actions.EventTests;

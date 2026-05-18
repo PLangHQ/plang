@@ -1,6 +1,6 @@
 using global::app.actor.context;
 using app;
-using global::app.Variables;
+using global::app.variables;
 using Action = global::app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.actions.loop;

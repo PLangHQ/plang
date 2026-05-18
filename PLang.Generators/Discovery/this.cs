@@ -201,7 +201,7 @@ public static class @this
                     && namedType.TypeArguments[0] is INamedTypeSymbol innerNamed
                     && innerNamed.AllInterfaces.Any(i =>
                         i.Name == "IRawNameResolvable"
-                        && i.ContainingNamespace.ToDisplayString() == "app.Variables"))
+                        && i.ContainingNamespace.ToDisplayString() == "app.variables"))
                 {
                     isRawNameResolvable = true;
                 }

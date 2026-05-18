@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using app;
 using global::app.channels.serializers;
-using global::app.Variables;
+using global::app.variables;
 using global::app.modules.signing;
 
 namespace PLang.Tests.App.Serializers;

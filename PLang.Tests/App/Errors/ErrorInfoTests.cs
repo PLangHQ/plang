@@ -1,6 +1,6 @@
 using global::app.actor.context;
 using app;
-using global::app.Errors;
+using global::app.errors;
 
 namespace PLang.Tests.App.Errors;
 

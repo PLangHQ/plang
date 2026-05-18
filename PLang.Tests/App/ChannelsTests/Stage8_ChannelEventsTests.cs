@@ -213,7 +213,7 @@ public class Stage8_ChannelEventsTests
         svc.Channels.Register(serviceLogger);
 
         var hits = 0;
-        app.events.Register(new EventBinding(EventType.BeforeWrite,
+        app.Events.Register(new EventBinding(EventType.BeforeWrite,
             (_, _, _) => { hits++; return Task.FromResult(Data.Ok()); },
             channelName: "logger"));
 
@@ -230,7 +230,7 @@ public class Stage8_ChannelEventsTests
         app.User.Channels.Register(ch);
 
         bool goalFired = false;
-        app.events.Register(new EventBinding(EventType.BeforeGoal,
+        app.Events.Register(new EventBinding(EventType.BeforeGoal,
             (_, _, _) => { goalFired = true; return Task.FromResult(Data.Ok()); }));
 
         await ch.WriteAsync(Data.Ok("x"));

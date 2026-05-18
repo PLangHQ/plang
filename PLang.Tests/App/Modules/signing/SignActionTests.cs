@@ -1,7 +1,7 @@
 using System.Text.Json;
 using global::app.actor.context;
-using global::app.Errors;
-using global::app.Variables;
+using global::app.errors;
+using global::app.variables;
 using global::app.Code;
 using global::app.modules.signing.code;
 using global::app.modules.crypto;

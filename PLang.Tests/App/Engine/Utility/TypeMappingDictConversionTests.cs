@@ -1,4 +1,4 @@
-using global::app.Variables;
+using global::app.variables;
 using global::app.Utils;
 
 namespace PLang.Tests.App.Utils;

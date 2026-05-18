@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using app;
 using global::app.goals.goal;
-using global::app.Variables;
+using global::app.variables;
 using global::app.Code;
 using global::app.modules.llm;
 using global::app.modules.llm.code;

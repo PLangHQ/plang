@@ -1,6 +1,6 @@
 namespace app.modules.matrix.snapshot;
 
-[global::app.modules.action("snapshotonerror")]
+[global::app.modules.Action("snapshotonerror")]
 public partial class SnapshotOnError : global::app.modules.IContext
 {
     public partial global::app.data.@this<string> First { get; init; }

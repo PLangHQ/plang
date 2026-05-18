@@ -1,6 +1,6 @@
 using global::app.actor.context;
 using app;
-using global::app.Variables;
+using global::app.variables;
 using LoopResult = global::app.modules.loop.types.loop;
 
 namespace PLang.Tests.App.actions.loop;

@@ -1,7 +1,7 @@
 using global::app.actor.context;
 using app;
-using global::app.Errors;
-using global::app.Variables;
+using global::app.errors;
+using global::app.variables;
 using global::app.modules.mock;
 using global::app.modules.mock.types;
 

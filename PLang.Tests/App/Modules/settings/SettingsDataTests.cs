@@ -1,7 +1,7 @@
 using global::app.actor.context;
 
-using global::app.Errors;
-using global::app.Variables;
+using global::app.errors;
+using global::app.variables;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.settings;

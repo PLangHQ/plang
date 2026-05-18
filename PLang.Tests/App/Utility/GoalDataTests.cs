@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using app;
-using global::app.Variables;
+using global::app.variables;
 
 namespace PLang.Tests.App.Utils;
 

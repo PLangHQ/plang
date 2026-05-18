@@ -1,6 +1,6 @@
 namespace app.modules.matrix.modifier;
 
-[global::app.modules.action("modifieraction", Cacheable = false)]
+[global::app.modules.Action("modifieraction", Cacheable = false)]
 [global::app.modules.Modifier(Order = 1)]
 public partial class ModifierAction : global::app.modules.IContext, global::app.modules.IModifier
 {

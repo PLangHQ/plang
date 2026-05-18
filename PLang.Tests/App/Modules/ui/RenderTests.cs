@@ -1,6 +1,6 @@
 using app;
 using global::app.actor.context;
-using global::app.Variables;
+using global::app.variables;
 using global::app.modules.ui;
 using global::app.modules.ui.code;
 

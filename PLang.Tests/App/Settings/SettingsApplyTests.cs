@@ -1,6 +1,6 @@
 using global::app.actor.context;
-using global::app.Variables;
-using global::app.Config;
+using global::app.variables;
+using global::app.config;
 using global::app.modules.http;
 using PLangEngine = global::app.@this;
 

@@ -1,6 +1,6 @@
 using global::app.actor.context;
 using app;
-using global::app.Variables;
+using global::app.variables;
 using global::app.modules.file;
 using global::app.filesystem.Default;
 using PLangPath = global::app.filesystem.path;

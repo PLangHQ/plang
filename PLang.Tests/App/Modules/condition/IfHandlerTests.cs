@@ -1,8 +1,8 @@
 using app;
 using global::app.actor.context;
-using global::app.Variables;
+using global::app.variables;
 using global::app.modules.condition;
-using global::app.FileSystem;
+using global::app.filesystem;
 using global::app.filesystem.Default;
 using Action = global::app.goals.goal.steps.step.actions.action.@this;
 

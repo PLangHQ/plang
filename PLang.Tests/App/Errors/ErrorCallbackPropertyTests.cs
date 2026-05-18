@@ -1,5 +1,5 @@
 using global::app.Callback;
-using global::app.Errors;
+using global::app.errors;
 
 namespace PLang.Tests.App.Errors;
 
@@ -14,7 +14,7 @@ public class ErrorCallbackPropertyTests
     {
         var app = NewApp();
         var err = new global::app.errors.Error("boom");
-        using var scope = app.errors.Push(err);
+        using var scope = app.Errors.Push(err);
 
         var data = err.Callback;
         await Assert.That(data).IsNotNull();
@@ -27,7 +27,7 @@ public class ErrorCallbackPropertyTests
     {
         var app = NewApp();
         var err = new global::app.errors.Error("typed");
-        using var scope = app.errors.Push(err);
+        using var scope = app.Errors.Push(err);
 
         global::app.data.@this<ErrorCallback> data = err.Callback;
         await Assert.That(data).IsNotNull();
@@ -39,7 +39,7 @@ public class ErrorCallbackPropertyTests
     {
         var app = NewApp();
         var err = new global::app.errors.Error("idempotent");
-        using var scope = app.errors.Push(err);
+        using var scope = app.Errors.Push(err);
 
         var first = err.Callback;
         var second = err.Callback;
@@ -52,8 +52,8 @@ public class ErrorCallbackPropertyTests
         var app = NewApp();
         var e1 = new global::app.errors.Error("first");
         var e2 = new global::app.errors.Error("second");
-        using (app.errors.Push(e1))
-        using (app.errors.Push(e2))
+        using (app.Errors.Push(e1))
+        using (app.Errors.Push(e2))
         {
             var c1 = e1.Callback;
             var c2 = e2.Callback;

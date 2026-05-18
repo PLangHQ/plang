@@ -1,4 +1,4 @@
-using global::app.Variables;
+using global::app.variables;
 using Variable = global::app.variables.Variable;
 
 namespace PLang.Tests.App.VariablesTests;

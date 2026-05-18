@@ -1,6 +1,6 @@
 using global::app.Callback;
-using global::app.CallStack;
-using global::app.Errors;
+using global::app.callstack;
+using global::app.errors;
 using global::app.Code;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
@@ -18,7 +18,7 @@ public class FailureMatrixTests
         var step = new Step { Index = 0, Text = text, Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.goals.Add(goal);
+        app.Goals.Add(goal);
         return (goal, action);
     }
 

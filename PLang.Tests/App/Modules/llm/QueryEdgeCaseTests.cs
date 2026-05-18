@@ -1,6 +1,6 @@
 using global::app.actor.context;
 using global::app.goals.goal;
-using global::app.Variables;
+using global::app.variables;
 using global::app.modules.llm;
 using global::app.modules.llm.code;
 using PLangEngine = global::app.@this;

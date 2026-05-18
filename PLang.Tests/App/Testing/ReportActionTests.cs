@@ -1,6 +1,6 @@
 using System.Xml.Linq;
-using global::app.Errors;
-using global::app.Tester;
+using global::app.errors;
+using global::app.tester;
 
 namespace PLang.Tests.App.Tester;
 

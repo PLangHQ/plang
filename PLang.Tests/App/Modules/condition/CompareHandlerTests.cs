@@ -1,8 +1,8 @@
 using app;
 using global::app.actor.context;
-using global::app.Variables;
+using global::app.variables;
 using global::app.modules.condition;
-using global::app.FileSystem;
+using global::app.filesystem;
 using global::app.filesystem.Default;
 
 namespace PLang.Tests.App.Modules.condition;

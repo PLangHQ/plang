@@ -1,8 +1,8 @@
 using app;
 using global::app.actor.context;
-using global::app.Errors;
+using global::app.errors;
 using global::app.goals.goal;
-using global::app.Variables;
+using global::app.variables;
 
 namespace PLang.Tests.App.Goals.Setup;
 

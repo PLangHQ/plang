@@ -67,7 +67,7 @@ public class GeneratorValidationTests
                 public class ActionAttribute : Attribute {}
             }
             namespace app.Test {
-                [app.modules.action]
+                [app.modules.Action]
                 public partial class BadHandler {
                     // Raw int — not Data<T>, not [Code], not [VariableName]. Triggers PLNG001.
                     public partial int RawIntProperty { get; init; }

@@ -1,6 +1,6 @@
 using app;
-using global::app.Errors;
-using global::app.Variables;
+using global::app.errors;
+using global::app.variables;
 using global::app.Utils;
 using R2 = global::app.data;
 

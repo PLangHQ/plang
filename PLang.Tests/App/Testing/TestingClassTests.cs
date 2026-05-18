@@ -1,4 +1,4 @@
-using global::app.Tester;
+using global::app.tester;
 
 namespace PLang.Tests.App.Tester;
 

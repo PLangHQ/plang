@@ -4,7 +4,7 @@ namespace app.modules.matrix.snapshot;
 // one. The snapshot captured on error must mask the sensitive one's PrValue and
 // FinalValue while leaving the non-sensitive one in plaintext.
 
-[global::app.modules.action("sensitivesnapshot")]
+[global::app.modules.Action("sensitivesnapshot")]
 public partial class SensitiveSnapshot : global::app.modules.IContext
 {
     [global::app.SensitiveAttribute]

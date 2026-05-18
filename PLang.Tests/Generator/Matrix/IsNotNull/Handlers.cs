@@ -1,6 +1,6 @@
 namespace app.modules.matrix.isnotnull;
 
-[global::app.modules.action("isnotnullprop")]
+[global::app.modules.Action("isnotnullprop")]
 public partial class IsNotNullProp : global::app.modules.IContext
 {
     [global::app.modules.IsNotNull]

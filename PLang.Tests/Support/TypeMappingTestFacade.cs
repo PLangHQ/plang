@@ -1,6 +1,6 @@
 // Test-only compatibility facade for the former `App.Utils.TypeMapping` and
 // `App.Utils.Json` static classes. Production callers were migrated to
-// `app.types.X(...)` (stage 26) and the dispersed Json bag homes (stage 27);
+// `app.Types.X(...)` (stage 26) and the dispersed Json bag homes (stage 27);
 // tests retain the flat static-call shape for ergonomics.
 
 namespace app.Utils;

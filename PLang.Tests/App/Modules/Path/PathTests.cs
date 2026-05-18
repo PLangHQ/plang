@@ -1,5 +1,5 @@
 using global::app.filesystem.Default;
-using global::app.Variables;
+using global::app.variables;
 using PLangPath = global::app.filesystem.path;
 using global::app.modules.file;
 using global::app.modules.file.code;

@@ -11,7 +11,7 @@ public class EventsSinceTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.goals.Add(goal);
+        app.Goals.Add(goal);
         return (app, action);
     }
 

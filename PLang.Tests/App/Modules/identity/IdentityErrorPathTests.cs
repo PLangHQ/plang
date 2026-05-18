@@ -1,8 +1,8 @@
 using System.Reflection;
 using global::app.actor.context;
 using global::app.Settings;
-using global::app.Errors;
-using global::app.Variables;
+using global::app.errors;
+using global::app.variables;
 using global::app.modules.identity;
 using PLangEngine = global::app.@this;
 

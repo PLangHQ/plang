@@ -1,4 +1,4 @@
-using global::app.Errors;
+using global::app.errors;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Errors;

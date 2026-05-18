@@ -1,5 +1,5 @@
 using global::app.Callback;
-using global::app.CallStack;
+using global::app.callstack;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;

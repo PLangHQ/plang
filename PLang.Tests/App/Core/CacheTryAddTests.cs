@@ -1,6 +1,6 @@
 using global::app.modules.cache;
 using global::app.goals.goal.steps.step;
-using global::app.Variables;
+using global::app.variables;
 
 namespace PLang.Tests.App.Core;
 

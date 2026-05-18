@@ -1,6 +1,6 @@
 using global::app.Callback;
-using global::app.CallStack;
-using global::app.Errors;
+using global::app.callstack;
+using global::app.errors;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
@@ -17,7 +17,7 @@ public class AskCallbackTests
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "variable", ActionName = "set" };
         action.Step = step; step.Actions.Add(action); goal.Steps.Add(step);
-        app.goals.Add(goal);
+        app.Goals.Add(goal);
         return (goal, action);
     }
 
