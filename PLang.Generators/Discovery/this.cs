@@ -38,7 +38,7 @@ public static class @this
     /// Diagnostic descriptor for raw-scalar partial properties on [Action] handlers.
     /// Post-v5 contract: every action property must be <c>Data&lt;T&gt;</c>, plain <c>Data</c>,
     /// or <c>[Code]</c>-attributed. Variable-name slots use <c>Data&lt;Variable&gt;</c>
-    /// (App.Variables.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
+    /// (app.variables.Variable) — the former <c>[VariableName] string</c> carve-out is gone.
     /// </summary>
     internal static readonly DiagnosticDescriptor RawScalarPropertyDescriptor = new(
         id: "PLNG001",
@@ -56,13 +56,13 @@ public static class @this
 
         var hasActionAttr = classSymbol.GetAttributes().Any(a =>
             a.AttributeClass?.Name == "ActionAttribute"
-            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "App.modules");
+            && a.AttributeClass.ContainingNamespace.ToDisplayString() == "app.modules");
         if (!hasActionAttr) return null;
 
         bool ImplementsModule(string ifaceName) =>
             classSymbol.AllInterfaces.Any(i =>
                 i.Name == ifaceName
-                && i.ContainingNamespace.ToDisplayString() == "App.modules");
+                && i.ContainingNamespace.ToDisplayString() == "app.modules");
 
         var implementsIContext = ImplementsModule("IContext");
         var implementsIChannel = ImplementsModule("IChannel");
@@ -131,7 +131,7 @@ public static class @this
         // without the leading @ — so we only need to check "this".
         if (prop.Type is INamedTypeSymbol dt
             && dt.OriginalDefinition.Name == "this"
-            && dt.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data")
+            && dt.OriginalDefinition.ContainingNamespace.ToDisplayString() == "app.data")
             return true;
 
         return false;
@@ -152,7 +152,7 @@ public static class @this
             var typeName = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
             // ImplementsIContext is used for the engine-resolution expression — read off the parent class.
             var parentImplsCtx = prop.ContainingType.AllInterfaces.Any(i =>
-                i.Name == "IContext" && i.ContainingNamespace.ToDisplayString() == "App.modules");
+                i.Name == "IContext" && i.ContainingNamespace.ToDisplayString() == "app.modules");
             return (new CodeProperty(prop.Name, typeName, parentImplsCtx), false);
         }
 
@@ -172,7 +172,7 @@ public static class @this
         var implementsIEvent = rawType is INamedTypeSymbol evt
             && evt.AllInterfaces.Any(i =>
                 i.Name == "IEvent"
-                && i.ContainingNamespace.ToDisplayString() == "App.modules");
+                && i.ContainingNamespace.ToDisplayString() == "app.modules");
 
         // Detect Data<T> and plain Data
         var typeNameStr = prop.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
@@ -180,7 +180,7 @@ public static class @this
 
         var namedType = prop.Type as INamedTypeSymbol;
         var isAppDataThis = namedType?.OriginalDefinition.Name == "this"
-            && namedType.OriginalDefinition.ContainingNamespace.ToDisplayString() == "App.Data";
+            && namedType.OriginalDefinition.ContainingNamespace.ToDisplayString() == "app.data";
         var isDataWrapped = isAppDataThis && namedType!.IsGenericType;
         var isPlainData = isAppDataThis && !namedType!.IsGenericType;
 
@@ -201,7 +201,7 @@ public static class @this
                     && namedType.TypeArguments[0] is INamedTypeSymbol innerNamed
                     && innerNamed.AllInterfaces.Any(i =>
                         i.Name == "IRawNameResolvable"
-                        && i.ContainingNamespace.ToDisplayString() == "App.Variables"))
+                        && i.ContainingNamespace.ToDisplayString() == "app.variables"))
                 {
                     isRawNameResolvable = true;
                 }

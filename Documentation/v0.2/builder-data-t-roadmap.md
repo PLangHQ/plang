@@ -16,9 +16,9 @@ sent to the LLM. Focus on:
 - Whether type schemas are sent alongside type names
 
 Key files:
-- `PLang/App/Modules/this.cs:150` — `Describe()` method, builds parameter list via reflection
-- `PLang/App/Utils/TypeMapping.cs:192` — `GetTypeName(Type)`, maps CLR types to PLang names
-- `PLang/App/Utils/TypeMapping.cs:662` — `GetComplexTypeSchemas()`, discovers and describes complex types
+- `PLang/app/modules/this.cs:150` — `Describe()` method, builds parameter list via reflection
+- `PLang/app/Utils/TypeMapping.cs:192` — `GetTypeName(Type)`, maps CLR types to PLang names
+- `PLang/app/Utils/TypeMapping.cs:662` — `GetComplexTypeSchemas()`, discovers and describes complex types
 - `system/builder/*.goal` — the PLang builder goals that construct the LLM prompt
 
 ## Step 2: Fix Describe to unwrap Data<T>

@@ -9,7 +9,7 @@
 
 `LazyParamsGenerator.cs` is gone. Generator decomposed into `PLang.Generators/this.cs` (entry) → `Discovery/this.cs` (Roslyn boundary) + `Emission/Action/this.cs` (per-handler) + `Emission/Property/{Data,Code}/this.cs` (polymorphic per-property). The `ResetResolution` patching was replaced by clean per-call backing-field reset emitted at `Emission/Action/this.cs:139` (`__<prop>_backing = default; __<prop>_set = false`). The deeper "request-scoped vs pr-template Data" lifecycle question dissolved with the backing-field shape — Data isn't reused across executions; the backing fields are.
 
-The `[VariableName]` → `Data<App.Variables.Variable>` migration was also part of the same arc (see 2026-04-30 entry, marked resolved 2026-05-01).
+The `[VariableName]` → `Data<app.variables.Variable>` migration was also part of the same arc (see 2026-04-30 entry, marked resolved 2026-05-01).
 
 ### Original entry (archived)
 
@@ -24,8 +24,8 @@ model (request-scoped Data vs. pr-template Data) rather than reset-patching.
 ## 2026-04-27 — wire dormant CallStack into the runtime  ✅ RESOLVED on `runtime2-callback` + `runtime2-cleanup` (stage 7)
 
 CallStack is now wired:
-- `App.Run` pushes a frame for every action at `PLang/App/this.cs:460` (handles `CallStackOverflowException` outside the try).
-- `Goal.Run` pushes a goal-entry frame at `PLang/App/Goals/Goal/this.cs:288`.
+- `App.Run` pushes a frame for every action at `PLang/app/this.cs:460` (handles `CallStackOverflowException` outside the try).
+- `Goal.Run` pushes a goal-entry frame at `PLang/app/goals/goal/this.cs:288`.
 - The source generator captures `__callFrames` from `context.CallStack?.Current?.SnapshotChain()` at `PLang.Generators/Emission/Action/this.cs:154`.
 - `!callStack` is registered as `DynamicData` at `PLang/App/Actor/Context/this.cs:168`.
 - Depth limits and audit accumulation work (`Tests/App/CallStack/` has 16 `.test.goal` files covering cycle detection, audit, cause links, timeout, recovery).
@@ -92,7 +92,7 @@ Without these tests, the asymmetry could re-regress the next time someone
 
 ## 2026-04-30 — migrate handlers off [VariableName] / raw primitives — RESOLVED 2026-05-01
 
-**Resolved on `runtime2-generator-obp` (architect/v5 → coder/v7 → coder/v8).** Took the typed-payload route rather than the speculative `VarRef<T>` (option 1 below): introduced `App.Variables.Variable` (record `Name, RawValue, WasPercentWrapped`) plus `IRawNameResolvable` marker. `[VariableName] partial string` slots become `Data<App.Variables.Variable>`; `Data.AsT_Impl` skips its `%var%` substitution branch for `T : IRawNameResolvable` and dispatches to `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`. 22 handlers migrated, `Emission/Property/Legacy/this.cs` deleted, `[VariableName]` attribute and `__Resolve<T>`/`__StripPercent`/`__HasParam`/`RawScalarValidations` removed, `PLNG001` collapsed to a two-rule gate. Coder/v8 added a generator-side pre-`Run()` guard so non-nullable `Data<Variable>` slots surface `MissingRequiredParameter` (closing auditor/v2 finding #1). The original design discussion is preserved below for archival/context.
+**Resolved on `runtime2-generator-obp` (architect/v5 → coder/v7 → coder/v8).** Took the typed-payload route rather than the speculative `VarRef<T>` (option 1 below): introduced `app.variables.Variable` (record `Name, RawValue, WasPercentWrapped`) plus `IRawNameResolvable` marker. `[VariableName] partial string` slots become `Data<app.variables.Variable>`; `Data.AsT_Impl` skips its `%var%` substitution branch for `T : IRawNameResolvable` and dispatches to `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`. 22 handlers migrated, `Emission/Property/Legacy/this.cs` deleted, `[VariableName]` attribute and `__Resolve<T>`/`__StripPercent`/`__HasParam`/`RawScalarValidations` removed, `PLNG001` collapsed to a two-rule gate. Coder/v8 added a generator-side pre-`Run()` guard so non-nullable `Data<Variable>` slots surface `MissingRequiredParameter` (closing auditor/v2 finding #1). The original design discussion is preserved below for archival/context.
 
 ### Original entry (archived)
 
@@ -476,10 +476,10 @@ There may still be cleanup worth doing here, but it's tangled with the
 three-tier scoping decision above:
 
 1. **Lift `Bindings/` and `Binding/` out from under `Lifecycle/`.** The deepest
-   namespace path today is `App.Events.Lifecycle.Bindings.Binding.@this`
-   (the `EventBinding` alias). `Bindings` and `Binding` aren't conceptually
-   under Lifecycle — Lifecycle is one *use* of them. Lifting them up would
-   shorten to `App.Events.Binding.@this`.
+   namespace path today is `app.events.lifecycle.bindings.binding.@this`
+   (the `EventBinding` alias). `bindings` and `binding` aren't conceptually
+   under `lifecycle` — Lifecycle is one *use* of them. Lifting them up would
+   shorten to `app.events.binding.@this`.
 2. **Move Lifecycle out of Events/ entirely.** It's created by Context, not
    by Events itself. A natural home is `Actor/Context/Lifecycle/this.cs` —
    closer to where it's actually instantiated. Bigger import-surface change.
@@ -496,8 +496,8 @@ Lifecycle ⇄ Context-owned Lifecycle folder, etc).
 
 ## 2026-05-08 — CallStack scope: shared on App.Debug is wrong for parallel execution
 
-Context: `App/Debug/this.cs:101` allocates a single `App.CallStack.@this()` per app
-and exposes it as `app.Debug.CallStack`. Comment in `App/Actor/Context/this.cs:44-47`
+Context: `app/modules/debug/this.cs:101` allocates a single `app.callstack.@this()` per app
+and exposes it as `app.Debug.CallStack`. Comment in `app/actor/context/this.cs:44-47`
 explains the move ("moved there from per-context ownership so it's a single tree
 per run, fork-safe via AsyncLocal"). The reasoning was sequential CLI execution.
 

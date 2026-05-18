@@ -1,11 +1,11 @@
 using System.Reflection;
 using System.Text.Json;
-using App;
-using global::App.Goals.Goal;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.llm;
-using global::App.modules.llm.code;
+using app;
+using global::app.goals.goal;
+using global::app.variables;
+using global::app.modules.code;
+using global::app.modules.llm;
+using global::app.modules.llm.code;
 
 namespace PLang.Tests.App.Modules.llm;
 

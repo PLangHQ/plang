@@ -1,5 +1,5 @@
-using global::App.Tester;
-using Tag = global::App.modules.test.Tag;
+using global::app.tester;
+using Tag = global::app.modules.test.Tag;
 
 namespace PLang.Tests.App.Tester;
 
@@ -13,19 +13,19 @@ namespace PLang.Tests.App.Tester;
 /// </summary>
 public class TagActionTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _app = new global::app.@this("/test");
     }
 
     [After(Test)]
     public async Task Teardown() => await _app.DisposeAsync();
 
-    private static global::App.Tester.Run NewRun() =>
-        new(new global::App.Tester.File { Path = "Tests/T.test.goal", EntryGoalName = "T" });
+    private static global::app.tester.Run NewRun() =>
+        new(new global::app.tester.File { Path = "Tests/T.test.goal", EntryGoalName = "T" });
 
     // When Testing.CurrentTest is set (test in flight), test.tag with Tags=["http","fast"]
     // writes both tags into CurrentTest.UserTags.
@@ -37,7 +37,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::App.Data.@this<string[]>("Tags", new[] { "http", "fast" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http", "fast" })
         };
         var result = await action.Run();
 
@@ -58,7 +58,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::App.Data.@this<string[]>("Tags", new[] { "t1" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "t1" })
         };
         var result = await action.Run();
 
@@ -78,7 +78,7 @@ public class TagActionTests
         var action = new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::App.Data.@this<string[]>("Tags", new[] { "ignored" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "ignored" })
         };
         var result = await action.Run();
 
@@ -97,17 +97,17 @@ public class TagActionTests
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::App.Data.@this<string[]>("Tags", new[] { "http" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http" })
         }.Run();
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::App.Data.@this<string[]>("Tags", new[] { "fast", "slow" })
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "fast", "slow" })
         }.Run();
         await new Tag
         {
             Context = _app.User.Context,
-            Tags = new global::App.Data.@this<string[]>("Tags", new[] { "http" }) // duplicate
+            Tags = new global::app.data.@this<string[]>("Tags", new[] { "http" }) // duplicate
         }.Run();
 
         await Assert.That(_app.Tester.CurrentTest.UserTags.Count).IsEqualTo(3);

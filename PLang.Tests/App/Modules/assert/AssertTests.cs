@@ -1,24 +1,24 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Errors;
-using global::App.Variables;
-using AssertEquals = global::App.modules.assert.Equals;
-using AssertNotEquals = global::App.modules.assert.NotEquals;
-using AssertIsTrue = global::App.modules.assert.IsTrue;
-using AssertIsFalse = global::App.modules.assert.IsFalse;
-using AssertIsNull = global::App.modules.assert.IsNull;
-using AssertIsNotNull = global::App.modules.assert.IsNotNull;
-using AssertContains = global::App.modules.assert.Contains;
-using AssertGreaterThan = global::App.modules.assert.GreaterThan;
-using AssertLessThan = global::App.modules.assert.LessThan;
+using global::app.actor.context;
+using app;
+using global::app.errors;
+using global::app.variables;
+using AssertEquals = global::app.modules.assert.Equals;
+using AssertNotEquals = global::app.modules.assert.NotEquals;
+using AssertIsTrue = global::app.modules.assert.IsTrue;
+using AssertIsFalse = global::app.modules.assert.IsFalse;
+using AssertIsNull = global::app.modules.assert.IsNull;
+using AssertIsNotNull = global::app.modules.assert.IsNotNull;
+using AssertContains = global::app.modules.assert.Contains;
+using AssertGreaterThan = global::app.modules.assert.GreaterThan;
+using AssertLessThan = global::app.modules.assert.LessThan;
 
 namespace PLang.Tests.App.actions.assert;
 
 public class AssertTests
 {
-    private (global::App.Actor.Context.@this context, Variables memory) CreateContext()
+    private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = new global::App.@this("/app");
+        var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variables);
     }
 

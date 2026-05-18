@@ -1,6 +1,6 @@
-using App.FileSystem;
-using App.FileSystem.Default;
-using App.Utils;
+using app.filesystem;
+using app.filesystem.Default;
+using app.Utils;
 using System.Reflection;
 
 namespace PLang
@@ -14,7 +14,7 @@ namespace PLang
 			this.fileSystem = fileSystem;
 		}
 
-		public async Task<App.Data.@this> Run(string[] args, CancellationToken cancellationToken = default)
+		public async Task<app.data.@this> Run(string[] args, CancellationToken cancellationToken = default)
 		{
 			var (engine, configError) = Configure(args);
 			if (configError != null) return configError;
@@ -28,7 +28,7 @@ namespace PLang
 		/// Returns (engine, null) on success, (null, errorData) if --test= config is invalid.
 		/// Separated from Run() so tests can observe configuration without executing Start().
 		/// </summary>
-		internal (App.@this? Engine, App.Data.@this? Error) Configure(string[] args)
+		internal (app.@this? Engine, app.data.@this? Error) Configure(string[] args)
 		{
 			// Normalize: "build" or "--builder" both become the --builder flag.
 			// Legacy `plang build` form preserved as ergonomics; --builder is canonical.
@@ -37,7 +37,7 @@ namespace PLang
 
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
-			var engine = new App.@this(fileSystem);
+			var engine = new app.@this(fileSystem);
 			engine.OsDirectory = fileSystem.OsDirectory;
 
 			var userVars = engine.User.Context.Variables;
@@ -70,7 +70,7 @@ namespace PLang
 
 			// App settings (--app={"create":true})
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
-				global::App.Types.@this.Populate(engine, appDict);
+				global::app.types.@this.Populate(engine, appDict);
 
 			// Builder mode (--builder or legacy --build)
 			if ((parameters.TryGetValue("!builder", out var buildValue) && buildValue is not false) ||
@@ -81,7 +81,7 @@ namespace PLang
 					userVars.Set("path", fileSystem.RootDirectory);
 
 				if (buildValue is IDictionary<string, object?> buildDict)
-					global::App.Types.@this.Populate(engine.Builder, buildDict);
+					global::app.types.@this.Populate(engine.Builder, buildDict);
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", engine.Builder.Cache);

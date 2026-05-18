@@ -1,8 +1,8 @@
 using System.Text;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.signing.code;
-using global::App.modules.signing;
+using global::app.variables;
+using global::app.modules.code;
+using global::app.modules.signing.code;
+using global::app.modules.signing;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -193,14 +193,14 @@ public class Ed25519ProviderTests
     [Test]
     public async Task Config_DefaultProvider_IsEd25519()
     {
-        var config = new global::App.modules.signing.Config();
+        var config = new global::app.modules.signing.Config();
         await Assert.That(config.Provider).IsEqualTo("ed25519");
     }
 
     [Test]
     public async Task Config_DefaultTimeoutMs_Is300000()
     {
-        var config = new global::App.modules.signing.Config();
+        var config = new global::app.modules.signing.Config();
         await Assert.That(config.TimeoutMs).IsEqualTo(300_000L);
     }
 

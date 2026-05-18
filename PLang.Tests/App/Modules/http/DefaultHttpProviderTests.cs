@@ -1,8 +1,8 @@
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.http;
-using global::App.modules.http.code;
-using PLangEngine = global::App.@this;
+using global::app.actor.context;
+using global::app.variables;
+using global::app.modules.http;
+using global::app.modules.http.code;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.http;
 
@@ -35,7 +35,7 @@ public class DefaultHttpProviderTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Provider_Configure_AcceptsValidConfig()

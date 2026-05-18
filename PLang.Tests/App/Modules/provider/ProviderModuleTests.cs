@@ -1,11 +1,11 @@
-using global::App.Actor.Context;
-using global::App.Errors;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.signing;
-using global::App.modules.signing.code;
-using global::App.modules.crypto.code;
-using PLangEngine = global::App.@this;
+using global::app.actor.context;
+using global::app.errors;
+using global::app.variables;
+using global::app.modules.code;
+using global::app.modules.signing;
+using global::app.modules.signing.code;
+using global::app.modules.crypto.code;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.provider;
 
@@ -38,7 +38,7 @@ public class ProviderModuleTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     // Fixture DLL paths — pre-built DLLs committed under PLang.Tests/App/Fixtures/dlls/
     private static readonly string FixtureBase = System.IO.Path.GetFullPath(
@@ -74,7 +74,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NonExistentDll_ReturnsLoadError()
     {
-        var action = new global::App.modules.code.load
+        var action = new global::app.modules.code.load
         {
             Context = Ctx,
             Path = "/nonexistent/path/fake.dll"
@@ -88,7 +88,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NullPath_ReturnsValidationError()
     {
-        var action = new global::App.modules.code.load
+        var action = new global::app.modules.code.load
         {
             Context = Ctx,
             Path = null
@@ -109,7 +109,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::App.modules.code.load
+        var action = new global::app.modules.code.load
         {
             Context = Ctx,
             Path = dllPath
@@ -132,7 +132,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::App.modules.code.load
+        var action = new global::app.modules.code.load
         {
             Context = Ctx,
             Path = dllPath
@@ -153,7 +153,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::App.modules.code.load
+        var action = new global::app.modules.code.load
         {
             Context = Ctx,
             Path = dllPath
@@ -174,7 +174,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
-        var action = new global::App.modules.code.remove
+        var action = new global::app.modules.code.remove
         {
             Context = Ctx,
             Name = "second",
@@ -190,7 +190,7 @@ public class ProviderModuleTests
     public async Task Remove_Default_ReturnsError()
     {
         // ed25519 is registered as default at engine startup
-        var action = new global::App.modules.code.remove
+        var action = new global::app.modules.code.remove
         {
             Context = Ctx,
             Name = "ed25519",
@@ -205,7 +205,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_NonExistent_ReturnsError()
     {
-        var action = new global::App.modules.code.remove
+        var action = new global::app.modules.code.remove
         {
             Context = Ctx,
             Name = "unknown",
@@ -220,7 +220,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_UnknownType_ReturnsError()
     {
-        var action = new global::App.modules.code.remove
+        var action = new global::app.modules.code.remove
         {
             Context = Ctx,
             Name = "anything",
@@ -244,7 +244,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(first);
         _app.Code.Register<ISigning>(second);
 
-        var action = new global::App.modules.code.setDefault
+        var action = new global::app.modules.code.setDefault
         {
             Context = Ctx,
             Name = "second",
@@ -262,7 +262,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
 
-        var action = new global::App.modules.code.setDefault
+        var action = new global::app.modules.code.setDefault
         {
             Context = Ctx,
             Name = "unknown",
@@ -277,7 +277,7 @@ public class ProviderModuleTests
     [Test]
     public async Task SetDefault_UnknownType_ReturnsError()
     {
-        var action = new global::App.modules.code.setDefault
+        var action = new global::app.modules.code.setDefault
         {
             Context = Ctx,
             Name = "anything",
@@ -322,7 +322,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("extra"));
 
-        var action = new global::App.modules.code.list
+        var action = new global::app.modules.code.list
         {
             Context = Ctx,
             Type = null
@@ -340,7 +340,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("extra"));
 
-        var action = new global::App.modules.code.list
+        var action = new global::app.modules.code.list
         {
             Context = Ctx,
             Type = "signing"
@@ -353,7 +353,7 @@ public class ProviderModuleTests
     [Test]
     public async Task ListAction_UnknownType_ReturnsError()
     {
-        var action = new global::App.modules.code.list
+        var action = new global::app.modules.code.list
         {
             Context = Ctx,
             Type = "quantum"
@@ -377,7 +377,7 @@ public class ProviderModuleTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
+        public global::app.data.@this<KeyPair> GenerateKeyPair() => global::app.data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
         public Data Sign(byte[] data, string privateKey) => Data.Ok(new byte[64]);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.Ok());

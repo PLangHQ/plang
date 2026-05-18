@@ -1,13 +1,13 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using global::App.Actor.Context;
-using global::App.Goals.Goal;
-using global::App.Variables;
-using global::App.modules.http.code;
-using global::App.modules.llm;
-using global::App.modules.llm.code;
-using PLangEngine = global::App.@this;
+using global::app.actor.context;
+using global::app.goals.goal;
+using global::app.variables;
+using global::app.modules.http.code;
+using global::app.modules.llm;
+using global::app.modules.llm.code;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.llm;
 
@@ -43,7 +43,7 @@ public class LlmIntegrationTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     // --- Test 1: Simple arithmetic ---
 
@@ -192,7 +192,7 @@ public class LlmIntegrationTests
                 Name = "GetWeather",
                 Parameters = new List<Data>
                 {
-                    new Data("city", null, global::App.Data.Type.String)
+                    new Data("city", null, global::app.data.type.String)
                 }
             }
         };

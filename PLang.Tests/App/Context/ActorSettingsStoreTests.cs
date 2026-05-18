@@ -1,5 +1,5 @@
-using global::App.Actor.Context;
-using global::App.Variables;
+using global::app.actor.context;
+using global::app.variables;
 
 namespace PLang.Tests.App.Context;
 
@@ -31,13 +31,13 @@ public class ActorSettingsStoreTests
     {
         // Build mode → on-disk system.sqlite — survives App lifetime so
         // LLM cache and other persistent system data live across builds.
-        await using (var engine = new global::App.@this(_testDir))
+        await using (var engine = new global::app.@this(_testDir))
         {
             engine.Builder.IsEnabled = true;
             await engine.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
-        await using (var engine2 = new global::App.@this(_testDir))
+        await using (var engine2 = new global::app.@this(_testDir))
         {
             engine2.Builder.IsEnabled = true;
             var result = await engine2.SettingsStore.Get("LlmCache", "testkey");
@@ -52,13 +52,13 @@ public class ActorSettingsStoreTests
         // During testing, the store is in-memory scoped by App.Id so per-test
         // Apps never share state. SQLite's shared-cache merges in-memory dbs
         // with identical DataSource names, so the App.Id scoping is load-bearing.
-        await using (var engine = new global::App.@this(_testDir))
+        await using (var engine = new global::app.@this(_testDir))
         {
             engine.Tester.IsEnabled = true;
             await engine.SettingsStore.Set("LlmCache", "testkey", Data.Ok("cached_response"));
         }
 
-        await using (var engine2 = new global::App.@this(_testDir))
+        await using (var engine2 = new global::app.@this(_testDir))
         {
             engine2.Tester.IsEnabled = true;
             var result = await engine2.SettingsStore.Get("LlmCache", "testkey");

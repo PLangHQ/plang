@@ -1,18 +1,18 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
-using LoopResult = global::App.modules.loop.types.loop;
+using global::app.actor.context;
+using app;
+using global::app.variables;
+using LoopResult = global::app.modules.loop.types.loop;
 
 namespace PLang.Tests.App.actions.loop;
 
 public class ForeachTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/app");
+        _app = new global::app.@this("/app");
     }
 
     [Test]

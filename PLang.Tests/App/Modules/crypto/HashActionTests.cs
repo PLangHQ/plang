@@ -1,9 +1,9 @@
-using global::App.Actor.Context;
-using global::App.Errors;
-using global::App.Variables;
-using global::App.modules.crypto;
-using global::App.modules.crypto.code;
-using PLangEngine = global::App.@this;
+using global::app.actor.context;
+using global::app.errors;
+using global::app.variables;
+using global::app.modules.crypto;
+using global::app.modules.crypto.code;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
 
@@ -32,7 +32,7 @@ public class HashActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     // --- Hash action ---
 
@@ -51,7 +51,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ObjectInput_ProducesDeterministicHash()
     {
-        var refHash = new global::App.modules.crypto.code.Default().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
+        var refHash = new global::app.modules.crypto.code.Default().Hash(new Hash { Data = Data.Ok("hello"), Algorithm = "keccak256" });
 
         var action = new Hash { Context = Ctx, Data = Data.Ok("hello"), Algorithm = "keccak256" };
         var result = await action.Run();

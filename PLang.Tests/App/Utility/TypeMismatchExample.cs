@@ -1,4 +1,4 @@
-using global::App.Utils;
+using global::app.Utils;
 
 namespace PLang.Tests.App.Utility;
 
@@ -12,12 +12,12 @@ public class TypeMismatchExampleSnapshot
     {
         var (_, err) = TypeConverter.TryConvertTo(
             "%stepResult.actions%",
-            typeof(global::App.Goals.Goal.Steps.Step.Actions.@this));
+            typeof(global::app.goals.goal.steps.step.actions.@this));
 
         await Assert.That(err).IsNotNull();
         // The C# identifier `@this` renders in Type.FullName as just `this` (the `@`
         // is a source-only escape for using a keyword as an identifier).
-        await Assert.That(err!.Message).Contains("App.Goals.Goal.Steps.Step.Actions.this");
+        await Assert.That(err!.Message).Contains("app.goals.goal.steps.step.actions.this");
         await Assert.That(err.Message).Contains("%stepResult.actions%");
         await Assert.That(err.FixSuggestion).Contains("%var%");
 

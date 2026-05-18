@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "app-lowercase is mechanical rename + 7 OBP folder merges; no trust-boundary changes, signing pipeline/zip-bomb/rehydration guards intact, no stale 'App.' literals." }

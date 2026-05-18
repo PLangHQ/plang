@@ -1,17 +1,17 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
+using global::app.actor.context;
+using app;
+using global::app.variables;
 
 namespace PLang.Tests.App.actions.variable;
 
 public class SetTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/app");
+        _app = new global::app.@this("/app");
     }
 
     [Test]
@@ -130,7 +130,7 @@ public class SetTests
     public async Task ValidateBuild_LiteralThis_ReturnsError()
     {
         var parameters = new List<Data> { new Data("Value", "this") };
-        var result = global::App.modules.variable.Set.ValidateBuild(parameters);
+        var result = global::app.modules.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!).Contains("this");
@@ -141,9 +141,9 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", "%myVar%", global::App.Data.Type.FromName("int"))
+            new Data("Value", "%myVar%", global::app.data.type.FromName("int"))
         };
-        var result = global::App.modules.variable.Set.ValidateBuild(parameters);
+        var result = global::app.modules.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNull();
     }
@@ -153,9 +153,9 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", "not a number", global::App.Data.Type.FromName("int"))
+            new Data("Value", "not a number", global::app.data.type.FromName("int"))
         };
-        var result = global::App.modules.variable.Set.ValidateBuild(parameters);
+        var result = global::app.modules.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!).Contains("type=int");
@@ -166,9 +166,9 @@ public class SetTests
     {
         var parameters = new List<Data>
         {
-            new Data("Value", 42, global::App.Data.Type.FromName("int"))
+            new Data("Value", 42, global::app.data.type.FromName("int"))
         };
-        var result = global::App.modules.variable.Set.ValidateBuild(parameters);
+        var result = global::app.modules.variable.Set.ValidateBuild(parameters);
 
         await Assert.That(result).IsNull();
     }

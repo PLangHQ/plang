@@ -1,4 +1,4 @@
-using global::App.Channels.Serializers.Serializer;
+using global::app.channels.serializers.serializer;
 using System.Text;
 
 namespace PLang.Tests.App.Serialization;
@@ -8,7 +8,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task ContentType_ReturnsTextPlain()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         await Assert.That(serializer.ContentType).IsEqualTo("text/plain");
     }
@@ -16,7 +16,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task FileExtension_ReturnsTxt()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         await Assert.That(serializer.FileExtension).IsEqualTo(".txt");
     }
@@ -24,7 +24,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Constructor_DefaultEncoding_UsesUtf8()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         // Serialize and verify it works with UTF-8 characters
         var result = serializer.Serialize("Hello 世界");
@@ -34,7 +34,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Serialize_String_ReturnsString()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Serialize("hello world");
 
@@ -44,7 +44,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Serialize_Number_ReturnsStringRepresentation()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Serialize(42);
 
@@ -54,7 +54,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Serialize_Boolean_ReturnsStringRepresentation()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var trueResult = serializer.Serialize(true);
         var falseResult = serializer.Serialize(false);
@@ -66,7 +66,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Serialize_Null_ReturnsEmptyString()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Serialize(null);
 
@@ -76,7 +76,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Serialize_Object_ReturnsJson()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         var obj = new { Name = "test" };
 
         var result = serializer.Serialize(obj);
@@ -89,7 +89,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Serialize_DateTime_ReturnsStringRepresentation()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         var dt = new DateTime(2024, 1, 15, 10, 30, 0);
 
         var result = serializer.Serialize(dt);
@@ -100,7 +100,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_String_ReturnsString()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize<string>("hello");
 
@@ -110,7 +110,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_Int_ParsesNumber()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize<int>("42");
 
@@ -120,7 +120,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_NullableInt_ParsesNumber()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize<int?>("42");
 
@@ -130,7 +130,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_Long_ParsesNumber()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize<long>("9999999999");
 
@@ -140,7 +140,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_Double_ParsesNumber()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         // Use culture-appropriate decimal separator
         var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var result = serializer.Deserialize<double>($"3{separator}14");
@@ -151,7 +151,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_Decimal_ParsesNumber()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         // Use culture-appropriate decimal separator
         var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var result = serializer.Deserialize<decimal>($"123{separator}45");
@@ -162,7 +162,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_Bool_ParsesBoolean()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var trueResult = serializer.Deserialize<bool>("true");
         var falseResult = serializer.Deserialize<bool>("false");
@@ -176,7 +176,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_DateTime_ParsesDateTime()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize<DateTime>("2024-01-15");
 
@@ -188,7 +188,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_Guid_ParsesGuid()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         var guidStr = "12345678-1234-1234-1234-123456789012";
 
         var result = serializer.Deserialize<Guid>(guidStr);
@@ -199,7 +199,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_ByteArray_ReturnsUtf8Bytes()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize<byte[]>("hello");
         var expected = Encoding.UTF8.GetBytes("hello");
@@ -211,7 +211,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_InvalidInt_ReturnsNull()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize<int?>("not a number");
 
@@ -221,7 +221,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_EmptyString_ToValueType_ReturnsDefault()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize("", typeof(int));
 
@@ -231,7 +231,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_EmptyString_ToReferenceType_ReturnsNull()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize<string>("");
 
@@ -241,7 +241,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_WithType_ReturnsCorrectType()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize("42", typeof(int));
 
@@ -251,7 +251,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Deserialize_UnknownType_ReturnsString()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
 
         var result = serializer.Deserialize("hello", typeof(Uri));
 
@@ -261,7 +261,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task SerializeAsync_WritesToStream()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         using var stream = new MemoryStream();
 
         await serializer.SerializeAsync(stream, "hello world");
@@ -274,7 +274,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task SerializeAsync_Null_WritesNewLine()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         using var stream = new MemoryStream();
 
         await serializer.SerializeAsync(stream, null);
@@ -287,7 +287,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task DeserializeAsync_Generic_ReadsFromStream()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
 
         var result = await serializer.DeserializeAsync<string>(stream);
@@ -298,7 +298,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task DeserializeAsync_WithType_ReadsFromStream()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("42"));
 
         var result = await serializer.DeserializeAsync(stream, typeof(int));
@@ -309,7 +309,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task DeserializeAsync_Generic_WrongType_ReturnsDefault()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
 
         var result = await serializer.DeserializeAsync<int>(stream);
@@ -320,7 +320,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Roundtrip_String_PreservesData()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         var original = "hello world";
 
         var text = serializer.Serialize(original);
@@ -332,7 +332,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task Roundtrip_Stream_PreservesData()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text();
+        var serializer = new global::app.channels.serializers.serializer.Text();
         var original = "hello world";
         using var stream = new MemoryStream();
 
@@ -346,7 +346,7 @@ public class TextStreamSerializerTests
     [Test]
     public async Task CustomEncoding_UsesSpecifiedEncoding()
     {
-        var serializer = new global::App.Channels.Serializers.Serializer.Text(Encoding.ASCII);
+        var serializer = new global::app.channels.serializers.serializer.Text(Encoding.ASCII);
         using var stream = new MemoryStream();
 
         await serializer.SerializeAsync(stream, "test");

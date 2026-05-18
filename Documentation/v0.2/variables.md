@@ -4,12 +4,12 @@ Variable storage using `Data` entries with type metadata, dot-notation path reso
 
 ## Variables
 
-`App.Memory.Variables` — `ConcurrentDictionary<string, Data>` under the hood.
+`app.variables.@this` — `ConcurrentDictionary<string, Data>` under the hood.
 
 ### API Surface
 
 ```csharp
-public class @this   // App.Variables.@this
+public class @this   // app.variables.@this
 {
     // Core operations
     Data Set(Data value)                                  // Stores Data under value.Name
@@ -127,7 +127,7 @@ Key properties for variable use:
 
 ## Properties
 
-`App.Memory.Properties : IList<Data>` — named collection of `Data` items.
+`app.memory.Properties : IList<Data>` — named collection of `Data` items.
 
 ```csharp
 public class Properties : IList<Data>

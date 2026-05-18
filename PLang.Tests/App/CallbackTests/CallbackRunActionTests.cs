@@ -1,22 +1,22 @@
-using global::App.Callback;
-using global::App.CallStack;
-using global::App.modules.callback;
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using global::app.modules.callback;
+using global::app.callstack;
+using global::app.modules.callback;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
 public class CallbackRunActionTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cbrun-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private sealed class StubCallback : ICallback
     {
-        public global::App.CallStack.Call.Position? Position => null;
-        public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<global::App.Data.@this> Run(global::App.Actor.Context.@this ctx)
-            => Task.FromResult(global::App.Data.@this.Ok("ran"));
+        public global::app.callstack.call.Position? Position => null;
+        public byte[] Serialize(global::app.actor.context.@this ctx) => Array.Empty<byte>();
+        public Task<global::app.data.@this> Run(global::app.actor.context.@this ctx)
+            => Task.FromResult(global::app.data.@this.Ok("ran"));
     }
 
     [Test]
@@ -51,7 +51,7 @@ public class CallbackRunActionTests
         // Set a tampered signature so signing.verify fails (no matching identity / bad bytes).
         var app = NewApp();
         var data = new Data("cb") { Value = new StubCallback(), Context = app.User.Context };
-        data.Signature = new global::App.modules.signing.Signature
+        data.Signature = new global::app.modules.signing.Signature
         {
             Type = "signature",
             Algorithm = "ed25519",

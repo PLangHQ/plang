@@ -1,7 +1,7 @@
 using System.Reflection;
-using App;
-using global::App.Variables;
-using Type = global::App.Data.Type;
+using app;
+using global::app.variables;
+using Type = global::app.data.type;
 
 namespace PLang.Tests.App.DataTests;
 
@@ -446,8 +446,8 @@ public class DataTests
     [Test]
     public async Task Context_WhenSet_PropagesToType()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         // Use MIME type — Kind is only non-null when context is set
         var ov = new Data("test", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
@@ -471,8 +471,8 @@ public class DataTests
     [Test]
     public async Task Type_LazyDerivation_WithContext()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var ov = new Data("test", "hello");
         ov.Context = context;
@@ -518,8 +518,8 @@ public class DataTests
     [Test]
     public async Task Type_Setter_StampsContext()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var ov = new Data("test", "hello");
         ov.Context = context;
@@ -534,8 +534,8 @@ public class DataTests
     [Test]
     public async Task Type_Kind_WithContext()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var data = new Data("img", new byte[] { 1, 2 }, Type.FromMime("image/jpeg"));
         data.Context = context;
@@ -556,8 +556,8 @@ public class DataTests
     [Test]
     public async Task Type_Compressible_TextKind()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var data = new Data("txt", "hello", Type.FromMime("text/plain"));
         data.Context = context;
@@ -569,8 +569,8 @@ public class DataTests
     [Test]
     public async Task GetChild_InheritsContext()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var data = new Dictionary<string, object?> { { "name", "test" } };
         var ov = new Data("data", data);
@@ -596,7 +596,7 @@ public class DataTests
     public async Task Signature_CanBeSet()
     {
         var data = new Data("test", "hello");
-        var sig = new global::App.modules.signing.Signature { Type = "signature", Nonce = "test" };
+        var sig = new global::app.modules.signing.Signature { Type = "signature", Nonce = "test" };
 
         data.Signature = sig;
 
@@ -644,8 +644,8 @@ public class DataTests
     [Test]
     public async Task Wrap_MimeType_CreatesKindEnvelope()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var data = new Data("file", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
         data.Context = context;
@@ -663,8 +663,8 @@ public class DataTests
     [Test]
     public async Task Wrap_PlangPrimitive_ReturnsSelf()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var data = new Data("count", 42);
         data.Context = context;
@@ -710,8 +710,8 @@ public class DataTests
     [Test]
     public async Task Unwrap_StampsContext()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var inner = new Data("", "Hello", Type.FromMime("text/plain"));
         var envelope = new Data("", inner, Type.FromName("text"));
@@ -725,8 +725,8 @@ public class DataTests
     [Test]
     public async Task Compress_CompressibleType_CreatesArchivedEnvelope()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         // Create a "text" envelope (text is compressible)
         var inner = new Data("", "Hello, this is a test string for compression!", Type.FromMime("text/plain"));
@@ -746,8 +746,8 @@ public class DataTests
     [Test]
     public async Task Compress_NonCompressible_ReturnsSelf()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         // "image" is not compressible
         var inner = new Data("", new byte[] { 1, 2, 3 }, Type.FromMime("image/jpeg"));
@@ -773,8 +773,8 @@ public class DataTests
     [Test]
     public async Task Decompress_ArchivedData_ReturnsOriginal()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         // Build a text envelope, compress it, then decompress
         var inner = new Data("", "Hello world", Type.FromMime("text/plain"));
@@ -805,8 +805,8 @@ public class DataTests
     [Test]
     public async Task CompressDecompress_RoundTrip_PreservesData()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var content = new Data("", "The quick brown fox jumps over the lazy dog", Type.FromMime("text/plain"));
         content.Context = context;
@@ -860,8 +860,8 @@ public class DataTests
     [Test]
     public async Task WrapCompressChain_TextData()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var data = new Data("msg", "Hello, PLang!", Type.FromMime("text/plain"));
         data.Context = context;
@@ -875,8 +875,8 @@ public class DataTests
     [Test]
     public async Task FullPipeline_WrapCompressUnwrap_RoundTrip()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var original = new Data("doc", "Report content here", Type.FromMime("text/plain"));
         original.Context = context;
@@ -963,8 +963,8 @@ public class DataTests
     [Test]
     public async Task CompressDecompress_MultiLevelNesting_PreservesAllLevels()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         // Two-level nesting: text envelope containing another text envelope
         var leaf = new Data("", "deep content", Type.FromMime("text/plain"));
@@ -994,8 +994,8 @@ public class DataTests
     [Test]
     public async Task CompressDecompress_PropertiesNotPreserved()
     {
-        await using var engine = new global::App.@this("/test");
-        var context = new global::App.Actor.Context.@this(engine);
+        await using var engine = new global::app.@this("/test");
+        var context = new global::app.actor.context.@this(engine);
 
         var content = new Data("", "Hello", Type.FromMime("text/plain"));
         content.Context = context;

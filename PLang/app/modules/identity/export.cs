@@ -1,0 +1,21 @@
+using app.variables;
+using app.modules.identity.code;
+
+namespace app.modules.identity;
+
+/// <summary>
+/// Exports the private key of an identity.
+/// Returns the raw private key string.
+/// PLang: export identity 'alice' private key, write to %privateKey%
+/// </summary>
+[System.ComponentModel.Description("Export the private key of an identity as a raw string")]
+[Action("export")]
+public partial class Export : IContext
+{
+    public partial data.@this<string>? Name { get; init; }
+
+    [Code]
+    public partial IIdentity Identity { get; }
+
+    public async Task<data.@this> Run() => await Identity.ExportAsync(this);
+}

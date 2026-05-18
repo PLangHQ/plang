@@ -1,4 +1,4 @@
-using global::App.Callback;
+using global::app.modules.callback;
 
 namespace PLang.Tests.App.DataTests;
 
@@ -6,9 +6,9 @@ public class DataContextWiringTests
 {
     private sealed class FakeCallback : ICallback
     {
-        public global::App.CallStack.Call.Position? Position => null;
-        public byte[] Serialize(global::App.Actor.Context.@this ctx) => Array.Empty<byte>();
-        public Task<Data> Run(global::App.Actor.Context.@this ctx) => Task.FromResult(Data.Ok(true));
+        public global::app.callstack.call.Position? Position => null;
+        public byte[] Serialize(global::app.actor.context.@this ctx) => Array.Empty<byte>();
+        public Task<Data> Run(global::app.actor.context.@this ctx) => Task.FromResult(Data.Ok(true));
     }
 
     [Test]
@@ -16,8 +16,8 @@ public class DataContextWiringTests
     {
         // Per Ingi's Q1: keep the existing settable Context property — Data already has Context
         // wired through Variables.Set, Step/Action/Goal dispatch, Envelope, Clone. The pattern
-        // is `new Data.@this(...) { Context = ctx }`. Pin that pattern + storage round-trip.
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        // is `new data.@this(...) { Context = ctx }`. Pin that pattern + storage round-trip.
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         var data = new Data("v") { Value = 1, Context = app.User.Context };
         await Assert.That(data.Context).IsSameReferenceAs(app.User.Context);
     }
@@ -26,7 +26,7 @@ public class DataContextWiringTests
     public async Task Data_LazySignature_ReadsExpiryFromContextAppCallbackSignature()
     {
         // The lazy Signature getter resolves expiry through ctx.App.Callback.Signature.Expires.
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-test-" + System.Guid.NewGuid().ToString("N")[..8]));
         app.Callback.Signature.Expires = TimeSpan.FromSeconds(30);
 
         var data = new Data("cb") { Value = new FakeCallback(), Context = app.User.Context };

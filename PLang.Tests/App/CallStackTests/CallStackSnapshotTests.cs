@@ -1,4 +1,4 @@
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallStackTests;
 
@@ -16,9 +16,9 @@ public class CallStackSnapshotTests
         return (goal, step, action);
     }
 
-    private static global::App.@this BuildAppWithGoals(params Goal[] goals)
+    private static global::app.@this BuildAppWithGoals(params Goal[] goals)
     {
-        var app = new global::App.@this("/test");
+        var app = new global::app.@this("/test");
         foreach (var g in goals) app.Goals.Add(g);
         return app;
     }

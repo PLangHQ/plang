@@ -1,5 +1,5 @@
-using App.Events;
-using App.Events.Lifecycle.Bindings.Binding;
+using app.events;
+using app.events.lifecycle.bindings.binding;
 
 namespace PLang.Tests.App.ChannelsTests.Integration;
 
@@ -10,7 +10,7 @@ public class IntegrationCutsTests
     [Test]
     public async Task Cut1_ConsoleBoot_ThroughWriteOut_ReachesStdout()
     {
-        await using var app = new global::App.@this("/tmp/cut1");
+        await using var app = new global::app.@this("/tmp/cut1");
         var userOutput = new MemoryStream();
         var userError = new MemoryStream();
         var userInput = new MemoryStream();
@@ -20,7 +20,7 @@ public class IntegrationCutsTests
         { Mime = "text/plain" });
         app.User.Channels.Register(new StreamChannel("input", userInput, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain" });
-        global::App.@this.WireDefaultConsoleChannels(app.System);
+        global::app.@this.WireDefaultConsoleChannels(app.System);
 
         // Direct write through the resolved Output channel — proves
         // Channels.Resolve(null) returns Output role channel and WriteAsync routes there.
@@ -35,7 +35,7 @@ public class IntegrationCutsTests
     [Test]
     public async Task Cut2_GoalChannelFanOut_HitsTwoDestinations_NoRecursion()
     {
-        await using var app = new global::App.@this("/tmp/cut2");
+        await using var app = new global::app.@this("/tmp/cut2");
         var foundational = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", foundational, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
@@ -45,7 +45,7 @@ public class IntegrationCutsTests
         // captures invocation count and writes to the foundational stream
         // directly (the override scope makes this safe).
         int loggerInvocations = 0;
-        var loggerGoal = new global::App.Goals.Goal.@this { Name = "Logger", Path = "L.goal", PrPath = "/L.pr" };
+        var loggerGoal = new global::app.goals.goal.@this { Name = "Logger", Path = "L.goal", PrPath = "/L.pr" };
         var logger = new GoalChannelProbe("output", loggerGoal, app.User, () => loggerInvocations++);
         app.User.Channels.Register(logger);
 
@@ -58,7 +58,7 @@ public class IntegrationCutsTests
     [Test]
     public async Task Cut3_ChannelEvents_AbortPlusAuditMetric_AcrossTwoWrites()
     {
-        await using var app = new global::App.@this("/tmp/cut3");
+        await using var app = new global::app.@this("/tmp/cut3");
         var auditCapture = new MemoryStream();
         var metricsCapture = new MemoryStream();
         var audit = new StreamChannel("audit.external", auditCapture, ChannelDirection.Output, ownsStream: false)
@@ -99,10 +99,10 @@ public class IntegrationCutsTests
         await Assert.That(metricsText.Contains("+1")).IsTrue();
     }
 
-    private sealed class GoalChannelProbe : global::App.Channels.Channel.Goal.@this
+    private sealed class GoalChannelProbe : global::app.channels.channel.Goal.@this
     {
         private readonly Action _onInvoke;
-        public GoalChannelProbe(string name, global::App.Goals.Goal.@this goal, global::App.Actor.@this actor, Action onInvoke)
+        public GoalChannelProbe(string name, global::app.goals.goal.@this goal, global::app.actor.@this actor, Action onInvoke)
             : base(name, goal, actor) { _onInvoke = onInvoke; }
         public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
         {

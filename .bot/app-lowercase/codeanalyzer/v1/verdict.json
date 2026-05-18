@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "App→app rename + 7 OBP merges are shape-clean; build/tests green; three small follow-ups (lowercase miss on app/data/Code/, 8 stale docstrings, document Default carve-out) — none blocking." }

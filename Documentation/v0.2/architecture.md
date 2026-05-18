@@ -57,7 +57,7 @@ public class Data
 Three actors represent execution identities with isolated resources:
 
 ```
-App._shutdownCts (infrastructure root)
+app._shutdownCts (infrastructure root)
   |
   System (linked to App shutdown)
     |--- User (linked to System)
@@ -218,18 +218,18 @@ Collections own their loops (OBP rule 5). Steps iterates its own steps, Actions 
 
 Flat `module.action` registry. No hierarchy, no inheritance.
 
-The catalog rendered into the LLM builder's system prompt — module/action names, parameter type tags, examples — is derived from these registered handlers via `App.Modules.Describe()` plus `App.Catalog.@this.Build()`. See [action-catalog.md](action-catalog.md) for the attribute model (`[Action]`, `[ModuleDescription]`, `[Example]`, `[Default]`, etc.) and the rules for writing structured `ExamplesForLlm()` static methods. Variable-name slots are typed via `Data<App.Variables.Variable>` (no attribute), and the catalog renders them as `Name([string] %var%)` based on the wrapped type.
+The catalog rendered into the LLM builder's system prompt — module/action names, parameter type tags, examples — is derived from these registered handlers via `app.modules.Describe()` plus `app.modules.Schema.@this.Build()`. See [action-catalog.md](action-catalog.md) for the attribute model (`[Action]`, `[ModuleDescription]`, `[Example]`, `[Default]`, etc.) and the rules for writing structured `ExamplesForLlm()` static methods. Variable-name slots are typed via `Data<app.variables.Variable>` (no attribute), and the catalog renders them as `Name([string] %var%)` based on the wrapped type.
 
 ### Discovery
 
-Scans assemblies for types with `[Action]` attribute implementing `ICodeGenerated`. Extracts module from namespace: `App.modules.{module}.{actionName}`.
+Scans assemblies for types with `[Action]` attribute implementing `ICodeGenerated`. Extracts module from namespace: `app.modules.{module}.{actionName}`.
 
 ### Handler pattern
 
 ```
 Record (parameters):  lowercase action name     -> set, save, read
 Handler (execution):  PascalCase + Handler      -> SetHandler, SaveHandler
-Namespace:            App.modules.{module}      -> modules.variable
+Namespace:            app.modules.{module}      -> modules.variable
 Registry key:         {module}.{record}         -> variable.set
 ```
 
@@ -264,7 +264,7 @@ Action property positions are constrained at build time. `Discovery.IsValidActio
 
 Any other shape (raw `partial string`, `partial int`, untagged primitives, attributed strings) reports the **PLNG001** error: *Property '{0}' on action '{1}' must be Data<T> or [Code]. Raw scalars are not permitted.* The diagnostic carries the full identifier span so IDE squiggles underline the property name.
 
-For parameters that name a variable rather than carry its value — write targets and read-by-name lookups (`variable.set`, every `list.*`, `loop.foreach` ItemName/KeyName) — use `Data<App.Variables.Variable>`. `Variable` implements `IRawNameResolvable`, a marker that tells `Data.AsT_Impl` to skip the `%var%` substitution branch and dispatch to `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`, so the name-slot semantic survives whichever shape the LLM emits — including the case where `x` doesn't yet exist (`set %x% = 5` creating x for the first time). Use sites read `Foo.Value`; Variable's implicit `string` operator and `ToString() => Name` cover the read paths. Discovery detects `T : IRawNameResolvable` on non-nullable `Data<T>` slots and the Action emitter emits a pre-`Run()` guard mirroring `[IsNotNull]` — a missing slot surfaces as `MissingRequiredParameter` ServiceError before the implicit conversion can NRE. See [`data-generic-design.md`](data-generic-design.md) and [`good_to_know.md`](good_to_know.md) for the resolution and gotcha details.
+For parameters that name a variable rather than carry its value — write targets and read-by-name lookups (`variable.set`, every `list.*`, `loop.foreach` ItemName/KeyName) — use `Data<app.variables.Variable>`. `Variable` implements `IRawNameResolvable`, a marker that tells `Data.AsT_Impl` to skip the `%var%` substitution branch and dispatch to `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` collapse to `Variable { Name = "x" }`, so the name-slot semantic survives whichever shape the LLM emits — including the case where `x` doesn't yet exist (`set %x% = 5` creating x for the first time). Use sites read `Foo.Value`; Variable's implicit `string` operator and `ToString() => Name` cover the read paths. Discovery detects `T : IRawNameResolvable` on non-nullable `Data<T>` slots and the Action emitter emits a pre-`Run()` guard mirroring `[IsNotNull]` — a missing slot surfaces as `MissingRequiredParameter` ServiceError before the implicit conversion can NRE. See [`data-generic-design.md`](data-generic-design.md) and [`good_to_know.md`](good_to_know.md) for the resolution and gotcha details.
 
 ### Key interface
 
@@ -383,7 +383,7 @@ Re-entrancy protection: `TryEnterEvent` / `ExitEvent` prevents recursive event h
 Named I/O streams for reading and writing data.
 
 ```
-App.Channels        app-level channel registry
+app.channels        app-level channel registry
 Actor.Channels      per-actor channel collection
 ```
 
@@ -488,7 +488,7 @@ When an error goal is called, the error is passed as `%!error%` parameter to the
 
 ## Snapshot / Restore
 
-Subsystems that need to round-trip across a suspend implement `App.Snapshot.ISnapshotted` — the type system is the bucket assignment. Each implementer captures into its own subtree of a `Snapshot.@this` and reconstructs from that subtree on Restore; references across subsystems are by name, never by pointer. `App.Snapshot()` walks every `ISnapshotted` property; `App.Restore(s, ctx)` walks `s.SectionNames` and dispatches each name to the right subsystem's `Restore`. Section presence is the gate — missing sections stay missing on the receiving side, which is what lets narrow wire shapes (e.g. CallStack + Variables only) round-trip cleanly.
+Subsystems that need to round-trip across a suspend implement `app.snapshot.ISnapshotted` — the type system is the bucket assignment. Each implementer captures into its own subtree of a `Snapshot.@this` and reconstructs from that subtree on Restore; references across subsystems are by name, never by pointer. `app.Snapshot()` walks every `ISnapshotted` property; `app.Restore(s, ctx)` walks `s.SectionNames` and dispatches each name to the right subsystem's `Restore`. Section presence is the gate — missing sections stay missing on the receiving side, which is what lets narrow wire shapes (e.g. CallStack + Variables only) round-trip cleanly.
 
 Subsystems that don't implement `ISnapshotted` (Modules, Goals, Channels, Cache, FileSystem) are reconstructed at App build instead. There's no third bucket and no per-call opt-in.
 
@@ -513,76 +513,79 @@ See `callbacks.md` for the full design.
 ## Directory Structure
 
 ```
-App/
-  this.cs                     App runtime root
+app/
+  this.cs                     app runtime root
   GlobalUsings.cs             type aliases
   
-  Actor/
+  actor/
     this.cs                   Actor (System/Service/User)
-    Context/
+    context/
       this.cs                 request-level context
   
-  Data/
+  data/
     this.cs                   universal Data type
     this.Result.cs            error/success concern
     this.Navigation.cs        dot-path traversal
     this.Envelope.cs          compress/wrap/encrypt
     Navigators/               per-type navigation
   
-  Goals/
+  goals/
     this.cs                   goal collection
-    Goal/
+    goal/
       this.cs                 goal entity
       GoalCall.cs             goal resolution
-      Steps/
+      steps/
         this.cs               steps collection
-        Step/
+        step/
           this.cs             step entity
-          Actions/
+          actions/
             this.cs           actions collection
-            Action/
+            action/
               this.cs         action entity
-    Setup/
+    setup/
       this.cs                 run-once setup system
   
-  Events/
+  events/
     this.cs                   event registry
-    Lifecycle/
+    lifecycle/
       this.cs                 before/after bindings
-      Bindings/
+      bindings/
         this.cs               binding collection
-        Binding/
+        binding/
           this.cs             single event binding
   
-  Channels/
+  channels/
     this.cs                   channel registry
-    Channel/                  named I/O stream
-    Serializers/              content-type routing
+    channel/                  named I/O stream
+    serializers/              content-type routing
   
-  Modules/
+  modules/
     this.cs                   action registry & dispatcher
   
   modules/
     ICodeGenerated.cs         handler interface
     IContext.cs               context injection
     IChannel.cs               channel injection
-    app/run.cs                unified run action
+    environment/run.cs        unified run action
     goal/call.cs              goal call action
     variable/                 variable operations
     file/                     file operations
     condition/                condition operations
     http/                     HTTP operations
+    builder/                  build-time goal parsing & persistence
+    cache/                    step result cache
+    callback/                 callback resume
+    code/                     pluggable code registry
+    debug/                    debug output
+    settings/                 persistent key-value storage
     ...                       20+ more modules
   
-  Variables/                  %variable% storage
-  Config/                     goal-scoped settings
-  CallStack/                  frame tracking
-  Providers/                  pluggable implementations
-  Types/                      type knowledge system
-  Errors/                     error hierarchy
-  Settings/                   persistent key-value storage
-  FileSystem/                 sandboxed I/O
-  Cache/                      step result cache
+  variables/                  %variable% storage
+  config/                     goal-scoped settings
+  callstack/                  frame tracking
+  types/                      type knowledge system
+  errors/                     error hierarchy
+  filesystem/                 sandboxed I/O
 ```
 
 ---

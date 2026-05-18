@@ -1,12 +1,12 @@
-using global::App.modules.goal;
+using global::app.modules.goal;
 
 namespace PLang.Tests.App.Modules.goal;
 
 public class GoalReturnTests
 {
-    private (global::App.Actor.Context.@this context, global::App.Variables.@this memory) CreateContext()
+    private (global::app.actor.context.@this context, global::app.variables.@this memory) CreateContext()
     {
-        var app = new global::App.@this("/app");
+        var app = new global::app.@this("/app");
         return (app.User.Context, app.User.Context.Variables);
     }
 
@@ -26,7 +26,7 @@ public class GoalReturnTests
     public async Task Return_WithData_PropagatesValue()
     {
         var (context, _) = CreateContext();
-        var data = global::App.Data.@this.Ok("hello");
+        var data = global::app.data.@this.Ok("hello");
         var action = new Return { Context = context, Data = data };
         var result = await action.Run();
 
@@ -39,7 +39,7 @@ public class GoalReturnTests
     public async Task Return_DepthGreaterThanOne_SetsReturnDepth()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = global::App.Data.@this.Ok(), Depth = 3 };
+        var action = new Return { Context = context, Data = global::app.data.@this.Ok(), Depth = 3 };
         var result = await action.Run();
 
         await Assert.That(result.Returned).IsTrue();
@@ -50,7 +50,7 @@ public class GoalReturnTests
     public async Task Return_DepthZero_DefaultsToOne()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = global::App.Data.@this.Ok(), Depth = 0 };
+        var action = new Return { Context = context, Data = global::app.data.@this.Ok(), Depth = 0 };
         var result = await action.Run();
 
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
@@ -60,7 +60,7 @@ public class GoalReturnTests
     public async Task Return_NegativeDepth_DefaultsToOne()
     {
         var (context, _) = CreateContext();
-        var action = new Return { Context = context, Data = global::App.Data.@this.Ok(), Depth = -5 };
+        var action = new Return { Context = context, Data = global::app.data.@this.Ok(), Depth = -5 };
         var result = await action.Run();
 
         await Assert.That(result.ReturnDepth).IsEqualTo(1);
@@ -70,8 +70,8 @@ public class GoalReturnTests
     public async Task Return_FailingData_PropagatesError()
     {
         var (context, _) = CreateContext();
-        var error = global::App.Data.@this.FromError(
-            new global::App.Errors.Error("something broke", "TestError", 500));
+        var error = global::app.data.@this.FromError(
+            new global::app.errors.Error("something broke", "TestError", 500));
         var action = new Return { Context = context, Data = error };
         var result = await action.Run();
 

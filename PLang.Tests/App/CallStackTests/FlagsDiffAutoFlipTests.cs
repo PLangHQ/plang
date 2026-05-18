@@ -1,4 +1,4 @@
-using global::App.Errors;
+using global::app.errors;
 
 namespace PLang.Tests.App.CallStackTests;
 
@@ -7,7 +7,7 @@ public class FlagsDiffAutoFlipTests
     [Test]
     public async Task FlagsDiff_AutoFlipsOn_DuringErrorProcessing()
     {
-        var app = new global::App.@this("/test");
+        var app = new global::app.@this("/test");
         await Assert.That(app.CallStack.Flags.Diff).IsFalse();
 
         using (app.Errors.Push(new ServiceError("boom", "TestErr", 400)))
@@ -19,7 +19,7 @@ public class FlagsDiffAutoFlipTests
     [Test]
     public async Task FlagsDiff_RestoredToPriorState_AfterErrorPathCompletes()
     {
-        var app = new global::App.@this("/test");
+        var app = new global::app.@this("/test");
         // Off baseline.
         await Assert.That(app.CallStack.Flags.Diff).IsFalse();
 

@@ -1,4 +1,4 @@
-using App;
+using app;
 
 namespace PLang.Tests.Generator;
 
@@ -17,10 +17,10 @@ namespace PLang.Tests.Generator;
 /// </summary>
 public class MissingVariableNameTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/app");
+    public void Setup() => _app = new global::app.@this("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

@@ -1,6 +1,6 @@
-using global::App.Utils;
-using global::App.modules.llm;
-using PLangEngine = global::App.@this;
+using global::app.Utils;
+using global::app.modules.llm;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -24,11 +24,11 @@ public class ComplexTypeDiscoveryTests
         _app.Builder.IsEnabled = true;
     }
 
-    private static string RenderEntry(global::App.Modules.Schema.Entry e) => e.Kind switch
+    private static string RenderEntry(global::app.modules.Schema.Entry e) => e.Kind switch
     {
-        global::App.Modules.Schema.EntryKind.Enum => string.Join(" | ", e.Values!),
-        global::App.Modules.Schema.EntryKind.Scalar => e.Shape ?? "",
-        _ => "{ " + string.Join(", ", (e.Fields ?? Array.Empty<global::App.Modules.Schema.Field>())
+        global::app.modules.Schema.EntryKind.Enum => string.Join(" | ", e.Values!),
+        global::app.modules.Schema.EntryKind.Scalar => e.Shape ?? "",
+        _ => "{ " + string.Join(", ", (e.Fields ?? Array.Empty<global::app.modules.Schema.Field>())
             .Select(f => f.Name + ": " + f.TypeName)) + " }"
     };
 
@@ -93,7 +93,7 @@ public class ComplexTypeDiscoveryTests
     public async Task Enums_ReturnValidValues()
     {
         // Enums should return their names as valid values
-        var values = TypeMapping.GetValidValues(typeof(global::App.Goals.Goal.Steps.Step.ErrorOrder));
+        var values = TypeMapping.GetValidValues(typeof(global::app.goals.goal.steps.step.ErrorOrder));
 
         await Assert.That(values).IsNotNull();
         await Assert.That(values!).Contains("GoalFirst");
@@ -104,7 +104,7 @@ public class ComplexTypeDiscoveryTests
     public async Task NullableEnums_ReturnValidValues()
     {
         // Nullable enums should unwrap and return valid values
-        var values = TypeMapping.GetValidValues(typeof(global::App.Goals.Goal.Steps.Step.ErrorOrder?));
+        var values = TypeMapping.GetValidValues(typeof(global::app.goals.goal.steps.step.ErrorOrder?));
 
         await Assert.That(values).IsNotNull();
         await Assert.That(values!).Contains("GoalFirst");

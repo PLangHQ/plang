@@ -1,13 +1,13 @@
-using global::App.Errors;
-using AssertEquals = global::App.modules.assert.Equals;
-using AssertNotEquals = global::App.modules.assert.NotEquals;
-using AssertIsTrue = global::App.modules.assert.IsTrue;
-using AssertIsFalse = global::App.modules.assert.IsFalse;
-using AssertIsNull = global::App.modules.assert.IsNull;
-using AssertIsNotNull = global::App.modules.assert.IsNotNull;
-using AssertContains = global::App.modules.assert.Contains;
-using AssertGreaterThan = global::App.modules.assert.GreaterThan;
-using AssertLessThan = global::App.modules.assert.LessThan;
+using global::app.errors;
+using AssertEquals = global::app.modules.assert.Equals;
+using AssertNotEquals = global::app.modules.assert.NotEquals;
+using AssertIsTrue = global::app.modules.assert.IsTrue;
+using AssertIsFalse = global::app.modules.assert.IsFalse;
+using AssertIsNull = global::app.modules.assert.IsNull;
+using AssertIsNotNull = global::app.modules.assert.IsNotNull;
+using AssertContains = global::app.modules.assert.Contains;
+using AssertGreaterThan = global::app.modules.assert.GreaterThan;
+using AssertLessThan = global::app.modules.assert.LessThan;
 
 namespace PLang.Tests.App.Tester;
 
@@ -20,12 +20,12 @@ namespace PLang.Tests.App.Tester;
 /// </summary>
 public class AssertionErrorVariablesTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _app = new global::app.@this("/test");
     }
 
     private static Data D(object? value) => value == null ? new Data("") : Data.Ok(value);
@@ -86,7 +86,7 @@ public class AssertionErrorVariablesTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        // On success, Data.Error is null — nothing to populate.
+        // On success, data.Error is null — nothing to populate.
         await Assert.That(result.Error).IsNull();
     }
 

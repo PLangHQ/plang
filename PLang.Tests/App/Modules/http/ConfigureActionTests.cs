@@ -1,11 +1,11 @@
 using System.Net;
 using System.Text;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.http;
-using global::App.modules.http.code;
-using PLangEngine = global::App.@this;
+using global::app.actor.context;
+using global::app.variables;
+using global::app.modules.code;
+using global::app.modules.http;
+using global::app.modules.http.code;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.http;
 
@@ -39,7 +39,7 @@ public class ConfigureActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     [Test]
     public async Task Configure_SetsTimeoutOnScopeChain()

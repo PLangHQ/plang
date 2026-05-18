@@ -1,17 +1,17 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
+using global::app.actor.context;
+using app;
+using global::app.variables;
 
 namespace PLang.Tests.App.Context;
 
 public class ContextVariableTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _app = new global::app.@this("/test");
     }
 
     [Test]
@@ -41,7 +41,7 @@ public class ContextVariableTests
         var value = vars.GetValue("!context");
 
         await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsTypeOf<global::App.Actor.Context.@this>();
+        await Assert.That(value).IsTypeOf<global::app.actor.context.@this>();
     }
 
     [Test]
@@ -60,7 +60,7 @@ public class ContextVariableTests
         var value = vars.GetValue("!callStack");
 
         await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsTypeOf<global::App.CallStack.@this>();
+        await Assert.That(value).IsTypeOf<global::app.callstack.@this>();
     }
 
     [Test]

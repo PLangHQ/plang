@@ -81,13 +81,13 @@ Leaving `goal.call.GoalName` and the `[goal.call]` type in place is deliberate. 
 
 **Date:** 2026-04-08
 
-**Problem:** `DefaultFileProvider.Read` (`PLang/App/modules/file/providers/DefaultFileProvider.cs:40`) uses `TypeMapping.TryConvertTo` for JSON-to-object deserialization. This is a raw utility that knows nothing about the domain. When it deserializes a `.pr` file into a Goal, the Goal is disconnected — no `App`, no `Step.Goal` back-references, no sub-goal wiring. This causes NullReferenceExceptions when runtime code tries to navigate the object graph (e.g., `Action.RunAsync()` at `PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs:55`).
+**Problem:** `DefaultFileProvider.Read` (`PLang/app/modules/file/providers/DefaultFileProvider.cs:40`) uses `TypeMapping.TryConvertTo` for JSON-to-object deserialization. This is a raw utility that knows nothing about the domain. When it deserializes a `.pr` file into a Goal, the Goal is disconnected — no `App`, no `Step.Goal` back-references, no sub-goal wiring. This causes NullReferenceExceptions when runtime code tries to navigate the object graph (e.g., `Action.RunAsync()` at `PLang/app/goals/goal/steps/step/actions/action/this.cs:55`).
 
-**Solution:** Route file deserialization through `Channels.Serializers` (`PLang/App/Channels/Serializers/this.cs`), which already has a registry keyed by extension and content type.
+**Solution:** Route file deserialization through `Channels.Serializers` (`PLang/app/channels/serializers/this.cs`), which already has a registry keyed by extension and content type.
 
 ### Changes needed:
 
-1. **Add context to `ISerializer`** (`PLang/App/Channels/Serializers/Serializer/this.cs`)
+1. **Add context to `ISerializer`** (`PLang/app/channels/serializers/serializer/this.cs`)
    - Add `Context` parameter to deserialize methods (or pass via `DeserializeOptions`)
    - Most serializers (JSON, text) ignore it. Domain-aware serializers use it.
 
@@ -103,16 +103,16 @@ Leaving `goal.call.GoalName` and the `[goal.call]` type in place is deliberate. 
    - File provider reads bytes/text and hands off to the serializer. No more type conversion logic.
 
 4. **Remove JSON deserialization from `TypeMapping.TryConvertTo`**
-   - `PLang/App/Utils/TypeMapping.cs:317-322` — the `string → complex type via JsonSerializer.Deserialize` path moves to serializers
+   - `PLang/app/Utils/TypeMapping.cs:317-322` — the `string → complex type via JsonSerializer.Deserialize` path moves to serializers
    - TypeMapping goes back to being about primitive type conversion only
 
 ### Key files:
-- `PLang/App/modules/file/providers/DefaultFileProvider.cs` — current file read logic
-- `PLang/App/Channels/Serializers/this.cs` — serializer registry
-- `PLang/App/Channels/Serializers/Serializer/this.cs` — ISerializer interface
-- `PLang/App/Utils/TypeMapping.cs:297` — TryConvertTo with JSON deserialization
-- `PLang/App/Goals/Goal/this.cs` — Goal entity, needs to own its child wiring
-- `PLang/App/Goals/this.cs:306` — LoadFromFileAsync, currently does manual wiring
+- `PLang/app/modules/file/providers/DefaultFileProvider.cs` — current file read logic
+- `PLang/app/channels/serializers/this.cs` — serializer registry
+- `PLang/app/channels/serializers/serializer/this.cs` — ISerializer interface
+- `PLang/app/Utils/TypeMapping.cs:297` — TryConvertTo with JSON deserialization
+- `PLang/app/goals/goal/this.cs` — Goal entity, needs to own its child wiring
+- `PLang/app/goals/this.cs:306` — LoadFromFileAsync, currently does manual wiring
 
 ---
 
@@ -120,7 +120,7 @@ Leaving `goal.call.GoalName` and the `[goal.call]` type in place is deliberate. 
 
 **Date:** 2026-04-10
 
-**Location:** `PLang/App/this.cs` — `Start()` method, build mode section
+**Location:** `PLang/app/this.cs` — `Start()` method, build mode section
 
 **Problem:** `Console.Write("No app found... Create new app? (y/n)")` uses raw Console I/O. When the AskUser module is implemented, this should use it instead so the prompt works through any UI channel (CLI, web, IDE), not just console.
 
@@ -173,11 +173,11 @@ Each scope level is backed by a goal at the appropriate system path. `timer.star
 **Current state:** `IStatic` exists with `ConcurrentDictionary` on context. Timer module works. The goal-backed approach replaces the C# backing with PLang goals. `IStatic` interface stays — the source generator wires it to the goal-backed storage instead of a direct dictionary.
 
 **Key files:**
-- `PLang/App/modules/IStatic.cs` — current interface
-- `PLang/App/Actor/Context/this.cs` — `GetModuleStatic()` (to be replaced)
-- `PLang/App/this.cs` — app-level statics (to be replaced with goal-backed property)
+- `PLang/app/modules/IStatic.cs` — current interface
+- `PLang/app/actor/context/this.cs` — `GetModuleStatic()` (to be replaced)
+- `PLang/app/this.cs` — app-level statics (to be replaced with goal-backed property)
 - `PLang.Generators/LazyParamsGenerator.cs` — wires IStatic to Static property
-- `PLang/App/modules/timer/` — first consumer of IStatic
+- `PLang/app/modules/timer/` — first consumer of IStatic
 
 ---
 
@@ -192,7 +192,7 @@ Each scope level is backed by a goal at the appropriate system path. `timer.star
 **Solution:** Add `steps` filter to `--build` options: `--build={"files":"BuildGoal.goal","steps":[8]}`. Skip the full BuildGoal LLM pass, go straight to BuildStep for the specified indexes. The infrastructure exists — BuildStep already does single-step LLM passes.
 
 **Changes needed:**
-1. `PLang/App/Build/this.cs` — add `public List<int> Steps { get; set; } = new();`
+1. `PLang/app/modules/builder/this.cs` — add `public List<int> Steps { get; set; } = new();`
 2. `PLang/Executor.cs` — parse steps from build JSON, sync to `%!build.steps%`
 3. `system/builder/BuildGoal.goal` — conditional: if `%!build.steps%` has items, call BuildStep directly for each index instead of BuildGoalCore
 4. New `RebuildStep` sub-goal wrapping BuildStep with template rendering and trace
@@ -210,9 +210,9 @@ Each scope level is backed by a goal at the appropriate system path. `timer.star
 **Fix:** Rename the `Value` property on `file.save` to `Content`. Update all .pr files that reference `"name": "Value"` on file.save parameters. Update builder prompt examples.
 
 **Key files:**
-- `PLang/App/modules/file/save.cs` — rename property
+- `PLang/app/modules/file/save.cs` — rename property
 - All `.pr` files with `file.save` parameters
-- `PLang/App/modules/file/providers/DefaultFileProvider.cs` — update reference
+- `PLang/app/modules/file/providers/DefaultFileProvider.cs` — update reference
 
 ---
 
@@ -288,7 +288,7 @@ Each module declares what debug info is *useful* for each action — that's code
 
 **Action-return logging.** Related but distinct: regardless of per-module debug, `--debug={"level":"action"}` should log each action's **returned Data** as a single line at the boundary (`→ module.action returned: Value=<...>, Success=True`). Today it shows the variable state BEFORE/AFTER but not the action's own return artifact, so "what did this action produce, exactly?" requires Console prints. This addition is independent of the module-scoped scheme and can land sooner.
 
-Where: `PLang/App/Debug/this.cs` (debug scope parser + formatter), `PLang.Generators` (codegen for zero-cost gating), per-module handlers (replace Console.Error.WriteLine with DebugLog calls).
+Where: `PLang/app/modules/debug/this.cs` (debug scope parser + formatter), `PLang.Generators` (codegen for zero-cost gating), per-module handlers (replace Console.Error.WriteLine with DebugLog calls).
 
 ---
 
@@ -419,16 +419,17 @@ process (`%app%` + `%app2%`, etc.), any `private static` mutable field
 becomes a cross-App leak. Found one concrete hotspot during the v10
 Console.* purge audit:
 
-- **`PLang/App/modules/builder/providers/DefaultBuilderProvider.cs:18`**
-  — `private static readonly Stopwatch _buildTimer = new();` is
+- **`PLang/app/modules/builder/code/Default.cs:18`** — historically
+  `private static readonly Stopwatch _buildTimer = new();` was
   process-global. Two concurrent builds (`%app%` and `%app2%` both
-  building) share one Stopwatch; `Restart()` from one corrupts the
-  elapsed measurement the other reads. Move to instance field on the
-  provider.
+  building) would share one Stopwatch; `Restart()` from one corrupts
+  the elapsed measurement the other reads. **Status:** already moved
+  to a `private readonly` instance field at the post-merge location;
+  kept as an example for the multi-App rule.
 
 The rest of the area is fine (`VarRefPattern` Regex, `_debugJsonOptions`
 JsonSerializerOptions, the `private static` lifecycle handlers in
-`App/Debug/this.cs` — those are stateless dispatchers that read state
+`app/modules/debug/this.cs` — those are stateless dispatchers that read state
 from `context.App.Debug`, not from static fields). But the *rule* to
 enforce: no `static` mutable state in any code path that an `App`
 instance touches. Worth a sweep when multi-App lands.

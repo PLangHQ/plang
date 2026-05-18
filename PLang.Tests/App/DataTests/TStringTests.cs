@@ -1,8 +1,8 @@
-using global::App.Utils;
+using global::app.Utils;
 
 namespace PLang.Tests.App.DataTests;
 
-using R2 = global::App.Data;
+using R2 = global::app.data;
 
 public class TStringTests
 {

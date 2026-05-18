@@ -8,8 +8,8 @@ build invocation, but conceptually any single PLang execution.
 
 C# owns Trace. It is **not** a PLang variable that scripts hand-roll.
 
-- Created by `App.Actor.Context.Trace.@this` in its constructor.
-- Owned by `App.Actor.Context.@this` as the property `Trace`.
+- Created by `app.actor.context.trace.@this` in its constructor.
+- Owned by `app.actor.context.@this` as the property `Trace`.
 - One Trace per Context instance. Sub-goal calls share the parent Context, and
   therefore share its Trace. Forking a new Context (e.g. another actor) creates
   a new Trace.
@@ -20,7 +20,7 @@ The previous PLang-side line `set %traceId% = %Now.Ticks%_%goal.Name%` is gone
 ## Shape
 
 ```csharp
-public sealed class @this    // App.Actor.Context.Trace.@this
+public sealed class @this    // app.actor.context.trace.@this
 {
     public string Id { get; }                 // {ticks}_{guid8}
     public DateTimeOffset Started { get; }    // when Context was constructed

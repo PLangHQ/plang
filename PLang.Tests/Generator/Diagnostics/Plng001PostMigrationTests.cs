@@ -12,7 +12,7 @@ namespace PLang.Tests.Generator.Diagnostics;
 //
 // [VariableName] string was a transitional carve-out; it is deleted in v5.
 // Variable-name slots use Data<Variable> (App.Variables.Variable, with the
-// IRawNameResolvable marker that bypasses %var% substitution in Data.As<T>).
+// IRawNameResolvable marker that bypasses %var% substitution in data.As<T>).
 //
 // PLNG001 still rejects raw scalars (the original purpose of the diagnostic).
 //
@@ -39,14 +39,14 @@ public class Plng001PostMigrationTests
 
     private const string Stubs = """
         using System;
-        namespace App.modules {
+        namespace app.modules {
             public class ActionAttribute : Attribute {}
             public class CodeAttribute : Attribute {}
             public interface IContext {}
             public interface ICodeGenerated {}
         }
-        namespace App.Data {
-            public partial class @this { public class Type {} }
+        namespace app.data {
+            public partial class @this { public class type {} }
             public partial class @this<T> : @this {}
         }
         """;
@@ -56,10 +56,10 @@ public class Plng001PostMigrationTests
     public async Task PLNG001_DataT_Property_NoDiagnostic()
     {
         var source = Stubs + """
-            namespace App.Test {
-                [App.modules.Action]
+            namespace app.Test {
+                [app.modules.Action]
                 public partial class GoodHandler {
-                    public partial App.Data.@this<int> Count { get; init; }
+                    public partial app.data.@this<int> Count { get; init; }
                 }
             }
             """;
@@ -73,10 +73,10 @@ public class Plng001PostMigrationTests
     public async Task PLNG001_PlainData_Property_NoDiagnostic()
     {
         var source = Stubs + """
-            namespace App.Test {
-                [App.modules.Action]
+            namespace app.Test {
+                [app.modules.Action]
                 public partial class GoodHandler {
-                    public partial App.Data.@this Value { get; init; }
+                    public partial app.data.@this Value { get; init; }
                 }
             }
             """;
@@ -90,11 +90,11 @@ public class Plng001PostMigrationTests
     public async Task PLNG001_CodeProperty_NoDiagnostic()
     {
         var source = Stubs + """
-            namespace App.Test {
+            namespace app.Test {
                 public interface IFooProvider {}
-                [App.modules.Action]
+                [app.modules.Action]
                 public partial class GoodHandler {
-                    [App.modules.Code]
+                    [app.modules.Code]
                     public partial IFooProvider Foo { get; init; }
                 }
             }
@@ -113,8 +113,8 @@ public class Plng001PostMigrationTests
     {
         // Author who forgot to migrate — bare `partial string`, no Data wrap.
         var source = Stubs + """
-            namespace App.Test {
-                [App.modules.Action]
+            namespace app.Test {
+                [app.modules.Action]
                 public partial class StaleHandler {
                     public partial string Name { get; init; }
                 }
@@ -133,8 +133,8 @@ public class Plng001PostMigrationTests
     public async Task PLNG001_RawScalar_StillReportsDiagnostic()
     {
         var source = Stubs + """
-            namespace App.Test {
-                [App.modules.Action]
+            namespace app.Test {
+                [app.modules.Action]
                 public partial class RawScalarHandler {
                     public partial int RawCount { get; init; }
                 }

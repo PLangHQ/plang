@@ -1,0 +1,483 @@
+{
+  "branch": "app-lowercase",
+  "sessions": [
+    {
+      "id": "ff1d5448-167e-4ab2-9707-98db92c3c097",
+      "bot": "architect",
+      "timestamp_start": "2026-05-15T01:34:47Z",
+      "timestamp_end": "2026-05-15T01:35:00Z",
+      "intent": "Set up the rename plan for Ingi to critique \u2014 take ownership from coder's v1 draft, fix bisection hygiene, define Phase 4 groupings, scope Builder in.",
+      "before": {
+        "assumptions": "Coder wrote a v1 plan + captured baseline; Ingi wants the architect to own the plan shape so he can critique it. The branch already has a settled goal (lowercase PLang vocabulary, keep C# infra PascalCase).",
+        "risk": "Plan reads as a draft pulled from coder rather than a designed structure. Mixing semantic change (Modules merge) with cosmetic rename poisons bisection."
+      },
+      "plan": ".bot/app-lowercase/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/app-lowercase/architect/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect spine. Six phases: root, Data/Type, Path, vocabulary sweep (4a-4d grouped by blast radius), Builder, close. Modules merge pulled out per Ingi's call. Builder lowercased per Ingi's call. Phase 4 groupings defined by blast radius not coupling \u2014 execution core / I/O / state-lifecycle / control-diagnostics."
+        }
+      ],
+      "after": {
+        "status": "Plan written, awaiting Ingi's critique. No code changes yet.",
+        "health": "green",
+        "notes": "Coder's v1 plan + baseline remain in .bot/app-lowercase/coder/v1/ as reference. Once Ingi signs off, this plan replaces coder's as the source of truth."
+      }
+    },
+    {
+      "id": "a3e91b27-5f44-4c8a-9d12-7c8b34f5e001",
+      "bot": "coder",
+      "timestamp_start": "2026-05-15T12:00:00Z",
+      "timestamp_end": "2026-05-15T12:30:00Z",
+      "intent": "Fix all 'App.' string literals in test files and production code after the App \u2192 app namespace rename.",
+      "before": {
+        "assumptions": "Branch already has the namespace rename in production C#. Test files have hardcoded 'App.' strings in reflection calls, assertions, and Roslyn stub sources.",
+        "risk": "Generator tests use inline Roslyn source that must use 'app.modules' for the generator to recognize [Action] attributes. Fixture DLLs need rebuilding."
+      },
+      "plan": ".bot/app-lowercase/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/signing/SignatureRenameTests.cs",
+            "PLang.Tests/App/Utility/TypeMismatchExample.cs",
+            "PLang.Tests/App/Utility/TypeMismatchMessageTests.cs",
+            "PLang.Tests/App/Fixtures/MatrixRunner.cs",
+            "PLang.Tests/Generator/IncrementalCacheTests.cs",
+            "PLang.Tests/Generator/GeneratorValidationTests.cs",
+            "PLang.Tests/Generator/SnapshotParamsTests.cs",
+            "PLang.Tests/Generator/Diagnostics/Plng001PostMigrationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Changed 'App.' string literals to 'app.' in reflection GetType() calls, assertions, generated file names, and inline Roslyn compilation stubs."
+        },
+        {
+          "paths": [
+            "TestFixtures/TestProvider/TestSigningProvider.cs",
+            "TestFixtures/NoCtorProvider/NoCtorProvider.cs",
+            "PLang.Tests/App/Fixtures/dlls/TestProvider.dll",
+            "PLang.Tests/App/Fixtures/dlls/NoCtorProvider.dll"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Updated fixture source files using directives from App.* to app.*, rebuilt DLLs and committed them."
+        },
+        {
+          "paths": [
+            "PLang/app/Builder/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Fixed StoreOnlyModifier namespace check from 'App.Goals' to 'app.Goals' \u2014 caused SaveGoal_CamelCase_StoreOnly to fail because non-[Store] properties (Errors, Warnings) were no longer filtered out of .pr JSON."
+        }
+      ],
+      "after": {
+        "status": "All 2752 tests passing. Both the original 16 string-literal failures and a hidden production bug in StoreOnlyModifier are fixed.",
+        "health": "green",
+        "notes": "The StoreOnlyModifier bug was not in the original task description but was discovered during test runs. Fixed as part of this session."
+      }
+    },
+    {
+      "id": "c39ff45a-966e-44ea-a5a1-4b249b5d8488",
+      "bot": "coder",
+      "timestamp_start": "2026-05-15T13:00:00Z",
+      "timestamp_end": "2026-05-15T14:00:00Z",
+      "intent": "Phase 4 namespace rename: fix ~80 source files where type-position bare references use old PascalCase names after top-level app/ folders renamed to lowercase.",
+      "before": {
+        "assumptions": "Directories already renamed. ~1260 build errors in source files using old PascalCase namespace references in type positions.",
+        "risk": "sed-based replacement may hit expression-position property accesses (app.Goals.X) which must stay PascalCase. Global aliases (Snapshot, Variables, Step, Channel, Serializers) make Alias.@this invalid \u2014 must use alias alone."
+      },
+      "plan": ".bot/app-lowercase/coder/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/snapshot/ISnapshot.cs",
+            "PLang/app/modules/IContext.cs",
+            "PLang/app/modules/ICodeGenerated.cs",
+            "PLang/app/Builder/this.Snapshot.cs",
+            "PLang/app/Statics/this.Snapshot.cs",
+            "PLang/app/Code/this.Snapshot.cs",
+            "PLang/app/Settings/this.cs",
+            "PLang/app/config/this.cs",
+            "PLang/app/config/ModuleView.cs",
+            "PLang/app/Debug/this.cs",
+            "PLang/app/events/lifecycle/bindings/binding/this.cs",
+            "PLang/app/events/lifecycle/bindings/this.cs",
+            "PLang/app/events/lifecycle/this.cs",
+            "PLang/app/data/JsonString.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/data/this.Compare.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/actor/context/this.cs",
+            "PLang/app/actor/this.cs",
+            "PLang/app/callstack/this.cs",
+            "PLang/app/callstack/this.Snapshot.cs",
+            "PLang/app/callstack/call/this.cs",
+            "PLang/app/channels/this.cs",
+            "PLang/app/channels/channel/this.cs",
+            "PLang/app/channels/channel/message/this.cs",
+            "PLang/app/channels/channel/session/this.cs",
+            "PLang/app/channels/channel/stream/this.cs",
+            "PLang/app/channels/channel/goal/this.cs",
+            "PLang/app/Builder/this.cs",
+            "PLang/app/Modules/this.cs",
+            "PLang/app/goals/goal/Methods.cs",
+            "PLang/app/goals/goal/GoalCall.cs",
+            "PLang/app/goals/goal/this.cs",
+            "PLang/app/goals/goal/steps/step/this.cs",
+            "PLang/app/goals/goal/steps/step/actions/action/this.cs",
+            "PLang/app/goals/goal/steps/step/actions/action/modifiers/this.cs",
+            "PLang/app/goals/goal/steps/step/actions/this.cs",
+            "PLang/app/goals/goal/steps/this.cs",
+            "PLang/app/goals/this.cs",
+            "PLang/app/goals/setup/this.cs",
+            "PLang/app/Callback/ErrorCallback.cs",
+            "PLang/app/Settings/Sqlite.cs",
+            "PLang/app/errors/this.Snapshot.cs",
+            "PLang/app/errors/trail/this.Snapshot.cs",
+            "PLang/app/errors/ActionError.cs",
+            "PLang/app/errors/Error.cs",
+            "PLang/app/errors/GoalError.cs",
+            "PLang/app/errors/ProgramError.cs",
+            "PLang/app/errors/ServiceError.cs",
+            "PLang/app/errors/SettingsError.cs",
+            "PLang/app/errors/StepError.cs",
+            "PLang/app/errors/ValidationError.cs",
+            "PLang/app/filesystem/path.cs",
+            "PLang/app/this.cs",
+            "PLang/app/types/Conversion.cs",
+            "PLang/app/variables/navigators/Object.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs",
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/modules/test/discover.cs",
+            "PLang/app/modules/ui/code/Fluid.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Fixed all type-position references after top-level app/ folder rename to lowercase. Key rules: Alias.@this is invalid (use alias alone); expression-position property accesses stay PascalCase; app.callstack.call.Errors namespace stayed PascalCase (exception); global:: qualifier required when relative resolution fails."
+        }
+      ],
+      "after": {
+        "status": "Build clean: 0 errors, 46 warnings. PLang.csproj and PLangConsole.csproj both build successfully.",
+        "health": "green",
+        "notes": "Discovered: (1) Global alias Foo.@this is always wrong \u2014 alias IS the @this type. (2) sed replaced expression-position property accesses (app.Goals, app.FileSystem) which needed reverting. (3) app.callstack.call.Errors is PascalCase namespace (exception). (4) Variables.Navigators.ValueNavigators needed global:: path since Variables is a type alias not a namespace."
+      }
+    },
+    {
+      "id": "1b49a9f7-9830-4a50-b2be-6c271d14e17f",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-18T15:16:20Z",
+      "timestamp_end": "2026-05-18T15:26:29Z",
+      "intent": "Read-and-report pass on the app-lowercase rename sweep + 7 OBP merges before merge to runtime2.",
+      "before": {
+        "assumptions": "Coder reports 2752 C# tests + 203 PLang tests green at every commit boundary. Two breaking plang API renames (app.run->environment.run, builder.app->builder.load) flagged as placeholders. claude-md-proposals already filed.",
+        "risk": "The OBP merges (7 commits) were scoped *out* of the rename branch by the architect plan but pulled in interactively. Merges are real shape changes \u2014 possible orphan files, duplicate state, or shallow consolidations that did not actually absorb the discipline."
+      },
+      "plan": ".bot/app-lowercase/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/app-lowercase/codeanalyzer/v1/plan.md",
+            ".bot/app-lowercase/codeanalyzer/v1/report.md",
+            ".bot/app-lowercase/codeanalyzer/v1/verdict.json",
+            ".bot/app-lowercase/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read-only audit of app-lowercase branch: 5 passes per character file, full clean rebuild + both test suites. Verdict PASS with three low-severity follow-ups."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/cache/",
+            "PLang/app/modules/builder/",
+            "PLang/app/modules/callback/",
+            "PLang/app/modules/settings/",
+            "PLang/app/modules/code/",
+            "PLang/app/modules/debug/",
+            "PLang/app/modules/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "OBP shape verification on the 7 merged folders. All single-owner with private mutation discipline. Verified each resolved the prior case-pair smell-#3 without introducing new shape smells."
+        },
+        {
+          "paths": [
+            "PLang/app/data/Code/Default.cs",
+            "PLang/app/data/Code/IGrep.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/modules/code/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pass-4 miss: app/data/Code/ stayed PascalCase while every other code-provider folder is lowercase. Flagged as finding S1 for coder follow-up."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/GlobalUsings.cs",
+            "PLang/app/channels/channel/events/this.cs",
+            "PLang/app/types/Registry.cs",
+            "PLang/app/callstack/call/Position.cs",
+            "PLang/app/modules/settings/IStore.cs",
+            "PLang/app/errors/CallbackGoalErrors.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Tests/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stale App.X docstring/comment references (~8 sites). No runtime impact. Flagged as finding R1/R2 for cleanup commit."
+        }
+      ],
+      "after": {
+        "status": "PASS. 2752/2752 C# tests + 203/6-known-fail PLang tests. Three low-severity follow-ups (S1 lowercase miss on app/data/Code/, R1 ~8 stale docstrings, S2 document Default carve-out) \u2014 none blocking the merge to runtime2.",
+        "health": "green",
+        "notes": "Branch ships two workstreams together (rename + 7 OBP merges). The merges resolved real prior smell-#3 violations and introduced no new shape smells. Branch is ready for tester."
+      }
+    },
+    {
+      "id": "c8701c85-f626-4cd8-9109-99127517f670",
+      "bot": "tester",
+      "timestamp_start": "2026-05-18T15:38:48Z",
+      "timestamp_end": "2026-05-18T15:41:03Z",
+      "intent": "First tester pass on app-lowercase after merging origin/runtime2 (foundation-verify error.handle tests). Validate that the rename + the new tests compose, no regressions, and the 3 new .pr files are not builder false greens.",
+      "before": {
+        "assumptions": "Coder v1 baseline (pre-rename, on 199b4997) was 2752/2752 C# and 203 pass + 6 expected-fail fixtures plang. Merge brought in 3 new Errors/*RecoveryValue*.test.goal files. Codeanalyzer already PASSed on the rename shape.",
+        "risk": "Reflection-driven action discovery could miss renamed namespaces silently. The 3 new tests could be builder false greens \u2014 action shifted under the same step text would still pass on assertions that don't pin enough. The 2026-04-27 recovery-value fix only matters if tests pin both the side-effect AND %!error% suppression."
+      },
+      "plan": ".bot/app-lowercase/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "decision",
+          "category": "config",
+          "confidence": "high",
+          "context": "Reset staged harness-injected CLAUDE.md diff before switching branches \u2014 that diff is per-agent preamble that doesn't belong in the tracked repo file. The /CLAUDE.md proposal workflow exists for genuine canonical additions."
+        },
+        {
+          "paths": [],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "git merge origin/runtime2 --no-edit on app-lowercase. 5 commits, no conflicts. Merge commit f24356380. Brought in runtime2-foundation-verify error.handle recovery-value tests + todos.md reconciliation. Pushed to origin."
+        },
+        {
+          "paths": [
+            "PlangConsole/bin",
+            "PlangConsole/obj",
+            "PLang/bin",
+            "PLang/obj",
+            "PLang.Tests/bin",
+            "PLang.Tests/obj",
+            "PLang.Generators/bin",
+            "PLang.Generators/obj"
+          ],
+          "type": "delete",
+          "category": "config",
+          "confidence": "high",
+          "context": "Clean rebuild from zero before running plang --test. Stale-binary trap rule from CLAUDE.md: phantom 'Action not found' errors on a renamed surface like app-lowercase are the exact pattern stale binaries produce; rebuild kills that risk."
+        },
+        {
+          "paths": [
+            "PLang.Tests/**",
+            "Tests/**"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Full C# + PLang test runs. C# 2752/2752 pass, identical to coder v1 baseline at 199b4997. PLang 206 real passes + 6 pre-existing expected-fail fixtures (delta +3 from baseline = the 3 new Errors/*RecoveryValue*.test.goal merged in)."
+        },
+        {
+          "paths": [
+            "Tests/Errors/.build/goalfirstreturnsrecoveryvalue.test.pr",
+            "Tests/Errors/.build/retryfirstreturnsrecoveryvalue.test.pr",
+            "Tests/Errors/.build/multiactionrecoverylastactionpropagates.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Builder false-green check. Every step's text semantically matches actions[*].module.action. error.handle lands as a modifier on error.throw with the right Order / RetryCount / Actions parameters in each. No shift, no shadow."
+        },
+        {
+          "paths": [
+            "Tests/Errors/GoalFirstReturnsRecoveryValue.test.goal",
+            "Tests/Errors/RetryFirstReturnsRecoveryValue.test.goal",
+            "Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Assertion quality check. Each test pins both side-effect (%content%/%first%/%second%) AND %!error% is null. The second is the symmetry pin for the 2026-04-27 handle.cs fix \u2014 without it an Ok()-without-Handled regression slips by; with it, deletion test catches the bug."
+        },
+        {
+          "paths": [
+            ".bot/app-lowercase/tester/v1/plan.md",
+            ".bot/app-lowercase/tester/v1/result.md",
+            ".bot/app-lowercase/tester/v1/verdict.json",
+            ".bot/app-lowercase/tester/summary.md",
+            ".bot/app-lowercase/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester deliverables for v1. Verdict: PASS, no findings."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Merge result is healthy. C# 2752/2752, PLang 206/206 real passes, 3 new tests are honestly green (no builder false greens, strong assertions). Pre-existing deserialize warning's namespace flipped lowercase exactly as coder v1 baseline predicted \u2014 shape unchanged.",
+        "notes": "Coder v3 has no baseline-tests.md (only v1 does). For this version, v1's baseline is the correct comparison since it captures pre-vs-post the entire rename arc. Did not raise this as a finding."
+      }
+    },
+    {
+      "id": "b03ac768-4ea1-417d-a690-eaa630c7350a",
+      "bot": "security",
+      "timestamp_start": "2026-05-18T15:56:01.907854Z",
+      "timestamp_end": "2026-05-18T15:57:40.625476Z",
+      "intent": "Security audit of app-lowercase: rename + 7 OBP merges, verify no trust-boundary regression.",
+      "before": {
+        "assumptions": "Branch is mechanical rename + folder merges; tester and codeanalyzer already PASSed.",
+        "risk": "Possible drift: generator discovery strings, signing pipeline shape, .pr deserialization type names, settings folder merge moving secrets store."
+      },
+      "plan": ".bot/app-lowercase/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/app-lowercase/security/v1/plan.md",
+            ".bot/app-lowercase/security/v1/verdict.json",
+            ".bot/app-lowercase/security-report.json",
+            ".bot/app-lowercase/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security audit deliverables: plan, verdict, full report, summary."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Generator discovery namespace literals \u2014 all lowercased and pointing at new tree."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.Envelope.cs",
+            "PLang/app/modules/signing/Signature.cs",
+            "PLang/app/modules/signing/verify.cs",
+            "PLang/app/modules/signing/code/Ed25519.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Crypto + envelope hardening \u2014 zip-bomb cap, rehydration depth cap, Signature.Hash internal-set, lazy-sign fail-closed \u2014 all preserved through rename."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "clean",
+        "notes": "No security findings. 664-file rename + 7 OBP merges preserve all trust boundaries, hardening guards, and crypto-setter visibility. Branch ready for auditor."
+      }
+    },
+    {
+      "id": "db1955cc-e5eb-4b9a-9e00-66cebc0a6c44",
+      "bot": "docs",
+      "timestamp_start": "2026-05-18T16:11:06Z",
+      "timestamp_end": "2026-05-18T16:35:00Z",
+      "intent": "Final docs gate for app-lowercase: apply CLAUDE.md proposal, scrub leftover App.X drift in docstrings/per-folder CLAUDE.md, write verdict.",
+      "before": {
+        "assumptions": "Coder already swept Documentation/v0.2 + Runtime2/data-spec.md in commit a146aa9d9 and filed a CLAUDE.md proposal. Codeanalyzer flagged 8 stale App.X docstrings (R1) and asked to document the Default carve-out (S2). Tester + security + codeanalyzer all PASS.",
+        "risk": "Per-folder CLAUDE.md files (/PLang/App/CLAUDE.md, /PLang.Tests/CLAUDE.md, /Tests/CLAUDE.md) and Documentation/Runtime2/plang_object_based_pattern.md may still carry stale PascalCase namespace references."
+      },
+      "plan": ".bot/app-lowercase/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied coder v3 proposal: 3 stale-line fixes + new Runtime2 Conventions bullet documenting lowercase rule, 7 merged engine concepts, property-name PascalCase carve-out, Default keyword carve-out, action renames."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/GlobalUsings.cs",
+            "PLang/app/channels/channel/events/this.cs",
+            "PLang/app/types/Registry.cs",
+            "PLang/app/callstack/call/Position.cs",
+            "PLang/app/modules/settings/IStore.cs",
+            "PLang/app/errors/CallbackGoalErrors.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Tests/GlobalUsings.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Scrubbed R1+R2 docstring/comment drift: namespace-position App.X.Y -> app.x.y. Property-position references preserved."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Substantive rewrite: top-level tree remapped to reflect 7 OBP merges (Cache/Builder/Callback/Settings/Modules/Code/Debug now under app/modules/), all paths lowercased, added Case-Convention section, renamed module app -> environment, noted builder.app -> builder.load."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/build.md",
+            "Documentation/v0.2/build_process.md",
+            "Documentation/v0.2/builder-data-t-roadmap.md",
+            "Documentation/v0.2/todos.md",
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Path references lowercased; merged-folder paths remapped. Mid-session fix: todos.md:422 builder/providers/DefaultBuilderProvider.cs (bogus) -> builder/code/Default.cs (real)."
+        },
+        {
+          "paths": [
+            ".bot/app-lowercase/docs-report.json",
+            ".bot/app-lowercase/docs/v1/plan.md",
+            ".bot/app-lowercase/docs/v1/result.md",
+            ".bot/app-lowercase/docs/v1/verdict.json",
+            ".bot/app-lowercase/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Docs gate artefacts: plan, result detail, verdict, summary, and structured docs-report with proposal decisions and findings."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "docs complete; CLAUDE.md proposal applied; all upstream verdicts PASS; build clean",
+        "notes": "Branch ready to merge into runtime2. Non-blocking follow-ups: S1 (app/data/Code/ -> app/data/code/), S3 (deliberate naming pass for environment.run / builder.load)."
+      }
+    }
+  ]
+}

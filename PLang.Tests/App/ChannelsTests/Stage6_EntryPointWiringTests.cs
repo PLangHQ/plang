@@ -15,7 +15,7 @@ public class Stage6_EntryPointWiringTests
     {
         // App ctor offers an opt-out for entry points that own the wiring.
         // With autoWireConsoleChannels:false, the per-actor Channels are empty.
-        await using var app = new global::App.@this("/tmp/s6a", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/tmp/s6a", autoWireConsoleChannels: false);
         await Assert.That(app.User.Channels.ChannelNames.Any()).IsFalse();
         await Assert.That(app.System.Channels.ChannelNames.Any()).IsFalse();
     }
@@ -23,7 +23,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task AppThis_NoLongerExposesChannelsProperty()
     {
-        var prop = typeof(global::App.@this).GetProperty("Channels",
+        var prop = typeof(global::app.@this).GetProperty("Channels",
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
         await Assert.That(prop).IsNull();
     }
@@ -31,7 +31,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task AppThis_SerializersExists_PerActor()
     {
-        await using var app = new global::App.@this("/tmp/s6c");
+        await using var app = new global::app.@this("/tmp/s6c");
         await Assert.That(app.User.Channels.Serializers).IsNotNull();
         await Assert.That(app.System.Channels.Serializers).IsNotNull();
     }
@@ -39,7 +39,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task ChannelsVerify_FailsFast_WhenOutputMissing()
     {
-        await using var app = new global::App.@this("/tmp/s6d", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/tmp/s6d", autoWireConsoleChannels: false);
         app.User.Channels.Register(new StreamChannel("error", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
         app.User.Channels.Register(new StreamChannel("input", new MemoryStream(),
@@ -53,7 +53,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task ChannelsVerify_FailsFast_WhenErrorMissing()
     {
-        await using var app = new global::App.@this("/tmp/s6e", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/tmp/s6e", autoWireConsoleChannels: false);
         app.User.Channels.Register(new StreamChannel("output", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
         app.User.Channels.Register(new StreamChannel("input", new MemoryStream(),
@@ -67,7 +67,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task ChannelsVerify_FailsFast_WhenInputMissing()
     {
-        await using var app = new global::App.@this("/tmp/s6f", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/tmp/s6f", autoWireConsoleChannels: false);
         app.User.Channels.Register(new StreamChannel("output", new MemoryStream(),
             ChannelDirection.Output, ownsStream: true));
         app.User.Channels.Register(new StreamChannel("error", new MemoryStream(),
@@ -81,8 +81,8 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task ChannelsVerify_Succeeds_WhenAllDefaultsRegistered()
     {
-        await using var app = new global::App.@this("/tmp/s6g");
-        global::App.@this.WireDefaultConsoleChannels(app.User);
+        await using var app = new global::app.@this("/tmp/s6g");
+        global::app.@this.WireDefaultConsoleChannels(app.User);
 
         var result = app.User.Channels.Verify();
         await Assert.That(result.Success).IsTrue();
@@ -91,9 +91,9 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task FreezeFoundational_CapturesPerActorSnapshot_BeforeGoalRuns()
     {
-        await using var app = new global::App.@this("/tmp/s6h");
-        global::App.@this.WireDefaultConsoleChannels(app.System);
-        global::App.@this.WireDefaultConsoleChannels(app.User);
+        await using var app = new global::app.@this("/tmp/s6h");
+        global::app.@this.WireDefaultConsoleChannels(app.System);
+        global::app.@this.WireDefaultConsoleChannels(app.User);
 
         app.User.FreezeFoundational();
         app.System.FreezeFoundational();
@@ -110,8 +110,8 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task FreezeFoundational_DoesNotCaptureChannelsAddedAfterFreeze()
     {
-        await using var app = new global::App.@this("/tmp/s6i", autoWireConsoleChannels: false);
-        global::App.@this.WireDefaultConsoleChannels(app.User);
+        await using var app = new global::app.@this("/tmp/s6i", autoWireConsoleChannels: false);
+        global::app.@this.WireDefaultConsoleChannels(app.User);
         app.User.FreezeFoundational();
 
         // Add a custom channel after freeze.
@@ -124,7 +124,7 @@ public class Stage6_EntryPointWiringTests
     [Test]
     public async Task ChannelsResolve_UnknownName_ReturnsNull_AndErrorChannelIsReachable()
     {
-        await using var app = new global::App.@this("/tmp/s6j");
+        await using var app = new global::app.@this("/tmp/s6j");
         var errorCapture = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("error", errorCapture,
             ChannelDirection.Output, ownsStream: false)

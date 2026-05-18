@@ -10,14 +10,14 @@ There are two implementations in v1 and one verb that runs them.
 public interface ICallback
 {
     RestoredFrame? Position { get; }
-    byte[] Serialize(Actor.Context.@this ctx);
-    Task<Data.@this> Run(Actor.Context.@this ctx);
+    byte[] Serialize(actor.context.@this ctx);
+    Task<Data.@this> Run(actor.context.@this ctx);
 }
 ```
 
 - `Position` answers "where does the resumed run land?". On `AskCallback` it's set at issue time. On `ErrorCallback` it materialises on Restore by walking the captured `CallStack` subsection's bottom frame.
 - `Serialize` produces ready-to-wire bytes. The bytes pass through `crypto.encrypt` (v1 = identity pass-through; the real symmetric crypto lands at the same surface).
-- `Run` reconstructs whatever state the impl needs, binds the answer or recovery state, jumps to `Position`, and dispatches through the normal `App.Run` path.
+- `Run` reconstructs whatever state the impl needs, binds the answer or recovery state, jumps to `Position`, and dispatches through the normal `app.Run` path.
 
 `Run` does **not** verify the wire signature. Verification is `callback.run`'s job — see "The seal-then-verify gate" below.
 
@@ -36,13 +36,13 @@ The shape is intentionally narrow — no full Snapshot. The resumed run boots a 
 
 ### `ErrorCallback` — full Snapshot
 
-For the error-retry issuer. Single field: a complete `Snapshot.@this` (App tree). On Run, constructs a fresh App, calls `App.Restore(snapshot, ctx)`, and dispatches from `BottomFrame`.
+For the error-retry issuer. Single field: a complete `Snapshot.@this` (App tree). On Run, constructs a fresh App, calls `app.Restore(snapshot, ctx)`, and dispatches from `BottomFrame`.
 
-The **wire shape is narrower than the in-process Snapshot fidelity**. `ErrorCallback.Serialize` only writes the `CallStack` and `Variables` subsections; `Errors.Trail` entries, `Providers` registrations, and `Statics` bags don't round-trip. That's deliberate — it's what current tests need, and full fidelity is a separate engineering haul. The narrow shape is enforced both by what `Serialize` emits and what `App.Restore` gates on (each subsystem's Restore is keyed on `HasSection` so missing subtrees stay missing).
+The **wire shape is narrower than the in-process Snapshot fidelity**. `ErrorCallback.Serialize` only writes the `CallStack` and `Variables` subsections; `Errors.Trail` entries, `Providers` registrations, and `Statics` bags don't round-trip. That's deliberate — it's what current tests need, and full fidelity is a separate engineering haul. The narrow shape is enforced both by what `Serialize` emits and what `app.Restore` gates on (each subsystem's Restore is keyed on `HasSection` so missing subtrees stay missing).
 
 ## The seal-then-verify gate (`callback.run`)
 
-`PLang/App/modules/callback/run.cs` is the public entry. It implements a strict gate so in-process and wire callbacks are **indistinguishable** to the security boundary — absence of signature is rejection, never trust.
+`PLang/app/modules/callback/run.cs` is the public entry. It implements a strict gate so in-process and wire callbacks are **indistinguishable** to the security boundary — absence of signature is rejection, never trust.
 
 ```
 1. callback.Value is ICallback?           → else TypeError
@@ -80,7 +80,7 @@ The carve-out is deliberate. A fully lazy populate breaks existing `if (data.Sig
 
 ## The `application/plang+data` mimetype
 
-`PlangDataSerializer` (in `App/Channels/Serializers/Serializer/`) is the wire serializer for the full Data envelope: `{ Type, Value, Signature }`. Distinct from `PlangSerializer` (`application/plang`), which targets the older PLang-to-PLang transport without the signature field.
+`PlangDataSerializer` (in `app/channels/Serializers/Serializer/`) is the wire serializer for the full Data envelope: `{ Type, Value, Signature }`. Distinct from `PlangSerializer` (`application/plang`), which targets the older PLang-to-PLang transport without the signature field.
 
 - **Write** triggers `data.EnsureSigned()` so the envelope ships sealed.
 - **Read** does **not** auto-verify. The reconstructed Data has its signature populated-but-unverified; consumers (`callback.run`) call `signing.verify` explicitly.
@@ -98,10 +98,10 @@ JSON envelope today (the wire shape is the coder's call per Stage 3 — could be
 ## Position semantics
 
 `RestoredFrame` is a **surrogate**, not a `Call.@this`. It carries:
-- The resolved live `Action` (linked to its Step → Goal in the live App.Goals registry).
+- The resolved live `Action` (linked to its Step → Goal in the live app.goals registry).
 - The positional triple `(StepIndex, ActionIndex, Id)` captured at issue time.
 
-It is **not pushable** into the AsyncLocal `Current`. It has no Stopwatch, no `OnSet`, no lifecycle. Restoring into a real `Call.@this` would tear up those invariants because Call's ctor is internal and lifecycle-coupled. Callbacks read `RestoredFrame` to identify the resume point; `callback.Run` dispatches the bottom frame's Action through `App.Run`, which Pushes a fresh live Call.
+It is **not pushable** into the AsyncLocal `Current`. It has no Stopwatch, no `OnSet`, no lifecycle. Restoring into a real `Call.@this` would tear up those invariants because Call's ctor is internal and lifecycle-coupled. Callbacks read `RestoredFrame` to identify the resume point; `callback.Run` dispatches the bottom frame's Action through `app.Run`, which Pushes a fresh live Call.
 
 ## Errors → App back-reference
 
@@ -125,8 +125,8 @@ Read by the lazy signature getter when the wrapped value is an `ICallback`. The 
 ## See also
 
 - `Documentation/v0.2/snapshots.md` — the `ISnapshotted` pattern and per-subsystem wire shapes that `ErrorCallback` rides on.
-- `PLang/App/Callback/` — `@this`, `ICallback`, `AskCallback`, `ErrorCallback`, `Signature/this.cs`.
-- `PLang/App/CallStack/RestoredFrame.cs` — the position surrogate.
-- `PLang/App/modules/callback/run.cs` — the seal-then-verify gate.
-- `PLang/App/modules/output/ask.cs` — the issuer + resume sentinel.
-- `PLang/App/Channels/Serializers/Serializer/PlangDataSerializer.cs` — the wire serializer.
+- `PLang/app/modules/callback/` — `@this`, `ICallback`, `AskCallback`, `ErrorCallback`, `Signature/this.cs`.
+- `PLang/app/callstack/RestoredFrame.cs` — the position surrogate.
+- `PLang/app/modules/callback/run.cs` — the seal-then-verify gate.
+- `PLang/app/modules/output/ask.cs` — the issuer + resume sentinel.
+- `PLang/app/channels/Serializers/Serializer/PlangDataSerializer.cs` — the wire serializer.

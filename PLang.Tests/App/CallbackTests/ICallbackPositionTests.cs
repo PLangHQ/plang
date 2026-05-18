@@ -1,6 +1,6 @@
-using global::App.Callback;
-using global::App.CallStack;
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using global::app.modules.callback;
+using global::app.callstack;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -19,7 +19,7 @@ public class ICallbackPositionTests
     public async Task ICallback_Position_ReturnsCallFrame_OnAskCallback()
     {
         var (goal, action) = MakeFrame("AskPos");
-        var frame = new global::App.CallStack.Call.Position(action, goal, 0, 0, "id1");
+        var frame = new global::app.callstack.call.Position(action, goal, 0, 0, "id1");
         var ask = new AskCallback { Position = frame };
         await Assert.That(ask.Position).IsSameReferenceAs(frame);
     }

@@ -1,0 +1,35 @@
+{
+  "reviewer": "docs",
+  "branch": "app-lowercase",
+  "timestamp": "2026-05-18T16:11:06Z",
+  "reviewed_version": "v1",
+  "summary": "Final docs gate for the App→app rename + 7 OBP folder merges. Coder pre-swept Documentation/v0.2 and Runtime2/data-spec.md in commit a146aa9d9 and filed a CLAUDE.md proposal. I applied the proposal (3 stale-line fixes + new Runtime2 Conventions bullet covering lowercase rule, property-vs-type distinction, Default carve-out, two pending action renames), scrubbed the 8 R1 + 1 R2 docstring drift sites and the larger PLang/app/GlobalUsings.cs comment block, rewrote Documentation/v0.2/app-tree.md to reflect the merges, and lowercased path references across build.md / build_process.md / builder-data-t-roadmap.md / todos.md / Documentation/Runtime2/todos.md. Property-access references (ctx.App.X) were deliberately preserved per the documented convention. Build remains clean.",
+  "stats": { "gaps_found": 11, "gaps_filled": 11, "docs_updated": 9, "docs_created": 0 },
+  "changes": [
+    { "id": 1, "type": "claude-md", "action": "updated", "file": "CLAUDE.md", "description": "Applied coder v3 proposal: 3 stale-line fixes (Console.* example, PLNG001 gate, test alias clash) + new Runtime2 Conventions bullet covering lowercase rule, 7 merged engine concepts, property-name PascalCase carve-out, Default keyword carve-out, action renames." },
+    { "id": 2, "type": "xml-doc", "action": "updated", "file": "PLang/app/data/this.cs", "description": "Line 554: 'App.Variables.Variable' → 'app.variables.Variable' in raw-name carve-out comment." },
+    { "id": 3, "type": "comment", "action": "updated", "file": "PLang/app/GlobalUsings.cs", "description": "Lines 19, 20, 56, 64, 65, 68-79: lowercased every namespace-position App.X reference in the comment block; preserved 'Builder property' property-position references." },
+    { "id": 4, "type": "xml-doc", "action": "updated", "file": "PLang/app/channels/channel/events/this.cs", "description": "Line 10: 'App.Goals.Goal.Events' → 'app.goals.goal.Events'." },
+    { "id": 5, "type": "xml-doc", "action": "updated", "file": "PLang/app/types/Registry.cs", "description": "Line 39: 'App.Goals.Goal.GoalCall' → 'app.goals.goal.GoalCall'." },
+    { "id": 6, "type": "xml-doc", "action": "updated", "file": "PLang/app/callstack/call/Position.cs", "description": "Line 8: 'live App.Goals registry' → 'live app.goals registry'." },
+    { "id": 7, "type": "xml-doc", "action": "updated", "file": "PLang/app/modules/settings/IStore.cs", "description": "Line 63: 'App.modules.encryption' → 'app.modules.encryption'." },
+    { "id": 8, "type": "xml-doc", "action": "updated", "file": "PLang/app/errors/CallbackGoalErrors.cs", "description": "Line 27: 'live <c>App.Goals</c>' → 'live <c>app.goals</c>'." },
+    { "id": 9, "type": "xml-doc", "action": "updated", "file": "PLang.Generators/Discovery/this.cs", "description": "Line 41: 'App.Variables.Variable' → 'app.variables.Variable' in PLNG001 descriptor comment." },
+    { "id": 10, "type": "comment", "action": "updated", "file": "PLang.Tests/GlobalUsings.cs", "description": "Lines 58-59: 'App.modules.goal.Call' / 'App.CallStack.Call.@this' lowercased." },
+    { "id": 11, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/app-tree.md", "description": "Substantive rewrite: lowercased all source paths; remapped Cache/Builder/Callback/Settings/Modules/Code/Debug rows to app/modules/<name>/ (no longer top-level); added Case-Convention section with property-vs-type rule; renamed module 'app' → 'environment'; noted builder.app → builder.load." },
+    { "id": 12, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/build.md", "description": "PLang/App/Builder/this.cs → PLang/app/modules/builder/this.cs (merged location)." },
+    { "id": 13, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/build_process.md", "description": "Three Goals/builder paths lowercased." },
+    { "id": 14, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/builder-data-t-roadmap.md", "description": "Three Modules/Utils paths lowercased." },
+    { "id": 15, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/todos.md", "description": "All 20 PLang/App/... references lowercased; PLang/App/Build/ and PLang/App/Debug/ remapped to their post-merge homes (app/modules/builder/ and app/modules/debug/)." },
+    { "id": 16, "type": "architecture-doc", "action": "updated", "file": "Documentation/Runtime2/todos.md", "description": "Type-position App.X.Y refs lowercased (Variable, Events.Lifecycle.Bindings); file paths remapped including merged Debug/." }
+  ],
+  "findings": [
+    { "id": 1, "severity": "minor", "category": "stale-doc", "file": "PLang/app/data/Code/", "issue": "Folder name still PascalCase under lowercased app/data/.", "resolution": "flagged-for-coder", "detail": "Codeanalyzer S1 — one-folder rename + ~6 references. Pure case fix." },
+    { "id": 2, "severity": "minor", "category": "missing-doc", "file": "PLang surface", "issue": "PLang actions environment.run and builder.load are pressure-chosen names from the rename.", "resolution": "flagged-for-coder", "detail": "Codeanalyzer S3 — wants a deliberate naming pass with Ingi before next release. Documented in /CLAUDE.md so future bots reading the rule know these are temporary." },
+    { "id": 3, "severity": "minor", "category": "stale-doc", "file": "Documentation/v0.2/todos.md:422", "issue": "Mentioned PLang/app/modules/builder/providers/DefaultBuilderProvider.cs — that providers/ subdir no longer exists (builder uses code/Default.cs).", "resolution": "filled", "detail": "Remapped to PLang/app/modules/builder/code/Default.cs:18 (where _buildTimer actually lives post-merge). Noted in the entry that the field was also de-staticized to 'private readonly', so the underlying concern is resolved at that site." }
+  ],
+  "claude_md_proposals": [
+    { "from_bot": "coder", "target": "/CLAUDE.md", "decision": "applied", "reason": "Three stale lines reference paths that no longer exist post-rename; new Runtime2 Conventions bullet captures the property-vs-type distinction (most error-prone aspect of the rename), Default carve-out, and pending action renames — all canonical for future work in this subtree." }
+  ],
+  "character_proposals": []
+}

@@ -1,12 +1,12 @@
-using global::App.Actor.Context;
-using global::App.Errors;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.signing.code;
-using global::App.modules.crypto;
-using global::App.modules.identity;
-using global::App.modules.signing;
-using PLangEngine = global::App.@this;
+using global::app.actor.context;
+using global::app.errors;
+using global::app.variables;
+using global::app.modules.code;
+using global::app.modules.signing.code;
+using global::app.modules.crypto;
+using global::app.modules.identity;
+using global::app.modules.signing;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -39,7 +39,7 @@ public class VerifyActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     private async Task<Data> SignHelper(object data, List<string>? contracts = null,
         TimeSpan? expires = null, Dictionary<string, object>? headers = null)
@@ -170,7 +170,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         // Tamper the hash
-        signed.Signature!.Hash = Data.Ok(new byte[32], global::App.Data.Type.FromName("keccak256"));
+        signed.Signature!.Hash = Data.Ok(new byte[32], global::app.data.type.FromName("keccak256"));
 
         var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
         await Assert.That(result.Success).IsFalse();
@@ -482,7 +482,7 @@ public class VerifyActionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
+        public global::app.data.@this<KeyPair> GenerateKeyPair() => global::app.data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
         public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.FromError(new ActionError("Sign failed", "SigningError", 500)));

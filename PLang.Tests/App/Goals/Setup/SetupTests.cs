@@ -1,23 +1,23 @@
-using App;
-using global::App.Actor.Context;
-using global::App.Errors;
-using global::App.Goals.Goal;
-using global::App.Variables;
+using app;
+using global::app.actor.context;
+using global::app.errors;
+using global::app.goals.goal;
+using global::app.variables;
 
 namespace PLang.Tests.App.Goals.Setup;
 
 public class SetupTests
 {
     private string _tempDir = null!;
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void SetUp()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        var fs = new global::App.FileSystem.Default.PLangFileSystem(_tempDir, "");
-        _app = new global::App.@this(fs);
+        var fs = new global::app.filesystem.Default.PLangFileSystem(_tempDir, "");
+        _app = new global::app.@this(fs);
     }
 
     [After(Test)]
@@ -97,7 +97,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this(new[] { step1, step2 })
+            Steps = new global::app.goals.goal.steps.@this(new[] { step1, step2 })
         };
         step1.Goal = goal;
         step2.Goal = goal;
@@ -132,7 +132,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this(new[] { step })
+            Steps = new global::app.goals.goal.steps.@this(new[] { step })
         };
         step.Goal = goal;
         _app.Goals.Add(goal);
@@ -156,7 +156,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this()
+            Steps = new global::app.goals.goal.steps.@this()
         };
         _app.Goals.Add(goal);
 
@@ -193,7 +193,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this(new[] { step })
+            Steps = new global::app.goals.goal.steps.@this(new[] { step })
         };
         step.Goal = goal;
         _app.Goals.Add(goal);
@@ -216,7 +216,7 @@ public class SetupTests
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = "/Setup.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this(new[] { step1, step2 })
+            Steps = new global::app.goals.goal.steps.@this(new[] { step1, step2 })
         };
         step1.Goal = goal;
         step2.Goal = goal;
@@ -373,19 +373,19 @@ public class SetupTests
     /// Creates a minimal no-op Actions collection that won't fail during step execution.
     /// Steps with empty actions succeed immediately.
     /// </summary>
-    private static global::App.Goals.Goal.Steps.Step.Actions.@this CreateNoOpActions()
+    private static global::app.goals.goal.steps.step.actions.@this CreateNoOpActions()
     {
-        return new global::App.Goals.Goal.Steps.Step.Actions.@this();
+        return new global::app.goals.goal.steps.step.actions.@this();
     }
 
     /// <summary>
     /// Creates an Actions collection with an unknown module that will fail at runtime.
     /// </summary>
-    private static global::App.Goals.Goal.Steps.Step.Actions.@this CreateFailingActions()
+    private static global::app.goals.goal.steps.step.actions.@this CreateFailingActions()
     {
-        return new global::App.Goals.Goal.Steps.Step.Actions.@this
+        return new global::app.goals.goal.steps.step.actions.@this
         {
-            new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+            new global::app.goals.goal.steps.step.actions.action.@this
             {
                 Module = "nonexistent",
                 ActionName = "doesnotexist",

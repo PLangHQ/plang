@@ -1,8 +1,8 @@
 using System.Text.Json;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.builder;
-using PLangEngine = global::App.@this;
+using global::app.actor.context;
+using global::app.variables;
+using global::app.modules.builder;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 

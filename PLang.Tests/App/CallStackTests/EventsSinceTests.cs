@@ -1,12 +1,12 @@
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallStackTests;
 
 public class EventsSinceTests
 {
-    private static (global::App.@this app, ActionEntity action) BuildLive(string name)
+    private static (global::app.@this app, ActionEntity action) BuildLive(string name)
     {
-        var app = new global::App.@this("/test");
+        var app = new global::app.@this("/test");
         var goal = new Goal { Name = name, Path = $"/{name}.goal" };
         var step = new Step { Index = 0, Text = "step", Goal = goal };
         var action = new ActionEntity { Module = "test", ActionName = "test" };
