@@ -1,0 +1,175 @@
+{
+  "name": "TestRetryFirstReturnsRecoveryValueAfterRetryExhausts",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022boom\u0022, on error set %content% = \u0022from-recovery\u0022, order RetryFirst, retry 1",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "boom",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "RetryCount",
+                  "value": 1,
+                  "type": "int"
+                },
+                {
+                  "name": "Order",
+                  "value": "RetryFirst",
+                  "type": "errororder"
+                },
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%content%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": "from-recovery",
+                          "type": "string"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u00601"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Throw the initial error. The step text says to handle it with RetryFirst order, retry 1, and set %content% to the recovery value after retries are exhausted. In engine terms: error.throw first, then error.handle with RetryCount=1, Order=RetryFirst, and a recovery Actions chain that sets %content%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %content% equals \u0022from-recovery\u0022, \u0022recovery\u0027s variable.set must have executed after retry exhausted\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "from-recovery",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "recovery\u0027s variable.set must have executed after retry exhausted",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: verify %content% equals the recovery value. Use assert.equals with Expected as the literal and Actual as %content%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!error% is null, \u0022Handled flag must be set in the RetryFirst path too \u2014 symmetric with GoalFirst\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!error%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "Handled flag must be set in the RetryFirst path too \u2014 symmetric with GoalFirst",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: verify %!error% is null. Use assert.isNull on %!error%.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Errors/RetryFirstReturnsRecoveryValue.test.goal",
+  "prPath": "/Tests/Errors/.build/retryfirstreturnsrecoveryvalue.test.pr",
+  "hash": "7260ef959a0fb41cb218859eaf7a9b990aea5340755bb931e1a40386218a8970",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

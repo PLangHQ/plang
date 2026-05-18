@@ -1,0 +1,6 @@
+TestGoalFirstReturnsRecoveryValue
+/ Order=GoalFirst: when recovery's chain succeeds, handle.cs returns recoveryResult and sets Handled=true on the errored Call (lines 109-114). Pinned by the side-effect (%content% set inside recovery) AND by %!error% being null outside the scope — Handled=true and recoveryResult-return live in the same branch, so if a regression replaces them with Ok()+no-flag, %!error% would surface.
+
+- throw error "boom", on error set %content% = "from-recovery", order GoalFirst
+- assert %content% equals "from-recovery", "recovery's variable.set must have executed in GoalFirst path"
+- assert %!error% is null, "Handled flag suppresses the error — proves the recoveryResult-return branch was taken"
