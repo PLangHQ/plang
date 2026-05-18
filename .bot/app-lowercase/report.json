@@ -174,6 +174,81 @@
         "health": "green",
         "notes": "Discovered: (1) Global alias Foo.@this is always wrong \u2014 alias IS the @this type. (2) sed replaced expression-position property accesses (app.Goals, app.FileSystem) which needed reverting. (3) app.callstack.call.Errors is PascalCase namespace (exception). (4) Variables.Navigators.ValueNavigators needed global:: path since Variables is a type alias not a namespace."
       }
+    },
+    {
+      "id": "1b49a9f7-9830-4a50-b2be-6c271d14e17f",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-18T15:16:20Z",
+      "timestamp_end": "2026-05-18T15:26:29Z",
+      "intent": "Read-and-report pass on the app-lowercase rename sweep + 7 OBP merges before merge to runtime2.",
+      "before": {
+        "assumptions": "Coder reports 2752 C# tests + 203 PLang tests green at every commit boundary. Two breaking plang API renames (app.run->environment.run, builder.app->builder.load) flagged as placeholders. claude-md-proposals already filed.",
+        "risk": "The OBP merges (7 commits) were scoped *out* of the rename branch by the architect plan but pulled in interactively. Merges are real shape changes \u2014 possible orphan files, duplicate state, or shallow consolidations that did not actually absorb the discipline."
+      },
+      "plan": ".bot/app-lowercase/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/app-lowercase/codeanalyzer/v1/plan.md",
+            ".bot/app-lowercase/codeanalyzer/v1/report.md",
+            ".bot/app-lowercase/codeanalyzer/v1/verdict.json",
+            ".bot/app-lowercase/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read-only audit of app-lowercase branch: 5 passes per character file, full clean rebuild + both test suites. Verdict PASS with three low-severity follow-ups."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/cache/",
+            "PLang/app/modules/builder/",
+            "PLang/app/modules/callback/",
+            "PLang/app/modules/settings/",
+            "PLang/app/modules/code/",
+            "PLang/app/modules/debug/",
+            "PLang/app/modules/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "OBP shape verification on the 7 merged folders. All single-owner with private mutation discipline. Verified each resolved the prior case-pair smell-#3 without introducing new shape smells."
+        },
+        {
+          "paths": [
+            "PLang/app/data/Code/Default.cs",
+            "PLang/app/data/Code/IGrep.cs",
+            "PLang/app/data/this.Navigation.cs",
+            "PLang/app/modules/code/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pass-4 miss: app/data/Code/ stayed PascalCase while every other code-provider folder is lowercase. Flagged as finding S1 for coder follow-up."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/GlobalUsings.cs",
+            "PLang/app/channels/channel/events/this.cs",
+            "PLang/app/types/Registry.cs",
+            "PLang/app/callstack/call/Position.cs",
+            "PLang/app/modules/settings/IStore.cs",
+            "PLang/app/errors/CallbackGoalErrors.cs",
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Tests/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stale App.X docstring/comment references (~8 sites). No runtime impact. Flagged as finding R1/R2 for cleanup commit."
+        }
+      ],
+      "after": {
+        "status": "PASS. 2752/2752 C# tests + 203/6-known-fail PLang tests. Three low-severity follow-ups (S1 lowercase miss on app/data/Code/, R1 ~8 stale docstrings, S2 document Default carve-out) \u2014 none blocking the merge to runtime2.",
+        "health": "green",
+        "notes": "Branch ships two workstreams together (rename + 7 OBP merges). The merges resolved real prior smell-#3 violations and introduced no new shape smells. Branch is ready for tester."
+      }
     }
   ]
 }
