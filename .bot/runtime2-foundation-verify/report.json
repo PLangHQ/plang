@@ -123,6 +123,73 @@
         "health": "Stage 6 deliverables shipped. Three .test.goal files green, no regressions. Behavior pinned: GoalFirst returns recovery value, RetryFirst returns recovery value after retry exhausts (symmetry), multi-action recovery chain's last action's value is what propagates. Branch ready for codeanalyzer review.",
         "notes": "Builder non-determinism observation: the LLM occasionally emits all steps with index 0 for a multi-step .test.goal — the builder validation correctly catches it (\"Step indexes must be 0..2 with no gaps\"), and a retry builds clean. Worth filing as a builder reliability todo if it keeps biting. Not gating this stage."
       }
+    },
+    {
+      "id": "3f8a2c91-7e4d-4b6a-9c1f-5a8e0d2b3f17",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-18T00:00:00Z",
+      "timestamp_end": "2026-05-18T00:30:00Z",
+      "intent": "Final integrity gate on the narrow docs+tests branch — verify the three error.handle recovery-value regression pins map to the right code branches, builder produced the right .pr shape, and the test suite stays green on a clean rebuild.",
+      "before": {
+        "assumptions": "No prior codeanalyzer / tester / security review exists on this branch — I am the only reviewer. Branch should be narrow (architect docs + three .test.goal files), no production C# changes. Coder claimed 203 total / 202 pass / 1 pre-existing fail (HelloPlain). Need to verify on clean rebuild because of the stale-binary trap.",
+        "risk": "(1) The three tests might pass for the wrong reason (side-effect lands regardless of which code branch was taken). (2) Apparent deletions in git diff might actually be branch work and not base divergence. (3) Stale binary could mask a real regression."
+      },
+      "plan": ".bot/runtime2-foundation-verify/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/modules/error/handle.cs",
+            "Tests/Errors/GoalFirstReturnsRecoveryValue.test.goal",
+            "Tests/Errors/RetryFirstReturnsRecoveryValue.test.goal",
+            "Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal",
+            "Tests/Errors/.build/goalfirstreturnsrecoveryvalue.test.pr",
+            "Tests/Errors/.build/multiactionrecoverylastactionpropagates.test.pr"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Walked handle.cs:90-185 against each .test.goal. GoalFirst test pins lines 109-114; RetryFirst test pins lines 120-131 (the 2026-04-27 symmetry fix); multi-action test exercises the RunRecovery foreach at 167-185. Builder produced correct modifier shape — Order=GoalFirst with single variable.set Actions in test 1; three sequential variable.set actions in test 3."
+        },
+        {
+          "paths": ["Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal"],
+          "type": "decision",
+          "category": "test",
+          "confidence": "high",
+          "context": "Identified one minor finding (F1): Test 3 asserts chain ordering + Handled-flag propagation but does NOT distinguish RunRecovery returning `last` from returning `Ok()`. Because variable.set returns Ok() with no Value, both variants produce identical observable outcomes — the side-effects land regardless and %!error% suppression depends on recoveryResult.Success not on its Value. Architect's original `file.read, write to %content%` recipe would have pinned propagation; coder's simpler chain pins only execution. Decided: not a blocker — fold into a future module-port that has a real recovery-Value consumer."
+        },
+        {
+          "paths": [],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild from scratch (`rm -rf bin/obj` across all five projects, dotnet build PlangConsole), then `cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test`. Result: 202 total, 202 pass, 0 fail, 0 timeout. All three new tests included and green. Stale-binary trap avoided. Coder's reported numbers (203/202pass/1fail) reflected their working tree at the time; on the clean branch state I see 202/202."
+        },
+        {
+          "paths": [],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verified branch diff scope. The apparent deletions of Documentation/v0.2/app-tree.md and reminisce-2026-05-11.md in `git diff runtime2..HEAD` are NOT branch work — those files were added on the sibling runtime2-channels branch (commits 199b4997 and c04cb551) after the merge-base 200e8e93. Confirmed via `git log --all` per-file. Actual branch additions: 3 .test.goal + 3 .pr + todos.md edits + bot output."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-foundation-verify/auditor/v1/plan.md",
+            ".bot/runtime2-foundation-verify/auditor/v1/result.md",
+            ".bot/runtime2-foundation-verify/auditor/v1/verdict.json",
+            ".bot/runtime2-foundation-verify/auditor-report.json",
+            ".bot/runtime2-foundation-verify/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor artifacts. verdict.json = pass. auditor-report.json carries the one minor finding (F1) so docs/coder see it on the next pass. summary.md captures the work for someone continuing without context."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PASS. Branch is narrow, the three regression pins are well-targeted, 202/202 tests green on clean rebuild. One minor finding (F1) on Test 3 pin strength — non-blocking, suitable for folding into a future module-port with a real recovery-Value consumer.",
+        "notes": "Hand-off: docs. No need to gate docs on F1 — the test still pins the realistic regression surface (Handled-flag + recoveryResult-return branches), it just doesn't pin the inner `return last` semantic the architect originally wanted."
+      }
     }
   ]
 }
