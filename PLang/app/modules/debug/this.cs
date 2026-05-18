@@ -6,7 +6,7 @@ using app.actor.context;
 using app.events;
 using EventBinding = app.events.lifecycle.bindings.binding.@this;
 
-namespace app.Debug;
+namespace app.modules.debug;
 
 /// <summary>
 /// Provides debug output for PLang execution when !debug is passed on the command line.
