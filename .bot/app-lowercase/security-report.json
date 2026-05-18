@@ -1,0 +1,53 @@
+{
+  "analyst": "security",
+  "branch": "app-lowercase",
+  "timestamp": "2026-05-18T00:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "generator-discovery-strings",
+      "exposure": "PLang.Generators/Discovery/this.cs and Emission/Action/this.cs use string-literal namespace names (\"app.modules\", \"app.data\", \"app.variables\") to find action handlers and data types by reflection over the Roslyn compilation. A stale 'App.X' literal here would silently skip or misclassify renamed types.",
+      "trust_boundary": "Build-time. Stale literals can cause silent handler loss (missing-handler runtime errors) or — worst case — let a type fall outside the validated handler set without being rejected.",
+      "mitigations": [
+        "PLNG001 build-time gate fails the build if handler properties aren't Data<T> or [Provider] T.",
+        "Source-of-truth strings centralized in PLang.Generators/Discovery/this.cs and Emission/Action/this.cs."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "data-envelope-deserialization",
+      "exposure": "PLang/app/data/this.Envelope.cs handles GZip decompression and recursive JSON rehydration of nested Data — both classic untrusted-input attack vectors.",
+      "trust_boundary": "Wire/transport. Any external party producing a Data envelope (e.g. callbacks coming back from a remote actor) hits this code before signature verification can consume the result.",
+      "mitigations": [
+        "MaxDecompressedSize = 100 MiB cap on GZip output (line 21).",
+        "MaxRehydrationDepth = 128 cap on nested Data rehydration (line 246).",
+        "Try/catch around InvalidDataException, JsonException, InvalidOperationException returning a typed DecompressError instead of crashing."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "signing-pipeline",
+      "exposure": "app.modules.signing (sign.cs, verify.cs, Signature.cs, code/Ed25519.cs) is the cryptographic seam — Signature.Hash setter must remain private; Data.Signature must fail-closed on non-callback Data.",
+      "trust_boundary": "The trust boundary for all signed content. Once verify() returns success, downstream code treats the payload as fully trusted.",
+      "mitigations": [
+        "Signature.Hash: { get; internal set; } — assembly-private setter only.",
+        "Data.Signature getter only auto-populates when wrapped value is ICallback; non-callback Data fail-closed (existing 'if (data.Signature == null)' verify checks still hit null).",
+        "Ed25519 via NSec.Cryptography (libsodium binding) — no roll-your-own crypto.",
+        "Signing pipeline isolated behind ISigning interface; provider chosen by config."
+      ],
+      "gaps": []
+    },
+    {
+      "area": "settings-store-merge",
+      "exposure": "Settings/Sqlite.cs holds engine-level configuration including signing provider names, timeouts, and any persisted keys. The merge moved it from app.Settings into app.modules.settings.",
+      "trust_boundary": "On-disk persistence. Any new public surface here would expose internal store discipline to plang user code.",
+      "mitigations": [
+        "Pure namespace relocation per git diff — no visibility upgrades, no API additions.",
+        "IStore interface boundary preserved."
+      ],
+      "gaps": []
+    }
+  ],
+  "findings": [],
+  "summary": "app-lowercase is a 664-file mechanical namespace rename (App.X -> app.X across Phases 1-5) plus seven OBP folder merges that collapse case-pair folders (Cache, Builder, Callback, Settings, Code, Debug, Modules) into single namespaces. No semantic changes were made — every rename is compile-enforced. I verified: (1) no stale 'App.' string literals in production C#, (2) generator discovery strings all lowercased and pointing at the new tree, (3) signing pipeline (Signature, sign, verify, Ed25519, ISigning) is structurally identical, (4) Data envelope's 100MiB zip-bomb cap and depth-128 rehydration guard are intact, (5) Settings/Modules/Callback merges preserve visibility and shape. No security findings. The 3 doc/cosmetic items codeanalyzer raised earlier are non-security drift. PASS — proceed to auditor."
+}

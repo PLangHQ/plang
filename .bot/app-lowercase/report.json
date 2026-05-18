@@ -345,6 +345,59 @@
         "health": "Merge result is healthy. C# 2752/2752, PLang 206/206 real passes, 3 new tests are honestly green (no builder false greens, strong assertions). Pre-existing deserialize warning's namespace flipped lowercase exactly as coder v1 baseline predicted \u2014 shape unchanged.",
         "notes": "Coder v3 has no baseline-tests.md (only v1 does). For this version, v1's baseline is the correct comparison since it captures pre-vs-post the entire rename arc. Did not raise this as a finding."
       }
+    },
+    {
+      "id": "b03ac768-4ea1-417d-a690-eaa630c7350a",
+      "bot": "security",
+      "timestamp_start": "2026-05-18T15:56:01.907854Z",
+      "timestamp_end": "2026-05-18T15:57:40.625476Z",
+      "intent": "Security audit of app-lowercase: rename + 7 OBP merges, verify no trust-boundary regression.",
+      "before": {
+        "assumptions": "Branch is mechanical rename + folder merges; tester and codeanalyzer already PASSed.",
+        "risk": "Possible drift: generator discovery strings, signing pipeline shape, .pr deserialization type names, settings folder merge moving secrets store."
+      },
+      "plan": ".bot/app-lowercase/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/app-lowercase/security/v1/plan.md",
+            ".bot/app-lowercase/security/v1/verdict.json",
+            ".bot/app-lowercase/security-report.json",
+            ".bot/app-lowercase/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security audit deliverables: plan, verdict, full report, summary."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Discovery/this.cs",
+            "PLang.Generators/Emission/Action/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Generator discovery namespace literals \u2014 all lowercased and pointing at new tree."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.Envelope.cs",
+            "PLang/app/modules/signing/Signature.cs",
+            "PLang/app/modules/signing/verify.cs",
+            "PLang/app/modules/signing/code/Ed25519.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Crypto + envelope hardening \u2014 zip-bomb cap, rehydration depth cap, Signature.Hash internal-set, lazy-sign fail-closed \u2014 all preserved through rename."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "clean",
+        "notes": "No security findings. 664-file rename + 7 OBP merges preserve all trust boundaries, hardening guards, and crypto-setter visibility. Branch ready for auditor."
+      }
     }
   ]
 }
