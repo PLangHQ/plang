@@ -4,7 +4,7 @@ PLang has a built-in debugger that dumps step execution info to stderr. It shows
 
 All debug options are passed as JSON via `--debug={...}`. The JSON properties map directly to `Debug.@this` class properties.
 
-Code: `PLang/App/Debug/this.cs`
+Code: `PLang/app/modules/debug/this.cs`
 
 ## Usage
 

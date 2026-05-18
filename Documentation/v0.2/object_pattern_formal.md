@@ -94,9 +94,9 @@ App
 Any code that has `App` can reach anything. No dependency injection frameworks. No parameter lists that grow every time you need one more thing. Navigate to what you need:
 
 ```csharp
-App.Channels.WriteTextAsync(StdOut, text);
-App.FileSystem.File.ReadAllTextAsync(path);
-App.Goals.Get("Start");
+app.Channels.WriteTextAsync(StdOut, text);
+app.FileSystem.File.ReadAllTextAsync(path);
+app.Goals.Get("Start");
 ```
 
 Read it like English: "the app's channels — write text to stdout." "The app's file system's file — read all text." The code tells you exactly what it's doing and where it lives.
@@ -292,7 +292,7 @@ var result = await Events.Before.Run(context);
 
 ## Why This Matters for LLMs
 
-An LLM reading OBP code can traverse the object graph like a map. `App.Goals.Get("Start")` — it knows exactly where goals live. `step.Actions.RunAsync(app, context)` — it knows actions own their execution.
+An LLM reading OBP code can traverse the object graph like a map. `app.Goals.Get("Start")` — it knows exactly where goals live. `step.Actions.RunAsync(app, context)` — it knows actions own their execution.
 
 Traditional architecture scatters behavior across services, managers, and utilities. An LLM (or a human) must hold the entire service graph in context to understand what happens when you save a goal. More context, worse results.
 
@@ -389,7 +389,7 @@ app.Modules.GetCodeGenerated("variable", "set", context);
 |---------|-----------|---------|
 | **Record** (parameters) | lowercase action name | `set`, `save`, `@if` |
 | **Handler** (execution) | PascalCase + `Handler`, `partial` | `SetHandler`, `IfHandler` |
-| **Namespace** | `App.modules.{module}` | `modules.condition` |
+| **Namespace** | `app.modules.{module}` | `app.modules.condition` |
 | **Registry key** | `{module}.{record}` | `condition.if` |
 
 ## Context and App: What You Can Access

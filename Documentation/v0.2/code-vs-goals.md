@@ -2,7 +2,7 @@
 
 > **Everything is goals, except where you need code.**
 
-PLang is a goal-first language. The expectation is that almost every piece of behaviour you write lives in a `.goal` file: natural-language steps, composed and orchestrated through other goals. The C# escape hatch — the `App.Code` registry and the `code/` folders inside each module — exists for the cases where goals can't reach.
+PLang is a goal-first language. The expectation is that almost every piece of behaviour you write lives in a `.goal` file: natural-language steps, composed and orchestrated through other goals. The C# escape hatch — the `app.modules.code` registry and the `code/` folders inside each module — exists for the cases where goals can't reach.
 
 This page is about that boundary: when goals are the right tool, when to reach for code, and how the two surfaces meet.
 
@@ -23,9 +23,9 @@ There are four honest reasons to drop into C#:
 
 If your reason isn't one of those four, write a goal.
 
-## The `App.Code` registry
+## The `app.modules.code` registry
 
-`App.Code` (`PLang/App/Code/this.cs`) is the runtime's named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each module interface (`ISigning`, `IHttp`, `ILlm`, etc.) can have multiple named implementations registered against it. First registered for a type becomes the default.
+`app.modules.code` (`PLang/app/modules/code/this.cs`) is the runtime's named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each module interface (`ISigning`, `IHttp`, `ILlm`, etc.) can have multiple named implementations registered against it. First registered for a type becomes the default.
 
 **Resolution at the call site:**
 
@@ -39,7 +39,7 @@ Action handlers usually don't call this directly — they declare `[Code] IHttp 
 **Where the implementations live:**
 
 ```
-PLang/App/modules/<module>/code/
+PLang/app/modules/<module>/code/
     Default.cs            # the built-in implementation
     I<Name>.cs            # the interface
     <Variant>.cs          # alternative impls (e.g. Ed25519.cs, OpenAi.cs)
@@ -92,7 +92,7 @@ In return, the runtime gives you:
 
 - A registered place in the snapshot graph — you participate in `app.Snapshot()` and `Restore`.
 - Free swappability — your default can be replaced via `code.load` without anyone editing call sites.
-- Lifetime management — `IAsyncDisposable` / `IDisposable` are honoured by `App.Code.DisposeAsync()`.
+- Lifetime management — `IAsyncDisposable` / `IDisposable` are honoured by `app.modules.code.DisposeAsync()`.
 
 ## Decision flow
 
@@ -103,18 +103,18 @@ Have a thing to do.
    │      └── Yes → write a goal. Stop.
    │
    ├── Is it a wire protocol, hot-path runtime concern, or specific algorithm?
-   │      └── Yes → write/extend an ICode implementation in App/modules/<m>/code/.
+   │      └── Yes → write/extend an ICode implementation in app/modules/<m>/code/.
    │              Expose it as actions (thin delegate records under modules/<m>/).
    │
    └── Is it a user-extension a PLang developer should be able to swap in?
           └── Yes → ship it as a DLL, document the ICode interface, point at code.load.
 ```
 
-If the goal-route ever feels "too verbose" for something that should be a one-liner, that's a signal the missing piece is a *new module action*, not a C# escape. Add the action under `App/modules/<m>/`, route it through the existing `code/` implementation, and goals can use it. The escape hatch should stay an escape, not the highway.
+If the goal-route ever feels "too verbose" for something that should be a one-liner, that's a signal the missing piece is a *new module action*, not a C# escape. Add the action under `app/modules/<m>/`, route it through the existing `code/` implementation, and goals can use it. The escape hatch should stay an escape, not the highway.
 
 ## See also
 
 - [`docs/modules/code.md`](../../docs/modules/code.md) — the user-facing `code` module reference.
-- [`good_to_know.md`](good_to_know.md) — `App.Code — Pluggable Module Implementations` covers the registry mechanics in depth.
+- [`good_to_know.md`](good_to_know.md) — `app.modules.code — Pluggable Module Implementations` covers the registry mechanics in depth.
 - [`architecture.md`](architecture.md) — `Property kinds (PLNG001 build-time gate)` covers the `[Code]` attribute contract.
-- `PLang/App/Code/this.cs` — the registry itself; `PLang/App/Code/ICode.cs` — the marker interface.
+- `PLang/app/modules/code/this.cs` — the registry itself; `PLang/app/modules/code/ICode.cs` — the marker interface.
