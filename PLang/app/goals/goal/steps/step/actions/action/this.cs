@@ -27,12 +27,12 @@ public sealed partial class @this : modules.IDataWrappable
     [Store, LlmBuilder, Debug, Default]
     [JsonPropertyName("module")]
     [Newtonsoft.Json.JsonProperty("module")]
-    public string Module { get; init; } = "";
+    public string Module { get; set; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     [JsonPropertyName("action")]
     [Newtonsoft.Json.JsonProperty("action")]
-    public string ActionName { get; init; } = "";
+    public string ActionName { get; set; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     public List<global::app.data.@this> Parameters { get; init; } = new();

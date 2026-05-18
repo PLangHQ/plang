@@ -212,6 +212,38 @@ public class Default : IBuilder
         var notFound = new List<string>();
         foreach (var a in actions)
         {
+            // Cheap repair for the recurring LLM hallucination of stuffing the
+            // module/action separator into the module name:
+            //   {"module": "ui.render",     "action": "render"} → module="ui",        action="render"
+            //   {"module": "goal.call",     "action": "call"}   → module="goal",      action="call"
+            //   {"module": "condition.if",  "action": "if"}     → module="condition", action="if"
+            //   {"module": "loop.foreach",  "action": "foreach"} → module="loop",     action="foreach"
+            // Both shapes appear: head.tail with action duplicating tail, and head.tail
+            // with action being the genuine tail. Try both before reporting "not found"
+            // so the fixer doesn't have to round-trip a deterministic mistake.
+            if (!modules.Contains(a.Module, a.ActionName) && a.Module.Contains('.'))
+            {
+                var parts = a.Module.Split('.', 2);
+                var head = parts[0];
+                var tail = parts[1];
+                if (modules.Contains(head, tail))
+                {
+                    a.Warnings.Add(new Info {
+                        Key = "ModuleNameRepaired",
+                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}', action='{tail}' (was action='{a.ActionName}')."
+                    });
+                    a.Module = head;
+                    a.ActionName = tail;
+                }
+                else if (modules.Contains(head, a.ActionName))
+                {
+                    a.Warnings.Add(new Info {
+                        Key = "ModuleNameRepaired",
+                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}' (action='{a.ActionName}' kept)."
+                    });
+                    a.Module = head;
+                }
+            }
             if (!modules.Contains(a.Module, a.ActionName))
             {
                 var available = modules.GetActions(a.Module);

@@ -6,12 +6,24 @@ BuildStep
 - render template "/system/builder/templates/v2/stepActionDetails.template", write to %actionDetails%
 - render template "/system/builder/llm/BuildStep.llm", write to %buildStepPrompt%
 - set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"%stepForLlm%"}], type=json
-- llm.query Messages=%messages%, Schema={errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}, cache=%!build.cache%, on error call HandleBuildStepFailure, write to %result%
+/ Wrap llm.query + Validate together so the retry surface catches BOTH
+/ malformed-JSON (llm.query throws) and validator failures (type-name guard,
+/ unknown action, missing required param). BuildStepFixer re-prompts with
+/ the error message; runtime retries the wrapped goal up to 2 times.
+- call QueryAndValidateBuildStep, on error call BuildStepFixer, then retry 2 times
+
+QueryAndValidateBuildStep
+- llm.query Messages=%messages%, Schema={errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}, cache=%!build.cache%, write to %result%
 - add {stepIndex: %stepResult.index%, stepText: %step.Text%, level: %stepResult.level%, system: %buildStepPrompt%, user: %stepForLlm%, response: %result%} to %trace.detailPasses%
 - save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'
 - call ValidateBuildStepResult
 - set %goal.Steps[stepResult.index].Actions% = %result.actions%
 - builder.validate actions=%goal.Steps[stepResult.index].Actions%
+
+BuildStepFixer
+/ LLM produced invalid output for a step — retry with error context
+- write out "  Step validation failed: %!error.Message% — retrying..."
+- set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"Your previous response had validation errors:\n%!error.Message%\n\nThe step to build:\n%stepForLlm%\n\nFix the errors above and return the complete corrected response."}], type=json
 
 ValidateBuildStepResult
 / Check for top-level and action-level errors from the BuildStep LLM
