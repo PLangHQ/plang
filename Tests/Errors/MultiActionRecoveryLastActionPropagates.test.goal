@@ -1,0 +1,8 @@
+TestLastActionInRecoveryChainPropagates
+/ Recovery chain runs in order, intermediate actions execute, and RunRecovery returns the chain's final Data (handle.cs:177-184 — `last = await action.RunAsync(...); ...; return last`). Three sequential variable.sets prove: (a) all three executed (side-effects observable), (b) the terminal value is the chain's last set, (c) %!error% is suppressed — the chain reached the success-return path.
+
+- throw error "boom", on error set %first% = "early", set %second% = "middle", set %content% = "final"
+- assert %first% equals "early", "first action in the recovery chain must have executed"
+- assert %second% equals "middle", "middle action in the recovery chain must have executed"
+- assert %content% equals "final", "the chain's terminal action's value is what propagates"
+- assert %!error% is null, "chain success suppresses the error"

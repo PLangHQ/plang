@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Three error.handle recovery-value regression-pin tests landed correctly; 202/202 plang tests pass on clean rebuild; one minor finding (Test 3's pin is weaker than the architect's brief — chain ordering is asserted but Value propagation is not). No production C# changed; no cross-file contracts at risk."
+}

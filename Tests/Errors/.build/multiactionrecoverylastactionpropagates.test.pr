@@ -1,0 +1,279 @@
+{
+  "name": "TestLastActionInRecoveryChainPropagates",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "throw error \u0022boom\u0022, on error set %first% = \u0022early\u0022, set %second% = \u0022middle\u0022, set %content% = \u0022final\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "boom",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%first%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": "early",
+                          "type": "string"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    },
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%second%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": "middle",
+                          "type": "string"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    },
+                    {
+                      "module": "variable",
+                      "action": "set",
+                      "parameters": [
+                        {
+                          "name": "Name",
+                          "value": "%content%",
+                          "type": "string"
+                        },
+                        {
+                          "name": "Value",
+                          "value": "final",
+                          "type": "string"
+                        }
+                      ],
+                      "defaults": null,
+                      "modifiers": []
+                    }
+                  ],
+                  "type": "list\u00601"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "ignoreerror",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Throw an error to trigger the step\u0027s on-error recovery chain. Then run the recovery actions in order: set %first%=\u0027early\u0027, set %second%=\u0027middle\u0027, set %content%=\u0027final\u0027. This step should complete successfully after recovery, so the thrown error must be suppressed.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %first% equals \u0022early\u0022, \u0022first action in the recovery chain must have executed\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "early",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%first%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "first action in the recovery chain must have executed",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %first% was set by the first recovery action.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %second% equals \u0022middle\u0022, \u0022middle action in the recovery chain must have executed\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "middle",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%second%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "middle action in the recovery chain must have executed",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %second% was set by the middle recovery action.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %content% equals \u0022final\u0022, \u0022the chain\u0027s terminal action\u0027s value is what propagates\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "final",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
+              "type": "string"
+            },
+            {
+              "name": "Message",
+              "value": "the chain\u0027s terminal action\u0027s value is what propagates",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %content% equals the terminal recovery action\u0027s value.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %!error% is null, \u0022chain success suppresses the error\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "isNull",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%!error%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "chain success suppresses the error",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that the special error variable is null, meaning the recovery chain suppressed the error.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal",
+  "prPath": "/Tests/Errors/.build/multiactionrecoverylastactionpropagates.test.pr",
+  "hash": "b0f9a3ce1fa29e7049611ed474775a9fd26d1b4e358429f49f95cb1134d994df",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}
