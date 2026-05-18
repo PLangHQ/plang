@@ -1,4 +1,4 @@
-using global::app.Callback;
+using global::app.modules.callback;
 using global::app.errors;
 
 namespace PLang.Tests.App.Errors;

@@ -190,7 +190,7 @@ public sealed partial class @this : IAsyncDisposable
     /// (e.g. `app.Callback.Signature.Expires`). Stage 4 expands the surface; Stage 3
     /// ships only the signature config.
     /// </summary>
-    public global::app.Callback.@this Callback { get; } = new();
+    public global::app.modules.callback.@this Callback { get; } = new();
 
     /// <summary>
     /// Allow creating a new app if none exists. Set via --app={"create":true}. Default false.

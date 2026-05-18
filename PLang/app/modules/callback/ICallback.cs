@@ -1,4 +1,4 @@
-namespace app.Callback;
+namespace app.modules.callback;
 
 /// <summary>
 /// Callback record contract. Two implementers in v1: <see cref="AskCallback"/> (capture

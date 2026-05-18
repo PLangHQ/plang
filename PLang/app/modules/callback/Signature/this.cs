@@ -1,4 +1,4 @@
-namespace app.Callback.Signature;
+namespace app.modules.callback.Signature;
 
 /// <summary>
 /// Signature config for the callback subsystem. Read by <see cref="data.@this"/>'s lazy

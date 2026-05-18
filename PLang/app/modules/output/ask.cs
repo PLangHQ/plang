@@ -6,10 +6,10 @@ namespace app.modules.output;
 /// <summary>
 /// Asks the actor a question. Two modes:
 ///  - **Fresh:** captures the current Position + the variables named by <c>vars:</c>
-///    + the actor name into an <see cref="app.Callback.AskCallback"/>, returns it as
+///    + the actor name into an <see cref="app.modules.callback.AskCallback"/>, returns it as
 ///    Data&lt;AskCallback&gt;. The caller (HTTP channel etc.) serialises and suspends
 ///    the goal until the user answers.
-///  - **Resumed:** when <see cref="app.Callback.AskCallback.Run"/> re-dispatches this
+///  - **Resumed:** when <see cref="app.modules.callback.AskCallback.Run"/> re-dispatches this
 ///    action, it pre-binds the answer under <c>%!ask.answer%</c>. The handler detects
 ///    the marker, returns the answer, and lets the calling step write it to its
 ///    <c>write to %x%</c> target. No fresh ask is issued.
@@ -69,13 +69,13 @@ public partial class ask : IContext
             }
         }
 
-        var cb = new global::app.Callback.AskCallback
+        var cb = new global::app.modules.callback.AskCallback
         {
             Position = bottom,
             ActorName = Context.Actor?.Name ?? "User",
             Variables = captured
         };
-        var data = new data.@this<global::app.Callback.AskCallback>("", cb);
+        var data = new data.@this<global::app.modules.callback.AskCallback>("", cb);
         data.Context = Context;
         return Task.FromResult<data.@this>(data);
     }

@@ -1,4 +1,4 @@
-namespace app.Callback;
+namespace app.modules.callback;
 
 /// <summary>
 /// App-scoped configuration holder for the callback subsystem. Reachable as <c>app.Callback</c>.

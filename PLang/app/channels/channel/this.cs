@@ -198,7 +198,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         }
     }
 
-    private async Task<global::app.data.@this?> FireBefore(global::app.events.EventType type, global::app.data.@this data, Callback.AskCallback? ask)
+    private async Task<global::app.data.@this?> FireBefore(global::app.events.EventType type, global::app.data.@this data, modules.callback.AskCallback? ask)
     {
         foreach (var binding in MatchingBindings(type))
         {
@@ -219,7 +219,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
         return null;
     }
 
-    private async Task FireAfter(global::app.events.EventType type, global::app.data.@this data, Callback.AskCallback? ask)
+    private async Task FireAfter(global::app.events.EventType type, global::app.data.@this data, modules.callback.AskCallback? ask)
     {
         foreach (var binding in MatchingBindings(type))
         {
@@ -233,7 +233,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     private Task<global::app.data.@this> InvokeChannelHandler(
         global::app.events.lifecycle.bindings.binding.@this binding,
         global::app.data.@this data,
-        Callback.AskCallback? ask)
+        modules.callback.AskCallback? ask)
     {
         // Bindings receive (context, action=null, result=data). The context comes
         // from the channel's owning Actor when the channel went through

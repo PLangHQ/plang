@@ -1,6 +1,6 @@
 using app.callstack;
 
-namespace app.Callback;
+namespace app.modules.callback;
 
 /// <summary>
 /// Callback for the error-retry issuer. Single field — the captured App tree. Position

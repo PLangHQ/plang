@@ -19,7 +19,7 @@ public partial class run : IContext
 
     public async Task<data.@this> Run()
     {
-        if (Callback.Value is not global::app.Callback.ICallback cb)
+        if (Callback.Value is not global::app.modules.callback.ICallback cb)
             return global::app.data.@this.FromError(new ServiceError(
                 "- run %x% requires an ICallback value", "TypeError", 400));
 

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using app.callstack;
 
-namespace app.Callback;
+namespace app.modules.callback;
 
 /// <summary>
 /// Slim callback for the ask-user issuer. Carries only what the resumed dispatch needs:

@@ -1,6 +1,6 @@
 using global::app.channels.serializers;
 using global::app.channels.serializers.serializer;
-using global::app.Callback;
+using global::app.modules.callback;
 
 namespace PLang.Tests.App.Serializers;
 

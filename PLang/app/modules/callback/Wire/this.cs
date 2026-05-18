@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 
-namespace app.Callback.Wire;
+namespace app.modules.callback.Wire;
 
 /// <summary>
 /// Wire-format configuration for the callback subsystem. Holds the JsonSerializerOptions
