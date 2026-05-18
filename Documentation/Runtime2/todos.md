@@ -556,3 +556,67 @@ Context: All 7 snapshot subsystems have C# TUnit round-trip tests. No `Tests/Sna
 
 **No standalone branch needed.** Folds naturally into the ask-user transport architect pass.
 
+---
+
+## 2026-05-15 — Migrate `Dictionary<string, object?>` → `List<Data>` across codebase
+
+The OBP smell: `Dictionary<string, object?>` is an untyped key-value bag
+used in several places to attach structured context — `Error.Details`,
+LLM tool-call params, action defaults, builder catalog parameters, etc.
+`Data` (App.Data.@this) is the canonical typed value container we already
+use everywhere else (Name + Value + Type + Properties), and it carries
+type information that the dict shape erases.
+
+Replacing `Dictionary<string, object?>` with `List<Data>` makes:
+- Every value carry its declared type (no more `value is JsonElement ? ...`
+  guards downstream)
+- Lookup uniform with how Variables, Parameters, Defaults already work
+  (`.FirstOrDefault(d => d.Name == ...)`)
+- PLang-side `%!error.Details.KEY%` resolution use the same navigator
+  the rest of the runtime uses
+
+### First site: `Error.Details`
+
+`PLang/App/Errors/Error.cs:28` — currently `Dictionary<string, object?>?`.
+Two construction sites (`OpenAiProvider.cs:255, 346` — JsonParseError and
+LLM error response). Migration:
+
+```csharp
+// Before
+Details = new Dictionary<string, object?> {
+    ["RawResponse"] = rawResponse,
+    ["Model"] = model,
+}
+
+// After
+Details = new List<Data> {
+    new Data("RawResponse", rawResponse, "string"),
+    new Data("Model", model, "string"),
+}
+```
+
+Display in Error.cs needs updating: iterate `Details` as `List<Data>`,
+show Name + Value + Type. PLang resolver path `%!error.Details.KEY%`
+needs to navigate a `List<Data>` by `.Name` instead of dict key lookup.
+
+### Sweep targets
+
+Use `grep -rn "Dictionary<string, object" /workspace/plang/PLang/ |
+grep -v "Tests\|\.md"` and triage each:
+- True name-keyed structured context → migrate to `List<Data>`
+- Genuine arbitrary-key map (rare — settings, registries) → keep dict
+- JSON-roundtrip-only payload (boundary with external system) → keep dict
+
+Likely candidates beyond Error.Details (need verification):
+- `LlmMessage.ToolCalls[].Arguments` — currently dict, semantically a
+  parameter list
+- Action `Defaults` / `Parameters` — already `List<Data>` in some places,
+  dict in others; harmonize
+- Cache entries / settings rows — likely keep dict
+
+### Why this is a sweep, not a one-shot
+
+Each call site has a reader pattern (`.Details["X"]`) that mechanically
+changes; combined with PLang-side navigator code and tests, it's wide
+but shallow. Best done as one focused branch when the channel/builder
+work has settled — otherwise it'll fight with active diffs.
