@@ -146,14 +146,14 @@
     },
     {
       "index": 4,
-      "text": "builder.app, write to %app%",
+      "text": "builder.load, write to %app%",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "builder",
-          "action": "app",
+          "action": "load",
           "parameters": [],
           "defaults": null,
           "modifiers": []

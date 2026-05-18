@@ -46,13 +46,13 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/system/Build.goal",
-  "prPath": "/system/.build/build.pr",
+  "path": "/Build.goal",
+  "prPath": "/.build/build.pr",
   "hash": "c73e799da0870eabbaaaabffa1683b9e654da2b41f5984db5efda0d76f46d30c",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
-  "isSystem": true,
+  "isSystem": false,
   "isTest": false,
   "inputParameters": null
 }
