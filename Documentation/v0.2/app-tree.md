@@ -158,7 +158,7 @@ Data
 ├── Envelope wrapping  (this.Envelope.cs)
 ├── Navigation         (this.Navigation.cs — drives %var.path%)
 ├── Result helpers     (this.Result.cs)
-└── Code-specific      (app/data/Code/)
+└── Code-specific      (app/data/code/)
 ```
 
 `Data<T>` is the typed variant; the `T = Variable` case is the marker used for
