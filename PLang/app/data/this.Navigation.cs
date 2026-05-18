@@ -168,15 +168,15 @@ public partial class @this
         return provider.GrepCount(this, ParseStringArg(args) ?? "");
     }
 
-    private app.data.Code.IGrep ResolveGrepProvider()
+    private app.data.code.IGrep ResolveGrepProvider()
     {
         var app = _context?.App;
         if (app != null)
         {
-            var result = app.Code.Get<app.data.Code.IGrep>();
-            if (result?.Value is app.data.Code.IGrep provider) return provider;
+            var result = app.Code.Get<app.data.code.IGrep>();
+            if (result?.Value is app.data.code.IGrep provider) return provider;
         }
-        return new app.data.Code.Default();
+        return new app.data.code.Default();
     }
 
     private static (string? pattern, int contextLines) ParseGrepArgs(string args)

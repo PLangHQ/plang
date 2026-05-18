@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace app.data.Code;
+namespace app.data.code;
 
 /// <summary>
 /// Default grep provider for text/string data.

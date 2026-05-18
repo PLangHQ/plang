@@ -113,7 +113,7 @@ public class FailureMatrixTests
         var snap = new Snapshot();
         snap.Section("Providers").Write("registrations", new List<global::app.modules.code.@this.Registration>
         {
-            new(typeof(global::app.data.Code.IGrep).AssemblyQualifiedName!,
+            new(typeof(global::app.data.code.IGrep).AssemblyQualifiedName!,
                 "ghost", "/nonexistent/missing.dll")
         });
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.modules.code.@this.DefaultOverride>());
@@ -133,7 +133,7 @@ public class FailureMatrixTests
         snap.Section("Providers").Write("registrations", new List<global::app.modules.code.@this.Registration>());
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.modules.code.@this.DefaultOverride>
         {
-            new(typeof(global::app.data.Code.IGrep).AssemblyQualifiedName!, "phantom-name")
+            new(typeof(global::app.data.code.IGrep).AssemblyQualifiedName!, "phantom-name")
         });
 
         var dst = NewApp();

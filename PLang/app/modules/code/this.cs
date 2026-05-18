@@ -251,7 +251,7 @@ public sealed partial class @this : IAsyncDisposable
         RegisterBuiltIn<ITemplate>(new modules.ui.code.Fluid());
         RegisterBuiltIn<modules.llm.code.ILlm>(new modules.llm.code.OpenAi());
         RegisterBuiltIn<modules.builder.code.IBuilder>(new modules.builder.code.Default());
-        RegisterBuiltIn<global::app.data.Code.IGrep>(new global::app.data.Code.Default());
+        RegisterBuiltIn<global::app.data.code.IGrep>(new global::app.data.code.Default());
     }
 
     private void RegisterBuiltIn<T>(T provider) where T : class, ICode

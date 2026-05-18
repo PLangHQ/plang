@@ -1,6 +1,6 @@
 using app.modules.code;
 
-namespace app.data.Code;
+namespace app.data.code;
 
 /// <summary>
 /// Provider interface for grep operations on Data.
