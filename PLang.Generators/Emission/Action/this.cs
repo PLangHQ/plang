@@ -249,15 +249,42 @@ public static class @this
         }
 
         sb.Append("""
-                    if (__resolutionError != null) return __resolutionError;
+                    if (__resolutionError != null) return __PrefixActionContext(__resolutionError);
 
-                    var __runResult = await Run();
+                    global::app.data.@this __runResult;
+                    try { __runResult = await Run(); }
+                    catch (System.Exception ex) when (ex is not (System.OperationCanceledException or System.OutOfMemoryException or System.StackOverflowException))
+                    {
+                        // Bare exceptions from Run() (NRE, InvalidCast, etc.) reach the user
+                        // as "Object reference not set" with no module.action context. Wrap
+                        // here so the message tells the reader which action's Run() threw.
+                        // Original exception preserved on the ServiceError.Exception so the
+                        // C# stack stays available for diagnostic display.
+                        var mod = __action?.Module ?? "?";
+                        var act = __action?.ActionName ?? "?";
+                        return global::app.data.@this.FromError(new global::app.errors.ServiceError(
+                            $"{mod}.{act}: {ex.GetType().Name}: {ex.Message}",
+                            __step!, __callFrames, ex.GetType().Name, 500)
+                        { Exception = ex });
+                    }
                     // Data<T> getters fire DURING Run() — they capture cycle/depth-trip into
                     // __resolutionError as the property is touched. Surface it now so a Run()
                     // that read .Value of a FromError-Data and produced a default-shaped result
                     // doesn't bury the resolution failure.
-                    if (__resolutionError != null) return __resolutionError;
+                    if (__resolutionError != null) return __PrefixActionContext(__resolutionError);
                     return __runResult;
+                }
+
+                // Wraps the resolution error with the action's module.action context so the
+                // reader can locate the failing call site without reading the call stack. The
+                // raw error from Data<T>.As<T> only carries source/target type names — useless
+                // without knowing which action and parameter the conversion was for.
+                private global::app.data.@this __PrefixActionContext(global::app.data.@this err)
+                {
+                    if (__action == null || err.Error == null) return err;
+                    var orig = err.Error;
+                    var msg = $"{__action.Module}.{__action.ActionName}: {orig.Message}";
+                    return global::app.data.@this.FromError(new global::app.errors.ActionError(msg, orig.Key ?? "ActionError", orig.StatusCode));
                 }
 
             """);
