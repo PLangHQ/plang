@@ -1,4 +1,4 @@
-namespace app.Modules.Schema.Spec;
+namespace app.modules.Schema.Spec;
 
 /// <summary>
 /// Structured Example for the LLM builder catalog. Authored by an action class

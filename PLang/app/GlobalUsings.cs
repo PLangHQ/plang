@@ -20,7 +20,7 @@ global using Bindings = app.events.lifecycle.bindings.@this;
 // EventBinding: v1 PLang.Events conflict — use: using EventBinding = App.Events.Lifecycle.Bindings.Binding.@this;
 
 // Modules subsystem (action registry)
-global using AppModules = app.Modules.@this;
+global using AppModules = app.modules.@this;
 
 // Channels subsystem
 global using AppChannels = app.channels.@this;

@@ -77,7 +77,7 @@ public sealed class @this : IList<Step>, IContext
     /// in this collection. Delegates per-step grouping to Actions.GroupModifiers —
     /// Steps owns the iteration (OBP rule 5).
     /// </summary>
-    public void GroupAllModifiers(Modules.@this modules)
+    public void GroupAllModifiers(global::app.modules.@this modules)
     {
         foreach (var step in _items)
             step.Actions.GroupModifiers(modules);

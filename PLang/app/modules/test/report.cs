@@ -133,7 +133,7 @@ public partial class report : IContext
         }
     }
 
-    private static void RenderCoverageTables(StringBuilder sb, app.tester.@this testing, Modules.@this modules)
+    private static void RenderCoverageTables(StringBuilder sb, app.tester.@this testing, global::app.modules.@this modules)
     {
         sb.AppendLine();
         sb.AppendLine("Module.action coverage:");

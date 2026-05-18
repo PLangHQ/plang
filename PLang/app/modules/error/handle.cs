@@ -2,8 +2,8 @@ using app.errors;
 using app.variables;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 using Call = app.callstack.call.@this;
-using ExampleSpec = app.Modules.Schema.Spec.Example;
-using ActionSpec = app.Modules.Schema.Spec.Action;
+using ExampleSpec = app.modules.Schema.Spec.Example;
+using ActionSpec = app.modules.Schema.Spec.Action;
 
 namespace app.modules.error;
 

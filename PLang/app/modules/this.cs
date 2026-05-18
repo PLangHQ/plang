@@ -4,7 +4,7 @@ using app.modules;
 using app.actor.context;
 using app.errors;
 
-namespace app.Modules;
+namespace app.modules;
 
 /// <summary>
 /// Flat action registry. Owns discovery, registration, and resolution of all actions.
@@ -22,7 +22,7 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// "What every action looks like, for the LLM." Describes the registered
     /// actions' types, parameter schemas, and authored Examples. Built on
-    /// demand via <c>app.Modules.Schema.Build()</c>; <see cref="Schema.@this.Render"/>
+    /// demand via <c>app.modules.Schema.Build()</c>; <see cref="Schema.@this.Render"/>
     /// works on the host instance directly without a Build call.
     /// </summary>
     public Schema.@this Schema { get; }
@@ -298,10 +298,10 @@ public sealed class @this : IAsyncDisposable
                     BindingFlags.Public | BindingFlags.Static, binder: null,
                     types: System.Type.EmptyTypes, modifiers: null);
                 if (examplesForLlm != null
-                    && typeof(app.Modules.Schema.Spec.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
+                    && typeof(app.modules.Schema.Spec.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
                 {
-                    var specs = (app.Modules.Schema.Spec.Example[]?)examplesForLlm.Invoke(null, null)
-                        ?? System.Array.Empty<app.Modules.Schema.Spec.Example>();
+                    var specs = (app.modules.Schema.Spec.Example[]?)examplesForLlm.Invoke(null, null)
+                        ?? System.Array.Empty<app.modules.Schema.Spec.Example>();
                     examples = specs
                         .Select(s => new data.@this(s.UserIntent, Schema.Render(s)))
                         .ToList();

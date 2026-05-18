@@ -580,7 +580,7 @@ public class Default : IBuilder
     /// without this, an LLM-emitted value that can't convert to the declared type
     /// would silently keep the wrong-typed value and the runtime would fail later.
     /// </summary>
-    private static List<string> NormalizeParameterTypes(Actions actions, app.Modules.@this modules,
+    private static List<string> NormalizeParameterTypes(Actions actions, global::app.modules.@this modules,
         actor.context.@this context)
     {
         var errors = new List<string>();
@@ -667,7 +667,7 @@ public class Default : IBuilder
     }
 
     /// <summary>
-    /// Recognizes catalog description strings produced by <see cref="app.Modules.@this.Describe"/>:
+    /// Recognizes catalog description strings produced by <see cref="app.modules.@this.Describe"/>:
     /// the four forms <c>"X"</c>, <c>"X?"</c>, <c>"X = default"</c>, <c>"%var% X"</c> (and
     /// combinations). When the catalog itself is fed back through validate, every parameter's
     /// Value is one of these — coercing them through TypeMapping fails because they're

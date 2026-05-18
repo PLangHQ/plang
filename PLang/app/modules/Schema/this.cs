@@ -3,14 +3,14 @@ using System.Text.Json.Serialization;
 using app.Attributes;
 using app.Utils;
 
-namespace app.Modules.Schema;
+namespace app.modules.Schema;
 
 /// <summary>
 /// "What every action looks like, for the LLM." Owned by Modules; describes
 /// the registered actions' types, parameter schemas, and authored Examples.
 ///
 /// Two roles in one type:
-///   - Host (the instance held at <c>app.Modules.Schema</c>) — has <c>_modules</c>
+///   - Host (the instance held at <c>app.modules.Schema</c>) — has <c>_modules</c>
 ///     and exposes <see cref="Build"/> + <see cref="Render"/>. Its
 ///     <see cref="PrimitiveNames"/> / <see cref="Types"/> are empty arrays.
 ///   - Built result (returned by <see cref="Build"/>) — same instance shape,
@@ -18,15 +18,15 @@ namespace app.Modules.Schema;
 ///     viewer) use the built result.
 ///
 /// OBP: schema is a real object owned by Modules. Reach it via
-/// <c>app.Modules.Schema</c>; build a snapshot via
-/// <c>app.Modules.Schema.Build()</c>.
+/// <c>app.modules.Schema</c>; build a snapshot via
+/// <c>app.modules.Schema.Build()</c>.
 /// </summary>
 [PlangType("catalog")]
 public sealed partial class @this
 {
-    private readonly app.Modules.@this _modules;
+    private readonly app.modules.@this _modules;
 
-    public @this(app.Modules.@this modules) { _modules = modules; }
+    public @this(app.modules.@this modules) { _modules = modules; }
 
     /// <summary>Ordered list of primitive type names exposed to the builder.</summary>
     [LlmBuilder]

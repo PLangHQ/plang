@@ -1,6 +1,6 @@
 using global::app.modules.math;
 using PLangEngine = global::app.@this;
-using ExampleSpec = global::app.Modules.Schema.Spec.Example;
+using ExampleSpec = global::app.modules.Schema.Spec.Example;
 
 namespace PLang.Tests.App.actions.math;
 

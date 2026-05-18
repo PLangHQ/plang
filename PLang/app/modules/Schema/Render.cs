@@ -5,10 +5,10 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using app.Utils;
-using ActionSpec = app.Modules.Schema.Spec.Action;
-using ExampleSpec = app.Modules.Schema.Spec.Example;
+using ActionSpec = app.modules.Schema.Spec.Action;
+using ExampleSpec = app.modules.Schema.Spec.Example;
 
-namespace app.Modules.Schema;
+namespace app.modules.Schema;
 
 /// <summary>
 /// Renders an <see cref="Example"/> into the formal-language string the

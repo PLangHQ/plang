@@ -104,7 +104,7 @@ public sealed partial class @this
     /// Static-friendly variant of <see cref="GetTypeName"/> — handles primitives, generics,
     /// nullable, arrays, Data&lt;T&gt; unwrap, and reads [PlangType] / @this convention names
     /// directly off the type via reflection (no per-App registry). For callers that don't
-    /// have an App in scope (e.g. <see cref="app.Modules.@this"/> instances constructed
+    /// have an App in scope (e.g. <see cref="app.modules.@this"/> instances constructed
     /// without an App backing in test fixtures).
     /// </summary>
     public static string GetTypeNameStatic(System.Type type)
@@ -442,9 +442,9 @@ public sealed partial class @this
     ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
-    public List<app.Modules.Schema.Entry> BuildTypeEntries(app.Modules.@this? modules)
+    public List<app.modules.Schema.Entry> BuildTypeEntries(app.modules.@this? modules)
     {
-        var entries = new List<app.Modules.Schema.Entry>();
+        var entries = new List<app.modules.Schema.Entry>();
         var seen = new HashSet<System.Type>();
         var queue = new Queue<System.Type>();
 
@@ -492,10 +492,10 @@ public sealed partial class @this
             var values = GetValidValues(type);
             if (values != null)
             {
-                entries.Add(new app.Modules.Schema.Entry
+                entries.Add(new app.modules.Schema.Entry
                 {
                     Name = typeName,
-                    Kind = app.Modules.Schema.EntryKind.Enum,
+                    Kind = app.modules.Schema.EntryKind.Enum,
                     Values = values,
                     Description = plangAttr?.Description,
                     Example = plangAttr?.Example,
@@ -519,14 +519,14 @@ public sealed partial class @this
                 }
             }
 
-            var llmProps = new List<app.Modules.Schema.Field>();
+            var llmProps = new List<app.modules.Schema.Field>();
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!prop.CanRead || prop.Name == "EqualityContract") continue;
                 if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
                 if (Attribute.IsDefined(prop, typeof(JsonIgnoreAttribute))) continue;
 
-                llmProps.Add(new app.Modules.Schema.Field
+                llmProps.Add(new app.modules.Schema.Field
                 {
                     Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
                     TypeName = GetTypeName(prop.PropertyType),
@@ -541,10 +541,10 @@ public sealed partial class @this
 
             if (isScalar)
             {
-                entries.Add(new app.Modules.Schema.Entry
+                entries.Add(new app.modules.Schema.Entry
                 {
                     Name = typeName,
-                    Kind = app.Modules.Schema.EntryKind.Scalar,
+                    Kind = app.modules.Schema.EntryKind.Scalar,
                     Shape = derivedShape ?? plangAttr?.Shape ?? "string",
                     ConstructorSignature = constructorSignature,
                     Properties = llmProps.Count > 0 ? llmProps : null,
@@ -557,10 +557,10 @@ public sealed partial class @this
 
             if (llmProps.Count > 0)
             {
-                entries.Add(new app.Modules.Schema.Entry
+                entries.Add(new app.modules.Schema.Entry
                 {
                     Name = typeName,
-                    Kind = app.Modules.Schema.EntryKind.Record,
+                    Kind = app.modules.Schema.EntryKind.Record,
                     Fields = llmProps,
                     Description = plangAttr?.Description,
                     Example = plangAttr?.Example,
@@ -573,7 +573,7 @@ public sealed partial class @this
     }
 
     /// <summary>Returns the catalog's record/enum entries, keyed by name.</summary>
-    public Dictionary<string, app.Modules.Schema.Entry> ComplexSchemas() =>
+    public Dictionary<string, app.modules.Schema.Entry> ComplexSchemas() =>
         BuildTypeEntries(null).ToDictionary(e => e.Name, e => e);
 
     /// <summary>

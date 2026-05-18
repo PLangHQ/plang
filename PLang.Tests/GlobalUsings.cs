@@ -24,7 +24,7 @@ global using Lifecycle = app.events.lifecycle.@this;
 global using Bindings = app.events.lifecycle.bindings.@this;
 
 // Modules subsystem (action registry)
-global using EngineModules = app.Modules.@this;
+global using EngineModules = app.modules.@this;
 
 // Channels subsystem
 global using EngineChannels = app.channels.@this;
