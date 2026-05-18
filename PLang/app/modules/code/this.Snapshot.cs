@@ -1,7 +1,7 @@
 using System.Reflection;
 using app.errors;
 
-namespace app.Code;
+namespace app.modules.code;
 
 public sealed partial class @this : ISnapshot
 {

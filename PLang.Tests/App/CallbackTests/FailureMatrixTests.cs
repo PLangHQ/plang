@@ -1,7 +1,7 @@
 using global::app.modules.callback;
 using global::app.callstack;
 using global::app.errors;
-using global::app.Code;
+using global::app.modules.code;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
@@ -111,12 +111,12 @@ public class FailureMatrixTests
     public async Task FailureMatrix_ProviderDllMissing_RaisesReferentIntegrityError()
     {
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>
+        snap.Section("Providers").Write("registrations", new List<global::app.modules.code.@this.Registration>
         {
             new(typeof(global::app.data.Code.IGrep).AssemblyQualifiedName!,
                 "ghost", "/nonexistent/missing.dll")
         });
-        snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.modules.code.@this.DefaultOverride>());
 
         var dst = NewApp();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
@@ -130,8 +130,8 @@ public class FailureMatrixTests
     public async Task FailureMatrix_ProviderDefaultSelectionNameMissing_RaisesReferentIntegrityError()
     {
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::app.modules.code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.modules.code.@this.DefaultOverride>
         {
             new(typeof(global::app.data.Code.IGrep).AssemblyQualifiedName!, "phantom-name")
         });
@@ -154,8 +154,8 @@ public class FailureMatrixTests
         // if the snapshot HAD an unresolvable identity reference, the underlying Providers
         // restore raises ProviderRestoreException. The shape mirrors the DLL-missing case.
         var snap = new Snapshot();
-        snap.Section("Providers").Write("registrations", new List<global::app.Code.@this.Registration>());
-        snap.Section("Providers").Write("defaultOverrides", new List<global::app.Code.@this.DefaultOverride>
+        snap.Section("Providers").Write("registrations", new List<global::app.modules.code.@this.Registration>());
+        snap.Section("Providers").Write("defaultOverrides", new List<global::app.modules.code.@this.DefaultOverride>
         {
             new(typeof(global::app.modules.identity.code.IIdentity).AssemblyQualifiedName!, "unknown-identity-provider")
         });

@@ -2,7 +2,7 @@ using app.variables;
 using app.modules;
 using app.modules.identity;
 
-using app.Code;
+using app.modules.code;
 
 namespace app.modules.identity.code;
 

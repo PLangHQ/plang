@@ -1,4 +1,4 @@
-namespace app.Code;
+namespace app.modules.code;
 
 /// <summary>
 /// Marker interface for runtime-overridable C# implementations. The fields

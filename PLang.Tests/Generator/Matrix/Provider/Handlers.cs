@@ -1,12 +1,12 @@
 namespace app.modules.matrix.provider;
 
 // Test provider interfaces — registered via app.Code.Register in the matrix runner.
-public interface IFakeProvider : global::app.Code.ICode
+public interface IFakeProvider : global::app.modules.code.ICode
 {
     string Echo(string s);
 }
 
-public interface IUnregisteredProvider : global::app.Code.ICode
+public interface IUnregisteredProvider : global::app.modules.code.ICode
 {
     string Hello();
 }

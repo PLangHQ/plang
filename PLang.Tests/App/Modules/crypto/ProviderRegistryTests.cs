@@ -1,8 +1,8 @@
 using global::app.variables;
-using global::app.Code;
+using global::app.modules.code;
 using global::app.modules.crypto;
 using global::app.modules.crypto.code;
-using EngineProviders = global::app.Code.@this;
+using EngineProviders = global::app.modules.code.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.crypto;

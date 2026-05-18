@@ -6,7 +6,7 @@ using app.modules.identity.code;
 using app.modules.signing.code;
 using app.modules.ui.code;
 
-namespace app.Code;
+namespace app.modules.code;
 
 /// <summary>
 /// Named provider registry. Each provider interface type can have multiple named implementations.

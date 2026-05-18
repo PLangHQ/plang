@@ -3,7 +3,7 @@ using System.Text.Json;
 using app;
 using global::app.goals.goal;
 using global::app.variables;
-using global::app.Code;
+using global::app.modules.code;
 using global::app.modules.llm;
 using global::app.modules.llm.code;
 

@@ -40,7 +40,7 @@ global using ConfigScope = app.config.Scope;
 global using AppTypes = app.types.@this;
 
 // Code subsystem (the runtime escape-hatch — was Providers)
-global using AppCode = app.Code.@this;
+global using AppCode = app.modules.code.@this;
 
 // Variables (was MemoryStack)
 global using Variables = app.variables.@this;
