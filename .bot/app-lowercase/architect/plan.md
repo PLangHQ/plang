@@ -2,11 +2,11 @@
 
 ## What this is
 
-PLang's C# tree currently splits along two casing conventions without an explicit rule for which is which. `App.Goal`, `App.Step`, `App.Path`, `App.Data` — all PascalCase — sit next to `Builder/`, `Services/`, `Attributes/`, also PascalCase. The reader can't tell from the case whether `Goal` is **PLang vocabulary** (a concept the developer thinks in) or **C# infrastructure** (a host concept the developer never sees). They look identical and they aren't.
+We want the C# types to *be named what the PLang concepts are named* — `type`, `path`, `data`, `goal`, `step`. The blocker is BCL collisions: `Type` shadows `System.Type`, `Path` shadows `System.IO.Path`. The PascalCase workaround would be to prefix everything (`PlangType`, `PlangPath`, `PlangData`) and lose the natural vocabulary. Lowercasing the *namespace segment* (`app.type.Type`, `app.path.Path`) lets the leaf type keep the natural name without colliding — `app.type` and `System.Type` are unambiguous to the compiler, and the reader still sees `Type` at the use site.
 
-This branch fixes that by lowercasing everything that is **PLang vocabulary** and keeping PascalCase for everything that is **C# infrastructure**. After the rename, a reader can tell from the namespace alone which side of the line a type is on — `app.goal.Goal` is vocabulary, `Services.Foo` is infrastructure, no ambiguity.
+A second benefit falls out for free: it makes the structure self-documenting. Today `App.Goal` (PLang vocabulary) and `Services.Foo` (C# infrastructure) look identical — both PascalCase, no rule visible from the namespace. After the rename, lowercase = **PLang vocabulary** (a concept the developer thinks in), PascalCase = **C# infrastructure** (a host concept they never see). The convention is readable from the case alone.
 
-A second benefit falls out for free: lowercasing `Data`, `Type`, `Path` kills the long-running shadowing battle with `System.Type` and `System.IO.Path`. `PLang.Tests/GlobalUsings.cs` currently routes around this with aliases; the aliases stop being load-bearing.
+`PLang.Tests/GlobalUsings.cs` currently routes around the shadowing battle with aliases; those aliases stop being load-bearing.
 
 ## What lowercases, what doesn't
 
