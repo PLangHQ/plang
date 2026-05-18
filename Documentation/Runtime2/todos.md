@@ -63,7 +63,16 @@ Proper fix:
 Probably surfaces other bugs (Push/Pop balancing in async paths, frame
 disposal, snapshot handling) — budget time accordingly.
 
-## 2026-04-27 — PLang tests for error.handle recovery-value path
+## 2026-04-27 — PLang tests for error.handle recovery-value path  ✅ RESOLVED 2026-05-11 (`runtime2-foundation-verify` stage 6)
+
+Three `.test.goal` regression pins landed in `Tests/Errors/`:
+- `GoalFirstReturnsRecoveryValue.test.goal` pins `handle.cs:109-114` (GoalFirst returns `recoveryResult`, sets `Handled=true`).
+- `RetryFirstReturnsRecoveryValue.test.goal` pins `handle.cs:120-131` — the 2026-04-27 symmetry fix.
+- `MultiActionRecoveryLastActionPropagates.test.goal` pins `handle.cs:177-184` (chain ordering, RunRecovery returns `last`).
+
+Each test asserts both the recovery side-effect (`%content% equals "from-recovery"`) and `%!error% is null` outside the scope — the latter only holds if the `recoveryResult`-return branch ran with `Handled=true`. The auditor flagged one minor gap (Test 3 cannot distinguish `return last` from `return Ok()` because `variable.set` returns `Ok()` with no `Value`); defer-with-consumer — augment when a downstream surface actually reads the recovery's terminal `Value`.
+
+### Original entry (archived)
 
 Context: codeanalyzer v1 flagged that `error.handle.Wrap` line 109 (RetryFirst
 path with recovery) returned `Ok()` while line 96 (GoalFirst) returned

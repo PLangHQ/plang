@@ -8,41 +8,51 @@
       "timestamp_end": "2026-05-11T17:43:30Z",
       "intent": "Reconcile Documentation/Runtime2/todos.md against the actual runtime2 state; verify foundation areas (snapshots, identity, settings, keepalive) are solid before module-port work begins.",
       "before": {
-        "assumptions": "Initial pass against runtime2 read todos.md as authoritative and proposed branches for CallStack wiring (item 1) and lazy generator OBP cleanup (item 3). Ingi pushed back. Verification in the code showed both items are DONE — App.Run/Goal.Run push frames, generator decomposed into Discovery + Emission/{Action,Property/{Data,Code}}, [VariableName] migration resolved. The todo file never got updated when the cleanup branch closed these.",
+        "assumptions": "Initial pass against runtime2 read todos.md as authoritative and proposed branches for CallStack wiring (item 1) and lazy generator OBP cleanup (item 3). Ingi pushed back. Verification in the code showed both items are DONE \u2014 App.Run/Goal.Run push frames, generator decomposed into Discovery + Emission/{Action,Property/{Data,Code}}, [VariableName] migration resolved. The todo file never got updated when the cleanup branch closed these.",
         "risk": "Other todo entries may be similarly stale. Other foundation areas (snapshots, identity, settings, keepalive) have not been depth-checked and may have quiet gaps that would surface when we start porting modules on top of them. We need to settle what is actually solid before claiming foundation done."
       },
       "plan": ".bot/runtime2-foundation-verify/architect/v1/plan.md",
       "actions": [
         {
-          "paths": ["Documentation/Runtime2/todos.md"],
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Marked 3 entries resolved with branch/commit pointers (2026-04-24 lazy generator, 2026-04-27 CallStack wiring, 2026-05-05 App._statics partially-resolved). Added audit header at top stating the file was re-verified 2026-05-11. Appended 2 new todos surfaced by the verification sweep: Settings encryption-at-rest decision, end-to-end Snapshot PLang tests (deferred to ask-user work). Conservative edit policy — only marked resolved when the closing commit/branch was identifiable."
+          "context": "Marked 3 entries resolved with branch/commit pointers (2026-04-24 lazy generator, 2026-04-27 CallStack wiring, 2026-05-05 App._statics partially-resolved). Added audit header at top stating the file was re-verified 2026-05-11. Appended 2 new todos surfaced by the verification sweep: Settings encryption-at-rest decision, end-to-end Snapshot PLang tests (deferred to ask-user work). Conservative edit policy \u2014 only marked resolved when the closing commit/branch was identifiable."
         },
         {
-          "paths": [".bot/runtime2-foundation-verify/architect/v1/plan.md"],
+          "paths": [
+            ".bot/runtime2-foundation-verify/architect/v1/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Plan spine for the branch — why this exists (todos.md drift), scope (audit + depth-check four foundation areas), stage index (6 stages), cross-cutting decisions (what counts as solid, what counts as quiet gap, conservative edit policy)."
+          "context": "Plan spine for the branch \u2014 why this exists (todos.md drift), scope (audit + depth-check four foundation areas), stage index (6 stages), cross-cutting decisions (what counts as solid, what counts as quiet gap, conservative edit policy)."
         },
         {
-          "paths": [".bot/runtime2-foundation-verify/architect/v1/verification.md"],
+          "paths": [
+            ".bot/runtime2-foundation-verify/architect/v1/verification.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Depth-check report. Snapshots: SOLID for current scope (7 sections round-trip, partial = no full-app PLang test). Identity: SOLID for day-one (12 .goal tests, partial = first-run/recovery/multi-actor crosstalk not pinned). Settings: SOLID for storage, story-incomplete for sensitive data (encryption-at-rest decision needed). KeepAlive: QUIET SURFACE — built, zero consumers, ready for Webserver. Cross-cutting observation: nothing else in the verified areas showed the documentation/code drift pattern that motivated this branch."
+          "context": "Depth-check report. Snapshots: SOLID for current scope (7 sections round-trip, partial = no full-app PLang test). Identity: SOLID for day-one (12 .goal tests, partial = first-run/recovery/multi-actor crosstalk not pinned). Settings: SOLID for storage, story-incomplete for sensitive data (encryption-at-rest decision needed). KeepAlive: QUIET SURFACE \u2014 built, zero consumers, ready for Webserver. Cross-cutting observation: nothing else in the verified areas showed the documentation/code drift pattern that motivated this branch."
         },
         {
-          "paths": [".bot/runtime2-foundation-verify/architect/stage-6-error-handle-recovery-value-tests.md"],
+          "paths": [
+            ".bot/runtime2-foundation-verify/architect/stage-6-error-handle-recovery-value-tests.md"
+          ],
           "type": "create",
           "category": "test",
           "confidence": "high",
           "context": "Test brief for the still-open 2026-04-27 todo (the only remaining real item from the foundation list). Three .test.goal files: GoalFirst returns recovery value, RetryFirst returns recovery value after retry exhausts, multi-action recovery chain's last action propagates. Behavior is correct in code today (verified handle.cs lines 109-134, 167-185); tests pin the symmetry against future regression. Ready for test-designer or coder hand-off."
         },
         {
-          "paths": [".bot/runtime2-foundation-verify/architect/summary.md"],
+          "paths": [
+            ".bot/runtime2-foundation-verify/architect/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -51,7 +61,7 @@
       ],
       "after": {
         "status": "complete",
-        "health": "Branch ready for review. No code changes — pure docs hygiene + verification report + test brief. Three resolved entries marked in todos.md, two new todos added with current-state context. Foundation deemed solid for module-port work to begin.",
+        "health": "Branch ready for review. No code changes \u2014 pure docs hygiene + verification report + test brief. Three resolved entries marked in todos.md, two new todos added with current-state context. Foundation deemed solid for module-port work to begin.",
         "notes": "Process lesson for future architect sessions: do NOT trust todos.md without verifying against current code. The CallStack and lazy-generator entries had been resolved for weeks but the file never reflected it. Reading the code first, then todos, would have caught this immediately. The 2026-05-11 audit header makes this less likely to recur. Open items for follow-up sessions: hand stage 6 to coder (small, ~half-day), revisit Settings encryption-at-rest decision before Webserver/LLM modules port, then start module porting."
       }
     },
@@ -62,24 +72,28 @@
       "timestamp_end": null,
       "intent": "Implement architect's stage 6: write three .test.goal files pinning error.handle recovery-value semantics (GoalFirst, RetryFirst, multi-action last-action-wins).",
       "before": {
-        "assumptions": "Architect's brief is correct: handle.cs lines 109-134 and 167-185 implement the recovery-value path correctly today. The tests are pure regression pins, not bug fixes. No C# changes. Pre-existing pretest baseline: 199/200 plang tests pass (Code/HelloPlain.test.goal fails — unrelated, modules.code.run leftover).",
+        "assumptions": "Architect's brief is correct: handle.cs lines 109-134 and 167-185 implement the recovery-value path correctly today. The tests are pure regression pins, not bug fixes. No C# changes. Pre-existing pretest baseline: 199/200 plang tests pass (Code/HelloPlain.test.goal fails \u2014 unrelated, modules.code.run leftover).",
         "risk": "Builder LLM may not map 'order GoalFirst' / 'order RetryFirst, retry 1' the way I expect. Mitigation: read each .pr after plang build and verify Order/RetryCount parameters before trusting test results."
       },
       "plan": ".bot/runtime2-foundation-verify/coder/v1/plan.md",
       "actions": [
         {
-          "paths": [".bot/runtime2-foundation-verify/coder/v1/baseline-tests.md"],
+          "paths": [
+            ".bot/runtime2-foundation-verify/coder/v1/baseline-tests.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Baseline before any changes: plang 199/200 (one pre-existing fail, Code/HelloPlain.test.goal, unrelated modules.code.run leftover); C# 2752/2752. Any new red outside HelloPlain would be my regression."
         },
         {
-          "paths": [".bot/runtime2-foundation-verify/coder/v1/plan.md"],
+          "paths": [
+            ".bot/runtime2-foundation-verify/coder/v1/plan.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Stage 6 plan: three .test.goal files pinning handle.cs recovery-value paths (GoalFirst/RetryFirst/multi-action chain). Self-contained .test.goal pattern (matching Tests/App/CallStack/*) rather than the Start.goal-without-asserts pattern of Tests/Errors/SimpleRecovery/. Trigger is `throw error \"boom\"` instead of architect's `read 'missing.txt'` — same recovery semantic, no filesystem dependency."
+          "context": "Stage 6 plan: three .test.goal files pinning handle.cs recovery-value paths (GoalFirst/RetryFirst/multi-action chain). Self-contained .test.goal pattern (matching Tests/App/CallStack/*) rather than the Start.goal-without-asserts pattern of Tests/Errors/SimpleRecovery/. Trigger is `throw error \"boom\"` instead of architect's `read 'missing.txt'` \u2014 same recovery semantic, no filesystem dependency."
         },
         {
           "paths": [
@@ -90,7 +104,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Three self-contained .test.goal files. Each asserts (a) recovery side-effect landed (variable.set observable outside) and (b) %!error% is null outside the recovery scope — the second assertion is the symmetry pin, because erroredCall.Handled=true and `return recoveryResult` live in the same branch of handle.cs (lines 111-113, 128-130). A regression to `return Ok()` (the pre-2026-04-27 bug) would leave %!error% surfaced, even though the side-effect still landed. Test 3 also asserts each intermediate %first%/%second% set to prove the chain ran in order, not just that the last action ran."
+          "context": "Three self-contained .test.goal files. Each asserts (a) recovery side-effect landed (variable.set observable outside) and (b) %!error% is null outside the recovery scope \u2014 the second assertion is the symmetry pin, because erroredCall.Handled=true and `return recoveryResult` live in the same branch of handle.cs (lines 111-113, 128-130). A regression to `return Ok()` (the pre-2026-04-27 bug) would leave %!error% surfaced, even though the side-effect still landed. Test 3 also asserts each intermediate %first%/%second% set to prove the chain ran in order, not just that the last action ran."
         },
         {
           "paths": [
@@ -101,27 +115,33 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Built .pr files. Verified each by reading: Order=GoalFirst / RetryFirst+RetryCount=1 resolved correctly; Actions list shapes match (single variable.set for tests 1+2, three sequential variable.sets %first%→%second%→%content% for test 3). Builder was non-deterministic on first try for test 1 (LLM emitted three steps all with index 0); retry built clean."
+          "context": "Built .pr files. Verified each by reading: Order=GoalFirst / RetryFirst+RetryCount=1 resolved correctly; Actions list shapes match (single variable.set for tests 1+2, three sequential variable.sets %first%\u2192%second%\u2192%content% for test 3). Builder was non-deterministic on first try for test 1 (LLM emitted three steps all with index 0); retry built clean."
         },
         {
-          "paths": [".bot/runtime2-foundation-verify/coder/summary.md"],
+          "paths": [
+            ".bot/runtime2-foundation-verify/coder/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Session summary. Captures intent, code-example shape, test deltas (203 total, 202 pass, 1 pre-existing fail), and codeanalyzer hand-off (no new modules/actions, so no builder step needed)."
         },
         {
-          "paths": ["Tests/Errors/", "Tests/Code/HelloPlain.test.goal", "Tests/Code/.build/helloplain.test.pr"],
+          "paths": [
+            "Tests/Errors/",
+            "Tests/Code/HelloPlain.test.goal",
+            "Tests/Code/.build/helloplain.test.pr"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Test results: plang 203 total, 202 pass, 1 fail (Code/HelloPlain.test.goal — pre-existing, modules.code.run/v1 branch leftover, NOT my regression). C# suite 2752/2752 unchanged. Delta on this branch: +3 tests, +3 pass, zero regression."
+          "context": "Test results: plang 203 total, 202 pass, 1 fail (Code/HelloPlain.test.goal \u2014 pre-existing, modules.code.run/v1 branch leftover, NOT my regression). C# suite 2752/2752 unchanged. Delta on this branch: +3 tests, +3 pass, zero regression."
         }
       ],
       "after": {
         "status": "complete",
         "health": "Stage 6 deliverables shipped. Three .test.goal files green, no regressions. Behavior pinned: GoalFirst returns recovery value, RetryFirst returns recovery value after retry exhausts (symmetry), multi-action recovery chain's last action's value is what propagates. Branch ready for codeanalyzer review.",
-        "notes": "Builder non-determinism observation: the LLM occasionally emits all steps with index 0 for a multi-step .test.goal — the builder validation correctly catches it (\"Step indexes must be 0..2 with no gaps\"), and a retry builds clean. Worth filing as a builder reliability todo if it keeps biting. Not gating this stage."
+        "notes": "Builder non-determinism observation: the LLM occasionally emits all steps with index 0 for a multi-step .test.goal \u2014 the builder validation correctly catches it (\"Step indexes must be 0..2 with no gaps\"), and a retry builds clean. Worth filing as a builder reliability todo if it keeps biting. Not gating this stage."
       }
     },
     {
@@ -129,9 +149,9 @@
       "bot": "auditor",
       "timestamp_start": "2026-05-18T00:00:00Z",
       "timestamp_end": "2026-05-18T00:30:00Z",
-      "intent": "Final integrity gate on the narrow docs+tests branch — verify the three error.handle recovery-value regression pins map to the right code branches, builder produced the right .pr shape, and the test suite stays green on a clean rebuild.",
+      "intent": "Final integrity gate on the narrow docs+tests branch \u2014 verify the three error.handle recovery-value regression pins map to the right code branches, builder produced the right .pr shape, and the test suite stays green on a clean rebuild.",
       "before": {
-        "assumptions": "No prior codeanalyzer / tester / security review exists on this branch — I am the only reviewer. Branch should be narrow (architect docs + three .test.goal files), no production C# changes. Coder claimed 203 total / 202 pass / 1 pre-existing fail (HelloPlain). Need to verify on clean rebuild because of the stale-binary trap.",
+        "assumptions": "No prior codeanalyzer / tester / security review exists on this branch \u2014 I am the only reviewer. Branch should be narrow (architect docs + three .test.goal files), no production C# changes. Coder claimed 203 total / 202 pass / 1 pre-existing fail (HelloPlain). Need to verify on clean rebuild because of the stale-binary trap.",
         "risk": "(1) The three tests might pass for the wrong reason (side-effect lands regardless of which code branch was taken). (2) Apparent deletions in git diff might actually be branch work and not base divergence. (3) Stale binary could mask a real regression."
       },
       "plan": ".bot/runtime2-foundation-verify/auditor/v1/plan.md",
@@ -148,14 +168,16 @@
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Walked handle.cs:90-185 against each .test.goal. GoalFirst test pins lines 109-114; RetryFirst test pins lines 120-131 (the 2026-04-27 symmetry fix); multi-action test exercises the RunRecovery foreach at 167-185. Builder produced correct modifier shape — Order=GoalFirst with single variable.set Actions in test 1; three sequential variable.set actions in test 3."
+          "context": "Walked handle.cs:90-185 against each .test.goal. GoalFirst test pins lines 109-114; RetryFirst test pins lines 120-131 (the 2026-04-27 symmetry fix); multi-action test exercises the RunRecovery foreach at 167-185. Builder produced correct modifier shape \u2014 Order=GoalFirst with single variable.set Actions in test 1; three sequential variable.set actions in test 3."
         },
         {
-          "paths": ["Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal"],
+          "paths": [
+            "Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal"
+          ],
           "type": "decision",
           "category": "test",
           "confidence": "high",
-          "context": "Identified one minor finding (F1): Test 3 asserts chain ordering + Handled-flag propagation but does NOT distinguish RunRecovery returning `last` from returning `Ok()`. Because variable.set returns Ok() with no Value, both variants produce identical observable outcomes — the side-effects land regardless and %!error% suppression depends on recoveryResult.Success not on its Value. Architect's original `file.read, write to %content%` recipe would have pinned propagation; coder's simpler chain pins only execution. Decided: not a blocker — fold into a future module-port that has a real recovery-Value consumer."
+          "context": "Identified one minor finding (F1): Test 3 asserts chain ordering + Handled-flag propagation but does NOT distinguish RunRecovery returning `last` from returning `Ok()`. Because variable.set returns Ok() with no Value, both variants produce identical observable outcomes \u2014 the side-effects land regardless and %!error% suppression depends on recoveryResult.Success not on its Value. Architect's original `file.read, write to %content%` recipe would have pinned propagation; coder's simpler chain pins only execution. Decided: not a blocker \u2014 fold into a future module-port that has a real recovery-Value consumer."
         },
         {
           "paths": [],
@@ -169,7 +191,7 @@
           "type": "review",
           "category": "doc",
           "confidence": "high",
-          "context": "Verified branch diff scope. The apparent deletions of Documentation/v0.2/app-tree.md and reminisce-2026-05-11.md in `git diff runtime2..HEAD` are NOT branch work — those files were added on the sibling runtime2-channels branch (commits 199b4997 and c04cb551) after the merge-base 200e8e93. Confirmed via `git log --all` per-file. Actual branch additions: 3 .test.goal + 3 .pr + todos.md edits + bot output."
+          "context": "Verified branch diff scope. The apparent deletions of Documentation/v0.2/app-tree.md and reminisce-2026-05-11.md in `git diff runtime2..HEAD` are NOT branch work \u2014 those files were added on the sibling runtime2-channels branch (commits 199b4997 and c04cb551) after the merge-base 200e8e93. Confirmed via `git log --all` per-file. Actual branch additions: 3 .test.goal + 3 .pr + todos.md edits + bot output."
         },
         {
           "paths": [
@@ -187,8 +209,60 @@
       ],
       "after": {
         "status": "complete",
-        "health": "PASS. Branch is narrow, the three regression pins are well-targeted, 202/202 tests green on clean rebuild. One minor finding (F1) on Test 3 pin strength — non-blocking, suitable for folding into a future module-port with a real recovery-Value consumer.",
-        "notes": "Hand-off: docs. No need to gate docs on F1 — the test still pins the realistic regression surface (Handled-flag + recoveryResult-return branches), it just doesn't pin the inner `return last` semantic the architect originally wanted."
+        "health": "PASS. Branch is narrow, the three regression pins are well-targeted, 202/202 tests green on clean rebuild. One minor finding (F1) on Test 3 pin strength \u2014 non-blocking, suitable for folding into a future module-port with a real recovery-Value consumer.",
+        "notes": "Hand-off: docs. No need to gate docs on F1 \u2014 the test still pins the realistic regression surface (Handled-flag + recoveryResult-return branches), it just doesn't pin the inner `return last` semantic the architect originally wanted."
+      }
+    },
+    {
+      "id": "cca733a9-0b1a-4dbf-a447-e6c8bff04a97",
+      "bot": "docs",
+      "timestamp_start": "2026-05-18T00:00:00Z",
+      "timestamp_end": "2026-05-18T00:30:00Z",
+      "intent": "Verify documentation completeness for a test-only foundation-verify branch and fill any gaps.",
+      "before": {
+        "assumptions": "Branch is narrow: architect docs + three .test.goal regression pins for error.handle recovery-value semantics. No production C# changed (confirmed via git diff --stat). Auditor PASS with one deferred-with-consumer minor finding. Expecting near-zero doc work.",
+        "risk": "Possible doc drift in good_to_know.md (ErrorOrder=GoalFirst section), debug.md (%!callStack.Current.Handled%), or callbacks.md (recovery scope). Possible missing CHANGELOG entry if any user-visible surface was touched. Possible missing resolution marker on the closed todo."
+      },
+      "plan": ".bot/runtime2-foundation-verify/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/Runtime2/todos.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "The 2026-04-27 'PLang tests for error.handle recovery-value path' entry was exactly what this branch resolved (stage 6, three .test.goal files) but lacked the \u2705 RESOLVED marker that its peer entries (2026-04-24 lazy-generator, 2026-04-27 CallStack) carry. Added the resolution header + a close-out paragraph naming the three test files, their handle.cs line refs, and the auditor's minor caveat (Test 3 cannot distinguish `return last` from `return Ok()` under variable.set \u2014 defer-with-consumer). Preserved original entry under '### Original entry (archived)' to match the archival convention. Alternative considered: leaving as-is since other surfaces also describe the fix \u2014 rejected because todos.md is the canonical work-status doc and inconsistent marker use erodes its reliability."
+        },
+        {
+          "paths": [
+            ".bot/runtime2-foundation-verify/docs/v1/plan.md",
+            ".bot/runtime2-foundation-verify/docs/v1/result.md",
+            ".bot/runtime2-foundation-verify/docs/v1/verdict.json",
+            ".bot/runtime2-foundation-verify/docs/summary.md",
+            ".bot/runtime2-foundation-verify/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard docs-bot output: plan, result detailing the gap and fix, PASS verdict, summary, and the structured docs-report.json with one minor finding (filled). No claude-md or character proposals on this branch."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/debug.md",
+            "Documentation/v0.2/callbacks.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Reviewed for drift against the new tests: good_to_know.md:176 documents ErrorOrder=GoalFirst 'if recovery succeeds, skip retries' with handle.cs pointer (accurate). debug.md:296-307 documents %!callStack.Current.Handled% as 'Set by error.handle.Wrap on recovery success' and %!error% lifecycle in/out of recovery scope (accurate \u2014 Test 1 and 2's %!error% null assertions exercise exactly this). callbacks.md:108 documents the error.App back-ref for recovery materialisation (unchanged). No edits needed."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 ready to merge.",
+        "health": "Branch is clean. One docs-hygiene gap found and filled. All other surfaces verified accurate.",
+        "notes": "Auditor's minor finding (Test 3 cannot pin Value propagation when chain ends in variable.set) was carried forward in the todos.md close-out paragraph so a future maintainer porting a recovery-Value consumer knows to augment Test 3 then. Not a blocker; explicitly defer-with-consumer per auditor."
       }
     }
   ]
