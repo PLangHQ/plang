@@ -1,6 +1,6 @@
 using app.errors;
 
-namespace app.Settings;
+namespace app.modules.settings;
 
 /// <summary>
 /// Shared (one per app) settings collection. Holds Data values keyed by name,

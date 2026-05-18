@@ -1,6 +1,6 @@
 using System.Reflection;
 using global::app.actor.context;
-using global::app.Settings;
+using global::app.modules.settings;
 using global::app.errors;
 using global::app.variables;
 using global::app.modules.identity;
@@ -52,7 +52,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             _app.SettingsStore));
 
-        var result = await new Get { Context = Ctx, Name = null }.Run();
+        var result = await new global::app.modules.identity.Get { Context = Ctx, Name = null }.Run();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -69,7 +69,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             _app.SettingsStore));
 
-        var result = await new Get { Context = Ctx, Name = null }.Run();
+        var result = await new global::app.modules.identity.Get { Context = Ctx, Name = null }.Run();
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
     }
@@ -83,7 +83,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             _app.SettingsStore));
 
-        var handler = new Get { Context = Ctx, Name = null };
+        var handler = new global::app.modules.identity.Get { Context = Ctx, Name = null };
         var result = await handler.Run();
 
         await Assert.That(result.Success).IsFalse();
@@ -292,7 +292,7 @@ public class IdentityErrorPathTests
         var ds = _app.SettingsStore;
         await ds.Set("identity", "weird", new Data("weird", 42));
 
-        var result = await new Get { Context = Ctx, Name = "weird" }.Run();
+        var result = await new global::app.modules.identity.Get { Context = Ctx, Name = "weird" }.Run();
         // Identity deserializes but has empty PublicKey — valid but useless
         await Assert.That(result.Success).IsTrue();
         var identity = result.Value as Identity;
@@ -327,20 +327,20 @@ public class IdentityErrorPathTests
     /// backing field. After stage 13's settings rework the store moved from
     /// per-actor to app-level — there's a single shared <c>app.SettingsStore</c>.
     /// </summary>
-    private static void SwapDataSource(global::app.@this app, global::app.Settings.IStore newDataSource)
+    private static void SwapDataSource(global::app.@this app, global::app.modules.settings.IStore newDataSource)
     {
         var field = typeof(global::app.@this).GetField("_settingsStore",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.SetValue(app, new Lazy<global::app.Settings.IStore>(() => newDataSource));
+        field!.SetValue(app, new Lazy<global::app.modules.settings.IStore>(() => newDataSource));
     }
 
     /// <summary>
     /// DataSource wrapper that delegates all operations except Set, which always fails.
     /// </summary>
-    private class FailingSaveDataSource : global::app.Settings.IStore
+    private class FailingSaveDataSource : global::app.modules.settings.IStore
     {
-        private readonly global::app.Settings.IStore _inner;
-        public FailingSaveDataSource(global::app.Settings.IStore inner) => _inner = inner;
+        private readonly global::app.modules.settings.IStore _inner;
+        public FailingSaveDataSource(global::app.modules.settings.IStore inner) => _inner = inner;
 
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
@@ -359,10 +359,10 @@ public class IdentityErrorPathTests
     /// <summary>
     /// Settings store wrapper that delegates all operations except Remove, which always fails.
     /// </summary>
-    private class FailingRemoveDataSource : global::app.Settings.IStore
+    private class FailingRemoveDataSource : global::app.modules.settings.IStore
     {
-        private readonly global::app.Settings.IStore _inner;
-        public FailingRemoveDataSource(global::app.Settings.IStore inner) => _inner = inner;
+        private readonly global::app.modules.settings.IStore _inner;
+        public FailingRemoveDataSource(global::app.modules.settings.IStore inner) => _inner = inner;
 
         public Task<Data> Get(string table, string key) => _inner.Get(table, key);
         public Task<Data> Get<T>(string table, string key) where T : Data => _inner.Get<T>(table, key);
@@ -381,7 +381,7 @@ public class IdentityErrorPathTests
     /// <summary>
     /// Settings store where GetAll always returns an error.
     /// </summary>
-    private class FailingGetAllDataSource : global::app.Settings.IStore
+    private class FailingGetAllDataSource : global::app.modules.settings.IStore
     {
         public Task<Data> Get(string table, string key)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));

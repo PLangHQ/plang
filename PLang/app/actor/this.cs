@@ -1,5 +1,5 @@
 using app;
-using app.Settings;
+using app.modules.settings;
 using app.variables;
 using app.modules.identity;
 using app.modules.identity.code;
@@ -134,7 +134,7 @@ public sealed class @this : IAsyncDisposable
         {
             var provider = app.Code.Get<IIdentity>();
             if (!provider.Success) return null;
-            var result = provider.Value!.GetOrCreateDefaultAsync(new Get { Context = app.System.Context }).GetAwaiter().GetResult();
+            var result = provider.Value!.GetOrCreateDefaultAsync(new global::app.modules.identity.Get { Context = app.System.Context }).GetAwaiter().GetResult();
             return result.Success ? result.Value as Identity : null;
         }));
     }

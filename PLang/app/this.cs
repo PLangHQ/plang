@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using app.actor.context;
-using app.Settings;
+using app.modules.settings;
 using app.errors;
 using app.variables;
 using app.modules;
@@ -153,16 +153,16 @@ public sealed partial class @this : IAsyncDisposable
     /// Created lazily on first access so tests with fictional paths and apps
     /// that never touch settings don't pay for SQLite-file creation at boot.
     /// </summary>
-    public global::app.Settings.IStore SettingsStore => _settingsStore.Value;
-    private Lazy<global::app.Settings.IStore> _settingsStore = null!;
+    public global::app.modules.settings.IStore SettingsStore => _settingsStore.Value;
+    private Lazy<global::app.modules.settings.IStore> _settingsStore = null!;
 
     /// <summary>
     /// Shared (one per app) settings collection. Holds Data values keyed by
     /// name, backed by <see cref="SettingsStore"/>. Registered on every actor's
     /// Variables via <see cref="Variables.@this.RegisterNavigable"/> so
-    /// <c>%Settings.X%</c> resolution dispatches into <see cref="app.Settings.@this.Get"/>.
+    /// <c>%Settings.X%</c> resolution dispatches into <see cref="app.modules.settings.@this.Get"/>.
     /// </summary>
-    public global::app.Settings.@this Settings { get; }
+    public global::app.modules.settings.@this Settings { get; }
 
     /// <summary>
     /// Debug mode controller. Registers event handlers for step/goal debug output.
@@ -301,8 +301,8 @@ public sealed partial class @this : IAsyncDisposable
         Builder = new global::app.modules.builder.@this(this);
         Types = new types.@this();
         Config = new config.@this();
-        _settingsStore = new Lazy<global::app.Settings.IStore>(CreateSettingsStore);
-        Settings = new global::app.Settings.@this(this);
+        _settingsStore = new Lazy<global::app.modules.settings.IStore>(CreateSettingsStore);
+        Settings = new global::app.modules.settings.@this(this);
         _modules = modules ?? new AppModules();
         _modules.App = this;
         _goals = new AppGoals { App = this };
@@ -556,17 +556,17 @@ public sealed partial class @this : IAsyncDisposable
         return await goal.RunAsync(context);
     }
 
-    private global::app.Settings.IStore CreateSettingsStore()
+    private global::app.modules.settings.IStore CreateSettingsStore()
     {
         // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
         if (Tester.IsEnabled)
-            return global::app.Settings.Sqlite.InMemory($"system-{Id}");
+            return global::app.modules.settings.Sqlite.InMemory($"system-{Id}");
 
         var dbDir = FileSystem.Path.Combine(AbsolutePath, ".db");
         var dbPath = FileSystem.Path.Combine(dbDir, "system.sqlite");
-        return new global::app.Settings.Sqlite(dbPath, FileSystem);
+        return new global::app.modules.settings.Sqlite(dbPath, FileSystem);
     }
 
     private static app.filesystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)

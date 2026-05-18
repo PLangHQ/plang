@@ -6,7 +6,7 @@ using app.actor.context;
 using app.errors;
 using app.goals.goal;
 using app.variables;
-using app.Settings;
+using app.modules.settings;
 using app.filesystem;
 using app.filesystem.Default;
 using app.modules.http;
