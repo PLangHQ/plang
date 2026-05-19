@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "write out \u0022Building goal: %goal.Name%\u0022",
+      "text": "write out \"Building goal: %goal.Name%\"",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -79,7 +79,7 @@
     },
     {
       "index": 2,
-      "text": "set %trace% = {\u0022id\u0022: \u0022%!trace.id%\u0022, \u0022timestamp\u0022: \u0022%Now%\u0022, \u0022goal\u0022: %goal%, \u0022pass1\u0022: null, \u0022subGoals\u0022: [], \u0022detailPasses\u0022: [], \u0022durationMs\u0022: 0}, type=json",
+      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"pass1\": null, \"subGoals\": [], \"detailPasses\": [], \"durationMs\": 0}, type=json",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -104,7 +104,7 @@
                 "detailPasses": [],
                 "durationMs": 0
               },
-              "type": "list\u003Ckeyvaluepair\u003E"
+              "type": "list<keyvaluepair>"
             },
             {
               "name": "Type",
@@ -178,7 +178,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list<action>"
                 }
               ],
               "defaults": [
@@ -243,7 +243,7 @@
     },
     {
       "index": 5,
-      "text": "set %goal.BuilderVersion% = \u00220.2.2\u0022",
+      "text": "set %goal.BuilderVersion% = \"0.2.2\"",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -335,7 +335,7 @@
             {
               "name": "Collection",
               "value": "%parentGoal.Goals%",
-              "type": "list"
+              "type": "object"
             },
             {
               "name": "ItemName",
@@ -364,11 +364,6 @@
                 "prPath": null
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "%subGoal%",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -581,7 +576,7 @@
     },
     {
       "index": 12,
-      "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027",
+      "text": "save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'",
       "lineNumber": 17,
       "indent": 0,
       "comment": null,
@@ -702,7 +697,7 @@
                 {
                   "name": "Name",
                   "value": "%passStart%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -721,7 +716,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %passStart% to %Now.Ticks% using variable.set. No modifiers.",
+          "guidance": "Set %passStart% from %Now.Ticks% into a runtime variable. @known indicates this step is already mapped and should be kept.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -824,7 +819,7 @@
         },
         {
           "index": 3,
-          "text": "render template \u0022/system/actions/v2/summary.md\u0022, write to %actionSummary%",
+          "text": "render template \"/system/actions/v2/summary.md\", write to %actionSummary%",
           "lineNumber": 29,
           "indent": 0,
           "comment": null,
@@ -882,7 +877,7 @@
         },
         {
           "index": 4,
-          "text": "render template \u0022/system/builder/templates/v2/goalFormatForLlm.template\u0022, write to %goalForLlm%",
+          "text": "render template \"/system/builder/templates/v2/goalFormatForLlm.template\", write to %goalForLlm%",
           "lineNumber": 30,
           "indent": 0,
           "comment": null,
@@ -940,7 +935,7 @@
         },
         {
           "index": 5,
-          "text": "render template \u0022/system/builder/llm/BuildGoal.llm\u0022, write to %buildGoalPrompt%",
+          "text": "render template \"/system/builder/llm/BuildGoal.llm\", write to %buildGoalPrompt%",
           "lineNumber": 31,
           "indent": 0,
           "comment": null,
@@ -998,7 +993,7 @@
         },
         {
           "index": 6,
-          "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildGoalPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%goalForLlm%\u0022}], type=json",
+          "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildGoalPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}], type=json",
           "lineNumber": 32,
           "indent": 0,
           "comment": null,
@@ -1064,7 +1059,7 @@
                 {
                   "name": "Messages",
                   "value": "%messages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -1092,7 +1087,7 @@
                           {
                             "module": "string",
                             "action": "string",
-                            "parameters?": "list\u003Cobject\u003E",
+                            "parameters?": "list<object>",
                             "errors?": [
                               {
                                 "key": "string",
@@ -1243,7 +1238,7 @@
                           "modifiers": []
                         }
                       ],
-                      "type": "list\u00601"
+                      "type": "list`1"
                     }
                   ],
                   "defaults": [
@@ -1343,7 +1338,7 @@
                 {
                   "name": "Value",
                   "value": {},
-                  "type": "list\u003Ckeyvaluepair\u003E"
+                  "type": "list<keyvaluepair>"
                 },
                 {
                   "name": "Type",
@@ -1687,7 +1682,7 @@
         },
         {
           "index": 18,
-          "text": "group %stepResults.steps% by \u0022level\u0022, write to %groupedSteps%",
+          "text": "group %stepResults.steps% by \"level\", write to %groupedSteps%",
           "lineNumber": 44,
           "indent": 0,
           "comment": null,
@@ -1736,7 +1731,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Group %stepResults.steps% by property key \u0022level\u0022 and store into %groupedSteps%. Fix: list.group expects Key([string]) and ListName([%var% string]) but step text uses %stepResults.steps% (property path). We pass it as the list variable name string reference.",
+          "guidance": "Group %stepResults.steps% by property key \"level\" and store into %groupedSteps%. Fix: list.group expects Key([string]) and ListName([%var% string]) but step text uses %stepResults.steps% (property path). We pass it as the list variable name string reference.",
           "level": "medium",
           "confidence": 60,
           "formal": null,
@@ -1793,7 +1788,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Iterate over %groupedSteps% and call ProcessGroup for each item. Fix: loop.foreach signature is Collection([object]) and ItemName([string?]) and KeyName([string?]); the step text says \u0027goal.call ProcessGroup item=%group%\u0027. We compile as loop.foreach over %groupedSteps% with ItemName=group, then goal.call ProcessGroup with parameter item=%group%. Also Actor([actor] this) is not a parameter of goal.call; app.run supports Actor, but goal.call does not. So we omit Actor and only pass parameters.",
+          "guidance": "Iterate over %groupedSteps% and call ProcessGroup for each item. Fix: loop.foreach signature is Collection([object]) and ItemName([string?]) and KeyName([string?]); the step text says 'goal.call ProcessGroup item=%group%'. We compile as loop.foreach over %groupedSteps% with ItemName=group, then goal.call ProcessGroup with parameter item=%group%. Also Actor([actor] this) is not a parameter of goal.call; app.run supports Actor, but goal.call does not. So we omit Actor and only pass parameters.",
           "level": "medium",
           "confidence": 55,
           "formal": null,
@@ -1803,13 +1798,13 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildGoal.goal",
-      "prPath": "/.build/buildgoal.pr",
+      "path": "/system/builder/BuildGoal.goal",
+      "prPath": "/system/builder/.build/buildgoal.pr",
       "hash": "0d7504c9d85dca6d91f6b0909450a0ddd964cea749c04e2a4d6947668930c655",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     },
@@ -1823,7 +1818,7 @@
           "text": "set %goal% = %subGoal%",
           "lineNumber": 51,
           "indent": 0,
-          "comment": "Builds a single sub-goal \u2014 no version, no sub-goal recursion, no save.\nAdds its pass data to the parent\u0027s %trace.subGoals%.",
+          "comment": "Builds a single sub-goal — no version, no sub-goal recursion, no save.\nAdds its pass data to the parent's %trace.subGoals%.",
           "actions": [
             {
               "module": "variable",
@@ -1851,7 +1846,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the runtime variable %goal% to %subGoal% (as specified by the step).",
+          "guidance": "Set the local %goal% variable to %subGoal%. This is a direct variable assignment and is marked @known, so reuse the prior mapping exactly.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -1860,7 +1855,7 @@
         },
         {
           "index": 1,
-          "text": "write out \u0022  Building sub-goal: %goal.Name%\u0022",
+          "text": "write out \"  Building sub-goal: %goal.Name%\"",
           "lineNumber": 52,
           "indent": 0,
           "comment": null,
@@ -1880,9 +1875,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Write a translatable log line showing the sub-goal name.",
+          "guidance": "Write a translatable progress line indicating which sub-goal is being built. Marked @known, so reuse the prior mapping exactly.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -1907,11 +1902,6 @@
                     "prPath": null
                   },
                   "type": "goal.call"
-                },
-                {
-                  "name": "Actor",
-                  "value": null,
-                  "type": "actor"
                 }
               ],
               "defaults": null,
@@ -1939,7 +1929,7 @@
                           "modifiers": []
                         }
                       ],
-                      "type": "list\u003Caction\u003E"
+                      "type": "list`1"
                     }
                   ],
                   "defaults": [
@@ -1955,7 +1945,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Call BuildGoalCore to build the sub-goal; on error, call HandleBuildGoalFailure as the recovery action chain.",
+          "guidance": "Call BuildGoalCore to build the sub-goal, and on error run HandleBuildGoalFailure as the recovery action chain. Marked @known; reuse prior mapping exactly.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -1995,7 +1985,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Append the current pass data (%currentPass%) to the parent\u0027s trace list %trace.subGoals%.",
+          "guidance": "Append %currentPass% to the parent's trace list %trace.subGoals%. Marked @known; reuse prior mapping exactly.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -2005,13 +1995,13 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildGoal.goal",
-      "prPath": "/.build/buildgoal.pr",
+      "path": "/system/builder/BuildGoal.goal",
+      "prPath": "/system/builder/.build/buildgoal.pr",
       "hash": "472eeadd1143d92384bb0398124e1fd1422130b3e21734c122ee716bdd4a90c3",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     },
@@ -2022,7 +2012,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %group.steps[0].level% is \u0022low\u0022 or \u0022medium\u0022",
+          "text": "if %group.steps[0].level% is \"low\" or \"medium\"",
           "lineNumber": 59,
           "indent": 0,
           "comment": "Process a group of steps with the same confidence level",
@@ -2060,7 +2050,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Check whether the first step\u0027s level is in [\u0027low\u0027,\u0027medium\u0027] using condition.if with operator \u0027in\u0027. This gates whether the group should be processed.",
+          "guidance": "Check whether the first step's level is in ['low','medium'] using condition.if with operator 'in'. This gates whether the group should be processed.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -2186,13 +2176,13 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildGoal.goal",
-      "prPath": "/.build/buildgoal.pr",
+      "path": "/system/builder/BuildGoal.goal",
+      "prPath": "/system/builder/.build/buildgoal.pr",
       "hash": "582acfb210dc8941bc2ebe5f3de71bbd321ad2ebf738392fa0a5b23adb7fbf72",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     },
@@ -2203,10 +2193,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Validation failed: %!error.Message% \u2014 retrying...\u0022",
+          "text": "write out \"  Validation failed: %!error.Message% — retrying...\"",
           "lineNumber": 66,
           "indent": 0,
-          "comment": "LLM produced invalid output \u2014 retry with error context",
+          "comment": "LLM produced invalid output — retry with error context",
           "actions": [
             {
               "module": "output",
@@ -2214,7 +2204,7 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  Validation failed: %!error.Message% \u2014 retrying...",
+                  "value": "  Validation failed: %!error.Message% — retrying...",
                   "type": "tstring"
                 }
               ],
@@ -2223,7 +2213,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Write retry context to output. Uses tstring so %!error.Message% is treated as a translation candidate.",
+          "guidance": "Write a retry notice to output, including the runtime error message placeholder. This is a direct output side-effect.",
           "level": "high",
           "confidence": 96,
           "formal": null,
@@ -2232,7 +2222,7 @@
         },
         {
           "index": 1,
-          "text": "set %fixerMessages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildGoalPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response had validation errors:\\n%!error.Message%\\n\\nThe PLang code to build:\\n%goalForLlm%\\n\\nFix the errors listed above and return the complete corrected response.\u0022}], type=json",
+          "text": "set %fixerMessages% = [{\"Role\":\"system\", \"Content\":\"%buildGoalPrompt%\"}, {\"Role\":\"user\", \"Content\":\"Your previous response had validation errors:\\n%!error.Message%\\n\\nThe PLang code to build:\\n%goalForLlm%\\n\\nFix the errors listed above and return the complete corrected response.\"}], type=json",
           "lineNumber": 67,
           "indent": 0,
           "comment": null,
@@ -2272,9 +2262,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %fixerMessages% to a JSON array of llm messages (system \u002B user) including %buildGoalPrompt%, %!error.Message%, and %goalForLlm%.",
+          "guidance": "Set %fixerMessages% to a JSON array containing system/user messages. The value is structured JSON, so use type=json.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 93,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2293,7 +2283,7 @@
                 {
                   "name": "Messages",
                   "value": "%fixerMessages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -2314,30 +2304,52 @@
                     "steps": [
                       {
                         "index": "int",
-                        "keep?": "bool",
-                        "guidance?": "string",
-                        "formal?": "string",
+                        "keep": "bool",
+                        "guidance": "string",
+                        "formal": "string",
                         "actions": [
                           {
                             "module": "string",
                             "action": "string",
-                            "parameters?": "array",
-                            "errors?": "array",
-                            "warnings?": "array"
+                            "parameters": [
+                              {
+                                "name": "string",
+                                "value": "object",
+                                "type": "string"
+                              }
+                            ],
+                            "errors": [
+                              {
+                                "key": "string",
+                                "message": "string"
+                              }
+                            ],
+                            "warnings": [
+                              {
+                                "key": "string",
+                                "message": "string"
+                              }
+                            ]
                           }
                         ],
-                        "errors?": "array",
-                        "warnings?": "array",
-                        "level?": "string",
-                        "confidence?": "int"
+                        "errors": [
+                          {
+                            "key": "string",
+                            "message": "string"
+                          }
+                        ],
+                        "warnings": [
+                          {
+                            "key": "string",
+                            "message": "string"
+                          }
+                        ],
+                        "level": "string",
+                        "confidence": "int"
                       }
-                    ],
-                    "errors?": "array",
-                    "warnings?": "array",
-                    "level?": "string",
-                    "confidence?": "int"
+                    ]
                   },
-                  "type": "jsonobject"
+                  "type": "object"
                 },
                 {
                   "name": "Cache",
@@ -2386,7 +2398,7 @@
                 {
                   "name": "Value",
                   "value": "%__data__%",
-                  "type": "json"
+                  "type": "object"
                 }
               ],
               "defaults": [
@@ -2400,9 +2412,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call llm.query using Messages=%fixerMessages% and a structured JSON schema for the expected build-fix response. Cache uses %!build.cache%. Store the response into %stepResults%.",
-          "level": "high",
-          "confidence": 72,
+          "guidance": "Re-query the LLM using the constructed messages, enforce a JSON schema for the build response, apply caching, and store the result into %stepResults%.",
+          "level": "medium",
+          "confidence": 55,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2424,7 +2436,7 @@
                     "name": "ValidateBuildResponse",
                     "parallel": false,
                     "parameters": null,
-                    "prPath": "/.build/validatebuildresponse.pr"
+                    "prPath": "/system/builder/.build/validatebuildresponse.pr"
                   },
                   "type": "goal.call"
                 }
@@ -2444,13 +2456,13 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildGoal.goal",
-      "prPath": "/.build/buildgoal.pr",
+      "path": "/system/builder/BuildGoal.goal",
+      "prPath": "/system/builder/.build/buildgoal.pr",
       "hash": "4a9dd3d176800126194ad034b8cd774a3f3edd3c2c7fc0ca692f2c8182e4fa75",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     },
@@ -2461,10 +2473,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Build error: %!error.Message%\u0022",
+          "text": "write out \"  Build error: %!error.Message%\"",
           "lineNumber": 77,
           "indent": 0,
-          "comment": "Capture error into the parent trace and save it. Parent\u0027s %trace% is in\nscope because BuildGoal created it before calling BuildGoalCore.\nThe error is tagged on the failing pass itself so the viewer can tie the\nbuildError to the specific goal (parent vs. specific sub-goal).",
+          "comment": "Capture error into the parent trace and save it. Parent's %trace% is in\nscope because BuildGoal created it before calling BuildGoalCore.\nThe error is tagged on the failing pass itself so the viewer can tie the\nbuildError to the specific goal (parent vs. specific sub-goal).",
           "actions": [
             {
               "module": "output",
@@ -2481,16 +2493,16 @@
             }
           ],
           "intent": null,
-          "guidance": "Write a human-readable build error line to output. Uses %!error.Message% and is tagged as tstring in the known mapping.",
+          "guidance": "Write a formatted build error message to output. Uses tstring because it contains %!error.Message% translation candidate.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "set %currentPass.buildError% = {\u0022key\u0022: \u0022%!error.Key%\u0022, \u0022message\u0022: \u0022%!error.Message%\u0022, \u0022statusCode\u0022: %!error.StatusCode%, \u0022details\u0022: %!error.Details%}, type=json",
+          "text": "set %currentPass.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"statusCode\": %!error.StatusCode%, \"details\": %!error.Details%}, type=json",
           "lineNumber": 78,
           "indent": 0,
           "comment": null,
@@ -2513,6 +2525,11 @@
                     "details": "%!error.Details%"
                   },
                   "type": "jsonobject"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -2526,7 +2543,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %currentPass.buildError% to a JSON object containing key/message/statusCode/details. The known mapping shows a list\u003Ckeyvaluepair\u003E JSON value shape.",
+          "guidance": "Set current pass buildError object (key/message/statusCode/details) into %currentPass.buildError% as json.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2535,7 +2552,7 @@
         },
         {
           "index": 2,
-          "text": "set %trace.buildError% = {\u0022key\u0022: \u0022%!error.Key%\u0022, \u0022message\u0022: \u0022%!error.Message%\u0022, \u0022statusCode\u0022: %!error.StatusCode%, \u0022details\u0022: %!error.Details%}, type=json",
+          "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"statusCode\": %!error.StatusCode%, \"details\": %!error.Details%}, type=json",
           "lineNumber": 79,
           "indent": 0,
           "comment": null,
@@ -2558,6 +2575,11 @@
                     "details": "%!error.Details%"
                   },
                   "type": "jsonobject"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -2571,7 +2593,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %trace.buildError% to the same JSON object so the parent trace captures the failure.",
+          "guidance": "Set parent trace buildError object into %trace.buildError% as json.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2639,9 +2661,9 @@
             }
           ],
           "intent": null,
-          "guidance": "If %trace.pass1% is null, initialize it to %currentPass%. This is a conditional branch with a variable assignment in the then-body.",
+          "guidance": "If %trace.pass1% is null, initialize it to %currentPass%.",
           "level": "high",
-          "confidence": 88,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2708,14 +2730,14 @@
           "intent": null,
           "guidance": "If %trace.pass1% is not null, append %currentPass% to %trace.subGoals%.",
           "level": "high",
-          "confidence": 80,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 5,
-          "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027",
+          "text": "save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'",
           "lineNumber": 82,
           "indent": 0,
           "comment": null,
@@ -2740,9 +2762,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Persist the updated %trace% object to the build traces file path.",
+          "guidance": "Persist the updated trace to the build traces directory as a JSON file.",
           "level": "high",
-          "confidence": 92,
+          "confidence": 93,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2774,9 +2796,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Rethrow the captured error message with a 500 status code.",
+          "guidance": "Rethrow the captured error so the build fails with the same message and status code.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 88,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2784,25 +2806,25 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildGoal.goal",
-      "prPath": "/.build/buildgoal.pr",
+      "path": "/system/builder/BuildGoal.goal",
+      "prPath": "/system/builder/.build/buildgoal.pr",
       "hash": "405f392540956d59c52258c6b2cf4c6db27450d1c8375c2081f071916d63429a",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": false,
+      "isSystem": true,
       "isTest": false,
       "inputParameters": null
     }
   ],
   "visibility": 1,
-  "path": "/BuildGoal.goal",
-  "prPath": "/.build/buildgoal.pr",
+  "path": "/system/builder/BuildGoal.goal",
+  "prPath": "/system/builder/.build/buildgoal.pr",
   "hash": "12837b61884a18129808811ed786d82e8910187f935a536730a7cc30dfa6603e",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false,
   "inputParameters": null
 }

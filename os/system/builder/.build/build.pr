@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \u0022.\u0022",
+      "text": "set default %path% = \".\"",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -117,7 +117,7 @@
     },
     {
       "index": 3,
-      "text": "write out \u0022Building path: %path%\u0022",
+      "text": "write out \"Building path: %path%\"",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -252,7 +252,7 @@
     },
     {
       "index": 6,
-      "text": "write out \u0022Found %goals.Count% goals\u0022",
+      "text": "write out \"Found %goals.Count% goals\"",
       "lineNumber": 12,
       "indent": 0,
       "comment": null,
@@ -297,7 +297,7 @@
             },
             {
               "name": "ItemName",
-              "value": "goal",
+              "value": "%goal%",
               "type": "variable"
             },
             {
@@ -319,14 +319,9 @@
                 "name": "BuildGoal",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/buildgoal.pr"
+                "prPath": null
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "%goal%",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -334,7 +329,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %goals% and for each item call the BuildGoal goal, binding the loop item to the parameter name \u0027item\u0027 as %goal%.",
+      "guidance": "Iterate over %goals% and for each item call the BuildGoal goal, binding the loop item to the parameter name 'item' as %goal%.",
       "level": "medium",
       "confidence": 70,
       "formal": null,
@@ -343,7 +338,7 @@
     },
     {
       "index": 8,
-      "text": "save %traceGoals% to file \u0027/.build/traces/%!trace.id%/manifest.json\u0027",
+      "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
       "lineNumber": 14,
       "indent": 0,
       "comment": null,
@@ -401,13 +396,13 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Build.goal",
-  "prPath": "/.build/build.pr",
+  "path": "/system/builder/Build.goal",
+  "prPath": "/system/builder/.build/build.pr",
   "hash": "9f79609e43e63702ef6ec4a0100bed7a4b10099d36d0e009c4fe254c5aa21b09",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
-  "isSystem": false,
+  "isSystem": true,
   "isTest": false,
   "inputParameters": null
 }
