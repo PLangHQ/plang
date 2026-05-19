@@ -117,9 +117,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %stepResults.steps% and call ValidateStep for each item, passing the current step as the \u0027item\u0027 parameter. This matches the known mapping and ensures per-step validation.",
+      "guidance": "Iterate over %stepResults.steps% and call ValidateStep for each item, passing the current step as parameter item=%step%.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -187,9 +187,9 @@
             }
           ],
           "intent": null,
-          "guidance": "If %step.keep% is true, validate using the kept-step validator goal. This step is annotated @known, so emit only the keep directive.",
+          "guidance": "If %step.keep% is true, validate the kept step by calling ValidateKeptStep. This matches the @known mapping exactly.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -250,9 +250,9 @@
             }
           ],
           "intent": null,
-          "guidance": "If %step.keep% is not true, validate using the built-step validator goal. This step is annotated @known, so emit only the keep directive.",
+          "guidance": "Else-if %step.keep% is not true, validate the built step by calling ValidateBuiltStep. This matches the @known mapping exactly.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -260,8 +260,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/ValidateBuildResponse.goal",
-      "prPath": "/builder/.build/validatebuildresponse.pr",
+      "path": "/ValidateBuildResponse.goal",
+      "prPath": "/.build/validatebuildresponse.pr",
       "hash": "860361585180a352d8424e30c81603b5aaa8a68564cc274c98d81da23103605e",
       "builderVersion": null,
       "isSetup": false,
@@ -332,7 +332,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check the keep:true invariant: if %step.actions% is not empty, then throw an error. This matches the @known mapping exactly.",
+          "guidance": "Use a condition to check that %step.actions% is not empty; if it is not empty, throw an error. This enforces that keep:true steps must reuse prior mappings and must not also emit fresh actions.",
           "level": "high",
           "confidence": 98,
           "formal": null,
@@ -396,7 +396,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check the second invariant: if the prior .pr has zero actions for this step index, throw an error. This matches the @known mapping exactly.",
+          "guidance": "Use a condition to check that the prior .pr step actions count is 0; if so, throw an error. This enforces that keep:true requires a prior mapping that was offered as @known.",
           "level": "high",
           "confidence": 98,
           "formal": null,
@@ -406,8 +406,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/ValidateBuildResponse.goal",
-      "prPath": "/builder/.build/validatebuildresponse.pr",
+      "path": "/ValidateBuildResponse.goal",
+      "prPath": "/.build/validatebuildresponse.pr",
       "hash": "e34d7d8b9b1478512882be36f95584d641eecc36dd8bfd85d33740c6d82b4b91",
       "builderVersion": null,
       "isSetup": false,
@@ -478,9 +478,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Check whether %step.actions% is empty; if so, throw the specified error message. This matches the @known mapping exactly.",
+          "guidance": "Check whether %step.actions% is empty; if so, throw a structured error message referencing the step index.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -507,7 +507,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Validate the step\u0027s action list against the known action catalog. This matches the @known mapping exactly.",
+          "guidance": "Validate the step\u0027s action list structure against the known action catalog using builder.validate.",
           "level": "high",
           "confidence": 98,
           "formal": null,
@@ -517,8 +517,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/ValidateBuildResponse.goal",
-      "prPath": "/builder/.build/validatebuildresponse.pr",
+      "path": "/ValidateBuildResponse.goal",
+      "prPath": "/.build/validatebuildresponse.pr",
       "hash": "b2e200426beecddaf6502e98a372d105d388bd36c1e77e099c1b194714968b66",
       "builderVersion": null,
       "isSetup": false,
@@ -529,8 +529,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/builder/ValidateBuildResponse.goal",
-  "prPath": "/builder/.build/validatebuildresponse.pr",
+  "path": "/ValidateBuildResponse.goal",
+  "prPath": "/.build/validatebuildresponse.pr",
   "hash": "fa4b4092e4bda15de8db1d02a031aa3dbcc82c33b3d987e463469f7e7c949a6d",
   "builderVersion": "0.2.2",
   "isSetup": false,

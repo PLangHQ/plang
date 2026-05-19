@@ -295,6 +295,16 @@
               "action": "handle",
               "parameters": [
                 {
+                  "name": "RetryCount",
+                  "value": 2,
+                  "type": "int"
+                },
+                {
+                  "name": "Order",
+                  "value": "RetryFirst",
+                  "type": "errororder"
+                },
+                {
                   "name": "Actions",
                   "value": [
                     {
@@ -314,11 +324,6 @@
                     }
                   ],
                   "type": "list\u00601"
-                },
-                {
-                  "name": "RetryCount",
-                  "value": 2,
-                  "type": "int"
                 }
               ],
               "defaults": [
@@ -334,9 +339,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Wrap the goal call QueryAndValidateBuildStep with error handling that calls BuildStepFixer on error, and retry up to 2 times. This matches the step text: \u0027on error call BuildStepFixer, then retry 2 times\u0027.",
+      "guidance": "Call QueryAndValidateBuildStep. Wrap it with error.handle so that on any error the recovery chain calls BuildStepFixer, and retry the wrapped goal up to 2 times. This matches the step text: \u0027on error call BuildStepFixer, then retry 2 times\u0027.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -468,9 +473,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Run llm.query using provided Messages and Schema, optionally cache based on %!build.cache%, then write the LLM response to %result% via variable.set.",
+          "guidance": "Run llm.query with provided Messages and JSON Schema for the build-step validation response. Apply cache modifier using the provided %!build.cache% flag, then store the response into %result%.",
           "level": "high",
-          "confidence": 78,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -551,7 +556,7 @@
           "intent": null,
           "guidance": "Persist %trace% to the specified JSON file path using file.save.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -583,9 +588,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call the goal ValidateBuildStepResult to validate the LLM-produced build step result.",
-          "level": "high",
-          "confidence": 90,
+          "guidance": "Call the goal ValidateBuildStepResult (non-parallel) to validate the produced build-step result.",
+          "level": "medium",
+          "confidence": 55,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -623,9 +628,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the current step\u0027s Actions field in %goal.Steps[stepResult.index]% to %result.actions% using variable.set.",
+          "guidance": "Set the Actions field for the current step in the goal steps structure to %result.actions% by assigning it to %goal.Steps[stepResult.index].Actions%.",
           "level": "high",
-          "confidence": 88,
+          "confidence": 85,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -652,9 +657,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Validate the produced action list against the known action catalog using builder.validate.",
+          "guidance": "Run builder.validate on the actions list stored in %goal.Steps[stepResult.index].Actions%.",
           "level": "high",
-          "confidence": 93,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -662,8 +667,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/BuildStep.goal",
-      "prPath": "/builder/.build/buildstep.pr",
+      "path": "/BuildStep.goal",
+      "prPath": "/.build/buildstep.pr",
       "hash": "1af310776775e31d83b7e167f5a6ffd2e4897c5ddee46cd7be1e09c59a012f81",
       "builderVersion": null,
       "isSetup": false,
@@ -748,7 +753,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %messages% to a JSON array containing system/user llm messages. The value is an inline JSON structure, so it must be emitted with type=json.",
+          "guidance": "Set %messages% to the provided JSON array containing system/user llm messages. This is a variable assignment with an inline JSON array, so Value must be typed as json.",
           "level": "high",
           "confidence": 96,
           "formal": null,
@@ -758,8 +763,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/BuildStep.goal",
-      "prPath": "/builder/.build/buildstep.pr",
+      "path": "/BuildStep.goal",
+      "prPath": "/.build/buildstep.pr",
       "hash": "59908509f12cd020877901df91e41c7061ecdd0e468f404240a11d4af1b8cc0c",
       "builderVersion": null,
       "isSetup": false,
@@ -828,7 +833,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If %result.errors% is not empty, run ThrowBuildStepErrors. The @known mapping indicates the exact prior structure should be reused.",
+          "guidance": "If %result.errors% is not empty, branch and call ThrowBuildStepErrors. The @known mapping indicates the condition is compiled as an isempty check with Negate=true.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -885,7 +890,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Iterate over %result.actions% and validate each action\u0027s errors by calling ValidateActionErrors with item=%action%. The @known mapping indicates the exact prior structure should be reused.",
+          "guidance": "Iterate over %result.actions% and validate each action by calling ValidateActionErrors with item=%action%. The @known mapping specifies loop.foreach with ItemName bound to variable action.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -895,8 +900,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/BuildStep.goal",
-      "prPath": "/builder/.build/buildstep.pr",
+      "path": "/BuildStep.goal",
+      "prPath": "/.build/buildstep.pr",
       "hash": "50919f867a0fb739d0a9b30038c369e5320d99e1c6d0b6c871ef91acfca45527",
       "builderVersion": null,
       "isSetup": false,
@@ -942,8 +947,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/BuildStep.goal",
-      "prPath": "/builder/.build/buildstep.pr",
+      "path": "/BuildStep.goal",
+      "prPath": "/.build/buildstep.pr",
       "hash": "b4873e938e58a1d2b48d06273b41c9dc0e242b7b580cb44936c20f5849e05f79",
       "builderVersion": null,
       "isSetup": false,
@@ -1012,7 +1017,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check whether %action.errors% is empty; Negate=true means the body runs when errors are NOT empty. Then call the goal ThrowActionErrors.",
+          "guidance": "Use condition.if to check that %action.errors% is not empty by negating an isempty comparison. If true, call the goal ThrowActionErrors (non-parallel).",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -1022,8 +1027,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/BuildStep.goal",
-      "prPath": "/builder/.build/buildstep.pr",
+      "path": "/BuildStep.goal",
+      "prPath": "/.build/buildstep.pr",
       "hash": "45f9b67164d4e1ebe4a426858a19b647d336332a9add63e2ac0deb4f6d697a59",
       "builderVersion": null,
       "isSetup": false,
@@ -1069,8 +1074,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/BuildStep.goal",
-      "prPath": "/builder/.build/buildstep.pr",
+      "path": "/BuildStep.goal",
+      "prPath": "/.build/buildstep.pr",
       "hash": "cdd9a59ed54a63a531cc834aea73c8a8c40622a67b04c84b35910a8c8e1cdc8f",
       "builderVersion": null,
       "isSetup": false,
@@ -1145,9 +1150,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Throw the provided error object as a structured error. Use the error\u0027s Message and Key fields for the error.throw parameters, and default StatusCode to 500 as specified.",
+          "guidance": "Throw the error object from %!error% using error.throw, mapping Message/StatusCode/Key from the error fields.",
           "level": "high",
-          "confidence": 78,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -1155,8 +1160,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/BuildStep.goal",
-      "prPath": "/builder/.build/buildstep.pr",
+      "path": "/BuildStep.goal",
+      "prPath": "/.build/buildstep.pr",
       "hash": "a97ecf4c75101c5dd733428c3bb934b009dc4b4bab26d3ab4b76e0583f6f0133",
       "builderVersion": null,
       "isSetup": false,
@@ -1167,8 +1172,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/builder/BuildStep.goal",
-  "prPath": "/builder/.build/buildstep.pr",
+  "path": "/BuildStep.goal",
+  "prPath": "/.build/buildstep.pr",
   "hash": "04528a140349e9b6813e722e9291b763e22446efa08e0a822d341ac780cd1c30",
   "builderVersion": "0.2.2",
   "isSetup": false,

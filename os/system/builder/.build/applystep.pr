@@ -59,9 +59,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Branch: if %stepResult.keep% == true, apply the kept step by calling ApplyKeptStep. This step is marked @known, so reuse prior mapping.",
+      "guidance": "If %stepResult.keep% is true, route to ApplyKeptStep. This matches the @known mapping and should be kept as-is.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -121,9 +121,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Branch: if %stepResult.keep% != true (i.e., negate the keep==true condition), apply the built step by calling ApplyBuiltStep. This step is marked @known, so reuse prior mapping.",
+      "guidance": "If %stepResult.keep% is not true, route to ApplyBuiltStep. This matches the @known mapping and should be kept as-is.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -172,8 +172,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/ApplyStep.goal",
-      "prPath": "/builder/.build/applystep.pr",
+      "path": "/ApplyStep.goal",
+      "prPath": "/.build/applystep.pr",
       "hash": "e333486ac6233a0a30c2e93c2af202d4c33e6f264a8b5fcc4beef45020601d8e",
       "builderVersion": null,
       "isSetup": false,
@@ -303,9 +303,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Merge the LLM-produced step result into the existing goal step at stepResult.index, then write the merged step back into %goal.Steps[stepResult.index]% by setting the variable to the merge output.",
+          "guidance": "Merge the LLM step result into the existing goal step at %stepResult.index%, then assign the merged step back into %goal.Steps[stepResult.index]% via variable.set.",
           "level": "high",
-          "confidence": 93,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -366,9 +366,9 @@
             }
           ],
           "intent": null,
-          "guidance": "If the built step\u0027s level is not \u0027high\u0027, call BuildStep to refine it. The @known mapping indicates the exact condition and goal.call shape.",
+          "guidance": "If the LLM step level is not \u0027high\u0027, call BuildStep to refine the step.",
           "level": "high",
-          "confidence": 92,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -376,8 +376,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/ApplyStep.goal",
-      "prPath": "/builder/.build/applystep.pr",
+      "path": "/ApplyStep.goal",
+      "prPath": "/.build/applystep.pr",
       "hash": "c0d98d2d1c7e1f248db0a70c2c8e0d28d9fa845bc4619e023fd49a30b278bc7a",
       "builderVersion": null,
       "isSetup": false,
@@ -404,8 +404,8 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  Validation error: %!error%",
-                  "type": "string"
+                  "value": "  Validation error: %!error.Message%",
+                  "type": "tstring"
                 }
               ],
               "defaults": null,
@@ -413,7 +413,7 @@
             }
           ],
           "intent": null,
-          "guidance": "write out the validation error message to output. The @known mapping indicates this step is exactly output.write with the provided Data string.",
+          "guidance": "Write the validation error message to output. The step text includes %!error.Message% which should be passed through as the Data payload.",
           "level": "high",
           "confidence": 98,
           "formal": null,
@@ -453,9 +453,9 @@
             }
           ],
           "intent": null,
-          "guidance": "set the goal step\u0027s validationError variable to the current error object. The @known mapping indicates variable.set Name to %goal.Steps[stepResult.index].validationError% and Value to %!error%.",
+          "guidance": "Set the validationError variable for the specific step index from the current error (%!error%).",
           "level": "high",
-          "confidence": 96,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -487,7 +487,7 @@
             }
           ],
           "intent": null,
-          "guidance": "call BuildStep goal. The @known mapping indicates a goal.call with name BuildStep and parallel=false, plus prPath provided by the builder hint.",
+          "guidance": "Call the BuildStep goal (non-parallel) using the provided prPath metadata from the known mapping.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -497,8 +497,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/builder/ApplyStep.goal",
-      "prPath": "/builder/.build/applystep.pr",
+      "path": "/ApplyStep.goal",
+      "prPath": "/.build/applystep.pr",
       "hash": "d44ef719ec271b3d4a9ab83019aa388ac185a38f3b7d3808dd9e7949b348d70c",
       "builderVersion": null,
       "isSetup": false,
@@ -509,8 +509,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/builder/ApplyStep.goal",
-  "prPath": "/builder/.build/applystep.pr",
+  "path": "/ApplyStep.goal",
+  "prPath": "/.build/applystep.pr",
   "hash": "a35056ab5e95d7b508f7c72693b636f9b6d251acc1548e569e5ffc0311f0bd24",
   "builderVersion": "0.2.2",
   "isSetup": false,

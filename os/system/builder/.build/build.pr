@@ -154,7 +154,13 @@
         {
           "module": "builder",
           "action": "load",
-          "parameters": [],
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "%path%",
+              "type": "string"
+            }
+          ],
           "defaults": null,
           "modifiers": []
         },
@@ -165,7 +171,7 @@
             {
               "name": "Name",
               "value": "%app%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -173,14 +179,20 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Load app-level build context from the directory in %path%, then store the returned object into %app% via variable.set.",
+      "level": "high",
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -212,7 +224,7 @@
             {
               "name": "Name",
               "value": "%goals%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -220,14 +232,20 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Discover/load all goal files from %path% into %goals% by calling builder.goals and assigning its output to %goals%.",
+      "level": "high",
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -254,9 +272,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Write a message to output including the goal count. %goals.Count% is used as a runtime expression inside the tstring.",
+      "level": "high",
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -275,12 +293,17 @@
             {
               "name": "Collection",
               "value": "%goals%",
-              "type": "object"
+              "type": "list"
             },
             {
               "name": "ItemName",
               "value": "goal",
-              "type": "string"
+              "type": "variable"
+            },
+            {
+              "name": "KeyName",
+              "value": "key",
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -293,9 +316,17 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "BuildGoal"
+                "name": "BuildGoal",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/.build/buildgoal.pr"
               },
               "type": "goal.call"
+            },
+            {
+              "name": "Actor",
+              "value": "%goal%",
+              "type": "actor"
             }
           ],
           "defaults": null,
@@ -303,9 +334,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Iterate over %goals% and for each item call the BuildGoal goal, binding the loop item to the parameter name \u0027item\u0027 as %goal%.",
+      "level": "medium",
+      "confidence": 70,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -337,9 +368,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Save the trace list %traceGoals% to the specified manifest.json path. Use file.save with the target path and the produced value from %traceGoals%.",
+      "guidance": "Save the %traceGoals% value to the manifest.json file under /.build/traces/%!trace.id%/.",
       "level": "high",
-      "confidence": 78,
+      "confidence": 88,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -370,8 +401,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/builder/Build.goal",
-  "prPath": "/builder/.build/build.pr",
+  "path": "/Build.goal",
+  "prPath": "/.build/build.pr",
   "hash": "9f79609e43e63702ef6ec4a0100bed7a4b10099d36d0e009c4fe254c5aa21b09",
   "builderVersion": "0.2.2",
   "isSetup": false,
