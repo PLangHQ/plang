@@ -4,6 +4,20 @@ How to rebuild PLang's own builder (`os/system/builder/`) — the part written i
 
 The reliability notes at the bottom of this file describe ongoing work to make the LLM-driven compile more deterministic — read those if you're touching builder prompts or the validator. If you just need to rebuild, the recipe is right here.
 
+## The cardinal rule
+
+**Never hand-edit a builder `.pr` file after a self-rebuild has produced an error.**
+
+If you self-rebuild the builder and notice the output is wrong — an action is mis-bound, a parameter is missing, a `goal.call` got a CLR type name, anything — **scream the error**. Surface it. Make it noisy. The fix belongs in:
+
+- the LLM prompt (`os/system/builder/llm/*.llm`), or
+- the validator (`PLang/app/modules/builder/code/Default.cs:Validate`), or
+- the action catalog / type teaching (`os/system/actions/v2/summary.md`, `PLang/app/data/types.cs`).
+
+**Never** in the `.pr` file. Editing the `.pr` after a bad rebuild masks the bug, lets the same LLM mistake reappear next rebuild, and corrupts the source of truth (the builder produces `.pr` — the `.pr` is downstream of the builder, not a place to compensate for it).
+
+The one exception is the *initial bootstrap* when source `.goal` semantics change faster than the builder can re-derive them — that's documented in the pre-flight audit below and is a one-time hand-patch before the first successful rebuild, not a post-build cleanup.
+
 ## The recipe
 
 ```bash
@@ -66,14 +80,14 @@ cd Tests/Simple && plang build
 
 Should report `Saved Start` with no LLM re-call (`Kept prior mapping for step N` for every step). If that fails, the just-rebuilt builder has a real regression and the change should be reverted before pushing.
 
-## Known LLM regressions to strip post-rebuild
+## Known LLM regressions — fix upstream, do not strip
 
-These are deterministic LLM mistakes the prompt hasn't fixed yet. Every self-rebuild reintroduces them; strip after each build until the prompt is tightened.
+These are deterministic LLM mistakes the current prompts emit on self-rebuild. Per the cardinal rule, **do not hand-strip them from the `.pr`**. The fix is in the prompt or the validator. List exists so the next person touching builder prompts knows what to target.
 
-- **`Actor=%goal%` / `Actor=%action%` on `goal.call`** — described above. Surfaces on every `foreach X, call Y, item=%var%` step. Strip the `Actor` entry from the action's `parameters`.
-- **`goal.call.Name='goal.call'`** — the LLM occasionally drops the action type name as the `Name` of a `goal.call`'s GoalCall value. The validator's type-name guard catches it and `BuildStepFixer` retries (see retry-wrap on `BuildStep.goal` step 5); usually self-heals.
+- **`Actor=%goal%` / `Actor=%action%` on `goal.call`** — appears on every `foreach X, call Y, item=%var%` step. The LLM mis-binds `%var%` as the `Actor` parameter of `goal.call` instead of recognising it as the foreach `ItemName`. Fix candidate: tighten `BuildGoal.llm` / `BuildStep.llm` examples on the foreach+call pattern, or have the validator reject `goal.call` with `Actor` set and force a retry.
+- **`goal.call.Name='goal.call'`** — the LLM occasionally drops the action type name as the `Name` of a `goal.call`'s GoalCall value. The validator's type-name guard already catches it and `BuildStepFixer` retries (see retry-wrap on `BuildStep.goal` step 5) — usually self-heals on the second pass.
 
-If you fix the prompt so one of these stops happening, delete the corresponding line from this list.
+When you fix the prompt so one of these stops happening, delete the corresponding line.
 
 ## Related files
 
