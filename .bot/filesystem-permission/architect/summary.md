@@ -15,15 +15,27 @@ After the verification pass surfaced that `error.handle` doesn't have a built-in
 - **Snapshot for in-memory grants deferred.** Known limitation: "y" (session) grants don't survive snapshot/restore. Acceptable for v1.
 - **Per-actor lock dropped.** Two concurrent asks against one actor may both prompt; revisit if real.
 
-### Stage status
+### Stage status (2026-05-19 fourth pass: stage 2 split into 2a + 2b)
 
 | Stage | File | Status |
 |-------|------|--------|
 | 1 | [Permission types](stage-1-permission-types.md) | pending |
-| 2 | [PermissionAskCallback](stage-2-permission-ask-callback.md) | pending |
+| 2a | [Callback round-trip (engine + serializer)](stage-2a-callback-roundtrip.md) | pending |
+| 2b | [PermissionAskCallback](stage-2b-permission-ask-callback.md) | pending (depends on 2a) |
 | 3 | [Storage binding](stage-3-storage-binding.md) | pending |
 | 4 | [Filesystem surface (bundle)](stage-4-filesystem-surface.md) | pending |
 | 5 | [Messages end-to-end + final consent UI](stage-5-messages-end-to-end.md) | pending |
+
+**Why split:** investigation showed stage 2 mashed two different concerns. Stage 2a is generic runtime — fixes mid-goal `output.ask` along the way, no permission types involved. Stage 2b is permission-specific and rides on 2a's foundation. Different reviewers might fit each.
+
+**Stage 2a deliverables (generic):**
+1. `IsCallback` extension method on `System.Type` (predicate knows ICallback; nothing else does).
+2. Step-loop short-circuit in `Steps/this.cs:RunAsync` on `result.Type?.ClrType?.IsCallback() == true`.
+3. Resume continuation in `ICallback.Run` — runs the suspended action, then continues steps from `Position.StepIndex + 1`.
+4. Typed-Value reconstruction in `Plang/Data.cs` inbound — uses `env.Type` → `App.Types.Clr(name)` → deserialize `env.Value` into that CLR type.
+5. Cleanup: drop `ICallback.Serialize` and per-callback static `Deserialize`. Interface shrinks to `Position` + `Run`. Wire serialization is the channel's job, not the callback's.
+
+HTTP/Web channel construction is parked — stage 2a is channel-agnostic.
 
 ## 2026-05-19 (continued) — design walkthrough with Ingi; further refinements
 
