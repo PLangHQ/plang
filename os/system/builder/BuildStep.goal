@@ -2,9 +2,9 @@ BuildStep
 / Builds a step that needs detailed action info
 / Action suggestions (module + action) already on step from BuildGoal
 - set %step% = %goal.Steps[stepResult.index]%
-- render template "/system/builder/templates/v2/stepForLlm.template", write to %stepForLlm%
-- render template "/system/builder/templates/v2/stepActionDetails.template", write to %actionDetails%
-- render template "/system/builder/llm/BuildStep.llm", write to %buildStepPrompt%
+- render template "/system/builder/llm/BuildStep.user.llm", write to %stepForLlm%
+- render template "/system/builder/llm/BuildStep.actionDetails.partial.llm", write to %actionDetails%
+- render template "/system/builder/llm/BuildStep.system.llm", write to %buildStepPrompt%
 - set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"%stepForLlm%"}], type=json
 / Wrap llm.query + Validate together so the retry surface catches BOTH
 / malformed-JSON (llm.query throws) and validator failures (type-name guard,

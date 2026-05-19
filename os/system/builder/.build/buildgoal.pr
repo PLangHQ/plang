@@ -877,7 +877,7 @@
         },
         {
           "index": 4,
-          "text": "render template \"/system/builder/templates/v2/goalFormatForLlm.template\", write to %goalForLlm%",
+          "text": "render template \"/system/builder/llm/BuildGoal.user.llm\", write to %goalForLlm%",
           "lineNumber": 30,
           "indent": 0,
           "comment": null,
@@ -888,7 +888,7 @@
               "parameters": [
                 {
                   "name": "Template",
-                  "value": "/system/builder/templates/v2/goalFormatForLlm.template",
+                  "value": "/system/builder/llm/BuildGoal.user.llm",
                   "type": "string"
                 },
                 {
@@ -935,7 +935,7 @@
         },
         {
           "index": 5,
-          "text": "render template \"/system/builder/llm/BuildGoal.llm\", write to %buildGoalPrompt%",
+          "text": "render template \"/system/builder/llm/BuildGoal.system.llm\", write to %buildGoalPrompt%",
           "lineNumber": 31,
           "indent": 0,
           "comment": null,
@@ -946,7 +946,7 @@
               "parameters": [
                 {
                   "name": "Template",
-                  "value": "/system/builder/llm/BuildGoal.llm",
+                  "value": "/system/builder/llm/BuildGoal.system.llm",
                   "type": "string"
                 },
                 {

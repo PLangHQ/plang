@@ -27,8 +27,8 @@ BuildGoalCore
 - builder.actions, write to %actions%
 - builder.types, write to %typeInfo%
 - render template "/system/actions/v2/summary.md", write to %actionSummary%
-- render template "/system/builder/templates/v2/goalFormatForLlm.template", write to %goalForLlm%
-- render template "/system/builder/llm/BuildGoal.llm", write to %buildGoalPrompt%
+- render template "/system/builder/llm/BuildGoal.user.llm", write to %goalForLlm%
+- render template "/system/builder/llm/BuildGoal.system.llm", write to %buildGoalPrompt%
 - set %messages% = [{"Role":"system", "Content":"%buildGoalPrompt%"}, {"Role":"user", "Content":"%goalForLlm%"}], type=json
 - llm.query Messages=%messages%, Schema={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, keep?: bool, guidance?: string, formal?: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level?: string, confidence?: int}]}, cache=%!build.cache%, write to %stepResults%
 - builder.validateResponse stepResults=%stepResults%, goal=%goal%, on error call LlmFixer
