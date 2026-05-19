@@ -8,7 +8,7 @@
       "text": "set %step% = %goal.Steps[stepResult.index]%",
       "lineNumber": 4,
       "indent": 0,
-      "comment": "Builds a step that needs detailed action info\nAction suggestions (module + action) already on step from BuildGoal",
+      "comment": "Builds a step that needs detailed action info\nAction suggestions (module \u002B action) already on step from BuildGoal",
       "actions": [
         {
           "module": "variable",
@@ -45,7 +45,7 @@
     },
     {
       "index": 1,
-      "text": "render template \"/system/builder/templates/v2/stepForLlm.template\", write to %stepForLlm%",
+      "text": "render template \u0022/system/builder/templates/v2/stepForLlm.template\u0022, write to %stepForLlm%",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -103,7 +103,7 @@
     },
     {
       "index": 2,
-      "text": "render template \"/system/builder/templates/v2/stepActionDetails.template\", write to %actionDetails%",
+      "text": "render template \u0022/system/builder/templates/v2/stepActionDetails.template\u0022, write to %actionDetails%",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -161,7 +161,7 @@
     },
     {
       "index": 3,
-      "text": "render template \"/system/builder/llm/BuildStep.llm\", write to %buildStepPrompt%",
+      "text": "render template \u0022/system/builder/llm/BuildStep.llm\u0022, write to %buildStepPrompt%",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -219,7 +219,7 @@
     },
     {
       "index": 4,
-      "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildStepPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%stepForLlm%\"}], type=json",
+      "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildStepPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%stepForLlm%\u0022}], type=json",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -245,7 +245,7 @@
                   "Content": "%stepForLlm%"
                 }
               ],
-              "type": "list<jsonnode>"
+              "type": "list\u003Cjsonnode\u003E"
             }
           ],
           "defaults": [
@@ -259,7 +259,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Construct the LLM messages array (system + user) as JSON and store it in %messages%.",
+      "guidance": "Construct the LLM messages array (system \u002B user) as JSON and store it in %messages%.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -271,7 +271,7 @@
       "text": "call QueryAndValidateBuildStep, on error call BuildStepFixer, then retry 2 times",
       "lineNumber": 13,
       "indent": 0,
-      "comment": "Wrap llm.query + Validate so retry catches BOTH malformed-JSON and validator failures.",
+      "comment": "Wrap llm.query \u002B Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and validator failures (type-name guard,\nunknown action, missing required param). BuildStepFixer re-prompts with\nthe error message; runtime retries the wrapped goal up to 2 times.",
       "actions": [
         {
           "module": "goal",
@@ -313,7 +313,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u00601"
                 },
                 {
                   "name": "RetryCount",
@@ -334,9 +334,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Call QueryAndValidateBuildStep with on-error call BuildStepFixer, retry 2 times.",
+      "guidance": "Wrap the goal call QueryAndValidateBuildStep with error handling that calls BuildStepFixer on error, and retry up to 2 times. This matches the step text: \u0027on error call BuildStepFixer, then retry 2 times\u0027.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -350,8 +350,8 @@
       "steps": [
         {
           "index": 0,
-          "text": "llm.query Messages=%messages%, Schema={errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}, cache=%!build.cache%, on error call HandleBuildStepFailure, write to %result%",
-          "lineNumber": 9,
+          "text": "llm.query Messages=%messages%, Schema={errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}]}, cache=%!build.cache%, write to %result%",
+          "lineNumber": 16,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -362,7 +362,7 @@
                 {
                   "name": "Messages",
                   "value": "%messages%",
-                  "type": "list<llmmessage>"
+                  "type": "list\u003Cllmmessage\u003E"
                 },
                 {
                   "name": "Schema",
@@ -405,17 +405,12 @@
                       }
                     ]
                   },
-                  "type": "list<keyvaluepair>"
+                  "type": "jsonobject"
                 },
                 {
                   "name": "Cache",
                   "value": "%!build.cache%",
                   "type": "bool"
-                },
-                {
-                  "name": "OnToolCall",
-                  "value": null,
-                  "type": "goal.call"
                 }
               ],
               "defaults": [
@@ -473,9 +468,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call llm.query using the prepared %messages% and a schema describing errors/warnings/actions. Apply cache modifier from %build.cache%. On error, run recovery goal HandleBuildStepFailure via error.handle Actions chain, then store %__data__% into %result%.",
-          "level": "medium",
-          "confidence": 55,
+          "guidance": "Run llm.query using provided Messages and Schema, optionally cache based on %!build.cache%, then write the LLM response to %result% via variable.set.",
+          "level": "high",
+          "confidence": 78,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -483,7 +478,7 @@
         {
           "index": 1,
           "text": "add {stepIndex: %stepResult.index%, stepText: %step.Text%, level: %stepResult.level%, system: %buildStepPrompt%, user: %stepForLlm%, response: %result%} to %trace.detailPasses%",
-          "lineNumber": 10,
+          "lineNumber": 17,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -494,7 +489,7 @@
                 {
                   "name": "ListName",
                   "value": "%trace.detailPasses%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -520,17 +515,17 @@
             }
           ],
           "intent": null,
-          "guidance": "Append a detailed trace entry (step index/text/level/system/user/response) into %trace.detailPasses% list.",
+          "guidance": "Append a trace detail pass object to %trace.detailPasses% using list.add. The step text constructs an object containing stepIndex, stepText, level, system, user, and response.",
           "level": "high",
-          "confidence": 78,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 2,
-          "text": "save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'",
-          "lineNumber": 11,
+          "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027",
+          "lineNumber": 18,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -554,7 +549,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Persist the %trace% object to a JSON file under /.build/traces/<trace.id>/<trace.goal.name>.json.",
+          "guidance": "Persist %trace% to the specified JSON file path using file.save.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -564,7 +559,7 @@
         {
           "index": 3,
           "text": "call ValidateBuildStepResult",
-          "lineNumber": 12,
+          "lineNumber": 19,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -588,9 +583,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call ValidateBuildStepResult goal to validate the LLM-produced step actions.",
-          "level": "medium",
-          "confidence": 55,
+          "guidance": "Call the goal ValidateBuildStepResult to validate the LLM-produced build step result.",
+          "level": "high",
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -598,7 +593,7 @@
         {
           "index": 4,
           "text": "set %goal.Steps[stepResult.index].Actions% = %result.actions%",
-          "lineNumber": 13,
+          "lineNumber": 20,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -609,7 +604,7 @@
                 {
                   "name": "Name",
                   "value": "%goal.Steps[stepResult.index].Actions%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -628,9 +623,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Attach the validated actions from %result.actions% back onto the current step definition's Actions field.",
+          "guidance": "Set the current step\u0027s Actions field in %goal.Steps[stepResult.index]% to %result.actions% using variable.set.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 88,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -638,7 +633,7 @@
         {
           "index": 5,
           "text": "builder.validate actions=%goal.Steps[stepResult.index].Actions%",
-          "lineNumber": 14,
+          "lineNumber": 21,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -649,7 +644,7 @@
                 {
                   "name": "Actions",
                   "value": "%goal.Steps[stepResult.index].Actions%",
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": null,
@@ -657,9 +652,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Validate the final action set against known action schemas using builder.validate.",
+          "guidance": "Validate the produced action list against the known action catalog using builder.validate.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 93,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -667,9 +662,9 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildStep.goal",
-      "prPath": "/.build/buildstep.pr",
-      "hash": "",
+      "path": "/builder/BuildStep.goal",
+      "prPath": "/builder/.build/buildstep.pr",
+      "hash": "1af310776775e31d83b7e167f5a6ffd2e4897c5ddee46cd7be1e09c59a012f81",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -684,10 +679,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \"  Step validation failed: %!error.Message% — retrying...\"",
-          "lineNumber": 1,
+          "text": "write out \u0022  Step validation failed: %!error.Message% \u2014 retrying...\u0022",
+          "lineNumber": 25,
           "indent": 0,
-          "comment": "LLM produced invalid output for a step — retry with error context",
+          "comment": "LLM produced invalid output for a step \u2014 retry with error context",
           "actions": [
             {
               "module": "output",
@@ -695,7 +690,7 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  Step validation failed: %!error.Message% — retrying...",
+                  "value": "  Step validation failed: %!error.Message% \u2014 retrying...",
                   "type": "string"
                 }
               ],
@@ -713,8 +708,8 @@
         },
         {
           "index": 1,
-          "text": "set %messages% = [fixer prompt], type=json",
-          "lineNumber": 2,
+          "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildStepPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response had validation errors:\\n%!error.Message%\\n\\nThe step to build:\\n%stepForLlm%\\n\\nFix the errors above and return the complete corrected response.\u0022}], type=json",
+          "lineNumber": 26,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -725,7 +720,7 @@
                 {
                   "name": "Name",
                   "value": "%messages%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -739,7 +734,7 @@
                       "Content": "Your previous response had validation errors:\n%!error.Message%\n\nThe step to build:\n%stepForLlm%\n\nFix the errors above and return the complete corrected response."
                     }
                   ],
-                  "type": "json"
+                  "type": "jsonarray"
                 }
               ],
               "defaults": [
@@ -753,9 +748,9 @@
             }
           ],
           "intent": null,
-          "guidance": null,
+          "guidance": "Set %messages% to a JSON array containing system/user llm messages. The value is an inline JSON structure, so it must be emitted with type=json.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -763,9 +758,9 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildStep.goal",
-      "prPath": "/.build/buildstep.pr",
-      "hash": "",
+      "path": "/builder/BuildStep.goal",
+      "prPath": "/builder/.build/buildstep.pr",
+      "hash": "59908509f12cd020877901df91e41c7061ecdd0e468f404240a11d4af1b8cc0c",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -781,7 +776,7 @@
         {
           "index": 0,
           "text": "if %result.errors% is not empty, call ThrowBuildStepErrors",
-          "lineNumber": 18,
+          "lineNumber": 30,
           "indent": 0,
           "comment": "Check for top-level and action-level errors from the BuildStep LLM",
           "actions": [
@@ -833,9 +828,9 @@
             }
           ],
           "intent": null,
-          "guidance": "If %result.errors% is not empty, branch conditionally and call ThrowBuildStepErrors. The @known mapping indicates the condition is compiled as isempty-negated.",
+          "guidance": "If %result.errors% is not empty, run ThrowBuildStepErrors. The @known mapping indicates the exact prior structure should be reused.",
           "level": "high",
-          "confidence": 92,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -843,7 +838,7 @@
         {
           "index": 1,
           "text": "foreach %result.actions%, call ValidateActionErrors, item=%action%",
-          "lineNumber": 19,
+          "lineNumber": 31,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -890,7 +885,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Iterate over %result.actions% and call ValidateActionErrors for each item, passing item=%action%. The @known mapping also includes Actor([actor] null).",
+          "guidance": "Iterate over %result.actions% and validate each action\u0027s errors by calling ValidateActionErrors with item=%action%. The @known mapping indicates the exact prior structure should be reused.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -900,8 +895,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildStep.goal",
-      "prPath": "/.build/buildstep.pr",
+      "path": "/builder/BuildStep.goal",
+      "prPath": "/builder/.build/buildstep.pr",
       "hash": "50919f867a0fb739d0a9b30038c369e5320d99e1c6d0b6c871ef91acfca45527",
       "builderVersion": null,
       "isSetup": false,
@@ -917,8 +912,8 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error \"BuildStep failed for step '%step.Text%': %result.errors%\"",
-          "lineNumber": 22,
+          "text": "throw error \u0022BuildStep failed for step \u0027%step.Text%\u0027: %result.errors%\u0022",
+          "lineNumber": 34,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -928,7 +923,7 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "BuildStep failed for step '%step.Text%': %result.errors%",
+                  "value": "BuildStep failed for step \u0027%step.Text%\u0027: %result.errors%",
                   "type": "tstring"
                 }
               ],
@@ -947,8 +942,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildStep.goal",
-      "prPath": "/.build/buildstep.pr",
+      "path": "/builder/BuildStep.goal",
+      "prPath": "/builder/.build/buildstep.pr",
       "hash": "b4873e938e58a1d2b48d06273b41c9dc0e242b7b580cb44936c20f5849e05f79",
       "builderVersion": null,
       "isSetup": false,
@@ -965,7 +960,7 @@
         {
           "index": 0,
           "text": "if %action.errors% is not empty, call ThrowActionErrors",
-          "lineNumber": 25,
+          "lineNumber": 37,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1027,8 +1022,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildStep.goal",
-      "prPath": "/.build/buildstep.pr",
+      "path": "/builder/BuildStep.goal",
+      "prPath": "/builder/.build/buildstep.pr",
       "hash": "45f9b67164d4e1ebe4a426858a19b647d336332a9add63e2ac0deb4f6d697a59",
       "builderVersion": null,
       "isSetup": false,
@@ -1044,8 +1039,8 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error \"Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%\"",
-          "lineNumber": 28,
+          "text": "throw error \u0022Action %action.module%.%action.action% failed for step \u0027%step.Text%\u0027: %action.errors%\u0022",
+          "lineNumber": 40,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1055,7 +1050,7 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%",
+                  "value": "Action %action.module%.%action.action% failed for step \u0027%step.Text%\u0027: %action.errors%",
                   "type": "tstring"
                 }
               ],
@@ -1074,8 +1069,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildStep.goal",
-      "prPath": "/.build/buildstep.pr",
+      "path": "/builder/BuildStep.goal",
+      "prPath": "/builder/.build/buildstep.pr",
       "hash": "cdd9a59ed54a63a531cc834aea73c8a8c40622a67b04c84b35910a8c8e1cdc8f",
       "builderVersion": null,
       "isSetup": false,
@@ -1091,8 +1086,8 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \"  Build step error: %!error.Message%\"",
-          "lineNumber": 31,
+          "text": "write out \u0022  Build step error: %!error.Message%\u0022",
+          "lineNumber": 43,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1121,7 +1116,7 @@
         {
           "index": 1,
           "text": "throw %!error%",
-          "lineNumber": 32,
+          "lineNumber": 44,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1150,9 +1145,9 @@
             }
           ],
           "intent": null,
-          "guidance": "error.throw to fail the step with the structured error message, using the error's message, status code 500, and key from %error%.",
+          "guidance": "Throw the provided error object as a structured error. Use the error\u0027s Message and Key fields for the error.throw parameters, and default StatusCode to 500 as specified.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 78,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -1160,8 +1155,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/BuildStep.goal",
-      "prPath": "/.build/buildstep.pr",
+      "path": "/builder/BuildStep.goal",
+      "prPath": "/builder/.build/buildstep.pr",
       "hash": "a97ecf4c75101c5dd733428c3bb934b009dc4b4bab26d3ab4b76e0583f6f0133",
       "builderVersion": null,
       "isSetup": false,
@@ -1172,9 +1167,9 @@
     }
   ],
   "visibility": 1,
-  "path": "/BuildStep.goal",
-  "prPath": "/.build/buildstep.pr",
-  "hash": "c99f20e5c8ace9596c225e42fb8fe593cf541a25072c1ef8387c86042c628eee",
+  "path": "/builder/BuildStep.goal",
+  "prPath": "/builder/.build/buildstep.pr",
+  "hash": "04528a140349e9b6813e722e9291b763e22446efa08e0a822d341ac780cd1c30",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

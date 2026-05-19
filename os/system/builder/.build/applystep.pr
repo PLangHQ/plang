@@ -59,9 +59,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Branch: if %stepResult.keep% == true, apply the kept step by calling ApplyKeptStep. This matches the @known mapping and should be kept as-is.",
+      "guidance": "Branch: if %stepResult.keep% == true, apply the kept step by calling ApplyKeptStep. This step is marked @known, so reuse prior mapping.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -121,9 +121,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Branch: if %stepResult.keep% == true is false, apply the built step by calling ApplyBuiltStep. This matches the @known mapping and should be kept as-is.",
+      "guidance": "Branch: if %stepResult.keep% != true (i.e., negate the keep==true condition), apply the built step by calling ApplyBuiltStep. This step is marked @known, so reuse prior mapping.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -172,8 +172,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/ApplyStep.goal",
-      "prPath": "/.build/applystep.pr",
+      "path": "/builder/ApplyStep.goal",
+      "prPath": "/builder/.build/applystep.pr",
       "hash": "e333486ac6233a0a30c2e93c2af202d4c33e6f264a8b5fcc4beef45020601d8e",
       "builderVersion": null,
       "isSetup": false,
@@ -229,7 +229,7 @@
                           "modifiers": []
                         }
                       ],
-                      "type": "list\u003Caction\u003E"
+                      "type": "list\u00601"
                     }
                   ],
                   "defaults": [
@@ -245,9 +245,9 @@
             }
           ],
           "intent": null,
-          "guidance": "builder.validate using the provided stepResult.actions. On validation error, recover by calling HandleValidationError via error.handle Actions chain.",
+          "guidance": "Validate the proposed action chain against the registered action catalog. On validation error, recover by calling HandleValidationError via error.handle Actions chain.",
           "level": "high",
-          "confidence": 92,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -303,9 +303,9 @@
             }
           ],
           "intent": null,
-          "guidance": "builder.merge the LLM step result into the existing goal step, then write the merged step back into %goal.Steps[stepResult.index]% by setting the variable to the merge output.",
+          "guidance": "Merge the LLM-produced step result into the existing goal step at stepResult.index, then write the merged step back into %goal.Steps[stepResult.index]% by setting the variable to the merge output.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 93,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -366,9 +366,9 @@
             }
           ],
           "intent": null,
-          "guidance": "If the stepResult.level is not \u0027high\u0027, call BuildStep (non-parallel).",
+          "guidance": "If the built step\u0027s level is not \u0027high\u0027, call BuildStep to refine it. The @known mapping indicates the exact condition and goal.call shape.",
           "level": "high",
-          "confidence": 85,
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -376,8 +376,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/ApplyStep.goal",
-      "prPath": "/.build/applystep.pr",
+      "path": "/builder/ApplyStep.goal",
+      "prPath": "/builder/.build/applystep.pr",
       "hash": "c0d98d2d1c7e1f248db0a70c2c8e0d28d9fa845bc4619e023fd49a30b278bc7a",
       "builderVersion": null,
       "isSetup": false,
@@ -497,8 +497,8 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/ApplyStep.goal",
-      "prPath": "/.build/applystep.pr",
+      "path": "/builder/ApplyStep.goal",
+      "prPath": "/builder/.build/applystep.pr",
       "hash": "d44ef719ec271b3d4a9ab83019aa388ac185a38f3b7d3808dd9e7949b348d70c",
       "builderVersion": null,
       "isSetup": false,
@@ -509,8 +509,8 @@
     }
   ],
   "visibility": 1,
-  "path": "/ApplyStep.goal",
-  "prPath": "/.build/applystep.pr",
+  "path": "/builder/ApplyStep.goal",
+  "prPath": "/builder/.build/applystep.pr",
   "hash": "a35056ab5e95d7b508f7c72693b636f9b6d251acc1548e569e5ffc0311f0bd24",
   "builderVersion": "0.2.2",
   "isSetup": false,
