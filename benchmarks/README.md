@@ -55,20 +55,32 @@ unused). Adding one is a separate piece of work.
 
 ## Running
 
-Rebuild plang first (the stale-binary trap in the project CLAUDE.md applies):
+### Node-only (works today)
+
+    python3 benchmarks/harness/run.py --runtime node
+    python3 benchmarks/harness/run.py --runtime node --workload hello --n 5000
+
+Defaults: N=10000 iters per run, 3 warmup runs, 5 measured runs, results
+written to `benchmarks/results/<today>/`.
+
+### Plang side — **currently blocked**
+
+`plang build` fails on this branch with `Action 'builder.app' not found`:
+`os/system/builder/Build.goal:10` calls `builder.app`, but
+`PLang/app/modules/builder/` only defines `appSave`, not `app`. Until the
+`app` builder action is restored (or a hand-authored `.build/*.pr` is
+permitted by the no-edit-.pr hook), the plang side of the benchmark can't
+produce numbers.
+
+Once the builder is fixed:
 
     rm -rf PlangConsole/bin PlangConsole/obj PLang/bin PLang/obj \
            PLang.Generators/bin PLang.Generators/obj
     dotnet build PlangConsole
-
-Then from the repo root:
-
-    python3 benchmarks/harness/run.py            # all workloads, both runtimes
-    python3 benchmarks/harness/run.py --workload hello
-    python3 benchmarks/harness/run.py --n 1000 --repeats 5
-
-Defaults: N=10000 iters per run, 3 warmup runs, 5 measured runs, results
-written to `benchmarks/results/<today>/`.
+    for w in hello json file; do
+      (cd benchmarks/workloads/$w && PlangConsole/bin/Debug/net10.0/plang build)
+    done
+    python3 benchmarks/harness/run.py --runtime both
 
 ## Caveats
 

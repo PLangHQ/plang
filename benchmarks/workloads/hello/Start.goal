@@ -1,10 +1,9 @@
 Start
-- timer.start name=startup, write to %_%
 - set %n% = 10000
-- range from 1 to %n%, write to %items%
-- timer.start name=loop, write to %_%
-- foreach %items%, call Noop item=%i%
-- timer.end name=loop, write to %loop%
+- generate range from 1 to %n%, write to %items%
+- start timer name=loop
+- foreach %items%, call Noop item=%item%
+- end timer name=loop, write to %loop%
 - write out "LOOP_NS=%loop.totalNanoseconds%"
 - write out "BENCH_DONE n=%n%"
 
