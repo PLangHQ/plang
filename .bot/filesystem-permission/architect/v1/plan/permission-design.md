@@ -1,156 +1,124 @@
-# Permission Design — Deep Dive
+# Permission Design — `FilePermission` Record + `Covers`
 
 ## Folder layout
 
 ```
 PLang/App/FileSystem/Permission/
-  this.cs              -- @this manager + the Permission record (both live here)
+  this.cs              -- the FilePermission record lives here. The actor-side typed view
+                          (Actor.@this.Permission) is wired in stage 3 but its body lives near Actor,
+                          not here. This folder owns the data shape and its matching logic only.
   Verb/
     this.cs            -- Verb @this: composes Read/Write/Delete coverage
     Read.cs            -- record Read(bool Recursive = true, bool Metadata = true)
-    Write.cs           -- record Write(bool Create = true, bool Overwrite = true, bool Append = true, bool Mkdir = true)
+    Write.cs           -- record Write(bool Create = true, bool Overwrite = true,
+                                       bool Append = true, bool Mkdir = true)
     Delete.cs          -- record Delete(bool Recursive = true, bool Permanent = true)
 ```
 
-Namespace: `App.FileSystem.Permission`. Singular. The doubled type name `App.FileSystem.Permission.Permission` is the accepted cost of singular OBP in C#.
+Namespace: `App.FileSystem.Permission`. Singular. The record is named `FilePermission` (not `Permission`) because there is no shared abstract `Permission` base across kinds; each subsystem owns its own independent record.
 
-## The record
+## The record — pure data
 
-```csharp
-namespace App.FileSystem.Permission;
+The record has four fields:
 
-public enum Match { Exact, Glob, Regex }
+- `AppId` — which app this grant applies to.
+- `Actor` — which actor kind holds the grant: `"system"`, `"user"`, or `"service"`.
+- `Path` — the path or path pattern this grant covers.
+- `Match` — `Exact`, `Glob`, or `Regex`. Determines how `Path` is interpreted when matching.
+- `Verb` — `Verb.@this` containing the Read, Write, Delete sub-records.
 
-public record Permission(string AppId, string Path, Verb.@this Verb, Match Match)
-{
-    public bool HasAccess(Path path, Verb.@this requested)
-    {
-        if (!PathMatches(path)) return false;
-        return Verb.Covers(requested);
-    }
+`Actor` lives on the record, not on a separate column or table — the record is self-describing, the signature covers it, and per-actor scoping at query time uses JSON extract on this field.
 
-    private bool PathMatches(Path path) => Match switch
-    {
-        Match.Exact => string.Equals(Path, path.Absolute, StringComparison.OrdinalIgnoreCase),
-        Match.Glob  => Glob.IsMatch(Path, path.Absolute),
-        Match.Regex => System.Text.RegularExpressions.Regex.IsMatch(path.Absolute, Path),
-        _           => false
-    };
-}
-```
+The record has **one method only: `Covers(FilePermission request)`**. No `Check`, no `Describe`, no `Request`, no static factories. `Covers` is a pure function: no external state, no I/O, no exceptions.
 
-`HasAccess(Path path, ...)` takes the whole Path object. The receiver decides which field to read; callers don't pre-decompose.
+Conceptually `Covers` checks:
+- AppId matches between grant and request.
+- Actor matches between grant and request.
+- The grant's Path pattern covers the request's specific Path (under the grant's Match mode).
+- The grant's Verb covers the request's Verb (each Read/Write/Delete sub-option subset check).
 
-`PathMatches` is private — the path-matching algorithm is an implementation detail of how Permission interprets its own Match field. The enum-and-switch is a known smell; if Match ever grows configurable variants (`Glob(CaseSensitive)`, `Regex(Flags)`), promote Match to its own `Match/` folder with the variant-design pattern from `good_to_know.md`.
+## Same record for grant and request
 
-## The manager
+`grant.Covers(request)` is the only matching operation. Both arguments are `FilePermission`. The asymmetry is encoded in `Match`:
 
-```csharp
-public class @this
-{
-    // State lives in app.System variables, not a private list here.
-    // @this is a typed view over that variable.
+- **A grant** typically has `Match.Glob` (or `Regex`) and broad verb coverage. Example shape:
+  - `AppId = "messages-app-id"`, `Actor = "user"`, `Path = "/apps/*/system.sqlite"`, `Match = Glob`, `Verb = full-allow`.
+- **A request** has `Match.Exact` and a narrowed verb that asks only for what the operation needs. Example shape for a `file.read` of `/apps/Email/system.sqlite`:
+  - `AppId = "messages-app-id"`, `Actor = "user"`, `Path = "/apps/Email/system.sqlite"`, `Match = Exact`, `Verb = Read-only narrowed`.
 
-    public IEnumerable<Permission> List() => /* read system variable */;
-
-    public Data Check(Path path, Verb.@this requested) =>
-        List().Any(p => p.HasAccess(path, requested))
-            ? Data.Ok()
-            : Data.Fail(new PermissionRequired(path, requested));
-
-    public void Add(Data<Permission> signed) => /* write back to system variable */;
-}
-```
-
-Check is four lines because every comparison is delegated. The manager iterates and composes; it never reaches into a record to apply matching from outside.
+One record, two roles, one matching rule. No parallel `Permission` vs `PermissionRequest` types.
 
 ## The Verb @this
 
-```csharp
-namespace App.FileSystem.Permission.Verb;
+`Verb.@this` composes the three variant records — `Read`, `Write`, `Delete` — each defaulted to "fully granted":
 
-public class @this
-{
-    public Read   Read   { get; init; } = new Read();
-    public Write  Write  { get; init; } = new Write();
-    public Delete Delete { get; init; } = new Delete();
+- `Verb.@this.Read` defaults to `Read(Recursive: true, Metadata: true)`.
+- `Verb.@this.Write` defaults to `Write(Create: true, Overwrite: true, Append: true, Mkdir: true)`.
+- `Verb.@this.Delete` defaults to `Delete(Recursive: true, Permanent: true)`.
 
-    public bool Covers(@this requested) =>
-        Read.Covers(requested.Read) &&
-        Write.Covers(requested.Write) &&
-        Delete.Covers(requested.Delete);
-}
-```
+All three variants are always present. Narrowing is an explicit record copy with sub-options set to false.
 
-All three variants always present, defaulted to "fully granted." Narrowing is an explicit record copy:
+`Verb.@this.Covers(request)` delegates to each variant: `grant.Read.Covers(request.Read)` && `grant.Write.Covers(request.Write)` && `grant.Delete.Covers(request.Delete)`.
 
-```csharp
-var loggerVerb = new Verb.@this
-{
-    Write  = new Write(Overwrite: false),
-    Delete = new Delete(Recursive: false, Permanent: false),
-};
-```
+## The variant records — `Covers` semantics
 
-## The variant records
+Each variant owns its own `Covers` rule, all reading the same way: *"if the request needs feature X, the grant must have X."* Expressed as `(!request.X || grant.X)` per sub-option.
 
-Each variant owns its own `Covers` rule. The rule reads naturally: *"if the request needs feature X, the grant must have X."*
+The trick: when the request doesn't need a feature (sub-option is false), the check trivially passes — `!false || anything = true`. This means a "fully granted" grant covers any properly-narrowed request, because the request's false sub-options short-circuit.
 
-```csharp
-// Read.cs
-public record Read(bool Recursive = true, bool Metadata = true)
-{
-    public bool Covers(Read r) => (!r.Recursive || Recursive) && (!r.Metadata || Metadata);
-}
+Concretely: a grant with all verbs full-allow covers a `file.read` request that asks for `Read(Recursive: true, Metadata: true)` and explicitly empty `Write/Delete` (all sub-options false). The Read check passes because the grant has the needed features; the Write/Delete checks pass because the request asks for nothing in those variants.
 
-// Write.cs
-public record Write(bool Create = true, bool Overwrite = true, bool Append = true, bool Mkdir = true)
-{
-    public bool Covers(Write w) =>
-        (!w.Create    || Create)    &&
-        (!w.Overwrite || Overwrite) &&
-        (!w.Append    || Append)    &&
-        (!w.Mkdir     || Mkdir);
-}
+## Constructing the request — narrowing happens inside Path.CheckPermission
 
-// Delete.cs
-public record Delete(bool Recursive = true, bool Permanent = true)
-{
-    public bool Covers(Delete d) => (!d.Recursive || Recursive) && (!d.Permanent || Permanent);
-}
-```
+`file.read` doesn't construct a Verb.@this. It calls `path.CheckPermission(Verb.Read)` with just the verb kind. Inside `CheckPermission`, Path builds the properly-narrowed request: full Read sub-options, all-false Write, all-false Delete. The narrowing logic lives in exactly one place; action handlers stay simple.
+
+No `Verb.@this.ReadOnly()` / `WriteOnly()` static factories on Verb — those would multiply combinatorially as soon as someone needs combined narrowings, and they hide what's actually being constructed. Inline construction inside CheckPermission keeps it explicit and contained.
+
+## Who finds the grants — `actor.Permission`
+
+The `FilePermission` record doesn't find matching grants — that's not its job. Storage and lookup live on a typed view bound to each actor:
+
+- `Actor.@this.Permission` is the actor's permission view. Each actor instance (system / user / service) has its own.
+- `actor.Permission.Find(request)` returns the first matching valid signed grant, or null. Internally consults the actor's in-memory list (for "y" grants) and `App.SettingsStore` (for "a" grants).
+- `actor.Permission.Add(signed)` routes by signature expiry: no expiry → in-memory; long expiry → sqlite.
+
+`FilePermission` is consumed by `actor.Permission` (which decides what counts as a match by asking each candidate grant `grant.Covers(request)`).
+
+Path's `CheckPermission(Verb.X)` calls `path.Context.Actor.Permission.Find(request)`. Path orchestrates two layers: own `Properties` cache, then `actor.Permission`. See storage.md and runtime-flow.md for the full flow.
 
 ## What the verbs mean in operations
 
-- **`mkdir`** is `Write` (with `Mkdir=true`). Creating a directory is making something exist.
+- **`mkdir`** is `Write` (with `Mkdir = true`). Creating a directory is making something exist.
 - **`rmdir`** is `Delete`.
-- **Rename / move** is *two checks*: `Delete` on the source path + `Write` on the destination parent. No new verb.
-- **Copy** is `Read` on source + `Write` on destination parent. No new verb.
-- **Stat / exists** is `Read` with `Metadata=true`. Granting a backup-style app `Read{Recursive: true, Metadata: true, but...}` — actually, content visibility isn't a sub-option of Read in this model. Worth a question: do we want a `Content` boolean on Read so "may stat but not read content" is expressible? See open-questions.md.
+- **Rename / move** is *two checks*: `Read` on source + `Write` on destination, batched into one request. The FS method decides which verbs it needs and uses the batched check (see `filesystem-surface.md`).
+- **Copy** is `Read` on source + `Write` on destination parent. Batched check.
+- **Stat / exists** is `Read` with `Metadata = true`. The `Content` distinction (may stat, may not read content) is deliberately not in the model — when it's needed, add a `Content` boolean to `Read` as a separate pass.
 
-## Serialization (LLM-legible)
+## On-the-wire and at-rest shape
 
-A signed `Data<Permission>` for the Messages app reading every app's `system.sqlite`:
+A signed grant — for the Messages app reading every app's `system.sqlite`, granted by the user — is just a Data with a typed Value and a signature:
 
-```json
-{
-  "appId": "<messages-app-id>",
-  "path": "/apps/*/system.sqlite",
-  "match": "glob",
-  "verb": {
-    "read":   { "recursive": false, "metadata": true },
-    "write":  { "create": false, "overwrite": false, "append": false, "mkdir": false },
-    "delete": { "recursive": false, "permanent": false }
-  }
+```
+Data {
+  value:     FilePermission {
+                appId: "messages-app-id"
+                actor: "user"
+                path:  "/apps/*/system.sqlite"
+                match: "glob"
+                verb:  { read, write, delete records }
+             }
+  signature: <signing.Signature>
 }
 ```
 
-Wrapped in Data, which carries signature, signer, signed-at, expires-at. The record itself is the payload; the envelope is the proof. Permission never sees crypto fields directly — it trusts that what comes out of the variable has already been verified.
+Stored as `{ id: <uuid>, data: <serialized Data> }` in the `permission` table.
+
+No nested Data, no wrapper around the request, no special permission shape — just a Data with a typed value and a signature, in a row.
 
 ## What's NOT in scope here
 
-- The signing mechanism (PLang plumbing).
-- The prompt UI (PLang plumbing).
-- Where the grant physically lives on disk (system variable; see `storage.md`).
-- The provider/Code routing for goal-backed virtual filesystem (parked).
-- The app-side cascade for *requested* verb config (see `open-questions.md`).
+- **The signing mechanism** — uses the existing `signing.sign` action and `signing.Signature` type. New code attaches to existing rail.
+- **The prompt UI** — covered in `runtime-flow.md` (Ask marker + `error.handle`'s built-in path + templates).
+- **Where the grant physically lives** — see `storage.md`.
+- **The Code routing for goal-backed virtual filesystem** — parked.
+- **App-side cascade for *requested* verb config** — out of scope entirely (see plan.md "Out of scope").

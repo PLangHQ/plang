@@ -1,43 +1,63 @@
 # Stage 1: Permission Types
 
-**Goal:** Land the pure types — `Permission` record, `Verb/@this` and its three records, `Match` enum — with all `Covers`/`HasAccess` logic. No filesystem dependency, no storage, no manager state. C# tests pin the coverage matrix and JSON round-trip.
+**Goal:** Land the pure types — `FilePermission` record, `Verb/@this` and its three records, `Match` enum — with all `Covers` logic. No filesystem dependency, no engine integration, no storage, no manager state. C# tests pin the coverage matrix.
 
 **Scope:** Types, records, enum, coverage methods. Nothing else.
 
-**Excluded:** Storage binding (stage 2). `IPLangFileSystem` rewrite (stage 3). Error types (stage 4). Anything that touches an actual filesystem.
+**Excluded:**
+- `Ask` marker + `error.handle` built-in path (stage 2).
+- Storage binding (stage 3).
+- IPLangFileSystem rewrite (stage 4).
+- Anything that touches the engine, actor context, or signing pipeline.
 
-**Deliverables:**
+## Deliverables
 
-- `PLang/App/FileSystem/Permission/this.cs` — contains the `Permission` record with `HasAccess(Path, Verb.@this)` and private `PathMatches(Path)`. The `@this` *class* is stubbed (empty manager) — stage 2 fills it.
+- `PLang/App/FileSystem/Permission/this.cs` — contains the `FilePermission` record with `Covers(FilePermission)` and private `PathMatches(string)`. The `@this` *class* is stubbed (empty manager) — stage 3 fills it.
 - `PLang/App/FileSystem/Permission/Verb/this.cs` — `@this` with `Read`/`Write`/`Delete` properties and `Covers(@this)`.
 - `PLang/App/FileSystem/Permission/Verb/Read.cs` — record + `Covers(Read)`.
 - `PLang/App/FileSystem/Permission/Verb/Write.cs` — record + `Covers(Write)`.
 - `PLang/App/FileSystem/Permission/Verb/Delete.cs` — record + `Covers(Delete)`.
-- `Match` enum (in `this.cs` alongside `Permission`).
-- C# tests under `PLang.Tests/App/FileSystem/PermissionTests/` covering the coverage matrix (each variant: full-grant, full-narrow, every partial mix), Match-mode dispatch (Exact / Glob / Regex), and JSON round-trip of a `Permission` record.
+- `Match` enum (in `this.cs` alongside `FilePermission`).
+- C# tests under `PLang.Tests/App/FileSystem/PermissionTests/` covering:
+  - Coverage matrix (each variant: full-grant, full-narrow, every partial mix)
+  - Match-mode dispatch (Exact / Glob / Regex)
+  - JSON round-trip of a `FilePermission` record
+  - The "same record, two roles" property — `grant.Covers(request)` reads naturally with broad and narrow records
 
-**Dependencies:** None. This stage is fully self-contained.
+## Dependencies
+
+None. This stage is fully self-contained.
 
 ## Design
 
-The full design is in [plan/permission-design.md](v1/plan/permission-design.md). Coder reads that for code shapes; this stage file is just the unit of work.
+The full record + verb design lives in [v1/plan/permission-design.md](v1/plan/permission-design.md). Coder reads that for code shapes; this stage file is just the unit of work.
 
-Three things the coder must get right and stage 1 tests must enforce:
+### Three things the coder must get right
 
-1. **Verb variants default to fully-granted records.** `new Verb.@this()` covers every request. Narrowing is explicit. Test: `new Verb.@this().Covers(new Verb.@this())` is true; `new Verb.@this { Write = new Write(Overwrite: false) }.Covers(new Verb.@this())` is false (default request wants Overwrite, narrowed grant doesn't have it).
+1. **Verb variants default to fully-granted records.** `new Verb.@this()` covers every request. Narrowing is explicit.
+   - Test: `new Verb.@this().Covers(new Verb.@this())` is true.
+   - Test: `new Verb.@this { Write = new Write(Overwrite: false) }.Covers(new Verb.@this())` is false (default request wants Overwrite, narrowed grant doesn't have it).
 
-2. **`HasAccess` takes whole `Path`, not strings.** No `path.Absolute` decomposition at the call site. The record extracts what it needs internally. Test: a permission with `Match.Exact` and `Path = "/a/b"` returns true for `Path` object with `Absolute = "/a/b"` regardless of `Raw` or other Path fields.
+2. **Same record for grant and request.** `Covers(FilePermission request)` takes another `FilePermission` of the same type. The asymmetry is the Match field plus the verb shape — not two parallel types.
+   - Test: a grant with `Match.Glob` and pattern `/apps/*/file.txt` covers a request with `Match.Exact` and path `/apps/Email/file.txt` when both have full-allow verbs.
+   - Test: same grant does NOT cover a request whose verb narrows the grant (request asks for verb the grant doesn't include).
 
-3. **Match-mode dispatch is closed.** Only Exact, Glob, Regex; the switch's default returns false. Test: any future enum value (in a test fixture) returns false instead of throwing.
+3. **Match-mode dispatch is closed.** Only Exact, Glob, Regex; the switch's default returns false. No throwing on unknown enum values; degraded behavior to deny is the safe choice.
+   - Test: any future enum value (in a test fixture, via reflection or a fake) returns false instead of throwing.
 
-The Glob library choice is open (see `plan/open-questions.md` #4). Coder picks `Microsoft.Extensions.FileSystemGlobbing` unless a constraint surfaces.
+### What stage 1 does NOT do
 
-## What stage 1 does NOT do
-
-- Doesn't instantiate `Permission/@this` with any storage. The class exists as a shell so stage 2 can fill it.
-- Doesn't define `PermissionRequired` — that's stage 4 (its shape depends on what we want the prompt to receive).
-- Doesn't touch `IPLangFileSystem` at all.
+- Doesn't instantiate `Permission/@this` with any storage. The class exists as a shell so stage 3 can fill it.
+- Doesn't define the `Ask` marker or wire `error.handle` — stage 2.
+- Doesn't touch `IPLangFileSystem` at all — stage 4.
+- Doesn't wire signing — stage 3 (where the manager actually deals with signed Data).
 
 ## Acceptance
 
 `dotnet run --project PLang.Tests` passes. New tests under `PermissionTests/` exercise the full coverage matrix and the Match dispatch. No production code outside the Permission folder is touched.
+
+Glob library: default to `Microsoft.Extensions.FileSystemGlobbing` unless an AOT or dependency constraint surfaces. The grant-matching semantics needed are well within that library's capabilities.
+
+## What this stage unblocks
+
+Stages 2 and 3 both depend on `FilePermission` being a real type they can reference. After stage 1, both stages can start in parallel — stage 2 wires the `Ask` marker and `error.handle`'s built-in path, stage 3 builds the storage view. Stage 4 (the FS surface) depends on both.

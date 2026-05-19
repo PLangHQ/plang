@@ -1,107 +1,96 @@
-# Filesystem Surface — Deep Dive
+# IPLangFileSystem v2 — Surface Rewrite With Permission Baked In
 
-## The shift
+## Why bundled
 
-`IPLangFileSystem` today inherits `System.IO.Abstractions.IFileSystem` — a BCL-shaped surface where every method takes `string` paths. That works against us in three ways:
+Two changes have to land together:
 
-1. The verb being requested (read vs. write vs. delete) is implicit in the method name and lost by the time `ValidatePath` runs.
-2. The calling goal isn't carried — `ValidatePath` has no idea who's asking.
-3. Every method returns raw .NET types and throws on error, making `Data`-based composition impossible.
+1. **Drop `System.IO.Abstractions.IFileSystem` inheritance.** The current PLangFileSystem extends the BCL abstraction wholesale. We want a Path-shaped, Data-returning surface — not File/Directory/Path with string parameters that throw on misuse.
 
-The rewrite drops the inheritance and makes the surface our own. Every method takes `Path`. The Path object carries its absolute and raw forms *and* the calling goal (via `Context.Goal`). Return shapes are `Data<T>` so errors are first-class.
+2. **Bake permission check into every operation.** Every method on `IPLangFileSystem` v2 includes the permission check internally. There is no public `ValidatePath` or `CheckPermission` method that callers must remember to invoke — enforcement is structural.
 
-## What we're keeping
+If we did (1) without (2), every action handler would still call a separate `CheckPermission` before each FS operation, easy to forget. If we did (2) without (1), the current `string`-returning surface couldn't carry the Ask-marked Fail cleanly.
 
-The shape `Path` itself, mostly. `Path.cs` already exists, already carries Context, already has `Resolve(rawPath, context)` that handles relative-to-goal-folder resolution. We don't redesign Path — we let it carry the foreign key the permission system needs.
+Together: one refactor, one branch.
 
-The Default code (current `PLangFileSystem`) keeps using `System.IO.Abstractions` *internally*. The BCL surface stays as the local-disk implementation language; it just stops being the public language of the filesystem layer.
+## The new surface — shape
 
-## What we're dropping
+Every method on `IPLangFileSystem` v2:
 
-Everything BCL-shaped from the public surface:
+- **Takes a `Path` object**, not `string`. Path carries absolute/raw/calling-goal context.
+- **Returns `Data<T>` or `Data`.** Permission misses come back as `Data.Fail` whose Error implements the `Ask` marker (specifically `FilePermissionAsk` carrying the FilePermission record(s) needed).
+- **Has its verb baked into the method.** `ReadText` and `Stat` and `Exists` check `Verb.Read` internally. `WriteText` / `Append` / `Mkdir` check `Verb.Write`. `Delete` checks `Verb.Delete`. `Move` and `Copy` check Read on source plus Write on dest. Callers don't pass the verb.
 
-- `IPLangFileSystem : IFileSystem` — inheritance gone.
-- The `Factory` classes (`PLangFileStreamFactory`, `PLangDirectoryInfoFactory`, etc.) as public exports — they become internal helpers of the Default code, or disappear entirely.
-- The `PLangFile`, `PLangFileInfo`, `PLangDirectoryWrapper` types as public types — same.
+Method inventory (final list settled by coder during the inventory pass):
 
-If a consumer needs them today, that's a call site we need to migrate.
+- **Reads** — `ReadText`, `ReadBytes`, `Exists`, `List`, `Stat`.
+- **Writes** — `WriteText`, `WriteBytes`, `Append`, `Mkdir`.
+- **Destructive** — `Delete`.
+- **Multi-path** — `Move`, `Copy`.
 
-## The survey (Pass 1, 2, 3)
+That's roughly 11 methods. Some may collapse or split during implementation; the shape is what matters.
 
-The closed list of operations the action layer and runtime actually use must be the minimum public surface. The big mapping work in Stage 3:
+## Permission check — delegated to Path
 
-**Pass 1 — Action layer.** `PLang/App/modules/file/` (read, save, copy, move, delete, exists, list) and their `code/` subfolders. Any other action that touches the FS — output handlers writing files, snapshot, build, the Diagnostics writer. Grep for `FileSystem.` calls.
+Each operation method asks the Path object whether it has permission, via `path.CheckPermission(Verb.X)`. Path owns its own question — it knows its absolute form, its Properties cache, and how to reach `path.Context.Actor.Permission` (the calling actor's permission view). The FS method's job is to propagate Path's answer.
 
-**Pass 2 — Runtime internals.** `PLang/Runtime2`, `PLang/App/Goals`, `PLang/App/Snapshot`, `PLang/App/Settings` — the engine loads goals, reads `.pr` files, writes snapshots, persists settings. Grep for `IPLangFileSystem` and `app.FileSystem` calls.
+`path.CheckPermission(Verb.Read)` returns:
+- `Data.Ok` if the Path is in-root, or a matching signed grant exists in cache or store.
+- `Data.Fail(FilePermissionAsk(new FilePermission(...)))` if not.
 
-**Pass 3 — Directory operations.** `Directory.Exists`, `EnumerateFiles`, `EnumerateDirectories`, `CreateDirectory`. Same passes, looking for the Directory subsurface.
+The FS operation method propagates this Data directly. If `Ok`, it proceeds to the actual BCL IO. If `Fail-with-Ask`, it returns the Fail unchanged for `error.handle`'s built-in path to pick up.
 
-Output: a flat list of operations. Probably ~15 distinct ones once de-duplicated.
+Enforcement is structural at two levels:
+- **Operation method** must ask the Path. There's no public "skip check" hook on Path.
+- **Path** owns the check internally — every operation that takes a Path goes through it.
 
-## Pinning the signatures (open in this plan)
+If a future operation forgets to call `path.CheckPermission` before doing IO, that's a coder bug catchable in review. Building a "you must call CheckPermission" enforcement at the compiler level is over-engineering — convention + test fixture (assert every IPLangFileSystem operation calls the check) is enough.
 
-For each operation in the closed list, decide three things:
+## Batched check for multi-path operations
 
-**A. Return shape.** Three candidates per read-like operation:
-- `Data<string>` — content as text (eager, encoding-aware)
-- `Data<byte[]>` — content as bytes (eager, no encoding decision)
-- `Data<Stream>` — lazy stream (consumer chooses how to read; supports large files)
+`Move` and `Copy` ask each Path for its respective verb's permission. If both return `Ok`, the operation proceeds. If either returns `Fail-with-Ask`, the FS method bundles the missing Asks into one `Data.Fail` covering both — the user sees one consent prompt.
 
-A read action probably wants `Data<byte[]>` or `Data<string>` depending on whether MIME is text. The runtime might want streams for big files. The closed list will tell us which we actually need.
+The bundling is the only piece of choreography that belongs at the FS layer: it knows about the operation (Move = Read+Write across two Paths) that ties the two checks together. Each Path knows about itself; the operation knows about the pair.
 
-**B. Verb explicit-or-implicit.** Two options for every operation:
-- `Read(Path, Verb.@this requested)` — caller spells out exact verb (allows passing `Read{Recursive: true}` for listing)
-- `Read(Path)` — method constructs the default verb internally; caller can't customize
-- Recommendation: explicit for operations whose verb meaningfully varies (listing wants Recursive; reading doesn't). Implicit for trivially-typed operations (Exists is always `Read{Metadata=true}`).
+Fail-fast: no partial work happens. Either all permissions are present (operation runs) or any missing surfaces in one bundled Ask.
 
-**C. Error decomposition.** `Data.Error` carries a typed payload. Two distinct error kinds:
-- `PermissionRequired(Path path, Verb.@this requested)` — recoverable; the runtime escalates to the user.
-- `IoFailure(Path path, Exception cause)` — not recoverable by prompting; bubbles to the caller as a hard fail.
-Each lives as its own type. The caller's error-handling can distinguish.
+## Inventory pass
 
-## Indicative method shapes (not pinned)
+`System.IO.Abstractions.IFileSystem` exposes the full BCL FS surface. Today PLangFileSystem inherits it and consumers reach `fs.File.ReadAllText`, `fs.Directory.GetFiles`, `fs.Path.GetFullPath`, etc.
 
-```csharp
-public interface IPLangFileSystem
-{
-    // File-level
-    Data<byte[]>  Read(Path path);
-    Data<Stream>  OpenRead(Path path);
-    Data          Write(Path path, byte[] content, Verb.@this requested);
-    Data          Delete(Path path);
-    Data<bool>    Exists(Path path);
+v2 collapses the surface to the ~11 methods listed above (plus a small set of helpers we discover during the inventory). Every existing call site needs to be touched. The inventory:
 
-    // Directory-level
-    Data<IReadOnlyList<Path>> List(Path directory, Verb.@this requested);
-    Data                      CreateDirectory(Path path);
+- **`PLang/App/modules/file/code/Default.cs`** — the primary consumer. Every method here gets rewritten against the new surface. Action handlers above it shrink to one-liners.
+- **`PLang/App/Builder/`** — the builder reads `.goal` and `.pr` files from disk. Heavy FS user. Switching to Data returns means every read becomes a Data flow.
+- **`PLang/App/Snapshot/`** — snapshot persistence. Reads/writes `.snapshot` files. Touch.
+- **`PLang/App/Settings/Sqlite.cs`** — sqlite-backed settings. Opens DB files via the FS layer. Touch.
+- **`PLang/App/Channels/Serializers/`** — file-extension-based content serialization. Indirectly uses FS.
+- **`PLang/App/Cache/`** — disk-backed cache. Touch.
+- **Runtime infra** — any place that does `fs.File.X` from internal C#. Grep `fs\.File\.|fs\.Directory\.|fs\.Path\.` across the codebase.
 
-    // Misc
-    Data          Move(Path source, Path destination);
-    Data          Copy(Path source, Path destination);
-}
-```
+Expected scope: ~50–100 call sites. Most are read-side (reading content); fewer are write-side. The mechanical conversion is "wrap the call in await, await the Data, branch on Success."
 
-These are sketches — real names and shapes come out of the surveys. The point is the *shape language*: `Path` in, `Data<T>` out, `Verb.@this` parameter only when intent varies.
+## What stays the same
 
-## The Default code
+- **`Path` class** — the `App.FileSystem.Path` introduced in earlier work continues unchanged. Carries absolute, raw, calling-goal context.
+- **`Code/Default`** — the implementation class still lives at `PLang/App/modules/file/code/Default.cs`, just with a different interface above it. Goal-mapped variants (parked) slot in alongside.
+- **The signing pipeline** — `signing.sign` action is what `Permission.Add` uses to sign grants. Unchanged.
+- **`signing.Signature` type** — what populates `Data.Signature`. Unchanged.
 
-Inside `PLang/App/FileSystem/Default/` (or whatever the Code folder is named under the new scheme), the implementation does:
+## Migration sequencing inside the bundle
 
-1. Receive a `Path` and (optional) `Verb.@this requested`.
-2. Call `Permission/@this.Check(path, requested)`. On `Data.Fail`, return that.
-3. On Ok, delegate to `System.IO.Abstractions` (or `System.IO` directly) using `path.Absolute`.
-4. Wrap the BCL result in `Data<T>` — success or `IoFailure` on exception.
+Within stage 4 itself (the bundle), the work breaks down:
 
-The Permission check happens once, at the FS boundary. Internal helpers below that line trust the path.
+1. **Define `IPLangFileSystem` v2 interface.** Pure declaration, no implementations yet.
+2. **Implement `Default` against v2.** Each operation calls `path.CheckPermission(Verb.X)` (single) or asks each Path then bundles missing asks (batched). The `Default` implementation doesn't see permission internals — Path's CheckPermission owns the consultation chain.
+3. **Rewrite each FS action handler against v2.** Action handler bodies shrink to one or two lines — call the FS method, return its Data.
+4. **Rewrite each non-action call site against v2.** Builder, Snapshot, Settings, Channels, Cache, Runtime infra. One pass, mechanical.
+5. **Delete the old surface.** Old `IPLangFileSystem` (inheriting `System.IO.Abstractions.IFileSystem`), old `ValidatePath` returning string, old `FileAccessControl`. All gone.
 
-## What this enables for stage 5
+Sub-stages can be commits inside one stage 4 PR. Bisectable per sub-stage.
 
-When Messages tries `Read(/apps/Email/system.sqlite)`:
-1. Path is constructed with Messages' goal in Context.
-2. FS.Read calls Permission.Check.
-3. No grant; returns `Data.Fail(PermissionRequired)`.
-4. Runtime catches the typed error, raises the prompt (the prompt knows the calling goal from `path.Context.Goal.Path` and the verb from the error payload).
-5. User says "always"; PLang plumbing signs a `Data<Permission>`; Permission.Add stores it in the system variable.
-6. The action retries; Check succeeds; bytes return in `Data<byte[]>`.
+## What this does NOT do
 
-Every piece is owned by exactly one type.
+- **Doesn't introduce a separate `CheckPermission` public method.** The check is internal to each operation.
+- **Doesn't expose `ValidatePath` to callers.** Whatever validation existed there is now embedded in the operation methods.
+- **Doesn't change the action surface (PLang side).** PLang developers writing `- read file.txt` still get the same builder mapping. Only the C# layer changes.
+- **Doesn't add Code routing for non-disk FS** (e.g. goal-mapped FS). Parked from original plan; stays parked.

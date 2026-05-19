@@ -45,6 +45,125 @@
         "notes": "Branch newly created from origin/runtime2. good_to_know.md edit is real codification work, not session noise — captures lessons that should outlast this branch."
       },
       "timestamp_end": "2026-05-14T23:45:00Z"
+    },
+    {
+      "id": "856d3ce7-215c-4edc-9e75-1bc60baa29f6",
+      "bot": "architect",
+      "timestamp_start": "2026-05-19T13:00:59Z",
+      "intent": "Rewrite the plan to reflect a major design shift: permission generalizes per-subsystem (file/http/payment), Data.Request becomes a third terminal state, permission lives on the variable via Properties (lazy from store), and stages 1-3 bundle types + storage + full IPLangFileSystem refactor with permission baked in.",
+      "before": {
+        "assumptions": "Original plan v1 framed PermissionRequired as an Error type, kept the FS surface rewrite separate from the permission check site, and treated this branch as filesystem-only with no generalization story. Conversation with Ingi reframed all three.",
+        "risk": "The shift is large enough that a partial update would leave the plan internally inconsistent. Stage files and topic docs need to move together with the spine."
+      },
+      "plan": ".bot/filesystem-permission/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/v1/plan.md",
+            ".bot/filesystem-permission/architect/v1/plan/permission-design.md",
+            ".bot/filesystem-permission/architect/v1/plan/filesystem-surface.md",
+            ".bot/filesystem-permission/architect/v1/plan/storage.md",
+            ".bot/filesystem-permission/architect/v1/plan/open-questions.md",
+            ".bot/filesystem-permission/architect/v1/plan/runtime-flow.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote spine + topic docs. Added runtime-flow.md (new). plan.md now leads with the pattern-not-base-class generalization, Data.Request third state, and the (c) bundle in stage 4. permission-design.md drops Check/Describe methods on the record — it's pure data with Covers. storage.md describes the two-store unification (in-memory + sqlite via system variables). filesystem-surface.md becomes the bundled IPLangFileSystem v2 design with permission baked in. open-questions.md retires most of the original list; ships five smaller still-open items."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/stage-1-permission-types.md",
+            ".bot/filesystem-permission/architect/stage-2-data-request-state.md",
+            ".bot/filesystem-permission/architect/stage-3-storage-binding.md",
+            ".bot/filesystem-permission/architect/stage-4-filesystem-surface.md",
+            ".bot/filesystem-permission/architect/stage-5-messages-end-to-end.md"
+          ],
+          "type": "rename",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Renumbered stages. Old stage-2 (storage), stage-3 (FS surface), stage-4 (PermissionRequired error) deleted; new stage-2 (Data.Request state), stage-3 (storage), stage-4 (IPLangFileSystem v2 bundle) written. Stage 1 (types) and stage 5 (e2e) updated in place. New ordering reflects the dependency chain: types → engine state → storage → FS rewrite → e2e."
+        },
+        {
+          "paths": [".bot/filesystem-permission/architect/summary.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Prepended 2026-05-19 entry summarizing the 10 design shifts and what previously-open questions resolved. Kept the 2026-05-14 entry below for history."
+        }
+      ],
+      "after": {
+        "status": "Plan rewritten initially to reflect 2026-05-19 design pass. Five stages defined, all pending. Stage 1 can start as-is (pure types, no dependencies). The big bundle is stage 4 — needs stages 2 and 3 first.",
+        "health": "good — design walked end-to-end through file.read. Generalization pattern named for HTTP/Payment without prematurely codifying.",
+        "notes": "Two follow-up branches implied by this design: an http-permission branch and a payment-permission branch, both consuming the Ask infrastructure landed in stage 2 of this branch."
+      },
+      "timestamp_end": "2026-05-19T13:11:51Z"
+    },
+    {
+      "id": "deafb9a3-2c40-4f9c-9c1f-2e3f0a8e7510",
+      "bot": "architect",
+      "timestamp_start": "2026-05-19T13:11:51Z",
+      "intent": "Walk through the plan with Ingi section by section; refine the design as it surfaces issues; propagate corrections across all plan files in one consolidated pass.",
+      "before": {
+        "assumptions": "Initial rewrite at 2026-05-19T13:00 had Data.Request as a third terminal state, FilePermission with AppId/Path/Match/Verb, storage as 'system variables backed by sqlite,' permission/@this as a manager class, and one-line code snippets in stage files.",
+        "risk": "Walking the plan in interactive mode tends to surface design problems mid-step; without consolidating fixes, the plan grows inconsistent. Several corrections from Ingi struck OBP nerves: helper-soup, envelope-thinking, yes-man drift."
+      },
+      "plan": ".bot/filesystem-permission/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/filesystem-permission/architect/v1/plan.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Spine: section 1 framing rewritten to drop Data.Request as a third state in favour of Data.Fail with an Ask marker handled inside error.handle's built-in path. Section 3 runtime narrative rewritten — Path delegates to actor.Permission (not App.Permissions); engine owns retry loop; ask handler is stateless. Cross-cutting decisions updated for 2-column storage rule, actor-as-record-field, JSON-filter scoping. Stage 2 renamed/relinked to stage-2-ask-routing.md."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/v1/plan/runtime-flow.md",
+            ".bot/filesystem-permission/architect/v1/plan/permission-design.md",
+            ".bot/filesystem-permission/architect/v1/plan/storage.md",
+            ".bot/filesystem-permission/architect/v1/plan/filesystem-surface.md",
+            ".bot/filesystem-permission/architect/v1/plan/open-questions.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Topic docs rewritten. runtime-flow.md: ask handling inside error.handle, two-layer lookup (Properties cache → actor.Permission), engine-side retry. permission-design.md: FilePermission gains Actor field; Path.CheckPermission takes verb kind only; no ReadOnly/WriteOnly factories; the manager-class concept dissolved into actor.Permission. storage.md: rewritten around App.SettingsStore + 2-column rule + actor-as-JSON-filter; no separate persistence layer; one permission table not three. filesystem-surface.md: code blocks stripped (architect rule); permission check delegated to Path via path.CheckPermission. open-questions.md: throw-vs-return resolved as return; ask shape resolved as Data.Fail+Ask."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/stage-1-permission-types.md",
+            ".bot/filesystem-permission/architect/stage-2-ask-routing.md",
+            ".bot/filesystem-permission/architect/stage-3-storage-binding.md",
+            ".bot/filesystem-permission/architect/stage-4-filesystem-surface.md",
+            ".bot/filesystem-permission/architect/stage-5-messages-end-to-end.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage files updated consistently. Stage 1 references Ask marker work as stage 2's concern. Stage 2 renamed (data-request-state → ask-routing), reframed around error.handle's built-in path. Stage 3 reframed around Actor.@this.Permission (per-actor view) + path.CheckPermission on Path class; storage is App.SettingsStore 'permission' table with 2-column rule; per-actor scoping via JSON filter on Actor field. Stage 4 references path.CheckPermission(Verb.X) interface. Stage 5 acceptance checks the permission table directly."
+        },
+        {
+          "paths": [".bot/filesystem-permission/claude-md-proposals.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New file. Proposes a 5th OBP smell to good_to_know.md: 'Helper that takes a domain object and returns a derived answer.' Includes worked example contrasting helper-soup (Resolve(path), CheckPermission(absolute, verb)) with self-owning methods (path.Absolute, path.CheckPermission(verb))."
+        },
+        {
+          "paths": [".bot/filesystem-permission/architect/summary.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Prepended a new 2026-05-19 (continued) entry summarizing the refinements: storage on App.SettingsStore directly; 2-column rule; actor-on-record with JSON-filter scoping; path.CheckPermission(verb kind) signature; verb sub-options stay in C#; four-level delegation; error.handle is the umbrella; CLAUDE.md proposal filed."
+        }
+      ],
+      "after": {
+        "status": "Plan internally consistent end-to-end after the walkthrough. All stage files, topic docs, summary, and the CLAUDE.md proposal reflect the same model. Stage 1 can begin; stage 2 has a clear acceptance contract; stage 3 has a concrete shape for actor.Permission + Path.CheckPermission; stage 4 references both.",
+        "health": "good — design walked end-to-end with Ingi, multiple OBP corrections caught and incorporated. The plan now reads as one coherent design rather than a sequence of accumulated decisions.",
+        "notes": "Major patterns codified during the session: (1) FilePermission carries Actor field; (2) Path owns CheckPermission; (3) actor.Permission unifies in-memory + persisted; (4) error.handle owns ask routing internally; (5) 2-column storage rule. The helper-soup OBP smell was the most generalizable lesson — filed as a CLAUDE.md proposal."
+      },
+      "timestamp_end": "2026-05-19T15:13:52Z"
     }
   ]
 }
