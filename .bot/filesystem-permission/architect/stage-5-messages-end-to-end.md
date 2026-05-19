@@ -12,7 +12,7 @@
 
 - **`os/apps/Messages/Start.goal`** — a minimal Messages app that, on run, iterates known apps and reads `/apps/<App>/system.sqlite` (or whatever the agreed convention is).
 
-- **`os/system/permission/file.template`** — the user-facing prompt. Renders the FilePermission(s) carried by a `FilePermissionAsk` into a clear consent question. For a single ask:
+- **`os/system/permission/file.template`** — the user-facing prompt. Renders the `FilePermission`(s) carried by a `PermissionAskCallback` into a clear consent question. For a single ask:
   ```
   %appName% wants to %verb% %path%
   [y]es / [n]o / [a]lways
@@ -24,15 +24,15 @@
     - %verb2% %path2%
   [y]es / [n]o / [a]lways (covers all)
   ```
-  Whether it's a `.template` file or a `.goal` file depends on what the ask handler from stage 2 ended up loading. Either is fine — the user-visible text is what matters.
+  Channel renders this from the typed `PermissionAskCallback` payload. Whether the renderer uses a `.template` file, an inline format string, or a goal-driven render path is the channel's call — the user-visible text is what matters here.
 
 - **Integration test** under `Tests/Permission/` (plang `--test` style) that:
-  1. Runs Messages with no grant. Verifies the `FilePermissionAsk`-marked Fail fires for `/apps/Email/system.sqlite` (and others), `error.handle`'s built-in path renders the consent prompt correctly.
-  2. Test-driver responds "always" with a glob-shaped consent. Signed grant lands in `app.System.filesystem.permission`.
+  1. Runs Messages with no grant. Verifies a `PermissionAskCallback` is returned for `/apps/Email/system.sqlite` (and others), channel renders the consent prompt correctly, goal suspends.
+  2. Test-driver responds "a" (always). On resume, `PermissionAskCallback.Run` signs the grant and stores it via `user.Permission.Add`. Persisted row lands in the `permission` table of `App.SettingsStore` (`<AppRoot>/.db/system.sqlite`).
   3. Reruns Messages immediately. Verifies no prompt this time — grant covers all matching paths.
   4. Restarts the process. Reruns Messages. Verifies no prompt this time either — grant persisted.
   5. Revokes the grant via `permission.revoke`. Reruns Messages. Verifies prompt fires again.
-  6. Issues a narrower grant (`Read` only with `Metadata: false`, no Content access). Verifies read attempt asking for full content surfaces a fresh Ask-marked Fail for the narrowed verb.
+  6. Issues a narrower grant (`Read` only with `Metadata: false`). Verifies a read attempt requiring metadata surfaces a fresh `PermissionAskCallback` for the narrowed verb.
 
 - **Short doc under `Documentation/v0.2/`** — walks through what just happened, for future readers. Code examples drawn from the integration test.
 
@@ -44,7 +44,7 @@ Stages 1–4 complete.
 
 This stage is the integration cut that proves the design end-to-end. Test seams:
 
-- **Prompt seam.** The output.ask handler is replaced with a test driver that returns canned answers. The signing pipeline stays real — we want to verify the signed Data actually lands and round-trips.
+- **Prompt seam.** The channel's user-answer hook is replaced with a test driver that returns canned strings ("a", "y", "n"). The callback's `ParseAnswer` and signing pipeline stay real — we want to verify the signed Data actually lands and round-trips.
 - **Apps tree.** The test sets up minimal `os/apps/Email/system.sqlite`, `os/apps/Calendar/system.sqlite`, etc. — just enough that there's something to read.
 
 What this test does NOT do:
@@ -57,7 +57,7 @@ What this test does NOT do:
 - **Permission types compose correctly** under a real-world ask (glob across multiple apps).
 - **Storage round-trips across process restart.** Persisted grants survive shutdown.
 - **Re-query retry contract holds end-to-end.** The same action runs twice; second run finds the grant.
-- **Templates render correctly** for both single and bundled Ask payloads.
+- **Channel renders correctly** for both single and bundled `PermissionAskCallback` payloads.
 - **`Permission.Find` correctly applies `Covers`** — narrowed grant fails wider request.
 - **Revocation** removes the grant and triggers a fresh consent prompt.
 - **The new FS surface doesn't regress existing actions.** Stages 3–4 had to keep tests green, but the integration cut confirms it at the app level.

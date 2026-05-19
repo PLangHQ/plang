@@ -1,6 +1,6 @@
 # Verification — Plan vs Existing Code
 
-Pass done 2026-05-19 after the design walkthrough, before fresh-eyes review. Cross-references each plan assumption against actual `PLang/App/` code. Findings flagged for the next architect pass.
+Pass done 2026-05-19 after the design walkthrough. Cross-references each plan assumption against actual `PLang/App/` code. **All findings resolved in the 2026-05-19 third-pass rewrite** — see status notes inline. This file is now historical; the resolved findings are baked into the stage files.
 
 ## Confirmed (plan matches reality)
 
@@ -25,7 +25,8 @@ Pass done 2026-05-19 after the design walkthrough, before fresh-eyes review. Cro
 
 ## Wrong (plan diverges from existing infrastructure)
 
-### `error.handle`'s "built-in path" doesn't exist
+### `error.handle`'s "built-in path" doesn't exist  ✅ RESOLVED (stage 2 rewritten around callback-suspension)
+
 **Plan claim:** "`error.handle` is the umbrella — its built-in path recognises Ask-marked errors and runs the consent/input flow before user-configured handlers."
 **Code:** `PLang/App/modules/error/handle.cs` — error.handle is a **user-applied Modifier** (`IModifier`, `Wrap(next, context)` pattern, `[Modifier(Order = 3)]`). It runs only when a developer attached `on error, ...` to a step. There is NO runtime-resident "built-in path" that intercepts errors before user modifiers see them.
 
@@ -34,7 +35,8 @@ Pass done 2026-05-19 after the design walkthrough, before fresh-eyes review. Cro
 - Engine-level interception before modifiers run at all.
 - A different pattern entirely — see next finding.
 
-### Ask routing pattern is callback-suspension, not error-marker
+### Ask routing pattern is callback-suspension, not error-marker  ✅ RESOLVED (stage 2 rewritten — `PermissionAskCallback : ICallback`)
+
 **Plan claim:** Action returns `Data.Fail` with an `Ask` marker error; something downstream routes it.
 **Code:** `PLang/App/modules/output/ask.cs` + `PLang/App/Callback/AskCallback.cs` — `output.ask` returns `Data.@this<AskCallback>` (typed Data, success path, NOT a Fail). The Data carries an `ICallback` instance. The channel detects the callback in the result and suspends the goal. On user answer, `AskCallback.Run(ctx)` re-dispatches the original action (`ctx.App.Run(Position.Action, ctx)`) with the answer pre-bound under `!ask.answer`.
 
@@ -50,7 +52,8 @@ The action handler short-circuits on the second invocation: sees `!ask.answer` i
 
 This is structurally cleaner and reuses existing PLang infrastructure (Callback, channel suspension, Position resume). The plan needs a substantial rewrite of stage 2 to reflect this.
 
-### Actor has no Snapshot extension
+### Actor has no Snapshot extension  ✅ RESOLVED as known limitation (stage 3 calls out: "y" grants don't survive snapshot; acceptable for v1)
+
 **Plan claim:** "Session grants are in-memory on `Actor.@this.Permission`. If the App is paused via snapshot, the list is captured as part of App's state."
 **Code:** `find PLang/App -name "this.Snapshot*"` shows snapshot partials for App, Tester, Builder, Variables, CallStack, Code, Statics, Errors, Call — but **NOT for Actor**. Actor is not snapshot-aware today.
 
@@ -63,7 +66,8 @@ The plan should either add a snapshot extension for Actor as part of stage 3, or
 
 ## Smaller specifics to nail down in plan
 
-### `path.CheckPermission(Verb.Read)` — what's the parameter type?
+### `path.Authorize(verb)` — parameter type  ✅ RESOLVED (option 1: overload taking the verb record — `path.Authorize(new Read())`)
+
 The plan punts this to "coder picks." But three reasonable shapes:
 - Method overload taking the record: `path.CheckPermission(Read r)` / `(Write w)` / `(Delete d)`. Most natural in C#; passing `new Read()` says "default full Read," `new Read(Recursive: false)` narrows further.
 - Enum: `VerbKind { Read, Write, Delete }`. Simpler caller, less expressive (can't specify sub-options at call site).
@@ -71,7 +75,8 @@ The plan punts this to "coder picks." But three reasonable shapes:
 
 The overload pattern (option 1) is the most PLang-natural. Records-as-parameters; whoever calls knows what they need.
 
-### `IStore` API today doesn't have `AddOrUpdate`
+### `IStore` API today doesn't have `AddOrUpdate`  ✅ RESOLVED (stage 3 uses `IStore.Set(table, key, data)`)
+
 **Code:** `PLang/App/Settings/IStore.cs` exposes `Set(table, key, data)` which is upsert behaviour (INSERT OR REPLACE). The plan said `Settings.AddOrUpdate(data)` — actual API is `Set(table, key, data)`. Plan text should use `Set` to match.
 
 ### `IStore.GetAll(table)` returns `Data.@this` containing `List<Data>`

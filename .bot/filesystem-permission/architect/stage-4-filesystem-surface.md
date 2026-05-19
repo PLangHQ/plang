@@ -1,6 +1,6 @@
 # Stage 4: IPLangFileSystem v2 — The Surface Bundle
 
-**Goal:** The big bundle. Drop `System.IO.Abstractions.IFileSystem` inheritance. Redesign `IPLangFileSystem` v2 around `Path` parameters and `Data<T>` returns, with verb baked into every method. Permission check happens inside each operation; on miss, the method returns `Data.Fail` with a `FilePermissionAsk`-marked error. Move/Copy use the batched check (one bundled Ask covers both required permissions). Inventory every call site across the codebase and rewrite.
+**Goal:** The big bundle. Drop `System.IO.Abstractions.IFileSystem` inheritance. Redesign `IPLangFileSystem` v2 around `Path` parameters and `Data<T>` returns, with verb baked into every method. Permission check happens inside each operation via `path.Authorize(verb)` (stage 2); on miss, the method returns whatever `Authorize` returned (`Data<PermissionAskCallback>`). Move/Copy use a batched check (one bundled `PermissionAskCallback` covers both required permissions). Inventory every call site across the codebase and rewrite.
 
 **This is the largest stage by far.** ~50–100 call sites touched across modules, builder, snapshot, settings, channels, cache, runtime infra.
 
@@ -25,34 +25,34 @@ Roughly 11 methods grouped as:
 - **Destructive** — `Delete`. Checks `Verb.Delete` internally.
 - **Multi-path** — `Move`, `Copy`. Each checks Read on source plus Write on dest, batched into one Ask if either is missing.
 
-Every method takes a `Path` object, not `string`. Every method returns `Data<T>` or `Data`. Permission miss = `Data.Fail` whose Error implements the `Ask` marker (concretely a `FilePermissionAsk` carrying the FilePermission record).
+Every method takes a `Path` object, not `string`. Every method returns `Data<T>` or `Data`. Permission miss surfaces as `Data<PermissionAskCallback>` (success path with an `ICallback` value — engine/channel detects and suspends). No `Data.Fail`, no marker interface.
 
 Final method list and exact signatures settled by coder during the inventory pass. The shape is what matters: typed Path in, Data out, verb baked in.
 
 ### Permission check, delegated to Path
 
-Every operation method asks the Path: `await path.CheckPermission(Verb.X)`. Path owns the question — it knows its absolute form, its Properties cache, and how to reach `actor.Permission` via its Context. The FS method propagates whatever Data Path returns:
+Every operation method asks the Path: `path.Authorize(new Verb.Read())` (or `Write`/`Delete`). Path owns the question — it knows its absolute form, reaches `Context.Actor.Permission`, and constructs a `PermissionAskCallback` itself when no grant covers. The FS method propagates whatever Data Path returns:
 
 - `Data.Ok` from Path → FS method proceeds with the BCL IO.
-- `Data.Fail` (with a `FilePermissionAsk`-marked error) from Path → FS method returns it unchanged. `error.handle`'s built-in path catches it from there.
+- `Data<PermissionAskCallback>` from Path → FS method returns it unchanged. Engine/channel detects the callback and suspends.
 
-The FS method body is two delegations: ask Path, then do IO via BCL. No private helpers, no transaction script. `path.CheckPermission` was wired in stage 3.
+The FS method body is two delegations: ask Path, then do IO via BCL. No private helpers, no transaction script. `path.Authorize` was wired in stage 2.
 
 ### Batched check for multi-path operations
 
-`Move` and `Copy` ask each Path for its respective verb. If both return `Ok`, the operation proceeds. If either returns `Fail-with-Ask`, the FS method merges any missing Asks into one bundled `Data.Fail` covering both paths. User sees one consent prompt for the whole operation.
+`Move` and `Copy` ask each Path for its respective verb. If both return `Ok`, the operation proceeds. If either returns a `PermissionAskCallback`, the FS method merges the unmet `Requests` lists into one bundled `PermissionAskCallback` covering both paths and returns it. User sees one consent prompt for the whole operation.
 
 The bundling is the only choreography that belongs at the FS layer — it knows the operation (Move/Copy) that ties the two Paths together. Each Path knows about itself; the operation knows about the pair.
 
-Fail-fast: no partial work happens. Either both grants present (operation runs) or any missing surfaces in one bundled Ask.
+Fail-fast: no partial work happens. Either both grants present (operation runs) or any missing surfaces in one bundled callback.
 
 ### Action handler rewrites
 
-Every `PLang/App/modules/file/*.cs` action handler shrinks to a thin shell — calls the corresponding FS method, returns the Data. Read may apply its `ResolveVariables` post-processing on the Success branch; other actions are essentially one-liners. The action handler never inspects an Ask-marked Fail — it returns it as-is and `error.handle` does the rest.
+Every `PLang/App/modules/file/*.cs` action handler shrinks to a thin shell — calls the corresponding FS method, returns the Data. Read may apply its `ResolveVariables` post-processing on the Success branch; other actions are essentially one-liners. The action handler never inspects whether the result is a callback — it returns it as-is and the engine/channel does the rest.
 
 ### Non-action call sites
 
-Inventory and rewrite — see [v1/plan/filesystem-surface.md](v1/plan/filesystem-surface.md#inventory-pass). Each call site that currently does `fs.File.X`, `fs.Directory.X`, `fs.Path.X` becomes a `Data`-returning call on the new surface. Cognitive change: handle Data return (Ok or Fail-with-Ask or Fail-with-other) instead of catching exceptions.
+Inventory and rewrite — see [v1/plan/filesystem-surface.md](v1/plan/filesystem-surface.md#inventory-pass). Each call site that currently does `fs.File.X`, `fs.Directory.X`, `fs.Path.X` becomes a `Data`-returning call on the new surface. Cognitive change: handle Data return (Ok, or Ok-with-callback to bubble through, or Fail-with-other) instead of catching exceptions.
 
 ### Delete the old surface
 
@@ -61,8 +61,8 @@ After all call sites are rewritten: remove `System.IO.Abstractions.IFileSystem` 
 ## Dependencies
 
 - Stage 1 (types — `FilePermission`, `Verb.@this`, `Match`).
-- Stage 2 (`Ask` marker exists; `error.handle` built-in path recognises it; engine retry loop in place).
-- Stage 3 (`path.CheckPermission(Verb.X)` exists on the Path class; `Actor.@this.Permission` view is reachable via `path.Context.Actor.Permission` but only used internally by Path).
+- Stage 2 (`PermissionAskCallback` exists; `Path.Authorize(verb)` exists; engine/channel handles `ICallback` values in action results — existing infrastructure).
+- Stage 3 (`Actor.@this.Permission` view exists; reachable via `path.Context.Actor.Permission` but only used internally by Path/Authorize).
 
 ## Design
 
@@ -73,7 +73,7 @@ Full surface design lives in [v1/plan/filesystem-surface.md](v1/plan/filesystem-
 This is one stage on the plan, but the work breaks into commits for bisectability:
 
 1. **Define the v2 interface.** Pure declaration. Code compiles; tests don't reference it yet.
-2. **Implement `Default` against v2.** Each operation asks `path.CheckPermission(Verb.X)` (single) or asks each path then merges (batched). Tests against `Default`: operations succeed for in-root paths, return Ask-marked Fail for out-of-root without grants.
+2. **Implement `Default` against v2.** Each operation asks `path.Authorize(new Verb.X())` (single) or asks each path then merges (batched). Tests against `Default`: operations succeed for in-root paths, return `Data<PermissionAskCallback>` for out-of-root without grants.
 3. **Rewrite each action handler.** One commit per action (read, save, delete, copy, move, list, exists). Tests in `Tests/App/modules/file/` continue to pass against the new shape.
 4. **Rewrite non-action call sites.** Commit per consumer (builder, snapshot, settings, channels, cache, runtime infra).
 5. **Delete the old surface.** Final commit removes `ValidatePath`, `FileAccessControl`, `IFileSystem` inheritance.

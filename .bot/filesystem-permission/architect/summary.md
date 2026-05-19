@@ -1,5 +1,30 @@
 # Summary
 
+## 2026-05-19 (third pass) — stage 2 reframed around `PermissionAskCallback`
+
+After the verification pass surfaced that `error.handle` doesn't have a built-in runtime path and that the right pattern is callback-suspension (mirroring `output.ask` + `AskCallback`), stage 2 was rewritten end-to-end and the other stage files swept for mechanical corrections.
+
+**Key shifts from the prior 2026-05-19 draft:**
+
+- **No `Ask` marker interface; no `error.handle` built-in path.** Deleted. The signal that an action needs consent is the same one `output.ask` already uses: the action returns `Data` whose `Value is ICallback`. Engine/channel detects, serializes, suspends.
+- **`PermissionAskCallback : ICallback`** lives at `PLang/App/Callback/PermissionAskCallback.cs`, mirrors `AskCallback` (Position, ActorName, Variables, Answer) and adds `Requests : List<FilePermission>`. On resume, `Run(ctx)` parses the Answer itself ("a"/"y"/"n"/garbage→deny — semantics owned by the callback, not the channel), signs + stores grants, then re-dispatches via `ctx.App.Run(Position.Action, ctx)`. Verbatim what `AskCallback.Run` does at `AskCallback.cs:99`.
+- **`Path.Authorize(Verb verb)`** is the consumer surface (was `CheckPermission`). Name chosen because the method does real work (may construct a callback) and isn't boolean-shaped. Reads `Context.Actor` directly — Path already carries Context (`Path.cs:57`).
+- **Channel is payload-agnostic.** It forwards a raw answer string to `callback.run`. It does not know about Decision, Always/Session/Deny, or `PermissionAskCallback` — that's the callback's job.
+- **Actor source confirmed: `Context.Actor`.** `App.CurrentActor` is slated for deletion and is irrelevant to permission decisions.
+- **Mechanical corrections** across stage files: `Path.@this` → `Path` (class isn't @this-shaped), `id` → `key` (sqlite column name), `AddOrUpdate` → `Set` (IStore API), Ask-marker / error.handle language → callback-from-action.
+- **Snapshot for in-memory grants deferred.** Known limitation: "y" (session) grants don't survive snapshot/restore. Acceptable for v1.
+- **Per-actor lock dropped.** Two concurrent asks against one actor may both prompt; revisit if real.
+
+### Stage status
+
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [Permission types](stage-1-permission-types.md) | pending |
+| 2 | [PermissionAskCallback](stage-2-permission-ask-callback.md) | pending |
+| 3 | [Storage binding](stage-3-storage-binding.md) | pending |
+| 4 | [Filesystem surface (bundle)](stage-4-filesystem-surface.md) | pending |
+| 5 | [Messages end-to-end + final consent UI](stage-5-messages-end-to-end.md) | pending |
+
 ## 2026-05-19 (continued) — design walkthrough with Ingi; further refinements
 
 Long walking-the-plan session with Ingi after the initial 2026-05-19 rewrite. Further refinements:
@@ -46,15 +71,7 @@ Session with Ingi reshaped the design substantially. The plan files were rewritt
 
 **(10) Multi-path operations bundle their consent.** `file.move` and `file.copy` use a batched check internally — accumulate all missing permissions and surface in one Request. Fail-fast: no partial work.
 
-### Stage status
-
-| Stage | File | Status |
-|-------|------|--------|
-| 1 | [Permission types](stage-1-permission-types.md) | pending |
-| 2 | [Ask marker + error.handle built-in path](stage-2-ask-routing.md) | pending |
-| 3 | [Storage binding](stage-3-storage-binding.md) | pending |
-| 4 | [Filesystem surface (bundle)](stage-4-filesystem-surface.md) | pending |
-| 5 | [Messages end-to-end + final template](stage-5-messages-end-to-end.md) | pending |
+### Stage status (superseded by the 2026-05-19 third-pass status table above)
 
 ### What previously-open questions resolved
 
