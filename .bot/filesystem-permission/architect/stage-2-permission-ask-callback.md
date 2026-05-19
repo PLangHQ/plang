@@ -77,16 +77,68 @@ The verb argument is one of the stage 1 records (`new Read()`, `new Write()`, `n
 
 If `callback.run` doesn't currently have a registry-of-types pattern, add one. Coder may need to extend `Wire/this.cs` — investigate at implementation time, do not pre-design.
 
-### 4. Tests
+### 4. `FilePermission.AppId` source
+
+Path constructs the request with `AppId = Context.App.Id` (verified `App.this.cs:34`). Document this on the constructor call so the coder doesn't invent a path.
+
+### 5. Engine: short-circuit on a callback result (NEW — fixes existing gap for `AskCallback` too)
+
+The current step loop at `Goals/Goal/Steps/this.cs:RunAsync` does not stop when an action returns a `Data` whose Type is a callback — subsequent steps run with the callback object as their input. This means **mid-goal `output.ask` is not properly suspending today either**; the existing tests cover round-trip and pre-bound resume but not real mid-goal continuation. Stage 2 fixes this for all callback kinds.
+
+**Changes:**
+
+- **`Type.IsCallback` property** on `App.Data.Type` (`Data/this.cs`). Returns `true` when `ClrType` is assignable to `App.Callback.ICallback`. The engine queries Type, never `data.Value` (OBP — engine never decomposes Data).
+- **Step-loop short-circuit** in `Steps/this.cs:RunAsync`, alongside the existing `Returned` and `!Success && !Handled` checks:
+  ```
+  if (result.Type?.IsCallback == true) return result;
+  ```
+  The goal's `RunAsync` returns the callback Data as the goal's effective output. The channel serializes it onto the wire and the request completes.
+
+### 6. Resume: continue goal execution from after the suspended step (NEW — also fixes `AskCallback`)
+
+Currently `ICallback.Run` (both `AskCallback.Run` and any future implementations) calls `App.Run(Position.Action, ctx)` — runs **only** the originally suspended action. After that returns, the rest of the goal does **not** execute. This means a goal like `- ask user "name?" / - write out %name%` does not currently complete after a real resume (only the simulated-via-pre-bind path is tested).
+
+**Change:**
+
+- After `App.Run(Position.Action, ctx)` succeeds, the callback's `Run` invokes the goal's step iterator starting at `Position.StepIndex + 1`. This requires either:
+  - A new `Steps.RunAsync(context, fromIndex)` overload, OR
+  - A method on `Goal` that does "run steps starting at index N."
+  Coder picks the cleaner shape; the call lives in one place (callback's `Run`), so the engine API change is small.
+
+The same change is applied to `AskCallback.Run` — same machinery, same fix. After the fix, mid-goal `output.ask` works end-to-end.
+
+A new integration test must prove the full loop: fresh dispatch returns callback → channel suspends → callback.run on the wire → resumed action returns answer → **next step in the goal runs and uses the answer**.
+
+### 7. `PermissionDenied` error
+
+New error class under `PLang/App/Errors/` (alongside `AskError.cs`). Carries the `Requests` list so callers can see what was denied. Returned by `PermissionAskCallback.Run` when the parsed Decision is Deny.
+
+### 8. `Decision` shape
+
+`Decision` enum (or sealed types — coder's call). At least three values: `Always`, `Session`, `Deny`. `ParseAnswer(object?)` lives on `PermissionAskCallback` as a private method, fail-closed (unknown answer → Deny). Lives in the callback file; not shared with other kinds yet.
+
+### 9. Expiry values
+
+Constants live on `PermissionAskCallback` (the file that signs). Tentative values:
+- Session ("y"): 30 minutes.
+- Always ("a"): 30 days (or `null` / forever — stage 3 ratifies based on storage routing).
+
+Stage 3 reads these constants when `Add` routes by expiry. If stage 3 wants different values, change them here.
+
+### 10. Tests
 
 - `PermissionAskCallback` round-trips through Serialize/Deserialize.
 - `Path.Authorize` returns `Data.Ok` when grant exists (use mock `actor.Permission`).
 - `Path.Authorize` returns `Data<PermissionAskCallback>` when no grant exists.
-- `Run` with Answer="a" stores grant + re-dispatches (mock `actor.Permission.Add` and `App.Run`).
-- `Run` with Answer="y" stores grant with shorter expiry.
-- `Run` with Answer="n" returns `Data.Fail(PermissionDenied)`.
-- `Run` with Answer="garbage" fail-closes to Deny.
-- End-to-end: `file.read` against ungranted path returns callback; resumed call against granted path returns content.
+- `Path.Authorize` populates the constructed `FilePermission` with `AppId = Context.App.Id`.
+- `Run` with Answer="a" stores grant with long expiry + re-dispatches (mock `actor.Permission.Add` and `App.Run`).
+- `Run` with Answer="y" stores grant with short expiry.
+- `Run` with Answer="n" returns `Data.Fail(PermissionDenied)` carrying the unmet `Requests`.
+- `Run` with Answer="garbage" or `null` fail-closes to Deny.
+- `Type.IsCallback` returns true for `Data<AskCallback>` and `Data<PermissionAskCallback>`; false for `Data<string>`, `Data<byte[]>`, etc.
+- Step-loop short-circuit: a goal whose step 1 returns a callback does not run steps 2+; `RunAsync` returns the callback Data.
+- Resume continuation: starting from a Position pointing at step N, after the action's resumed run completes, steps N+1..end execute. Test with a 3-step goal: ask → write the answer → assert it was written.
+- End-to-end: `file.read` against ungranted path returns callback; resumed call signs/stores grant and re-runs; second pass reads content; subsequent goal steps run with the read result.
 
 ## Dependencies
 
@@ -98,6 +150,7 @@ If `callback.run` doesn't currently have a registry-of-types pattern, add one. C
 
 - `PermissionAskCallback` compiles, implements `ICallback`, round-trips.
 - `Path.Authorize` is the only public surface for permission checks. No `HasAccess`, no `Check*`, no decomposition into bool+factory.
-- `file.read`-against-ungranted-path test issues a callback; resume test reads content.
+- `Type.IsCallback` is the engine-side discriminator. The step-loop short-circuit and resume-continuation work for **any** `ICallback`, not just `PermissionAskCallback` — verified by adding a mid-goal `output.ask` integration test that now passes (previously not exercised end-to-end).
+- `file.read`-against-ungranted-path test issues a callback; resume test signs/stores grant, re-runs, returns content, and **the next step in the goal runs**.
 - Channel doesn't import permission types — it only sees `ICallback` bytes and forwards a raw string. Verified by inspection of channel code touched in this stage (should be zero or near-zero).
-- No `dotnet run --project PLang.Tests` regressions.
+- No `dotnet run --project PLang.Tests` regressions. New tests added cover Type.IsCallback, the step-loop short-circuit, the resume continuation, and the full permission round-trip.
