@@ -1,0 +1,59 @@
+{
+  "n": 5000,
+  "warmup": 1,
+  "repeats": 3,
+  "results": {
+    "hello": {
+      "node": {
+        "runs": 3,
+        "wall_s_median": 0.03719918499700725,
+        "loop_ns_median": 1728931,
+        "cpu_total_s_median": 0.038619,
+        "rss_max_mib_median": 51.7421875,
+        "p50_ns_median": 100.0,
+        "p95_ns_median": 200.0,
+        "p99_ns_median": 300.0,
+        "iter_count_first": 5000
+      }
+    },
+    "json": {
+      "node": {
+        "runs": 3,
+        "wall_s_median": 0.036623374035116285,
+        "loop_ns_median": 3454364,
+        "cpu_total_s_median": 0.03773500000000002,
+        "rss_max_mib_median": 51.98828125,
+        "p50_ns_median": 400.0,
+        "p95_ns_median": 600.0,
+        "p99_ns_median": 1700.0,
+        "iter_count_first": 5000
+      }
+    },
+    "file": {
+      "node": {
+        "runs": 3,
+        "wall_s_median": 0.07369335601106286,
+        "loop_ns_median": 36478772,
+        "cpu_total_s_median": 0.080151,
+        "rss_max_mib_median": 53.4921875,
+        "p50_ns_median": 5700.0,
+        "p95_ns_median": 11301.0,
+        "p99_ns_median": 23602.000000000044,
+        "iter_count_first": 5000
+      }
+    },
+    "sqlite": {
+      "node": {
+        "runs": 3,
+        "wall_s_median": 0.032861104991752654,
+        "loop_ns_median": null,
+        "cpu_total_s_median": 0.032694999999999974,
+        "rss_max_mib_median": 53.4921875,
+        "p50_ns_median": null,
+        "p95_ns_median": null,
+        "p99_ns_median": null,
+        "iter_count_first": 0
+      }
+    }
+  }
+}

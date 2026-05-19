@@ -1,0 +1,12 @@
+Start
+- set %n% = 10000
+- set %payload% = {"id":42,"name":"plang","ok":true,"tags":["a","b","c"]}
+- range from 1 to %n%, write to %items%
+- timer.start name=loop, write to %_%
+- foreach %items%, call Serialize payload=%payload%
+- timer.end name=loop, write to %loop%
+- write out "LOOP_NS=%loop.totalNanoseconds%"
+- write out "BENCH_DONE n=%n%"
+
+Serialize
+- set %s% = %payload%

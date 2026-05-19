@@ -1,0 +1,11 @@
+Start
+- set %n% = 10000
+- range from 1 to %n%, write to %items%
+- timer.start name=loop, write to %_%
+- foreach %items%, call ReadFix item=%i%
+- timer.end name=loop, write to %loop%
+- write out "LOOP_NS=%loop.totalNanoseconds%"
+- write out "BENCH_DONE n=%n%"
+
+ReadFix
+- read file fixture.txt, write to %content%

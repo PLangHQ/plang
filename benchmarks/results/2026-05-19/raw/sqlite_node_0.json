@@ -1,0 +1,19 @@
+{
+  "cmd": [
+    "node",
+    "/workspace/plang/benchmarks/workloads/sqlite/bench.js"
+  ],
+  "exit": 2,
+  "wall_s": 0.0336213189875707,
+  "loop_ns": null,
+  "cpu_user_s": 0.018237000000000003,
+  "cpu_sys_s": 0.01459000000000002,
+  "cpu_total_s": 0.03282700000000002,
+  "rss_max_mib": 53.4921875,
+  "iter_count": 0,
+  "p50_ns": null,
+  "p95_ns": null,
+  "p99_ns": null,
+  "stdout_tail": "",
+  "stderr_tail": "better-sqlite3 not installed \u2014 `cd benchmarks/workloads/sqlite && npm i better-sqlite3`\n"
+}
