@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "write out \"Building goal: %goal.Name%\"",
+      "text": "write out \u0022Building goal: %goal.Name%\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -70,7 +70,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Store build start tick count into %buildStart% as a string typed variable (per @known).",
+      "guidance": "Initialize build start timestamp into %buildStart% using variable.set. %Now.Ticks% is runtime-provided.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -79,7 +79,7 @@
     },
     {
       "index": 2,
-      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"pass1\": null, \"subGoals\": [], \"detailPasses\": [], \"durationMs\": 0}, type=json",
+      "text": "set %trace% = {\u0022id\u0022: \u0022%!trace.id%\u0022, \u0022timestamp\u0022: \u0022%Now%\u0022, \u0022goal\u0022: %goal%, \u0022pass1\u0022: null, \u0022subGoals\u0022: [], \u0022detailPasses\u0022: [], \u0022durationMs\u0022: 0}, type=json",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -104,7 +104,7 @@
                 "detailPasses": [],
                 "durationMs": 0
               },
-              "type": "list<keyvaluepair>"
+              "type": "jsonobject"
             },
             {
               "name": "Type",
@@ -123,7 +123,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Initialize %trace% as a JSON object containing trace metadata. Step is marked @known; emit variable.set with Type=json and JSON value.",
+      "guidance": "Create the trace JSON object and store it in %trace% as json.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -178,7 +178,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u00601"
                 }
               ],
               "defaults": [
@@ -194,9 +194,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Call BuildGoalCore and, on error, run HandleBuildGoalFailure via error.handle Actions chain. Step is marked @known; preserve its exact structure.",
+      "guidance": "Call BuildGoalCore; on error run HandleBuildGoalFailure via error.handle Actions chain.",
       "level": "high",
-      "confidence": 88,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -234,7 +234,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Assign currentPass into trace.pass1 using variable.set.",
+      "guidance": "Store current pass into trace.pass1.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -243,7 +243,7 @@
     },
     {
       "index": 5,
-      "text": "set %goal.BuilderVersion% = \"0.2.2\"",
+      "text": "set %goal.BuilderVersion% = \u00220.2.2\u0022",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -274,9 +274,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Set builder version string into %goal.BuilderVersion% (per @known).",
+      "guidance": "Set builder version string into %goal.BuilderVersion%.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -314,9 +314,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Set %parentGoal% to %goal% (per @known).",
+      "guidance": "Assign %parentGoal% to %goal% (object reference).",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -339,12 +339,12 @@
             },
             {
               "name": "ItemName",
-              "value": "subGoal",
+              "value": "%subGoal%",
               "type": "variable"
             },
             {
               "name": "KeyName",
-              "value": "key",
+              "value": "%key%",
               "type": "variable"
             }
           ],
@@ -371,9 +371,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %parentGoal.Goals% and call BuildSubGoal for each item, binding item to %subGoal% (per @known).",
-      "level": "medium",
-      "confidence": 70,
+      "guidance": "Iterate over parentGoal.Goals and call BuildSubGoal for each item.",
+      "level": "high",
+      "confidence": 80,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -411,9 +411,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Set %goal% back to %parentGoal% (per @known).",
+      "guidance": "Set %goal% to %parentGoal% after sub-goal processing.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -469,7 +469,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Compute elapsedTicks = Now.Ticks - buildStart using math.subtract, then store into %elapsedTicks% via variable.set.",
+      "guidance": "Compute elapsedTicks = Now.Ticks - buildStart.",
       "level": "high",
       "confidence": 85,
       "formal": null,
@@ -527,7 +527,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Compute elapsedMs = elapsedTicks / 10000 using math.divide, then store into %elapsedMs% via variable.set.",
+      "guidance": "Convert elapsedTicks to elapsedMs by dividing by 10000.",
       "level": "high",
       "confidence": 85,
       "formal": null,
@@ -567,16 +567,16 @@
         }
       ],
       "intent": null,
-      "guidance": "Set %trace.durationMs% to %elapsedMs% (per @known).",
+      "guidance": "Set trace.durationMs from elapsedMs.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 12,
-      "text": "save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'",
+      "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027",
       "lineNumber": 17,
       "indent": 0,
       "comment": null,
@@ -601,9 +601,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Save %trace% to the specified traces file path (per @known).",
+      "guidance": "Save trace JSON to the build traces directory.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -640,7 +640,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Append %goal.Name% to %traceGoals% list (per @known).",
+      "guidance": "Append goal name to traceGoals list.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -669,9 +669,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Persist the built goal artifact by calling builder.goalsSave with %goal% (per @known).",
+      "guidance": "Persist the built goal artifact by calling builder.goalsSave with %goal%.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -716,7 +716,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %passStart% from %Now.Ticks% into a runtime variable. @known indicates this step is already mapped and should be kept.",
+          "guidance": "Set %passStart% to %Now.Ticks% using variable.set. @known indicates the exact prior mapping is authoritative.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -763,7 +763,7 @@
             }
           ],
           "intent": null,
-          "guidance": "builder.actions to retrieve the registered action catalog; store it in %actions%.",
+          "guidance": "Call builder.actions to retrieve the action catalog, then store it in %actions%. @known is authoritative.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -810,7 +810,7 @@
             }
           ],
           "intent": null,
-          "guidance": "builder.types to retrieve available PLang type names; store it in %typeInfo%.",
+          "guidance": "Call builder.types to retrieve registered PLang type names, then store it in %typeInfo%. @known is authoritative.",
           "level": "high",
           "confidence": 95,
           "formal": null,
@@ -819,7 +819,7 @@
         },
         {
           "index": 3,
-          "text": "render template \"/system/actions/v2/summary.md\", write to %actionSummary%",
+          "text": "render template \u0022/system/actions/v2/summary.md\u0022, write to %actionSummary%",
           "lineNumber": 29,
           "indent": 0,
           "comment": null,
@@ -868,17 +868,70 @@
             }
           ],
           "intent": null,
-          "guidance": "Render the markdown template file as a UI template (IsFile=true) and store output in %actionSummary%.",
+          "guidance": "Render the actions summary template file and store output in %actionSummary%. @known is authoritative.",
           "level": "high",
-          "confidence": 93,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 4,
-          "text": "render template \"/system/builder/llm/BuildGoal.user.llm\", write to %goalForLlm%",
+          "text": "goal.getTypes Goal=%goal%, write to %variablesByStep%",
           "lineNumber": 30,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "getTypes",
+              "parameters": [
+                {
+                  "name": "Goal",
+                  "value": "%goal%",
+                  "type": "goal"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%variablesByStep%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Call goal.getTypes for %goal% and store the per-step variable type map in %variablesByStep%. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 5,
+          "text": "render template \u0022/system/builder/llm/BuildGoal.user.llm\u0022, write to %goalForLlm%",
+          "lineNumber": 31,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -926,17 +979,17 @@
             }
           ],
           "intent": null,
-          "guidance": "Render the goal-format template file (IsFile=true) and store output in %goalForLlm%.",
+          "guidance": "Render the BuildGoal.user prompt template file and store output in %goalForLlm%. @known is authoritative.",
           "level": "high",
-          "confidence": 93,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
         },
         {
-          "index": 5,
-          "text": "render template \"/system/builder/llm/BuildGoal.system.llm\", write to %buildGoalPrompt%",
-          "lineNumber": 31,
+          "index": 6,
+          "text": "render template \u0022/system/builder/llm/BuildGoal.system.llm\u0022, write to %buildGoalPrompt%",
+          "lineNumber": 32,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -984,17 +1037,17 @@
             }
           ],
           "intent": null,
-          "guidance": "Render the BuildGoal.llm prompt template file (IsFile=true) and store output in %buildGoalPrompt%.",
+          "guidance": "Render the BuildGoal.system prompt template file and store output in %buildGoalPrompt%. @known is authoritative.",
           "level": "high",
-          "confidence": 93,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
         },
         {
-          "index": 6,
-          "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildGoalPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}], type=json",
-          "lineNumber": 32,
+          "index": 7,
+          "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildGoalPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%goalForLlm%\u0022}], type=json",
+          "lineNumber": 33,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1038,7 +1091,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %messages% to a JSON array of llm messages (system/user) and tag it as type json.",
+          "guidance": "Set %messages% to a JSON array containing system/user prompt content, then store it. @known is authoritative.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -1046,9 +1099,9 @@
           "waitForExecution": true
         },
         {
-          "index": 7,
+          "index": 8,
           "text": "llm.query Messages=%messages%, Schema={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, keep?: bool, guidance?: string, formal?: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level?: string, confidence?: int}]}, cache=%!build.cache%, write to %stepResults%",
-          "lineNumber": 33,
+          "lineNumber": 34,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1059,1231 +1112,7 @@
                 {
                   "name": "Messages",
                   "value": "%messages%",
-                  "type": "list<llmmessage>"
-                },
-                {
-                  "name": "Schema",
-                  "value": {
-                    "description": "string",
-                    "errors?": [
-                      {
-                        "key": "string",
-                        "message": "string"
-                      }
-                    ],
-                    "warnings?": [
-                      {
-                        "key": "string",
-                        "message": "string"
-                      }
-                    ],
-                    "steps": [
-                      {
-                        "index": "int",
-                        "keep?": "bool",
-                        "guidance?": "string",
-                        "formal?": "string",
-                        "actions?": [
-                          {
-                            "module": "string",
-                            "action": "string",
-                            "parameters?": "list<object>",
-                            "errors?": [
-                              {
-                                "key": "string",
-                                "message": "string"
-                              }
-                            ],
-                            "warnings?": [
-                              {
-                                "key": "string",
-                                "message": "string"
-                              }
-                            ]
-                          }
-                        ],
-                        "errors?": [
-                          {
-                            "key": "string",
-                            "message": "string"
-                          }
-                        ],
-                        "warnings?": [
-                          {
-                            "key": "string",
-                            "message": "string"
-                          }
-                        ],
-                        "level?": "string",
-                        "confidence?": "int"
-                      }
-                    ],
-                    "level?": "string",
-                    "confidence?": "int"
-                  },
-                  "type": "object"
-                },
-                {
-                  "name": "Cache",
-                  "value": "%build.cache%",
-                  "type": "bool"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "continuepreviousconversation",
-                  "value": false,
-                  "type": "bool"
-                },
-                {
-                  "name": "temperature",
-                  "value": 0,
-                  "type": "double"
-                },
-                {
-                  "name": "maxtokens",
-                  "value": 16000,
-                  "type": "int"
-                },
-                {
-                  "name": "maxtoolcalls",
-                  "value": 10,
-                  "type": "int"
-                },
-                {
-                  "name": "maxvalidationretries",
-                  "value": 0,
-                  "type": "int"
-                }
-              ],
-              "modifiers": []
-            },
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%stepResults%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Value",
-                  "value": "%__data__%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Call llm.query with Messages=%messages% and Schema describing the expected response shape; cache controlled by %build.cache%; store response in %stepResults%.",
-          "level": "high",
-          "confidence": 70,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 8,
-          "text": "builder.validateResponse stepResults=%stepResults%, goal=%goal%, on error call LlmFixer",
-          "lineNumber": 34,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "builder",
-              "action": "validateResponse",
-              "parameters": [
-                {
-                  "name": "StepResults",
-                  "value": "%stepResults%",
-                  "type": "buildresponse"
-                },
-                {
-                  "name": "Goal",
-                  "value": "%goal%",
-                  "type": "goal"
-                }
-              ],
-              "defaults": null,
-              "modifiers": [
-                {
-                  "module": "error",
-                  "action": "handle",
-                  "parameters": [
-                    {
-                      "name": "Actions",
-                      "value": [
-                        {
-                          "module": "goal",
-                          "action": "call",
-                          "parameters": [
-                            {
-                              "name": "GoalName",
-                              "value": {
-                                "name": "LlmFixer"
-                              },
-                              "type": "goal.call"
-                            }
-                          ],
-                          "defaults": null,
-                          "modifiers": []
-                        }
-                      ],
-                      "type": "list`1"
-                    }
-                  ],
-                  "defaults": [
-                    {
-                      "name": "ignoreerror",
-                      "value": false,
-                      "type": "bool"
-                    }
-                  ],
-                  "modifiers": []
-                }
-              ]
-            }
-          ],
-          "intent": null,
-          "guidance": "Validate the LLM response structure; on error call LlmFixer via error.handle recovery action chain.",
-          "level": "high",
-          "confidence": 85,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 9,
-          "text": "builder.enrichResponse stepResults=%stepResults%, goal=%goal%, write to %stepResults%",
-          "lineNumber": 35,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "builder",
-              "action": "enrichResponse",
-              "parameters": [
-                {
-                  "name": "StepResults",
-                  "value": "%stepResults%",
-                  "type": "buildresponse"
-                },
-                {
-                  "name": "Goal",
-                  "value": "%goal%",
-                  "type": "goal"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            },
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%stepResults%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Value",
-                  "value": "%__data__%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Enrich the response (backfill keep:true steps, tag sources) and store updated %stepResults%.",
-          "level": "high",
-          "confidence": 95,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 10,
-          "text": "set %currentPass% = {}, type=json",
-          "lineNumber": 36,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%currentPass%",
-                  "type": "string"
-                },
-                {
-                  "name": "Value",
-                  "value": {},
-                  "type": "list<keyvaluepair>"
-                },
-                {
-                  "name": "Type",
-                  "value": "json",
-                  "type": "string"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Initialize %currentPass% to an empty JSON object.",
-          "level": "high",
-          "confidence": 90,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 11,
-          "text": "set %currentPass.goal% = %goal%",
-          "lineNumber": 37,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%currentPass.goal%",
-                  "type": "string"
-                },
-                {
-                  "name": "Value",
-                  "value": "%goal%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Set %currentPass.goal% to %goal% (store as object).",
-          "level": "high",
-          "confidence": 85,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 12,
-          "text": "set %currentPass.system% = %buildGoalPrompt%",
-          "lineNumber": 38,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%currentPass.system%",
-                  "type": "string"
-                },
-                {
-                  "name": "Value",
-                  "value": "%buildGoalPrompt%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Set %currentPass.system% to %buildGoalPrompt%.",
-          "level": "high",
-          "confidence": 85,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 13,
-          "text": "set %currentPass.user% = %goalForLlm%",
-          "lineNumber": 39,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%currentPass.user%",
-                  "type": "string"
-                },
-                {
-                  "name": "Value",
-                  "value": "%goalForLlm%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Set %currentPass.user% to %goalForLlm%.",
-          "level": "high",
-          "confidence": 85,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 14,
-          "text": "set %currentPass.response% = %stepResults%",
-          "lineNumber": 40,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%currentPass.response%",
-                  "type": "string"
-                },
-                {
-                  "name": "Value",
-                  "value": "%stepResults%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Set %currentPass.response% to %stepResults%.",
-          "level": "high",
-          "confidence": 85,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 15,
-          "text": "math.subtract A=%Now.Ticks%, B=%passStart%, write to %passElapsedTicks%",
-          "lineNumber": 41,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "math",
-              "action": "subtract",
-              "parameters": [
-                {
-                  "name": "A",
-                  "value": "%Now.Ticks%",
-                  "type": "object"
-                },
-                {
-                  "name": "B",
-                  "value": "%passStart%",
-                  "type": "object"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            },
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%passElapsedTicks%",
-                  "type": "string"
-                },
-                {
-                  "name": "Value",
-                  "value": "%__data__%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Compute %passElapsedTicks% = %Now.Ticks% - %passStart% using math.subtract, then store.",
-          "level": "high",
-          "confidence": 95,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 16,
-          "text": "math.divide A=%passElapsedTicks%, B=10000, write to %passDurationMs%",
-          "lineNumber": 42,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "math",
-              "action": "divide",
-              "parameters": [
-                {
-                  "name": "A",
-                  "value": "%passElapsedTicks%",
-                  "type": "object"
-                },
-                {
-                  "name": "B",
-                  "value": 10000,
-                  "type": "object"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            },
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%passDurationMs%",
-                  "type": "string"
-                },
-                {
-                  "name": "Value",
-                  "value": "%__data__%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Compute %passDurationMs% = %passElapsedTicks% / 10000 using math.divide, then store.",
-          "level": "high",
-          "confidence": 95,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 17,
-          "text": "set %currentPass.durationMs% = %passDurationMs%",
-          "lineNumber": 43,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%currentPass.durationMs%",
-                  "type": "string"
-                },
-                {
-                  "name": "Value",
-                  "value": "%passDurationMs%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Set %currentPass.durationMs% to %passDurationMs%.",
-          "level": "high",
-          "confidence": 85,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 18,
-          "text": "group %stepResults.steps% by \"level\", write to %groupedSteps%",
-          "lineNumber": 44,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "list",
-              "action": "group",
-              "parameters": [
-                {
-                  "name": "ListName",
-                  "value": "%stepResults.steps%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Key",
-                  "value": "level",
-                  "type": "string"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            },
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%groupedSteps%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Value",
-                  "value": "%__data__%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Group %stepResults.steps% by property key \"level\" and store into %groupedSteps%. Fix: list.group expects Key([string]) and ListName([%var% string]) but step text uses %stepResults.steps% (property path). We pass it as the list variable name string reference.",
-          "level": "medium",
-          "confidence": 60,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 19,
-          "text": "loop.foreach %groupedSteps%, goal.call ProcessGroup item=%group%",
-          "lineNumber": 45,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "loop",
-              "action": "foreach",
-              "parameters": [
-                {
-                  "name": "Collection",
-                  "value": "%groupedSteps%",
-                  "type": "object"
-                },
-                {
-                  "name": "ItemName",
-                  "value": "group",
-                  "type": "variable"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            },
-            {
-              "module": "goal",
-              "action": "call",
-              "parameters": [
-                {
-                  "name": "GoalName",
-                  "value": {
-                    "name": "ProcessGroup",
-                    "parallel": false,
-                    "parameters": null,
-                    "prPath": null
-                  },
-                  "type": "goal.call"
-                },
-                {
-                  "name": "item",
-                  "value": "%group%",
-                  "type": "object"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Iterate over %groupedSteps% and call ProcessGroup for each item. Fix: loop.foreach signature is Collection([object]) and ItemName([string?]) and KeyName([string?]); the step text says 'goal.call ProcessGroup item=%group%'. We compile as loop.foreach over %groupedSteps% with ItemName=group, then goal.call ProcessGroup with parameter item=%group%. Also Actor([actor] this) is not a parameter of goal.call; app.run supports Actor, but goal.call does not. So we omit Actor and only pass parameters.",
-          "level": "medium",
-          "confidence": 55,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        }
-      ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/system/builder/BuildGoal.goal",
-      "prPath": "/system/builder/.build/buildgoal.pr",
-      "hash": "0d7504c9d85dca6d91f6b0909450a0ddd964cea749c04e2a4d6947668930c655",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false,
-      "inputParameters": null
-    },
-    {
-      "name": "BuildSubGoal",
-      "description": null,
-      "comment": null,
-      "steps": [
-        {
-          "index": 0,
-          "text": "set %goal% = %subGoal%",
-          "lineNumber": 51,
-          "indent": 0,
-          "comment": "Builds a single sub-goal — no version, no sub-goal recursion, no save.\nAdds its pass data to the parent's %trace.subGoals%.",
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%goal%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Value",
-                  "value": "%subGoal%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Set the local %goal% variable to %subGoal%. This is a direct variable assignment and is marked @known, so reuse the prior mapping exactly.",
-          "level": "high",
-          "confidence": 95,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 1,
-          "text": "write out \"  Building sub-goal: %goal.Name%\"",
-          "lineNumber": 52,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "output",
-              "action": "write",
-              "parameters": [
-                {
-                  "name": "Data",
-                  "value": "  Building sub-goal: %goal.Name%",
-                  "type": "tstring"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Write a translatable progress line indicating which sub-goal is being built. Marked @known, so reuse the prior mapping exactly.",
-          "level": "high",
-          "confidence": 95,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 2,
-          "text": "call BuildGoalCore, on error HandleBuildGoalFailure",
-          "lineNumber": 53,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "goal",
-              "action": "call",
-              "parameters": [
-                {
-                  "name": "GoalName",
-                  "value": {
-                    "name": "BuildGoalCore",
-                    "parallel": false,
-                    "parameters": null,
-                    "prPath": null
-                  },
-                  "type": "goal.call"
-                }
-              ],
-              "defaults": null,
-              "modifiers": [
-                {
-                  "module": "error",
-                  "action": "handle",
-                  "parameters": [
-                    {
-                      "name": "Actions",
-                      "value": [
-                        {
-                          "module": "goal",
-                          "action": "call",
-                          "parameters": [
-                            {
-                              "name": "GoalName",
-                              "value": {
-                                "name": "HandleBuildGoalFailure"
-                              },
-                              "type": "goal.call"
-                            }
-                          ],
-                          "defaults": null,
-                          "modifiers": []
-                        }
-                      ],
-                      "type": "list`1"
-                    }
-                  ],
-                  "defaults": [
-                    {
-                      "name": "ignoreerror",
-                      "value": false,
-                      "type": "bool"
-                    }
-                  ],
-                  "modifiers": []
-                }
-              ]
-            }
-          ],
-          "intent": null,
-          "guidance": "Call BuildGoalCore to build the sub-goal, and on error run HandleBuildGoalFailure as the recovery action chain. Marked @known; reuse prior mapping exactly.",
-          "level": "high",
-          "confidence": 90,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 3,
-          "text": "add %currentPass% to %trace.subGoals%",
-          "lineNumber": 54,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "list",
-              "action": "add",
-              "parameters": [
-                {
-                  "name": "ListName",
-                  "value": "%trace.subGoals%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Value",
-                  "value": "%currentPass%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "atindex",
-                  "value": -1,
-                  "type": "int"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Append %currentPass% to the parent's trace list %trace.subGoals%. Marked @known; reuse prior mapping exactly.",
-          "level": "high",
-          "confidence": 95,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        }
-      ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/system/builder/BuildGoal.goal",
-      "prPath": "/system/builder/.build/buildgoal.pr",
-      "hash": "472eeadd1143d92384bb0398124e1fd1422130b3e21734c122ee716bdd4a90c3",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false,
-      "inputParameters": null
-    },
-    {
-      "name": "ProcessGroup",
-      "description": null,
-      "comment": null,
-      "steps": [
-        {
-          "index": 0,
-          "text": "if %group.steps[0].level% is \"low\" or \"medium\"",
-          "lineNumber": 59,
-          "indent": 0,
-          "comment": "Process a group of steps with the same confidence level",
-          "actions": [
-            {
-              "module": "condition",
-              "action": "if",
-              "parameters": [
-                {
-                  "name": "Left",
-                  "value": "%group.steps[0].level%",
-                  "type": "string"
-                },
-                {
-                  "name": "Operator",
-                  "value": "in",
-                  "type": "operator"
-                },
-                {
-                  "name": "Right",
-                  "value": [
-                    "low",
-                    "medium"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "name": "Negate",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Check whether the first step's level is in ['low','medium'] using condition.if with operator 'in'. This gates whether the group should be processed.",
-          "level": "high",
-          "confidence": 92,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 1,
-          "text": "foreach %group.steps%, call BuildStep item=%stepResult%",
-          "lineNumber": 60,
-          "indent": 1,
-          "comment": null,
-          "actions": [
-            {
-              "module": "loop",
-              "action": "foreach",
-              "parameters": [
-                {
-                  "name": "Collection",
-                  "value": "%group.steps%",
-                  "type": "object"
-                },
-                {
-                  "name": "ItemName",
-                  "value": "stepResult",
-                  "type": "string"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            },
-            {
-              "module": "goal",
-              "action": "call",
-              "parameters": [
-                {
-                  "name": "GoalName",
-                  "value": {
-                    "name": "BuildStep",
-                    "parallel": false,
-                    "parameters": [
-                      {
-                        "name": "item",
-                        "value": "%stepResult%",
-                        "type": "string"
-                      }
-                    ],
-                    "prPath": "/system/builder/.build/buildstep.pr"
-                  },
-                  "type": "goal.call"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "foreach %group.steps%, call BuildStep item=%stepResult%. The foreach iterates group.steps and the loop body is a goal.call to BuildStep with parameter item bound to the current stepResult.",
-          "level": "high",
-          "confidence": 90,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 2,
-          "text": "foreach %group.steps%, call ApplyStep item=%stepResult%",
-          "lineNumber": 61,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "loop",
-              "action": "foreach",
-              "parameters": [
-                {
-                  "name": "Collection",
-                  "value": "%group.steps%",
-                  "type": "object"
-                },
-                {
-                  "name": "ItemName",
-                  "value": "stepResult",
-                  "type": "string"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            },
-            {
-              "module": "goal",
-              "action": "call",
-              "parameters": [
-                {
-                  "name": "GoalName",
-                  "value": {
-                    "name": "ApplyStep",
-                    "parallel": false,
-                    "parameters": [
-                      {
-                        "name": "item",
-                        "value": "%stepResult%",
-                        "type": "string"
-                      }
-                    ],
-                    "prPath": "/system/builder/.build/applystep.pr"
-                  },
-                  "type": "goal.call"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "foreach %group.steps%, call ApplyStep item=%stepResult%. Same pattern as BuildStep, but calling ApplyStep.",
-          "level": "high",
-          "confidence": 90,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        }
-      ],
-      "goals": [],
-      "visibility": 0,
-      "path": "/system/builder/BuildGoal.goal",
-      "prPath": "/system/builder/.build/buildgoal.pr",
-      "hash": "582acfb210dc8941bc2ebe5f3de71bbd321ad2ebf738392fa0a5b23adb7fbf72",
-      "builderVersion": null,
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": true,
-      "isTest": false,
-      "inputParameters": null
-    },
-    {
-      "name": "LlmFixer",
-      "description": null,
-      "comment": null,
-      "steps": [
-        {
-          "index": 0,
-          "text": "write out \"  Validation failed: %!error.Message% — retrying...\"",
-          "lineNumber": 66,
-          "indent": 0,
-          "comment": "LLM produced invalid output — retry with error context",
-          "actions": [
-            {
-              "module": "output",
-              "action": "write",
-              "parameters": [
-                {
-                  "name": "Data",
-                  "value": "  Validation failed: %!error.Message% — retrying...",
-                  "type": "tstring"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Write a retry notice to output, including the runtime error message placeholder. This is a direct output side-effect.",
-          "level": "high",
-          "confidence": 96,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 1,
-          "text": "set %fixerMessages% = [{\"Role\":\"system\", \"Content\":\"%buildGoalPrompt%\"}, {\"Role\":\"user\", \"Content\":\"Your previous response had validation errors:\\n%!error.Message%\\n\\nThe PLang code to build:\\n%goalForLlm%\\n\\nFix the errors listed above and return the complete corrected response.\"}], type=json",
-          "lineNumber": 67,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%fixerMessages%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Value",
-                  "value": [
-                    {
-                      "Role": "system",
-                      "Content": "%buildGoalPrompt%"
-                    },
-                    {
-                      "Role": "user",
-                      "Content": "Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response."
-                    }
-                  ],
-                  "type": "jsonarray"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
-          "intent": null,
-          "guidance": "Set %fixerMessages% to a JSON array containing system/user messages. The value is structured JSON, so use type=json.",
-          "level": "high",
-          "confidence": 93,
-          "formal": null,
-          "source": null,
-          "waitForExecution": true
-        },
-        {
-          "index": 2,
-          "text": "llm.query Messages=%fixerMessages%, Schema={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, keep?: bool, guidance?: string, formal?: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level?: string, confidence?: int}]}, cache=%!build.cache%, write to %stepResults%",
-          "lineNumber": 68,
-          "indent": 0,
-          "comment": null,
-          "actions": [
-            {
-              "module": "llm",
-              "action": "query",
-              "parameters": [
-                {
-                  "name": "Messages",
-                  "value": "%fixerMessages%",
-                  "type": "list<llmmessage>"
+                  "type": "list\u003Cllmmessage\u003E"
                 },
                 {
                   "name": "Schema",
@@ -2349,7 +1178,1218 @@
                       }
                     ]
                   },
+                  "type": "jsonobject"
+                },
+                {
+                  "name": "Cache",
+                  "value": "%!build.cache%",
+                  "type": "bool"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "continuepreviousconversation",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "temperature",
+                  "value": 0,
+                  "type": "double"
+                },
+                {
+                  "name": "maxtokens",
+                  "value": 16000,
+                  "type": "int"
+                },
+                {
+                  "name": "maxtoolcalls",
+                  "value": 10,
+                  "type": "int"
+                },
+                {
+                  "name": "maxvalidationretries",
+                  "value": 0,
+                  "type": "int"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Call llm.query with Messages=%messages%, Schema describing the expected structured response, cache=%!build.cache%, then store result in %stepResults%. @known is authoritative.",
+          "level": "medium",
+          "confidence": 55,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 9,
+          "text": "builder.validateResponse stepResults=%stepResults%, goal=%goal%, on error call LlmFixer",
+          "lineNumber": 35,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "builder",
+              "action": "validateResponse",
+              "parameters": [
+                {
+                  "name": "StepResults",
+                  "value": "%stepResults%",
+                  "type": "buildresponse"
+                },
+                {
+                  "name": "Goal",
+                  "value": "%goal%",
+                  "type": "goal"
+                }
+              ],
+              "defaults": null,
+              "modifiers": [
+                {
+                  "module": "error",
+                  "action": "handle",
+                  "parameters": [
+                    {
+                      "name": "Actions",
+                      "value": [
+                        {
+                          "module": "goal",
+                          "action": "call",
+                          "parameters": [
+                            {
+                              "name": "GoalName",
+                              "value": {
+                                "name": "LlmFixer"
+                              },
+                              "type": "goal.call"
+                            }
+                          ],
+                          "defaults": null,
+                          "modifiers": []
+                        }
+                      ],
+                      "type": "list\u00601"
+                    }
+                  ],
+                  "defaults": [
+                    {
+                      "name": "ignoreerror",
+                      "value": false,
+                      "type": "bool"
+                    }
+                  ],
+                  "modifiers": []
+                }
+              ]
+            }
+          ],
+          "intent": null,
+          "guidance": "Validate the LLM response; on error call goal LlmFixer via error.handle Actions chain. @known is authoritative.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 10,
+          "text": "builder.enrichResponse stepResults=%stepResults%, goal=%goal%, write to %stepResults%",
+          "lineNumber": 36,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "builder",
+              "action": "enrichResponse",
+              "parameters": [
+                {
+                  "name": "StepResults",
+                  "value": "%stepResults%",
+                  "type": "buildresponse"
+                },
+                {
+                  "name": "Goal",
+                  "value": "%goal%",
+                  "type": "goal"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%stepResults%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
                   "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Enrich the response (backfill keep:true steps, tag sources) and store updated %stepResults%. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 11,
+          "text": "set %currentPass% = {}, type=json",
+          "lineNumber": 37,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%currentPass%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": {},
+                  "type": "jsonobject"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Initialize %currentPass% as an empty JSON object. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 12,
+          "text": "set %currentPass.goal% = %goal%",
+          "lineNumber": 38,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%currentPass.goal%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%goal%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set %currentPass.goal% to %goal%. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 13,
+          "text": "set %currentPass.system% = %buildGoalPrompt%",
+          "lineNumber": 39,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%currentPass.system%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%buildGoalPrompt%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set %currentPass.system% to %buildGoalPrompt%. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 14,
+          "text": "set %currentPass.user% = %goalForLlm%",
+          "lineNumber": 40,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%currentPass.user%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%goalForLlm%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set %currentPass.user% to %goalForLlm%. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 15,
+          "text": "set %currentPass.response% = %stepResults%",
+          "lineNumber": 41,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%currentPass.response%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%stepResults%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set %currentPass.response% to %stepResults%. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 16,
+          "text": "math.subtract A=%Now.Ticks%, B=%passStart%, write to %passElapsedTicks%",
+          "lineNumber": 42,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "math",
+              "action": "subtract",
+              "parameters": [
+                {
+                  "name": "A",
+                  "value": "%Now.Ticks%",
+                  "type": "object"
+                },
+                {
+                  "name": "B",
+                  "value": "%passStart%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%passElapsedTicks%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Compute elapsed ticks: %passElapsedTicks% = %Now.Ticks% - %passStart% using math.subtract, then store. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 17,
+          "text": "math.divide A=%passElapsedTicks%, B=10000, write to %passDurationMs%",
+          "lineNumber": 43,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "math",
+              "action": "divide",
+              "parameters": [
+                {
+                  "name": "A",
+                  "value": "%passElapsedTicks%",
+                  "type": "object"
+                },
+                {
+                  "name": "B",
+                  "value": 10000,
+                  "type": "object"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%passDurationMs%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Convert ticks to ms: %passDurationMs% = %passElapsedTicks% / 10000 using math.divide, then store. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 18,
+          "text": "set %currentPass.durationMs% = %passDurationMs%",
+          "lineNumber": 44,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%currentPass.durationMs%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%passDurationMs%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set %currentPass.durationMs% to %passDurationMs%. @known is authoritative.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 19,
+          "text": "group %stepResults.steps% by \u0022level\u0022, write to %groupedSteps%",
+          "lineNumber": 45,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "list",
+              "action": "group",
+              "parameters": [
+                {
+                  "name": "ListName",
+                  "value": "%stepResults.steps%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Key",
+                  "value": "level",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%groupedSteps%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%__data__%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Group %stepResults.steps% by \u0027level\u0027 into %groupedSteps% using list.group, then store. @known is authoritative.",
+          "level": "medium",
+          "confidence": 70,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 20,
+          "text": "loop.foreach %groupedSteps%, goal.call ProcessGroup item=%group%",
+          "lineNumber": 46,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "loop",
+              "action": "foreach",
+              "parameters": [
+                {
+                  "name": "Collection",
+                  "value": "%groupedSteps%",
+                  "type": "object"
+                },
+                {
+                  "name": "ItemName",
+                  "value": "group",
+                  "type": "variable"
+                },
+                {
+                  "name": "KeyName",
+                  "value": "group",
+                  "type": "variable"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "ProcessGroup",
+                    "parallel": false,
+                    "parameters": null,
+                    "prPath": null
+                  },
+                  "type": "goal.call"
+                },
+                {
+                  "name": "Actor",
+                  "value": "%group%",
+                  "type": "actor"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Iterate over %groupedSteps% and call ProcessGroup for each item, passing item=%group%. @known is authoritative.",
+          "level": "low",
+          "confidence": 35,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/builder/BuildGoal.goal",
+      "prPath": "/system/builder/.build/buildgoal.pr",
+      "hash": "9c26c44648c99f9de108fb11e170fcefb515411926c7654bfe29ce14740a5215",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "BuildSubGoal",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %goal% = %subGoal%",
+          "lineNumber": 52,
+          "indent": 0,
+          "comment": "Builds a single sub-goal \u2014 no version, no sub-goal recursion, no save.\nAdds its pass data to the parent\u0027s %trace.subGoals%.",
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%goal%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%subGoal%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set the local %goal% variable to %subGoal%. This is a direct variable assignment and is marked @known, so reuse the prior mapping exactly.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "write out \u0022  Building sub-goal: %goal.Name%\u0022",
+          "lineNumber": 53,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "  Building sub-goal: %goal.Name%",
+                  "type": "tstring"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Write a translatable progress line indicating which sub-goal is being built. Marked @known, so reuse the prior mapping exactly.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "call BuildGoalCore, on error HandleBuildGoalFailure",
+          "lineNumber": 54,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "BuildGoalCore",
+                    "parallel": false,
+                    "parameters": null,
+                    "prPath": null
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": [
+                {
+                  "module": "error",
+                  "action": "handle",
+                  "parameters": [
+                    {
+                      "name": "Actions",
+                      "value": [
+                        {
+                          "module": "goal",
+                          "action": "call",
+                          "parameters": [
+                            {
+                              "name": "GoalName",
+                              "value": {
+                                "name": "HandleBuildGoalFailure"
+                              },
+                              "type": "goal.call"
+                            }
+                          ],
+                          "defaults": null,
+                          "modifiers": []
+                        }
+                      ],
+                      "type": "list\u00601"
+                    }
+                  ],
+                  "defaults": [
+                    {
+                      "name": "ignoreerror",
+                      "value": false,
+                      "type": "bool"
+                    }
+                  ],
+                  "modifiers": []
+                }
+              ]
+            }
+          ],
+          "intent": null,
+          "guidance": "Call BuildGoalCore on the current %goal% context; apply on-error recovery by running HandleBuildGoalFailure via error.handle Actions chain.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "add %currentPass% to %trace.subGoals%",
+          "lineNumber": 55,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "list",
+              "action": "add",
+              "parameters": [
+                {
+                  "name": "ListName",
+                  "value": "%trace.subGoals%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%currentPass%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "atindex",
+                  "value": -1,
+                  "type": "int"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Append %currentPass% to the parent\u0027s trace list %trace.subGoals%. Marked @known; reuse prior mapping exactly.",
+          "level": "high",
+          "confidence": 95,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/builder/BuildGoal.goal",
+      "prPath": "/system/builder/.build/buildgoal.pr",
+      "hash": "472eeadd1143d92384bb0398124e1fd1422130b3e21734c122ee716bdd4a90c3",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "ProcessGroup",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "if %group.steps[0].level% is \u0022low\u0022 or \u0022medium\u0022",
+          "lineNumber": 60,
+          "indent": 0,
+          "comment": "Process a group of steps with the same confidence level",
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%group.steps[0].level%",
+                  "type": "string"
+                },
+                {
+                  "name": "Operator",
+                  "value": "in",
+                  "type": "operator"
+                },
+                {
+                  "name": "Right",
+                  "value": [
+                    "low",
+                    "medium"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "name": "Negate",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Use condition.if to check whether %group.steps[0].level% is in [\u0022low\u0022,\u0022medium\u0022]. The step is annotated @known, so the engine will reuse the prior mapping.",
+          "level": "high",
+          "confidence": 92,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "foreach %group.steps%, call BuildStep item=%stepResult%",
+          "lineNumber": 61,
+          "indent": 1,
+          "comment": null,
+          "actions": [
+            {
+              "module": "loop",
+              "action": "foreach",
+              "parameters": [
+                {
+                  "name": "Collection",
+                  "value": "%group.steps%",
+                  "type": "object"
+                },
+                {
+                  "name": "ItemName",
+                  "value": "stepResult",
+                  "type": "string"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "BuildStep",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "item",
+                        "value": "%stepResult%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/buildstep.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "foreach %group.steps%, call BuildStep item=%stepResult%. The foreach iterates group.steps and the loop body is a goal.call to BuildStep with parameter item bound to the current stepResult.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "foreach %group.steps%, call ApplyStep item=%stepResult%",
+          "lineNumber": 62,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "loop",
+              "action": "foreach",
+              "parameters": [
+                {
+                  "name": "Collection",
+                  "value": "%group.steps%",
+                  "type": "object"
+                },
+                {
+                  "name": "ItemName",
+                  "value": "stepResult",
+                  "type": "variable"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "ApplyStep",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "item",
+                        "value": "%stepResult%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": "/system/builder/.build/applystep.pr"
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Iterate over %group.steps% and call ApplyStep for each step item. The step is annotated @known, so the engine will reuse the prior mapping.",
+          "level": "high",
+          "confidence": 85,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/builder/BuildGoal.goal",
+      "prPath": "/system/builder/.build/buildgoal.pr",
+      "hash": "582acfb210dc8941bc2ebe5f3de71bbd321ad2ebf738392fa0a5b23adb7fbf72",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "LlmFixer",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \u0022  Validation failed: %!error.Message% \u2014 retrying...\u0022",
+          "lineNumber": 67,
+          "indent": 0,
+          "comment": "LLM produced invalid output \u2014 retry with error context",
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "  Validation failed: %!error.Message% \u2014 retrying...",
+                  "type": "tstring"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "write out the retry message including %!error.Message% (tstring translation hint) to output channel.",
+          "level": "high",
+          "confidence": 98,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %fixerMessages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildGoalPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response had validation errors:\\n%!error.Message%\\n\\nThe PLang code to build:\\n%goalForLlm%\\n\\nFix the errors listed above and return the complete corrected response.\u0022}], type=json",
+          "lineNumber": 68,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%fixerMessages%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": [
+                    {
+                      "Role": "system",
+                      "Content": "%buildGoalPrompt%"
+                    },
+                    {
+                      "Role": "user",
+                      "Content": "Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response."
+                    }
+                  ],
+                  "type": "jsonarray"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Set %fixerMessages% to the JSON array of system/user messages used to re-prompt the LLM with the validation error context and the PLang code to build.",
+          "level": "high",
+          "confidence": 92,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "llm.query Messages=%fixerMessages%, Schema={description: string, errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], steps: [{index: int, keep?: bool, guidance?: string, formal?: string, actions?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}]}], errors?: [{key: string, message: string}], warnings?: [{key: string, message: string}], level?: string, confidence?: int}]}, cache=%!build.cache%, write to %stepResults%",
+          "lineNumber": 69,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "llm",
+              "action": "query",
+              "parameters": [
+                {
+                  "name": "Messages",
+                  "value": "%fixerMessages%",
+                  "type": "list\u003Cllmmessage\u003E"
+                },
+                {
+                  "name": "Schema",
+                  "value": {
+                    "description": "string",
+                    "errors": [
+                      {
+                        "key": "string",
+                        "message": "string"
+                      }
+                    ],
+                    "warnings": [
+                      {
+                        "key": "string",
+                        "message": "string"
+                      }
+                    ],
+                    "steps": [
+                      {
+                        "index": "int",
+                        "keep": "bool",
+                        "guidance": "string",
+                        "formal": "string",
+                        "actions": [
+                          {
+                            "module": "string",
+                            "action": "string",
+                            "parameters": [
+                              {
+                                "name": "string",
+                                "value": "object",
+                                "type": "string"
+                              }
+                            ],
+                            "errors": [
+                              {
+                                "key": "string",
+                                "message": "string"
+                              }
+                            ],
+                            "warnings": [
+                              {
+                                "key": "string",
+                                "message": "string"
+                              }
+                            ]
+                          }
+                        ],
+                        "errors": [
+                          {
+                            "key": "string",
+                            "message": "string"
+                          }
+                        ],
+                        "warnings": [
+                          {
+                            "key": "string",
+                            "message": "string"
+                          }
+                        ],
+                        "level": "string",
+                        "confidence": "int"
+                      }
+                    ],
+                    "level": "string",
+                    "confidence": "int"
+                  },
+                  "type": "jsonobject"
                 },
                 {
                   "name": "Cache",
@@ -2412,9 +2452,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Re-query the LLM using the constructed messages, enforce a JSON schema for the build response, apply caching, and store the result into %stepResults%.",
-          "level": "medium",
-          "confidence": 55,
+          "guidance": "Call llm.query using the fixer messages, strict JSON schema for the corrected build response, enable caching, and store the result into %stepResults%.",
+          "level": "high",
+          "confidence": 85,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2422,7 +2462,7 @@
         {
           "index": 3,
           "text": "call ValidateBuildResponse",
-          "lineNumber": 69,
+          "lineNumber": 70,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -2436,7 +2476,7 @@
                     "name": "ValidateBuildResponse",
                     "parallel": false,
                     "parameters": null,
-                    "prPath": "/system/builder/.build/validatebuildresponse.pr"
+                    "prPath": null
                   },
                   "type": "goal.call"
                 }
@@ -2446,9 +2486,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call ValidateBuildResponse to validate the corrected LLM response.",
-          "level": "high",
-          "confidence": 90,
+          "guidance": "Call ValidateBuildResponse to validate the corrected LLM response stored in %stepResults%.",
+          "level": "medium",
+          "confidence": 55,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2473,10 +2513,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \"  Build error: %!error.Message%\"",
-          "lineNumber": 77,
+          "text": "write out \u0022  Build error: %!error.Message%\u0022",
+          "lineNumber": 78,
           "indent": 0,
-          "comment": "Capture error into the parent trace and save it. Parent's %trace% is in\nscope because BuildGoal created it before calling BuildGoalCore.\nThe error is tagged on the failing pass itself so the viewer can tie the\nbuildError to the specific goal (parent vs. specific sub-goal).",
+          "comment": "Capture error into the parent trace and save it. Parent\u0027s %trace% is in\nscope because BuildGoal created it before calling BuildGoalCore.\nThe error is tagged on the failing pass itself so the viewer can tie the\nbuildError to the specific goal (parent vs. specific sub-goal).",
           "actions": [
             {
               "module": "output",
@@ -2493,17 +2533,17 @@
             }
           ],
           "intent": null,
-          "guidance": "Write a formatted build error message to output. Uses tstring because it contains %!error.Message% translation candidate.",
+          "guidance": "Step writes build error to output. Use output.write with tstring so the message is treated as a translation candidate; keep the prior mapping from @known.",
           "level": "high",
-          "confidence": 96,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "set %currentPass.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"statusCode\": %!error.StatusCode%, \"details\": %!error.Details%}, type=json",
-          "lineNumber": 78,
+          "text": "set %currentPass.buildError% = {\u0022key\u0022: \u0022%!error.Key%\u0022, \u0022message\u0022: \u0022%!error.Message%\u0022, \u0022statusCode\u0022: %!error.StatusCode%, \u0022details\u0022: %!error.Details%}, type=json",
+          "lineNumber": 79,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -2543,7 +2583,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set current pass buildError object (key/message/statusCode/details) into %currentPass.buildError% as json.",
+          "guidance": "Set current pass buildError as a JSON object. The step text includes type=json; compile to variable.set with Value typed as json (object). Keep the prior mapping from @known.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2552,8 +2592,8 @@
         },
         {
           "index": 2,
-          "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"statusCode\": %!error.StatusCode%, \"details\": %!error.Details%}, type=json",
-          "lineNumber": 79,
+          "text": "set %trace.buildError% = {\u0022key\u0022: \u0022%!error.Key%\u0022, \u0022message\u0022: \u0022%!error.Message%\u0022, \u0022statusCode\u0022: %!error.StatusCode%, \u0022details\u0022: %!error.Details%}, type=json",
+          "lineNumber": 80,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -2593,7 +2633,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set parent trace buildError object into %trace.buildError% as json.",
+          "guidance": "Set trace.buildError as a JSON object. Compile to variable.set with json-typed object value; keep the prior mapping from @known.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2603,7 +2643,7 @@
         {
           "index": 3,
           "text": "if %trace.pass1% is null, set %trace.pass1% = %currentPass%",
-          "lineNumber": 80,
+          "lineNumber": 81,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -2661,7 +2701,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If %trace.pass1% is null, initialize it to %currentPass%.",
+          "guidance": "If trace.pass1 is null, set it to currentPass. Compile to condition.if then variable.set in the same step.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -2671,7 +2711,7 @@
         {
           "index": 4,
           "text": "if %trace.pass1% is not null, add %currentPass% to %trace.subGoals%",
-          "lineNumber": 81,
+          "lineNumber": 82,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -2728,7 +2768,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If %trace.pass1% is not null, append %currentPass% to %trace.subGoals%.",
+          "guidance": "If trace.pass1 is not null, add currentPass to trace.subGoals. Compile to condition.if then list.add in the same step.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -2737,8 +2777,8 @@
         },
         {
           "index": 5,
-          "text": "save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'",
-          "lineNumber": 82,
+          "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027",
+          "lineNumber": 83,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -2762,9 +2802,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Persist the updated trace to the build traces directory as a JSON file.",
+          "guidance": "Save trace to file path. Compile to file.save with Path typed as path and Value typed as object.",
           "level": "high",
-          "confidence": 93,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -2772,7 +2812,7 @@
         {
           "index": 6,
           "text": "throw %!error%",
-          "lineNumber": 83,
+          "lineNumber": 84,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -2796,9 +2836,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Rethrow the captured error so the build fails with the same message and status code.",
+          "guidance": "Throw the captured error. Compile to error.throw with Message and StatusCode.",
           "level": "high",
-          "confidence": 88,
+          "confidence": 97,
           "formal": null,
           "source": null,
           "waitForExecution": true

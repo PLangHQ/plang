@@ -8,7 +8,7 @@
       "text": "if %stepResult.keep% is true, call ApplyKeptStep",
       "lineNumber": 5,
       "indent": 0,
-      "comment": "Validates and applies step result\nkeep:true → reuse prior .pr actions, no merge, no detail pass\notherwise level=high → use as-is, medium/low → run BuildStep with guidance",
+      "comment": "Validates and applies step result\nkeep:true \u2192 reuse prior .pr actions, no merge, no detail pass\notherwise level=high \u2192 use as-is, medium/low \u2192 run BuildStep with guidance",
       "actions": [
         {
           "module": "condition",
@@ -59,9 +59,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Branch: if %stepResult.keep% == true, apply the kept step by calling ApplyKeptStep. This step is annotated @known, so reuse prior mapping.",
+      "guidance": "If %stepResult.keep% is true, reuse prior .pr actions by calling ApplyKeptStep. This step is annotated @known, so emit keep:true only.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -121,9 +121,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Branch: if %stepResult.keep% == true with Negate=true (i.e., keep is not true), apply the built step by calling ApplyBuiltStep. This step is annotated @known, so reuse prior mapping.",
+      "guidance": "If %stepResult.keep% is not true, apply the built step by calling ApplyBuiltStep. This step is annotated @known, so emit keep:true only.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -137,10 +137,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \"  Kept prior mapping for step %stepResult.index%\"",
+          "text": "write out \u0022  Kept prior mapping for step %stepResult.index%\u0022",
           "lineNumber": 12,
           "indent": 0,
-          "comment": "keep:true short-circuit — prior actions are already on the step from MergeFrom\nNothing to validate, nothing to merge. The step is ready as-is.",
+          "comment": "keep:true short-circuit \u2014 prior actions are already on the step from MergeFrom\nNothing to validate, nothing to merge. The step is ready as-is.",
           "actions": [
             {
               "module": "output",
@@ -201,7 +201,7 @@
                 {
                   "name": "Actions",
                   "value": "%stepResult.actions%",
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": null,
@@ -229,7 +229,7 @@
                           "modifiers": []
                         }
                       ],
-                      "type": "list`1"
+                      "type": "list\u00601"
                     }
                   ],
                   "defaults": [
@@ -303,7 +303,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Merge the validated LLM step result into the existing goal step at %goal.Steps[stepResult.index]%, then write the merged step back into the same goal step variable.",
+          "guidance": "Merge the LLM-produced step result into the existing goal step at stepResult.index, then store the merged step back into %goal.Steps[stepResult.index]% via variable.set.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -312,7 +312,7 @@
         },
         {
           "index": 2,
-          "text": "if %stepResult.level% != \"high\", call BuildStep",
+          "text": "if %stepResult.level% != \u0022high\u0022, call BuildStep",
           "lineNumber": 19,
           "indent": 0,
           "comment": null,
@@ -366,9 +366,9 @@
             }
           ],
           "intent": null,
-          "guidance": "If the built step's level is not 'high', call BuildStep to refine it.",
+          "guidance": "If the incoming stepResult.level is not \u0027high\u0027, call BuildStep to refine/build the step.",
           "level": "high",
-          "confidence": 88,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -393,7 +393,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \"  Validation error: %!error.Message%\"",
+          "text": "write out \u0022  Validation error: %!error.Message%\u0022",
           "lineNumber": 23,
           "indent": 0,
           "comment": null,
@@ -453,9 +453,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the validationError variable for the specific step index from the current error (%!error%).",
+          "guidance": "Store the current error object into the goal step\u0027s validationError variable using variable.set. The @known mapping indicates the exact prior action should be reused.",
           "level": "high",
-          "confidence": 95,
+          "confidence": 90,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -477,7 +477,7 @@
                     "name": "BuildStep",
                     "parallel": false,
                     "parameters": null,
-                    "prPath": "/system/builder/.build/buildstep.pr"
+                    "prPath": null
                   },
                   "type": "goal.call"
                 }
@@ -487,9 +487,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call the BuildStep goal (non-parallel) using the provided prPath metadata from the known mapping.",
+          "guidance": "Call BuildStep goal (non-parallel) to continue building the step after validation error handling.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 85,
           "formal": null,
           "source": null,
           "waitForExecution": true

@@ -2,6 +2,8 @@ BuildStep
 / Builds a step that needs detailed action info
 / Action suggestions (module + action) already on step from BuildGoal
 - set %step% = %goal.Steps[stepResult.index]%
+- goal.getTypes Goal=%goal%, write to %variablesByStep%
+- set %variables% = %variablesByStep[stepResult.index]%
 - render template "/system/builder/llm/BuildStep.user.llm", write to %stepForLlm%
 - render template "/system/builder/llm/BuildStep.actionDetails.partial.llm", write to %actionDetails%
 - render template "/system/builder/llm/BuildStep.system.llm", write to %buildStepPrompt%

@@ -27,6 +27,7 @@ BuildGoalCore
 - builder.actions, write to %actions%
 - builder.types, write to %typeInfo%
 - render template "/system/actions/v2/summary.md", write to %actionSummary%
+- goal.getTypes Goal=%goal%, write to %variablesByStep%
 - render template "/system/builder/llm/BuildGoal.user.llm", write to %goalForLlm%
 - render template "/system/builder/llm/BuildGoal.system.llm", write to %buildGoalPrompt%
 - set %messages% = [{"Role":"system", "Content":"%buildGoalPrompt%"}, {"Role":"user", "Content":"%goalForLlm%"}], type=json

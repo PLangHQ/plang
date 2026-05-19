@@ -1,6 +1,9 @@
 {% if goal.Comment %}/ {{ goal.Comment }}
 {% endif %}{{ goal.Name }}
 {% for step in goal.Steps %}{% if step.Comment %}/ {{ step.Comment }}
+{% endif %}{% assign vars = variablesByStep[step.Index] %}{% if vars and vars.size > 0 %}/* Variables in scope */
+{% for kv in vars %}%{{ kv[0] }}%({{ kv[1] }})
+{% endfor %}/* end variables */
 {% endif %}- {{ step.Text }}{% if step.Actions.size > 0 %}   @known: {% for a in step.Actions %}{{ a.Module }}.{{ a.ActionName }}{% if a.Parameters.size > 0 %} {% for p in a.Parameters %}{{ p.Name }}({% if p.Type %}[{{ p.Type }}] {% endif %}{{ p.Value | formal }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% for m in a.Modifiers %} | {{ m.Module }}.{{ m.ActionName }}{% if m.Parameters.size > 0 %} {% for p in m.Parameters %}{{ p.Name }}({% if p.Type %}[{{ p.Type }}] {% endif %}{{ p.Value | formal }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% endfor %}{% unless forloop.last %} | {% endunless %}{% endfor %}{% endif %}
 {% endfor %}{% if goal.Errors.size > 0 %}
 errors:

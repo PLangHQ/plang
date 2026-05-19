@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "if %stepResults.steps.Count% is not %goal.Steps.Count%, throw error 'LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step, with one or more actions per step.'",
+      "text": "if %stepResults.steps.Count% is not %goal.Steps.Count%, throw error \u0027LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with \u0027- \u0027. Return exactly one result per goal step, with one or more actions per step.\u0027",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Validates the LLM build response",
@@ -44,7 +44,7 @@
           "parameters": [
             {
               "name": "Message",
-              "value": "LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step, with one or more actions per step.",
+              "value": "LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with \u0027- \u0027. Return exactly one result per goal step, with one or more actions per step.",
               "type": "string"
             }
           ],
@@ -117,7 +117,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %stepResults.steps% and call ValidateStep for each item, passing the current step as parameter item=%step%. The @known mapping indicates the loop body is a goal.call to ValidateStep with parallel=false.",
+      "guidance": "Iterate over %stepResults.steps% and call ValidateStep for each item. The @known mapping indicates the loop binds the current item to variable name \u0027step\u0027 and passes it as parameter \u0027item\u0027 to the goal call.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -136,7 +136,7 @@
           "text": "if %step.keep% is true, call ValidateKeptStep",
           "lineNumber": 10,
           "indent": 0,
-          "comment": "Validates a single step from the LLM response\nkeep:true is a shortcut — valid only when the prior .pr has actions for this step\nand the response has no fresh actions. Other steps must include actions as usual.",
+          "comment": "Validates a single step from the LLM response\nkeep:true is a shortcut \u2014 valid only when the prior .pr has actions for this step\nand the response has no fresh actions. Other steps must include actions as usual.",
           "actions": [
             {
               "module": "condition",
@@ -187,7 +187,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If %step.keep% == true, call ValidateKeptStep. This step is conditional and the body is a goal.call.",
+          "guidance": "First conditional branch: when %step.keep% == true, call ValidateKeptStep. This is a condition.if followed by a goal.call.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -250,7 +250,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Else-if %step.keep% != true, call ValidateBuiltStep. This is the fallback branch for non-kept steps.",
+          "guidance": "Second conditional branch: when %step.keep% != true (i.e., not kept), call ValidateBuiltStep. This is an elseif condition followed by a goal.call.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -277,7 +277,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %step.actions% is not empty, throw error 'Step at index %step.index% has keep:true but also emitted actions. keep:true means reuse the prior mapping — emit one or the other, not both.'",
+          "text": "if %step.actions% is not empty, throw error \u0027Step at index %step.index% has keep:true but also emitted actions. keep:true means reuse the prior mapping \u2014 emit one or the other, not both.\u0027",
           "lineNumber": 15,
           "indent": 0,
           "comment": "keep:true guard rails: must have prior actions, must not also emit fresh actions",
@@ -317,7 +317,7 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "Step at index %step.index% has keep:true but also emitted actions. keep:true means reuse the prior mapping — emit one or the other, not both.",
+                  "value": "Step at index %step.index% has keep:true but also emitted actions. keep:true means reuse the prior mapping \u2014 emit one or the other, not both.",
                   "type": "string"
                 }
               ],
@@ -332,7 +332,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check that %step.actions% is not empty; if it is not empty, throw an error. This enforces that keep:true steps must not also emit fresh actions.",
+          "guidance": "Use a condition to check that %step.actions% is not empty; if it is not empty, throw an error. This enforces that keep:true steps must not also emit fresh actions.",
           "level": "high",
           "confidence": 96,
           "formal": null,
@@ -341,7 +341,7 @@
         },
         {
           "index": 1,
-          "text": "if %goal.Steps[step.index].Actions.Count% is 0, throw error 'Step at index %step.index% has keep:true but the prior .pr has no actions. keep:true requires a prior mapping that was offered as @known.'",
+          "text": "if %goal.Steps[step.index].Actions.Count% is 0, throw error \u0027Step at index %step.index% has keep:true but the prior .pr has no actions. keep:true requires a prior mapping that was offered as @known.\u0027",
           "lineNumber": 16,
           "indent": 0,
           "comment": null,
@@ -396,7 +396,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check that the prior .pr step actions count is 0; if so, throw an error. This enforces that keep:true requires a prior mapping that had actions.",
+          "guidance": "Use a condition to check that the prior .pr step actions count is 0; if so, throw an error. This enforces that keep:true requires a prior mapping that had actions.",
           "level": "high",
           "confidence": 96,
           "formal": null,
@@ -423,7 +423,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %step.actions% is empty, throw error 'Step at index %step.index% has no actions. Every step must include actions with module and action filled in.'",
+          "text": "if %step.actions% is empty, throw error \u0027Step at index %step.index% has no actions. Every step must include actions with module and action filled in.\u0027",
           "lineNumber": 20,
           "indent": 0,
           "comment": "Standard validation for fresh-build steps",
@@ -499,7 +499,7 @@
                 {
                   "name": "Actions",
                   "value": "%step.actions%",
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": null,
@@ -507,7 +507,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Run builder.validate to validate the step's action list structure against known modules and parameter schemas. The @known mapping indicates the exact formal/action shape is authoritative.",
+          "guidance": "Run standard builder validation for the provided step actions list to ensure modules/actions/parameters match the registered action catalog schemas.",
           "level": "high",
           "confidence": 95,
           "formal": null,
