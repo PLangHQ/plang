@@ -17,7 +17,7 @@
 
 - **`Actor.@this.Permission`** — a new typed view on each actor instance. Its API:
   - `Find(Path path, Verb verb)` — returns a matching valid signed `Data<Permission>`, or null. Consults the actor's in-memory list, then runs a SQL query against the `permission` table filtered by this actor's kind (`json_extract(data, '$.Value.Actor') = '<actor>'`) + a coarse path-prefix prune. Validates signatures and runs `Covers` over candidates.
-  - `Add(Data<Permission> signed)` — routes by signature expiry. Short expiry (Session, "y") → adds to the in-memory list (discarded at process exit). Long expiry (Always, "a") → calls `App.SettingsStore.Set("permission", key, signed)` where `key` = the Permission's `Path` field.
+  - `Add(Data<Permission> signed)` — routes by presence of signature expiry. **No expiry** (session, "y") → adds to the in-memory list (dies with the App; no timestamp comparison). **Expiry set** (always, "a") → calls `App.SettingsStore.Set("permission", key, signed)` where `key` = the Permission's `Path` field.
   - `Revoke(Data<Permission> grant)` — removes from in-memory list or from sqlite, whichever holds it.
 
   Each actor instance has its own `Permission` property. Different actors (system / user / service) maintain independent in-memory lists and filter persisted rows by their own actor kind.
@@ -50,7 +50,7 @@ Full storage design lives in [v1/plan/storage.md](v1/plan/storage.md). Permissio
 
 ### Three things to get right
 
-1. **Two homes unified behind one `Find`.** Session ("y", short expiry) and persisted ("a", long expiry) are routed internally by `Add` based on signature expiry. `Find` walks both. Callers don't differentiate.
+1. **Two homes unified behind one `Find`.** Session ("y", no expiry, in-memory list) and persisted ("a", expiry set, sqlite) are routed internally by `Add` based on presence of signature expiry. `Find` walks both. Callers don't differentiate. In-memory grants need no timestamp comparison — they're alive until the App is.
 
 2. **Per-actor scoping via JSON filter, not via tables.** One `permission` table in `App.SettingsStore`. Each actor's `Permission` filters its queries to its own actor kind via `json_extract(data, '$.Value.Actor') = '<actor>'`. Adding new actor kinds (unlikely — only system/user/service exist) is a non-event.
 

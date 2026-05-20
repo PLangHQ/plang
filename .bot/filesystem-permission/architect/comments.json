@@ -43,7 +43,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:13:14",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "8d98b80c6b",
@@ -51,13 +51,46 @@
       "text": "it´s correct that all these verbs also have sub permissions?",
       "anchor": "- `PLang/App/FileSystem/Permission/Verb/this.cs` — `@this` with `Read`/`Write`/`Delete` properties and `Covers(@this)`.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:13:37",
       "drifted": false
     }
   ],
   "stage-2a-snapshot-resume.md": [
+    {
+      "id": "6ba025f96e",
+      "line": 9,
+      "text": "here we still have AskCallback and ERrorCallback, make sure to fix that in all stage files",
+      "anchor": "**Goal:** Unify all suspend/resume flows through `Snapshot`. Today there are two parallel mechanisms — `AskCallback.Run` (variable-bind + re-dispatch) and `ErrorCallback.Run` (App.Restore + dispatch). Both round-trip exists only as scaffolding (zero production callers outside the Wire serializer comment). Replace both with a single rule: when a step returns a Data whose Type \"exits the goal\", the engine captures a Snapshot, attaches it to the result, and short-circuits the goal. Whoever holds the result (channel, in-process resumer, wire receiver) restores via `App.Restore(snapshot)` and dispatches from the captured Position.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:42:41",
+      "drifted": false
+    },
+    {
+      "id": "34906ae7bd",
+      "line": 15,
+      "text": "AskCore = Ask",
+      "anchor": "- **Not a new channel.** Stream channel is the only one whose ask-blocking path is fully wired today (it's the only place that actually exercises the current `AskCore`); that path is what stage 2a exercises end-to-end. The Message/HTTP channel is parked — its `Ask` body lands when HTTP work happens.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:42:55",
+      "drifted": false
+    },
+    {
+      "id": "825df2e625",
+      "line": 23,
+      "text": "why new Snapshot(), not action.Snapshot(). action should know how to create a snapshot of it self",
+      "anchor": "```",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:44:09",
+      "drifted": false
+    },
     {
       "id": "bb5c0d8c0b",
       "line": 59,
@@ -78,7 +111,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:16:45",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "03ebad8047",
@@ -89,7 +122,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:17:58",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "1b654d4160",
@@ -100,6 +133,50 @@
       "status": "resolved",
       "parent_id": "03ebad8047",
       "ts": "2026-05-20T15:18:52",
+      "drifted": true
+    },
+    {
+      "id": "db46f862d3",
+      "line": 102,
+      "text": "I feel like this Context.App.Capture is going top to bottom, when I would think it should go bottom to top?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-20T15:45:22",
+      "drifted": false
+    },
+    {
+      "id": "712dc5aae0",
+      "line": 102,
+      "text": "Can you show me how a snapshot looks, one full snapshot one small (for like http)",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "open",
+      "parent_id": "db46f862d3",
+      "ts": "2026-05-20T15:45:57",
+      "drifted": false
+    },
+    {
+      "id": "5f8ff6fd53",
+      "line": 120,
+      "text": "Why is it not new Data<Ask>(question)?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:47:09",
+      "drifted": false
+    },
+    {
+      "id": "ccc496bc61",
+      "line": 120,
+      "text": "var ask = new Ask(action.Question.Value);\n    var data = new Data.@this<Ask>(\"\", ask);\n\nthis feels like double wrapping",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "5f8ff6fd53",
+      "ts": "2026-05-20T15:47:35",
       "drifted": false
     },
     {
@@ -111,6 +188,17 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:19:20",
+      "drifted": true
+    },
+    {
+      "id": "e66290c271",
+      "line": 142,
+      "text": "So we dont need the Exit method, just need to check if Snapshot is null?",
+      "anchor": "**Note on `Type.Exit()`:** the predicate (deliverable #1) is still useful — it's the *invariant* the engine and tests assert (Exit-typed result MUST have a Snapshot; non-Exit-typed result MUST NOT). The step loop checks `Snapshot != null` because the action did the actual capture; the predicate gates which actions are allowed to do so.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:48:20",
       "drifted": false
     },
     {
@@ -122,6 +210,17 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:20:14",
+      "drifted": true
+    },
+    {
+      "id": "ddd969261c",
+      "line": 154,
+      "text": "it feels a bit durty to have AnswerVariableName, can I ask, when user answers, we should be getting Data from him, isn't it just Data.Value, so the answer is Data.Value?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:50:16",
       "drifted": false
     },
     {
@@ -133,7 +232,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:21:27",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "cb34bde902",
@@ -144,7 +243,7 @@
       "status": "resolved",
       "parent_id": "049d0c1816",
       "ts": "2026-05-20T15:23:25",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "d85e033727",
@@ -155,7 +254,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:22:12",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "aa9da45f22",
@@ -166,7 +265,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:23:38",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "e642727b7e",
@@ -177,7 +276,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:24:15",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "c03270e0af",
@@ -187,7 +286,64 @@
       "author": "user",
       "status": "resolved",
       "parent_id": "e642727b7e",
-      "ts": "2026-05-20T15:27:28"
+      "ts": "2026-05-20T15:27:28",
+      "drifted": true
+    },
+    {
+      "id": "f559eb3471",
+      "line": 195,
+      "text": "again double wrapping?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:50:44",
+      "drifted": false
+    },
+    {
+      "id": "3e8607673b",
+      "line": 212,
+      "text": "I feel like this is strange how we are continueing, you run an action then move on to next step, it should now be like that, it should just run the action, the following steps should be executed automatically because that is the next action in the pr or next step. like this you just run the action we suspended at, what if there an action after that? The flow is not correct here, it should just be 'return await Context.App.Run(bottom.Action, Context);' this should exeucte any from the action it suspended and continue to next action or step",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:54:51",
+      "drifted": false
+    },
+    {
+      "id": "757a8eed54",
+      "line": 262,
+      "text": "dont think we need this",
+      "anchor": "### 6. `Steps.RunAsync(context, fromIndex)` overload",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:55:07"
+    }
+  ],
+  "stage-2b-path-authorize.md": [
+    {
+      "id": "34a17ff13b",
+      "line": 61,
+      "text": "this BuildRequest and SignAndStore seems wrong, here is why. We should format the question as it will be stored, so I guess we need this for now since question is only string and not some json options. what I would like to do is defined the permission before asking the user, the user then signs that definition, and we just save that, we dont have to reconstruct it. But we cannot do this becuase ask is simple text so for now we need to have BuildRequst and SignAndStore. Lets add to todo to add options to output.ask and this needs to be fixed when it gets added",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:39:18",
+      "drifted": false
+    },
+    {
+      "id": "80a0a44023",
+      "line": 114,
+      "text": "There is not sessionexpiry, the permission hangs on the context.id, so when execution is done, the permission is done. so while the app is running it can access the path",
+      "anchor": "- `SessionExpiry` — `TimeSpan`, tentative 30 minutes (`\"y\"` → in-memory grant).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:41:18",
+      "drifted": false
     }
   ]
 }

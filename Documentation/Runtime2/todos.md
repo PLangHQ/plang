@@ -620,3 +620,35 @@ Each call site has a reader pattern (`.Details["X"]`) that mechanically
 changes; combined with PLang-side navigator code and tests, it's wide
 but shallow. Best done as one focused branch when the channel/builder
 work has settled — otherwise it'll fight with active diffs.
+
+## 2026-05-20 — Replace `!ask.answer` sentinel with explicit Answer parameter pattern
+
+Context (from `filesystem-permission` branch, stage 2a design): the resume
+path for `output.ask` works by the channel setting `!ask.answer` into
+`Context.Variables` before invoking the resume action; `output.ask`'s body
+checks for that sentinel and short-circuits to the answer instead of
+issuing a fresh ask. The mechanism works but `!ask.answer` smells —
+state passed through a variable namespace instead of an explicit parameter.
+
+When `output.ask` grows structured options (separate TODO), revisit this:
+the resumed action should declare an `Answer` input parameter (nullable);
+the resume entry binds it explicitly from the wire payload; the action
+checks `if (Answer != null) return Answer;`. No sentinel needed.
+
+## 2026-05-20 — Add structured options to `output.ask`
+
+Context (from `filesystem-permission` branch, stage 2b design): today
+`output.ask` only takes a free-text question. Permission's `Path.Authorize`
+has to format the consent question as a string, then reconstruct the
+`Permission` record on the answer side via `BuildRequest` — the same
+data is built twice (once for the prompt, once for storage).
+
+When `output.ask` grows structured options (e.g., the action carries the
+Permission record alongside the question, and the channel renders the
+options based on the record's shape), refactor `Path.Authorize`:
+1. Define the `Permission` record once.
+2. Hand it to `output.ask` as the structured option.
+3. User signs over the actual definition.
+4. Store the signed `Permission` directly — no `BuildRequest` reconstruction.
+
+Drop the `BuildRequest`/`SignAndStore` helpers when this lands.

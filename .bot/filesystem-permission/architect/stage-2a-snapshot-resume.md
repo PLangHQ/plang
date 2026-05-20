@@ -6,13 +6,13 @@ type: stage
 
 # Stage 2a: Snapshot-resume
 
-**Goal:** Unify all suspend/resume flows through `Snapshot`. Today there are two parallel mechanisms — `AskCallback.Run` (variable-bind + re-dispatch) and `ErrorCallback.Run` (App.Restore + dispatch). Both round-trip exists only as scaffolding (zero production callers outside the Wire serializer comment). Replace both with a single rule: when a step returns a Data whose Type "exits the goal", the engine captures a Snapshot, attaches it to the result, and short-circuits the goal. Whoever holds the result (channel, in-process resumer, wire receiver) restores via `App.Restore(snapshot)` and dispatches from the captured Position.
+**Goal:** Unify all suspend/resume flows through `Snapshot`. Today the codebase has two parallel callback classes (variable-bind / app-restore-dispatch) — both scaffolding only, zero production callers outside the Wire serializer comment. Replace both with a single rule: when an action returns a Data whose Type "exits the goal", the action attaches a `Snapshot` to that Data; the step loop short-circuits the goal. Whoever holds the result (channel, in-process resumer, wire receiver) restores via `App.Restore(snapshot)` and dispatches from the captured Position. The two existing callback classes are deleted.
 
 Stage 2b's `Path.Authorize` rides on top — calls `output.ask`, gets either a synchronous answer (stateful channel) or an Exit-typed Data (stateless channel). No permission-specific machinery.
 
 ## What this stage is NOT
 
-- **Not a new channel.** Stream channel is the only one whose ask-blocking path is fully wired today (it's the only place that actually exercises the current `AskCore`); that path is what stage 2a exercises end-to-end. The Message/HTTP channel is parked — its `Ask` body lands when HTTP work happens.
+- **Not a new channel.** Stream channel is the only one whose ask-blocking path is fully wired today; that path is what stage 2a exercises end-to-end. The Message/HTTP channel's `Ask` body lands when HTTP work happens — parked.
 - **Not permission-specific.** `Permission`, `Path.Authorize`, all permission semantics belong to stage 2b.
 - **Not a new abstraction.** `Snapshot` already exists (`PLang/App/Snapshot/this.cs`, `PLang/App/CallStack/this.Snapshot.cs`). Stage 2a reuses it as the only suspend/resume currency.
 
@@ -28,10 +28,7 @@ file.read action
   ↓ Authorize sees result.Type.Exit() == true → returns it
   ↓ file.read returns it
 
-Step loop sees result.Type.Exit() == true:
-    snapshot = new Snapshot()
-    App.Capture(snapshot)
-    result.Snapshot = snapshot
+Step loop sees result.Snapshot != null (the action attached it):
     return result                                  ← short-circuits the goal
 
 Channel layer holds the result:
@@ -75,17 +72,22 @@ public static class TypeExitExtensions
 - `typeof(string).Exit()` → false.
 - `typeof(byte[]).Exit()` → false.
 
-### 2. `Ask` type — the only Exit-typed Data in stage 2a
+### 2. `Ask` type — empty marker class, the only Exit-typed kind in stage 2a
 
-Replaces `AskCallback`. Small record at `PLang/App/modules/output/ask.cs` (lowercase per PLang convention — same file as the action; the record sits alongside the partial class).
+Sits at `PLang/App/modules/output/ask.cs` (lowercase filename, alongside the action partial class).
 
 ```csharp
-public sealed record Ask(string Question) : global::App.IExitsGoal;
+public sealed class Ask : global::App.IExitsGoal { }    // empty marker
 ```
 
-That's it. No Position, no Actor, no Variables. Just the question.
+The question text rides as `Data.Value` — no wrapping. JSON wire shape is single-layer:
 
-The previous `AskCallback` fields (Position, Variables, ActorName-as-string) move into `Snapshot` capture, which already records them via the existing CallStack + Variables snapshotting. ActorName-as-string is replaced by the live `Actor.@this` reference inside the captured CallStack frames.
+```json
+{ "type": "ask", "value": "Allow user to read /apps/Email/system.sqlite?",
+  "signature": {...}, "snapshot": {...} }
+```
+
+Strong typing preserved via the generic — `Data<Ask>` says "this is an Ask," and `Type.Exit()` is true because `typeof(Ask)` implements `IExitsGoal`. The previous `AskCallback` fields (Position, Variables, ActorName) all live in `Snapshot` now.
 
 ### 3. Action owns the Snapshot; engine short-circuits on `result.Snapshot != null`
 
@@ -115,31 +117,30 @@ public partial class @this
 }
 ```
 
-Action handlers that exit attach the snapshot themselves:
+Action handlers that exit attach the snapshot themselves. Single-layer Data construction — the question rides directly as `Value`:
 
 ```csharp
-// inside Message channel's Ask (replaces today's AskCore)
+// inside Message channel's Ask
 public override Task<Data.@this> Ask(modules.output.ask action, CancellationToken ct = default)
 {
-    var ask = new Ask(action.Question.Value);
-    var data = new Data.@this<Ask>("", ask);
-    data.Context = action.Context;
-    data.Snapshot = action.Snapshot();      // capture at action level, frame alive
+    var data = new Data.@this<Ask>("", action.Question.Value);   // Value = question string
+    data.Context  = action.Context;
+    data.Snapshot = action.Snapshot();                            // action owns capture
     return Task.FromResult<Data.@this>(data);
 }
 ```
 
-**Step loop adds one branch.** `Steps.RunAsync` (`Goals/Goal/Steps/this.cs:154`) now short-circuits when the result carries a Snapshot — and `result.Type?.ClrType?.Exit() == true` collapses with it, since any Exit-typed result will have an attached Snapshot by contract:
+**Step loop adds one branch.** `Steps.RunAsync` (`Goals/Goal/Steps/this.cs:154`) checks `Type.Exit()` — the primary signal. Snapshot existence is a contract assertion, not the engine's decision criterion (Snapshot may exist on a Data for other reasons later — debug, audit — and we don't want any Snapshot to trigger exit):
 
 ```csharp
 result = await step.RunAsync(context);
 
 if (!result.Success && !result.Handled) return result;
 if (result.Returned) return result;
-if (result.Snapshot != null) return result;    // NEW: action captured a snapshot → suspend
+if (result.Type?.ClrType?.Exit() == true) return result;    // NEW: short-circuit
 ```
 
-**Note on `Type.Exit()`:** the predicate (deliverable #1) is still useful — it's the *invariant* the engine and tests assert (Exit-typed result MUST have a Snapshot; non-Exit-typed result MUST NOT). The step loop checks `Snapshot != null` because the action did the actual capture; the predicate gates which actions are allowed to do so.
+**Contract:** any action whose Type is `Exit()`-true MUST have called `action.Snapshot()` and attached it to its Data. Test asserts (Exit-typed result with `Snapshot == null` is a bug).
 
 **Tests:**
 - 3-step goal where step 1 returns `Data<Ask>` — steps 2/3 do NOT execute. Returned Data has `.Snapshot` populated; `.Snapshot`'s CallStack frame chain ends at step 1's action.
@@ -205,9 +206,9 @@ public override Task<Data.@this> Ask(modules.output.ask action, CancellationToke
 
 `Context.App.CallStack` BottomFrame at `action.Snapshot()` time is `output.ask`'s own frame (it's still live when this code runs from inside the action's Run). The smart "walk-up-to-step-action" logic stays inside `Snapshot` capture if the action is synthetic (no Step) — same as before, just lives in the snapshot path now.
 
-### 5. Single resume entry (refactor `callback.run` or replace)
+### 5. Single resume entry — `App.Run(Snapshot, ctx)`
 
-Today `modules/callback/run.cs` dispatches polymorphically via `ICallback.Run`. After this stage, dispatch is one path:
+Today `modules/callback/run.cs` dispatches polymorphically via `ICallback.Run`. After this stage, the resume action is a thin wrapper around a new `App.Run(Snapshot, ctx)` overload:
 
 ```csharp
 [Action("run", Cacheable = false)]
@@ -219,8 +220,6 @@ public partial class run : IContext
 
     public async Task<Data.@this> Run()
     {
-        // Data has its own signature; verification stays through signing.verify
-        // (existing pattern — auditor v2 / security v1 S-F1).
         var v = await Context.App.RunAction<modules.signing.verify>(
             new modules.signing.verify { Data = Data }, Context);
         if (!v.Success) return v;
@@ -229,39 +228,66 @@ public partial class run : IContext
             return Data.@this.FromError(new ServiceError(
                 "Resume invoked on Data without a Snapshot", "NoSnapshot", 400));
 
-        // Restore App state from the suspend.
-        Context.App.Restore(Data.Snapshot, Context);
-
-        // Answer (if any) was already set into Context.Variables by the channel
-        // *before* invoking this action — e.g. via the !ask.answer sentinel for
-        // an Ask resume. This action does not touch the answer; it just restores
-        // and re-dispatches. The resumed action reads the sentinel itself.
-
-        var bottom = Context.App.CallStack.BottomFrame;
-        if (bottom == null)
-            return Data.@this.FromError(new ServiceError(
-                "Resume has no bottom frame after Restore", "NoPosition", 400));
-
-        var actionResult = await Context.App.Run(bottom.Action, Context);
-        if (!actionResult.Success) return actionResult;
-
-        // Continue the goal from after the suspended step.
-        return await bottom.Goal.Steps.RunAsync(Context, fromIndex: bottom.StepIndex + 1);
+        // One call. App.Run(snapshot) does Restore + run-from-position-forward.
+        return await Context.App.Run(Data.Snapshot, Context);
     }
+}
+```
+
+**`App.Run(Snapshot, ctx)` is the new overload** — sibling of `App.Run(action, ctx)`. Does everything from one entry:
+
+```csharp
+public async Task<Data.@this> Run(Snapshot.@this snapshot, Actor.Context.@this context)
+{
+    Restore(snapshot, context);
+    var bottom = context.App.CallStack.BottomFrame;
+    if (bottom == null)
+        return Data.@this.FromError(new ServiceError(
+            "Resume has no bottom frame after Restore", "NoPosition", 400));
+
+    // Run from the suspended action forward — through any remaining actions in
+    // the same step, then through subsequent steps in the goal. (Deliverable #6
+    // wires the Goal.RunFrom helper that does this.)
+    return await bottom.Goal.RunFrom(context, bottom.StepIndex, bottom.ActionIndex);
 }
 ```
 
 **Key shape points:**
 
-- The action input is plain `Data` — not an "Envelope," not a "Callback." Data is what's serialized and what comes back. (Per the OBP rule: Data is a self-owning object, not a wrapper-with-contents.)
-- `Data.Snapshot` is the resume state (deliverable #3 wires it onto Data).
-- Signature lives on Data itself (existing — `Data.Signature` is already there).
-- The answer is fed into the system **by the channel**, not through Data. Channel sets `!ask.answer` (or the relevant sentinel) into `Context.Variables` before invoking this resume action. The resume action stays answer-agnostic; it just restores state and re-dispatches. The resumed action (e.g. `output.ask`) is what reads the sentinel and acts on it.
-- Sentinel placement is the channel's contract with the suspended action's resume-consume code. For Ask it's `!ask.answer`. Other kinds may use different sentinels — but Data doesn't carry the answer.
+- The resume action's input is plain `Data` — not "Envelope," not "Callback."
+- Caller invokes the resume with one method: `App.Run(snapshot, ctx)`. No two-phase "run the suspended action, then run remaining steps" dance visible to the caller.
+- The answer is fed by the channel into `Context.Variables` (sentinel `!ask.answer`) **before** invoking this resume action. The resume itself stays answer-agnostic. When `App.Run(snapshot)` re-runs the suspended action, the action reads the sentinel and short-circuits to the answer.
+- *(Sentinel cleanup tracked in `Documentation/Runtime2/todos.md` — replace `!ask.answer`-via-Variables with a more explicit Answer parameter pattern when output.ask grows structured options.)*
 
-### 6. `Steps.RunAsync(context, fromIndex)` overload
+### 6. `Goal.RunFrom(ctx, stepIdx, actionIdx)` helper
 
-`Steps/this.cs:RunAsync` grows an overload taking a starting index. Existing parameterless version delegates to `(context, 0)`. Single use-site for now: the resume entry above.
+Internal continuation helper. Lives on Goal (or Steps — coder picks the cleaner home). Runs:
+
+1. The action at `(stepIdx, actionIdx)` — which on resume re-runs the suspended action; sentinel makes it short-circuit to the answer.
+2. Remaining actions in the same step (`actionIdx + 1 .. step.Actions.Count - 1`).
+3. Subsequent steps (`stepIdx + 1 .. Steps.Count - 1`) via the normal Steps loop.
+
+Why this exists: the existing `App.Run(action, ctx)` runs a single Call frame and stops — that's its contract, and many in-process callers depend on it. Resume needs to continue past the action, through the step's remaining actions, through subsequent steps. That continuation needs an explicit method that knows the (stepIdx, actionIdx) anchor. Implementation hides behind `App.Run(Snapshot, ctx)` — callers don't see it.
+
+Suggested shape:
+
+```csharp
+// PLang/App/Goals/Goal/this.RunFrom.cs
+public partial class @this
+{
+    public async Task<Data.@this> RunFrom(Actor.Context.@this ctx, int stepIdx, int actionIdx)
+    {
+        var step = Steps[stepIdx];
+        var result = await step.RunFrom(ctx, actionIdx);             // runs action[actionIdx..]
+        if (!result.Success && !result.Handled) return result;
+        if (result.Returned) return result;
+        if (result.Type?.ClrType?.Exit() == true) return result;     // re-suspend if it asks again
+        return await Steps.RunAsync(ctx, fromIndex: stepIdx + 1);    // remaining steps
+    }
+}
+```
+
+`Step.RunFrom(ctx, fromActionIdx)` is the within-step equivalent — coder adds it next to `Step.RunAsync`. Existing `Steps.RunAsync(ctx, fromIndex)` overload is still needed (the inner loop call), now justified by this consumer.
 
 ### 7. Drop dead code
 

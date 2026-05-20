@@ -79,19 +79,21 @@ public async Task<Data> Authorize(Verb verb, string prefix = "")
     var answer = askResult.Value?.ToString()?.Trim();
     return answer switch
     {
-        "a" => SignAndStore(actor, verb, AlwaysExpiry),
-        "y" => SignAndStore(actor, verb, SessionExpiry),
+        "a" => SignAndStore(actor, verb, persist: true),
+        "y" => SignAndStore(actor, verb, persist: false),
         "n" => Data.FromError(new PermissionDenied(BuildRequest(actor, verb))),
         _   => await Authorize(verb, prefix: $"Invalid answer '{answer}'. ")  // recurse
     };
 }
 
-private Data SignAndStore(Actor actor, Verb verb, TimeSpan? expiry)
+private Data SignAndStore(Actor actor, Verb verb, bool persist)
 {
     var req  = BuildRequest(actor, verb);
     var data = new Data<Permission>("", req);
     data.Context = Context;
-    data.EnsureSignedWithExpiry(expiry);   // helper / signing.sign call
+    // "a" → persist=true → far-future expiry → Add routes to sqlite.
+    // "y" → persist=false → no expiry → Add routes to in-memory list (dies with App).
+    data.EnsureSigned(persist ? AlwaysExpiry : null);
     actor.Permission.Add(data);
     return Data.Ok();
 }
@@ -106,15 +108,16 @@ private Permission BuildRequest(Actor actor, Verb verb) => new Permission(
 
 The verb argument is one of the stage 1 records (`new Read()`, `new Write()`, `new Delete()`). Construct it at the FS-method call site — the FS method knows which verb it represents.
 
+**Known awkwardness — `BuildRequest`/`SignAndStore`:** this shape exists only because `output.ask` is text-only today. The flow ends up building the Permission twice — once to format the question, once to reconstruct on the answer side. The right design (when `output.ask` grows structured options): define the Permission record up front, pass it to `output.ask` as the structured option, the user signs over that exact definition, store the signed Data directly. No reconstruction, no `BuildRequest`. Tracked in `Documentation/Runtime2/todos.md` — refactor when output.ask gets options.
+
 **On the recursion for invalid answer:** in stateful mode it's an immediate re-prompt (channel's `Ask` blocks on stdin again). In stateless mode it produces a fresh Exit-typed result with Question prefixed by `"Invalid answer 'foo'. "` — user sees the error inline with the next request's prompt.
 
-### 2. Expiry constants
+### 2. Expiry and storage routing
 
-Live as private const/static fields colocated with `Authorize` (on `Path`, or a small `Expiry` static class):
-- `SessionExpiry` — `TimeSpan`, tentative 30 minutes (`"y"` → in-memory grant).
-- `AlwaysExpiry` — `TimeSpan?`, tentative 30 days (or `null` = forever) (`"a"` → persisted grant).
+- **`"y"` (session):** in-memory. No expiry value on the signed Data — the grant lives as long as the App lives. When the App exits, the in-memory list goes with it. `actor.Permission.Add` (stage 3) sees no expiry → routes to its in-memory list. No timestamp comparison at lookup.
+- **`"a"` (always):** persisted. Signed with a far-future expiry (`AlwaysExpiry` constant — tentative 100 years, or `null` if the signing layer treats null as forever). `actor.Permission.Add` routes to sqlite.
 
-Stage 3's `actor.Permission.Add` reads the signed Data's expiry field and routes by magnitude (short → in-memory; long/null → sqlite).
+Only one constant needed: `AlwaysExpiry`. No `SessionExpiry`. Lives as a private const colocated with `Authorize`.
 
 ### 3. `PermissionDenied` error
 
