@@ -59,8 +59,8 @@ Full storage design lives in [v1/plan/storage.md](v1/plan/storage.md). Permissio
 ### What stage 3 does NOT do
 
 - Doesn't implement any FS IO — stage 4.
-- Doesn't render the prompt UI — channel handles raw answer routing; `PermissionAskCallback.Run` (stage 2) does the semantic work.
-- Doesn't sign — signing happens in `PermissionAskCallback.Run` (stage 2). Stage 3 stores already-signed Data.
+- Doesn't render the prompt UI — channel renders the `Ask`'s Question (stage 2a); answer parsing lives in `Path.Authorize` (stage 2b).
+- Doesn't sign — signing happens in `Path.Authorize` (stage 2b). Stage 3 stores already-signed Data and routes by expiry.
 - Doesn't add indexed columns or generated columns on the `permission` table. v1 uses `json_extract` scans; indexes are v2 work if scale demands.
 - Doesn't snapshot in-memory grants. Known limitation: if the App is paused via snapshot mid-flow, "y" grants are lost — user re-prompts on resume. Acceptable for v1.
 

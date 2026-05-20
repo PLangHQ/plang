@@ -1,6 +1,6 @@
 # Stage 4: IPLangFileSystem v2 — The Surface Bundle
 
-**Goal:** The big bundle. Drop `System.IO.Abstractions.IFileSystem` inheritance. Redesign `IPLangFileSystem` v2 around `Path` parameters and `Data<T>` returns, with verb baked into every method. Permission check happens inside each operation via `path.Authorize(verb)` (stage 2); on miss, the method returns whatever `Authorize` returned (`Data<PermissionAskCallback>`). Move/Copy use a batched check (one bundled `PermissionAskCallback` covers both required permissions). Inventory every call site across the codebase and rewrite.
+**Goal:** The big bundle. Drop `System.IO.Abstractions.IFileSystem` inheritance. Redesign `IPLangFileSystem` v2 around `Path` parameters and `Data<T>` returns, with verb baked into every method. Permission check happens inside each operation via `path.Authorize(verb)` (stage 2b); on miss, the method returns whatever Authorize returned (either an answer-bearing Data on stateful resume, or an Exit-typed `Data<Ask>` on stateless suspend — engine handles the rest via stage 2a). Move/Copy use a batched check (one bundled prompt covers both required permissions). Inventory every call site across the codebase and rewrite.
 
 **This is the largest stage by far.** ~50–100 call sites touched across modules, builder, snapshot, settings, channels, cache, runtime infra.
 
@@ -25,22 +25,22 @@ Roughly 11 methods grouped as:
 - **Destructive** — `Delete`. Checks `Verb.Delete` internally.
 - **Multi-path** — `Move`, `Copy`. Each checks Read on source plus Write on dest, batched into one Ask if either is missing.
 
-Every method takes a `Path` object, not `string`. Every method returns `Data<T>` or `Data`. Permission miss surfaces as `Data<PermissionAskCallback>` (success path with an `ICallback` value — engine/channel detects and suspends). No `Data.Fail`, no marker interface.
+Every method takes a `Path` object, not `string`. Every method returns `Data<T>` or `Data`. Permission miss surfaces as `Data<Ask>` (stage 2a's Exit-typed kind) — engine captures Snapshot and short-circuits the goal. No `Data.Fail`, no per-kind callback class.
 
 Final method list and exact signatures settled by coder during the inventory pass. The shape is what matters: typed Path in, Data out, verb baked in.
 
 ### Permission check, delegated to Path
 
-Every operation method asks the Path: `path.Authorize(new Verb.Read())` (or `Write`/`Delete`). Path owns the question — it knows its absolute form, reaches `Context.Actor.Permission`, and constructs a `PermissionAskCallback` itself when no grant covers. The FS method propagates whatever Data Path returns:
+Every operation method asks the Path: `path.Authorize(new Verb.Read())` (or `Write`/`Delete`). Path owns the question — it knows its absolute form, reaches `Context.Actor.Permission`, and calls `output.ask` itself when no grant covers. The FS method propagates whatever Data Path returns:
 
 - `Data.Ok` from Path → FS method proceeds with the BCL IO.
-- `Data<PermissionAskCallback>` from Path → FS method returns it unchanged. Engine/channel detects the callback and suspends.
+- `Data<Ask>` (Exit-typed, stateless suspend) from Path → FS method returns it unchanged. Stage 2a's step-loop captures Snapshot and short-circuits.
 
-The FS method body is two delegations: ask Path, then do IO via BCL. No private helpers, no transaction script. `path.Authorize` was wired in stage 2.
+The FS method body is two delegations: ask Path, then do IO via BCL. No private helpers, no transaction script. `path.Authorize` is wired in stage 2b.
 
 ### Batched check for multi-path operations
 
-`Move` and `Copy` ask each Path for its respective verb. If both return `Ok`, the operation proceeds. If either returns a `PermissionAskCallback`, the FS method merges the unmet `Requests` lists into one bundled `PermissionAskCallback` covering both paths and returns it. User sees one consent prompt for the whole operation.
+`Move` and `Copy` ask each Path for its respective verb. If both return `Ok`, the operation proceeds. If either returns `Data<Ask>`, the FS method combines the two questions into a single bundled `Ask` (one question string covering both paths) and returns it. User sees one consent prompt for the whole operation. Authorize handles the multi-path answer on resume — same recursion-on-invalid-answer pattern applies.
 
 The bundling is the only choreography that belongs at the FS layer — it knows the operation (Move/Copy) that ties the two Paths together. Each Path knows about itself; the operation knows about the pair.
 
@@ -61,7 +61,8 @@ After all call sites are rewritten: remove `System.IO.Abstractions.IFileSystem` 
 ## Dependencies
 
 - Stage 1 (types — `FilePermission`, `Verb.@this`, `Match`).
-- Stage 2 (`PermissionAskCallback` exists; `Path.Authorize(verb)` exists; engine/channel handles `ICallback` values in action results — existing infrastructure).
+- Stage 2a (Snapshot-resume infrastructure: `Type.Exit()`, step-loop Snapshot capture, single resume entry, `output.ask` delegating to `AskCore`).
+- Stage 2b (`Path.Authorize(verb)` exists).
 - Stage 3 (`Actor.@this.Permission` view exists; reachable via `path.Context.Actor.Permission` but only used internally by Path/Authorize).
 
 ## Design
@@ -73,7 +74,7 @@ Full surface design lives in [v1/plan/filesystem-surface.md](v1/plan/filesystem-
 This is one stage on the plan, but the work breaks into commits for bisectability:
 
 1. **Define the v2 interface.** Pure declaration. Code compiles; tests don't reference it yet.
-2. **Implement `Default` against v2.** Each operation asks `path.Authorize(new Verb.X())` (single) or asks each path then merges (batched). Tests against `Default`: operations succeed for in-root paths, return `Data<PermissionAskCallback>` for out-of-root without grants.
+2. **Implement `Default` against v2.** Each operation asks `path.Authorize(new Verb.X())` (single) or asks each path then bundles (batched). Tests against `Default`: operations succeed for in-root paths, return `Data<Ask>` for out-of-root without grants when the channel is Message-like; complete synchronously when the channel is Stream-like.
 3. **Rewrite each action handler.** One commit per action (read, save, delete, copy, move, list, exists). Tests in `Tests/App/modules/file/` continue to pass against the new shape.
 4. **Rewrite non-action call sites.** Commit per consumer (builder, snapshot, settings, channels, cache, runtime infra).
 5. **Delete the old surface.** Final commit removes `ValidatePath`, `FileAccessControl`, `IFileSystem` inheritance.

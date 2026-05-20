@@ -12,7 +12,7 @@
 
 - **`os/apps/Messages/Start.goal`** — a minimal Messages app that, on run, iterates known apps and reads `/apps/<App>/system.sqlite` (or whatever the agreed convention is).
 
-- **`os/system/permission/file.template`** — the user-facing prompt. Renders the `FilePermission`(s) carried by a `PermissionAskCallback` into a clear consent question. For a single ask:
+- **`os/system/permission/file.template`** — the user-facing prompt. The `Ask`'s `Question` string is built by `Path.Authorize` (stage 2b) and is what the channel renders. For a single ask:
   ```
   %appName% wants to %verb% %path%
   [y]es / [n]o / [a]lways
@@ -24,15 +24,15 @@
     - %verb2% %path2%
   [y]es / [n]o / [a]lways (covers all)
   ```
-  Channel renders this from the typed `PermissionAskCallback` payload. Whether the renderer uses a `.template` file, an inline format string, or a goal-driven render path is the channel's call — the user-visible text is what matters here.
+  Channel renders this from the `Ask.Question` string. Whether the renderer uses a `.template` file, an inline format string, or a goal-driven render path is the channel's call — the user-visible text is what matters here.
 
 - **Integration test** under `Tests/Permission/` (plang `--test` style) that:
-  1. Runs Messages with no grant. Verifies a `PermissionAskCallback` is returned for `/apps/Email/system.sqlite` (and others), channel renders the consent prompt correctly, goal suspends.
-  2. Test-driver responds "a" (always). On resume, `PermissionAskCallback.Run` signs the grant and stores it via `user.Permission.Add`. Persisted row lands in the `permission` table of `App.SettingsStore` (`<AppRoot>/.db/system.sqlite`).
+  1. Runs Messages with no grant against a stateless channel. Verifies `Data<Ask>` is returned for `/apps/Email/system.sqlite` (and others), step-loop captures Snapshot (stage 2a), channel renders the consent prompt correctly, goal suspends with the Snapshot.
+  2. Test-driver responds "a" (always). On resume (stage 2a single resume entry), file.read re-runs, Authorize signs the grant and stores it via `user.Permission.Add`. Persisted row lands in the `permission` table of `App.SettingsStore` (`<AppRoot>/.db/system.sqlite`).
   3. Reruns Messages immediately. Verifies no prompt this time — grant covers all matching paths.
   4. Restarts the process. Reruns Messages. Verifies no prompt this time either — grant persisted.
   5. Revokes the grant via `permission.revoke`. Reruns Messages. Verifies prompt fires again.
-  6. Issues a narrower grant (`Read` only with `Metadata: false`). Verifies a read attempt requiring metadata surfaces a fresh `PermissionAskCallback` for the narrowed verb.
+  6. Issues a narrower grant (`Read` only with `Metadata: false`). Verifies a read attempt requiring metadata surfaces a fresh `Data<Ask>` for the narrowed verb.
 
 - **Short doc under `Documentation/v0.2/`** — walks through what just happened, for future readers. Code examples drawn from the integration test.
 
@@ -57,7 +57,7 @@ What this test does NOT do:
 - **Permission types compose correctly** under a real-world ask (glob across multiple apps).
 - **Storage round-trips across process restart.** Persisted grants survive shutdown.
 - **Re-query retry contract holds end-to-end.** The same action runs twice; second run finds the grant.
-- **Channel renders correctly** for both single and bundled `PermissionAskCallback` payloads.
+- **Channel renders correctly** for both single and bundled `Ask` payloads (Question strings constructed by Authorize).
 - **`Permission.Find` correctly applies `Covers`** — narrowed grant fails wider request.
 - **Revocation** removes the grant and triggers a fresh consent prompt.
 - **The new FS surface doesn't regress existing actions.** Stages 3–4 had to keep tests green, but the integration cut confirms it at the app level.

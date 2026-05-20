@@ -1,6 +1,16 @@
 {
   "stage-2a-callback-roundtrip.md": [
     {
+      "id": "9904798007",
+      "line": 16,
+      "text": "For AskCallback, I feel like it violates obp the naming, and how it should really be, I think.\n\nI would think it would be like this, 'ask user \"name?\"' -> this gets funnelled to stream, then if the stream is stateless we sould create the callstack on it and then serialize it, if it is statefull we just serialize it. Lets disucss",
+      "anchor": "Stage 2a fixes all four for **any** callback kind. `AskCallback` gets a real mid-goal continuation it never had. Stage 2b builds `PermissionAskCallback` on top of this foundation.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-20T14:05:33"
+    },
+    {
       "id": "159a765b63",
       "line": 18,
       "text": "I think we can do this, it is only working with stream, not touching on http. plus, isn´t it just serialize just include the callback?",
@@ -19,7 +29,8 @@
       "author": "user",
       "status": "open",
       "parent_id": null,
-      "ts": "2026-05-19T17:44:36"
+      "ts": "2026-05-19T17:44:36",
+      "drifted": false
     }
   ]
 }

@@ -1,5 +1,46 @@
 # Summary
 
+## 2026-05-20 — stage 2a rewritten around Snapshot-resume; callback classes dissolve
+
+After walking the wire model with Ingi, the design simplified substantially. Findings during the walkthrough:
+
+- Today's `AskCallback` and `ErrorCallback` are scaffolding — zero production callers outside the Wire serializer's doc comment.
+- `output.ask` bypasses `Channel.AskCore` entirely, building an AskCallback inline regardless of channel kind. Stream's blocking AskCore is unused.
+- The Plang Data serializer's `FromEnvelope` returns `JsonElement` for `Value` on inbound — broken for any `Value is X` consumer.
+- Two parallel resume paths exist (AskCallback.Run / ErrorCallback.Run) but should be one.
+
+**The unified model:**
+
+- Action layer returns plain Data. `Ask` (a small record at `modules/output/Ask.cs` implementing `IExitsGoal`) is the only Exit-typed kind in stage 2a; it carries just a Question.
+- Engine step loop sees `result.Type?.ClrType?.Exit() == true`, captures `Snapshot` via the existing `App.Capture` path, attaches it to the result, short-circuits the goal.
+- Channel layer materializes the suspend: Stream blocks synchronously on `AskCore` (no Snapshot involved); Message serializes `{ question, snapshot }` to wire.
+- Resume is one entry: `Snapshot.Restore` + set `!ask.answer` sentinel + `App.Run(BottomFrame.Action)` + `Steps.RunAsync(ctx, fromIndex: StepIndex + 1)`.
+- `ICallback` interface, `AskCallback`, `ErrorCallback` classes deleted. `Error.Callback` property becomes `Error.Snapshot`.
+
+**Permission rides on it (stage 2b):**
+
+- `Path.Authorize(verb, prefix="")` calls `output.ask` via `RunAction`. Stateful → answer back synchronously; stateless → `Data<Ask>` bubbles up, engine short-circuits, resume re-runs file.read → Authorize sees `!ask.answer` via output.ask → signs grant → stores → file.read proceeds.
+- No `PermissionAskCallback` class. No `Decision` enum. No per-callback `ParseAnswer`. The y/n/a parse + recursion on invalid input lives inline in Authorize.
+
+**Predicate name:** `Type.Exit()` (extension on `System.Type`; pure verb per OBP).
+
+### Stage status (2026-05-20 fifth pass)
+
+| Stage | File | Status |
+|-------|------|--------|
+| 1  | [Permission types](stage-1-permission-types.md) | pending |
+| 2a | [Snapshot-resume](stage-2a-snapshot-resume.md) | pending |
+| 2b | [Permission ask via Path.Authorize](stage-2b-path-authorize.md) | pending (depends on 2a) |
+| 3  | [Storage binding](stage-3-storage-binding.md) | pending |
+| 4  | [Filesystem surface (bundle)](stage-4-filesystem-surface.md) | pending |
+| 5  | [Messages end-to-end + final consent UI](stage-5-messages-end-to-end.md) | pending |
+
+### Notes
+
+- `v1/plan/*.md` files are out of sync with current design. Park them as historical; current truth lives in stage files.
+- `AskCore` is an OBP smell (noun+verb). Flagged for coder rename during implementation.
+- `Snapshot` does the heavy lifting in stage 2a; minimal-wire projection for HTTP is the same Snapshot serialized through a different output mode.
+
 ## 2026-05-19 (third pass) — stage 2 reframed around `PermissionAskCallback`
 
 After the verification pass surfaced that `error.handle` doesn't have a built-in runtime path and that the right pattern is callback-suspension (mirroring `output.ask` + `AskCallback`), stage 2 was rewritten end-to-end and the other stage files swept for mechanical corrections.
@@ -15,27 +56,9 @@ After the verification pass surfaced that `error.handle` doesn't have a built-in
 - **Snapshot for in-memory grants deferred.** Known limitation: "y" (session) grants don't survive snapshot/restore. Acceptable for v1.
 - **Per-actor lock dropped.** Two concurrent asks against one actor may both prompt; revisit if real.
 
-### Stage status (2026-05-19 fourth pass: stage 2 split into 2a + 2b)
+### Stage status (2026-05-19 fourth pass — superseded by 2026-05-20)
 
-| Stage | File | Status |
-|-------|------|--------|
-| 1 | [Permission types](stage-1-permission-types.md) | pending |
-| 2a | [Callback round-trip (engine + serializer)](stage-2a-callback-roundtrip.md) | pending |
-| 2b | [PermissionAskCallback](stage-2b-permission-ask-callback.md) | pending (depends on 2a) |
-| 3 | [Storage binding](stage-3-storage-binding.md) | pending |
-| 4 | [Filesystem surface (bundle)](stage-4-filesystem-surface.md) | pending |
-| 5 | [Messages end-to-end + final consent UI](stage-5-messages-end-to-end.md) | pending |
-
-**Why split:** investigation showed stage 2 mashed two different concerns. Stage 2a is generic runtime — fixes mid-goal `output.ask` along the way, no permission types involved. Stage 2b is permission-specific and rides on 2a's foundation. Different reviewers might fit each.
-
-**Stage 2a deliverables (generic):**
-1. `IsCallback` extension method on `System.Type` (predicate knows ICallback; nothing else does).
-2. Step-loop short-circuit in `Steps/this.cs:RunAsync` on `result.Type?.ClrType?.IsCallback() == true`.
-3. Resume continuation in `ICallback.Run` — runs the suspended action, then continues steps from `Position.StepIndex + 1`.
-4. Typed-Value reconstruction in `Plang/Data.cs` inbound — uses `env.Type` → `App.Types.Clr(name)` → deserialize `env.Value` into that CLR type.
-5. Cleanup: drop `ICallback.Serialize` and per-callback static `Deserialize`. Interface shrinks to `Position` + `Run`. Wire serialization is the channel's job, not the callback's.
-
-HTTP/Web channel construction is parked — stage 2a is channel-agnostic.
+See the 2026-05-20 entry above for current status. The original split into 2a + 2b stood; what changed in the fifth pass was stage 2a's foundation (Snapshot-resume) and the deletion of `AskCallback`/`ErrorCallback` classes.
 
 ## 2026-05-19 (continued) — design walkthrough with Ingi; further refinements
 

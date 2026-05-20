@@ -5,7 +5,7 @@
 **Scope:** Types, records, enum, coverage methods. Nothing else.
 
 **Excluded:**
-- `PermissionAskCallback` and `Path.Authorize` (stage 2).
+- `Path.Authorize` (stage 2b). Snapshot-resume infrastructure (stage 2a).
 - Storage binding (stage 3).
 - IPLangFileSystem rewrite (stage 4).
 - Anything that touches the engine, actor context, or signing pipeline.
@@ -48,7 +48,7 @@ The full record + verb design lives in [v1/plan/permission-design.md](v1/plan/pe
 ### What stage 1 does NOT do
 
 - Doesn't instantiate `Permission/@this` with any storage. The class exists as a shell so stage 3 can fill it.
-- Doesn't define `PermissionAskCallback` or the `Path.Authorize` method — stage 2.
+- Doesn't define `Path.Authorize` (stage 2b) or any engine/Snapshot machinery (stage 2a).
 - Doesn't touch `IPLangFileSystem` at all — stage 4.
 - Doesn't wire signing — stage 3 (where the manager actually deals with signed Data).
 
@@ -60,4 +60,4 @@ Glob library: default to `Microsoft.Extensions.FileSystemGlobbing` unless an AOT
 
 ## What this stage unblocks
 
-Stages 2 and 3 both depend on `FilePermission` being a real type they can reference. After stage 1, both stages can start in parallel — stage 2 wires `PermissionAskCallback` and `Path.Authorize`, stage 3 builds the storage view. Stage 4 (the FS surface) depends on both.
+Stages 2a/2b and 3 all depend on `FilePermission` being a real type they can reference. After stage 1, they can start in parallel — stage 2a lands Snapshot-resume infrastructure, stage 2b builds `Path.Authorize` (depends on 2a), stage 3 builds the storage view. Stage 4 (the FS surface) depends on 2b + 3.
