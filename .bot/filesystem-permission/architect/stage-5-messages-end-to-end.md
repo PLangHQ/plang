@@ -11,9 +11,9 @@ This stage is the acceptance test for the whole branch. Real `.goal` files, real
 
 ## Deliverables
 
-### 1. `os/apps/Messages/Start.goal`
+### 1. Test fixture: `Tests/Permission/Messages/Start.goal`
 
-Minimal Messages app that, on run, iterates known apps and reads `/apps/<App>/system.sqlite`.
+Minimal Messages-shaped goal that, on run, iterates known apps and reads `/apps/<App>/system.sqlite`. Lives under `Tests/` — it's a fixture for the integration test, not a real app shipped under `os/apps/`.
 
 ### 2. Consent prompt format
 
@@ -53,7 +53,7 @@ Walks a reader through what just happened. Code examples drawn from the integrat
 ## Test seams
 
 - **Prompt seam.** Channel's user-answer hook replaced with a test driver returning canned strings (`"a"`, `"y"`, `"n"`). Signing pipeline stays real — verify the signed Data actually lands and round-trips.
-- **Apps tree.** Minimal `os/apps/Email/system.sqlite`, `os/apps/Calendar/system.sqlite`, etc. — just enough to have something to read.
+- **Apps-tree fixture.** Minimal `Tests/Permission/_fixtures/apps/Email/system.sqlite`, `Tests/Permission/_fixtures/apps/Calendar/system.sqlite`, etc. — under Tests, not `os/apps/`. Just enough to have something to read.
 
 ## What this stage does NOT do
 

@@ -89,7 +89,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:44:09",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "bb5c0d8c0b",
@@ -100,7 +100,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:15:47",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "ced838e34a",
@@ -232,7 +232,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:21:27",
-      "drifted": true
+      "drifted": false
     },
     {
       "id": "cb34bde902",
@@ -243,7 +243,7 @@
       "status": "resolved",
       "parent_id": "049d0c1816",
       "ts": "2026-05-20T15:23:25",
-      "drifted": true
+      "drifted": false
     },
     {
       "id": "d85e033727",
@@ -298,7 +298,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:50:44",
-      "drifted": true
+      "drifted": false
     },
     {
       "id": "066422fe13",
@@ -309,7 +309,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T17:17:23",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "3e8607673b",
@@ -330,7 +330,8 @@
       "author": "user",
       "status": "resolved",
       "parent_id": null,
-      "ts": "2026-05-20T17:21:03"
+      "ts": "2026-05-20T17:21:03",
+      "drifted": true
     },
     {
       "id": "757a8eed54",
@@ -347,7 +348,7 @@
   "stage-2b-path-authorize.md": [
     {
       "id": "34a17ff13b",
-      "line": 61,
+      "line": 51,
       "text": "this BuildRequest and SignAndStore seems wrong, here is why. We should format the question as it will be stored, so I guess we need this for now since question is only string and not some json options. what I would like to do is defined the permission before asking the user, the user then signs that definition, and we just save that, we dont have to reconstruct it. But we cannot do this becuase ask is simple text so for now we need to have BuildRequst and SignAndStore. Lets add to todo to add options to output.ask and this needs to be fixed when it gets added",
       "anchor": "```csharp",
       "author": "user",
@@ -366,6 +367,18 @@
       "parent_id": null,
       "ts": "2026-05-20T15:41:18",
       "drifted": true
+    }
+  ],
+  "stage-5-messages-end-to-end.md": [
+    {
+      "id": "1b6c43863a",
+      "line": 14,
+      "text": "don't put this in apps, it's a test so in tests/ folder",
+      "anchor": "### 1. `os/apps/Messages/Start.goal`",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T23:20:17"
     }
   ]
 }
