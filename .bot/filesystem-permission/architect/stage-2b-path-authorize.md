@@ -66,11 +66,12 @@ public async Task<Data> Authorize(Verb verb, string prefix = "")
     // Already granted?
     if (actor.Permission.Find(this, verb) != null) return Data.Ok();
 
-    // Ask. Stage 2a's smart Position capture (via Snapshot) means output.ask
-    // works correctly whether called as a step or nested via RunAction.
+    // Ask. Action runs itself (stage 2a deliverable #7). Synthetic=true by default
+    // for inline-constructed actions; Push records the flag; snapshot capture
+    // filters synthetic frames out at wire-serialize time.
     var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}? (y/n/a)";
-    var askResult = await Context.App.RunAction<modules.output.ask>(
-        new modules.output.ask { Question = Data.@this<string>.Ok(question) }, Context);
+    var askAction = new modules.output.ask { Question = Data.@this<string>.Ok(question) };
+    var askResult = await askAction.RunAsync(Context);
 
     // Stateless: suspended (Exit-typed). Bubble up; engine short-circuits.
     if (askResult.Type?.ClrType?.Exit() == true) return askResult;
