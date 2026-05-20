@@ -688,3 +688,29 @@ deliverable #3) then calls `Snapshot.@this.Capture(Context)` directly.
 Pure refactor — no behaviour change. Out of scope for the
 filesystem-permission branch (stage 2a uses the existing entry); land
 separately to keep stage 2a focused.
+
+## 2026-05-20 — Revisit Snapshot.ResumeChain shape
+
+Context (from `filesystem-permission` branch, stage 2a):
+`Snapshot.Resume` walks the captured frame chain recursively via
+`ResumeChain(chain, idx, ctx)` — outermost-to-innermost on the way down
+(pushes each parent frame back onto the live CallStack), bottom frame
+runs `Goal.RunFrom(stepIdx, actionIdx)`, then unwind continues each
+parent at `ActionIndex + 1`.
+
+Works, but it's clunky:
+- Explicit recursive helper alongside the natural call-stack semantics.
+- Two RunFrom calls per parent (one for the in-flight step's remaining
+  actions if any, one when the call returns) — kind of.
+- Push-without-execute on parent frames feels off; the call frame is
+  faking "in flight" state.
+
+There's probably a cleaner shape — possibly something where Restore
+itself does the pushing in the right order, and a single `RunFrom`
+walks naturally because the call stack is set up. Or some way the
+goal-call action knows how to continue from "I'm mid-call, my sub-goal
+just returned with X."
+
+Revisit when stage 2a's coder gets to the implementation — the recursive
+shape may obviously be the wrong abstraction in code form even though
+it works on paper.
