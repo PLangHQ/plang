@@ -13,7 +13,7 @@ Stage 2b's `Path.Authorize` rides on top — calls `output.ask`, gets either a s
 ## What this stage is NOT
 
 - **Not a new channel.** Stream channel is the only one whose ask-blocking path is fully wired today (it's the only place that actually exercises the current `AskCore`); that path is what stage 2a exercises end-to-end. The Message/HTTP channel is parked — its `Ask` body lands when HTTP work happens.
-- **Not permission-specific.** `FilePermission`, `Path.Authorize`, all permission semantics belong to stage 2b.
+- **Not permission-specific.** `Permission`, `Path.Authorize`, all permission semantics belong to stage 2b.
 - **Not a new abstraction.** `Snapshot` already exists (`PLang/App/Snapshot/this.cs`, `PLang/App/CallStack/this.Snapshot.cs`). Stage 2a reuses it as the only suspend/resume currency.
 
 ## Flow

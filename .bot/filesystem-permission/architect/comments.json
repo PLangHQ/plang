@@ -40,7 +40,7 @@
       "text": "should not be FilePermission, just Permission, this is also much more of a path permission than file, because we can also give access to folders",
       "anchor": "- `PLang/App/FileSystem/Permission/this.cs` — contains the `FilePermission` record with `Covers(FilePermission)` and private `PathMatches(string)`. The `@this` *class* is stubbed (empty manager) — stage 3 fills it.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:13:14",
       "drifted": false

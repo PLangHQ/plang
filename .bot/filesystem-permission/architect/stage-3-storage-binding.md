@@ -16,9 +16,9 @@
 ## Deliverables
 
 - **`Actor.@this.Permission`** — a new typed view on each actor instance. Its API:
-  - `Find(Path path, Verb verb)` — returns a matching valid signed `Data<FilePermission>`, or null. Consults the actor's in-memory list, then runs a SQL query against the `permission` table filtered by this actor's kind (`json_extract(data, '$.Value.Actor') = '<actor>'`) + a coarse path-prefix prune. Validates signatures and runs `Covers` over candidates.
-  - `Add(Data<FilePermission> signed)` — routes by signature expiry. Short expiry (Session, "y") → adds to the in-memory list (discarded at process exit). Long expiry (Always, "a") → calls `App.SettingsStore.Set("permission", key, signed)` where `key` = the FilePermission's `Path` field.
-  - `Revoke(Data<FilePermission> grant)` — removes from in-memory list or from sqlite, whichever holds it.
+  - `Find(Path path, Verb verb)` — returns a matching valid signed `Data<Permission>`, or null. Consults the actor's in-memory list, then runs a SQL query against the `permission` table filtered by this actor's kind (`json_extract(data, '$.Value.Actor') = '<actor>'`) + a coarse path-prefix prune. Validates signatures and runs `Covers` over candidates.
+  - `Add(Data<Permission> signed)` — routes by signature expiry. Short expiry (Session, "y") → adds to the in-memory list (discarded at process exit). Long expiry (Always, "a") → calls `App.SettingsStore.Set("permission", key, signed)` where `key` = the Permission's `Path` field.
+  - `Revoke(Data<Permission> grant)` — removes from in-memory list or from sqlite, whichever holds it.
 
   Each actor instance has its own `Permission` property. Different actors (system / user / service) maintain independent in-memory lists and filter persisted rows by their own actor kind.
 
@@ -39,7 +39,7 @@
 
 ## Dependencies
 
-- Stage 1 (`FilePermission` record with `AppId/Actor/Path/Match/Verb`; `Verb.@this` with Read/Write/Delete; `Match` enum; `Covers` methods).
+- Stage 1 (`Permission` record with `AppId/Actor/Path/Match/Verb`; `Verb.@this` with Read/Write/Delete; `Match` enum; `Covers` methods).
 - Existing `App.SettingsStore` (`IStore.Set(table, key, data)` — note: `key`, not `id`; `Set`, not `AddOrUpdate`).
 - Existing signing infrastructure (`Data.Signature` round-trips through `App.Channels.Serializers.Serializer.Plang.Data` — confirmed at line 9 of that file).
 - Existing `Actor.@this` class (this stage adds the `Permission` property to it).
@@ -54,7 +54,7 @@ Full storage design lives in [v1/plan/storage.md](v1/plan/storage.md). Permissio
 
 2. **Per-actor scoping via JSON filter, not via tables.** One `permission` table in `App.SettingsStore`. Each actor's `Permission` filters its queries to its own actor kind via `json_extract(data, '$.Value.Actor') = '<actor>'`. Adding new actor kinds (unlikely — only system/user/service exist) is a non-event.
 
-3. **Per-kind keying lives close to the kind.** For `FilePermission` the natural key is the **path** itself. Granting the same path twice overwrites — idempotent. Glob grants (`/apps/*/file.txt`) and exact grants (`/apps/Email/file.txt`) are different keys, coexist naturally. If future permission kinds plug into the same table, they bring their own `Key` rule on the record.
+3. **Per-kind keying lives close to the kind.** For `Permission` the natural key is the **path** itself. Granting the same path twice overwrites — idempotent. Glob grants (`/apps/*/file.txt`) and exact grants (`/apps/Email/file.txt`) are different keys, coexist naturally. If future permission kinds plug into the same table, they bring their own `Key` rule on the record.
 
 ### What stage 3 does NOT do
 

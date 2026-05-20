@@ -67,4 +67,4 @@ What this test does NOT do:
 - The 6-step integration test passes.
 - `plang --test` from `Tests/` reports zero regressions (or only the intentional pre-existing failures from `_fixtures_*`).
 - `Documentation/v0.2/<new-doc>.md` walks a reader through the flow.
-- A spot-check of the `permission` table in `App.SettingsStore` (`<AppRoot>/.db/system.sqlite`) after the test shows the expected signed `Data<FilePermission>` row (2-column shape; `data` column is a serialized Data with `Actor = "user"` in the Value).
+- A spot-check of the `permission` table in `App.SettingsStore` (`<AppRoot>/.db/system.sqlite`) after the test shows the expected signed `Data<Permission>` row (2-column shape; `data` column is a serialized Data with `Actor = "user"` in the Value).

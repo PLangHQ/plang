@@ -60,7 +60,7 @@ After all call sites are rewritten: remove `System.IO.Abstractions.IFileSystem` 
 
 ## Dependencies
 
-- Stage 1 (types — `FilePermission`, `Verb.@this`, `Match`).
+- Stage 1 (types — `Permission`, `Verb.@this`, `Match`).
 - Stage 2a (Snapshot-resume infrastructure: `Type.Exit()`, step-loop Snapshot capture, single resume entry, `output.ask` delegating to `AskCore`).
 - Stage 2b (`Path.Authorize(verb)` exists).
 - Stage 3 (`Actor.@this.Permission` view exists; reachable via `path.Context.Actor.Permission` but only used internally by Path/Authorize).
