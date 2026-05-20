@@ -6,7 +6,7 @@
       "text": "For AskCallback, I feel like it violates obp the naming, and how it should really be, I think.\n\nI would think it would be like this, 'ask user \"name?\"' -> this gets funnelled to stream, then if the stream is stateless we sould create the callstack on it and then serialize it, if it is statefull we just serialize it. Lets disucss",
       "anchor": "Stage 2a fixes all four for **any** callback kind. `AskCallback` gets a real mid-goal continuation it never had. Stage 2b builds `PermissionAskCallback` on top of this foundation.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T14:05:33"
     },
@@ -16,7 +16,7 @@
       "text": "I think we can do this, it is only working with stream, not touching on http. plus, isn´t it just serialize just include the callback?",
       "anchor": "**Out of scope:** building the HTTP/Web channel. The serializer is generic; whatever channel wires it (CLI today; HTTP when shipped — see `Channel/Message/this.cs:7` \"Web extends Message (when shipped)\") is a separate branch's concern. Stage 2a makes the bytes correct; the channel can use them whenever it lands.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-19T17:39:38",
       "drifted": false
@@ -27,10 +27,167 @@
       "text": "this is useless method FromEnvelope. What is Envelope? you are just returning data, data is just data, just send it around, when we want to serizlize data, then the signature is created, and it the Data class that does that on serialize",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-19T17:44:36",
       "drifted": false
+    }
+  ],
+  "stage-1-permission-types.md": [
+    {
+      "id": "87807db4a9",
+      "line": 15,
+      "text": "should not be FilePermission, just Permission, this is also much more of a path permission than file, because we can also give access to folders",
+      "anchor": "- `PLang/App/FileSystem/Permission/this.cs` — contains the `FilePermission` record with `Covers(FilePermission)` and private `PathMatches(string)`. The `@this` *class* is stubbed (empty manager) — stage 3 fills it.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-20T15:13:14",
+      "drifted": false
+    },
+    {
+      "id": "8d98b80c6b",
+      "line": 16,
+      "text": "it´s correct that all these verbs also have sub permissions?",
+      "anchor": "- `PLang/App/FileSystem/Permission/Verb/this.cs` — `@this` with `Read`/`Write`/`Delete` properties and `Covers(@this)`.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-20T15:13:37",
+      "drifted": false
+    }
+  ],
+  "stage-2a-snapshot-resume.md": [
+    {
+      "id": "bb5c0d8c0b",
+      "line": 59,
+      "text": "can we use this Exit in more places in the runtime engine, we have some if Handled etc. just see if we can have fewer if statements in the runtime running each action",
+      "anchor": "### 1. `Type.Exit()` extension method on `System.Type`",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-20T15:15:47",
+      "drifted": false
+    },
+    {
+      "id": "ced838e34a",
+      "line": 80,
+      "text": "maybe ask.cs instead of capital Ask.cs?",
+      "anchor": "Replaces `AskCallback`. Small record at `PLang/App/modules/output/Ask.cs` (the **payload**, not the action; the action `output.ask` returns `Data<Ask>`).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:16:45",
+      "drifted": false
+    },
+    {
+      "id": "03ebad8047",
+      "line": 101,
+      "text": "I would think action should own the snapshot? so action.Snapshot() would generate the snapshot we need for result.",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:17:58",
+      "drifted": false
+    },
+    {
+      "id": "1b654d4160",
+      "line": 101,
+      "text": "I also notice this is at the step level, not the action level, shouldn´t this code be at the action level? if we create the snapshot here, we wouldn´t know which action to execute in the step",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "03ebad8047",
+      "ts": "2026-05-20T15:18:52",
+      "drifted": false
+    },
+    {
+      "id": "4aa121fac9",
+      "line": 128,
+      "text": "I dont like AskCore, why not just Ask?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:19:20",
+      "drifted": false
+    },
+    {
+      "id": "67282864b5",
+      "line": 144,
+      "text": "I dont think we need to take in IAskRequest into AskCore, just take in the module action",
+      "anchor": "`AskCore` signature change: takes an `IAskRequest` (lives in `App.Channels` — right dependency direction) so the channel layer doesn't reference `App.modules.output` directly:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:20:14",
+      "drifted": false
+    },
+    {
+      "id": "049d0c1816",
+      "line": 159,
+      "text": "What is WriteCore? dont like that name, and why are we decomposing instead of sending the action down?",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:21:27",
+      "drifted": false
+    },
+    {
+      "id": "cb34bde902",
+      "line": 159,
+      "text": "lets have the WriteCore take in the action and it should decompose the Question.Value",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "049d0c1816",
+      "ts": "2026-05-20T15:23:25",
+      "drifted": false
+    },
+    {
+      "id": "d85e033727",
+      "line": 170,
+      "text": "We need to fix ActorName and just have is as Actor. It should also be the Actor type",
+      "anchor": "**Message channel `AskCore`** — returns `Data<Ask>`. No Position / Variables / ActorName here — step-loop Snapshot capture (#3) handles all of that:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:22:12",
+      "drifted": false
+    },
+    {
+      "id": "aa9da45f22",
+      "line": 182,
+      "text": "Just Ask",
+      "anchor": "**Name flag for the coder:** `AskCore` is an OBP smell (noun+verb). Pick a cleaner name during implementation — `Prompt`, `Solicit`, plain `Ask` on the channel, or similar. Architect leaves naming to coder; flagging.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:23:38",
+      "drifted": false
+    },
+    {
+      "id": "e642727b7e",
+      "line": 188,
+      "text": "What is Envelope in this code? I dont want to see any Envelope, it´s Data",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-20T15:24:15",
+      "drifted": false
+    },
+    {
+      "id": "c03270e0af",
+      "line": 188,
+      "text": "not sure, just a guess, but should Run(Data data), then data.signature.verify(), then data.snapshot, data.answer (although .answer is probably not right here because Data doesnt have answer, we need to decide how the answer is fed into the system.",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "e642727b7e",
+      "ts": "2026-05-20T15:27:28"
     }
   ]
 }

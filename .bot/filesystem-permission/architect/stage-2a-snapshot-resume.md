@@ -12,7 +12,7 @@ Stage 2b's `Path.Authorize` rides on top — calls `output.ask`, gets either a s
 
 ## What this stage is NOT
 
-- **Not a new channel.** Stream channel is the only one with a working `AskCore` today; that path is what stage 2a exercises end-to-end. The Message/HTTP channel is parked — its `AskCore` body lands when HTTP work happens.
+- **Not a new channel.** Stream channel is the only one whose ask-blocking path is fully wired today (it's the only place that actually exercises the current `AskCore`); that path is what stage 2a exercises end-to-end. The Message/HTTP channel is parked — its `Ask` body lands when HTTP work happens.
 - **Not permission-specific.** `FilePermission`, `Path.Authorize`, all permission semantics belong to stage 2b.
 - **Not a new abstraction.** `Snapshot` already exists (`PLang/App/Snapshot/this.cs`, `PLang/App/CallStack/this.Snapshot.cs`). Stage 2a reuses it as the only suspend/resume currency.
 
@@ -24,7 +24,7 @@ Stage 2b's `Path.Authorize` rides on top — calls `output.ask`, gets either a s
 file.read action
   ↓ Authorize(verb=Read)                          [stage 2b helper]
   ↓ no grant; output.ask(question="Allow…?")
-  ↓ AskCore on Message channel: returns Data<Ask>(question)
+  ↓ Channel.Ask on Message channel: returns Data<Ask>(question) with Snapshot attached
   ↓ Authorize sees result.Type.Exit() == true → returns it
   ↓ file.read returns it
 
@@ -52,7 +52,7 @@ Next request: { answer:"a", snapshot }:
     proceeds with the actual read → next step runs.
 ```
 
-Against a stateful (Stream) channel the Authorize/output.ask chain runs, but `AskCore` blocks on stdin instead of returning Exit-typed Data. The Snapshot capture / short-circuit path never fires. Goal completes synchronously.
+Against a stateful (Stream) channel the Authorize/output.ask chain runs, but the channel's `Ask` blocks on stdin instead of returning Exit-typed Data. The Snapshot capture / short-circuit path never fires. Goal completes synchronously.
 
 ## Deliverables
 
@@ -77,53 +77,79 @@ public static class TypeExitExtensions
 
 ### 2. `Ask` type — the only Exit-typed Data in stage 2a
 
-Replaces `AskCallback`. Small record at `PLang/App/modules/output/Ask.cs` (the **payload**, not the action; the action `output.ask` returns `Data<Ask>`).
+Replaces `AskCallback`. Small record at `PLang/App/modules/output/ask.cs` (lowercase per PLang convention — same file as the action; the record sits alongside the partial class).
 
 ```csharp
 public sealed record Ask(string Question) : global::App.IExitsGoal;
 ```
 
-That's it. No Position, no ActorName, no Variables. Just the question.
+That's it. No Position, no Actor, no Variables. Just the question.
 
-The previous `AskCallback` fields (Position, Variables, ActorName) move into `Snapshot` capture, which already records them via the existing CallStack + Variables snapshotting.
+The previous `AskCallback` fields (Position, Variables, ActorName-as-string) move into `Snapshot` capture, which already records them via the existing CallStack + Variables snapshotting. ActorName-as-string is replaced by the live `Actor.@this` reference inside the captured CallStack frames.
 
-### 3. `Data.Snapshot` attachment + step-loop capture
+### 3. Action owns the Snapshot; engine short-circuits on `result.Snapshot != null`
 
-`Data.@this` grows one optional field:
+`Data.@this` grows one optional field that serialises (it's part of the wire shape — the channel reads it back on resume):
 
 ```csharp
-[JsonIgnore]
 public Snapshot.@this? Snapshot { get; set; }
 ```
 
-`Steps.RunAsync` (`Goals/Goal/Steps/this.cs:154`) — add one branch alongside the existing failure / Returned checks:
+**The action owns capture.** An action that wants to exit the goal builds its Snapshot at the action level — *before* returning, while its own Call frame is still alive. This is essential: at step level, the action frame has already popped and we'd lose which action triggered the Exit (a step can have multiple actions).
+
+`Action.@this` (the partial class actions inherit) grows a `Snapshot()` helper:
+
+```csharp
+// PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.Snapshot.cs (or similar)
+public partial class @this
+{
+    /// Captures App state from the action's perspective. Call from inside an
+    /// action handler *before* returning an Exit-typed Data. The captured
+    /// CallStack ends at this action's live frame.
+    public Snapshot.@this Snapshot()
+    {
+        var snap = new Snapshot.@this();
+        Context.App.Capture(snap);
+        return snap;
+    }
+}
+```
+
+Action handlers that exit attach the snapshot themselves:
+
+```csharp
+// inside Message channel's Ask (replaces today's AskCore)
+public override Task<Data.@this> Ask(modules.output.ask action, CancellationToken ct = default)
+{
+    var ask = new Ask(action.Question.Value);
+    var data = new Data.@this<Ask>("", ask);
+    data.Context = action.Context;
+    data.Snapshot = action.Snapshot();      // capture at action level, frame alive
+    return Task.FromResult<Data.@this>(data);
+}
+```
+
+**Step loop adds one branch.** `Steps.RunAsync` (`Goals/Goal/Steps/this.cs:154`) now short-circuits when the result carries a Snapshot — and `result.Type?.ClrType?.Exit() == true` collapses with it, since any Exit-typed result will have an attached Snapshot by contract:
 
 ```csharp
 result = await step.RunAsync(context);
 
 if (!result.Success && !result.Handled) return result;
 if (result.Returned) return result;
-
-// NEW: Exit-typed result captures Snapshot and short-circuits.
-if (result.Type?.ClrType?.Exit() == true)
-{
-    var snap = new Snapshot.@this();
-    context.App.Capture(snap);
-    result.Snapshot = snap;
-    return result;
-}
+if (result.Snapshot != null) return result;    // NEW: action captured a snapshot → suspend
 ```
 
-`App.Capture(snap)` is the existing snapshot path (`PLang/App/this.Snapshot.cs` / `CallStack/this.Snapshot.cs`).
+**Note on `Type.Exit()`:** the predicate (deliverable #1) is still useful — it's the *invariant* the engine and tests assert (Exit-typed result MUST have a Snapshot; non-Exit-typed result MUST NOT). The step loop checks `Snapshot != null` because the action did the actual capture; the predicate gates which actions are allowed to do so.
 
 **Tests:**
 - 3-step goal where step 1 returns `Data<Ask>` — steps 2/3 do NOT execute. Returned Data has `.Snapshot` populated; `.Snapshot`'s CallStack frame chain ends at step 1's action.
 - 3-step goal where step 1 returns `Data<string>` — steps 2/3 DO execute (regression guard).
-- Snapshot capture happens **before** any goal frame pops — verified by reading the snapshot's frame chain, last entry must be the suspended action.
+- Action that constructs Exit-typed Data without calling `Snapshot()` — caught by a contract test asserting "every Exit-typed result has `Snapshot != null`."
+- Action that calls `Snapshot()` with a non-Exit Value Type — also caught (predicate must be true).
 
-### 4. Route `output.ask` through `AskCore`; remove inline AskCallback construction
+### 4. Route `output.ask` through `Channel.Ask`; remove inline AskCallback construction
 
-Today `output.ask` (`modules/output/ask.cs:37-81`) always builds an `AskCallback` inline. After this stage:
+Today `output.ask` (`modules/output/ask.cs:37-81`) always builds an `AskCallback` inline, bypassing the channel entirely. After this stage:
 
 ```csharp
 public async Task<Data.@this> Run()
@@ -137,78 +163,101 @@ public async Task<Data.@this> Run()
     }
 
     // Delegate. Stream blocks; Message returns Data<Ask>.
-    return await Context.Actor.Channels.Input.AskCore(this);
+    return await Context.Actor.Channels.Input.Ask(this);
 }
 ```
 
-`AskCore` signature change: takes an `IAskRequest` (lives in `App.Channels` — right dependency direction) so the channel layer doesn't reference `App.modules.output` directly:
+**`Channel.Ask` takes the action directly.** No `IAskRequest` interface. The channel knows about `output.ask` — that's appropriate since "ask" is the channel's reason for exposing an Ask method. Direction of dependency is fine.
 
 ```csharp
-// PLang/App/Channels/IAskRequest.cs
-public interface IAskRequest
-{
-    Data.@this<string> Question { get; }
-    Actor.Context.@this Context { get; }
-}
+// PLang/App/Channels/Channel/this.cs
+public abstract Task<Data.@this> Ask(modules.output.ask action, CancellationToken ct = default);
 ```
 
-`output.ask` implements `IAskRequest`. (No `Variables` member — surviving-variable capture lives in Snapshot now, not the Ask payload.)
+(Existing `AskCore` name dies. Pure verb on the channel.)
 
-**Stream channel `AskCore`** — pulls `Question.Value`, writes, blocks on stdin, returns `Data.Ok(line)`:
+**Stream channel `Ask`** — takes the action, decomposes `Question.Value` itself, writes, blocks on stdin, returns `Data.Ok(line)`:
 
 ```csharp
-public override async Task<Data.@this> AskCore(IAskRequest request, CancellationToken ct = default)
+public override async Task<Data.@this> Ask(modules.output.ask action, CancellationToken ct = default)
 {
-    var prompt = Data.@this.Ok(request.Question.Value);
-    var writeRes = await WriteCore(prompt, ct);
+    var writeRes = await Write(action, ct);          // see Write rename below
     if (!writeRes.Success) return writeRes;
     // existing read-line + timeout logic from Stream/this.cs:97-120
     return Data.@this.Ok(line ?? string.Empty);
 }
 ```
 
-**Message channel `AskCore`** — returns `Data<Ask>`. No Position / Variables / ActorName here — step-loop Snapshot capture (#3) handles all of that:
+(`WriteCore` similarly renamed to `Write` and takes the action directly — extracts `Question.Value` itself rather than the caller pre-wrapping a `Data` prompt. Same OBP smell, same fix.)
+
+**Message channel `Ask`** — returns `Data<Ask>` with a Snapshot captured at action level (per #3). No Position / Variables / Actor here — Snapshot carries it:
 
 ```csharp
-public override Task<Data.@this> AskCore(IAskRequest request, CancellationToken ct = default)
+public override Task<Data.@this> Ask(modules.output.ask action, CancellationToken ct = default)
 {
-    var ask = new Ask(Question: request.Question.Value);
+    var ask = new Ask(action.Question.Value);
     var data = new Data.@this<Ask>("", ask);
-    data.Context = request.Context;
+    data.Context  = action.Context;
+    data.Snapshot = action.Snapshot();       // action owns capture (deliverable #3)
     return Task.FromResult<Data.@this>(data);
 }
 ```
 
-**Name flag for the coder:** `AskCore` is an OBP smell (noun+verb). Pick a cleaner name during implementation — `Prompt`, `Solicit`, plain `Ask` on the channel, or similar. Architect leaves naming to coder; flagging.
+`Context.App.CallStack` BottomFrame at `action.Snapshot()` time is `output.ask`'s own frame (it's still live when this code runs from inside the action's Run). The smart "walk-up-to-step-action" logic stays inside `Snapshot` capture if the action is synthetic (no Step) — same as before, just lives in the snapshot path now.
 
 ### 5. Single resume entry (refactor `callback.run` or replace)
 
 Today `modules/callback/run.cs` dispatches polymorphically via `ICallback.Run`. After this stage, dispatch is one path:
 
 ```csharp
-public async Task<Data> Run()        // schematic
+[Action("run", Cacheable = false)]
+public partial class run : IContext
 {
-    // Verify envelope signature (existing)
-    var v = await signing.verify(Envelope);
-    if (!v.Success) return v;
+    /// <summary>The suspended Data sent back by the channel. Carries Signature + Snapshot.</summary>
+    [IsNotNull]
+    public partial Data.@this Data { get; init; }
 
-    var snapshot = Envelope.Snapshot;
-    var answer   = Envelope.Answer;     // raw string from channel; may be null
+    public async Task<Data.@this> Run()
+    {
+        // Data has its own signature; verification stays through signing.verify
+        // (existing pattern — auditor v2 / security v1 S-F1).
+        var v = await Context.App.RunAction<modules.signing.verify>(
+            new modules.signing.verify { Data = Data }, Context);
+        if (!v.Success) return v;
 
-    Context.App.Restore(snapshot, Context);
-    if (answer != null)
-        Context.Variables.Set(modules.output.ask.AnswerVariableName, answer);
+        if (Data.Snapshot == null)
+            return Data.@this.FromError(new ServiceError(
+                "Resume invoked on Data without a Snapshot", "NoSnapshot", 400));
 
-    var bottom = Context.App.CallStack.BottomFrame;
-    var actionResult = await Context.App.Run(bottom.Action, Context);
-    if (!actionResult.Success) return actionResult;
+        // Restore App state from the suspend.
+        Context.App.Restore(Data.Snapshot, Context);
 
-    // Continue the goal from after the suspended step
-    return await bottom.Goal.Steps.RunAsync(Context, fromIndex: bottom.StepIndex + 1);
+        // Answer (if any) was already set into Context.Variables by the channel
+        // *before* invoking this action — e.g. via the !ask.answer sentinel for
+        // an Ask resume. This action does not touch the answer; it just restores
+        // and re-dispatches. The resumed action reads the sentinel itself.
+
+        var bottom = Context.App.CallStack.BottomFrame;
+        if (bottom == null)
+            return Data.@this.FromError(new ServiceError(
+                "Resume has no bottom frame after Restore", "NoPosition", 400));
+
+        var actionResult = await Context.App.Run(bottom.Action, Context);
+        if (!actionResult.Success) return actionResult;
+
+        // Continue the goal from after the suspended step.
+        return await bottom.Goal.Steps.RunAsync(Context, fromIndex: bottom.StepIndex + 1);
+    }
 }
 ```
 
-The shape of the action's input parameters is the coder's call — the verify, restore, set sentinel, dispatch, continue pieces are the spec.
+**Key shape points:**
+
+- The action input is plain `Data` — not an "Envelope," not a "Callback." Data is what's serialized and what comes back. (Per the OBP rule: Data is a self-owning object, not a wrapper-with-contents.)
+- `Data.Snapshot` is the resume state (deliverable #3 wires it onto Data).
+- Signature lives on Data itself (existing — `Data.Signature` is already there).
+- The answer is fed into the system **by the channel**, not through Data. Channel sets `!ask.answer` (or the relevant sentinel) into `Context.Variables` before invoking this resume action. The resume action stays answer-agnostic; it just restores state and re-dispatches. The resumed action (e.g. `output.ask`) is what reads the sentinel and acts on it.
+- Sentinel placement is the channel's contract with the suspended action's resume-consume code. For Ask it's `!ask.answer`. Other kinds may use different sentinels — but Data doesn't carry the answer.
 
 ### 6. `Steps.RunAsync(context, fromIndex)` overload
 
@@ -235,14 +284,14 @@ After 1–6 land and tests pass:
 
 - Existing `App.Snapshot.@this` and `App.CallStack.this.Snapshot.cs` (Capture + Restore).
 - Existing `App.Types` (no changes).
-- Existing `Channels.Channel.Stream.@this.AskCore` (signature changes to take `IAskRequest`; body keeps its stdin-block logic).
+- Existing `Channels.Channel.Stream.@this.AskCore` (gets renamed to `Ask` and changes signature to take the `modules.output.ask` action directly; body keeps its stdin-block logic).
 - No new packages.
 
 ## Acceptance
 
 - Single resume mechanism: `App.Restore(snapshot, ctx)` is the only path the channel/host uses to reconstitute a suspended goal. No `ICallback.Run` dispatch anywhere.
 - `Type.Exit()` is the only engine-side discriminator for "this Data exits the goal."
-- `output.ask` is ~10 lines: resume-consume sentinel + delegate to `AskCore`.
+- `output.ask` is ~10 lines: resume-consume sentinel + delegate to the channel's `Ask`.
 - Mid-goal `output.ask` works on Stream (no Snapshot involved) and on Message (Snapshot round-trip).
 - `dotnet run --project PLang.Tests` zero regressions. Existing `Tests/Callback/AskWithVars` and `AskVarsResumeBindsValue` adapted to the new shape.
 
