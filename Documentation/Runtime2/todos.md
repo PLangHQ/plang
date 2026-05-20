@@ -652,3 +652,39 @@ options based on the record's shape), refactor `Path.Authorize`:
 4. Store the signed `Permission` directly — no `BuildRequest` reconstruction.
 
 Drop the `BuildRequest`/`SignAndStore` helpers when this lands.
+
+## 2026-05-20 — Per-channel serializer for stateless suspend (error vs ask vs ...)
+
+Context (from `filesystem-permission` branch, stage 2a design discussion):
+Snapshot is now the unified suspend/resume currency. Each channel kind
+owns its serializer — stateful (Stream) doesn't serialize at all (in-process
+resume); stateless (Message/HTTP and any future kind) does.
+
+The minimal wire for an ask-resume needs only CallStack + Variables. The
+minimal wire for an error-resume needs CallStack + Variables + the Errors
+trail (the caller needs failure detail to decide retry behaviour). Other
+stateless kinds may need different sections.
+
+Open: how to express section-filtering on the serializer side. Options:
+(a) one configurable Plang Data serializer with an allowlist set per
+channel kind; (b) distinct serializer classes per resume kind registered
+under different MIME types; (c) each subsystem's Capture takes a "minimal"
+hint and writes less. (a) and (b) feel cleaner than (c).
+
+Resolve when the Message/HTTP channel actually ships.
+
+## 2026-05-20 — Relocate App.Snapshot() orchestration to Snapshot.@this.Capture(ctx)
+
+Context (from `filesystem-permission` branch, stage 2a OBP discussion):
+The orchestration that walks subsystems and builds a Snapshot currently
+lives on `App.Snapshot()` (`PLang/App/this.Snapshot.cs:16-27`). OBP-wise,
+App shouldn't know how a Snapshot is built — the Snapshot type should.
+
+Refactor: move the body to `Snapshot.@this.Capture(Actor.Context.@this ctx)`
+as a static factory. Delete `App.Snapshot()`. Update callers (today only
+ErrorCallback constructor + tests). Action's `Snapshot()` helper (stage 2a
+deliverable #3) then calls `Snapshot.@this.Capture(Context)` directly.
+
+Pure refactor — no behaviour change. Out of scope for the
+filesystem-permission branch (stage 2a uses the existing entry); land
+separately to keep stage 2a focused.

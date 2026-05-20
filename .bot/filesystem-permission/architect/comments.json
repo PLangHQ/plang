@@ -97,7 +97,7 @@
       "text": "can we use this Exit in more places in the runtime engine, we have some if Handled etc. just see if we can have fewer if statements in the runtime running each action",
       "anchor": "### 1. `Type.Exit()` extension method on `System.Type`",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:15:47",
       "drifted": false
@@ -141,7 +141,7 @@
       "text": "I feel like this Context.App.Capture is going top to bottom, when I would think it should go bottom to top?",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-20T15:45:22",
       "drifted": false
@@ -152,7 +152,7 @@
       "text": "Can you show me how a snapshot looks, one full snapshot one small (for like http)",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "db46f862d3",
       "ts": "2026-05-20T15:45:57",
       "drifted": false

@@ -99,7 +99,7 @@ public Snapshot.@this? Snapshot { get; set; }
 
 **The action owns capture.** An action that wants to exit the goal builds its Snapshot at the action level — *before* returning, while its own Call frame is still alive. This is essential: at step level, the action frame has already popped and we'd lose which action triggered the Exit (a step can have multiple actions).
 
-`Action.@this` (the partial class actions inherit) grows a `Snapshot()` helper:
+`Action.@this` (the partial class actions inherit) grows a `Snapshot()` helper. Uses the existing `App.Snapshot()` factory (`PLang/App/this.Snapshot.cs:16-27`) — which already walks subsystems and returns the full tree:
 
 ```csharp
 // PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.Snapshot.cs (or similar)
@@ -108,14 +108,11 @@ public partial class @this
     /// Captures App state from the action's perspective. Call from inside an
     /// action handler *before* returning an Exit-typed Data. The captured
     /// CallStack ends at this action's live frame.
-    public Snapshot.@this Snapshot()
-    {
-        var snap = new Snapshot.@this();
-        Context.App.Capture(snap);
-        return snap;
-    }
+    public Snapshot.@this Snapshot() => Context.App.Snapshot();
 }
 ```
+
+**OBP relocation note (tracked in todos.md):** the orchestration that walks subsystems currently lives on `App.Snapshot()`. The OBP-clean home is `Snapshot.@this.Capture(ctx)` as a static factory — App shouldn't need to know how a Snapshot is built. Out of scope for this stage; tracked as a follow-up cleanup. Stage 2a uses the existing entry as-is.
 
 Action handlers that exit attach the snapshot themselves. Single-layer Data construction — the question rides directly as `Value`:
 
@@ -289,9 +286,51 @@ public partial class @this
 
 `Step.RunFrom(ctx, fromActionIdx)` is the within-step equivalent — coder adds it next to `Step.RunAsync`. Existing `Steps.RunAsync(ctx, fromIndex)` overload is still needed (the inner loop call), now justified by this consumer.
 
-### 7. Drop dead code
+`Goal.RunFrom`'s body uses three checks today (failure / Returned / Exit). Deliverable #7 collapses them into one call (`ShouldExit`) — the body shrinks to two lines after that lands.
 
-After 1–6 land and tests pass:
+### 7. `Data.ShouldExit` extension — collapse the engine's stop checks
+
+The step / goal / RunFrom loops all have the same three-line pattern:
+
+```csharp
+if (!result.Success && !result.Handled) return result;
+if (result.Returned) return result;
+if (result.Type?.ClrType?.Exit() == true) return result;
+```
+
+Each check has distinct semantics (unhandled failure / explicit goal.return / action-suspends-goal), so they can't merge into one flag — but the call-site pattern repeats everywhere. Wrap it in one extension:
+
+```csharp
+// PLang/App/Data/ShouldExit.cs (or wherever Data extensions live)
+public static class DataShouldExitExtensions
+{
+    /// <summary>
+    /// True when this Data's presence should stop the surrounding loop.
+    /// Combines the three distinct stop conditions: unhandled failure,
+    /// explicit goal.return, and Exit-typed result (action wants to suspend).
+    /// </summary>
+    public static bool ShouldExit(this Data.@this d) =>
+        (!d.Success && !d.Handled)
+        || d.Returned
+        || (d.Type?.ClrType?.Exit() == true);
+}
+```
+
+Step loop, Steps loop, and `Goal.RunFrom` collapse:
+
+```csharp
+if (result.ShouldExit()) return result;
+```
+
+Flags stay distinct (consumers downstream still differentiate via `Type.Exit()` vs `Returned` etc.); only the loop-stop check unifies.
+
+**Tests:**
+- Each individual flag's `ShouldExit() == true`.
+- Combined cases (e.g. Returned + Exit-typed simultaneously — should still stop).
+
+### 8. Drop dead code
+
+After 1–7 land and tests pass:
 
 - Delete `PLang/App/Callback/ICallback.cs`.
 - Delete `PLang/App/Callback/AskCallback.cs`.
@@ -300,7 +339,7 @@ After 1–6 land and tests pass:
 - Update `PLang/App/Errors/Error.cs:55` — `Callback` property → `Snapshot` property (`Data<Snapshot>`). Consumers update accordingly. No production callers outside Wire serializer comments today.
 - Update tests under `PLang.Tests/App/CallbackTests/` — round-trip tests rewrite to exercise Snapshot serialization + the single resume entry; per-callback Deserialize tests delete.
 
-### 8. Tests (integration)
+### 9. Tests (integration)
 
 - **Stream / stateful, mid-goal:** `- ask user "name?", write to %name%` / `- write out %name%` against a Stream channel piped with `"Alice"` on stdin. Goal completes; `%name% == "Alice"`; no Snapshot ever captured.
 - **Message / stateless, mid-goal:** same goal against a fake Message-like channel. Step 1 returns `Data<Ask>`. Step loop short-circuits, captures Snapshot. Goal returns the Ask Data with Snapshot attached. Invoke the resume entry with `{ snapshot, answer:"Alice" }`. After resume, `%name% == "Alice"`. Step 2 ran with the bound value.
@@ -320,6 +359,63 @@ After 1–6 land and tests pass:
 - `output.ask` is ~10 lines: resume-consume sentinel + delegate to the channel's `Ask`.
 - Mid-goal `output.ask` works on Stream (no Snapshot involved) and on Message (Snapshot round-trip).
 - `dotnet run --project PLang.Tests` zero regressions. Existing `Tests/Callback/AskWithVars` and `AskVarsResumeBindsValue` adapted to the new shape.
+
+## Snapshot wire shape (reference)
+
+The full `App.Snapshot()` walks every `ISnapshot`-implementing subsystem (`App/this.Snapshot.cs:16-27`): Variables, Errors, Providers, Statics, Build, Testing, CallStack. The in-memory `Snapshot.@this` is a key/value tree (`Snapshot/this.cs`).
+
+A serialized **full** snapshot of a paused `- read /path/to/file.txt` mid-goal looks roughly like:
+
+```json
+{
+  "Variables": {
+    "entries": [
+      { "name": "%userId%", "value": "u-42", "type": "string" },
+      { "name": "%name%",   "value": null,   "type": "string" }
+    ]
+  },
+  "CallStack": {
+    "frames": [
+      { "goalPrPath": "/app/start.pr", "goalHash": "abc123",
+        "stepIndex": 0, "actionIndex": 0, "id": "f1",
+        "variables": { /* per-call diffs */ } }
+    ]
+  },
+  "Errors":    { "trail": [ /* recent errors, audit */ ] },
+  "Providers": { /* code-routing config */ },
+  "Statics":   { /* statics */ },
+  "Build":     { /* builder state — empty at runtime */ },
+  "Testing":   { /* tester state — empty when not under test */ }
+}
+```
+
+For a **stateless ask-resume** wire, only CallStack + Variables are needed to re-dispatch:
+
+```json
+{
+  "Variables": {
+    "entries": [
+      { "name": "%userId%", "value": "u-42", "type": "string" }
+    ]
+  },
+  "CallStack": {
+    "frames": [
+      { "goalPrPath": "/app/start.pr", "goalHash": "abc123",
+        "stepIndex": 0, "actionIndex": 0, "id": "f1" }
+    ]
+  }
+}
+```
+
+For an **error-resume** wire, Errors trail is essential too — the caller needs the failure detail to decide how to retry. Stateless serializer for the Error case keeps `Errors` alongside CallStack + Variables.
+
+**Per-channel serializers.** Statefulness vs statelessness isn't an HTTP-specific concept — it's a property of the channel. Each channel kind owns its own serializer (already the pattern via MIME-based serializer selection on `Channels.Serializers`). Stateful (Stream/Session) channels never serialize a Snapshot — they just hold it in memory across the in-process resume. Stateless channels (Message/HTTP and any future kind) declare a serializer that knows which sections to include for their purpose: ask-resume vs error-resume vs anything else.
+
+How the section-filtering happens at the serializer level (one configurable serializer with an allowlist, vs distinct serializer classes per resume kind, vs subsystems-decide) is the coder's call during implementation. Architect's spec: the choice is the channel's.
+
+**Tracked in todos.md:**
+- Per-channel serializer for stateless suspend — how to handle error-message detail in the stateless serializer (errors carry richer context than asks).
+- App.Snapshot() orchestration → relocate to Snapshot.@this.Capture(ctx) factory (OBP cleanup).
 
 ## What stage 2a unblocks
 
