@@ -141,7 +141,95 @@ Requires the Deserialize entry points to flow a Context through. The serializer 
 - Round-trip with unknown `Type` string: `Value` stays as JsonElement (graceful degrade, no throw).
 - Signature survives the round-trip in both directions.
 
-### 5. Drop `ICallback.Serialize` / per-callback static `Deserialize`
+### 5. Route `output.ask` through `AskCore`; channel decides stateful vs stateless
+
+Today `output.ask` (`PLang/App/modules/output/ask.cs:37-81`) **always** builds an `AskCallback` directly and returns it. It bypasses `Channel.AskCore` entirely. Stream channel's `AskCore` (which blocks on stdin and returns `Data.Ok(line)`) is unused. Mid-goal `output.ask` on console therefore goes through the stateless suspend/resume path uselessly instead of just blocking and reading the line.
+
+**Fix:** `output.ask` keeps its resume-consume sentinel, then delegates to the channel.
+
+```csharp
+// PLang/App/modules/output/ask.cs
+public async Task<Data.@this> Run()
+{
+    // Resume — unchanged
+    var answer = Context.Variables.Get(AnswerVariableName);
+    if (answer != null && answer.IsInitialized)
+    {
+        Context.Variables.Remove(AnswerVariableName);
+        return Data.@this.Ok(answer.Value);
+    }
+
+    // Delegate to the channel. Stream blocks; Message suspends.
+    return await Context.Actor.Channels.Input.AskCore(this);
+}
+```
+
+**`AskCore` signature change.** Today `AskCore(Data prompt, CancellationToken ct)`. New signature takes an `IAskRequest` so the Channel layer doesn't depend on `App.modules.output`:
+
+```csharp
+// PLang/App/Channels/IAskRequest.cs   (new file, lives in Channels — the right dependency direction)
+public interface IAskRequest
+{
+    Data.@this<string> Question { get; }
+    Data.@this? Variables { get; }
+    Actor.Context.@this Context { get; }
+}
+```
+
+`output.ask` implements `IAskRequest` (its existing properties already match; just declare the interface on the class).
+
+```csharp
+// PLang/App/Channels/Channel/this.cs
+public abstract Task<Data.@this> AskCore(IAskRequest request, CancellationToken ct = default);
+```
+
+**Stream channel implementation** — pulls `Question.Value`, writes, blocks on stdin, returns the line:
+
+```csharp
+public override async Task<Data.@this> AskCore(IAskRequest request, CancellationToken ct = default)
+{
+    var prompt = Data.@this.Ok(request.Question.Value);
+    var writeRes = await WriteCore(prompt, ct);
+    if (!writeRes.Success) return writeRes;
+    // ... existing read-line + timeout logic from Stream/this.cs:97-120
+}
+```
+
+**Message channel implementation** — builds the `AskCallback` (the logic relocated from `output.ask`):
+
+```csharp
+public override Task<Data.@this> AskCore(IAskRequest request, CancellationToken ct = default)
+{
+    var ctx      = request.Context;
+    var bottom   = ctx.App.CallStack.BottomFrame;
+    var captured = ExtractCapturedVars(request.Variables, ctx);
+
+    var cb = new AskCallback
+    {
+        Position  = bottom,
+        ActorName = ctx.Actor?.Name ?? "User",
+        Variables = captured
+    };
+    var data = new Data.@this<AskCallback>("", cb);
+    data.Context = ctx;
+    return Task.FromResult<Data.@this>(data);
+}
+```
+
+`ExtractCapturedVars` is the variable-capture logic currently inline in `output.ask:54-69` — moves over as-is.
+
+**Tests:**
+
+- Stream channel: `output.ask` returns `Data.Ok(line)` after stdin input. Blocks. No callback.
+- Message channel: `output.ask` returns `Data<AskCallback>`. Position and Variables populated from the action's context.
+- `output.ask` is ~10 lines after the change (resume-consume + delegate).
+- Mid-goal `output.ask` on console runs synchronously: `- ask user "name?", write to %name%` / `- write out %name%` completes in one process tick when invoked against a Stream channel (no suspend, no callback short-circuit fires because no callback is returned).
+
+**Message channel parking note:** if Message channel implementation lands later (with HTTP work), park its `AskCore` body as a `NotImplementedException` for stage 2a. Stream-channel path is what stage 2a actually exercises. The integration test for the full callback round-trip uses a fake Message-like channel for now.
+
+**Name flag for the coder:** `AskCore` is an OBP smell — noun + verb (`Ask` + `Core`). The method does the work of asking; it shouldn't be named like a property-with-suffix. Picking a better name (`Prompt`, `Solicit`, or — since the method already exists — keep `AskCore` but rename to a plain verb on a refactor pass) is the coder's call during implementation. Flag it; don't block on it.
+
+### 6. Drop `ICallback.Serialize` / per-callback static `Deserialize`
 
 The current interface and concrete callbacks carry their own serialization (`AskCallback.Serialize(ctx)` does encrypted-JSON via `crypto.encrypt`). With #4 above, the channel's serializer does this work generically. Per-callback Serialize/Deserialize become redundant.
 

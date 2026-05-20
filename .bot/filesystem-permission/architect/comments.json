@@ -1,0 +1,25 @@
+{
+  "stage-2a-callback-roundtrip.md": [
+    {
+      "id": "159a765b63",
+      "line": 18,
+      "text": "I think we can do this, it is only working with stream, not touching on http. plus, isn´t it just serialize just include the callback?",
+      "anchor": "**Out of scope:** building the HTTP/Web channel. The serializer is generic; whatever channel wires it (CLI today; HTTP when shipped — see `Channel/Message/this.cs:7` \"Web extends Message (when shipped)\") is a separate branch's concern. Stage 2a makes the bytes correct; the channel can use them whenever it lands.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-19T17:39:38",
+      "drifted": false
+    },
+    {
+      "id": "31fc0469c7",
+      "line": 118,
+      "text": "this is useless method FromEnvelope. What is Envelope? you are just returning data, data is just data, just send it around, when we want to serizlize data, then the signature is created, and it the Data class that does that on serialize",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-19T17:44:36"
+    }
+  ]
+}

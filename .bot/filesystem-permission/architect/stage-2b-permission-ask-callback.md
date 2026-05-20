@@ -1,109 +1,144 @@
 ---
-name: Stage 2b — PermissionAskCallback
-description: Permission-specific callback subtype + Path.Authorize. Rides on stage 2a's generic callback round-trip.
+name: Stage 2b — Permission ask via Path.Authorize
+description: Path.Authorize uses output.ask (stage 2a) — no new callback type. Sign/store on approval.
 type: stage
 ---
 
-# Stage 2b: `PermissionAskCallback`
+# Stage 2b: Permission ask via `Path.Authorize`
 
-**Goal:** When a filesystem operation needs a permission grant that doesn't exist, surface a typed callback on the success path so the engine suspends (stage 2a's short-circuit), the channel writes the envelope (stage 2a's serializer), the channel collects the actor's raw answer, `callback.run` dispatches into `PermissionAskCallback.Run`, the grant is signed and stored, the action re-runs, and the goal continues (stage 2a's resume continuation).
+**Goal:** When a filesystem operation needs a permission grant that doesn't exist, `Path.Authorize` calls `output.ask` to consult the actor. On a stateful channel (console), the prompt blocks and the answer flows back synchronously. On a stateless channel, `output.ask` returns a callback, the engine suspends (stage 2a #2), the channel writes the envelope (stage 2a #4), the user answers, `callback.run` resumes via `AskCallback.Run` which re-runs the suspended action — and `Path.Authorize` is called again, calls `output.ask` again, this time receives the answer (sentinel short-circuit), signs the grant, stores via `actor.Permission.Add`, returns Ok. The file operation proceeds.
 
-Stage 2b is the permission-specific layer. Stage 2a is the runtime infrastructure it relies on.
+**No new callback type.** Everything rides on `AskCallback` + the channel's existing stateful/stateless split. Stage 2b is purely the orchestration layer + storage + sign.
 
 ## What this stage is NOT
 
-- **Not the engine round-trip.** Stage 2a owns `IsCallback`, the step-loop short-circuit, resume continuation, and typed-Value reconstruction in the serializer.
-- **Not a per-callback Serialize / Deserialize.** Removed in stage 2a (#5). The channel serializer handles the wire shape generically.
-- **Not the HTTP channel.** Stage 2a's serializer is channel-agnostic. The HTTP/Web channel is parked.
+- **Not a new callback subtype.** `PermissionAskCallback` was the earlier idea; dropped. The single `AskCallback` plus the channel's AskCore split is sufficient.
+- **Not the engine round-trip.** Stage 2a owns `IsCallback`, step-loop short-circuit, resume continuation, and typed-Value reconstruction.
+- **Not the HTTP channel.** Stage 2a is channel-agnostic. The HTTP/Web channel is parked.
 - **Not the storage layer.** Stage 3 implements `actor.Permission.Find/Add`. Stage 2b uses the surface as a mock until 3 lands.
 - **Not the FS surface.** Stage 4 rewrites `IPLangFileSystem` to consume `path.Authorize`. Stage 2b provides the method; stage 4 wires it in.
 
-## Flow (canonical, grounded in stage 2a)
+## Flow
 
-First dispatch of `- read /path/to/file.txt`:
+### Stateful channel (console)
 
-1. `file.read` handler calls the FS method (stage 4 surface).
-2. The FS method calls `path.Authorize(new Read())`.
-3. `Path.Authorize` reads `Context.Actor`, asks `actor.Permission.Find(this, Read)` (stage 3 surface). Covered → return `Data.Ok` (green light). Not covered → Path constructs a `PermissionAskCallback` carrying the unmet `FilePermission` request(s) and returns `Data<PermissionAskCallback>`.
-4. The FS method, on a non-green-light result, returns it as-is. `file.read` returns it as-is.
-5. Stage 2a's step-loop short-circuit fires (Type is a callback). Goal returns the callback Data. Channel serializes via `Plang/Data.cs` and writes the envelope.
+`- read /path/to/file.txt`, no grant exists:
 
-User answers (e.g. `a`):
+1. `file.read` → FS method → `path.Authorize(new Read())`.
+2. `actor.Permission.Find` misses.
+3. Authorize calls `output.ask("Allow user to read /path/to/file.txt? (y/n/a)")`.
+4. `output.ask` delegates to the channel's `AskCore`. Stream channel writes the prompt, blocks on stdin, reads `"a"`.
+5. `output.ask` returns `Data.Ok("a")`.
+6. Authorize parses, signs the `FilePermission` with `AlwaysExpiry`, calls `actor.Permission.Add(signed)`, returns `Data.Ok`.
+7. FS method does the actual read; returns `Data<byte[]>`. Goal continues normally.
 
-6. Channel reads the actor's raw response string. Constructs a `Data` containing the deserialized callback (stage 2a's typed-Value reconstruction did this on inbound), sets `Answer` on the callback to the raw string, invokes `callback.run`.
-7. `callback.run` verifies the signature, dispatches `PermissionAskCallback.Run(ctx)`.
-8. `PermissionAskCallback.Run` parses the answer itself — `"a"→Always`, `"y"→Session`, `"n"→Deny`, anything else → Deny (fail-closed). Parsing logic lives on the callback because the payload's semantics are the callback's job, not the channel's.
-9. Deny → returns `Data.Fail(PermissionDenied)`. Flows up like any other failure.
-10. Allow → for each `req` in `Requests`: build `Data<FilePermission>`, set expiry (short for Session, long for Always — constants on this file), sign via the existing signing path, call `ctx.Actor.Permission.Add(signed)`. Then return what stage 2a's resume continuation expects.
+No suspend, no callback short-circuit, no resume continuation — everything is synchronous in-process.
 
-Second dispatch (auto-triggered by stage 2a's resume continuation):
+### Stateless channel (HTTP / Message)
 
-11. `file.read` runs again. `path.Authorize(new Read())` now finds the grant; returns `Data.Ok`.
-12. FS method reads bytes, returns `Data<byte[]>`. The goal's remaining steps run.
+Same first dispatch:
+
+1–3. Same as above.
+4. `output.ask` delegates to Message channel's `AskCore`. Returns `Data<AskCallback>` carrying Position (file.read's frame) + Variables + ActorName.
+5. Authorize sees the result is a callback (Type.IsCallback) — returns it unchanged.
+6. FS method passes it through unchanged. `file.read` returns it. Stage 2a's step-loop short-circuit fires. Goal returns the callback Data.
+7. Channel writes the envelope via `Plang/Data.cs` (stage 2a #4 — typed value, signed). HTTP response body.
+
+User answers `"a"`:
+
+8. Client POSTs the wire bytes back with the answer (channel-specific protocol).
+9. Channel deserializes via `Plang/Data.cs` (stage 2a #4 reconstructs `Value` as typed `AskCallback`). Binds the answer via the existing `!ask.answer` sentinel pattern (the channel sets `ctx.Variables.Set("!ask.answer", "a")` before invoking `callback.run`).
+10. `callback.run` verifies signature, calls `AskCallback.Run(ctx)`.
+11. `AskCallback.Run`: re-runs `Position.Action` (file.read) via `App.Run`, then continues the goal from `Position.StepIndex + 1` (stage 2a #3).
+12. file.read runs again. Calls Authorize. Find still misses (we haven't stored yet). Authorize calls `output.ask`. `output.ask`'s resume-consume sees `!ask.answer = "a"`, returns `Data.Ok("a")`.
+13. Authorize parses, signs, stores, returns Ok.
+14. file.read proceeds with the read. Goal continues.
 
 ## Deliverables
 
-### 1. `PermissionAskCallback : ICallback`
-
-Lives at `PLang/App/Callback/PermissionAskCallback.cs`. Shape mirrors `AskCallback` (post-stage-2a shrinkage):
-
-- `Position` — `Call.Position?`, from `ICallback`. Set from `Context.App.CallStack.BottomFrame` at construction.
-- `ActorName` — `string`, from `Context.Actor.Name`. Carried so resume binds to the same actor identity.
-- `Requests` — `List<FilePermission>` (stage 1 type). The unmet grants the actor is being asked to approve.
-- `Answer` — `object?`, set by the channel (via `callback.run`) from the actor's raw input. Opaque to the channel.
-- `Run(ctx)`:
-  - `decision = ParseAnswer(Answer)` — private method on the callback.
-  - Deny → `Data.@this.FromError(new PermissionDenied(Requests))`.
-  - Allow (Session or Always) → for each `req` in `Requests`: build `Data<FilePermission>`, set expiry per Decision, sign, call `ctx.Actor.Permission.Add(signed)`. Then let stage 2a's resume continuation run the suspended action + the rest of the goal.
-
-### 2. `Path.Authorize(Verb verb) : Data`
+### 1. `Path.Authorize(Verb verb, string prefix = "") : Data`
 
 Method on `App.FileSystem.Path` (class is plain `Path`, not `@this`). Reads `Context.Actor` directly — Path already carries Context (`Path.cs:57`).
 
-Behaviour:
+**No new callback type.** Authorize uses the standard `output.ask` machinery from stage 2a. Channel decides stateful vs stateless; Authorize just observes "did I get an answer or a callback?" by checking `Type.IsCallback`.
 
-- `actor.Permission.Find(this, verb)` — returns matching `Data<FilePermission>` if any covers; null/empty otherwise. (Find's exact signature is stage 3.)
-- Match found → `Data.Ok` (no payload — caller treats Ok as green light).
-- No match → construct:
-  ```
-  new FilePermission(
-      AppId  = Context.App.Id,           // App.this.cs:34
-      Actor  = Context.Actor.Name,
-      Path   = this.Absolute,
-      Verb   = verb,
-      Match  = Match.Exact)
-  ```
-  Wrap in a `PermissionAskCallback { Requests = [ that ] }` and return as `Data<PermissionAskCallback>`.
+```csharp
+public async Task<Data> Authorize(Verb verb, string prefix = "")
+{
+    var actor = Context.Actor;
+
+    // Already granted?
+    var grant = actor.Permission.Find(this, verb);
+    if (grant != null) return Data.Ok();
+
+    // Ask (stateful or stateless — output.ask + channel decide)
+    var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {this.Absolute}? (y/n/a)";
+    var askResult = await Context.App.RunAction<modules.output.ask>(
+        new modules.output.ask { Question = Data.@this<string>.Ok(question) }, Context);
+
+    // Stateless mode: ask suspended. Bubble up; engine short-circuits.
+    if (askResult.Type?.ClrType?.IsCallback() == true) return askResult;
+
+    // Stateful mode (or resumed stateless): process the answer.
+    var answer = askResult.Value?.ToString()?.Trim();
+    return answer switch
+    {
+        "a" => SignAndStore(actor, verb, AlwaysExpiry),
+        "y" => SignAndStore(actor, verb, SessionExpiry),
+        "n" => Data.FromError(new PermissionDenied(BuildRequest(actor, verb))),
+        _   => await Authorize(verb, prefix: $"Invalid answer '{answer}'. ")  // recurse
+    };
+}
+
+private Data SignAndStore(Actor actor, Verb verb, TimeSpan? expiry)
+{
+    var req = BuildRequest(actor, verb);
+    var data = new Data<FilePermission>("", req);
+    data.Context = Context;
+    // Sign with the requested expiry; stage 3's Permission.Add routes
+    // by signature expiry (short → in-memory; long/null → sqlite).
+    data.EnsureSignedWithExpiry(expiry);   // helper or signing.sign call
+    actor.Permission.Add(data);
+    return Data.Ok();
+}
+
+private FilePermission BuildRequest(Actor actor, Verb verb) => new FilePermission(
+    AppId = Context.App.Id,          // App.this.cs:34
+    Actor = actor.Name,
+    Path  = this.Absolute,
+    Verb  = verb,
+    Match = Match.Exact);
+```
 
 The verb argument is one of the stage 1 records (`new Read()`, `new Write()`, `new Delete()`). Construct it at the FS-method call site — the FS method knows which verb it represents.
 
-### 3. `Decision` and `ParseAnswer`
+**On the recursion for invalid answer:** in stateful mode this is an immediate re-prompt (AskCore blocks on stdin again). In stateless mode it produces a fresh AskCallback whose Question carries the "Invalid answer 'foo'. " prefix — user sees the error inline with the next request's prompt.
 
-`Decision` enum on the callback file: `Always`, `Session`, `Deny`. Private `ParseAnswer(object?)` returns one of these — `"a"`/`"always"` → Always; `"y"`/`"yes"` → Session; `"n"`/`"no"` → Deny; any other value, null, or empty → Deny (fail-closed).
+### 2. Expiry constants
 
-### 4. Expiry constants
+Live as private const/static fields on `Path` (or a small `Expiry` static class colocated with `Authorize`). Tentative:
+- `SessionExpiry` — `TimeSpan`, tentative 30 minutes (`"y"` → in-memory grant).
+- `AlwaysExpiry` — `TimeSpan?`, tentative 30 days, or `null` = forever (`"a"` → persisted grant).
 
-Live on `PermissionAskCallback`:
-- `SessionExpiry` — `TimeSpan`, tentative 30 minutes.
-- `AlwaysExpiry` — `TimeSpan?`, tentative 30 days (or `null` = forever, ratified by stage 3 based on routing).
+Stage 3's `actor.Permission.Add` reads these via the signed Data's expiry field and routes by their relative magnitude (short → in-memory; long/null → sqlite).
 
-Stage 3's `actor.Permission.Add` reads these via the signed Data's expiry field (set when `Run` signs) and routes by their relative magnitude (short → in-memory; long → sqlite).
+### 3. `PermissionDenied` error
 
-### 5. `PermissionDenied` error
+New error class at `PLang/App/Errors/PermissionDenied.cs` (alongside `AskError.cs`). Carries the `FilePermission` that was denied so consumers can see what was refused.
 
-New error class at `PLang/App/Errors/PermissionDenied.cs` (alongside `AskError.cs`). Carries the `Requests` list so consumers can see what was denied. Returned by `PermissionAskCallback.Run` when `ParseAnswer` returns Deny.
+### 4. Tests
 
-### 6. Tests
-
-- `Path.Authorize` returns `Data.Ok` when grant exists (mock `actor.Permission`).
-- `Path.Authorize` returns `Data<PermissionAskCallback>` when no grant exists. Constructed `FilePermission` carries `AppId = Context.App.Id`, `Actor = Context.Actor.Name`, the absolute path, the verb record, and `Match.Exact`.
-- `PermissionAskCallback.Run` with `Answer="a"` signs grants with `AlwaysExpiry` + calls `actor.Permission.Add` for each `Request`.
-- `PermissionAskCallback.Run` with `Answer="y"` uses `SessionExpiry`.
-- `PermissionAskCallback.Run` with `Answer="n"` returns `Data.Fail(PermissionDenied)` carrying the unmet `Requests`.
-- `PermissionAskCallback.Run` with `Answer="garbage"` or `null` → fail-closed → Deny.
-- `ParseAnswer` unit tests: every accepted alias + several fail-closed inputs.
-- Round-trip via stage 2a's serializer: `Data<PermissionAskCallback>` → bytes → `Data<PermissionAskCallback>`. Verifies typed-Value reconstruction works for this kind.
-- End-to-end (integration): a 2-step goal whose first step does `- read /apps/Other/file.txt`. With no grant, step 1 returns the callback; goal short-circuits. Inject `Answer="a"`, invoke `callback.run`. Grant signed and stored (mock or real actor.Permission). Resumed `file.read` succeeds; step 2 executes with the file contents.
+- `Path.Authorize` returns `Data.Ok` immediately when grant exists (mock `actor.Permission.Find` to return a grant; no `output.ask` call observed).
+- **Stateful path (Stream channel):**
+  - Mock channel's `AskCore` to return `Data.Ok("a")`. Authorize signs with `AlwaysExpiry`, calls `Permission.Add`, returns Ok.
+  - Mock returns `Data.Ok("y")`. Signs with `SessionExpiry`, Add, Ok.
+  - Mock returns `Data.Ok("n")`. Returns `Data.Fail(PermissionDenied)` carrying the constructed `FilePermission`.
+  - Mock returns `Data.Ok("garbage")`. Authorize re-asks with `"Invalid answer 'garbage'. "` prefix on the next question. Recursion depth bounded by sane input on retry.
+- **Stateless path (Message channel / mock):**
+  - Mock channel's `AskCore` returns `Data<AskCallback>`. Authorize returns it unchanged (Type.IsCallback check). FS method propagates. Engine short-circuits.
+- **Constructed `FilePermission`** on the unmet-grant path: `AppId = Context.App.Id`, `Actor = Context.Actor.Name`, `Path = this.Absolute`, `Verb = the requested verb`, `Match = Match.Exact`.
+- **End-to-end (integration):** a 2-step goal whose first step does `- read /apps/Other/file.txt`. With no grant and a stateful Stream channel piped with `"a"` on stdin, step 1 runs Authorize, prompt blocks, answer arrives, grant stored, file read, step 2 executes with the file contents. No callback machinery exercised.
+- **End-to-end (stateless integration):** same goal against a fake Message channel. Step 1 returns `Data<AskCallback>`. Goal short-circuits. Inject `!ask.answer = "a"` and invoke `callback.run`. AskCallback.Run re-runs file.read; Authorize re-runs; output.ask sees the sentinel; answer returned; grant stored; bytes read; step 2 executes.
 
 ## Dependencies
 
@@ -113,8 +148,9 @@ New error class at `PLang/App/Errors/PermissionDenied.cs` (alongside `AskError.c
 
 ## Acceptance
 
-- `PermissionAskCallback` compiles, implements `ICallback`, round-trips through stage 2a's serializer.
 - `Path.Authorize` is the only public surface for permission checks. No `HasAccess`, no `Check*`, no decomposition into bool+factory.
-- `file.read`-against-ungranted-path test issues the callback; resume signs/stores grant, re-runs the action, and the rest of the goal completes.
-- Channel doesn't import permission types — it sees `ICallback` Data and forwards a raw answer string.
+- No new `ICallback` subtype was introduced. `AskCallback` carries the suspend for permission asks just as it does for any `output.ask` use.
+- **Stateful integration:** `file.read` against ungranted path, console channel piped with `"a"`, completes synchronously — no suspend, no callback short-circuit, no resume continuation triggered.
+- **Stateless integration:** same scenario against a fake Message channel — suspend → resume → grant stored → file read → goal continues.
+- Channel doesn't import permission types — it sees `ICallback` Data through stage 2a's generic infrastructure.
 - No `dotnet run --project PLang.Tests` regressions.
