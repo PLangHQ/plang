@@ -8,16 +8,18 @@
       "intent": "Design the filesystem permission system: signed per-app grants on paths, with read/write/delete verbs each carrying sub-options. Path-shaped rewrite of IPLangFileSystem.",
       "before": {
         "assumptions": "Current FileAccessControl is runtime-only (in-memory FileAccessControl record, populated by yes/no/always prompt at exception time). No signature, no expiry, no audit. IPLangFileSystem inherits System.IO.Abstractions.IFileSystem (string-only). Cross-app reads (e.g. a messages app reading every app's system.sqlite) are not modelable today.",
-        "risk": "Big surface rewrite — every action that touches the FS and every runtime internal that does the same. Signature work has to walk the full call graph. Goal-mapped FS provider is deliberately deferred."
+        "risk": "Big surface rewrite \u2014 every action that touches the FS and every runtime internal that does the same. Signature work has to walk the full call graph. Goal-mapped FS provider is deliberately deferred."
       },
       "plan": ".bot/filesystem-permission/architect/v1/plan.md",
       "actions": [
         {
-          "paths": ["Documentation/v0.2/good_to_know.md"],
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Added new section 'OBP Variant Design — When a Concept Has Multiple Configurable Modes'. Codifies four rules drawn from this design pass: singular folders, variant records with default-allow, owners-do-their-own-coverage, methods take whole domain objects. Also added a refinement to existing OBP guidance: verb-named methods are fine when they do real work — the GetX/IsX smell is about property-shaped questions, not verbs in general."
+          "context": "Added new section 'OBP Variant Design \u2014 When a Concept Has Multiple Configurable Modes'. Codifies four rules drawn from this design pass: singular folders, variant records with default-allow, owners-do-their-own-coverage, methods take whole domain objects. Also added a refinement to existing OBP guidance: verb-named methods are fine when they do real work \u2014 the GetX/IsX smell is about property-shaped questions, not verbs in general."
         },
         {
           "paths": [
@@ -40,9 +42,9 @@
         }
       ],
       "after": {
-        "status": "plan written; awaiting Ingi to settle the three open gates (app-side cascade, Content sub-option on Read, process-only grant distinction) before stage 3 starts. Stage 1 can begin in parallel — pure types are independent.",
-        "health": "good — design walked end-to-end (file.read from Messages to Email/system.sqlite), every concept has a named owner, no choreography across files.",
-        "notes": "Branch newly created from origin/runtime2. good_to_know.md edit is real codification work, not session noise — captures lessons that should outlast this branch."
+        "status": "plan written; awaiting Ingi to settle the three open gates (app-side cascade, Content sub-option on Read, process-only grant distinction) before stage 3 starts. Stage 1 can begin in parallel \u2014 pure types are independent.",
+        "health": "good \u2014 design walked end-to-end (file.read from Messages to Email/system.sqlite), every concept has a named owner, no choreography across files.",
+        "notes": "Branch newly created from origin/runtime2. good_to_know.md edit is real codification work, not session noise \u2014 captures lessons that should outlast this branch."
       },
       "timestamp_end": "2026-05-14T23:45:00Z"
     },
@@ -69,7 +71,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Rewrote spine + topic docs. Added runtime-flow.md (new). plan.md now leads with the pattern-not-base-class generalization, Data.Request third state, and the (c) bundle in stage 4. permission-design.md drops Check/Describe methods on the record — it's pure data with Covers. storage.md describes the two-store unification (in-memory + sqlite via system variables). filesystem-surface.md becomes the bundled IPLangFileSystem v2 design with permission baked in. open-questions.md retires most of the original list; ships five smaller still-open items."
+          "context": "Rewrote spine + topic docs. Added runtime-flow.md (new). plan.md now leads with the pattern-not-base-class generalization, Data.Request third state, and the (c) bundle in stage 4. permission-design.md drops Check/Describe methods on the record \u2014 it's pure data with Covers. storage.md describes the two-store unification (in-memory + sqlite via system variables). filesystem-surface.md becomes the bundled IPLangFileSystem v2 design with permission baked in. open-questions.md retires most of the original list; ships five smaller still-open items."
         },
         {
           "paths": [
@@ -82,10 +84,12 @@
           "type": "rename",
           "category": "doc",
           "confidence": "high",
-          "context": "Renumbered stages. Old stage-2 (storage), stage-3 (FS surface), stage-4 (PermissionRequired error) deleted; new stage-2 (Data.Request state), stage-3 (storage), stage-4 (IPLangFileSystem v2 bundle) written. Stage 1 (types) and stage 5 (e2e) updated in place. New ordering reflects the dependency chain: types → engine state → storage → FS rewrite → e2e."
+          "context": "Renumbered stages. Old stage-2 (storage), stage-3 (FS surface), stage-4 (PermissionRequired error) deleted; new stage-2 (Data.Request state), stage-3 (storage), stage-4 (IPLangFileSystem v2 bundle) written. Stage 1 (types) and stage 5 (e2e) updated in place. New ordering reflects the dependency chain: types \u2192 engine state \u2192 storage \u2192 FS rewrite \u2192 e2e."
         },
         {
-          "paths": [".bot/filesystem-permission/architect/summary.md"],
+          "paths": [
+            ".bot/filesystem-permission/architect/summary.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
@@ -93,8 +97,8 @@
         }
       ],
       "after": {
-        "status": "Plan rewritten initially to reflect 2026-05-19 design pass. Five stages defined, all pending. Stage 1 can start as-is (pure types, no dependencies). The big bundle is stage 4 — needs stages 2 and 3 first.",
-        "health": "good — design walked end-to-end through file.read. Generalization pattern named for HTTP/Payment without prematurely codifying.",
+        "status": "Plan rewritten initially to reflect 2026-05-19 design pass. Five stages defined, all pending. Stage 1 can start as-is (pure types, no dependencies). The big bundle is stage 4 \u2014 needs stages 2 and 3 first.",
+        "health": "good \u2014 design walked end-to-end through file.read. Generalization pattern named for HTTP/Payment without prematurely codifying.",
         "notes": "Two follow-up branches implied by this design: an http-permission branch and a payment-permission branch, both consuming the Ask infrastructure landed in stage 2 of this branch."
       },
       "timestamp_end": "2026-05-19T13:11:51Z"
@@ -111,11 +115,13 @@
       "plan": ".bot/filesystem-permission/architect/v1/plan.md",
       "actions": [
         {
-          "paths": [".bot/filesystem-permission/architect/v1/plan.md"],
+          "paths": [
+            ".bot/filesystem-permission/architect/v1/plan.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Spine: section 1 framing rewritten to drop Data.Request as a third state in favour of Data.Fail with an Ask marker handled inside error.handle's built-in path. Section 3 runtime narrative rewritten — Path delegates to actor.Permission (not App.Permissions); engine owns retry loop; ask handler is stateless. Cross-cutting decisions updated for 2-column storage rule, actor-as-record-field, JSON-filter scoping. Stage 2 renamed/relinked to stage-2-ask-routing.md."
+          "context": "Spine: section 1 framing rewritten to drop Data.Request as a third state in favour of Data.Fail with an Ask marker handled inside error.handle's built-in path. Section 3 runtime narrative rewritten \u2014 Path delegates to actor.Permission (not App.Permissions); engine owns retry loop; ask handler is stateless. Cross-cutting decisions updated for 2-column storage rule, actor-as-record-field, JSON-filter scoping. Stage 2 renamed/relinked to stage-2-ask-routing.md."
         },
         {
           "paths": [
@@ -128,7 +134,7 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Topic docs rewritten. runtime-flow.md: ask handling inside error.handle, two-layer lookup (Properties cache → actor.Permission), engine-side retry. permission-design.md: FilePermission gains Actor field; Path.CheckPermission takes verb kind only; no ReadOnly/WriteOnly factories; the manager-class concept dissolved into actor.Permission. storage.md: rewritten around App.SettingsStore + 2-column rule + actor-as-JSON-filter; no separate persistence layer; one permission table not three. filesystem-surface.md: code blocks stripped (architect rule); permission check delegated to Path via path.CheckPermission. open-questions.md: throw-vs-return resolved as return; ask shape resolved as Data.Fail+Ask."
+          "context": "Topic docs rewritten. runtime-flow.md: ask handling inside error.handle, two-layer lookup (Properties cache \u2192 actor.Permission), engine-side retry. permission-design.md: FilePermission gains Actor field; Path.CheckPermission takes verb kind only; no ReadOnly/WriteOnly factories; the manager-class concept dissolved into actor.Permission. storage.md: rewritten around App.SettingsStore + 2-column rule + actor-as-JSON-filter; no separate persistence layer; one permission table not three. filesystem-surface.md: code blocks stripped (architect rule); permission check delegated to Path via path.CheckPermission. open-questions.md: throw-vs-return resolved as return; ask shape resolved as Data.Fail+Ask."
         },
         {
           "paths": [
@@ -141,17 +147,21 @@
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Stage files updated consistently. Stage 1 references Ask marker work as stage 2's concern. Stage 2 renamed (data-request-state → ask-routing), reframed around error.handle's built-in path. Stage 3 reframed around Actor.@this.Permission (per-actor view) + path.CheckPermission on Path class; storage is App.SettingsStore 'permission' table with 2-column rule; per-actor scoping via JSON filter on Actor field. Stage 4 references path.CheckPermission(Verb.X) interface. Stage 5 acceptance checks the permission table directly."
+          "context": "Stage files updated consistently. Stage 1 references Ask marker work as stage 2's concern. Stage 2 renamed (data-request-state \u2192 ask-routing), reframed around error.handle's built-in path. Stage 3 reframed around Actor.@this.Permission (per-actor view) + path.CheckPermission on Path class; storage is App.SettingsStore 'permission' table with 2-column rule; per-actor scoping via JSON filter on Actor field. Stage 4 references path.CheckPermission(Verb.X) interface. Stage 5 acceptance checks the permission table directly."
         },
         {
-          "paths": [".bot/filesystem-permission/claude-md-proposals.md"],
+          "paths": [
+            ".bot/filesystem-permission/claude-md-proposals.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "New file. Proposes a 5th OBP smell to good_to_know.md: 'Helper that takes a domain object and returns a derived answer.' Includes worked example contrasting helper-soup (Resolve(path), CheckPermission(absolute, verb)) with self-owning methods (path.Absolute, path.CheckPermission(verb))."
         },
         {
-          "paths": [".bot/filesystem-permission/architect/summary.md"],
+          "paths": [
+            ".bot/filesystem-permission/architect/summary.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
@@ -160,10 +170,120 @@
       ],
       "after": {
         "status": "Plan internally consistent end-to-end after the walkthrough. All stage files, topic docs, summary, and the CLAUDE.md proposal reflect the same model. Stage 1 can begin; stage 2 has a clear acceptance contract; stage 3 has a concrete shape for actor.Permission + Path.CheckPermission; stage 4 references both.",
-        "health": "good — design walked end-to-end with Ingi, multiple OBP corrections caught and incorporated. The plan now reads as one coherent design rather than a sequence of accumulated decisions.",
-        "notes": "Major patterns codified during the session: (1) FilePermission carries Actor field; (2) Path owns CheckPermission; (3) actor.Permission unifies in-memory + persisted; (4) error.handle owns ask routing internally; (5) 2-column storage rule. The helper-soup OBP smell was the most generalizable lesson — filed as a CLAUDE.md proposal."
+        "health": "good \u2014 design walked end-to-end with Ingi, multiple OBP corrections caught and incorporated. The plan now reads as one coherent design rather than a sequence of accumulated decisions.",
+        "notes": "Major patterns codified during the session: (1) FilePermission carries Actor field; (2) Path owns CheckPermission; (3) actor.Permission unifies in-memory + persisted; (4) error.handle owns ask routing internally; (5) 2-column storage rule. The helper-soup OBP smell was the most generalizable lesson \u2014 filed as a CLAUDE.md proposal."
       },
       "timestamp_end": "2026-05-19T15:13:52Z"
+    },
+    {
+      "id": "1c0a766d-41d3-4e4d-96d4-a1c936b8cffc",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-20T23:38:04Z",
+      "timestamp_end": "2026-05-20T23:45:41Z",
+      "intent": "Translate architect's 5-stage filesystem-permission design into a test contract \u2014 C# TUnit stubs + PLang test goals \u2014 that the coder makes pass.",
+      "before": {
+        "assumptions": "Architect plan is final after Ingi's review pass (33 comments resolved). 5 stages: types, snapshot/resume, Path.Authorize, storage, IPLangFileSystem v2, end-to-end Messages. Existing CallbackTests/ folder will be rewritten around Snapshot instead of per-callback classes.",
+        "risk": "Volume is large (~100 tests). Stage 4 parametrization needs the coder to confirm the [Arguments] shape. 'No App.Run / App.RunAction' tests are static-survey style \u2014 that pattern may not be established yet."
+      },
+      "plan": ".bot/filesystem-permission/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/test-designer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "10-batch breakdown across the 5 stages. Approved up front by user \u2014 no per-batch walk-through needed."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/PermissionTests/VerbCoversTests.cs",
+            "PLang.Tests/App/FileSystem/PermissionTests/PermissionCoversTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 1 \u2014 Verb sub-record cover matrix + Permission.Covers with closed Match dispatch and JSON round-trip."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CallbackTests/TypeExitTests.cs",
+            "PLang.Tests/App/CallbackTests/ActionSyntheticTests.cs",
+            "PLang.Tests/App/CallbackTests/DataSnapshotTests.cs",
+            "PLang.Tests/App/CallbackTests/StepLoopShouldExitTests.cs",
+            "PLang.Tests/App/CallbackTests/GoalRunFromTests.cs",
+            "PLang.Tests/App/CallbackTests/ActionRunAsyncTests.cs",
+            "PLang.Tests/App/CallbackTests/OutputAskRoutingTests.cs",
+            "PLang.Tests/App/CallbackTests/SnapshotResumeTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2a \u2014 markers, Snapshot field+helper, ShouldExit, RunFrom, RunAsync, output.ask routing, Snapshot.Resume. One concern per file."
+        },
+        {
+          "paths": [
+            "Tests/Callback/StatefulAskMidGoalBindsValue/Start.test.goal",
+            "Tests/Callback/StatelessCrossGoalResumes/Start.test.goal",
+            "Tests/Callback/StatelessCrossGoalResumes/AskAQuestion.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2a \u2014 PLang integration. Mid-goal stateful + cross-goal stateless suspend/resume (the canonical Start\u2192AskAQuestion case)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/PermissionTests/AuthorizeTests/PathAuthorizeTests.cs",
+            "Tests/Permission/Authorize/StatefulAuthorizeGrantsAndContinues/Start.test.goal",
+            "Tests/Permission/Authorize/StatelessAuthorizeResumesAndContinues/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2b \u2014 Path.Authorize answer cases (a/y/n/garbage), stateless bubble, constructed Permission shape, PermissionDenied; plus stateful and stateless e2e."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/PermissionTests/StorageTests/ActorPermissionStorageTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 3 \u2014 Find/Add/Revoke; per-actor JSON-filter scoping; in-memory + sqlite unification; signature caching; idempotent Add."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/SurfaceTests/FileSystemPermissionFlowTests.cs",
+            "PLang.Tests/App/FileSystem/SurfaceTests/FileSystemSurfaceShapeTests.cs",
+            "PLang.Tests/App/FileSystem/SurfaceTests/MoveCopyBundledConsentTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Stage 4 \u2014 parametrized per-method flow (in-root, out-of-root stateful, out-of-root stateless); shape contracts (no IFileSystem inheritance, no ValidatePath, no FileAccessControl); Move/Copy bundled consent. Parametrization shape (MethodDataSource) will need a coder review."
+        },
+        {
+          "paths": [
+            "Tests/Permission/NoGrantSuspends/Start.test.goal",
+            "Tests/Permission/GrantAStoresPersisted/Start.test.goal",
+            "Tests/Permission/ImmediateRereadSkipsPrompt/Start.test.goal",
+            "Tests/Permission/RestartStillNoPrompt/Start.test.goal",
+            "Tests/Permission/RevokeReprompts/Start.test.goal",
+            "Tests/Permission/NarrowedGrantRejectsWiderRequest/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 5 \u2014 six-step integration test broken into six independent PLang test goals: no-grant suspend \u2192 grant 'a' stores \u2192 immediate reread skips \u2192 restart still skips \u2192 revoke reprompts \u2192 narrowed grant rejects wider request."
+        }
+      ],
+      "after": {
+        "status": "Test contract drafted. ~70 C# test stubs + 11 PLang test goal stubs. All bodies are Assert.Fail / throw \"not implemented\". Ready for coder.",
+        "health": "pending",
+        "notes": "Open follow-ups (logged in plan.md): (1) some Batch 6 'stateful e2e' tests may actually need real Stage 3 storage rather than mocks \u2014 coder to decide; (2) TUnit MethodDataSource shape in Stage 4 parametrization needs a coder review; (3) static-survey 'no App.Run / App.RunAction' tests may need a new helper."
+      }
     }
   ]
 }

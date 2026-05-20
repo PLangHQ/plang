@@ -1,0 +1,4 @@
+Start
+/ Stage 5 (5/6) — Revoke the persisted grant (permission.revoke). Rerun
+/ Messages: a fresh prompt fires; goal suspends again until next answer.
+- throw "not implemented"

@@ -1,0 +1,5 @@
+Start
+/ Stage 5 (3/6) — With the persisted grant from step 2 in place, rerun
+/ Messages in the same process. user.Permission.Find returns the grant;
+/ no prompt issued; file.read returns bytes directly.
+- throw "not implemented"

@@ -1,0 +1,5 @@
+Start
+/ Stage 5 (2/6) — Driver answers "a" on the suspended Snapshot. On resume,
+/ file.read re-runs; Authorize signs with AlwaysExpiry; user.Permission.Add
+/ persists. The `permission` table holds the signed row.
+- throw "not implemented"

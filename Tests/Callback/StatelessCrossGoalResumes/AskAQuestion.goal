@@ -1,0 +1,5 @@
+AskAQuestion
+/ Helper sub-goal called from Start. Prints "Asking", then asks the user a
+/ question whose answer binds to %answer%. The suspend lives in this goal;
+/ Snapshot captures the chain [Start#callStep, AskAQuestion#askStep].
+- throw "not implemented"

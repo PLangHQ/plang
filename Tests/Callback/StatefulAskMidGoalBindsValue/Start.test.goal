@@ -1,0 +1,4 @@
+Start
+/ Stage 2a — Mid-goal `output.ask` against a stateful driver completes
+/ synchronously. No Snapshot capture. Variable binds; step 2 executes.
+- throw "not implemented"

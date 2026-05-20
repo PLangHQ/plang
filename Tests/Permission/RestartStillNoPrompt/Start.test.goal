@@ -1,0 +1,4 @@
+Start
+/ Stage 5 (4/6) — Restart the process. Persisted grant survives the
+/ sqlite round-trip; rerun Messages; no prompt.
+- throw "not implemented"

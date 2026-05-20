@@ -1,0 +1,6 @@
+Start
+/ Stage 2b — Same two-step goal as the stateful variant, but against a fake
+/ Message channel. First run returns Data<Ask> with Snapshot. Resume with
+/ !ask.answer="a": file.read re-runs, Authorize signs+stores, bytes read,
+/ step 2 executes.
+- throw "not implemented"

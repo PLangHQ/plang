@@ -1,0 +1,5 @@
+Start
+/ Stage 2b — Two-step goal whose first step reads an ungranted path against
+/ a stateful (Stream) driver piped with "a". Authorize prompts, blocks on
+/ stdin, signs+stores the grant, file reads, step 2 sees the content.
+- throw "not implemented"

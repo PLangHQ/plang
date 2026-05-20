@@ -1,0 +1,5 @@
+Start
+/ Stage 5 (6/6) — Issue a Read grant with Metadata=false. A read that needs
+/ metadata surfaces a fresh Data<Ask> for the narrowed verb; the narrow
+/ grant does not cover the wider request.
+- throw "not implemented"

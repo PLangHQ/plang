@@ -1,0 +1,5 @@
+Start
+/ Stage 5 (1/6) — First read of /apps/Email/system.sqlite against a
+/ stateless channel returns Data<Ask>. Step loop captures Snapshot.
+/ Goal suspends; channel renders the prompt.
+- throw "not implemented"
