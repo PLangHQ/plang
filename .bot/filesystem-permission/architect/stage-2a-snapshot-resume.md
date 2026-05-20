@@ -215,35 +215,58 @@ public partial class run : IContext
     [IsNotNull]
     public partial Data.@this Data { get; init; }
 
-    public async Task<Data.@this> Run()
+    public Task<Data.@this> Run()
     {
-        var verifyAction = new modules.signing.verify { Data = Data };
-        var v = await verifyAction.RunAsync(Context);
-        if (!v.Success) return v;
-
+        // No explicit signing.verify here — the contract is that any Data
+        // we receive has been verified by the wire deserializer at the
+        // boundary. If verification fails the deserializer never produces
+        // a Data; we'd never reach this action. Data == verified by construction.
         if (Data.Snapshot == null)
-            return Data.@this.FromError(new ServiceError(
-                "Resume invoked on Data without a Snapshot", "NoSnapshot", 400));
+            return Task.FromResult(Data.@this.FromError(new ServiceError(
+                "Resume invoked on Data without a Snapshot", "NoSnapshot", 400)));
 
-        return await Data.Snapshot.Resume(Context);   // snapshot resumes itself
+        return Data.Snapshot.Resume(Context);
     }
 }
 ```
 
-**`Snapshot.@this.Resume(ctx)`** is the entry. Does restore + run-from-position-forward:
+**`Snapshot.@this.Resume(ctx)`** is the entry. Restores the call chain, then walks it recursively so each goal in the chain re-enters at the right position. The recursion handles cross-goal continuation — when the suspended sub-goal completes, the parent goal continues from the action after its `call SubGoal`:
 
 ```csharp
 public async Task<Data.@this> Resume(Actor.Context.@this context)
 {
-    Restore(this, context);                          // existing static
-    var bottom = context.App.CallStack.BottomFrame;
-    if (bottom == null)
+    Restore(this, context);                              // populates RestoredChain
+    var chain = context.App.CallStack.RestoredChain;
+    if (chain == null || chain.Count == 0)
         return Data.@this.FromError(new ServiceError(
-            "Resume has no bottom frame after Restore", "NoPosition", 400));
+            "Resume has no frames after Restore", "NoPosition", 400));
 
-    // Run from the suspended action forward — through any remaining actions in
-    // the same step, then through subsequent steps in the goal.
-    return await bottom.Goal.RunFrom(context, bottom.StepIndex, bottom.ActionIndex);
+    return await ResumeChain(chain, 0, context);
+}
+
+private static async Task<Data.@this> ResumeChain(
+    IReadOnlyList<Call.Position> chain, int idx, Actor.Context.@this ctx)
+{
+    var frame = chain[idx];
+
+    if (idx == chain.Count - 1)
+    {
+        // Bottom frame: re-enter the goal at the suspended (StepIndex, ActionIndex).
+        return await frame.Goal.RunFrom(ctx, frame.StepIndex, frame.ActionIndex);
+    }
+
+    // Parent frame: its action is a "call SubGoal" that's in flight. Push so
+    // children see it as caller (live CallStack rebuilds during resume), then
+    // recurse into the next frame to resolve the sub-goal.
+    await using var callFrame = ctx.App.CallStack.Push(frame.Action, ctx.Variables);
+
+    var subResult = await ResumeChain(chain, idx + 1, ctx);
+    if (subResult.ShouldExit()) return subResult;       // re-suspended → bubble up
+
+    // Sub-goal completed naturally. Continue THIS goal from the action
+    // AFTER the call action — handles steps like `- call X, write to %y%`
+    // where there are more actions in the call step after the call itself.
+    return await frame.Goal.RunFrom(ctx, frame.StepIndex, frame.ActionIndex + 1);
 }
 ```
 
@@ -449,6 +472,22 @@ After 1–8 land and tests pass:
 
 - **Stream / stateful, mid-goal:** `- ask user "name?", write to %name%` / `- write out %name%` against a Stream channel piped with `"Alice"` on stdin. Goal completes; `%name% == "Alice"`; no Snapshot ever captured.
 - **Message / stateless, mid-goal:** same goal against a fake Message-like channel. Step 1 returns `Data<Ask>`. Step loop short-circuits, captures Snapshot. Goal returns the Ask Data with Snapshot attached. Invoke the resume entry with `{ snapshot, answer:"Alice" }`. After resume, `%name% == "Alice"`. Step 2 ran with the bound value.
+- **Cross-goal continuation (nested suspend / resume):**
+  ```
+  Start
+  - write out "Hello"
+  - call AskAQuestion
+  - write out "%answer%"
+
+  AskAQuestion
+  - write out "Asking"
+  - ask user "name?", write to %answer%
+  ```
+  Against a Message-like channel: suspend fires inside `AskAQuestion`'s ask step. Snapshot captures the full chain `[Start#callStep, AskAQuestion#askStep]`. After resume with answer="Alice":
+  - AskAQuestion's ask step completes with `%answer% = "Alice"`; no more steps in AskAQuestion.
+  - Recursion unwinds to Start; Start continues at the action after `call AskAQuestion`.
+  - `write out "%answer%"` runs and prints "Alice".
+  Assertion: full output across capture+resume cycle is `"Hello\nAsking\nAlice"`. Verifies the recursive `ResumeChain` cross-goal continuation works end-to-end.
 - **Permission integration is stage 2b's job.**
 
 ## Dependencies
