@@ -195,18 +195,18 @@ public override async Task<Data.@this> AskCore(IAskRequest request, Cancellation
 }
 ```
 
-**Message channel implementation** — builds the `AskCallback` (the logic relocated from `output.ask`):
+**Message channel implementation** — builds the `AskCallback`. Position is the **outermost real step frame** on the live call stack, not `BottomFrame`:
 
 ```csharp
 public override Task<Data.@this> AskCore(IAskRequest request, CancellationToken ct = default)
 {
     var ctx      = request.Context;
-    var bottom   = ctx.App.CallStack.BottomFrame;
+    var resume   = ResolveResumeFrame(ctx.App.CallStack);
     var captured = ExtractCapturedVars(request.Variables, ctx);
 
     var cb = new AskCallback
     {
-        Position  = bottom,
+        Position  = resume,
         ActorName = ctx.Actor?.Name ?? "User",
         Variables = captured
     };
@@ -214,14 +214,37 @@ public override Task<Data.@this> AskCore(IAskRequest request, CancellationToken 
     data.Context = ctx;
     return Task.FromResult<Data.@this>(data);
 }
+
+// Walks up from the deepest live frame to the first frame whose Action.Step
+// is non-null — i.e., the outermost action that's actually a step in a goal.
+// Why: synthetic actions invoked via RunAction (e.g., output.ask called from
+// inside another C# action via RunAction) have Step=null because they were
+// constructed inline, not dispatched as a step. BottomFrame would point at
+// such a synthetic action; Position.Goal / StepIndex would then be invalid
+// and stage 2a #3's resume-continuation would crash. Walking up to a real
+// step frame ensures Position points at the action whose step+1 is the
+// next thing to run after the resumed action completes.
+private static Call.Position? ResolveResumeFrame(CallStack.@this stack)
+{
+    var frame = stack.Current;
+    while (frame != null && frame.Action.Step == null)
+        frame = frame.Caller;
+    return frame == null ? null : FrameFromLive(frame);
+}
 ```
+
+For PLang `- ask user "name?"`: chain is `[goal-entry, output.ask]`. output.ask is the step itself; its Action.Step is non-null. Loop exits immediately; Position = output.ask. Today's intended behaviour preserved.
+
+For C# call sites that invoke `output.ask` via `RunAction` from inside another action (e.g., `Path.Authorize` calling output.ask from inside `file.read`): chain is `[goal-entry, file.read, output.ask]`. output.ask is synthetic (Step=null). Loop walks up to file.read. Position = file.read. On resume, `file.read` is what re-runs — which is exactly what we want, because file.read is what called Authorize and needs to see the answer come back.
 
 `ExtractCapturedVars` is the variable-capture logic currently inline in `output.ask:54-69` — moves over as-is.
 
 **Tests:**
 
 - Stream channel: `output.ask` returns `Data.Ok(line)` after stdin input. Blocks. No callback.
-- Message channel: `output.ask` returns `Data<AskCallback>`. Position and Variables populated from the action's context.
+- Message channel: `output.ask` returns `Data<AskCallback>`. Position and Variables populated from the call stack.
+- **Position-capture: top-level use** — `- ask user "name?"` as a step → Position = output.ask itself.
+- **Position-capture: nested use** — call `output.ask` via `RunAction` from inside a step action whose handler is C# → Position = the outer step action, not output.ask.
 - `output.ask` is ~10 lines after the change (resume-consume + delegate).
 - Mid-goal `output.ask` on console runs synchronously: `- ask user "name?", write to %name%` / `- write out %name%` completes in one process tick when invoked against a Stream channel (no suspend, no callback short-circuit fires because no callback is returned).
 

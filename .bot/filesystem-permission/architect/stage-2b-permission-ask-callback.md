@@ -39,7 +39,7 @@ No suspend, no callback short-circuit, no resume continuation — everything is 
 Same first dispatch:
 
 1–3. Same as above.
-4. `output.ask` delegates to Message channel's `AskCore`. Returns `Data<AskCallback>` carrying Position (file.read's frame) + Variables + ActorName.
+4. `output.ask` delegates to Message channel's `AskCore`. AskCore walks the call stack up from output.ask (Step=null, synthetic) to file.read (real step). Returns `Data<AskCallback>` carrying Position=file.read + Variables + ActorName. (See stage 2a #5 for the resume-frame resolution rule.)
 5. Authorize sees the result is a callback (Type.IsCallback) — returns it unchanged.
 6. FS method passes it through unchanged. `file.read` returns it. Stage 2a's step-loop short-circuit fires. Goal returns the callback Data.
 7. Channel writes the envelope via `Plang/Data.cs` (stage 2a #4 — typed value, signed). HTTP response body.
@@ -68,10 +68,11 @@ public async Task<Data> Authorize(Verb verb, string prefix = "")
     var actor = Context.Actor;
 
     // Already granted?
-    var grant = actor.Permission.Find(this, verb);
-    if (grant != null) return Data.Ok();
+    if (actor.Permission.Find(this, verb) != null) return Data.Ok();
 
-    // Ask (stateful or stateless — output.ask + channel decide)
+    // Ask. Stage 2a's smart Position-capture means output.ask works correctly
+    // whether called as a step or nested via RunAction — Position lands on the
+    // outermost real step frame either way.
     var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {this.Absolute}? (y/n/a)";
     var askResult = await Context.App.RunAction<modules.output.ask>(
         new modules.output.ask { Question = Data.@this<string>.Ok(question) }, Context);
