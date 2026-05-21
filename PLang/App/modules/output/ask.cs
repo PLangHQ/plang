@@ -1,5 +1,4 @@
 using App.Variables;
-using App.CallStack;
 
 namespace App.modules.output;
 
@@ -44,49 +43,24 @@ public partial class ask : IContext
     /// <summary>Resume sentinel — variable name used by AskCallback.Run to inject the answer.</summary>
     public const string AnswerVariableName = "!ask.answer";
 
-    public Task<Data.@this> Run()
+    public async Task<Data.@this> Run()
     {
-        // Resume path: AskCallback.Run pre-bound the answer under !ask.answer.
+        // Resume path: callback.run / channel pre-bound the answer under !ask.answer.
         var answer = Context.Variables.Get(AnswerVariableName);
         if (answer != null && answer.IsInitialized)
         {
-            // Consume the marker so a subsequent ask isn't accidentally short-circuited.
-            Context.Variables.Remove(AnswerVariableName);
-            return Task.FromResult(global::App.Data.@this.Ok(answer.Value));
+            // The sentinel rides as the "answer" property of the infra root
+            // variable "!ask". Variables.Remove only takes flat keys; removing
+            // the root consumes the marker. "!ask" is reserved for this use.
+            Context.Variables.Remove("!ask");
+            return global::App.Data.@this.Ok(answer.Value);
         }
 
-        // Fresh path: capture position + the surviving variables, return AskCallback.
-        var stack = Context.App.CallStack;
-        var bottom = stack.BottomFrame;
-        var captured = new List<Data.@this>();
-        // Builder emits each entry either as a bare string ("x" / "%x%") or as
-        // {"name":"%x%","type":"variable"} — accept both.
-        if (Variables?.Value is System.Collections.IEnumerable items)
-        {
-            foreach (var item in items)
-            {
-                string? raw = item switch
-                {
-                    string s => s,
-                    System.Collections.Generic.IDictionary<string, object?> d
-                        when d.TryGetValue("name", out var n) => n?.ToString(),
-                    _ => item?.ToString()
-                };
-                if (string.IsNullOrEmpty(raw)) continue;
-                var name = raw.TrimStart('%').TrimEnd('%');
-                var live = Context.Variables.Get(name);
-                if (live != null) captured.Add(live);
-            }
-        }
-
-        var cb = new global::App.Callback.AskCallback
-        {
-            Position = bottom,
-            ActorName = Context.Actor?.Name ?? "User",
-            Variables = captured
-        };
-        var data = new Data.@this<global::App.Callback.AskCallback>("", cb);
-        data.Context = Context;
-        return Task.FromResult<Data.@this>(data);
+        // Fresh path: delegate to the input channel. Stream blocks; Message
+        // returns Data<Ask> with a Snapshot — the engine short-circuits and
+        // the channel decides whether to materialise in-process or on the wire.
+        var input = Context.Actor?.Channels.Resolve(global::App.Channels.@this.Input)
+            ?? throw new InvalidOperationException("No input channel registered on actor");
+        return await input.Ask(this);
     }
 }

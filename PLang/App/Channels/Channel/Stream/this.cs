@@ -84,13 +84,14 @@ public sealed class @this : Session.@this
         }
     }
 
-    public override async Task<Data.@this> AskCore(Data.@this prompt, CancellationToken ct = default)
+    public override async Task<Data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
     {
-        // Session-style ask: write the prompt (if any), then read a line.
+        // Session-style ask: write the question, then read a line.
         // Timeout enforced via the per-channel Timeout config.
-        if (prompt.Value != null)
+        var question = action.Question?.Value;
+        if (!string.IsNullOrEmpty(question))
         {
-            var writeRes = await WriteCore(prompt, ct);
+            var writeRes = await WriteCore(global::App.Data.@this.Ok(question), ct);
             if (!writeRes.Success) return writeRes;
         }
 

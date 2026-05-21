@@ -178,7 +178,7 @@ public class Stage8_ChannelEventsTests
             receivedData = payload;
             return Task.FromResult(Data.Ok());
         }));
-        var result = await ch.Ask(Data.Ok((object?)null));
+        var result = await ch.Ask(new global::App.modules.output.ask { Question = new global::App.Data.@this<string>("", "") });
         await Assert.That(result.Value as string).IsEqualTo("answer");
         await Assert.That(receivedData).IsNotNull();
         await Assert.That(receivedData!.Value as string).IsEqualTo("answer");
@@ -198,7 +198,7 @@ public class Stage8_ChannelEventsTests
             fired = true;
             return Task.FromResult(Data.Ok());
         }));
-        await ch.Ask(Data.Ok("q?"));
+        await ch.Ask(new global::App.modules.output.ask { Question = new global::App.Data.@this<string>("", "q?") });
         await Assert.That(fired).IsTrue();
     }
 
@@ -279,7 +279,7 @@ public class Stage8_ChannelEventsTests
         public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
             => throw new IOException("boom");
         public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> AskCore(Data prompt, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> AskCore(global::App.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
     private sealed class MessageProbeChannel : global::App.Channels.Channel.Message.@this
@@ -287,6 +287,6 @@ public class Stage8_ChannelEventsTests
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> WriteCore(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> AskCore(Data prompt, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
+        public override Task<Data> AskCore(global::App.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
     }
 }

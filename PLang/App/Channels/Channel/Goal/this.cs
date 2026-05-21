@@ -38,8 +38,9 @@ public class @this : Session.@this
         return await InvokeGoal(Data.@this.Ok((object?)null), ct);
     }
 
-    public override async Task<Data.@this> AskCore(Data.@this prompt, CancellationToken ct = default)
+    public override async Task<Data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
     {
+        var prompt = global::App.Data.@this.Ok(action.Question?.Value);
         return await InvokeGoal(prompt, ct);
     }
 
