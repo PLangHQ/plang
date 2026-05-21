@@ -23,124 +23,119 @@ namespace App.FileSystem;
 /// </summary>
 public partial class Path
 {
+    /// <summary>
+    /// Stat() result payload. Exists=false → all other fields null.
+    /// IsFile=true → file (Length set). IsFile=false → directory.
+    /// Nested under Path so callers reach it as <c>Path.StatInfo</c>.
+    /// </summary>
+    public sealed record StatInfo(bool Exists, bool? IsFile = null, long? Length = null, DateTime? Modified = null);
+
+    /// <summary>
+    /// Authorize + Exit-bubble guard. Returns non-null when the caller should
+    /// return early (either the gate denied or the result is Exit-typed and
+    /// must bubble to the step loop). Returns null on grant — caller proceeds
+    /// with the IO.
+    /// </summary>
+    private async Task<Data.@this?> AuthGate(Verb verb)
+    {
+        var auth = await Authorize(verb);
+        if (auth.Type?.ClrType.Exit() == true) return auth;
+        if (!auth.Success) return auth;
+        return null;
+    }
+
+    private void EnsureParentDir()
+    {
+        var dir = System.IO.Path.GetDirectoryName(Absolute);
+        if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
+            System.IO.Directory.CreateDirectory(dir);
+    }
+
     // --- Reads ---------------------------------------------------------------
 
     public async Task<Data.@this> ReadText()
     {
-        var auth = await Authorize(new Verb { Read = new ReadVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
-        var text = await System.IO.File.ReadAllTextAsync(Absolute);
-        return Data.@this.Ok(text);
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
+        return Data.@this.Ok(await System.IO.File.ReadAllTextAsync(Absolute));
     }
 
     public async Task<Data.@this> ReadBytes()
     {
-        var auth = await Authorize(new Verb { Read = new ReadVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
-        var bytes = await System.IO.File.ReadAllBytesAsync(Absolute);
-        return Data.@this.Ok(bytes);
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
+        return Data.@this.Ok(await System.IO.File.ReadAllBytesAsync(Absolute));
     }
 
     public async Task<Data.@this> ExistsAsync()
     {
-        var auth = await Authorize(new Verb { Read = new ReadVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
-        var exists = System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute);
-        return Data.@this.Ok(exists);
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
+        return Data.@this.Ok(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
     }
 
     public async Task<Data.@this> List()
     {
-        var auth = await Authorize(new Verb { Read = new ReadVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
         if (!System.IO.Directory.Exists(Absolute)) return Data.@this.Ok(Array.Empty<string>());
-        var entries = System.IO.Directory.EnumerateFileSystemEntries(Absolute).ToArray();
-        return Data.@this.Ok(entries);
+        return Data.@this.Ok(System.IO.Directory.EnumerateFileSystemEntries(Absolute).ToArray());
     }
 
     public async Task<Data.@this> Stat()
     {
-        var auth = await Authorize(new Verb { Read = new ReadVerb(Metadata: true) });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
+        if (await AuthGate(new Verb { Read = new ReadVerb(Metadata: true) }) is { } early) return early;
         if (System.IO.File.Exists(Absolute))
         {
             var info = new System.IO.FileInfo(Absolute);
-            return Data.@this.Ok(new Dictionary<string, object?>
-            {
-                ["exists"] = true, ["isFile"] = true,
-                ["length"] = info.Length, ["modified"] = info.LastWriteTimeUtc,
-            });
+            return Data.@this.Ok(new StatInfo(Exists: true, IsFile: true, Length: info.Length, Modified: info.LastWriteTimeUtc));
         }
         if (System.IO.Directory.Exists(Absolute))
         {
             var info = new System.IO.DirectoryInfo(Absolute);
-            return Data.@this.Ok(new Dictionary<string, object?>
-            {
-                ["exists"] = true, ["isFile"] = false,
-                ["modified"] = info.LastWriteTimeUtc,
-            });
+            return Data.@this.Ok(new StatInfo(Exists: true, IsFile: false, Modified: info.LastWriteTimeUtc));
         }
-        return Data.@this.Ok(new Dictionary<string, object?> { ["exists"] = false });
+        return Data.@this.Ok(new StatInfo(Exists: false));
     }
 
     // --- Writes --------------------------------------------------------------
 
     public async Task<Data.@this> WriteText(string content)
     {
-        var auth = await Authorize(new Verb { Write = new WriteVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
-        var dir = System.IO.Path.GetDirectoryName(Absolute);
-        if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        EnsureParentDir();
         await System.IO.File.WriteAllTextAsync(Absolute, content);
         return Data.@this.Ok();
     }
 
     public async Task<Data.@this> WriteBytes(byte[] content)
     {
-        var auth = await Authorize(new Verb { Write = new WriteVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
-        var dir = System.IO.Path.GetDirectoryName(Absolute);
-        if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        EnsureParentDir();
         await System.IO.File.WriteAllBytesAsync(Absolute, content);
         return Data.@this.Ok();
     }
 
     public async Task<Data.@this> Append(string content)
     {
-        var auth = await Authorize(new Verb { Write = new WriteVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
-        var dir = System.IO.Path.GetDirectoryName(Absolute);
-        if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        EnsureParentDir();
         await System.IO.File.AppendAllTextAsync(Absolute, content);
         return Data.@this.Ok();
     }
 
     public async Task<Data.@this> Mkdir()
     {
-        var auth = await Authorize(new Verb { Write = new WriteVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
         System.IO.Directory.CreateDirectory(Absolute);
         return Data.@this.Ok();
     }
 
     // --- Destructive ---------------------------------------------------------
+    // Delete returns Ok when neither file nor directory exists — idempotent
+    // `rm -f` semantics. Caller can pre-check Exists() for strict-mode flows.
 
     public async Task<Data.@this> Delete()
     {
-        var auth = await Authorize(new Verb { Delete = new DeleteVerb() });
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
-        if (System.IO.File.Exists(Absolute)) { System.IO.File.Delete(Absolute); return Data.@this.Ok(); }
-        if (System.IO.Directory.Exists(Absolute)) { System.IO.Directory.Delete(Absolute, recursive: true); return Data.@this.Ok(); }
+        if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return early;
+        if (System.IO.File.Exists(Absolute)) System.IO.File.Delete(Absolute);
+        else if (System.IO.Directory.Exists(Absolute)) System.IO.Directory.Delete(Absolute, recursive: true);
         return Data.@this.Ok();
     }
 
@@ -230,13 +225,13 @@ public partial class Path
         await Context!.Actor!.Permission.Add(data);
     }
 
-    private async Task<Data.@this> PerformTransfer(Path destination, bool isMove)
+    private Task<Data.@this> PerformTransfer(Path destination, bool isMove)
     {
         var destDir = System.IO.Path.GetDirectoryName(destination.Absolute);
         if (!string.IsNullOrEmpty(destDir) && !System.IO.Directory.Exists(destDir))
             System.IO.Directory.CreateDirectory(destDir);
         if (isMove) System.IO.File.Move(Absolute, destination.Absolute, overwrite: true);
         else        System.IO.File.Copy(Absolute, destination.Absolute, overwrite: true);
-        return await Task.FromResult(Data.@this.Ok());
+        return Task.FromResult(Data.@this.Ok());
     }
 }
