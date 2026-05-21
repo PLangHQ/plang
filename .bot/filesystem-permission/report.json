@@ -533,6 +533,71 @@
         "health": "Suite green (2846/2846 C#) but dishonest: v3's case-comparison fix, Move semantics, and 6 PLang permission goals are false greens.",
         "notes": "No baseline-tests.md in any coder version (finding 9) \u2014 regression attribution reconstructed manually, confirmed no regressions. Fixes for findings 1-3 are cheap: ~1 ValidatePath test, 1 Move assertion block, rename/delete 6 goals."
       }
+    },
+    {
+      "id": "e2ca5fe3-0e0b-4458-821f-5b9266597beb",
+      "bot": "tester",
+      "timestamp_start": "2026-05-21T18:55:00+00:00",
+      "timestamp_end": "2026-05-21T19:05:00+00:00",
+      "intent": "Re-review test quality for coder v4 (closes 9 tester-v3 findings) + v5 (drops PermissionRecord.AppId, un-skips Scenario4).",
+      "before": {
+        "assumptions": "coder declared v5 ready; C# 2853 pass / 0 skip / 0 fail per coder. v3 verdict was NEEDS-FIXES with 3 major false-greens.",
+        "risk": "v5 is real production code (AppId removal from a security record), not just test code \u2014 highest risk. A fix is only closed if the mutation v3 survived now kills a test."
+      },
+      "plan": ".bot/filesystem-permission/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/",
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + both suites. C# 2853/2853 pass, 0 skip; PLang 203/203 pass (4 intentional fail-fixtures excluded, confirmed via coder/baseline-tests.md). No regressions."
+        },
+        {
+          "paths": [
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/FileSystem/Path.Operations.cs",
+            "PLang/App/Actor/Permission/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation tests (source edited then reverted, never committed): RootComparison->OrdinalIgnoreCase kills IsInRoot_UpperCasedRoot test (F1); isMove->File.Copy kills both Move_* tests (F2); disabling persisted Find kills Scenario4 (F4/v5). All three v3 major false-greens now genuinely gated."
+        },
+        {
+          "paths": [
+            "PLang/App/FileSystem/Permission/this.cs",
+            "PLang/App/Actor/Permission/this.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed v5's PermissionRecord.AppId removal for security regressions. Sound: AppId was a per-instance GUID that never survived a restart \u2014 it defeated the persist contract rather than adding isolation. Actor isolation via name filter + signature verify; root isolation via per-root SettingsStore. Scenario4 is the cross-App regression gate."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/test-report.json",
+            ".bot/filesystem-permission/tester/v4/plan.md",
+            ".bot/filesystem-permission/tester/v4/result.md",
+            ".bot/filesystem-permission/tester/v4/verdict.json",
+            ".bot/filesystem-permission/tester/summary.md",
+            ".bot/filesystem-permission/claude-md-proposals.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v4 review docs (verdict pass) and, on explicit user request after the user was alarmed by mid-review source edits, a CLAUDE.md proposal for an announce-before-mutation rule."
+        }
+      ],
+      "after": {
+        "status": "PASS. All 9 v3 findings closed and mutation-verified. v5 AppId removal reviewed as a correct, well-scoped production change.",
+        "health": "Suite green and now honest \u2014 the three major false-greens each die under the mutation v3 survived. Three minor non-blocking notes (N1 docstring over-claim, N2 line-227 defensive, N3 no different-root isolation test).",
+        "notes": "coder v4/v5 did not append sessions to report.json. v5 production code has not had a codeanalyzer pass \u2014 worth one before branch close."
+      }
     }
   ]
 }

@@ -1,63 +1,55 @@
 # tester — filesystem-permission
 
 ## Version
-v3 (matches coder v3 — the version under review)
+v4 (reviews coder v4 + v5 — the versions under review)
 
 ## What this is
 The `filesystem-permission` branch adds PLang's consent-gated filesystem
 access: a `Permission` record, a `Path.Authorize(verb)` gate that prompts the
 actor on out-of-root access, per-actor in-memory + sqlite grant storage, a v2
 Path-in/Data-out FS surface, and a snapshot/resume engine for stateless
-suspend. coder v3 was a small closing version — it fixed codeanalyzer v2 #2
-(a one-line OS-aware case-comparison fix in `PLangFileSystem.ValidatePath`)
-and deferred v2 #1 (handler copy-paste) to a new branch.
+suspend.
 
-This is the **tester** pass — test-quality review, run after codeanalyzer v3
-PASSed the code.
+tester v3 returned **NEEDS-FIXES** (3 major false-greens, 6 minor). coder v4
+closed all 9 findings; coder v5 then fixed the deferred Scenario4 bug by
+dropping `PermissionRecord.AppId`. This v4 pass re-reviews both.
 
 ## What was done
-- Clean rebuild (per the stale-binary rule). C# suite **2846/2846 pass**;
-  PLang suite **213 pass, 6 fail** — all 6 fails are intentional fail-fixtures
-  (`_fixtures_fail`, `_fixtures_sensitive`), not coder regressions.
-- Coverage run → `v3/coverage.json`. Changed FS files are well line-covered
-  (Path.Authorize.cs 98.4%) — which turned out to be the trap, not the
-  reassurance.
-- Read every permission test file (C# + PLang `.test.goal` + `.pr`) with the
-  deletion test and parameter-swap test.
-- Verdict: **NEEDS-FIXES** — 3 major false-greens, 5 minor, 1 process violation.
-  Output: `v3/result.md`, `v3/plan.md`, `v3/verdict.json`, `v3/coverage.json`,
+- Clean rebuild (stale-binary rule). C# **2853/2853 pass, 0 skip**; PLang
+  **203/203 pass** (4 intentional fail-fixtures excluded — not regressions).
+- **Mutation tests** on the three v3 major findings — re-applied the exact
+  mutation v3 survived and confirmed a test now dies:
+  - F1: `RootComparison` → `OrdinalIgnoreCase` → kills
+    `IsInRoot_UpperCasedRoot_TreatedAsOutOfRoot_OnUnix`.
+  - F2: `isMove` branch → `File.Copy` → kills both `Move_*` tests.
+  - F4/v5: disable persisted `Find` → kills `Scenario4`.
+- Read the v5 production change (`PermissionRecord.AppId` removal) for
+  security regressions.
+- Verdict: **PASS**. Output: `v4/result.md`, `v4/plan.md`, `v4/verdict.json`,
   shared `test-report.json`.
 
-## Key findings
-1. **(major) v3's fix has no test.** The only behavioral change in v3 —
-   `ValidatePath:227` `OrdinalIgnoreCase`→`RootComparison` — can be reverted
-   without failing a single test. It is a permission gate (case-variant path
-   bypass on Linux). 100% line-covered, 0% behaviorally verified.
-2. **(major) Move can't be told from Copy.** No test checks that `MoveTo`
-   removes the source. Flip `isMove` in `PerformTransfer` → suite stays green.
-3. **(major) 6 of 8 PLang permission goals are false greens.** Named after
-   Stage 5 scenarios (`RestartStillNoPrompt`, `NoGrantSuspends`, ...) but
-   bodies do trivial in-root round-trips that never reach the gate.
-4–8. (minor) empty Scenario4 body reports *passed*; weak storage assertions;
-   tautological `LegacyFsGoalTests`; untested `OsDirectory` clause; Move/Copy
-   "n" + stateless branches untested.
-9. (minor/process) no `baseline-tests.md` in any coder version.
+## Outcome
+All 9 v3 findings closed and mutation-verified. The three major false-greens
+each now kill a test under the mutation v3 survived — the suite is honest
+about the security gate.
 
-All 9 are test-quality gaps — no code bug found. The code is correct; the
-suite just doesn't prove it.
+v5's `AppId` drop is sound: `AppId` was a per-instance GUID that never
+survived a restart, so it defeated the "a" = always-persist contract rather
+than adding isolation. Grant identity is now `(Actor + Path + Verb)`; actor
+isolation holds via name filter + signature verify, root isolation via the
+per-root `SettingsStore`. Scenario4 is the real cross-App regression gate.
 
-## Code example — the false green that defines the verdict
-```diff
-// v3's entire behavioral change (PLangFileSystem.cs:227):
-- if (!path.StartsWith(RootDirectory, StringComparison.OrdinalIgnoreCase))
-+ if (!path.StartsWith(RootDirectory, App.FileSystem.Path.RootComparison))
-```
-Every in-root test uses exact casing (matches under both); every out-of-root
-test uses a wholly distinct path (matches under neither). The one input that
-separates `Ordinal` from `OrdinalIgnoreCase` — a path whose root prefix
-differs only in case — is never supplied. Fix: a Linux-gated `ValidatePath`
-test with an upper-cased root segment, asserting out-of-root treatment.
+## Minor notes (non-blocking)
+- **N1** — `ValidatePathTests.UpperCasedRootPrefix_..._OnUnix` docstring
+  over-claims: it survives the F1 mutation, so it does not gate
+  `RootComparison`. It pins the re-prefix path of line 189's plain
+  `StartsWith`. Valid test, wrong comment.
+- **N2** — `PLangFileSystem.cs:227`'s `RootComparison` is gated only
+  transitively (shared property); the line is effectively defensive.
+- **N3** — no different-root isolation test; v5 makes the root directory the
+  sole persistence boundary and only same-root sharing is pinned.
 
 ## Next
-Back to coder to add the missing tests (findings 1–3 are the blockers; cheap
-fixes — ~1 ValidatePath test, 1 Move assertion block, rename/delete 6 goals).
+Branch is test-clean. N1–N3 are optional polish for a future coder pass.
+Note: coder v4/v5 production code (the v5 `AppId` removal) has not had a
+codeanalyzer pass — worth one before branch close.

@@ -1,115 +1,35 @@
 {
   "tester": "tester",
   "branch": "filesystem-permission",
-  "timestamp": "2026-05-21T18:10:49Z",
-  "tested_version": "v3",
+  "timestamp": "2026-05-21T19:03:46Z",
+  "tested_version": "v4+v5",
   "test_run": {
-    "csharp": { "total": 2846, "passed": 2846, "failed": 0, "skipped": 0 },
-    "plang": { "total": 219, "passed": 213, "failed": 6, "skipped": 0 }
+    "csharp": { "total": 2853, "passed": 2853, "failed": 0, "skipped": 0 },
+    "plang": { "total": 203, "passed": 203, "failed": 0, "skipped": 0 }
   },
-  "plang_failures_note": "All 6 PLang failures are intentional fail-fixtures under Tests/TestModule/Report/_fixtures_fail/ and _fixtures_sensitive/ (failsvar asserts 42==99; sensitivefail asserts identity=='will-not-match'). They exist to be failed-by-design so the Report module's tests can verify failure reporting. `plang --test` discovers them directly because of the leading-underscore fixture convention. NOT coder regressions — pre-existing, not touched behaviorally on this branch.",
-  "coverage": {
-    "changed_files_covered": 32,
-    "changed_files_total": 34,
-    "uncovered_files": [
-      "PLang/App/Goals/Goal/Steps/Step/this.RunFrom.cs",
-      "PLang/App/FileSystem/Default/PLangPath.cs"
-    ],
-    "note": "Line coverage on the changed FS files is healthy (Path.Authorize.cs 98.4%, Path.Operations.cs 83.2%). The problem is NOT line coverage — it is behavioral verification. See findings 1 and 2: lines run green while the property they were changed to enforce is never exercised."
-  },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/App/FileSystem/ValidatePathTests.cs",
-      "code_file": "PLang/App/FileSystem/Default/PLangFileSystem.cs",
-      "issue": "v3's ONLY behavioral change is PLangFileSystem.cs:227 — `path.StartsWith(RootDirectory, OrdinalIgnoreCase)` became `... Path.RootComparison` (OS-aware: Ordinal on Linux). No test exercises a path whose prefix is a CASE-VARIANT of the root. Every in-root test uses exact casing (matches under both comparisons); every out-of-root test uses a wholly distinct path (`//tmp/...`, matches under neither). Reverting line 227 to `OrdinalIgnoreCase` fails ZERO tests. The line is 100% line-covered and branch-covered — pure coverage dazzle. Same blind spot applies to Path.Authorize.IsInRoot (RootComparison at Path.Authorize.cs:95-96).",
-      "impact": "This is the permission gate. The case-comparison rule exists so `/SRV/myapp` cannot slip past the gate by matching root `/srv/myapp` on a case-sensitive Linux filesystem. A future edit that reverts this to case-insensitive comparison = sandbox escape (out-of-root path auto-granted as in-root), and the green suite would not notice. The exact regression codeanalyzer v2 #2 was raised to fix has no regression test.",
-      "suggestion": "Add to ValidatePathTests (Linux-gated, like the existing OsRooted tests): create app with root `<tmp>/plang-vp-abc`, call ValidatePath on `<tmp>/plang-vp-ABC/file.txt` (uppercased segment), assert the result is returned UNCHANGED (out-of-root => normaliser-only path, line 229). Under the OrdinalIgnoreCase bug it would fall into the in-root resolution branch and be rewritten. Add the mirror to PathAuthorizeTests: a Path under a case-variant of fs.RootDirectory must NOT be auto-granted (must prompt / Find)."
-    },
-    {
-      "id": 2,
-      "severity": "major",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/FileSystem/SurfaceTests/MoveCopyBundledConsentTests.cs",
-      "code_file": "PLang/App/FileSystem/Path.Operations.cs",
-      "issue": "No test verifies a Move actually moves. `Move_OneMissingGrant` and `Move_BothPathsMissing` assert only result.Success, channel AskCount, and question text — never that the source file is gone and the destination exists. `Copy_MirrorsMove` DOES assert both files exist (correct for copy). PerformTransfer (Path.Operations.cs:228-235) branches on `isMove`: line 233 `File.Move` vs line 234 `File.Copy`. Flip the `isMove` flag and the entire suite stays green — the Move tests never look at the filesystem, and the Copy test's `src exists` assertion is true for a broken move-as-copy too.",
-      "impact": "MoveTo could silently behave as CopyTo (leaving the source behind) and no test would catch it. The defining difference between Move and Copy is unverified.",
-      "suggestion": "In Move_BothPathsMissing (and/or Move_OneMissingGrant) after the await, assert `System.IO.File.Exists(srcFile)` IsFalse and `System.IO.File.Exists(dstFile)` IsTrue, and assert dst content equals the written source content. That pins the isMove=true branch."
-    },
-    {
-      "id": 3,
-      "severity": "major",
-      "type": "false-green",
-      "test_file": "Tests/Permission/RestartStillNoPrompt/Start.test.goal, Tests/Permission/NoGrantSuspends/Start.test.goal, Tests/Permission/RevokeReprompts/Start.test.goal, Tests/Permission/NarrowedGrantRejectsWiderRequest/Start.test.goal, Tests/Permission/ImmediateRereadSkipsPrompt/Start.test.goal, Tests/Permission/Authorize/StatelessAuthorizeResumesAndContinues/Start.test.goal",
-      "code_file": "PLang/App/FileSystem/Path.Authorize.cs",
-      "issue": "6 of the 8 PLang permission `.test.goal` files are named after Stage 5 / 2b permission scenarios but their bodies do a trivial IN-ROOT file round-trip (`save fixture.txt` -> `file.read fixture.txt` -> `assert equals`). In-root paths auto-grant (Path.Authorize:35) — these goals never reach a prompt, a suspend, a revoke, or a narrowed grant. `plang --test` prints `[Pass] Permission/RestartStillNoPrompt/...` etc., so the runner reports green tests under permission-scenario names that exercise none of those scenarios. The coder's in-goal comments honestly say 'placeholder' / 'exercised by C# scenario X' — but the goal NAME is what a CI dashboard, future auditor, or `--test` consumer sees. Only GrantAStoresPersisted and Authorize/StatefulAuthorizeGrantsAndContinues are real (out-of-root //tmp paths + answerer channels — verified .pr is correct).",
-      "impact": "Anyone auditing 'is the permission flow covered at the PLang layer?' sees 8 green goals with scenario names and concludes yes. Reality: 6 would pass even if the entire Path.Authorize gate were deleted. A misleadingly-named placeholder also squats the namespace slot so nobody writes the real test.",
-      "suggestion": "Either (a) rename the 6 placeholder goals to describe what they actually do (e.g. InRootReadRoundTrip) so the green is honest, or (b) delete them — the C# Stage5MessagesEndToEndTests cover scenarios 1/2/3/5/6 properly. Do not keep a goal whose name claims coverage that only exists one layer down in C#."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "type": "false-green",
-      "test_file": "PLang.Tests/App/FileSystem/Stage5MessagesEndToEndTests.cs",
-      "code_file": "PLang/App/FileSystem/Path.Operations.cs",
-      "issue": "Scenario4_RestartStillNoPrompt_PersistedGrantSurvivesNewApp has an empty body (`await Task.CompletedTask;`) and asserts nothing. It reports as PASSED, not skipped. The coder documented the underlying deserialiser bug honestly in the summary, but the test row is a green with a scenario name.",
-      "impact": "The green count includes a test that verifies nothing; a reader scanning the suite believes restart-persistence is covered.",
-      "suggestion": "Mark it `[Skip(\"cross-App SettingsStore round-trip — deserialiser stack overflow in SmallObjectWithParameterizedConstructorConverter; see coder summary\")]` so it reports as skipped, not passed."
-    },
-    {
-      "id": 5,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/FileSystem/PermissionTests/StorageTests/ActorPermissionStorageTests.cs",
-      "code_file": "PLang/App/Actor/Permission/this.cs",
-      "issue": "IdempotentAdd_SamePathTwice_Overwrites_NoDuplicateRow asserts only that Find returns non-null after two Adds. If Add appended a duplicate instead of overwriting, Find would still return non-null and the test passes — the 'NoDuplicateRow' / 'Overwrites' claim in the name is unverified. Likewise TwoHomes_InMemoryGrant_AndPersistedGrant_FindReturnsCorrectOne asserts both grants are non-null but never verifies routing (in-memory grant from the session home, persisted grant from sqlite) — both could be served from one home and it passes.",
-      "impact": "A regression that double-stores grants, or that routes signed/unsigned grants to the wrong home, would not be caught.",
-      "suggestion": "IdempotentAdd: after both Adds, assert the store holds exactly one row for the path (count via the storage surface, or Revoke once then assert Find is null — proving there was no second copy). TwoHomes: assert `mem.RawSignature` is null (unsigned => in-memory) and `disk.RawSignature` is not null (signed => sqlite)."
-    },
-    {
-      "id": 6,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/FileSystem/SurfaceTests/MoveCopyBundledConsentTests.cs",
-      "code_file": "PLang/App/FileSystem/Default/PLangFileSystem.cs",
-      "issue": "LegacyFsGoalTests_StayGreen_AgainstV2Surface — the name promises it pins legacy `.test.goal` fixtures against the v2 surface, but the body only asserts `RootDirectory != null` and `ValidatePath(\"/test\") != null`. ValidatePath now always returns non-null (it is a pure normaliser post-branch), so the assertion is a near-tautology that exercises no legacy goal.",
-      "impact": "Negligible bug-catching power; the test name oversells. Harmless but it pads the green count.",
-      "suggestion": "Either delete it (the real legacy-vs-v2 coexistence is covered by the rest of the suite running green) or rename to `ValidatePath_StillResolves_AfterV2SurfaceAdded` so the name matches the trivial assertion."
-    },
-    {
-      "id": 7,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/FileSystem/PermissionTests/AuthorizeTests/PathAuthorizeTests.cs",
-      "code_file": "PLang/App/FileSystem/Path.Authorize.cs",
-      "issue": "IsInRoot() has two clauses: `IsUnder(fs.RootDirectory)` and `IsUnder(fs.OsDirectory)` (Path.Authorize.cs:95-96). The OsDirectory clause — auto-granting system-built-in goal files (test/build) that live outside the actor root — is never exercised by a test. FileSystemPermissionFlowTests.InRootPath only covers the RootDirectory clause.",
-      "impact": "If the OsDirectory short-circuit broke, system goal files would start prompting for permission and no test would catch it.",
-      "suggestion": "Add a PathAuthorizeTests case: a Path under `fs.OsDirectory` (but outside RootDirectory) returns Ok() from Authorize with no channel Ask."
-    },
-    {
-      "id": 8,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/FileSystem/SurfaceTests/MoveCopyBundledConsentTests.cs",
-      "code_file": "PLang/App/FileSystem/Path.Operations.cs",
-      "issue": "Move/Copy bundled consent is only tested with answer 'a'. The 'n' branch (Path.Operations.cs:201-205 — PermissionDenied built from whichever path lacks the grant) and the stateless-channel branch (bundled Data<Ask> + Snapshot) are untested. Single-path flow tests both 'n' and stateless; bundled-consent does not.",
-      "impact": "A refused or suspended Move/Copy could mis-report which path was denied, or fail to bundle the Ask, without a test failing.",
-      "suggestion": "Add: Move with answer 'n' => result.Success false, Error IsTypeOf PermissionDenied, and assert Error.Permission.Path is the missing-grant path. Add: Move over a StatelessChannel => result.Type.Value == 'ask' && Snapshot not null."
-    },
-    {
-      "id": 9,
-      "severity": "minor",
-      "type": "false-green",
-      "test_file": ".bot/filesystem-permission/coder/v1/, v2/, v3/",
-      "code_file": "n/a",
-      "issue": "Process violation: no `baseline-tests.md` exists in any coder version directory. The tester workflow depends on it to separate coder-introduced regressions from pre-existing failures. I reconstructed the distinction manually (clean rebuild + fixture-provenance check) and confirmed no regressions, but the safety net was absent.",
-      "impact": "On a branch with real green->red movement this gap would make regression attribution guesswork.",
-      "suggestion": "Coder must write `v<N>/baseline-tests.md` recording pre-work suite state before starting each version."
-    }
+  "plang_failures_note": "203 excludes the 4 intentional fail-fixtures (Tests/{TestModule,Modules/Test}/Report/_fixtures_fail/failsvar + _fixtures_sensitive/sensitivefail). Confirmed against coder/baseline-tests.md — not regressions. One stdout 'Failed to deserialize List`1' line is a negative-path mock test feeding bad JSON, not a failure.",
+  "v3_findings_status": [
+    { "id": 1, "title": "v3 case-comparison gate untested", "status": "closed", "verification": "Mutation RootComparison->OrdinalIgnoreCase now fails IsInRoot_UpperCasedRoot_TreatedAsOutOfRoot_OnUnix (v3: 0 fails). Companion ValidatePath test does not depend on RootComparison — see note N1." },
+    { "id": 2, "title": "Move indistinguishable from Copy", "status": "closed", "verification": "Mutation isMove->File.Copy now fails Move_OneMissingGrant and Move_BothPathsMissing (v3: 0 fails). Move tests assert source gone + dest content." },
+    { "id": 3, "title": "6 placeholder PLang goals overclaiming", "status": "closed", "verification": "6 goals deleted; 2 real goals (GrantAStoresPersisted, StatefulAuthorizeGrantsAndContinues) kept and green." },
+    { "id": 4, "title": "Scenario4 empty body reported pass", "status": "closed", "verification": "v4 added [Skip]; v5 replaced with a real cross-App body. Disabling persisted Find kills Scenario4 — confirmed." },
+    { "id": 5, "title": "weak storage assertions", "status": "closed", "verification": "TwoHomes inspects SettingsStore (/disk present, /mem absent); IdempotentAdd does Revoke->assert-null and a sqlite row count." },
+    { "id": 6, "title": "tautological LegacyFsGoalTests", "status": "closed", "verification": "Renamed LegacyV1FsSurface_RoundTripsFile_AlongsideV2; real v1 write/read round-trip + v2 cross-read." },
+    { "id": 7, "title": "OsDirectory clause untested", "status": "closed", "verification": "IsInRoot_PathUnderOsDirectory_AutoGrants_NoChannelAsk — no channel registered; only the carve-out lets Authorize return Ok." },
+    { "id": 8, "title": "Move/Copy n + stateless branches untested", "status": "closed", "verification": "Move/Copy AnswerN (PermissionDenied + no FS mutation) and Move StatelessChannel (Data<Ask> bubble + no FS mutation) added." },
+    { "id": 9, "title": "no baseline-tests.md", "status": "closed", "verification": "coder/baseline-tests.md present, accurate against this run." }
   ],
-  "verdict": "needs-fixes",
-  "verdict_note": "All 9 findings are TEST-quality gaps — none is a code bug. codeanalyzer v3 already passed the code, and the v3 fix is correct. But the suite is dishonest in three material ways: (1) v3's entire behavioral change has zero regression protection on a security gate, (2) Move's defining behavior is unverified, (3) six PLang goals report green under permission-scenario names they do not exercise. Findings 1-3 are cheap to fix (a handful of test additions/renames) and high-value.",
-  "summary": "Clean rebuild: C# 2846/2846 pass; PLang 213 pass, 6 fail (all intentional fail-fixtures, not regressions). No regressions vs the implied baseline. Coverage on changed FS files is healthy on paper (Path.Authorize.cs 98.4%) — and that is precisely the trap: the v2 #2 fix (ValidatePath case-comparison) is 100% line- and branch-covered yet behaviorally unverified — reverting it fails nothing. Move semantics are unverified (flip isMove, suite stays green). Six of eight PLang permission .test.goal files do in-root round-trips under names that promise out-of-root/suspend/revoke/narrowing scenarios. Verdict: needs-fixes — three major false-greens plus minor weak assertions and one process violation (missing baseline-tests.md)."
+  "v5_code_review": {
+    "change": "Dropped PermissionRecord.AppId; grant identity is (Actor + Path + Verb), persisted store scoped by root directory.",
+    "assessment": "sound",
+    "reasoning": "AppId was a per-instance GUID that never survived a restart — it defeated the 'a'=always persist contract rather than adding isolation. Actor isolation still holds via name filter + signature verify; root isolation via per-root SettingsStore. Scenario4 is the regression gate."
+  },
+  "notes": [
+    { "id": "N1", "severity": "minor", "type": "misleading-comment", "test_file": "PLang.Tests/App/FileSystem/ValidatePathTests.cs", "issue": "UpperCasedRootPrefix_TreatedAsNewPath_AndRePrefixed_OnUnix docstring claims it catches a RootComparison/line-227/line-191 case regression. Mutation RootComparison->OrdinalIgnoreCase leaves it green. It actually pins the re-prefix path driven by PLangFileSystem.cs:189's plain StartsWith(RootDirectory). Valid pin, misattributed comment.", "suggestion": "Correct the docstring." },
+    { "id": "N2", "severity": "minor", "type": "defensive-code-untested", "code_file": "PLang/App/FileSystem/Default/PLangFileSystem.cs:227", "issue": "RootComparison at line 227 is gated only transitively (shared-property value pinned by the IsInRoot test). Branch analysis: path reaches line 227 either exact-root-prefixed or clearly out-of-root, so the comparison is effectively defensive. Acceptable under single-home design.", "suggestion": "Awareness only." },
+    { "id": "N3", "severity": "minor", "type": "missing-coverage", "code_file": "PLang/App/Actor/Permission/this.cs", "issue": "v5 makes the root directory the sole persistence boundary. Scenario4 pins same-root sharing; no test pins that two apps on different roots do not share a persisted grant.", "suggestion": "Optional one-test pin: two apps on distinct roots, grant on one, assert the other re-prompts." }
+  ],
+  "verdict": "pass",
+  "verdict_note": "All 9 v3 findings closed and mutation-verified — the three major false-greens each now kill a test under the mutation v3 survived. v5's AppId removal is a correct, well-scoped production change with Scenario4 as a real cross-App gate. N1-N3 are cosmetic / defensive-hardening notes, not blockers.",
+  "summary": "Clean rebuild: C# 2853/2853 pass, PLang 203/203 pass (4 intentional fail-fixtures excluded, no regressions). Mutation tests confirm F1 (RootComparison), F2 (isMove), and F4/v5 (Scenario4) are genuinely gated — each kills a test under the mutation v3 survived. v5's PermissionRecord.AppId drop reviewed as sound: AppId never survived a restart so it defeated the persist contract; actor + root scoping still isolate grants. Verdict: pass."
 }

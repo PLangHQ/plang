@@ -41,3 +41,34 @@ Self-owning:
 
 Litmus test: count private static helpers in the calling class. Each one is suspicious — it's a method that didn't make it onto the right type.
 ```
+
+## tester — v1 — 2026-05-21
+**Target:** `CLAUDE.md` — new subsection under "## Running plang Tests" (or a standalone "## Mutation Testing" section).
+**Why:** During the v4 tester review, the tester edited production source three times (`Path.cs` `RootComparison`, `Path.Operations.cs` `isMove`, `Actor/Permission/this.cs` `Find`) as mutation tests — deliberately breaking behavior to confirm a test dies, then reverting. This is a core, legitimate tester technique and the edits were reverted immediately (`git status` clean, nothing committed). But Ingi saw the edits land mid-review and asked, alarmed, "why are you changing code?". The technique is sound; the problem is it is *silent* — a source edit to a security-relevant file looks identical to an accidental or unauthorized change until you read the surrounding context. A one-line announcement before the first mutation removes the alarm with zero cost. Filed at Ingi's explicit request.
+**Proposed change:**
+
+Add a new subsection to `CLAUDE.md`:
+
+```markdown
+## Mutation Testing (announce first)
+
+Before editing production source to run a mutation/deletion test — deliberately
+breaking behavior to confirm a test catches it — say so in plain text first:
+
+> **Mutation test:** about to temporarily edit `<file>` (`<what changes>`) to
+> verify `<which test/finding>`. Will revert immediately; nothing committed.
+
+This is a legitimate and expected technique (testers, reviewers). The
+announcement exists only so a watching human never has to wonder whether a
+source edit to a security-relevant file is intentional. Rules:
+
+- Announce **once** before a batch of mutations, not per file.
+- Always revert before moving on; end with `git status` clean.
+- Never commit a mutation — source stays untouched in the final diff.
+```
+
+---
+**Footnote (reviewer-bot exception):** Per CLAUDE.md, reviewer bots (tester) do
+not propose CLAUDE.md changes on their own. This proposal is filed under the
+stated exception — explicit user request after a real incident on the branch
+(Ingi asked for it directly after being surprised by a mid-review source edit).
