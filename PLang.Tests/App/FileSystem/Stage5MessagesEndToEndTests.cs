@@ -119,7 +119,7 @@ public class Stage5MessagesEndToEndTests
         var asksBeforeRevoke = ch.AskCount;
 
         // Revoke the persisted grant.
-        var permission = new PermissionRecord(app.Id, app.User.Name, path.Absolute, new Verb(), MatchMode.Exact);
+        var permission = new PermissionRecord(app.Id, app.User.Name, path.Absolute, Verb.AllowAll(), MatchMode.Exact);
         await app.User.Permission.Revoke(permission);
 
         await path.ReadText();              // fresh prompt fires

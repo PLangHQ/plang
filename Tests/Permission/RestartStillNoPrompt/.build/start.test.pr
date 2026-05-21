@@ -30,7 +30,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Save literal \u0027persisted-content\u0027 to fixture.txt. This is the persistence write step.",
+      "guidance": "Persist the literal string \u0027persisted-content\u0027 to fixture.txt using file.save. The @known mapping indicates this exact step compiles to a single file.save action.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -88,9 +88,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Read fixture.txt (no variable resolution) and store the result into %content%.",
+      "guidance": "Read fixture.txt and write its content into %content%. The @known mapping specifies ResolveVariables=false and then variable.set %content%.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -122,9 +122,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %content% equals the expected string.",
+      "guidance": "Post-condition check: assert %content% equals \u0027persisted-content\u0027. The @known mapping specifies assert.equals with Expected as the literal and Actual as %content%.",
       "level": "high",
-      "confidence": 99,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

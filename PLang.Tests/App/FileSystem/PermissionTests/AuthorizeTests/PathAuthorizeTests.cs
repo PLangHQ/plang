@@ -57,7 +57,7 @@ public class PathAuthorizeTests
         var path = new Path("/p", ctx);
 
         // Pre-seed a grant covering the request.
-        var grant = new PermissionRecord(app.Id, app.User.Name, "/p", new Verb(), MatchMode.Exact);
+        var grant = new PermissionRecord(app.Id, app.User.Name, "/p", Verb.AllowAll(), MatchMode.Exact);
         var grantData = new global::App.Data.@this<PermissionRecord>("", grant) { Context = ctx };
         await app.User.Permission.Add(grantData);
 
@@ -159,7 +159,7 @@ public class PathAuthorizeTests
 
     [Test] public async Task PermissionDenied_Error_RoundTripsThroughErrorShape()
     {
-        var perm = new PermissionRecord("app1", "user", "/p", new Verb(), MatchMode.Exact);
+        var perm = new PermissionRecord("app1", "user", "/p", Verb.AllowAll(), MatchMode.Exact);
         var err = new global::App.Errors.PermissionDenied(perm);
         await Assert.That(err.Key).IsEqualTo("PermissionDenied");
         await Assert.That(err.StatusCode).IsEqualTo(403);

@@ -141,6 +141,18 @@ Logger
 
 reaches the original entry-point streams, not the overlay that fired the goal-channel — preventing infinite recursion if the same name is later re-registered, and giving fan-out via composition for free (a `logger` goal-channel can write through `output` and also append to a file).
 
+**`%!data%` lifetime inside a goal-channel:** the channel sets `%!data%` once before the goal runs, but every action's result is also aliased there (the "current step data" convention). After the first step runs, `%!data%` no longer holds the channel input — it holds whatever the prior step returned. **If the goal needs the channel input across multiple steps, capture it into a local at the top:**
+
+```plang
+VerbBasedAnswerer
+- set %access% = %!data%      /// stable snapshot of the channel input
+- if %access% contains 'write' then return "y"
+- if %access% contains 'read'  then return "a"
+- return "n"
+```
+
+The Logger one-liner above works because it reads `%!data%` exactly once.
+
 #### `Channel.Events.@this`
 
 Per-channel binding list with its own lock and an AsyncLocal "this binding is already firing" recursion guard. The cross-source firing orchestration (per-channel → per-actor → app-level) lives on `Channel.@this`; this type owns the per-channel slice. Same shape spirit as `Goal.Events` / `Step.Events`: the type that owns the data also owns its access rules.

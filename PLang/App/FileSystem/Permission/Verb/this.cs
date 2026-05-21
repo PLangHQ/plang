@@ -1,16 +1,30 @@
 namespace App.FileSystem.Permission.Verb;
 
 /// <summary>
-/// Container for verb sub-records. Default ctor → all three verbs fully granted
-/// (Read, Write, Delete with all sub-options true). Narrow by record-with:
-/// <c>new @this { Write = new Write(Overwrite: false) }</c> or set to null to
-/// deny the verb entirely.
+/// Container for verb sub-records.
+///
+/// <b>Default ctor</b> (<c>new @this()</c>) → all three verbs null. Set the
+/// specific verb(s) you want: <c>new @this { Read = new Read() }</c>. This
+/// is what JSON survives (<c>JsonIgnoreCondition.WhenWritingNull</c> on the
+/// Plang serializer means non-set verbs are omitted from the wire and stay
+/// null on deserialize — signature bytes survive sqlite round-trip).
+///
+/// For "fully granted" grants, use <see cref="AllowAll"/> which sets all
+/// three sub-verbs at their default-true options.
 /// </summary>
 public sealed record @this
 {
-    public Read? Read { get; init; } = new Read();
-    public Write? Write { get; init; } = new Write();
-    public Delete? Delete { get; init; } = new Delete();
+    public Read? Read { get; init; }
+    public Write? Write { get; init; }
+    public Delete? Delete { get; init; }
+
+    /// <summary>
+    /// "Fully granted" — all three verbs at their default-true options. Use
+    /// when the grant covers everything for a path (e.g. test fixtures,
+    /// blanket grants). Requests narrow naturally by setting one verb.
+    /// </summary>
+    public static @this AllowAll() =>
+        new() { Read = new Read(), Write = new Write(), Delete = new Delete() };
 
     public bool Covers(@this request)
     {

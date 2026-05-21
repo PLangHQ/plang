@@ -62,21 +62,28 @@ public class VerbCoversTests
         await Assert.That(grant.Covers(new Delete())).IsFalse();
     }
 
-    [Test] public async Task VerbCovers_AllNullSubVerbs_DoesNotCoverAnyVerbRequest()
+    [Test] public async Task VerbCovers_AllNullGrant_DoesNotCoverAnyVerbRequest()
     {
-        var grant = new Verb { Read = null, Write = null, Delete = null };
-        await Assert.That(grant.Covers(new Verb())).IsFalse();
+        var grant = new Verb(); // default: all null
+        var request = new Verb { Read = new Read() };
+        await Assert.That(grant.Covers(request)).IsFalse();
     }
 
-    [Test] public async Task VerbCovers_DefaultCtorCoversDefaultCtor()
+    [Test] public async Task VerbCovers_AllNullGrant_CoversAllNullRequest()
     {
+        // Both empty (no constraints either way) → trivially covered.
         await Assert.That(new Verb().Covers(new Verb())).IsTrue();
+    }
+
+    [Test] public async Task VerbCovers_AllowAll_CoversAllowAll()
+    {
+        await Assert.That(Verb.AllowAll().Covers(Verb.AllowAll())).IsTrue();
     }
 
     [Test] public async Task VerbCovers_ReadOnlyGrant_DoesNotCoverWriteRequest()
     {
-        var grant = new Verb { Read = new Read(), Write = null, Delete = null };
-        var request = new Verb { Read = null, Write = new Write(), Delete = null };
+        var grant = new Verb { Read = new Read() };
+        var request = new Verb { Write = new Write() };
         await Assert.That(grant.Covers(request)).IsFalse();
     }
 }

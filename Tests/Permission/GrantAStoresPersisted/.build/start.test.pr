@@ -69,7 +69,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the literal string \u0027permission-flow-content\u0027 to the real out-of-root path //tmp/plang-perm-out.txt.",
+      "guidance": "file.save to the absolute out-of-root path //tmp/plang-perm-out.txt with literal content permission-flow-content.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -91,15 +91,14 @@
               "name": "Path",
               "value": "//tmp/plang-perm-out.txt",
               "type": "path"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "resolvevariables",
+              "name": "ResolveVariables",
               "value": false,
               "type": "bool"
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -128,9 +127,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Read the file from //tmp/plang-perm-out.txt and store its content into %content%.",
+      "guidance": "Reads the absolute file path //tmp/plang-perm-out.txt and stores its content into %content% via variable.set. ResolveVariables is false per @known.",
       "level": "high",
-      "confidence": 93,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -162,9 +161,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: assert that %content% equals the expected string.",
+      "guidance": "Post-condition assertion that %content% equals the expected literal string.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

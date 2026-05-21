@@ -22,7 +22,7 @@ public class ActorPermissionStorageTests
     private static global::App.Data.@this<PermissionRecord> Grant(
         global::App.@this app, string actor, string path, Verb? verb = null, MatchMode match = MatchMode.Exact)
     {
-        var p = new PermissionRecord(app.Id, actor, path, verb ?? new Verb(), match);
+        var p = new PermissionRecord(app.Id, actor, path, verb ?? Verb.AllowAll(), match);
         return new global::App.Data.@this<PermissionRecord>("", p) { Context = app.User.Context };
     }
 
@@ -86,7 +86,7 @@ public class ActorPermissionStorageTests
     [Test] public async Task VerbNarrowing_ReadOnlyGrant_DoesNotCoverDeleteRequest()
     {
         var app = NewApp();
-        var readOnly = new Verb { Read = new Read(), Write = null, Delete = null };
+        var readOnly = new Verb { Read = new Read() };
         var grant = Grant(app, app.User.Name, "/p", verb: readOnly);
         await app.User.Permission.Add(grant);
 
@@ -144,7 +144,7 @@ public class ActorPermissionStorageTests
         grant.EnsureSigned();
         // Tamper the path post-signing — signature no longer covers payload.
         var tampered = new global::App.Data.@this<PermissionRecord>("",
-            new PermissionRecord(app.Id, app.User.Name, "/different", new Verb(), MatchMode.Exact))
+            new PermissionRecord(app.Id, app.User.Name, "/different", Verb.AllowAll(), MatchMode.Exact))
         { Context = app.User.Context, Signature = grant.Signature };
         await app.User.Permission.Add(tampered);
 

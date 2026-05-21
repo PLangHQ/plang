@@ -1,0 +1,281 @@
+{
+  "name": "VerbBasedAnswerer",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %access% = %!data%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "%!data% is overwritten by every action\u0027s result, so capture the channel\ninput (the question text) into a local %access% first. Subsequent steps\nbranch on %access% \u2014 stable for the whole goal.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%access%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Store the current step input (%!data%) into a stable local variable %access% so later steps can branch consistently.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %access% contains \u0027write\u0027 then return \u0022y\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%access%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "contains",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": "write",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "return",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "y",
+              "type": "object"
+            },
+            {
+              "name": "Depth",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "If %access% contains \u0027write\u0027, return \u0022y\u0022 from the goal.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "if %access% contains \u0027delete\u0027 then return \u0022n\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%access%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "contains",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": "delete",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "return",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "n",
+              "type": "object"
+            },
+            {
+              "name": "Depth",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "If %access% contains \u0027delete\u0027, return \u0022n\u0022 from the goal.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "if %access% contains \u0027read\u0027 then return \u0022a\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%access%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "contains",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": "read",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "return",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "a",
+              "type": "object"
+            },
+            {
+              "name": "Depth",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "If %access% contains \u0027read\u0027, return \u0022a\u0022 from the goal.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "return \u0022n\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "return",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "n",
+              "type": "object"
+            },
+            {
+              "name": "Depth",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Default return \u0022n\u0022 when none of the contains checks matched.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Authorize/StatefulAuthorizeGrantsAndContinues/VerbBasedAnswerer.goal",
+  "prPath": "/Authorize/StatefulAuthorizeGrantsAndContinues/.build/verbbasedanswerer.pr",
+  "hash": "affd4c92aba9a12d7fedd6526dbeb8a8340532fd2331197bae3edd951892d84c",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

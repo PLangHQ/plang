@@ -64,9 +64,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Return early from the current goal with the constant value \u0022a\u0022.",
+      "guidance": "Return early from the current goal with Data set to the literal string \u0022a\u0022.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true

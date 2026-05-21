@@ -14,10 +14,10 @@ namespace PLang.Tests.App.FileSystem.PermissionTests;
 public class PermissionCoversTests
 {
     private static Permission Grant(string path, Match match, Verb? verb = null) =>
-        new("app1", "user", path, verb ?? new Verb(), match);
+        new("app1", "user", path, verb ?? Verb.AllowAll(), match);
 
     private static Permission Request(string path, Verb? verb = null) =>
-        new("app1", "user", path, verb ?? new Verb(), Match.Exact);
+        new("app1", "user", path, verb ?? Verb.AllowAll(), Match.Exact);
 
     [Test] public async Task ExactMatch_EqualPath_Covers()
     {
@@ -70,14 +70,14 @@ public class PermissionCoversTests
 
     [Test] public async Task SameRecordShape_GrantRoleAndRequestRole_BothLegible()
     {
-        var grant = new Permission("app1", "user", "/apps/*/file.txt", new Verb(), Match.Glob);
-        var request = new Permission("app1", "user", "/apps/Email/file.txt", new Verb(), Match.Exact);
+        var grant = new Permission("app1", "user", "/apps/*/file.txt", Verb.AllowAll(), Match.Glob);
+        var request = new Permission("app1", "user", "/apps/Email/file.txt", Verb.AllowAll(), Match.Exact);
         await Assert.That(grant.Covers(request)).IsTrue();
     }
 
     [Test] public async Task JsonRoundTrip_PermissionRecord_RoundTripsEqual()
     {
-        var original = new Permission("app1", "user", "/p", new Verb(), Match.Glob);
+        var original = new Permission("app1", "user", "/p", Verb.AllowAll(), Match.Glob);
         var json = JsonSerializer.Serialize(original);
         var roundtripped = JsonSerializer.Deserialize<Permission>(json);
         await Assert.That(roundtripped).IsEqualTo(original);

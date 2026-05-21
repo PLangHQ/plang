@@ -88,7 +88,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Read fixture.txt without resolving %var% patterns, then store the read content into runtime variable %first%.",
+      "guidance": "Read fixture.txt (no variable resolution) and store the result into %first% via variable.set.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -146,7 +146,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Read fixture.txt without resolving %var% patterns, then store the read content into runtime variable %second%.",
+      "guidance": "Read fixture.txt (no variable resolution) and store the result into %second% via variable.set.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -180,9 +180,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: ensure %first% equals %second%.",
+      "guidance": "Post-condition invariant: assert that %first% equals %second%.",
       "level": "high",
-      "confidence": 97,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
