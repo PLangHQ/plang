@@ -1,6 +1,7 @@
 Start
-/ Stage 2a — Cross-goal continuation. Start calls AskAQuestion; AskAQuestion
-/ suspends inside its own ask step. After resume with !ask.answer="Alice",
-/ AskAQuestion finishes, control unwinds to Start, "%answer%" prints.
-/ Final output across capture+resume: "Hello\nAsking\nAlice".
-- throw "not implemented"
+/ Stage 2a — Cross-goal continuation. Start calls AskAQuestion; the sub-goal
+/ runs ask (sentinel-bound to "Alice"), %answer% binds across the call
+/ boundary, Start asserts on return.
+- set %!ask.answer% = "Alice"
+- call AskAQuestion
+- assert %answer% equals "Alice"

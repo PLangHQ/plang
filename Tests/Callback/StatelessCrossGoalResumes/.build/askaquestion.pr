@@ -1,0 +1,81 @@
+{
+  "name": "AskAQuestion",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "output.ask question=\u0022name?\u0022, write to %answer%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Helper sub-goal called from Start. With %!ask.answer% pre-bound, ask\nconsumes the sentinel and writes %answer% \u2014 visible to Start across the\ncall boundary.",
+      "actions": [
+        {
+          "module": "output",
+          "action": "ask",
+          "parameters": [
+            {
+              "name": "Question",
+              "value": "name?",
+              "type": "string",
+              "snapshot": null
+            },
+            {
+              "name": "Variables",
+              "value": null,
+              "type": "object",
+              "snapshot": null
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%answer%",
+              "type": "variable",
+              "snapshot": null
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object",
+              "snapshot": null
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool",
+              "snapshot": null
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use output.ask to request input from the actor. The step text specifies the question \u0027name?\u0027 and directs the result into %answer%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/StatelessCrossGoalResumes/AskAQuestion.goal",
+  "prPath": "/StatelessCrossGoalResumes/.build/askaquestion.pr",
+  "hash": "b10f855a7b868c9f3b1a85b15c3b2eacd9e83b2d2d5242664f6b141d89b8201f",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

@@ -17,19 +17,22 @@
             {
               "name": "Name",
               "value": "%userId%",
-              "type": "variable"
+              "type": "variable",
+              "snapshot": null
             },
             {
               "name": "Value",
               "value": "u-42",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": "bool",
+              "snapshot": null
             }
           ],
           "modifiers": []
@@ -57,7 +60,8 @@
             {
               "name": "Question",
               "value": "what\u0027s your name?",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             },
             {
               "name": "Variables",
@@ -67,7 +71,8 @@
                   "type": "variable"
                 }
               ],
-              "type": "list\u003Cvariable\u003E"
+              "type": "list\u003Cvariable\u003E",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -80,19 +85,22 @@
             {
               "name": "Name",
               "value": "%askResult%",
-              "type": "variable"
+              "type": "variable",
+              "snapshot": null
             },
             {
               "name": "Value",
               "value": "%__data__%",
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": "bool",
+              "snapshot": null
             }
           ],
           "modifiers": []
@@ -120,12 +128,14 @@
             {
               "name": "Value",
               "value": "%askResult%",
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             },
             {
               "name": "Message",
               "value": "askResult must not be null",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             }
           ],
           "defaults": null,

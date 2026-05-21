@@ -17,14 +17,16 @@
             {
               "name": "Message",
               "value": "boom",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             }
           ],
           "defaults": [
             {
               "name": "statuscode",
               "value": 500,
-              "type": "int"
+              "type": "int",
+              "snapshot": null
             }
           ],
           "modifiers": [
@@ -52,14 +54,16 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list\u003Caction\u003E",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "ignoreerror",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -89,12 +93,14 @@
             {
               "name": "Value",
               "value": "%ranCallback%",
-              "type": "bool"
+              "type": "bool",
+              "snapshot": null
             },
             {
               "name": "Message",
               "value": "callback dispatch should have completed",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -102,9 +108,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: %ranCallback% must be true after the on-error callback dispatch path completes.",
+      "guidance": "Post-condition assertion that the callback dispatch completed. Use assert.isTrue on %ranCallback%.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -130,19 +136,22 @@
                 {
                   "name": "Name",
                   "value": "%cb%",
-                  "type": "variable"
+                  "type": "variable",
+                  "snapshot": null
                 },
                 {
                   "name": "Value",
                   "value": "%!error.callback%",
-                  "type": "object"
+                  "type": "object",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -172,7 +181,8 @@
                   "value": {
                     "callback": "%cb%"
                   },
-                  "type": "object"
+                  "type": "object",
+                  "snapshot": null
                 }
               ],
               "defaults": null,
@@ -184,7 +194,8 @@
                     {
                       "name": "IgnoreError",
                       "value": true,
-                      "type": "bool"
+                      "type": "bool",
+                      "snapshot": null
                     }
                   ],
                   "defaults": null,
@@ -194,9 +205,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Run the callback. The step text says \u0027on error ignore\u0027, so wrap the callback.run with error.handle IgnoreError=true.",
-          "level": "medium",
-          "confidence": 55,
+          "guidance": "Run the provided callback (%cb%) and ignore any error from the callback execution. The step text indicates the callback is passed as the \u0027callback\u0027 field.",
+          "level": "high",
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -215,26 +226,29 @@
                 {
                   "name": "Name",
                   "value": "%ranCallback%",
-                  "type": "variable"
+                  "type": "variable",
+                  "snapshot": null
                 },
                 {
                   "name": "Value",
                   "value": true,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
             }
           ],
           "intent": null,
-          "guidance": "Mark that the callback was executed by setting %ranCallback% to true.",
+          "guidance": "Set %ranCallback% to true to record that the callback was executed (or at least attempted).",
           "level": "high",
           "confidence": 95,
           "formal": null,

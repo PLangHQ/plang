@@ -17,19 +17,22 @@
             {
               "name": "Name",
               "value": "%x%",
-              "type": "variable"
+              "type": "variable",
+              "snapshot": null
             },
             {
               "name": "Value",
               "value": 1,
-              "type": "int"
+              "type": "int",
+              "snapshot": null
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": "bool",
+              "snapshot": null
             }
           ],
           "modifiers": []
@@ -57,12 +60,14 @@
             {
               "name": "Message",
               "value": "boom",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             },
             {
               "name": "StatusCode",
               "value": 500,
-              "type": "int"
+              "type": "int",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -84,21 +89,24 @@
                             "name": "CaptureAndRecover",
                             "parameters": []
                           },
-                          "type": "goal.call"
+                          "type": "goal.call",
+                          "snapshot": null
                         }
                       ],
                       "defaults": null,
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list\u00601",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "ignoreerror",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -107,9 +115,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw an error with message \u0022boom\u0022. The step text says \u0027on error call CaptureAndRecover\u0027, so wrap the throw with error.handle that runs a recovery action chain calling the goal CaptureAndRecover.",
-      "level": "medium",
-      "confidence": 62,
+      "guidance": "Throw an error with message \u0022boom\u0022 and status code 500. The step text says \u0027on error call CaptureAndRecover\u0027, so compile as error.throw wrapped with error.handle that runs a recovery action chain calling the goal CaptureAndRecover.",
+      "level": "high",
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -128,17 +136,20 @@
             {
               "name": "Expected",
               "value": 2,
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             },
             {
               "name": "Actual",
               "value": "%x%",
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             },
             {
               "name": "Message",
               "value": "live x should be 2 after recovery",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -146,9 +157,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: after recovery, live %x% should equal 2. Use assert.equals.",
+      "guidance": "Post-condition assertion that live %x% equals 2 after recovery.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -167,7 +178,8 @@
             {
               "name": "Value",
               "value": "%callbackPresent%",
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -175,7 +187,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: %callbackPresent% should be true. Use assert.isTrue.",
+      "guidance": "Post-condition assertion that %callbackPresent% is true (callback snapshot should exist).",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -203,19 +215,22 @@
                 {
                   "name": "Name",
                   "value": "%cb%",
-                  "type": "variable"
+                  "type": "variable",
+                  "snapshot": null
                 },
                 {
                   "name": "Value",
                   "value": "%!error.callback%",
-                  "type": "object"
+                  "type": "object",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -243,19 +258,22 @@
                 {
                   "name": "Name",
                   "value": "%callbackPresent%",
-                  "type": "variable"
+                  "type": "variable",
+                  "snapshot": null
                 },
                 {
                   "name": "Value",
                   "value": true,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -283,12 +301,14 @@
                 {
                   "name": "Value",
                   "value": "%cb%",
-                  "type": "object"
+                  "type": "object",
+                  "snapshot": null
                 },
                 {
                   "name": "Message",
                   "value": "Expected %cb% to be not null",
-                  "type": "string"
+                  "type": "string",
+                  "snapshot": null
                 }
               ],
               "defaults": null,
@@ -317,28 +337,31 @@
                 {
                   "name": "Name",
                   "value": "%x%",
-                  "type": "variable"
+                  "type": "variable",
+                  "snapshot": null
                 },
                 {
                   "name": "Value",
                   "value": 2,
-                  "type": "int"
+                  "type": "int",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
             }
           ],
           "intent": null,
-          "guidance": "Set %x% to numeric value 2.",
+          "guidance": "Set runtime variable %x% to integer 2.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 99,
           "formal": null,
           "source": null,
           "waitForExecution": true

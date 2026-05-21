@@ -1,0 +1,132 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %!ask.answer% = \u0022Alice\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Stage 2a \u2014 Cross-goal continuation. Start calls AskAQuestion; the sub-goal\nruns ask (sentinel-bound to \u0022Alice\u0022), %answer% binds across the call\nboundary, Start asserts on return.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%!ask.answer%",
+              "type": "variable",
+              "snapshot": null
+            },
+            {
+              "name": "Value",
+              "value": "Alice",
+              "type": "string",
+              "snapshot": null
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool",
+              "snapshot": null
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Bind the ask sentinel variable %!ask.answer% to the string \u0027Alice\u0027 so the called goal can use it.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call AskAQuestion",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "AskAQuestion",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call",
+              "snapshot": null
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Call the cross-goal sub-goal AskAQuestion. No parameters are provided in the step text; parallel is false per @known metadata.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %answer% equals \u0022Alice\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "Alice",
+              "type": "string",
+              "snapshot": null
+            },
+            {
+              "name": "Actual",
+              "value": "%answer%",
+              "type": "object",
+              "snapshot": null
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: verify %answer% equals the expected string \u0022Alice\u0022 after AskAQuestion returns.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/StatelessCrossGoalResumes/Start.test.goal",
+  "prPath": "/StatelessCrossGoalResumes/.build/start.test.pr",
+  "hash": "5890941f04b48b8a027bd284556322a93e86337d1748be2cd7fd942d63931e8e",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

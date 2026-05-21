@@ -17,28 +17,31 @@
             {
               "name": "Name",
               "value": "%notACallback%",
-              "type": "variable"
+              "type": "variable",
+              "snapshot": null
             },
             {
               "name": "Value",
               "value": 42,
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": "bool",
+              "snapshot": null
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Set %notACallback% to 42 so callback.run receives a non-ICallback value. This step is annotated @known, so reuse the prior mapping exactly.",
+      "guidance": "Initialize %notACallback% to 42. This is a variable assignment; no callback execution yet.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -59,7 +62,8 @@
               "value": {
                 "callback": "%notACallback%"
               },
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -71,7 +75,8 @@
                 {
                   "name": "Key",
                   "value": "TypeError",
-                  "type": "string"
+                  "type": "string",
+                  "snapshot": null
                 },
                 {
                   "name": "Actions",
@@ -85,21 +90,24 @@
                           "value": {
                             "name": "HandleTypeError"
                           },
-                          "type": "goal.call"
+                          "type": "goal.call",
+                          "snapshot": null
                         }
                       ],
                       "defaults": null,
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list\u00601",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "ignoreerror",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -108,9 +116,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Run callback.run using %notACallback% as the callback input. If a typed TypeError occurs, handle it by calling the goal HandleTypeError. The step is annotated @known, so reuse the prior mapping exactly.",
+      "guidance": "callback.run using %notACallback% as the callback input. The step specifies on error call HandleTypeError; map to error.handle with Key TypeError and recovery Actions containing a goal.call to HandleTypeError.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -129,12 +137,14 @@
             {
               "name": "Value",
               "value": "%typeErrorSeen%",
-              "type": "bool"
+              "type": "bool",
+              "snapshot": null
             },
             {
               "name": "Message",
               "value": "on-error handler should have run",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -142,7 +152,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert that %typeErrorSeen% is true, confirming the on-error handler executed. The step is annotated @known, so reuse the prior mapping exactly.",
+      "guidance": "Post-condition assertion that %typeErrorSeen% is true, indicating the on-error handler ran.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -170,19 +180,22 @@
                 {
                   "name": "Name",
                   "value": "%typeErrorSeen%",
-                  "type": "variable"
+                  "type": "variable",
+                  "snapshot": null
                 },
                 {
                   "name": "Value",
                   "value": true,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -210,17 +223,20 @@
                 {
                   "name": "Expected",
                   "value": "TypeError",
-                  "type": "string"
+                  "type": "string",
+                  "snapshot": null
                 },
                 {
                   "name": "Actual",
                   "value": "%!error.Key%",
-                  "type": "object"
+                  "type": "object",
+                  "snapshot": null
                 },
                 {
                   "name": "Message",
                   "value": "Expected error key to be TypeError",
-                  "type": "string"
+                  "type": "string",
+                  "snapshot": null
                 }
               ],
               "defaults": null,
@@ -228,7 +244,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Post-condition assertion: verify the runtime error key variable %!error.Key% equals the expected string \u0022TypeError\u0022. This must fail the step if the values differ.",
+          "guidance": "Post-condition assertion: verify the runtime error key equals the literal string \u0022TypeError\u0022. Uses assert.equals with Expected and Actual bound to %!error.Key%.",
           "level": "high",
           "confidence": 98,
           "formal": null,

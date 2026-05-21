@@ -17,12 +17,14 @@
             {
               "name": "Message",
               "value": "boom",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             },
             {
               "name": "StatusCode",
               "value": 500,
-              "type": "int"
+              "type": "int",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -44,21 +46,24 @@
                             "name": "HandleErrorCallback",
                             "parameters": []
                           },
-                          "type": "goal.call"
+                          "type": "goal.call",
+                          "snapshot": null
                         }
                       ],
                       "defaults": null,
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list\u00601",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "ignoreerror",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -67,9 +72,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw an error with message \u0022boom\u0022. The step text specifies an on-error handler that should run next.",
+      "guidance": "throw error \u0027boom\u0027 with default status code 500, then handle the error by running a recovery action chain that calls the goal HandleErrorCallback.",
       "level": "high",
-      "confidence": 70,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -88,12 +93,14 @@
             {
               "name": "Value",
               "value": "%callbackSeen%",
-              "type": "bool"
+              "type": "bool",
+              "snapshot": null
             },
             {
               "name": "Message",
               "value": "on-error handler should have run and read callback",
-              "type": "string"
+              "type": "string",
+              "snapshot": null
             }
           ],
           "defaults": null,
@@ -129,19 +136,22 @@
                 {
                   "name": "Name",
                   "value": "%cb%",
-                  "type": "variable"
+                  "type": "variable",
+                  "snapshot": null
                 },
                 {
                   "name": "Value",
                   "value": "%!error.callback%",
-                  "type": "object"
+                  "type": "object",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []
@@ -169,12 +179,14 @@
                 {
                   "name": "Value",
                   "value": "%cb%",
-                  "type": "object"
+                  "type": "object",
+                  "snapshot": null
                 },
                 {
                   "name": "Message",
                   "value": "Error callback must be set",
-                  "type": "string"
+                  "type": "string",
+                  "snapshot": null
                 }
               ],
               "defaults": null,
@@ -203,19 +215,22 @@
                 {
                   "name": "Name",
                   "value": "%callbackSeen%",
-                  "type": "variable"
+                  "type": "variable",
+                  "snapshot": null
                 },
                 {
                   "name": "Value",
                   "value": true,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool"
+                  "type": "bool",
+                  "snapshot": null
                 }
               ],
               "modifiers": []

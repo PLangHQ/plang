@@ -17,19 +17,22 @@
             {
               "name": "Name",
               "value": "%callbackOutsideScope%",
-              "type": "variable"
+              "type": "variable",
+              "snapshot": null
             },
             {
               "name": "Value",
               "value": "%!error.callback%",
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool"
+              "type": "bool",
+              "snapshot": null
             }
           ],
           "modifiers": []
@@ -57,11 +60,13 @@
             {
               "name": "Value",
               "value": "%callbackOutsideScope%",
-              "type": "object"
+              "type": "object",
+              "snapshot": null
             },
             {
               "name": "Message",
-              "value": null
+              "value": null,
+              "snapshot": null
             }
           ],
           "defaults": null,
