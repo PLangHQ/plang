@@ -96,7 +96,7 @@ public sealed class AskCallback : ICallback
         // Dispatch the original action through the live execution path. The resumed run
         // lands at Position; the ask handler sees !ask.answer and short-circuits to it
         // instead of issuing a fresh ask.
-        return await ctx.App.Run(Position.Action, ctx);
+        return await Position.Action.RunAsync(ctx);
     }
 
     // --- Wire shapes ---

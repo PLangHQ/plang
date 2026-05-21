@@ -57,7 +57,11 @@ public sealed class @this
                 if (goal == null || !goal.IsSetup) continue;
 
                 foreach (var step in goal.Steps)
+                {
                     step.Goal = goal;
+                    foreach (var action in step.Actions)
+                        action.Synthetic = false;
+                }
 
                 _goals.Add(goal);
             }

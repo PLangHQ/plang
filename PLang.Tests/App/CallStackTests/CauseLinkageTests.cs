@@ -20,7 +20,7 @@ public class CauseLinkageTests
         // We push directly with cause to confirm the field wires.
         var stack3 = new CallStack();
         await using var top = stack3.Push(MakeAction("Top"));
-        await using var recoveryDispatch = stack3.Push(MakeAction("Recovery"), cause: failing);
+        await using var recoveryDispatch = stack3.Push(MakeAction("Recovery"));
         await Assert.That(recoveryDispatch.Cause).IsEqualTo(failing);
     }
 
@@ -43,7 +43,7 @@ public class CauseLinkageTests
         // Pop errored. After this `await using var`, _current rewinds to goalCall.
         await erroredHandle.DisposeAsync();
         // Now push a recovery body action: Caller is goal, Cause is the errored sibling.
-        await using var recovery = stack.Push(MakeAction("Recovery"), cause: erroredHandle);
+        await using var recovery = stack.Push(MakeAction("Recovery"));
         await Assert.That(recovery.Caller).IsEqualTo(goalCall);
         await Assert.That(recovery.Cause).IsEqualTo(erroredHandle);
         await Assert.That(recovery.Caller).IsNotEqualTo(recovery.Cause);
@@ -56,7 +56,7 @@ public class CauseLinkageTests
         await using var goalCall = stack.Push(MakeAction("Goal"));
         var erroredHandle = stack.Push(MakeAction("Errored"));
         await erroredHandle.DisposeAsync();
-        await using var recovery = stack.Push(MakeAction("Recovery"), cause: erroredHandle);
+        await using var recovery = stack.Push(MakeAction("Recovery"));
 
         // After the errored Call's Dispose, the recovery's Cause still points to it.
         await Assert.That(recovery.Cause).IsNotNull();
@@ -70,7 +70,7 @@ public class CauseLinkageTests
         await using var goalCall = stack.Push(MakeAction("Goal"));
         var erroredHandle = stack.Push(MakeAction("Errored"));
         await erroredHandle.DisposeAsync();
-        await using var recovery = stack.Push(MakeAction("Recovery"), cause: erroredHandle);
+        await using var recovery = stack.Push(MakeAction("Recovery"));
 
         var chain = recovery.SnapshotChain();
         // Chain walks Caller only — [recovery, goalCall]. Cause-linked errored is NOT in it.

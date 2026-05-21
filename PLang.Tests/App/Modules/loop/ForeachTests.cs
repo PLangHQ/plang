@@ -58,7 +58,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("itemname", "%item%"));
-        var result = await _app.Run(action, context);
+        var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
@@ -167,7 +167,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", null), ("itemname", "%item%"));
-        var result = await _app.Run(action, context);
+        var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;
@@ -187,7 +187,7 @@ public class ForeachTests
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", "%items%"), ("itemname", "%item%"));
-        var result = await _app.Run(action, context);
+        var result = await action.RunAsync(context);
 
         await Assert.That(result.Success).IsTrue();
         var loopResult = result.Value as LoopResult;

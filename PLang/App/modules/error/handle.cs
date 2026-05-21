@@ -178,7 +178,7 @@ public partial class Handle : IContext, IModifier
         {
             if (action.Step == null && enclosingStep != null)
                 action.Step = enclosingStep;
-            last = await action.RunAsync(context, cause);
+            last = await action.RunAsync(context);
             if (!last.Success) return last;
         }
         return last;

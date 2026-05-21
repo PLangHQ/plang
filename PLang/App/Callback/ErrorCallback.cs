@@ -74,7 +74,7 @@ public sealed class ErrorCallback : ICallback
         _position = bottom;
 
         // Re-execute the failing action — bind already happened via Restore (Variables section).
-        return await ctx.App.Run(bottom.Action, ctx);
+        return await bottom.Action.RunAsync(ctx);
     }
 
     // --- Snapshot.@this wire shape ---

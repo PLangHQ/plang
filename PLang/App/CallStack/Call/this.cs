@@ -72,6 +72,14 @@ public sealed partial class @this : IAsyncDisposable
     public bool Handled { get; set; }
 
     /// <summary>
+    /// Mirror of <see cref="Action.@this.Synthetic"/> stamped at Push time. False
+    /// for PR-built actions (the wire-restorable case); true for C#-composed
+    /// actions. Snapshot wire-serialisation filters synthetic frames out since
+    /// they're recreated naturally by the resumed execution.
+    /// </summary>
+    public bool Synthetic { get; }
+
+    /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
     /// <see cref="Children.@this"/>. Allocated lazily via the constructor below so the
     /// back-reference to the parent CallStack is set before any Add can land.
@@ -111,7 +119,6 @@ public sealed partial class @this : IAsyncDisposable
     internal @this(
         ActionEntity action,
         @this? caller,
-        @this? cause,
         App.CallStack.@this stack,
         Flags flags,
         @this? previousCurrent,
@@ -120,7 +127,8 @@ public sealed partial class @this : IAsyncDisposable
         Id = Guid.NewGuid().ToString("N")[..8];
         Action = action;
         Caller = caller;
-        _ownCause = cause;
+        Synthetic = action.Synthetic;
+        _ownCause = null;
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;

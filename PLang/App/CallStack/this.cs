@@ -74,8 +74,7 @@ public sealed partial class @this
     /// </summary>
     /// <param name="action">The action being dispatched.</param>
     /// <param name="variables">Variables instance for diff capture (when Flags.Diff is on).</param>
-    /// <param name="cause">Optional async-cause link (recovery dispatch, event publish).</param>
-    public Call.@this Push(ActionEntity action, Variables.@this? variables = null, Call.@this? cause = null)
+    public Call.@this Push(ActionEntity action, Variables.@this? variables = null)
     {
         var caller = _current.Value;
 
@@ -102,7 +101,7 @@ public sealed partial class @this
             && ContainsGoal(goalPath))
             throw new CallStackOverflowException(MaxDepth);
 
-        var call = new Call.@this(action, caller, cause, this, Flags, caller, variables ?? Variables);
+        var call = new Call.@this(action, caller, this, Flags, caller, variables ?? Variables);
 
         // Children owns its own lock + FIFO eviction policy.
         caller?.Children.Add(call);

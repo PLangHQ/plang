@@ -92,8 +92,7 @@ public partial class @this
             Data = this,
             Expires = expires.HasValue ? new @this<TimeSpan>("", expires.Value) : null
         };
-        var result = _context.App.RunAction<App.modules.signing.sign>(action, _context)
-            .GetAwaiter().GetResult();
+        var result = _context.App.RunAction(action, _context).GetAwaiter().GetResult();
         if (!result.Success)
             throw new InvalidOperationException(
                 $"Signing failed during lazy Signature populate: {result.Error?.Message ?? "unknown"}.");

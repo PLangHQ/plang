@@ -219,7 +219,7 @@ public class ReResolveAcrossCallsTests
             Parameters = new List<Data> { sharedData }
         };
         MatrixRunner.EnsureRegistered<ReResolveAcrossCalls>(app);
-        await app.Run(action1, app.User.Context);
+        await action1.RunAsync(app.User.Context);
 
         // Raw .Value is still "%x%" — no in-place mutation
         await Assert.That(sharedData.Value).IsEqualTo("%x%");
@@ -231,7 +231,7 @@ public class ReResolveAcrossCallsTests
             ActionName = "reresolveacrosscalls",
             Parameters = new List<Data> { sharedData }
         };
-        await app.Run(action2, app.User.Context);
+        await action2.RunAsync(app.User.Context);
 
         await Assert.That(sharedData.Value).IsEqualTo("%x%");
     }
@@ -277,7 +277,7 @@ public class ConcurrentHandlersTests
                 ActionName = "concurrenthandlers",
                 Parameters = new List<Data> { sharedData }
             };
-            var data = await app.Run(action, app.User.Context);
+            var data = await action.RunAsync(app.User.Context);
             return data.Success && (data is global::App.Data.@this<string> typed) && typed.Value == "value";
         })).ToArray();
 

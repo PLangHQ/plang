@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Reflection;
 using App.Actor.Context;
 using App.Settings;
 using App.Errors;
@@ -414,68 +415,56 @@ public sealed partial class @this : IAsyncDisposable
     /// file.read handles .pr → List&lt;Goal&gt; deserialization via MIME type mapping.
     // --- [Method] primitives — the kernel ---
 
+    // App.Run collapsed into Action.@this.RunAsync in stage 2a.5
+    // (action owns its execution — no shared App-level dispatch).
+    //
+    // RunAction retained as the inline-C#-composition entry: callers construct
+    // a handler instance (`new sign { ... }`), this wraps it in an Action.@this
+    // entity with PreboundHandler set so the entity's DispatchAsync uses the
+    // pre-built handler instead of resolving via Modules.GetCodeGenerated.
+    // The entity is Synthetic=true by default — wire-serialize filters such
+    // frames per stage 2a.5 deliverable 4e.
+
     /// <summary>
-    /// Runs a strongly-typed action. Properties are already set via init.
-    /// Used by C# code composing actions (providers, tests).
+    /// Runs a strongly-typed action handler through the production execution
+    /// path (Push / Anchor / lifecycle / dispatch). Used by C# composing
+    /// actions (providers, tests). Spec-deferred follow-up: this overload may
+    /// be removed entirely when handlers grow their own RunAsync surface.
     /// </summary>
-    public async Task<Data.@this<TResult>> RunAction<TAction, TResult>(TAction action, Actor.Context.@this context)
-        where TAction : ICodeGenerated
+    public Task<Data.@this> RunAction<TAction>(TAction handler, Actor.Context.@this context)
+        where TAction : modules.ICodeGenerated
     {
-        var result = await action.ExecuteAsync(null!, context);
+        var entity = new Goals.Goal.Steps.Step.Actions.Action.@this
+        {
+            Module = ResolveModuleName(typeof(TAction)),
+            ActionName = ResolveActionName(typeof(TAction)),
+            PreboundHandler = handler,
+        };
+        return entity.RunAsync(context);
+    }
+
+    /// <summary>
+    /// Typed variant — same dispatch path, casts the result Value to TResult.
+    /// </summary>
+    public async Task<Data.@this<TResult>> RunAction<TAction, TResult>(TAction handler, Actor.Context.@this context)
+        where TAction : modules.ICodeGenerated
+    {
+        var result = await RunAction(handler, context);
         if (!result.Success) return Data.@this<TResult>.FromError(result.Error!);
         return Data.@this<TResult>.Ok((TResult)result.Value!);
     }
 
-    /// <summary>
-    /// Runs a strongly-typed action and returns the raw Data result.
-    /// Used by C# code composing actions (providers, tests).
-    /// </summary>
-    public async Task<Data.@this> RunAction<TAction>(TAction action, Actor.Context.@this context)
-        where TAction : ICodeGenerated
+    private static string ResolveModuleName(System.Type handlerType)
     {
-        return await action.ExecuteAsync(null!, context);
+        var ns = handlerType.Namespace ?? "";
+        var lastDot = ns.LastIndexOf('.');
+        return lastDot >= 0 ? ns[(lastDot + 1)..] : ns;
     }
 
-    /// <summary>
-    /// Dispatches an action through the production execution path: pushes a Call onto
-    /// the CallStack tree (AsyncLocal Current updates), saves/restores Context anchors
-    /// (Step/Goal/Event), populates Call.Errors + stack.Audit on failure, and translates
-    /// CLR exceptions into ServiceError with the post-Push chain attached.
-    ///
-    /// The generated handler ExecuteAsync is thin — it sets markers, eagerly resolves
-    /// [Code] properties, resets backing fields, validates [IsNotNull], then calls
-    /// Run() directly. App.Run wraps it. Return variable mapping is owned by
-    /// Action.RunAsync, not here.
-    /// </summary>
-    public async Task<Data.@this> Run(Goals.Goal.Steps.Step.Actions.Action.@this action, Actor.Context.@this context, CallStack.Call.@this? cause = null)
+    private static string ResolveActionName(System.Type handlerType)
     {
-        var (handler, error) = Modules.GetCodeGenerated(action);
-        if (error != null) return Data.@this.FromError(error);
-
-        // CallStackOverflowException (depth limit or ContainsGoal cycle) trips at Push,
-        // before the call frame is on the stack — catch it here so App.Run's contract
-        // (returns Data, never throws) holds. Once Push succeeds the Call owns its
-        // own try/catch via ExecuteAsync.
-        CallStack.Call.@this call;
-        try { call = CallStack.Push(action, context.Variables, cause); }
-        catch (Errors.CallStackOverflowException ex) { return HandleOverflow(ex, action.Step, CallStack); }
-
-        // Dispose order matters: anchor restore must run BEFORE Call's await-using
-        // dispose (AsyncLocal restore, Children removal, Variables.OnSet unsubscribe).
-        // C# disposes in reverse declaration order — declare `await using call` first
-        // so the inner `using anchor` disposes first.
-        await using var _ = call;
-        using var _anchor = context.AnchorScope(action);
-        return await call.ExecuteAsync(handler!, context);
-    }
-
-    private static Data.@this HandleOverflow(Errors.CallStackOverflowException ex, Step? step, CallStack.@this stack)
-    {
-        var caller = stack.Current;
-        var chain = caller != null ? caller.SnapshotChain() : Array.Empty<CallStack.Call.@this>();
-        var overflowErr = new Errors.ServiceError(ex.Message, step!, chain, "CallStackOverflow", 500) { Exception = ex };
-        stack.Audit.Add(overflowErr);
-        return Data.@this.FromError(overflowErr);
+        var attr = handlerType.GetCustomAttribute<modules.ActionAttribute>(inherit: false);
+        return attr?.Name ?? handlerType.Name.ToLowerInvariant();
     }
 
     /// <summary>

@@ -55,7 +55,7 @@ public static class MatrixRunner
                 context.Variables.Set(kv.Key, kv.Value);
         }
 
-        var data = await app.Run(action, context);
+        var data = await action.RunAsync(context);
         var snapshot = (data.Error as global::App.Errors.Error)?.Params;
         return new Result(data, snapshot);
     }

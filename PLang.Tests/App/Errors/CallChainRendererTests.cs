@@ -88,7 +88,7 @@ public class CallChainRendererTests
         await using var failed = stack.Push(Make("Failing", line: 7));
         await failed.DisposeAsync(); // failed is no longer Current
 
-        await using var recover = stack.Push(Make("RecoverHead", line: 9), cause: failed);
+        await using var recover = stack.Push(Make("RecoverHead", line: 9));
         var lines = CallChainRenderer.Render(recover.SnapshotChain());
 
         await Assert.That(lines.Count).IsEqualTo(2);
@@ -107,7 +107,7 @@ public class CallChainRendererTests
         await using var failed = stack.Push(Make("Failing", line: 7));
         await failed.DisposeAsync();
 
-        await using var recoverHead = stack.Push(Make("RecoverHead", line: 9), cause: failed);
+        await using var recoverHead = stack.Push(Make("RecoverHead", line: 9));
         await using var recoverDeep = stack.Push(Make("RecoverDeep", line: 12));
 
         var lines = CallChainRenderer.Render(recoverDeep.SnapshotChain());

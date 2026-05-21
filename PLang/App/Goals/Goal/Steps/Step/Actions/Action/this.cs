@@ -61,7 +61,16 @@ public sealed partial class @this : modules.IDataWrappable
     /// override this to <c>false</c> when materializing the action from JSON.
     /// </summary>
     [JsonIgnore]
-    public bool Synthetic { get; init; } = true;
+    public bool Synthetic { get; set; } = true;
+
+    /// <summary>
+    /// Pre-built handler instance for inline C# composition. When set,
+    /// <see cref="DispatchAsync"/> uses it directly instead of resolving via
+    /// <c>Modules.GetCodeGenerated</c>. Null on PR-loaded actions (the dispatch
+    /// path resolves a fresh handler per execution).
+    /// </summary>
+    [JsonIgnore]
+    public modules.ICodeGenerated? PreboundHandler { get; init; }
 
     /// <summary>
     /// True for any condition chain action: condition.if, condition.elseif, or condition.else.
@@ -150,10 +159,11 @@ public sealed partial class @this : modules.IDataWrappable
     /// <summary>
     /// Runs this action: lifecycle events → dispatch → return mapping.
     /// Context travels as parameter — actions are shared objects, not per-request.
-    /// <paramref name="cause"/> is threaded through to <c>App.Run</c> so recovery-body
-    /// dispatches stamp the resulting Call's <c>Cause</c> (the errored sibling).
+    /// Owns its own callstack push/pop, anchor save/restore, exception translation
+    /// (formerly App.Run's body — collapsed in stage 2a.5 since "action owns its
+    /// execution").
     /// </summary>
-    public async Task<Data.@this> RunAsync(Actor.Context.@this context, global::App.CallStack.Call.@this? cause = null)
+    public async Task<Data.@this> RunAsync(Actor.Context.@this context)
     {
         var lifecycle = context.LifecycleFor(this);
 
@@ -172,7 +182,7 @@ public sealed partial class @this : modules.IDataWrappable
         }
         else
         {
-            Func<Task<Data.@this>> dispatch = () => context.App!.Run(this, context, cause);
+            Func<Task<Data.@this>> dispatch = () => DispatchAsync(context);
             result = await Modifiers.RunAsync(dispatch, context);
         }
 
@@ -190,6 +200,57 @@ public sealed partial class @this : modules.IDataWrappable
         if (!afterResult.Success) return afterResult;
 
         return result;
+    }
+
+    /// <summary>
+    /// Dispatches this action through the production execution path: pushes a Call
+    /// onto the CallStack, saves/restores Context anchors, translates CLR exceptions
+    /// into ServiceError. Absorbed from the former <c>App.Run</c> in stage 2a.5 so
+    /// the action owns its own execution.
+    /// </summary>
+    private async Task<Data.@this> DispatchAsync(Actor.Context.@this context)
+    {
+        var app = context.App!;
+        modules.ICodeGenerated? handler;
+        global::App.Errors.IError? error;
+        if (PreboundHandler != null)
+        {
+            handler = PreboundHandler;
+            error = null;
+        }
+        else
+        {
+            (handler, error) = app.Modules.GetCodeGenerated(this);
+            if (error != null) return Data.@this.FromError(error);
+        }
+
+        // CallStackOverflowException (depth limit or ContainsGoal cycle) trips at Push,
+        // before the call frame is on the stack — catch it here so the contract
+        // (returns Data, never throws) holds. Once Push succeeds the Call owns its
+        // own try/catch via ExecuteAsync.
+        global::App.CallStack.Call.@this call;
+        try { call = app.CallStack.Push(this, context.Variables); }
+        catch (global::App.Errors.CallStackOverflowException ex)
+        {
+            var caller = app.CallStack.Current;
+            var chain = caller != null ? caller.SnapshotChain() : Array.Empty<global::App.CallStack.Call.@this>();
+            var overflowErr = new global::App.Errors.ServiceError(ex.Message, this.Step!, chain, "CallStackOverflow", 500) { Exception = ex };
+            app.CallStack.Audit.Add(overflowErr);
+            return Data.@this.FromError(overflowErr);
+        }
+
+        // Dispose order matters: anchor restore must run BEFORE Call's await-using
+        // dispose (AsyncLocal restore, Children removal, Variables.OnSet unsubscribe).
+        // C# disposes in reverse declaration order — declare `await using call` first
+        // so the inner `using anchor` disposes first.
+        await using var _ = call;
+        using var _anchor = context.AnchorScope(this);
+        // PreboundHandler path: handler properties are already set by inline C#
+        // composition. Pass `null` to ExecuteAsync so the generated reset/resolve
+        // loop is skipped — matches the former App.RunAction behaviour.
+        if (PreboundHandler != null)
+            return await handler!.ExecuteAsync(null!, context);
+        return await call.ExecuteAsync(handler!, context);
     }
 
     /// <summary>

@@ -39,7 +39,7 @@ public class AppRunScaffoldingTests
         var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
-        await _app.Run(action, _app.User.Context);
+        await action.RunAsync(_app.User.Context);
 
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
@@ -57,7 +57,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         action.Step = dispatchStep;
 
-        await _app.Run(action, _app.User.Context);
+        await action.RunAsync(_app.User.Context);
 
         // Restored after dispatch
         await Assert.That(ReferenceEquals(_app.User.Context.Step, stepBefore)).IsTrue();
@@ -76,7 +76,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
         action.Step = step;
 
-        await _app.Run(action, _app.User.Context);
+        await action.RunAsync(_app.User.Context);
 
         await Assert.That(ReferenceEquals(_app.User.Context.Goal, goalBefore)).IsTrue();
     }
@@ -89,7 +89,7 @@ public class AppRunScaffoldingTests
         var eventBefore = _app.User.Context.Event;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
-        await _app.Run(action, _app.User.Context);
+        await action.RunAsync(_app.User.Context);
 
         await Assert.That(_app.User.Context.Event).IsEqualTo(eventBefore);
     }
@@ -105,7 +105,7 @@ public class AppRunScaffoldingTests
 
         var currentBefore = _app.User.Context.CallStack?.Current;
         var action = MakeAction("matrix.throwing", "throw");
-        var result = await _app.Run(action, _app.User.Context);
+        var result = await action.RunAsync(_app.User.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
@@ -121,7 +121,7 @@ public class AppRunScaffoldingTests
         var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "ok"));
-        var result = await _app.Run(action, _app.User.Context);
+        var result = await action.RunAsync(_app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
@@ -136,8 +136,8 @@ public class AppRunScaffoldingTests
         var currentBefore = _app.User.Context.CallStack?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "first"));
-        await _app.Run(action, _app.User.Context);
-        await _app.Run(action, _app.User.Context);
+        await action.RunAsync(_app.User.Context);
+        await action.RunAsync(_app.User.Context);
 
         await Assert.That(_app.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
     }
@@ -156,7 +156,7 @@ public class AppRunScaffoldingTests
         var action = MakeAction("matrix.oce", "throwoce");
 
         // Should NOT throw — OCE is caught and translated.
-        var result = await _app.Run(action, _app.User.Context);
+        var result = await action.RunAsync(_app.User.Context);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
