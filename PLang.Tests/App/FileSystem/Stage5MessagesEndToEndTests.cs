@@ -120,6 +120,38 @@ public class Stage5MessagesEndToEndTests
         await Assert.That(secondRead.Type?.Value).IsNotEqualTo("ask");
     }
 
+    /// Auditor v1 F-A regression: persisted "always allow" grants must outlive
+    /// the wire-freshness window (Config.TimeoutMs, default 5 min). Without
+    /// the SkipFreshnessCheck on grant verification, this re-read after
+    /// advancing NowUtc by 10 minutes would re-prompt — the user would see
+    /// "always allow" expire after 5 minutes despite the docs claiming
+    /// permanence.
+    [Test] public async Task Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow()
+    {
+        var (app1, foreignFile) = Setup("a");
+        var root = app1.AbsolutePath;
+        var path1 = new Path(foreignFile, app1.User.Context);
+        var firstRead = await path1.ReadText();
+        await Assert.That(firstRead.Success).IsTrue();
+
+        // Advance clock by 10 minutes — past the default 5-minute
+        // Config.TimeoutMs window that would otherwise expire the signature.
+        var app2 = new global::app.@this(root);
+        var statelessProbe = new StatelessChannel();
+        app2.User.Channels.Register(statelessProbe);
+        // Replace the DynamicData NowUtc with a static Data (the DynamicData's
+        // override Value getter ignores `_value`, so Set("NowUtc", offset)
+        // would be a no-op — we must replace with a fresh Data instance).
+        app2.User.Context.Variables.Set(
+            new global::app.data.@this("NowUtc", DateTimeOffset.UtcNow.AddMinutes(10),
+                global::app.data.type.DateTime));
+
+        var path2 = new Path(foreignFile, app2.User.Context);
+        var secondRead = await path2.ReadText();
+        await Assert.That(secondRead.Success).IsTrue();
+        await Assert.That(secondRead.Type?.Value).IsNotEqualTo("ask");
+    }
+
     [Test] public async Task Scenario5_RevokeReprompts_AfterRevokeFreshPromptFires()
     {
         var (app, foreignFile) = Setup("a");

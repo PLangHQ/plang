@@ -19,6 +19,11 @@ public enum Match
 /// Identity is (Actor + Path + Verb); the persistence root is the per-actor
 /// sqlite store. No App-instance scoping — grants survive `new App()` on the
 /// same root, which is the contract the "a" ("always allow") answer promises.
+///
+/// Time bound: a grant's signature is verified with
+/// <c>SkipFreshnessCheck=true</c>, so the wire-freshness <c>Created+TimeoutMs</c>
+/// window doesn't apply. The grant lives for its signature's <c>Expires</c>
+/// field — null today (permanent), parameterised later.
 /// </summary>
 public sealed record @this(
     string Actor,

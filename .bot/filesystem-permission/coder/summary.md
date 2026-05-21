@@ -1,7 +1,26 @@
 # Coder — filesystem-permission
 
 ## Version
-v5 — see `v5/report.md` (Scenario4 unskipped: persisted grants survive new App)
+v6 — see `v6/report.md` (auditor F-A persistent-grant durability + F-B runtime2 merge)
+
+## v6 update — both major auditor findings closed
+
+**F-A:** persisted "always allow" grants used to expire after 5 minutes
+(wire-freshness `Created+TimeoutMs` applied to all signatures, including
+grants). Fix: `signing.verify` gains `SkipFreshnessCheck` flag (default
+false); `Permission.VerifySignature` passes true so the grant's own
+`Expires` is the only time bound (null = permanent, set = enforced).
+Doc-comment corrected. New mutation-verified test advances `NowUtc` by
+10 min and confirms the grant still covers.
+
+**F-B:** merged `origin/runtime2` (27 commits, app-lowercase rename +
+7 OBP folder collapses). 63 conflicts resolved across DU/UD/AU/UU
+categories. Branch additions now live at lowercase paths with lowercase
+namespaces, matching runtime2 convention.
+
+Suite: **2854 pass, 0 skip, 0 fail**.
+
+## v5 update — Scenario4 closed
 
 ## v5 update — Scenario4 closed
 

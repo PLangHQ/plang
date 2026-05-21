@@ -135,7 +135,17 @@ public sealed class @this
     {
         try
         {
-            var action = new global::app.modules.signing.verify { Data = data };
+            // SkipFreshnessCheck=true: grants are long-lived artifacts. The
+            // Created-age wire-freshness check (and the paired nonce-replay
+            // check) is for transient signed messages; applying it to grants
+            // would expire "always allow" after 5 minutes and would reject
+            // re-reads of the same stored nonce. The grant's own Expires
+            // (null = permanent today) is the only time bound that applies.
+            var action = new global::app.modules.signing.verify
+            {
+                Data = data,
+                SkipFreshnessCheck = new global::app.data.@this<bool>("", true),
+            };
             var result = await _actor.Context.App.RunAction(action, _actor.Context);
             return result.Success;
         }
