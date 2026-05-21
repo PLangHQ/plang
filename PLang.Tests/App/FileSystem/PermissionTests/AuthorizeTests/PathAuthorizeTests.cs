@@ -65,7 +65,7 @@ public class PathAuthorizeTests
         await Assert.That(result.Success).IsTrue();
     }
 
-    [Test] public async Task Authorize_StatefulAnswerA_SignsWithAlwaysExpiry_Adds_ReturnsOk()
+    [Test] public async Task Authorize_StatefulAnswerA_Signs_Adds_ReturnsOk()
     {
         var app = NewApp();
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "a" }));

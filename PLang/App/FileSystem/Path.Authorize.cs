@@ -20,9 +20,11 @@ namespace App.FileSystem;
 /// </summary>
 public partial class Path
 {
-    // Far-future expiry stamped on "a"-grants. Signing layer routes anything
-    // with an expiry into the persistent store; null → in-memory only.
-    private static readonly TimeSpan AlwaysExpiry = TimeSpan.FromDays(365 * 100);
+    // Routing today: signed grants → sqlite, unsigned → in-memory. "a"
+    // answers sign without an expiry argument because the signing layer's
+    // public surface is text-only. When EnsureSigned grows an Expires
+    // parameter, the "a" branch in this file should pass a far-future
+    // TimeSpan (architect's "AlwaysExpiry" intent). Tracked in todos.md.
 
     public async Task<Data.@this> Authorize(Verb verb)
     {
