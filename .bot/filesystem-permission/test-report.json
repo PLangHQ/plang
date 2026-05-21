@@ -1,35 +1,35 @@
 {
   "tester": "tester",
   "branch": "filesystem-permission",
-  "timestamp": "2026-05-21T19:03:46Z",
-  "tested_version": "v4+v5",
+  "timestamp": "2026-05-21T22:30:00Z",
+  "tested_version": "v6",
   "test_run": {
-    "csharp": { "total": 2853, "passed": 2853, "failed": 0, "skipped": 0 },
+    "csharp": { "total": 2854, "passed": 2854, "failed": 0, "skipped": 0 },
     "plang": { "total": 203, "passed": 203, "failed": 0, "skipped": 0 }
   },
-  "plang_failures_note": "203 excludes the 4 intentional fail-fixtures (Tests/{TestModule,Modules/Test}/Report/_fixtures_fail/failsvar + _fixtures_sensitive/sensitivefail). Confirmed against coder/baseline-tests.md — not regressions. One stdout 'Failed to deserialize List`1' line is a negative-path mock test feeding bad JSON, not a failure.",
-  "v3_findings_status": [
-    { "id": 1, "title": "v3 case-comparison gate untested", "status": "closed", "verification": "Mutation RootComparison->OrdinalIgnoreCase now fails IsInRoot_UpperCasedRoot_TreatedAsOutOfRoot_OnUnix (v3: 0 fails). Companion ValidatePath test does not depend on RootComparison — see note N1." },
-    { "id": 2, "title": "Move indistinguishable from Copy", "status": "closed", "verification": "Mutation isMove->File.Copy now fails Move_OneMissingGrant and Move_BothPathsMissing (v3: 0 fails). Move tests assert source gone + dest content." },
-    { "id": 3, "title": "6 placeholder PLang goals overclaiming", "status": "closed", "verification": "6 goals deleted; 2 real goals (GrantAStoresPersisted, StatefulAuthorizeGrantsAndContinues) kept and green." },
-    { "id": 4, "title": "Scenario4 empty body reported pass", "status": "closed", "verification": "v4 added [Skip]; v5 replaced with a real cross-App body. Disabling persisted Find kills Scenario4 — confirmed." },
-    { "id": 5, "title": "weak storage assertions", "status": "closed", "verification": "TwoHomes inspects SettingsStore (/disk present, /mem absent); IdempotentAdd does Revoke->assert-null and a sqlite row count." },
-    { "id": 6, "title": "tautological LegacyFsGoalTests", "status": "closed", "verification": "Renamed LegacyV1FsSurface_RoundTripsFile_AlongsideV2; real v1 write/read round-trip + v2 cross-read." },
-    { "id": 7, "title": "OsDirectory clause untested", "status": "closed", "verification": "IsInRoot_PathUnderOsDirectory_AutoGrants_NoChannelAsk — no channel registered; only the carve-out lets Authorize return Ok." },
-    { "id": 8, "title": "Move/Copy n + stateless branches untested", "status": "closed", "verification": "Move/Copy AnswerN (PermissionDenied + no FS mutation) and Move StatelessChannel (Data<Ask> bubble + no FS mutation) added." },
-    { "id": 9, "title": "no baseline-tests.md", "status": "closed", "verification": "coder/baseline-tests.md present, accurate against this run." }
-  ],
-  "v5_code_review": {
-    "change": "Dropped PermissionRecord.AppId; grant identity is (Actor + Path + Verb), persisted store scoped by root directory.",
-    "assessment": "sound",
-    "reasoning": "AppId was a per-instance GUID that never survived a restart — it defeated the 'a'=always persist contract rather than adding isolation. Actor isolation still holds via name filter + signature verify; root isolation via per-root SettingsStore. Scenario4 is the regression gate."
+  "plang_failures_note": "203 excludes the 4 intentional fail-fixtures (Tests/{TestModule,Modules/Test}/Report/_fixtures_fail + _fixtures_sensitive). The single 'Failed to deserialize List`1' stdout line is a negative-path mock test feeding bad JSON, not a failure. Both unchanged from v4 baseline; the app-lowercase merge left the suites green.",
+  "scope": "Re-review of coder v6 (894d6a0ca) — auditor F-A fix (persistent-grant durability). F-B (app-lowercase merge) is a mechanical rename already cleared by codeanalyzer v4; both suites re-run to confirm it left them green.",
+  "mutation_verification": {
+    "mutation": "permission/this.cs:147 SkipFreshnessCheck true -> false, clean rebuild, full C# suite",
+    "result": "1 test fails — Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow",
+    "assessment": "The flag neutralises TWO checks (Ed25519 step 2 wire-freshness, step 4 nonce-replay). The mutation flips both; only the step-2 half is caught. coder v6's commit claims 'Mutation-verified' of the fix — literally true but the step-4 half has no test behind it."
   },
-  "notes": [
-    { "id": "N1", "severity": "minor", "type": "misleading-comment", "test_file": "PLang.Tests/App/FileSystem/ValidatePathTests.cs", "issue": "UpperCasedRootPrefix_TreatedAsNewPath_AndRePrefixed_OnUnix docstring claims it catches a RootComparison/line-227/line-191 case regression. Mutation RootComparison->OrdinalIgnoreCase leaves it green. It actually pins the re-prefix path driven by PLangFileSystem.cs:189's plain StartsWith(RootDirectory). Valid pin, misattributed comment.", "suggestion": "Correct the docstring." },
-    { "id": "N2", "severity": "minor", "type": "defensive-code-untested", "code_file": "PLang/App/FileSystem/Default/PLangFileSystem.cs:227", "issue": "RootComparison at line 227 is gated only transitively (shared-property value pinned by the IsInRoot test). Branch analysis: path reaches line 227 either exact-root-prefixed or clearly out-of-root, so the comparison is effectively defensive. Acceptable under single-home design.", "suggestion": "Awareness only." },
-    { "id": "N3", "severity": "minor", "type": "missing-coverage", "code_file": "PLang/App/Actor/Permission/this.cs", "issue": "v5 makes the root directory the sole persistence boundary. Scenario4 pins same-root sharing; no test pins that two apps on different roots do not share a persisted grant.", "suggestion": "Optional one-test pin: two apps on distinct roots, grant on one, assert the other re-prompts." }
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "major",
+      "type": "missing-coverage",
+      "title": "Nonce-replay half of the F-A fix is ungated",
+      "status": "open",
+      "detail": "Persisted Find re-deserializes a fresh Data each call (SettingsStore.GetAll), so the per-instance VerifiedFlag cache does not carry across reads; two Finds = two VerifySignature passes. With step 4 active the second pass hits NonceReplay -> re-prompt. No test does two verifications of a persisted grant (Scenario3's read 1 creates without verifying; Scenario4 variants verify once in app2). A step-4-only revert passes all 2854 tests. Confirmed by a scratch probe: app2 reads twice -> re-prompts (Type 'ask') under mutation, covered with the fix. Exact closing test in tester/v5/result.md, mutation-verified.",
+      "fix": "Add Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt to Stage5MessagesEndToEndTests.cs."
+    }
   ],
-  "verdict": "pass",
-  "verdict_note": "All 9 v3 findings closed and mutation-verified — the three major false-greens each now kill a test under the mutation v3 survived. v5's AppId removal is a correct, well-scoped production change with Scenario4 as a real cross-App gate. N1-N3 are cosmetic / defensive-hardening notes, not blockers.",
-  "summary": "Clean rebuild: C# 2853/2853 pass, PLang 203/203 pass (4 intentional fail-fixtures excluded, no regressions). Mutation tests confirm F1 (RootComparison), F2 (isMove), and F4/v5 (Scenario4) are genuinely gated — each kills a test under the mutation v3 survived. v5's PermissionRecord.AppId drop reviewed as sound: AppId never survived a restart so it defeated the persist contract; actor + root scoping still isolate grants. Verdict: pass."
+  "non_blocking_notes": [
+    { "id": "N1", "severity": "minor", "detail": "ValidatePathTests.UpperCasedRootPrefix_..._OnUnix docstring still over-claims the RootComparison gate (carried from tester v4 N1)." },
+    { "id": "N4", "severity": "minor", "detail": "auditor F-5 (attributed to tester): MoveCopyBundledConsentTests covers bundled consent only on the v2 Path surface; real copy.cs/move.cs handlers issue two prompts. Add a note or handler-path test. Fair to defer with F-C/D/E." }
+  ],
+  "verdict": "needs-work",
+  "verdict_note": "coder v6's F-A fix is correct and the suite is green, but the F-A regression guard covers only half the mechanism. F1 (major): the nonce-replay half is ungated — a plausible regression survives the full suite. One added test (handed over, mutation-verified) closes it. Re-issue as a quick v7.",
+  "summary": "Clean rebuild: C# 2854/2854, PLang 203/203 — app-lowercase merge left suites green. coder v6's SkipFreshnessCheck fix for auditor F-A is correct (verified working by mutation), but the flag neutralises two independent checks and only step 2 (wire-freshness) has a test. F1: step 4 (nonce-replay) skip is ungated — no test verifies a persisted grant twice, so a step-4-only revert passes all 2854 tests and would silently re-break 'always allow' for repeated foreign-resource reads. Verdict: needs-work, one major finding with the closing test handed over."
 }
