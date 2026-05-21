@@ -10,8 +10,6 @@ namespace App.CallStack.Call;
 /// optionally removes self from <c>Caller.Children</c> when history is off.
 ///
 /// Tree shape: navigate up via <see cref="Caller"/>, down via <see cref="Children"/>.
-/// <see cref="Cause"/> models *async* causality (recovery body, event handler) — distinct
-/// from the synchronous <see cref="Caller"/>.
 ///
 /// Render-agnostic: same data folds into a stack (Caller walk), flamegraph (Children walk),
 /// or timeline (sort by StartedAt).
@@ -179,7 +177,6 @@ public sealed partial class @this : IAsyncDisposable
     /// Returns <c>[this, Caller, Caller.Caller, ..., Root]</c>. Stable refs only — no copy.
     /// Used by App.Run to attach a chain to ServiceError on exception. Index <c>[0]</c> is
     /// always the failing Call (behavior tweak vs the old shape, which excluded self).
-    /// Cause links are NOT walked — only the synchronous Caller chain.
     /// </summary>
     public IReadOnlyList<@this> SnapshotChain()
     {

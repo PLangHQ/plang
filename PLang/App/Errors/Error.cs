@@ -219,8 +219,7 @@ public class Error : IError
             }
         }
 
-        // Call stack \u2014 CallChainRenderer compresses recursive runs and annotates
-        // recovery boundaries with their originating Cause.
+        // Call stack \u2014 CallChainRenderer compresses recursive runs.
         if (error.CallFrames.Count > 0)
         {
             sb.AppendLine();

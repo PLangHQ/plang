@@ -2,7 +2,7 @@ namespace App.CallStack;
 
 /// <summary>
 /// Per-property gates for richer Call data capture. Default is all-false (structural only)
-/// — the thin Action/Caller/Cause/Errors push/pop costs ~50ns and is always on.
+/// — the thin Action/Caller/Errors push/pop costs ~50ns and is always on.
 /// Each flag toggles population of one tier of data on Call.@this:
 ///  - <see cref="Timing"/>: StartedAt/CompletedAt/Duration
 ///  - <see cref="Diff"/>: Variables.OnSet → Call.Diffs (scalar-only by default)

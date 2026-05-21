@@ -7,7 +7,7 @@ namespace App.CallStack;
 /// Per-app call tree. Owned by <c>App.CallStack</c> — moved here from
 /// <c>Actor.Context.CallStack</c> because it's an observability concern, not an actor one.
 ///
-/// Structural data (Action, Caller, Cause, Errors) is always populated — the cost of the
+/// Structural data (Action, Caller, Errors) is always populated — the cost of the
 /// thin push/pop is ~50ns per action and means errors get a useful trace without any flag.
 /// Richer capture is fine-grained per-flag (<see cref="Flags"/>): timing, diff,
 /// deepDiff, tags, history.

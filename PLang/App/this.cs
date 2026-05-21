@@ -272,7 +272,7 @@ public sealed partial class @this : IAsyncDisposable
     public KeepAlive.@this KeepAlive { get; } = new();
 
     /// <summary>
-    /// App-wide call tree. Structural data (Action / Caller / Cause / Errors)
+    /// App-wide call tree. Structural data (Action / Caller / Errors)
     /// is always captured; richer capture (timing, tags, history) is gated by
     /// <see cref="CallStack.@this.Flags"/>, populated via Debug.Apply from
     /// <c>--debug={callstack:{...}}</c>.
