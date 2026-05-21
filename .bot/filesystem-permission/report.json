@@ -598,6 +598,63 @@
         "health": "Suite green and now honest \u2014 the three major false-greens each die under the mutation v3 survived. Three minor non-blocking notes (N1 docstring over-claim, N2 line-227 defensive, N3 no different-root isolation test).",
         "notes": "coder v4/v5 did not append sessions to report.json. v5 production code has not had a codeanalyzer pass \u2014 worth one before branch close."
       }
+    },
+    {
+      "id": "a4286026-db88-4889-ac93-61384de9f1e6",
+      "bot": "security",
+      "timestamp_start": "2026-05-21T19:09:01Z",
+      "intent": "Security audit of the filesystem-permission branch \u2014 consent-gated FS access, signed permission grants, the v5 AppId-removal trust-boundary change.",
+      "before": {
+        "assumptions": "Branch adds consent-gated filesystem access: file action handlers call Path.Authorize, which prompts the user, signs the grant, stores it via Actor.Permission. v5 dropped PermissionRecord.AppId so persisted grants survive a fresh App on the same root.",
+        "risk": "Dropping AppId widens a signed grant's trust scope. If the per-actor sqlite store is not actually the persistence boundary, an 'always allow' grant could be replayed across Apps. Also: signature gate on grant verification, path-traversal in the root check, RootComparison helper not reaching all gate sites."
+      },
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/FileSystem/Path.Operations.cs",
+            "PLang/App/FileSystem/Permission/this.cs",
+            "PLang/App/FileSystem/Permission/Verb/this.cs",
+            "PLang/App/Actor/Permission/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mapped the consent gate. Grant creation is C#-internal and consent-gated \u2014 no PLang-reachable fabrication path (no permission.add module; settings.set hardcodes its table). Path containment correct (trailing-separator prefix). This half of the gate holds."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/signing/code/Ed25519.cs",
+            "PLang/App/Actor/Permission/this.cs",
+            "PLang/App/Settings/Sqlite.cs",
+            "PLang/App/Data/this.Envelope.cs",
+            "PLang/App/Channels/Serializers/Filters/Transport.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Audited grant verification. F1: signing.verify checks signature integrity but not signer authority \u2014 any keypair verifies. F2: TryCover auto-trusts unsigned persisted rows. F3: signing.verify's 5-min Created-age freshness window is mis-applied to long-lived persisted grants, silently expiring 'a' grants and false-greening Scenario4. F4: RegexMatches has no match timeout."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/security-report.json",
+            ".bot/filesystem-permission/security/v1/result.md",
+            ".bot/filesystem-permission/security/v1/verdict.json",
+            ".bot/filesystem-permission/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote security report (4 findings, attack-surface map), result.md, verdict (PASS \u2014 no critical/high open), summary."
+        }
+      ],
+      "plan": ".bot/filesystem-permission/security/v1/plan.md",
+      "timestamp_end": "2026-05-21T19:16:32Z",
+      "after": {
+        "status": "PASS",
+        "health": "Consent gate structurally sound on the creation side; weaknesses are all on the verification side and either latent (F1/F4) or fail-closed (F3) today.",
+        "notes": "F1 (signer identity not pinned) and F3 (persisted grants expire after 5min; test false-green) should be closed before the permission table gains any non-disk write path. F2/F4 are cheap defense-in-depth. None block merge."
+      }
     }
   ]
 }
