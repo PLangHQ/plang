@@ -409,6 +409,57 @@
         "notes": "Earlier coder commits had no report.json session entry (codeanalyzer flagged this). This v2 entry covers only the comment cleanup; the eight earlier fix commits remain undocumented in report.json."
       },
       "timestamp_end": "2026-05-21T16:39:20.461869+00:00"
+    },
+    {
+      "id": "1367ded7-319e-4c53-bb8d-711ecc76b5c5",
+      "bot": "coder",
+      "timestamp_start": "2026-05-21T16:58:32.452966+00:00",
+      "intent": "Close branch: fix codeanalyzer v2 #2 (ValidatePath case-comparison regression), defer v2 #1 (handler-layer authorize copy-paste) to a new branch with a written architect handoff plan. The plan goes further than codeanalyzer's (a)/(b) options \u2014 Path becomes polymorphic across schemes (file:// / http:// / s3://...).",
+      "before": {
+        "assumptions": "Codeanalyzer v2 verdict NEEDS WORK. Two regressions cited: v2 #1 (handler-layer authorize copy-paste in modules/file/*.cs) and v2 #2 (PLangFileSystem.ValidatePath:227 Linux case-comparison). Ingi's call after design discussion: close this branch with v2 #2 fixed and v2 #1 deferred to a polymorphic-Path branch.",
+        "risk": "Low. v2 #2 is a single-line site fix behind a shared helper. v2 #1's deferral is documented in three places (path-polymorphism-plan.md, todos.md, coder summary v3) so codeanalyzer's next pass sees the intentional scope choice."
+      },
+      "plan": "Documentation/v0.2/path-polymorphism-plan.md (for v2 #1, future branch) + .bot/filesystem-permission/coder/v3/report.md (for v2 #2 + branch closure)",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs"
+          ],
+          "type": "edit",
+          "category": "code",
+          "confidence": "high",
+          "context": "Hoisted Path.RootComparison static helper into Path.cs main partial. Path.Authorize.IsInRoot now reads the shared helper instead of inlining the OS switch. PLangFileSystem.ValidatePath:227 changed from OrdinalIgnoreCase to Path.RootComparison. Single home for the rule, no future drift."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/path-polymorphism-plan.md",
+            "Documentation/v0.2/todos.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect handoff plan for polymorphic Path (Phase 1: FilePath split + factory + handler degenerates; Phase 2: scheme registry + HttpPath; Phase 3: community schemes). Closes codeanalyzer v2 #1 on a new branch \u2014 deliberately not this one. Includes verb-surface matrix, scheme-registry [PathScheme] attribute design, open architect questions (factory location, caching, PlangType split). Credentials scoped down (PLang identity for HTTP, Settings for custom \u2014 base class doesn't abstract over creds). todos.md updated with one-line pointer."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/coder/v3/report.md",
+            ".bot/filesystem-permission/coder/v3/verdict.json",
+            ".bot/filesystem-permission/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 coder report explicitly tells codeanalyzer that v2 #1 is tracked-with-plan (not punted to vague follow-up). Verdict: ready-to-merge."
+        }
+      ],
+      "after": {
+        "status": "Branch closes. v2 #2 fixed. v2 #1 has a written architect handoff plan. dotnet build clean; 2846/2846 C# tests green.",
+        "health": "good \u2014 every codeanalyzer finding from v1 and v2 is either fixed or deferred with a written, phased plan that codeanalyzer can track on the next branch.",
+        "notes": "Communication to codeanalyzer about v2 #1's deferral is in three places by design: the plan doc (the artifact), todos.md (the durable index), and the coder summary v3 (the branch-local audit trail). Codeanalyzer's next pass on this branch should see ready-to-merge."
+      },
+      "timestamp_end": "2026-05-21T16:58:32.453068+00:00"
     }
   ]
 }
