@@ -1,6 +1,11 @@
+using System.Text.Json;
 using TUnit.Core;
+using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
 using Permission = global::App.FileSystem.Permission.@this;
 using Match = global::App.FileSystem.Permission.Match;
+using Verb = global::App.FileSystem.Permission.Verb.@this;
+using Write = global::App.FileSystem.Permission.Verb.Write;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 
@@ -8,19 +13,73 @@ namespace PLang.Tests.App.FileSystem.PermissionTests;
 /// dispatch is closed (unknown enum → false); JSON round-trip is lossless.
 public class PermissionCoversTests
 {
-    [Test] public Task ExactMatch_EqualPath_Covers()                            { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task ExactMatch_DifferentPath_DoesNotCover()                  { Assert.Fail("Not implemented"); return Task.CompletedTask; }
+    private static Permission Grant(string path, Match match, Verb? verb = null) =>
+        new("app1", "user", path, verb ?? new Verb(), match);
 
-    [Test] public Task GlobMatch_PatternCoversConcretePath()                    { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task GlobMatch_NonMatchingPattern_DoesNotCover()              { Assert.Fail("Not implemented"); return Task.CompletedTask; }
+    private static Permission Request(string path, Verb? verb = null) =>
+        new("app1", "user", path, verb ?? new Verb(), Match.Exact);
 
-    [Test] public Task RegexMatch_PatternCoversConcretePath()                   { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task RegexMatch_NonMatchingPattern_DoesNotCover()             { Assert.Fail("Not implemented"); return Task.CompletedTask; }
+    [Test] public async Task ExactMatch_EqualPath_Covers()
+    {
+        var g = Grant("/apps/Email/file.txt", Match.Exact);
+        await Assert.That(g.Covers(Request("/apps/Email/file.txt"))).IsTrue();
+    }
 
-    [Test] public Task UnknownMatchEnumValue_CoversReturnsFalse_FailClosed()    { Assert.Fail("Not implemented"); return Task.CompletedTask; }
+    [Test] public async Task ExactMatch_DifferentPath_DoesNotCover()
+    {
+        var g = Grant("/apps/Email/file.txt", Match.Exact);
+        await Assert.That(g.Covers(Request("/apps/Email/other.txt"))).IsFalse();
+    }
 
-    [Test] public Task PathMatches_ButVerbDoesNot_DoesNotCover()                { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task SameRecordShape_GrantRoleAndRequestRole_BothLegible()    { Assert.Fail("Not implemented"); return Task.CompletedTask; }
+    [Test] public async Task GlobMatch_PatternCoversConcretePath()
+    {
+        var g = Grant("/apps/*/file.txt", Match.Glob);
+        await Assert.That(g.Covers(Request("/apps/Email/file.txt"))).IsTrue();
+    }
 
-    [Test] public Task JsonRoundTrip_PermissionRecord_RoundTripsEqual()         { Assert.Fail("Not implemented"); return Task.CompletedTask; }
+    [Test] public async Task GlobMatch_NonMatchingPattern_DoesNotCover()
+    {
+        var g = Grant("/apps/*/file.txt", Match.Glob);
+        await Assert.That(g.Covers(Request("/apps/Email/Sub/file.txt"))).IsFalse();
+    }
+
+    [Test] public async Task RegexMatch_PatternCoversConcretePath()
+    {
+        var g = Grant(@"^/apps/[^/]+/file\.txt$", Match.Regex);
+        await Assert.That(g.Covers(Request("/apps/Email/file.txt"))).IsTrue();
+    }
+
+    [Test] public async Task RegexMatch_NonMatchingPattern_DoesNotCover()
+    {
+        var g = Grant(@"^/apps/[^/]+/file\.txt$", Match.Regex);
+        await Assert.That(g.Covers(Request("/apps/Email/other.txt"))).IsFalse();
+    }
+
+    [Test] public async Task UnknownMatchEnumValue_CoversReturnsFalse_FailClosed()
+    {
+        var g = Grant("/whatever", (Match)999);
+        await Assert.That(g.Covers(Request("/whatever"))).IsFalse();
+    }
+
+    [Test] public async Task PathMatches_ButVerbDoesNot_DoesNotCover()
+    {
+        var grantVerb = new Verb { Write = new Write(Overwrite: false) };
+        var g = Grant("/p", Match.Exact, grantVerb);
+        await Assert.That(g.Covers(Request("/p"))).IsFalse();
+    }
+
+    [Test] public async Task SameRecordShape_GrantRoleAndRequestRole_BothLegible()
+    {
+        var grant = new Permission("app1", "user", "/apps/*/file.txt", new Verb(), Match.Glob);
+        var request = new Permission("app1", "user", "/apps/Email/file.txt", new Verb(), Match.Exact);
+        await Assert.That(grant.Covers(request)).IsTrue();
+    }
+
+    [Test] public async Task JsonRoundTrip_PermissionRecord_RoundTripsEqual()
+    {
+        var original = new Permission("app1", "user", "/p", new Verb(), Match.Glob);
+        var json = JsonSerializer.Serialize(original);
+        var roundtripped = JsonSerializer.Deserialize<Permission>(json);
+        await Assert.That(roundtripped).IsEqualTo(original);
+    }
 }
