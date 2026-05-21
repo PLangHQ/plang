@@ -53,6 +53,17 @@ public sealed partial class @this : modules.IDataWrappable
     public bool Cacheable { get; init; } = true;
 
     /// <summary>
+    /// True when this action was constructed inline in C# (default for
+    /// <c>new SomeAction { ... }</c>). False when materialized from a .pr
+    /// file. CallStack.Push stamps the Call frame; wire-serialize filters
+    /// synthetic frames out of the Snapshot (they can't be restored from PR
+    /// and are recreated naturally by the resumed execution). PR-load sites
+    /// override this to <c>false</c> when materializing the action from JSON.
+    /// </summary>
+    [JsonIgnore]
+    public bool Synthetic { get; init; } = true;
+
+    /// <summary>
     /// True for any condition chain action: condition.if, condition.elseif, or condition.else.
     /// Used by SplitAtConditions / ComputeBranchChain to split an orchestrated step's actions
     /// into per-branch groups.

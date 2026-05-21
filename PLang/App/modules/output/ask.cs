@@ -4,6 +4,16 @@ using App.CallStack;
 namespace App.modules.output;
 
 /// <summary>
+/// Payload marker for an in-flight ask. The question text rides as
+/// <c>Data.Value</c>; the Snapshot rides as <c>Data.Snapshot</c>. Stage 2a.4
+/// wires this in via <see cref="App.Channels.Channel.@this.Ask"/> on the
+/// stateless Message channel. <see cref="global::App.IExitsGoal"/> makes the
+/// step loop short-circuit when an action returns <c>Data&lt;Ask&gt;</c>.
+/// </summary>
+[global::App.Attributes.PlangType("ask")]
+public sealed class Ask : global::App.IExitsGoal { }
+
+/// <summary>
 /// Asks the actor a question. Two modes:
 ///  - **Fresh:** captures the current Position + the variables named by <c>vars:</c>
 ///    + the actor name into an <see cref="App.Callback.AskCallback"/>, returns it as

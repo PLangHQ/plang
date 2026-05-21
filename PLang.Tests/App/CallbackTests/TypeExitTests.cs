@@ -1,5 +1,9 @@
 using TUnit.Core;
+using TUnit.Assertions;
+using TUnit.Assertions.Extensions;
 using global::App;
+using global::App.Types;
+using global::App.modules.output;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -8,10 +12,24 @@ namespace PLang.Tests.App.CallbackTests;
 /// goal" — query is `result.Type?.ClrType?.Exit() == true`.
 public class TypeExitTests
 {
-    [Test] public Task TypeExit_TrueFor_Ask()                                   { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task TypeExit_FalseFor_String()                               { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task TypeExit_FalseFor_ByteArray()                            { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task TypeExit_FalseFor_PlainClassWithoutMarker()              { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task TypeExit_FalseFor_GenericDataOfNonExitT()                { Assert.Fail("Not implemented"); return Task.CompletedTask; }
-    [Test] public Task Ask_ImplementsIExitsGoal()                               { Assert.Fail("Not implemented"); return Task.CompletedTask; }
+    [Test] public async Task TypeExit_TrueFor_Ask()
+        => await Assert.That(typeof(Ask).Exit()).IsTrue();
+
+    [Test] public async Task TypeExit_FalseFor_String()
+        => await Assert.That(typeof(string).Exit()).IsFalse();
+
+    [Test] public async Task TypeExit_FalseFor_ByteArray()
+        => await Assert.That(typeof(byte[]).Exit()).IsFalse();
+
+    [Test] public async Task TypeExit_FalseFor_PlainClassWithoutMarker()
+        => await Assert.That(typeof(System.Text.StringBuilder).Exit()).IsFalse();
+
+    [Test] public async Task TypeExit_FalseFor_GenericDataOfNonExitT()
+    {
+        var d = new global::App.Data.@this<string>("", "hello");
+        await Assert.That(d.Value?.GetType().Exit() ?? false).IsFalse();
+    }
+
+    [Test] public async Task Ask_ImplementsIExitsGoal()
+        => await Assert.That(typeof(IExitsGoal).IsAssignableFrom(typeof(Ask))).IsTrue();
 }
