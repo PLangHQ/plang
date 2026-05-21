@@ -1,8 +1,8 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using global::App.modules.callback;
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using app.modules.callback;
+using ActionEntity = global::app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -10,8 +10,8 @@ namespace PLang.Tests.App.CallbackTests;
 /// goal continuation; `callback.run` is the resume entry and requires Snapshot.
 public class SnapshotResumeTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Step SetStep(int index, string varName, object value)
@@ -26,7 +26,7 @@ public class SnapshotResumeTests
     [Test] public async Task CallbackRun_NullSnapshot_ReturnsNoSnapshotError()
     {
         var app = NewApp();
-        var data = global::App.Data.@this.Ok("v"); // Snapshot = null
+        var data = global::app.data.@this.Ok("v"); // Snapshot = null
         var handler = new run { Context = app.User.Context, Callback = data };
         var result = await handler.Run();
         await Assert.That(result.Success).IsFalse();
@@ -36,8 +36,8 @@ public class SnapshotResumeTests
     [Test] public async Task CallbackRun_WithSnapshot_DelegatesToSnapshotResume()
     {
         var app = NewApp();
-        var data = global::App.Data.@this.Ok("v");
-        data.Snapshot = new global::App.Snapshot.@this(); // empty snapshot
+        var data = global::app.data.@this.Ok("v");
+        data.Snapshot = new global::app.snapshot.@this(); // empty snapshot
         var handler = new run { Context = app.User.Context, Callback = data };
         var result = await handler.Run();
         // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
@@ -48,7 +48,7 @@ public class SnapshotResumeTests
     [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoPositionError()
     {
         var app = NewApp();
-        var snap = new global::App.Snapshot.@this();
+        var snap = new global::app.snapshot.@this();
         var result = await snap.Resume(app.User.Context);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
@@ -88,7 +88,7 @@ public class SnapshotResumeTests
         // just pin the API contract: ResumeChain handles >1 frame without
         // throwing on the recursive walk.
         var app = NewApp();
-        var snap = new global::App.Snapshot.@this();
+        var snap = new global::app.snapshot.@this();
         var result = await snap.Resume(app.User.Context);
         // Empty chain → NoPosition; demonstrates recursion entry doesn't NRE.
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");

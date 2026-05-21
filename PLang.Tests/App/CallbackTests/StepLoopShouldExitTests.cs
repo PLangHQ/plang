@@ -1,9 +1,9 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using global::App.Data;
-using global::App.Errors;
-using global::App.modules.output;
+using app.data;
+using app.errors;
+using app.modules.output;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -14,36 +14,36 @@ public class StepLoopShouldExitTests
 {
     [Test] public async Task ShouldExit_True_UnhandledFailure_SuccessFalseHandledFalse()
     {
-        var d = global::App.Data.@this.FromError(new ServiceError("boom"));
+        var d = global::app.data.@this.FromError(new ServiceError("boom"));
         d.Handled = false;
         await Assert.That(d.ShouldExit()).IsTrue();
     }
 
     [Test] public async Task ShouldExit_False_HandledFailure_SuccessFalseHandledTrue()
     {
-        var d = global::App.Data.@this.FromError(new ServiceError("boom"));
+        var d = global::app.data.@this.FromError(new ServiceError("boom"));
         d.Handled = true;
         await Assert.That(d.ShouldExit()).IsFalse();
     }
 
     [Test] public async Task ShouldExit_True_ReturnedTrue()
     {
-        var d = global::App.Data.@this.Ok("v");
+        var d = global::app.data.@this.Ok("v");
         d.Returned = true;
         await Assert.That(d.ShouldExit()).IsTrue();
     }
 
     [Test] public async Task ShouldExit_True_ExitTypedResult()
     {
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var d = new global::App.Data.@this<Ask>("", new Ask()) { Context = app.User.Context };
+        var d = new global::app.data.@this<Ask>("", new Ask()) { Context = app.User.Context };
         await Assert.That(d.ShouldExit()).IsTrue();
     }
 
     [Test] public async Task ShouldExit_False_OkSuccessNonExitType()
     {
-        var d = global::App.Data.@this.Ok("hello");
+        var d = global::app.data.@this.Ok("hello");
         await Assert.That(d.ShouldExit()).IsFalse();
     }
 
@@ -53,9 +53,9 @@ public class StepLoopShouldExitTests
     {
         // Pinned by Tests/Callback/StatelessCrossGoalResumes end-to-end in 2a.8.
         // Here we just pin the predicate contract used by the loop.
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var exitData = new global::App.Data.@this<Ask>("", new Ask()) { Context = app.User.Context };
+        var exitData = new global::app.data.@this<Ask>("", new Ask()) { Context = app.User.Context };
         await Assert.That(exitData.ShouldExit()).IsTrue();
     }
 }

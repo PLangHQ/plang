@@ -250,6 +250,6 @@ At runtime, the engine loads .pr files on demand:
 | `system/builder/ApplyStep.goal` | Validate + merge step results |
 | `system/builder/llm/BuildGoal.llm` | LLM prompt for the broad pass |
 | `system/builder/llm/BuildStep.llm` | LLM prompt for the detail pass |
-| `PLang/App/Goals/Goal/this.cs` | Goal entity, Parse(), PrPath derivation |
-| `PLang/App/Goals/this.cs` | Goal collection, loading, caching |
-| `PLang/App/modules/builder/code/Default.cs` | Builder actions (goals, save, validate, merge) |
+| `PLang/app/goals/goal/this.cs` | Goal entity, Parse(), PrPath derivation |
+| `PLang/app/goals/this.cs` | Goal collection, loading, caching |
+| `PLang/app/modules/builder/code/Default.cs` | Builder actions (goals, save, validate, merge) |

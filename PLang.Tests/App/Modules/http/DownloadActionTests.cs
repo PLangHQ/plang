@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.http;
-using global::App.modules.http.code;
-using PLangEngine = global::App.@this;
+using app.actor.context;
+using app.variables;
+using app.modules.http;
+using app.modules.http.code;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.http;
 
@@ -43,7 +43,7 @@ public class DownloadActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::App.Actor.Context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.System.Context;
 
     private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {

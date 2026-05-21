@@ -1,4 +1,4 @@
-using global::App.modules;
+using app.modules;
 using static PLang.Tests.TestAction;
 
 namespace PLang.Tests.App.Modules.modifier;
@@ -9,13 +9,13 @@ namespace PLang.Tests.App.Modules.modifier;
 /// </summary>
 public class ModifierFoldTests
 {
-    private global::App.@this _app = null!;
-    private global::App.Actor.Context.@this Ctx => _app.User.Context;
+    private global::app.@this _app = null!;
+    private global::app.actor.context.@this Ctx => _app.User.Context;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/app");
+        _app = new global::app.@this("/app");
     }
 
     [After(Test)]
@@ -27,7 +27,7 @@ public class ModifierFoldTests
     public async Task ModifierAttribute_Order_IsSetAndReadable()
     {
         // Verify [Modifier(Order = N)] stores and exposes the Order value via reflection
-        var timeoutType = typeof(global::App.modules.timeout.After);
+        var timeoutType = typeof(global::app.modules.timeout.After);
         var attr = timeoutType.GetCustomAttributes(typeof(ModifierAttribute), false)
             .Cast<ModifierAttribute>().FirstOrDefault();
 
@@ -73,7 +73,7 @@ public class ModifierFoldTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::App.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%y%"), new("value", "wrapped")
             },
@@ -82,7 +82,7 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::App.Data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
                 }
             }
         };
@@ -102,7 +102,7 @@ public class ModifierFoldTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::App.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%z%"), new("value", "nested")
             },
@@ -111,12 +111,12 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::App.Data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
                 },
                 new PrAction
                 {
                     Module = "error", ActionName = "handle",
-                    Parameters = new List<global::App.Data.@this> { new("ignoreError", true) }
+                    Parameters = new List<global::app.data.@this> { new("ignoreError", true) }
                 }
             }
         };
@@ -135,7 +135,7 @@ public class ModifierFoldTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::App.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%q%"), new("value", "full")
             },
@@ -144,12 +144,12 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "timeout", ActionName = "after",
-                    Parameters = new List<global::App.Data.@this> { new("ms", 5000) }
+                    Parameters = new List<global::app.data.@this> { new("ms", 5000) }
                 },
                 new PrAction
                 {
                     Module = "cache", ActionName = "wrap",
-                    Parameters = new List<global::App.Data.@this>
+                    Parameters = new List<global::app.data.@this>
                     {
                         new("durationMs", 60_000L),
                         new("key", "fold-test-key")
@@ -158,7 +158,7 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "error", ActionName = "handle",
-                    Parameters = new List<global::App.Data.@this> { new("ignoreError", true) }
+                    Parameters = new List<global::app.data.@this> { new("ignoreError", true) }
                 }
             }
         };
@@ -177,7 +177,7 @@ public class ModifierFoldTests
         {
             Module = "variable",
             ActionName = "set",
-            Parameters = new List<global::App.Data.@this>
+            Parameters = new List<global::app.data.@this>
             {
                 new("name", "%nope%"), new("value", "x")
             },
@@ -187,7 +187,7 @@ public class ModifierFoldTests
                 new PrAction
                 {
                     Module = "variable", ActionName = "set",
-                    Parameters = new List<global::App.Data.@this>
+                    Parameters = new List<global::app.data.@this>
                     {
                         new("name", "%bad%"), new("value", "no")
                     }

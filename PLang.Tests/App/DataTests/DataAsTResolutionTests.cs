@@ -6,10 +6,10 @@ namespace PLang.Tests.App.DataTests;
 
 public class DataAsTResolutionTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/app");
+    public void Setup() => _app = new global::app.@this("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -18,7 +18,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_AlreadyTypedData_ReturnsSelf()
     {
-        var typed = new global::App.Data.@this<int>("count", 42) { Context = _app.User.Context };
+        var typed = new global::app.data.@this<int>("count", 42) { Context = _app.User.Context };
         var result = typed.As<int>(_app.User.Context);
         await Assert.That(ReferenceEquals(result, typed)).IsTrue();
     }
@@ -29,7 +29,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("count", 42) { Context = _app.User.Context };
         var result = data.As<int>(_app.User.Context);
-        await Assert.That(result).IsTypeOf<global::App.Data.@this<int>>();
+        await Assert.That(result).IsTypeOf<global::app.data.@this<int>>();
         await Assert.That(result.Value).IsEqualTo(42);
     }
 
@@ -100,17 +100,17 @@ public class DataAsTResolutionTests
         await Assert.That(result.Value!["content"]).IsEqualTo("You are a compiler");
     }
 
-    // T has static Resolve(string, Context) (e.g., FileSystem.Path) → As<T> dispatches to it for string Values.
+    // T has static Resolve(string, Context) (e.g., FileSystem.path) → As<T> dispatches to it for string Values.
     [Test]
     public async Task AsT_TypeWithStaticResolve_StringValue_DispatchesToResolve()
     {
         var data = new Data("file", "subdir/file.txt") { Context = _app.User.Context };
 
-        var result = data.As<global::App.FileSystem.Path>(_app.User.Context);
+        var result = data.As<global::app.filesystem.path>(_app.User.Context);
 
-        // FileSystem.Path.Resolve returned a Path instance — Value should be one.
+        // FileSystem.path.Resolve returned a Path instance — Value should be one.
         await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value).IsTypeOf<global::App.FileSystem.Path>();
+        await Assert.That(result.Value).IsTypeOf<global::app.filesystem.path>();
     }
 
     // TypeMapping conversion failure → Data.FromError with structured error.
@@ -312,7 +312,7 @@ public class DataAsTResolutionTests
     {
         var data = new Data("v", "%x%");
 
-        await using var app2 = new global::App.@this("/app2");
+        await using var app2 = new global::app.@this("/app2");
         app2.User.Context.Variables.Set("x", "from-app2");
 
         var result = data.As<string>(app2.User.Context);
@@ -345,7 +345,7 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %x% and %y% inside"
             }
         };
-        ctx.Variables.Set(new global::App.Data.@this<List<object?>>("messages", stored) { Context = ctx });
+        ctx.Variables.Set(new global::app.data.@this<List<object?>>("messages", stored) { Context = ctx });
 
         var paramData = new Data("Messages", "%messages%") { Context = ctx };
         var result = paramData.As<List<Dictionary<string, object?>>>(ctx);
@@ -380,11 +380,11 @@ public class DataAsTResolutionTests
                 ["Content"] = "literal text with %goal.Name% and %buildStart% inside"
             }
         };
-        ctx.Variables.Set(new global::App.Data.@this<List<object?>>("fixerMessages", stored) { Context = ctx });
+        ctx.Variables.Set(new global::app.data.@this<List<object?>>("fixerMessages", stored) { Context = ctx });
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
         var paramData = new Data("Messages", "%fixerMessages%") { Context = ctx };
-        var result = paramData.As<List<global::App.modules.llm.LlmMessage>>(ctx);
+        var result = paramData.As<List<global::app.modules.llm.LlmMessage>>(ctx);
 
         await Assert.That(result.Success).IsTrue();
         var content = result.Value![0].Content!;

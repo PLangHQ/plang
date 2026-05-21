@@ -62,7 +62,7 @@ The LLM guesses `"type": "string"` because it sees a string literal. That's fine
 
 ### 3. Builder validates and formalizes
 
-**The default `IBuilder.Validate()`** (`App/modules/builder/code/Default.cs`) reflects on the `file.read` action class:
+**The default `IBuilder.Validate()`** (`app/modules/builder/code/Default.cs`) reflects on the `file.read` action class:
 
 ```csharp
 public partial class read : IContext
@@ -563,7 +563,7 @@ Smallest blast radius, proves the pattern:
 
 ## Resolution semantics (`Data.As<T>`) — cycle, depth, error contract
 
-The simplified `As<T>` shown in section 7 above is the design sketch. The shipped implementation in `App/Data/this.cs` adds three guards plus a `ServiceError` contract; both halves matter for handler correctness.
+The simplified `As<T>` shown in section 7 above is the design sketch. The shipped implementation in `app/data/this.cs` adds three guards plus a `ServiceError` contract; both halves matter for handler correctness.
 
 ### Cycle protection
 
@@ -621,7 +621,7 @@ The principle: **every plang variable IS `Data`.** A `Data<T>` is a typed *view*
 
 ### The four `As<T>` rules
 
-`Data.As<T>(context)` (in `App/Data/this.cs`, `WrapAs<T>`) decides between four cases based on the canonical's runtime shape:
+`Data.As<T>(context)` (in `app/data/this.cs`, `WrapAs<T>`) decides between four cases based on the canonical's runtime shape:
 
 | Case | Source | Target | Outcome |
 |---|---|---|---|
@@ -649,7 +649,7 @@ The walker is shared between `AsCanonical` (plain Data) and `AsT_Impl` (typed Da
 Identity preservation continues at the storage layer. When `Variables.Set(dv)` replaces an existing binding under the same name:
 
 ```csharp
-// PLang/App/Variables/this.cs
+// PLang/app/variables/this.cs
 if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 {
     dv.OnCreate = prev.OnCreate;   // alias — same list refs

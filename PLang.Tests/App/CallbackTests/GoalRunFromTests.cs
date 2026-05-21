@@ -1,9 +1,9 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using global::App.Data;
-using global::App.modules.output;
-using ActionEntity = App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using app.data;
+using app.modules.output;
+using ActionEntity = global::app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -14,8 +14,8 @@ namespace PLang.Tests.App.CallbackTests;
 /// inside Goal.RunFrom.
 public class GoalRunFromTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rf-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Step SetStep(int index, string varName, object value)
@@ -96,7 +96,7 @@ public class GoalRunFromTests
         // The integration test in 2a.8 (StatelessCrossGoalResumes) pins the
         // end-to-end behavior.
         var app = NewApp();
-        var data = new global::App.Data.@this<Ask>("", new Ask()) { Context = app.User.Context };
+        var data = new global::app.data.@this<Ask>("", new Ask()) { Context = app.User.Context };
         await Assert.That(data.ShouldExit()).IsTrue();
     }
 

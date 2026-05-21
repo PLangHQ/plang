@@ -1,7 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using global::App.modules.output;
+using app.modules.output;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -11,21 +11,21 @@ namespace PLang.Tests.App.CallbackTests;
 /// with Snapshot attached.
 public class OutputAskRoutingTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rt-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private sealed class TestMessageChannel : global::App.Channels.Channel.Message.@this
+    private sealed class TestMessageChannel : global::app.channels.channel.message.@this
     {
         public TestMessageChannel(string name)
         {
             Name = name;
-            Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional;
+            Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
         }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok((object?)null));
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
     [Test] public async Task OutputAsk_AnswerSentinelPresent_ReturnsOkAndConsumesIt()
@@ -34,7 +34,7 @@ public class OutputAskRoutingTests
         var ctx = app.User.Context;
         ctx.Variables.Set(ask.AnswerVariableName, "Alice");
 
-        var handler = new ask { Context = ctx, Question = new global::App.Data.@this<string>("", "name?") };
+        var handler = new ask { Context = ctx, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo("Alice");
@@ -49,7 +49,7 @@ public class OutputAskRoutingTests
         var msg = new TestMessageChannel("input");
         app.User.Channels.Register(msg);
 
-        var handler = new ask { Context = ctx, Question = new global::App.Data.@this<string>("", "name?") };
+        var handler = new ask { Context = ctx, Question = new global::app.data.@this<string>("", "name?") };
         var result = await handler.Run();
         await Assert.That(result.Type?.Value).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
@@ -59,13 +59,13 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("Alice\n"));
-        var ch = new global::App.Channels.Channel.Stream.@this("i", ms,
-            global::App.Channels.Channel.ChannelDirection.Bidirectional, ownsStream: false)
+        var ch = new global::app.channels.channel.stream.@this("i", ms,
+            global::app.channels.channel.ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
         // Empty question to skip WriteCore (the existing Stage 2 stream tests
         // do the same — exercises Ask's read-line path without needing a
         // registered Channels collection for the serializer).
-        var action = new ask { Context = app.User.Context, Question = new global::App.Data.@this<string>("", "") };
+        var action = new ask { Context = app.User.Context, Question = new global::app.data.@this<string>("", "") };
         var result = await ch.AskCore(action);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo("Alice");
@@ -84,7 +84,7 @@ public class OutputAskRoutingTests
         var action = new ask
         {
             Context = app.User.Context,
-            Question = new global::App.Data.@this<string>("", "Allow X?")
+            Question = new global::app.data.@this<string>("", "Allow X?")
         };
         var result = await ch.AskCore(action);
         await Assert.That(result.Value as string).IsEqualTo("Allow X?");
@@ -98,7 +98,7 @@ public class OutputAskRoutingTests
         var action = new ask
         {
             Context = app.User.Context,
-            Question = new global::App.Data.@this<string>("", "?")
+            Question = new global::app.data.@this<string>("", "?")
         };
         var result = await ch.AskCore(action);
         await Assert.That(result.Snapshot).IsNotNull();

@@ -1,4 +1,4 @@
-using global::App.Errors;
+using app.errors;
 using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.CallStackTests;
@@ -44,7 +44,7 @@ public class CycleDetectionTests
         // cross boundaries and are caught by ContainsGoal at Push time — see
         // Push_IndirectGoalCycle_Throws for that path.
         var stack = new CallStack { MaxDepth = 5 };
-        var calls = new List<global::App.CallStack.Call.@this>();
+        var calls = new List<global::app.callstack.call.@this>();
         CallStackOverflowException? caught = null;
         try
         {

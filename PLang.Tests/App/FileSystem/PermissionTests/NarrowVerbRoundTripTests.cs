@@ -1,11 +1,11 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::App.FileSystem.Path;
-using PermissionRecord = global::App.FileSystem.Permission.@this;
-using Verb = global::App.FileSystem.Permission.Verb.@this;
-using Read = global::App.FileSystem.Permission.Verb.Read;
-using MatchMode = global::App.FileSystem.Permission.Match;
+using Path = global::app.filesystem.path;
+using PermissionRecord = global::app.filesystem.permission.@this;
+using Verb = global::app.filesystem.permission.verb.@this;
+using Read = global::app.filesystem.permission.verb.Read;
+using MatchMode = global::app.filesystem.permission.Match;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 
@@ -17,11 +17,11 @@ public class NarrowVerbRoundTripTests
 {
     [Test] public async Task NarrowRead_AddDirect_FindDirect_InMemory_Found()
     {
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-nv-" + System.Guid.NewGuid().ToString("N")[..8]));
         var narrowRead = new Verb { Read = new Read(), Write = null, Delete = null };
         var perm = new PermissionRecord(app.User.Name, "/p", narrowRead, MatchMode.Exact);
-        var grant = new global::App.Data.@this<PermissionRecord>("", perm) { Context = app.User.Context };
+        var grant = new global::app.data.@this<PermissionRecord>("", perm) { Context = app.User.Context };
         // No EnsureSigned → in-memory path.
         await app.User.Permission.Add(grant);
 
@@ -31,11 +31,11 @@ public class NarrowVerbRoundTripTests
 
     [Test] public async Task NarrowRead_AddDirect_FindDirect_Sqlite_Found()
     {
-        var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-nv-" + System.Guid.NewGuid().ToString("N")[..8]));
         var narrowRead = new Verb { Read = new Read(), Write = null, Delete = null };
         var perm = new PermissionRecord(app.User.Name, "/p", narrowRead, MatchMode.Exact);
-        var grant = new global::App.Data.@this<PermissionRecord>("", perm) { Context = app.User.Context };
+        var grant = new global::app.data.@this<PermissionRecord>("", perm) { Context = app.User.Context };
         grant.EnsureSigned();  // → sqlite path
         await app.User.Permission.Add(grant);
 

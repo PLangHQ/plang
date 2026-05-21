@@ -1,7 +1,7 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
-using Action = global::App.Goals.Goal.Steps.Step.Actions.Action.@this;
+using app.actor.context;
+using app;
+using app.variables;
+using Action = global::app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.actions.loop;
 
@@ -16,12 +16,12 @@ namespace PLang.Tests.App.actions.loop;
 /// </summary>
 public class ForeachErrorPropagationTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/app");
+        _app = new global::app.@this("/app");
     }
 
     /// <summary>

@@ -1,7 +1,7 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::App.FileSystem.Path;
+using Path = global::app.filesystem.path;
 
 namespace PLang.Tests.App.FileSystem;
 
@@ -14,7 +14,7 @@ public class PathDoubleSlashTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-pds-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::App.@this(root);
+        var app = new global::app.@this(root);
         var path = Path.Resolve("//tmp/plang-ds-test.txt", app.User.Context);
         await Assert.That(path.Absolute).IsEqualTo("//tmp/plang-ds-test.txt");
     }
@@ -24,7 +24,7 @@ public class PathDoubleSlashTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-pds-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::App.@this(root);
+        var app = new global::app.@this(root);
         var fs = app.FileSystem;
         var realPath = "/tmp/plang-ds-test-" + System.Guid.NewGuid().ToString("N")[..8] + ".txt";
         var doubleSlash = "/" + realPath;

@@ -1,5 +1,5 @@
-using App;
-using App.Utils;
+using app;
+using app.Utils;
 
 namespace PLang.Tests.App.Foundation;
 

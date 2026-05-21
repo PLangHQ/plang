@@ -1,5 +1,5 @@
-using GoalChannel = global::App.Channels.Channel.Goal.@this;
-using EngineGoal = global::App.Goals.Goal.@this;
+using GoalChannel = global::app.channels.channel.goal.@this;
+using EngineGoal = global::app.goals.goal.@this;
 
 namespace PLang.Tests.App.ChannelsTests;
 
@@ -11,7 +11,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_WriteCore_InvokesGoalWithDataBound()
     {
-        var app = new global::App.@this("/tmp/g1");
+        var app = new global::app.@this("/tmp/g1");
         var goal = new EngineGoal { Name = "Probe", Path = "Probe.goal", PrPath = "/Probe.pr" };
         // Empty steps → goal completes with Ok. Test validates %!data% binding via Variables.
         var ch = new GoalChannel("logger", goal, app.User);
@@ -26,7 +26,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_WriteCore_ReturnsGoalsResultData()
     {
-        var app = new global::App.@this("/tmp/g2");
+        var app = new global::app.@this("/tmp/g2");
         var goal = new EngineGoal { Name = "ReturnsOk", Path = "Returns.goal", PrPath = "/R.pr" };
         var ch = new GoalChannel("c", goal, app.User);
         var result = await ch.WriteCore(Data.Ok("x"));
@@ -36,7 +36,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_RegisteredBeforeFreeze_CapturesPreFreezeFoundationalSet()
     {
-        var app = new global::App.@this("/tmp/g3");
+        var app = new global::app.@this("/tmp/g3");
         // Freeze: snapshot taken now.
         app.User.FreezeFoundational();
         var foundationalNames = app.User.FoundationalChannels.ChannelNames.ToHashSet();
@@ -50,7 +50,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_WritesInsideGoal_ResolveAgainstFoundational_NotCurrentOverlay()
     {
-        var app = new global::App.@this("/tmp/g4");
+        var app = new global::app.@this("/tmp/g4");
         // Foundational state: capture stream registered as "output".
         var foundationalCapture = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", foundationalCapture, ChannelDirection.Output, ownsStream: false)
@@ -76,7 +76,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_AsOutput_GoalWriteOut_ReachesFoundationalStdout()
     {
-        var app = new global::App.@this("/tmp/g5");
+        var app = new global::app.@this("/tmp/g5");
         var captured = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
@@ -99,7 +99,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_StackedOverrides_DoNotChain()
     {
-        var app = new global::App.@this("/tmp/g6");
+        var app = new global::app.@this("/tmp/g6");
         var foundationCapture = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", foundationCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
@@ -123,7 +123,7 @@ public class Stage3_GoalChannelTests
         // Light version: confirm no infinite recursion when a goal channel's body
         // would reference its own name. The override + foundational set guarantees
         // it. Full integration cut covers the dual-destination assertion.
-        var app = new global::App.@this("/tmp/g7");
+        var app = new global::app.@this("/tmp/g7");
         var captured = new MemoryStream();
         app.User.Channels.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
@@ -143,17 +143,17 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_Ask_InvokesGoal_ReturnsAnswer()
     {
-        var app = new global::App.@this("/tmp/g8");
+        var app = new global::app.@this("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = "Asker.goal", PrPath = "/A.pr" };
         var ch = new GoalChannel("input", goal, app.User);
-        var result = await ch.AskCore(new global::App.modules.output.ask { Question = new global::App.Data.@this<string>("", "q?") });
+        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(result.Success).IsTrue();
     }
 
     [Test]
     public async Task GoalChannel_Dispose_DoesNotDisposeUnderlyingGoal()
     {
-        var app = new global::App.@this("/tmp/g9");
+        var app = new global::app.@this("/tmp/g9");
         var goal = new EngineGoal { Name = "G", Path = "G.goal", PrPath = "/G.pr" };
         var ch = new GoalChannel("c", goal, app.User);
         await ch.DisposeAsync();

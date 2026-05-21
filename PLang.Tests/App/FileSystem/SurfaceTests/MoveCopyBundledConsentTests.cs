@@ -1,10 +1,10 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::App.FileSystem.Path;
-using Verb = global::App.FileSystem.Permission.Verb.@this;
-using Read = global::App.FileSystem.Permission.Verb.Read;
-using Write = global::App.FileSystem.Permission.Verb.Write;
+using Path = global::app.filesystem.path;
+using Verb = global::app.filesystem.permission.verb.@this;
+using Read = global::app.filesystem.permission.verb.Read;
+using Write = global::app.filesystem.permission.verb.Write;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -13,15 +13,15 @@ namespace PLang.Tests.App.FileSystem.SurfaceTests;
 /// question string covering both paths. On bundled "a", both grants land.
 public class MoveCopyBundledConsentTests
 {
-    private static global::App.@this NewApp(out string root)
+    private static global::app.@this NewApp(out string root)
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-mc-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new global::App.@this(root);
+        return new global::app.@this(root);
     }
 
-    private sealed class CapturingChannel : global::App.Channels.Channel.@this
+    private sealed class CapturingChannel : global::app.channels.channel.@this
     {
         public string LastQuestion { get; private set; } = "";
         public int AskCount { get; private set; }
@@ -29,17 +29,17 @@ public class MoveCopyBundledConsentTests
         public CapturingChannel(string answer)
         {
             _answer = answer; Name = "input";
-            Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional;
+            Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
         }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok((object?)null));
-        public override Task<global::App.Data.@this> AskCore(global::App.modules.output.ask action, CancellationToken ct = default)
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public override Task<global::app.data.@this> AskCore(global::app.modules.output.ask action, CancellationToken ct = default)
         {
             LastQuestion = action.Question?.Value ?? "";
             AskCount++;
-            return Task.FromResult(global::App.Data.@this.Ok(_answer));
+            return Task.FromResult(global::app.data.@this.Ok(_answer));
         }
     }
 
@@ -145,13 +145,13 @@ public class MoveCopyBundledConsentTests
         await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNotNull();
     }
 
-    private sealed class StatelessChannel : global::App.Channels.Channel.Message.@this
+    private sealed class StatelessChannel : global::app.channels.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional; }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok((object?)null));
+        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
     [Test] public async Task Move_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation()
@@ -171,7 +171,7 @@ public class MoveCopyBundledConsentTests
 
         var result = await src.MoveTo(dst);
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::App.Errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
         // No grants stored, no filesystem mutation.
         await Assert.That(await app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNull();
         await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNull();
@@ -196,7 +196,7 @@ public class MoveCopyBundledConsentTests
 
         var result = await src.CopyTo(dst);
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::App.Errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
         await Assert.That(System.IO.File.Exists(dstFile)).IsFalse();
     }

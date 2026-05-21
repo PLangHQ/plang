@@ -8,32 +8,32 @@ Collected architectural insights from building and debugging PLang App.
 
 ### `@this` Class Convention
 Every folder's primary class is named `@this` in `this.cs`. Consumers use global using aliases:
-- `App/this.cs` → `class @this` (no global alias — namespace shadows it)
-- `App/Goals/this.cs` → `class @this` (alias: `EngineGoals`)
-- `App/Goals/Goal/this.cs` → `class @this` (alias: `Goal` in tests, per-file in PLang)
-- `App/Goals/Goal/Steps/Step/Actions/Action/this.cs` → `class @this` (per-file alias only — `System.Action` conflict)
+- `app/this.cs` → `class @this` (no global alias — namespace shadows it)
+- `app/goals/this.cs` → `class @this` (alias: `EngineGoals`)
+- `app/goals/goal/this.cs` → `class @this` (alias: `Goal` in tests, per-file in PLang)
+- `app/goals/goal/steps/step/actions/action/this.cs` → `class @this` (per-file alias only — `System.Action` conflict)
 
 ### Namespace Per Folder
 Each folder gets its **own namespace** matching its path exactly:
-- `Goals/Goal/this.cs` → namespace `App.Goals.Goal`
-- `Goals/Goal/Steps/Step/this.cs` → namespace `App.Goals.Goal.Steps.Step`
-- `Events/Lifecycle/Bindings/this.cs` → namespace `App.Events.Lifecycle.Bindings`
+- `Goals/Goal/this.cs` → namespace `app.goals.goal`
+- `Goals/Goal/Steps/Step/this.cs` → namespace `app.goals.goal.steps.step`
+- `Events/Lifecycle/Bindings/this.cs` → namespace `app.events.lifecycle.bindings`
 
 This works because the class is `@this` — it never collides with its namespace segment.
 
 ### `ChildNamespace.@this` Pattern
 From within a parent namespace, reference a child's primary class as `ChildNamespace.@this`:
-- From `App.Goals`: `Goal.@this` (the Goal entity class)
-- From `App.Channels`: `Channel.@this`, `Serializers.@this`
-- From `App.*`: `App.@this` (the App root class)
+- From `app.goals`: `Goal.@this` (the Goal entity class)
+- From `app.channels`: `Channel.@this`, `Serializers.@this`
+- From `app.*`: `app.@this` (the app root class)
 
 This works because C# resolves child namespace segments before using aliases.
 
 ### Global Using Aliases
-`PLang/App/GlobalUsings.cs` provides aliases for types without naming conflicts.
+`PLang/app/GlobalUsings.cs` provides aliases for types without naming conflicts.
 
 **Can't be global** (shadowed or conflicting):
-- `App` — namespace `App.App` shadows it from all `App.*` files
+- `App` — namespace `app.app` shadows it from all `app.*` files
 - `CallStack` — v1 `PLang.Runtime.CallStack` conflict
 - `Goal`, `Visibility` — v1 `Building.Model` conflict
 - `Action` — `System.Action` conflict
@@ -335,7 +335,7 @@ Only if the error goal fails (or is absent) does the runtime proceed to retries.
 
 `RetryFirst` (the default) is the opposite order: retries run first, the error goal only runs if every retry still fails. `IgnoreError` is the final fallback in both orderings — applied after retry and goal are both exhausted.
 
-See `PLang/App/modules/error/handle.cs` for the implementation.
+See `PLang/app/modules/error/handle.cs` for the implementation.
 
 ---
 
@@ -431,7 +431,7 @@ Several subsystems have resource limits to prevent abuse:
 
 ## [Sensitive] Attribute — Two-Mode Serialization
 
-The `[Sensitive]` attribute (defined in `App/View.cs`) marks properties that contain secret data (e.g., `IdentityData.PrivateKey`). It controls a two-mode serialization split:
+The `[Sensitive]` attribute (defined in `app/View.cs`) marks properties that contain secret data (e.g., `IdentityData.PrivateKey`). It controls a two-mode serialization split:
 
 - **Output serialization** (JsonStreamSerializer, Data.Envelope Compress): `SensitivePropertyFilter` strips `[Sensitive]` properties. Private keys never leak through channels, API responses, or compressed payloads.
 - **Storage serialization** (raw JsonSerializer via DataSource): Filter is NOT applied. Private keys persist in SQLite.
@@ -447,7 +447,7 @@ The filter is always-on — it's wired into both `JsonStreamSerializer`'s defaul
 
 Handlers update `Actor.Identity` directly after mutations (e.g., `setDefault`, `rename`). The `DefaultIdentityProvider.Get()` refreshes `app.System.Identity` when resolving the default identity. `IdentityData.ToString()` returns the public key, so `%MyIdentity%` in a string context gives the public key.
 
-See `PLang/App/modules/identity/types.cs` for the class definition.
+See `PLang/app/modules/identity/types.cs` for the class definition.
 
 ---
 
@@ -475,12 +475,12 @@ This means:
 
 ---
 
-## App.Code — Pluggable Module Implementations
+## app.modules.code — Pluggable Module Implementations
 
-`App.Code` (`App.Code.@this`) is a named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each interface type can have multiple named implementations. First registered becomes default.
+`app.modules.code` (`app.modules.code.@this`) is a named code-implementation registry — `ConcurrentDictionary<Type, ConcurrentDictionary<string, ICode>>`. Each interface type can have multiple named implementations. First registered becomes default.
 
 Each module:
-1. Defines a code interface (e.g., `ICrypto`, `ISigning`) under `App/modules/<m>/code/`
+1. Defines a code interface (e.g., `ICrypto`, `ISigning`) under `app/modules/<m>/code/`
 2. Ships a default implementation under the same `code/` folder (e.g., `Default.cs`, `Ed25519.cs`)
 3. Resolves at runtime via `app.Code.Get<T>(name?)` or `GetOrDefault<T>(fallback)`
 
@@ -558,11 +558,11 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ---
 
-## ILlm — LLM Implementation in App.Code
+## ILlm — LLM Implementation in app.modules.code
 
 `ILlm` follows the same `ICode` pattern as other module interfaces. Single method: `Task<Data> Query(query action)`. The implementation owns the full lifecycle: config resolution, message formatting, HTTP calls (via the http module), tool execution loop, caching, streaming, validation, and conversation continuity.
 
-**Default implementation:** `OpenAi` (`App/modules/llm/code/OpenAi.cs`) — works with any OpenAI-compatible API (configurable endpoint). Registered on `app.Code` during construction. Switchable via `code.setDefault`.
+**Default implementation:** `OpenAi` (`app/modules/llm/code/OpenAi.cs`) — works with any OpenAI-compatible API (configurable endpoint). Registered on `app.Code` during construction. Switchable via `code.setDefault`.
 
 **PLang type name mapping:** `"llm"` / `"illm"` → `ILlm`.
 
@@ -578,9 +578,9 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 ---
 
-## IHttp — HTTP Implementation in App.Code
+## IHttp — HTTP Implementation in app.modules.code
 
-`IHttp` follows the same `ICode` pattern as `ISigning`, `ICrypto`, etc. Registered on `app.Code` during app construction. `Default` (`App/modules/http/code/Default.cs`) is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
+`IHttp` follows the same `ICode` pattern as `ISigning`, `ICrypto`, etc. Registered on `app.Code` during app construction. `Default` (`app/modules/http/code/Default.cs`) is the built-in implementation that owns `HttpClient`, config resolution, signing integration, streaming, and response parsing.
 
 Full code-interface roster:
 - `ICode` — base: `Name`, `IsDefault`, `IsBuiltIn`, `Source`
@@ -591,15 +591,15 @@ Full code-interface roster:
 - `IHttp : ICode, IDisposable` — HTTP transport, disposable because it owns `HttpClient`
 - `ITemplate : ICode` — template rendering (default: `Fluid` using Liquid syntax)
 - `ILlm : ICode` — LLM queries (default: `OpenAi`)
-- `IBuilder : ICode` — build-time goal parsing, validation, merge, persistence (default: `Default` under `App/modules/builder/code/`)
+- `IBuilder : ICode` — build-time goal parsing, validation, merge, persistence (default: `Default` under `app/modules/builder/code/`)
 
 PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"itemplate"` → `ITemplate`, `"llm"` / `"illm"` → `ILlm`.
 
 ---
 
-## IBuilder — Builder Implementation in App.Code
+## IBuilder — Builder Implementation in app.modules.code
 
-`IBuilder` follows the same `ICode` pattern as other module interfaces. Owns all build-time logic — action records are thin one-line delegates. The default implementation under `App/modules/builder/code/Default.cs` handles goal parsing, `.pr` file merging, action validation, and persistence.
+`IBuilder` follows the same `ICode` pattern as other module interfaces. Owns all build-time logic — action records are thin one-line delegates. The default implementation under `app/modules/builder/code/Default.cs` handles goal parsing, `.pr` file merging, action validation, and persistence.
 
 **No per-action BuildingGuard.** Earlier revisions had a static `BuildingGuard(IContext)` called first in every method to gate builder actions on `App.Builder.IsEnabled`. That guard was deliberately removed (commit `4633674c`) — builder actions are callable at runtime as well as build time. The trust boundary is the goal signature: a signed `.pr` may legitimately invoke `builder.goals.save` and rewrite sibling `.pr` files, and the user is sovereign over which signatures to trust. `App.Builder.IsEnabled` is still consulted by the file module's default `IFile` on the read path for snapshot logic, but no per-action guard exists on the write path. If you are reasoning about the threat model, the docs file [`docs/modules/builder.md`](../../docs/modules/builder.md) summarises the same posture.
 
@@ -615,7 +615,7 @@ PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"item
 
 ## TransportPropertyFilter — [In] / [Out] Attributes
 
-`[In]` and `[Out]` are serialization view attributes (defined in `App/View.cs`) that control transport-layer property visibility. They work alongside `[JsonIgnore]` to create a three-mode serialization system:
+`[In]` and `[Out]` are serialization view attributes (defined in `app/View.cs`) that control transport-layer property visibility. They work alongside `[JsonIgnore]` to create a three-mode serialization system:
 
 - **Default JSON**: `[JsonIgnore]` properties are hidden (e.g., `Data.Signature`)
 - **Inbound transport** (`[In]`): `TransportPropertyFilter.ForInbound` re-includes `[In]` properties during deserialization. Used when parsing `application/plang` responses — `Data.Signature` arrives on the wire and must be deserialized.
@@ -631,9 +631,9 @@ PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"item
 
 `ISettings` was renamed to `IConfig` across all modules. The rationale: "config" better describes what these classes are — configuration with defaults, not mutable settings. Files:
 
-- `App/Settings/ISettings.cs` → `App/Config/IConfig.cs`
-- `App/Settings/ModuleView.cs` → `App/Config/ModuleView.cs`
-- `App/Settings/this.cs` → `App/Config/this.cs`
+- `app/modules/settings/ISettings.cs` → `app/config/IConfig.cs`
+- `app/modules/settings/ModuleView.cs` → `app/config/ModuleView.cs`
+- `app/modules/settings/this.cs` → `app/config/this.cs`
 - Module `Settings.cs` files → `Config.cs` (archive, signing, http)
 
 `app.Settings` → `app.Config`. `Settings.Apply` writes action properties to the scope chain via reflection.
@@ -642,7 +642,7 @@ PLang type name mapping: `"http"` / `"ihttp"` → `IHttp`, `"template"` / `"item
 
 ## IConfigure\<T\> — Build-Time Defaults Pattern
 
-`IConfigure<TConfig>` (in `App.modules`) marks a configure action and links it to its `IConfig` class. The builder uses this to reflect on `TConfig` for filling defaults instead of reflecting on the action record itself.
+`IConfigure<TConfig>` (in `app.modules`) marks a configure action and links it to its `IConfig` class. The builder uses this to reflect on `TConfig` for filling defaults instead of reflecting on the action record itself.
 
 ```csharp
 [Action("configure", Cacheable = false)]
@@ -653,13 +653,13 @@ This separates the configure action's nullable properties (only non-null values 
 
 ---
 
-## PathData — Data Subclass in App/FileSystem/
+## PathData — Data Subclass in app/filesystem/
 
-`PathData` extends `Data` — a path IS a Data. It was moved from `App/Memory/` to `App/FileSystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by the file module (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
+`PathData` extends `Data` — a path IS a Data. It was moved from `app/Memory/` to `app/filesystem/` because it's a file system concept, not a memory concept. `Value` holds file content when set by the file module (e.g., after `file.read`). Path properties (`Extension`, `FileName`, `FileNameWithoutExtension`, `Directory`, `Relative`) are on `PathData` directly, not on `Value`.
 
 The class resolves raw path strings into absolute paths. Relative paths resolve against the goal's folder, not the app root. The source generator detects `Resolve(string, PLangContext)` and auto-wraps string parameters.
 
-See `PLang/App/FileSystem/PathData.cs` for the class definition.
+See `PLang/app/filesystem/PathData.cs` for the class definition.
 
 ---
 
@@ -669,13 +669,13 @@ Error handling, caching, and timeouts are **not step-level properties** — they
 
 **Runtime.** `Action.RunAsync` hands its dispatch delegate to `Action.Modifiers.RunAsync(innermost, context)`, which walks the list right-to-left. Each action resolves its own handler via `Action.WrapAround` and wraps the running delegate. First in the list = outermost wrapper.
 
-**Builder.** The default `IBuilder.GoalsSave` (`App/modules/builder/code/Default.cs`) calls `step.Actions.GroupModifiers(app.Modules)` before serialization. The LLM returns a flat list; grouping attaches every `[Modifier]` action to the nearest preceding executable action and sorts each cluster by `Order`. A leading modifier with no preceding executable is dropped and recorded as `DroppedLeadingModifier` in `step.Warnings` so the builder author notices.
+**Builder.** The default `IBuilder.GoalsSave` (`app/modules/builder/code/Default.cs`) calls `step.Actions.GroupModifiers(app.Modules)` before serialization. The LLM returns a flat list; grouping attaches every `[Modifier]` action to the nearest preceding executable action and sorts each cluster by `Order`. A leading modifier with no preceding executable is dropped and recorded as `DroppedLeadingModifier` in `step.Warnings` so the builder author notices.
 
 **Ordering today:** `timeout=1` (outermost — caps everything including cache lookup), `cache=2` (skip the rest on a hit), `error=3` (innermost — closest to the action).
 
 **Adding a modifier.** Write a handler with `[Modifier(Order = N)]` and implement `IModifier.Wrap`. Normal module discovery picks it up; the LLM sees it in the action registry like any other action.
 
-See `PLang/App/modules/IModifier.cs`, `PLang/App/Goals/Goal/Steps/Step/Actions/Action/Modifiers/this.cs`, and `PLang/App/Goals/Goal/Steps/Step/Actions/this.cs` (`GroupModifiers`).
+See `PLang/app/modules/IModifier.cs`, `PLang/app/goals/goal/steps/step/actions/action/modifiers/this.cs`, and `PLang/app/goals/goal/steps/step/actions/this.cs` (`GroupModifiers`).
 
 ---
 
@@ -714,7 +714,7 @@ Three accepted-but-unresolved items from security v1 on the modifier feature. No
 
 ## Test Module — Cross-Cutting Invariants
 
-The test runner lives in `PLang/App/modules/test/` (`discover.cs`, `run.cs`, `tag.cs`, `report.cs`) and stores run state on `app.Tester` (`PLang/App/Tester/this.cs`). Facts future devs won't see in any single file:
+The test runner lives in `PLang/app/modules/test/` (`discover.cs`, `run.cs`, `tag.cs`, `report.cs`) and stores run state on `app.Tester` (`PLang/app/tester/this.cs`). Facts future devs won't see in any single file:
 
 ### App boundary = file boundary
 Each `.test.goal` file gets its own child `App` rooted at that file's directory — not per-goal, not per-step. `test.run` spins up one App via `await using` per `TestFile`, runs the entry goal, then disposes. Multiple goals inside the same file share state within that test's run. Don't "optimise" this by pooling Apps across tests — isolation is the entire point of the module existing.
@@ -729,7 +729,7 @@ The branch-coverage site identifier includes the source path, not just the goal 
 Before a single test runs, `test.discover` walks every `condition.if` site in every discovered test's goal tree — including statically-reachable `goal.call` targets — and records each site's declared chain on `Testing.Coverage`. Purpose: unreached sites (branches that exist in source but no test visits) still appear in the coverage report. Runtime observation unions in later without overwriting; seed-then-observe is safe by design (`Coverage.RecordBranchChain` stores only the first chain per site).
 
 ### `[RequiresCapability]` is class-level, single-instance
-Per `PLang/App/Attributes/RequiresCapabilityAttribute.cs`, the attribute has `AllowMultiple = false`. Multi-capability handlers use `params string[]`: `[RequiresCapability("network", "llm")]`. Discovery reflects over the attribute on the resolved handler type for every action referenced in the test's `.pr` (recursing static `goal.call` chains, depth 50, cycle-safe via visited set) and unions the capabilities into the test's auto-tag set. If you add a new capability-hungry action, remember the attribute — otherwise `--test={"exclude":["your-capability"]}` won't filter it out.
+Per `PLang/app/Attributes/RequiresCapabilityAttribute.cs`, the attribute has `AllowMultiple = false`. Multi-capability handlers use `params string[]`: `[RequiresCapability("network", "llm")]`. Discovery reflects over the attribute on the resolved handler type for every action referenced in the test's `.pr` (recursing static `goal.call` chains, depth 50, cycle-safe via visited set) and unions the capabilities into the test's auto-tag set. If you add a new capability-hungry action, remember the attribute — otherwise `--test={"exclude":["your-capability"]}` won't filter it out.
 
 ### Staleness check uses goal hash, not mtime
 `test.discover` re-parses the current `.goal` text into a Goal object and compares `Goal.Hash` (SHA-256 of Name + concatenated Step.Text) against the `.pr`'s stored hash. Touching the file, changing whitespace, or editing a comment doesn't trigger staleness — only changes that affect step text do. Missing `.pr` or unparseable `.pr` also marks Stale with a reason set on `TestFile.StatusReason`.
@@ -738,10 +738,10 @@ Per `PLang/App/Attributes/RequiresCapabilityAttribute.cs`, the attribute has `Al
 `internal static event Action<App> ChildAppCreated` on `run.cs:29` fires once per child App after configuration (SystemDirectory inherited, `Testing.IsEnabled = true`, `CurrentTest` assigned) and before the entry goal runs. It exists so the runner's own meta-tests can install probes observing child-App state (SystemDirectory, parallel count, etc.) without faking. Do **not** depend on it from production handlers — it's an `internal static event` and subscribers must be thread-safe because parallel tests fire it concurrently.
 
 ### `test.tag` no-ops outside test mode
-Shared goals often tag themselves so they carry auto-tags when reused in tests (`tag this test 'http'`). When that same goal runs in production (no `CurrentTest` on `App.Testing`), the action does nothing instead of throwing. This is why `test.tag` is callable from production goals — it's a one-way signal, never an error.
+Shared goals often tag themselves so they carry auto-tags when reused in tests (`tag this test 'http'`). When that same goal runs in production (no `CurrentTest` on `App.Tester`), the action does nothing instead of throwing. This is why `test.tag` is callable from production goals — it's a one-way signal, never an error.
 
 ### `Variables.Snapshot()` honors exclusions, not sensitivity
-The snapshot taken on assertion failure (`PLang/App/Variables/this.cs:Snapshot`) excludes `!`-prefixed infrastructure vars, `DynamicData` (Now/GUID), and `SettingsVariable`. It does **not** honour `[Sensitive]` — that filter applies at JSON *serialization* via `Json.DiagnosticOutput` when the snapshot is rendered into the report. Result: ordinary user variables carrying secrets flow through the snapshot but are only masked if their carrier type has `[Sensitive]` on the relevant property. See security-report.json finding #3 on this branch.
+The snapshot taken on assertion failure (`PLang/app/variables/this.cs:Snapshot`) excludes `!`-prefixed infrastructure vars, `DynamicData` (Now/GUID), and `SettingsVariable`. It does **not** honour `[Sensitive]` — that filter applies at JSON *serialization* via `Json.DiagnosticOutput` when the snapshot is rendered into the report. Result: ordinary user variables carrying secrets flow through the snapshot but are only masked if their carrier type has `[Sensitive]` on the relevant property. See security-report.json finding #3 on this branch.
 
 ### Teach LLM mappings via `ExamplesForLlm()`, never via runtime parsers
 When a step like `set %count% = %count% + 1` produces the wrong action chain, the temptation is to add an arithmetic evaluator inside `Variables.Resolve` so the runtime "just handles" the `+`. Don't. The compile path already has a `math` module (`add` / `subtract` / `multiply` / `divide` / `power`); the LLM just doesn't know to translate the RHS-arithmetic shorthand. Adding `ExamplesForLlm()` to each math action with both forms (natural — `"add 5 and 3, write to %sum%"` — and RHS — `"set %count% = %count% + 1"`) mapping to `math.<op> | variable.set Value=%!data%` is enough; the LLM follows the example.
@@ -777,11 +777,11 @@ Tracking-name constants (`ActionInfoTrackingName`, `ActionInfoFilteredTrackingNa
 **Test alias clash with namespace generation.** `PLang.Tests/GlobalUsings.cs` declares heavily-used type aliases:
 
 ```csharp
-global using Data = global::App.Data.@this;
-global using Variables = App.Variables.@this;
+global using Data = global::app.data.@this;
+global using Variables = app.variables.@this;
 ```
 
-Do NOT create test namespaces matching these alias names — `PLang.Tests.App.Data` or `PLang.Tests.App.Variables` namespaces shadow the type alias for all sibling test files (`CS0118: 'Data' is a namespace but is used like a type`). File-level `using Data = ...` cannot override (CS1537 against the global, and the namespace still wins at sibling scope). Convention: when a test folder mirrors `PLang/App/Data/` or `PLang/App/Variables/`, use the `*Tests` suffix on the folder/namespace (`PLang.Tests/App/DataTests/`, `PLang.Tests/App/VariablesTests/`). Same applies to any future global alias whose name is also a directory under `PLang/App/`.
+Do NOT create test namespaces matching these alias names — `PLang.Tests.app.data` or `PLang.Tests.app.variables` namespaces shadow the type alias for all sibling test files (`CS0118: 'Data' is a namespace but is used like a type`). File-level `using Data = ...` cannot override (CS1537 against the global, and the namespace still wins at sibling scope). Convention: when a test folder mirrors `PLang/app/data/` or `PLang/app/variables/`, use the `*Tests` suffix on the folder/namespace (`PLang.Tests/app/DataTests/`, `PLang.Tests/app/VariablesTests/`). Same applies to any future global alias whose name is also a directory under `PLang/app/`.
 
 ---
 
@@ -798,7 +798,7 @@ Anything else fails the build with `PLNG001: Property '{0}' on action '{1}' must
 
 ---
 
-## `App.Variables.Variable` — the variable-name carrier
+## `app.variables.Variable` — the variable-name carrier
 
 `Variable` is a record (`Name`, `RawValue`, `WasPercentWrapped`) used as the wrapped type in `Data<Variable>` for action parameters that *name* a variable rather than carry its value (write targets, read-by-name lookups: `variable.set`, every `list.*`, `loop.foreach` ItemName/KeyName). It implements `IRawNameResolvable`, a marker that tells `Data.AsT_Impl` to skip its `%var%` substitution branch and call `Variable.Resolve(raw, ctx)` directly. Both `value="%x%"` and bare `value="x"` slot forms collapse to `Variable { Name = "x" }` — symmetric, and works even when the named variable doesn't yet exist (e.g., `set %x% = 5` creating x for the first time).
 
@@ -867,7 +867,7 @@ When `T` is `Action.@this` or `IEnumerable<Action.@this>`, `AsT_Impl` skips the 
 
 When a handler errors, `App.Run` stamps `ICodeGenerated.SnapshotParams()` onto `Error.Params`, which prints to logs/CI artefacts/debug output under "📥 Parameters at dispatch:". Each property contributes a `ParamSnapshot { Name, DeclaredType, PrValue, PrType, FinalValue, WasAccessed }`.
 
-`[Sensitive]` on a `Data<T>` or legacy-scalar property (defined in `App/View.cs`, also used by `SensitivePropertyFilter` for JSON serialization) controls masking in two slots:
+`[Sensitive]` on a `Data<T>` or legacy-scalar property (defined in `app/View.cs`, also used by `SensitivePropertyFilter` for JSON serialization) controls masking in two slots:
 
 | Field | Non-sensitive | Sensitive |
 |-------|---------------|-----------|
@@ -908,7 +908,7 @@ Why the `context` parameter even though the lookup is context-free today: contra
 
 ## Data identity preservation — `As<T>` four wrap rules
 
-`Data.As<T>(context)` does not always allocate. It applies four rules (architect/v1/plan.md §Phase 2; `App/Data/this.cs` `WrapAs<T>`):
+`Data.As<T>(context)` does not always allocate. It applies four rules (architect/v1/plan.md §Phase 2; `app/data/this.cs` `WrapAs<T>`):
 
 1. **Same-type fast path** — `this is Data<T>` and `.Value is T` → return `this`. No allocation.
 2. **Variance fast path** — `value is T` and `IsPlangAssignable(T, value.GetType())` → new `Data<T>` whose `.Value` is the same reference (cast-only). `Properties`, `OnCreate`, `OnChange`, `OnDelete` aliased from `this`.
@@ -917,7 +917,7 @@ Why the `context` parameter even though the lookup is context-free today: contra
 
 Aliasing means the four state slots are list refs shared between source and view: `wrapped.Properties.Set(...)` is visible through `source.Properties`; subscribers added to either side fire from either side. Removing any of the four alias assignments in `ConstructWrap<T>` is a silent regression — `--debug={"variables":[...]}` watches and `condition.if`'s `branchIndex` (attached to the result Data via `Properties`) both depend on this.
 
-**Where it lives**: `App/Data/this.cs` — `WrapAs<T>` is the dispatch; `ConstructWrap<T>` is the per-rule constructor. Plain `Data` slots bypass `As<T>` entirely via `AsCanonical` (next entry).
+**Where it lives**: `app/data/this.cs` — `WrapAs<T>` is the dispatch; `ConstructWrap<T>` is the per-rule constructor. Plain `Data` slots bypass `As<T>` entirely via `AsCanonical` (next entry).
 
 ---
 
@@ -939,7 +939,7 @@ The walker is shared with `AsT_Impl` so plain `Data` and `Data<T>` resolve neste
 
 ## `Variables.Set` — events follow the name, Properties stay with the Data
 
-When `Variables.Set(dv)` replaces an existing binding under the same name (`App/Variables/this.cs:78-87`):
+When `Variables.Set(dv)` replaces an existing binding under the same name (`app/variables/this.cs:78-87`):
 
 ```csharp
 if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
@@ -963,7 +963,7 @@ if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 
 ## `variable.set` is the sole binding-mint site
 
-`App/modules/variable/set.cs` owns type inference for user-visible variables. `MintTyped(name, raw, ctx)` switches on the runtime type of the bound value and constructs the right `Data<T>` directly. Hot types (string, bool, int, long, double, decimal, float, DateTime, DateTimeOffset, Guid, byte[], `List<object?>`, `Dictionary<string, object?>`) take the if-chain; cold types fall through to a reflection construction (`typeof(Data<>).MakeGenericType`).
+`app/modules/variable/set.cs` owns type inference for user-visible variables. `MintTyped(name, raw, ctx)` switches on the runtime type of the bound value and constructs the right `Data<T>` directly. Hot types (string, bool, int, long, double, decimal, float, DateTime, DateTimeOffset, Guid, byte[], `List<object?>`, `Dictionary<string, object?>`) take the if-chain; cold types fall through to a reflection construction (`typeof(Data<>).MakeGenericType`).
 
 **Mutable refs are snapshot-cloned via JSON roundtrip.** `set %x% = %y%` where `y` is a list/dict mints a `Data<List<object?>>` (or `Data<Dict>`) over a *fresh* container — later mutations of the source do not bleed through. The clone runs through `Data.UnwrapJsonElement` to recursively normalize `List<JsonElement>` (which `JsonSerializer.Deserialize<List<object?>>` produces) into primitives.
 
@@ -975,7 +975,7 @@ if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 
 ## String-not-iterable — `IsPlangIterable` / `IsPlangAssignable`
 
-C# treats `string` as `IEnumerable<char>`. Plang treats strings as atomic. Two helpers in `App/Data/this.cs` enforce this:
+C# treats `string` as `IEnumerable<char>`. Plang treats strings as atomic. Two helpers in `app/data/this.cs` enforce this:
 
 ```csharp
 internal static bool IsPlangIterable(object? value) =>
@@ -996,7 +996,7 @@ Three call sites: `As<T>` variance fast path (so `Data<string>` doesn't variance
 
 ## JsonNode / JsonArray dispatch in `TypeConverter`
 
-`set ... type=json` mints a `Data<JsonNode>` (TypeMapping maps `"json"` → `typeof(JsonNode)`). Downstream typed handlers want concrete types (`LlmMessage`, `List<LlmMessage>`, etc.) so the converter must roundtrip. Caveat: `JsonObject` implements `IDictionary<string, JsonNode?>` (NOT `IDictionary<string, object?>`) and `JsonArray` implements `IList<JsonNode?>` (NOT non-generic `IList`) — neither matches the existing `IDictionary<string, object?>` / `IList` arms in `App/Utils/TypeConverter.cs`'s complex-source dispatch.
+`set ... type=json` mints a `Data<JsonNode>` (TypeMapping maps `"json"` → `typeof(JsonNode)`). Downstream typed handlers want concrete types (`LlmMessage`, `List<LlmMessage>`, etc.) so the converter must roundtrip. Caveat: `JsonObject` implements `IDictionary<string, JsonNode?>` (NOT `IDictionary<string, object?>`) and `JsonArray` implements `IList<JsonNode?>` (NOT non-generic `IList`) — neither matches the existing `IDictionary<string, object?>` / `IList` arms in `app/Utils/TypeConverter.cs`'s complex-source dispatch.
 
 Fix lives at `TypeConverter.cs` (~line 336): `JsonNode` joins `IDictionary<string, object?>`, `JsonElement`, `IList` in the complex-source check (so the JSON-roundtrip serialize→deserialize-to-target arm picks it up); `JsonArray` gets its own element-iteration arm parallel to `JsonElement`-array. Pinned by `TypeMappingDictConversionTests`.
 
@@ -1020,7 +1020,7 @@ See `Documentation/v0.2/callbacks.md` for the seal-then-verify gate that depends
 
 ## `RestoredFrame` is a surrogate, not a `Call.@this`
 
-`PLang/App/CallStack/RestoredFrame.cs` is the position record callbacks use to identify their resume point. It carries the resolved live `Action` (linked to its Step → Goal in the live `App.Goals` registry) plus the positional triple `(StepIndex, ActionIndex, Id)` captured at issue time.
+`PLang/app/callstack/RestoredFrame.cs` is the position record callbacks use to identify their resume point. It carries the resolved live `Action` (linked to its Step → Goal in the live `app.goals` registry) plus the positional triple `(StepIndex, ActionIndex, Id)` captured at issue time.
 
 **It is not a `Call.@this`.** It cannot be Pushed into `CallStack`'s AsyncLocal `Current`. It has no Stopwatch, no `OnSet`, no lifecycle. Restoring into a real `Call.@this` would tear up its invariants because Call's ctor is internal and lifecycle-coupled.
 
@@ -1032,7 +1032,7 @@ The dispatch path is: callbacks read `RestoredFrame` to identify the resume `Pos
 
 `Error.Callback` is a property that materialises an `ErrorCallback` on demand by calling `app.Snapshot()`. For that call to land, the `Error` instance needs a path to the live App tree at the point the callback is asked for — which is later than the point the error was raised.
 
-`PLang/App/Errors/this.cs` solves this by setting `error.App = this.App` inside `Push`. Errors plumb through code that doesn't know about App; the back-ref means recovery callbacks can materialise without re-threading App through the throw site. If you reorganise error handling, preserve this assignment — `Error.Callback` reads `App` via this property and silently returning `null` would mask the recovery path.
+`PLang/app/errors/this.cs` solves this by setting `error.App = this.App` inside `Push`. Errors plumb through code that doesn't know about App; the back-ref means recovery callbacks can materialise without re-threading App through the throw site. If you reorganise error handling, preserve this assignment — `Error.Callback` reads `App` via this property and silently returning `null` would mask the recovery path.
 
 ---
 
@@ -1043,7 +1043,7 @@ Channels exist so that I/O is **redirectable** — a user can re-register the `o
 The rule, with the three flavours of write:
 
 - **Diagnostic / debug chatter** (lifecycle banners, `--debug` traces, internal warnings) → `await context.App.Debug.Write(...)`. This routes through the `debug` channel falling back to `error`, and is gated on `IsEnabled` so it goes silent without `--debug`. Sites that subscribe as `Action<...>` (sync event handlers) can use `_ = Debug.Write(...)` — `Console.Error` was non-awaitable already, so ordering guarantees don't change.
-- **User-facing program output** (builder progress lines, LLM validation chatter — the user expects to see them with `--debug` off) → `await app.CurrentActor.Channels.WriteTextAsync(global::App.Channels.@this.Output, ...)`. Do **not** route these through `Debug.Write` — the `IsEnabled` gate would silence them in the default case.
+- **User-facing program output** (builder progress lines, LLM validation chatter — the user expects to see them with `--debug` off) → `await app.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, ...)`. Do **not** route these through `Debug.Write` — the `IsEnabled` gate would silence them in the default case.
 - **Interactive prompts** (the App build "create new app? (y/n)" prompt is the canonical example). The default console pair is direction-split: `output` is write-only, `input` is read-only. `Channel.Stream.AskCore` writes-then-reads on a single bidirectional stream and does not work across the split pair. Two-call pattern: write the prompt through `output`, then `using var reader = new StreamReader(inputChannel.Stream, leaveOpen: true)` and `await reader.ReadLineAsync()`. Don't extract a `Channels.AskAcrossAsync` primitive on speculation — there's only one caller.
 
 The two `Console.*` references that **stay**:

@@ -1,13 +1,13 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::App.FileSystem.Path;
-using PermissionRecord = global::App.FileSystem.Permission.@this;
-using Verb = global::App.FileSystem.Permission.Verb.@this;
-using Read = global::App.FileSystem.Permission.Verb.Read;
-using Write = global::App.FileSystem.Permission.Verb.Write;
-using Delete = global::App.FileSystem.Permission.Verb.Delete;
-using MatchMode = global::App.FileSystem.Permission.Match;
+using Path = global::app.filesystem.path;
+using PermissionRecord = global::app.filesystem.permission.@this;
+using Verb = global::app.filesystem.permission.verb.@this;
+using Read = global::app.filesystem.permission.verb.Read;
+using Write = global::app.filesystem.permission.verb.Write;
+using Delete = global::app.filesystem.permission.verb.Delete;
+using MatchMode = global::app.filesystem.permission.Match;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests.StorageTests;
 
@@ -15,15 +15,15 @@ namespace PLang.Tests.App.FileSystem.PermissionTests.StorageTests;
 /// persisted ("a") grants behind one Find/Add/Revoke surface.
 public class ActorPermissionStorageTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-st-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private static global::App.Data.@this<PermissionRecord> Grant(
-        global::App.@this app, string actor, string path, Verb? verb = null, MatchMode match = MatchMode.Exact)
+    private static global::app.data.@this<PermissionRecord> Grant(
+        global::app.@this app, string actor, string path, Verb? verb = null, MatchMode match = MatchMode.Exact)
     {
         var p = new PermissionRecord(actor, path, verb ?? Verb.AllowAll(), match);
-        return new global::App.Data.@this<PermissionRecord>("", p) { Context = app.User.Context };
+        return new global::app.data.@this<PermissionRecord>("", p) { Context = app.User.Context };
     }
 
     [Test] public async Task RoundTrip_AddSignedAGrant_FindReturnsIt_SignatureValidates()
@@ -68,7 +68,7 @@ public class ActorPermissionStorageTests
         // Routing: only the signed grant lands in sqlite. The unsigned one
         // must NOT appear there — proves Add's signature-presence heuristic
         // sends the two grants to different homes.
-        var stored = await app.SettingsStore.GetAll<global::App.Data.@this<PermissionRecord>>("permission");
+        var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
         await Assert.That(stored.Success).IsTrue();
         var paths = stored.Value!.Where(d => d.Value != null).Select(d => d.Value!.Path).ToList();
         await Assert.That(paths).Contains("/disk");
@@ -151,7 +151,7 @@ public class ActorPermissionStorageTests
         var grant = Grant(app, app.User.Name, "/p");
         grant.EnsureSigned();
         // Tamper the path post-signing — signature no longer covers payload.
-        var tampered = new global::App.Data.@this<PermissionRecord>("",
+        var tampered = new global::app.data.@this<PermissionRecord>("",
             new PermissionRecord(app.User.Name, "/different", Verb.AllowAll(), MatchMode.Exact))
         { Context = app.User.Context, Signature = grant.Signature };
         await app.User.Permission.Add(tampered);
@@ -192,7 +192,7 @@ public class ActorPermissionStorageTests
 
         // SettingsStore.Set is keyed by path — the table must hold one row
         // for `/p`, not two.
-        var stored = await app.SettingsStore.GetAll<global::App.Data.@this<PermissionRecord>>("permission");
+        var stored = await app.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>("permission");
         await Assert.That(stored.Success).IsTrue();
         var rowsForP = stored.Value!.Count(d => d.Value?.Path == "/p");
         await Assert.That(rowsForP).IsEqualTo(1);

@@ -1,8 +1,8 @@
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules;
-using global::App.FileSystem;
-using global::App.FileSystem.Default;
+using app.actor.context;
+using app.variables;
+using app.modules;
+using app.filesystem;
+using app.filesystem.Default;
 using Path = System.IO.Path;
 using File = System.IO.File;
 using Directory = System.IO.Directory;
@@ -19,7 +19,7 @@ public class PrPipelineTests
     public async Task FullPipeline_LoadAndExecute_VariablesOutputDefaults()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         var capture = new CapturingWriteHandler();
         engine.Modules.Register("output", "write", capture);
@@ -49,7 +49,7 @@ public class PrPipelineTests
     [Test]
     public async Task ReadFile_ReturnMapsResultToVariable()
     {
-        await using var engine = new global::App.@this("/app");
+        await using var engine = new global::app.@this("/app");
 
         // Capture output
         var capture = new CapturingWriteHandler();
@@ -84,7 +84,7 @@ public class PrPipelineTests
     public async Task FilePaths_FromRoot_RelativeAbsoluteSubfolderDotSlash()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
         await Assert.That(loadResult.Success).IsTrue();
@@ -110,7 +110,7 @@ public class PrPipelineTests
     public async Task FilePaths_FromSubfolder_AbsoluteRootWorks()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,Path.Combine("sub", "FilePathsFromSub.pr"));
         await Assert.That(loadResult.Success).IsTrue();
@@ -129,23 +129,23 @@ public class PrPipelineTests
     public async Task FilePaths_RelativeResolvesAgainstGoalFolder()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // A goal in /sub/ reads "subdata.txt" (relative)
         // This resolves to {root}/sub/subdata.txt — relative to goal folder
-        var goal = new global::App.Goals.Goal.@this
+        var goal = new global::app.goals.goal.@this
         {
             Name = "SubRelative",
             Path = "/sub/SubRelative.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this
+            Steps = new global::app.goals.goal.steps.@this
             {
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "read subdata.txt, write to %content%",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -169,22 +169,22 @@ public class PrPipelineTests
     public async Task FilePaths_ParentTraversal_FromSubfolderToRoot()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // #3: Goal in /sub/ reads ../testdata.txt — should resolve to {root}/testdata.txt
-        var goal = new global::App.Goals.Goal.@this
+        var goal = new global::app.goals.goal.@this
         {
             Name = "ParentTraversal",
             Path = "/sub/ParentTraversal.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this
+            Steps = new global::app.goals.goal.steps.@this
             {
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "read ../testdata.txt, write to %fromParent%",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -207,22 +207,22 @@ public class PrPipelineTests
     public async Task FilePaths_ParentTraversal_BackAndDown()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // #8: Goal in /sub/ reads ../sub/subdata.txt — parent then back down
-        var goal = new global::App.Goals.Goal.@this
+        var goal = new global::app.goals.goal.@this
         {
             Name = "ParentAndDown",
             Path = "/sub/ParentAndDown.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this
+            Steps = new global::app.goals.goal.steps.@this
             {
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "read ../sub/subdata.txt, write to %backAndDown%",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -245,22 +245,22 @@ public class PrPipelineTests
     public async Task FilePaths_NonexistentFile_ReturnsError()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // Hand-build a goal that reads a nonexistent file
-        var goal = new global::App.Goals.Goal.@this
+        var goal = new global::app.goals.goal.@this
         {
             Name = "ReadMissing",
             Path = "/ReadMissing.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this
+            Steps = new global::app.goals.goal.steps.@this
             {
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "read nonexistent.txt, write to %content%",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -284,22 +284,22 @@ public class PrPipelineTests
     public async Task FilePaths_EscapeAttempt_Blocked()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::App.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
         // Try to read ../../ — should be blocked by PLangFileSystem
-        var goal = new global::App.Goals.Goal.@this
+        var goal = new global::app.goals.goal.@this
         {
             Name = "ReadEscape",
             Path = "/ReadEscape.goal",
-            Steps = new global::App.Goals.Goal.Steps.@this
+            Steps = new global::app.goals.goal.steps.@this
             {
-                new global::App.Goals.Goal.Steps.Step.@this
+                new global::app.goals.goal.steps.step.@this
                 {
                     Index = 0,
                     Text = "read ../../etc/passwd, write to %content%",
-                    Actions = new global::App.Goals.Goal.Steps.Step.Actions.@this
+                    Actions = new global::app.goals.goal.steps.step.actions.@this
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "file",
                             ActionName = "read",
@@ -346,12 +346,12 @@ public class PrPipelineTests
     {
         public List<string> Lines { get; } = new();
 
-        public global::App.Goals.Goal.Steps.Step.Actions.Action.@this Action { get; set; } = null!;
-        public global::App.@this App { get; private set; } = null!;
-        public global::App.Actor.Context.@this Context { get; private set; } = null!;
+        public global::app.goals.goal.steps.step.actions.action.@this Action { get; set; } = null!;
+        public global::app.@this App { get; private set; } = null!;
+        public global::app.actor.context.@this Context { get; private set; } = null!;
         public System.Type? ParameterType => null;
 
-        public Task<Data> ExecuteAsync(global::App.Goals.Goal.Steps.Step.Actions.Action.@this action, global::App.Actor.Context.@this context)
+        public Task<Data> ExecuteAsync(global::app.goals.goal.steps.step.actions.action.@this action, global::app.actor.context.@this context)
         {
             App = context.App!;
             Context = context;

@@ -1,25 +1,25 @@
-using global::App.Tester;
+using app.tester;
 
 namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// Batch 2 — Results collection.
-/// Results is the run-wide collection of global::App.Tester.Run entries. Parallel test execution
+/// Results is the run-wide collection of global::app.tester.Run entries. Parallel test execution
 /// means Add is called concurrently from multiple Tasks — thread-safety is essential.
-/// global::App.Tester.Run.Complete transitions the per-test status and records duration.
+/// global::app.tester.Run.Complete transitions the per-test status and records duration.
 /// </summary>
 public class ResultsTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _app = new global::app.@this("/test");
     }
 
-    private static global::App.Tester.Run NewRun(string name = "T") =>
-        new(new global::App.Tester.File { Path = $"Tests/{name}.test.goal", EntryGoalName = name });
+    private static global::app.tester.Run NewRun(string name = "T") =>
+        new(new global::app.tester.File { Path = $"Tests/{name}.test.goal", EntryGoalName = name });
 
     // Fresh Results starts empty — Count == 0, enumeration yields nothing.
     [Test]
@@ -30,7 +30,7 @@ public class ResultsTests
         await Assert.That(results.Any()).IsFalse();
     }
 
-    // Adding a global::App.Tester.Run makes it enumerable via the Results collection.
+    // Adding a global::app.tester.Run makes it enumerable via the Results collection.
     [Test]
     public async Task Add_TestRun_AppearsInEnumeration()
     {
@@ -48,23 +48,23 @@ public class ResultsTests
     {
         var results = _app.Tester.Results;
 
-        var pass1 = NewRun("P1"); pass1.Complete(global::App.Tester.Status.Pass);
-        var pass2 = NewRun("P2"); pass2.Complete(global::App.Tester.Status.Pass);
-        var fail = NewRun("F"); fail.Complete(global::App.Tester.Status.Fail);
-        var timeout = NewRun("T"); timeout.Complete(global::App.Tester.Status.Timeout);
-        var stale = NewRun("S"); stale.Complete(global::App.Tester.Status.Stale);
-        var skipped = NewRun("K"); skipped.Complete(global::App.Tester.Status.Skipped);
+        var pass1 = NewRun("P1"); pass1.Complete(global::app.tester.Status.Pass);
+        var pass2 = NewRun("P2"); pass2.Complete(global::app.tester.Status.Pass);
+        var fail = NewRun("F"); fail.Complete(global::app.tester.Status.Fail);
+        var timeout = NewRun("T"); timeout.Complete(global::app.tester.Status.Timeout);
+        var stale = NewRun("S"); stale.Complete(global::app.tester.Status.Stale);
+        var skipped = NewRun("K"); skipped.Complete(global::app.tester.Status.Skipped);
 
         results.Add(pass1); results.Add(pass2); results.Add(fail);
         results.Add(timeout); results.Add(stale); results.Add(skipped);
 
         var summary = results.Summary();
 
-        await Assert.That(summary[global::App.Tester.Status.Pass]).IsEqualTo(2);
-        await Assert.That(summary[global::App.Tester.Status.Fail]).IsEqualTo(1);
-        await Assert.That(summary[global::App.Tester.Status.Timeout]).IsEqualTo(1);
-        await Assert.That(summary[global::App.Tester.Status.Stale]).IsEqualTo(1);
-        await Assert.That(summary[global::App.Tester.Status.Skipped]).IsEqualTo(1);
+        await Assert.That(summary[global::app.tester.Status.Pass]).IsEqualTo(2);
+        await Assert.That(summary[global::app.tester.Status.Fail]).IsEqualTo(1);
+        await Assert.That(summary[global::app.tester.Status.Timeout]).IsEqualTo(1);
+        await Assert.That(summary[global::app.tester.Status.Stale]).IsEqualTo(1);
+        await Assert.That(summary[global::app.tester.Status.Skipped]).IsEqualTo(1);
     }
 
     // Parallel test.run appends from multiple Tasks concurrently — Results.Add must be
@@ -87,16 +87,16 @@ public class ResultsTests
         await Assert.That(results.Count).IsEqualTo(workers * perWorker);
     }
 
-    // global::App.Tester.Run.Complete(status) sets the terminal status and captures elapsed
-    // duration measured from global::App.Tester.Run start.
+    // global::app.tester.Run.Complete(status) sets the terminal status and captures elapsed
+    // duration measured from global::app.tester.Run start.
     [Test]
     public async Task TestRun_Complete_TransitionsStatusAndRecordsDuration()
     {
         var run = NewRun("D");
         await Task.Delay(10); // ensure measurable duration
-        run.Complete(global::App.Tester.Status.Pass);
+        run.Complete(global::app.tester.Status.Pass);
 
-        await Assert.That(run.Status).IsEqualTo(global::App.Tester.Status.Pass);
+        await Assert.That(run.Status).IsEqualTo(global::app.tester.Status.Pass);
         await Assert.That(run.Duration.TotalMilliseconds).IsGreaterThanOrEqualTo(1);
     }
 }

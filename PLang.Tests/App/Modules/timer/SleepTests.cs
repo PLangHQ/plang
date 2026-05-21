@@ -4,13 +4,13 @@ namespace PLang.Tests.App.Modules.timer;
 
 public class SleepTests
 {
-    private global::App.@this _app = null!;
-    private global::App.Actor.Context.@this Ctx => _app.User.Context;
+    private global::app.@this _app = null!;
+    private global::app.actor.context.@this Ctx => _app.User.Context;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/app");
+        _app = new global::app.@this("/app");
     }
 
     [After(Test)]

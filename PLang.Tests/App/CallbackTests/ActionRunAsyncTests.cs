@@ -11,8 +11,8 @@ namespace PLang.Tests.App.CallbackTests;
 /// RunAsync surface).
 public class ActionRunAsyncTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rasn-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test] public async Task ActionRunAsync_IsSingleEntry_PushAnchorExecute()
@@ -27,12 +27,12 @@ public class ActionRunAsyncTests
 
     [Test] public async Task AppRun_SymbolAbsent_FromProductionSource()
     {
-        var run = typeof(global::App.@this).GetMethod("Run",
+        var run = typeof(global::app.@this).GetMethod("Run",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
             null,
             new[] {
-                typeof(global::App.Goals.Goal.Steps.Step.Actions.Action.@this),
-                typeof(global::App.Actor.Context.@this),
+                typeof(global::app.goals.goal.steps.step.actions.action.@this),
+                typeof(global::app.actor.context.@this),
             },
             null);
         await Assert.That(run).IsNull();
@@ -44,7 +44,7 @@ public class ActionRunAsyncTests
         // It builds an Action.@this entity with PreboundHandler set and
         // dispatches through entity.RunAsync — same path as PR-loaded actions,
         // synthetic-stamped. Pin current behavior (will flip when removed).
-        var runAction = typeof(global::App.@this).GetMethods(
+        var runAction = typeof(global::app.@this).GetMethods(
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .FirstOrDefault(m => m.Name == "RunAction" && m.GetGenericArguments().Length == 1);
         await Assert.That(runAction).IsNotNull();
@@ -52,7 +52,7 @@ public class ActionRunAsyncTests
 
     [Test] public async Task CauseParameter_AbsentFromAllCallSites()
     {
-        var push = typeof(global::App.CallStack.@this).GetMethod("Push");
+        var push = typeof(global::app.callstack.@this).GetMethod("Push");
         var args = push?.GetParameters();
         await Assert.That(args).IsNotNull();
         await Assert.That(args!.Length).IsEqualTo(2);

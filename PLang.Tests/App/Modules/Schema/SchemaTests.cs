@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Text.Json;
-using global::App.Modules.Schema;
-using PLangEngine = global::App.@this;
+using app.modules.Schema;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.Schema;
 

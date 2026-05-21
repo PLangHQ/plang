@@ -1,7 +1,7 @@
-using global::App.Actor.Context;
-using App;
-using global::App.Variables;
-using LoopResult = global::App.modules.loop.types.loop;
+using app.actor.context;
+using app;
+using app.variables;
+using LoopResult = global::app.modules.loop.types.loop;
 
 namespace PLang.Tests.App.actions.loop;
 
@@ -14,10 +14,10 @@ namespace PLang.Tests.App.actions.loop;
 
 public class ForeachStringNotIterableTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/app");
+    public void Setup() => _app = new global::app.@this("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }

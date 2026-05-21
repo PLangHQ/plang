@@ -10,10 +10,10 @@ namespace PLang.Tests.App.DataTests;
 
 public class PlangAssignabilityTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = new global::App.@this("/app");
+    public void Setup() => _app = new global::app.@this("/app");
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -54,7 +54,7 @@ public class PlangAssignabilityTests
     [Test]
     public async Task AsT_StringToIEnumerable_WrapsAsSingleElementList()
     {
-        var source = new global::App.Data.@this<string>("text", "hello") { Context = _app.User.Context };
+        var source = new global::app.data.@this<string>("text", "hello") { Context = _app.User.Context };
         var wrapped = source.As<IEnumerable>();
         var items = new List<object?>();
         foreach (var item in wrapped.Value!) items.Add(item);
@@ -67,7 +67,7 @@ public class PlangAssignabilityTests
     [Test]
     public async Task AsT_IntToIEnumerable_WrapsAsSingleElementList()
     {
-        var source = new global::App.Data.@this<int>("n", 42) { Context = _app.User.Context };
+        var source = new global::app.data.@this<int>("n", 42) { Context = _app.User.Context };
         var wrapped = source.As<IEnumerable>();
         var items = new List<object?>();
         foreach (var item in wrapped.Value!) items.Add(item);

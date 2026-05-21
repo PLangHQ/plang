@@ -1,5 +1,5 @@
-using App.Events;
-using App.Events.Lifecycle.Bindings.Binding;
+using app.events;
+using app.events.lifecycle.bindings.binding;
 
 namespace PLang.Tests.App.ChannelsTests;
 
@@ -39,7 +39,7 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task BeforeWriteHandler_ReceivesCorrectData()
     {
-        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("logger");
         app.User.Channels.Register(ch);
         Data? captured = null;
@@ -75,7 +75,7 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task AfterWriteHandler_FiresWhenWriteCoreSucceeds()
     {
-        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
         app.User.Channels.Register(ch);
         bool afterFired = false;
@@ -110,7 +110,7 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task AfterWriteHandler_ThrowingIsSuppressed_OriginalOutcomeStands()
     {
-        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
         app.User.Channels.Register(ch);
         ch.Events.Add(new EventBinding(EventType.AfterWrite, (_, _, _) =>
@@ -138,7 +138,7 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task MultipleBindings_FireInRegistrationOrder()
     {
-        await using var app = new global::App.@this("/test", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("c");
         app.User.Channels.Register(ch);
         var order = new List<string>();
@@ -178,7 +178,7 @@ public class Stage8_ChannelEventsTests
             receivedData = payload;
             return Task.FromResult(Data.Ok());
         }));
-        var result = await ch.Ask(new global::App.modules.output.ask { Question = new global::App.Data.@this<string>("", "") });
+        var result = await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Value as string).IsEqualTo("answer");
         await Assert.That(receivedData).IsNotNull();
         await Assert.That(receivedData!.Value as string).IsEqualTo("answer");
@@ -198,14 +198,14 @@ public class Stage8_ChannelEventsTests
             fired = true;
             return Task.FromResult(Data.Ok());
         }));
-        await ch.Ask(new global::App.modules.output.ask { Question = new global::App.Data.@this<string>("", "q?") });
+        await ch.Ask(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(fired).IsTrue();
     }
 
     [Test]
     public async Task BindingsMatch_AcrossUserAndServiceChannels_OfSameName()
     {
-        await using var app = new global::App.@this("/tmp/s8-cross");
+        await using var app = new global::app.@this("/tmp/s8-cross");
         var userLogger = StreamChannel.Memory("logger");
         var serviceLogger = StreamChannel.Memory("logger");
         app.User.Channels.Register(userLogger);
@@ -225,7 +225,7 @@ public class Stage8_ChannelEventsTests
     [Test]
     public async Task ChannelEvents_DoNotTriggerGoalStepOrActionBindings()
     {
-        await using var app = new global::App.@this("/tmp/s8-iso");
+        await using var app = new global::app.@this("/tmp/s8-iso");
         var ch = StreamChannel.Memory("c");
         app.User.Channels.Register(ch);
 
@@ -242,8 +242,8 @@ public class Stage8_ChannelEventsTests
     {
         // Regression probe for B1: `_active` is an instance field, not static.
         // If it ever becomes static, evB sees evA's active set.
-        var evA = new global::App.Channels.Channel.Events.@this();
-        var evB = new global::App.Channels.Channel.Events.@this();
+        var evA = new global::app.channels.channel.events.@this();
+        var evB = new global::app.channels.channel.events.@this();
         using var _ = evA.Enter("X");
         await Assert.That(evA.IsActive("X")).IsTrue();
         await Assert.That(evB.IsActive("X")).IsFalse();
@@ -256,7 +256,7 @@ public class Stage8_ChannelEventsTests
         // If a child mutates the parent's HashSet in place, the parent flow
         // sees the child's id while the child is still inside its scope.
         // (Naive Task.WhenAll passes either way — children Add then Remove.)
-        var ev = new global::App.Channels.Channel.Events.@this();
+        var ev = new global::app.channels.channel.events.@this();
         using var _ = ev.Enter("A");
         var inside = new TaskCompletionSource();
         var release = new TaskCompletionSource();
@@ -279,14 +279,14 @@ public class Stage8_ChannelEventsTests
         public override Task<Data> WriteCore(Data data, CancellationToken ct = default)
             => throw new IOException("boom");
         public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> AskCore(global::App.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> AskCore(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
-    private sealed class MessageProbeChannel : global::App.Channels.Channel.Message.@this
+    private sealed class MessageProbeChannel : global::app.channels.channel.message.@this
     {
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> WriteCore(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> AskCore(global::App.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
+        public override Task<Data> AskCore(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok("answer-from-resume"));
     }
 }

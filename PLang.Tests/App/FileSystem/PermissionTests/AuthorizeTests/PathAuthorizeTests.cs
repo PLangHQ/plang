@@ -1,11 +1,11 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::App.FileSystem.Path;
-using PermissionRecord = global::App.FileSystem.Permission.@this;
-using Verb = global::App.FileSystem.Permission.Verb.@this;
-using Read = global::App.FileSystem.Permission.Verb.Read;
-using MatchMode = global::App.FileSystem.Permission.Match;
+using Path = global::app.filesystem.path;
+using PermissionRecord = global::app.filesystem.permission.@this;
+using Verb = global::app.filesystem.permission.verb.@this;
+using Read = global::app.filesystem.permission.verb.Read;
+using MatchMode = global::app.filesystem.permission.Match;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests.AuthorizeTests;
 
@@ -14,40 +14,40 @@ namespace PLang.Tests.App.FileSystem.PermissionTests.AuthorizeTests;
 /// PermissionDenied on refusal, recurses on bad input.
 public class PathAuthorizeTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-auth-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     /// Stub stateful channel — answers Ask with a pre-set canned line.
-    private sealed class CannedAnswerChannel : global::App.Channels.Channel.@this
+    private sealed class CannedAnswerChannel : global::app.channels.channel.@this
     {
         public string[] Answers { get; }
         private int _idx;
         public CannedAnswerChannel(string[] answers)
         {
             Name = "input";
-            Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional;
+            Direction = global::app.channels.channel.ChannelDirection.Bidirectional;
             Answers = answers;
         }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok((object?)null));
-        public override Task<global::App.Data.@this> AskCore(
-            global::App.modules.output.ask action, CancellationToken ct = default)
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public override Task<global::app.data.@this> AskCore(
+            global::app.modules.output.ask action, CancellationToken ct = default)
         {
             var ans = _idx < Answers.Length ? Answers[_idx++] : "";
-            return Task.FromResult(global::App.Data.@this.Ok(ans));
+            return Task.FromResult(global::app.data.@this.Ok(ans));
         }
     }
 
-    private sealed class StatelessChannel : global::App.Channels.Channel.Message.@this
+    private sealed class StatelessChannel : global::app.channels.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional; }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default)
-            => Task.FromResult(global::App.Data.@this.Ok((object?)null));
+        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
     [Test] public async Task Authorize_GrantExists_ReturnsOk_NoChannelAsk()
@@ -58,7 +58,7 @@ public class PathAuthorizeTests
 
         // Pre-seed a grant covering the request.
         var grant = new PermissionRecord(app.User.Name, "/p", Verb.AllowAll(), MatchMode.Exact);
-        var grantData = new global::App.Data.@this<PermissionRecord>("", grant) { Context = ctx };
+        var grantData = new global::app.data.@this<PermissionRecord>("", grant) { Context = ctx };
         await app.User.Permission.Add(grantData);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
@@ -99,7 +99,7 @@ public class PathAuthorizeTests
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::App.Errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
     }
 
     [Test] public async Task Authorize_StatefulAnswerGarbage_RecursesWithInvalidPrefix()
@@ -151,7 +151,7 @@ public class PathAuthorizeTests
         var path = new Path("/secret", ctx);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
-        var denied = (global::App.Errors.PermissionDenied)result.Error!;
+        var denied = (global::app.errors.PermissionDenied)result.Error!;
         await Assert.That(denied.Permission.Path).IsEqualTo("/secret");
         await Assert.That(denied.Permission.Actor).IsEqualTo(app.User.Name);
     }
@@ -175,7 +175,7 @@ public class PathAuthorizeTests
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error).IsTypeOf<global::App.Errors.PermissionDenied>();
+        await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
     }
 
     /// IsInRoot's second clause: OsDirectory (system-built-in goals like
@@ -198,7 +198,7 @@ public class PathAuthorizeTests
     [Test] public async Task PermissionDenied_Error_RoundTripsThroughErrorShape()
     {
         var perm = new PermissionRecord("user", "/p", Verb.AllowAll(), MatchMode.Exact);
-        var err = new global::App.Errors.PermissionDenied(perm);
+        var err = new global::app.errors.PermissionDenied(perm);
         await Assert.That(err.Key).IsEqualTo("PermissionDenied");
         await Assert.That(err.StatusCode).IsEqualTo(403);
         await Assert.That(err.Permission).IsSameReferenceAs(perm);

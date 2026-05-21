@@ -1,4 +1,4 @@
-using global::App.Utils;
+using app.Utils;
 
 namespace PLang.Tests.App.Utils;
 
@@ -635,18 +635,18 @@ public class TypeMappingTests
     [Test]
     public async Task TryConvertTo_IObject_ValidString_CreatesInstance()
     {
-        var (result, error) = TypeMapping.TryConvertTo("==", typeof(global::App.modules.condition.Operator));
+        var (result, error) = TypeMapping.TryConvertTo("==", typeof(global::app.modules.condition.Operator));
 
         await Assert.That(error).IsNull();
         await Assert.That(result).IsNotNull();
-        await Assert.That(result).IsTypeOf<global::App.modules.condition.Operator>();
-        await Assert.That(((global::App.modules.condition.Operator)result!).Value).IsEqualTo("==");
+        await Assert.That(result).IsTypeOf<global::app.modules.condition.Operator>();
+        await Assert.That(((global::app.modules.condition.Operator)result!).Value).IsEqualTo("==");
     }
 
     [Test]
     public async Task TryConvertTo_Operator_InvalidString_ReturnsError()
     {
-        var (result, error) = TypeMapping.TryConvertTo("equals", typeof(global::App.modules.condition.Operator));
+        var (result, error) = TypeMapping.TryConvertTo("equals", typeof(global::app.modules.condition.Operator));
 
         await Assert.That(error).IsNotNull();
         await Assert.That(error!.Key).IsEqualTo("ConstructorFailed");
@@ -655,7 +655,7 @@ public class TypeMappingTests
     [Test]
     public async Task TryConvertTo_IObject_Null_ReturnsNull()
     {
-        var (result, error) = TypeMapping.TryConvertTo(null, typeof(global::App.modules.condition.Operator));
+        var (result, error) = TypeMapping.TryConvertTo(null, typeof(global::app.modules.condition.Operator));
 
         await Assert.That(error).IsNull();
         await Assert.That(result).IsNull();
@@ -666,7 +666,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfPath_ReturnsPath()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::App.Data.@this<global::App.FileSystem.Path>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<global::app.filesystem.path>));
 
         await Assert.That(name).IsEqualTo("path");
     }
@@ -674,7 +674,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfBool_ReturnsBool()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::App.Data.@this<bool>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<bool>));
 
         await Assert.That(name).IsEqualTo("bool");
     }
@@ -682,7 +682,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetTypeName_DataOfListString_ReturnsListString()
     {
-        var name = TypeMapping.GetTypeName(typeof(global::App.Data.@this<List<string>>));
+        var name = TypeMapping.GetTypeName(typeof(global::app.data.@this<List<string>>));
 
         await Assert.That(name).IsEqualTo("list<string>");
     }
@@ -698,7 +698,7 @@ public class TypeMappingTests
     [Test]
     public async Task GetValidValues_DataOfActor_ReturnsValues()
     {
-        var values = TypeMapping.GetValidValues(typeof(global::App.Data.@this<global::App.Actor.@this>));
+        var values = TypeMapping.GetValidValues(typeof(global::app.data.@this<global::app.actor.@this>));
 
         await Assert.That(values).IsNotNull();
         await Assert.That(values!.Length).IsGreaterThan(0);

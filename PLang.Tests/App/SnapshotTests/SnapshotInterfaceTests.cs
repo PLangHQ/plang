@@ -34,6 +34,6 @@ public class SnapshotInterfaceTests
         var pars = restore.GetParameters();
         await Assert.That(pars.Length).IsEqualTo(2);
         await Assert.That(pars[0].ParameterType).IsEqualTo(typeof(Snapshot));
-        await Assert.That(pars[1].ParameterType).IsEqualTo(typeof(global::App.Actor.Context.@this));
+        await Assert.That(pars[1].ParameterType).IsEqualTo(typeof(global::app.actor.context.@this));
     }
 }

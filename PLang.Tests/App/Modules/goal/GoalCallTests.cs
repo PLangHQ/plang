@@ -1,18 +1,18 @@
-using global::App.modules.goal;
-using global::App.Goals.Goal;
+using app.modules.goal;
+using app.goals.goal;
 
 namespace PLang.Tests.App.Modules.goal;
 
 public class GoalCallTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/app");
+        _app = new global::app.@this("/app");
         // Register a stub goal that call.cs can find
-        _app.Goals.Add(new global::App.Goals.Goal.@this
+        _app.Goals.Add(new global::app.goals.goal.@this
         {
             Name = "TestGoal",
             Path = "/TestGoal.goal"

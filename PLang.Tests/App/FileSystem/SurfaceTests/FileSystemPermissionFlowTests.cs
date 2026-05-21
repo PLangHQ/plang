@@ -1,11 +1,11 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::App.FileSystem.Path;
-using Verb = global::App.FileSystem.Permission.Verb.@this;
-using Read = global::App.FileSystem.Permission.Verb.Read;
-using Write = global::App.FileSystem.Permission.Verb.Write;
-using Delete = global::App.FileSystem.Permission.Verb.Delete;
+using Path = global::app.filesystem.path;
+using Verb = global::app.filesystem.permission.verb.@this;
+using Read = global::app.filesystem.permission.verb.Read;
+using Write = global::app.filesystem.permission.verb.Write;
+using Delete = global::app.filesystem.permission.verb.Delete;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -20,31 +20,31 @@ public class FileSystemPermissionFlowTests
         new[] { "ReadText", "ReadBytes", "Exists", "List", "Stat",
                 "WriteText", "WriteBytes", "Append", "Mkdir", "Delete" };
 
-    private static global::App.@this NewApp(out string root)
+    private static global::app.@this NewApp(out string root)
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new global::App.@this(root);
+        return new global::app.@this(root);
     }
 
-    private sealed class CannedChannel : global::App.Channels.Channel.@this
+    private sealed class CannedChannel : global::app.channels.channel.@this
     {
         private readonly string _answer;
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional; }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok((object?)null));
-        public override Task<global::App.Data.@this> AskCore(global::App.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok(_answer));
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public override Task<global::app.data.@this> AskCore(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
     }
 
-    private sealed class StatelessChannel : global::App.Channels.Channel.Message.@this
+    private sealed class StatelessChannel : global::app.channels.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional; }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok((object?)null));
+        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
-    private static Task<global::App.Data.@this> Dispatch(string method, Path path) => method switch
+    private static Task<global::app.data.@this> Dispatch(string method, Path path) => method switch
     {
         "ReadText"   => path.ReadText(),
         "ReadBytes"  => path.ReadBytes(),

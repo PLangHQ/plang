@@ -6,8 +6,8 @@ This doc is for anyone adding or editing action handlers — what metadata you a
 
 ## Where the catalog lives
 
-1. **Source**: C# action handler classes in `PLang/App/modules/<module>/<action>.cs`. Attributes on these classes (and their properties) are the single source of truth.
-2. **Builder pulls it**: `App.Modules.Describe()` walks the registered handlers, reads the attributes, and emits a collection of `Action` records with: `Module`, `ActionName`, `Cacheable`, `Parameters`, `Description`, `ModuleDescription`, `IsModifier`, `Examples`, `ReturnType`.
+1. **Source**: C# action handler classes in `PLang/app/modules/<module>/<action>.cs`. Attributes on these classes (and their properties) are the single source of truth.
+2. **Builder pulls it**: `app.modules.Describe()` walks the registered handlers, reads the attributes, and emits a collection of `Action` records with: `Module`, `ActionName`, `Cacheable`, `Parameters`, `Description`, `ModuleDescription`, `IsModifier`, `Examples`, `ReturnType`.
 3. **Template renders it**: `system/actions/v2/summary.md` is a Liquid template that groups the records into a `# Actions` section and a `# Modifiers` section and formats each entry.
 4. **Prompt injects it**: `system/builder/llm/BuildGoal.llm` pulls the rendered output in via `{{ actionSummary }}`, right under the `## Available Actions` heading.
 
@@ -45,7 +45,7 @@ A module with a mix of action and modifier classes (like `error` here) gets its 
 
 ## Attributes you apply
 
-All attributes live in `App.modules` (plus the built-in `System.ComponentModel.Description`).
+All attributes live in `app.modules` (plus the built-in `System.ComponentModel.Description`).
 
 ### On the action class
 
@@ -73,14 +73,14 @@ All attributes live in `App.modules` (plus the built-in `System.ComponentModel.D
 | `string` / `int` / `long` / `bool` / `double` / `decimal` / `DateTime` / `Guid` | Lowercased: `string`, `int`, etc. |
 | Nullable (`string?`, `int?`) | Trailing `?`. |
 | `Data<T>` (LazyParam) | Unwrapped to `T`'s rendering. |
-| `Data<App.Variables.Variable>` | Renders as `string` — the slot names a variable rather than carrying a value. `Variable` implements `IRawNameResolvable`, so `Data.As<T>` resolves it from the raw slot string (`%x%` and bare `x` both produce `Variable { Name = "x" }`). The handler reads `Foo.Value` to get the `Variable`; implicit conversion to `string` covers method-call boundaries. |
+| `Data<app.variables.Variable>` | Renders as `string` — the slot names a variable rather than carrying a value. `Variable` implements `IRawNameResolvable`, so `Data.As<T>` resolves it from the raw slot string (`%x%` and bare `x` both produce `Variable { Name = "x" }`). The handler reads `Foo.Value` to get the `Variable`; implicit conversion to `string` covers method-call boundaries. |
 | Enum or type with a `static string[] ValidValues` | Type name plus inline enumeration: `operator(==|!=|>|<|…)`. |
 | `List<T>`, `IList<T>`, arrays | `list<T>`. |
 | `Dictionary<K,V>`, `IDictionary<K,V>`, `ConcurrentDictionary<K,V>`, `ReadOnlyDictionary<K,V>`, etc. | `dict<K,V>`. |
 | `HashSet<T>`, `ISet<T>`, `IEnumerable<T>`, `ICollection<T>`, `IReadOnlyList<T>` | `list<T>`. |
 | `byte[]` | `bytes`. |
 
-Type mapping lives in `PLang/App/Utils/TypeMapping.cs`. If you add a new generic collection type and see it leak as `somecollection<…>` in the catalog, add a branch to `GetTypeName()`.
+Type mapping lives in `PLang/app/utils/TypeMapping.cs`. If you add a new generic collection type and see it leak as `somecollection<…>` in the catalog, add a branch to `GetTypeName()`.
 
 ## Writing good `[Example]` attributes
 
@@ -114,7 +114,7 @@ Drop examples that restate the signature (`"set %x% = 1 → Name=x, Value=1"` ad
 
 ## Adding a new action
 
-1. Create `PLang/App/modules/<module>/<action>.cs`. Class should be `public partial class YourAction : IContext` (or the appropriate base/interfaces for your module pattern).
+1. Create `PLang/app/modules/<module>/<action>.cs`. Class should be `public partial class YourAction : IContext` (or the appropriate base/interfaces for your module pattern).
 2. Apply `[Action("<action-name>")]`. If action name matches the class name lowercased, the string argument is optional.
 3. Apply `[System.ComponentModel.Description("…")]` — one short sentence.
 4. If this is the first class in a brand-new module, apply `[ModuleDescription("…")]` too.
@@ -136,11 +136,11 @@ Modules composed entirely of modifier actions (e.g. `cache`, `timeout`) render o
 This is `variable.set` — a good reference because it exercises most of the attributes in a compact class. Comments are annotations for this doc; they're not part of the source file.
 
 ```csharp
-using App.Attributes;
-using App.Variables;
+using app.attributes;
+using app.variables;
 
-// Namespace segment = module name. "App.modules.variable" ⇒ module "variable".
-namespace App.modules.variable;
+// Namespace segment = module name. "app.modules.variable" ⇒ module "variable".
+namespace app.modules.variable;
 
 // System.ComponentModel.Description — rendered inline after the action name
 // in the catalog. Must add info the signature doesn't: the ", optionally
@@ -170,7 +170,7 @@ public partial class Set : IContext, IBuildValidatable
 
     // Data<Variable> — slot names a variable, not a value. The catalog
     // renders it as "Name([string] %var%)"; Data.As<Variable> resolves
-    // the raw slot string into a Variable (Variable implements
+    // the raw slot string into a Variable (app.variables.Variable implements
     // IRawNameResolvable, so %x% and bare x both yield Name="x").
     // Use sites read Name.Value (Variable→string implicit fires at
     // Variables.Set boundaries).

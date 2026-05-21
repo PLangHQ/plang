@@ -5,7 +5,7 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Snapshot_WalksISnapshottedProperties_AndAggregatesIntoTree()
     {
-        var app = new global::App.@this("/test");
+        var app = new global::app.@this("/test");
         var snap = app.Snapshot();
 
         await Assert.That(snap.HasSection("Variables")).IsTrue();
@@ -20,14 +20,14 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Restore_DispatchesEachSubtree_ToMatchingThisRestore()
     {
-        var src = new global::App.@this("/src");
+        var src = new global::app.@this("/src");
         src.User.Context.Variables.Set("x", 1);
         src.Builder.IsEnabled = true;
         src.Tester.IsEnabled = true;
 
         var snap = src.Snapshot();
 
-        var dst = new global::App.@this("/dst");
+        var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
         await Assert.That(dst.User.Context.Variables.Get("x")?.Value).IsEqualTo(1);
@@ -38,7 +38,7 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Snapshot_OmitsReconstructOnBuildSubsystems()
     {
-        var app = new global::App.@this("/test");
+        var app = new global::app.@this("/test");
         var snap = app.Snapshot();
 
         await Assert.That(snap.HasSection("Modules")).IsFalse();
@@ -56,13 +56,13 @@ public class AppSnapshotTests
     [Test]
     public async Task App_Cache_NotInSnapshot_FreshAppHasEmptyCache()
     {
-        var src = new global::App.@this("/src");
+        var src = new global::app.@this("/src");
         var snap = src.Snapshot();
 
-        var dst = new global::App.@this("/dst");
+        var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
-        await Assert.That(dst.Cache).IsTypeOf<global::App.Cache.Memory>();
+        await Assert.That(dst.Cache).IsTypeOf<global::app.modules.cache.Memory>();
         await Assert.That(snap.HasSection("Cache")).IsFalse();
     }
 }

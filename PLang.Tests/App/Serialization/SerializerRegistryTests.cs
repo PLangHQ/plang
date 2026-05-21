@@ -1,5 +1,5 @@
-using global::App.Channels.Serializers.Serializer;
-using SerializerRegistry = global::App.Channels.Serializers.@this;
+using app.channels.serializers.serializer;
+using SerializerRegistry = global::app.channels.serializers.@this;
 
 namespace PLang.Tests.App.Serialization;
 

@@ -1,8 +1,8 @@
 using System.Text.Json;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.signing.code;
-using global::App.modules.signing;
+using app.variables;
+using app.modules.code;
+using app.modules.signing.code;
+using app.modules.signing;
 
 namespace PLang.Tests.App.Modules.signing;
 
@@ -95,8 +95,8 @@ public class SigningSerializationTests
     public async Task Hash_IsBase64_NotHex()
     {
         // Hash some data using the crypto provider directly
-        var cryptoProvider = new global::App.modules.crypto.code.Default();
-        var hashResult = cryptoProvider.Hash(new global::App.modules.crypto.Hash
+        var cryptoProvider = new global::app.modules.crypto.code.Default();
+        var hashResult = cryptoProvider.Hash(new global::app.modules.crypto.Hash
             { Data = Data.Ok(System.Text.Encoding.UTF8.GetBytes("test data")), Algorithm = "sha256" });
         var hashBytes = (byte[])hashResult.Value!;
         var base64Hash = Convert.ToBase64String(hashBytes);
@@ -139,7 +139,7 @@ public class SigningSerializationTests
         // Create a Signature with invalid base64 in Hash
         // Verification should handle it gracefully (the hash comparison will fail)
         var sd = CreateTestSignedData();
-        sd.Hash = Data.Ok(new byte[] { 0xFF }, global::App.Data.Type.FromName("sha256"));
+        sd.Hash = Data.Ok(new byte[] { 0xFF }, global::app.data.type.FromName("sha256"));
         sd.Value = Convert.ToBase64String(new byte[64]);
         sd.Contracts = new List<string> { "C0" };
 
@@ -148,7 +148,7 @@ public class SigningSerializationTests
         System.IO.Directory.CreateDirectory(tempDir);
         try
         {
-            var engine = new global::App.@this(tempDir);
+            var engine = new global::app.@this(tempDir);
             var signedData = Data.Ok("test");
             signedData.Value = sd;
 
@@ -199,7 +199,7 @@ public class SigningSerializationTests
             Created = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
             Identity = "testPublicKey",
             Contracts = new List<string> { "C0" },
-            Hash = Data.Ok(new byte[32], global::App.Data.Type.FromName("sha256")),
+            Hash = Data.Ok(new byte[32], global::app.data.type.FromName("sha256")),
             Value = null
         };
     }

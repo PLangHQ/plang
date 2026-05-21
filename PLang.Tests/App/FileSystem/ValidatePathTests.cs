@@ -17,12 +17,12 @@ namespace PLang.Tests.App.FileSystem;
 ///      ValidatePath only normalises.
 public class ValidatePathTests
 {
-    private static global::App.@this NewApp(out string root)
+    private static global::app.@this NewApp(out string root)
     {
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-vp-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return new global::App.@this(root);
+        return new global::app.@this(root);
     }
 
     [Test] public async Task PlangRootedPath_GetsRootPrefix()

@@ -1,6 +1,6 @@
 # OBP Audit Rules — Sharpened Detection
 
-Five detection rules with grep recipes for finding OBP shape smells in `PLang/App/`. Each rule has a screen (the raw grep), a filter (what to discard), and worked examples from this codebase. Use after a major refactor to catch what slipped through, or when investigating a specific suspected smell.
+Five detection rules with grep recipes for finding OBP shape smells in `PLang/app/`. Each rule has a screen (the raw grep), a filter (what to discard), and worked examples from this codebase. Use after a major refactor to catch what slipped through, or when investigating a specific suspected smell.
 
 For the foundational *principles* (what good OBP shape looks like), read `Documentation/v0.2/good_to_know.md` "OBP Naming Principle" and "OBP Smell Checklist", and `/shared/bots/obp/core.md` for the consolidated reference.
 
@@ -18,7 +18,7 @@ For the foundational *principles* (what good OBP shape looks like), read `Docume
 
 ```bash
 grep -rEn "^\s*(public|internal|private|protected)?\s*(sealed\s+|static\s+|partial\s+|abstract\s+)*(class|record)\s+[A-Z][a-z]+[A-Z]" \
-  PLang/App/ --include='*.cs'
+  PLang/app/ --include='*.cs'
 ```
 
 Two capital letters in the class name is the red flag.
@@ -29,12 +29,12 @@ Two capital letters in the class name is the red flag.
 2. **Per-impl variants** — `XxxNavigator`, `XxxProvider`, `XxxSerializer`, `XxxConverter`, `XxxStore`. The folder names the abstraction (`Navigators/`, `Providers/`); the prefix names the implementation. These are OBP-correct — same shape as `Cache/Memory.cs`. Skip when the file lives in a folder that names the abstraction.
 3. **Tri-valent compound nouns** — `MemoryStepCache`, `SqliteSettingsStore`. When the impl AND the entity AND the role are all genuinely part of the identity, accept the compound. Rare.
 
-**Today's count on `PLang/App/`:** ~145 raw hits → ~30-40 real candidates after filtering.
+**Today's count on `PLang/app/`:** ~145 raw hits → ~30-40 real candidates after filtering.
 
 **Worked examples currently in the cleanup plan:**
 
-- `App/Catalog/ExampleRenderer.cs` — `Renderer` is a role suffix. Rule A flags. Fix (stage 9): becomes `App/Modules/Schema/Render.cs` (file name) on a navigable property `app.Modules.Schema.Render(...)`.
-- `App/Cache/MemoryStepCache.cs` — three nouns (Memory + Step + Cache). Rule A flags. Fix (stage 14): `App/Cache/Memory.cs` (impl variant under the Cache abstraction).
+- `app/Catalog/ExampleRenderer.cs` — `Renderer` is a role suffix. Rule A flags. Fix (stage 9): becomes `app/modules/Schema/Render.cs` (file name) on a navigable property `app.Modules.Schema.Render(...)`.
+- `app/modules/cache/MemoryStepCache.cs` — three nouns (Memory + Step + Cache). Rule A flags. Fix (stage 14): `app/modules/cache/Memory.cs` (impl variant under the Cache abstraction).
 
 ---
 
@@ -47,19 +47,19 @@ Refinement: `Get(uniqueKey)` returning **one item** is fine (`Variables.Get(name
 **Quick screen.**
 
 ```bash
-grep -rEn "Get[A-Z][a-z]+s\(" PLang/App/ --include='*.cs' \
+grep -rEn "Get[A-Z][a-z]+s\(" PLang/app/ --include='*.cs' \
   | grep -vE "GetType\(\)\.Get|GetInterfaces\(|GetProperties\(|GetMethods\(|GetParameters\(|GetFields\(|GetTypes\(\)|GetCustom|GetBytes\(|GetFiles\(|GetNames\(\)|Encoding\."
 ```
 
 The unfiltered grep returns ~94 hits; almost all are .NET reflection (`type.GetProperties(...)`, `GetType().GetInterfaces()`) or framework I/O (`Encoding.GetBytes`, `Directory.GetFiles`, `Enum.GetNames`) — not the smell. The filter drops to ~5-8 real candidates.
 
-**Today's count on `PLang/App/`:** 94 raw → ~5-8 real candidates.
+**Today's count on `PLang/app/`:** 94 raw → ~5-8 real candidates.
 
 **Worked examples currently in the cleanup plan:**
 
-- `App/Modules/this.cs:103` — `public IEnumerable<string> GetActions(string module)` flags. Fix: `app.Modules.<module>.Actions` (or similar) navigable.
-- `App/Modules/this.cs:384` — `public List<Data.@this>? GetDefaults(string module, string actionName, HashSet<string>)` flags. Same fix shape.
-- `App/Channels/Channel/this.cs:179,188` — `Events.GetBindings(type)` flags. The bindings should be a navigable collection on Events.
+- `app/modules/this.cs:103` — `public IEnumerable<string> GetActions(string module)` flags. Fix: `app.Modules.<module>.Actions` (or similar) navigable.
+- `app/modules/this.cs:384` — `public List<Data.@this>? GetDefaults(string module, string actionName, HashSet<string>)` flags. Same fix shape.
+- `app/channels/channel/this.cs:179,188` — `Events.GetBindings(type)` flags. The bindings should be a navigable collection on Events.
 
 ---
 
@@ -80,25 +80,25 @@ Three exceptions for state:
 ```bash
 # Static fields with assignment or termination, not methods
 grep -rEn "^\s+(public|private|internal|protected)\s+static\s+(volatile\s+)?[A-Za-z_<>?,\.\[\]\s]+\s+_?[a-zA-Z]\w*\s*[=;]" \
-  PLang/App/ --include='*.cs' \
+  PLang/app/ --include='*.cs' \
   | grep -vE "static\s+(class|partial|implicit|explicit|event|async|readonly)" \
   | grep -v "("
 
 # Static events (separate — they're process-global subscription points)
-grep -rEn "^\s+(public|private|internal|protected)\s+static\s+event" PLang/App/ --include='*.cs'
+grep -rEn "^\s+(public|private|internal|protected)\s+static\s+event" PLang/app/ --include='*.cs'
 
 # Mutable static-readonly collections (the deeper smell — reference is readonly but contents mutate)
 grep -rEn "^\s+(public|private|internal|protected)\s+static\s+readonly\s+(List|Dictionary|HashSet|ConcurrentDictionary|ConcurrentBag|ConcurrentQueue)" \
-  PLang/App/ --include='*.cs'
+  PLang/app/ --include='*.cs'
 ```
 
-**Today's count on `PLang/App/`:** ~7 mutable static fields, 1 static event, ~9 mutable static-readonly collections. ~17 real targets total.
+**Today's count on `PLang/app/`:** ~7 mutable static fields, 1 static event, ~9 mutable static-readonly collections. ~17 real targets total.
 
 **Worked examples currently in the cleanup plan:**
 
-- `App/Utils/PlangTypeIndex.cs:27,37` — `_initialized`, `_clrTypeFullNamesInitialized` flags. Fix (stage 15): become instance state on `App/Types/this.cs`; the locks vanish because construction is deterministic at App.Start.
-- `App/modules/llm/providers/OpenAiProvider.cs:41` — `private static int _requestCount` flags. Fix (stage 15): delete (per-process counter on an actor-resolved provider — wrong scope; per Ingi's review: temporary blocker, not worth promoting).
-- `App/modules/test/run.cs:30` — `internal static event Action<App.@this>? ChildAppCreated` flags. Fix (stage 15): test-runner registry pattern (design TBD).
+- `app/Utils/PlangTypeIndex.cs:27,37` — `_initialized`, `_clrTypeFullNamesInitialized` flags. Fix (stage 15): become instance state on `app/types/this.cs`; the locks vanish because construction is deterministic at App.Start.
+- `app/modules/llm/providers/OpenAiProvider.cs:41` — `private static int _requestCount` flags. Fix (stage 15): delete (per-process counter on an actor-resolved provider — wrong scope; per Ingi's review: temporary blocker, not worth promoting).
+- `app/modules/test/run.cs:30` — `internal static event Action<app.@this>? ChildAppCreated` flags. Fix (stage 15): test-runner registry pattern (design TBD).
 
 ---
 
@@ -112,7 +112,7 @@ Three forms must all agree:
 
 | Form | Today (wrong) | After (correct) |
 |------|---------------|-----------------|
-| Folder | `App/Build/` | `App/Builder/` |
+| Folder | `app/Build/` | `app/modules/builder/` |
 | App property | `app.Building` *(or `app.Build` if it's the type form)* | `app.Builder` |
 | CLI flag | `--build` | `--builder` |
 | CLI command | `plang p build` | unchanged (verb) |
@@ -122,7 +122,7 @@ Three forms must all agree:
 1. **Property side (gerund form):**
 
 ```bash
-grep -rE "(public|internal)\s+\w+ing\b" PLang/App/this.cs
+grep -rE "(public|internal)\s+\w+ing\b" PLang/app/this.cs
 ```
 
 Catches `public Testing Testing { get; }`. Read each: a real state name is the rare case; rename otherwise.
@@ -130,19 +130,19 @@ Catches `public Testing Testing { get; }`. Read each: a real state name is the r
 2. **Folder side (verb-root form):**
 
 ```bash
-ls PLang/App/ | grep -E "^(Build|Test|Run|Parse|Render|Compile|Stream|Process|Setup|Init|Load|Save|Read|Write|Send|Receive)$"
+ls PLang/app/ | grep -E "^(Build|Test|Run|Parse|Render|Compile|Stream|Process|Setup|Init|Load|Save|Read|Write|Send|Receive)$"
 ```
 
-Catches `App/Build/`, `App/Test/` — folders named with verb roots that read as commands, not objects.
+Catches `app/Build/`, `app/Test/` — folders named with verb roots that read as commands, not objects.
 
-**Both screens needed.** The "three forms must all agree" rule means a misshapen folder, property, or CLI flag are all symptoms of the same smell; checking only one form misses the others. `App/Build/` slipped past the gerund-only screen during the v1 audit; the folder screen catches it.
+**Both screens needed.** The "three forms must all agree" rule means a misshapen folder, property, or CLI flag are all symptoms of the same smell; checking only one form misses the others. `app/Build/` slipped past the gerund-only screen during the v1 audit; the folder screen catches it.
 
-**Today's count on `PLang/App/`:** 1 gerund property (`Testing`), 2 verb-root folders (`Build/`, `Test/`).
+**Today's count on `PLang/app/`:** 1 gerund property (`Testing`), 2 verb-root folders (`Build/`, `Test/`).
 
 **Worked examples currently in the cleanup plan:**
 
-- `App/this.cs:188` `public Testing Testing { get; }` — Rule D flags (gerund). Fix (stage 16): `App/Tester/`, `app.Tester`.
-- `App/Build/` folder + `App/this.cs:194` `public global::App.Build.@this Build { get; }` — Rule D flags (verb root). Fix (stage 16): `App/Builder/`, `app.Builder`.
+- `app/this.cs:188` `public Testing Testing { get; }` — Rule D flags (gerund). Fix (stage 16): `app/tester/`, `app.Tester`.
+- `app/Build/` folder + `app/this.cs:194` `public global::app.Build.@this Build { get; }` — Rule D flags (verb root). Fix (stage 16): `app/modules/builder/`, `app.Builder`.
 
 ---
 
@@ -158,7 +158,7 @@ Two side wins of the navigation form:
 **Quick screen.**
 
 ```bash
-grep -rnE "\.\w+\(.+\.App\.\w+" PLang/App/ --include='*.cs' \
+grep -rnE "\.\w+\(.+\.App\.\w+" PLang/app/ --include='*.cs' \
   | grep -v "//\|Console\|Debug.Write"
 ```
 
@@ -166,12 +166,12 @@ Surfaces every call site where the caller is reaching into `App.X` to pass it as
 
 **Refinement.** Not every parameter is decomposed. A method that takes data the receiver *cannot* navigate to (a fresh value computed by the caller, an opaque token, an unrelated entity) is correctly parameterized. The smell is specifically *parameter is a child of the receiver* or *parameter is reachable through the receiver's parent chain*.
 
-**Today's count on `PLang/App/`:** ~4 raw hits, 2 real smells.
+**Today's count on `PLang/app/`:** ~4 raw hits, 2 real smells.
 
 **Worked examples currently in the cleanup plan:**
 
-- `App/modules/builder/providers/DefaultBuilderProvider.cs:37` — `Catalog.@this.Build(action.Context.App.Modules)` flags. Fix (stage 9): `app.Modules.Schema.Build()` instance method, navigates `this.Modules` internally.
-- `App/Catalog/ExampleRenderer.cs:Render(spec, modules)` flags. Fix (stage 9): instance method `Schema.Render(spec)` navigating `this.Modules`.
+- `app/modules/builder/providers/DefaultBuilderProvider.cs:37` — `Catalog.@this.Build(action.Context.App.Modules)` flags. Fix (stage 9): `app.modules.Schema.Build()` instance method, navigates `this.Modules` internally.
+- `app/Catalog/ExampleRenderer.cs:Render(spec, modules)` flags. Fix (stage 9): instance method `Schema.Render(spec)` navigating `this.Modules`.
 
 ---
 

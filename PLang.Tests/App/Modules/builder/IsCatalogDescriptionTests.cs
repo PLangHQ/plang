@@ -1,4 +1,4 @@
-using global::App.modules.builder.code;
+using app.modules.builder.code;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -6,7 +6,7 @@ namespace PLang.Tests.App.Modules.builder;
 /// Unit tests for the catalog-description shape recognizer used by the validate
 /// pipeline to skip parameters whose Value is schema metadata, not a real value.
 ///
-/// Anchored on this fact: <see cref="App.Modules.@this.Describe"/> renders parameter
+/// Anchored on this fact: <see cref="app.modules.@this.Describe"/> renders parameter
 /// values as one of four shapes — <c>"X"</c>, <c>"X?"</c>, <c>"X = default"</c>,
 /// <c>"%var% X"</c> (and combinations). When the catalog itself is fed back through
 /// validate (BuilderValidateValid smoke test), every Value is one of these. Tests

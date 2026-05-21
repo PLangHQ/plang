@@ -1,9 +1,9 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using global::App;
-using global::App.Types;
-using global::App.modules.output;
+using app;
+using app.types;
+using app.modules.output;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -26,7 +26,7 @@ public class TypeExitTests
 
     [Test] public async Task TypeExit_FalseFor_GenericDataOfNonExitT()
     {
-        var d = new global::App.Data.@this<string>("", "hello");
+        var d = new global::app.data.@this<string>("", "hello");
         await Assert.That(d.Value?.GetType().Exit() ?? false).IsFalse();
     }
 

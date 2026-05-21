@@ -1,8 +1,8 @@
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.builder;
-using Action = global::App.Goals.Goal.Steps.Step.Actions.Action.@this;
-using PLangEngine = global::App.@this;
+using app.actor.context;
+using app.variables;
+using app.modules.builder;
+using Action = global::app.goals.goal.steps.step.actions.action.@this;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 

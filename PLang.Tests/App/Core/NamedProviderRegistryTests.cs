@@ -1,13 +1,13 @@
-using global::App.Actor.Context;
-using global::App.Errors;
-using global::App.Variables;
-using global::App.Code;
-using global::App.modules.signing;
-using global::App.modules.signing.code;
-using global::App.modules.identity.code;
-using global::App.modules.crypto.code;
-using PLangEngine = global::App.@this;
-using EngineProviders = global::App.Code.@this;
+using app.actor.context;
+using app.errors;
+using app.variables;
+using app.modules.code;
+using app.modules.signing;
+using app.modules.signing.code;
+using app.modules.identity.code;
+using app.modules.crypto.code;
+using PLangEngine = global::app.@this;
+using EngineProviders = global::app.modules.code.@this;
 
 namespace PLang.Tests.App.Core;
 
@@ -362,7 +362,7 @@ public class NamedProviderRegistryTests
 
         public MockSigningProvider(string name) { Name = name; }
 
-        public global::App.Data.@this<KeyPair> GenerateKeyPair() => global::App.Data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
+        public global::app.data.@this<KeyPair> GenerateKeyPair() => global::app.data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
         public Data Sign(byte[] data, string privateKey) => Data.Ok(new byte[64]);
         public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
         public Task<Data> SignAsync(sign action) => Task.FromResult(Data.Ok());

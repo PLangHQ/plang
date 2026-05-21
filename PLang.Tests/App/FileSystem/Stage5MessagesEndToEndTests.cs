@@ -1,11 +1,11 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::App.FileSystem.Path;
-using PermissionRecord = global::App.FileSystem.Permission.@this;
-using Verb = global::App.FileSystem.Permission.Verb.@this;
-using Read = global::App.FileSystem.Permission.Verb.Read;
-using MatchMode = global::App.FileSystem.Permission.Match;
+using Path = global::app.filesystem.path;
+using PermissionRecord = global::app.filesystem.permission.@this;
+using Verb = global::app.filesystem.permission.verb.@this;
+using Read = global::app.filesystem.permission.verb.Read;
+using MatchMode = global::app.filesystem.permission.Match;
 
 namespace PLang.Tests.App.FileSystem;
 
@@ -17,12 +17,12 @@ namespace PLang.Tests.App.FileSystem;
 /// sync today and the migration needs an async refactor).
 public class Stage5MessagesEndToEndTests
 {
-    private static (global::App.@this app, string foreignPath) Setup(string answer)
+    private static (global::app.@this app, string foreignPath) Setup(string answer)
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-s5-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        var app = new global::App.@this(root);
+        var app = new global::app.@this(root);
         app.User.Channels.Register(new CannedChannel(answer));
 
         // Simulate /apps/Email/system.sqlite living outside the app root.
@@ -34,25 +34,25 @@ public class Stage5MessagesEndToEndTests
         return (app, foreignFile);
     }
 
-    private sealed class CannedChannel : global::App.Channels.Channel.@this
+    private sealed class CannedChannel : global::app.channels.channel.@this
     {
         private readonly string _answer;
         public int AskCount { get; private set; }
-        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional; }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok((object?)null));
-        public override Task<global::App.Data.@this> AskCore(global::App.modules.output.ask action, CancellationToken ct = default)
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public override Task<global::app.data.@this> AskCore(global::app.modules.output.ask action, CancellationToken ct = default)
         {
             AskCount++;
-            return Task.FromResult(global::App.Data.@this.Ok(_answer));
+            return Task.FromResult(global::app.data.@this.Ok(_answer));
         }
     }
 
-    private sealed class StatelessChannel : global::App.Channels.Channel.Message.@this
+    private sealed class StatelessChannel : global::app.channels.channel.message.@this
     {
-        public StatelessChannel() { Name = "input"; Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional; }
-        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok());
-        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::App.Data.@this.Ok((object?)null));
+        public StatelessChannel() { Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
     [Test] public async Task Scenario1_NoGrantSuspends_StatelessChannelReturnsDataAsk()
@@ -110,7 +110,7 @@ public class Stage5MessagesEndToEndTests
 
         // App #2 on the same root. Channel here has zero "a" answers — any
         // prompt that fires means the persisted grant was missed.
-        var app2 = new global::App.@this(root);
+        var app2 = new global::app.@this(root);
         var statelessProbe = new StatelessChannel();
         app2.User.Channels.Register(statelessProbe);
         var path2 = new Path(foreignFile, app2.User.Context);
@@ -143,7 +143,7 @@ public class Stage5MessagesEndToEndTests
         // Pre-seed a narrowed grant (Read with Metadata=false) — does NOT cover
         // a request that needs Metadata.
         var narrowedVerb = new Verb { Read = new Read(Recursive: true, Metadata: false), Write = null, Delete = null };
-        var narrowGrant = new global::App.Data.@this<PermissionRecord>("",
+        var narrowGrant = new global::app.data.@this<PermissionRecord>("",
             new PermissionRecord(app.User.Name, foreignFile, narrowedVerb, MatchMode.Exact))
         { Context = app.User.Context };
         narrowGrant.EnsureSigned();

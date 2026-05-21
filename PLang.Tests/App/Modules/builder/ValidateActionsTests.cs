@@ -1,8 +1,8 @@
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.builder;
-using Action = global::App.Goals.Goal.Steps.Step.Actions.Action.@this;
-using PLangEngine = global::App.@this;
+using app.actor.context;
+using app.variables;
+using app.modules.builder;
+using Action = global::app.goals.goal.steps.step.actions.action.@this;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -82,8 +82,8 @@ public class ValidateActionsTests
         });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
 
-        var goalCallData = new Data("GoalName", new global::App.Goals.Goal.GoalCall { Name = "DoSomething" });
-        goalCallData.Type = new global::App.Data.Type("goal.call");
+        var goalCallData = new Data("GoalName", new global::app.goals.goal.GoalCall { Name = "DoSomething" });
+        goalCallData.Type = new global::app.data.type("goal.call");
 
         var actions = new StepActions
         {
@@ -101,7 +101,7 @@ public class ValidateActionsTests
 
         await Assert.That(result.Success).IsTrue();
         // Verify PrPath was actually resolved
-        var resolvedCall = actions[0].Parameters[0].Value as global::App.Goals.Goal.GoalCall;
+        var resolvedCall = actions[0].Parameters[0].Value as global::app.goals.goal.GoalCall;
         await Assert.That(resolvedCall).IsNotNull();
         await Assert.That(resolvedCall!.PrPath).IsEqualTo("/.build/dosomething.pr");
     }
@@ -109,8 +109,8 @@ public class ValidateActionsTests
     [Test]
     public async Task ValidateActions_DynamicNames_Skipped()
     {
-        var goalCallData = new Data("GoalName", new global::App.Goals.Goal.GoalCall { Name = "%dynamicGoal%" });
-        goalCallData.Type = new global::App.Data.Type("goal.call");
+        var goalCallData = new Data("GoalName", new global::app.goals.goal.GoalCall { Name = "%dynamicGoal%" });
+        goalCallData.Type = new global::app.data.type("goal.call");
 
         var actions = new StepActions
         {
@@ -169,8 +169,8 @@ public class ValidateActionsTests
                 Parameters = new List<Data>
                 {
                     new("Left", "%flag%"),
-                    new("Operator", "==") { Type = new global::App.Data.Type("string") },
-                    new("Right", "false") { Type = new global::App.Data.Type("bool") }
+                    new("Operator", "==") { Type = new global::app.data.type("string") },
+                    new("Right", "false") { Type = new global::app.data.type("bool") }
                 }
             }
         };
@@ -196,8 +196,8 @@ public class ValidateActionsTests
                 Parameters = new List<Data>
                 {
                     new("Left", "%count%"),
-                    new("Operator", ">") { Type = new global::App.Data.Type("string") },
-                    new("Right", "5") { Type = new global::App.Data.Type("int") }
+                    new("Operator", ">") { Type = new global::app.data.type("string") },
+                    new("Right", "5") { Type = new global::app.data.type("int") }
                 }
             }
         };
@@ -221,9 +221,9 @@ public class ValidateActionsTests
                 ActionName = "if",
                 Parameters = new List<Data>
                 {
-                    new("Left", "%flag%") { Type = new global::App.Data.Type("bool") },
+                    new("Left", "%flag%") { Type = new global::app.data.type("bool") },
                     new("Operator", "=="),
-                    new("Right", true) { Type = new global::App.Data.Type("bool") }
+                    new("Right", true) { Type = new global::app.data.type("bool") }
                 }
             }
         };

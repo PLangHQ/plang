@@ -1,6 +1,6 @@
-using global::App.modules.condition;
-using global::App.modules.condition.code;
-using global::App.Tester;
+using app.modules.condition;
+using app.modules.condition.code;
+using app.tester;
 
 namespace PLang.Tests.App.Tester;
 
@@ -24,12 +24,12 @@ namespace PLang.Tests.App.Tester;
 /// </summary>
 public class OrchestrateBranchCoverageTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _app = new global::app.@this("/test");
     }
 
     [After(Test)]

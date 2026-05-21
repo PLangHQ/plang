@@ -1,5 +1,5 @@
 using System.Text.Json;
-using global::App.Tester;
+using app.tester;
 
 namespace PLang.Tests.App.Tester;
 
@@ -14,7 +14,7 @@ namespace PLang.Tests.App.Tester;
 public class EdgeCaseTests
 {
     private string _tempDir = null!;
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
     private System.IO.MemoryStream _captureStream = null!;
 
     [Before(Test)]
@@ -23,8 +23,8 @@ public class EdgeCaseTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-edge-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        var fs = new global::App.FileSystem.Default.PLangFileSystem(_tempDir, "");
-        _app = new global::App.@this(fs);
+        var fs = new global::app.filesystem.Default.PLangFileSystem(_tempDir, "");
+        _app = new global::app.@this(fs);
         _captureStream = new System.IO.MemoryStream();
         _app.User.Channels.Register(new StreamChannel(
             EngineChannels.Output, _captureStream,
@@ -78,11 +78,11 @@ public class EdgeCaseTests
         // test so the Results grow — verify count is from the outer action, not the
         // inner grandchild-runs).
 
-        var emptyList = new List<global::App.Tester.File>();
-        var outerAction = new global::App.modules.test.run
+        var emptyList = new List<global::app.tester.File>();
+        var outerAction = new global::app.modules.test.run
         {
             Context = _app.User.Context,
-            Tests = new global::App.Data.@this<List<global::App.Tester.File>>("Tests", emptyList),
+            Tests = new global::app.data.@this<List<global::app.tester.File>>("Tests", emptyList),
             Parallel = null,
             Timeout = null
         };
@@ -98,12 +98,12 @@ public class EdgeCaseTests
     [Test]
     public async Task Discover_PathTraversal_OutsideProjectRoot_Rejected()
     {
-        var action = new global::App.modules.test.discover
+        var action = new global::app.modules.test.discover
         {
             Context = _app.User.Context,
-            Path = new global::App.Data.@this<string>("Path", "../../../etc"),
-            Pattern = new global::App.Data.@this<string>("Pattern", "*.test.goal"),
-            Recursive = new global::App.Data.@this<bool>("Recursive", true)
+            Path = new global::app.data.@this<string>("Path", "../../../etc"),
+            Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
+            Recursive = new global::app.data.@this<bool>("Recursive", true)
         };
 
         // discover catches traversal and returns an empty list — does not throw,
@@ -111,7 +111,7 @@ public class EdgeCaseTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var files = result.Value as List<global::App.Tester.File> ?? new List<global::App.Tester.File>();
+        var files = result.Value as List<global::app.tester.File> ?? new List<global::app.tester.File>();
         await Assert.That(files.Count).IsEqualTo(0);
     }
 
@@ -123,12 +123,12 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::App.Tester.Run(new global::App.Tester.File { Path = "Tests/X.test.goal", EntryGoalName = "X" });
+        var run = new global::app.tester.Run(new global::app.tester.File { Path = "Tests/X.test.goal", EntryGoalName = "X" });
         run.CapturedOutput = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
-        run.Complete(global::App.Tester.Status.Fail, new global::App.Errors.AssertionError(1, 2));
+        run.Complete(global::app.tester.Status.Fail, new global::app.errors.AssertionError(1, 2));
         _app.Tester.Results.Add(run);
 
-        var action = new global::App.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.modules.test.report { Context = _app.User.Context };
         await action.Run();
 
         var output = CapturedOutput();
@@ -144,22 +144,22 @@ public class EdgeCaseTests
     [Test]
     public async Task Snapshot_DataContainingData_RenderedCorrectly_NoCircularReference()
     {
-        var inner = new global::App.Data.@this("inner", 42);
-        var outer = new global::App.Data.@this("outer", inner);
+        var inner = new global::app.data.@this("inner", 42);
+        var outer = new global::app.data.@this("outer", inner);
 
-        var err = new global::App.Errors.AssertionError(1, 2)
+        var err = new global::app.errors.AssertionError(1, 2)
         {
             Variables = new Dictionary<string, object?>
             {
                 ["nested"] = outer
             }
         };
-        var run = new global::App.Tester.Run(new global::App.Tester.File { Path = "Tests/Nested.test.goal", EntryGoalName = "N" });
-        run.Complete(global::App.Tester.Status.Fail, err);
+        var run = new global::app.tester.Run(new global::app.tester.File { Path = "Tests/Nested.test.goal", EntryGoalName = "N" });
+        run.Complete(global::app.tester.Status.Fail, err);
         _app.Tester.Results.Add(run);
 
         // Report rendering must not throw on nested Data.
-        var action = new global::App.modules.test.report { Context = _app.User.Context };
+        var action = new global::app.modules.test.report { Context = _app.User.Context };
         await action.Run();
 
         var jsonPath = System.IO.Path.Combine(_tempDir, ".test", "results.json");

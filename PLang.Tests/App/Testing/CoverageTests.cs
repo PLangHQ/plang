@@ -1,4 +1,4 @@
-using global::App.Tester;
+using app.tester;
 
 namespace PLang.Tests.App.Tester;
 
@@ -11,12 +11,12 @@ namespace PLang.Tests.App.Tester;
 /// </summary>
 public class CoverageTests
 {
-    private global::App.@this _app = null!;
+    private global::app.@this _app = null!;
 
     [Before(Test)]
     public void Setup()
     {
-        _app = new global::App.@this("/test");
+        _app = new global::app.@this("/test");
     }
 
     // Fresh Coverage has no observed (module, action) entries.

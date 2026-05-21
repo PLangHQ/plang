@@ -1,4 +1,4 @@
-using global::App.Errors;
+using app.errors;
 
 namespace PLang.Tests.App.Errors;
 

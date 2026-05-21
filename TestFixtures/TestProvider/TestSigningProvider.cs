@@ -1,6 +1,6 @@
-using App.Code;
-using App.modules.signing;
-using App.modules.signing.code;
+using app.modules.code;
+using app.modules.signing;
+using app.modules.signing.code;
 
 namespace TestProvider;
 
@@ -15,18 +15,18 @@ public class TestSigningProvider : ISigning
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public App.Data.@this<KeyPair> GenerateKeyPair()
-        => App.Data.@this<KeyPair>.Ok(new KeyPair("testPub", "testPriv"));
+    public app.data.@this<KeyPair> GenerateKeyPair()
+        => app.data.@this<KeyPair>.Ok(new KeyPair("testPub", "testPriv"));
 
-    public App.Data.@this Sign(byte[] data, string privateKey)
-        => App.Data.@this.Ok(new byte[64]);
+    public app.data.@this Sign(byte[] data, string privateKey)
+        => app.data.@this.Ok(new byte[64]);
 
-    public App.Data.@this Verify(byte[] data, byte[] signature, string publicKey)
-        => App.Data.@this.Ok(true);
+    public app.data.@this Verify(byte[] data, byte[] signature, string publicKey)
+        => app.data.@this.Ok(true);
 
-    public Task<App.Data.@this> SignAsync(sign action)
-        => Task.FromResult(App.Data.@this.Ok());
+    public Task<app.data.@this> SignAsync(sign action)
+        => Task.FromResult(app.data.@this.Ok());
 
-    public Task<App.Data.@this> VerifyAsync(verify action)
-        => Task.FromResult(App.Data.@this.Ok(true));
+    public Task<app.data.@this> VerifyAsync(verify action)
+        => Task.FromResult(app.data.@this.Ok(true));
 }

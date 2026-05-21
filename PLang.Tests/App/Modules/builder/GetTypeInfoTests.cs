@@ -1,7 +1,7 @@
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.builder;
-using PLangEngine = global::App.@this;
+using app.actor.context;
+using app.variables;
+using app.modules.builder;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;
 
@@ -43,7 +43,7 @@ public class GetTypeInfoTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
-        var info = result.Value as global::App.Modules.Schema.@this;
+        var info = result.Value as global::app.modules.Schema.@this;
         await Assert.That(info).IsNotNull();
         await Assert.That(info!.TypeNames).Contains("string");
         await Assert.That(info.TypeNames).Contains("int");
@@ -57,7 +57,7 @@ public class GetTypeInfoTests
         var result = await _app.RunAction(action, _app.User.Context);
 
         await Assert.That(result.Success).IsTrue();
-        var info = result.Value as global::App.Modules.Schema.@this;
+        var info = result.Value as global::app.modules.Schema.@this;
         await Assert.That(info).IsNotNull();
         await Assert.That(info!.TypeSchemas).Contains("goal.call");
     }

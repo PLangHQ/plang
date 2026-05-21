@@ -6,12 +6,12 @@ public class VariablesSnapshotTests
     public async Task Variables_RoundTrip_PreservesValuesAndProperties_ForUserVars()
     {
         // Set %x%=1 and %obj%={a:1}; Capture; Restore into fresh Variables; deep-equal.
-        var src = new global::App.@this("/src");
+        var src = new global::app.@this("/src");
         src.User.Context.Variables.Set("x", 1);
         src.User.Context.Variables.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
 
         var snap = src.Snapshot();
-        var dst = new global::App.@this("/dst");
+        var dst = new global::app.@this("/dst");
         dst.Restore(snap, dst.User.Context);
 
         var x = dst.User.Context.Variables.Get("x");
@@ -31,7 +31,7 @@ public class VariablesSnapshotTests
         // Existing partition: skip !-prefix, DynamicData (Now/GUID/!app/MyIdentity).
         // Settings is now a navigable resolver (not in _variables) so it's absent
         // by construction — no special-case needed.
-        var src = new global::App.@this("/src");
+        var src = new global::app.@this("/src");
         var vars = src.User.Context.Variables;
         vars.Set("user", "alice");        // user var — survives
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped

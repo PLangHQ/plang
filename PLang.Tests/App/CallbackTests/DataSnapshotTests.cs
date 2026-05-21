@@ -1,8 +1,8 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using global::App.modules;
-using global::App.modules.output;
+using app.modules;
+using app.modules.output;
 
 namespace PLang.Tests.App.CallbackTests;
 
@@ -11,29 +11,29 @@ namespace PLang.Tests.App.CallbackTests;
 /// a non-null Snapshot — contract pinned by a generic invariant test.
 public class DataSnapshotTests
 {
-    private static global::App.@this NewApp() =>
-        new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+    private static global::app.@this NewApp() =>
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-snap-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test] public async Task DataSnapshot_PropertyExists_AndDefaultsNull()
     {
-        var d = global::App.Data.@this.Ok("v");
+        var d = global::app.data.@this.Ok("v");
         await Assert.That(d.Snapshot).IsNull();
     }
 
     [Test] public async Task DataSnapshot_RoundTripsThrough_OkConstructor()
     {
-        var snap = new global::App.Snapshot.@this();
-        var d = global::App.Data.@this.Ok("v");
+        var snap = new global::app.snapshot.@this();
+        var d = global::app.data.@this.Ok("v");
         d.Snapshot = snap;
         await Assert.That(d.Snapshot).IsSameReferenceAs(snap);
     }
 
     [Test] public async Task DataSnapshot_SettableAfterConstruction()
     {
-        var d = new global::App.Data.@this<string>("", "x");
+        var d = new global::app.data.@this<string>("", "x");
         await Assert.That(d.Snapshot).IsNull();
-        d.Snapshot = new global::App.Snapshot.@this();
+        d.Snapshot = new global::app.snapshot.@this();
         await Assert.That(d.Snapshot).IsNotNull();
     }
 
@@ -65,8 +65,8 @@ public class DataSnapshotTests
         // MUST attach a Snapshot. Producers respect this; here we assert the
         // invariant holds for the Ask-carrying Data shape (after the producer
         // call sites in 2a.4 wire the Snapshot capture).
-        var snap = new global::App.Snapshot.@this();
-        var data = new global::App.Data.@this<Ask>("", new Ask()) { Snapshot = snap };
+        var snap = new global::app.snapshot.@this();
+        var data = new global::app.data.@this<Ask>("", new Ask()) { Snapshot = snap };
         await Assert.That(data.Snapshot).IsNotNull();
     }
 }

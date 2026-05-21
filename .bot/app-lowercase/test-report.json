@@ -1,0 +1,20 @@
+{
+  "tester": "tester",
+  "branch": "app-lowercase",
+  "timestamp": "2026-05-18T15:38:48Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 2752, "passed": 2752, "failed": 0, "skipped": 0 },
+    "plang":  { "total": 212, "passed": 206, "failed": 6, "skipped": 0,
+                "note": "6 [Fail] entries are pre-existing expected-fail fixtures (_fixtures_sensitive/sensitivefail ×4, _fixtures_fail/failsvar ×2). Real pass count is 206/206." }
+  },
+  "coverage": {
+    "changed_files_covered": 0,
+    "changed_files_total": 0,
+    "uncovered_files": [],
+    "note": "This version is a merge integration (origin/runtime2 into app-lowercase). No new production C# in this version; coverage check N/A. The 3 .test.goal files merged in cover the recovery-value branches in PLang/app/error/handle.cs (lines 109-114, 120-131, 177-184) that the foundation-verify version added."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "summary": "Merge of origin/runtime2 (5 commits, foundation-verify error.handle recovery-value tests + todos.md reconciliation) into app-lowercase composes cleanly with the 12 rename + OBP merge commits. Clean rebuild: 0 errors. C# 2752/2752 pass (identical to coder v1 baseline of 199b4997). PLang 206 real passes + 6 pre-existing expected-fail fixtures (delta +3 vs baseline = exactly the 3 new Errors/*RecoveryValue*.test.goal files). Builder false-green check on all 3 new .pr files: each step's text semantically matches actions[*].module.action and the error.handle modifier carries the right Order / RetryCount / Actions parameters. Assertion quality: every new test pins the recovery side-effect AND %!error% is null (the symmetry pin for the 2026-04-27 handle.cs recoveryResult-return fix). The pre-existing 'Failed to deserialize List`1 to this' stderr stack flipped its namespace string from PascalCase to lowercase exactly as the coder v1 baseline predicted — shape unchanged, not a new regression. No findings."
+}

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using App;
-using global::App.Variables;
+using app;
+using app.variables;
 
 namespace PLang.Tests.App.Utils;
 
@@ -28,7 +28,7 @@ public class GoalSerializationTests
             IsEvent = false,
             Hash = "abc123",
             InputParameters = new Dictionary<string, string> { { "param1", "string" } },
-            Goals = new List<global::App.Goals.Goal.@this> { new() { Name = "SubGoal1" } }
+            Goals = new List<global::app.goals.goal.@this> { new() { Name = "SubGoal1" } }
         };
 
         var json = JsonSerializer.Serialize(goal, JsonOptions);
@@ -101,13 +101,13 @@ public class GoalSerializationTests
                     WaitForExecution = false,
                     Actions = new StepActions
                     {
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "http",
                             ActionName = "get",
                             Parameters = new List<Data> { new Data("url", "https://api.example.com") },
                         },
-                        new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                        new global::app.goals.goal.steps.step.actions.action.@this
                         {
                             Module = "variable",
                             ActionName = "set",

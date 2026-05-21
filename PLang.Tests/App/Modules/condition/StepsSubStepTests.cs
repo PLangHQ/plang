@@ -1,9 +1,9 @@
-using App;
-using global::App.Actor.Context;
-using global::App.Variables;
-using global::App.modules.condition;
-using global::App.FileSystem;
-using global::App.FileSystem.Default;
+using app;
+using app.actor.context;
+using app.variables;
+using app.modules.condition;
+using app.filesystem;
+using app.filesystem.Default;
 
 namespace PLang.Tests.App.Modules.condition;
 
@@ -11,14 +11,14 @@ public class StepsSubStepTests : IDisposable
 {
     private readonly string _tempDir;
     private readonly PLangFileSystem _fs;
-    private readonly global::App.@this _app;
+    private readonly global::app.@this _app;
 
     public StepsSubStepTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
         _fs = new PLangFileSystem(_tempDir, "");
-        _app = new global::App.@this(_tempDir, fileSystem: _fs);
+        _app = new global::app.@this(_tempDir, fileSystem: _fs);
     }
 
     public void Dispose()
@@ -40,7 +40,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"if condition = {conditionResult}",
             Actions = new StepActions
             {
-                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = "condition",
                     ActionName = "if",
@@ -67,7 +67,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"write {marker}",
             Actions = new StepActions
             {
-                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = "output",
                     ActionName = "write",
@@ -89,7 +89,7 @@ public class StepsSubStepTests : IDisposable
             Text = $"set {varName} = {value}",
             Actions = new StepActions
             {
-                new global::App.Goals.Goal.Steps.Step.Actions.Action.@this
+                new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = "variable",
                     ActionName = "set",
