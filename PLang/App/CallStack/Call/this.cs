@@ -43,20 +43,6 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public @this? Caller { get; }
 
-    private readonly @this? _ownCause;
-
-    /// <summary>
-    /// Async origin — set by recovery dispatch (errored Call), event publish, sync-event
-    /// capture. Null for normal goal.call descents. Same-process refs only — cross-process
-    /// identity goes through <see cref="GetItem{T}"/>.
-    ///
-    /// Walks up the synchronous Caller chain when this Call has no own cause: any descendant
-    /// of a recovery dispatch (e.g. a goal.call recovery → its called goal's steps) inherits
-    /// the same async cause without needing every intermediate Push to copy it. PLang reads
-    /// <c>%!callStack.Current.Cause%</c> from anywhere inside the recovery scope.
-    /// </summary>
-    public @this? Cause => _ownCause ?? Caller?.Cause;
-
     /// <summary>
     /// Errors observed at this scope. Populated by App.Run when the handler returns a
     /// failure or throws. <see cref="Handled"/> tracks recovery outcome independently —
@@ -128,7 +114,6 @@ public sealed partial class @this : IAsyncDisposable
         Action = action;
         Caller = caller;
         Synthetic = action.Synthetic;
-        _ownCause = null;
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
