@@ -1,0 +1,4 @@
+{
+  "verdict": "pass",
+  "summary": "All 10 codeanalyzer v1 findings closed. This session cleaned the five stale Cause doc-comments (including one broken cref) that survived the earlier code-only cleanup. 2846/2846 C# tests green."
+}

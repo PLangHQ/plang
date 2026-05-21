@@ -1,7 +1,15 @@
 # Coder — filesystem-permission
 
 ## Version
-v1
+v2 — see `v2/report.md`
+
+## v2 update (post-codeanalyzer follow-up)
+
+All 10 codeanalyzer v1 findings closed. Eight fixed across `af32f3e` /
+`82a136b` / `c4cbbd3` / `8b22a5e` / `f543e19` / `1af7922` immediately
+after the codeanalyzer report. v2 cleaned the five stale Cause
+doc-comments (including a broken `<see cref="Cause"/>`) that survived
+the code-only #7/#8 cleanup. **2846 / 2846 C# tests green.**
 
 ## What this is
 PLang's filesystem permission system + unified suspend/resume mechanism.

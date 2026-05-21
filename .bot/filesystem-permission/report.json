@@ -366,6 +366,49 @@
         "notes": "Worth noting: report.json had no coder session block even though the coder committed 14 stage commits and wrote a long summary.md. Not a bug per se \u2014 but if reporting is meant to be complete, the coder's session is missing from the audit trail."
       },
       "timestamp_end": "2026-05-21T12:45:31.734009Z"
+    },
+    {
+      "id": "ab050188-880a-4919-8ac4-54b21003b502",
+      "bot": "coder",
+      "timestamp_start": "2026-05-21T16:39:20.461720+00:00",
+      "intent": "Close codeanalyzer v1's remaining doc-comment debt for findings #7 and #8 (dead Cause chain). The earlier 1af7922 commit removed the Cause code, but five stale doc-comments survived \u2014 including a broken <see cref=\"Cause\"/>.",
+      "before": {
+        "assumptions": "Codeanalyzer v1 cited 10 findings. By 13:05 UTC, all code-level fixes had landed (af32f3e, 82a136b, c4cbbd3, 8b22a5e, f543e19, 1af7922). A grep for 'Cause' across PLang/App/ still surfaced five XML doc-comments, one of which (CallStack/Call/this.cs:13) used <see cref=\"Cause\"/> against a property that no longer exists.",
+        "risk": "Low. Comment-only edits; one broken cref to remove."
+      },
+      "plan": ".bot/filesystem-permission/coder/v2/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/this.cs",
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/CallStack/Flags.cs",
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/Errors/Error.cs"
+          ],
+          "type": "edit",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Removed 'Cause' from four structural-data comments and the broken <see cref=\"Cause\"/> in CallStack/Call/this.cs. Trimmed the stale 'recovery boundaries with their originating Cause' note in Error.cs. +4/-8 lines across 5 files."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/coder/v2/report.md",
+            ".bot/filesystem-permission/coder/v2/verdict.json",
+            ".bot/filesystem-permission/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 coder report documenting the post-codeanalyzer follow-ups, a verdict.json marking pass, and a summary.md preamble pointing readers at v2."
+        }
+      ],
+      "after": {
+        "status": "All 10 codeanalyzer v1 findings closed. Commit 91a7999. dotnet build clean. 2846/2846 C# tests green.",
+        "health": "good \u2014 codeanalyzer v1 verdict (NEEDS WORK) is now fully resolved across code and comments.",
+        "notes": "Earlier coder commits had no report.json session entry (codeanalyzer flagged this). This v2 entry covers only the comment cleanup; the eight earlier fix commits remain undocumented in report.json."
+      },
+      "timestamp_end": "2026-05-21T16:39:20.461869+00:00"
     }
   ]
 }
