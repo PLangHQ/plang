@@ -78,7 +78,7 @@ public class Stage5MessagesEndToEndTests
         var result = await path.ReadText();
         await Assert.That(result.Success).IsTrue();
         // Grant landed and is signed (persisted).
-        var found = app.User.Permission.Find(path, new Verb { Read = new Read() });
+        var found = await app.User.Permission.Find(path, new Verb { Read = new Read() });
         await Assert.That(found).IsNotNull();
         await Assert.That(found!.RawSignature).IsNotNull();
     }
@@ -120,7 +120,7 @@ public class Stage5MessagesEndToEndTests
 
         // Revoke the persisted grant.
         var permission = new PermissionRecord(app.Id, app.User.Name, path.Absolute, new Verb(), MatchMode.Exact);
-        app.User.Permission.Revoke(permission);
+        await app.User.Permission.Revoke(permission);
 
         await path.ReadText();              // fresh prompt fires
         await Assert.That(ch.AskCount).IsGreaterThan(asksBeforeRevoke);
@@ -136,7 +136,7 @@ public class Stage5MessagesEndToEndTests
             new PermissionRecord(app.Id, app.User.Name, foreignFile, narrowedVerb, MatchMode.Exact))
         { Context = app.User.Context };
         narrowGrant.EnsureSigned();
-        app.User.Permission.Add(narrowGrant);
+        await app.User.Permission.Add(narrowGrant);
 
         // Stat needs Metadata=true; the narrowed Read grant doesn't cover it.
         // Authorize asks; the CannedChannel answers "a" and a wider grant lands.

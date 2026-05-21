@@ -59,7 +59,7 @@ public class PathAuthorizeTests
         // Pre-seed a grant covering the request.
         var grant = new PermissionRecord(app.Id, app.User.Name, "/p", new Verb(), MatchMode.Exact);
         var grantData = new global::App.Data.@this<PermissionRecord>("", grant) { Context = ctx };
-        app.User.Permission.Add(grantData);
+        await app.User.Permission.Add(grantData);
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsTrue();
@@ -75,7 +75,7 @@ public class PathAuthorizeTests
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsTrue();
         // Subsequent Find should hit since Add ran.
-        await Assert.That(app.User.Permission.Find(path, new Verb { Read = new Read() })).IsNotNull();
+        await Assert.That(await app.User.Permission.Find(path, new Verb { Read = new Read() })).IsNotNull();
     }
 
     [Test] public async Task Authorize_StatefulAnswerY_SignsWithoutExpiry_Adds_ReturnsOk()
@@ -87,7 +87,7 @@ public class PathAuthorizeTests
 
         var result = await path.Authorize(new Verb { Read = new Read() });
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(app.User.Permission.Find(path, new Verb { Read = new Read() })).IsNotNull();
+        await Assert.That(await app.User.Permission.Find(path, new Verb { Read = new Read() })).IsNotNull();
     }
 
     [Test] public async Task Authorize_StatefulAnswerN_ReturnsFail_PermissionDenied()
@@ -136,7 +136,7 @@ public class PathAuthorizeTests
         var verb = new Verb { Read = new Read() };
 
         await path.Authorize(verb);
-        var grant = app.User.Permission.Find(path, verb);
+        var grant = await app.User.Permission.Find(path, verb);
         await Assert.That(grant).IsNotNull();
         await Assert.That(grant!.Value!.AppId).IsEqualTo(app.Id);
         await Assert.That(grant.Value.Actor).IsEqualTo(app.User.Name);

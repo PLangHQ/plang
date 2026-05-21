@@ -193,12 +193,12 @@ public partial class Path
         switch (answer)
         {
             case "a":
-                if (!sourceOk) StoreGrant(sourceVerb, persist: true);
-                if (!destOk)   destination.StoreGrant(destVerb, persist: true);
+                if (!sourceOk) await StoreGrant(sourceVerb, persist: true);
+                if (!destOk)   await destination.StoreGrant(destVerb, persist: true);
                 return await PerformTransfer(destination, isMove);
             case "y":
-                if (!sourceOk) StoreGrant(sourceVerb, persist: false);
-                if (!destOk)   destination.StoreGrant(destVerb, persist: false);
+                if (!sourceOk) await StoreGrant(sourceVerb, persist: false);
+                if (!destOk)   await destination.StoreGrant(destVerb, persist: false);
                 return await PerformTransfer(destination, isMove);
             case "n":
                 var denied = !sourceOk
@@ -214,16 +214,16 @@ public partial class Path
     private async Task<Data.@this?> TryAuthorizeWithoutAsk(Verb verb)
     {
         if (IsInRoot()) return Data.@this.Ok();
-        var existing = Context?.Actor?.Permission.Find(this, verb);
+        var existing = await Context!.Actor!.Permission.Find(this, verb);
         return existing != null ? Data.@this.Ok() : null;
     }
 
-    private void StoreGrant(Verb verb, bool persist)
+    private async Task StoreGrant(Verb verb, bool persist)
     {
         var permission = BuildRequest(Context!.Actor!, verb);
         var data = new Data.@this<global::App.FileSystem.Permission.@this>("", permission) { Context = Context };
         if (persist) data.EnsureSigned();
-        Context!.Actor!.Permission.Add(data);
+        await Context!.Actor!.Permission.Add(data);
     }
 
     private async Task<Data.@this> PerformTransfer(Path destination, bool isMove)

@@ -128,7 +128,7 @@ public class FileSystemPermissionFlowTests
             "Delete" => new Verb { Delete = new Delete() },
             _ => new Verb { Read = new Read() },
         };
-        await Assert.That(app.User.Permission.Find(path, verb)).IsNotNull();
+        await Assert.That(await app.User.Permission.Find(path, verb)).IsNotNull();
     }
 
     [Test]

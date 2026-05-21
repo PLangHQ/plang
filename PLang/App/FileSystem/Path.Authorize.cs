@@ -32,7 +32,7 @@ public partial class Path
         // In-root paths are auto-granted — the actor owns its own root.
         if (IsInRoot()) return Data.@this.Ok();
 
-        var existing = actor.Permission.Find(this, verb);
+        var existing = await actor.Permission.Find(this, verb);
         if (existing != null) return Data.@this.Ok();
 
         var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}? (y/n/a)";
@@ -50,22 +50,22 @@ public partial class Path
         var answer = askResult.Value?.ToString()?.Trim();
         return answer switch
         {
-            "a" => SignAndStore(actor, verb, persist: true),
-            "y" => SignAndStore(actor, verb, persist: false),
+            "a" => await SignAndStore(actor, verb, persist: true),
+            "y" => await SignAndStore(actor, verb, persist: false),
             "n" => Data.@this.FromError(new global::App.Errors.PermissionDenied(BuildRequest(actor, verb))),
             _ => await Authorize(verb, prefix: $"Invalid answer '{answer}'. "),
         };
     }
 
-    private Data.@this SignAndStore(Actor.@this actor, Verb verb, bool persist)
+    private async Task<Data.@this> SignAndStore(Actor.@this actor, Verb verb, bool persist)
     {
         var permission = BuildRequest(actor, verb);
         var data = new Data.@this<PermissionRecord>("", permission)
         {
             Context = Context,
         };
-        if (persist) data.EnsureSigned(); // future: pass AlwaysExpiry once signing surface grows it
-        actor.Permission.Add(data);
+        if (persist) data.EnsureSigned();
+        await actor.Permission.Add(data);
         return Data.@this.Ok();
     }
 

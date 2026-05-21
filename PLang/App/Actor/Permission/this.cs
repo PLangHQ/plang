@@ -37,30 +37,29 @@ public sealed class @this
     /// verification is cached via the Data instance's Properties bag — repeat
     /// Find calls on the same in-memory grant don't re-verify.
     /// </summary>
-    public global::App.Data.@this<PermissionRecord>? Find(PathT path, Verb verb)
+    public async Task<global::App.Data.@this<PermissionRecord>?> Find(PathT path, Verb verb)
     {
         var request = new PermissionRecord(
             _actor.App.Id, _actor.Name, path.Absolute, verb, MatchMode.Exact);
 
-        // 1) In-memory grants.
-        lock (_lock)
+        // 1) In-memory grants. Snapshot under the lock; verify outside it so
+        //    the async signing-verify call doesn't hold the lock.
+        List<global::App.Data.@this<PermissionRecord>> snapshot;
+        lock (_lock) snapshot = new(_inMemory);
+        foreach (var grantData in snapshot)
         {
-            foreach (var grantData in _inMemory)
-            {
-                if (TryCover(grantData, request)) return grantData;
-            }
+            if (await TryCover(grantData, request)) return grantData;
         }
 
         // 2) Persisted grants (client-side actor filter).
-        var stored = _actor.App.SettingsStore.GetAll<global::App.Data.@this<PermissionRecord>>(PermissionTable)
-            .GetAwaiter().GetResult();
+        var stored = await _actor.App.SettingsStore.GetAll<global::App.Data.@this<PermissionRecord>>(PermissionTable);
         if (stored.Success && stored.Value is { } list)
         {
             foreach (var grantData in list)
             {
                 if (grantData.Value is null) continue;
                 if (!string.Equals(grantData.Value.Actor, _actor.Name, StringComparison.Ordinal)) continue;
-                if (TryCover(grantData, request)) return grantData;
+                if (await TryCover(grantData, request)) return grantData;
             }
         }
 
@@ -68,22 +67,19 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Records a signed grant. Routes by signature expiry: present → sqlite,
-    /// absent → in-memory. Same path twice overwrites (in either home).
+    /// Records a signed grant. Routes by signature presence: signed → sqlite,
+    /// unsigned → in-memory. Same path twice overwrites (in either home).
     /// </summary>
-    public void Add(global::App.Data.@this<PermissionRecord> signed)
+    public async Task Add(global::App.Data.@this<PermissionRecord> signed)
     {
         if (signed.Value == null) return;
         var key = signed.Value.Path;
 
-        // Heuristic for "persisted": signature with an Expires value. The
-        // signing-layer expiry surface is text-only today; until that grows,
-        // any signed grant is treated as persisted. In-memory grants come in
-        // unsigned ("y" branch in Path.Authorize doesn't call EnsureSigned).
-        var persisted = signed.RawSignature != null;
-        if (persisted)
+        // Heuristic for "persisted": signature present. In-memory grants come
+        // in unsigned ("y" branch in Path.Authorize doesn't call EnsureSigned).
+        if (signed.RawSignature != null)
         {
-            _actor.App.SettingsStore.Set(PermissionTable, key, signed).GetAwaiter().GetResult();
+            await _actor.App.SettingsStore.Set(PermissionTable, key, signed);
             return;
         }
 
@@ -101,7 +97,7 @@ public sealed class @this
     /// Drops a grant. Removes from in-memory if present; also removes from
     /// the persisted table by path key.
     /// </summary>
-    public bool Revoke(PermissionRecord match)
+    public async Task<bool> Revoke(PermissionRecord match)
     {
         bool removed = false;
         lock (_lock)
@@ -114,12 +110,12 @@ public sealed class @this
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
         }
 
-        var sqliteResult = _actor.App.SettingsStore.Remove(PermissionTable, match.Path).GetAwaiter().GetResult();
+        var sqliteResult = await _actor.App.SettingsStore.Remove(PermissionTable, match.Path);
         if (sqliteResult.Success) removed = true;
         return removed;
     }
 
-    private bool TryCover(global::App.Data.@this<PermissionRecord> grantData, PermissionRecord request)
+    private async Task<bool> TryCover(global::App.Data.@this<PermissionRecord> grantData, PermissionRecord request)
     {
         var grant = grantData.Value;
         if (grant == null) return false;
@@ -132,19 +128,27 @@ public sealed class @this
         var cached = grantData.Properties[VerifiedFlag];
         if (cached?.Value is bool b) return b;
 
-        var verified = VerifySignature(grantData);
+        var verified = await VerifySignature(grantData);
         grantData.Properties[VerifiedFlag] = new global::App.Data.@this(VerifiedFlag, verified);
         return verified;
     }
 
-    private bool VerifySignature(global::App.Data.@this<PermissionRecord> data)
+    private async Task<bool> VerifySignature(global::App.Data.@this<PermissionRecord> data)
     {
         try
         {
             var action = new global::App.modules.signing.verify { Data = data };
-            var result = _actor.Context.App.RunAction(action, _actor.Context).GetAwaiter().GetResult();
+            var result = await _actor.Context.App.RunAction(action, _actor.Context);
             return result.Success;
         }
-        catch { return false; }
+        // Filter rule: signing failures (bad key, tampered envelope) surface as
+        // `result.Success == false` and don't throw. Anything that does throw
+        // here is a contract break — surface via debug, return false (deny).
+        catch (Exception ex) when (ex is not (NullReferenceException
+            or OutOfMemoryException or StackOverflowException or OperationCanceledException))
+        {
+            _ = _actor.Context.App.Debug.Write($"[Permission.VerifySignature] swallowed {ex.GetType().Name}: {ex.Message}");
+            return false;
+        }
     }
 }

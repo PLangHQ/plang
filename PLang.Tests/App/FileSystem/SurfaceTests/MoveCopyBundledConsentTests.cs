@@ -133,8 +133,8 @@ public class MoveCopyBundledConsentTests
         await src.MoveTo(dst);
 
         // Both grants landed.
-        await Assert.That(app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNotNull();
-        await Assert.That(app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNotNull();
+        await Assert.That(await app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNotNull();
+        await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNotNull();
     }
 
     [Test] public async Task LegacyFsGoalTests_StayGreen_AgainstV2Surface()
