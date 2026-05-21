@@ -24,7 +24,7 @@ public partial class Path
     // with an expiry into the persistent store; null → in-memory only.
     private static readonly TimeSpan AlwaysExpiry = TimeSpan.FromDays(365 * 100);
 
-    public async Task<Data.@this> Authorize(Verb verb, string prefix = "")
+    public async Task<Data.@this> Authorize(Verb verb)
     {
         var actor = Context?.Actor
             ?? throw new InvalidOperationException("Path.Authorize requires Context.Actor");
@@ -35,26 +35,36 @@ public partial class Path
         var existing = await actor.Permission.Find(this, verb);
         if (existing != null) return Data.@this.Ok();
 
-        var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}? (y/n/a)";
-        var askAction = new modules.output.ask
+        // Loop, not recursion: adversarial input (a channel that keeps
+        // returning garbage) would grow the async state machine without
+        // bound under recursion.
+        string prefix = "";
+        while (true)
         {
-            Context = Context,
-            Question = new Data.@this<string>("", question),
-        };
-        var askResult = await Context!.App.RunAction(askAction, Context);
+            var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}? (y/n/a)";
+            var askAction = new modules.output.ask
+            {
+                Context = Context,
+                Question = new Data.@this<string>("", question),
+            };
+            var askResult = await Context!.App.RunAction(askAction, Context);
 
-        // Stateless suspend: Type.Exit() bubbles up unchanged.
-        if (askResult.Type?.ClrType.Exit() == true) return askResult;
-        if (!askResult.Success) return askResult;
+            // Stateless suspend: Type.Exit() bubbles up unchanged.
+            if (askResult.Type?.ClrType.Exit() == true) return askResult;
+            if (!askResult.Success) return askResult;
 
-        var answer = askResult.Value?.ToString()?.Trim();
-        return answer switch
-        {
-            "a" => await SignAndStore(actor, verb, persist: true),
-            "y" => await SignAndStore(actor, verb, persist: false),
-            "n" => Data.@this.FromError(new global::App.Errors.PermissionDenied(BuildRequest(actor, verb))),
-            _ => await Authorize(verb, prefix: $"Invalid answer '{answer}'. "),
-        };
+            var answer = askResult.Value?.ToString()?.Trim();
+            switch (answer)
+            {
+                case "a": return await SignAndStore(actor, verb, persist: true);
+                case "y": return await SignAndStore(actor, verb, persist: false);
+                case "n": return Data.@this.FromError(
+                    new global::App.Errors.PermissionDenied(BuildRequest(actor, verb)));
+                default:
+                    prefix = $"Invalid answer '{answer}'. ";
+                    continue;
+            }
+        }
     }
 
     private async Task<Data.@this> SignAndStore(Actor.@this actor, Verb verb, bool persist)

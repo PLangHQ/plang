@@ -170,44 +170,48 @@ public partial class Path
             return await PerformTransfer(destination, isMove);
         }
 
-        // At least one needs an Ask. Build a bundled prompt covering only the
-        // missing paths so the user sees a single question.
-        var sb = new StringBuilder();
-        var actorName = Context!.Actor!.Name;
-        sb.Append(actorName).Append(" wants to:");
-        if (!sourceOk) sb.Append("\n  - read ").Append(Absolute);
-        if (!destOk)   sb.Append("\n  - write ").Append(destination.Absolute);
-        sb.Append("\n(y/n/a — covers all)");
-
-        var askAction = new modules.output.ask
+        // At least one needs an Ask. Loop on garbage input — recursion would
+        // grow the async state machine without bound.
+        string prefix = "";
+        while (true)
         {
-            Context = Context,
-            Question = new Data.@this<string>("", sb.ToString()),
-        };
-        var askResult = await Context!.App.RunAction(askAction, Context);
+            var sb = new StringBuilder();
+            sb.Append(prefix);
+            sb.Append(Context!.Actor!.Name).Append(" wants to:");
+            if (!sourceOk) sb.Append("\n  - read ").Append(Absolute);
+            if (!destOk)   sb.Append("\n  - write ").Append(destination.Absolute);
+            sb.Append("\n(y/n/a — covers all)");
 
-        if (askResult.Type?.ClrType.Exit() == true) return askResult;
-        if (!askResult.Success) return askResult;
+            var askAction = new modules.output.ask
+            {
+                Context = Context,
+                Question = new Data.@this<string>("", sb.ToString()),
+            };
+            var askResult = await Context!.App.RunAction(askAction, Context);
 
-        var answer = askResult.Value?.ToString()?.Trim();
-        switch (answer)
-        {
-            case "a":
-                if (!sourceOk) await StoreGrant(sourceVerb, persist: true);
-                if (!destOk)   await destination.StoreGrant(destVerb, persist: true);
-                return await PerformTransfer(destination, isMove);
-            case "y":
-                if (!sourceOk) await StoreGrant(sourceVerb, persist: false);
-                if (!destOk)   await destination.StoreGrant(destVerb, persist: false);
-                return await PerformTransfer(destination, isMove);
-            case "n":
-                var denied = !sourceOk
-                    ? new global::App.Errors.PermissionDenied(BuildRequest(Context!.Actor!, sourceVerb))
-                    : new global::App.Errors.PermissionDenied(BuildRequest(Context!.Actor!, destVerb));
-                return Data.@this.FromError(denied);
-            default:
-                // Re-prompt on garbage. Recurse keeps the bundling.
-                return await BundledTransfer(destination, isMove);
+            if (askResult.Type?.ClrType.Exit() == true) return askResult;
+            if (!askResult.Success) return askResult;
+
+            var answer = askResult.Value?.ToString()?.Trim();
+            switch (answer)
+            {
+                case "a":
+                    if (!sourceOk) await StoreGrant(sourceVerb, persist: true);
+                    if (!destOk)   await destination.StoreGrant(destVerb, persist: true);
+                    return await PerformTransfer(destination, isMove);
+                case "y":
+                    if (!sourceOk) await StoreGrant(sourceVerb, persist: false);
+                    if (!destOk)   await destination.StoreGrant(destVerb, persist: false);
+                    return await PerformTransfer(destination, isMove);
+                case "n":
+                    var denied = !sourceOk
+                        ? new global::App.Errors.PermissionDenied(BuildRequest(Context!.Actor!, sourceVerb))
+                        : new global::App.Errors.PermissionDenied(BuildRequest(Context!.Actor!, destVerb));
+                    return Data.@this.FromError(denied);
+                default:
+                    prefix = $"Invalid answer '{answer}'. ";
+                    continue;
+            }
         }
     }
 
