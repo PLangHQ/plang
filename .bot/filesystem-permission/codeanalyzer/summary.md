@@ -58,9 +58,27 @@ The pairing — this test plus the existing `_WireFreshnessWindow` — means
 any future regression that re-enables either step 2 or step 4 of the
 Ed25519 verifier on grant verification fails exactly one of them.
 
+## Auditor v2 F1 — codeanalyzer self-correction
+
+After Ingi's nudge, re-read the auditor v2 report. It names a doc-comment
+defect I (v4) missed:
+
+`PLang/app/actor/permission/this.cs:11-13` still carries the pre-F-A
+description of session vs. persisted grants. F-A inverted the polarity
+(persisted is now signed-but-permanent; session is unsigned), and the
+remediation patched the equivalent comment in the sibling
+`filesystem/permission/this.cs` but not this one.
+
+Confirmed lying at HEAD. 4-line fix for the coder. Not blocking — code
+is correct, only its self-description is wrong — but should land before
+docs propagates it.
+
+Learnings written to `/learnings/filesystem-permission/codeanalyzer/v5/learnings.md`
+(7 entries; #1 is the audit-traversal rule that would have caught this).
+
 ## What's next
 
 ```
 VERDICT: PASS
-Branch is ready for docs / merge.
+Next: coder closes auditor v2 F1 (4-line doc fix), then docs / merge.
 ```

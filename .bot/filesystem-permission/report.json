@@ -887,12 +887,31 @@
           "category": "doc",
           "confidence": "high",
           "context": "v5 PASS artifacts. summary.md overwritten per workflow."
+        },
+        {
+          "paths": [
+            "/learnings/filesystem-permission/codeanalyzer/v5/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Codeanalyzer learnings from this branch \u2014 7 entries covering auditor v2 F1 (the sibling-class doc-comment miss in actor/permission/this.cs:11-13), the test-only-commit pitfall from tester v5, the SkipFreshnessCheck bypass-scoping template from security v2, idiom-precedent-citation, scenario test naming, and the codeanalyzer-no-CLAUDE.md-proposals rule."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v5/report.md",
+            ".bot/filesystem-permission/codeanalyzer/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added auditor v2 F1 self-correction block to report and summary \u2014 the inverted doc-comment in actor/permission/this.cs:11-13 that v4 missed and v5's initial pass did not re-check. Verdict stays PASS (doc-only, code is correct) with a 4-line follow-up flagged for the coder."
         }
       ],
       "after": {
         "status": "PASS",
         "health": "branch ready for docs / merge",
-        "notes": "Only diff since v4 PASS is one regression test. No production code changed. Reviewer chain (tester v6, security v2, auditor v2) all green."
+        "notes": "v5 PASS holds. Ingi prompted re-read of auditor v2; captured the sibling-doc-inversion miss as Learning #1 and flagged the trivial follow-up in the report. Branch advances after coder lands the 4-line doc fix."
       }
     }
   ]
