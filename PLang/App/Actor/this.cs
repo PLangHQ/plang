@@ -23,6 +23,13 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public Context.@this Context { get; }
 
+    /// <summary>
+    /// Per-actor permission view — signed grants on paths, keyed by verb
+    /// + sub-options. <c>Find/Add/Revoke</c>. Stage 2b stub (in-memory only);
+    /// stage 3 layers sqlite persistence under the same surface.
+    /// </summary>
+    public Permission.@this Permission { get; } = new();
+
     private readonly AppChannels _channels;
     private AppChannels? _foundationalChannels;
     private readonly AsyncLocal<AppChannels?> _channelsOverride = new();

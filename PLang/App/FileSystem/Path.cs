@@ -10,7 +10,7 @@ namespace App.FileSystem;
 /// </summary>
 [PlangType("path",
     Example = "/some/file.json")]
-public class Path : modules.IContext
+public partial class Path : modules.IContext
 {
     private readonly string _absolutePath;
 
