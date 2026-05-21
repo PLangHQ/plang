@@ -1,7 +1,7 @@
 # tester — filesystem-permission
 
 ## Version
-v5 (reviews coder v6 — the version under review)
+v6 (reviews coder v7 — the version under review)
 
 ## What this is
 The `filesystem-permission` branch adds PLang's consent-gated filesystem
@@ -10,49 +10,40 @@ actor on out-of-root access, per-actor in-memory + sqlite grant storage, a v2
 Path-in/Data-out FS surface, and a snapshot/resume engine for stateless
 suspend.
 
-tester v4 PASSed v4+v5. The **auditor** then FAILed the branch on F-A
-(persisted "always allow" grants expired after 5 min) and rated my v4 PASS
-*partial* — Scenario4 never advanced `NowUtc`, so the documented durability
-was never verified. coder v6 closed F-A; the app-lowercase merge closed F-B;
-codeanalyzer v4 PASSed. This v5 re-reviews coder v6.
+tester v5 reviewed coder v6's auditor-F-A fix and returned NEEDS WORK with one
+major finding (F1). coder v7 is a test-only change closing F1. This v6
+re-reviews coder v7.
 
 ## What was done
-- Clean rebuild (stale-binary rule). C# **2854/2854 pass, 0 skip**; PLang
-  **203/203 pass** (4 intentional fail-fixtures excluded). The app-lowercase
-  merge left both suites green.
-- Read coder v6's fix: `signing.verify` gained `SkipFreshnessCheck`;
-  `Ed25519.VerifyAsync` skips steps 2 & 4 when set; `Permission.VerifySignature`
-  passes it true so grants live by `Expires` alone.
-- **Mutation test**: `SkipFreshnessCheck` `true→false`, clean rebuild, full
-  suite — 1 test dies (`Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow`).
-- **Scratch probe**: confirmed the flag neutralises *two* checks and only one
-  is gated — a persisted grant verified twice re-prompts under the mutation,
-  is covered with the fix. Probe deleted; tree clean.
-- Verdict: **NEEDS WORK**, 1 major finding. Output: `v5/result.md`,
-  `v5/plan.md`, `v5/verdict.json`, shared `test-report.json`.
+- Clean rebuild (stale-binary rule). C# **2855/2855 pass, 0 skip** (+1 vs v5);
+  PLang **203/203 pass** (4 intentional fail-fixtures excluded).
+- Diff-checked coder v7's change: `Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt`
+  added to `Stage5MessagesEndToEndTests.cs` — **verbatim** from tester v5's
+  handed-over spec, no edits, no production change.
+- **Mutation test**: `permission/this.cs:147` `SkipFreshnessCheck` `true→false`,
+  clean rebuild, run `Scenario4*`. Two independent failures:
+  `_WireFreshnessWindow` on `secondRead` (step 2), the new test on `read2`
+  (step 4). `_RestartStillNoPrompt` passes (one verify only).
+- Production code restored; suite re-confirmed green.
+- Verdict: **PASS**. Output: `v6/result.md`, `v6/plan.md`, `v6/verdict.json`,
+  shared `test-report.json`.
 
 ## Outcome
-coder v6's production fix is **correct** — the feature works. But the
-`SkipFreshnessCheck` flag turns off two independent checks (step 2
-wire-freshness, step 4 nonce-replay) and **only step 2 has a test**. The new
-durability test advances `NowUtc` +10 min so it dies on the age check; it
-never re-presents a nonce.
+F1 (the only finding) is **closed**. tester v5 found that
+`SkipFreshnessCheck=true` neutralises two independent signing checks (step 2
+wire-freshness, step 4 nonce-replay) while only step 2 had a test — a
+step-4-only regression would have passed the full suite and silently
+re-broken "always allow" for any app re-reading a foreign resource. coder v7
+added the missing test. The mutation that v5 said would survive the suite now
+kills the new test on `read2`. Each half of the flag is its own regression
+gate — coder v6's "Mutation-verified" commit claim now genuinely holds.
 
-**F1 (major)** — the nonce-replay half is ungated. Persisted `Find`
-re-deserializes a fresh `Data` each call, so two reads of a persisted grant =
-two real `VerifySignature` passes; with step 4 active the second hits
-`NonceReplay` and re-prompts. No test does two verifications of a persisted
-grant — a step-4-only revert passes all 2854 tests and would silently
-re-break "always allow" for any app that re-reads a foreign resource.
-`v5/result.md` hands over the exact closing test, mutation-verified.
-
-## Minor notes (non-blocking)
+## Minor notes (non-blocking, carried)
 - **N1** — `ValidatePathTests.UpperCasedRootPrefix_..._OnUnix` docstring still
-  over-claims the `RootComparison` gate (carried from v4).
-- **N4** — auditor F-5 (attributed to tester): `MoveCopyBundledConsentTests`
-  covers bundled consent only on the v2 `Path` surface; the real handlers
-  issue two prompts. Add a note or a handler-path test. Fair to defer.
+  over-claims the `RootComparison` gate (carried from v4). Cosmetic.
+- **N4** — auditor F-5: `MoveCopyBundledConsentTests` covers bundled consent
+  only on the v2 `Path` surface; the real `copy.cs`/`move.cs` handlers issue
+  two prompts. Fairly deferred with auditor F-C/D/E.
 
 ## Next
-One added test closes F1 and makes coder v6's "Mutation-verified" commit
-claim actually hold. Re-issue as a quick v7.
+Branch is green from a test-coverage standpoint. No tester action outstanding.

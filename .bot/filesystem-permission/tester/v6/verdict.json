@@ -1,0 +1,14 @@
+{
+  "status": "pass",
+  "reviewed_version": "v7",
+  "summary": "coder v7 closes tester v5 F1 — the only finding. Added Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt verbatim from v5's spec (test-only change, no production edit). Clean rebuild: C# 2855/2855, PLang 203/203, 0 fail, 0 skip. Mutation-verified: SkipFreshnessCheck true->false now produces TWO independent Scenario4 failures — _WireFreshnessWindow on secondRead (step 2, wire-freshness) and the new test on read2 (step 4, nonce-replay). Each half of the F-A fix is now its own regression gate, which is exactly what v5 said was missing. Production code restored, suite re-confirmed green.",
+  "findings": [],
+  "non_blocking_notes": [
+    { "id": "N1", "detail": "ValidatePathTests.UpperCasedRootPrefix_..._OnUnix docstring still over-claims the RootComparison gate (carried from tester v4 N1). Cosmetic." },
+    { "id": "N4", "detail": "auditor F-5: MoveCopyBundledConsentTests covers bundled consent only on the v2 Path surface; the real copy.cs/move.cs handlers issue two prompts. Fairly deferred with auditor F-C/D/E." }
+  ],
+  "suites": {
+    "csharp": { "total": 2855, "passed": 2855, "failed": 0, "skipped": 0 },
+    "plang": { "total": 203, "passed": 203, "failed": 0, "skipped": 0 }
+  }
+}
