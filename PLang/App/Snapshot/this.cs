@@ -10,7 +10,7 @@ namespace App.Snapshot;
 /// Subsystems write entries via <see cref="Write{T}"/> and read via
 /// <see cref="Read{T}"/>; the underlying storage is an implementation detail.
 /// </summary>
-public sealed class @this
+public sealed partial class @this
 {
     private readonly Dictionary<string, @this> _sections =
         new(StringComparer.OrdinalIgnoreCase);
