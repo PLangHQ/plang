@@ -1,4 +1,4 @@
-using global::app.modules;
+using app.modules;
 using static PLang.Tests.TestAction;
 
 namespace PLang.Tests.App.Modules.modifier;
@@ -56,7 +56,7 @@ public class ModifierFoldTests
     public async Task RunAsync_ZeroModifiers_ExistingBehaviorUnchanged()
     {
         // Regression: Action.RunAsync with no modifiers dispatches normally
-        // and stores result as %__data__%
+        // and stores result as %!data%
         var action = Create("variable", "set", ("name", "%x%"), ("value", "hello"));
 
         var result = await action.RunAsync(Ctx);

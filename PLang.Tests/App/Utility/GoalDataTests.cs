@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using app;
-using global::app.variables;
+using app.variables;
 
 namespace PLang.Tests.App.Utils;
 
@@ -114,7 +114,7 @@ public class GoalSerializationTests
                             Parameters = new List<Data>
                             {
                                 new Data("Name", "response"),
-                                new Data("Value", "%__data__%")
+                                new Data("Value", "%!data%")
                             }
                         }
                     }

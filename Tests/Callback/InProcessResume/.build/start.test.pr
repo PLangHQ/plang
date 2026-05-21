@@ -36,7 +36,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Assign literal 1 to runtime variable %x% using variable.set.",
+      "guidance": "Set runtime variable %x% to 1. This is the throw-time value that the recovery goal should observe via its snapshot.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -91,7 +91,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list\u00601"
                 }
               ],
               "defaults": [
@@ -107,9 +107,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw an error with message \u0022boom\u0022. The step text says \u0027on error call CaptureAndRecover\u0027, so wrap the throw with error.handle that runs a recovery action chain calling the goal CaptureAndRecover.",
-      "level": "medium",
-      "confidence": 62,
+      "guidance": "Throw an error with message \u0027boom\u0027 and status code 500. On error, run recovery goal CaptureAndRecover via error.handle Actions chain.",
+      "level": "high",
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -146,9 +146,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: after recovery, live %x% should equal 2. Use assert.equals.",
+      "guidance": "Post-condition assertion: after recovery, live %x% should equal 2.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -175,9 +175,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition: %callbackPresent% should be true. Use assert.isTrue.",
+      "guidance": "Post-condition assertion: callback should be present (i.e., recovery captured the callback/snapshot).",
       "level": "high",
-      "confidence": 90,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -336,9 +336,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %x% to numeric value 2.",
+          "guidance": "Set runtime variable %x% to integer 2.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 99,
           "formal": null,
           "source": null,
           "waitForExecution": true

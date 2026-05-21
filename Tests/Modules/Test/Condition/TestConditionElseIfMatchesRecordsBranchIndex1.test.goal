@@ -3,5 +3,5 @@ TestConditionElseIfMatchesRecordsBranchIndex1
 / (if false, elseif true). Also asserts the elseif body ran (%b% was set).
 - set %x% = 7
 - if %x% > 10 set %a% = 1, else if %x% > 5 set %b% = 2, else set %c% = 3
-- assert %__data__.branchIndex% equals 1
+- assert %!data.branchIndex% equals 1
 - assert %b% equals 2

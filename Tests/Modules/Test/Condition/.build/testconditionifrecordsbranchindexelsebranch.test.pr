@@ -79,7 +79,7 @@
             {
               "name": "Name",
               "value": "%a%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -131,7 +131,7 @@
             {
               "name": "Name",
               "value": "%b%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -162,7 +162,7 @@
             {
               "name": "Name",
               "value": "%c%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -181,7 +181,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Chained conditional: compile the first condition as condition.if, then include the elseif and else bodies as additional actions in the same step. The step text sets %a%, %b%, or %c% depending on which branch runs.",
+      "guidance": "Compile the chained conditional: first evaluate if %x% \u003E 10, then elseif %x% \u003E 5, then else. Each branch assigns its corresponding variable. This step also needs to preserve the builder-emitted branchIndex in %!data% for the later assertion.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -190,7 +190,7 @@
     },
     {
       "index": 2,
-      "text": "assert %__data__.branchIndex% equals 2",
+      "text": "assert %!data.branchIndex% equals 2",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -206,7 +206,7 @@
             },
             {
               "name": "Actual",
-              "value": "%__data__.branchIndex%",
+              "value": "%!data.branchIndex%",
               "type": "object"
             }
           ],
@@ -227,7 +227,7 @@
   "visibility": 1,
   "path": "/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
   "prPath": "/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
-  "hash": "8c811da5c5241ac00a53ca66d71b3b03a2f48c2fd075acb31312f47cf0c59d49",
+  "hash": "34b23a0ea3c04a6a7bb7fddd9311e553b113bc68b9ba9f26aaa3318ef2290f59",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

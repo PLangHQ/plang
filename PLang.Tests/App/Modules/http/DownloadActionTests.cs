@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text;
-using global::app.actor.context;
-using global::app.variables;
-using global::app.modules.http;
-using global::app.modules.http.code;
+using app.actor.context;
+using app.variables;
+using app.modules.http;
+using app.modules.http.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.http;

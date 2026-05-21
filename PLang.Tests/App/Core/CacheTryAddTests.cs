@@ -1,11 +1,11 @@
-using global::app.modules.cache;
-using global::app.goals.goal.steps.step;
-using global::app.variables;
+using app.modules.cache;
+using app.goals.goal.steps.step;
+using app.variables;
 
 namespace PLang.Tests.App.Core;
 
 /// <summary>
-/// Tests ICache.TryAddAsync atomic semantics on global::app.modules.cache.Memory.
+/// Tests ICache.TryAddAsync atomic semantics on global::app.modules.cache.memory.
 /// TryAddAsync is the atomic add-if-absent operation needed for nonce replay prevention.
 /// </summary>
 public class CacheTryAddTests

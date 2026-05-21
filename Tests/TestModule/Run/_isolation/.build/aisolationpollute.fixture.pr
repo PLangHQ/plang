@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%shared_probe%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -30,14 +30,20 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "The step assigns a value to the runtime variable %shared_probe%. Compile to variable.set with Name=%shared_probe% and Value=1.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -69,9 +75,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "The step asserts the variable %shared_probe% equals 1. Compile to assert.equals with Expected=1 and Actual=%shared_probe%.",
+      "level": "high",
+      "confidence": 97,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -79,8 +85,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Run/_isolation/AIsolationPollute.fixture.goal",
-  "prPath": "/TestModule/Run/_isolation/.build/aisolationpollute.fixture.pr",
+  "path": "/Run/_isolation/AIsolationPollute.fixture.goal",
+  "prPath": "/Run/_isolation/.build/aisolationpollute.fixture.pr",
   "hash": "ccfd7c751fa91fde51affd03a2ea8154f89675e6492bcd4f79bce4d4220c49d6",
   "builderVersion": "0.2.2",
   "isSetup": false,

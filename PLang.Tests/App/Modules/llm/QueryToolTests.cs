@@ -1,9 +1,9 @@
 using System.Text.Json;
-using global::app.actor.context;
-using global::app.goals.goal;
-using global::app.variables;
-using global::app.modules.llm;
-using global::app.modules.llm.code;
+using app.actor.context;
+using app.goals.goal;
+using app.variables;
+using app.modules.llm;
+using app.modules.llm.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.llm;

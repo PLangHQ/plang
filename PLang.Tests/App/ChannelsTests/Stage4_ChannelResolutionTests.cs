@@ -135,6 +135,6 @@ public class Stage4_ChannelResolutionTests
             return Task.FromResult(Data.Ok());
         }
         public override Task<Data> ReadCore(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> AskCore(Data prompt, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> AskCore(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 }

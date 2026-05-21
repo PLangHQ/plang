@@ -1,8 +1,8 @@
 using app;
-using global::app.actor.context;
-using global::app.variables;
-using global::app.filesystem;
-using global::app.filesystem.Default;
+using app.actor.context;
+using app.variables;
+using app.filesystem;
+using app.filesystem.Default;
 using Action = global::app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Modules.condition;

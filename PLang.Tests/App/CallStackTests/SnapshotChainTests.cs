@@ -54,7 +54,7 @@ public class SnapshotChainTests
         await using var goalCall = stack.Push(MakeAction("Goal"));
         var errored = stack.Push(MakeAction("Errored"));
         await errored.DisposeAsync();
-        await using var recovery = stack.Push(MakeAction("Recovery"), cause: errored);
+        await using var recovery = stack.Push(MakeAction("Recovery"));
 
         var chain = recovery.SnapshotChain();
         await Assert.That(chain.Contains(errored)).IsFalse();

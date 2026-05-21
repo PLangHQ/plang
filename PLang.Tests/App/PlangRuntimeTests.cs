@@ -1,8 +1,8 @@
 using app;
-using global::app.actor.context;
-using global::app.variables;
-using global::app.filesystem;
-using global::app.filesystem.Default;
+using app.actor.context;
+using app.variables;
+using app.filesystem;
+using app.filesystem.Default;
 
 namespace PLang.Tests.App;
 

@@ -10,8 +10,6 @@ namespace app.callstack.call;
 /// optionally removes self from <c>Caller.Children</c> when history is off.
 ///
 /// Tree shape: navigate up via <see cref="Caller"/>, down via <see cref="Children"/>.
-/// <see cref="Cause"/> models *async* causality (recovery body, event handler) — distinct
-/// from the synchronous <see cref="Caller"/>.
 ///
 /// Render-agnostic: same data folds into a stack (Caller walk), flamegraph (Children walk),
 /// or timeline (sort by StartedAt).
@@ -43,20 +41,6 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public @this? Caller { get; }
 
-    private readonly @this? _ownCause;
-
-    /// <summary>
-    /// Async origin — set by recovery dispatch (errored Call), event publish, sync-event
-    /// capture. Null for normal goal.call descents. Same-process refs only — cross-process
-    /// identity goes through <see cref="GetItem{T}"/>.
-    ///
-    /// Walks up the synchronous Caller chain when this Call has no own cause: any descendant
-    /// of a recovery dispatch (e.g. a goal.call recovery → its called goal's steps) inherits
-    /// the same async cause without needing every intermediate Push to copy it. PLang reads
-    /// <c>%!callStack.Current.Cause%</c> from anywhere inside the recovery scope.
-    /// </summary>
-    public @this? Cause => _ownCause ?? Caller?.Cause;
-
     /// <summary>
     /// Errors observed at this scope. Populated by App.Run when the handler returns a
     /// failure or throws. <see cref="Handled"/> tracks recovery outcome independently —
@@ -70,6 +54,14 @@ public sealed partial class @this : IAsyncDisposable
     /// show "errored — recovered" vs "errored — uncaught."
     /// </summary>
     public bool Handled { get; set; }
+
+    /// <summary>
+    /// Mirror of <see cref="Action.@this.Synthetic"/> stamped at Push time. False
+    /// for PR-built actions (the wire-restorable case); true for C#-composed
+    /// actions. Snapshot wire-serialisation filters synthetic frames out since
+    /// they're recreated naturally by the resumed execution.
+    /// </summary>
+    public bool Synthetic { get; }
 
     /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
@@ -111,7 +103,6 @@ public sealed partial class @this : IAsyncDisposable
     internal @this(
         ActionEntity action,
         @this? caller,
-        @this? cause,
         app.callstack.@this stack,
         Flags flags,
         @this? previousCurrent,
@@ -120,7 +111,7 @@ public sealed partial class @this : IAsyncDisposable
         Id = Guid.NewGuid().ToString("N")[..8];
         Action = action;
         Caller = caller;
-        _ownCause = cause;
+        Synthetic = action.Synthetic;
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
@@ -186,7 +177,6 @@ public sealed partial class @this : IAsyncDisposable
     /// Returns <c>[this, Caller, Caller.Caller, ..., Root]</c>. Stable refs only — no copy.
     /// Used by App.Run to attach a chain to ServiceError on exception. Index <c>[0]</c> is
     /// always the failing Call (behavior tweak vs the old shape, which excluded self).
-    /// Cause links are NOT walked — only the synchronous Caller chain.
     /// </summary>
     public IReadOnlyList<@this> SnapshotChain()
     {

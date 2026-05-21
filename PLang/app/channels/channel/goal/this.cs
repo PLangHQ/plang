@@ -1,6 +1,6 @@
 using app.errors;
 
-namespace app.channels.channel.Goal;
+namespace app.channels.channel.goal;
 
 /// <summary>
 /// Concrete goal-backed channel. WriteAsync invokes the wrapped goal with the Data
@@ -38,8 +38,9 @@ public class @this : global::app.channels.channel.session.@this
         return await InvokeGoal(global::app.data.@this.Ok((object?)null), ct);
     }
 
-    public override async Task<global::app.data.@this> AskCore(global::app.data.@this prompt, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
     {
+        var prompt = global::app.data.@this.Ok(action.Question?.Value);
         return await InvokeGoal(prompt, ct);
     }
 

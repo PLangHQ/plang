@@ -1,0 +1,995 @@
+{
+  "branch": "filesystem-permission",
+  "sessions": [
+    {
+      "id": "8bd8a24e-e4b9-49db-a1c7-44d01674c525",
+      "bot": "architect",
+      "timestamp_start": "2026-05-14T23:25:38Z",
+      "intent": "Design the filesystem permission system: signed per-app grants on paths, with read/write/delete verbs each carrying sub-options. Path-shaped rewrite of IPLangFileSystem.",
+      "before": {
+        "assumptions": "Current FileAccessControl is runtime-only (in-memory FileAccessControl record, populated by yes/no/always prompt at exception time). No signature, no expiry, no audit. IPLangFileSystem inherits System.IO.Abstractions.IFileSystem (string-only). Cross-app reads (e.g. a messages app reading every app's system.sqlite) are not modelable today.",
+        "risk": "Big surface rewrite \u2014 every action that touches the FS and every runtime internal that does the same. Signature work has to walk the full call graph. Goal-mapped FS provider is deliberately deferred."
+      },
+      "plan": ".bot/filesystem-permission/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added new section 'OBP Variant Design \u2014 When a Concept Has Multiple Configurable Modes'. Codifies four rules drawn from this design pass: singular folders, variant records with default-allow, owners-do-their-own-coverage, methods take whole domain objects. Also added a refinement to existing OBP guidance: verb-named methods are fine when they do real work \u2014 the GetX/IsX smell is about property-shaped questions, not verbs in general."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/v1/plan.md",
+            ".bot/filesystem-permission/architect/v1/plan/permission-design.md",
+            ".bot/filesystem-permission/architect/v1/plan/filesystem-surface.md",
+            ".bot/filesystem-permission/architect/v1/plan/storage.md",
+            ".bot/filesystem-permission/architect/v1/plan/open-questions.md",
+            ".bot/filesystem-permission/architect/stage-1-permission-types.md",
+            ".bot/filesystem-permission/architect/stage-2-storage-binding.md",
+            ".bot/filesystem-permission/architect/stage-3-filesystem-surface.md",
+            ".bot/filesystem-permission/architect/stage-4-permission-required-error.md",
+            ".bot/filesystem-permission/architect/stage-5-messages-end-to-end.md",
+            ".bot/filesystem-permission/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan for filesystem permission system. Spine + four topic deep-dives + five stage files + summary. Design settled in conversation with Ingi; three open conversation gates documented before stage 3."
+        }
+      ],
+      "after": {
+        "status": "plan written; awaiting Ingi to settle the three open gates (app-side cascade, Content sub-option on Read, process-only grant distinction) before stage 3 starts. Stage 1 can begin in parallel \u2014 pure types are independent.",
+        "health": "good \u2014 design walked end-to-end (file.read from Messages to Email/system.sqlite), every concept has a named owner, no choreography across files.",
+        "notes": "Branch newly created from origin/runtime2. good_to_know.md edit is real codification work, not session noise \u2014 captures lessons that should outlast this branch."
+      },
+      "timestamp_end": "2026-05-14T23:45:00Z"
+    },
+    {
+      "id": "856d3ce7-215c-4edc-9e75-1bc60baa29f6",
+      "bot": "architect",
+      "timestamp_start": "2026-05-19T13:00:59Z",
+      "intent": "Rewrite the plan to reflect a major design shift: permission generalizes per-subsystem (file/http/payment), Data.Request becomes a third terminal state, permission lives on the variable via Properties (lazy from store), and stages 1-3 bundle types + storage + full IPLangFileSystem refactor with permission baked in.",
+      "before": {
+        "assumptions": "Original plan v1 framed PermissionRequired as an Error type, kept the FS surface rewrite separate from the permission check site, and treated this branch as filesystem-only with no generalization story. Conversation with Ingi reframed all three.",
+        "risk": "The shift is large enough that a partial update would leave the plan internally inconsistent. Stage files and topic docs need to move together with the spine."
+      },
+      "plan": ".bot/filesystem-permission/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/v1/plan.md",
+            ".bot/filesystem-permission/architect/v1/plan/permission-design.md",
+            ".bot/filesystem-permission/architect/v1/plan/filesystem-surface.md",
+            ".bot/filesystem-permission/architect/v1/plan/storage.md",
+            ".bot/filesystem-permission/architect/v1/plan/open-questions.md",
+            ".bot/filesystem-permission/architect/v1/plan/runtime-flow.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote spine + topic docs. Added runtime-flow.md (new). plan.md now leads with the pattern-not-base-class generalization, Data.Request third state, and the (c) bundle in stage 4. permission-design.md drops Check/Describe methods on the record \u2014 it's pure data with Covers. storage.md describes the two-store unification (in-memory + sqlite via system variables). filesystem-surface.md becomes the bundled IPLangFileSystem v2 design with permission baked in. open-questions.md retires most of the original list; ships five smaller still-open items."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/stage-1-permission-types.md",
+            ".bot/filesystem-permission/architect/stage-2-data-request-state.md",
+            ".bot/filesystem-permission/architect/stage-3-storage-binding.md",
+            ".bot/filesystem-permission/architect/stage-4-filesystem-surface.md",
+            ".bot/filesystem-permission/architect/stage-5-messages-end-to-end.md"
+          ],
+          "type": "rename",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Renumbered stages. Old stage-2 (storage), stage-3 (FS surface), stage-4 (PermissionRequired error) deleted; new stage-2 (Data.Request state), stage-3 (storage), stage-4 (IPLangFileSystem v2 bundle) written. Stage 1 (types) and stage 5 (e2e) updated in place. New ordering reflects the dependency chain: types \u2192 engine state \u2192 storage \u2192 FS rewrite \u2192 e2e."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Prepended 2026-05-19 entry summarizing the 10 design shifts and what previously-open questions resolved. Kept the 2026-05-14 entry below for history."
+        }
+      ],
+      "after": {
+        "status": "Plan rewritten initially to reflect 2026-05-19 design pass. Five stages defined, all pending. Stage 1 can start as-is (pure types, no dependencies). The big bundle is stage 4 \u2014 needs stages 2 and 3 first.",
+        "health": "good \u2014 design walked end-to-end through file.read. Generalization pattern named for HTTP/Payment without prematurely codifying.",
+        "notes": "Two follow-up branches implied by this design: an http-permission branch and a payment-permission branch, both consuming the Ask infrastructure landed in stage 2 of this branch."
+      },
+      "timestamp_end": "2026-05-19T13:11:51Z"
+    },
+    {
+      "id": "deafb9a3-2c40-4f9c-9c1f-2e3f0a8e7510",
+      "bot": "architect",
+      "timestamp_start": "2026-05-19T13:11:51Z",
+      "intent": "Walk through the plan with Ingi section by section; refine the design as it surfaces issues; propagate corrections across all plan files in one consolidated pass.",
+      "before": {
+        "assumptions": "Initial rewrite at 2026-05-19T13:00 had Data.Request as a third terminal state, FilePermission with AppId/Path/Match/Verb, storage as 'system variables backed by sqlite,' permission/@this as a manager class, and one-line code snippets in stage files.",
+        "risk": "Walking the plan in interactive mode tends to surface design problems mid-step; without consolidating fixes, the plan grows inconsistent. Several corrections from Ingi struck OBP nerves: helper-soup, envelope-thinking, yes-man drift."
+      },
+      "plan": ".bot/filesystem-permission/architect/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/v1/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Spine: section 1 framing rewritten to drop Data.Request as a third state in favour of Data.Fail with an Ask marker handled inside error.handle's built-in path. Section 3 runtime narrative rewritten \u2014 Path delegates to actor.Permission (not App.Permissions); engine owns retry loop; ask handler is stateless. Cross-cutting decisions updated for 2-column storage rule, actor-as-record-field, JSON-filter scoping. Stage 2 renamed/relinked to stage-2-ask-routing.md."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/v1/plan/runtime-flow.md",
+            ".bot/filesystem-permission/architect/v1/plan/permission-design.md",
+            ".bot/filesystem-permission/architect/v1/plan/storage.md",
+            ".bot/filesystem-permission/architect/v1/plan/filesystem-surface.md",
+            ".bot/filesystem-permission/architect/v1/plan/open-questions.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Topic docs rewritten. runtime-flow.md: ask handling inside error.handle, two-layer lookup (Properties cache \u2192 actor.Permission), engine-side retry. permission-design.md: FilePermission gains Actor field; Path.CheckPermission takes verb kind only; no ReadOnly/WriteOnly factories; the manager-class concept dissolved into actor.Permission. storage.md: rewritten around App.SettingsStore + 2-column rule + actor-as-JSON-filter; no separate persistence layer; one permission table not three. filesystem-surface.md: code blocks stripped (architect rule); permission check delegated to Path via path.CheckPermission. open-questions.md: throw-vs-return resolved as return; ask shape resolved as Data.Fail+Ask."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/stage-1-permission-types.md",
+            ".bot/filesystem-permission/architect/stage-2-ask-routing.md",
+            ".bot/filesystem-permission/architect/stage-3-storage-binding.md",
+            ".bot/filesystem-permission/architect/stage-4-filesystem-surface.md",
+            ".bot/filesystem-permission/architect/stage-5-messages-end-to-end.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Stage files updated consistently. Stage 1 references Ask marker work as stage 2's concern. Stage 2 renamed (data-request-state \u2192 ask-routing), reframed around error.handle's built-in path. Stage 3 reframed around Actor.@this.Permission (per-actor view) + path.CheckPermission on Path class; storage is App.SettingsStore 'permission' table with 2-column rule; per-actor scoping via JSON filter on Actor field. Stage 4 references path.CheckPermission(Verb.X) interface. Stage 5 acceptance checks the permission table directly."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/claude-md-proposals.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New file. Proposes a 5th OBP smell to good_to_know.md: 'Helper that takes a domain object and returns a derived answer.' Includes worked example contrasting helper-soup (Resolve(path), CheckPermission(absolute, verb)) with self-owning methods (path.Absolute, path.CheckPermission(verb))."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Prepended a new 2026-05-19 (continued) entry summarizing the refinements: storage on App.SettingsStore directly; 2-column rule; actor-on-record with JSON-filter scoping; path.CheckPermission(verb kind) signature; verb sub-options stay in C#; four-level delegation; error.handle is the umbrella; CLAUDE.md proposal filed."
+        }
+      ],
+      "after": {
+        "status": "Plan internally consistent end-to-end after the walkthrough. All stage files, topic docs, summary, and the CLAUDE.md proposal reflect the same model. Stage 1 can begin; stage 2 has a clear acceptance contract; stage 3 has a concrete shape for actor.Permission + Path.CheckPermission; stage 4 references both.",
+        "health": "good \u2014 design walked end-to-end with Ingi, multiple OBP corrections caught and incorporated. The plan now reads as one coherent design rather than a sequence of accumulated decisions.",
+        "notes": "Major patterns codified during the session: (1) FilePermission carries Actor field; (2) Path owns CheckPermission; (3) actor.Permission unifies in-memory + persisted; (4) error.handle owns ask routing internally; (5) 2-column storage rule. The helper-soup OBP smell was the most generalizable lesson \u2014 filed as a CLAUDE.md proposal."
+      },
+      "timestamp_end": "2026-05-19T15:13:52Z"
+    },
+    {
+      "id": "1c0a766d-41d3-4e4d-96d4-a1c936b8cffc",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-20T23:38:04Z",
+      "timestamp_end": "2026-05-20T23:45:41Z",
+      "intent": "Translate architect's 5-stage filesystem-permission design into a test contract \u2014 C# TUnit stubs + PLang test goals \u2014 that the coder makes pass.",
+      "before": {
+        "assumptions": "Architect plan is final after Ingi's review pass (33 comments resolved). 5 stages: types, snapshot/resume, Path.Authorize, storage, IPLangFileSystem v2, end-to-end Messages. Existing CallbackTests/ folder will be rewritten around Snapshot instead of per-callback classes.",
+        "risk": "Volume is large (~100 tests). Stage 4 parametrization needs the coder to confirm the [Arguments] shape. 'No App.Run / App.RunAction' tests are static-survey style \u2014 that pattern may not be established yet."
+      },
+      "plan": ".bot/filesystem-permission/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/test-designer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "10-batch breakdown across the 5 stages. Approved up front by user \u2014 no per-batch walk-through needed."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/PermissionTests/VerbCoversTests.cs",
+            "PLang.Tests/App/FileSystem/PermissionTests/PermissionCoversTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 1 \u2014 Verb sub-record cover matrix + Permission.Covers with closed Match dispatch and JSON round-trip."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/CallbackTests/TypeExitTests.cs",
+            "PLang.Tests/App/CallbackTests/ActionSyntheticTests.cs",
+            "PLang.Tests/App/CallbackTests/DataSnapshotTests.cs",
+            "PLang.Tests/App/CallbackTests/StepLoopShouldExitTests.cs",
+            "PLang.Tests/App/CallbackTests/GoalRunFromTests.cs",
+            "PLang.Tests/App/CallbackTests/ActionRunAsyncTests.cs",
+            "PLang.Tests/App/CallbackTests/OutputAskRoutingTests.cs",
+            "PLang.Tests/App/CallbackTests/SnapshotResumeTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2a \u2014 markers, Snapshot field+helper, ShouldExit, RunFrom, RunAsync, output.ask routing, Snapshot.Resume. One concern per file."
+        },
+        {
+          "paths": [
+            "Tests/Callback/StatefulAskMidGoalBindsValue/Start.test.goal",
+            "Tests/Callback/StatelessCrossGoalResumes/Start.test.goal",
+            "Tests/Callback/StatelessCrossGoalResumes/AskAQuestion.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2a \u2014 PLang integration. Mid-goal stateful + cross-goal stateless suspend/resume (the canonical Start\u2192AskAQuestion case)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/PermissionTests/AuthorizeTests/PathAuthorizeTests.cs",
+            "Tests/Permission/Authorize/StatefulAuthorizeGrantsAndContinues/Start.test.goal",
+            "Tests/Permission/Authorize/StatelessAuthorizeResumesAndContinues/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2b \u2014 Path.Authorize answer cases (a/y/n/garbage), stateless bubble, constructed Permission shape, PermissionDenied; plus stateful and stateless e2e."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/PermissionTests/StorageTests/ActorPermissionStorageTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 3 \u2014 Find/Add/Revoke; per-actor JSON-filter scoping; in-memory + sqlite unification; signature caching; idempotent Add."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/SurfaceTests/FileSystemPermissionFlowTests.cs",
+            "PLang.Tests/App/FileSystem/SurfaceTests/FileSystemSurfaceShapeTests.cs",
+            "PLang.Tests/App/FileSystem/SurfaceTests/MoveCopyBundledConsentTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Stage 4 \u2014 parametrized per-method flow (in-root, out-of-root stateful, out-of-root stateless); shape contracts (no IFileSystem inheritance, no ValidatePath, no FileAccessControl); Move/Copy bundled consent. Parametrization shape (MethodDataSource) will need a coder review."
+        },
+        {
+          "paths": [
+            "Tests/Permission/NoGrantSuspends/Start.test.goal",
+            "Tests/Permission/GrantAStoresPersisted/Start.test.goal",
+            "Tests/Permission/ImmediateRereadSkipsPrompt/Start.test.goal",
+            "Tests/Permission/RestartStillNoPrompt/Start.test.goal",
+            "Tests/Permission/RevokeReprompts/Start.test.goal",
+            "Tests/Permission/NarrowedGrantRejectsWiderRequest/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 5 \u2014 six-step integration test broken into six independent PLang test goals: no-grant suspend \u2192 grant 'a' stores \u2192 immediate reread skips \u2192 restart still skips \u2192 revoke reprompts \u2192 narrowed grant rejects wider request."
+        }
+      ],
+      "after": {
+        "status": "Test contract drafted. ~70 C# test stubs + 11 PLang test goal stubs. All bodies are Assert.Fail / throw \"not implemented\". Ready for coder.",
+        "health": "pending",
+        "notes": "Open follow-ups (logged in plan.md): (1) some Batch 6 'stateful e2e' tests may actually need real Stage 3 storage rather than mocks \u2014 coder to decide; (2) TUnit MethodDataSource shape in Stage 4 parametrization needs a coder review; (3) static-survey 'no App.Run / App.RunAction' tests may need a new helper."
+      }
+    },
+    {
+      "id": "d4bed572-dcb6-43e3-94c3-2a08a67eda86",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-21T12:38:33.196911Z",
+      "intent": "Codeanalyzer review of filesystem-permission v1 (stages 1-5): OBP compliance, simplification, readability, behavioral reasoning, deletion test on ~6k LOC of new/modified C#.",
+      "before": {
+        "assumptions": "Coder reports 2830/2830 tests passing. Five stages landed: Permission types, snapshot-resume engine, Path.Authorize, Actor.Permission storage, IPLangFileSystem v2 surface. Several items deferred (v1 surface deletion, scenario 4 deserialiser bug, .test.goal integration, App.RunAction surface, Cause linkage, wire serialiser).",
+        "risk": "Big surface \u2014 Snapshot-resume crosses Engine/Goal/Step/Action/Channel boundaries; permission state lives in Actor; FS v2 surface added alongside v1 (dual-path risk). Look for OBP shape smells from doubled collections, cross-file locks, and disciplined collections held in the wrong type."
+      },
+      "plan": ".bot/filesystem-permission/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan \u2014 five passes (OBP rules+shape, simplification, readability, behavioral, deletion) against the 43 modified C# files under PLang/App/."
+        },
+        {
+          "paths": [
+            "PLang/App/Actor/Permission/this.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/FileSystem/Path.Operations.cs",
+            "PLang/App/FileSystem/Permission/this.cs",
+            "PLang/App/FileSystem/Permission/Verb/this.cs",
+            "PLang/App/FileSystem/Permission/Verb/Read.cs",
+            "PLang/App/FileSystem/Permission/Verb/Write.cs",
+            "PLang/App/FileSystem/Permission/Verb/Delete.cs",
+            "PLang/App/Snapshot/this.cs",
+            "PLang/App/Snapshot/this.Resume.cs",
+            "PLang/App/Data/this.Snapshot.cs",
+            "PLang/App/Data/ShouldExit.cs",
+            "PLang/App/Data/this.Envelope.cs",
+            "PLang/App/IExitsGoal.cs",
+            "PLang/App/Types/Exit.cs",
+            "PLang/App/Errors/PermissionDenied.cs",
+            "PLang/App/Goals/Goal/this.RunFrom.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.RunFrom.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Goals/Goal/Steps/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Setup/this.cs",
+            "PLang/App/Goals/this.cs",
+            "PLang/App/Channels/Channel/this.cs",
+            "PLang/App/Channels/Channel/Message/this.cs",
+            "PLang/App/Channels/Channel/Stream/this.cs",
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/Actor/this.cs",
+            "PLang/App/modules/output/ask.cs",
+            "PLang/App/modules/callback/run.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/modules/IContext.Snapshot.cs",
+            "PLang/App/this.cs",
+            "PLang/App/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pass 1a/1b: OBP shape clean across the family. Pass 2: 9x authorize preamble copy-paste in Path.Operations; Stat returns Dictionary; AlwaysExpiry constant unused; await Task.FromResult redundant. Pass 3: prefix-concatenation in Authorize, Channel/Stream leaveOpen comment, Step break condition deserves a one-line comment or named predicate. Pass 4: sync-over-async at 4 sites in Actor.Permission; unbounded recursion in Path.Authorize and BundledTransfer on bad input; silent bare catch in VerifySignature; IsInRoot uses OrdinalIgnoreCase on a case-sensitive OS; exception->ServiceError pattern duplicated between Step.RunAsync and Step.RunFrom. Pass 5: AlwaysExpiry constant, Cause chain (Call._ownCause always null, renderer Cause branches dead), cause/erroredCall parameters threaded but unused in error/handle's RunRecovery, await Task.FromResult wrapper."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v1/report.md",
+            ".bot/filesystem-permission/codeanalyzer/v1/verdict.json",
+            ".bot/filesystem-permission/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Findings written up with file:line citations and reproduction-ready fixes. Verdict: NEEDS WORK (fail). Top issues: sync-over-async at Actor.Permission, unbounded recursion in Authorize/BundledTransfer, silent VerifySignature catch, case-insensitive IsInRoot on Linux, 9x authorize preamble, dead Cause/cause parameters after stage 2a.5."
+        }
+      ],
+      "after": {
+        "status": "verdict written \u2014 NEEDS WORK. 10 findings cited with file:line. Shape (Pass 1a/1b) clean; behavioral and copy-paste issues. Coder follow-up suggested in summary.md.",
+        "health": "good \u2014 the OBP shape of the new code is right, which is the big risk on a 6k-LOC engine restructure. The findings are tactical, not structural.",
+        "notes": "Worth noting: report.json had no coder session block even though the coder committed 14 stage commits and wrote a long summary.md. Not a bug per se \u2014 but if reporting is meant to be complete, the coder's session is missing from the audit trail."
+      },
+      "timestamp_end": "2026-05-21T12:45:31.734009Z"
+    },
+    {
+      "id": "ab050188-880a-4919-8ac4-54b21003b502",
+      "bot": "coder",
+      "timestamp_start": "2026-05-21T16:39:20.461720+00:00",
+      "intent": "Close codeanalyzer v1's remaining doc-comment debt for findings #7 and #8 (dead Cause chain). The earlier 1af7922 commit removed the Cause code, but five stale doc-comments survived \u2014 including a broken <see cref=\"Cause\"/>.",
+      "before": {
+        "assumptions": "Codeanalyzer v1 cited 10 findings. By 13:05 UTC, all code-level fixes had landed (af32f3e, 82a136b, c4cbbd3, 8b22a5e, f543e19, 1af7922). A grep for 'Cause' across PLang/App/ still surfaced five XML doc-comments, one of which (CallStack/Call/this.cs:13) used <see cref=\"Cause\"/> against a property that no longer exists.",
+        "risk": "Low. Comment-only edits; one broken cref to remove."
+      },
+      "plan": ".bot/filesystem-permission/coder/v2/report.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/this.cs",
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/CallStack/Flags.cs",
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/Errors/Error.cs"
+          ],
+          "type": "edit",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Removed 'Cause' from four structural-data comments and the broken <see cref=\"Cause\"/> in CallStack/Call/this.cs. Trimmed the stale 'recovery boundaries with their originating Cause' note in Error.cs. +4/-8 lines across 5 files."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/coder/v2/report.md",
+            ".bot/filesystem-permission/coder/v2/verdict.json",
+            ".bot/filesystem-permission/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 coder report documenting the post-codeanalyzer follow-ups, a verdict.json marking pass, and a summary.md preamble pointing readers at v2."
+        }
+      ],
+      "after": {
+        "status": "All 10 codeanalyzer v1 findings closed. Commit 91a7999. dotnet build clean. 2846/2846 C# tests green.",
+        "health": "good \u2014 codeanalyzer v1 verdict (NEEDS WORK) is now fully resolved across code and comments.",
+        "notes": "Earlier coder commits had no report.json session entry (codeanalyzer flagged this). This v2 entry covers only the comment cleanup; the eight earlier fix commits remain undocumented in report.json."
+      },
+      "timestamp_end": "2026-05-21T16:39:20.461869+00:00"
+    },
+    {
+      "id": "1367ded7-319e-4c53-bb8d-711ecc76b5c5",
+      "bot": "coder",
+      "timestamp_start": "2026-05-21T16:58:32.452966+00:00",
+      "intent": "Close branch: fix codeanalyzer v2 #2 (ValidatePath case-comparison regression), defer v2 #1 (handler-layer authorize copy-paste) to a new branch with a written architect handoff plan. The plan goes further than codeanalyzer's (a)/(b) options \u2014 Path becomes polymorphic across schemes (file:// / http:// / s3://...).",
+      "before": {
+        "assumptions": "Codeanalyzer v2 verdict NEEDS WORK. Two regressions cited: v2 #1 (handler-layer authorize copy-paste in modules/file/*.cs) and v2 #2 (PLangFileSystem.ValidatePath:227 Linux case-comparison). Ingi's call after design discussion: close this branch with v2 #2 fixed and v2 #1 deferred to a polymorphic-Path branch.",
+        "risk": "Low. v2 #2 is a single-line site fix behind a shared helper. v2 #1's deferral is documented in three places (path-polymorphism-plan.md, todos.md, coder summary v3) so codeanalyzer's next pass sees the intentional scope choice."
+      },
+      "plan": "Documentation/v0.2/path-polymorphism-plan.md (for v2 #1, future branch) + .bot/filesystem-permission/coder/v3/report.md (for v2 #2 + branch closure)",
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs"
+          ],
+          "type": "edit",
+          "category": "code",
+          "confidence": "high",
+          "context": "Hoisted Path.RootComparison static helper into Path.cs main partial. Path.Authorize.IsInRoot now reads the shared helper instead of inlining the OS switch. PLangFileSystem.ValidatePath:227 changed from OrdinalIgnoreCase to Path.RootComparison. Single home for the rule, no future drift."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/path-polymorphism-plan.md",
+            "Documentation/v0.2/todos.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Architect handoff plan for polymorphic Path (Phase 1: FilePath split + factory + handler degenerates; Phase 2: scheme registry + HttpPath; Phase 3: community schemes). Closes codeanalyzer v2 #1 on a new branch \u2014 deliberately not this one. Includes verb-surface matrix, scheme-registry [PathScheme] attribute design, open architect questions (factory location, caching, PlangType split). Credentials scoped down (PLang identity for HTTP, Settings for custom \u2014 base class doesn't abstract over creds). todos.md updated with one-line pointer."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/coder/v3/report.md",
+            ".bot/filesystem-permission/coder/v3/verdict.json",
+            ".bot/filesystem-permission/coder/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 coder report explicitly tells codeanalyzer that v2 #1 is tracked-with-plan (not punted to vague follow-up). Verdict: ready-to-merge."
+        }
+      ],
+      "after": {
+        "status": "Branch closes. v2 #2 fixed. v2 #1 has a written architect handoff plan. dotnet build clean; 2846/2846 C# tests green.",
+        "health": "good \u2014 every codeanalyzer finding from v1 and v2 is either fixed or deferred with a written, phased plan that codeanalyzer can track on the next branch.",
+        "notes": "Communication to codeanalyzer about v2 #1's deferral is in three places by design: the plan doc (the artifact), todos.md (the durable index), and the coder summary v3 (the branch-local audit trail). Codeanalyzer's next pass on this branch should see ready-to-merge."
+      },
+      "timestamp_end": "2026-05-21T16:58:32.453068+00:00"
+    },
+    {
+      "id": "78f15f19-3b78-47d9-9c92-b1cb3adc40bf",
+      "bot": "tester",
+      "timestamp_start": "2026-05-21T18:10:25.447328+00:00",
+      "timestamp_end": "2026-05-21T18:12:32.685861+00:00",
+      "intent": "Validate test quality for coder v3 filesystem-permission work \u2014 hunt false greens.",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS; coder declared branch ready-to-merge; 2846/2846 C# green per coder.",
+        "risk": "v3's single behavioral change (ValidatePath RootComparison) is review-driven code \u2014 highest risk for missing test coverage."
+      },
+      "plan": ".bot/filesystem-permission/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/",
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + ran both suites. C# 2846/2846 pass; PLang 213 pass / 6 fail. Verified the 6 PLang fails are intentional fail-fixtures (_fixtures_fail/_fixtures_sensitive) by reading fixture content + git provenance \u2014 not coder regressions."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/ValidatePathTests.cs",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/FileSystem/Path.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Deletion test on v3's only behavioral change (ValidatePath:227 OrdinalIgnoreCase->RootComparison): reverting it fails 0 tests. No test supplies a case-variant-of-root path. 100% line/branch coverage = coverage dazzle. Major false-green, finding 1."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/SurfaceTests/MoveCopyBundledConsentTests.cs",
+            "PLang/App/FileSystem/Path.Operations.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Parameter-swap test on PerformTransfer isMove flag: no test verifies Move removes the source. Flipping isMove keeps the suite green. Major weak-assertion, finding 2."
+        },
+        {
+          "paths": [
+            "Tests/Permission/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read all 8 permission .test.goal files + verified GrantAStoresPersisted .pr. 6 of 8 are in-root round-trips named after permission scenarios they never exercise \u2014 plang --test reports them green under scenario names. Major false-green, finding 3."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/test-report.json",
+            ".bot/filesystem-permission/tester/v3/result.md",
+            ".bot/filesystem-permission/tester/v3/verdict.json",
+            ".bot/filesystem-permission/tester/v3/coverage.json",
+            ".bot/filesystem-permission/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote test-report.json (9 findings, verdict needs-fixes), result.md, verdict.json, coverage.json, summary.md."
+        }
+      ],
+      "after": {
+        "status": "NEEDS-FIXES. 3 major false-greens + 5 minor + 1 process violation. All are test-quality gaps; no code bug \u2014 codeanalyzer v3 already passed the code and the v3 fix is correct.",
+        "health": "Suite green (2846/2846 C#) but dishonest: v3's case-comparison fix, Move semantics, and 6 PLang permission goals are false greens.",
+        "notes": "No baseline-tests.md in any coder version (finding 9) \u2014 regression attribution reconstructed manually, confirmed no regressions. Fixes for findings 1-3 are cheap: ~1 ValidatePath test, 1 Move assertion block, rename/delete 6 goals."
+      }
+    },
+    {
+      "id": "e2ca5fe3-0e0b-4458-821f-5b9266597beb",
+      "bot": "tester",
+      "timestamp_start": "2026-05-21T18:55:00+00:00",
+      "timestamp_end": "2026-05-21T19:05:00+00:00",
+      "intent": "Re-review test quality for coder v4 (closes 9 tester-v3 findings) + v5 (drops PermissionRecord.AppId, un-skips Scenario4).",
+      "before": {
+        "assumptions": "coder declared v5 ready; C# 2853 pass / 0 skip / 0 fail per coder. v3 verdict was NEEDS-FIXES with 3 major false-greens.",
+        "risk": "v5 is real production code (AppId removal from a security record), not just test code \u2014 highest risk. A fix is only closed if the mutation v3 survived now kills a test."
+      },
+      "plan": ".bot/filesystem-permission/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/",
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + both suites. C# 2853/2853 pass, 0 skip; PLang 203/203 pass (4 intentional fail-fixtures excluded, confirmed via coder/baseline-tests.md). No regressions."
+        },
+        {
+          "paths": [
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/FileSystem/Path.Operations.cs",
+            "PLang/App/Actor/Permission/this.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation tests (source edited then reverted, never committed): RootComparison->OrdinalIgnoreCase kills IsInRoot_UpperCasedRoot test (F1); isMove->File.Copy kills both Move_* tests (F2); disabling persisted Find kills Scenario4 (F4/v5). All three v3 major false-greens now genuinely gated."
+        },
+        {
+          "paths": [
+            "PLang/App/FileSystem/Permission/this.cs",
+            "PLang/App/Actor/Permission/this.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed v5's PermissionRecord.AppId removal for security regressions. Sound: AppId was a per-instance GUID that never survived a restart \u2014 it defeated the persist contract rather than adding isolation. Actor isolation via name filter + signature verify; root isolation via per-root SettingsStore. Scenario4 is the cross-App regression gate."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/test-report.json",
+            ".bot/filesystem-permission/tester/v4/plan.md",
+            ".bot/filesystem-permission/tester/v4/result.md",
+            ".bot/filesystem-permission/tester/v4/verdict.json",
+            ".bot/filesystem-permission/tester/summary.md",
+            ".bot/filesystem-permission/claude-md-proposals.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote v4 review docs (verdict pass) and, on explicit user request after the user was alarmed by mid-review source edits, a CLAUDE.md proposal for an announce-before-mutation rule."
+        }
+      ],
+      "after": {
+        "status": "PASS. All 9 v3 findings closed and mutation-verified. v5 AppId removal reviewed as a correct, well-scoped production change.",
+        "health": "Suite green and now honest \u2014 the three major false-greens each die under the mutation v3 survived. Three minor non-blocking notes (N1 docstring over-claim, N2 line-227 defensive, N3 no different-root isolation test).",
+        "notes": "coder v4/v5 did not append sessions to report.json. v5 production code has not had a codeanalyzer pass \u2014 worth one before branch close."
+      }
+    },
+    {
+      "id": "a4286026-db88-4889-ac93-61384de9f1e6",
+      "bot": "security",
+      "timestamp_start": "2026-05-21T19:09:01Z",
+      "intent": "Security audit of the filesystem-permission branch \u2014 consent-gated FS access, signed permission grants, the v5 AppId-removal trust-boundary change.",
+      "before": {
+        "assumptions": "Branch adds consent-gated filesystem access: file action handlers call Path.Authorize, which prompts the user, signs the grant, stores it via Actor.Permission. v5 dropped PermissionRecord.AppId so persisted grants survive a fresh App on the same root.",
+        "risk": "Dropping AppId widens a signed grant's trust scope. If the per-actor sqlite store is not actually the persistence boundary, an 'always allow' grant could be replayed across Apps. Also: signature gate on grant verification, path-traversal in the root check, RootComparison helper not reaching all gate sites."
+      },
+      "actions": [
+        {
+          "paths": [
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/FileSystem/Path.Operations.cs",
+            "PLang/App/FileSystem/Permission/this.cs",
+            "PLang/App/FileSystem/Permission/Verb/this.cs",
+            "PLang/App/Actor/Permission/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mapped the consent gate. Grant creation is C#-internal and consent-gated \u2014 no PLang-reachable fabrication path (no permission.add module; settings.set hardcodes its table). Path containment correct (trailing-separator prefix). This half of the gate holds."
+        },
+        {
+          "paths": [
+            "PLang/App/modules/signing/code/Ed25519.cs",
+            "PLang/App/Actor/Permission/this.cs",
+            "PLang/App/Settings/Sqlite.cs",
+            "PLang/App/Data/this.Envelope.cs",
+            "PLang/App/Channels/Serializers/Filters/Transport.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Audited grant verification. F1: signing.verify checks signature integrity but not signer authority \u2014 any keypair verifies. F2: TryCover auto-trusts unsigned persisted rows. F3: signing.verify's 5-min Created-age freshness window is mis-applied to long-lived persisted grants, silently expiring 'a' grants and false-greening Scenario4. F4: RegexMatches has no match timeout."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/security-report.json",
+            ".bot/filesystem-permission/security/v1/result.md",
+            ".bot/filesystem-permission/security/v1/verdict.json",
+            ".bot/filesystem-permission/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote security report (4 findings, attack-surface map), result.md, verdict (PASS \u2014 no critical/high open), summary."
+        }
+      ],
+      "plan": ".bot/filesystem-permission/security/v1/plan.md",
+      "timestamp_end": "2026-05-21T19:16:32Z",
+      "after": {
+        "status": "PASS",
+        "health": "Consent gate structurally sound on the creation side; weaknesses are all on the verification side and either latent (F1/F4) or fail-closed (F3) today.",
+        "notes": "F1 (signer identity not pinned) and F3 (persisted grants expire after 5min; test false-green) should be closed before the permission table gains any non-disk write path. F2/F4 are cheap defense-in-depth. None block merge."
+      }
+    },
+    {
+      "id": "2757e19b-7417-422a-bfed-2ed99c4f46c7",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-21T19:20:47.724082+00:00",
+      "timestamp_end": "2026-05-21T19:26:52.790253+00:00",
+      "intent": "Cross-cutting integrity audit of filesystem-permission \u2014 review gaps between codeanalyzer, tester, security",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS, tester v4 PASS, security v1 PASS (4 non-blocking findings). All three reviewed their slice and approved.",
+        "risk": "Branch diverged from runtime2 before the app-lowercase merge \u2014 runtime2 now has lowercase app/. Possible review gap: tester says Scenario4 is a real persistence gate, security says it false-greens the 5-min-expiry feature."
+      },
+      "plan": ".bot/filesystem-permission/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v3/report.md",
+            ".bot/filesystem-permission/tester/v4/result.md",
+            ".bot/filesystem-permission/security/v1/result.md",
+            ".bot/filesystem-permission/security-report.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read all three prior reviewer reports + architect/coder summaries to map what each slice covered and where the seams are."
+        },
+        {
+          "paths": [
+            "PLang/App/FileSystem/Permission/this.cs",
+            "PLang/App/Actor/Permission/this.cs",
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/Snapshot/this.Resume.cs",
+            "PLang/App/modules/signing/code/Ed25519.cs",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified F3 chain end-to-end (EnsureSigned no Expires -> VerifySignature no TimeoutMs -> Ed25519 step2 Created-age check = 5min). Confirmed all 7 file handlers route through Authorize. Checked ResumeChain frame disposal ordering. Checked merge-base vs runtime2."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/auditor-report.json",
+            ".bot/filesystem-permission/auditor/v1/result.md",
+            ".bot/filesystem-permission/auditor/v1/verdict.json",
+            ".bot/filesystem-permission/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote audit findings: F-A (major, 5-min grant expiry + false-greening test), F-B (major, branch on stale runtime2), F-C/F-D minor, F-E nit. Verdict FAIL."
+        }
+      ],
+      "after": {
+        "status": "FAIL \u2014 2 major findings",
+        "health": "Branch builds clean (0 errors), C# suite 2853/2853 green. Internally sound; FAIL is about a documented-contract defect (F-A) and an unreviewed integration gap (F-B), not build/test breakage.",
+        "notes": "F-A: persisted always-allow grants expire after 5 min \u2014 security under-rated as non-blocking; escalated to major because the doc-comment is false and Scenario4 false-greens it. F-B: merge-base predates app-lowercase merge; ~40 new PascalCase-namespace files vs runtime2 lowercase convention. Coverage verified independently."
+      }
+    },
+    {
+      "id": "87db3006-1dcf-4a23-bf4c-80e3b231c9f9",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-21T21:44:30Z",
+      "timestamp_end": "2026-05-21T21:50:00Z",
+      "intent": "Review coder v4/v5/v6 (test-quality, AppId drop, SkipFreshnessCheck + runtime2 merge) for OBP, simplicity, behavioral correctness.",
+      "before": {
+        "assumptions": "Auditor FAILed v5 with F-A (grant durability) + F-B (merge). Coder v6 claims both closed. v5/v6 are small logic changes; merge is mechanical rename.",
+        "risk": "SkipFreshnessCheck disables anti-replay primitives for grant verification \u2014 must skip exactly the right checks and keep wire-message verification intact (default false)."
+      },
+      "plan": ".bot/filesystem-permission/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/filesystem/permission/this.cs",
+            "PLang/app/actor/permission/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "v5 AppId drop: verified record ctor 5->4 args, Covers, Find/Revoke/TryCover/BuildRequest all updated in lockstep, no dangling AppId. _inMemory list discipline fully in-class. OBP clean."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/signing/verify.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "v6 SkipFreshnessCheck: traced 5-step VerifyAsync. Flag skips exactly step 2 (wire-freshness) + step 4 (nonce-replay); step 3 (Expires) still always runs. Default-false keeps wire-message verification intact; Permission.VerifySignature is the only caller passing true and the only grant-verify path. ('','true') Data ctor is established idiom (3 precedents)."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v4/report.md",
+            ".bot/filesystem-permission/codeanalyzer/v4/verdict.json",
+            ".bot/filesystem-permission/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS verdict. Two non-blocking carry-overs: F-C OrdinalIgnoreCase sites (now tracked in coder v6 report); pre-existing Path-only Add keying. Clean rebuild: 0 errors."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "good",
+        "notes": "Coder v5/v6 close auditor F-A and F-B cleanly. No OBP violations, no bugs, build 0 errors. Deferred F-C/D/E + security F1/F2/F4 honestly tracked in coder/v6/report.md."
+      }
+    },
+    {
+      "id": "3756b34e-25e5-4556-9135-cb015309e007",
+      "bot": "security",
+      "timestamp_start": "2026-05-21T23:55:00Z",
+      "timestamp_end": "2026-05-22T00:45:00Z",
+      "intent": "v2 security re-audit after runtime2 merge and the SkipFreshnessCheck crypto change.",
+      "before": {
+        "assumptions": "v1 PASS with 4 findings (F1/F2 signer-trust gaps, F3 5-min grant expiry, F4 ReDoS). F3 reportedly closed by coder v6.",
+        "risk": "The freshness/nonce-replay bypass added for grants could leak to wire-message verification if mis-scoped."
+      },
+      "plan": ".bot/filesystem-permission/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/signing/verify.cs",
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/channels/serializers/serializer/plang/Data.cs",
+            "PLang/app/modules/callback/run.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-audited the coder v6 SkipFreshnessCheck crypto change. Traced every signing.verify construction site: flag is [Default(false)], only the grant path sets true, all 4 HTTP wire-verify sites leave it false. Ed25519 step 8 (signature verification) still runs for grants. F3 fixed and correctly scoped \u2014 no leak to wire-message anti-replay."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/security-report.json",
+            ".bot/filesystem-permission/security/v2/result.md",
+            ".bot/filesystem-permission/security/v2/verdict.json",
+            ".bot/filesystem-permission/security/v2/v1_review_summary.md",
+            ".bot/filesystem-permission/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 security report. F3 closed; F1 (medium)/F2 (low)/F4 (low) carried forward unchanged, all precondition-gated by the no-non-disk-write-path-to-permission-table invariant, re-confirmed at HEAD. Verdict PASS."
+        }
+      ],
+      "after": {
+        "status": "complete \u2014 PASS",
+        "health": "green: C# suite 2855/2855 on clean rebuild; no critical/high open findings",
+        "notes": "F3 fixed by coder v6 and re-audited safe. F1/F2/F4 open but gated. One non-blocking observation logged: callback/channel verify doc-comment contradiction (pre-existing, not a branch finding)."
+      }
+    },
+    {
+      "id": "11af8ec3-9850-4288-9751-37a632a97b5b",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-21T22:45:00Z",
+      "timestamp_end": "2026-05-21T23:15:00Z",
+      "intent": "Re-audit filesystem-permission after auditor v1 FAIL \u2014 verify F-A and F-B are genuinely closed.",
+      "before": {
+        "assumptions": "codeanalyzer v4, tester v6, security v2 all re-passed after coder v5/v6/v7. Auditor v1 FAILed on F-A (5-min grant expiry) and F-B (stale runtime2 merge-base).",
+        "risk": "A re-reviewer may have rubber-stamped a code change without verifying the headline contract; the F-A doc-comment cleanup may be incomplete."
+      },
+      "plan": ".bot/filesystem-permission/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/filesystem/permission/this.cs",
+            "PLang/app/filesystem/path.Authorize.cs",
+            "PLang/app/filesystem/path.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced the F-A fix end-to-end: SkipFreshnessCheck skips Ed25519 steps 2+4, step 3 (Expires) and step 8 (crypto) still run for grants, default-false keeps wire path intact. Verified F-B: origin/runtime2 is an ancestor of HEAD, app/ lowercase. Adjudicated F-C: authorization gate uses RootComparison, the OrdinalIgnoreCase sites are observability only."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/auditor/v2/result.md",
+            ".bot/filesystem-permission/auditor/v2/verdict.json",
+            ".bot/filesystem-permission/auditor-report.json",
+            ".bot/filesystem-permission/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor v2 PASS. Both v1 majors genuinely closed. One new minor (F-1): stale inverted doc-comment in actor/permission/this.cs class header that the F-A fix should have cleaned up. Three v1 minors carried non-blocking."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 no critical/major open",
+        "health": "Clean build, 2855/2855 tests green (verified independently).",
+        "notes": "F-A and F-B closed. F-1 (minor doc inversion) worth fixing before docs propagates it; does not block. Next stage: docs."
+      }
+    },
+    {
+      "id": "e3d0f6eb-5bd0-4a3d-916e-8cc6fe05d99e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-21T22:57:38Z",
+      "timestamp_end": "2026-05-21T23:01:00Z",
+      "intent": "v5 review \u2014 verify coder v7 test-only addition closing tester v5 F1 (nonce-replay half of F-A).",
+      "before": {
+        "assumptions": "v4 PASSed at coder v6. Only new code since is coder v7 (one regression test). Tester v6, security v2, auditor v2 all PASSed \u2192 expect clean.",
+        "risk": "Low \u2014 no production-code change; only risk is that the new test is shaped wrong (false-green, brittle, or doesn't actually exercise step 4)."
+      },
+      "plan": ".bot/filesystem-permission/codeanalyzer/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/Stage5MessagesEndToEndTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Reviewed the +27/-0 addition (Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt) in coder v7. Test pairs with the existing Scenario4_WireFreshnessWindow to give independent coverage of Ed25519 verify steps 2 and 4. Mutation-verified by coder. CLEAN."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v5/plan.md",
+            ".bot/filesystem-permission/codeanalyzer/v5/report.md",
+            ".bot/filesystem-permission/codeanalyzer/v5/verdict.json",
+            ".bot/filesystem-permission/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v5 PASS artifacts. summary.md overwritten per workflow."
+        },
+        {
+          "paths": [
+            "/learnings/filesystem-permission/codeanalyzer/v5/learnings.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Codeanalyzer learnings from this branch \u2014 7 entries covering auditor v2 F1 (the sibling-class doc-comment miss in actor/permission/this.cs:11-13), the test-only-commit pitfall from tester v5, the SkipFreshnessCheck bypass-scoping template from security v2, idiom-precedent-citation, scenario test naming, and the codeanalyzer-no-CLAUDE.md-proposals rule."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v5/report.md",
+            ".bot/filesystem-permission/codeanalyzer/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added auditor v2 F1 self-correction block to report and summary \u2014 the inverted doc-comment in actor/permission/this.cs:11-13 that v4 missed and v5's initial pass did not re-check. Verdict stays PASS (doc-only, code is correct) with a 4-line follow-up flagged for the coder."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "branch ready for docs / merge",
+        "notes": "v5 PASS holds. Ingi prompted re-read of auditor v2; captured the sibling-doc-inversion miss as Learning #1 and flagged the trivial follow-up in the report. Branch advances after coder lands the 4-line doc fix."
+      }
+    },
+    {
+      "id": "3c1f0c99-4adf-4e60-94a9-5ed4782d38ce",
+      "bot": "docs",
+      "timestamp_start": "2026-05-21T23:27:27Z",
+      "timestamp_end": "2026-05-21T23:38:00Z",
+      "intent": "Docs pass: apply 2 CLAUDE.md proposals (architect helper-soup smell, tester mutation-test announcement), close auditor v2 F1 doc-inversion, update app-tree.md for actor.Permission, write filesystem-permission architecture doc.",
+      "before": {
+        "assumptions": "Branch is PASS through reviewer chain (codeanalyzer v5, tester v6, security v2, auditor v2). One residual doc bug (auditor F1) and two pending claude-md-proposals; no character-proposals.md. Documentation/v0.2/ has no canonical home for the permission system yet.",
+        "risk": "Low for CLAUDE.md proposals (text additions). Medium for the new architecture doc \u2014 must match implementation precisely. Low for app-tree.md and the auditor F1 doc-comment fix."
+      },
+      "plan": ".bot/filesystem-permission/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied architect claude-md-proposal v1 verbatim \u2014 added OBP smell #5 (helper that takes a domain object and returns a derived answer) + a Helper-soup vs. self-owning methods worked example. Renamed the existing 'Worked example (this branch)' header to 'Worked example (collections \u2014 this branch)' for disambiguation now that the section has two examples."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied tester claude-md-proposal v1 verbatim \u2014 new '## Mutation Testing (announce first)' section between 'Running plang Tests' and 'Debugging'. One-line announcement template + three sub-rules. Filed under reviewer-bot exception per the proposal footnote."
+        },
+        {
+          "paths": [
+            "PLang/app/actor/permission/this.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Closed auditor v2 F1. Rewrote class-header XML doc (lines 8-18) \u2014 pre-F-A polarity was inverted (Session 'no expiry on signature' / Persisted 'signature has an expiry'). Now matches post-F-A reality and the sibling filesystem/permission class doc."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added Permission line to the Actor surface block (Find/Add/Revoke summary). Updated the Maintenance table 'New Actor surface' row with Permission as an example."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/filesystem-permission.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New ~140-line architecture doc. Covers PermissionRecord/Verb/Match concepts, Authorize flow (in-root \u2192 Find \u2192 ask y/n/a), two grant homes, Find two-pass lookup with per-Data verified caching, Ed25519 8-step verify with SkipFreshnessCheck scoped to steps 2 and 4 (security v2's 4-step bypass-scoping template), revoke, known follow-ups, file map. Cross-references app-tree.md and good_to_know.md."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/docs/v1/plan.md",
+            ".bot/filesystem-permission/docs/v1/result.md",
+            ".bot/filesystem-permission/docs/v1/verdict.json",
+            ".bot/filesystem-permission/docs/summary.md",
+            ".bot/filesystem-permission/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Docs session artifacts. docs-report.json carries the claude_md_proposals decisions (both applied, character_proposals empty)."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 ready to merge",
+        "health": "Branch reviewer-green (codeanalyzer v5, tester v6, security v2, auditor v2) and now docs-complete. No PLang code paths changed in this pass \u2014 text and one XML-doc only.",
+        "notes": "Two claude-md-proposals applied, auditor v2 F1 doc-inversion closed, app-tree.md actor surface updated, new filesystem-permission.md architecture doc written. No character-proposals on this branch."
+      }
+    }
+  ]
+}

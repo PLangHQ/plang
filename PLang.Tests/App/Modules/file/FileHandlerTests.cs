@@ -1,8 +1,8 @@
-using global::app.actor.context;
+using app.actor.context;
 using app;
-using global::app.variables;
-using global::app.modules.file;
-using global::app.filesystem.Default;
+using app.variables;
+using app.modules.file;
+using app.filesystem.Default;
 using PLangPath = global::app.filesystem.path;
 
 namespace PLang.Tests.App.actions.file;
@@ -451,8 +451,7 @@ public class FileHandlerTests : IDisposable
                             Parameters = new System.Collections.Generic.List<global::app.data.@this>
                             {
                                 new global::app.data.@this("Name", "fileResult"),
-                                new global::app.data.@this("Value", "%__data__%")
-                            }
+                                new global::app.data.@this("Value", "%!data%")                            }
                         }
                     }
                 },
@@ -528,8 +527,7 @@ public class FileHandlerTests : IDisposable
                             Parameters = new System.Collections.Generic.List<global::app.data.@this>
                             {
                                 new global::app.data.@this("Name", "fileResult"),
-                                new global::app.data.@this("Value", "%__data__%")
-                            }
+                                new global::app.data.@this("Value", "%!data%")                            }
                         }
                     }
                 },

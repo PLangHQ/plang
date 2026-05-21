@@ -1,7 +1,7 @@
-using global::app.variables;
-using global::app.modules.code;
-using global::app.modules.crypto;
-using global::app.modules.crypto.code;
+using app.variables;
+using app.modules.code;
+using app.modules.crypto;
+using app.modules.crypto.code;
 using EngineProviders = global::app.modules.code.@this;
 using PLangEngine = global::app.@this;
 

@@ -79,7 +79,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -137,7 +137,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -195,7 +195,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -412,7 +412,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -427,7 +427,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Call llm.query using the prepared %messages% and a schema describing errors/warnings/actions. Apply cache modifier from %build.cache%. On error, run recovery goal HandleBuildStepFailure via error.handle Actions chain, then store %__data__% into %result%.",
+      "guidance": "Call llm.query using the prepared %messages% and a schema describing errors/warnings/actions. Apply cache modifier from %build.cache%. On error, run recovery goal HandleBuildStepFailure via error.handle Actions chain, then store %!data% into %result%.",
       "level": "medium",
       "confidence": 55,
       "formal": null,

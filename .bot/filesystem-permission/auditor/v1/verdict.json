@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "FAIL on F-A: persisted 'always allow' grants expire after 5 minutes (signing.verify's Created-age check applied to long-lived grants), the Permission doc-comment claims permanent persistence, and Scenario4 false-greens it by never advancing time — the headline feature does not do what it documents. F-B (branch on stale runtime2, ~40 new PascalCase-namespace files vs runtime2's lowercase convention) is also major and unreviewed. Branch builds clean and is 2853/2853 green on its own terms."
+}

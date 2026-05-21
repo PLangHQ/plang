@@ -19,7 +19,7 @@
           "action": "set",
           "parameters": [
             { "name": "Name", "value": "relative" },
-            { "name": "Value", "value": "%__data__%" }
+            { "name": "Value", "value": "%!data%" }
           ]
         }
       ]
@@ -41,7 +41,7 @@
           "action": "set",
           "parameters": [
             { "name": "Name", "value": "absolute" },
-            { "name": "Value", "value": "%__data__%" }
+            { "name": "Value", "value": "%!data%" }
           ]
         }
       ]
@@ -63,7 +63,7 @@
           "action": "set",
           "parameters": [
             { "name": "Name", "value": "subfolder" },
-            { "name": "Value", "value": "%__data__%" }
+            { "name": "Value", "value": "%!data%" }
           ]
         }
       ]
@@ -85,7 +85,7 @@
           "action": "set",
           "parameters": [
             { "name": "Name", "value": "dotslash" },
-            { "name": "Value", "value": "%__data__%" }
+            { "name": "Value", "value": "%!data%" }
           ]
         }
       ]

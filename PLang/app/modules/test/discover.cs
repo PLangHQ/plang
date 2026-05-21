@@ -21,7 +21,7 @@ namespace app.modules.test;
 [ModuleDescription("Discover, run, and report on PLang test goals with tag filtering and coverage tracking")]
 [System.ComponentModel.Description("Walk a directory for *.test.goal files and return a filtered list of global::app.tester.File descriptors")]
 [Example("discover tests in 'Tests/Foo' recursive=false, write to %tests%",
-    "test.discover Path([string] Tests/Foo), Recursive([bool] false) | variable.set Name([string] %tests%), Value([object] %__data__%)")]
+    "test.discover Path([string] Tests/Foo), Recursive([bool] false) | variable.set Name([string] %tests%), Value([object] %!data%)")]
 [Action("discover")]
 public partial class discover : IContext
 {

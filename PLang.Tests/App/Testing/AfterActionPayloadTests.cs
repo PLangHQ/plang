@@ -1,4 +1,4 @@
-using global::app.actor.context;
+using app.actor.context;
 
 namespace PLang.Tests.App.Tester;
 

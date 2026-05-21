@@ -1,6 +1,6 @@
-using global::app.actor.context;
-using global::app.variables;
-using global::app.modules;
+using app.actor.context;
+using app.variables;
+using app.modules;
 
 namespace PLang.Tests.App.Core;
 
@@ -49,7 +49,7 @@ public class EngineTests
                     Parameters = new List<Data>
                     {
                         new Data("Name", returnVarName),
-                        new Data("Value", "%__data__%")
+                        new Data("Value", "%!data%")
                     }
                 }
             }

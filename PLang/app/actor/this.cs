@@ -23,6 +23,14 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     public context.@this Context { get; }
 
+    /// <summary>
+    /// Per-actor permission view — signed grants on paths, keyed by verb
+    /// + sub-options. <c>Find/Add/Revoke</c>. Routes "y" grants to an
+    /// in-memory list (live for the App's lifetime) and "a" grants to
+    /// <c>App.SettingsStore</c> under the <c>permission</c> table.
+    /// </summary>
+    public permission.@this Permission { get; private set; } = null!;
+
     private readonly AppChannels _channels;
     private AppChannels? _foundationalChannels;
     private readonly AsyncLocal<AppChannels?> _channelsOverride = new();
@@ -118,6 +126,7 @@ public sealed class @this : IAsyncDisposable
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         Context = new context.@this(app, parentToken: _cts.Token);
         Context.Actor = this;
+        Permission = new permission.@this(this);
         _channels = new AppChannels(app) { Actor = this };
 
         // Register %Settings.X% as a navigable mount on this actor's Variables.

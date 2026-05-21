@@ -33,14 +33,6 @@ public class CallTests
     }
 
     [Test]
-    public async Task Call_Cause_NullByDefault()
-    {
-        var stack = new CallStack();
-        await using var call = stack.Push(MakeAction("A"));
-        await Assert.That(call.Cause).IsNull();
-    }
-
-    [Test]
     public async Task Call_Errors_StartsEmpty()
     {
         var stack = new CallStack();

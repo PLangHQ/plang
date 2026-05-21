@@ -52,7 +52,7 @@ public partial class Set : IContext
         // Upsert: dispose any existing channel under this name before re-registering.
         await actor.Channels.RemoveAsync(name);
 
-        var ch = new app.channels.channel.Goal.@this(name, goalEntry, actor, direction)
+        var ch = new app.channels.channel.goal.@this(name, goalEntry, actor, direction)
         {
             Buffer = Buffer != null ? Buffer.Value : 4096L,
             Timeout = Timeout != null ? Timeout.Value : TimeSpan.FromSeconds(30),

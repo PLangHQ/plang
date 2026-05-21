@@ -1,7 +1,7 @@
 using EventBinding = global::app.events.lifecycle.bindings.binding.@this;
 using EventType = global::app.events.EventType;
 
-namespace app.channels.channel.Events;
+namespace app.channels.channel.events;
 
 /// <summary>
 /// Per-channel event bindings + recursion guard. Encapsulates the binding list,

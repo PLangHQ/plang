@@ -77,7 +77,7 @@
                         },
                         {
                           "name": "Value",
-                          "value": "%__data__%",
+                          "value": "%!data%",
                           "type": "object"
                         }
                       ],
@@ -101,7 +101,7 @@
         }
       ],
       "intent": null,
-      "guidance": "file.read data.txt produces content; on error 404 run recovery chain: output.write \u0027primary missing\u0027, then file.read fallback.txt, then variable.set %content% to the recovered %__data__%.",
+      "guidance": "file.read data.txt produces content; on error 404 run recovery chain: output.write \u0027primary missing\u0027, then file.read fallback.txt, then variable.set %content% to the recovered %!data%.",
       "level": "high",
       "confidence": 78,
       "formal": null,

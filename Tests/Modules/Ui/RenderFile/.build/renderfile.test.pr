@@ -73,7 +73,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -88,7 +88,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Render a file-based Liquid template (template.html) and write the rendered output into %result% by capturing ui.render output via variable.set. The step explicitly says \u0027render file ... write to %result%\u0027, so ui.render must use IsFile=true and then variable.set stores %__data__.",
+      "guidance": "Render a file-based Liquid template (template.html) and write the rendered output into %result% by capturing ui.render output via variable.set. The step explicitly says \u0027render file ... write to %result%\u0027, so ui.render must use IsFile=true and then variable.set stores %!data.",
       "level": "high",
       "confidence": 95,
       "formal": null,

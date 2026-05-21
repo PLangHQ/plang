@@ -1,8 +1,8 @@
-using global::app.filesystem.Default;
-using global::app.variables;
+using app.filesystem.Default;
+using app.variables;
 using PLangPath = global::app.filesystem.path;
-using global::app.modules.file;
-using global::app.modules.file.code;
+using app.modules.file;
+using app.modules.file.code;
 
 namespace PLang.Tests.App.Modules.Path;
 

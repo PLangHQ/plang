@@ -102,9 +102,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: %ranCallback% must be true after the on-error callback dispatch path completes.",
+      "guidance": "Post-condition assertion that the callback dispatch completed. Use assert.isTrue on %ranCallback%.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -194,9 +194,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Run the callback. The step text says \u0027on error ignore\u0027, so wrap the callback.run with error.handle IgnoreError=true.",
-          "level": "medium",
-          "confidence": 55,
+          "guidance": "Run the provided callback (%cb%) and ignore any error from the callback execution. The step text indicates the callback is passed as the \u0027callback\u0027 field.",
+          "level": "high",
+          "confidence": 92,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -234,7 +234,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Mark that the callback was executed by setting %ranCallback% to true.",
+          "guidance": "Set %ranCallback% to true to record that the callback was executed (or at least attempted).",
           "level": "high",
           "confidence": 95,
           "formal": null,

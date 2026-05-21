@@ -1,9 +1,9 @@
-using global::app.actor.context;
+using app.actor.context;
 using app;
-using global::app.errors;
-using global::app.variables;
-using global::app.modules.mock;
-using global::app.modules.mock.types;
+using app.errors;
+using app.variables;
+using app.modules.mock;
+using app.modules.mock.types;
 
 namespace PLang.Tests.App.Modules.mock;
 

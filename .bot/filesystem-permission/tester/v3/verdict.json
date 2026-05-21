@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "Suite is green but dishonest: v3's case-comparison fix has no regression test, Move semantics are unverified, and 6 PLang permission goals report green under scenario names they never exercise."
+}

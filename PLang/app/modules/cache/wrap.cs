@@ -5,7 +5,7 @@ namespace app.modules.cache;
 /// <summary>
 /// Modifier: wraps an action with cache lookup before and cache store after.
 /// On a cache hit, the inner delegate is skipped entirely and the cached result
-/// is returned (also published as %__data__% for the next action in the step).
+/// is returned (also published as %!data% for the next action in the step).
 /// </summary>
 [ModuleDescription("Modifier that wraps the preceding action with result caching for a given duration")]
 [System.ComponentModel.Description("Cache the result of the preceding action for DurationMs milliseconds, skipping re-execution on hit")]
@@ -34,7 +34,7 @@ public partial class CacheWrap : IContext, IModifier
             if (cached != null)
             {
                 var hit = cached.ShallowClone();
-                context.Variables.Set("__data__", hit);
+                context.Variables.Set("!data", hit);
                 return hit;
             }
 

@@ -1,5 +1,5 @@
-using global::app.channels.serializers;
-using global::app.channels.serializers.serializer;
+using app.channels.serializers;
+using app.channels.serializers.serializer;
 
 namespace PLang.Tests.App.Serializers;
 

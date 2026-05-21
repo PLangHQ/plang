@@ -1,6 +1,6 @@
 using System.Text.Json;
-using global::app.tester;
-using global::app.Utils;
+using app.tester;
+using app.Utils;
 
 namespace PLang.Tests.App.Tester;
 

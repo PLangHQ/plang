@@ -1,23 +1,35 @@
 using app.variables;
-using app.callstack;
 
 namespace app.modules.output;
 
 /// <summary>
-/// Asks the actor a question. Two modes:
-///  - **Fresh:** captures the current Position + the variables named by <c>vars:</c>
-///    + the actor name into an <see cref="app.modules.callback.AskCallback"/>, returns it as
-///    Data&lt;AskCallback&gt;. The caller (HTTP channel etc.) serialises and suspends
-///    the goal until the user answers.
-///  - **Resumed:** when <see cref="app.modules.callback.AskCallback.Run"/> re-dispatches this
-///    action, it pre-binds the answer under <c>%!ask.answer%</c>. The handler detects
-///    the marker, returns the answer, and lets the calling step write it to its
-///    <c>write to %x%</c> target. No fresh ask is issued.
-///
-/// PLang: <c>- ask user "what's your name?", vars: %userId%, write to %name%</c>
+/// Payload marker for an in-flight ask. The question text rides as
+/// <c>Data.Value</c>; the Snapshot rides as <c>Data.Snapshot</c>. Stage 2a.4
+/// wires this in via <see cref="app.channels.channel.@this.Ask"/> on the
+/// stateless Message channel. <see cref="global::app.IExitsGoal"/> makes the
+/// step loop short-circuit when an action returns <c>Data&lt;Ask&gt;</c>.
 /// </summary>
-[ModuleDescription("Ask the actor a question — issues an AskCallback when no answer is in scope yet.")]
-[System.ComponentModel.Description("Ask a question; returns Data<AskCallback> on first call and the bound answer on resume")]
+[global::app.Attributes.PlangType("ask")]
+public sealed class Ask : global::app.IExitsGoal { }
+
+/// <summary>
+/// Asks the actor a question via the input channel. Two paths:
+///  - **Stateful channel** (Stream, in-process goal channel): the channel
+///    answers synchronously; the answer flows back through Data.Value.
+///  - **Stateless channel** (Message / HTTP, when wired): the channel returns
+///    a <c>Data&lt;Ask&gt;</c> with Snapshot attached. The engine short-circuits
+///    via the step-loop's ShouldExit. Resume re-runs the goal; the channel
+///    pre-binds the answer under <c>%!ask.answer%</c> so the second call to
+///    output.ask short-circuits to that value.
+///
+/// PLang: <c>- ask user "what's your name?", write to %name%</c>
+/// </summary>
+[ModuleDescription("Ask the actor a question via the input channel. Stateful channels (Stream, goal-channel) answer synchronously; stateless channels (Message) return Data<Ask> + Snapshot so the engine can serialise and resume after the user answers.")]
+[System.ComponentModel.Description("Ask the input channel a question. Stateful: synchronous answer. Stateless: Data<Ask> + Snapshot for suspend/resume.")]
+[Example("ask user 'what's your name?', write to %name%",
+    "output.ask Question([string] what's your name?) | variable.set Name([string] %name%), Value([object] %!data%)")]
+[Example("output.ask question='Allow access? (y/n/a)', write to %answer%",
+    "output.ask Question([string] Allow access? (y/n/a)) | variable.set Name([string] %answer%), Value([object] %!data%)")]
 [Action("ask", Cacheable = false)]
 public partial class ask : IContext
 {
@@ -26,57 +38,32 @@ public partial class ask : IContext
     public partial data.@this<string> Question { get; init; }
 
     /// <summary>
-    /// Names of variables whose current values survive into the AskCallback (per
+    /// Names of variables whose current values survive into the suspend (per
     /// <c>vars:</c> annotation). Empty list = no extra state crosses the suspend.
     /// </summary>
     public partial data.@this? Variables { get; init; }
 
-    /// <summary>Resume sentinel — variable name used by AskCallback.Run to inject the answer.</summary>
+    /// <summary>Resume sentinel — variable name used to inject the answer.</summary>
     public const string AnswerVariableName = "!ask.answer";
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
-        // Resume path: AskCallback.Run pre-bound the answer under !ask.answer.
+        // Resume path: channel pre-bound the answer under !ask.answer.
         var answer = Context.Variables.Get(AnswerVariableName);
         if (answer != null && answer.IsInitialized)
         {
-            // Consume the marker so a subsequent ask isn't accidentally short-circuited.
-            Context.Variables.Remove(AnswerVariableName);
-            return Task.FromResult(global::app.data.@this.Ok(answer.Value));
+            // The sentinel rides as the "answer" property of the infra root
+            // variable "!ask". Variables.Remove only takes flat keys; removing
+            // the root consumes the marker. "!ask" is reserved for this use.
+            Context.Variables.Remove("!ask");
+            return global::app.data.@this.Ok(answer.Value);
         }
 
-        // Fresh path: capture position + the surviving variables, return AskCallback.
-        var stack = Context.App.CallStack;
-        var bottom = stack.BottomFrame;
-        var captured = new List<data.@this>();
-        // Builder emits each entry either as a bare string ("x" / "%x%") or as
-        // {"name":"%x%","type":"variable"} — accept both.
-        if (Variables?.Value is System.Collections.IEnumerable items)
-        {
-            foreach (var item in items)
-            {
-                string? raw = item switch
-                {
-                    string s => s,
-                    System.Collections.Generic.IDictionary<string, object?> d
-                        when d.TryGetValue("name", out var n) => n?.ToString(),
-                    _ => item?.ToString()
-                };
-                if (string.IsNullOrEmpty(raw)) continue;
-                var name = raw.TrimStart('%').TrimEnd('%');
-                var live = Context.Variables.Get(name);
-                if (live != null) captured.Add(live);
-            }
-        }
-
-        var cb = new global::app.modules.callback.AskCallback
-        {
-            Position = bottom,
-            ActorName = Context.Actor?.Name ?? "User",
-            Variables = captured
-        };
-        var data = new data.@this<global::app.modules.callback.AskCallback>("", cb);
-        data.Context = Context;
-        return Task.FromResult<data.@this>(data);
+        // Fresh path: delegate to the input channel. Stream blocks; Message
+        // returns Data<Ask> with a Snapshot — the engine short-circuits and
+        // the channel decides whether to materialise in-process or on the wire.
+        var input = Context.Actor?.Channels.Resolve(global::app.channels.@this.Input)
+            ?? throw new InvalidOperationException("No input channel registered on actor");
+        return await input.Ask(this);
     }
 }

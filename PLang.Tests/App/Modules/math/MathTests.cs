@@ -1,7 +1,7 @@
-using global::app.actor.context;
+using app.actor.context;
 using app;
-using global::app.variables;
-using global::app.modules.math;
+using app.variables;
+using app.modules.math;
 
 namespace PLang.Tests.App.actions.math;
 

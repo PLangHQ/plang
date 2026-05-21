@@ -1,0 +1,7 @@
+Start
+/ Stage 2a — Mid-goal output.ask completes synchronously when the answer
+/ sentinel is pre-bound (simulates a stateful channel returning the answer).
+/ Variable binds; next step asserts.
+- set %!ask.answer% = "Alice"
+- ask user "name?", write to %name%
+- assert %name% equals "Alice"

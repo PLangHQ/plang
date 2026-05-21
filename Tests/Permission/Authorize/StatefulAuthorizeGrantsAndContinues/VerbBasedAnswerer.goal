@@ -1,0 +1,9 @@
+VerbBasedAnswerer
+/ %!data% is overwritten by every action's result, so capture the channel
+/ input (the question text) into a local %access% first. Subsequent steps
+/ branch on %access% — stable for the whole goal.
+- set %access% = %!data%
+- if %access% contains 'write' then return "y"
+- if %access% contains 'delete' then return "n"
+- if %access% contains 'read' then return "a"
+- return "n"

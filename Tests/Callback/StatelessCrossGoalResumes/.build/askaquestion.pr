@@ -1,0 +1,76 @@
+{
+  "name": "AskAQuestion",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "output.ask question=\u0022name?\u0022, write to %answer%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Helper sub-goal called from Start. With %!ask.answer% pre-bound, ask\nconsumes the sentinel and writes %answer% \u2014 visible to Start across the\ncall boundary.",
+      "actions": [
+        {
+          "module": "output",
+          "action": "ask",
+          "parameters": [
+            {
+              "name": "Question",
+              "value": "name?",
+              "type": "string"
+            },
+            {
+              "name": "Variables",
+              "value": null,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%answer%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Use output.ask to request the question (with %answer% already pre-bound as the sentinel). The engine returns the answer on resume; then assign it into %answer% via variable.set so Start can read it after the call boundary.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/StatelessCrossGoalResumes/AskAQuestion.goal",
+  "prPath": "/StatelessCrossGoalResumes/.build/askaquestion.pr",
+  "hash": "b10f855a7b868c9f3b1a85b15c3b2eacd9e83b2d2d5242664f6b141d89b8201f",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

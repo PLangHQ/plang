@@ -620,3 +620,97 @@ Each call site has a reader pattern (`.Details["X"]`) that mechanically
 changes; combined with PLang-side navigator code and tests, it's wide
 but shallow. Best done as one focused branch when the channel/builder
 work has settled — otherwise it'll fight with active diffs.
+
+## 2026-05-20 — Replace `!ask.answer` sentinel with explicit Answer parameter pattern
+
+Context (from `filesystem-permission` branch, stage 2a design): the resume
+path for `output.ask` works by the channel setting `!ask.answer` into
+`Context.Variables` before invoking the resume action; `output.ask`'s body
+checks for that sentinel and short-circuits to the answer instead of
+issuing a fresh ask. The mechanism works but `!ask.answer` smells —
+state passed through a variable namespace instead of an explicit parameter.
+
+When `output.ask` grows structured options (separate TODO), revisit this:
+the resumed action should declare an `Answer` input parameter (nullable);
+the resume entry binds it explicitly from the wire payload; the action
+checks `if (Answer != null) return Answer;`. No sentinel needed.
+
+## 2026-05-20 — Add structured options to `output.ask`
+
+Context (from `filesystem-permission` branch, stage 2b design): today
+`output.ask` only takes a free-text question. Permission's `Path.Authorize`
+has to format the consent question as a string, then reconstruct the
+`Permission` record on the answer side via `BuildRequest` — the same
+data is built twice (once for the prompt, once for storage).
+
+When `output.ask` grows structured options (e.g., the action carries the
+Permission record alongside the question, and the channel renders the
+options based on the record's shape), refactor `Path.Authorize`:
+1. Define the `Permission` record once.
+2. Hand it to `output.ask` as the structured option.
+3. User signs over the actual definition.
+4. Store the signed `Permission` directly — no `BuildRequest` reconstruction.
+
+Drop the `BuildRequest`/`SignAndStore` helpers when this lands.
+
+## 2026-05-20 — Per-channel serializer for stateless suspend (error vs ask vs ...)
+
+Context (from `filesystem-permission` branch, stage 2a design discussion):
+Snapshot is now the unified suspend/resume currency. Each channel kind
+owns its serializer — stateful (Stream) doesn't serialize at all (in-process
+resume); stateless (Message/HTTP and any future kind) does.
+
+The minimal wire for an ask-resume needs only CallStack + Variables. The
+minimal wire for an error-resume needs CallStack + Variables + the Errors
+trail (the caller needs failure detail to decide retry behaviour). Other
+stateless kinds may need different sections.
+
+Open: how to express section-filtering on the serializer side. Options:
+(a) one configurable Plang Data serializer with an allowlist set per
+channel kind; (b) distinct serializer classes per resume kind registered
+under different MIME types; (c) each subsystem's Capture takes a "minimal"
+hint and writes less. (a) and (b) feel cleaner than (c).
+
+Resolve when the Message/HTTP channel actually ships.
+
+## 2026-05-20 — Relocate App.Snapshot() orchestration to Snapshot.@this.Capture(ctx)
+
+Context (from `filesystem-permission` branch, stage 2a OBP discussion):
+The orchestration that walks subsystems and builds a Snapshot currently
+lives on `App.Snapshot()` (`PLang/App/this.Snapshot.cs:16-27`). OBP-wise,
+App shouldn't know how a Snapshot is built — the Snapshot type should.
+
+Refactor: move the body to `Snapshot.@this.Capture(Actor.Context.@this ctx)`
+as a static factory. Delete `App.Snapshot()`. Update callers (today only
+ErrorCallback constructor + tests). Action's `Snapshot()` helper (stage 2a
+deliverable #3) then calls `Snapshot.@this.Capture(Context)` directly.
+
+Pure refactor — no behaviour change. Out of scope for the
+filesystem-permission branch (stage 2a uses the existing entry); land
+separately to keep stage 2a focused.
+
+## 2026-05-20 — Revisit Snapshot.ResumeChain shape
+
+Context (from `filesystem-permission` branch, stage 2a):
+`Snapshot.Resume` walks the captured frame chain recursively via
+`ResumeChain(chain, idx, ctx)` — outermost-to-innermost on the way down
+(pushes each parent frame back onto the live CallStack), bottom frame
+runs `Goal.RunFrom(stepIdx, actionIdx)`, then unwind continues each
+parent at `ActionIndex + 1`.
+
+Works, but it's clunky:
+- Explicit recursive helper alongside the natural call-stack semantics.
+- Two RunFrom calls per parent (one for the in-flight step's remaining
+  actions if any, one when the call returns) — kind of.
+- Push-without-execute on parent frames feels off; the call frame is
+  faking "in flight" state.
+
+There's probably a cleaner shape — possibly something where Restore
+itself does the pushing in the right order, and a single `RunFrom`
+walks naturally because the call stack is set up. Or some way the
+goal-call action knows how to continue from "I'm mid-call, my sub-goal
+just returned with X."
+
+Revisit when stage 2a's coder gets to the implementation — the recursive
+shape may obviously be the wrong abstraction in code form even though
+it works on paper.

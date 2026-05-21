@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Consent gate is structurally sound (no PLang-reachable grant fabrication, correct path containment, fail-closed catch). Four findings, all in the verification half — F1 signer-identity not pinned (medium, latent), F2 unsigned persisted rows auto-trusted (low), F3 persisted grants silently expire after 5min via mis-applied wire-freshness window (medium, fail-closed + test false-green), F4 regex grant ReDoS (low, latent). No critical/high open."
+}

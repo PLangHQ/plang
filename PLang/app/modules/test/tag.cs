@@ -27,7 +27,7 @@ public partial class Tag : IContext
                     currentTest.UserTags.Add(tag);
         }
         // Return the current tag set (empty list outside test mode) so plang tests
-        // can inspect accumulated tags via %__data__%.
+        // can inspect accumulated tags via %!data%.
         var snapshot = currentTest != null
             ? currentTest.UserTags.ToList()
             : new List<string>();

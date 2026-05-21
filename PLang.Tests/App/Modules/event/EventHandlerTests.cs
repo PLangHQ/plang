@@ -1,8 +1,8 @@
-using global::app.actor.context;
+using app.actor.context;
 using app;
-using global::app.variables;
-using global::app.events;
-using global::app.modules.@event;
+using app.variables;
+using app.events;
+using app.modules.@event;
 
 namespace PLang.Tests.App.actions.EventTests;
 

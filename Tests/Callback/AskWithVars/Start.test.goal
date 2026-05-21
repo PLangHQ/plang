@@ -1,9 +1,0 @@
-Start
-/ Issuing an ask without a resume answer in scope returns Data<AskCallback>.
-/ Variables list captures the variables named by `vars:`.
-- set %userId% = "u-42"
-- output.ask question="what's your name?", variables=%userId%, write to %askResult%
-- assert %askResult% is not null
-/ %askResult% is the returned AskCallback object — assert presence is enough
-/ to pin "ask returned a callback envelope". Field-by-field navigation of the
-/ typed object is exercised in the C# tests (AskCallbackTests).

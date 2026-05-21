@@ -35,29 +35,17 @@ public partial class @this
     private app.modules.signing.Signature? _signature;
 
     /// <summary>
-    /// Cryptographic signature envelope. Lazy-populates on read ONLY when the wrapped value
-    /// is an <see cref="ICallback"/> — callbacks need a wire seal at every Serialize and the
-    /// architect's design says reading the property is the trigger. For non-callback values,
-    /// returns the backing field as-is so existing verify-style "if (data.Signature == null)"
-    /// checks still fail-closed instead of auto-signing. Use <see cref="EnsureSigned"/> as
-    /// the explicit populate trigger when a serializer needs to seal a non-callback Data.
-    /// The setter writes the field directly — wire-deserializers inject a captured signature
-    /// without triggering populate.
+    /// Cryptographic signature envelope. After stage 2a.7, ICallback is gone —
+    /// no auto-populate on read. Callers seal explicitly via <see cref="EnsureSigned"/>
+    /// when needed (e.g. wire serializer). Verify-style "if (Signature == null)"
+    /// checks fail-closed.
     /// </summary>
     [JsonIgnore]
     [In]
     [Out]
     public app.modules.signing.Signature? Signature
     {
-        get
-        {
-            // Read _value directly (not the Value property) so DynamicData's lazy factory
-            // isn't force-computed just to check ICallback-ness. DynamicData wrapping an
-            // ICallback is not a real shape we encounter; if it ever is, callers can call
-            // EnsureSigned() explicitly.
-            if (_signature == null && _value is ICallback) EnsureSigned();
-            return _signature;
-        }
+        get => _signature;
         set => _signature = value;
     }
 
@@ -83,17 +71,11 @@ public partial class @this
                 "Data.Signature cannot be lazily populated without a Context — " +
                 "set Context (or use the Variables.Set path which wires it) before reading Signature.");
 
-        var expires = Value is ICallback
-            ? _context.App.Callback.Signature.Expires
-            : (TimeSpan?)null;
-
         var action = new app.modules.signing.sign
         {
             Data = this,
-            Expires = expires.HasValue ? new @this<TimeSpan>("", expires.Value) : null
         };
-        var result = _context.App.RunAction<app.modules.signing.sign>(action, _context)
-            .GetAwaiter().GetResult();
+        var result = _context.App.RunAction(action, _context).GetAwaiter().GetResult();
         if (!result.Success)
             throw new InvalidOperationException(
                 $"Signing failed during lazy Signature populate: {result.Error?.Message ?? "unknown"}.");

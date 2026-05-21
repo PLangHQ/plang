@@ -1,4 +1,4 @@
-using global::app.modules.math;
+using app.modules.math;
 using PLangEngine = global::app.@this;
 using ExampleSpec = global::app.modules.Schema.Spec.Example;
 
@@ -47,7 +47,7 @@ public class MathExamplesForLlmTests
         await Assert.That(rendered).Contains("A([object] 5)");
         await Assert.That(rendered).Contains("B([object] 3)");
         await Assert.That(rendered).Contains("Name([string] %sum%)");
-        await Assert.That(rendered).Contains("Value([object] %__data__%)");
+        await Assert.That(rendered).Contains("Value([object] %!data%)");
     }
 
     [Test]
@@ -60,7 +60,7 @@ public class MathExamplesForLlmTests
         await Assert.That(rendered).Contains("math.add");
         await Assert.That(rendered).Contains("variable.set");
         await Assert.That(rendered).Contains("%count%");
-        await Assert.That(rendered).Contains("Value([object] %__data__%)");
+        await Assert.That(rendered).Contains("Value([object] %!data%)");
     }
 
     // --- Subtract ---

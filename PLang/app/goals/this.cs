@@ -335,7 +335,11 @@ public sealed class @this
             foreach (var goal in goals)
             {
                 foreach (var step in goal.Steps)
+                {
                     step.Goal = goal;
+                    foreach (var action in step.Actions)
+                        action.Synthetic = false;
+                }
 
                 Add(goal);
                 primary ??= goal;

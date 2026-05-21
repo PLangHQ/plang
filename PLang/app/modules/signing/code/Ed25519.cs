@@ -70,28 +70,37 @@ public class Ed25519 : ISigning
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
         var signingSettings = app.Config.For<Config>(action.Context);
         var effectiveTimeout = action.TimeoutMs?.Value ?? signingSettings.Resolve<long>("TimeoutMs", 300_000);
+        var skipFreshness = action.SkipFreshnessCheck?.Value ?? false;
 
         // 1. Type check
         if (signedData.Type != "signature")
             return global::app.data.@this.FromError(new ActionError($"Invalid signed data type: '{signedData.Type}'", "InvalidType", 400));
 
-        // 2. Timeout check (Created too old)
-        var age = now - signedData.Created;
-        if (age.TotalMilliseconds > effectiveTimeout)
-            return global::app.data.@this.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
+        // 2. Wire-freshness check (Created too old). Anti-replay primitive for
+        // transient signed messages — skipped for long-lived artifacts (grants)
+        // whose intrinsic lifetime is governed by step 3's Expires.
+        if (!skipFreshness)
+        {
+            var age = now - signedData.Created;
+            if (age.TotalMilliseconds > effectiveTimeout)
+                return global::app.data.@this.FromError(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
+        }
 
-        // 3. Expiry check
+        // 3. Expiry check (signature's intrinsic lifetime — null = permanent).
         if (signedData.Expires.HasValue && now > signedData.Expires.Value)
             return global::app.data.@this.FromError(new ActionError("Signature has expired", "Expired", 400));
 
-        // 4. Nonce replay check
-        // Cache TTL matches effectiveTimeout. After restart, the timeout check (step 2)
-        // rejects signatures older than effectiveTimeout, so nonce replay is bounded.
-        var nonceCacheKey = $"nonce:{signedData.Nonce}";
-        var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
-        var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, global::app.data.@this.Ok(true), cacheSettings);
-        if (!nonceAdded)
-            return global::app.data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
+        // 4. Nonce replay check — paired with step 2 (wire-freshness). For
+        // stored artifacts the same nonce naturally re-presents on every read,
+        // which isn't replay; skip alongside step 2.
+        if (!skipFreshness)
+        {
+            var nonceCacheKey = $"nonce:{signedData.Nonce}";
+            var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
+            var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, global::app.data.@this.Ok(true), cacheSettings);
+            if (!nonceAdded)
+                return global::app.data.@this.FromError(new ActionError("Nonce has already been used", "NonceReplay", 400));
+        }
 
         // 5. Contract matching
         if (!ContractsMatch(signedData.Contracts, action.Contracts?.Value))

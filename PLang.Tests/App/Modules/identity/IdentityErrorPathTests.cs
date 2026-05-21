@@ -1,9 +1,9 @@
 using System.Reflection;
-using global::app.actor.context;
-using global::app.modules.settings;
-using global::app.errors;
-using global::app.variables;
-using global::app.modules.identity;
+using app.actor.context;
+using app.modules.settings;
+using app.errors;
+using app.variables;
+using app.modules.identity;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.identity;

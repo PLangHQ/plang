@@ -1,5 +1,5 @@
 using System.Reflection;
-using global::app.Attributes;
+using app.Attributes;
 
 namespace PLang.Tests.App.Tester;
 

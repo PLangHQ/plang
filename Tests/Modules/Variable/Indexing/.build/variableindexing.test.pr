@@ -111,7 +111,7 @@
             },
             {
               "name": "Actual",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object?"
             }
           ],
@@ -231,7 +231,7 @@
             },
             {
               "name": "Actual",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object?"
             },
             {
@@ -288,7 +288,7 @@
             },
             {
               "name": "Actual",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object?"
             },
             {

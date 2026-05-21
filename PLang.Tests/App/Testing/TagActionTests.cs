@@ -1,4 +1,4 @@
-using global::app.tester;
+using app.tester;
 using Tag = global::app.modules.test.Tag;
 
 namespace PLang.Tests.App.Tester;

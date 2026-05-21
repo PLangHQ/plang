@@ -15,14 +15,14 @@ public partial class Divide : IContext
             new[]
             {
                 new ActionSpec("math",     "divide", new() { ["A"] = 10, ["B"] = 4 }),
-                new ActionSpec("variable", "set",    new() { ["Name"] = "%quotient%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set",    new() { ["Name"] = "%quotient%", ["Value"] = "%!data%" }),
             }),
         new ExampleSpec(
             "set %avg% = %total% / %count%",
             new[]
             {
                 new ActionSpec("math",     "divide", new() { ["A"] = "%total%", ["B"] = "%count%" }),
-                new ActionSpec("variable", "set",    new() { ["Name"] = "%avg%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set",    new() { ["Name"] = "%avg%", ["Value"] = "%!data%" }),
             }),
     };
 

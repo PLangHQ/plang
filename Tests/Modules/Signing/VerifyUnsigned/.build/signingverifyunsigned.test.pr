@@ -57,7 +57,7 @@
             },
             {
               "name": "Hash",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "string"
             },
             {

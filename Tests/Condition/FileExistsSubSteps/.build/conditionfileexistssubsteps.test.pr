@@ -87,7 +87,7 @@
           "parameters": [
             {
               "name": "Left",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             },
             {

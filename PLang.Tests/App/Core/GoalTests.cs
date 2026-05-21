@@ -1,5 +1,5 @@
 using app;
-using global::app.variables;
+using app.variables;
 
 namespace PLang.Tests.App.Core;
 
@@ -344,7 +344,7 @@ public class GoalTests
                             Parameters = new List<Data>
                             {
                                 new("Name", "users"),
-                                new("Value", "%__data__%")
+                                new("Value", "%!data%")
                             }
                         }
                     })

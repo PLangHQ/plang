@@ -1,0 +1,5 @@
+AskAQuestion
+/ Helper sub-goal called from Start. With %!ask.answer% pre-bound, ask
+/ consumes the sentinel and writes %answer% — visible to Start across the
+/ call boundary.
+- output.ask question="name?", write to %answer%

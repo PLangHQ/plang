@@ -1,0 +1,4 @@
+{
+  "status": "ready",
+  "summary": "Auditor v1 F-A and F-B both closed. F-A: signing.verify gains a SkipFreshnessCheck flag (default false); Permission.VerifySignature passes true so grants are governed solely by their Expires field (null = permanent, set = enforced) — wire-freshness Created+TimeoutMs and the paired nonce-replay check no longer apply to grants. Doc-comment corrected. New mutation-verified test advances NowUtc by 10 min and confirms the grant still covers (revert SkipFreshnessCheck=true to false → test fails). F-B: merged origin/runtime2 (27 commits, including app-lowercase rename) into the branch — 63 conflicts resolved across 4 categories (DU/UD/AU/UU); branch additions now live at lowercase paths with lowercase namespaces. Suite: 2854 pass, 0 skip, 0 fail."
+}

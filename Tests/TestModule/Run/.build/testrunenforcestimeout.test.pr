@@ -44,7 +44,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -91,7 +91,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -188,7 +188,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -256,7 +256,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -310,8 +310,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Run/TestRunEnforcesTimeout.test.goal",
-  "prPath": "/TestModule/Run/.build/testrunenforcestimeout.test.pr",
+  "path": "/Run/TestRunEnforcesTimeout.test.goal",
+  "prPath": "/Run/.build/testrunenforcestimeout.test.pr",
   "hash": "81ad25af43e071c5d7705ec329d54652a0e0bd6dcb4cacc615ada7477b68527b",
   "builderVersion": "0.2.2",
   "isSetup": false,

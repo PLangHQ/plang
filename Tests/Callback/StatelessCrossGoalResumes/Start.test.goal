@@ -1,0 +1,7 @@
+Start
+/ Stage 2a — Cross-goal continuation. Start calls AskAQuestion; the sub-goal
+/ runs ask (sentinel-bound to "Alice"), %answer% binds across the call
+/ boundary, Start asserts on return.
+- set %!ask.answer% = "Alice"
+- call AskAQuestion
+- assert %answer% equals "Alice"

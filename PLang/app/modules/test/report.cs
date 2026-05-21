@@ -19,7 +19,7 @@ namespace app.modules.test;
 /// </summary>
 [System.ComponentModel.Description("Write test results to the console and emit a JSON or JUnit report artefact")]
 [Example("write test report %results% format='junit', write to %report%",
-    "test.report Results([object] %results%), Format([string] junit) | variable.set Name([string] %report%), Value([object] %__data__%)")]
+    "test.report Results([object] %results%), Format([string] junit) | variable.set Name([string] %report%), Value([object] %!data%)")]
 [Action("report", Cacheable = false)]
 public partial class report : IContext
 {

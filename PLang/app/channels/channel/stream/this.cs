@@ -84,14 +84,28 @@ public sealed class @this : global::app.channels.channel.session.@this
         }
     }
 
-    public override async Task<global::app.data.@this> AskCore(global::app.data.@this prompt, CancellationToken ct = default)
+    public override async Task<global::app.data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
     {
-        // Session-style ask: write the prompt (if any), then read a line.
-        // Timeout enforced via the per-channel Timeout config.
-        if (prompt.Value != null)
+        // Two-call pattern across the actor's split output/input pair — per
+        // CLAUDE.md's "Console.* Is Banned" rule: write the prompt via the
+        // "output" channel (the input channel is typically stdin and is
+        // input-only). Falls back to writing via self only when self is
+        // bidirectional and no output channel is registered (test fixtures).
+        var question = action.Question?.Value;
+        if (!string.IsNullOrEmpty(question))
         {
-            var writeRes = await WriteCore(prompt, ct);
-            if (!writeRes.Success) return writeRes;
+            var output = action.Context?.Actor?.Channels.Resolve(global::app.channels.@this.Output);
+            if (output != null && output.CanWrite)
+            {
+                var writeRes = await output.WriteAsync(global::app.data.@this.Ok(question), ct);
+                if (!writeRes.Success) return writeRes;
+            }
+            else if (CanWrite)
+            {
+                var writeRes = await WriteCore(global::app.data.@this.Ok(question), ct);
+                if (!writeRes.Success) return writeRes;
+            }
+            // No writer at all — proceed to read; the prompt is just lost.
         }
 
         if (!CanRead)
@@ -106,7 +120,14 @@ public sealed class @this : global::app.channels.channel.session.@this
             using var reader = new StreamReader(Stream, ResolveEncoding(),
                 detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
             var line = await reader.ReadLineAsync(timeoutCts.Token);
-            return global::app.data.@this.Ok(line ?? string.Empty);
+            // Null from ReadLineAsync = stream EOF. There's no interactive
+            // answerer (closed pipe, redirected stdin, non-interactive runner).
+            // Fail-fast instead of letting the caller loop on "" forever.
+            if (line == null)
+                return global::app.data.@this.FromError(new ServiceError(
+                    $"Channel '{Name}' has no interactive answerer (stream EOF)",
+                    "ChannelEof", 400));
+            return global::app.data.@this.Ok(line);
         }
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
         {

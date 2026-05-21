@@ -1,4 +1,4 @@
-using global::app.goals.goal;
+using app.goals.goal;
 
 namespace PLang.Tests.App.Modules.builder;
 

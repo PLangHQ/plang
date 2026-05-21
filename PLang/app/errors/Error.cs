@@ -43,16 +43,17 @@ public class Error : IError
     [System.Text.Json.Serialization.JsonIgnore]
     internal global::app.@this? App { get; set; }
 
-    private global::app.data.@this<global::app.modules.callback.ErrorCallback>? _callback;
+    private global::app.data.@this<global::app.snapshot.@this>? _callback;
 
     /// <summary>
     /// PLang surface <c>%!error.callback%</c> resolves through here. First read invokes
     /// <c>app.Snapshot()</c> (which captures Variables.SnapshotAt(this) for the throw-time
-    /// view) and wraps the snapshot in an <see cref="app.modules.callback.ErrorCallback"/>. Cached
-    /// per Error instance — reading twice returns the same Data reference.
+    /// view) and wraps the snapshot directly — <c>Data&lt;Snapshot&gt;</c>. Resume goes
+    /// through <see cref="app.snapshot.@this.Resume"/>, same path as ask-resume.
+    /// Cached per Error instance — reading twice returns the same Data reference.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.data.@this<global::app.modules.callback.ErrorCallback> Callback
+    public global::app.data.@this<global::app.snapshot.@this> Callback
     {
         get
         {
@@ -61,9 +62,9 @@ public class Error : IError
                 throw new InvalidOperationException(
                     "Error.Callback requires App reference; ensure the error went through Errors.Push.");
             var snap = App.Snapshot();
-            var cb = new global::app.modules.callback.ErrorCallback { AppSnapshot = snap };
-            _callback = global::app.data.@this<global::app.modules.callback.ErrorCallback>.Ok(cb);
+            _callback = global::app.data.@this<global::app.snapshot.@this>.Ok(snap);
             _callback.Context = App.User.Context;
+            _callback.Snapshot = snap;
             return _callback;
         }
     }
@@ -218,8 +219,7 @@ public class Error : IError
             }
         }
 
-        // Call stack \u2014 CallChainRenderer compresses recursive runs and annotates
-        // recovery boundaries with their originating Cause.
+        // Call stack \u2014 CallChainRenderer compresses recursive runs.
         if (error.CallFrames.Count > 0)
         {
             sb.AppendLine();
