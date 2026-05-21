@@ -460,6 +460,79 @@
         "notes": "Communication to codeanalyzer about v2 #1's deferral is in three places by design: the plan doc (the artifact), todos.md (the durable index), and the coder summary v3 (the branch-local audit trail). Codeanalyzer's next pass on this branch should see ready-to-merge."
       },
       "timestamp_end": "2026-05-21T16:58:32.453068+00:00"
+    },
+    {
+      "id": "78f15f19-3b78-47d9-9c92-b1cb3adc40bf",
+      "bot": "tester",
+      "timestamp_start": "2026-05-21T18:10:25.447328+00:00",
+      "timestamp_end": "2026-05-21T18:12:32.685861+00:00",
+      "intent": "Validate test quality for coder v3 filesystem-permission work \u2014 hunt false greens.",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS; coder declared branch ready-to-merge; 2846/2846 C# green per coder.",
+        "risk": "v3's single behavioral change (ValidatePath RootComparison) is review-driven code \u2014 highest risk for missing test coverage."
+      },
+      "plan": ".bot/filesystem-permission/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/",
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + ran both suites. C# 2846/2846 pass; PLang 213 pass / 6 fail. Verified the 6 PLang fails are intentional fail-fixtures (_fixtures_fail/_fixtures_sensitive) by reading fixture content + git provenance \u2014 not coder regressions."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/ValidatePathTests.cs",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/FileSystem/Path.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Deletion test on v3's only behavioral change (ValidatePath:227 OrdinalIgnoreCase->RootComparison): reverting it fails 0 tests. No test supplies a case-variant-of-root path. 100% line/branch coverage = coverage dazzle. Major false-green, finding 1."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/SurfaceTests/MoveCopyBundledConsentTests.cs",
+            "PLang/App/FileSystem/Path.Operations.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Parameter-swap test on PerformTransfer isMove flag: no test verifies Move removes the source. Flipping isMove keeps the suite green. Major weak-assertion, finding 2."
+        },
+        {
+          "paths": [
+            "Tests/Permission/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read all 8 permission .test.goal files + verified GrantAStoresPersisted .pr. 6 of 8 are in-root round-trips named after permission scenarios they never exercise \u2014 plang --test reports them green under scenario names. Major false-green, finding 3."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/test-report.json",
+            ".bot/filesystem-permission/tester/v3/result.md",
+            ".bot/filesystem-permission/tester/v3/verdict.json",
+            ".bot/filesystem-permission/tester/v3/coverage.json",
+            ".bot/filesystem-permission/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote test-report.json (9 findings, verdict needs-fixes), result.md, verdict.json, coverage.json, summary.md."
+        }
+      ],
+      "after": {
+        "status": "NEEDS-FIXES. 3 major false-greens + 5 minor + 1 process violation. All are test-quality gaps; no code bug \u2014 codeanalyzer v3 already passed the code and the v3 fix is correct.",
+        "health": "Suite green (2846/2846 C#) but dishonest: v3's case-comparison fix, Move semantics, and 6 PLang permission goals are false greens.",
+        "notes": "No baseline-tests.md in any coder version (finding 9) \u2014 regression attribution reconstructed manually, confirmed no regressions. Fixes for findings 1-3 are cheap: ~1 ValidatePath test, 1 Move assertion block, rename/delete 6 goals."
+      }
     }
   ]
 }
