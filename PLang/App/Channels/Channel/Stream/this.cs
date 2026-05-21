@@ -120,7 +120,14 @@ public sealed class @this : Session.@this
             using var reader = new StreamReader(Stream, ResolveEncoding(),
                 detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
             var line = await reader.ReadLineAsync(timeoutCts.Token);
-            return Data.@this.Ok(line ?? string.Empty);
+            // Null from ReadLineAsync = stream EOF. There's no interactive
+            // answerer (closed pipe, redirected stdin, non-interactive runner).
+            // Fail-fast instead of letting the caller loop on "" forever.
+            if (line == null)
+                return Data.@this.FromError(new ServiceError(
+                    $"Channel '{Name}' has no interactive answerer (stream EOF)",
+                    "ChannelEof", 400));
+            return Data.@this.Ok(line);
         }
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !ct.IsCancellationRequested)
         {
