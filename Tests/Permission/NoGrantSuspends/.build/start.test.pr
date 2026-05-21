@@ -1,0 +1,145 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "save \u0027in-root-fixture\u0027 to file \u0027fixture.txt\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Stage 5 \u2014 stateless suspend (Data\u003CAsk\u003E \u002B Snapshot) needs a Message-class\nchannel registered as \u0022input\u0022; plang \u0060--test\u0060 runs each test with the\ndefault Stream channels so a stateless suspend can\u0027t fire here. Exercised\nby C# Stage5MessagesEndToEndTests.Scenario1 against a TestMessageChannel.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "fixture.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "in-root-fixture",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Save the literal fixture text into a file named fixture.txt. The step text says: save \u0027in-root-fixture\u0027 to file \u0027fixture.txt\u0027.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "file.read fixture.txt, write to %content%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "fixture.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%content%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%__data__%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Read fixture.txt and write its content into %content% via variable.set.",
+      "level": "high",
+      "confidence": 97,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %content% contains \u0022fixture\u0022",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%content%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "fixture",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion: %content% must contain the substring \u0022fixture\u0022.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/NoGrantSuspends/Start.test.goal",
+  "prPath": "/NoGrantSuspends/.build/start.test.pr",
+  "hash": "1d1dd653eb6816d7ecca7b36790525485eda7afab65e8adee59554591d2ee7b8",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

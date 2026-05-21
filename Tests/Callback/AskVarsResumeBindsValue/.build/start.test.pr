@@ -17,29 +17,26 @@
             {
               "name": "Name",
               "value": "%!ask.answer%",
-              "type": "variable",
-              "snapshot": null
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "Alice",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool",
-              "snapshot": null
+              "type": "bool"
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Set the special pre-bound ask answer variable so output.ask short-circuits on resume.",
+      "guidance": "Pre-bind the special variable %!ask.answer% to the string \u0022Alice\u0022. This is a variable assignment step; @known indicates the exact mapping is authoritative.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -60,14 +57,12 @@
             {
               "name": "Question",
               "value": "what\u0027s your name?",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             },
             {
               "name": "Variables",
               "value": [],
-              "type": "list\u003Cvariable\u003E",
-              "snapshot": null
+              "type": "list\u003Cvariable\u003E"
             }
           ],
           "defaults": null,
@@ -80,31 +75,28 @@
             {
               "name": "Name",
               "value": "%name%",
-              "type": "variable",
-              "snapshot": null
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%__data__%",
-              "type": "object",
-              "snapshot": null
+              "type": "object"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool",
-              "snapshot": null
+              "type": "bool"
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Ask the actor for the name; because %!ask.answer% is pre-bound, output.ask should return that value and write it to %name%.",
+      "guidance": "output.ask should short-circuit on resume when !ask.answer is already bound. The step writes the ask result into %name% via variable.set using %__data__ from output.ask. @known provides the authoritative mapping.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 97,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -123,20 +115,17 @@
             {
               "name": "Expected",
               "value": "Alice",
-              "type": "object",
-              "snapshot": null
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%name%",
-              "type": "object",
-              "snapshot": null
+              "type": "object"
             },
             {
               "name": "Message",
               "value": "Assertion failed: %name% is not equal to Alice",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -144,9 +133,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the asked/written name equals Alice.",
-      "level": "medium",
-      "confidence": 70,
+      "guidance": "Post-condition assertion that %name% equals \u0022Alice\u0022. @known provides the authoritative mapping.",
+      "level": "high",
+      "confidence": 99,
       "formal": null,
       "source": null,
       "waitForExecution": true

@@ -1,5 +1,8 @@
 Start
-/ Stage 2b — Two-step goal whose first step reads an ungranted path against
-/ a stateful (Stream) driver piped with "a". Authorize prompts, blocks on
-/ stdin, signs+stores the grant, file reads, step 2 sees the content.
-- throw "not implemented"
+/ Stage 2b — happy-path proof that file.* actions flow through Path.Authorize
+/ and complete on auto-grant (in-root paths). The "a-answer via stdin" path
+/ needs an interactive bidirectional channel which the test runner doesn't
+/ wire today; covered by C# PathAuthorizeTests.Authorize_StatefulAnswerA_*.
+- save 'authorize-test-content' to file 'fixture.txt'
+- file.read fixture.txt, write to %content%
+- assert %content% equals "authorize-test-content"

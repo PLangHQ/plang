@@ -17,29 +17,26 @@
             {
               "name": "Name",
               "value": "%!ask.answer%",
-              "type": "variable",
-              "snapshot": null
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "Alice",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             }
           ],
           "defaults": [
             {
               "name": "asdefault",
               "value": false,
-              "type": "bool",
-              "snapshot": null
+              "type": "bool"
             }
           ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Bind the ask sentinel variable %!ask.answer% to the string \u0027Alice\u0027 so the called goal can use it.",
+      "guidance": "Set the sentinel-bound variable %!ask.answer% to \u0022Alice\u0022. This is a variable assignment; the @known mapping indicates the exact prior action chain should be kept.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -65,8 +62,7 @@
                 "parameters": [],
                 "prPath": null
               },
-              "type": "goal.call",
-              "snapshot": null
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -74,7 +70,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Call the cross-goal sub-goal AskAQuestion. No parameters are provided in the step text; parallel is false per @known metadata.",
+      "guidance": "Call the sub-goal AskAQuestion. The @known mapping indicates the prior mapping should be reused exactly.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -95,14 +91,12 @@
             {
               "name": "Expected",
               "value": "Alice",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             },
             {
               "name": "Actual",
               "value": "%answer%",
-              "type": "object",
-              "snapshot": null
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -110,7 +104,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: verify %answer% equals the expected string \u0022Alice\u0022 after AskAQuestion returns.",
+      "guidance": "Assert that %answer% equals \u0022Alice\u0022 after AskAQuestion returns. This is a post-condition invariant; the @known mapping indicates the prior mapping should be reused exactly.",
       "level": "high",
       "confidence": 95,
       "formal": null,

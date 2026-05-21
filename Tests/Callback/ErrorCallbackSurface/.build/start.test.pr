@@ -17,14 +17,12 @@
             {
               "name": "Message",
               "value": "boom",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             },
             {
               "name": "StatusCode",
               "value": 500,
-              "type": "int",
-              "snapshot": null
+              "type": "int"
             }
           ],
           "defaults": null,
@@ -54,16 +52,14 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u00601",
-                  "snapshot": null
+                  "type": "list\u00601"
                 }
               ],
               "defaults": [
                 {
                   "name": "ignoreerror",
                   "value": false,
-                  "type": "bool",
-                  "snapshot": null
+                  "type": "bool"
                 }
               ],
               "modifiers": []
@@ -93,14 +89,12 @@
             {
               "name": "Value",
               "value": "%callbackSeen%",
-              "type": "bool",
-              "snapshot": null
+              "type": "bool"
             },
             {
               "name": "Message",
               "value": "on-error handler should have run and read callback",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -108,9 +102,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: verify %callbackSeen% is true after the on-error handler runs.",
+      "guidance": "Post-condition assertion: verify %callbackSeen% is true after the on-error handler ran and the callback was read.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -136,22 +130,19 @@
                 {
                   "name": "Name",
                   "value": "%cb%",
-                  "type": "variable",
-                  "snapshot": null
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
                   "value": "%!error.callback%",
-                  "type": "object",
-                  "snapshot": null
+                  "type": "object"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool",
-                  "snapshot": null
+                  "type": "bool"
                 }
               ],
               "modifiers": []
@@ -179,14 +170,12 @@
                 {
                   "name": "Value",
                   "value": "%cb%",
-                  "type": "object",
-                  "snapshot": null
+                  "type": "object"
                 },
                 {
                   "name": "Message",
                   "value": "Error callback must be set",
-                  "type": "string",
-                  "snapshot": null
+                  "type": "string"
                 }
               ],
               "defaults": null,
@@ -194,9 +183,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Post-condition assertion: ensure the callback variable is not null/unset at this point; fail the step if it is.",
+          "guidance": "Post-condition invariant: ensure the error callback variable %cb% is not null before proceeding. This compiles to assert.isNotNull.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -215,31 +204,28 @@
                 {
                   "name": "Name",
                   "value": "%callbackSeen%",
-                  "type": "variable",
-                  "snapshot": null
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
                   "value": true,
-                  "type": "bool",
-                  "snapshot": null
+                  "type": "bool"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool",
-                  "snapshot": null
+                  "type": "bool"
                 }
               ],
               "modifiers": []
             }
           ],
           "intent": null,
-          "guidance": "Set a boolean flag %callbackSeen% to true to record that the callback was handled.",
+          "guidance": "Set %callbackSeen% to true to record that the callback was observed.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true

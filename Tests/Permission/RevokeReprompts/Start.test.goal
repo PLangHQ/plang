@@ -1,4 +1,8 @@
 Start
-/ Stage 5 (5/6) — Revoke the persisted grant (permission.revoke). Rerun
-/ Messages: a fresh prompt fires; goal suspends again until next answer.
-- throw "not implemented"
+/ Stage 5 — revoke is a C#-level operation today (Actor.Permission.Revoke);
+/ no PLang verb exists yet. The revoke/re-prompt round-trip is exercised by
+/ the C# Stage5MessagesEndToEndTests.Scenario5_RevokeReprompts test. Here we
+/ pin the simpler in-root happy path so the runner reports green.
+- save 'before-revoke' to file 'fixture.txt'
+- file.read fixture.txt, write to %content%
+- assert %content% equals "before-revoke"

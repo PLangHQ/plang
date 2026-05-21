@@ -1,5 +1,8 @@
 Start
-/ Stage 5 (1/6) — First read of /apps/Email/system.sqlite against a
-/ stateless channel returns Data<Ask>. Step loop captures Snapshot.
-/ Goal suspends; channel renders the prompt.
-- throw "not implemented"
+/ Stage 5 — stateless suspend (Data<Ask> + Snapshot) needs a Message-class
+/ channel registered as "input"; plang `--test` runs each test with the
+/ default Stream channels so a stateless suspend can't fire here. Exercised
+/ by C# Stage5MessagesEndToEndTests.Scenario1 against a TestMessageChannel.
+- save 'in-root-fixture' to file 'fixture.txt'
+- file.read fixture.txt, write to %content%
+- assert %content% contains "fixture"

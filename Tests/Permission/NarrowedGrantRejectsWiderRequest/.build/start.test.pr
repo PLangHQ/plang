@@ -5,67 +5,62 @@
   "steps": [
     {
       "index": 0,
-      "text": "set %!ask.answer% = \u0022Alice\u0022",
-      "lineNumber": 5,
+      "text": "save \u0027narrowed-fixture\u0027 to file \u0027fixture.txt\u0027",
+      "lineNumber": 6,
       "indent": 0,
-      "comment": "Stage 2a \u2014 Mid-goal output.ask completes synchronously when the answer\nsentinel is pre-bound (simulates a stateful channel returning the answer).\nVariable binds; next step asserts.",
+      "comment": "Stage 5 \u2014 narrowing-coverage logic needs C#-level construction of a Verb\nwith specific sub-options (Read(Metadata=false)). No PLang verb exists for\n\u0022issue a Read grant with Metadata=false\u0022. Exercised by C#\nStage5MessagesEndToEndTests.Scenario6. Happy-path placeholder here.",
       "actions": [
         {
-          "module": "variable",
-          "action": "set",
+          "module": "file",
+          "action": "save",
           "parameters": [
             {
-              "name": "Name",
-              "value": "%!ask.answer%",
-              "type": "variable"
+              "name": "Path",
+              "value": "fixture.txt",
+              "type": "path"
             },
             {
               "name": "Value",
-              "value": "Alice",
+              "value": "narrowed-fixture",
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
+          "defaults": null,
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": "Pre-bind the ask answer sentinel variable %!ask.answer% so output.ask can complete synchronously and consume it.",
+      "guidance": "Save the literal fixture text to \u0027fixture.txt\u0027 so the subsequent read has a source file.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "ask user \u0022name?\u0022, write to %name%",
-      "lineNumber": 6,
+      "text": "file.read fixture.txt, write to %content%",
+      "lineNumber": 7,
       "indent": 0,
       "comment": null,
       "actions": [
         {
-          "module": "output",
-          "action": "ask",
+          "module": "file",
+          "action": "read",
           "parameters": [
             {
-              "name": "Question",
-              "value": "name?",
-              "type": "string"
-            },
-            {
-              "name": "Variables",
-              "value": null,
-              "type": "object"
+              "name": "Path",
+              "value": "fixture.txt",
+              "type": "path"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -74,7 +69,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%name%",
+              "value": "%content%",
               "type": "variable"
             },
             {
@@ -94,7 +89,7 @@
         }
       ],
       "intent": null,
-      "guidance": "output.ask to user for the question \u0027name?\u0027 and write the returned answer into %name% via variable.set. The @known mapping indicates the exact prior action chain.",
+      "guidance": "Read the file content from \u0027fixture.txt\u0027 and assign it to %content% for validation.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -103,8 +98,8 @@
     },
     {
       "index": 2,
-      "text": "assert %name% equals \u0022Alice\u0022",
-      "lineNumber": 7,
+      "text": "assert %content% equals \u0022narrowed-fixture\u0022",
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -114,12 +109,12 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "Alice",
+              "value": "narrowed-fixture",
               "type": "string"
             },
             {
               "name": "Actual",
-              "value": "%name%",
+              "value": "%content%",
               "type": "object"
             }
           ],
@@ -128,9 +123,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %name% equals \u0022Alice\u0022 using assert.equals.",
+      "guidance": "Post-condition assertion that the read content equals the expected narrowed fixture string.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -138,9 +133,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/StatefulAskMidGoalBindsValue/Start.test.goal",
-  "prPath": "/StatefulAskMidGoalBindsValue/.build/start.test.pr",
-  "hash": "291cb099c7d44d9245bb838be9b198c80169817e9d368c3a7dc5f2f9c52186dd",
+  "path": "/NarrowedGrantRejectsWiderRequest/Start.test.goal",
+  "prPath": "/NarrowedGrantRejectsWiderRequest/.build/start.test.pr",
+  "hash": "4ec9cac56e8bc64c216b51ef380f0e43b1b25b9cc29646119aeeb636fa441b12",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

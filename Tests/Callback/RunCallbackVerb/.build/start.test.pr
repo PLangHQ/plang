@@ -17,16 +17,14 @@
             {
               "name": "Message",
               "value": "boom",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             }
           ],
           "defaults": [
             {
               "name": "statuscode",
               "value": 500,
-              "type": "int",
-              "snapshot": null
+              "type": "int"
             }
           ],
           "modifiers": [
@@ -54,16 +52,14 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u003Caction\u003E",
-                  "snapshot": null
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": [
                 {
                   "name": "ignoreerror",
                   "value": false,
-                  "type": "bool",
-                  "snapshot": null
+                  "type": "bool"
                 }
               ],
               "modifiers": []
@@ -93,14 +89,12 @@
             {
               "name": "Value",
               "value": "%ranCallback%",
-              "type": "bool",
-              "snapshot": null
+              "type": "bool"
             },
             {
               "name": "Message",
               "value": "callback dispatch should have completed",
-              "type": "string",
-              "snapshot": null
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -136,22 +130,19 @@
                 {
                   "name": "Name",
                   "value": "%cb%",
-                  "type": "variable",
-                  "snapshot": null
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
                   "value": "%!error.callback%",
-                  "type": "object",
-                  "snapshot": null
+                  "type": "object"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool",
-                  "snapshot": null
+                  "type": "bool"
                 }
               ],
               "modifiers": []
@@ -181,8 +172,7 @@
                   "value": {
                     "callback": "%cb%"
                   },
-                  "type": "object",
-                  "snapshot": null
+                  "type": "object"
                 }
               ],
               "defaults": null,
@@ -194,8 +184,7 @@
                     {
                       "name": "IgnoreError",
                       "value": true,
-                      "type": "bool",
-                      "snapshot": null
+                      "type": "bool"
                     }
                   ],
                   "defaults": null,
@@ -226,22 +215,19 @@
                 {
                   "name": "Name",
                   "value": "%ranCallback%",
-                  "type": "variable",
-                  "snapshot": null
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
                   "value": true,
-                  "type": "bool",
-                  "snapshot": null
+                  "type": "bool"
                 }
               ],
               "defaults": [
                 {
                   "name": "asdefault",
                   "value": false,
-                  "type": "bool",
-                  "snapshot": null
+                  "type": "bool"
                 }
               ],
               "modifiers": []
