@@ -13,20 +13,23 @@ namespace App.modules.output;
 public sealed class Ask : global::App.IExitsGoal { }
 
 /// <summary>
-/// Asks the actor a question. Two modes:
-///  - **Fresh:** captures the current Position + the variables named by <c>vars:</c>
-///    + the actor name into an <see cref="App.Callback.AskCallback"/>, returns it as
-///    Data&lt;AskCallback&gt;. The caller (HTTP channel etc.) serialises and suspends
-///    the goal until the user answers.
-///  - **Resumed:** when <see cref="App.Callback.AskCallback.Run"/> re-dispatches this
-///    action, it pre-binds the answer under <c>%!ask.answer%</c>. The handler detects
-///    the marker, returns the answer, and lets the calling step write it to its
-///    <c>write to %x%</c> target. No fresh ask is issued.
+/// Asks the actor a question via the input channel. Two paths:
+///  - **Stateful channel** (Stream, in-process goal channel): the channel
+///    answers synchronously; the answer flows back through Data.Value.
+///  - **Stateless channel** (Message / HTTP, when wired): the channel returns
+///    a <c>Data&lt;Ask&gt;</c> with Snapshot attached. The engine short-circuits
+///    via the step-loop's ShouldExit. Resume re-runs the goal; the channel
+///    pre-binds the answer under <c>%!ask.answer%</c> so the second call to
+///    output.ask short-circuits to that value.
 ///
-/// PLang: <c>- ask user "what's your name?", vars: %userId%, write to %name%</c>
+/// PLang: <c>- ask user "what's your name?", write to %name%</c>
 /// </summary>
-[ModuleDescription("Ask the actor a question — issues an AskCallback when no answer is in scope yet.")]
-[System.ComponentModel.Description("Ask a question; returns Data<AskCallback> on first call and the bound answer on resume")]
+[ModuleDescription("Ask the actor a question via the input channel. Stateful channels (Stream, goal-channel) answer synchronously; stateless channels (Message) return Data<Ask> + Snapshot so the engine can serialise and resume after the user answers.")]
+[System.ComponentModel.Description("Ask the input channel a question. Stateful: synchronous answer. Stateless: Data<Ask> + Snapshot for suspend/resume.")]
+[Example("ask user 'what's your name?', write to %name%",
+    "output.ask Question([string] what's your name?) | variable.set Name([string] %name%), Value([object] %!data%)")]
+[Example("output.ask question='Allow access? (y/n/a)', write to %answer%",
+    "output.ask Question([string] Allow access? (y/n/a)) | variable.set Name([string] %answer%), Value([object] %!data%)")]
 [Action("ask", Cacheable = false)]
 public partial class ask : IContext
 {

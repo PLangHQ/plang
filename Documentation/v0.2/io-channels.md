@@ -186,6 +186,8 @@ Two actions in the `channel` module:
 
 **`channel.set`** registers (or replaces — always upserts) a goal-backed channel on the current actor or an explicitly-named one. Direction precedence: an explicit `direction:` parameter wins; otherwise the channel name `"input"` / `"output"` decides; otherwise `Bidirectional`. Optional config: `buffer`, `timeout` (ISO 8601 like `PT30S`), `mime`, `encoding`, `encryption`, `signing`.
 
+The referenced goal must be **public** — a top-level goal in its own `.goal` file under the app's goal directory. `channel.set` resolves the name via `GetGoalAsync` which walks `App.Goals`; private sub-goals nested under another goal (defined below a `Start` in the same file) aren't discoverable by name. Put the answerer in its own file: `MyAnswerer.goal` next to `Start.goal`, with `MyAnswerer` as the first non-comment line.
+
 **`channel.remove`** unregisters. Refused for `output`/`error`/`input` (the boot invariant); use `channel.set` to replace their backing instead.
 
 Every PLang `write` step resolves through the channels registry. `write out` resolves the channel named `"output"` on the current actor; `write to "logger"` resolves `"logger"`.

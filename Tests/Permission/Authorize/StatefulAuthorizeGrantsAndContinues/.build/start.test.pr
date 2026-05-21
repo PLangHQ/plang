@@ -30,7 +30,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the literal fixture content to the specified file path using file.save.",
+      "guidance": "Save literal fixture content to a file named fixture.txt. This is the producing action whose output is persisted to disk.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -89,9 +89,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Read the file content from fixture.txt and assign it to the runtime variable %content% via variable.set.",
+      "guidance": "Read fixture.txt and assign its content to runtime variable %content% via variable.set.",
       "level": "high",
-      "confidence": 97,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -123,9 +123,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition check: assert that %content% equals the expected string.",
+      "guidance": "Post-condition assertion that %content% equals the expected literal authorize-test-content.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 97,
       "formal": null,
       "source": null,
       "waitForExecution": true

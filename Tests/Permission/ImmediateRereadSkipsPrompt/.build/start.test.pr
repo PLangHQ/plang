@@ -88,7 +88,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Read fixture.txt and store its content into %first%.",
+      "guidance": "Read fixture.txt without resolving %var% patterns, then store the read content into runtime variable %first%.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -146,7 +146,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Read fixture.txt again and store its content into %second%.",
+      "guidance": "Read fixture.txt without resolving %var% patterns, then store the read content into runtime variable %second%.",
       "level": "high",
       "confidence": 95,
       "formal": null,

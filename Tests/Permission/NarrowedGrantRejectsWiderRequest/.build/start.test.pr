@@ -30,7 +30,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Save the literal fixture text to \u0027fixture.txt\u0027 so the subsequent read has a source file.",
+      "guidance": "save literal \u0027narrowed-fixture\u0027 to file \u0027fixture.txt\u0027. This is a file.write/save action producing the file content (no variable assignment needed).",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -52,15 +52,14 @@
               "name": "Path",
               "value": "fixture.txt",
               "type": "path"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "resolvevariables",
+              "name": "ResolveVariables",
               "value": false,
               "type": "bool"
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -89,7 +88,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Read the file content from \u0027fixture.txt\u0027 and assign it to %content% for validation.",
+      "guidance": "read fixture.txt and write its content into %content% via variable.set. The file.read produces %!data% which is assigned to %content%.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -123,9 +122,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the read content equals the expected narrowed fixture string.",
+      "guidance": "post-condition assertion that %content% equals the expected string \u0027narrowed-fixture\u0027.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

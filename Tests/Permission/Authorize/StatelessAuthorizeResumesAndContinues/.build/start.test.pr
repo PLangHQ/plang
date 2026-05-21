@@ -30,9 +30,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the literal fixture content to the specified file path using file.save.",
+      "guidance": "Persist the literal string into fixture.txt using file.save. The @known mapping indicates this step is authoritative and should be kept as-is.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -89,9 +89,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Read the file content from fixture.txt and assign the produced content to %content% via variable.set.",
+      "guidance": "Read fixture.txt and assign its content to %content% via variable.set. The @known mapping indicates this step is authoritative and should be kept as-is.",
       "level": "high",
-      "confidence": 97,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -123,9 +123,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %content% equals the expected string.",
+      "guidance": "Post-condition invariant: assert that %content% equals the expected literal string.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true

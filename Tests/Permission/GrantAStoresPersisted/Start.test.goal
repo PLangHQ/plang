@@ -1,11 +1,9 @@
 Start
-/ Stage 5 — the v1 wiring of file action handlers through Path.Authorize.
-/ This test exercises the in-root happy path: file.save then file.read both
-/ go through Authorize, both auto-grant (in-root), the round-trip works.
-/ The out-of-root prompt/sign/store scenarios are exercised by the C# Stage 5
-/ tests (PLang.Tests/App/FileSystem/Stage5MessagesEndToEndTests.cs) — the
-/ PLang test runner can't easily set up real OS-out-of-root paths because
-/ ValidatePath prefixes /-rooted paths with the test's RootDirectory.
-- save 'fixture-content' to file 'fixture.txt'
-- file.read fixture.txt, write to %content%
-- assert %content% contains "fixture-content"
+/ Permission flow test: file.save to //tmp/X is a REAL out-of-root path
+/ (// → OS root, bypasses RootDirectory prefix). Authorize prompts via the
+/ registered "input" channel — ProbeAnswerer returns "a" → grant signed +
+/ stored → save proceeds. The /tmp file gets written for real.
+- set channel "input" call ProbeAnswerer
+- file.save 'permission-flow-content' to //tmp/plang-perm-out.txt
+- file.read //tmp/plang-perm-out.txt, write to %content%
+- assert %content% equals "permission-flow-content"

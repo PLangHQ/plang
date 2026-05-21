@@ -1,0 +1,86 @@
+{
+  "name": "ProbeAnswerer",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "file.save %!data% to probe-question.txt",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Channel-input answerer. Saves the question to an IN-root file (no Authorize\nprompt would fire on this path) for inspection, then returns \u0022a\u0022. Writing\nto //tmp here would recurse into Authorize \u2192 output.ask \u2192 stdin EOF.",
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "probe-question.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Persist the current produced data (%!data%) to a file for inspection. Step text says to save to probe-question.txt (IN-root) and warns against //tmp recursion.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "return \u0022a\u0022",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "return",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "a",
+              "type": "object"
+            },
+            {
+              "name": "Depth",
+              "value": 1,
+              "type": "int"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Return early from the current goal with the constant value \u0022a\u0022.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/GrantAStoresPersisted/ProbeAnswerer.goal",
+  "prPath": "/GrantAStoresPersisted/.build/probeanswerer.pr",
+  "hash": "5454ba03ddff54a51bef8e9f816179ad428ef48ffe57e28a158f3af55693fcac",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}
