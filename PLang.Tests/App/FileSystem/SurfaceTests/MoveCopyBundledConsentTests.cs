@@ -70,6 +70,10 @@ public class MoveCopyBundledConsentTests
         await Assert.That(ch.AskCount).IsEqualTo(1);
         await Assert.That(ch.LastQuestion).Contains(srcFile);
         await Assert.That(ch.LastQuestion).DoesNotContain(dst.Absolute);
+        // Move semantics: source must be gone, destination must exist with content.
+        await Assert.That(System.IO.File.Exists(srcFile)).IsFalse();
+        await Assert.That(System.IO.File.Exists(dst.Absolute)).IsTrue();
+        await Assert.That(System.IO.File.ReadAllText(dst.Absolute)).IsEqualTo("data");
     }
 
     [Test] public async Task Move_BothPathsMissing_ProducesBundledAsk_OneQuestionTwoPaths()
@@ -92,6 +96,10 @@ public class MoveCopyBundledConsentTests
         await Assert.That(ch.AskCount).IsEqualTo(1); // single bundled question
         await Assert.That(ch.LastQuestion).Contains(srcFile);
         await Assert.That(ch.LastQuestion).Contains(dstFile);
+        // Move semantics: source gone, destination has the data.
+        await Assert.That(System.IO.File.Exists(srcFile)).IsFalse();
+        await Assert.That(System.IO.File.Exists(dstFile)).IsTrue();
+        await Assert.That(System.IO.File.ReadAllText(dstFile)).IsEqualTo("data");
     }
 
     [Test] public async Task Copy_MirrorsMove_BundledBehavior()
@@ -137,16 +145,101 @@ public class MoveCopyBundledConsentTests
         await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNotNull();
     }
 
-    [Test] public async Task LegacyFsGoalTests_StayGreen_AgainstV2Surface()
+    private sealed class StatelessChannel : global::App.Channels.Channel.Message.@this
     {
-        // v2 surface is added alongside the v1 surface (which still exists for
-        // backward compatibility). PLang `.test.goal` fixtures under
-        // Tests/Modules/file/* continue to exercise the file action handlers,
-        // which still go through the v1 fs.File/fs.Directory path. v2 is the
-        // new surface for permission-gated callers (Path.Operations.cs).
-        // Pin contract: legacy IPLangFileSystem surface still resolves.
+        public StatelessChannel() { Name = "input"; Direction = global::App.Channels.Channel.ChannelDirection.Bidirectional; }
+        public override Task<global::App.Data.@this> WriteCore(global::App.Data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::App.Data.@this.Ok());
+        public override Task<global::App.Data.@this> ReadCore(CancellationToken ct = default)
+            => Task.FromResult(global::App.Data.@this.Ok((object?)null));
+    }
+
+    [Test] public async Task Move_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation()
+    {
         var app = NewApp(out _);
-        await Assert.That(app.FileSystem.RootDirectory).IsNotNull();
-        await Assert.That(app.FileSystem.ValidatePath("/test")).IsNotNull();
+        var ch = new CapturingChannel("n");
+        app.User.Channels.Register(ch);
+
+        var srcDir = ForeignDir();
+        var srcFile = System.IO.Path.Combine(srcDir, "x");
+        System.IO.File.WriteAllText(srcFile, "data");
+        var dstDir = ForeignDir();
+        var dstFile = System.IO.Path.Combine(dstDir, "y");
+
+        var src = new Path(srcFile, app.User.Context);
+        var dst = new Path(dstFile, app.User.Context);
+
+        var result = await src.MoveTo(dst);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsTypeOf<global::App.Errors.PermissionDenied>();
+        // No grants stored, no filesystem mutation.
+        await Assert.That(await app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNull();
+        await Assert.That(await app.User.Permission.Find(dst, new Verb { Write = new Write() })).IsNull();
+        await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
+        await Assert.That(System.IO.File.Exists(dstFile)).IsFalse();
+    }
+
+    [Test] public async Task Copy_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation()
+    {
+        var app = NewApp(out _);
+        var ch = new CapturingChannel("n");
+        app.User.Channels.Register(ch);
+
+        var srcDir = ForeignDir();
+        var srcFile = System.IO.Path.Combine(srcDir, "x");
+        System.IO.File.WriteAllText(srcFile, "data");
+        var dstDir = ForeignDir();
+        var dstFile = System.IO.Path.Combine(dstDir, "y");
+
+        var src = new Path(srcFile, app.User.Context);
+        var dst = new Path(dstFile, app.User.Context);
+
+        var result = await src.CopyTo(dst);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsTypeOf<global::App.Errors.PermissionDenied>();
+        await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
+        await Assert.That(System.IO.File.Exists(dstFile)).IsFalse();
+    }
+
+    [Test] public async Task Move_StatelessChannel_BubblesDataAskUnchanged_NoFsMutation()
+    {
+        var app = NewApp(out _);
+        app.User.Channels.Register(new StatelessChannel());
+
+        var srcDir = ForeignDir();
+        var srcFile = System.IO.Path.Combine(srcDir, "x");
+        System.IO.File.WriteAllText(srcFile, "data");
+        var dstDir = ForeignDir();
+        var dstFile = System.IO.Path.Combine(dstDir, "y");
+
+        var src = new Path(srcFile, app.User.Context);
+        var dst = new Path(dstFile, app.User.Context);
+
+        var result = await src.MoveTo(dst);
+        // Stateless: ask result is Exit-typed — Move bubbles it unchanged.
+        await Assert.That(result.Type?.Value).IsEqualTo("ask");
+        await Assert.That(result.Snapshot).IsNotNull();
+        // Nothing mutated on disk.
+        await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
+        await Assert.That(System.IO.File.Exists(dstFile)).IsFalse();
+    }
+
+    [Test] public async Task LegacyV1FsSurface_RoundTripsFile_AlongsideV2()
+    {
+        // v2 (Path.Operations) is added alongside the v1 fs.File/fs.Directory
+        // surface, which non-file-action sites (builder, snapshot, settings)
+        // still use. Pin: a round-trip through the v1 surface continues to
+        // work — write via fs.File, read via fs.File, assert content.
+        var app = NewApp(out var root);
+        var rel = "legacy-roundtrip.txt";
+        var abs = System.IO.Path.Combine(root, rel);
+        await app.FileSystem.File.WriteAllTextAsync(abs, "v1-still-here");
+        var roundTripped = await app.FileSystem.File.ReadAllTextAsync(abs);
+        await Assert.That(roundTripped).IsEqualTo("v1-still-here");
+        // And the v2 surface sees the same bytes.
+        var v2 = new Path(abs, app.User.Context);
+        var v2Read = await v2.ReadText();
+        await Assert.That(v2Read.Success).IsTrue();
+        await Assert.That(v2Read.Value).IsEqualTo("v1-still-here");
     }
 }

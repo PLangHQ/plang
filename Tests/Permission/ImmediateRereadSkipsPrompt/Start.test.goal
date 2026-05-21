@@ -1,8 +1,0 @@
-Start
-/ Stage 5 — two file.read calls in succession. In-root paths skip the
-/ Authorize prompt entirely (the actor owns its root); both reads complete
-/ without any %!ask.answer% sentinel.
-- save 'first-read' to file 'fixture.txt'
-- file.read fixture.txt, write to %first%
-- file.read fixture.txt, write to %second%
-- assert %first% equals %second%

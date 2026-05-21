@@ -49,14 +49,14 @@ public class ActorPermissionStorageTests
         await Assert.That(found).IsNull();
     }
 
-    [Test] public async Task TwoHomes_InMemoryGrant_AndPersistedGrant_FindReturnsCorrectOne()
+    [Test] public async Task TwoHomes_InMemoryGrant_AndPersistedGrant_FindReturnsCorrectOne_AndRoutingHonoured()
     {
         var app = NewApp();
-        // In-memory grant for /mem (unsigned → session)
+        // In-memory grant for /mem (unsigned → session, no RawSignature)
         var memGrant = Grant(app, app.User.Name, "/mem");
         await app.User.Permission.Add(memGrant);
 
-        // Persisted grant for /disk (signed → sqlite)
+        // Persisted grant for /disk (signed → sqlite, RawSignature set)
         var diskGrant = Grant(app, app.User.Name, "/disk");
         diskGrant.EnsureSigned();
         await app.User.Permission.Add(diskGrant);
@@ -65,6 +65,14 @@ public class ActorPermissionStorageTests
         var disk = await app.User.Permission.Find(new Path("/disk", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(mem).IsNotNull();
         await Assert.That(disk).IsNotNull();
+        // Routing: only the signed grant lands in sqlite. The unsigned one
+        // must NOT appear there — proves Add's signature-presence heuristic
+        // sends the two grants to different homes.
+        var stored = await app.SettingsStore.GetAll<global::App.Data.@this<PermissionRecord>>("permission");
+        await Assert.That(stored.Success).IsTrue();
+        var paths = stored.Value!.Where(d => d.Value != null).Select(d => d.Value!.Path).ToList();
+        await Assert.That(paths).Contains("/disk");
+        await Assert.That(paths).DoesNotContain("/mem");
     }
 
     [Test] public async Task VerbNarrowing_FullAllowGrant_CoversNarrowedReadRequest()
@@ -163,6 +171,31 @@ public class ActorPermissionStorageTests
         // Find should still hit — overwrite, not duplicate.
         var found = await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() });
         await Assert.That(found).IsNotNull();
+
+        // Prove no-duplicate behaviorally: one Revoke should fully remove the
+        // grant. If Add had stored a duplicate, the second copy would still
+        // cover the request after Revoke.
+        await app.User.Permission.Revoke(first.Value!);
+        var afterRevoke = await app.User.Permission.Find(new Path("/p", app.User.Context), new Verb { Read = new Read() });
+        await Assert.That(afterRevoke).IsNull();
+    }
+
+    [Test] public async Task IdempotentAdd_PersistedSamePathTwice_SingleSqliteRow()
+    {
+        var app = NewApp();
+        var first  = Grant(app, app.User.Name, "/p");
+        first.EnsureSigned();
+        var second = Grant(app, app.User.Name, "/p");
+        second.EnsureSigned();
+        await app.User.Permission.Add(first);
+        await app.User.Permission.Add(second);
+
+        // SettingsStore.Set is keyed by path — the table must hold one row
+        // for `/p`, not two.
+        var stored = await app.SettingsStore.GetAll<global::App.Data.@this<PermissionRecord>>("permission");
+        await Assert.That(stored.Success).IsTrue();
+        var rowsForP = stored.Value!.Count(d => d.Value?.Path == "/p");
+        await Assert.That(rowsForP).IsEqualTo(1);
     }
 
     [Test] public async Task SignatureVerificationCached_FindWalksSameDataOnce()

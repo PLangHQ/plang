@@ -1,8 +1,0 @@
-Start
-/ Stage 5 — narrowing-coverage logic needs C#-level construction of a Verb
-/ with specific sub-options (Read(Metadata=false)). No PLang verb exists for
-/ "issue a Read grant with Metadata=false". Exercised by C#
-/ Stage5MessagesEndToEndTests.Scenario6. Happy-path placeholder here.
-- save 'narrowed-fixture' to file 'fixture.txt'
-- file.read fixture.txt, write to %content%
-- assert %content% equals "narrowed-fixture"

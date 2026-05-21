@@ -1,7 +1,31 @@
 # Coder — filesystem-permission
 
 ## Version
-v3 — see `v3/report.md` (branch closure)
+v4 — see `v4/report.md` (tester-v3 follow-up: 9 test-quality findings closed)
+
+## v4 update — all 9 tester findings closed
+
+Tester v3 (NEEDS-FIXES) flagged 9 test-quality gaps — the v3 code change
+itself was correct. All 9 addressed:
+
+| # | Finding | Fix |
+|---|---|---|
+| 1 | v3 `RootComparison` fix had no regression test | Added Linux-gated `IsInRoot_UpperCasedRoot_*` (security-observable) in PathAuthorizeTests + contract pin in ValidatePathTests |
+| 2 | Move couldn't be told from Copy | Move tests now assert source-gone + dst content |
+| 3 | 6 PLang placeholder goals under overclaiming names | Deleted (Stage5 C# covers them) |
+| 4 | Stage5 Scenario4 empty body reported pass | `[Skip(...)]` attribute with full deferred-bug reason |
+| 5 | `IdempotentAdd` / `TwoHomes` weak assertions | Behavioral no-duplicate via Revoke+Find; sqlite routing inspection |
+| 6 | LegacyFsGoalTests 2-line tautology | Real v1↔v2 round-trip |
+| 7 | `IsInRoot.OsDirectory` clause untested | Added |
+| 8 | Move/Copy "n" + stateless `Data<Ask>` untested | 3 new tests |
+| 9 | No `baseline-tests.md` | Added at `coder/baseline-tests.md` |
+
+C# suite: **2852 pass, 1 skip, 0 fail** (skip = Scenario4 deferred).
+
+**Next (v5):** the deferred SettingsStore cross-App `Data<PermissionRecord>`
+deserialiser recursion that Scenario4 documents. The "a" answer's persistent
+grant only survives within one App process today; fixing this is what
+unskips Scenario4 and closes the persistence half of the two-homes model.
 
 ## v3 update — branch closes
 

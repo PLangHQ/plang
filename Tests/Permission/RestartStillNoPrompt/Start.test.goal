@@ -1,9 +1,0 @@
-Start
-/ Stage 5 — process-restart persistence needs two App instances on the same
-/ root. The plang `--test` runner spawns one child App per test goal, so the
-/ restart round-trip can't easily be exercised from a single .test.goal.
-/ Exercised by C# Stage5MessagesEndToEndTests.Scenario4 (currently deferred —
-/ deserialiser overflow on cross-App SettingsStore round-trip).
-- save 'persisted-content' to file 'fixture.txt'
-- file.read fixture.txt, write to %content%
-- assert %content% equals "persisted-content"

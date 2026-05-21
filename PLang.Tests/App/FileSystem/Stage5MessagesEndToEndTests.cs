@@ -96,16 +96,9 @@ public class Stage5MessagesEndToEndTests
         await Assert.That(result.Success).IsTrue();
     }
 
+    [Skip("Deferred: SettingsStore Set+Get round-trip across two App instances on the same root is broken by a recursion in the Data<PermissionRecord> JSON deserialiser (stack overflow in SmallObjectWithParameterizedConstructorConverter when the second app loads the row). Same Set+Get works inside a single App (Scenario2/3/5 hit sqlite without issue), so the bug is in the deserialiser's Data constructor reentry path when a fresh App materialises the row.")]
     [Test] public async Task Scenario4_RestartStillNoPrompt_PersistedGrantSurvivesNewApp()
     {
-        // SettingsStore Set+Get round-trip across two App instances on the
-        // same root is broken by a recursion in the Data<PermissionRecord>
-        // JSON deserialiser (stack overflow in
-        // SmallObjectWithParameterizedConstructorConverter when the second
-        // app loads the row). Deferred: the same Set+Get works inside a
-        // single App (Scenario2/3/5 all hit sqlite without issue), so the
-        // bug is in the deserialiser's Data constructor reentry path when
-        // a fresh App instance materialises the row.
         await Task.CompletedTask;
     }
 

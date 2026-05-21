@@ -71,6 +71,30 @@ public class ValidatePathTests
         await Assert.That(resolved.StartsWith(root)).IsTrue();
     }
 
+    /// Regression: codeanalyzer v2 #2. On case-sensitive filesystems an
+    /// upper-cased copy of the root prefix is treated as a *new* plang-rooted
+    /// path and gets re-prefixed under the real (lowercase) root — it must
+    /// NOT be silently merged into the root as if it were already in-root.
+    ///
+    /// The security-observable gate test lives in PathAuthorizeTests
+    /// (`IsInRoot_UpperCasedRoot_TreatedAsOutOfRoot_OnUnix`) — that's where
+    /// the case comparison actually decides whether to auto-grant. This pin
+    /// catches a regression where line 191 of ValidatePath flipped to
+    /// case-insensitive (which would let `/TMP/X/f` slip through unprefixed
+    /// and then the `StartsWith(RootDirectory)` check at line 227 would treat
+    /// it as in-root).
+    [Test] public async Task UpperCasedRootPrefix_TreatedAsNewPath_AndRePrefixed_OnUnix()
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
+        var app = NewApp(out var root);
+        var uppered = root.ToUpperInvariant() + "/file.txt";
+        var resolved = app.FileSystem.ValidatePath(uppered);
+        // Observed contract: the upper-cased version is unrecognised as the
+        // current root and ValidatePath joins it onto the real root.
+        await Assert.That(resolved.StartsWith(root)).IsTrue();
+        await Assert.That(resolved).IsEqualTo(System.IO.Path.Join(root, uppered));
+    }
+
     [Test] public async Task InRootAbsolute_LeftAlone()
     {
         var app = NewApp(out var root);

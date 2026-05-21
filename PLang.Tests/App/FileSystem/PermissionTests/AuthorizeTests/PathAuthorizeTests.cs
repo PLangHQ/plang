@@ -157,6 +157,45 @@ public class PathAuthorizeTests
         await Assert.That(denied.Permission.Actor).IsEqualTo(app.User.Name);
     }
 
+    /// Regression: codeanalyzer v2 #2. On Linux the root-prefix comparison must
+    /// be case-sensitive — `/SRV/myapp` must not be treated as in-root when the
+    /// real root is `/srv/myapp`, or the auto-grant in IsInRoot becomes a
+    /// permission-gate bypass. Linux/macOS only; Windows is intentionally
+    /// case-insensitive at the FS layer.
+    [Test] public async Task IsInRoot_UpperCasedRoot_TreatedAsOutOfRoot_OnUnix()
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS()) return;
+        var app = NewApp();
+        // "n" answers the prompt that IsInRoot=false forces — so we observe
+        // PermissionDenied (out-of-root path → prompt → refused). Under the
+        // OrdinalIgnoreCase bug, IsInRoot=true and Ok() comes back instead.
+        app.User.Channels.Register(new CannedAnswerChannel(new[] { "n" }));
+        var ctx = app.User.Context;
+        var uppered = app.FileSystem.RootDirectory.ToUpperInvariant() + "/file.txt";
+        var path = new Path(uppered, ctx);
+
+        var result = await path.Authorize(new Verb { Read = new Read() });
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsTypeOf<global::App.Errors.PermissionDenied>();
+    }
+
+    /// IsInRoot's second clause: OsDirectory (system-built-in goals like
+    /// test, build) auto-grants without a prompt, even though it sits outside
+    /// the actor's RootDirectory. Verifies the runtime-owned-files carve-out.
+    [Test] public async Task IsInRoot_PathUnderOsDirectory_AutoGrants_NoChannelAsk()
+    {
+        var app = NewApp();
+        // No channel registered — if Authorize tried to prompt, it would
+        // throw or return non-Ok. Auto-grant means Ok with no ask.
+        var ctx = app.User.Context;
+        var osDir = app.FileSystem.OsDirectory;
+        var osPath = System.IO.Path.Combine(osDir, "system", "test", "fixture.goal");
+        var path = new Path(osPath, ctx);
+
+        var result = await path.Authorize(new Verb { Read = new Read() });
+        await Assert.That(result.Success).IsTrue();
+    }
+
     [Test] public async Task PermissionDenied_Error_RoundTripsThroughErrorShape()
     {
         var perm = new PermissionRecord("app1", "user", "/p", Verb.AllowAll(), MatchMode.Exact);

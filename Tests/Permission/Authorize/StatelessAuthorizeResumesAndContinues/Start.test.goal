@@ -1,8 +1,0 @@
-Start
-/ Stage 2b — stateless suspend/resume needs a Message-class channel and a
-/ resume invocation; both are C#-only surfaces. Covered by C#
-/ PathAuthorizeTests.Authorize_StatelessChannel_BubblesDataAskUnchanged
-/ and SnapshotResumeTests. In-root happy path here.
-- save 'stateless-test-content' to file 'fixture.txt'
-- file.read fixture.txt, write to %content%
-- assert %content% equals "stateless-test-content"
