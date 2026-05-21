@@ -29,6 +29,9 @@ public partial class Path
         var actor = Context?.Actor
             ?? throw new InvalidOperationException("Path.Authorize requires Context.Actor");
 
+        // In-root paths are auto-granted — the actor owns its own root.
+        if (IsInRoot()) return Data.@this.Ok();
+
         var existing = actor.Permission.Find(this, verb);
         if (existing != null) return Data.@this.Ok();
 
@@ -72,6 +75,17 @@ public partial class Path
         Path:  Absolute,
         Verb:  verb,
         Match: MatchMode.Exact);
+
+    private bool IsInRoot()
+    {
+        var root = Context?.App.FileSystem.RootDirectory;
+        if (string.IsNullOrEmpty(root)) return false;
+        var rootWithSep = root.EndsWith(System.IO.Path.DirectorySeparatorChar)
+            ? root
+            : root + System.IO.Path.DirectorySeparatorChar;
+        return Absolute.StartsWith(rootWithSep, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(Absolute, root, StringComparison.OrdinalIgnoreCase);
+    }
 
     private static string VerbLabel(Verb verb)
     {
