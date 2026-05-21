@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_fail",
-              "type": "path"
+              "type": "string"
             },
             {
               "name": "Pattern",
@@ -40,22 +40,28 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Discover fixture files under _fail matching *.fixture.goal recursively, then store the resulting list in %tests%.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -74,7 +80,7 @@
             {
               "name": "ListName",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -87,11 +93,11 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -108,7 +114,7 @@
       "intent": null,
       "guidance": "Count discovered tests in %tests% and store the count in %count%.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 97,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -140,9 +146,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert the number of discovered tests equals 1.",
+      "guidance": "Assert the number of discovered tests equals 1 (expected fixture count).",
       "level": "high",
-      "confidence": 98,
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -174,11 +180,11 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -193,7 +199,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Run the discovered tests and store the aggregated results in %results%.",
+      "guidance": "Run the discovered tests in %tests% and store the aggregated results in %results%.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -214,7 +220,7 @@
             {
               "name": "ListName",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Key",
@@ -224,7 +230,7 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
@@ -242,22 +248,28 @@
             {
               "name": "Name",
               "value": "%hasFail%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Check whether any test result has Status == \u0027Fail\u0027 and store the boolean in %hasFail%.",
+      "level": "high",
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -284,9 +296,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Assert that at least one test result failed.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -294,8 +306,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Run/TestRunReportsAssertionFailure.test.goal",
-  "prPath": "/TestModule/Run/.build/testrunreportsassertionfailure.test.pr",
+  "path": "/Run/TestRunReportsAssertionFailure.test.goal",
+  "prPath": "/Run/.build/testrunreportsassertionfailure.test.pr",
   "hash": "5d80694d511162c5034997665a75b5101994906e80d0362ef0137d6c7fc753cd",
   "builderVersion": "0.2.2",
   "isSetup": false,

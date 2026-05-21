@@ -30,9 +30,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "The step is an assertion of equality: \u0027assert %MyIdentity% equals ...\u0027. Map to assert.equals with Expected as the literal string and Actual as the runtime variable %MyIdentity%.",
+      "level": "high",
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -40,8 +40,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Report/_fixtures_sensitive/sensitivefail.fixture.goal",
-  "prPath": "/TestModule/Report/_fixtures_sensitive/.build/sensitivefail.fixture.pr",
+  "path": "/Report/_fixtures_sensitive/sensitivefail.fixture.goal",
+  "prPath": "/Report/_fixtures_sensitive/.build/sensitivefail.fixture.pr",
   "hash": "486a2f266226d16f78281757d2d40fed559a23edf1ac4bdf3a1783581b78d4da",
   "builderVersion": "0.2.2",
   "isSetup": false,

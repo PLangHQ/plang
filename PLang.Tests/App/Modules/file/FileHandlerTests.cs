@@ -451,7 +451,7 @@ public class FileHandlerTests : IDisposable
                             Parameters = new System.Collections.Generic.List<global::App.Data.@this>
                             {
                                 new global::App.Data.@this("Name", "fileResult"),
-                                new global::App.Data.@this("Value", "%__data__%")
+                                new global::App.Data.@this("Value", "%!data%")
                             }
                         }
                     }
@@ -528,7 +528,7 @@ public class FileHandlerTests : IDisposable
                             Parameters = new System.Collections.Generic.List<global::App.Data.@this>
                             {
                                 new global::App.Data.@this("Name", "fileResult"),
-                                new global::App.Data.@this("Value", "%__data__%")
+                                new global::App.Data.@this("Value", "%!data%")
                             }
                         }
                     }

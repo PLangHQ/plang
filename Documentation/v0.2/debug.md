@@ -52,10 +52,10 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["%actions%"],"maxLength
 
 **step** (default): Shows BEFORE/AFTER for each step. Multi-action steps show the final state only.
 
-**action**: Also shows BEFORE/AFTER for each action within a step. Useful for seeing how `%__data__%` flows between actions like `goal.call` → `variable.set`.
+**action**: Also shows BEFORE/AFTER for each action within a step. Useful for seeing how `%!data%` flows between actions like `goal.call` → `variable.set`.
 
 ```bash
-plang '--debug={"level":"action","variables":["%__data__%"]}'
+plang '--debug={"level":"action","variables":["%!data%"]}'
 ```
 
 ## Output Format

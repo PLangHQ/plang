@@ -15,14 +15,14 @@ public partial class Multiply : IContext
             new[]
             {
                 new ActionSpec("math",     "multiply", new() { ["A"] = 6, ["B"] = 7 }),
-                new ActionSpec("variable", "set",      new() { ["Name"] = "%product%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set",      new() { ["Name"] = "%product%", ["Value"] = "%!data%" }),
             }),
         new ExampleSpec(
             "set %area% = %width% * %height%",
             new[]
             {
                 new ActionSpec("math",     "multiply", new() { ["A"] = "%width%", ["B"] = "%height%" }),
-                new ActionSpec("variable", "set",      new() { ["Name"] = "%area%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set",      new() { ["Name"] = "%area%", ["Value"] = "%!data%" }),
             }),
     };
 

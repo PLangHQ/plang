@@ -132,7 +132,7 @@ public partial class @this
             // `--debug={"variables":[...]}` watches see every assignment, and how Properties
             // attached to a name survive a re-mint. In-place mutation of prev is wrong: a
             // Data may be aliased under multiple keys (e.g. Action stores the step result
-            // both under its own name AND under "__data__"), so mutating prev would bleed
+            // both under its own name AND under "!data"), so mutating prev would bleed
             // across keys.
             if (value is Data.@this dv)
             {

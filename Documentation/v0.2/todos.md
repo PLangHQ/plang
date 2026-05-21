@@ -311,7 +311,7 @@ The first form attaches a rollback to a single step (like `on error` does, but d
 
 **Out of scope for now.** This is a sketch, not a spec. Revisit when we finalize the transaction / saga story.
 
-Motivation surfaced: during the build-trace-viewer branch, chasing a null-valued `%__data__%` required four ad-hoc C# Console.Error.WriteLine additions spread across `OpenAiProvider`, `Action.RunAsync`, `Variables.Set`, and `validateResponse`. Only two of those were truly missing from `--debug`; the others were me flailing. With action-return logging + module-scoped LLM response trace, zero would have been needed.
+Motivation surfaced: during the build-trace-viewer branch, chasing a null-valued `%!data%` required four ad-hoc C# Console.Error.WriteLine additions spread across `OpenAiProvider`, `Action.RunAsync`, `Variables.Set`, and `validateResponse`. Only two of those were truly missing from `--debug`; the others were me flailing. With action-return logging + module-scoped LLM response trace, zero would have been needed.
 
 ### Further design (2026-04-23)
 

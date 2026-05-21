@@ -341,7 +341,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// Groups modifier actions onto their preceding executable action for this goal's
     /// steps and every sub-goal recursively. Called before .pr serialization so saved
     /// files have modifiers correctly nested. Without recursion sub-goal steps keep
-    /// modifiers flat and fail at runtime (flat modifiers' no-op Run wipes %__data__%).
+    /// modifiers flat and fail at runtime (flat modifiers' no-op Run wipes %!data%).
     /// </summary>
     public void GroupModifiersRecursive(App.Modules.@this modules)
     {

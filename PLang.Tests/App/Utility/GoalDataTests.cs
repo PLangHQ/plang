@@ -114,7 +114,7 @@ public class GoalSerializationTests
                             Parameters = new List<Data>
                             {
                                 new Data("Name", "response"),
-                                new Data("Value", "%__data__%")
+                                new Data("Value", "%!data%")
                             }
                         }
                     }

@@ -23834,13 +23834,13 @@
         }
       }
       function hashClear() {
-        this.__data__ = nativeCreate ? nativeCreate(null) : {};
+        this.!data = nativeCreate ? nativeCreate(null) : {};
       }
       function hashDelete(key) {
-        return this.has(key) && delete this.__data__[key];
+        return this.has(key) && delete this.!data[key];
       }
       function hashGet(key) {
-        var data = this.__data__;
+        var data = this.!data;
         if (nativeCreate) {
           var result = data[key];
           return result === HASH_UNDEFINED ? void 0 : result;
@@ -23848,11 +23848,11 @@
         return hasOwnProperty2.call(data, key) ? data[key] : void 0;
       }
       function hashHas(key) {
-        var data = this.__data__;
+        var data = this.!data;
         return nativeCreate ? data[key] !== void 0 : hasOwnProperty2.call(data, key);
       }
       function hashSet(key, value) {
-        var data = this.__data__;
+        var data = this.!data;
         data[key] = nativeCreate && value === void 0 ? HASH_UNDEFINED : value;
         return this;
       }
@@ -23870,10 +23870,10 @@
         }
       }
       function listCacheClear() {
-        this.__data__ = [];
+        this.!data = [];
       }
       function listCacheDelete(key) {
-        var data = this.__data__, index2 = assocIndexOf(data, key);
+        var data = this.!data, index2 = assocIndexOf(data, key);
         if (index2 < 0) {
           return false;
         }
@@ -23886,14 +23886,14 @@
         return true;
       }
       function listCacheGet(key) {
-        var data = this.__data__, index2 = assocIndexOf(data, key);
+        var data = this.!data, index2 = assocIndexOf(data, key);
         return index2 < 0 ? void 0 : data[index2][1];
       }
       function listCacheHas(key) {
-        return assocIndexOf(this.__data__, key) > -1;
+        return assocIndexOf(this.!data, key) > -1;
       }
       function listCacheSet(key, value) {
-        var data = this.__data__, index2 = assocIndexOf(data, key);
+        var data = this.!data, index2 = assocIndexOf(data, key);
         if (index2 < 0) {
           data.push([key, value]);
         } else {
@@ -23915,7 +23915,7 @@
         }
       }
       function mapCacheClear() {
-        this.__data__ = {
+        this.!data = {
           "hash": new Hash(),
           "map": new (Map2 || ListCache)(),
           "string": new Hash()
@@ -23941,17 +23941,17 @@
       MapCache.prototype.set = mapCacheSet;
       function SetCache(values) {
         var index2 = -1, length = values ? values.length : 0;
-        this.__data__ = new MapCache();
+        this.!data = new MapCache();
         while (++index2 < length) {
           this.add(values[index2]);
         }
       }
       function setCacheAdd(value) {
-        this.__data__.set(value, HASH_UNDEFINED);
+        this.!data.set(value, HASH_UNDEFINED);
         return this;
       }
       function setCacheHas(value) {
-        return this.__data__.has(value);
+        return this.!data.has(value);
       }
       SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
       SetCache.prototype.has = setCacheHas;
@@ -24015,7 +24015,7 @@
         return new Set2(values);
       };
       function getMapData(map, key) {
-        var data = map.__data__;
+        var data = map.!data;
         return isKeyable(key) ? data[typeof key == "string" ? "string" : "hash"] : data.map;
       }
       function getNative(object2, key) {
@@ -26563,16 +26563,16 @@
         }
       }
       function hashClear() {
-        this.__data__ = nativeCreate ? nativeCreate(null) : {};
+        this.!data = nativeCreate ? nativeCreate(null) : {};
         this.size = 0;
       }
       function hashDelete(key) {
-        var result = this.has(key) && delete this.__data__[key];
+        var result = this.has(key) && delete this.!data[key];
         this.size -= result ? 1 : 0;
         return result;
       }
       function hashGet(key) {
-        var data = this.__data__;
+        var data = this.!data;
         if (nativeCreate) {
           var result = data[key];
           return result === HASH_UNDEFINED ? void 0 : result;
@@ -26580,11 +26580,11 @@
         return hasOwnProperty2.call(data, key) ? data[key] : void 0;
       }
       function hashHas(key) {
-        var data = this.__data__;
+        var data = this.!data;
         return nativeCreate ? data[key] !== void 0 : hasOwnProperty2.call(data, key);
       }
       function hashSet(key, value) {
-        var data = this.__data__;
+        var data = this.!data;
         this.size += this.has(key) ? 0 : 1;
         data[key] = nativeCreate && value === void 0 ? HASH_UNDEFINED : value;
         return this;
@@ -26603,11 +26603,11 @@
         }
       }
       function listCacheClear() {
-        this.__data__ = [];
+        this.!data = [];
         this.size = 0;
       }
       function listCacheDelete(key) {
-        var data = this.__data__, index2 = assocIndexOf(data, key);
+        var data = this.!data, index2 = assocIndexOf(data, key);
         if (index2 < 0) {
           return false;
         }
@@ -26621,14 +26621,14 @@
         return true;
       }
       function listCacheGet(key) {
-        var data = this.__data__, index2 = assocIndexOf(data, key);
+        var data = this.!data, index2 = assocIndexOf(data, key);
         return index2 < 0 ? void 0 : data[index2][1];
       }
       function listCacheHas(key) {
-        return assocIndexOf(this.__data__, key) > -1;
+        return assocIndexOf(this.!data, key) > -1;
       }
       function listCacheSet(key, value) {
-        var data = this.__data__, index2 = assocIndexOf(data, key);
+        var data = this.!data, index2 = assocIndexOf(data, key);
         if (index2 < 0) {
           ++this.size;
           data.push([key, value]);
@@ -26652,7 +26652,7 @@
       }
       function mapCacheClear() {
         this.size = 0;
-        this.__data__ = {
+        this.!data = {
           "hash": new Hash(),
           "map": new (Map2 || ListCache)(),
           "string": new Hash()
@@ -26682,49 +26682,49 @@
       MapCache.prototype.set = mapCacheSet;
       function SetCache(values) {
         var index2 = -1, length = values == null ? 0 : values.length;
-        this.__data__ = new MapCache();
+        this.!data = new MapCache();
         while (++index2 < length) {
           this.add(values[index2]);
         }
       }
       function setCacheAdd(value) {
-        this.__data__.set(value, HASH_UNDEFINED);
+        this.!data.set(value, HASH_UNDEFINED);
         return this;
       }
       function setCacheHas(value) {
-        return this.__data__.has(value);
+        return this.!data.has(value);
       }
       SetCache.prototype.add = SetCache.prototype.push = setCacheAdd;
       SetCache.prototype.has = setCacheHas;
       function Stack(entries) {
-        var data = this.__data__ = new ListCache(entries);
+        var data = this.!data = new ListCache(entries);
         this.size = data.size;
       }
       function stackClear() {
-        this.__data__ = new ListCache();
+        this.!data = new ListCache();
         this.size = 0;
       }
       function stackDelete(key) {
-        var data = this.__data__, result = data["delete"](key);
+        var data = this.!data, result = data["delete"](key);
         this.size = data.size;
         return result;
       }
       function stackGet(key) {
-        return this.__data__.get(key);
+        return this.!data.get(key);
       }
       function stackHas(key) {
-        return this.__data__.has(key);
+        return this.!data.has(key);
       }
       function stackSet(key, value) {
-        var data = this.__data__;
+        var data = this.!data;
         if (data instanceof ListCache) {
-          var pairs = data.__data__;
+          var pairs = data.!data;
           if (!Map2 || pairs.length < LARGE_ARRAY_SIZE - 1) {
             pairs.push([key, value]);
             this.size = ++data.size;
             return this;
           }
-          data = this.__data__ = new MapCache(pairs);
+          data = this.!data = new MapCache(pairs);
         }
         data.set(key, value);
         this.size = data.size;
@@ -26965,7 +26965,7 @@
         return baseGetAllKeys(object2, keys, getSymbols);
       }
       function getMapData(map, key) {
-        var data = map.__data__;
+        var data = map.!data;
         return isKeyable(key) ? data[typeof key == "string" ? "string" : "hash"] : data.map;
       }
       function getNative(object2, key) {

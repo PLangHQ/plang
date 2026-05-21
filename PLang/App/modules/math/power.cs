@@ -15,14 +15,14 @@ public partial class Power : IContext
             new[]
             {
                 new ActionSpec("math",     "power", new() { ["Base"] = 2, ["Exponent"] = 3 }),
-                new ActionSpec("variable", "set",   new() { ["Name"] = "%pow%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set",   new() { ["Name"] = "%pow%", ["Value"] = "%!data%" }),
             }),
         new ExampleSpec(
             "set %y% = %x% ^ 2",
             new[]
             {
                 new ActionSpec("math",     "power", new() { ["Base"] = "%x%", ["Exponent"] = 2 }),
-                new ActionSpec("variable", "set",   new() { ["Name"] = "%y%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set",   new() { ["Name"] = "%y%", ["Value"] = "%!data%" }),
             }),
     };
 

@@ -193,7 +193,7 @@ public class SubscriberSurvivalTests
 
     // Properties stay attached to the Data instance — they're result metadata
     // (e.g. condition.if's branchIndex), not binding metadata. Without this rule,
-    // engine-level aliases like `__data__` would carry stale Properties between
+    // engine-level aliases like `!data` would carry stale Properties between
     // step results.
     [Test]
     public async Task Set_Replace_DoesNotCarryProperties()

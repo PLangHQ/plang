@@ -344,7 +344,7 @@ public class GoalTests
                             Parameters = new List<Data>
                             {
                                 new("Name", "users"),
-                                new("Value", "%__data__%")
+                                new("Value", "%!data%")
                             }
                         }
                     })

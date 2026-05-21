@@ -24,7 +24,7 @@ public partial class Set : IContext, IBuildValidatable
         var value = parameters.FirstOrDefault(p =>
             string.Equals(p.Name, "Value", StringComparison.OrdinalIgnoreCase));
         if (value?.Value is string s && s == "this")
-            return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%__data__%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
+            return "Parameter 'Value' is the literal string \"this\" — this is wrong. For \"write to %var%\" patterns, use \"%!data%\" to capture the previous action's result. \"this\" is a type annotation, not a value.";
         if (value?.Type?.Value != null && value.Value != null)
         {
             // Skip validation when value contains %variable% references — they resolve at runtime

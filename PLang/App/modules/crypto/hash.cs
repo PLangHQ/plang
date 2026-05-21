@@ -6,7 +6,7 @@ namespace App.modules.crypto;
 [ModuleDescription("Cryptographic hashing and hash verification using configurable algorithms")]
 [System.ComponentModel.Description("Hash data using the specified algorithm (default keccak256) and return the hex digest")]
 [Example("hash %content%, write to %hash%",
-    "crypto.hash Data([object] %content%), Algorithm([string] keccak256) | variable.set Name([string] %hash%), Value([object] %__data__%)")]
+    "crypto.hash Data([object] %content%), Algorithm([string] keccak256) | variable.set Name([string] %hash%), Value([object] %!data%)")]
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext
 {

@@ -49,7 +49,7 @@ public class EngineTests
                     Parameters = new List<Data>
                     {
                         new Data("Name", returnVarName),
-                        new Data("Value", "%__data__%")
+                        new Data("Value", "%!data%")
                     }
                 }
             }

@@ -173,7 +173,7 @@ public class CacheWrapTests
     public async Task Wrap_CachedResult_RestoredAsDataVariable()
     {
         // Pre-cache a value, then execute — the handler should put the cached Data
-        // into Variables under name __data__ so the next action can read it via %__data__%.
+        // into Variables under name !data so the next action can read it via %!data%.
         var stashed = global::App.Data.@this.Ok("restored");
         await Ctx.App!.Cache.SetAsync("restore-key", stashed,
             new CacheSettings { DurationMs = 60_000, Sliding = false });
@@ -190,7 +190,7 @@ public class CacheWrapTests
 
         await action.RunAsync(Ctx);
 
-        var dataVar = Ctx.Variables.Get("__data__");
+        var dataVar = Ctx.Variables.Get("!data");
         await Assert.That(dataVar).IsNotNull();
         await Assert.That(dataVar.Value).IsEqualTo("restored");
     }

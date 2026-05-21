@@ -150,7 +150,7 @@ RunSteps(steps, context)
       Run(action, context)
         -> Modules.GetCodeGenerated(action)
         -> handler.ExecuteAsync(action, context)
-        -> result stored as %__data__% on context.Variables
+        -> result stored as %!data% on context.Variables
     
     sub-step control:
       condition.if sets step.Disabled on indented children
@@ -164,8 +164,8 @@ Run(action, context)
   var executor = Modules.GetCodeGenerated(action.Module, action.ActionName, context);
   var result = await executor.ExecuteAsync(action, this, context);
   
-  // Result stored as %__data__% — available to the next action or variable.set
-  result.Name = "__data__";
+  // Result stored as %!data% — available to the next action or variable.set
+  result.Name = "!data";
   context.Variables.Put(result);
   
   return result;

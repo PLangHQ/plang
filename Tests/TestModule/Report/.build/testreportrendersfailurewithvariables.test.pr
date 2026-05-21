@@ -44,7 +44,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -97,7 +97,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -150,7 +150,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -243,8 +243,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Report/TestReportRendersFailureWithVariables.test.goal",
-  "prPath": "/TestModule/Report/.build/testreportrendersfailurewithvariables.test.pr",
+  "path": "/Report/TestReportRendersFailureWithVariables.test.goal",
+  "prPath": "/Report/.build/testreportrendersfailurewithvariables.test.pr",
   "hash": "48239745160930279840396bf6ddb529a74a9e8b353384c264638664ffdf1ab0",
   "builderVersion": "0.2.2",
   "isSetup": false,

@@ -188,12 +188,12 @@ public sealed partial class @this : modules.IDataWrappable
 
         if (result.Success)
         {
-            // Alias the result as %__data__% — Variables.Set stores Data references as-is
-            // (no clone, no rename). Same object is reachable via both %__data__% and
+            // Alias the result as %!data% — Variables.Set stores Data references as-is
+            // (no clone, no rename). Same object is reachable via both %!data% and
             // whatever name the producing handler owns (e.g., variable.set's stored entry).
             // Override path (beforeResult.Handled) flows through the same write so
             // mocks and event.skipAction feed the next action like any real result.
-            context.Variables.Set("__data__", result);
+            context.Variables.Set("!data", result);
         }
 
         var afterResult = await lifecycle.After.Run(context, App.Events.EventType.AfterAction, this, result);

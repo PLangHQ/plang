@@ -15,7 +15,7 @@ namespace App.modules.file;
 /// </summary>
 [System.ComponentModel.Description("Read a file's content; optionally resolve %var% patterns in the text before returning")]
 [Example("read file.txt, write to %content%",
-    "file.read Path([path] file.txt) | variable.set Name([string] %content%), Value([object] %__data__%)")]
+    "file.read Path([path] file.txt) | variable.set Name([string] %content%), Value([object] %!data%)")]
 [Action("read")]
 public partial class Read : IContext
 {

@@ -61,7 +61,7 @@ Examples of `formal` for common steps:
 
 ```
 step   : read file 'config.json', write to %config%
-formal : file.read Path([path] config.json) | variable.set Name([string] %config%), Value([object] %__data__%)
+formal : file.read Path([path] config.json) | variable.set Name([string] %config%), Value([object] %!data%)
 
 step   : call goal Greet name="world"
 formal : goal.call GoalName([goal.call] {"name":"Greet","parameters":[{"name":"name","value":"world","type":"string"}]})
@@ -152,11 +152,11 @@ Response:
     {
       "index": 1,
       "guidance": "file.read with cache.wrap modifier (5 min = 300000ms), then variable.set to capture %config%. The cache.wrap modifier wraps only the file.read, not the variable.set.",
-      "formal": "file.read Path([path] config.json) | cache.wrap DurationMs([long] 300000) | variable.set Name([string] %config%), Value([object] %__data__%)",
+      "formal": "file.read Path([path] config.json) | cache.wrap DurationMs([long] 300000) | variable.set Name([string] %config%), Value([object] %!data%)",
       "actions": [
         {"module": "file", "action": "read", "parameters": [{"name": "Path", "value": "config.json", "type": "path"}]},
         {"module": "cache", "action": "wrap", "parameters": [{"name": "DurationMs", "value": 300000, "type": "long"}]},
-        {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%config%", "type": "string"}, {"name": "Value", "value": "%__data__%", "type": "object"}]}
+        {"module": "variable", "action": "set", "parameters": [{"name": "Name", "value": "%config%", "type": "string"}, {"name": "Value", "value": "%!data%", "type": "object"}]}
       ],
       "group": "config-check",
       "level": "high", "confidence": 95
@@ -200,14 +200,14 @@ Response:
 
 ## Steps Are Chains of Actions
 
-A natural step usually compiles to more than one action. Each clause in the step text that **does work** — returns data, mutates state, branches, iterates, wraps — is its own action. Chain them in `formal` with ` | `; they execute in order, and the producing action's result is the consuming action's `%__data__%` input.
+A natural step usually compiles to more than one action. Each clause in the step text that **does work** — returns data, mutates state, branches, iterates, wraps — is its own action. Chain them in `formal` with ` | `; they execute in order, and the producing action's result is the consuming action's `%!data%` input.
 
 Walk the step text left to right. For each clause, ask: *does this do work, or is it a description of what the preceding work should do?* If it does work, it's an action. If it modifies how the preceding work runs (error handling, caching, deadlines), it's a modifier action right after it.
 
 Illustrative patterns (not exhaustive — any clause-doing-work is an action):
 
-- **`… write to %var%`** → main action | `variable.set Name=%var%, Value=%__data__%`. Applies to any producing action that assigns its output to a variable.
-- **`… write out …`** → main action | `output.write Data=%__data__%` when the second clause directs the produced value to output (e.g. `get URL, write out`).
+- **`… write to %var%`** → main action | `variable.set Name=%var%, Value=%!data%`. Applies to any producing action that assigns its output to a variable.
+- **`… write out …`** → main action | `output.write Data=%!data%` when the second clause directs the produced value to output (e.g. `get URL, write out`).
 - **`foreach %list%, call Goal`** → `loop.foreach` | `goal.call`. The foreach iterates; the goal.call runs per item.
 - **`if X then Y`** → `condition.if` | Y-action(s). The conditional body is the following action(s) in the **same** step — one response-step object, multiple entries in its `actions` array. Applies to every inline form: `if X, call Y` → `condition.if | goal.call`; `if X, throw error Y` → `condition.if | error.throw`; `if X, set %y% = …` → `condition.if | variable.set`. A step with one `- ` line produces exactly one response-step object, however many actions its compiled chain contains.
 - **`action, on error …` / `action, cache for …` / `action, timeout …`** → action | modifier (`error.handle`, `cache.wrap`, `timeout.after`). Modifiers are listed in the catalog's `# Modifiers` section.
@@ -223,7 +223,7 @@ If `formal` only shows one action and the step text had more than one clause doi
 
 Example step `"llm.query system=%prompt%, user=%input%, schema={result: string}, write to %answer%"`:
 ```
-formal: llm.query Messages([list<llmmessage>] [{"Role":"system","Content":"%prompt%"},{"Role":"user","Content":"%input%"}]), Schema([json] {"result":"string"}) | variable.set Name([string] %answer%), Value([object] %__data__%)
+formal: llm.query Messages([list<llmmessage>] [{"Role":"system","Content":"%prompt%"},{"Role":"user","Content":"%input%"}]), Schema([json] {"result":"string"}) | variable.set Name([string] %answer%), Value([object] %!data%)
 ```
 
 ## JSON values — type declaration
@@ -245,6 +245,6 @@ Any parameter value that is a JSON object or JSON array MUST carry `"type": "jso
 - NEVER alter literal values. You are a compiler, not an editor.
 - Action modifiers — any step text expressing cross-cutting behavior around an action (error handling, caching, deadlines) MUST produce a modifier action right after the action it applies to. Modifier actions today: `error.handle` (on-error / retry / ignore / error-goal), `cache.wrap` (cache for X), `timeout.after` (deadline). The builder groups these onto the preceding executable action. Missing a modifier when the step text implies one is a build-breaking bug.
 - Modifier shape. Modifier actions live in the flat action list as separate entries (`{"module":"error","action":"handle",...}`) directly after the action they wrap. They are NEVER concatenated into the preceding action's module path. Module names never contain dots. `{"module":"signing.error.handle",...}` is wrong — that invents a non-existent module. `{"module":"timeout.after.after",...}` is wrong for the same reason. Always keep each module name to a single identifier; let the flat-list position express the wrapping relationship.
-- Actions within a step execute in order. Each action's result is available as \%__data__\% to the next action.
+- Actions within a step execute in order. Each action's result is available as \%!data\% to the next action.
 - When a step combines a condition with another action (e.g., `if X, call GoalName` or `if X, set %y% = 1` or `if X, throw error 'msg'`), produce multiple actions in the **same response-step object**: `condition.if` first, then the conditional action(s). The orchestrator handles running or skipping them. This line is ONE step in the response `steps` array — never split the condition and its body into two response-step entries.
 - `assert.*` is for **post-condition invariants** that must always hold at that point (unconditional checks on already-produced data). Conditional-fail patterns — `if X, throw error Y`, `if X is empty, throw error Y`, `if X is null, throw error Y` — are NOT assertions; they branch on X and throw only when the branch is taken. Map them as `condition.if | error.throw`, never as `assert.isTrue`/`assert.isNull`/etc. An assert with a conditional-looking value (`assert.isTrue Value=[bool] %x% is not empty`) is a compile-time bug.

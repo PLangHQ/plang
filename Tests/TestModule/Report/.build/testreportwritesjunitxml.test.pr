@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_fixtures_pass",
-              "type": "path"
+              "type": "string"
             },
             {
               "name": "Pattern",
@@ -40,22 +40,28 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Discover fixture goals under _fixtures_pass recursively, store the resulting test descriptors list into %tests% for later test.run.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -74,7 +80,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             }
           ],
           "defaults": null,
@@ -87,22 +93,28 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Run the discovered tests in %tests% and store the aggregated results into %results% for report generation.",
+      "level": "high",
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -121,7 +133,7 @@
             {
               "name": "Results",
               "value": "%results%",
-              "type": "object"
+              "type": "results"
             },
             {
               "name": "Format",
@@ -139,22 +151,28 @@
             {
               "name": "Name",
               "value": "%report%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Generate a JUnit report from %results% with format=\u0027junit\u0027, writing it to %report% and storing the report object into %report%.",
+      "level": "high",
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -191,7 +209,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the generated report content includes the JUnit XML root tag \u0027\u003Ctestsuites\u0027. Uses assert.contains with %report.content% as Value and the literal tag as Container.",
+      "guidance": "Assert the generated report content contains the JUnit XML root tag \u0027\u003Ctestsuites\u0027.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -221,8 +239,7 @@
             },
             {
               "name": "Message",
-              "value": "",
-              "type": "string"
+              "value": null
             }
           ],
           "defaults": null,
@@ -230,9 +247,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the report summaryPass equals 1. Uses assert.equals with Expected=1 and Actual=%report.summaryPass%.",
+      "guidance": "Assert the report summaryPass equals 1.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 80,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -264,11 +281,11 @@
             {
               "name": "Name",
               "value": "%exists%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -283,9 +300,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Check that the report file at %report.reportPath% exists, writing the boolean result to %exists%.",
+      "guidance": "Check whether the report file at %report.reportPath% exists on disk, storing the boolean into %exists%.",
       "level": "high",
-      "confidence": 97,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -308,8 +325,7 @@
             },
             {
               "name": "Message",
-              "value": "",
-              "type": "string"
+              "value": null
             }
           ],
           "defaults": null,
@@ -317,9 +333,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the file existence flag %exists% is true.",
+      "guidance": "Assert the %exists% flag is true, confirming the junit.xml file was written.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -327,8 +343,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Report/TestReportWritesJunitXml.test.goal",
-  "prPath": "/TestModule/Report/.build/testreportwritesjunitxml.test.pr",
+  "path": "/Report/TestReportWritesJunitXml.test.goal",
+  "prPath": "/Report/.build/testreportwritesjunitxml.test.pr",
   "hash": "ebbd2c30032f7282dbbd208efd557578ab21b33141284d8b06d8527140e5f0b6",
   "builderVersion": "0.2.2",
   "isSetup": false,

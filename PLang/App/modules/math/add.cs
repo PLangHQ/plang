@@ -15,14 +15,14 @@ public partial class Add : IContext
             new[]
             {
                 new ActionSpec("math",     "add", new() { ["A"] = 5, ["B"] = 3 }),
-                new ActionSpec("variable", "set", new() { ["Name"] = "%sum%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set", new() { ["Name"] = "%sum%", ["Value"] = "%!data%" }),
             }),
         new ExampleSpec(
             "set %count% = %count% + 1",
             new[]
             {
                 new ActionSpec("math",     "add", new() { ["A"] = "%count%", ["B"] = 1 }),
-                new ActionSpec("variable", "set", new() { ["Name"] = "%count%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set", new() { ["Name"] = "%count%", ["Value"] = "%!data%" }),
             }),
     };
 

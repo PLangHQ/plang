@@ -24,9 +24,9 @@ Notation: `module.action Name([type?=default])` — `?` = optional, `=val` is de
 # Actions
 
 ## file — Read, write, list, and delete files through the configured filesystem
-- file.read — Read a file's bytes or text, returned in %__data__%
+- file.read — Read a file's bytes or text, returned in %!data%
   (Path([path]), Encoding([string?]))
-  e.g. `read file.txt, write to %content%` → file.read Path([path] file.txt) | variable.set Name([string] %content%), Value([object] %__data__%)
+  e.g. `read file.txt, write to %content%` → file.read Path([path] file.txt) | variable.set Name([string] %content%), Value([object] %!data%)
 
 ## error — Error handling: throw errors from a step, or wrap the preceding action with retry/handle-goal/ignore semantics
 - error.throw [no-cache] — Immediately fail the step with a structured error message, status code, and optional key
@@ -94,19 +94,19 @@ module.action Name([type] value), Name2([type] value) | next-action Name([type] 
 - `[type]` tag precedes each value. Use the same type token the catalog renders (`string`, `path`, `object`, `int`, `bool`, `goal.call`, etc.). Variable-name slots render as `[string]` with a `%var%` value (e.g. `Name([string] %foo%)`).
 - String values with spaces or commas are quoted; numbers, bools, and `%var%` refs are unquoted.
 - Structured values (e.g. `goal.call` payloads) stay as JSON after the type tag: `GoalName([goal.call] {"name":"Greet","parameters":[...]})`.
-- When the plang step captures output with `write to %var%`, include the implicit `variable.set` as the last pipe segment: `| variable.set Name([string] %var%), Value([object] %__data__%)`.
+- When the plang step captures output with `write to %var%`, include the implicit `variable.set` as the last pipe segment: `| variable.set Name([string] %var%), Value([object] %!data%)`.
 
 Concrete example from `crypto/verify.cs`:
 
 ```csharp
 [Example("verify %content% against %hash%, write to %isValid%",
-         "crypto.verify Data([object] %content%), Hash([string] %hash%), Algorithm([string] keccak256) | variable.set Name([string] %isValid%), Value([object] %__data__%)")]
+         "crypto.verify Data([object] %content%), Hash([string] %hash%), Algorithm([string] keccak256) | variable.set Name([string] %isValid%), Value([object] %!data%)")]
 ```
 
 **Keep examples at one per action**, and only when the mapping teaches something the signature alone doesn't:
 
 - Non-obvious param wiring (which natural phrase maps to which param)
-- A multi-action pipe chain (shows how `%__data__%` flows)
+- A multi-action pipe chain (shows how `%!data%` flows)
 - Structured JSON values
 - Enum selection
 

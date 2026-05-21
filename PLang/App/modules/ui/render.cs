@@ -6,7 +6,7 @@ namespace App.modules.ui;
 [ModuleDescription("Render Liquid templates from inline content or files with PLang variable injection")]
 [System.ComponentModel.Description("Render a Liquid template (file or inline) with the current variables and optional explicit parameters")]
 [Example("render 'page.html' with title=%pageTitle%, write to %html%",
-    "ui.render Template([string] page.html), Parameters([list<object>] [{\"Name\":\"title\",\"Value\":\"%pageTitle%\"}]) | variable.set Name([string] %html%), Value([object] %__data__%)")]
+    "ui.render Template([string] page.html), Parameters([list<object>] [{\"Name\":\"title\",\"Value\":\"%pageTitle%\"}]) | variable.set Name([string] %html%), Value([object] %!data%)")]
 [Action("render")]
 public partial class Render : IContext
 {

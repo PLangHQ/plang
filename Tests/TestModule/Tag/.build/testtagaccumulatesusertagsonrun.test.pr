@@ -83,7 +83,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -136,7 +136,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -222,7 +222,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -308,7 +308,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -394,7 +394,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -447,8 +447,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Tag/TestTagAccumulatesUserTagsOnRun.test.goal",
-  "prPath": "/TestModule/Tag/.build/testtagaccumulatesusertagsonrun.test.pr",
+  "path": "/Tag/TestTagAccumulatesUserTagsOnRun.test.goal",
+  "prPath": "/Tag/.build/testtagaccumulatesusertagsonrun.test.pr",
   "hash": "8c1946d4479b68d6874fc61ef7d2cefbfb715158b2da482fc531cdd1ec4bb1fe",
   "builderVersion": "0.2.2",
   "isSetup": false,

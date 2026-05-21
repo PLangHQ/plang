@@ -18,7 +18,7 @@ namespace App.modules.test;
 /// </summary>
 [System.ComponentModel.Description("Execute a list of discovered TestFiles in parallel and accumulate results")]
 [Example("run tests %tests%, write to %results%",
-    "test.run Tests([object] %tests%) | variable.set Name([string] %results%), Value([object] %__data__%)")]
+    "test.run Tests([object] %tests%) | variable.set Name([string] %results%), Value([object] %!data%)")]
 [Action("run", Cacheable = false)]
 public partial class run : IContext
 {

@@ -39,7 +39,7 @@ public partial class Handle : IContext, IModifier
                                 new ActionSpec("output",   "write", new() { ["Data"] = "missing" }),
                                 new ActionSpec("file",     "read",  new() { ["Path"] = "fallback.txt" }),
                                 new ActionSpec("variable", "set",   new() { ["Name"]  = "%content%",
-                                                                             ["Value"] = "%__data__%" }),
+                                                                             ["Value"] = "%!data%" }),
                             }
                         })
                     }),
@@ -70,7 +70,7 @@ public partial class Handle : IContext, IModifier
     /// <summary>
     /// Action chain to run when the error matches. Preferred over Goal — lets a
     /// developer express "on error, log + fall back + notify" inline without
-    /// wrapping it in a goal. Actions execute in order; %__data__% flows between
+    /// wrapping it in a goal. Actions execute in order; %!data% flows between
     /// them just like the main step chain.
     /// </summary>
     public partial global::App.Data.@this<List<ActionEntity>>? Actions { get; init; }

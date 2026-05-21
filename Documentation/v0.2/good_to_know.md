@@ -744,7 +744,7 @@ Shared goals often tag themselves so they carry auto-tags when reused in tests (
 The snapshot taken on assertion failure (`PLang/App/Variables/this.cs:Snapshot`) excludes `!`-prefixed infrastructure vars, `DynamicData` (Now/GUID), and `SettingsVariable`. It does **not** honour `[Sensitive]` — that filter applies at JSON *serialization* via `Json.DiagnosticOutput` when the snapshot is rendered into the report. Result: ordinary user variables carrying secrets flow through the snapshot but are only masked if their carrier type has `[Sensitive]` on the relevant property. See security-report.json finding #3 on this branch.
 
 ### Teach LLM mappings via `ExamplesForLlm()`, never via runtime parsers
-When a step like `set %count% = %count% + 1` produces the wrong action chain, the temptation is to add an arithmetic evaluator inside `Variables.Resolve` so the runtime "just handles" the `+`. Don't. The compile path already has a `math` module (`add` / `subtract` / `multiply` / `divide` / `power`); the LLM just doesn't know to translate the RHS-arithmetic shorthand. Adding `ExamplesForLlm()` to each math action with both forms (natural — `"add 5 and 3, write to %sum%"` — and RHS — `"set %count% = %count% + 1"`) mapping to `math.<op> | variable.set Value=%__data__%` is enough; the LLM follows the example.
+When a step like `set %count% = %count% + 1` produces the wrong action chain, the temptation is to add an arithmetic evaluator inside `Variables.Resolve` so the runtime "just handles" the `+`. Don't. The compile path already has a `math` module (`add` / `subtract` / `multiply` / `divide` / `power`); the LLM just doesn't know to translate the RHS-arithmetic shorthand. Adding `ExamplesForLlm()` to each math action with both forms (natural — `"add 5 and 3, write to %sum%"` — and RHS — `"set %count% = %count% + 1"`) mapping to `math.<op> | variable.set Value=%!data%` is enough; the LLM follows the example.
 
 The pattern: `static ExampleSpec[] ExamplesForLlm() => new[] { Example("step text", Action("module.action", new() { ["Param"] = ... }), Action(...)) }` — multi-action chains pass multiple `Action(...)` args to one `Example`. Helpers live in `App.Catalog.ExampleHelpers`.
 
@@ -953,11 +953,11 @@ if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 
 **Events follow the name.** Each `Data` under a name shares the *same* event-list refs as the prev binding. Subscribers added at any point — to source, to any view, before or after replacement — are visible from every alias because they share the same list. This is what makes `--debug={"variables":[{"name":"x","event":"onchange"}]}` see every assignment to `%x%`, not just the first; pinned by `Set_Replace_AliasesPrevOnChangeOntoDv` and the regression test `DebugWatch_OnChange_FiresOnEveryReplacement` in `SubscriberSurvivalTests`.
 
-**Properties stay with the `Data` instance.** They're metadata about the *value* (e.g. `condition.if`'s `branchIndex`, attached to a step's `__data__` Data). A new binding starts with its own `Properties` so stale metadata doesn't bleed across re-bindings.
+**Properties stay with the `Data` instance.** They're metadata about the *value* (e.g. `condition.if`'s `branchIndex`, attached to a step's `!data` Data). A new binding starts with its own `Properties` so stale metadata doesn't bleed across re-bindings.
 
 **Idempotent Set.** The `!ReferenceEquals(prev, dv)` guard means setting the same instance twice is a no-op (no double-fire of `OnChange`).
 
-**Inconsistency on the non-Data path.** `Variables.Set(string, object?, Type?)` for a non-Data value mutates the existing Data in place via `existing.Value = value`; the `Value` setter fires `OnChange(this, this)` — same instance for both args. The replacement path fires `(prev, dv)` as two distinct Data; the in-place path fires `(this, this)`. `OnTypeChange` watches via the non-Data path therefore never fire (auditor v2 N1) — but user-visible `set %x% = ...` always goes through `variable.set` → `MintTyped` → Data path, so user variable watches work correctly. Engine paths (`__data__` rebinding, `list.add` write-back, settings vars) hit the non-Data path; OnTypeChange on those is best-effort.
+**Inconsistency on the non-Data path.** `Variables.Set(string, object?, Type?)` for a non-Data value mutates the existing Data in place via `existing.Value = value`; the `Value` setter fires `OnChange(this, this)` — same instance for both args. The replacement path fires `(prev, dv)` as two distinct Data; the in-place path fires `(this, this)`. `OnTypeChange` watches via the non-Data path therefore never fire (auditor v2 N1) — but user-visible `set %x% = ...` always goes through `variable.set` → `MintTyped` → Data path, so user variable watches work correctly. Engine paths (`!data` rebinding, `list.add` write-back, settings vars) hit the non-Data path; OnTypeChange on those is best-effort.
 
 ---
 
@@ -969,7 +969,7 @@ if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 
 **Forced type via `[Type]`** — `set %x% = "42", type=int` calls `TypeMapping.TryConvertTo(value, targetType, ctx)`; conversion failure surfaces as `Data.FromError`, `Variables.Set` is not called, and the binding stays whatever it was. For `type=json`, the value flows through `JsonNode` (`JsonObject` implements `IDictionary<string, JsonNode?>`, NOT `IDictionary<string, object?>`, so it has its own dispatch arm in `TypeConverter`); see *JsonNode in TypeConverter* below.
 
-**Other `Variables.Set` callers exist but don't mint user-named bindings:** `Action.RunAsync` rebinds `__data__` per step; `list.add` falls back to `Variables.Set(ListName, list)` on the convert-non-list-to-list path; `cache/wrap.cs` restores cached `__data__`. None of these are slots a user would `set %x% = ...` on, so the "sole" framing holds at the user-visible layer.
+**Other `Variables.Set` callers exist but don't mint user-named bindings:** `Action.RunAsync` rebinds `!data` per step; `list.add` falls back to `Variables.Set(ListName, list)` on the convert-non-list-to-list path; `cache/wrap.cs` restores cached `!data`. None of these are slots a user would `set %x% = ...` on, so the "sole" framing holds at the user-visible layer.
 
 ---
 

@@ -44,7 +44,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -91,7 +91,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -155,7 +155,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             },
             {
               "name": "Parallel",
@@ -173,22 +173,28 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Run the discovered fixture tests with parallel=1 to ensure deterministic sequential execution and isolate memory stack between tests. Capture results into %results%.",
+      "level": "high",
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -207,7 +213,7 @@
             {
               "name": "ListName",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Key",
@@ -217,7 +223,7 @@
             {
               "name": "Operator",
               "value": "!=",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
@@ -235,22 +241,28 @@
             {
               "name": "Name",
               "value": "%hasNonPass%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Check whether any test result in %results% has Status != \u0027Pass\u0027. Store boolean into %hasNonPass%.",
+      "level": "high",
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -277,9 +289,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Assert that %hasNonPass% is false, meaning all tests passed.",
+      "level": "high",
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -287,8 +299,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
-  "prPath": "/TestModule/Run/.build/testrunisolatesmemorystackbetweentests.test.pr",
+  "path": "/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal",
+  "prPath": "/Run/.build/testrunisolatesmemorystackbetweentests.test.pr",
   "hash": "4a9ec2134e51a51c2587b3148d38511306e201d7b0f12b272af72cfbbf1d5292",
   "builderVersion": "0.2.2",
   "isSetup": false,
