@@ -1,7 +1,23 @@
 # Coder — filesystem-permission
 
 ## Version
-v6 — see `v6/report.md` (auditor F-A persistent-grant durability + F-B runtime2 merge)
+v7 — see `v7/result.md` (close tester v5 F1: pin nonce-replay half of F-A fix)
+
+## v7 update — tester v5 F1 closed
+
+tester v5 PASSed the production fix but flagged that coder v6's
+`SkipFreshnessCheck=true` neutralises **two** independent signing checks
+(step 2 wire-freshness, step 4 nonce-replay) and only step 2 had a test.
+
+Added `Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt`
+(tester's spec verbatim): app1 grants "a"; app2 reads the same foreign file
+twice. Persisted `Find` re-deserializes `Data` each call, so each read does a
+real `VerifySignature` — second read would hit `NonceReplay` without the
+flag. Stateless channel surfaces a re-prompt as `Type == "ask"`.
+
+Mutation-verified: `SkipFreshnessCheck` `true→false` now kills **both**
+Scenario4 durability tests (step 2 and step 4 each), where v6's commit
+killed only one. Suite: **2855 pass, 0 skip, 0 fail**.
 
 ## v6 update — both major auditor findings closed
 

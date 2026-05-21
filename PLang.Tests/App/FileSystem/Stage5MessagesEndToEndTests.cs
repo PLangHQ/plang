@@ -152,6 +152,33 @@ public class Stage5MessagesEndToEndTests
         await Assert.That(secondRead.Type?.Value).IsNotEqualTo("ask");
     }
 
+    /// Auditor v1 F-A, nonce-replay half: a persisted grant is re-verified on
+    /// every Find (SettingsStore.GetAll yields a fresh Data each call, so the
+    /// per-instance VerifiedFlag cache does not carry across reads). Without
+    /// SkipFreshnessCheck neutralising step 4, the second verification inside
+    /// one app would hit NonceReplay and re-prompt. Pairs with
+    /// Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow, which gates
+    /// only step 2 (wire-freshness).
+    [Test] public async Task Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt()
+    {
+        var (app1, foreignFile) = Setup("a");
+        var root = app1.AbsolutePath;
+        var path1 = new Path(foreignFile, app1.User.Context);
+        await Assert.That((await path1.ReadText()).Success).IsTrue();   // create persisted grant
+
+        // app2: two reads. Each Find re-deserializes the grant → two real
+        // VerifySignature passes → step 4 would NonceReplay the second.
+        var app2 = new global::app.@this(root);
+        app2.User.Channels.Register(new StatelessChannel());
+        var path2 = new Path(foreignFile, app2.User.Context);
+        var read1 = await path2.ReadText();   // verify #1 — nonce cached
+        var read2 = await path2.ReadText();   // verify #2 — nonce replay if step 4 active
+        await Assert.That(read1.Success).IsTrue();
+        await Assert.That(read1.Type?.Value).IsNotEqualTo("ask");
+        await Assert.That(read2.Success).IsTrue();
+        await Assert.That(read2.Type?.Value).IsNotEqualTo("ask");
+    }
+
     [Test] public async Task Scenario5_RevokeReprompts_AfterRevokeFreshPromptFires()
     {
         var (app, foreignFile) = Setup("a");
