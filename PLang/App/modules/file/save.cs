@@ -1,5 +1,8 @@
+using App.Types;
 using App.Variables;
 using App.modules.file.code;
+using Verb = global::App.FileSystem.Permission.Verb.@this;
+using WriteVerb = global::App.FileSystem.Permission.Verb.Write;
 
 namespace App.modules.file;
 
@@ -13,5 +16,10 @@ public partial class Save : IContext
     [Code]
     public partial IFile Files { get; }
 
-    public Task<Data.@this> Run() => Files.Save(this);
+    public async Task<Data.@this> Run()
+    {
+        var auth = await Path.Value!.Authorize(new Verb { Write = new WriteVerb() });
+        if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
+        return await Files.Save(this);
+    }
 }

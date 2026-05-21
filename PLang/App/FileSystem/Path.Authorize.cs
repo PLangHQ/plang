@@ -90,19 +90,32 @@ public partial class Path
 
     private bool IsInRoot()
     {
-        var root = Context?.App.FileSystem.RootDirectory;
-        if (string.IsNullOrEmpty(root)) return false;
-        var rootWithSep = root.EndsWith(System.IO.Path.DirectorySeparatorChar)
-            ? root
-            : root + System.IO.Path.DirectorySeparatorChar;
+        var fs = Context?.App.FileSystem;
+        if (fs == null) return false;
         // Linux paths are case-sensitive: comparing case-insensitively lets
         // /SRV/myapp match /srv/myapp and slip past the gate. Windows is
         // case-insensitive at the filesystem layer, so honour that there.
         var cmp = OperatingSystem.IsWindows()
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
-        return Absolute.StartsWith(rootWithSep, cmp)
-            || string.Equals(Absolute, root, cmp);
+        return IsUnder(fs.RootDirectory, cmp)
+            || IsUnder(fs.OsDirectory, cmp);
+    }
+
+    /// <summary>
+    /// Returns true when <see cref="Absolute"/> sits under (or equals)
+    /// <paramref name="dir"/>. The OsDirectory check covers system-built-in
+    /// goals (test, build) that live outside the actor's RootDirectory — they
+    /// are runtime-owned files, not user content.
+    /// </summary>
+    private bool IsUnder(string? dir, StringComparison cmp)
+    {
+        if (string.IsNullOrEmpty(dir)) return false;
+        var dirWithSep = dir.EndsWith(System.IO.Path.DirectorySeparatorChar)
+            ? dir
+            : dir + System.IO.Path.DirectorySeparatorChar;
+        return Absolute.StartsWith(dirWithSep, cmp)
+            || string.Equals(Absolute, dir, cmp);
     }
 
     private static string VerbLabel(Verb verb)

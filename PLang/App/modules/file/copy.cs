@@ -1,5 +1,9 @@
+using App.Types;
 using App.Variables;
 using App.modules.file.code;
+using Verb = global::App.FileSystem.Permission.Verb.@this;
+using ReadVerb = global::App.FileSystem.Permission.Verb.Read;
+using WriteVerb = global::App.FileSystem.Permission.Verb.Write;
 
 namespace App.modules.file;
 
@@ -20,5 +24,18 @@ public partial class Copy : IContext
     [Code]
     public partial IFile Files { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Files.Copy(this));
+    /// <summary>
+    /// Authorize source (Read) then destination (Write) in sequence. v1
+    /// degradation: two separate prompts on a fresh out-of-root pair.
+    /// Bundled-consent UX is pinned by the C# Path.MoveTo/CopyTo path
+    /// and tracked as a follow-up for the action-handler surface.
+    /// </summary>
+    public async Task<Data.@this> Run()
+    {
+        var srcAuth = await Source.Value!.Authorize(new Verb { Read = new ReadVerb() });
+        if (srcAuth.Type?.ClrType.Exit() == true || !srcAuth.Success) return srcAuth;
+        var dstAuth = await Destination.Value!.Authorize(new Verb { Write = new WriteVerb() });
+        if (dstAuth.Type?.ClrType.Exit() == true || !dstAuth.Success) return dstAuth;
+        return Files.Copy(this);
+    }
 }

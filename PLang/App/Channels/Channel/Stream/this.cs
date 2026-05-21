@@ -86,13 +86,26 @@ public sealed class @this : Session.@this
 
     public override async Task<Data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
     {
-        // Session-style ask: write the question, then read a line.
-        // Timeout enforced via the per-channel Timeout config.
+        // Two-call pattern across the actor's split output/input pair — per
+        // CLAUDE.md's "Console.* Is Banned" rule: write the prompt via the
+        // "output" channel (the input channel is typically stdin and is
+        // input-only). Falls back to writing via self only when self is
+        // bidirectional and no output channel is registered (test fixtures).
         var question = action.Question?.Value;
         if (!string.IsNullOrEmpty(question))
         {
-            var writeRes = await WriteCore(global::App.Data.@this.Ok(question), ct);
-            if (!writeRes.Success) return writeRes;
+            var output = action.Context?.Actor?.Channels.Resolve(global::App.Channels.@this.Output);
+            if (output != null && output.CanWrite)
+            {
+                var writeRes = await output.WriteAsync(global::App.Data.@this.Ok(question), ct);
+                if (!writeRes.Success) return writeRes;
+            }
+            else if (CanWrite)
+            {
+                var writeRes = await WriteCore(global::App.Data.@this.Ok(question), ct);
+                if (!writeRes.Success) return writeRes;
+            }
+            // No writer at all — proceed to read; the prompt is just lost.
         }
 
         if (!CanRead)

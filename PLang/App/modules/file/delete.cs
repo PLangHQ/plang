@@ -1,5 +1,8 @@
+using App.Types;
 using App.Variables;
 using App.modules.file.code;
+using Verb = global::App.FileSystem.Permission.Verb.@this;
+using DeleteVerb = global::App.FileSystem.Permission.Verb.Delete;
 
 namespace App.modules.file;
 
@@ -18,5 +21,10 @@ public partial class Delete : IContext
     [Code]
     public partial IFile Files { get; }
 
-    public Task<Data.@this> Run() => Task.FromResult(Files.Delete(this));
+    public async Task<Data.@this> Run()
+    {
+        var auth = await Path.Value!.Authorize(new Verb { Delete = new DeleteVerb() });
+        if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
+        return Files.Delete(this);
+    }
 }
