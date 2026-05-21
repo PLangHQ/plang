@@ -1,77 +1,66 @@
 # codeanalyzer — filesystem-permission
 
 ## Version
-v4
+v5
 
 ## What this is
-Fourth pass. Reviews the coder work landed since v3 PASS (`863c7c972`):
-coder v4 (test-quality), v5 (drop `PermissionRecord.AppId`), the runtime2
-merge (app-lowercase, 63 conflicts), and v6 (close auditor F-A + F-B).
-
-The auditor v1 FAILed at v5 with two majors. This pass verifies coder v6's
-closures and audits the new code for OBP / simplicity / behavioral issues.
+Fifth pass. Reviews everything landed since v4 PASS (`3121babeb`). Only
+one commit qualifies — `8b42b0d31`, coder v7, which adds a single
+regression test (`Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt`)
+in `Stage5MessagesEndToEndTests.cs` to pin the nonce-replay (step 4) half
+of the F-A fix. Tester v6, security v2, auditor v2 are reports, not code.
 
 ## What was done
 
-- Diffed v4/v5/v6 against the v3 baseline; read the current state of all
-  four touched files.
-- Clean rebuild from scratch — **0 errors** (merge + v6 compile).
-- **v5 — drop `AppId`:** verified complete. Record ctor (5→4 args),
-  `Covers`, `Find`, `Revoke`, `TryCover`, `BuildRequest` all updated in
-  lockstep; no dangling `AppId` reference.
-- **v6 — `SkipFreshnessCheck` (F-A):** traced the 5-step `Ed25519.VerifyAsync`
-  pipeline. The flag skips exactly step 2 (wire-freshness) and step 4
-  (nonce-replay); step 3 (Expires) still always runs, so grant lifetime is
-  governed solely by `Expires` (null = permanent). Default-false keeps all
-  wire-message verification intact — `Permission.VerifySignature` is the
-  only caller passing `true`, and it is the only grant-verify path.
-- Confirmed the `("", true)` Data construction is the established codebase
-  idiom (3 precedents) — not a smell.
-- Confirmed `Scenario4` is now a real regression test (advances `NowUtc`
-  by 10 min), not the false-green the auditor flagged.
+- Diffed v7 against the v4 baseline. **One file changed, +27 / −0, tests only.**
+- Read the new test in context of its sibling `Scenario4_…_WireFreshnessWindow`
+  to confirm independent coverage of Ed25519 verify steps 2 and 4.
+- Applied all five passes; nothing to flag.
+- Mutation-verification was already done by coder: `SkipFreshnessCheck`
+  true→false kills each Scenario4 variant independently.
 
 ## Verdict: PASS
 
-Both auditor majors genuinely closed. No OBP violations, no bugs, no
-latent crashes across the four files.
+No production code changed since v4. New test is well-shaped, well-named,
+mirrors the sibling. Reviewer chain stayed green through it
+(tester v6 / security v2 / auditor v2).
 
-## Two carry-over observations (non-blocking)
+## Carry-overs (unchanged from v4, non-blocking)
 
 1. **Auditor F-C** — `Path.cs:125,127` / `PLangFileSystem.cs:254` still use
-   `OrdinalIgnoreCase` where `RootComparison` belongs. Now explicitly
-   tracked as a follow-up in `coder/v6/report.md` — the process gap from
-   codeanalyzer v3 (passed without a tracking entry) is closed.
-2. **Pre-existing** — `actor/permission/this.cs` `Add` overwrites by `Path`
-   alone, so granting a different verb on an already-granted path drops
-   the prior grant. Untouched by v4/v5/v6; flagged because v5's
-   doc-comment now leans on "(Actor + Path + Verb)" as identity while
-   `Add`'s dedup key stays Path-only. Worth a `todos.md` line.
+   `OrdinalIgnoreCase` where `RootComparison` belongs. Tracked in
+   `coder/v6/result.md`.
+2. **Pre-existing** — `actor/permission/this.cs` `Add` dedups by `Path`
+   alone; granting a different verb on an already-granted path drops
+   the prior grant.
 
-## Code example — v6 fix shape
-
-`Ed25519.cs` — step 2 wrapped, step 3 left unconditional:
+## Code example — the new test's shape
 
 ```csharp
-// 2. Wire-freshness check — skipped for long-lived artifacts (grants).
-if (!skipFreshness)
+[Test] public async Task Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt()
 {
-    var age = now - signedData.Created;
-    if (age.TotalMilliseconds > effectiveTimeout) return ...TimedOut;
-}
+    var (app1, foreignFile) = Setup("a");
+    var root = app1.AbsolutePath;
+    var path1 = new Path(foreignFile, app1.User.Context);
+    await Assert.That((await path1.ReadText()).Success).IsTrue();
 
-// 3. Expiry check (signature's intrinsic lifetime — null = permanent).
-if (signedData.Expires.HasValue && now > signedData.Expires.Value) return ...Expired;
+    var app2 = new global::app.@this(root);
+    app2.User.Channels.Register(new StatelessChannel());
+    var path2 = new Path(foreignFile, app2.User.Context);
+    var read1 = await path2.ReadText();   // verify #1 — nonce cached
+    var read2 = await path2.ReadText();   // verify #2 — nonce replay if step 4 active
+    await Assert.That(read1.Type?.Value).IsNotEqualTo("ask");
+    await Assert.That(read2.Type?.Value).IsNotEqualTo("ask");
+}
 ```
 
-The fix narrows a grant's time bound to exactly `Expires` and nothing
-else — precisely the user's clarification. The default-false flag means
-no wire-message path changes behavior.
+The pairing — this test plus the existing `_WireFreshnessWindow` — means
+any future regression that re-enables either step 2 or step 4 of the
+Ed25519 verifier on grant verification fails exactly one of them.
 
 ## What's next
 
 ```
 VERDICT: PASS
-Branch advances. F-B (merge) compiles clean; F-A closed with a real
-regression test. Deferred follow-ups (F-C/D/E, security F1/F2/F4) are
-honestly tracked in coder/v6/report.md — not blocking.
+Branch is ready for docs / merge.
 ```

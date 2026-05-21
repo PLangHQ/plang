@@ -854,6 +854,46 @@
         "health": "Clean build, 2855/2855 tests green (verified independently).",
         "notes": "F-A and F-B closed. F-1 (minor doc inversion) worth fixing before docs propagates it; does not block. Next stage: docs."
       }
+    },
+    {
+      "id": "e3d0f6eb-5bd0-4a3d-916e-8cc6fe05d99e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-21T22:57:38Z",
+      "timestamp_end": "2026-05-21T23:01:00Z",
+      "intent": "v5 review \u2014 verify coder v7 test-only addition closing tester v5 F1 (nonce-replay half of F-A).",
+      "before": {
+        "assumptions": "v4 PASSed at coder v6. Only new code since is coder v7 (one regression test). Tester v6, security v2, auditor v2 all PASSed \u2192 expect clean.",
+        "risk": "Low \u2014 no production-code change; only risk is that the new test is shaped wrong (false-green, brittle, or doesn't actually exercise step 4)."
+      },
+      "plan": ".bot/filesystem-permission/codeanalyzer/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/FileSystem/Stage5MessagesEndToEndTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Reviewed the +27/-0 addition (Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt) in coder v7. Test pairs with the existing Scenario4_WireFreshnessWindow to give independent coverage of Ed25519 verify steps 2 and 4. Mutation-verified by coder. CLEAN."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v5/plan.md",
+            ".bot/filesystem-permission/codeanalyzer/v5/report.md",
+            ".bot/filesystem-permission/codeanalyzer/v5/verdict.json",
+            ".bot/filesystem-permission/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v5 PASS artifacts. summary.md overwritten per workflow."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "branch ready for docs / merge",
+        "notes": "Only diff since v4 PASS is one regression test. No production code changed. Reviewer chain (tester v6, security v2, auditor v2) all green."
+      }
     }
   ]
 }
