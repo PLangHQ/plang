@@ -1,43 +1,48 @@
 {
   "analyst": "security",
   "branch": "filesystem-permission",
-  "timestamp": "2026-05-21T19:40:00Z",
+  "timestamp": "2026-05-22T00:30:00Z",
   "phase": "both",
+  "audit_version": "v2",
+  "scope": "Re-audit after 34 commits since security v1 (PASS). Two security-relevant deltas: (1) runtime2 merged in (0b4ff9cc, app-lowercase rename — closes auditor F-B); (2) coder v6 (894d6a0c) added a SkipFreshnessCheck flag to signing.verify, grant verification now skips Ed25519 steps 2 (wire-freshness) and 4 (nonce-replay) — closes auditor F-A / security v1 F3. coder v7 (8b42b0d3) is test-only. Clean rebuild, C# suite 2855/2855 green.",
   "attack_surface": [
     {
+      "area": "grant-verification (post-v6 SkipFreshnessCheck)",
+      "exposure": "Actor.Permission.VerifySignature now builds `new signing.verify { Data, SkipFreshnessCheck = true }`. With the flag set, Ed25519.VerifyAsync skips step 2 (Created-age wire-freshness) and step 4 (nonce-replay cache). Steps 1 (type), 3 (Expires), 5 (contract), 6 (header), 7 (data-hash) and 8 (Ed25519 signature verification) still run.",
+      "trust_boundary": "The Ed25519 signature over the PermissionRecord remains the integrity gate for the sqlite 'permission' table.",
+      "mitigations": [
+        "Core cryptographic check (Ed25519 step 8) is NOT skipped — forgery still requires the actor's private key",
+        "SkipFreshnessCheck is [Default(false)] and resolves `?? false` — opt-in, never on by default",
+        "Only one production caller sets it true: actor/permission/this.cs:147. All 4 HTTP wire-message verify sites (modules/http/code/Default.cs:603,636,655,917) leave it false — wire-message anti-replay is fully intact",
+        "Skipping nonce-replay for grants is correct by design: a stored grant re-presents the same nonce on every read, which is not a replay"
+      ],
+      "gaps": [
+        "None new. The freshness/nonce bypass is correctly confined to grant verification — verified by exhaustive trace of every signing.verify construction site in production C#."
+      ]
+    },
+    {
       "area": "grant-creation",
-      "exposure": "PermissionRecord grants are created in two C# sites only: Path.Authorize.SignAndStore and Path.Operations.StoreGrant. Both are reachable only after a user consent prompt (output.ask y/n/a). There is no permission.add action module, and settings.set is hardcoded to the 'settings' table — a PLang goal cannot fabricate a grant or write to the 'permission' table through any module surface.",
+      "exposure": "PermissionRecord grants created only in Path.Authorize (path.Authorize.cs:79) and Path.Operations (path.Operations.cs:219), both after a user consent prompt. EnsureSigned() seals persisted grants.",
       "trust_boundary": "User consent via output.ask. The actor answering the prompt is the trust authority.",
-      "mitigations": ["No PLang-reachable grant-creation API", "settings.set table name is hardcoded, cannot target 'permission'", "Persisted ('a') grants are Ed25519-signed via EnsureSigned"],
-      "gaps": ["Authorize re-prompt loop is unbounded — an adversarial channel returning infinite non-EOF garbage spins Authorize forever (liveness only, fail-closed, no grant produced)"]
+      "mitigations": [
+        "No PLang-reachable grant-creation API — no permission.add action module exists",
+        "Only two writers to the 'permission' sqlite table: Permission.Add (this.cs:82) and Permission.Revoke (this.cs:112). Re-confirmed at HEAD post-merge — the runtime2 merge introduced no new write path."
+      ],
+      "gaps": [
+        "Unchanged from v1: no non-disk write path to the 'permission' table — this is the precondition that holds F1/F2/F4 at Low/Medium."
+      ]
     },
     {
-      "area": "grant-verification",
-      "exposure": "Actor.Permission.TryCover decides whether a stored grant covers a request. For persisted grants it calls signing.verify (Ed25519 VerifyAsync). The verify confirms the signature is cryptographically valid for the public key embedded in the Signature envelope itself.",
-      "trust_boundary": "The signature on a persisted grant is the integrity gate for the sqlite 'permission' table.",
-      "mitigations": ["Ed25519 signature over a keccak256 hash of the PermissionRecord (Actor+Path+Verb all covered)", "Per-Data verify-result caching via Properties bag avoids re-verify churn", "VerifySignature catch block is fail-closed (deny on any unexpected throw)"],
-      "gaps": ["signing.verify never checks that the signer identity is a trusted identity — any Ed25519 keypair yields a grant that verifies (F1)", "TryCover auto-trusts a persisted row with no signature at all (F2)", "signing.verify applies a 5-minute Created-age freshness window to long-lived persisted grants (F3)"]
-    },
-    {
-      "area": "grant-persistence",
-      "exposure": "Persisted grants live in the per-actor sqlite SettingsStore, table 'permission', deserialized via GetAll<Data<PermissionRecord>> on every Find. The table is shared across actors and filtered client-side by Actor name.",
-      "trust_boundary": "The sqlite file on disk. On a single-user machine this is user-owned (in threat-model scope: not an attacker).",
-      "mitigations": ["RehydrateValue + bounded nested-Data rehydration depth (128)", "Plang serializer round-trips the signature via [In]/[Out] Transport filter"],
-      "gaps": ["After v5 (AppId dropped) the only persistence scope is the root directory — any app run from the same root, with the same actor name, inherits every persisted grant (deliberate v5 design; noted as scope expansion)"]
-    },
-    {
-      "area": "path-containment",
-      "exposure": "IsInRoot / IsUnder decide auto-grant for in-root paths. Absolute is the ValidatePath-normalised path (GetFullPath collapses ../).",
-      "trust_boundary": "RootDirectory and OsDirectory boundaries.",
-      "mitigations": ["IsUnder appends a trailing separator before StartsWith — prevents the /root vs /rootEvil sibling-prefix false match", "RootComparison helper centralises OS-aware case sensitivity (Windows OrdinalIgnoreCase, Linux Ordinal)"],
-      "gaps": ["None security-relevant. codeanalyzer v3 flagged Path.cs:125,127 (Relative getter) still using OrdinalIgnoreCase — that is observability, not a gate; not a security finding."]
-    },
-    {
-      "area": "pattern-matching",
-      "exposure": "Permission.PathMatches dispatches on Match enum: Exact / Glob / Regex. RegexMatches calls Regex.IsMatch with no timeout.",
-      "trust_boundary": "The Match mode and pattern are part of the signed grant payload.",
-      "mitigations": ["BuildRequest always sets Match.Exact — Glob/Regex grants are never created by current code", "RegexMatches catches ArgumentException (bad pattern) and returns false"],
-      "gaps": ["Regex.IsMatch has no RegexOptions timeout — a Match.Regex grant carrying a catastrophic-backtracking pattern hangs the thread (F4, Low — currently unreachable, latent)"]
+      "area": "callback / channel signature verification (observation, not a branch finding)",
+      "exposure": "The application/plang+data wire serializer (channels/serializers/serializer/plang/Data.cs) reconstructs Data with `signature populated-but-unverified`. callback/run.cs resumes the Data's Snapshot.",
+      "trust_boundary": "Inbound channel messages carrying a Snapshot — code-execution-adjacent (Snapshot.Resume re-enters execution).",
+      "mitigations": [
+        "Callbacks riding HTTP are verified at the transport layer (http/code/Default.cs:609) with freshness ON",
+        "callback.run's Callback parameter is [IsNotNull]"
+      ],
+      "gaps": [
+        "Doc-comment drift: channels/.../plang/Data.cs:14-16 says 'callback.run invokes signing.verify before dispatching'; callback/run.cs:7-8 says 'Data is verified by construction ... so no explicit verify call here'. Neither file actually calls verify. Verification depends entirely on the transport (HTTP does verify). Pre-existing, NOT introduced by this branch — flagged so the contradiction is on record; not a filesystem-permission finding and does not affect the verdict."
+      ]
     }
   ],
   "findings": [
@@ -45,50 +50,55 @@
       "id": 1,
       "severity": "medium",
       "category": "code-execution",
-      "vector": "signing.verify (Ed25519 VerifyAsync, step 8) verifies the signature against signedData.Identity — the public key carried inside the Signature envelope. It never checks that this identity is the actor's own / a trusted identity. Actor.Permission.TryCover treats a successful verify as proof the grant is genuine. So any grant signed by ANY Ed25519 keypair passes verification, and the only actor binding (PermissionRecord.Actor) is a plain name string also under the signer's control.",
-      "preconditions": "An attacker must land a forged-but-self-consistently-signed row in the per-actor sqlite 'permission' table. Today the only write path to that table is direct tampering with the sqlite file on disk — user-owned on a single-user machine, so out of immediate threat-model scope. There is no PLang-reachable API to write the 'permission' table.",
-      "impact": "Full bypass of the consent gate: a forged grant for any out-of-root path/verb is honored without ever prompting the user. The Ed25519 signature provides ZERO integrity over an unsigned row against an adversarial tamperer — a tamperer who can rewrite the row can also re-sign it with their own key and it verifies. The signature only catches accidental corruption, not attack.",
-      "affected_files": ["PLang/App/Actor/Permission/this.cs", "PLang/App/modules/signing/code/Ed25519.cs"],
-      "exploit_sketch": "1. Generate an Ed25519 keypair (attacker's own). 2. Build a PermissionRecord{Actor:'<victim actor name>', Path:'/etc/passwd', Verb:AllowAll, Match:Exact}. 3. Hash + sign it with the attacker key; set Signature.Identity = attacker public key. 4. Write the Data envelope JSON into the sqlite 'permission' table. 5. Victim app's Path.Authorize('/etc/passwd', read) → Find → GetAll → TryCover → signing.verify → cryptographically valid for the embedded key → Ok(true). Access granted, no prompt.",
-      "proposed_fix": "Pin the signer. After signing.verify succeeds, Permission.TryCover (or VerifySignature) must additionally assert grant.RawSignature.Identity equals the actor's trusted identity public key (identity.Get().PublicKey). A grant signed by a non-trusted identity is denied. This makes the signature a real integrity control over the sqlite table and closes the bypass before any non-disk write path to the table ships.",
-      "status": "open"
+      "vector": "signing.verify (Ed25519 VerifyAsync step 8) verifies the signature against signedData.Identity — the public key carried INSIDE the Signature envelope. It never checks that this identity is the actor's own / a trusted identity. Permission.VerifySignature returns `result.Success` verbatim. So any grant signed by ANY Ed25519 keypair passes, and the only actor binding (PermissionRecord.Actor) is a plain name string also under the signer's control.",
+      "preconditions": "An attacker must land a forged-but-self-consistently-signed row in the per-actor sqlite 'permission' table. Re-confirmed at HEAD: the only writers are Permission.Add/Revoke, both reachable only after user consent; there is no PLang-reachable or non-disk write path. So today this requires direct tampering with the sqlite file on disk (user-owned, out of immediate threat-model scope).",
+      "impact": "Full bypass of the consent gate: a forged grant for any out-of-root path/verb is honored without prompting. The Ed25519 signature provides ZERO integrity against an adversarial tamperer — a tamperer who rewrites the row re-signs it with their own key and it verifies. Ratchets to High/Critical the instant the 'permission' table gains any non-disk write path.",
+      "affected_files": ["PLang/app/actor/permission/this.cs", "PLang/app/modules/signing/code/Ed25519.cs"],
+      "exploit_sketch": "1. Generate an attacker Ed25519 keypair. 2. Build PermissionRecord{Actor:'<victim actor name>', Path:'/etc/passwd', Verb:AllowAll, Match:Exact}. 3. Hash+sign with attacker key; set Signature.Identity = attacker public key. 4. Write the Data envelope JSON into the sqlite 'permission' table. 5. Victim Path.Authorize('/etc/passwd', read) -> Find -> TryCover -> VerifySignature -> verify cryptographically valid for the embedded key -> Ok. Access granted, no prompt.",
+      "proposed_fix": "Pin the signer. After signing.verify succeeds, Permission.VerifySignature must additionally assert grant.RawSignature.Identity equals the actor's trusted identity public key (identity.Get().PublicKey). A grant signed by a non-trusted identity is denied. Land before the 'permission' table ever gains a non-disk write path.",
+      "status": "open",
+      "carried_from": "v1 F1 — unchanged by coder v6/v7"
     },
     {
       "id": 2,
       "severity": "low",
       "category": "code-execution",
-      "vector": "Actor.Permission.TryCover line ~125: `if (grantData.RawSignature == null) return true;` with the comment `// in-memory unsigned grant`. The comment's assumption holds for the in-memory loop, but Find calls the SAME TryCover for the persisted-store loop. A row in the sqlite 'permission' table with no signature is therefore honored with no verification at all.",
-      "preconditions": "An unsigned row must exist in the sqlite 'permission' table. Currently unreachable: Actor.Permission.Add routes unsigned grants to the in-memory list and only signed grants to sqlite, and no other code writes a 'permission' table. The gate's correctness depends entirely on that one routing convention in a sibling method.",
-      "impact": "If the Add routing ever drifts (refactor, migration importing legacy grants, a future bulk-import path), an unsigned forged grant in the table is auto-trusted — consent-gate bypass with no crypto needed at all. This is the allocate-here / trust-there smell: the verification gate's safety is enforced from another file.",
-      "affected_files": ["PLang/App/Actor/Permission/this.cs"],
-      "exploit_sketch": "Place {Actor, Path, Verb, Match} JSON with no 'signature' property as a row in the sqlite 'permission' table. Find's persisted loop → TryCover → RawSignature==null → return true. Honored.",
-      "proposed_fix": "Split the unsigned shortcut by provenance. The in-memory loop may trust unsigned grants (created by Path.Authorize this process, never crossed a boundary). The persisted loop must treat RawSignature == null as DENY. Parameterise TryCover with an `allowUnsigned` flag, or give Find two helpers (TryCoverInMemory / TryCoverPersisted). An unsigned persisted row is invalid by definition.",
-      "status": "open"
+      "vector": "Actor.Permission.TryCover (this.cs:125): `if (grantData.RawSignature == null) return true; // in-memory unsigned grant`. TryCover is shared between the in-memory loop (this.cs:49-52) and the persisted-store loop (this.cs:59-63). A row in the sqlite 'permission' table with no signature is therefore honored with NO verification at all.",
+      "preconditions": "An unsigned row must exist in the sqlite 'permission' table. Currently unreachable: Permission.Add routes unsigned grants to the in-memory list and only signed grants to sqlite (this.cs:80-93). The gate's correctness depends entirely on that one routing convention in a sibling method.",
+      "impact": "If the Add routing ever drifts (refactor, migration, bulk-import), an unsigned forged grant in the table is auto-trusted — consent-gate bypass with no crypto needed. Allocate-here / trust-there: the verification gate's safety is enforced from another method.",
+      "affected_files": ["PLang/app/actor/permission/this.cs"],
+      "exploit_sketch": "Place {Actor,Path,Verb,Match} JSON with no 'signature' property as a row in the sqlite 'permission' table. Find's persisted loop -> TryCover -> RawSignature==null -> return true. Honored.",
+      "proposed_fix": "Split the unsigned shortcut by provenance. The in-memory loop may trust unsigned grants; the persisted loop must treat RawSignature == null as DENY. Parameterise TryCover with an `allowUnsigned` flag, or give Find two helpers. An unsigned persisted row is invalid by definition.",
+      "status": "open",
+      "carried_from": "v1 F2 — unchanged by coder v6/v7"
     },
     {
       "id": 3,
       "severity": "medium",
       "category": "resource-exhaustion",
-      "vector": "Persisted ('a') grants are sealed by EnsureSigned() with no Expires argument, so Signature.Expires is null. But signing.verify (Ed25519 VerifyAsync, step 2) rejects ANY signature whose Created timestamp is older than effectiveTimeout — and Permission.VerifySignature constructs `new signing.verify { Data = data }` with no TimeoutMs override, so effectiveTimeout falls back to Config.TimeoutMs (default 300_000 ms = 5 minutes). A persisted grant therefore fails verification 5 minutes after it was created.",
-      "preconditions": "Any persisted grant verified more than 5 minutes after creation — i.e. essentially every real-world reuse of an 'always allow' grant.",
-      "impact": "Two parts. (a) Correctness/test-confidence: the documented 'a' contract — `Permission/this.cs` doc-comment: 'grants survive new App on the same root, which is the contract the a answer promises' — is false in practice; the grant survives only 5 minutes. The Stage5 Scenario4 and cross-App persistence tests pass ONLY because unit tests run in milliseconds; they give false confidence that persistent grants work. (b) Footgun: the obvious developer 'fix' is to raise signing Config.TimeoutMs. But TimeoutMs is the anti-replay freshness window for ALL signed wire messages — widening it to make grants long-lived simultaneously widens the nonce-replay acceptance window for every signed transport message to the same duration. The signing module's transient-message freshness primitive is the wrong tool for a long-lived persisted grant. Behaviour is fail-closed (re-prompt), so this is not itself an exploitable bypass — but the natural remediation introduces a real replay weakness.",
-      "affected_files": ["PLang/App/Actor/Permission/this.cs", "PLang/App/modules/signing/code/Ed25519.cs", "PLang/App/FileSystem/Permission/this.cs"],
-      "exploit_sketch": "Not an attacker exploit — a reproduction: grant 'a' for an out-of-root path; wait >5 minutes (or advance NowUtc); trigger Find. signing.verify step 2 → 'Signature timed out' → verified=false → TryCover returns false → user re-prompted despite having answered 'always allow'.",
-      "proposed_fix": "Decouple persisted-grant verification from the wire-message freshness window. Options: (1) when Path.Authorize signs an 'a' grant, pass an explicit long/parameterised Expires (the architect's deferred 'AlwaysExpiry' intent, already noted in Path.Authorize.cs's todo comment), AND (2) Permission.VerifySignature passes a TimeoutMs that effectively disables the Created-age check for grant verification (the grant's own Expires becomes the only time bound). Do NOT fix this by globally raising Config.TimeoutMs. Add a test that advances NowUtc past 5 minutes so the suite stops false-greening.",
-      "status": "open"
+      "vector": "Persisted 'a' grants were sealed with no Expires (null), but signing.verify step 2 rejected any signature whose Created age exceeded Config.TimeoutMs (default 300_000ms), so persisted grants failed verification 5 minutes after creation and the user was re-prompted.",
+      "preconditions": "Any persisted grant verified more than 5 minutes after creation.",
+      "impact": "The documented 'always allow' contract was false past 5 minutes; the test suite false-greened it (unit tests run in milliseconds).",
+      "affected_files": ["PLang/app/actor/permission/this.cs", "PLang/app/modules/signing/code/Ed25519.cs", "PLang/app/filesystem/permission/this.cs"],
+      "exploit_sketch": "Not an attacker exploit — a reproduction: grant 'a' for an out-of-root path; advance NowUtc >5 min; trigger Find -> 'Signature timed out' -> re-prompt.",
+      "proposed_fix": "Decouple persisted-grant verification from the wire-message freshness window. Do NOT globally raise Config.TimeoutMs (widens the wire-replay window).",
+      "status": "fixed",
+      "fix_verification": "coder v6 (894d6a0c) added a SkipFreshnessCheck flag to signing.verify; Ed25519.VerifyAsync skips steps 2 and 4 when set; Permission.VerifySignature passes true. This is exactly v1's recommended fix and explicitly NOT the rejected 'raise Config.TimeoutMs' approach — wire-message replay window is untouched. Security re-audit of the flag: (a) Ed25519 step 8 cryptographic verification still runs for grants; (b) flag is [Default(false)], the only true-setter is the grant path, all 4 HTTP wire-verify sites leave it false; (c) skipping nonce-replay for a stored grant is correct — the same nonce naturally re-presents on each read. tester v6 mutation-verified both halves (Scenario4 wire-freshness + nonce-replay). Closed.",
+      "carried_from": "v1 F3"
     },
     {
       "id": 4,
       "severity": "low",
       "category": "resource-exhaustion",
-      "vector": "Permission.RegexMatches calls Regex.IsMatch(candidate, pattern) with no RegexOptions and no matchTimeout. A catastrophic-backtracking pattern against a crafted candidate hangs the executing thread (ReDoS).",
-      "preconditions": "A grant with Match == Match.Regex and a malicious pattern must reach PathMatches. Currently unreachable — BuildRequest only ever sets Match.Exact, so Glob/Regex grants are never created by branch code. Reachable only via a deserialized grant carrying Match.Regex (i.e. through the same sqlite-table write path as F1/F2) or a future code path that constructs Regex grants.",
+      "vector": "Permission.RegexMatches (filesystem/permission/this.cs:57) calls Regex.IsMatch(candidate, pattern) with no RegexOptions and no matchTimeout. A catastrophic-backtracking pattern against a crafted candidate hangs the executing thread (ReDoS).",
+      "preconditions": "A grant with Match == Match.Regex and a malicious pattern must reach PathMatches. Currently unreachable — BuildRequest only ever sets Match.Exact (Find at this.cs:43 hardcodes MatchMode.Exact), so Glob/Regex grants are never created by branch code. Reachable only via a deserialized grant carrying Match.Regex (same sqlite-table write path as F1/F2) or a future code path constructing Regex grants.",
       "impact": "CPU denial of service — one Find call pins a core indefinitely. Latent today; flips to a live DoS the moment Regex grants become creatable.",
-      "affected_files": ["PLang/App/FileSystem/Permission/this.cs"],
-      "exploit_sketch": "Persisted grant {Match: Regex, Path: '(a+)+$'}; Find for a path like 'aaaaaaaaaaaaaaaaaaaaaaaa!' → Regex.IsMatch backtracks exponentially.",
-      "proposed_fix": "Give RegexMatches a bounded matchTimeout: `new Regex(pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100)).IsMatch(candidate)`, and catch RegexMatchTimeoutException → return false (deny). Mirrors the standing 'recursive methods need depth guards' rule — untrusted-influenced regex needs a time guard.",
-      "status": "open"
+      "affected_files": ["PLang/app/filesystem/permission/this.cs"],
+      "exploit_sketch": "Persisted grant {Match:Regex, Path:'(a+)+$'}; Find for 'aaaaaaaaaaaaaaaaaaaaaaaa!' -> Regex.IsMatch backtracks exponentially.",
+      "proposed_fix": "Give RegexMatches a bounded matchTimeout: `new Regex(pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100)).IsMatch(candidate)`, catch RegexMatchTimeoutException -> return false (deny).",
+      "status": "open",
+      "carried_from": "v1 F4 — unchanged by coder v6/v7"
     }
   ],
-  "summary": "filesystem-permission adds a consent-gated FS layer with a sound overall shape: grant creation is C#-internal and gated by user consent (no PLang-reachable fabrication path), path containment uses correct trailing-separator prefix checks, and the VerifySignature catch block is fail-closed. The weaknesses are all in the verification half. The persisted-grant trust gate leans entirely on the Ed25519 signature, but signing.verify checks signature INTEGRITY without checking signer AUTHORITY (F1) — so the signature provides no real protection against an adversarial tamperer of the sqlite table, only against accidental corruption. TryCover additionally auto-trusts a wholly unsigned persisted row (F2), making the gate's safety depend on a routing convention in a sibling method. Both are Low/Medium today because the 'permission' table is only writable by direct disk tampering (user-sovereign), but both ratchet to High/Critical the instant that table becomes reachable by any non-disk input — exactly the standing-finding pattern. Separately, F3 is a real correctness defect with security-process impact: persisted 'a' grants silently expire after 5 minutes because signing.verify's anti-replay freshness window is mis-applied to long-lived grants, and the test suite false-greens it because unit tests run in milliseconds. No critical/high open findings. Verdict: PASS — the four findings are improvements to land (F1 + F3 before the permission table ever gains a non-disk write path), not branch blockers."
+  "summary": "v2 re-audit of filesystem-permission after the runtime2 merge and the coder v6 crypto change. The SkipFreshnessCheck flag added in v6 to fix the 5-minute grant-expiry defect (auditor F-A / security v1 F3) is correctly designed and correctly scoped: the Ed25519 cryptographic signature check still runs for grants, the flag defaults to false, the single production true-setter is the grant-verification path, and all four HTTP wire-message verify sites leave it false — wire-message anti-replay protection is fully intact. Skipping nonce-replay for stored grants is sound (a grant legitimately re-presents the same nonce on every read). F3 is fixed and mutation-verified by tester v6. The runtime2 merge introduced no new write path to the 'permission' sqlite table — re-confirmed by exhaustive trace; the only writers remain Permission.Add/Revoke behind user consent. v1 findings F1 (signer authority not pinned — Medium), F2 (unsigned persisted row auto-trusted — Low) and F4 (unbounded Regex in RegexMatches — Low) are unchanged by v6/v7 and carried forward at the same severity; all three remain gated by the user-sovereign 'no non-disk write path to the permission table' precondition, which still holds. One observation logged (not a branch finding): the callback/channel signature-verification doc-comments in plang/Data.cs and callback/run.cs contradict each other — pre-existing, verification in practice rides the transport (HTTP verifies). No critical/high open findings. Verdict: PASS — F1 should land before the 'permission' table ever gains a non-disk write path."
 }

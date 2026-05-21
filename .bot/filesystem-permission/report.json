@@ -764,6 +764,52 @@
         "health": "good",
         "notes": "Coder v5/v6 close auditor F-A and F-B cleanly. No OBP violations, no bugs, build 0 errors. Deferred F-C/D/E + security F1/F2/F4 honestly tracked in coder/v6/report.md."
       }
+    },
+    {
+      "id": "3756b34e-25e5-4556-9135-cb015309e007",
+      "bot": "security",
+      "timestamp_start": "2026-05-21T23:55:00Z",
+      "timestamp_end": "2026-05-22T00:45:00Z",
+      "intent": "v2 security re-audit after runtime2 merge and the SkipFreshnessCheck crypto change.",
+      "before": {
+        "assumptions": "v1 PASS with 4 findings (F1/F2 signer-trust gaps, F3 5-min grant expiry, F4 ReDoS). F3 reportedly closed by coder v6.",
+        "risk": "The freshness/nonce-replay bypass added for grants could leak to wire-message verification if mis-scoped."
+      },
+      "plan": ".bot/filesystem-permission/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/signing/verify.cs",
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/channels/serializers/serializer/plang/Data.cs",
+            "PLang/app/modules/callback/run.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Re-audited the coder v6 SkipFreshnessCheck crypto change. Traced every signing.verify construction site: flag is [Default(false)], only the grant path sets true, all 4 HTTP wire-verify sites leave it false. Ed25519 step 8 (signature verification) still runs for grants. F3 fixed and correctly scoped \u2014 no leak to wire-message anti-replay."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/security-report.json",
+            ".bot/filesystem-permission/security/v2/result.md",
+            ".bot/filesystem-permission/security/v2/verdict.json",
+            ".bot/filesystem-permission/security/v2/v1_review_summary.md",
+            ".bot/filesystem-permission/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 security report. F3 closed; F1 (medium)/F2 (low)/F4 (low) carried forward unchanged, all precondition-gated by the no-non-disk-write-path-to-permission-table invariant, re-confirmed at HEAD. Verdict PASS."
+        }
+      ],
+      "after": {
+        "status": "complete \u2014 PASS",
+        "health": "green: C# suite 2855/2855 on clean rebuild; no critical/high open findings",
+        "notes": "F3 fixed by coder v6 and re-audited safe. F1/F2/F4 open but gated. One non-blocking observation logged: callback/channel verify doc-comment contradiction (pre-existing, not a branch finding)."
+      }
     }
   ]
 }
