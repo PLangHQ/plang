@@ -1,69 +1,58 @@
 {
   "reviewer": "auditor",
   "branch": "filesystem-permission",
-  "timestamp": "2026-05-21T20:05:00Z",
-  "reviewed_version": "v5",
-  "summary": "filesystem-permission is internally sound — clean build, C# suite 2853/2853 green, OBP shape holds, and the consent gate's creation side has no PLang-reachable fabrication path. But two issues straddle the seams the three prior reviewers each missed. F-A: persisted 'always allow' grants expire 5 minutes after creation (signing.verify applies Config.TimeoutMs's Created-age check to long-lived grants), the FileSystem/Permission/this.cs doc-comment claims permanent persistence, and Stage5 Scenario4 false-greens it because the test never advances time — the branch's headline feature does not do what it documents. Security found this (their F3) but under-rated it as a non-blocking security nit; viewed as code+tests+docs it is branch-blocking. F-B: the branch's merge-base predates the app-lowercase merge into runtime2, so it carries ~40 new files under PascalCase App/ with PascalCase namespaces that violate runtime2's current lowercase convention — no reviewer diffed against current runtime2. Verdict: FAIL, driven by F-A (which stands alone).",
+  "timestamp": "2026-05-21T23:10:00Z",
+  "reviewed_version": "v2 (coder v5/v6/v7)",
+  "summary": "Re-audit after auditor v1 FAILed the branch on two majors (F-A: persisted 'always allow' grants expired after 5 min; F-B: branch on a stale runtime2 merge-base). Coder v5/v6/v7 landed the fixes and codeanalyzer v4, tester v6, security v2 all re-passed. Verified independently by code trace, not by trusting the re-reviewers: both majors are genuinely closed. F-A's SkipFreshnessCheck flag skips exactly Ed25519 steps 2 (wire-freshness) and 4 (nonce-replay) while step 3 (Expires) and step 8 (cryptographic signature) still run for grants; it is [Default(false)] with a single production true-setter, so wire-message anti-replay is untouched. The Scenario4 tests now advance NowUtc and double-read, mutation-verified on both halves. F-B is a real merge of current runtime2 (origin/runtime2 is an ancestor of HEAD; app/ is lowercase). One new minor finding: the F-A remediation corrected the doc-comment in filesystem/permission/this.cs but left an inverted, now-false claim in the sibling actor/permission/this.cs class header. The three v1 minors (F-C/D/E) remain non-blocking and are tracked or deferred. Clean build, 2855/2855 tests green. Verdict: PASS.",
   "previous_reviews_assessed": {
-    "codeanalyzer": "partial — thorough OBP pass, but diagnosed the Linux case-comparison bug (Path.cs:125,127 / PLangFileSystem.cs:254) and passed without fixing or tracking it, and asserted ResumeChain dispose order 'correct' with no test behind the claim.",
-    "tester": "partial — all 9 v3 findings genuinely mutation-verified closed, but Scenario4 is presented as the cross-App persistence gate when it only pins the AppId-removal regression; the documented durability is unverified (test never advances NowUtc).",
-    "security": "partial — F1/F2/F4 well-analysed and severity-fair; F3 under-rated as non-blocking. As a correctness defect with a false doc-comment and a false-greening test, F3 is branch-blocking, not 'an improvement to land'."
+    "codeanalyzer": "agree — F-A/F-B closure analysis correct and thorough; missed the stale actor/permission/this.cs class header (outside the v6 diff)",
+    "tester": "agree — tester v5 catching that the v6 mutation claim covered only the wire-freshness half was the sharpest review on the branch; v6 mutation-verified both halves",
+    "security": "agree — SkipFreshnessCheck scoping verified independently: crypto intact, default-false, single true-setter, wire path untouched; F1/F2/F4 correctly carried non-blocking"
   },
   "findings": [
     {
       "id": 1,
-      "severity": "major",
-      "category": "contract",
-      "file": "PLang/App/Actor/Permission/this.cs",
-      "line": 138,
-      "issue": "Persisted 'always allow' grants expire 5 minutes after creation. Path.Authorize.SignAndStore calls EnsureSigned() with no Expires; VerifySignature builds `new signing.verify { Data = data }` with no TimeoutMs; Ed25519.VerifyAsync step 2 (Ed25519.cs:79-81) rejects any signature whose Created age exceeds effectiveTimeout = Config.TimeoutMs (default 300000ms). After 5 minutes TryCover returns false and the user is re-prompted. The FileSystem/Permission/this.cs:19-21 doc-comment states grants 'survive new App() on the same root, which is the contract the a answer promises' — false past 5 minutes. Stage5 Scenario4 false-greens it: the test never advances NowUtc, so it only ever reads a millisecond-old grant inside the freshness window.",
-      "missed_by": "security",
-      "impact": "The branch's headline feature — persistent 'always allow' consent — does not work as documented. A user who answers 'a' is re-prompted 5 minutes later. Behaviour is fail-closed (re-prompt, not bypass) so not a security hole, but it is a real functional defect in the core feature, the shipped doc-comment is false, and the test suite asserts the feature works when it does not. The team's tracked AlwaysExpiry todo addresses Expires==null only, not the independent Created-age check, so the deferred fix is insufficient.",
-      "suggestion": "Sign 'a' grants with an explicit long Expires AND have VerifySignature pass a TimeoutMs that disables the Created-age check for grant verification (grant's own Expires becomes the only time bound). Do NOT raise global Config.TimeoutMs — it widens the wire-message replay window. Add a test that advances NowUtc past 5 minutes. Correct the Permission/this.cs doc-comment until fixed."
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "PLang/app/actor/permission/this.cs",
+      "line": 12,
+      "issue": "The class-header doc-comment still states 'Persisted (\"a\") — signature has an expiry' and 'Session (\"y\") — no expiry on signature'. After the F-A fix this is inverted: persisted 'a' grants are signed with Expires == null and verified with SkipFreshnessCheck=true — they are the permanent ones; session 'y' grants are unsigned (no signature at all). The F-A remediation corrected the equivalent doc-comment in the sibling filesystem/permission/this.cs (lines 22-26) but not this one. Same class of defect (a false permission doc-comment) that auditor v1 cited as part of F-A — it survived in the other file.",
+      "missed_by": "codeanalyzer",
+      "impact": "Documentation-only; the code is correct and tested, so it does not break behavior or block the branch. But the docs bot is the next pipeline stage and may read this comment as ground truth and propagate the inversion into user-facing documentation. A future maintainer of the Find/Add/Revoke routing would read the contract exactly backwards.",
+      "suggestion": "Rewrite the two bullets to match filesystem/permission/this.cs:22-26 — session = unsigned, dies with the App; persisted = signed, Expires == null (permanent today), verified with SkipFreshnessCheck so the wire-freshness Created+TimeoutMs window does not apply."
     },
     {
       "id": 2,
-      "severity": "major",
-      "category": "architectural",
-      "file": "PLang/App/FileSystem/Permission/this.cs",
-      "line": 4,
-      "issue": "The branch merge-base with runtime2 (79d76aa0) predates the app-lowercase merge (16ab73eb). runtime2 tip has PLang/app/ lowercase; this branch has PLang/App/ PascalCase and adds ~40 new files under it, each declaring a PascalCase namespace (namespace App.FileSystem.Permission;, namespace App.Actor.Permission;, etc.) that violates runtime2's current lowercase-namespace convention. codeanalyzer v3 rebased onto origin/filesystem-permission (the branch's own remote), not runtime2 — no reviewer diffed against the actual merge target.",
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/app/filesystem/path.cs",
+      "line": 125,
+      "issue": "Carried v1 F-C, now adjudicated. path.cs:125,127 (the Relative getter) and 189-194 (Equals/GetHashCode) hardcode StringComparison.OrdinalIgnoreCase instead of the RootComparison helper (path.cs:23, Ordinal on Linux). Verified independently that the authorization gate (path.Authorize -> IsInRoot -> IsUnder) DOES use RootComparison at both call sites, so the gate is case-correct on Linux; the OrdinalIgnoreCase sites are observability only (Relative feeds ToString/GoalCall, not the gate). PLangFileSystem.cs:254 is in the legacy v1 surface.",
       "missed_by": "none",
-      "impact": "The branch cannot merge to runtime2 as-is. Landing it requires renaming the whole new App/ subtree to app/, rewriting ~40 namespace declarations to lowercase, and updating every using / global-using alias and consumer — a substantial, convention-sensitive body of work that is currently invisible and unreviewed. 'Three PASSes' does not mean 'mergeable'.",
-      "suggestion": "Rebase onto current runtime2; rename PLang/App/** new files to PLang/app/**; rewrite new-file namespaces to the lowercase convention; re-run the suite; have a reviewer see the rebased diff before the branch advances to docs."
+      "impact": "None to the permission gate — confirmed non-security. On Linux, Relative and path equality treat case-variant paths as equal, which is wrong for display/keying but does not affect authorization.",
+      "suggestion": "Non-blocking. codeanalyzer now tracks F-C as a named follow-up; it folds naturally into the polymorphic-Path branch. No action required for this branch."
     },
     {
       "id": 3,
-      "severity": "minor",
+      "severity": "nit",
       "category": "review-gap",
-      "file": "PLang/App/FileSystem/Path.cs",
-      "line": 125,
-      "issue": "Path.cs:125,127 (Relative getter) and PLangFileSystem.cs:254 (system/ fallback) still use StringComparison.OrdinalIgnoreCase where the new RootComparison helper belongs. codeanalyzer v3 finding 3 diagnosed both and wrote the one-line fix, then passed the branch with them unfixed and no todos.md entry. Both confirmed still present at HEAD.",
-      "missed_by": "none",
-      "impact": "On Linux, a path under a mismatched-case RootDirectory yields a wrong %path.Relative% (observability, not a permission gate — security correctly excluded it as a security finding). The process issue: a diagnosed defect with a written fix was shipped without the fix or a tracking entry.",
-      "suggestion": "Apply RootComparison at Path.cs:125,127 and PLangFileSystem.cs:254, or file a tracked todos.md entry. Path.cs:189,194 (Equals/GetHashCode) carry the same unconditional OrdinalIgnoreCase smell — not gate-reachable, worth folding in."
+      "file": "PLang/app/snapshot/this.Resume.cs",
+      "line": 0,
+      "issue": "Carried v1 F-D. The ResumeChain parent-continuation runs inside the child call-frame scope; codeanalyzer asserted 'dispose order correct' with no dedicated test. The snapshot/resume engine was not touched by v5/v6/v7 (permission + merge + test only), so the gap is unchanged.",
+      "missed_by": "tester",
+      "impact": "Latent at most — the full green suite exercises the resume path indirectly. No observed defect.",
+      "suggestion": "Non-blocking. Worth a todos.md line for a targeted dispose-order test; not a blocker."
     },
     {
       "id": 4,
       "severity": "minor",
-      "category": "review-gap",
-      "file": "PLang/App/Snapshot/this.Resume.cs",
-      "line": 40,
-      "issue": "ResumeChain's parent branch does `await using var callFrame = Push(frame.Action)` then recurses into the child, then `return await frame.Goal.RunFrom(ctx, StepIndex, ActionIndex + 1)`. The parent's post-call continuation runs INSIDE the callFrame await-using scope — the child call frame is not disposed until after the parent has fully continued, unlike normal execution where a call frame is scoped to the call action. codeanalyzer v1 asserted 'dispose order is correct' with no test behind the claim.",
-      "missed_by": "codeanalyzer",
-      "impact": "If the parent's post-resume continuation reads %!callstack%, renders an error trail, or re-suspends (capturing a fresh Snapshot), it sees/embeds a stale extra frame. SnapshotResumeTests and GoalRunFromTests pass because they assert results, not call-stack shape — the assumption is untested. Architect already flagged ResumeChain as 'clunky, revisit' in todos.md.",
-      "suggestion": "Add a test that asserts call-stack shape during a post-resume parent continuation (and a re-suspend after resume), or restructure so the call frame disposes before the parent advances past the call action."
-    },
-    {
-      "id": 5,
-      "severity": "nit",
-      "category": "review-gap",
-      "file": "PLang/App/modules/file/copy.cs",
-      "line": 33,
-      "issue": "MoveCopyBundledConsentTests exercises bundled (single-prompt) consent on Path.MoveTo/CopyTo (v2 surface). The action handlers modules/file/copy.cs and move.cs — the path a real PLang copy/move step takes — issue two sequential prompts (documented v1 degradation). Bundled consent is tested only on a surface PLang programs do not reach.",
+      "category": "contract",
+      "file": "PLang.Tests/App/FileSystem/MoveCopyBundledConsentTests.cs",
+      "line": 0,
+      "issue": "Carried v1 F-E. Bundled consent is exercised only on the v2 path.MoveTo/CopyTo surface; the real modules/file/copy.cs and move.cs handlers PLang programs actually use issue two prompts (a documented v1 degradation). The test name implies coverage of a single-prompt UX the shipped handler path does not deliver.",
       "missed_by": "tester",
-      "impact": "Not a defect (the degradation is documented in the handler doc-comments), but the test name implies coverage of a UX that shipped code paths do not deliver.",
-      "suggestion": "Either note in the test that it covers only the v2 surface, or add a handler-path test asserting the two-prompt behaviour so the gap is explicit."
+      "impact": "Test-name over-claim; no functional defect. tester v6 carries this as N4 and defers it.",
+      "suggestion": "Non-blocking. Add a one-line note in the test, or a handler-path two-prompt test. Fairly deferred with F-C/D."
     }
   ]
 }

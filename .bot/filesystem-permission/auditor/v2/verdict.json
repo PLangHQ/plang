@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Both v1 majors genuinely closed: F-A (SkipFreshnessCheck skips Ed25519 steps 2+4, step 3 Expires still governs, crypto check intact, default-false keeps wire path; Scenario4 tests advance NowUtc +10min and double-read, mutation-verified both halves); F-B (origin/runtime2 is now an ancestor of HEAD, app/ lowercase, namespaces lowercase). One new minor: actor/permission/this.cs class doc-comment still claims persisted 'a' grants 'have an expiry' — the inverse of the shipped contract; the F-A fix corrected the sibling file's comment but not this one. F-C/D/E carried non-blocking. Clean build, 2855/2855 green."
+}

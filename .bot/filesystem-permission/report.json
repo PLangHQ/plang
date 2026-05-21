@@ -810,6 +810,50 @@
         "health": "green: C# suite 2855/2855 on clean rebuild; no critical/high open findings",
         "notes": "F3 fixed by coder v6 and re-audited safe. F1/F2/F4 open but gated. One non-blocking observation logged: callback/channel verify doc-comment contradiction (pre-existing, not a branch finding)."
       }
+    },
+    {
+      "id": "11af8ec3-9850-4288-9751-37a632a97b5b",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-21T22:45:00Z",
+      "timestamp_end": "2026-05-21T23:15:00Z",
+      "intent": "Re-audit filesystem-permission after auditor v1 FAIL \u2014 verify F-A and F-B are genuinely closed.",
+      "before": {
+        "assumptions": "codeanalyzer v4, tester v6, security v2 all re-passed after coder v5/v6/v7. Auditor v1 FAILed on F-A (5-min grant expiry) and F-B (stale runtime2 merge-base).",
+        "risk": "A re-reviewer may have rubber-stamped a code change without verifying the headline contract; the F-A doc-comment cleanup may be incomplete."
+      },
+      "plan": ".bot/filesystem-permission/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/filesystem/permission/this.cs",
+            "PLang/app/filesystem/path.Authorize.cs",
+            "PLang/app/filesystem/path.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced the F-A fix end-to-end: SkipFreshnessCheck skips Ed25519 steps 2+4, step 3 (Expires) and step 8 (crypto) still run for grants, default-false keeps wire path intact. Verified F-B: origin/runtime2 is an ancestor of HEAD, app/ lowercase. Adjudicated F-C: authorization gate uses RootComparison, the OrdinalIgnoreCase sites are observability only."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/auditor/v2/result.md",
+            ".bot/filesystem-permission/auditor/v2/verdict.json",
+            ".bot/filesystem-permission/auditor-report.json",
+            ".bot/filesystem-permission/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor v2 PASS. Both v1 majors genuinely closed. One new minor (F-1): stale inverted doc-comment in actor/permission/this.cs class header that the F-A fix should have cleaned up. Three v1 minors carried non-blocking."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 no critical/major open",
+        "health": "Clean build, 2855/2855 tests green (verified independently).",
+        "notes": "F-A and F-B closed. F-1 (minor doc inversion) worth fixing before docs propagates it; does not block. Next stage: docs."
+      }
     }
   ]
 }
