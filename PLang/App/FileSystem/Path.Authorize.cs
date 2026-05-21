@@ -93,8 +93,14 @@ public partial class Path
         var rootWithSep = root.EndsWith(System.IO.Path.DirectorySeparatorChar)
             ? root
             : root + System.IO.Path.DirectorySeparatorChar;
-        return Absolute.StartsWith(rootWithSep, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(Absolute, root, StringComparison.OrdinalIgnoreCase);
+        // Linux paths are case-sensitive: comparing case-insensitively lets
+        // /SRV/myapp match /srv/myapp and slip past the gate. Windows is
+        // case-insensitive at the filesystem layer, so honour that there.
+        var cmp = OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        return Absolute.StartsWith(rootWithSep, cmp)
+            || string.Equals(Absolute, root, cmp);
     }
 
     private static string VerbLabel(Verb verb)
