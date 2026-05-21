@@ -1,0 +1,4 @@
+{
+  "verdict": "ready-to-merge",
+  "summary": "Codeanalyzer v2 #2 (ValidatePath Linux case-comparison) fixed via shared Path.RootComparison helper. Codeanalyzer v2 #1 (handler-layer authorize copy-paste) intentionally deferred to a new branch — full plan at Documentation/v0.2/path-polymorphism-plan.md, handed to architect. 2846/2846 C# tests green."
+}

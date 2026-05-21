@@ -12,6 +12,19 @@ namespace App.FileSystem;
     Example = "/some/file.json")]
 public partial class Path : modules.IContext
 {
+    /// <summary>
+    /// String comparison for "is this path under that root" checks. Linux
+    /// filesystems are case-sensitive — comparing case-insensitively lets
+    /// <c>/SRV/myapp</c> match <c>/srv/myapp</c> and slip past the gate.
+    /// Windows is case-insensitive at the filesystem layer, so we honour
+    /// that. Single home so <see cref="IsUnder"/> and
+    /// <c>PLangFileSystem.ValidatePath</c> can't drift apart again.
+    /// </summary>
+    internal static StringComparison RootComparison =>
+        OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+
     private readonly string _absolutePath;
 
     // Cached string-derived properties

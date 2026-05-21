@@ -224,7 +224,7 @@ namespace App.FileSystem.Default
 			// handler calls Authorize first, which prompts + signs + stores via
 			// Actor.Permission. ValidatePath now just normalises the path; gating
 			// is Authorize's responsibility.
-			if (!path.StartsWith(RootDirectory, StringComparison.OrdinalIgnoreCase))
+			if (!path.StartsWith(RootDirectory, App.FileSystem.Path.RootComparison))
 			{
 				return path;
 			}

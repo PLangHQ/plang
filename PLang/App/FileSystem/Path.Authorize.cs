@@ -92,14 +92,8 @@ public partial class Path
     {
         var fs = Context?.App.FileSystem;
         if (fs == null) return false;
-        // Linux paths are case-sensitive: comparing case-insensitively lets
-        // /SRV/myapp match /srv/myapp and slip past the gate. Windows is
-        // case-insensitive at the filesystem layer, so honour that there.
-        var cmp = OperatingSystem.IsWindows()
-            ? StringComparison.OrdinalIgnoreCase
-            : StringComparison.Ordinal;
-        return IsUnder(fs.RootDirectory, cmp)
-            || IsUnder(fs.OsDirectory, cmp);
+        return IsUnder(fs.RootDirectory, RootComparison)
+            || IsUnder(fs.OsDirectory, RootComparison);
     }
 
     /// <summary>

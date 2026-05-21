@@ -1,5 +1,13 @@
 # TODOs
 
+## Polymorphic `Path` (file:// + http:// + s3://… via scheme registry)
+
+**Date:** 2026-05-21
+
+`Path` becomes abstract; `FilePath`, `HttpPath`, etc. implement the verb surface (ReadText/WriteText/Save/Delete/Stat/List/CopyTo/MoveTo) per scheme. `Path.From(string)` factory routes by scheme prefix. File action handlers degenerate to one-liners (`Path.Value!.ReadText()`); legacy `IFile.Read/Save/...` dies. Closes codeanalyzer v2 finding #1 (handler-layer authorize copy-paste) on a new branch — deliberately not on `filesystem-permission`.
+
+Plan + phasing: `Documentation/v0.2/path-polymorphism-plan.md`. Hand to architect.
+
 ## Replace `GoalCall` parameter type with `list<action>` everywhere
 
 **Date:** 2026-04-22

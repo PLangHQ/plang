@@ -1,15 +1,23 @@
 # Coder — filesystem-permission
 
 ## Version
-v2 — see `v2/report.md`
+v3 — see `v3/report.md` (branch closure)
 
-## v2 update (post-codeanalyzer follow-up)
+## v3 update — branch closes
+
+Codeanalyzer v2 raised two regressions:
+- **v2 #2** (`PLangFileSystem.ValidatePath:227` Linux case-comparison): **fixed** this session — shared `Path.RootComparison` helper used at both gate sites.
+- **v2 #1** (handler-layer authorize copy-paste in `modules/file/*.cs`): **intentionally deferred** to a new branch. The real fix is bigger than codeanalyzer's (a)/(b) options — `Path` becomes polymorphic across schemes (`file://`, `http://`, ...). Plan: `Documentation/v0.2/path-polymorphism-plan.md`, handed to architect.
+
+**For codeanalyzer:** v2 #1 is tracked with a written plan + `todos.md` entry, not punted. Branch scope was permissions, not Path hierarchy restructure. **2846 / 2846 C# tests green.**
+
+## v2 update (post-codeanalyzer-v1 follow-up)
 
 All 10 codeanalyzer v1 findings closed. Eight fixed across `af32f3e` /
 `82a136b` / `c4cbbd3` / `8b22a5e` / `f543e19` / `1af7922` immediately
 after the codeanalyzer report. v2 cleaned the five stale Cause
 doc-comments (including a broken `<see cref="Cause"/>`) that survived
-the code-only #7/#8 cleanup. **2846 / 2846 C# tests green.**
+the code-only #7/#8 cleanup.
 
 ## What this is
 PLang's filesystem permission system + unified suspend/resume mechanism.
