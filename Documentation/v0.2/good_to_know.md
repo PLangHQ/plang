@@ -153,7 +153,34 @@ Fix: the collection becomes its own type with the lock private and `Add(...)` as
 
 **4. Two collections with overlapping semantics in different parent types.** If `stack.Audit` and `app.Errors.All` are both "run-wide IError log", they are one concept used in two places — even if the SCOPES differ (run-wide observed vs run-wide pushed-via-handler). Either one type used twice (with domain-specific wrappers) or — preferred — each gets its own *domain-named* type that happens to share a small implementation pattern. Avoid generic shared utility names like `ErrorLog`, `Tracker`, `Manager` — those are structural names, not domain identities. The folder name is the type name; pick a domain word.
 
-**Worked example (this branch):** `stack.Audit`, `app.Errors.All`, `call.Errors`, `call.Children`, `call.Diffs`, `call.Tags` were all `List<T>` / `Dictionary<K,V>` exposed publicly with locks scattered around CallStack.Push, Call.DisposeAsync, Tag(), and the OnSet handler. All six were promoted to their own types: `Audit`, `Trail` (was `All`), `Errors` (per-call), `Children`, `Diffs`, `Tags` — each `@this` in its own namespace folder. Each owns its lock, its eviction policy (Children FIFO), and its snapshot-iteration semantics. The Diffs and Tags promotions specifically closed the *reader race* that survived the writer-lock fix — a `lock (_diffsLock) { Diffs!.Add(...) }` writer pattern was safe for the writer but a debug observer iterating the public `List<Diff>?` could still throw `InvalidOperationException` mid-Add. Promoting both moved iteration under the same lock as Add (snapshot-then-yield), closing the race symmetrically.
+**5. Helper that takes a domain object and returns a derived answer.** A free function (private, static, or external) takes `Thing` and returns some piece of its logic — `ComputeAbsolute(path)`, `CheckPermission(absolute, verb)`, `RenderName(user)`. The domain object owns its own questions; if you find yourself writing `Helper.X(thing)`, ask whether it should be `thing.X()`. Almost always yes. The helper is the missing method on the type.
+
+### Worked example — Helper-soup vs. self-owning methods
+
+Smelly:
+
+    public async Task<Data<string>> ReadText(Path path) {
+        var absolute = ResolveAbsolute(path);
+        var check = CheckOrRequest(absolute, Verb.Read);
+        if (check is { } request) return request;
+        return Data.Ok(await File.ReadAllTextAsync(absolute));
+    }
+
+`ResolveAbsolute` and `CheckOrRequest` are helpers taking Path's data and producing answers. The method body is wiring outputs from one helper into the next — a transaction script dressed as OBP.
+
+Self-owning:
+
+    public async Task<Data<string>> ReadText(Path path) {
+        var check = path.CheckPermission(Verb.Read);
+        if (!check.Success) return check;
+        return Data.Ok(await File.ReadAllTextAsync(path.Absolute));
+    }
+
+`Path.Absolute` and `Path.CheckPermission(Verb)` are methods on Path — it owns those questions. The FS method only does what only it can do: the actual IO via the BCL. Two delegations, no helper wiring.
+
+Litmus test: count private static helpers in the calling class. Each one is suspicious — it's a method that didn't make it onto the right type.
+
+**Worked example (collections — this branch):** `stack.Audit`, `app.Errors.All`, `call.Errors`, `call.Children`, `call.Diffs`, `call.Tags` were all `List<T>` / `Dictionary<K,V>` exposed publicly with locks scattered around CallStack.Push, Call.DisposeAsync, Tag(), and the OnSet handler. All six were promoted to their own types: `Audit`, `Trail` (was `All`), `Errors` (per-call), `Children`, `Diffs`, `Tags` — each `@this` in its own namespace folder. Each owns its lock, its eviction policy (Children FIFO), and its snapshot-iteration semantics. The Diffs and Tags promotions specifically closed the *reader race* that survived the writer-lock fix — a `lock (_diffsLock) { Diffs!.Add(...) }` writer pattern was safe for the writer but a debug observer iterating the public `List<Diff>?` could still throw `InvalidOperationException` mid-Add. Promoting both moved iteration under the same lock as Add (snapshot-then-yield), closing the race symmetrically.
 
 **Tags / Dictionary case** is the same shape as List, with two extra notes: (a) the type implements `IDictionary<string,V>` (not just `IReadOnlyDictionary<string,V>`) because PLang's DictionaryNavigator probes for the writable interface; mutation methods other than the type's own `Set` throw to enforce the lock-internal discipline. (b) Always-allocate the wrapper at construction — lazy alloc would re-introduce the race on the property setter, defeating the point. Cost is one dict alloc per Call (small).
 

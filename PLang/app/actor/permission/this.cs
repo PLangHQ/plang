@@ -8,10 +8,13 @@ namespace app.actor.permission;
 /// <summary>
 /// Per-actor permission view — <c>actor.Permission.Find/Add/Revoke</c>.
 /// Two homes unified behind one Find:
-///   - <b>Session ("y")</b> — no expiry on signature, lives in an in-memory
-///     list, dies when the App exits.
-///   - <b>Persisted ("a")</b> — signature has an expiry, routed to
-///     <c>app.SettingsStore</c> under the <c>permission</c> table.
+///   - <b>Session ("y")</b> — unsigned, lives in an in-memory list, dies
+///     when the App exits.
+///   - <b>Persisted ("a")</b> — Ed25519-signed with <c>Expires == null</c>
+///     (permanent), routed to <c>app.SettingsStore</c> under the
+///     <c>permission</c> table. Verified with <c>SkipFreshnessCheck=true</c>
+///     so the wire-freshness window doesn't apply; the signature's own
+///     <c>Expires</c> field is the only time bound.
 /// The shared table is filtered to this actor's kind client-side.
 /// Per-kind keying: <c>Permission.Path</c> is the natural key — granting the
 /// same path twice overwrites.

@@ -98,6 +98,22 @@ in-place). Only `plang --test` is exposed to the trap.
 Do **not** delete `Tests/**/.build/` — those are tracked `.pr` files, not
 build artefacts. The "NEVER delete .build folders" rule above applies.
 
+## Mutation Testing (announce first)
+
+Before editing production source to run a mutation/deletion test — deliberately
+breaking behavior to confirm a test catches it — say so in plain text first:
+
+> **Mutation test:** about to temporarily edit `<file>` (`<what changes>`) to
+> verify `<which test/finding>`. Will revert immediately; nothing committed.
+
+This is a legitimate and expected technique (testers, reviewers). The
+announcement exists only so a watching human never has to wonder whether a
+source edit to a security-relevant file is intentional. Rules:
+
+- Announce **once** before a batch of mutations, not per file.
+- Always revert before moving on; end with `git status` clean.
+- Never commit a mutation — source stays untouched in the final diff.
+
 ## Debugging
 - `plang --debug` — debug all steps
 - `plang '--debug={"goal":"Start"}'` — debug specific goal

@@ -913,6 +913,83 @@
         "health": "branch ready for docs / merge",
         "notes": "v5 PASS holds. Ingi prompted re-read of auditor v2; captured the sibling-doc-inversion miss as Learning #1 and flagged the trivial follow-up in the report. Branch advances after coder lands the 4-line doc fix."
       }
+    },
+    {
+      "id": "3c1f0c99-4adf-4e60-94a9-5ed4782d38ce",
+      "bot": "docs",
+      "timestamp_start": "2026-05-21T23:27:27Z",
+      "timestamp_end": "2026-05-21T23:38:00Z",
+      "intent": "Docs pass: apply 2 CLAUDE.md proposals (architect helper-soup smell, tester mutation-test announcement), close auditor v2 F1 doc-inversion, update app-tree.md for actor.Permission, write filesystem-permission architecture doc.",
+      "before": {
+        "assumptions": "Branch is PASS through reviewer chain (codeanalyzer v5, tester v6, security v2, auditor v2). One residual doc bug (auditor F1) and two pending claude-md-proposals; no character-proposals.md. Documentation/v0.2/ has no canonical home for the permission system yet.",
+        "risk": "Low for CLAUDE.md proposals (text additions). Medium for the new architecture doc \u2014 must match implementation precisely. Low for app-tree.md and the auditor F1 doc-comment fix."
+      },
+      "plan": ".bot/filesystem-permission/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied architect claude-md-proposal v1 verbatim \u2014 added OBP smell #5 (helper that takes a domain object and returns a derived answer) + a Helper-soup vs. self-owning methods worked example. Renamed the existing 'Worked example (this branch)' header to 'Worked example (collections \u2014 this branch)' for disambiguation now that the section has two examples."
+        },
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Applied tester claude-md-proposal v1 verbatim \u2014 new '## Mutation Testing (announce first)' section between 'Running plang Tests' and 'Debugging'. One-line announcement template + three sub-rules. Filed under reviewer-bot exception per the proposal footnote."
+        },
+        {
+          "paths": [
+            "PLang/app/actor/permission/this.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Closed auditor v2 F1. Rewrote class-header XML doc (lines 8-18) \u2014 pre-F-A polarity was inverted (Session 'no expiry on signature' / Persisted 'signature has an expiry'). Now matches post-F-A reality and the sibling filesystem/permission class doc."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added Permission line to the Actor surface block (Find/Add/Revoke summary). Updated the Maintenance table 'New Actor surface' row with Permission as an example."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/filesystem-permission.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New ~140-line architecture doc. Covers PermissionRecord/Verb/Match concepts, Authorize flow (in-root \u2192 Find \u2192 ask y/n/a), two grant homes, Find two-pass lookup with per-Data verified caching, Ed25519 8-step verify with SkipFreshnessCheck scoped to steps 2 and 4 (security v2's 4-step bypass-scoping template), revoke, known follow-ups, file map. Cross-references app-tree.md and good_to_know.md."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/docs/v1/plan.md",
+            ".bot/filesystem-permission/docs/v1/result.md",
+            ".bot/filesystem-permission/docs/v1/verdict.json",
+            ".bot/filesystem-permission/docs/summary.md",
+            ".bot/filesystem-permission/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Docs session artifacts. docs-report.json carries the claude_md_proposals decisions (both applied, character_proposals empty)."
+        }
+      ],
+      "after": {
+        "status": "PASS \u2014 ready to merge",
+        "health": "Branch reviewer-green (codeanalyzer v5, tester v6, security v2, auditor v2) and now docs-complete. No PLang code paths changed in this pass \u2014 text and one XML-doc only.",
+        "notes": "Two claude-md-proposals applied, auditor v2 F1 doc-inversion closed, app-tree.md actor surface updated, new filesystem-permission.md architecture doc written. No character-proposals on this branch."
+      }
     }
   ]
 }

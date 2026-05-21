@@ -1,0 +1,94 @@
+{
+  "reviewer": "docs",
+  "branch": "filesystem-permission",
+  "timestamp": "2026-05-21T23:35:00Z",
+  "reviewed_version": "v1",
+  "summary": "Final docs pass after the reviewer chain went green (codeanalyzer v5, tester v6, security v2, auditor v2). Applied both pending claude-md-proposals (architect: OBP helper-soup smell #5 in Documentation/v0.2/good_to_know.md; tester: Mutation Testing announcement section in CLAUDE.md). Closed auditor v2 F1 by rewriting the inverted class-header XML doc in PLang/app/actor/permission/this.cs. Updated Documentation/v0.2/app-tree.md to add the Permission line to the Actor surface block. Wrote a new architecture doc Documentation/v0.2/filesystem-permission.md (~140 lines) covering the Authorize flow, two-homes model, Ed25519 SkipFreshnessCheck rationale (with the security v2 4-step bypass-scoping template), and known non-blocking follow-ups. No character-proposals.md on this branch. Verdict: PASS — ready to merge.",
+  "stats": {
+    "gaps_found": 3,
+    "gaps_filled": 3,
+    "docs_updated": 4,
+    "docs_created": 1
+  },
+  "changes": [
+    {
+      "id": 1,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/good_to_know.md",
+      "description": "Added OBP smell #5 (helper-soup) and a worked example contrasting helper-soup vs. self-owning methods. Renamed the existing 'Worked example (this branch)' header to 'Worked example (collections — this branch)' for disambiguation."
+    },
+    {
+      "id": 2,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "CLAUDE.md",
+      "description": "Added '## Mutation Testing (announce first)' section between Running plang Tests and Debugging. One-line announcement template + three rules (announce once per batch, always revert, never commit a mutation)."
+    },
+    {
+      "id": 3,
+      "type": "xml-doc",
+      "action": "updated",
+      "file": "PLang/app/actor/permission/this.cs",
+      "description": "Rewrote class-header summary (lines 8-18). Pre-F-A polarity had Session as 'no expiry on signature' and Persisted as 'signature has an expiry' — inverted. Now: Session 'y' unsigned in-memory; Persisted 'a' Ed25519-signed with Expires == null, verified with SkipFreshnessCheck=true."
+    },
+    {
+      "id": 4,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/app-tree.md",
+      "description": "Added Permission → app/actor/permission/ line to the Actor surface block with one-line Find/Add/Revoke summary. Updated the Maintenance table to call out Permission as an example new-Actor-surface entry."
+    },
+    {
+      "id": 5,
+      "type": "architecture-doc",
+      "action": "created",
+      "file": "Documentation/v0.2/filesystem-permission.md",
+      "description": "New ~140-line architecture doc. Covers concept map (PermissionRecord + Verb + Match), the Authorize flow (in-root → Find → ask y/n/a), two grant homes, Find two-pass lookup, Ed25519 8-step verify with SkipFreshnessCheck scoped to steps 2 and 4 (security v2's 4-step bypass-scoping template), revoke, known follow-ups (RootComparison thread-through, Add dedup-by-Path, bundled consent in copy/move, output.ask text-only), and a file map. Reader audience: PLang developer debugging a permission denial."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "stale-doc",
+      "file": "PLang/app/actor/permission/this.cs",
+      "issue": "Auditor v2 F1: class-header XML doc carried the pre-F-A polarity (Session 'no expiry on signature' / Persisted 'signature has an expiry'). After F-A this is inverted (Persisted is signed-but-permanent, Session is unsigned).",
+      "resolution": "filled",
+      "detail": "Rewrote lines 8-18 in-place. The new text matches the sibling class doc in PLang/app/filesystem/permission/this.cs:22-26 and the Authorize implementation. XML-only change; no compile risk."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "missing-doc",
+      "file": "Documentation/v0.2/app-tree.md",
+      "issue": "Actor surface block did not list the new Permission property added on this branch.",
+      "resolution": "filled",
+      "detail": "Added one-line entry with Find/Add/Revoke summary. Also added a maintenance-table example for future surfaces."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "category": "missing-doc",
+      "file": "Documentation/v0.2/filesystem-permission.md",
+      "issue": "Filesystem permission system was undocumented as a concept. path-polymorphism-plan.md mentioned it tangentially as a future hand-off; no canonical home for the current shape.",
+      "resolution": "filled",
+      "detail": "Wrote a new architecture doc. Cross-references app-tree.md and good_to_know.md."
+    }
+  ],
+  "claude_md_proposals": [
+    {
+      "from_bot": "architect",
+      "target": "Documentation/v0.2/good_to_know.md",
+      "decision": "applied",
+      "reason": "Canonical rule (all future OBP work); concrete; matches the file's existing worked-example style. Applied verbatim, with the listing inserted as smell #5."
+    },
+    {
+      "from_bot": "tester",
+      "target": "CLAUDE.md",
+      "decision": "applied",
+      "reason": "Real incident on the branch; one-sentence rule with three operational sub-rules; zero behavioral cost. Filed under the explicit reviewer-bot exception (Ingi's direct request). Applied verbatim."
+    }
+  ],
+  "character_proposals": []
+}
