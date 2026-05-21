@@ -1,143 +1,112 @@
 # codeanalyzer — filesystem-permission
 
 ## Version
-v2
+v3
 
 ## What this is
-Second pass after the coder addressed v1's ten findings and shipped seven
-new functional commits (verb-null-by-default, channel.set goal-channel
-wiring, `%__data__% → %!data%` rename, Stream EOF fail-fast, `//tmp/X`
-out-of-root, action handlers wired through `Path.Authorize`, dropped
-stale plang tests). +226 / -109 across 33 C# files since v1.
+Third (and likely final) pass. Coder closed v2 #2 with the helper shape
+v2 prescribed, deferred v2 #1 to a new branch via a polymorphic-Path
+plan handed to the architect, and declared the branch closed.
 
-This v2 review re-verifies the v1 fixes and walks the new commits with the
-same five passes (OBP rules + shape smells; simplification; readability;
-behavioral reasoning; deletion test).
+This v3 review verifies the v2 #2 fix, evaluates the v2 #1 deferral as
+a scope call, and audits the one new commit (`3234b5254`) for any
+incidental issues.
 
 ## What was done
 
-- Re-read `v1/report.md` and verified all ten v1 findings are properly
-  fixed in commits `af32f3ece..f543e19ca` (Actor.Permission async sweep,
-  filtered catch, loop-not-recursion in Authorize/BundledTransfer,
-  OS-aware IsInRoot, AuthGate helper, StatInfo record, dead Cause/cause
-  removal, AlwaysExpiry deletion, redundant await drop).
-- Ran the five passes on the new commits (`bd730d39f..dc3a17890`).
-- Wrote `v2/report.md` with line-cited findings.
-- Wrote `v2/verdict.json`: **fail** — two regressions of v1 findings at
-  sibling sites.
+- Verified `Path.RootComparison` helper (`Path.cs:23–25`) is well-shaped:
+  single-line getter, `internal` scope, doc-comment names both consumers
+  by name, used at `Path.Authorize.IsInRoot` (95–96) and
+  `PLangFileSystem.ValidatePath:227`.
+- Read `Documentation/v0.2/path-polymorphism-plan.md` (the v2 #1
+  deferral artefact). The plan is structurally cleaner than v2's
+  tactical (a)/(b) options — `Path.From(scheme)` factory + virtual verb
+  surface absorbs the handler boilerplate AND opens a feature surface
+  (`read %url%` → HTTP).
+- Grepped for `OrdinalIgnoreCase` + `StartsWith`/`Equals` patterns in
+  `PLang/App/FileSystem/`. Found two more sites with the same root-
+  prefix-compared-case-insensitively bug the helper was created to
+  prevent.
+- Rebuilt + reran `PLang.Tests`: 2846/2846 passed.
+- Wrote `v3/report.md` + `v3/verdict.json`: **pass**, with one new
+  follow-up finding.
 
-## Verdict: NEEDS WORK
+## Verdict: PASS
 
-All v1 fixes hold. **Two regressions in the new commits:**
+v2 #2 is fixed cleanly. v2 #1 deferral is a defensible scope call —
+the (a)/(b) options I gave in v2 were tactical; coder's polymorphic-Path
+plan is the real fix one floor up, and the right venue is a fresh branch
+with architect input. Branch closure is honest: filesystem-permission's
+scope (consent-gated FS access) is complete; the handler-layer
+copy-paste is the seam where the next branch picks up.
 
-1. **v1 #1 reintroduced one floor up.** `AuthGate` was added to
-   `Path.Operations` as v1 prescribed, but it's `private`. The seven new
-   file action handlers (`PLang/App/modules/file/{read,save,copy,move,
-   delete,exists,list}.cs`) each copy-paste the same two-line
-   authorize preamble instead — exactly the v1 #1 shape, one layer up.
-2. **v1 #4 at a sibling site.** The OS-aware case-comparison fix landed
-   in `Path.Authorize.IsInRoot`, but
-   `PLangFileSystem.ValidatePath:227` still uses
-   `OrdinalIgnoreCase` `StartsWith`. Same Linux false-match bug,
-   different file.
+## One new finding (v3 §3)
 
-Other new code is clean: `Verb` defaults flipped to null (correct — fixes
-JSON signature round-trip), `Stream.AskCore` EOF fail-fast is sound,
-`test.run.FreezeFoundational` is the right fix in the right place, the
-`%!data%` rename is mechanical and consistent.
+The `RootComparison` helper exists "so `IsUnder` and
+`PLangFileSystem.ValidatePath` can't drift apart again." Two more sites
+share the exact same root-prefix-with-`OrdinalIgnoreCase` pattern and
+would drift on the same Linux false-match bug:
 
-## Top findings (line-cited; full detail in `v2/report.md`)
+- `PLang/App/FileSystem/Path.cs:125,127` — `Relative` getter
+  (`StartsWith` and `Equals` against `Fs.RootDirectory`)
+- `PLang/App/FileSystem/Default/PLangFileSystem.cs:254` — system/
+  fallback (`StartsWith` against `RootDirectory + "/system/"`)
 
-**Must fix:**
+Both should swap to `App.FileSystem.Path.RootComparison`. Low impact —
+neither is a security gate (`Relative` is observability, `system/`
+fallback is disk-layout) — but the same drift the helper was created
+to eliminate.
 
-1. `PLang/App/modules/file/{read,save,copy,move,delete,exists,list}.cs:32`
-   (and matching lines in siblings) — 7 sites, 9 calls of the identical
-   two-line authorize preamble. Either promote `Path.AuthGate` to public
-   and call it (`if (await Path.Value!.AuthGate(verb) is { } early)
-   return early;`) OR route handlers through `Path.Operations` and delete
-   the `IFile.X` surface. The `Path.Operations` doc-comment already
-   advertises (b) — wiring stopped short.
-2. `PLang/App/FileSystem/Default/PLangFileSystem.cs:227` —
-   `path.StartsWith(RootDirectory, OrdinalIgnoreCase)` — Linux case-
-   sensitive paths get false matches. Hoist the v1 `IsInRoot` OS-switch
-   into a `RootComparison` helper and use it at both sites.
+**`PLangFileSystem.cs:200`** (`sysPrefix = "/system/"`) is a PLang
+logical convention, not a filesystem root — case-insensitivity is
+intentional there. Leave it.
 
-**Should fix:**
+## Code example — v2 #2 fix shape
 
-3. `PLang/App/modules/file/{copy,move}.cs:35` — two prompts on a fresh
-   out-of-root pair; `Path.Operations.BundledTransfer` already does the
-   single combined prompt for the same operation. Route action handlers
-   through it. (Resolves both 2.2 and 4.4.)
-4. `PLang/App/FileSystem/Default/PLangFileSystem.cs:184–188` — empty `if`
-   body with a tail-of-chain `else`. Restructure to invert/extract; carry
-   the load-bearing comment with it.
-
-**Nice to have:**
-
-5. `PLang/App/modules/test/run.cs:79–86` — `FreezeFoundational` is the
-   correct fix, but no test pins the goal-channel-recursion-on-self
-   failure mode. Add a regression test so a future contributor moving
-   the freeze later doesn't silently reintroduce the stack overflow.
-6. `PLang/App/Channels/Channel/Stream/this.cs:108` — "the prompt is just
-   lost" silent fallthrough when neither output nor self can write. Log
-   or hard-fail.
-7. `PLang/App/FileSystem/Permission/Verb/this.cs` — given 16 sites of
-   `new Verb { Read = new ReadVerb() }` across `Path.Operations` and the
-   action handlers, add `Verb.ReadOnly()` / `Verb.WriteOnly()` /
-   `Verb.ReadWrite()` factories mirroring `AllowAll()`.
-
-## Code example — the most representative finding
-
-The v1 #1 regression. `PLang/App/modules/file/read.cs:30–43`:
+`Path.cs:23–25` (the new single home):
 
 ```csharp
-public async Task<Data.@this> Run()
-{
-    var auth = await Path.Value!.Authorize(new Verb { Read = new ReadVerb() });
-    if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
-
-    var result = Files.Read(this);
-    // … ResolveVariables branch …
-    return result;
-}
+internal static StringComparison RootComparison =>
+    OperatingSystem.IsWindows()
+        ? StringComparison.OrdinalIgnoreCase
+        : StringComparison.Ordinal;
 ```
 
-`Path.Operations.cs:39` already has:
+Doc-comment explicitly names the bug it prevents and lists both
+consumers by name. One-line getter, no drift possible. The kind of
+helper that prevents the next regression by construction.
 
+Then `Path.Authorize.cs:95–96`:
 ```csharp
-private async Task<Data.@this?> AuthGate(Verb verb)
-{
-    var auth = await Authorize(verb);
-    if (auth.Type?.ClrType.Exit() == true) return auth;
-    if (!auth.Success) return auth;
-    return null;
-}
+return IsUnder(fs.RootDirectory, RootComparison)
+    || IsUnder(fs.OsDirectory, RootComparison);
 ```
 
-Promoting it to `public` would let `read.cs:32–33` collapse to:
-
+And `PLangFileSystem.cs:227`:
 ```csharp
-if (await Path.Value!.AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
+if (!path.StartsWith(RootDirectory, App.FileSystem.Path.RootComparison))
 ```
 
-— one line per handler instead of two. Same logic as v1 #1.
+Two sites, one source of truth. Codeanalyzer's verbatim prescription.
+
+## Open items for the next branch / pass
+
+```
+1. Migrate Path.cs:125,127 (Relative getter) and PLangFileSystem.cs:254
+   (system/ fallback) to App.FileSystem.Path.RootComparison.
+2. Polymorphic-Path branch (architect): per
+   Documentation/v0.2/path-polymorphism-plan.md — absorbs the v2 #1
+   handler copy-paste AND v2 #3 copy/move two-prompt UX.
+3. v2 lower-priority follow-ups (#4 empty-if-body, #5 Stream
+   fallthrough, #6 test/run regression test, #7 Verb factories) — pick
+   up opportunistically or roll into polymorphic-Path branch.
+```
 
 ## What's next
 
 ```
-VERDICT: FAIL
-Issues: v1 #1 regressed at handler layer (PLang/App/modules/file/*.cs,
-7 sites of duplicated authorize preamble because Path.AuthGate is
-private); v1 #4 regressed at sibling site (PLangFileSystem.ValidatePath:227
-Linux case-insensitive StartsWith). Plus copy/move using two-prompt path
-when BundledTransfer exists, empty-if-body in ValidatePath, missing
-regression test for goal-channel-recursion fix.
-Next: run.ps1 coder filesystem-permission "Fix the two regressions from
-codeanalyzer v2: (1) promote Path.AuthGate to public (or route the seven
-file action handlers through Path.Operations) so the 9-site copy-paste
-preamble doesn't live at the handler layer; (2) hoist the OS-aware
-case-comparison from Path.Authorize.IsInRoot into a shared helper and
-use it at PLangFileSystem.ValidatePath:227. Then route copy/move handlers
-through Path.Operations.BundledTransfer to get the single-prompt UX."
--b filesystem-permission
+VERDICT: PASS
+Branch ready to merge. One v3 follow-up (RootComparison should reach
+two more sites in PLang/App/FileSystem/) is low-priority and folds
+naturally into the polymorphic-Path branch.
 ```
