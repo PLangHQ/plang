@@ -1,106 +1,143 @@
 # codeanalyzer — filesystem-permission
 
 ## Version
-v1
+v2
 
 ## What this is
-The filesystem-permission branch landed five stages from the architect plan
-(permission types, snapshot-resume engine, Path.Authorize gate,
-Actor.Permission storage binding, IPLangFileSystem v2 surface) plus
-Stage 5 Messages-end-to-end fixtures. ~6,200 lines added, ~1,800 removed
-across 129 files. Coder reports 2830/2830 tests green.
+Second pass after the coder addressed v1's ten findings and shipped seven
+new functional commits (verb-null-by-default, channel.set goal-channel
+wiring, `%__data__% → %!data%` rename, Stream EOF fail-fast, `//tmp/X`
+out-of-root, action handlers wired through `Path.Authorize`, dropped
+stale plang tests). +226 / -109 across 33 C# files since v1.
 
-This codeanalyzer review walks the diff with five passes (OBP rules + shape
-smells; simplification; readability; behavioral reasoning; deletion test)
-and produces a line-cited report.
+This v2 review re-verifies the v1 fixes and walks the new commits with the
+same five passes (OBP rules + shape smells; simplification; readability;
+behavioral reasoning; deletion test).
 
 ## What was done
 
-- Read `report.json` (4 prior sessions: 3 architect, 1 test-designer; no
-  coder session entry — coder posted commits and `summary.md` but didn't
-  write a session block) and appended my session.
-- Wrote `v1/plan.md`; ran the five passes against the 43 modified C#
-  files under `PLang/App/`.
-- Wrote `v1/report.md` with line-cited findings.
-- Wrote `v1/verdict.json`: **fail** with a one-line summary.
+- Re-read `v1/report.md` and verified all ten v1 findings are properly
+  fixed in commits `af32f3ece..f543e19ca` (Actor.Permission async sweep,
+  filtered catch, loop-not-recursion in Authorize/BundledTransfer,
+  OS-aware IsInRoot, AuthGate helper, StatInfo record, dead Cause/cause
+  removal, AlwaysExpiry deletion, redundant await drop).
+- Ran the five passes on the new commits (`bd730d39f..dc3a17890`).
+- Wrote `v2/report.md` with line-cited findings.
+- Wrote `v2/verdict.json`: **fail** — two regressions of v1 findings at
+  sibling sites.
 
 ## Verdict: NEEDS WORK
 
-Shape is correct — Permission record family, Actor.Permission home,
-Snapshot.Resume continuation, and the `IExitsGoal` marker all hold their
-OBP shape cleanly. Findings are about choreography copy-paste, sync-over-
-async stitching, fix-introduced dead parameters, and one unbounded
-recursion. None are structural; all are follow-up-pass fodder.
+All v1 fixes hold. **Two regressions in the new commits:**
 
-## Top findings (cite list — full detail in `v1/report.md`)
+1. **v1 #1 reintroduced one floor up.** `AuthGate` was added to
+   `Path.Operations` as v1 prescribed, but it's `private`. The seven new
+   file action handlers (`PLang/App/modules/file/{read,save,copy,move,
+   delete,exists,list}.cs`) each copy-paste the same two-line
+   authorize preamble instead — exactly the v1 #1 shape, one layer up.
+2. **v1 #4 at a sibling site.** The OS-aware case-comparison fix landed
+   in `Path.Authorize.IsInRoot`, but
+   `PLangFileSystem.ValidatePath:227` still uses
+   `OrdinalIgnoreCase` `StartsWith`. Same Linux false-match bug,
+   different file.
 
-**Behavioral (Pass 4) — fix first:**
+Other new code is clean: `Verb` defaults flipped to null (correct — fixes
+JSON signature round-trip), `Stream.AskCore` EOF fail-fast is sound,
+`test.run.FreezeFoundational` is the right fix in the right place, the
+`%!data%` rename is mechanical and consistent.
 
-1. `PLang/App/Actor/Permission/this.cs:55,86,117,145` — four sync-over-async
-   call sites (`.GetAwaiter().GetResult()`). Promote Find/Add/Revoke to
-   `Task<…>`; Path.Authorize is already async, migration is mechanical.
-2. `PLang/App/FileSystem/Path.Authorize.cs:56` — unbounded recursion on
-   invalid answer. Same pattern at `Path.Operations.cs:210`. Use a loop.
-3. `PLang/App/Actor/Permission/this.cs:148` — bare `catch { return false; }`
-   masks NRE/OCE as "denied". Filter exceptions like other catch sites.
-4. `PLang/App/FileSystem/Path.Authorize.cs:82` — `IsInRoot` uses
-   `OrdinalIgnoreCase` everywhere. On Linux, paths are case-sensitive;
-   case-insensitive comparison lets `/SRV/myapp` slip past the gate.
+## Top findings (line-cited; full detail in `v2/report.md`)
 
-**Simplification (Pass 2):**
+**Must fix:**
 
-5. `PLang/App/FileSystem/Path.Operations.cs:28-145` — same three-line
-   `Authorize` preamble repeated nine times. Single helper collapses it.
-6. `PLang/App/FileSystem/Path.Operations.cs:73,82,88` — `Stat` returns
-   `Dictionary<string, object?>`. Should be a `Stat` record.
-7. `PLang/App/modules/error/handle.cs:154,170` + `RunRecovery` —
-   `cause`/`erroredCall` parameters are dead. Delete or restore threading.
-8. `PLang/App/CallStack/Call/this.cs:46,56-58,131` + Errors/CallChainRenderer
-   Cause branches — `_ownCause` is always null. Coder's deferred item;
-   today's state is two dead halves of a feature.
+1. `PLang/App/modules/file/{read,save,copy,move,delete,exists,list}.cs:32`
+   (and matching lines in siblings) — 7 sites, 9 calls of the identical
+   two-line authorize preamble. Either promote `Path.AuthGate` to public
+   and call it (`if (await Path.Value!.AuthGate(verb) is { } early)
+   return early;`) OR route handlers through `Path.Operations` and delete
+   the `IFile.X` surface. The `Path.Operations` doc-comment already
+   advertises (b) — wiring stopped short.
+2. `PLang/App/FileSystem/Default/PLangFileSystem.cs:227` —
+   `path.StartsWith(RootDirectory, OrdinalIgnoreCase)` — Linux case-
+   sensitive paths get false matches. Hoist the v1 `IsInRoot` OS-switch
+   into a `RootComparison` helper and use it at both sites.
 
-**Deletion (Pass 5):**
+**Should fix:**
 
-9. `PLang/App/FileSystem/Path.Authorize.cs:25` — `AlwaysExpiry` constant
-   unused; either thread or delete.
-10. `PLang/App/FileSystem/Path.Operations.cs:236` — `await Task.FromResult(…)`
-    redundant inside an async method.
+3. `PLang/App/modules/file/{copy,move}.cs:35` — two prompts on a fresh
+   out-of-root pair; `Path.Operations.BundledTransfer` already does the
+   single combined prompt for the same operation. Route action handlers
+   through it. (Resolves both 2.2 and 4.4.)
+4. `PLang/App/FileSystem/Default/PLangFileSystem.cs:184–188` — empty `if`
+   body with a tail-of-chain `else`. Restructure to invert/extract; carry
+   the load-bearing comment with it.
+
+**Nice to have:**
+
+5. `PLang/App/modules/test/run.cs:79–86` — `FreezeFoundational` is the
+   correct fix, but no test pins the goal-channel-recursion-on-self
+   failure mode. Add a regression test so a future contributor moving
+   the freeze later doesn't silently reintroduce the stack overflow.
+6. `PLang/App/Channels/Channel/Stream/this.cs:108` — "the prompt is just
+   lost" silent fallthrough when neither output nor self can write. Log
+   or hard-fail.
+7. `PLang/App/FileSystem/Permission/Verb/this.cs` — given 16 sites of
+   `new Verb { Read = new ReadVerb() }` across `Path.Operations` and the
+   action handlers, add `Verb.ReadOnly()` / `Verb.WriteOnly()` /
+   `Verb.ReadWrite()` factories mirroring `AllowAll()`.
 
 ## Code example — the most representative finding
 
-The `Authorize` preamble repeats nine times in `Path.Operations.cs`:
+The v1 #1 regression. `PLang/App/modules/file/read.cs:30–43`:
 
 ```csharp
-public async Task<Data.@this> ReadText()
+public async Task<Data.@this> Run()
 {
-    var auth = await Authorize(new Verb { Read = new ReadVerb() });
+    var auth = await Path.Value!.Authorize(new Verb { Read = new ReadVerb() });
+    if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
+
+    var result = Files.Read(this);
+    // … ResolveVariables branch …
+    return result;
+}
+```
+
+`Path.Operations.cs:39` already has:
+
+```csharp
+private async Task<Data.@this?> AuthGate(Verb verb)
+{
+    var auth = await Authorize(verb);
     if (auth.Type?.ClrType.Exit() == true) return auth;
     if (!auth.Success) return auth;
-    var text = await System.IO.File.ReadAllTextAsync(Absolute);
-    return Data.@this.Ok(text);
+    return null;
 }
 ```
 
-Three similar lines is better than a premature abstraction. **Nine
-identical three-line preambles is exactly when the abstraction earns its
-place.** Each operation should shrink to one preamble line:
+Promoting it to `public` would let `read.cs:32–33` collapse to:
 
 ```csharp
-public async Task<Data.@this> ReadText()
-{
-    if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
-    var text = await System.IO.File.ReadAllTextAsync(Absolute);
-    return Data.@this.Ok(text);
-}
+if (await Path.Value!.AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
 ```
+
+— one line per handler instead of two. Same logic as v1 #1.
 
 ## What's next
 
 ```
 VERDICT: FAIL
-Issues: Sync-over-async at Actor.Permission, unbounded recursion in
-Path.Authorize/BundledTransfer, silent catch in VerifySignature,
-case-insensitive IsInRoot on Linux, 9× authorize preamble copy-paste,
-dead cause/Cause params after stage 2a.5.
-Next: run.ps1 coder filesystem-permission "Fix the issues found by codeanalyzer: promote Actor.Permission Find/Add/Revoke to async, replace recursive bad-input handling in Path.Authorize and BundledTransfer with a loop, filter the catch in VerifySignature, fix case-sensitive IsInRoot on Linux, extract the 9× authorize preamble into a helper, and resolve the dead Cause/cause parameters (delete or restore)." -b filesystem-permission
+Issues: v1 #1 regressed at handler layer (PLang/App/modules/file/*.cs,
+7 sites of duplicated authorize preamble because Path.AuthGate is
+private); v1 #4 regressed at sibling site (PLangFileSystem.ValidatePath:227
+Linux case-insensitive StartsWith). Plus copy/move using two-prompt path
+when BundledTransfer exists, empty-if-body in ValidatePath, missing
+regression test for goal-channel-recursion fix.
+Next: run.ps1 coder filesystem-permission "Fix the two regressions from
+codeanalyzer v2: (1) promote Path.AuthGate to public (or route the seven
+file action handlers through Path.Operations) so the 9-site copy-paste
+preamble doesn't live at the handler layer; (2) hoist the OS-aware
+case-comparison from Path.Authorize.IsInRoot into a shared helper and
+use it at PLangFileSystem.ValidatePath:227. Then route copy/move handlers
+through Path.Operations.BundledTransfer to get the single-prompt UX."
+-b filesystem-permission
 ```

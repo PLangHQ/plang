@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "All ten v1 fixes properly applied. Two regressions in the seven new functional commits: handler-layer authorize copy-paste (v1 #1 re-emerged in PLang/App/modules/file/*.cs because AuthGate is private) and Linux case-insensitive StartsWith at PLangFileSystem.ValidatePath:227 (v1 #4 at a sibling site). Other new code (Verb default-null, Stream EOF fail-fast, FreezeFoundational in test.run, %!data% rename, ValidatePath consolidation) is clean."
+}
