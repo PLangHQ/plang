@@ -714,6 +714,56 @@
         "health": "Branch builds clean (0 errors), C# suite 2853/2853 green. Internally sound; FAIL is about a documented-contract defect (F-A) and an unreviewed integration gap (F-B), not build/test breakage.",
         "notes": "F-A: persisted always-allow grants expire after 5 min \u2014 security under-rated as non-blocking; escalated to major because the doc-comment is false and Scenario4 false-greens it. F-B: merge-base predates app-lowercase merge; ~40 new PascalCase-namespace files vs runtime2 lowercase convention. Coverage verified independently."
       }
+    },
+    {
+      "id": "87db3006-1dcf-4a23-bf4c-80e3b231c9f9",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-21T21:44:30Z",
+      "timestamp_end": "2026-05-21T21:50:00Z",
+      "intent": "Review coder v4/v5/v6 (test-quality, AppId drop, SkipFreshnessCheck + runtime2 merge) for OBP, simplicity, behavioral correctness.",
+      "before": {
+        "assumptions": "Auditor FAILed v5 with F-A (grant durability) + F-B (merge). Coder v6 claims both closed. v5/v6 are small logic changes; merge is mechanical rename.",
+        "risk": "SkipFreshnessCheck disables anti-replay primitives for grant verification \u2014 must skip exactly the right checks and keep wire-message verification intact (default false)."
+      },
+      "plan": ".bot/filesystem-permission/codeanalyzer/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/filesystem/permission/this.cs",
+            "PLang/app/actor/permission/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "v5 AppId drop: verified record ctor 5->4 args, Covers, Find/Revoke/TryCover/BuildRequest all updated in lockstep, no dangling AppId. _inMemory list discipline fully in-class. OBP clean."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/signing/code/Ed25519.cs",
+            "PLang/app/modules/signing/verify.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "v6 SkipFreshnessCheck: traced 5-step VerifyAsync. Flag skips exactly step 2 (wire-freshness) + step 4 (nonce-replay); step 3 (Expires) still always runs. Default-false keeps wire-message verification intact; Permission.VerifySignature is the only caller passing true and the only grant-verify path. ('','true') Data ctor is established idiom (3 precedents)."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v4/report.md",
+            ".bot/filesystem-permission/codeanalyzer/v4/verdict.json",
+            ".bot/filesystem-permission/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS verdict. Two non-blocking carry-overs: F-C OrdinalIgnoreCase sites (now tracked in coder v6 report); pre-existing Path-only Add keying. Clean rebuild: 0 errors."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "good",
+        "notes": "Coder v5/v6 close auditor F-A and F-B cleanly. No OBP violations, no bugs, build 0 errors. Deferred F-C/D/E + security F1/F2/F4 honestly tracked in coder/v6/report.md."
+      }
     }
   ]
 }
