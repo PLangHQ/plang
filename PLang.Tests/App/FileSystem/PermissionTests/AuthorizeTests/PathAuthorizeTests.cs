@@ -57,7 +57,7 @@ public class PathAuthorizeTests
         var path = new Path("/p", ctx);
 
         // Pre-seed a grant covering the request.
-        var grant = new PermissionRecord(app.Id, app.User.Name, "/p", Verb.AllowAll(), MatchMode.Exact);
+        var grant = new PermissionRecord(app.User.Name, "/p", Verb.AllowAll(), MatchMode.Exact);
         var grantData = new global::App.Data.@this<PermissionRecord>("", grant) { Context = ctx };
         await app.User.Permission.Add(grantData);
 
@@ -127,7 +127,7 @@ public class PathAuthorizeTests
         await Assert.That(result.Snapshot).IsNotNull();
     }
 
-    [Test] public async Task Authorize_ConstructedPermission_HasExpectedAppIdActorPathVerbMatch()
+    [Test] public async Task Authorize_ConstructedPermission_HasExpectedActorPathVerbMatch()
     {
         var app = NewApp();
         app.User.Channels.Register(new CannedAnswerChannel(new[] { "a" }));
@@ -138,8 +138,7 @@ public class PathAuthorizeTests
         await path.Authorize(verb);
         var grant = await app.User.Permission.Find(path, verb);
         await Assert.That(grant).IsNotNull();
-        await Assert.That(grant!.Value!.AppId).IsEqualTo(app.Id);
-        await Assert.That(grant.Value.Actor).IsEqualTo(app.User.Name);
+        await Assert.That(grant!.Value!.Actor).IsEqualTo(app.User.Name);
         await Assert.That(grant.Value.Path).IsEqualTo("/apps/Email/file.txt");
         await Assert.That(grant.Value.Match).IsEqualTo(MatchMode.Exact);
     }
@@ -198,7 +197,7 @@ public class PathAuthorizeTests
 
     [Test] public async Task PermissionDenied_Error_RoundTripsThroughErrorShape()
     {
-        var perm = new PermissionRecord("app1", "user", "/p", Verb.AllowAll(), MatchMode.Exact);
+        var perm = new PermissionRecord("user", "/p", Verb.AllowAll(), MatchMode.Exact);
         var err = new global::App.Errors.PermissionDenied(perm);
         await Assert.That(err.Key).IsEqualTo("PermissionDenied");
         await Assert.That(err.StatusCode).IsEqualTo(403);

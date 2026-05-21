@@ -1,7 +1,24 @@
 # Coder — filesystem-permission
 
 ## Version
-v4 — see `v4/report.md` (tester-v3 follow-up: 9 test-quality findings closed)
+v5 — see `v5/report.md` (Scenario4 unskipped: persisted grants survive new App)
+
+## v5 update — Scenario4 closed
+
+The deferred bug from v4 turned out to not be a deserialiser bug at all. The
+`[Skip]` reason ("STJ stack overflow in
+`SmallObjectWithParameterizedConstructorConverter` when a fresh App loads
+the row") was wrong — the JSON is small and clean, and a fresh-app `Find`
+returns null (not crash). The actual blocker: `PermissionRecord.AppId`
+scoped grants to a per-instance `App.Id` (a fresh GUID per `new App()`), so
+app2 never matched app1's grant even with the sqlite row sitting right
+there.
+
+Fix: drop `AppId` from `PermissionRecord` and the cover check. Grants are
+now identified by `(Actor + Path + Verb)`, with the per-actor sqlite store
+providing the root scope. `App.Id` retained for in-memory test scoping.
+
+Scenario4 unskipped with a real body; **2853 pass, 0 skip, 0 fail**.
 
 ## v4 update — all 9 tester findings closed
 

@@ -96,10 +96,28 @@ public class Stage5MessagesEndToEndTests
         await Assert.That(result.Success).IsTrue();
     }
 
-    [Skip("Deferred: SettingsStore Set+Get round-trip across two App instances on the same root is broken by a recursion in the Data<PermissionRecord> JSON deserialiser (stack overflow in SmallObjectWithParameterizedConstructorConverter when the second app loads the row). Same Set+Get works inside a single App (Scenario2/3/5 hit sqlite without issue), so the bug is in the deserialiser's Data constructor reentry path when a fresh App materialises the row.")]
     [Test] public async Task Scenario4_RestartStillNoPrompt_PersistedGrantSurvivesNewApp()
     {
-        await Task.CompletedTask;
+        // Set up app1 on a root, grant via "a" so the row is signed and lands
+        // in sqlite, then construct app2 on the same root. The persisted grant
+        // is identified by (Actor + Path + Verb) — App.Id no longer scopes
+        // grants — so app2's Find must hit without a fresh prompt.
+        var (app1, foreignFile) = Setup("a");
+        var root = app1.AbsolutePath;
+        var path1 = new Path(foreignFile, app1.User.Context);
+        var firstRead = await path1.ReadText();
+        await Assert.That(firstRead.Success).IsTrue();
+
+        // App #2 on the same root. Channel here has zero "a" answers — any
+        // prompt that fires means the persisted grant was missed.
+        var app2 = new global::App.@this(root);
+        var statelessProbe = new StatelessChannel();
+        app2.User.Channels.Register(statelessProbe);
+        var path2 = new Path(foreignFile, app2.User.Context);
+        var secondRead = await path2.ReadText();
+        await Assert.That(secondRead.Success).IsTrue();
+        // No Exit-typed bubble (no prompt) — the grant covered the request.
+        await Assert.That(secondRead.Type?.Value).IsNotEqualTo("ask");
     }
 
     [Test] public async Task Scenario5_RevokeReprompts_AfterRevokeFreshPromptFires()
@@ -112,7 +130,7 @@ public class Stage5MessagesEndToEndTests
         var asksBeforeRevoke = ch.AskCount;
 
         // Revoke the persisted grant.
-        var permission = new PermissionRecord(app.Id, app.User.Name, path.Absolute, Verb.AllowAll(), MatchMode.Exact);
+        var permission = new PermissionRecord(app.User.Name, path.Absolute, Verb.AllowAll(), MatchMode.Exact);
         await app.User.Permission.Revoke(permission);
 
         await path.ReadText();              // fresh prompt fires
@@ -126,7 +144,7 @@ public class Stage5MessagesEndToEndTests
         // a request that needs Metadata.
         var narrowedVerb = new Verb { Read = new Read(Recursive: true, Metadata: false), Write = null, Delete = null };
         var narrowGrant = new global::App.Data.@this<PermissionRecord>("",
-            new PermissionRecord(app.Id, app.User.Name, foreignFile, narrowedVerb, MatchMode.Exact))
+            new PermissionRecord(app.User.Name, foreignFile, narrowedVerb, MatchMode.Exact))
         { Context = app.User.Context };
         narrowGrant.EnsureSigned();
         await app.User.Permission.Add(narrowGrant);

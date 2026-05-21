@@ -21,10 +21,10 @@ result, rebuild from clean (see `CLAUDE.md` → "Running plang Tests").
 
 **Expected: all green.** Any failure is a regression.
 
-Skipped (with attribute, intentional):
-- `Stage5MessagesEndToEndTests.Scenario4_RestartStillNoPrompt_PersistedGrantSurvivesNewApp`
-  — deferred SettingsStore-cross-App deserialiser bug. Carries `[Skip(...)]`
-  with the full reason. Not a regression; not a coder-fix either.
+No skipped tests as of v5 — Scenario4 was unskipped when the underlying
+issue was diagnosed (turned out to be `PermissionRecord.AppId` scoping
+grants to a per-instance `App.Id`, not the deserialiser recursion that the
+v4 `[Skip]` reason guessed at). See `coder/v5/report.md`.
 
 ## PLang suite (`plang --test`)
 

@@ -20,7 +20,7 @@ public class NarrowVerbRoundTripTests
         var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-nv-" + System.Guid.NewGuid().ToString("N")[..8]));
         var narrowRead = new Verb { Read = new Read(), Write = null, Delete = null };
-        var perm = new PermissionRecord(app.Id, app.User.Name, "/p", narrowRead, MatchMode.Exact);
+        var perm = new PermissionRecord(app.User.Name, "/p", narrowRead, MatchMode.Exact);
         var grant = new global::App.Data.@this<PermissionRecord>("", perm) { Context = app.User.Context };
         // No EnsureSigned → in-memory path.
         await app.User.Permission.Add(grant);
@@ -34,7 +34,7 @@ public class NarrowVerbRoundTripTests
         var app = new global::App.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-nv-" + System.Guid.NewGuid().ToString("N")[..8]));
         var narrowRead = new Verb { Read = new Read(), Write = null, Delete = null };
-        var perm = new PermissionRecord(app.Id, app.User.Name, "/p", narrowRead, MatchMode.Exact);
+        var perm = new PermissionRecord(app.User.Name, "/p", narrowRead, MatchMode.Exact);
         var grant = new global::App.Data.@this<PermissionRecord>("", perm) { Context = app.User.Context };
         grant.EnsureSigned();  // → sqlite path
         await app.User.Permission.Add(grant);

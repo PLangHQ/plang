@@ -40,7 +40,7 @@ public sealed class @this
     public async Task<global::App.Data.@this<PermissionRecord>?> Find(PathT path, Verb verb)
     {
         var request = new PermissionRecord(
-            _actor.App.Id, _actor.Name, path.Absolute, verb, MatchMode.Exact);
+            _actor.Name, path.Absolute, verb, MatchMode.Exact);
 
         // 1) In-memory grants. Snapshot under the lock; verify outside it so
         //    the async signing-verify call doesn't hold the lock.
@@ -104,7 +104,6 @@ public sealed class @this
         {
             var idx = _inMemory.FindIndex(d =>
                 d.Value != null
-                && d.Value.AppId == match.AppId
                 && d.Value.Actor == match.Actor
                 && d.Value.Path == match.Path);
             if (idx >= 0) { _inMemory.RemoveAt(idx); removed = true; }
@@ -120,7 +119,6 @@ public sealed class @this
         var grant = grantData.Value;
         if (grant == null) return false;
         if (!string.Equals(grant.Actor, request.Actor, StringComparison.Ordinal)) return false;
-        if (!string.Equals(grant.AppId, request.AppId, StringComparison.Ordinal)) return false;
         if (!grant.Covers(request)) return false;
 
         // Signature check (cached per-Data via Properties).

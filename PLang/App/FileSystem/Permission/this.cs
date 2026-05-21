@@ -15,17 +15,19 @@ public enum Match
 /// <c>Covers</c> answers "does this grant cover that request?". Asymmetry is
 /// encoded by <see cref="Match"/> (grant's pattern semantics) and the verb's
 /// sub-options (grant ≥ request, per option).
+///
+/// Identity is (Actor + Path + Verb); the persistence root is the per-actor
+/// sqlite store. No App-instance scoping — grants survive `new App()` on the
+/// same root, which is the contract the "a" ("always allow") answer promises.
 /// </summary>
 public sealed record @this(
-    string AppId,
     string Actor,
     string Path,
     Verb.@this Verb,
     Match Match)
 {
     public bool Covers(@this request) =>
-        AppId == request.AppId
-        && Actor == request.Actor
+        Actor == request.Actor
         && PathMatches(request.Path)
         && Verb.Covers(request.Verb);
 

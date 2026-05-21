@@ -22,7 +22,7 @@ public class ActorPermissionStorageTests
     private static global::App.Data.@this<PermissionRecord> Grant(
         global::App.@this app, string actor, string path, Verb? verb = null, MatchMode match = MatchMode.Exact)
     {
-        var p = new PermissionRecord(app.Id, actor, path, verb ?? Verb.AllowAll(), match);
+        var p = new PermissionRecord(actor, path, verb ?? Verb.AllowAll(), match);
         return new global::App.Data.@this<PermissionRecord>("", p) { Context = app.User.Context };
     }
 
@@ -152,7 +152,7 @@ public class ActorPermissionStorageTests
         grant.EnsureSigned();
         // Tamper the path post-signing — signature no longer covers payload.
         var tampered = new global::App.Data.@this<PermissionRecord>("",
-            new PermissionRecord(app.Id, app.User.Name, "/different", Verb.AllowAll(), MatchMode.Exact))
+            new PermissionRecord(app.User.Name, "/different", Verb.AllowAll(), MatchMode.Exact))
         { Context = app.User.Context, Signature = grant.Signature };
         await app.User.Permission.Add(tampered);
 

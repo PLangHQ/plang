@@ -82,7 +82,6 @@ public partial class Path
     }
 
     private PermissionRecord BuildRequest(Actor.@this actor, Verb verb) => new(
-        AppId: Context!.App.Id,
         Actor: actor.Name,
         Path:  Absolute,
         Verb:  verb,
