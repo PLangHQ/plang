@@ -655,6 +655,65 @@
         "health": "Consent gate structurally sound on the creation side; weaknesses are all on the verification side and either latent (F1/F4) or fail-closed (F3) today.",
         "notes": "F1 (signer identity not pinned) and F3 (persisted grants expire after 5min; test false-green) should be closed before the permission table gains any non-disk write path. F2/F4 are cheap defense-in-depth. None block merge."
       }
+    },
+    {
+      "id": "2757e19b-7417-422a-bfed-2ed99c4f46c7",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-21T19:20:47.724082+00:00",
+      "timestamp_end": "2026-05-21T19:26:52.790253+00:00",
+      "intent": "Cross-cutting integrity audit of filesystem-permission \u2014 review gaps between codeanalyzer, tester, security",
+      "before": {
+        "assumptions": "codeanalyzer v3 PASS, tester v4 PASS, security v1 PASS (4 non-blocking findings). All three reviewed their slice and approved.",
+        "risk": "Branch diverged from runtime2 before the app-lowercase merge \u2014 runtime2 now has lowercase app/. Possible review gap: tester says Scenario4 is a real persistence gate, security says it false-greens the 5-min-expiry feature."
+      },
+      "plan": ".bot/filesystem-permission/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v3/report.md",
+            ".bot/filesystem-permission/tester/v4/result.md",
+            ".bot/filesystem-permission/security/v1/result.md",
+            ".bot/filesystem-permission/security-report.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read all three prior reviewer reports + architect/coder summaries to map what each slice covered and where the seams are."
+        },
+        {
+          "paths": [
+            "PLang/App/FileSystem/Permission/this.cs",
+            "PLang/App/Actor/Permission/this.cs",
+            "PLang/App/FileSystem/Path.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/modules/file/read.cs",
+            "PLang/App/Snapshot/this.Resume.cs",
+            "PLang/App/modules/signing/code/Ed25519.cs",
+            "PLang/App/FileSystem/Default/PLangFileSystem.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified F3 chain end-to-end (EnsureSigned no Expires -> VerifySignature no TimeoutMs -> Ed25519 step2 Created-age check = 5min). Confirmed all 7 file handlers route through Authorize. Checked ResumeChain frame disposal ordering. Checked merge-base vs runtime2."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/auditor-report.json",
+            ".bot/filesystem-permission/auditor/v1/result.md",
+            ".bot/filesystem-permission/auditor/v1/verdict.json",
+            ".bot/filesystem-permission/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote audit findings: F-A (major, 5-min grant expiry + false-greening test), F-B (major, branch on stale runtime2), F-C/F-D minor, F-E nit. Verdict FAIL."
+        }
+      ],
+      "after": {
+        "status": "FAIL \u2014 2 major findings",
+        "health": "Branch builds clean (0 errors), C# suite 2853/2853 green. Internally sound; FAIL is about a documented-contract defect (F-A) and an unreviewed integration gap (F-B), not build/test breakage.",
+        "notes": "F-A: persisted always-allow grants expire after 5 min \u2014 security under-rated as non-blocking; escalated to major because the doc-comment is false and Scenario4 false-greens it. F-B: merge-base predates app-lowercase merge; ~40 new PascalCase-namespace files vs runtime2 lowercase convention. Coverage verified independently."
+      }
     }
   ]
 }
