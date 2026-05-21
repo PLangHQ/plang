@@ -4,75 +4,79 @@
 v1
 
 ## What this is
-PLang's filesystem permission system + a unified suspend/resume mechanism
-(replaces `AskCallback` / `ErrorCallback` with a single `Snapshot`-based
-round-trip). Architect produced 5 stages; test-designer wrote ~70 C# TUnit
-stubs + 11 PLang `.test.goal` stubs. Coder makes them pass.
+PLang's filesystem permission system + unified suspend/resume mechanism
+(Snapshot replaces AskCallback/ErrorCallback). 5 stages per the architect's
+plan; this session completed stages 1, 2a (all 8 slices), 2b, 3. Stages 4
+and 5 remain.
 
 ## What was done
 
-### Stage 1 — Permission types (commit `4143621b8`)
-Pure types under `PLang/App/FileSystem/Permission/`:
-- `this.cs` — `Permission` record (`AppId, Actor, Path, Verb, Match`) +
-  `Match` enum + `Covers(Permission)` + private `PathMatches` dispatching
-  Exact / Glob / Regex (fail-closed on unknown enum).
-- `Verb/this.cs` — container with init-only `Read/Write/Delete` defaulting
-  non-null (option B per Ingi: `new Verb()` is fully granted).
-- `Verb/Read.cs`, `Write.cs`, `Delete.cs` — sub-records with default-true
-  bool options + `Covers`.
+| Stage | Status | Commits |
+|-------|--------|---------|
+| 1 — Permission types | ✅ | `4143621b8` |
+| 2a.1 — primitives (IExitsGoal, Type.Exit, Data.Snapshot, Action.Synthetic) | ✅ | `b06c64380` |
+| 2a.2 — step-loop short-circuit | ✅ | `1744d3f13` |
+| 2a.3 — Step.RunFrom + Goal.RunFrom | ✅ | (squashed in v1 chain) |
+| 2a.4 — Channel.Ask takes action; Message returns Data<Ask> | ✅ | `30f503396` |
+| 2a.5 — action owns its execution (drop App.Run/cause) | ✅ | `dff9051c4` |
+| 2a.6 — Snapshot.Resume + callback.run rewrite | ✅ | `797f7eee0` |
+| 2a.7 — delete dead callback classes | ✅ | `d47e025a2` |
+| 2a.8 — cross-goal `.test.goal` fixtures | ✅ | `8dc9e0e01` |
+| 2b — Path.Authorize + PermissionDenied | ✅ | `3bf37c4a9` |
+| 3 — Actor.Permission storage (in-memory + sqlite) | ✅ | `15c165ee0` |
+| 4 — IPLangFileSystem v2 (FS surface rewrite) | **TODO** | — |
+| 5 — Messages end-to-end fixture | **TODO** (needs 4) | — |
 
-Added `Microsoft.Extensions.FileSystemGlobbing 9.0.5` to `PLang.csproj`.
-21 PermissionTests green.
+## Test suite
 
-### Stage 2a — Snapshot-resume engine (in progress, 4 of 8 slices)
+C#: **2824 tests, 40 failing**. All remaining failures are stubs for stages
+4 and 5 (Move/Copy bundled consent, OutOfRoot stream/message,
+FileSystemSurfaceShape, FileAccessControl absence, ValidatePath absence,
+end-to-end Messages flow, etc.).
 
-Sub-slicing in `.bot/filesystem-permission/coder/v1/stage-2a-slicing.md`.
+PLang `--test`:
+- `Callback/StatelessCrossGoalResumes` → Pass
+- `Callback/StatefulAskMidGoalBindsValue` → Pass
+- Existing test corpus → no new regressions
 
-- **2a.1** (`b06c64380`) — primitives: `IExitsGoal`, `Type.Exit()`,
-  `Ask` payload class (`[PlangType("ask")]`), `Data.Snapshot` property,
-  `Data.ShouldExit` extension, `Action.Synthetic` (default true),
-  `IContext.Snapshot()` extension.
-- **2a.2** (`1744d3f13`) — step loop short-circuits on `ShouldExit()`.
-  Steps.RunAsync, Step.RunAsync.
-- **2a.3** (`...`) — `Step.RunFrom(ctx, fromActionIdx)` +
-  `Goal.RunFrom(ctx, stepIdx, actionIdx)`. Per resolved architect comment,
-  no `Steps.RunAsync(fromIndex)` overload — remaining-steps loop lives
-  inside `Goal.RunFrom`.
-- **2a.4** (`30f503396`) — `Channel.AskCore` takes the `output.ask` action
-  directly. Stream extracts question + reads stdin. Message channel
-  becomes concrete with `AskCore` returning Data{Type=ask, Snapshot}.
-  `output.ask.Run` shrinks to ~10 lines; old `AskCallback` construction
-  deleted. Test-channel callers updated.
+## Decisions / where I diverged from the spec
 
-**Tests flipped green (37 total)**: PermissionCoversTests (10),
-VerbCoversTests (11), TypeExitTests (6), StepLoopShouldExitTests (6),
-DataSnapshotTests (6), ActionSyntheticTests #1, GoalRunFromTests (5),
-OutputAskRoutingTests (6).
-
-Suite: started at 105 stub failures, now at 75 (all remaining are
-test-designer stubs for slices 2a.5–2a.8 and stages 2b–5).
-
-### Remaining slices
-
-- **2a.5** — Action owns its execution. Drop `App.Run`/`App.RunAction`/
-  `cause` parameter. ~32 call sites across signing, http, GoalCall,
-  Data.Envelope, modules/error/handle, etc. CallStack.Push reads
-  `Action.Synthetic`. PR-loader flips Synthetic=false on materialization.
-- **2a.6** — `Snapshot.Resume(ctx)` recursive `ResumeChain`. `callback.run`
-  rewrite to ~10 lines.
-- **2a.7** — Delete `ICallback`, `AskCallback`, `ErrorCallback`,
-  `Callback/Wire/`. Retype `Error.Callback` to `Data<Snapshot>`. Drop
-  `ICallback` branches in `Data/this.Envelope.cs`. Delete the 6 obsolete
-  `CallbackTests` files exercising the deleted types.
-- **2a.8** — PLang `.test.goal` end-to-end (`Tests/Callback/
-  StatelessCrossGoalResumes`).
-
-### Stages 2b, 3, 4, 5
-Not started.
+- **Goal.RunFrom doesn't push a goal frame** — Snapshot.Resume restores the
+  CallStack chain before dispatching here, so re-pushing would double-up.
+- **Step.RunAsync keeps `|| Handled` break alongside ShouldExit** —
+  preserves before-event short-circuit semantics.
+- **Variables.Remove for `!ask.answer`** — uses `Remove("!ask")` (path
+  semantics: sentinel rides as property of infra root `!ask`).
+- **AskCore/WriteCore naming kept** — architect flagged "Just Ask" as a
+  taste preference; renaming would have touched `WriteAsync`/`ReadAsync`
+  pattern across the channel surface. Deferred.
+- **RunAction<T> kept on App.@this** as the inline-C#-composition entry —
+  spec called for full deletion but doing so cleanly requires a source-
+  generator surface change (handler classes would need their own RunAsync
+  that wraps in an entity). RunAction now routes through
+  Action.@this.RunAsync via a PreboundHandler property — same dispatch
+  path as PR-loaded actions, synthetic-stamped.
+- **PreboundHandler property added to Action.@this** for the inline path.
+  When set, DispatchAsync skips the entity-driven property reset (calls
+  `handler.ExecuteAsync(null!, ctx)`) so inline-set properties survive.
+- **Cause linkage dormant** — `cause` parameter removed from
+  `CallStack.Push` and `Action.RunAsync`. `Call.@this.Cause` property stays
+  but is always null (renderers no-op naturally). Recovery dispatch in
+  `error/handle.cs:RunRecovery` no longer threads cause.
+- **`Synthetic = true` default + PR-loader flip** in
+  `Goals.LoadGoalFile` / `Setup.LoadFile` — PR actions get `Synthetic=false`
+  on materialisation.
+- **Glob path matching uses `Microsoft.Extensions.FileSystemGlobbing`** as
+  the architect specified — added to `PLang/PLang.csproj`.
+- **Permission signature routing**: signed grants go to sqlite, unsigned
+  to in-memory. The signing surface doesn't expose an Expires parameter
+  today, so the "AlwaysExpiry" constant is unused — Path.Authorize's
+  `"a"` branch calls `EnsureSigned()` (no expiry arg). Tracked: when the
+  signing layer grows Expires, pipe `AlwaysExpiry` through.
 
 ## Code example
 
-`Type.Exit()` predicate — the engine's only Exit-type discriminator:
+`Type.Exit()` — the engine's only Exit-type discriminator:
 
 ```csharp
 // PLang/App/Types/Exit.cs
@@ -83,36 +87,50 @@ public static class TypeExitExtensions
 }
 ```
 
-Used in `Data.ShouldExit`:
+`Path.Authorize` (stage 2b) — the permission gate:
 
 ```csharp
-public static bool ShouldExit(this @this d) =>
-    (!d.Success && !d.Handled)
-    || d.Returned
-    || d.Type?.ClrType.Exit() == true;
+public async Task<Data.@this> Authorize(Verb verb, string prefix = "")
+{
+    var actor = Context?.Actor ?? throw …;
+    if (actor.Permission.Find(this, verb) != null) return Data.@this.Ok();
+    var askAction = new modules.output.ask { Context = Context, Question = … };
+    var askResult = await Context!.App.RunAction(askAction, Context);
+    if (askResult.Type?.ClrType.Exit() == true) return askResult; // stateless bubble
+    return askResult.Value?.ToString()?.Trim() switch {
+        "a" => SignAndStore(actor, verb, persist: true),
+        "y" => SignAndStore(actor, verb, persist: false),
+        "n" => Data.@this.FromError(new PermissionDenied(BuildRequest(actor, verb))),
+        _   => await Authorize(verb, prefix: $"Invalid answer '...'. "),
+    };
+}
 ```
 
-## Decisions / where I diverged from the spec
+## To continue (stages 4 + 5)
 
-- **Goal.RunFrom doesn't push a goal frame** — Snapshot.Resume restores the
-  CallStack chain before dispatching here, so re-pushing would double-up.
-- **Step.RunAsync keeps the `|| Handled` break** alongside ShouldExit —
-  before-event-handled semantics differ from ShouldExit's "Handled means
-  recovery, keep going" treatment. Worth a second look if a test flags it.
-- **Variables.Remove for `!ask.answer`** — sentinel rides as a property of
-  infra root `!ask` (path semantics); Variables.Remove takes flat keys, so
-  Remove("!ask") consumes the whole root. Reserved-name pattern.
+**Stage 4** — `IPLangFileSystem` v2. Per the architect's 5 sub-stages:
 
-## Followups baked into commits
+1. Define v2 interface (Path-in, Data-out, verb-baked). ~11 methods.
+2. Implement `Default` against v2 — each operation calls
+   `path.Authorize(verb)` first, propagates Exit-typed results unchanged.
+3. Rewrite each `PLang/App/modules/file/*.cs` action handler — one
+   commit per action (read, save, delete, copy, move, list, exists).
+4. Rewrite non-action call sites — builder, snapshot, settings, channels,
+   cache, runtime infra. ~50-100 sites.
+5. Delete old surface: `ValidatePath(string)`, `FileAccessControl`,
+   `IFileSystem` inheritance.
 
-- `Synthetic = true` is the default — PR-loader sweep (in 2a.5) needs to
-  flip to `false` on materialization.
-- `App.Snapshot()` orchestration could relocate to `Snapshot.@this.Capture()`
-  per architect's todos.md note — not done.
-- The architect-noted naming concern (`AskCore` → `Ask`, `WriteCore` →
-  `Write`) wasn't done — keeping the `Core`/`Async` split avoided wider
-  rename surgery.
+Watch-outs:
+- Path resolution semantics must match `ValidatePath` (system fallback,
+  // OS-rooted, root-resolved default).
+- Builder `.pr` snapshotting in `Default.Read` — preserve.
+- Stream operations: a few real consumers (uploads, large reads). Decide
+  whether v2 keeps stream-returning methods or routes through bytes/text.
 
-## To continue
-Pick up at slice 2a.5. The slicing plan + survey is in
-`.bot/filesystem-permission/coder/v1/stage-2a-slicing.md`.
+**Stage 5** — Messages end-to-end fixture under `Tests/Permission/`. Six
+steps testing no-grant suspend / grant-a-store / no-prompt re-query /
+restart persistence / revoke-reprompt / narrowed grant. Depends on Stage 4
+being green.
+
+Stubs already exist for both stages under
+`PLang.Tests/App/FileSystem/SurfaceTests/` and `Tests/Permission/`.
