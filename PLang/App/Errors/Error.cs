@@ -43,16 +43,17 @@ public class Error : IError
     [System.Text.Json.Serialization.JsonIgnore]
     internal global::App.@this? App { get; set; }
 
-    private global::App.Data.@this<global::App.Callback.ErrorCallback>? _callback;
+    private global::App.Data.@this<global::App.Snapshot.@this>? _callback;
 
     /// <summary>
     /// PLang surface <c>%!error.callback%</c> resolves through here. First read invokes
     /// <c>app.Snapshot()</c> (which captures Variables.SnapshotAt(this) for the throw-time
-    /// view) and wraps the snapshot in an <see cref="App.Callback.ErrorCallback"/>. Cached
-    /// per Error instance — reading twice returns the same Data reference.
+    /// view) and wraps the snapshot directly — <c>Data&lt;Snapshot&gt;</c>. Resume goes
+    /// through <see cref="App.Snapshot.@this.Resume"/>, same path as ask-resume.
+    /// Cached per Error instance — reading twice returns the same Data reference.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::App.Data.@this<global::App.Callback.ErrorCallback> Callback
+    public global::App.Data.@this<global::App.Snapshot.@this> Callback
     {
         get
         {
@@ -61,9 +62,9 @@ public class Error : IError
                 throw new InvalidOperationException(
                     "Error.Callback requires App reference; ensure the error went through Errors.Push.");
             var snap = App.Snapshot();
-            var cb = new global::App.Callback.ErrorCallback { AppSnapshot = snap };
-            _callback = global::App.Data.@this<global::App.Callback.ErrorCallback>.Ok(cb);
+            _callback = global::App.Data.@this<global::App.Snapshot.@this>.Ok(snap);
             _callback.Context = App.User.Context;
+            _callback.Snapshot = snap;
             return _callback;
         }
     }

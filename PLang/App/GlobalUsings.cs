@@ -51,7 +51,6 @@ global using ISnapshot = App.Snapshot.ISnapshot;
 
 // Callback subsystem
 global using AppCallback = App.Callback.@this;
-global using ICallback = App.Callback.ICallback;
 
 // Statics — App-scoped key/value store extracted from App._statics
 global using AppStatics = App.Statics.@this;
