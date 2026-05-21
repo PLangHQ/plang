@@ -284,6 +284,88 @@
         "health": "pending",
         "notes": "Open follow-ups (logged in plan.md): (1) some Batch 6 'stateful e2e' tests may actually need real Stage 3 storage rather than mocks \u2014 coder to decide; (2) TUnit MethodDataSource shape in Stage 4 parametrization needs a coder review; (3) static-survey 'no App.Run / App.RunAction' tests may need a new helper."
       }
+    },
+    {
+      "id": "d4bed572-dcb6-43e3-94c3-2a08a67eda86",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-21T12:38:33.196911Z",
+      "intent": "Codeanalyzer review of filesystem-permission v1 (stages 1-5): OBP compliance, simplification, readability, behavioral reasoning, deletion test on ~6k LOC of new/modified C#.",
+      "before": {
+        "assumptions": "Coder reports 2830/2830 tests passing. Five stages landed: Permission types, snapshot-resume engine, Path.Authorize, Actor.Permission storage, IPLangFileSystem v2 surface. Several items deferred (v1 surface deletion, scenario 4 deserialiser bug, .test.goal integration, App.RunAction surface, Cause linkage, wire serialiser).",
+        "risk": "Big surface \u2014 Snapshot-resume crosses Engine/Goal/Step/Action/Channel boundaries; permission state lives in Actor; FS v2 surface added alongside v1 (dual-path risk). Look for OBP shape smells from doubled collections, cross-file locks, and disciplined collections held in the wrong type."
+      },
+      "plan": ".bot/filesystem-permission/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v1/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v1 plan \u2014 five passes (OBP rules+shape, simplification, readability, behavioral, deletion) against the 43 modified C# files under PLang/App/."
+        },
+        {
+          "paths": [
+            "PLang/App/Actor/Permission/this.cs",
+            "PLang/App/FileSystem/Path.Authorize.cs",
+            "PLang/App/FileSystem/Path.Operations.cs",
+            "PLang/App/FileSystem/Permission/this.cs",
+            "PLang/App/FileSystem/Permission/Verb/this.cs",
+            "PLang/App/FileSystem/Permission/Verb/Read.cs",
+            "PLang/App/FileSystem/Permission/Verb/Write.cs",
+            "PLang/App/FileSystem/Permission/Verb/Delete.cs",
+            "PLang/App/Snapshot/this.cs",
+            "PLang/App/Snapshot/this.Resume.cs",
+            "PLang/App/Data/this.Snapshot.cs",
+            "PLang/App/Data/ShouldExit.cs",
+            "PLang/App/Data/this.Envelope.cs",
+            "PLang/App/IExitsGoal.cs",
+            "PLang/App/Types/Exit.cs",
+            "PLang/App/Errors/PermissionDenied.cs",
+            "PLang/App/Goals/Goal/this.RunFrom.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.RunFrom.cs",
+            "PLang/App/Goals/Goal/Steps/Step/this.cs",
+            "PLang/App/Goals/Goal/Steps/this.cs",
+            "PLang/App/Goals/Goal/Steps/Step/Actions/Action/this.cs",
+            "PLang/App/Goals/Setup/this.cs",
+            "PLang/App/Goals/this.cs",
+            "PLang/App/Channels/Channel/this.cs",
+            "PLang/App/Channels/Channel/Message/this.cs",
+            "PLang/App/Channels/Channel/Stream/this.cs",
+            "PLang/App/CallStack/this.cs",
+            "PLang/App/CallStack/Call/this.cs",
+            "PLang/App/Actor/this.cs",
+            "PLang/App/modules/output/ask.cs",
+            "PLang/App/modules/callback/run.cs",
+            "PLang/App/modules/error/handle.cs",
+            "PLang/App/modules/IContext.Snapshot.cs",
+            "PLang/App/this.cs",
+            "PLang/App/GlobalUsings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pass 1a/1b: OBP shape clean across the family. Pass 2: 9x authorize preamble copy-paste in Path.Operations; Stat returns Dictionary; AlwaysExpiry constant unused; await Task.FromResult redundant. Pass 3: prefix-concatenation in Authorize, Channel/Stream leaveOpen comment, Step break condition deserves a one-line comment or named predicate. Pass 4: sync-over-async at 4 sites in Actor.Permission; unbounded recursion in Path.Authorize and BundledTransfer on bad input; silent bare catch in VerifySignature; IsInRoot uses OrdinalIgnoreCase on a case-sensitive OS; exception->ServiceError pattern duplicated between Step.RunAsync and Step.RunFrom. Pass 5: AlwaysExpiry constant, Cause chain (Call._ownCause always null, renderer Cause branches dead), cause/erroredCall parameters threaded but unused in error/handle's RunRecovery, await Task.FromResult wrapper."
+        },
+        {
+          "paths": [
+            ".bot/filesystem-permission/codeanalyzer/v1/report.md",
+            ".bot/filesystem-permission/codeanalyzer/v1/verdict.json",
+            ".bot/filesystem-permission/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Findings written up with file:line citations and reproduction-ready fixes. Verdict: NEEDS WORK (fail). Top issues: sync-over-async at Actor.Permission, unbounded recursion in Authorize/BundledTransfer, silent VerifySignature catch, case-insensitive IsInRoot on Linux, 9x authorize preamble, dead Cause/cause parameters after stage 2a.5."
+        }
+      ],
+      "after": {
+        "status": "verdict written \u2014 NEEDS WORK. 10 findings cited with file:line. Shape (Pass 1a/1b) clean; behavioral and copy-paste issues. Coder follow-up suggested in summary.md.",
+        "health": "good \u2014 the OBP shape of the new code is right, which is the big risk on a 6k-LOC engine restructure. The findings are tactical, not structural.",
+        "notes": "Worth noting: report.json had no coder session block even though the coder committed 14 stage commits and wrote a long summary.md. Not a bug per se \u2014 but if reporting is meant to be complete, the coder's session is missing from the audit trail."
+      },
+      "timestamp_end": "2026-05-21T12:45:31.734009Z"
     }
   ]
 }
