@@ -1,5 +1,6 @@
 using System.Collections;
 using App.Actor.Context;
+using App.Data;
 using App.modules;
 
 namespace App.Goals.Goal.Steps;
@@ -153,8 +154,7 @@ public sealed class @this : IList<Step.@this>, IContext
 
             result = await step.RunAsync(context);
 
-            if (!result.Success && !result.Handled) return result;
-            if (result.Returned) return result;
+            if (result.ShouldExit()) return result;
 
             // Sub-step control: false condition skips indented children
             if (i + 1 < _items.Count && _items[i + 1].Indent > step.Indent

@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using App.Actor.Context;
+using App.Data;
 using App.Variables;
 using App.modules;
 using Action = App.Goals.Goal.Steps.Step.Actions.Action.@this;
@@ -151,7 +152,7 @@ public sealed partial class @this : modules.IDataWrappable
             {
                 context.CancellationToken.ThrowIfCancellationRequested();
                 result = await action.RunAsync(context);
-                if (!result.Success || result.Handled) break;
+                if (result.ShouldExit() || result.Handled) break;
             }
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
