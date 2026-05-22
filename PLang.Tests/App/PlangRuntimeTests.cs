@@ -2,7 +2,6 @@ using app;
 using app.actor.context;
 using app.variables;
 using app.types.path;
-using app.types.path.Default;
 
 namespace PLang.Tests.App;
 
@@ -13,15 +12,13 @@ namespace PLang.Tests.App;
 public class PlangRuntimeTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly PLangFileSystem _fs;
     private readonly global::app.@this _app;
 
     public PlangRuntimeTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_runtime_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _fs = new PLangFileSystem(_tempDir, "");
-        _app = new global::app.@this(_tempDir, fileSystem: _fs);
+        _app = new global::app.@this(_tempDir);
     }
 
     public void Dispose()

@@ -1,6 +1,5 @@
 using Microsoft.Data.Sqlite;
 using app.types.path;
-using app.types.path.Default;
 using app.channels.serializers.serializer;
 using app.errors;
 using app.variables;
@@ -22,14 +21,14 @@ public sealed class Sqlite : IStore
     private bool _disposed;
 
     /// <summary>
-    /// Creates a Sqlite at the specified database path.
-    /// Ensures the parent directory exists using the file system abstraction.
+    /// Creates a Sqlite at the specified database path, creating the parent
+    /// directory if absent.
     /// </summary>
-    public Sqlite(string dbPath, IPLangFileSystem fileSystem)
+    public Sqlite(string dbPath)
     {
-        var dir = fileSystem.Path.GetDirectoryName(dbPath);
-        if (!string.IsNullOrEmpty(dir) && !fileSystem.Directory.Exists(dir))
-            fileSystem.Directory.CreateDirectory(dir);
+        var parent = System.IO.Path.GetDirectoryName(dbPath);
+        if (!string.IsNullOrEmpty(parent) && !System.IO.Directory.Exists(parent))
+            System.IO.Directory.CreateDirectory(parent);
 
         _connectionString = new SqliteConnectionStringBuilder
         {
@@ -45,7 +44,7 @@ public sealed class Sqlite : IStore
     /// Creates an in-memory Sqlite with a sentinel connection that keeps
     /// the database alive for the lifetime of this instance.
     /// </summary>
-    private Sqlite(string name)
+    private Sqlite(string name, bool inMemory)
     {
         _connectionString = new SqliteConnectionStringBuilder
         {
@@ -63,7 +62,7 @@ public sealed class Sqlite : IStore
     /// Different names produce isolated databases.
     /// </summary>
     public static Sqlite InMemory(string name)
-        => new Sqlite(name);
+        => new Sqlite(name, inMemory: true);
 
     private void EnableWalMode()
     {

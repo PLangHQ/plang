@@ -8,7 +8,6 @@ using app.goals.goal;
 using app.variables;
 using app.modules.settings;
 using app.types.path;
-using app.types.path.Default;
 using app.modules.http;
 using PlangHttpMethod = app.modules.http.HttpMethod;
 
@@ -145,7 +144,7 @@ public sealed class OpenAi : ILlm
             var body = new Dictionary<string, object?>
             {
                 ["model"] = model,
-                ["messages"] = ToApiMessages(messages, app.FileSystem),
+                ["messages"] = ToApiMessages(messages, app),
                 ["temperature"] = action.Temperature.Value,
                 ["max_completion_tokens"] = action.MaxTokens.Value
             };
@@ -572,7 +571,7 @@ public sealed class OpenAi : ILlm
 
     // --- Message formatting ---
 
-    private static List<object> ToApiMessages(List<LlmMessage> messages, IPLangFileSystem fileSystem)
+    private static List<object> ToApiMessages(List<LlmMessage> messages, global::app.@this app)
     {
         var result = new List<object>();
         foreach (var msg in messages)
@@ -619,7 +618,7 @@ public sealed class OpenAi : ILlm
 
                 foreach (var image in msg.Images)
                 {
-                    var imageContent = ResolveImage(image, fileSystem);
+                    var imageContent = ResolveImage(image, app);
                     contentParts.Add(imageContent);
                 }
 
@@ -641,7 +640,7 @@ public sealed class OpenAi : ILlm
         return result;
     }
 
-    private static object ResolveImage(string image, IPLangFileSystem fileSystem)
+    private static object ResolveImage(string image, global::app.@this app)
     {
         if (image.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -656,11 +655,11 @@ public sealed class OpenAi : ILlm
         // Try file path
         try
         {
-            if (fileSystem.File.Exists(image))
+            if (System.IO.File.Exists(image))
             {
-                var bytes = fileSystem.File.ReadAllBytes(image);
+                var bytes = System.IO.File.ReadAllBytes(image);
                 var base64 = Convert.ToBase64String(bytes);
-                var extension = fileSystem.Path.GetExtension(image).TrimStart('.').ToLowerInvariant();
+                var extension = System.IO.Path.GetExtension(image).TrimStart('.').ToLowerInvariant();
                 var mimeType = extension switch
                 {
                     "jpg" or "jpeg" => "image/jpeg",

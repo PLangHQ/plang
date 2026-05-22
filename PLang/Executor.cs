@@ -1,5 +1,3 @@
-using app.types.path;
-using app.types.path.Default;
 using app.Utils;
 using System.Reflection;
 
@@ -7,11 +5,11 @@ namespace PLang
 {
 	public class Executor
 	{
-		private readonly IPLangFileSystem fileSystem;
+		private readonly string startupDirectory;
 
-		public Executor(IPLangFileSystem fileSystem)
+		public Executor(string startupDirectory)
 		{
-			this.fileSystem = fileSystem;
+			this.startupDirectory = startupDirectory;
 		}
 
 		public async Task<app.data.@this> Run(string[] args, CancellationToken cancellationToken = default)
@@ -37,8 +35,8 @@ namespace PLang
 
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
-			var engine = new app.@this(fileSystem);
-			engine.OsDirectory = fileSystem.OsDirectory;
+			var engine = new app.@this(startupDirectory);
+			engine.OsDirectory = global::app.types.path.file.@this.OsAbsolutePath;
 
 			var userVars = engine.User.Context.Variables;
 
@@ -59,7 +57,7 @@ namespace PLang
 			{
 				engine.Tester.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
-					userVars.Set("path", fileSystem.RootDirectory);
+					userVars.Set("path", startupDirectory);
 
 				if (testValue is IDictionary<string, object?> testDict)
 				{
@@ -78,7 +76,7 @@ namespace PLang
 			{
 				engine.Builder.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
-					userVars.Set("path", fileSystem.RootDirectory);
+					userVars.Set("path", startupDirectory);
 
 				if (buildValue is IDictionary<string, object?> buildDict)
 					global::app.types.@this.Populate(engine.Builder, buildDict);

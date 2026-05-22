@@ -91,14 +91,13 @@ public sealed partial class @this : modules.IDataWrappable
     public string? GetRuntimeDirectory()
     {
         if (App == null || string.IsNullOrEmpty(LoadedFromPrPath)) return null;
-        var fs = App.FileSystem;
         string prAbs;
-        try { prAbs = fs.ValidatePath(LoadedFromPrPath); }
+        try { prAbs = global::app.types.path.file.@this.ValidatePath(LoadedFromPrPath, App); }
         catch { return null; }
-        var prParent = fs.Path.GetDirectoryName(prAbs);
+        var prParent = System.IO.Path.GetDirectoryName(prAbs);
         if (prParent == null) return null;
-        if (!string.Equals(fs.Path.GetFileName(prParent), ".build", StringComparison.OrdinalIgnoreCase)) return null;
-        return fs.Path.GetDirectoryName(prParent);
+        if (!string.Equals(System.IO.Path.GetFileName(prParent), ".build", StringComparison.OrdinalIgnoreCase)) return null;
+        return System.IO.Path.GetDirectoryName(prParent);
     }
 
     [Store, Debug]

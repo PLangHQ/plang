@@ -150,7 +150,7 @@ public class EngineTests
         await Assert.That(engine.Modules).IsNotNull();
         await Assert.That(engine.User.Channels.Serializers).IsNotNull();
         await Assert.That(engine.Goals).IsNotNull();
-        await Assert.That(engine.FileSystem).IsNotNull();
+        await Assert.That(engine.AbsolutePath).IsNotNull();
     }
 
     [Test]

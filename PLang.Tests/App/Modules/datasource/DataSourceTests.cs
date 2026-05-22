@@ -33,8 +33,8 @@ public class DataSourceTests
 
     private global::app.modules.settings.Sqlite CreateDataSource()
     {
-        var dbPath = _app.FileSystem.Path.Combine(_tempDir, ".db", "test.sqlite");
-        return new global::app.modules.settings.Sqlite(dbPath, _app.FileSystem);
+        var dbPath = System.IO.Path.Combine(_tempDir, ".db", "test.sqlite");
+        return new global::app.modules.settings.Sqlite(dbPath);
     }
 
     [Test]

@@ -27,7 +27,6 @@ public sealed partial class @this : global::app.types.path.@this
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
 
-        var fs = context.App.FileSystem;
         var resolved = rawPath;
 
         // Relative paths resolve against the goal's folder. Prefer the runtime
@@ -41,21 +40,21 @@ public sealed partial class @this : global::app.types.path.@this
             var runtimeDir = goal?.GetRuntimeDirectory();
             if (!string.IsNullOrEmpty(runtimeDir))
             {
-                resolved = fs.Path.Combine(runtimeDir, rawPath);
+                resolved = System.IO.Path.Combine(runtimeDir, rawPath);
             }
             else
             {
                 var goalPath = goal?.Path;
                 if (!string.IsNullOrEmpty(goalPath))
                 {
-                    var goalDir = fs.Path.GetDirectoryName(goalPath);
+                    var goalDir = System.IO.Path.GetDirectoryName(goalPath);
                     if (!string.IsNullOrEmpty(goalDir))
-                        resolved = fs.Path.Combine(goalDir, rawPath);
+                        resolved = System.IO.Path.Combine(goalDir, rawPath);
                 }
             }
         }
 
-        var p = new @this(fs.ValidatePath(resolved), context) { Raw = rawPath };
+        var p = new @this(ValidatePath(resolved, context.App), context) { Raw = rawPath };
         return p;
     }
 }

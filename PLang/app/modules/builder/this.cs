@@ -106,8 +106,8 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> RunAsync()
     {
-        var appPrPath = _app.FileSystem.ValidatePath(".build/app.pr");
-        if (!_app.FileSystem.File.Exists(appPrPath) && !_app.Create)
+        var appPrPath = System.IO.Path.Combine(_app.AbsolutePath, ".build", "app.pr");
+        if (System.IO.File.Exists(appPrPath) && !_app.Create)
         {
             if (Console.IsInputRedirected)
                 return data.@this.FromError(new global::app.errors.ServiceError(

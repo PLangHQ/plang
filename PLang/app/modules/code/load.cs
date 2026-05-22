@@ -27,7 +27,7 @@ public partial class load : IContext
         Assembly assembly;
         try
         {
-            var fullPath = Context.App.FileSystem.Path.GetFullPath(Path.Value!, Context.App.AbsolutePath);
+            var fullPath = System.IO.Path.GetFullPath(Path.Value!, Context.App.AbsolutePath);
             assembly = Assembly.LoadFrom(fullPath);
         }
         catch (Exception ex)
@@ -51,7 +51,7 @@ public partial class load : IContext
 
             var instance = (ICode)ctor.Invoke(null);
             // Stamp DLL origin so snapshot capture / restore can reload from the same source.
-            instance.Source = Context.App.FileSystem.Path.GetFullPath(Path.Value!, Context.App.AbsolutePath);
+            instance.Source = System.IO.Path.GetFullPath(Path.Value!, Context.App.AbsolutePath);
 
             // Register for each ICode-derived interface the type implements
             var interfaces = type.GetInterfaces()

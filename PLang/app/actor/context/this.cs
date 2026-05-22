@@ -166,7 +166,6 @@ public sealed class @this : IDisposable
         vars.Set(new data.DynamicData("!app", () => App));
         vars.Set(new data.DynamicData("!context", () => this));
         vars.Set(new data.DynamicData("!variables", () => Variables));
-        vars.Set(new data.DynamicData("!fileSystem", () => App.FileSystem));
         vars.Set(new data.DynamicData("!callStack", () => CallStack));
         vars.Set(new data.DynamicData("!trace", () => Trace));
         vars.Set(new data.DynamicData("!channels", () => Actor?.Channels));

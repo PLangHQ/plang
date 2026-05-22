@@ -36,23 +36,22 @@ public sealed class @this
     /// </summary>
     private async Task<data.@this> DiscoverAsync(app.@this app, CancellationToken ct = default)
     {
-        var fs = app.FileSystem;
         var root = app.AbsolutePath;
 
         var candidates = new[]
         {
-            fs.Path.Combine(root, ".build", "setup.pr"),
-            fs.Path.Combine(root, "Setup", ".build", "setup.pr"),
+            System.IO.Path.Combine(root, ".build", "setup.pr"),
+            System.IO.Path.Combine(root, "Setup", ".build", "setup.pr"),
         };
 
         foreach (var file in candidates)
         {
-            if (!fs.File.Exists(file)) continue;
+            if (!System.IO.File.Exists(file)) continue;
 
             try
             {
-                var content = await fs.File.ReadAllTextAsync(file, ct);
-                var ext = fs.Path.GetExtension(file);
+                var content = await System.IO.File.ReadAllTextAsync(file, ct);
+                var ext = System.IO.Path.GetExtension(file);
                 var goal = app.System.Channels.Serializers.Deserialize<goal.@this>(new app.channels.serializers.DeserializeOptions { Value = content, Extension = ext });
                 if (goal == null || !goal.IsSetup) continue;
 

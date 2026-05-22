@@ -42,16 +42,14 @@ public abstract partial class @this : modules.IContext
     private string? _relative;
 
     /// <summary>
-    /// Lazy FileSystem access — resolved from Context.App.FileSystem.
-    /// Context can be supplied via constructor, or set later through the IContext
-    /// interface (Data&lt;Path&gt;.Context propagation). Properties that need the
-    /// filesystem (Relative, Extension, FileName, etc.) throw if accessed before
-    /// Context is wired — by that point in any real flow Context is always
-    /// available; only CLI-parse-time and direct test construction skip it.
+    /// App root directory — resolved from Context. The string-derived path
+    /// properties (Relative, Extension, …) need it; they throw if accessed
+    /// before Context is wired (only CLI-parse-time / direct test construction
+    /// skip it — by any real flow Context is always available).
     /// </summary>
-    private IPLangFileSystem Fs => Context?.App?.FileSystem
+    private string RootAbsolutePath => Context?.App?.AbsolutePath
         ?? throw new InvalidOperationException(
-            "Path requires Context with App.FileSystem — wire it before accessing filesystem-dependent properties");
+            "Path requires Context with App — wire it before accessing path-derived properties");
 
     /// <summary>
     /// Creates a Path. Context is optional at construction so utilities that
@@ -100,13 +98,14 @@ public abstract partial class @this : modules.IContext
         {
             if (_relative != null) return _relative;
 
-            var root = Fs.RootDirectory;
-            if (!root.EndsWith(Fs.Path.DirectorySeparatorChar) && !root.EndsWith(Fs.Path.AltDirectorySeparatorChar))
-                root += Fs.Path.DirectorySeparatorChar;
+            var rootAbsolutePath = RootAbsolutePath;
+            var rootWithSeparator = rootAbsolutePath;
+            if (!rootWithSeparator.EndsWith(System.IO.Path.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(System.IO.Path.AltDirectorySeparatorChar))
+                rootWithSeparator += System.IO.Path.DirectorySeparatorChar;
 
-            if (_absolutePath.StartsWith(root, StringComparison.OrdinalIgnoreCase))
-                _relative = _absolutePath[root.Length..];
-            else if (string.Equals(_absolutePath, Fs.RootDirectory, StringComparison.OrdinalIgnoreCase))
+            if (_absolutePath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
+                _relative = _absolutePath[rootWithSeparator.Length..];
+            else if (string.Equals(_absolutePath, rootAbsolutePath, StringComparison.OrdinalIgnoreCase))
                 _relative = ".";
             else
                 _relative = _absolutePath;
@@ -115,11 +114,11 @@ public abstract partial class @this : modules.IContext
         }
     }
 
-    [LlmBuilder] public string Extension => _extension ??= Fs.Path.GetExtension(_absolutePath);
-    [LlmBuilder] public string FileName => _fileName ??= Fs.Path.GetFileName(_absolutePath);
+    [LlmBuilder] public string Extension => _extension ??= System.IO.Path.GetExtension(_absolutePath);
+    [LlmBuilder] public string FileName => _fileName ??= System.IO.Path.GetFileName(_absolutePath);
     [LlmBuilder] public string FileNameWithoutExtension
-        => _fileNameWithoutExtension ??= Fs.Path.GetFileNameWithoutExtension(_absolutePath);
-    [LlmBuilder] public string Directory => _directory ??= Fs.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
+        => _fileNameWithoutExtension ??= System.IO.Path.GetFileNameWithoutExtension(_absolutePath);
+    [LlmBuilder] public string Directory => _directory ??= System.IO.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
     [LlmBuilder] public string MimeType => Context?.App?.Formats?.Mime(Extension) ?? "application/octet-stream";
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
@@ -133,8 +132,8 @@ public abstract partial class @this : modules.IContext
         get
         {
             var rel = Relative.Replace('\\', '/');
-            var dir = Fs.Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
-            var baseName = Fs.Path.GetFileNameWithoutExtension(rel);
+            var dir = System.IO.Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
+            var baseName = System.IO.Path.GetFileNameWithoutExtension(rel);
             var prDir = string.IsNullOrEmpty(dir) ? ".build" : $"{dir}/.build";
             var prPath = $"/{prDir}/{baseName.ToLowerInvariant()}.pr";
             return new GoalCall { Name = "", PrPath = prPath };
@@ -143,13 +142,13 @@ public abstract partial class @this : modules.IContext
 
     // --- Live filesystem properties ---
 
-    [LlmBuilder] public bool Exists => Fs.File.Exists(_absolutePath) || Fs.Directory.Exists(_absolutePath);
+    [LlmBuilder] public bool Exists => System.IO.File.Exists(_absolutePath) || System.IO.Directory.Exists(_absolutePath);
 
     [LlmBuilder] public long Size
     {
         get
         {
-            var info = Fs.FileInfo.New(_absolutePath);
+            var info = new System.IO.FileInfo(_absolutePath);
             return info.Exists ? info.Length : 0;
         }
     }

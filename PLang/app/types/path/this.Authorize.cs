@@ -89,26 +89,29 @@ public partial class @this
 
     protected bool IsInRoot()
     {
-        var fs = Context?.App.FileSystem;
-        if (fs == null) return false;
-        return IsUnder(fs.RootDirectory, RootComparison)
-            || IsUnder(fs.OsDirectory, RootComparison);
+        var app = Context?.App;
+        if (app == null) return false;
+        // os-folder check covers system-built-in goals (test, build) — use the
+        // computed os path so it holds even when App.OsDirectory was not set.
+        return IsUnder(app.AbsolutePath, RootComparison)
+            || IsUnder(app.OsDirectory, RootComparison)
+            || IsUnder(global::app.types.path.file.@this.OsAbsolutePath, RootComparison);
     }
 
     /// <summary>
     /// Returns true when <see cref="Absolute"/> sits under (or equals)
-    /// <paramref name="dir"/>. The OsDirectory check covers system-built-in
-    /// goals (test, build) that live outside the actor's RootDirectory — they
-    /// are runtime-owned files, not user content.
+    /// <paramref name="rootCandidate"/>. The os-folder check covers
+    /// system-built-in goals (test, build) that live outside the actor's root
+    /// — they are runtime-owned files, not user content.
     /// </summary>
-    private bool IsUnder(string? dir, StringComparison cmp)
+    private bool IsUnder(string? rootCandidate, StringComparison cmp)
     {
-        if (string.IsNullOrEmpty(dir)) return false;
-        var dirWithSep = dir.EndsWith(System.IO.Path.DirectorySeparatorChar)
-            ? dir
-            : dir + System.IO.Path.DirectorySeparatorChar;
-        return Absolute.StartsWith(dirWithSep, cmp)
-            || string.Equals(Absolute, dir, cmp);
+        if (string.IsNullOrEmpty(rootCandidate)) return false;
+        var rootWithSeparator = rootCandidate.EndsWith(System.IO.Path.DirectorySeparatorChar)
+            ? rootCandidate
+            : rootCandidate + System.IO.Path.DirectorySeparatorChar;
+        return Absolute.StartsWith(rootWithSeparator, cmp)
+            || string.Equals(Absolute, rootCandidate, cmp);
     }
 
     private static string VerbLabel(Verb verb)

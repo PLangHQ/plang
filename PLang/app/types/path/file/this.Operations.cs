@@ -37,7 +37,6 @@ public sealed partial class @this
     {
         if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
 
-        var fs = Context!.App.FileSystem;
 
         // During build: use snapshotted .pr content to avoid reading overwritten files.
         if (Context!.App.Builder.IsEnabled && Extension == ".pr")
@@ -119,7 +118,6 @@ public sealed partial class @this
     public async Task<data.@this> List(string pattern, bool recursive)
     {
         if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
-        var fs = Context!.App.FileSystem;
         if (!System.IO.Directory.Exists(Absolute))
             return data.@this.FromError(new errors.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
@@ -173,7 +171,6 @@ public sealed partial class @this
     {
         if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
 
-        var fs = Context!.App.FileSystem;
         try
         {
             EnsureParentDir();
@@ -249,7 +246,6 @@ public sealed partial class @this
     public async Task<data.@this> Delete(bool recursive, bool ignoreIfNotFound)
     {
         if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return early;
-        var fs = Context!.App.FileSystem;
         try
         {
             if (System.IO.File.Exists(Absolute))
@@ -301,14 +297,14 @@ public sealed partial class @this
         return await BundledTransfer(fileDest, isMove: false, overwrite: overwrite, includeSubfolders: includeSubfolders);
     }
 
-    private static string ResolveDestinationPath(global::app.types.path.IPLangFileSystem fs, @this source, @this destination)
+    private static string ResolveDestinationPath(@this source, @this destination)
     {
         if (System.IO.File.Exists(source.Absolute) && System.IO.Directory.Exists(destination.Absolute))
             return System.IO.Path.Combine(destination.Absolute, source.FileName);
         return destination.Absolute;
     }
 
-    private static void CopyDirectory(global::app.types.path.IPLangFileSystem fs, string src, string dest, bool overwrite, bool includeSubfolders)
+    private static void CopyDirectory(string src, string dest, bool overwrite, bool includeSubfolders)
     {
         System.IO.Directory.CreateDirectory(dest);
         foreach (var file in System.IO.Directory.GetFiles(src))
@@ -320,7 +316,7 @@ public sealed partial class @this
         foreach (var subDir in System.IO.Directory.GetDirectories(src))
         {
             var dirName = System.IO.Path.GetFileName(subDir);
-            CopyDirectory(fs, subDir, System.IO.Path.Combine(dest, dirName), overwrite, includeSubfolders);
+            CopyDirectory(subDir, System.IO.Path.Combine(dest, dirName), overwrite, includeSubfolders);
         }
     }
 
@@ -413,7 +409,6 @@ public sealed partial class @this
     /// </summary>
     private Task<data.@this> PerformTransfer(@this destination, bool isMove, bool overwrite, bool includeSubfolders)
     {
-        var fs = Context!.App.FileSystem;
         try
         {
             if (!System.IO.File.Exists(Absolute) && !System.IO.Directory.Exists(Absolute))
@@ -435,13 +430,13 @@ public sealed partial class @this
                         data.@this<global::app.types.path.@this>.Ok(new @this(destination.Absolute, Context, source: Absolute)));
                 }
 
-                CopyDirectory(fs, Absolute, destination.Absolute, overwrite, includeSubfolders);
+                CopyDirectory(Absolute, destination.Absolute, overwrite, includeSubfolders);
                 return Task.FromResult<global::app.data.@this>(
                     data.@this<global::app.types.path.@this>.Ok(new @this(destination.Absolute, Context, source: Absolute)));
             }
 
             // File transfer -----------------------------------------------------
-            var destPath = ResolveDestinationPath(fs, this, destination);
+            var destPath = ResolveDestinationPath(this, destination);
             var destDir = System.IO.Path.GetDirectoryName(destPath);
             if (!string.IsNullOrEmpty(destDir) && !System.IO.Directory.Exists(destDir))
                 System.IO.Directory.CreateDirectory(destDir);

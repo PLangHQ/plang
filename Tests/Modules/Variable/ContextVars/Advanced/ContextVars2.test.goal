@@ -5,7 +5,5 @@ Start
 - assert %!step% is not null
 / Test: context is accessible
 - assert %!context% is not null
-/ Test: fileSystem is accessible
-- assert %!fileSystem% is not null
 / Test: callStack is accessible
 - assert %!callStack% is not null

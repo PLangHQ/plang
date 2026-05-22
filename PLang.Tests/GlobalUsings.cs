@@ -46,7 +46,6 @@ global using Variables = app.variables.@this;
 
 // Path types (formerly FileSystem)
 global using FileSystem = app.types.path;
-global using PLangFileSystem = app.types.path.Default.PLangFileSystem;
 // Lowercase path aliases — match PLang concept names, no System.IO.Path clash.
 global using path = app.types.path.@this;
 global using filepath = app.types.path.file.@this;

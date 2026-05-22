@@ -16,7 +16,6 @@ namespace PLang.Tests.App.Tester;
 public class ExecutorTests
 {
     private string _tempDir = null!;
-    private PLangFileSystem _fs = null!;
 
     [Before(Test)]
     public void Setup()
@@ -24,7 +23,6 @@ public class ExecutorTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-executor-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _fs = new PLangFileSystem(_tempDir, "");
     }
 
     [After(Test)]
@@ -34,7 +32,7 @@ public class ExecutorTests
             System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private Executor NewExecutor() => new(_fs);
+    private Executor NewExecutor() => new(_tempDir);
 
     // --test flag turns on test mode and routes to system/.build/test.pr when the
     // default Start.goal is the target. Users expect `plang --test` to run the test

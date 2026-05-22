@@ -112,14 +112,14 @@ public sealed class @this
         if (isAbsolute)
             cleanName = cleanName.TrimStart('/', '\\');
 
-        var file = App.FileSystem.Path.GetFileName(cleanName);
-        var nameDir = App.FileSystem.Path.GetDirectoryName(cleanName) ?? "";
+        var file = System.IO.Path.GetFileName(cleanName);
+        var nameDir = System.IO.Path.GetDirectoryName(cleanName) ?? "";
 
         // If relative and we have a calling folder, try resolving relative to it first
         if (!isAbsolute && !string.IsNullOrEmpty(callingFolderPath))
         {
             var relativeDir = callingFolderPath.Trim('/', '\\');
-            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : App.FileSystem.Path.Combine(relativeDir, nameDir);
+            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : System.IO.Path.Combine(relativeDir, nameDir);
 
             var loaded = await TryLoadPr(combinedDir, file, name, cancellationToken);
             if (loaded != null) return loaded;
@@ -147,8 +147,8 @@ public sealed class @this
         var prFile = file.ToLowerInvariant() + ".pr";
 
         // 1. Try user's root directory
-        var rootPath = App.FileSystem.Path.Combine(App.FileSystem.RootDirectory, dir, ".build", prFile);
-        if (App.FileSystem.File.Exists(rootPath))
+        var rootPath = System.IO.Path.Combine(App.AbsolutePath, dir, ".build", prFile);
+        if (System.IO.File.Exists(rootPath))
         {
             var result = await LoadFromFileAsync(App, rootPath, cancellationToken: ct);
             if (result.Success)
@@ -170,8 +170,8 @@ public sealed class @this
             {
                 // Strip the "system/" prefix — system tree lives at <OsDirectory>/system
                 var withinSystem = normalized.Length > 7 ? normalized[7..] : "";
-                var osPath = App.FileSystem.Path.Combine(App.OsDirectory, "system", withinSystem, ".build", prFile);
-                if (App.FileSystem.File.Exists(osPath))
+                var osPath = System.IO.Path.Combine(App.OsDirectory, "system", withinSystem, ".build", prFile);
+                if (System.IO.File.Exists(osPath))
                 {
                     var result = await LoadFromFileAsync(App, osPath, cancellationToken: ct);
                     if (result.Success)
@@ -283,11 +283,11 @@ public sealed class @this
             return cached.IsSetup ? null : cached;
 
         // Resolve relative path against root directory
-        var absolutePath = App.FileSystem.Path.IsPathRooted(prPath)
+        var absolutePath = System.IO.Path.IsPathRooted(prPath)
             ? prPath
-            : App.FileSystem.Path.Combine(App.FileSystem.RootDirectory, prPath);
+            : System.IO.Path.Combine(App.AbsolutePath, prPath);
 
-        if (!App.FileSystem.File.Exists(absolutePath))
+        if (System.IO.File.Exists(absolutePath))
             return null;
 
         var loadResult = await LoadFromFileAsync(App, absolutePath, cancellationToken: ct);
@@ -308,10 +308,14 @@ public sealed class @this
     {
         try
         {
+            // Normalize against the App root — the old IPLangFileSystem wrapper
+            // did this implicitly on every read; System.IO.File does not, so a
+            // relative prFilePath would otherwise resolve against the CWD.
+            prFilePath = global::app.types.path.file.@this.ValidatePath(prFilePath, app);
+
             // .pr files can be an array of goals (multiple goals per .goal file) or a single goal object
-            var fs = app.FileSystem;
-            var content = await fs.File.ReadAllTextAsync(prFilePath, cancellationToken);
-            var ext = fs.Path.GetExtension(prFilePath);
+            var content = await System.IO.File.ReadAllTextAsync(prFilePath, cancellationToken);
+            var ext = System.IO.Path.GetExtension(prFilePath);
 
             List<goal.@this>? goals = null;
             var trimmed = content.TrimStart();
@@ -362,7 +366,7 @@ public sealed class @this
         {
             // Direct filesystem access for bootstrapping — the file.list action handler
             // exists for use in PLang steps, but goal loading happens before step execution.
-            var files = app.FileSystem.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
+            var files = System.IO.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
             var loadedCount = 0;
 
             foreach (var file in files)

@@ -2,7 +2,6 @@ using app.actor.context;
 using app.variables;
 using app.modules;
 using app.types.path;
-using app.types.path.Default;
 using File = System.IO.File;
 using Directory = System.IO.Directory;
 
@@ -18,7 +17,7 @@ public class PrPipelineTests
     public async Task FullPipeline_LoadAndExecute_VariablesOutputDefaults()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir);
 
         var capture = new CapturingWriteHandler();
         engine.Modules.Register("output", "write", capture);
@@ -48,15 +47,13 @@ public class PrPipelineTests
     [Test]
     public async Task ReadFile_ReturnMapsResultToVariable()
     {
-        await using var engine = new global::app.@this("/app");
+        // Engine rooted at the fixtures dir (contains testdata.txt and ReadFile.pr).
+        var fixturesDir = FindFixturesDir();
+        await using var engine = new global::app.@this(fixturesDir);
 
         // Capture output
         var capture = new CapturingWriteHandler();
         engine.Modules.Register("output", "write", capture);
-
-        // Point engine filesystem at fixtures dir (contains testdata.txt and ReadFile.pr)
-        var fixturesDir = FindFixturesDir();
-        engine.FileSystem = new PLangFileSystem(fixturesDir, "");
 
         // Load and execute
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,"ReadFile.pr");
@@ -83,7 +80,7 @@ public class PrPipelineTests
     public async Task FilePaths_FromRoot_RelativeAbsoluteSubfolderDotSlash()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir);
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,"FilePathsFromRoot.pr");
         await Assert.That(loadResult.Success).IsTrue();
@@ -109,7 +106,7 @@ public class PrPipelineTests
     public async Task FilePaths_FromSubfolder_AbsoluteRootWorks()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir);
 
         var loadResult = await engine.Goals.LoadFromFileAsync(engine,System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
         await Assert.That(loadResult.Success).IsTrue();
@@ -128,7 +125,7 @@ public class PrPipelineTests
     public async Task FilePaths_RelativeResolvesAgainstGoalFolder()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir);
 
         // A goal in /sub/ reads "subdata.txt" (relative)
         // This resolves to {root}/sub/subdata.txt — relative to goal folder
@@ -168,7 +165,7 @@ public class PrPipelineTests
     public async Task FilePaths_ParentTraversal_FromSubfolderToRoot()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir);
 
         // #3: Goal in /sub/ reads ../testdata.txt — should resolve to {root}/testdata.txt
         var goal = new global::app.goals.goal.@this
@@ -206,7 +203,7 @@ public class PrPipelineTests
     public async Task FilePaths_ParentTraversal_BackAndDown()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir);
 
         // #8: Goal in /sub/ reads ../sub/subdata.txt — parent then back down
         var goal = new global::app.goals.goal.@this
@@ -244,7 +241,7 @@ public class PrPipelineTests
     public async Task FilePaths_NonexistentFile_ReturnsError()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir);
 
         // Hand-build a goal that reads a nonexistent file
         var goal = new global::app.goals.goal.@this
@@ -283,7 +280,7 @@ public class PrPipelineTests
     public async Task FilePaths_EscapeAttempt_Blocked()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
+        await using var engine = new global::app.@this(fixturesDir);
 
         // Try to read ../../ — should be blocked by PLangFileSystem
         var goal = new global::app.goals.goal.@this

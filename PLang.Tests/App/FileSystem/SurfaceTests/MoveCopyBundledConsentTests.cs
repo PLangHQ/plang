@@ -233,8 +233,8 @@ public class MoveCopyBundledConsentTests
         var app = NewApp(out var root);
         var rel = "legacy-roundtrip.txt";
         var abs = System.IO.Path.Combine(root, rel);
-        await app.FileSystem.File.WriteAllTextAsync(abs, "v1-still-here");
-        var roundTripped = await app.FileSystem.File.ReadAllTextAsync(abs);
+        await System.IO.File.WriteAllTextAsync(abs, "v1-still-here");
+        var roundTripped = await System.IO.File.ReadAllTextAsync(abs);
         await Assert.That(roundTripped).IsEqualTo("v1-still-here");
         // And the v2 surface sees the same bytes.
         var v2 = new Path(abs, app.User.Context);

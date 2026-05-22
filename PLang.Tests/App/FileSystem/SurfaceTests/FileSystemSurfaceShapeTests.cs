@@ -1,69 +1,68 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using System.Linq;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
-/// Stage 4 — Batch 8: shape contracts on the v2 FS surface.
+/// <summary>
+/// Shape contracts on the path verb surface, post Stage 8.
 ///
-/// The architect's plan called for *deleting* the legacy v1 surface
-/// (ValidatePath, FileAccessControl, IFileSystem inheritance) as the final
-/// sub-stage. This branch adds the v2 surface alongside v1 — Path.Operations
-/// is the new entry; v1 stays for the existing builder / snapshot / settings
-/// / http / ui / test callers. Removing v1 cleanly requires migrating
-/// ~50 non-action call sites and is tracked as a follow-up.
-///
-/// The "absence" assertions here pin the current (v1-still-present) state.
-/// When v1 deletes, flip the assertions.
+/// The legacy v1 surface (IPLangFileSystem, PLangFileSystem, FileAccessControl,
+/// the System.IO.Abstractions wrapper layer) is now <b>deleted</b>. These
+/// assertions — formerly "spec-deferred, flip when v1 deletes" — are flipped:
+/// they pin the absence. String-based reflection so the file compiles without
+/// the removed types.
+/// </summary>
 public class FileSystemSurfaceShapeTests
 {
+    private static System.Reflection.Assembly AppAssembly => typeof(global::app.@this).Assembly;
+
     [Test] public async Task ActionHandlers_AreThinShells_NoPerHandlerShortCircuit()
     {
-        // v2 surface contract: Path has ReadText/WriteText/Delete (and the
-        // other 7 single-path ops) that authorise + IO. No per-handler
-        // short-circuit branch — the step loop's ShouldExit() handles it.
+        // The path verb surface lives on the abstract base — ReadText/WriteText/
+        // Delete/MoveTo/CopyTo. Handlers are thin shells over it.
         var pathType = typeof(global::app.types.path.@this);
-        var readText = pathType.GetMethod("ReadText");
-        var writeText = pathType.GetMethod("WriteText", new[] { typeof(string) });
-        var delete = pathType.GetMethod("Delete");
-        var moveTo = pathType.GetMethod("MoveTo");
-        var copyTo = pathType.GetMethod("CopyTo");
-        await Assert.That(readText).IsNotNull();
-        await Assert.That(writeText).IsNotNull();
-        await Assert.That(delete).IsNotNull();
-        await Assert.That(moveTo).IsNotNull();
-        await Assert.That(copyTo).IsNotNull();
+        await Assert.That(pathType.GetMethod("ReadText")).IsNotNull();
+        await Assert.That(pathType.GetMethod("WriteText", new[] { typeof(string) })).IsNotNull();
+        await Assert.That(pathType.GetMethod("Delete", System.Type.EmptyTypes)).IsNotNull();
+        await Assert.That(pathType.GetMethod("MoveTo")).IsNotNull();
+        await Assert.That(pathType.GetMethod("CopyTo")).IsNotNull();
     }
 
-    [Test] public async Task ValidatePathStringOverload_AbsentFromProductionSource()
+    [Test] public async Task IPLangFileSystem_AbsentFromProductionAssembly()
     {
-        // Spec-deferred. v1 ValidatePath still present for legacy callers.
-        var validatePath = typeof(global::app.types.path.IPLangFileSystem).GetMethod("ValidatePath");
-        await Assert.That(validatePath).IsNotNull();
+        await Assert.That(AppAssembly.GetType("app.types.path.IPLangFileSystem")).IsNull();
     }
 
-    [Test] public async Task FileAccessControl_TypeAbsentFromProductionSource()
+    [Test] public async Task FileAccessControl_TypeAbsentFromProductionAssembly()
     {
-        // Spec-deferred. v2 uses Actor.Permission; FileAccessControl record
-        // remains in Default/PLangFileSystem.cs for v1 compatibility.
-        var t = typeof(global::app.types.path.Default.FileAccessControl);
-        await Assert.That(t).IsNotNull();
+        // v2 uses Actor.Permission — the FileAccessControl root-jail record is gone.
+        await Assert.That(AppAssembly.GetType("app.types.path.Default.FileAccessControl")).IsNull();
     }
 
-    [Test] public async Task FileAccessesList_ApiAbsentFromProductionSource()
+    [Test] public async Task PLangFileSystem_WrapperLayer_AbsentFromProductionAssembly()
     {
-        // Spec-deferred. AddFileAccess/ClearFileAccess still on IPLangFileSystem.
-        var add = typeof(global::app.types.path.IPLangFileSystem).GetMethod("AddFileAccess");
-        await Assert.That(add).IsNotNull();
+        // The System.IO.Abstractions wrapper layer is deleted.
+        foreach (var name in new[]
+        {
+            "app.types.path.Default.PLangFileSystem",
+            "app.types.path.Default.PLangFile",
+            "app.types.path.Default.PLangDirectoryWrapper",
+            "app.types.path.Default.PLangPath",
+        })
+        {
+            await Assert.That(AppAssembly.GetType(name)).IsNull();
+        }
     }
 
-    [Test] public async Task IPLangFileSystem_DoesNotInherit_SystemIOAbstractionsIFileSystem()
+    [Test] public async Task ProductionAssembly_DoesNotReference_SystemIOAbstractions()
     {
-        // Spec-deferred. v1 IPLangFileSystem still inherits IFileSystem for
-        // legacy callers. v2 surface bypasses the interface entirely
-        // (Path.Operations uses System.IO.File directly after Authorize).
-        var inherits = typeof(global::System.IO.Abstractions.IFileSystem)
-            .IsAssignableFrom(typeof(global::app.types.path.IPLangFileSystem));
-        await Assert.That(inherits).IsTrue();
+        // The System.IO.Abstractions package is dropped — no referenced assembly
+        // named "System.IO.Abstractions" remains.
+        var referenced = AppAssembly.GetReferencedAssemblies()
+            .Select(a => a.Name)
+            .ToArray();
+        await Assert.That(referenced).DoesNotContain("System.IO.Abstractions");
     }
 }
