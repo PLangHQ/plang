@@ -307,6 +307,8 @@ public sealed partial class @this : IAsyncDisposable
         Code.RegisterDefaults();
         Types.RegisterDomainTypes();
         Types.Scheme.Register("file", (raw, ctx) => global::app.types.path.file.@this.Resolve(raw, ctx));
+        Types.Scheme.Register("http", (raw, ctx) => global::app.types.path.http.@this.Resolve(raw, ctx));
+        Types.Scheme.Register("https", (raw, ctx) => global::app.types.path.http.@this.Resolve(raw, ctx));
         Navigators.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap

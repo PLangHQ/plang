@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace app.types.path.permission;
 
@@ -44,12 +43,44 @@ public sealed record @this(
         _ => false,
     };
 
+    /// <summary>
+    /// Glob match over the canonical-form string. Works uniformly for file
+    /// paths (<c>/apps/*/file.txt</c>) and URLs (<c>https://api.example.com/*</c>)
+    /// — the FileSystemGlobbing matcher chokes on the <c>://</c> in URLs, so the
+    /// pattern is compiled to a regex instead. <c>*</c> matches within a single
+    /// segment (no <c>/</c>); <c>**</c> matches across segments; <c>?</c> is a
+    /// single non-slash char.
+    /// </summary>
     private static bool GlobMatches(string pattern, string candidate)
     {
-        var matcher = new Matcher(StringComparison.Ordinal);
-        matcher.AddInclude(pattern.TrimStart('/'));
-        var result = matcher.Match(candidate.TrimStart('/'));
-        return result.HasMatches;
+        var rx = new System.Text.StringBuilder("^");
+        for (int i = 0; i < pattern.Length; i++)
+        {
+            char c = pattern[i];
+            if (c == '*')
+            {
+                if (i + 1 < pattern.Length && pattern[i + 1] == '*')
+                {
+                    rx.Append(".*");
+                    i++;
+                }
+                else
+                {
+                    rx.Append("[^/]*");
+                }
+            }
+            else if (c == '?')
+            {
+                rx.Append("[^/]");
+            }
+            else
+            {
+                rx.Append(Regex.Escape(c.ToString()));
+            }
+        }
+        rx.Append('$');
+        try { return Regex.IsMatch(candidate, rx.ToString()); }
+        catch (ArgumentException) { return false; }
     }
 
     private static bool RegexMatches(string pattern, string candidate)

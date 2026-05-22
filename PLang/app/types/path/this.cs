@@ -92,7 +92,7 @@ public abstract partial class @this : modules.IContext
     // --- Path properties ---
 
     public string Raw { get; init; } = "";
-    public string Absolute => _absolutePath;
+    public virtual string Absolute => _absolutePath;
 
     public string Relative
     {
