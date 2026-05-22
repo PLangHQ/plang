@@ -7,7 +7,7 @@ namespace app.modules.file;
 [Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {
-    public partial data.@this<global::app.types.path.@this> Path { get; init; }
+    public partial data.@this<path> Path { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> IgnoreIfNotFound { get; init; }
@@ -17,7 +17,7 @@ public partial class Delete : IContext
 
     public async Task<data.@this> Run()
     {
-        if (Path.Value is global::app.types.path.file.@this fp)
+        if (Path.Value is filepath fp)
             return await fp.Delete(Recursive.Value, IgnoreIfNotFound.Value);
         return await Path.Value!.Delete();
     }

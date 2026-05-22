@@ -9,11 +9,11 @@ namespace app.modules.file;
 [Action("exists")]
 public partial class Exists : IContext
 {
-    public partial data.@this<global::app.types.path.@this> Path { get; init; }
+    public partial data.@this<path> Path { get; init; }
 
     public async Task<data.@this> Run()
     {
-        if (Path.Value is global::app.types.path.file.@this fp)
+        if (Path.Value is filepath fp)
             return await fp.ExistsPathAsync();
         return await Path.Value!.ExistsAsync();
     }

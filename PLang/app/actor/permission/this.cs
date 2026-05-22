@@ -1,6 +1,5 @@
 using PermissionRecord = global::app.types.path.permission.@this;
 using Verb = global::app.types.path.permission.verb.@this;
-using PathT = global::app.types.path.@this;
 using MatchMode = global::app.types.path.permission.Match;
 
 namespace app.actor.permission;
@@ -40,10 +39,10 @@ public sealed class @this
     /// verification is cached via the Data instance's Properties bag — repeat
     /// Find calls on the same in-memory grant don't re-verify.
     /// </summary>
-    public async Task<global::app.data.@this<PermissionRecord>?> Find(PathT path, Verb verb)
+    public async Task<global::app.data.@this<PermissionRecord>?> Find(path requestPath, Verb verb)
     {
         var request = new PermissionRecord(
-            _actor.Name, path.Absolute, verb, MatchMode.Exact);
+            _actor.Name, requestPath.Absolute, verb, MatchMode.Exact);
 
         // 1) In-memory grants. Snapshot under the lock; verify outside it so
         //    the async signing-verify call doesn't hold the lock.

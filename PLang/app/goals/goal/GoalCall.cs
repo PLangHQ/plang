@@ -93,7 +93,7 @@ public sealed class GoalCall : modules.IEvent
         var readAction = new modules.file.Read
         {
             Context = context,
-            Path = data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(prPath, context))
+            Path = data.@this<path>.Ok(path.Resolve(prPath, context))
         };
         var result = await app.RunAction(readAction, context);
         if (!result.Success) return result;

@@ -8,8 +8,8 @@ namespace app.modules.file;
 [Action("copy", Cacheable = false)]
 public partial class Copy : IContext
 {
-    public partial data.@this<global::app.types.path.@this> Source { get; init; }
-    public partial data.@this<global::app.types.path.@this> Destination { get; init; }
+    public partial data.@this<path> Source { get; init; }
+    public partial data.@this<path> Destination { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> Overwrite { get; init; }
@@ -19,7 +19,7 @@ public partial class Copy : IContext
 
     public async Task<data.@this> Run()
     {
-        if (Source.Value is global::app.types.path.file.@this fp)
+        if (Source.Value is filepath fp)
             return await fp.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
         return await Source.Value!.CopyTo(Destination.Value!);
     }

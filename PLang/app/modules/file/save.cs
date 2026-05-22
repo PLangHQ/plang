@@ -7,12 +7,12 @@ namespace app.modules.file;
 [Action("save", Cacheable = false)]
 public partial class Save : IContext
 {
-    public partial data.@this<global::app.types.path.@this> Path { get; init; }
+    public partial data.@this<path> Path { get; init; }
     public partial data.@this? Value { get; init; }
 
     public async Task<data.@this> Run()
     {
-        if (Path.Value is global::app.types.path.file.@this fp)
+        if (Path.Value is filepath fp)
             return await fp.Save(Value);
         var raw = Value?.Value;
         if (raw is byte[] bytes) return await Path.Value!.WriteBytes(bytes);

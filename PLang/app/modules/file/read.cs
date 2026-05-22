@@ -18,7 +18,7 @@ namespace app.modules.file;
 [Action("read")]
 public partial class Read : IContext
 {
-    public partial data.@this<global::app.types.path.@this> Path { get; init; }
+    public partial data.@this<path> Path { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> ResolveVariables { get; init; }
