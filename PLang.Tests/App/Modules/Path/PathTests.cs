@@ -1,6 +1,7 @@
-using app.filesystem.Default;
+using app.types.path.Default;
 using app.variables;
-using PLangPath = global::app.filesystem.path;
+using PLangPath = global::app.types.path.@this;
+using PLangFilePath = global::app.types.path.file.@this;
 using app.modules.file;
 using app.modules.file.code;
 
@@ -37,7 +38,7 @@ public class PathTests : IDisposable
     }
 
     /// <summary>Creates a Path with Context set so FileSystem resolves.</summary>
-    private PLangPath MakePath(string path) => new PLangPath(path) { Context = _app.User.Context };
+    private PLangPath MakePath(string path) => new PLangFilePath(path) { Context = _app.User.Context };
 
     /// <summary>Wraps a Path in Data&lt;Path&gt; for action parameters.</summary>
     private global::app.data.@this<PLangPath> WrapPath(PLangPath p) => new("", p);

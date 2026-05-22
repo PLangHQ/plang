@@ -1,68 +1,72 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using System.Reflection;
+using PLangPath = global::app.types.path.@this;
+using FilePath = global::app.types.path.file.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 2 — <c>path</c> becomes an abstract base. Today's concrete impl moves into
-/// <c>FilePath : Path</c> (<c>app.types.path.file.@this</c>). The verb surface
-/// (Read/Write/Delete/Exists/Stat/List + ReadText/ReadBytes/WriteText/WriteBytes/Append)
-/// is declared <c>abstract</c> on the base; <c>CopyTo</c>/<c>MoveTo</c> are <c>virtual</c>
-/// with cross-scheme default bodies (ReadBytes → WriteBytes; CopyTo + Delete).
-///
-/// These are shape tests over the type hierarchy — reflection on the abstract base and
-/// the FilePath subclass.
+/// Stage 2 — shape tests: the path base is abstract; FilePath is the concrete
+/// file-scheme subclass; verb surface declared abstract on base; CopyTo/MoveTo
+/// virtual (cross-scheme default).
 /// </summary>
 public class PathAbstractTests
 {
-    /// <summary>Intent: the path base type is <c>abstract</c> — it cannot be instantiated
-    /// directly. <c>typeof(Path).IsAbstract</c> is true.</summary>
+    private static readonly string[] AbstractVerbs =
+    {
+        nameof(PLangPath.ReadText), nameof(PLangPath.ReadBytes), nameof(PLangPath.WriteText),
+        nameof(PLangPath.WriteBytes), nameof(PLangPath.Append), nameof(PLangPath.Delete),
+        nameof(PLangPath.ExistsAsync), nameof(PLangPath.Stat), nameof(PLangPath.List),
+    };
+
     [Test] public async Task Path_IsAbstract_CannotInstantiateDirectly()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(typeof(PLangPath).IsAbstract).IsTrue();
     }
 
-    /// <summary>Intent: <c>FilePath</c> derives from the abstract <c>Path</c> base
-    /// (<c>typeof(FilePath).IsSubclassOf(typeof(Path))</c>).</summary>
     [Test] public async Task FilePath_DerivesFrom_PathBase()
     {
-        Assert.Fail("Not implemented");
+        await Assert.That(typeof(FilePath).IsSubclassOf(typeof(PLangPath))).IsTrue();
     }
 
-    /// <summary>Intent: the verb surface is declared <c>abstract</c> on the base — each of
-    /// <c>ReadText</c>, <c>ReadBytes</c>, <c>WriteText</c>, <c>WriteBytes</c>,
-    /// <c>Append</c>, <c>Delete</c>, <c>Exists</c>, <c>Stat</c>, <c>List</c> is an abstract
-    /// member on <c>Path</c>. (The exact set mirrors today's <c>path.Operations.cs</c>;
-    /// don't invent new verbs.)</summary>
     [Test] public async Task Path_DeclaresAbstract_VerbSurface()
     {
-        Assert.Fail("Not implemented");
+        foreach (var name in AbstractVerbs)
+        {
+            var m = typeof(PLangPath).GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
+            await Assert.That(m).IsNotNull();
+            await Assert.That(m!.IsAbstract).IsTrue();
+        }
     }
 
-    /// <summary>Intent: <c>CopyTo</c> and <c>MoveTo</c> are <c>virtual</c> (overridable)
-    /// but NOT abstract — the base provides cross-scheme default bodies so a new scheme
-    /// gets file↔scheme transfer for free. Reflect <c>MethodInfo.IsVirtual &amp;&amp;
-    /// !IsAbstract</c>.</summary>
     [Test] public async Task Path_CopyTo_MoveTo_AreVirtual_WithBaseDefault()
     {
-        Assert.Fail("Not implemented");
+        foreach (var name in new[] { nameof(PLangPath.CopyTo), nameof(PLangPath.MoveTo) })
+        {
+            var m = typeof(PLangPath).GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
+            await Assert.That(m).IsNotNull();
+            await Assert.That(m!.IsVirtual).IsTrue();
+            await Assert.That(m.IsAbstract).IsFalse();
+        }
     }
 
-    /// <summary>Intent: <c>FilePath</c> overrides <c>Scheme</c> to return <c>"file"</c>,
-    /// and <c>Raw</c> returns the string it was constructed with. Construct via
-    /// <c>new FilePath(raw)</c>.</summary>
     [Test] public async Task FilePath_Scheme_IsFile_And_Raw_RoundTrips()
     {
-        Assert.Fail("Not implemented");
+        var p = new FilePath("/tmp/x.txt") { Raw = "/tmp/x.txt" };
+        await Assert.That(p.Scheme).IsEqualTo("file");
+        await Assert.That(p.Raw).IsEqualTo("/tmp/x.txt");
     }
 
-    /// <summary>Intent: <c>this.Authorize.cs</c> (the Permission gate) stays a
-    /// non-virtual member ON the base — permission gating is scheme-agnostic.
-    /// <c>FilePath</c> inherits it; it is not re-declared per scheme. Reflect that
-    /// <c>Authorize</c> is declared on <c>Path</c>, not overridden on <c>FilePath</c>.</summary>
     [Test] public async Task Authorize_StaysOnBase_NotPerSchemeOverride()
     {
-        Assert.Fail("Not implemented");
+        var m = typeof(PLangPath).GetMethod(nameof(PLangPath.Authorize), BindingFlags.Public | BindingFlags.Instance);
+        await Assert.That(m).IsNotNull();
+        await Assert.That(m!.DeclaringType).IsEqualTo(typeof(PLangPath));
+        // FilePath must not declare its own Authorize override.
+        var derived = typeof(FilePath).GetMethod(nameof(PLangPath.Authorize),
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        await Assert.That(derived).IsNull();
     }
 }

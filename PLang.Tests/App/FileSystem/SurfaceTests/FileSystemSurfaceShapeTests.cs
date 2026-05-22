@@ -22,7 +22,7 @@ public class FileSystemSurfaceShapeTests
         // v2 surface contract: Path has ReadText/WriteText/Delete (and the
         // other 7 single-path ops) that authorise + IO. No per-handler
         // short-circuit branch — the step loop's ShouldExit() handles it.
-        var pathType = typeof(global::app.filesystem.path);
+        var pathType = typeof(global::app.types.path.@this);
         var readText = pathType.GetMethod("ReadText");
         var writeText = pathType.GetMethod("WriteText", new[] { typeof(string) });
         var delete = pathType.GetMethod("Delete");
@@ -38,7 +38,7 @@ public class FileSystemSurfaceShapeTests
     [Test] public async Task ValidatePathStringOverload_AbsentFromProductionSource()
     {
         // Spec-deferred. v1 ValidatePath still present for legacy callers.
-        var validatePath = typeof(global::app.filesystem.IPLangFileSystem).GetMethod("ValidatePath");
+        var validatePath = typeof(global::app.types.path.IPLangFileSystem).GetMethod("ValidatePath");
         await Assert.That(validatePath).IsNotNull();
     }
 
@@ -46,14 +46,14 @@ public class FileSystemSurfaceShapeTests
     {
         // Spec-deferred. v2 uses Actor.Permission; FileAccessControl record
         // remains in Default/PLangFileSystem.cs for v1 compatibility.
-        var t = typeof(global::app.filesystem.Default.FileAccessControl);
+        var t = typeof(global::app.types.path.Default.FileAccessControl);
         await Assert.That(t).IsNotNull();
     }
 
     [Test] public async Task FileAccessesList_ApiAbsentFromProductionSource()
     {
         // Spec-deferred. AddFileAccess/ClearFileAccess still on IPLangFileSystem.
-        var add = typeof(global::app.filesystem.IPLangFileSystem).GetMethod("AddFileAccess");
+        var add = typeof(global::app.types.path.IPLangFileSystem).GetMethod("AddFileAccess");
         await Assert.That(add).IsNotNull();
     }
 
@@ -63,7 +63,7 @@ public class FileSystemSurfaceShapeTests
         // legacy callers. v2 surface bypasses the interface entirely
         // (Path.Operations uses System.IO.File directly after Authorize).
         var inherits = typeof(global::System.IO.Abstractions.IFileSystem)
-            .IsAssignableFrom(typeof(global::app.filesystem.IPLangFileSystem));
+            .IsAssignableFrom(typeof(global::app.types.path.IPLangFileSystem));
         await Assert.That(inherits).IsTrue();
     }
 }

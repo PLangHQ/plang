@@ -134,7 +134,7 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// The file system abstraction.
     /// </summary>
-    public app.filesystem.IPLangFileSystem FileSystem { get; set; }
+    public app.types.path.IPLangFileSystem FileSystem { get; set; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -272,13 +272,13 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public callstack.@this CallStack { get; } = new();
 
-    public @this(app.filesystem.IPLangFileSystem fileSystem)
+    public @this(app.types.path.IPLangFileSystem fileSystem)
         : this(fileSystem.RootDirectory, fileSystem: fileSystem)
     {
     }
 
     public @this(string absolutePath, AppModules? modules = null,
-        app.filesystem.IPLangFileSystem? fileSystem = null,
+        app.types.path.IPLangFileSystem? fileSystem = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {
@@ -306,6 +306,7 @@ public sealed partial class @this : IAsyncDisposable
 
         Code.RegisterDefaults();
         Types.RegisterDomainTypes();
+        Types.Scheme.Register("file", (raw, ctx) => global::app.types.path.file.@this.Resolve(raw, ctx));
         Navigators.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
@@ -551,18 +552,18 @@ public sealed partial class @this : IAsyncDisposable
         return new global::app.modules.settings.Sqlite(dbPath, FileSystem);
     }
 
-    private static app.filesystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)
+    private static app.types.path.IPLangFileSystem CreateDefaultFileSystem(string rootPath)
     {
         try
         {
             var fullPath = global::System.IO.Path.GetFullPath(rootPath);
-            return new app.filesystem.Default.PLangFileSystem(fullPath, "");
+            return new app.types.path.Default.PLangFileSystem(fullPath, "");
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             // If rootPath is not a valid filesystem path (e.g., "/app" in tests),
             // fall back to PLangFileSystem with current directory
-            return new app.filesystem.Default.PLangFileSystem(global::System.IO.Directory.GetCurrentDirectory(), "");
+            return new app.types.path.Default.PLangFileSystem(global::System.IO.Directory.GetCurrentDirectory(), "");
         }
     }
 

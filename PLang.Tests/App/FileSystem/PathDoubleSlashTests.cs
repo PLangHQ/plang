@@ -1,7 +1,7 @@
+using Path = global::app.types.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::app.filesystem.path;
 
 namespace PLang.Tests.App.FileSystem;
 

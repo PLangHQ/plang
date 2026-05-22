@@ -1,8 +1,8 @@
 using app.variables;
 using app.modules.file.code;
 using app.types;
-using Verb = global::app.filesystem.permission.verb.@this;
-using DeleteVerb = global::app.filesystem.permission.verb.Delete;
+using Verb = global::app.types.path.permission.verb.@this;
+using DeleteVerb = global::app.types.path.permission.verb.Delete;
 
 namespace app.modules.file;
 
@@ -10,7 +10,7 @@ namespace app.modules.file;
 [Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {
-    public partial data.@this<filesystem.path> Path { get; init; }
+    public partial data.@this<types.path.@this> Path { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> IgnoreIfNotFound { get; init; }

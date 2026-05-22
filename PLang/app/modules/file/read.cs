@@ -1,15 +1,15 @@
 using app.variables;
 using app.modules.file.code;
 using app.types;
-using Verb = global::app.filesystem.permission.verb.@this;
-using ReadVerb = global::app.filesystem.permission.verb.Read;
+using Verb = global::app.types.path.permission.verb.@this;
+using ReadVerb = global::app.types.path.permission.verb.Read;
 
 namespace app.modules.file;
 
 /// <summary>
 /// Reads a file and returns its content as Data.
 /// When ResolveVariables is true, %var% patterns in the content are resolved (with infrastructure variables blocked for security).
-/// Calls <see cref="filesystem.path.Authorize"/> first — out-of-root paths
+/// Calls <see cref="types.path.@this.Authorize"/> first — out-of-root paths
 /// prompt for consent (stateful) or surface as <c>Data&lt;Ask&gt;</c> + Snapshot
 /// (stateless); the engine short-circuits via the step-loop's ShouldExit().
 /// </summary>
@@ -19,7 +19,7 @@ namespace app.modules.file;
 [Action("read")]
 public partial class Read : IContext
 {
-    public partial data.@this<filesystem.path> Path { get; init; }
+    public partial data.@this<types.path.@this> Path { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> ResolveVariables { get; init; }

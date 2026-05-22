@@ -1,9 +1,8 @@
 using app.actor.context;
 using app.variables;
 using app.modules;
-using app.filesystem;
-using app.filesystem.Default;
-using Path = System.IO.Path;
+using app.types.path;
+using app.types.path.Default;
 using File = System.IO.File;
 using Directory = System.IO.Directory;
 
@@ -112,7 +111,7 @@ public class PrPipelineTests
         var fixturesDir = FindFixturesDir();
         await using var engine = new global::app.@this(fixturesDir, fileSystem: new PLangFileSystem(fixturesDir, ""));
 
-        var loadResult = await engine.Goals.LoadFromFileAsync(engine,Path.Combine("sub", "FilePathsFromSub.pr"));
+        var loadResult = await engine.Goals.LoadFromFileAsync(engine,System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
         await Assert.That(loadResult.Success).IsTrue();
 
         var context = engine.User.Context;
@@ -325,13 +324,13 @@ public class PrPipelineTests
         var dir = AppContext.BaseDirectory;
         while (dir != null)
         {
-            var candidate = Path.Combine(dir, "PLang.Tests", "App", "Fixtures", "pr");
+            var candidate = System.IO.Path.Combine(dir, "PLang.Tests", "App", "Fixtures", "pr");
             if (Directory.Exists(candidate))
                 return candidate;
             dir = Directory.GetParent(dir)?.FullName;
         }
 
-        var fallback = Path.GetFullPath(Path.Combine(
+        var fallback = System.IO.Path.GetFullPath(System.IO.Path.Combine(
             Directory.GetCurrentDirectory(), "..", "..", "..", "..", "PLang.Tests", "App", "Fixtures", "pr"));
         if (Directory.Exists(fallback))
             return fallback;

@@ -1,8 +1,8 @@
 using app.variables;
 using app.modules.file.code;
 using app.types;
-using Verb = global::app.filesystem.permission.verb.@this;
-using ReadVerb = global::app.filesystem.permission.verb.Read;
+using Verb = global::app.types.path.permission.verb.@this;
+using ReadVerb = global::app.types.path.permission.verb.Read;
 
 namespace app.modules.file;
 
@@ -12,7 +12,7 @@ namespace app.modules.file;
 [Action("list")]
 public partial class List : IContext
 {
-    public partial data.@this<filesystem.path> Path { get; init; }
+    public partial data.@this<types.path.@this> Path { get; init; }
 
     [Default("*")]
     public partial data.@this<string> Pattern { get; init; }

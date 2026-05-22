@@ -2,8 +2,9 @@ using app.actor.context;
 using app;
 using app.variables;
 using app.modules.file;
-using app.filesystem.Default;
-using PLangPath = global::app.filesystem.path;
+using app.types.path.Default;
+using PLangPath = global::app.types.path.@this;
+using PLangFilePath = global::app.types.path.file.@this;
 
 namespace PLang.Tests.App.actions.file;
 
@@ -32,10 +33,10 @@ public class FileHandlerTests : IDisposable
         _fs.Path.Combine(_tempDir, relativePath);
 
     private global::app.data.@this<PLangPath> MakePath(string relativePath) =>
-        new("", new PLangPath(TempPath(relativePath)) { Context = _app.User.Context });
+        new("", new PLangFilePath(TempPath(relativePath)) { Context = _app.User.Context });
 
     private global::app.data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
-        new("", new PLangPath(absolutePath) { Context = _app.User.Context });
+        new("", new PLangFilePath(absolutePath) { Context = _app.User.Context });
 
     // --- Save ---
 

@@ -1,7 +1,7 @@
 using app.Utils;
 using app.Attributes;
 
-namespace app.filesystem;
+namespace app.types.path;
 
 /// <summary>
 /// Plain domain class representing a filesystem path.
@@ -10,8 +10,15 @@ namespace app.filesystem;
 /// </summary>
 [PlangType("path",
     Example = "/some/file.json")]
-public partial class path : modules.IContext
+public abstract partial class @this : modules.IContext
 {
+    /// <summary>
+    /// Scheme name for this path (e.g. "file", "http", "https"). Subclasses
+    /// implement. Used by Permission canonical-form and diagnostic surfaces.
+    /// </summary>
+    public abstract string Scheme { get; }
+
+
     /// <summary>
     /// String comparison for "is this path under that root" checks. Linux
     /// filesystems are case-sensitive — comparing case-insensitively lets
@@ -25,7 +32,7 @@ public partial class path : modules.IContext
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
 
-    private readonly string _absolutePath;
+    protected readonly string _absolutePath;
 
     // Cached string-derived properties
     private string? _extension;
@@ -52,7 +59,7 @@ public partial class path : modules.IContext
     /// construct them; Context arrives via the IContext setter when the Path
     /// is wrapped in Data&lt;Path&gt; or set on a runtime object.
     /// </summary>
-    public path(string absolutePath, actor.context.@this? context = null, object? content = null, string? source = null)
+    protected @this(string absolutePath, actor.context.@this? context = null, object? content = null, string? source = null)
     {
         _absolutePath = absolutePath;
         Context = context;
@@ -70,41 +77,16 @@ public partial class path : modules.IContext
     public actor.context.@this? Context { get; set; }
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
-    public static path Resolve(string rawPath, actor.context.@this context)
+    /// <summary>
+    /// Source generator convention — auto-wraps string parameters. Routes
+    /// through the per-App scheme registry so the right subclass is built
+    /// (file → FilePath, http → HttpPath, ...). Bare paths default to file.
+    /// </summary>
+    public static @this Resolve(string rawPath, actor.context.@this context)
     {
         ArgumentNullException.ThrowIfNull(rawPath);
         ArgumentNullException.ThrowIfNull(context);
-
-        var fs = context.App.FileSystem;
-        var resolved = rawPath;
-
-        // Relative paths resolve against the goal's folder. Prefer the runtime
-        // directory derived from the .pr's on-disk location — Goal.Path is the
-        // build-time identity (parent-perspective in child Apps) and would
-        // mis-resolve. Fall back to Goal.Path's directory for in-memory goals
-        // that have no LoadedFromPrPath.
-        if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://"))
-        {
-            var goal = context.Goal;
-            var runtimeDir = goal?.GetRuntimeDirectory();
-            if (!string.IsNullOrEmpty(runtimeDir))
-            {
-                resolved = fs.Path.Combine(runtimeDir, rawPath);
-            }
-            else
-            {
-                var goalPath = goal?.Path;
-                if (!string.IsNullOrEmpty(goalPath))
-                {
-                    var goalDir = fs.Path.GetDirectoryName(goalPath);
-                    if (!string.IsNullOrEmpty(goalDir))
-                        resolved = fs.Path.Combine(goalDir, rawPath);
-                }
-            }
-        }
-
-        var p = new path(fs.ValidatePath(resolved), context) { Raw = rawPath };
-        return p;
+        return context.App.Types.Scheme.From(rawPath, context);
     }
 
     // --- Path properties ---
@@ -186,7 +168,7 @@ public partial class path : modules.IContext
 
     public override bool Equals(object? obj) => obj switch
     {
-        path other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
+        @this other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
         string str => string.Equals(_absolutePath, str, StringComparison.OrdinalIgnoreCase),
         _ => false
     };

@@ -1,49 +1,22 @@
 using System.Text;
 using app.types;
-using Verb = global::app.filesystem.permission.verb.@this;
-using ReadVerb = global::app.filesystem.permission.verb.Read;
-using WriteVerb = global::app.filesystem.permission.verb.Write;
-using DeleteVerb = global::app.filesystem.permission.verb.Delete;
+using app.errors;
+using Verb = global::app.types.path.permission.verb.@this;
+using ReadVerb = global::app.types.path.permission.verb.Read;
+using WriteVerb = global::app.types.path.permission.verb.Write;
+using DeleteVerb = global::app.types.path.permission.verb.Delete;
 
-namespace app.filesystem;
+namespace app.types.path.file;
 
 /// <summary>
-/// IPLangFileSystem v2 — Path-in, Data-out FS surface. Each operation calls
-/// <see cref="Authorize"/> first; in-root paths auto-grant, out-of-root paths
-/// either match an existing grant or prompt via <c>output.ask</c>. Permission
-/// miss surfaces as <c>Data&lt;Ask&gt;</c> (Exit-typed) — engine short-circuits
-/// the goal; channel decides materialisation (Stream blocks, Message wires).
-///
-/// The handlers under <c>PLang/app/modules/file/*.cs</c> become thin shells
-/// (one-liner each) on top of this surface. The legacy <c>fs.File</c>/
-/// <c>fs.Directory</c> calls remain in non-file-action sites (builder,
-/// snapshot, settings) — those don't go through the permission gate (they're
-/// internal infra). When the spec's "delete the old surface" follow-up
-/// lands, those sites move here too.
+/// FilePath verb implementations — relocated from the (now abstract) base.
+/// Every method passes through <see cref="@this.AuthGate"/> (defined on the base)
+/// before touching <c>System.IO</c>. Same-scheme MoveTo/CopyTo override the
+/// base's naive default with <c>System.IO.File.Move</c>/<c>Copy</c> and the
+/// bundled-consent prompt for fresh out-of-root pairs.
 /// </summary>
-public partial class path
+public sealed partial class @this
 {
-    /// <summary>
-    /// Stat() result payload. Exists=false → all other fields null.
-    /// IsFile=true → file (Length set). IsFile=false → directory.
-    /// Nested under path so callers reach it as <c>path.StatInfo</c>.
-    /// </summary>
-    public sealed record StatInfo(bool Exists, bool? IsFile = null, long? Length = null, DateTime? Modified = null);
-
-    /// <summary>
-    /// Authorize + Exit-bubble guard. Returns non-null when the caller should
-    /// return early (either the gate denied or the result is Exit-typed and
-    /// must bubble to the step loop). Returns null on grant — caller proceeds
-    /// with the IO.
-    /// </summary>
-    private async Task<data.@this?> AuthGate(Verb verb)
-    {
-        var auth = await Authorize(verb);
-        if (auth.Type?.ClrType.Exit() == true) return auth;
-        if (!auth.Success) return auth;
-        return null;
-    }
-
     private void EnsureParentDir()
     {
         var dir = System.IO.Path.GetDirectoryName(Absolute);
@@ -53,32 +26,32 @@ public partial class path
 
     // --- Reads ---------------------------------------------------------------
 
-    public async Task<data.@this> ReadText()
+    public override async Task<data.@this> ReadText()
     {
         if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
         return data.@this.Ok(await System.IO.File.ReadAllTextAsync(Absolute));
     }
 
-    public async Task<data.@this> ReadBytes()
+    public override async Task<data.@this> ReadBytes()
     {
         if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
         return data.@this.Ok(await System.IO.File.ReadAllBytesAsync(Absolute));
     }
 
-    public async Task<data.@this> ExistsAsync()
+    public override async Task<data.@this> ExistsAsync()
     {
         if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
         return data.@this.Ok(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
     }
 
-    public async Task<data.@this> List()
+    public override async Task<data.@this> List()
     {
         if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
         if (!System.IO.Directory.Exists(Absolute)) return data.@this.Ok(Array.Empty<string>());
         return data.@this.Ok(System.IO.Directory.EnumerateFileSystemEntries(Absolute).ToArray());
     }
 
-    public async Task<data.@this> Stat()
+    public override async Task<data.@this> Stat()
     {
         if (await AuthGate(new Verb { Read = new ReadVerb(Metadata: true) }) is { } early) return early;
         if (System.IO.File.Exists(Absolute))
@@ -96,7 +69,7 @@ public partial class path
 
     // --- Writes --------------------------------------------------------------
 
-    public async Task<data.@this> WriteText(string content)
+    public override async Task<data.@this> WriteText(string content)
     {
         if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
         EnsureParentDir();
@@ -104,7 +77,7 @@ public partial class path
         return data.@this.Ok();
     }
 
-    public async Task<data.@this> WriteBytes(byte[] content)
+    public override async Task<data.@this> WriteBytes(byte[] content)
     {
         if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
         EnsureParentDir();
@@ -112,7 +85,7 @@ public partial class path
         return data.@this.Ok();
     }
 
-    public async Task<data.@this> Append(string content)
+    public override async Task<data.@this> Append(string content)
     {
         if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
         EnsureParentDir();
@@ -120,7 +93,7 @@ public partial class path
         return data.@this.Ok();
     }
 
-    public async Task<data.@this> Mkdir()
+    public override async Task<data.@this> Mkdir()
     {
         if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
         System.IO.Directory.CreateDirectory(Absolute);
@@ -129,7 +102,7 @@ public partial class path
 
     // --- Destructive ---------------------------------------------------------
 
-    public async Task<data.@this> Delete()
+    public override async Task<data.@this> Delete()
     {
         if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return early;
         if (System.IO.File.Exists(Absolute)) System.IO.File.Delete(Absolute);
@@ -137,15 +110,23 @@ public partial class path
         return data.@this.Ok();
     }
 
-    // --- Multi-path: Move / Copy --------------------------------------------
+    // --- Same-scheme fast paths for Move/Copy --------------------------------
 
-    public async Task<data.@this> MoveTo(path destination) =>
-        await BundledTransfer(destination, isMove: true);
+    public override async Task<data.@this> MoveTo(global::app.types.path.@this destination)
+    {
+        if (destination is @this fileDest)
+            return await BundledTransfer(fileDest, isMove: true);
+        return await base.MoveTo(destination);  // cross-scheme default
+    }
 
-    public async Task<data.@this> CopyTo(path destination) =>
-        await BundledTransfer(destination, isMove: false);
+    public override async Task<data.@this> CopyTo(global::app.types.path.@this destination)
+    {
+        if (destination is @this fileDest)
+            return await BundledTransfer(fileDest, isMove: false);
+        return await base.CopyTo(destination);  // cross-scheme default
+    }
 
-    private async Task<data.@this> BundledTransfer(path destination, bool isMove)
+    private async Task<data.@this> BundledTransfer(@this destination, bool isMove)
     {
         var sourceVerb = new Verb { Read = new ReadVerb() };
         var destVerb   = new Verb { Write = new WriteVerb() };
@@ -215,12 +196,12 @@ public partial class path
     private async Task StoreGrant(Verb verb, bool persist)
     {
         var permission = BuildRequest(Context!.Actor!, verb);
-        var d = new data.@this<global::app.filesystem.permission.@this>("", permission) { Context = Context };
+        var d = new data.@this<global::app.types.path.permission.@this>("", permission) { Context = Context };
         if (persist) d.EnsureSigned();
         await Context!.Actor!.Permission.Add(d);
     }
 
-    private Task<data.@this> PerformTransfer(path destination, bool isMove)
+    private Task<data.@this> PerformTransfer(@this destination, bool isMove)
     {
         var destDir = System.IO.Path.GetDirectoryName(destination.Absolute);
         if (!string.IsNullOrEmpty(destDir) && !System.IO.Directory.Exists(destDir))

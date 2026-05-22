@@ -1,8 +1,8 @@
-﻿using app.filesystem;
-using app.filesystem.Default;
+﻿using app.types.path;
+using app.types.path.Default;
 using System.IO.Abstractions;
 
-namespace app.filesystem.Default
+namespace app.types.path.Default
 {
 	[Serializable]
 	internal class PLangDriveInfoFactory : IDriveInfoFactory

@@ -1,9 +1,9 @@
 using app.variables;
 using app.modules.file.code;
 using app.types;
-using Verb = global::app.filesystem.permission.verb.@this;
-using ReadVerb = global::app.filesystem.permission.verb.Read;
-using WriteVerb = global::app.filesystem.permission.verb.Write;
+using Verb = global::app.types.path.permission.verb.@this;
+using ReadVerb = global::app.types.path.permission.verb.Read;
+using WriteVerb = global::app.types.path.permission.verb.Write;
 
 namespace app.modules.file;
 
@@ -12,8 +12,8 @@ namespace app.modules.file;
 [Action("copy", Cacheable = false)]
 public partial class Copy : IContext
 {
-    public partial data.@this<filesystem.path> Source { get; init; }
-    public partial data.@this<filesystem.path> Destination { get; init; }
+    public partial data.@this<types.path.@this> Source { get; init; }
+    public partial data.@this<types.path.@this> Destination { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> Overwrite { get; init; }

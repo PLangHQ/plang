@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.IO.Abstractions;
 
-namespace app.filesystem.Default
+namespace app.types.path.Default
 {
 	public sealed class PLangPath : PathWrapper, IPath
 	{

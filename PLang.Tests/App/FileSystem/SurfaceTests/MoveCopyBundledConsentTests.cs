@@ -1,10 +1,10 @@
+using Path = global::app.types.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::app.filesystem.path;
-using Verb = global::app.filesystem.permission.verb.@this;
-using Read = global::app.filesystem.permission.verb.Read;
-using Write = global::app.filesystem.permission.verb.Write;
+using Verb = global::app.types.path.permission.verb.@this;
+using Read = global::app.types.path.permission.verb.Read;
+using Write = global::app.types.path.permission.verb.Write;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 

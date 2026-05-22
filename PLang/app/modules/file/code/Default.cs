@@ -1,8 +1,8 @@
-using app.filesystem;
-using app.filesystem.Default;
+using app.types.path;
+using app.types.path.Default;
 using app.channels.serializers;
 using app.errors;
-using app.filesystem;
+using app.types.path;
 using app.variables;
 using app.Utils;
 
@@ -100,8 +100,8 @@ public class Default : IFile
                     { Stream = stream, Data = value, Extension = path.Extension });
             }
 
-            var resultPath = new filesystem.path(path.Absolute, action.Context);
-            return data.@this<filesystem.path>.Ok(resultPath);
+            var resultPath = new types.path.file.@this(path.Absolute, action.Context);
+            return data.@this<types.path.@this>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -132,8 +132,8 @@ public class Default : IFile
             else if (!action.IgnoreIfNotFound.Value)
                 return global::app.data.@this.FromError(new ServiceError($"Not found: {path.Raw}", "NotFound", 404));
 
-            var resultPath = new filesystem.path(path.Absolute, action.Context);
-            return data.@this<filesystem.path>.Ok(resultPath);
+            var resultPath = new types.path.file.@this(path.Absolute, action.Context);
+            return data.@this<types.path.@this>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -159,8 +159,8 @@ public class Default : IFile
             else
                 CopyDirectory(fs, source.Absolute, destPath, action.Overwrite.Value, action.IncludeSubfolders.Value);
 
-            var resultPath = new filesystem.path(destPath, action.Context, source: source.Absolute);
-            return data.@this<filesystem.path>.Ok(resultPath);
+            var resultPath = new types.path.file.@this(destPath, action.Context, source: source.Absolute);
+            return data.@this<types.path.@this>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -191,8 +191,8 @@ public class Default : IFile
                 fs.Directory.Move(source.Absolute, destPath);
             }
 
-            var resultPath = new filesystem.path(destPath, action.Context, source: source.Absolute);
-            return data.@this<filesystem.path>.Ok(resultPath);
+            var resultPath = new types.path.file.@this(destPath, action.Context, source: source.Absolute);
+            return data.@this<types.path.@this>.Ok(resultPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -211,7 +211,7 @@ public class Default : IFile
         {
             var option = action.Recursive.Value ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
             var files = fs.Directory.GetFiles(path.Absolute, action.Pattern.Value!, option)
-                .Select(f => new filesystem.path(f, action.Context))
+                .Select(f => new types.path.file.@this(f, action.Context))
                 .ToArray();
             return global::app.data.@this.Ok(files);
         }
@@ -224,13 +224,13 @@ public class Default : IFile
     public data.@this Exists(Exists action)
     {
         var path = action.Path.Value!;
-        var result = new filesystem.path(path.Absolute, action.Context);
-        return data.@this<filesystem.path>.Ok(result);
+        var result = new types.path.file.@this(path.Absolute, action.Context);
+        return data.@this<types.path.@this>.Ok(result);
     }
 
     // --- Helpers ---
 
-    private static string ResolveDestinationPath(IPLangFileSystem fs, filesystem.path source, filesystem.path destination)
+    private static string ResolveDestinationPath(IPLangFileSystem fs, types.path.@this source, types.path.@this destination)
     {
         if (fs.File.Exists(source.Absolute) && fs.Directory.Exists(destination.Absolute))
             return fs.Path.Combine(destination.Absolute, source.FileName);

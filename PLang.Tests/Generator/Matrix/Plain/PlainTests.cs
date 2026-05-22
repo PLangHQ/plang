@@ -115,19 +115,19 @@ public class PathPlainTests
         await using var app = new global::app.@this("/app");
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)"data/x.txt") });
-        var typed = result.Data as global::app.data.@this<global::app.filesystem.path>;
+        var typed = result.Data as global::app.data.@this<global::app.types.path.@this>;
         await Assert.That(typed!.Value).IsNotNull();
-        await Assert.That(typed.Value).IsTypeOf<global::app.filesystem.path>();
+        await Assert.That(typed.Value).IsTypeOf<global::app.types.path.@this>();
     }
 
     [Test]
     public async Task PathPlain_PathValue_FastPath()
     {
         await using var app = new global::app.@this("/app");
-        var path = new global::app.filesystem.path("/already-a-path.txt");
+        var path = new global::app.types.path.file.@this("/already-a-path.txt");
         var result = await MatrixRunner.RunAsync<PathPlain>(app,
             parameters: new[] { ("file", (object?)path) });
-        var typed = result.Data as global::app.data.@this<global::app.filesystem.path>;
+        var typed = result.Data as global::app.data.@this<global::app.types.path.@this>;
         await Assert.That(ReferenceEquals(typed!.Value, path)).IsTrue();
     }
 }

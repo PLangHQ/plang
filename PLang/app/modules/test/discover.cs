@@ -69,7 +69,7 @@ public partial class discover : IContext
     }
 
     /// <summary>Discovers metadata for a single .test.goal file.</summary>
-    private global::app.tester.File DiscoverOne(string absGoalPath, filesystem.IPLangFileSystem fs,
+    private global::app.tester.File DiscoverOne(string absGoalPath, types.path.IPLangFileSystem fs,
         HashSet<string> include, HashSet<string> exclude)
     {
         var dir = fs.Path.GetDirectoryName(absGoalPath) ?? fs.RootDirectory;

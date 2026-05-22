@@ -21,6 +21,14 @@ public sealed partial class @this
     /// <summary>[Choices] vocabulary registry — reachable as <c>app.types.choices</c>.</summary>
     public choices.@this Choices { get; } = new();
 
+    /// <summary>
+    /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
+    /// construction with built-in factories (<c>"file"</c>; later <c>"http"</c>
+    /// and <c>"https"</c>). External DLLs loaded via <c>code.load</c> add their
+    /// own schemes via <see cref="path.scheme.@this.Register"/>.
+    /// </summary>
+    public path.scheme.@this Scheme { get; } = new();
+
     // --- Primitive lookup tables — read-only constant data, no per-App divergence. ---
 
     private static readonly Dictionary<string, System.Type> Primitives = new(StringComparer.OrdinalIgnoreCase)

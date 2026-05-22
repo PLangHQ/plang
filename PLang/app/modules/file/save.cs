@@ -1,8 +1,8 @@
 using app.variables;
 using app.modules.file.code;
 using app.types;
-using Verb = global::app.filesystem.permission.verb.@this;
-using WriteVerb = global::app.filesystem.permission.verb.Write;
+using Verb = global::app.types.path.permission.verb.@this;
+using WriteVerb = global::app.types.path.permission.verb.Write;
 
 namespace app.modules.file;
 
@@ -10,7 +10,7 @@ namespace app.modules.file;
 [Action("save", Cacheable = false)]
 public partial class Save : IContext
 {
-    public partial data.@this<filesystem.path> Path { get; init; }
+    public partial data.@this<types.path.@this> Path { get; init; }
     public partial data.@this? Value { get; init; }
 
     [Code]

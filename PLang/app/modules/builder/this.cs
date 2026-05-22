@@ -24,7 +24,7 @@ public sealed partial class @this
     /// Optional file filter. When set, only these files are built — IN ORDER.
     /// Set via --build={"files":"test.goal"} or --build={"files":["test.goal","run.goal"]}
     /// </summary>
-    public List<global::app.filesystem.path> Files { get; set; } = new();
+    public List<global::app.types.path.@this> Files { get; set; } = new();
 
     /// <summary>
     /// Whether to use LLM cache. Default true. Set via --build={"cache":false}

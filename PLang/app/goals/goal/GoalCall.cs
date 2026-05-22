@@ -1,4 +1,4 @@
-using app.filesystem;
+using app.types.path;
 using app.variables;
 using app.actor.context;
 using app.Attributes;
@@ -93,7 +93,7 @@ public sealed class GoalCall : modules.IEvent
         var readAction = new modules.file.Read
         {
             Context = context,
-            Path = data.@this<global::app.filesystem.path>.Ok(global::app.filesystem.path.Resolve(prPath, context))
+            Path = data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(prPath, context))
         };
         var result = await app.RunAction(readAction, context);
         if (!result.Success) return result;

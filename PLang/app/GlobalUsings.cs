@@ -30,7 +30,10 @@ global using Serializers = app.channels.serializers.@this;
 global using SerializeOptions = app.channels.serializers.SerializeOptions;
 global using DeserializeOptions = app.channels.serializers.DeserializeOptions;
 
-// FileSystem types
+// Path types (formerly FileSystem)
+// Note: `Path` is NOT a global alias — it collides with System.IO.Path across
+// the codebase and tests. Use `global::app.types.path.@this` or a per-file
+// `using Path = global::app.types.path.@this;` alias.
 
 // Config subsystem
 global using AppConfig = app.config.@this;

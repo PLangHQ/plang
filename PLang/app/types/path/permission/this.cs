@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.FileSystemGlobbing;
 
-namespace app.filesystem.permission;
+namespace app.types.path.permission;
 
 public enum Match
 {

@@ -1,12 +1,12 @@
-﻿using app.filesystem;
-using app.filesystem.Default;
+﻿using app.types.path;
+using app.types.path.Default;
 using app.Utils;
 using System.IO.Abstractions;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Websocket.Client.Logging;
 
-namespace app.filesystem.Default
+namespace app.types.path.Default
 {
 
 	public record FileAccessControl(string appName, string path, DateTime? expires = null, string? ProcessId = null);
@@ -224,7 +224,7 @@ namespace app.filesystem.Default
 			// handler calls Authorize first, which prompts + signs + stores via
 			// Actor.Permission. ValidatePath now just normalises the path; gating
 			// is Authorize's responsibility.
-			if (!path.StartsWith(RootDirectory, app.filesystem.path.RootComparison))
+			if (!path.StartsWith(RootDirectory, global::app.types.path.@this.RootComparison))
 			{
 				return path;
 			}

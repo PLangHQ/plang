@@ -1,7 +1,7 @@
-using PermissionRecord = global::app.filesystem.permission.@this;
-using Verb = global::app.filesystem.permission.verb.@this;
-using PathT = global::app.filesystem.path;
-using MatchMode = global::app.filesystem.permission.Match;
+using PermissionRecord = global::app.types.path.permission.@this;
+using Verb = global::app.types.path.permission.verb.@this;
+using PathT = global::app.types.path.@this;
+using MatchMode = global::app.types.path.permission.Match;
 
 namespace app.actor.permission;
 

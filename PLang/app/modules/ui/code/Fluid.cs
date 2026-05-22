@@ -4,10 +4,10 @@ using Fluid.Ast;
 using Fluid.Values;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
-using app.filesystem;
-using app.filesystem.Default;
+using app.types.path;
+using app.types.path.Default;
 using app.errors;
-using app.filesystem;
+using app.types.path;
 using app.goals.goal;
 using app.variables;
 
@@ -36,7 +36,7 @@ public class Fluid : ITemplate
         // Resolve template content: file or inline
         if (isFile == true || (isFile == null && LooksLikeFilePath(templateContent)))
         {
-            var pathData = global::app.filesystem.path.Resolve(templateContent, action.Context);
+            var pathData = global::app.types.path.@this.Resolve(templateContent, action.Context);
             if (!pathData.Exists)
                 return app.data.@this.FromError(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));

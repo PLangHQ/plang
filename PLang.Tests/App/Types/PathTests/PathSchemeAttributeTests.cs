@@ -1,71 +1,75 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using System.Reflection;
+using global::app.types.path;
+using FilePath = global::app.types.path.file.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 4 — the <c>[PathScheme]</c> marker attribute (<c>app.types.path.PathSchemeAttribute</c>).
-/// It is DEFINED on this branch and applied to the built-in scheme handlers for
-/// documentation, but NOT consumed: built-ins are registered explicitly by name at App
-/// startup. The attribute exists as the contract a future <c>code.load</c> will reflect
-/// over to discover scheme handlers in third-party DLLs.
-///
-/// These tests reflect over the attribute and over the built-in handlers. Reflection is
-/// string-tolerant where it must outlive a rename, but the attribute type itself is new
-/// and stable — a direct <c>typeof</c> is fine once stage 4 lands.
+/// Stage 4 — the <c>[PathScheme]</c> marker attribute.
 /// </summary>
 public class PathSchemeAttributeTests
 {
-    /// <summary>Intent: <c>[PathScheme]</c> is declared
-    /// <c>[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]</c> — class-only,
-    /// repeatable. AllowMultiple is required so HttpPath can carry both <c>http</c> and
-    /// <c>https</c>. Read the <c>AttributeUsageAttribute</c> off the attribute type.</summary>
     [Test] public async Task PathSchemeAttribute_HasClassTarget_AllowMultiple()
     {
-        Assert.Fail("Not implemented");
+        var usage = typeof(PathSchemeAttribute).GetCustomAttribute<AttributeUsageAttribute>();
+        await Assert.That(usage).IsNotNull();
+        await Assert.That(usage!.ValidOn).IsEqualTo(AttributeTargets.Class);
+        await Assert.That(usage.AllowMultiple).IsTrue();
     }
 
-    /// <summary>Intent: the attribute exposes exactly one public string property
-    /// (<c>Scheme</c>) and a single-string constructor that sets it. Pins the shape future
-    /// reflection-based registration depends on.</summary>
     [Test] public async Task PathSchemeAttribute_ExposesSingleSchemeString()
     {
-        Assert.Fail("Not implemented");
+        var props = typeof(PathSchemeAttribute)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        await Assert.That(props.Length).IsEqualTo(1);
+        await Assert.That(props[0].Name).IsEqualTo("Scheme");
+        await Assert.That(props[0].PropertyType).IsEqualTo(typeof(string));
+
+        var ctor = typeof(PathSchemeAttribute)
+            .GetConstructor(new[] { typeof(string) });
+        await Assert.That(ctor).IsNotNull();
+
+        var instance = new PathSchemeAttribute("ftp");
+        await Assert.That(instance.Scheme).IsEqualTo("ftp");
     }
 
-    /// <summary>Intent: a class decorated with two <c>[PathScheme]</c> attributes yields
-    /// both scheme strings via <c>GetCustomAttributes</c>. Use the nested
-    /// <see cref="TwoSchemeFixture"/> below as the subject so the test does not depend on
-    /// HttpPath having landed yet.</summary>
     [Test] public async Task Reflection_FindsBothSchemes_OnMultiplyDecoratedClass()
     {
-        Assert.Fail("Not implemented");
+        var attrs = typeof(TwoSchemeFixture)
+            .GetCustomAttributes<PathSchemeAttribute>(inherit: false)
+            .Select(a => a.Scheme)
+            .OrderBy(s => s)
+            .ToArray();
+        await Assert.That(attrs.Length).IsEqualTo(2);
+        await Assert.That(attrs[0]).IsEqualTo("alpha");
+        await Assert.That(attrs[1]).IsEqualTo("beta");
     }
 
-    /// <summary>Intent: <c>FilePath</c> (<c>app.types.path.file.@this</c>) is decorated
-    /// <c>[PathScheme("file")]</c>. Documentation-only — the built-in is registered by
-    /// explicit name regardless — but the attribute must be present for the future
-    /// <c>code.load</c> contract.</summary>
     [Test] public async Task FilePath_Carries_PathSchemeFile_Attribute()
     {
-        Assert.Fail("Not implemented");
+        var attrs = typeof(FilePath)
+            .GetCustomAttributes<PathSchemeAttribute>(inherit: false)
+            .Select(a => a.Scheme)
+            .ToArray();
+        await Assert.That(attrs).Contains("file");
     }
 
-    /// <summary>Intent: every <c>[PathScheme]</c>-decorated handler exposes a public
-    /// single-string constructor (<c>public @this(string raw)</c>) — the signature the
-    /// scheme registry's factory delegate and future reflection-based registration both
-    /// rely on. Assert it on <c>FilePath</c>.</summary>
     [Test] public async Task SchemeHandler_Exposes_PublicSingleStringConstructor()
     {
-        Assert.Fail("Not implemented");
+        var ctor = typeof(FilePath).GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+            .FirstOrDefault(c =>
+            {
+                var ps = c.GetParameters();
+                return ps.Length >= 1
+                    && ps[0].ParameterType == typeof(string)
+                    && ps.Skip(1).All(p => p.IsOptional);
+            });
+        await Assert.That(ctor).IsNotNull();
     }
 
-    /// <summary>
-    /// Test-only subject for <see cref="Reflection_FindsBothSchemes_OnMultiplyDecoratedClass"/>.
-    /// Stands in for a real multi-scheme handler so the reflection assertion does not
-    /// couple to HttpPath's existence. The coder applies the real <c>[PathScheme]</c>
-    /// attribute here once stage 4 defines it.
-    /// </summary>
+    [PathScheme("alpha"), PathScheme("beta")]
     private sealed class TwoSchemeFixture { }
 }

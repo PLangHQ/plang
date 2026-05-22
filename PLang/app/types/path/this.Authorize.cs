@@ -1,12 +1,12 @@
 using app.types;
-using PermissionRecord = global::app.filesystem.permission.@this;
-using Verb = global::app.filesystem.permission.verb.@this;
-using Read = global::app.filesystem.permission.verb.Read;
-using Write = global::app.filesystem.permission.verb.Write;
-using Delete = global::app.filesystem.permission.verb.Delete;
-using MatchMode = global::app.filesystem.permission.Match;
+using PermissionRecord = global::app.types.path.permission.@this;
+using Verb = global::app.types.path.permission.verb.@this;
+using Read = global::app.types.path.permission.verb.Read;
+using Write = global::app.types.path.permission.verb.Write;
+using Delete = global::app.types.path.permission.verb.Delete;
+using MatchMode = global::app.types.path.permission.Match;
 
-namespace app.filesystem;
+namespace app.types.path;
 
 /// <summary>
 /// Permission gate. FS methods call <c>path.Authorize(verb)</c> before any
@@ -18,7 +18,7 @@ namespace app.filesystem;
 /// When <c>output.ask</c> grows structured options the Permission becomes a
 /// first-class option, defined once, signed once. Tracked in todos.md.
 /// </summary>
-public partial class path
+public partial class @this
 {
     // Routing today: signed grants → sqlite, unsigned → in-memory. "a"
     // answers sign without an expiry argument because the signing layer's
@@ -69,7 +69,7 @@ public partial class path
         }
     }
 
-    private async Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist)
+    protected async Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist)
     {
         var permission = BuildRequest(actor, verb);
         var d = new data.@this<PermissionRecord>("", permission)
@@ -81,13 +81,13 @@ public partial class path
         return data.@this.Ok();
     }
 
-    private PermissionRecord BuildRequest(actor.@this actor, Verb verb) => new(
+    protected PermissionRecord BuildRequest(actor.@this actor, Verb verb) => new(
         Actor: actor.Name,
         Path:  Absolute,
         Verb:  verb,
         Match: MatchMode.Exact);
 
-    private bool IsInRoot()
+    protected bool IsInRoot()
     {
         var fs = Context?.App.FileSystem;
         if (fs == null) return false;

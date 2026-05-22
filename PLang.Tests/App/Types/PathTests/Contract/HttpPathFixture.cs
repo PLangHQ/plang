@@ -1,8 +1,8 @@
+using Path = global::app.types.path.@this;
 using System;
 using System.Threading.Tasks;
 using PLang.Tests.App.Types.PathTests.Http;
 // See IPathSchemeFixture.cs — current-type alias, repointed by stage 1's rename sweep.
-using Path = global::app.filesystem.path;
 
 namespace PLang.Tests.App.Types.PathTests.Contract;
 

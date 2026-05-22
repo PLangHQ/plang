@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Types.PathTests;
 /// <c>@this</c> convention.
 ///
 /// These are survey assertions over the loaded App assembly. They MUST be written with
-/// string-based reflection (<c>Assembly.GetType("app.filesystem.path")</c>,
+/// string-based reflection (<c>Assembly.GetType("app.types.path.@this")</c>,
 /// <c>assembly.GetTypes()</c> namespace scans) — never a compile-time <c>typeof</c> of a
 /// moved/deleted symbol, which would stop compiling once the rename lands. The App
 /// assembly is reachable via <c>typeof(global::app.@this).Assembly</c>.
@@ -50,7 +50,7 @@ public class NamespaceMoveTests
     }
 
     /// <summary>Intent: the Permission record moved under the path namespace —
-    /// <c>app.types.path.permission.@this</c> resolves, and <c>app.filesystem.permission.@this</c>
+    /// <c>app.types.path.permission.@this</c> resolves, and <c>app.types.path.permission.@this</c>
     /// no longer does.</summary>
     [Test] public async Task PermissionType_MovedUnder_AppTypesPathPermission()
     {

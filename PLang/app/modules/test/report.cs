@@ -280,7 +280,7 @@ public partial class report : IContext
         return JsonSerializer.Serialize(envelope, global::app.Diagnostics.Format.Options);
     }
 
-    private static string BuildJUnit(app.tester.Results results, filesystem.IPLangFileSystem fs)
+    private static string BuildJUnit(app.tester.Results results, types.path.IPLangFileSystem fs)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");

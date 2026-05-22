@@ -1,4 +1,4 @@
-using PermissionRecord = global::app.filesystem.permission.@this;
+using PermissionRecord = global::app.types.path.permission.@this;
 
 namespace app.errors;
 

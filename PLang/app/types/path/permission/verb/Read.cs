@@ -1,4 +1,4 @@
-namespace app.filesystem.permission.verb;
+namespace app.types.path.permission.verb;
 
 public sealed record Read(bool Recursive = true, bool Metadata = true)
 {

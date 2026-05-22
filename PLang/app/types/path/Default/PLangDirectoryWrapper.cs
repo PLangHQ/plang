@@ -1,9 +1,9 @@
 ﻿using global::System.IO.Abstractions;
-using app.filesystem;
-using app.filesystem.Default;
+using app.types.path;
+using app.types.path.Default;
 using System.IO;
 
-namespace app.filesystem.Default
+namespace app.types.path.Default
 {
 
 	/// <inheritdoc />
