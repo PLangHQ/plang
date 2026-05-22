@@ -30,7 +30,7 @@ BuildStepFixer
 ValidateBuildStepResult
 / Check for top-level and action-level errors from the BuildStep LLM
 - if %result.errors% is not empty, call ThrowBuildStepErrors
-- foreach %result.actions%, call ValidateActionErrors, item=%action%
+- foreach %result.actions%, call ValidateActionErrors, action=%item%
 
 ThrowBuildStepErrors
 - throw error "BuildStep failed for step '%step.Text%': %result.errors%"

@@ -10,6 +10,6 @@ Build
 - builder.load, write to %app%
 - builder.goals path=%path%, write to %goals%
 - write out "Found %goals.Count% goals"
-- foreach %goals%, call BuildGoal, item=%goal%
+- foreach %goals%, call BuildGoal, goal=%item%
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
 - builder.appSave

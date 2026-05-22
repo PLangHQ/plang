@@ -9,7 +9,7 @@ BuildGoal
 - set %trace.pass1% = %currentPass%
 - set %goal.BuilderVersion% = "0.2.2"
 - set %parentGoal% = %goal%
-- foreach %parentGoal.Goals%, call BuildSubGoal item=%subGoal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
 - set %goal% = %parentGoal%
 - math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
 - math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
@@ -43,7 +43,7 @@ BuildGoalCore
 - math.divide A=%passElapsedTicks%, B=10000, write to %passDurationMs%
 - set %currentPass.durationMs% = %passDurationMs%
 - group %stepResults.steps% by "level", write to %groupedSteps%
-- loop.foreach %groupedSteps%, goal.call ProcessGroup item=%group%
+- loop.foreach %groupedSteps%, goal.call ProcessGroup group=%item%
 
 
 BuildSubGoal
@@ -58,8 +58,8 @@ BuildSubGoal
 ProcessGroup
 / Process a group of steps with the same confidence level
 - if %group.steps[0].level% is "low" or "medium"
-    - foreach %group.steps%, call BuildStep item=%stepResult%
-- foreach %group.steps%, call ApplyStep item=%stepResult%
+    - foreach %group.steps%, call BuildStep stepResult=%item%
+- foreach %group.steps%, call ApplyStep stepResult=%item%
 
 
 LlmFixer

@@ -68,7 +68,7 @@
     },
     {
       "index": 1,
-      "text": "foreach %stepResults.steps%, call ValidateStep, item=%step%",
+      "text": "foreach %stepResults.steps%, call ValidateStep, step=%item%",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -84,7 +84,7 @@
             },
             {
               "name": "ItemName",
-              "value": "step",
+              "value": "item",
               "type": "variable"
             }
           ],
@@ -100,7 +100,13 @@
               "value": {
                 "name": "ValidateStep",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [
+                  {
+                    "name": "step",
+                    "value": "%item%",
+                    "type": "object"
+                  }
+                ],
                 "prPath": null
               },
               "type": "goal.call"
@@ -111,7 +117,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %stepResults.steps% and call ValidateStep for each item. The @known mapping indicates the loop binds the current item to variable name 'step' and passes it as parameter 'item' to the goal call.",
+      "guidance": "foreach over %stepResults.steps% and call ValidateStep for each returned step, passing the current item as the step parameter.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -213,15 +219,14 @@
                   "name": "Right",
                   "value": true,
                   "type": "bool"
-                }
-              ],
-              "defaults": [
+                },
                 {
-                  "name": "negate",
+                  "name": "Negate",
                   "value": false,
                   "type": "bool"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             },
             {
@@ -244,7 +249,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Second conditional branch: when %step.keep% != true (i.e., not kept), call ValidateBuiltStep. This is an elseif condition followed by a goal.call.",
+          "guidance": "Second conditional branch: when %step.keep% is not true, call ValidateBuiltStep.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -326,7 +331,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use a condition to check that %step.actions% is not empty; if it is not empty, throw an error. This enforces that keep:true steps must not also emit fresh actions.",
+          "guidance": "Use condition.if to check that %step.actions% is not empty; if it is not empty, throw an error. This enforces that keep:true steps must not also emit fresh actions.",
           "level": "high",
           "confidence": 96,
           "formal": null,
@@ -390,7 +395,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use a condition to check that the prior .pr step actions count is 0; if so, throw an error. This enforces that keep:true requires a prior mapping that had actions.",
+          "guidance": "Use condition.if to check that the prior .pr step action count is 0; if so, throw an error. This enforces that keep:true requires a prior mapping with actions.",
           "level": "high",
           "confidence": 96,
           "formal": null,
@@ -472,7 +477,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Check whether %step.actions% is empty; if so, throw a structured error message referencing the step index.",
+          "guidance": "Use condition.if to check whether %step.actions% is empty (isempty). If true, throw an error with the required message referencing %step.index%. This matches the @known mapping exactly.",
           "level": "high",
           "confidence": 96,
           "formal": null,
@@ -525,7 +530,7 @@
   "visibility": 1,
   "path": "/system/builder/ValidateBuildResponse.goal",
   "prPath": "/system/builder/.build/validatebuildresponse.pr",
-  "hash": "fa4b4092e4bda15de8db1d02a031aa3dbcc82c33b3d987e463469f7e7c949a6d",
+  "hash": "78283750f484ad1c59bc51dd6b8cefbd64611fd2187b50f71dd60e8de6692db8",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

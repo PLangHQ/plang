@@ -281,7 +281,7 @@
     },
     {
       "index": 7,
-      "text": "foreach %goals%, call BuildGoal, item=%goal%",
+      "text": "foreach %goals%, call BuildGoal, goal=%item%",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
@@ -297,7 +297,7 @@
             },
             {
               "name": "ItemName",
-              "value": "%goal%",
+              "value": "item",
               "type": "variable"
             },
             {
@@ -318,15 +318,16 @@
               "value": {
                 "name": "BuildGoal",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [
+                  {
+                    "name": "goal",
+                    "value": "%item%",
+                    "type": "object"
+                  }
+                ],
                 "prPath": null
               },
               "type": "goal.call"
-            },
-            {
-              "name": "goal",
-              "value": "%goal%",
-              "type": "object"
             }
           ],
           "defaults": null,
@@ -403,7 +404,7 @@
   "visibility": 1,
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "9f79609e43e63702ef6ec4a0100bed7a4b10099d36d0e009c4fe254c5aa21b09",
+  "hash": "9b136eceaf1ab5d6275975d010f23e2d5ffa4c5eed21f200b673242f1a6b3480",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

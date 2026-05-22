@@ -338,7 +338,7 @@
                   "Content": "%stepForLlm%"
                 }
               ],
-              "type": "jsonarray"
+              "type": "list`1"
             }
           ],
           "defaults": [
@@ -352,9 +352,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Build the llm messages array as JSON: system content from %buildStepPrompt% and user content from %stepForLlm%, then store into %messages%. (known mapping)",
+      "guidance": "Set %messages% to a JSON array containing system/user roles for the LLM. The step explicitly sets type=json, so emit variable.set with Value as a JSON array.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -432,9 +432,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Call QueryAndValidateBuildStep, and on error run BuildStepFixer with retry count 2 and RetryFirst order. (known mapping)",
+      "guidance": "Call QueryAndValidateBuildStep. On error, run BuildStepFixer as recovery action chain, with RetryCount=2 and RetryFirst order.",
       "level": "high",
-      "confidence": 88,
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -503,7 +503,7 @@
                       }
                     ]
                   },
-                  "type": "jsonobject"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Cache",
@@ -566,9 +566,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Run llm.query using provided %messages% and schema for errors/warnings/actions, optionally cache based on %!build.cache%, then write the response into %result% via variable.set.",
-          "level": "high",
-          "confidence": 92,
+          "guidance": "Run llm.query using provided Messages and Schema, apply cache modifier using %!build.cache%, then write the LLM result into %result% via variable.set.",
+          "level": "medium",
+          "confidence": 55,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -832,7 +832,7 @@
                       "Content": "Your previous response had validation errors:\n%!error.Message%\n\nThe step to build:\n%stepForLlm%\n\nFix the errors above and return the complete corrected response."
                     }
                   ],
-                  "type": "jsonarray"
+                  "type": "list`1"
                 }
               ],
               "defaults": [
@@ -846,7 +846,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %messages% to a JSON array containing two llmmessage objects (system and user). The step explicitly sets type=json, so emit variable.set with Value as json.",
+          "guidance": "Construct the LLM conversation messages array (system + user) embedding runtime variables for the build step prompt and the validation error message, then store it in %messages% as a JSON value.",
           "level": "high",
           "confidence": 96,
           "formal": null,
@@ -935,7 +935,7 @@
         },
         {
           "index": 1,
-          "text": "foreach %result.actions%, call ValidateActionErrors, item=%action%",
+          "text": "foreach %result.actions%, call ValidateActionErrors, action=%item%",
           "lineNumber": 33,
           "indent": 0,
           "comment": null,
@@ -951,7 +951,7 @@
                 },
                 {
                   "name": "ItemName",
-                  "value": "action",
+                  "value": "item",
                   "type": "variable"
                 },
                 {
@@ -972,7 +972,13 @@
                   "value": {
                     "name": "ValidateActionErrors",
                     "parallel": false,
-                    "parameters": null,
+                    "parameters": [
+                      {
+                        "name": "action",
+                        "value": "%item%",
+                        "type": "object"
+                      }
+                    ],
                     "prPath": null
                   },
                   "type": "goal.call"
@@ -995,7 +1001,7 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep.goal",
       "prPath": "/system/builder/.build/buildstep.pr",
-      "hash": "50919f867a0fb739d0a9b30038c369e5320d99e1c6d0b6c871ef91acfca45527",
+      "hash": "e060519dea70bd34e9dd8307215dbbe91bd3e0987e1edd0b3e63083c676e42cd",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -1243,9 +1249,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Throw the provided error object as a structured error. Use the error message for Message, set StatusCode to 500, and use the error key from %error%.",
-          "level": "medium",
-          "confidence": 55,
+          "guidance": "Throw the provided error object as a structured error. Use Message from %!error%.Message%, StatusCode 500, and Key from %!error%.",
+          "level": "high",
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true

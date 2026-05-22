@@ -303,7 +303,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Merge the LLM-produced step result into the existing goal step at stepResult.index, then store the merged step back into %goal.Steps[stepResult.index]% via variable.set.",
+          "guidance": "Merge the LLM step result into the existing goal step at the given index, then set the merged step back into the goal.steps[...] variable reference.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -366,7 +366,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If the incoming stepResult.level is not 'high', call BuildStep to refine/build the step.",
+          "guidance": "If the stepResult.level is not 'high', call BuildStep to refine/build the step.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -413,7 +413,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Write the validation error message to output. The step text includes %!error.Message% which should be passed through as the Data payload.",
+          "guidance": "Write the validation error message to the output channel. Uses the known mapping with tstring so %!error.Message% is treated as a translation candidate string.",
           "level": "high",
           "confidence": 98,
           "formal": null,
@@ -453,9 +453,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Store the current error object into the goal step's validationError variable using variable.set. The @known mapping indicates the exact prior action should be reused.",
+          "guidance": "Store the current error object into the goal step-scoped variable %goal.Steps[stepResult.index].validationError%. This is a variable assignment from the runtime error.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 96,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -487,9 +487,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Call BuildStep goal (non-parallel) to continue building the step after validation error handling.",
-          "level": "high",
-          "confidence": 85,
+          "guidance": "Call the BuildStep goal (non-parallel). No explicit parameters are provided in the step text, so only the goal name is emitted.",
+          "level": "medium",
+          "confidence": 70,
           "formal": null,
           "source": null,
           "waitForExecution": true
