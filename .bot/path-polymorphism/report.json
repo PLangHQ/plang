@@ -170,6 +170,80 @@
         "health": "Green except the one documented deferral red.",
         "notes": "Wrapper-layer (PLangFileSystem + Default/*) removal deferred \u2014 ~14 non-action App.FileSystem callers. No global Path alias (System.IO.Path clash). PLangPath test-alias name collision flagged for discussion with Ingi."
       }
+    },
+    {
+      "id": "7c0de200-pa7h-po1y-m0rf-15m000000002",
+      "bot": "coder",
+      "timestamp_start": "2026-05-22T09:00:00Z",
+      "timestamp_end": "2026-05-22T13:00:00Z",
+      "intent": "Lowercase path aliases + Stage 8: remove the System.IO.Abstractions wrapper layer, per Ingi.",
+      "before": {
+        "assumptions": "Stages 1-7 landed (commit ae2206c9). PascalCase Path alias removed earlier due to System.IO.Path clash.",
+        "risk": "IO.Abstractions removal touches ~18 production + ~20 test files. ValidatePath feared security-sensitive \u2014 turned out to be dead root-jail, now pure normalization."
+      },
+      "plan": ".bot/path-polymorphism/coder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/GlobalUsings.cs",
+            "PLang.Tests/GlobalUsings.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Lowercase global aliases path/filepath/httppath \u2014 no System.IO.Path clash (case-sensitive). Production call sites cleaned to use them."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/file/this.Validate.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "ValidatePath relocated from PLangFileSystem as a static on filepath \u2014 pure path normalization, not a security gate (Authorize is). filepath.OsAbsolutePath exposes the os/ folder."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/IPLangFileSystem.cs",
+            "PLang/app/types/path/Default/"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "IPLangFileSystem + 9 System.IO.Abstractions wrapper types deleted. The root-jail (FileAccessControl) was already dead \u2014 replaced by Path.Authorize/Actor.Permission. Pure double-wrapping removed. System.IO.Abstractions NuGet package dropped."
+        },
+        {
+          "paths": [
+            "PLang/app/this.cs",
+            "PLang/Executor.cs",
+            "PLang/app/modules/settings/Sqlite.cs",
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs",
+            "PLang/app/modules/ui/code/Fluid.cs",
+            "PLang/app/modules/test/discover.cs",
+            "PLang/app/modules/test/report.cs",
+            "PLang/app/goals/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "~18 production callers migrated App.FileSystem.{File,Directory,Path} -> System.IO.*; IPLangFileSystem params -> app.@this. App.FileSystem property + %!fileSystem% context var removed."
+        },
+        {
+          "paths": [
+            "PLang.Tests/"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "~20 test files migrated off PLangFileSystem construction. FileSystemSurfaceShapeTests flipped to assert wrapper-layer absence. ValidatePathTests repointed to filepath.ValidatePath."
+        }
+      ],
+      "after": {
+        "status": "All 8 stages complete. C# 2875/2875 pass. PLang --test 202 pass / 0 fail / 1 stale.",
+        "health": "Green. The 1 stale (ContextVars2.test.goal) is blocked by a pre-existing plang build breakage (builder.app->builder.load staleness in os/system/builder/, untouched on this branch, being fixed elsewhere by Ingi).",
+        "notes": "Ready for codeanalyzer review. Two follow-up items for discussion: PLangPath test-alias name collision; filepath/httppath alias casing not finalized by Ingi."
+      }
     }
   ]
 }
