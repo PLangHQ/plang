@@ -1,8 +1,5 @@
 using app.variables;
-using app.modules.file.code;
 using app.types;
-using Verb = global::app.types.path.permission.verb.@this;
-using WriteVerb = global::app.types.path.permission.verb.Write;
 
 namespace app.modules.file;
 
@@ -10,16 +7,15 @@ namespace app.modules.file;
 [Action("save", Cacheable = false)]
 public partial class Save : IContext
 {
-    public partial data.@this<types.path.@this> Path { get; init; }
+    public partial data.@this<global::app.types.path.@this> Path { get; init; }
     public partial data.@this? Value { get; init; }
-
-    [Code]
-    public partial IFile Files { get; }
 
     public async Task<data.@this> Run()
     {
-        var auth = await Path.Value!.Authorize(new Verb { Write = new WriteVerb() });
-        if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
-        return await Files.Save(this);
+        if (Path.Value is global::app.types.path.file.@this fp)
+            return await fp.Save(Value);
+        var raw = Value?.Value;
+        if (raw is byte[] bytes) return await Path.Value!.WriteBytes(bytes);
+        return await Path.Value!.WriteText(raw?.ToString() ?? "");
     }
 }

@@ -1,9 +1,5 @@
 using app.variables;
-using app.modules.file.code;
 using app.types;
-using Verb = global::app.types.path.permission.verb.@this;
-using ReadVerb = global::app.types.path.permission.verb.Read;
-using WriteVerb = global::app.types.path.permission.verb.Write;
 
 namespace app.modules.file;
 
@@ -11,27 +7,16 @@ namespace app.modules.file;
 [Action("move", Cacheable = false)]
 public partial class Move : IContext
 {
-    public partial data.@this<types.path.@this> Source { get; init; }
-    public partial data.@this<types.path.@this> Destination { get; init; }
+    public partial data.@this<global::app.types.path.@this> Source { get; init; }
+    public partial data.@this<global::app.types.path.@this> Destination { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> Overwrite { get; init; }
 
-    [Code]
-    public partial IFile Files { get; }
-
-    /// <summary>
-    /// Authorize source (Read) then destination (Write) in sequence. v1
-    /// degradation: two prompts on a fresh out-of-root pair. Bundled-consent
-    /// UX lives in the C# path.MoveTo surface; the action-handler surface
-    /// inherits it as a follow-up.
-    /// </summary>
     public async Task<data.@this> Run()
     {
-        var srcAuth = await Source.Value!.Authorize(new Verb { Read = new ReadVerb() });
-        if (srcAuth.Type?.ClrType.Exit() == true || !srcAuth.Success) return srcAuth;
-        var dstAuth = await Destination.Value!.Authorize(new Verb { Write = new WriteVerb() });
-        if (dstAuth.Type?.ClrType.Exit() == true || !dstAuth.Success) return dstAuth;
-        return Files.Move(this);
+        if (Source.Value is global::app.types.path.file.@this fp)
+            return await fp.MoveTo(Destination.Value!, Overwrite.Value);
+        return await Source.Value!.MoveTo(Destination.Value!);
     }
 }

@@ -1,17 +1,16 @@
 using app.variables;
-using app.modules.file.code;
 using app.types;
-using Verb = global::app.types.path.permission.verb.@this;
-using ReadVerb = global::app.types.path.permission.verb.Read;
 
 namespace app.modules.file;
 
 /// <summary>
 /// Reads a file and returns its content as Data.
-/// When ResolveVariables is true, %var% patterns in the content are resolved (with infrastructure variables blocked for security).
-/// Calls <see cref="types.path.@this.Authorize"/> first — out-of-root paths
-/// prompt for consent (stateful) or surface as <c>Data&lt;Ask&gt;</c> + Snapshot
-/// (stateless); the engine short-circuits via the step-loop's ShouldExit().
+/// When ResolveVariables is true, %var% patterns in the content are resolved
+/// (with infrastructure variables blocked for security).
+///
+/// The Authorize call lives inside the Path verb impl (FilePath.ReadText etc.) —
+/// the handler no longer carries an authorization preamble. This is the
+/// codeanalyzer v2 #1 fix: gate centralised, not duplicated.
 /// </summary>
 [System.ComponentModel.Description("Read a file's content; optionally resolve %var% patterns in the text before returning")]
 [Example("read file.txt, write to %content%",
@@ -19,26 +18,20 @@ namespace app.modules.file;
 [Action("read")]
 public partial class Read : IContext
 {
-    public partial data.@this<types.path.@this> Path { get; init; }
+    public partial data.@this<global::app.types.path.@this> Path { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> ResolveVariables { get; init; }
 
-    [Code]
-    public partial IFile Files { get; }
-
     public async Task<data.@this> Run()
     {
-        var auth = await Path.Value!.Authorize(new Verb { Read = new ReadVerb() });
-        if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
-
-        var result = Files.Read(this);
-        if (ResolveVariables.Value && result.Success && result.Value is string content)
+        var read = await Path.Value!.ReadText();
+        if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
+        if (ResolveVariables.Value && read.Value is string content)
         {
-            // skipInfrastructure: file content is untrusted — don't resolve %!app% etc.
             var resolved = Context.Variables.Resolve(content, skipInfrastructure: true);
-            return new data.@this(result.Name, resolved, result.Type);
+            return new data.@this(read.Name, resolved, read.Type);
         }
-        return result;
+        return read;
     }
 }
