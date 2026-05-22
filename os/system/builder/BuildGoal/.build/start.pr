@@ -584,9 +584,7 @@
           "parameters": [
             {
               "name": "Path",
-              "value": {
-                "rawPath": "/.build/traces/%!trace.id%/%goal.Name%.json"
-              },
+              "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
               "type": "path"
             },
             {

@@ -17,12 +17,12 @@
             {
               "name": "Name",
               "value": "%greeting%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "hello",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -57,7 +57,7 @@
             {
               "name": "Name",
               "value": "%name%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -97,11 +97,11 @@
             {
               "name": "Name",
               "value": "%message%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%greeting% %name%",
+              "value": "\u0027%greeting% %name%\u0027",
               "type": "string"
             }
           ],
@@ -166,7 +166,7 @@
             {
               "name": "Expected",
               "value": "hello plang",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -192,7 +192,7 @@
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
   "hash": "4c13f9ebf4e5ad86ae18eeb092585a8141afe8b1758d677901ed8a109658e70a",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
