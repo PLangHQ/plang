@@ -17,7 +17,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "goal /builder/Build",
+                "name": "/builder/Build",
                 "parallel": false,
                 "parameters": [],
                 "prPath": null

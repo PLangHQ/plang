@@ -26,17 +26,16 @@
             },
             {
               "name": "Right",
-              "value": false,
+              "value": true,
               "type": "bool"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "negate",
-              "value": false,
+              "name": "Negate",
+              "value": true,
               "type": "bool"
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -92,15 +91,19 @@
               "name": "Operator",
               "value": "isempty",
               "type": "operator"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "negate",
+              "name": "Right",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Negate",
               "value": false,
               "type": "bool"
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -113,18 +116,17 @@
               "type": "string"
             },
             {
+              "name": "StatusCode",
+              "value": 500,
+              "type": "int"
+            },
+            {
               "name": "Key",
               "value": "GoalBug",
               "type": "string"
             }
           ],
-          "defaults": [
-            {
-              "name": "statuscode",
-              "value": 500,
-              "type": "int"
-            }
-          ],
+          "defaults": null,
           "modifiers": []
         }
       ],
@@ -221,14 +223,15 @@
                   "name": "Right",
                   "value": false,
                   "type": "bool"
-                },
+                }
+              ],
+              "defaults": [
                 {
-                  "name": "Negate",
+                  "name": "negate",
                   "value": false,
                   "type": "bool"
                 }
               ],
-              "defaults": null,
               "modifiers": []
             },
             {
