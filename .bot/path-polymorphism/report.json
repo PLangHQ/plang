@@ -21,7 +21,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batch 1 — Stage 1 (namespace move) survey tests + Stage 4 ([PathScheme] attribute). Survey tests specified as string-based reflection so they survive the old types being deleted; no compile-time typeof of a moved symbol."
+          "context": "Batch 1 \u2014 Stage 1 (namespace move) survey tests + Stage 4 ([PathScheme] attribute). Survey tests specified as string-based reflection so they survive the old types being deleted; no compile-time typeof of a moved symbol."
         },
         {
           "paths": [
@@ -33,7 +33,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batches 2-3 — Stage 2: scheme registry Register/From, bare/schemed/unknown dispatch, multi-App isolation; abstract path hierarchy shape; FilePath verb round-trips; PLang type-mapper dispatch through the registry."
+          "context": "Batches 2-3 \u2014 Stage 2: scheme registry Register/From, bare/schemed/unknown dispatch, multi-App isolation; abstract path hierarchy shape; FilePath verb round-trips; PLang type-mapper dispatch through the registry."
         },
         {
           "paths": [
@@ -42,7 +42,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batch 4 — Stage 3: survey tests asserting IFile/DefaultFileProvider/PLangFileSystem wrapper layer are absent and no [Code]-partial provider remains on file handlers, plus behavioural checks that the gate still fires from inside Path verbs. Existing Tests/Modules/File/File.test.goal is the PLang-level regression net (no new goal file)."
+          "context": "Batch 4 \u2014 Stage 3: survey tests asserting IFile/DefaultFileProvider/PLangFileSystem wrapper layer are absent and no [Code]-partial provider remains on file handlers, plus behavioural checks that the gate still fires from inside Path verbs. Existing Tests/Modules/File/File.test.goal is the PLang-level regression net (no new goal file)."
         },
         {
           "paths": [
@@ -53,7 +53,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batches 5-6 — Stage 5 HttpPath (GET/POST/DELETE/HEAD, 404/405, identity, network error, HttpClient pooling) with an HttpTestServer skeleton (HttpListener-shaped, no new package); Stage 6 per-scheme Absolute canonical-form, one test per rule."
+          "context": "Batches 5-6 \u2014 Stage 5 HttpPath (GET/POST/DELETE/HEAD, 404/405, identity, network error, HttpClient pooling) with an HttpTestServer skeleton (HttpListener-shaped, no new package); Stage 6 per-scheme Absolute canonical-form, one test per rule."
         },
         {
           "paths": [
@@ -69,10 +69,12 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batch 7 — Stage 7: the generic PathSchemeContractTests<TFixture> base (8 contract assertions), the IPathSchemeFixture interface + VerbName enum, FilePath/Http fixture skeletons, two [InheritsTests] concrete subclasses, and cross-scheme CopyTo. Contract files alias the path type to the CURRENT app.filesystem.path so the project compiles today; stage 1's rename sweep repoints them."
+          "context": "Batch 7 \u2014 Stage 7: the generic PathSchemeContractTests<TFixture> base (8 contract assertions), the IPathSchemeFixture interface + VerbName enum, FilePath/Http fixture skeletons, two [InheritsTests] concrete subclasses, and cross-scheme CopyTo. Contract files alias the path type to the CURRENT app.filesystem.path so the project compiles today; stage 1's rename sweep repoints them."
         },
         {
-          "paths": ["PLang.Tests/PLang.Tests.csproj"],
+          "paths": [
+            "PLang.Tests/PLang.Tests.csproj"
+          ],
           "type": "review",
           "category": "config",
           "confidence": "medium",
@@ -82,7 +84,91 @@
       "after": {
         "status": "Complete. 14 test files created under PLang.Tests/App/Types/PathTests/. 94 tests, all discovered and red ('Not implemented'). PLang.Tests builds with 0 errors.",
         "health": "Green build. All path-polymorphism tests in proper TDD red state. No existing test affected.",
-        "notes": "Coder picks up next. Two non-blocking decisions surfaced: (1) use HttpListener for the test server (csproj: no new package needed); (2) HttpTestServer.cs and the two fixtures are skeletons (throw NotImplementedException) for the coder to implement in stages 5/7. Contract/ files intentionally alias the current app.filesystem.path — stage 1's rename sweep migrates them along with the existing PathAuthorizeTests/FileHandlerTests aliases."
+        "notes": "Coder picks up next. Two non-blocking decisions surfaced: (1) use HttpListener for the test server (csproj: no new package needed); (2) HttpTestServer.cs and the two fixtures are skeletons (throw NotImplementedException) for the coder to implement in stages 5/7. Contract/ files intentionally alias the current app.filesystem.path \u2014 stage 1's rename sweep migrates them along with the existing PathAuthorizeTests/FileHandlerTests aliases."
+      }
+    },
+    {
+      "id": "7c0de200-pa7h-po1y-m0rf-15m000000001",
+      "bot": "coder",
+      "timestamp_start": "2026-05-22T02:00:00Z",
+      "timestamp_end": "2026-05-22T08:30:00Z",
+      "intent": "Implement the architect 7-stage path-polymorphism plan: scheme-polymorphic path, FilePath/HttpPath, handler collapse, contract tests.",
+      "before": {
+        "assumptions": "architect plan final; test-designer 94 red TDD tests in place; 2855 green baseline.",
+        "risk": "Large surface. Stage 3 IFile removal touches many callers. No global Path alias possible (System.IO.Path clash)."
+      },
+      "plan": ".bot/path-polymorphism/coder/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/"
+          ],
+          "type": "move",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 1 namespace move app.filesystem -> app.types.path; class path -> @this."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/this.cs",
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/scheme/this.cs",
+            "PLang/app/types/Conversion.cs",
+            "PLang/app/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 2 abstract path + FilePath + per-App scheme registry + type-mapper routing."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/file/save.cs",
+            "PLang/app/modules/file/copy.cs",
+            "PLang/app/modules/file/move.cs",
+            "PLang/app/modules/file/delete.cs",
+            "PLang/app/modules/file/exists.cs",
+            "PLang/app/modules/file/list.cs",
+            "PLang/app/types/path/file/this.Operations.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 3 handler one-liners; IFile/DefaultFileProvider deleted; wrapper-layer removal flag-and-split."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/PathSchemeAttribute.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 4 [PathScheme] marker attribute."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/http/this.cs"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Stage 5 HttpPath + Stage 6 canonical Absolute. Stage 6 also rewrote permission GlobMatches glob->regex."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 7 contract framework (HttpTestServer, PathSchemeContractTests, fixtures) + all test-designer placeholder bodies."
+        }
+      ],
+      "after": {
+        "status": "All 7 stages implemented. C# 2875 pass / 1 deliberate red (wrapper-layer flag-and-split). PLang --test 203/203 pass.",
+        "health": "Green except the one documented deferral red.",
+        "notes": "Wrapper-layer (PLangFileSystem + Default/*) removal deferred \u2014 ~14 non-action App.FileSystem callers. No global Path alias (System.IO.Path clash). PLangPath test-alias name collision flagged for discussion with Ingi."
       }
     }
   ]
