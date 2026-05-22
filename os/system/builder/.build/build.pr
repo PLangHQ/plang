@@ -5,8 +5,8 @@
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \".\"",
-      "lineNumber": 6,
+      "text": "set default %path% = \"/\"",
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -21,7 +21,7 @@
             },
             {
               "name": "Value",
-              "value": ".",
+              "value": "/",
               "type": "string"
             },
             {
