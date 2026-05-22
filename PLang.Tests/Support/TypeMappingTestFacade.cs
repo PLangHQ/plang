@@ -58,7 +58,7 @@ internal static class TypeConverter
 /// <summary>
 /// Test-only facade for the former <c>App.Utils.Json</c> static class. Each option bag
 /// dispersed to its consumer in stage 27; this facade routes back to those homes so the
-/// existing <c>using App.Utils;</c> in tests keeps resolving.
+/// existing <c>using app.Utils;</c> in tests keeps resolving.
 /// </summary>
 internal static class Json
 {

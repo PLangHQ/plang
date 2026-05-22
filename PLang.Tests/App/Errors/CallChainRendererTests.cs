@@ -1,4 +1,4 @@
-using global::app.errors;
+using app.errors;
 using ActionEntity = app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Errors;
@@ -77,43 +77,7 @@ public class CallChainRendererTests
         await Assert.That(lines[1]).IsEqualTo("Recur ×2 - /Recur.goal:4");
     }
 
-    [Test]
-    public async Task Render_CauseBoundary_AnnotatesWithOriginGoalAndLine()
-    {
-        // Outer pushes a Failing; recovery dispatch passes Failing as Cause to RecoverHead.
-        // Chain from inside recovery: [RecoverHead, Outer]. Boundary at RecoverHead (own
-        // cause set, Outer.Cause is null).
-        var stack = new CallStack();
-        await using var outer  = stack.Push(Make("Outer", line: 1));
-        await using var failed = stack.Push(Make("Failing", line: 7));
-        await failed.DisposeAsync(); // failed is no longer Current
-
-        await using var recover = stack.Push(Make("RecoverHead", line: 9), cause: failed);
-        var lines = CallChainRenderer.Render(recover.SnapshotChain());
-
-        await Assert.That(lines.Count).IsEqualTo(2);
-        await Assert.That(lines[0]).IsEqualTo("RecoverHead - /RecoverHead.goal:9  ↷ caused by error in: Failing (line 7)");
-        await Assert.That(lines[1]).IsEqualTo("Outer - /Outer.goal:1");
-    }
-
-    [Test]
-    public async Task Render_DescendantsInsideRecovery_DoNotReAnnotateInheritedCause()
-    {
-        // Recovery boundary is at the deepest frame whose own Cause is set (RecoverHead).
-        // Children of RecoverHead inherit Cause via walk-up — they must NOT annotate.
-        // Chain from inside recovery body: [RecoverDeep, RecoverHead, Outer].
-        var stack = new CallStack();
-        await using var outer  = stack.Push(Make("Outer", line: 1));
-        await using var failed = stack.Push(Make("Failing", line: 7));
-        await failed.DisposeAsync();
-
-        await using var recoverHead = stack.Push(Make("RecoverHead", line: 9), cause: failed);
-        await using var recoverDeep = stack.Push(Make("RecoverDeep", line: 12));
-
-        var lines = CallChainRenderer.Render(recoverDeep.SnapshotChain());
-        await Assert.That(lines.Count).IsEqualTo(3);
-        await Assert.That(lines[0]).DoesNotContain("caused by");                     // RecoverDeep — inherited
-        await Assert.That(lines[1]).Contains("↷ caused by error in: Failing (line 7)"); // RecoverHead — own cause
-        await Assert.That(lines[2]).DoesNotContain("caused by");                     // Outer — no cause
-    }
+    // Render_CauseBoundary_* / Render_DescendantsInsideRecovery_* deleted
+    // in stage 2a.7 — they pinned the Cause-linkage feature which is gone
+    // (Call.@this.Cause is always null post-2a.5; renderers no-op on it).
 }

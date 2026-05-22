@@ -153,9 +153,192 @@ Fix: the collection becomes its own type with the lock private and `Add(...)` as
 
 **4. Two collections with overlapping semantics in different parent types.** If `stack.Audit` and `app.Errors.All` are both "run-wide IError log", they are one concept used in two places — even if the SCOPES differ (run-wide observed vs run-wide pushed-via-handler). Either one type used twice (with domain-specific wrappers) or — preferred — each gets its own *domain-named* type that happens to share a small implementation pattern. Avoid generic shared utility names like `ErrorLog`, `Tracker`, `Manager` — those are structural names, not domain identities. The folder name is the type name; pick a domain word.
 
-**Worked example (this branch):** `stack.Audit`, `app.Errors.All`, `call.Errors`, `call.Children`, `call.Diffs`, `call.Tags` were all `List<T>` / `Dictionary<K,V>` exposed publicly with locks scattered around CallStack.Push, Call.DisposeAsync, Tag(), and the OnSet handler. All six were promoted to their own types: `Audit`, `Trail` (was `All`), `Errors` (per-call), `Children`, `Diffs`, `Tags` — each `@this` in its own namespace folder. Each owns its lock, its eviction policy (Children FIFO), and its snapshot-iteration semantics. The Diffs and Tags promotions specifically closed the *reader race* that survived the writer-lock fix — a `lock (_diffsLock) { Diffs!.Add(...) }` writer pattern was safe for the writer but a debug observer iterating the public `List<Diff>?` could still throw `InvalidOperationException` mid-Add. Promoting both moved iteration under the same lock as Add (snapshot-then-yield), closing the race symmetrically.
+**5. Helper that takes a domain object and returns a derived answer.** A free function (private, static, or external) takes `Thing` and returns some piece of its logic — `ComputeAbsolute(path)`, `CheckPermission(absolute, verb)`, `RenderName(user)`. The domain object owns its own questions; if you find yourself writing `Helper.X(thing)`, ask whether it should be `thing.X()`. Almost always yes. The helper is the missing method on the type.
+
+### Worked example — Helper-soup vs. self-owning methods
+
+Smelly:
+
+    public async Task<Data<string>> ReadText(Path path) {
+        var absolute = ResolveAbsolute(path);
+        var check = CheckOrRequest(absolute, Verb.Read);
+        if (check is { } request) return request;
+        return Data.Ok(await File.ReadAllTextAsync(absolute));
+    }
+
+`ResolveAbsolute` and `CheckOrRequest` are helpers taking Path's data and producing answers. The method body is wiring outputs from one helper into the next — a transaction script dressed as OBP.
+
+Self-owning:
+
+    public async Task<Data<string>> ReadText(Path path) {
+        var check = path.CheckPermission(Verb.Read);
+        if (!check.Success) return check;
+        return Data.Ok(await File.ReadAllTextAsync(path.Absolute));
+    }
+
+`Path.Absolute` and `Path.CheckPermission(Verb)` are methods on Path — it owns those questions. The FS method only does what only it can do: the actual IO via the BCL. Two delegations, no helper wiring.
+
+Litmus test: count private static helpers in the calling class. Each one is suspicious — it's a method that didn't make it onto the right type.
+
+**Worked example (collections — this branch):** `stack.Audit`, `app.Errors.All`, `call.Errors`, `call.Children`, `call.Diffs`, `call.Tags` were all `List<T>` / `Dictionary<K,V>` exposed publicly with locks scattered around CallStack.Push, Call.DisposeAsync, Tag(), and the OnSet handler. All six were promoted to their own types: `Audit`, `Trail` (was `All`), `Errors` (per-call), `Children`, `Diffs`, `Tags` — each `@this` in its own namespace folder. Each owns its lock, its eviction policy (Children FIFO), and its snapshot-iteration semantics. The Diffs and Tags promotions specifically closed the *reader race* that survived the writer-lock fix — a `lock (_diffsLock) { Diffs!.Add(...) }` writer pattern was safe for the writer but a debug observer iterating the public `List<Diff>?` could still throw `InvalidOperationException` mid-Add. Promoting both moved iteration under the same lock as Add (snapshot-then-yield), closing the race symmetrically.
 
 **Tags / Dictionary case** is the same shape as List, with two extra notes: (a) the type implements `IDictionary<string,V>` (not just `IReadOnlyDictionary<string,V>`) because PLang's DictionaryNavigator probes for the writable interface; mutation methods other than the type's own `Set` throw to enforce the lock-internal discipline. (b) Always-allocate the wrapper at construction — lazy alloc would re-introduce the race on the property setter, defeating the point. Cost is one dict alloc per Call (small).
+
+---
+
+## OBP Variant Design — When a Concept Has Multiple Configurable Modes
+
+When you have a single concept that can take several mutually-distinct shapes, each carrying its own configuration (e.g. a filesystem `Verb` that is Read *or* Write *or* Delete, each with its own boolean knobs), the temptation from other languages is a flags enum plus an option bag:
+
+```csharp
+// ANTI-PATTERN
+[Flags] public enum Verb { None=0, Read=1, Write=2, Delete=4 }
+
+public record Permission(
+    string Subject,
+    string Resource,
+    Verb Verbs,                            // bitfield says which
+    VerbRead? Read,                        // anonymous payloads alongside
+    VerbWrite? Write,
+    VerbDelete? Delete);
+
+public record VerbRead(bool Recursive, bool Metadata);
+public record VerbWrite(bool Create, bool Overwrite, bool Append, bool Mkdir);
+public record VerbDelete(bool Recursive, bool Permanent);
+```
+
+Three things are wrong with this shape:
+
+1. **The variants have no owner of their own.** `VerbRead` lives wherever it's declared, but no folder *owns* the question "what is Read?". The flag enum implies one thing, the payload records imply another, and the truth is reconstructed by the consumer every time.
+2. **The enum and payloads can disagree.** `Verbs = Read | Write` with `Write == null` is a representable nonsense state. The compiler can't catch it.
+3. **Serialization is two-pass.** A reader has to interpret the bitfield, then go fetch the matching payload. An LLM looking at the JSON sees `"Verbs": 3` and has nothing useful to chew on.
+
+**The correct shape: a folder per concept (singular name), a file per variant, always-present records with sub-option booleans defaulting to true, and each owner does its own coverage check.**
+
+```
+Permission/
+  this.cs              -- @this manager + the Permission record (both live here)
+  Verb/
+    this.cs            -- Verb @this: composes Read/Write/Delete coverage
+    Read.cs            -- record Read(bool Recursive = true, bool Metadata = true)
+    Write.cs           -- record Write(bool Create = true, bool Overwrite = true, bool Append = true, bool Mkdir = true)
+    Delete.cs          -- record Delete(bool Recursive = true, bool Permanent = true)
+```
+
+Singular namespace: `App.FileSystem.Permission`. The full type name `App.FileSystem.Permission.Permission` is the doubled-name cost of singular OBP — C# wasn't designed for this pattern, and the consistency of every folder being singular is worth the small awkwardness.
+
+**`Verb/this.cs`** — variants are always-present, defaulted to full capability:
+
+```csharp
+namespace App.FileSystem.Permission.Verb;
+
+public class @this
+{
+    public Read   Read   { get; init; } = new Read();
+    public Write  Write  { get; init; } = new Write();
+    public Delete Delete { get; init; } = new Delete();
+
+    public bool Covers(@this requested) =>
+        Read.Covers(requested.Read) &&
+        Write.Covers(requested.Write) &&
+        Delete.Covers(requested.Delete);
+}
+```
+
+**Each variant owns its own coverage rule** — Read knows what "this Read covers that Read" means; Verb only composes:
+
+```csharp
+public record Read(bool Recursive = true, bool Metadata = true)
+{
+    public bool Covers(Read r) => (!r.Recursive || Recursive) && (!r.Metadata || Metadata);
+}
+
+public record Write(bool Create = true, bool Overwrite = true, bool Append = true, bool Mkdir = true)
+{
+    public bool Covers(Write w) =>
+        (!w.Create    || Create)    &&
+        (!w.Overwrite || Overwrite) &&
+        (!w.Append    || Append)    &&
+        (!w.Mkdir     || Mkdir);
+}
+
+public record Delete(bool Recursive = true, bool Permanent = true)
+{
+    public bool Covers(Delete d) => (!d.Recursive || Recursive) && (!d.Permanent || Permanent);
+}
+```
+
+The coverage rule reads naturally: *"if the request needs feature X, the grant must have X."*
+
+**`Permission/this.cs` — the record and the manager together. Note: methods take whole domain objects (`Path`), not pre-decomposed primitives (`string`), and use verb-named implementation methods (`HasAccess`, `Covers`) which are real-work methods, not property-shaped getters:**
+
+```csharp
+namespace App.FileSystem.Permission;
+
+public enum Match { Exact, Glob, Regex }
+
+public record Permission(string AppId, string Path, Verb.@this Verb, Match Match)
+{
+    public bool HasAccess(Path path, Verb.@this requested)
+    {
+        if (!PathMatches(path)) return false;
+        return Verb.Covers(requested);
+    }
+
+    private bool PathMatches(Path path) => Match switch
+    {
+        Match.Exact => string.Equals(Path, path.Absolute, StringComparison.OrdinalIgnoreCase),
+        Match.Glob  => Glob.IsMatch(Path, path.Absolute),
+        Match.Regex => System.Text.RegularExpressions.Regex.IsMatch(path.Absolute, Path),
+        _           => false
+    };
+}
+
+public class @this
+{
+    // State lives in the app's system variables, not in a private list here.
+    // Permission/@this is a typed view over that variable.
+    public IEnumerable<Permission> List() => /* read system variable, unwrap Data<Permission> values */;
+
+    public Data Check(Path path, Verb.@this requested) =>
+        List().Any(p => p.HasAccess(path, requested))
+            ? Data.Ok()
+            : Data.Fail(new PermissionRequired(path, requested));
+}
+```
+
+**Why `HasAccess(Path path, ...)` and not `HasAccess(string absolutePath, ...)`:** caller doesn't pre-decompose. The record decides which field of `Path` it needs (absolute, raw, the originating goal — whatever). Passing the whole object hides information; passing `path.Absolute` leaks the receiver's internal preference into the call site.
+
+**Why `HasAccess` / `Covers` are fine method names:** they do real work. The OBP rule against verb-prefixed methods (`GetX`, `IsX`) is about property-shaped questions disguised as methods. When the method has actual logic, verbs are how English describes work and method names can read like prose.
+
+Construction reads naturally — the default is full capability, narrowing is an explicit record copy:
+
+```csharp
+// Append-only write, no destructive delete
+var loggerVerb = new Verb.@this
+{
+    Write  = new Write(Overwrite: false),
+    Delete = new Delete(Recursive: false, Permanent: false),
+};
+```
+
+What this fixes:
+
+- **Each variant has a single owner** — `Read.cs` owns what "read" is *and* what "read covers read" means. `Write.cs` owns the same for write. There is no ambiguity about where to add a new field or change a default.
+- **No representable nonsense.** No flag enum to disagree with payloads, no nullable records to null-check. The state space is exactly the legal one: every variant is always present, allowance is the booleans inside.
+- **Coverage logic lives with the data.** `Permission/@this.Check` is four lines because every comparison is delegated to the type that owns the fields being compared. The manager iterates and composes; it doesn't implement matching itself.
+- **Serialization is one-pass and LLM-legible.** JSON is `{"read":{"recursive":true,"metadata":true},"write":{"create":true,"overwrite":false,"append":true,"mkdir":true},"delete":{...}}` — every field is a domain word the LLM can read top-to-bottom.
+
+**The rules, stated tightly:**
+
+> 1. **Folders are singular.** `Permission/`, not `Permissions/`. The doubled type name (`App.FileSystem.Permission.Permission`) is the accepted cost.
+> 2. **A concept with N variants, each carrying its own configuration, is one folder.** Each variant is one file owning its record with sensible defaults (default-allow when granted) *and* its own `Covers(other)` rule.
+> 3. **Variants are always-present, non-nullable properties on the parent `@this`.** Narrowing is a record copy with explicit `false` on the sub-options you want to revoke. Never a flag enum with parallel option records; never nullable variants used as "granted/not-granted" signaling.
+> 4. **Managers compose, they don't implement.** `Check` on a manager calls `record.HasAccess(...)` and `variant.Covers(...)`; it never reaches into a record to apply matching logic from outside.
+> 5. **Methods take whole domain objects, not pre-decomposed primitives.** `HasAccess(Path, ...)` not `HasAccess(string absolutePath, ...)`. The receiver decides which field it needs.
+> 6. **Verb-named methods are fine when they do real work.** `HasAccess`, `Covers`, `Resolve`, `Open` — all valid. The `GetX`/`IsX` smell is about property-shaped questions dressed up as methods, not about verbs in general.
+
+This is the same OBP move as the collection-promotion smell: choreography that requires reading three files collapses into one folder where each piece has a named owner. The smell checklist (above) catches it for collections; this rule catches it for variant configurations.
 
 ---
 
@@ -588,7 +771,7 @@ Shared goals often tag themselves so they carry auto-tags when reused in tests (
 The snapshot taken on assertion failure (`PLang/app/variables/this.cs:Snapshot`) excludes `!`-prefixed infrastructure vars, `DynamicData` (Now/GUID), and `SettingsVariable`. It does **not** honour `[Sensitive]` — that filter applies at JSON *serialization* via `Json.DiagnosticOutput` when the snapshot is rendered into the report. Result: ordinary user variables carrying secrets flow through the snapshot but are only masked if their carrier type has `[Sensitive]` on the relevant property. See security-report.json finding #3 on this branch.
 
 ### Teach LLM mappings via `ExamplesForLlm()`, never via runtime parsers
-When a step like `set %count% = %count% + 1` produces the wrong action chain, the temptation is to add an arithmetic evaluator inside `Variables.Resolve` so the runtime "just handles" the `+`. Don't. The compile path already has a `math` module (`add` / `subtract` / `multiply` / `divide` / `power`); the LLM just doesn't know to translate the RHS-arithmetic shorthand. Adding `ExamplesForLlm()` to each math action with both forms (natural — `"add 5 and 3, write to %sum%"` — and RHS — `"set %count% = %count% + 1"`) mapping to `math.<op> | variable.set Value=%__data__%` is enough; the LLM follows the example.
+When a step like `set %count% = %count% + 1` produces the wrong action chain, the temptation is to add an arithmetic evaluator inside `Variables.Resolve` so the runtime "just handles" the `+`. Don't. The compile path already has a `math` module (`add` / `subtract` / `multiply` / `divide` / `power`); the LLM just doesn't know to translate the RHS-arithmetic shorthand. Adding `ExamplesForLlm()` to each math action with both forms (natural — `"add 5 and 3, write to %sum%"` — and RHS — `"set %count% = %count% + 1"`) mapping to `math.<op> | variable.set Value=%!data%` is enough; the LLM follows the example.
 
 The pattern: `static ExampleSpec[] ExamplesForLlm() => new[] { Example("step text", Action("module.action", new() { ["Param"] = ... }), Action(...)) }` — multi-action chains pass multiple `Action(...)` args to one `Example`. Helpers live in `App.Catalog.ExampleHelpers`.
 
@@ -797,11 +980,11 @@ if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 
 **Events follow the name.** Each `Data` under a name shares the *same* event-list refs as the prev binding. Subscribers added at any point — to source, to any view, before or after replacement — are visible from every alias because they share the same list. This is what makes `--debug={"variables":[{"name":"x","event":"onchange"}]}` see every assignment to `%x%`, not just the first; pinned by `Set_Replace_AliasesPrevOnChangeOntoDv` and the regression test `DebugWatch_OnChange_FiresOnEveryReplacement` in `SubscriberSurvivalTests`.
 
-**Properties stay with the `Data` instance.** They're metadata about the *value* (e.g. `condition.if`'s `branchIndex`, attached to a step's `__data__` Data). A new binding starts with its own `Properties` so stale metadata doesn't bleed across re-bindings.
+**Properties stay with the `Data` instance.** They're metadata about the *value* (e.g. `condition.if`'s `branchIndex`, attached to a step's `!data` Data). A new binding starts with its own `Properties` so stale metadata doesn't bleed across re-bindings.
 
 **Idempotent Set.** The `!ReferenceEquals(prev, dv)` guard means setting the same instance twice is a no-op (no double-fire of `OnChange`).
 
-**Inconsistency on the non-Data path.** `Variables.Set(string, object?, Type?)` for a non-Data value mutates the existing Data in place via `existing.Value = value`; the `Value` setter fires `OnChange(this, this)` — same instance for both args. The replacement path fires `(prev, dv)` as two distinct Data; the in-place path fires `(this, this)`. `OnTypeChange` watches via the non-Data path therefore never fire (auditor v2 N1) — but user-visible `set %x% = ...` always goes through `variable.set` → `MintTyped` → Data path, so user variable watches work correctly. Engine paths (`__data__` rebinding, `list.add` write-back, settings vars) hit the non-Data path; OnTypeChange on those is best-effort.
+**Inconsistency on the non-Data path.** `Variables.Set(string, object?, Type?)` for a non-Data value mutates the existing Data in place via `existing.Value = value`; the `Value` setter fires `OnChange(this, this)` — same instance for both args. The replacement path fires `(prev, dv)` as two distinct Data; the in-place path fires `(this, this)`. `OnTypeChange` watches via the non-Data path therefore never fire (auditor v2 N1) — but user-visible `set %x% = ...` always goes through `variable.set` → `MintTyped` → Data path, so user variable watches work correctly. Engine paths (`!data` rebinding, `list.add` write-back, settings vars) hit the non-Data path; OnTypeChange on those is best-effort.
 
 ---
 
@@ -813,7 +996,7 @@ if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 
 **Forced type via `[Type]`** — `set %x% = "42", type=int` calls `TypeMapping.TryConvertTo(value, targetType, ctx)`; conversion failure surfaces as `Data.FromError`, `Variables.Set` is not called, and the binding stays whatever it was. For `type=json`, the value flows through `JsonNode` (`JsonObject` implements `IDictionary<string, JsonNode?>`, NOT `IDictionary<string, object?>`, so it has its own dispatch arm in `TypeConverter`); see *JsonNode in TypeConverter* below.
 
-**Other `Variables.Set` callers exist but don't mint user-named bindings:** `Action.RunAsync` rebinds `__data__` per step; `list.add` falls back to `Variables.Set(ListName, list)` on the convert-non-list-to-list path; `cache/wrap.cs` restores cached `__data__`. None of these are slots a user would `set %x% = ...` on, so the "sole" framing holds at the user-visible layer.
+**Other `Variables.Set` callers exist but don't mint user-named bindings:** `Action.RunAsync` rebinds `!data` per step; `list.add` falls back to `Variables.Set(ListName, list)` on the convert-non-list-to-list path; `cache/wrap.cs` restores cached `!data`. None of these are slots a user would `set %x% = ...` on, so the "sole" framing holds at the user-visible layer.
 
 ---
 

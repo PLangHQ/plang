@@ -1,5 +1,5 @@
-using global::app.variables;
-using global::app.modules.condition;
+using app.variables;
+using app.modules.condition;
 
 namespace PLang.Tests.App.Modules.condition;
 

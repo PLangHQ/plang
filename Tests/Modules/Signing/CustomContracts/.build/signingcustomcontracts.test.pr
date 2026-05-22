@@ -158,7 +158,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Sign %data% using custom contracts C0 and C1. Capture signed envelope in %__data__% for the next step.",
+      "guidance": "Sign %data% using custom contracts C0 and C1. Capture signed envelope in %!data% for the next step.",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -204,7 +204,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],

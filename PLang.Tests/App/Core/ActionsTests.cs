@@ -1,6 +1,6 @@
 using app;
-using global::app.variables;
-using global::app.modules;
+using app.variables;
+using app.modules;
 
 namespace PLang.Tests.App.Core;
 

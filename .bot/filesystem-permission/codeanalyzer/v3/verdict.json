@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "v2 #2 fixed cleanly (Path.RootComparison helper hoisted to a single home, used at Path.Authorize.IsInRoot and PLangFileSystem.ValidatePath). v2 #1 (handler-layer authorize copy-paste) deferred to a new branch with a polymorphic-Path plan handed to architect — defensible scope call; the plan is structurally cleaner than v2's tactical (a)/(b) options. One follow-up: the new RootComparison helper should also reach Path.cs:125,127 (Relative getter) and PLangFileSystem.cs:254 (system/ fallback) — same drift risk the helper was created to prevent. Branch is mergeable."
+}

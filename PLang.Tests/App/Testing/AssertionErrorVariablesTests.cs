@@ -1,4 +1,4 @@
-using global::app.errors;
+using app.errors;
 using AssertEquals = global::app.modules.assert.Equals;
 using AssertNotEquals = global::app.modules.assert.NotEquals;
 using AssertIsTrue = global::app.modules.assert.IsTrue;

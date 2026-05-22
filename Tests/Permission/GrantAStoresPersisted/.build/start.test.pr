@@ -1,0 +1,183 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set channel \u0022input\u0022 call ProbeAnswerer",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Permission flow test: file.save to //tmp/X is a REAL out-of-root path\n(// \u2192 OS root, bypasses RootDirectory prefix). Authorize prompts via the\nregistered \u0022input\u0022 channel \u2014 ProbeAnswerer returns \u0022a\u0022 \u2192 grant signed \u002B\nstored \u2192 save proceeds. The /tmp file gets written for real.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "input",
+              "type": "string"
+            },
+            {
+              "name": "Goal",
+              "value": {
+                "name": "ProbeAnswerer",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set/replace the named \u0027input\u0027 channel to be backed by a goal call to ProbeAnswerer, so subsequent prompts use the registered input channel.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "file.save \u0027permission-flow-content\u0027 to //tmp/plang-perm-out.txt",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "//tmp/plang-perm-out.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "permission-flow-content",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "file.save to the absolute out-of-root path //tmp/plang-perm-out.txt with literal content permission-flow-content.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "file.read //tmp/plang-perm-out.txt, write to %content%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "//tmp/plang-perm-out.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%content%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Reads the absolute file path //tmp/plang-perm-out.txt and stores its content into %content% via variable.set. ResolveVariables is false per @known.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %content% equals \u0022permission-flow-content\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "permission-flow-content",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %content% equals the expected literal string.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/GrantAStoresPersisted/Start.test.goal",
+  "prPath": "/GrantAStoresPersisted/.build/start.test.pr",
+  "hash": "73bf5e83fbbfc0698251679392d71ea4ec1649f12c12620e1a12125078f37bcc",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

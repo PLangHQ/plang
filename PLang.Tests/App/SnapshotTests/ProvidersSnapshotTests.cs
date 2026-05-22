@@ -1,4 +1,4 @@
-using global::app.modules.code;
+using app.modules.code;
 
 namespace PLang.Tests.App.SnapshotTests;
 

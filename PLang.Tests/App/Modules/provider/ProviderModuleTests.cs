@@ -1,10 +1,10 @@
-using global::app.actor.context;
-using global::app.errors;
-using global::app.variables;
-using global::app.modules.code;
-using global::app.modules.signing;
-using global::app.modules.signing.code;
-using global::app.modules.crypto.code;
+using app.actor.context;
+using app.errors;
+using app.variables;
+using app.modules.code;
+using app.modules.signing;
+using app.modules.signing.code;
+using app.modules.crypto.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.provider;

@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "OBP shape clean across all new files; needs work on sync-over-async in Actor.Permission, unbounded recursion in Path.Authorize/BundledTransfer, silent catch in VerifySignature, copy-paste authorize preamble (9 sites), case-insensitive IsInRoot on Linux, and dead Cause/cause params left after stage 2a.5."
+}

@@ -1,7 +1,7 @@
 using app;
-using global::app.errors;
-using global::app.variables;
-using global::app.Utils;
+using app.errors;
+using app.variables;
+using app.Utils;
 using R2 = global::app.data;
 
 namespace PLang.Tests.App;

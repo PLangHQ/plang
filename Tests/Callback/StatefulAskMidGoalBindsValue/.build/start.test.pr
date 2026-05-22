@@ -1,0 +1,150 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %!ask.answer% = \u0022Alice\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "Stage 2a \u2014 Mid-goal output.ask completes synchronously when the answer\nsentinel is pre-bound (simulates a stateful channel returning the answer).\nVariable binds; next step asserts.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%!ask.answer%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "Alice",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Pre-bind the ask answer sentinel variable %!ask.answer% so output.ask can complete synchronously and consume it.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "ask user \u0022name?\u0022, write to %name%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "ask",
+          "parameters": [
+            {
+              "name": "Question",
+              "value": "name?",
+              "type": "string"
+            },
+            {
+              "name": "Variables",
+              "value": null,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%name%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "output.ask to user for the question \u0027name?\u0027 and write the returned answer into %name% via variable.set. The @known mapping indicates the exact prior action chain.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %name% equals \u0022Alice\u0022",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "Alice",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%name%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition assertion that %name% equals \u0022Alice\u0022 using assert.equals.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/StatefulAskMidGoalBindsValue/Start.test.goal",
+  "prPath": "/StatefulAskMidGoalBindsValue/.build/start.test.pr",
+  "hash": "291cb099c7d44d9245bb838be9b198c80169817e9d368c3a7dc5f2f9c52186dd",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

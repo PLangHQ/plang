@@ -40,11 +40,11 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -59,9 +59,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Use test.discover to walk the _fixtures directory recursively and match *.fixture.goal files. Store the discovered test descriptors into %tests% via variable.set.",
+      "guidance": "Use test.discover to scan the _fixtures directory recursively for *.fixture.goal files, then store the resulting descriptors list into %tests%.",
       "level": "high",
-      "confidence": 100,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -80,7 +80,7 @@
             {
               "name": "ListName",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -93,11 +93,11 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -112,9 +112,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Count the number of discovered entries in %tests% using list.count, then store into %count%.",
+      "guidance": "Count how many discovered test descriptors are in %tests% and store the count in %count%.",
       "level": "high",
-      "confidence": 100,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -146,9 +146,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert that %count% equals 1 to ensure discovery found exactly one fixture goal.",
+      "guidance": "Assert that the discovered count equals 1.",
       "level": "high",
-      "confidence": 100,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -167,7 +167,7 @@
             {
               "name": "ListName",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Key",
@@ -195,11 +195,11 @@
             {
               "name": "Name",
               "value": "%hasProf%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -214,9 +214,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Check whether any discovered entry has EntryGoalName equal to the Icelandic goal name \u0022Pr\u00F3f\u0022. Store boolean result into %hasProf%.",
+      "guidance": "Check whether any discovered entry has EntryGoalName equal to the Icelandic goal name \u0022Pr\u00F3f\u0022; store boolean result in %hasProf%.",
       "level": "high",
-      "confidence": 98,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -248,7 +248,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert that %hasProf% is true, confirming the discovered entry preserved the Icelandic goal name.",
+      "guidance": "Assert that %hasProf% is true, ensuring the Icelandic goal name was preserved in discovery results.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -258,8 +258,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
-  "prPath": "/TestModule/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
+  "path": "/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
+  "prPath": "/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
   "hash": "4eb9339dcc4e580542741bb08757300a5d7caba273b5c183dfa668153e3e1efe",
   "builderVersion": "0.2.2",
   "isSetup": false,

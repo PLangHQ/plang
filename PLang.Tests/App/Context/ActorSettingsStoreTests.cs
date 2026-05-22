@@ -1,5 +1,5 @@
-using global::app.actor.context;
-using global::app.variables;
+using app.actor.context;
+using app.variables;
 
 namespace PLang.Tests.App.Context;
 

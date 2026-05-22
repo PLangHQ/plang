@@ -40,11 +40,11 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -59,9 +59,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Discover fixture goals under _fixtures_sensitive matching *.fixture.goal recursively, store the discovered test descriptors in %tests%.",
+      "guidance": "Discover fixture goal files under _fixtures_sensitive matching *.fixture.goal recursively, then store the resulting list in %tests%.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -93,12 +93,12 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
-              "type": "json"
+              "value": "%!data%",
+              "type": "object"
             }
           ],
           "defaults": [
@@ -112,9 +112,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Run the discovered tests in %tests%, store the aggregated results in %results%.",
-      "level": "medium",
-      "confidence": 70,
+      "guidance": "Run the discovered tests in %tests% and store the aggregated results in %results%.",
+      "level": "high",
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -146,11 +146,11 @@
             {
               "name": "Name",
               "value": "%report%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -165,9 +165,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Generate a test report from %results% and write it to %report% by capturing the returned report artefact/content.",
-      "level": "high",
-      "confidence": 95,
+      "guidance": "Generate a test report from %results% and store the report artifact/content in %report%.",
+      "level": "medium",
+      "confidence": 70,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -199,7 +199,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the report\u0027s summaryFail count equals 1. Uses assert.equals with Expected=1 and Actual=%report.summaryFail%.",
+      "guidance": "Assert the report\u0027s summaryFail count equals 1.",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -233,7 +233,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the report content includes the sensitive key name \u0027privateKey\u0027 (name preserved even though value is redacted).",
+      "guidance": "Assert the report content includes the sensitive key name \u0027privateKey\u0027 (name preserved).",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -267,7 +267,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the report content includes the redacted value \u0027******\u0027 to ensure masking is applied.",
+      "guidance": "Assert the report content includes the redacted value \u0027******\u0027 (value masked).",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -301,7 +301,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the report content includes the non-sensitive key name \u0027publicKey\u0027 (should serialize normally).",
+      "guidance": "Assert the report content includes the non-sensitive key name \u0027publicKey\u0027 (non-sensitive values still serialize).",
       "level": "high",
       "confidence": 98,
       "formal": null,
@@ -311,8 +311,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Report/TestReportMasksSensitiveVariables.test.goal",
-  "prPath": "/TestModule/Report/.build/testreportmaskssensitivevariables.test.pr",
+  "path": "/Report/TestReportMasksSensitiveVariables.test.goal",
+  "prPath": "/Report/.build/testreportmaskssensitivevariables.test.pr",
   "hash": "98bb738f1744ae140dc4797544b72723f8c3c4f6ab90d007b050758552c9b244",
   "builderVersion": "0.2.2",
   "isSetup": false,

@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "v2 re-audit: coder v6 SkipFreshnessCheck fix for F3 is correctly scoped (cryptographic check intact, bypass confined to grants, wire-message anti-replay untouched); F3 closed; F1/F2/F4 carried forward unchanged, all gated by the no-non-disk-write precondition; no critical/high open." }

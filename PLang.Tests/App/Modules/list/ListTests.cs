@@ -1,7 +1,7 @@
-using global::app.actor.context;
+using app.actor.context;
 using app;
-using global::app.variables;
-using global::app.modules.list;
+using app.variables;
+using app.modules.list;
 using ListResult = global::app.modules.list.types.list;
 
 namespace PLang.Tests.App.actions.list;

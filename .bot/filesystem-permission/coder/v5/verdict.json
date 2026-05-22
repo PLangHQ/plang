@@ -1,0 +1,4 @@
+{
+  "status": "ready",
+  "summary": "Scenario4 closed. The 'persisted grant survives new App on same root' contract now holds — diagnosis showed no deserialiser bug; the actual blocker was PermissionRecord.AppId scoping grants to a per-instance App.Id. Dropped AppId from the record + cover check; grants are now identified by (Actor + Path + Verb) with the per-actor sqlite store providing the root scope. App.Id retained for in-memory test scoping. Suite: 2853 pass, 0 skip, 0 fail."
+}

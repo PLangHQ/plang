@@ -1,5 +1,5 @@
-using global::app.Utils;
-using global::app.modules.llm;
+using app.Utils;
+using app.modules.llm;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.builder;

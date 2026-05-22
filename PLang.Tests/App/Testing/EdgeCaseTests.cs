@@ -1,5 +1,5 @@
 using System.Text.Json;
-using global::app.tester;
+using app.tester;
 
 namespace PLang.Tests.App.Tester;
 

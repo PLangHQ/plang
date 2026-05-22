@@ -1,0 +1,58 @@
+{
+  "reviewer": "auditor",
+  "branch": "filesystem-permission",
+  "timestamp": "2026-05-21T23:10:00Z",
+  "reviewed_version": "v2 (coder v5/v6/v7)",
+  "summary": "Re-audit after auditor v1 FAILed the branch on two majors (F-A: persisted 'always allow' grants expired after 5 min; F-B: branch on a stale runtime2 merge-base). Coder v5/v6/v7 landed the fixes and codeanalyzer v4, tester v6, security v2 all re-passed. Verified independently by code trace, not by trusting the re-reviewers: both majors are genuinely closed. F-A's SkipFreshnessCheck flag skips exactly Ed25519 steps 2 (wire-freshness) and 4 (nonce-replay) while step 3 (Expires) and step 8 (cryptographic signature) still run for grants; it is [Default(false)] with a single production true-setter, so wire-message anti-replay is untouched. The Scenario4 tests now advance NowUtc and double-read, mutation-verified on both halves. F-B is a real merge of current runtime2 (origin/runtime2 is an ancestor of HEAD; app/ is lowercase). One new minor finding: the F-A remediation corrected the doc-comment in filesystem/permission/this.cs but left an inverted, now-false claim in the sibling actor/permission/this.cs class header. The three v1 minors (F-C/D/E) remain non-blocking and are tracked or deferred. Clean build, 2855/2855 tests green. Verdict: PASS.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — F-A/F-B closure analysis correct and thorough; missed the stale actor/permission/this.cs class header (outside the v6 diff)",
+    "tester": "agree — tester v5 catching that the v6 mutation claim covered only the wire-freshness half was the sharpest review on the branch; v6 mutation-verified both halves",
+    "security": "agree — SkipFreshnessCheck scoping verified independently: crypto intact, default-false, single true-setter, wire path untouched; F1/F2/F4 correctly carried non-blocking"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "category": "review-gap",
+      "file": "PLang/app/actor/permission/this.cs",
+      "line": 12,
+      "issue": "The class-header doc-comment still states 'Persisted (\"a\") — signature has an expiry' and 'Session (\"y\") — no expiry on signature'. After the F-A fix this is inverted: persisted 'a' grants are signed with Expires == null and verified with SkipFreshnessCheck=true — they are the permanent ones; session 'y' grants are unsigned (no signature at all). The F-A remediation corrected the equivalent doc-comment in the sibling filesystem/permission/this.cs (lines 22-26) but not this one. Same class of defect (a false permission doc-comment) that auditor v1 cited as part of F-A — it survived in the other file.",
+      "missed_by": "codeanalyzer",
+      "impact": "Documentation-only; the code is correct and tested, so it does not break behavior or block the branch. But the docs bot is the next pipeline stage and may read this comment as ground truth and propagate the inversion into user-facing documentation. A future maintainer of the Find/Add/Revoke routing would read the contract exactly backwards.",
+      "suggestion": "Rewrite the two bullets to match filesystem/permission/this.cs:22-26 — session = unsigned, dies with the App; persisted = signed, Expires == null (permanent today), verified with SkipFreshnessCheck so the wire-freshness Created+TimeoutMs window does not apply."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang/app/filesystem/path.cs",
+      "line": 125,
+      "issue": "Carried v1 F-C, now adjudicated. path.cs:125,127 (the Relative getter) and 189-194 (Equals/GetHashCode) hardcode StringComparison.OrdinalIgnoreCase instead of the RootComparison helper (path.cs:23, Ordinal on Linux). Verified independently that the authorization gate (path.Authorize -> IsInRoot -> IsUnder) DOES use RootComparison at both call sites, so the gate is case-correct on Linux; the OrdinalIgnoreCase sites are observability only (Relative feeds ToString/GoalCall, not the gate). PLangFileSystem.cs:254 is in the legacy v1 surface.",
+      "missed_by": "none",
+      "impact": "None to the permission gate — confirmed non-security. On Linux, Relative and path equality treat case-variant paths as equal, which is wrong for display/keying but does not affect authorization.",
+      "suggestion": "Non-blocking. codeanalyzer now tracks F-C as a named follow-up; it folds naturally into the polymorphic-Path branch. No action required for this branch."
+    },
+    {
+      "id": 3,
+      "severity": "nit",
+      "category": "review-gap",
+      "file": "PLang/app/snapshot/this.Resume.cs",
+      "line": 0,
+      "issue": "Carried v1 F-D. The ResumeChain parent-continuation runs inside the child call-frame scope; codeanalyzer asserted 'dispose order correct' with no dedicated test. The snapshot/resume engine was not touched by v5/v6/v7 (permission + merge + test only), so the gap is unchanged.",
+      "missed_by": "tester",
+      "impact": "Latent at most — the full green suite exercises the resume path indirectly. No observed defect.",
+      "suggestion": "Non-blocking. Worth a todos.md line for a targeted dispose-order test; not a blocker."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "category": "contract",
+      "file": "PLang.Tests/App/FileSystem/MoveCopyBundledConsentTests.cs",
+      "line": 0,
+      "issue": "Carried v1 F-E. Bundled consent is exercised only on the v2 path.MoveTo/CopyTo surface; the real modules/file/copy.cs and move.cs handlers PLang programs actually use issue two prompts (a documented v1 degradation). The test name implies coverage of a single-prompt UX the shipped handler path does not deliver.",
+      "missed_by": "tester",
+      "impact": "Test-name over-claim; no functional defect. tester v6 carries this as N4 and defers it.",
+      "suggestion": "Non-blocking. Add a one-line note in the test, or a handler-path two-prompt test. Fairly deferred with F-C/D."
+    }
+  ]
+}

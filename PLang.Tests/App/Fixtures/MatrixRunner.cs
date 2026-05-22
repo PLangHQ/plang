@@ -1,5 +1,5 @@
 using System.Reflection;
-using global::app.modules;
+using app.modules;
 
 namespace PLang.Tests.App.Fixtures;
 
@@ -55,9 +55,8 @@ public static class MatrixRunner
                 context.Variables.Set(kv.Key, kv.Value);
         }
 
-        var data = await app.Run(action, context);
-        var snapshot = (data.Error as global::app.errors.Error)?.Params;
-        return new Result(data, snapshot);
+        var data = await action.RunAsync(context);
+        var snapshot = (data.Error as global::app.errors.Error)?.Params;        return new Result(data, snapshot);
     }
 
     /// <summary>

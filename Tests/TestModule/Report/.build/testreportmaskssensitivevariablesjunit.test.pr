@@ -44,7 +44,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -97,7 +97,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -155,7 +155,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -204,9 +204,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert the report summaryFail count equals 1.",
+      "guidance": "Post-condition assertion that the JUnit report summaryFail count equals 1. Uses assert.equals with Expected=1 and Actual=%report.summaryFail%.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 98,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -238,9 +238,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert the report content contains the JUnit XML root marker \u0027\u003Ctestsuites\u0027.",
+      "guidance": "Post-condition assertion that the report content contains the JUnit XML root marker \u0027\u003Ctestsuites\u0027.",
       "level": "high",
-      "confidence": 85,
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -277,9 +277,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert the report content contains the literal \u0027privateKey\u0027 (ensuring the masking test is exercising the sensitive-key path).",
+      "guidance": "Post-condition assertion that the report content contains the literal \u0027privateKey\u0027 string (verifies the key name appears, even though the value should be masked).",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -316,9 +316,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert the report content contains the masking placeholder \u0027******\u0027.",
+      "guidance": "Post-condition assertion that the report content contains the masking placeholder \u0027******\u0027.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -355,9 +355,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Assert the report content contains the literal \u0027publicKey\u0027.",
+      "guidance": "Post-condition assertion that the report content contains the literal \u0027publicKey\u0027 string.",
       "level": "high",
-      "confidence": 90,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -389,9 +389,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Save the masked JUnit XML snapshot to the committed path using %report.content% as the file content.",
+      "guidance": "Write the generated report content to a snapshot file path for manual inspection of masking in the committed JUnit XML.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 97,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -399,8 +399,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
-  "prPath": "/TestModule/Report/.build/testreportmaskssensitivevariablesjunit.test.pr",
+  "path": "/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
+  "prPath": "/Report/.build/testreportmaskssensitivevariablesjunit.test.pr",
   "hash": "26f282c2eed41a2eceeb5b3d05ba1bbbe8a9648aee1425cb7ad316f828bc8f7b",
   "builderVersion": "0.2.2",
   "isSetup": false,

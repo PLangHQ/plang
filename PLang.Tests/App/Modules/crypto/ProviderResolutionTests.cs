@@ -1,8 +1,8 @@
-using global::app.actor.context;
-using global::app.errors;
-using global::app.variables;
-using global::app.modules.crypto;
-using global::app.modules.crypto.code;
+using app.actor.context;
+using app.errors;
+using app.variables;
+using app.modules.crypto;
+using app.modules.crypto.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.crypto;

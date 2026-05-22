@@ -1,4 +1,4 @@
-using global::app.variables;
+using app.variables;
 using AppModules = global::app.modules.@this;
 
 namespace PLang.Tests.App.Modules;

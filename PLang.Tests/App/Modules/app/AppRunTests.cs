@@ -1,5 +1,5 @@
-using global::app.modules.environment;
-using global::app.goals.goal;
+using app.modules.environment;
+using app.goals.goal;
 
 namespace PLang.Tests.App.Modules.app;
 

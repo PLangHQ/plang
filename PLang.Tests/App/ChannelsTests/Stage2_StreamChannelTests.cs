@@ -91,7 +91,7 @@ public class Stage2_StreamChannelTests
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
         var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
-        var result = await ch.AskCore(Data.Ok((object?)null));
+        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo("answer");
     }
@@ -111,7 +111,7 @@ public class Stage2_StreamChannelTests
             Mime = "text/plain",
             Encoding = "iso-8859-1"
         };
-        var result = await ch.AskCore(Data.Ok((object?)null));
+        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value as string).IsEqualTo("é");
     }
@@ -126,7 +126,7 @@ public class Stage2_StreamChannelTests
             Mime = "text/plain",
             Timeout = TimeSpan.FromMilliseconds(100)
         };
-        var result = await ch.AskCore(Data.Ok((object?)null));
+        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "") });
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("AskTimeout");
     }

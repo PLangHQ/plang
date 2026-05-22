@@ -174,7 +174,19 @@ namespace app.filesystem.Default
 			}
 			RootDirectory = RootDirectory.TrimEnd(Path.DirectorySeparatorChar);
 			
-			if (IsPlangRooted(path))
+			// Order matters: OS-rooted (//tmp/X on Unix, C:\... on Windows) is the
+			// "escape the root" form; PLang-rooted (single leading /) gets root-
+			// prefixed. IsPlangRooted matches the OS-rooted form too (both start
+			// with /), so check IsOsRooted FIRST and PRESERVE the // prefix — that
+			// way subsequent ValidatePath calls (PLangFile wraps every File.X call
+			// with another ValidatePath) keep recognising the path as OS-rooted.
+			// System.IO normalises "//tmp/X" → "/tmp/X" on Linux at the IO boundary.
+			if (IsOsRooted(path))
+			{
+				// no-op: leave // prefix intact for idempotency. Permission.Authorize
+				// gates these out-of-root accesses; System.IO handles normalisation.
+			}
+			else if (IsPlangRooted(path))
 			{
 				if (!path.StartsWith(RootDirectory)
 					&& !path.StartsWith(OsDirectory))
@@ -199,13 +211,6 @@ namespace app.filesystem.Default
 					path = resolved;
 				}
 			}
-			else if (IsOsRooted(path))
-			{
-				if (path.StartsWith("//"))
-				{
-					path = path.Substring(0, 1);
-				}
-			}
 			else
 			{
 				path = Path.GetFullPath(Path.Join(RootDirectory, path));
@@ -213,36 +218,15 @@ namespace app.filesystem.Default
 			}
 
 		
-			if (!path.StartsWith(RootDirectory, StringComparison.OrdinalIgnoreCase))
+			// Out-of-root access used to throw UnauthorizedAccessException here,
+			// gated by the fileAccesses list. That model is replaced by
+			// Path.Authorize (filesystem-permission branch) — every file action
+			// handler calls Authorize first, which prompts + signs + stores via
+			// Actor.Permission. ValidatePath now just normalises the path; gating
+			// is Authorize's responsibility.
+			if (!path.StartsWith(RootDirectory, app.filesystem.path.RootComparison))
 			{
-				var appName = RootDirectory ?? Path.DirectorySeparatorChar.ToString();
-
-				if (fileAccesses.Count > 0)
-				{
-					var hasAccess = fileAccesses.FirstOrDefault(p => p.appName.ToLower() == appName.ToLower() && path.ToLower().StartsWith(p.path.ToLower())
-						&& (p.expires > DateTime.UtcNow || p.ProcessId == Id));
-					if (hasAccess != null) return path;
-				}
-
-				throw new UnauthorizedAccessException($@"{appName}
-
-	is trying to access 
-
-{path}
-
-Do you accept that?
-
-You can answer
-- yes/y
-- no/n
-- always/a
-
-or in more natural language, e.g. 
-- yes for 30 days 
-- yes forever
-
-Your answer:
-");
+				return path;
 			}
 
 

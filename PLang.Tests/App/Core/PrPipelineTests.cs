@@ -1,8 +1,8 @@
-using global::app.actor.context;
-using global::app.variables;
-using global::app.modules;
-using global::app.filesystem;
-using global::app.filesystem.Default;
+using app.actor.context;
+using app.variables;
+using app.modules;
+using app.filesystem;
+using app.filesystem.Default;
 using Path = System.IO.Path;
 using File = System.IO.File;
 using Directory = System.IO.Directory;

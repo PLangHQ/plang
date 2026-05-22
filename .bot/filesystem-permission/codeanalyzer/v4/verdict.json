@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Coder v5/v6 close auditor F-A and F-B cleanly: AppId drop is complete and consistent; SkipFreshnessCheck skips exactly steps 2+4 of Ed25519 verify while step 3 (Expires) still governs grant lifetime, and default-false keeps wire-message verification intact. No OBP violations, build clean. Two non-blocking carry-overs (F-C OrdinalIgnoreCase sites now tracked; pre-existing Path-only Add keying)."
+}

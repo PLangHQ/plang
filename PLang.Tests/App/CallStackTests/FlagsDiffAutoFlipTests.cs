@@ -1,4 +1,4 @@
-using global::app.errors;
+using app.errors;
 
 namespace PLang.Tests.App.CallStackTests;
 

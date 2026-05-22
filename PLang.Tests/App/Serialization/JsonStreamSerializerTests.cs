@@ -1,4 +1,4 @@
-using global::app.channels.serializers.serializer;
+using app.channels.serializers.serializer;
 using System.Text;
 
 namespace PLang.Tests.App.Serialization;

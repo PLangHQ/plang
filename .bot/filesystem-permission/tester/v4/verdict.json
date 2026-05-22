@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "All 9 tester-v3 findings closed. Mutation-verified: the three major false-greens (F1 case-comparison gate, F2 Move-vs-Copy, F4/v5 Scenario4) each now kill a test under the mutation v3 survived. v5's PermissionRecord.AppId removal reviewed as a correct, well-scoped change — root directory is the persistence boundary, Scenario4 is the real cross-App gate. C# 2853/2853, PLang 203/203. Three minor non-blocking notes (N1 docstring over-claim, N2 line-227 defensive, N3 no different-root isolation test)."
+}

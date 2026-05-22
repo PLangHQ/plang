@@ -206,7 +206,7 @@
     },
     {
       "index": 2,
-      "text": "assert %__data__.branchIndex% equals 2",
+      "text": "assert %!data.branchIndex% equals 2",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -222,7 +222,7 @@
             },
             {
               "name": "Actual",
-              "value": "%__data__.branchIndex%",
+              "value": "%!data.branchIndex%",
               "type": "object"
             },
             {
@@ -246,9 +246,9 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
-  "prPath": "/TestModule/Condition/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
-  "hash": "8c811da5c5241ac00a53ca66d71b3b03a2f48c2fd075acb31312f47cf0c59d49",
+  "path": "/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
+  "prPath": "/Condition/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
+  "hash": "34b23a0ea3c04a6a7bb7fddd9311e553b113bc68b9ba9f26aaa3318ef2290f59",
   "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,

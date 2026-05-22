@@ -61,7 +61,7 @@ public class MissingVariableNameTests
         };
         var act = TestAction.Create(module, action, extras);
 
-        var result = await _app.Run(act, ctx);
+        var result = await act.RunAsync(ctx);
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsNotNull();

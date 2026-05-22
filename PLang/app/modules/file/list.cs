@@ -1,11 +1,14 @@
 using app.variables;
 using app.modules.file.code;
+using app.types;
+using Verb = global::app.filesystem.permission.verb.@this;
+using ReadVerb = global::app.filesystem.permission.verb.Read;
 
 namespace app.modules.file;
 
 [System.ComponentModel.Description("List files in a directory matching an optional glob pattern, optionally recursing into subdirectories")]
 [Example("list files in docs/ recursive, write to %files%",
-    "file.list Path([path] docs/), Recursive([bool] true) | variable.set Name([string] %files%), Value([object] %__data__%)")]
+    "file.list Path([path] docs/), Recursive([bool] true) | variable.set Name([string] %files%), Value([object] %!data%)")]
 [Action("list")]
 public partial class List : IContext
 {
@@ -20,5 +23,10 @@ public partial class List : IContext
     [Code]
     public partial IFile Files { get; }
 
-    public Task<data.@this> Run() => Task.FromResult(Files.List(this));
+    public async Task<data.@this> Run()
+    {
+        var auth = await Path.Value!.Authorize(new Verb { Read = new ReadVerb() });
+        if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
+        return Files.List(this);
+    }
 }

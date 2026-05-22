@@ -1,7 +1,7 @@
 using app;
-using global::app.goals.goal;
-using global::app.filesystem;
-using global::app.filesystem.Default;
+using app.goals.goal;
+using app.filesystem;
+using app.filesystem.Default;
 
 namespace PLang.Tests.App.Core;
 

@@ -39,7 +39,7 @@ public partial class Handle : IContext, IModifier
                                 new ActionSpec("output",   "write", new() { ["Data"] = "missing" }),
                                 new ActionSpec("file",     "read",  new() { ["Path"] = "fallback.txt" }),
                                 new ActionSpec("variable", "set",   new() { ["Name"]  = "%content%",
-                                                                             ["Value"] = "%__data__%" }),
+                                                                             ["Value"] = "%!data%" }),
                             }
                         })
                     }),
@@ -70,7 +70,7 @@ public partial class Handle : IContext, IModifier
     /// <summary>
     /// Action chain to run when the error matches. Preferred over Goal — lets a
     /// developer express "on error, log + fall back + notify" inline without
-    /// wrapping it in a goal. Actions execute in order; %__data__% flows between
+    /// wrapping it in a goal. Actions execute in order; %!data% flows between
     /// them just like the main step chain.
     /// </summary>
     public partial global::app.data.@this<List<ActionEntity>>? Actions { get; init; }
@@ -106,7 +106,7 @@ public partial class Handle : IContext, IModifier
             {
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!, erroredCall);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -123,7 +123,7 @@ public partial class Handle : IContext, IModifier
                 if (retryResult?.Success == true) return retryResult;
                 if (hasRecovery)
                 {
-                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!, erroredCall);
+                    var recoveryResult = await RunRecoveryWithErrorScope(actions!, context, result.Error!);
                     if (recoveryResult.Success)
                     {
                         if (erroredCall != null) erroredCall.Handled = true;
@@ -143,31 +143,25 @@ public partial class Handle : IContext, IModifier
     /// <summary>
     /// Runs recovery with <c>%!error%</c> populated to the caught error for the
     /// duration of the recovery chain, restoring the previous value via AsyncLocal LIFO
-    /// scope on dispose. Each recovery action's Call is dispatched with
-    /// <paramref name="erroredCall"/> as Cause — so renderers see "this happened because
-    /// of that errored sibling."
+    /// scope on dispose.
     /// </summary>
     private static async Task<global::app.data.@this> RunRecoveryWithErrorScope(
         List<ActionEntity> actions,
         actor.context.@this context,
-        app.errors.IError caughtError,
-        Call? erroredCall)
+        app.errors.IError caughtError)
     {
         using (context.App.Errors.Push(caughtError))
         {
-            return await RunRecovery(actions, context, erroredCall);
+            return await RunRecovery(actions, context);
         }
     }
 
     /// <summary>
-    /// Runs the on-error recovery action chain. Each action is dispatched through
-    /// <c>App.Run</c> with <paramref name="cause"/> threaded through so the resulting Call
-    /// has <c>Cause = erroredCall</c> in addition to its sync Caller (the goal-level Call).
+    /// Runs the on-error recovery action chain.
     /// </summary>
     private static async Task<global::app.data.@this> RunRecovery(
         List<ActionEntity> actions,
-        actor.context.@this context,
-        Call? cause)
+        actor.context.@this context)
     {
         // Nested actions live as parameter values with no Step reference of their own.
         // Stamp the enclosing step so navigation — goal.call → GetGoalAsync → sibling
@@ -178,7 +172,7 @@ public partial class Handle : IContext, IModifier
         {
             if (action.Step == null && enclosingStep != null)
                 action.Step = enclosingStep;
-            last = await action.RunAsync(context, cause);
+            last = await action.RunAsync(context);
             if (!last.Success) return last;
         }
         return last;

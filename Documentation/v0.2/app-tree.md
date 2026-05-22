@@ -98,6 +98,10 @@ Actor
 │   ├── Register(channel), Contains(name)
 │   ├── Verify()                               // all-three-roles invariant
 │   └── WriteTextAsync(role, text, ct)
+├── Permission             → app/actor/permission/  // per-actor grant store
+│   ├── Find(path, verb)                       // in-memory then sqlite, verified
+│   ├── Add(signedGrant)                       // unsigned → in-memory, signed → sqlite
+│   └── Revoke(record)                         // drops from both homes by Path
 ├── Identity                                   // signing identity (Service only by default)
 └── FreezeFoundational()                       // snapshot boot-time channels
 ```
@@ -191,7 +195,7 @@ When `PLang/app/` changes:
 | New top-level property on `app` | Add a line under "Top-level tree" |
 | New action module registered | Add a line under "modules/" |
 | Property renamed | Update the line; add a row to "What's NOT on `app`" if the old name was widely used |
-| New `Actor` surface | Update the "Actor surface" block |
+| New `Actor` surface | Update the "Actor surface" block (e.g. `Permission` added on the filesystem-permission branch) |
 
 This file is hand-curated, like `/shared/app-tree/`. Keep it short — one
 screen of structure is more valuable than a complete-but-unreadable dump.

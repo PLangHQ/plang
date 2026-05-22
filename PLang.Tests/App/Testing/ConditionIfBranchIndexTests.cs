@@ -1,4 +1,4 @@
-using global::app.modules.condition;
+using app.modules.condition;
 
 namespace PLang.Tests.App.Tester;
 
@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Tester;
 /// Uniform indexing: simple-if uses 0 for true, 1 for false. Multi-branch uses the
 /// branch's position in the chain (0 = if, 1 = first elseif, 2 = second elseif, ...,
 /// N = else). One mental model for all forms.
-/// PLang access syntax: %__data__!branchIndex% (! separator for properties).
+/// PLang access syntax: %!data!branchIndex% (! separator for properties).
 /// </summary>
 public class ConditionIfBranchIndexTests
 {

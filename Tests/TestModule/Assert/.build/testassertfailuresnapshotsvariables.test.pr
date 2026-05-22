@@ -44,7 +44,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -91,7 +91,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -172,7 +172,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "json"
             }
           ],
@@ -240,7 +240,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "bool"
             }
           ],
@@ -342,7 +342,7 @@
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "bool"
             }
           ],
@@ -401,8 +401,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal",
-  "prPath": "/TestModule/Assert/.build/testassertfailuresnapshotsvariables.test.pr",
+  "path": "/Assert/TestAssertFailureSnapshotsVariables.test.goal",
+  "prPath": "/Assert/.build/testassertfailuresnapshotsvariables.test.pr",
   "hash": "3582cc34c81065674a9645a1d8de2904b59298fbe57628ffd5e288c5c1b12116",
   "builderVersion": "0.2.2",
   "isSetup": false,

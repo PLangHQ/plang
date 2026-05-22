@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_fixtures_pass",
-              "type": "path"
+              "type": "string"
             },
             {
               "name": "Pattern",
@@ -40,22 +40,28 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Discover fixture goals under _fixtures_pass matching *.fixture.goal recursively, then store the resulting list in %tests%.",
+      "level": "high",
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -74,7 +80,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             }
           ],
           "defaults": null,
@@ -87,22 +93,28 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Run the discovered tests in %tests%, store the aggregated results in %results%.",
+      "level": "high",
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -121,7 +133,7 @@
             {
               "name": "Results",
               "value": "%results%",
-              "type": "object"
+              "type": "results"
             },
             {
               "name": "Format",
@@ -139,22 +151,28 @@
             {
               "name": "Name",
               "value": "%report%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Generate a test report from %results% in default json format, store the report object in %report%.",
+      "level": "high",
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -186,9 +204,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: verify the produced report content contains the substring \u0027branchCoverage\u0027. Uses assert.contains with Value=%report.content% and Container=\u0027branchCoverage\u0027.",
+      "guidance": "Assert the report content contains the branchCoverage block to ensure the BuildJson branch actually ran.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -220,9 +238,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: summaryPass should equal 1. Uses assert.equals with Expected=1 and Actual=%report.summaryPass%.",
+      "guidance": "Assert summaryPass equals 1.",
       "level": "high",
-      "confidence": 96,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -254,11 +272,11 @@
             {
               "name": "Name",
               "value": "%exists%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%__data__%",
+              "value": "%!data%",
               "type": "object"
             }
           ],
@@ -273,7 +291,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Check whether the report file exists at %report.reportPath%. file.exists returns file info; store it in %exists%.",
+      "guidance": "Check whether the report file exists at %report.reportPath%, store the boolean result in %exists%.",
       "level": "high",
       "confidence": 90,
       "formal": null,
@@ -302,9 +320,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: %exists% should be true.",
+      "guidance": "Assert the %exists% flag is true.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -312,8 +330,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestModule/Report/TestReportIncludesCoverageTables.test.goal",
-  "prPath": "/TestModule/Report/.build/testreportincludescoveragetables.test.pr",
+  "path": "/Report/TestReportIncludesCoverageTables.test.goal",
+  "prPath": "/Report/.build/testreportincludescoveragetables.test.pr",
   "hash": "87128b082985dc6a0b01437b05b745a604d4d5c9a6ccba0268851162c7792b4e",
   "builderVersion": "0.2.2",
   "isSetup": false,

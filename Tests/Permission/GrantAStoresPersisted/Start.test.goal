@@ -1,0 +1,9 @@
+Start
+/ Permission flow test: file.save to //tmp/X is a REAL out-of-root path
+/ (// → OS root, bypasses RootDirectory prefix). Authorize prompts via the
+/ registered "input" channel — ProbeAnswerer returns "a" → grant signed +
+/ stored → save proceeds. The /tmp file gets written for real.
+- set channel "input" call ProbeAnswerer
+- file.save 'permission-flow-content' to //tmp/plang-perm-out.txt
+- file.read //tmp/plang-perm-out.txt, write to %content%
+- assert %content% equals "permission-flow-content"

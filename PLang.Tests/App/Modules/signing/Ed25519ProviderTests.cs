@@ -1,8 +1,8 @@
 using System.Text;
-using global::app.variables;
-using global::app.modules.code;
-using global::app.modules.signing.code;
-using global::app.modules.signing;
+using app.variables;
+using app.modules.code;
+using app.modules.signing.code;
+using app.modules.signing;
 
 namespace PLang.Tests.App.Modules.signing;
 

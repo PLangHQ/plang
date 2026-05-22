@@ -15,14 +15,14 @@ public partial class Subtract : IContext
             new[]
             {
                 new ActionSpec("math",     "subtract", new() { ["A"] = 10, ["B"] = 3 }),
-                new ActionSpec("variable", "set",      new() { ["Name"] = "%diff%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set",      new() { ["Name"] = "%diff%", ["Value"] = "%!data%" }),
             }),
         new ExampleSpec(
             "set %total% = %total% - %discount%",
             new[]
             {
                 new ActionSpec("math",     "subtract", new() { ["A"] = "%total%", ["B"] = "%discount%" }),
-                new ActionSpec("variable", "set",      new() { ["Name"] = "%total%", ["Value"] = "%__data__%" }),
+                new ActionSpec("variable", "set",      new() { ["Name"] = "%total%", ["Value"] = "%!data%" }),
             }),
     };
 

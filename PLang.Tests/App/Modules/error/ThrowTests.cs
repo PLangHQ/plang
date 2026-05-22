@@ -1,7 +1,7 @@
-using global::app.actor.context;
+using app.actor.context;
 using app;
-using global::app.variables;
-using global::app.modules.error;
+using app.variables;
+using app.modules.error;
 
 namespace PLang.Tests.App.actions.error;
 

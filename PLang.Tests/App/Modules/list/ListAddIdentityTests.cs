@@ -1,7 +1,7 @@
-using global::app.actor.context;
+using app.actor.context;
 using app;
-using global::app.variables;
-using global::app.modules.list;
+using app.variables;
+using app.modules.list;
 
 namespace PLang.Tests.App.actions.list;
 
@@ -54,7 +54,7 @@ public class ListAddIdentityTests
     }
 
     // list.add returns a Data wrapping a types.list { count, value=<the-live-list> }.
-    // The wrapping Data is new (so chained `%__data__%` carries count for terse reads),
+    // The wrapping Data is new (so chained `%!data%` carries count for terse reads),
     // but the inner `value` IS the live list — chained reads see the same items the
     // variable now holds, not a stale snapshot.
     [Test]

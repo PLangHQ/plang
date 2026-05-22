@@ -44,14 +44,15 @@
                             "name": "HandleErrorCallback",
                             "parameters": []
                           },
-                          "type": "goal.call"
+                          "type": "goal.call",
+                          "snapshot": null
                         }
                       ],
                       "defaults": null,
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list\u00601"
                 }
               ],
               "defaults": [
@@ -67,9 +68,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Throw an error with message \u0022boom\u0022. The step text specifies an on-error handler that should run next.",
+      "guidance": "throw error \u0027boom\u0027 with default status code 500, then handle the error by running a recovery action chain that calls the goal HandleErrorCallback.",
       "level": "high",
-      "confidence": 70,
+      "confidence": 92,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -101,9 +102,9 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: verify %callbackSeen% is true after the on-error handler runs.",
+      "guidance": "Post-condition assertion: verify %callbackSeen% is true after the on-error handler ran and the callback was read.",
       "level": "high",
-      "confidence": 95,
+      "confidence": 96,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -182,9 +183,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Post-condition assertion: ensure the callback variable is not null/unset at this point; fail the step if it is.",
+          "guidance": "Post-condition invariant: ensure the error callback variable %cb% is not null before proceeding. This compiles to assert.isNotNull.",
           "level": "high",
-          "confidence": 90,
+          "confidence": 98,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -222,9 +223,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set a boolean flag %callbackSeen% to true to record that the callback was handled.",
+          "guidance": "Set %callbackSeen% to true to record that the callback was observed.",
           "level": "high",
-          "confidence": 98,
+          "confidence": 95,
           "formal": null,
           "source": null,
           "waitForExecution": true

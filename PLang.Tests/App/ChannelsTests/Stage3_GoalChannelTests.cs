@@ -1,4 +1,4 @@
-using GoalChannel = global::app.channels.channel.Goal.@this;
+using GoalChannel = global::app.channels.channel.goal.@this;
 using EngineGoal = global::app.goals.goal.@this;
 
 namespace PLang.Tests.App.ChannelsTests;
@@ -146,7 +146,7 @@ public class Stage3_GoalChannelTests
         var app = new global::app.@this("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = "Asker.goal", PrPath = "/A.pr" };
         var ch = new GoalChannel("input", goal, app.User);
-        var result = await ch.AskCore(Data.Ok("q?"));
+        var result = await ch.AskCore(new global::app.modules.output.ask { Question = new global::app.data.@this<string>("", "q?") });
         await Assert.That(result.Success).IsTrue();
     }
 

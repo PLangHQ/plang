@@ -7,7 +7,7 @@ namespace app.callstack;
 /// Per-app call tree. Owned by <c>App.CallStack</c> — moved here from
 /// <c>Actor.Context.CallStack</c> because it's an observability concern, not an actor one.
 ///
-/// Structural data (Action, Caller, Cause, Errors) is always populated — the cost of the
+/// Structural data (Action, Caller, Errors) is always populated — the cost of the
 /// thin push/pop is ~50ns per action and means errors get a useful trace without any flag.
 /// Richer capture is fine-grained per-flag (<see cref="Flags"/>): timing, diff,
 /// deepDiff, tags, history.
@@ -74,8 +74,7 @@ public sealed partial class @this
     /// </summary>
     /// <param name="action">The action being dispatched.</param>
     /// <param name="variables">Variables instance for diff capture (when Flags.Diff is on).</param>
-    /// <param name="cause">Optional async-cause link (recovery dispatch, event publish).</param>
-    public call.@this Push(ActionEntity action, Variables? variables = null, call.@this? cause = null)
+    public call.@this Push(ActionEntity action, Variables? variables = null)
     {
         var caller = _current.Value;
 
@@ -102,7 +101,7 @@ public sealed partial class @this
             && ContainsGoal(goalPath))
             throw new CallStackOverflowException(MaxDepth);
 
-        var call = new call.@this(action, caller, cause, this, Flags, caller, variables ?? Variables);
+        var call = new call.@this(action, caller, this, Flags, caller, variables ?? Variables);
 
         // Children owns its own lock + FIFO eviction policy.
         caller?.Children.Add(call);

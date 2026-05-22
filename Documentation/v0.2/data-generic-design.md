@@ -16,7 +16,7 @@ Data is the universal type in PLang. Currently, domain types (Path, Identity, Go
 This creates several problems:
 
 - **Thread safety**: Goal, Step, Action are loaded from `.pr` files and shared across threads. Per-execution state (Context, Error, Handled, Returned) lives on these shared objects via Data inheritance — a race condition.
-- **Unwrapping confusion**: The system (Variables.Set, `__data__` rename, etc.) must inspect concrete types to decide whether to adopt or wrap Data subclasses. Different types get different treatment.
+- **Unwrapping confusion**: The system (Variables.Set, `!data` rename, etc.) must inspect concrete types to decide whether to adopt or wrap Data subclasses. Different types get different treatment.
 - **Coupled identity**: A Path can't exist without being a variable container. Every Path carries Name, Error, Properties, Signature overhead even when used transiently.
 
 ## Design Decision
@@ -78,14 +78,14 @@ The builder sees: parameter "Path" maps to property `Data<Path>`. The inner type
 { "name": "Path", "value": "config.json", "type": "path" }
 ```
 
-**Type inference across actions**: The builder knows `file.read` returns `Data<Path>`. When the next action (`variable.set`) uses `%__data__%`, the builder infers the type from the previous action's return type:
+**Type inference across actions**: The builder knows `file.read` returns `Data<Path>`. When the next action (`variable.set`) uses `%!data%`, the builder infers the type from the previous action's return type:
 
 ```json
 // Before (blind):
-{ "name": "Value", "value": "%__data__%", "type": "object" }
+{ "name": "Value", "value": "%!data%", "type": "object" }
 
 // After (builder infers from file.read's return type):
-{ "name": "Value", "value": "%__data__%", "type": "path" }
+{ "name": "Value", "value": "%!data%", "type": "path" }
 ```
 
 The builder is the formalization layer. It has the action schema. It has visibility of the action chain. It stamps correct types — strongly typed as soon as possible.
@@ -109,7 +109,7 @@ The builder is the formalization layer. It has the action schema. It has visibil
       "action": "set",
       "parameters": [
         { "name": "Name", "value": "config", "type": "string" },
-        { "name": "Value", "value": "%__data__%", "type": "path" }
+        { "name": "Value", "value": "%!data%", "type": "path" }
       ]
     }]
   }]
@@ -221,16 +221,16 @@ public Task<Data.@this> Run()
 ```csharp
 // Action.RunAsync:
 var result = await context.App.Run(this, context);
-result.Name = "__data__";
-context.Variables.Put(result);   // stored as %__data__%
+result.Name = "!data";
+context.Variables.Put(result);   // stored as %!data%
 ```
 
 The runtime only touches Data. It renames `.Name`, stores it. Never looks at `.Value`.
 
 ### 10. Next action picks up typed Data
 
-`variable.set` with `Value = "%__data__%"` and `Type = "path"`:
-- `context.Variables.Get("__data__")` returns the `Data<Path>` from the previous action
+`variable.set` with `Value = "%!data%"` and `Type = "path"`:
+- `context.Variables.Get("!data")` returns the `Data<Path>` from the previous action
 - Already the correct type → passes through, no conversion
 - Stored as `%config%` — still `Data<Path>`
 
@@ -499,7 +499,7 @@ PLang code     "read file 'config.json'"         human intent
 LLM            { value: "config.json", type: "string" }  casual guess
     |
 Builder        { value: "config.json", type: "path" }    formalized, correct type
-    |                                                     (infers __data__ types from
+    |                                                     (infers !data types from
     |                                                      previous action return types)
     |
 .pr file       Data { Value="config.json", Type="path" } strongly typed on disk
@@ -548,7 +548,7 @@ Smallest blast radius, proves the pattern:
 
 - Update action records: all properties become Data<T>
 - Update source generator: __Resolve returns Data<T>, null check replaces _set flag
-- Update builder: stamp correct types from action schema, infer __data__ types from action chain
+- Update builder: stamp correct types from action schema, infer !data types from action chain
 - Formalize Data concept in LLM prompt ("each parameter is a Data with name, value, type")
 
 ### Phase 4: Clean up
@@ -659,7 +659,7 @@ if (_variables.TryGetValue(name, out var prev) && !ReferenceEquals(prev, dv))
 }
 ```
 
-Each `Data` under a name shares the *same* event-list refs as every prior binding. New subscribers added at any point are visible to all subsequent re-bindings, so debug watches survive any number of replacements. **Properties don't carry across replacement** — they're metadata about the *value* (e.g. `condition.if`'s `branchIndex` lives in `Properties` of that step's `__data__` Data; replacing `__data__` on the next step shouldn't bleed through stale metadata). Events follow the *name*, Properties stay with the *Data instance*.
+Each `Data` under a name shares the *same* event-list refs as every prior binding. New subscribers added at any point are visible to all subsequent re-bindings, so debug watches survive any number of replacements. **Properties don't carry across replacement** — they're metadata about the *value* (e.g. `condition.if`'s `branchIndex` lives in `Properties` of that step's `!data` Data; replacing `!data` on the next step shouldn't bleed through stale metadata). Events follow the *name*, Properties stay with the *Data instance*.
 
 `variable.set` is the **sole binding-mint site** for user-visible variables. Its `MintTyped` if-chain switches on the runtime type of the bound value (`string`/`int`/`long`/`bool`/`Guid`/`byte[]`/`List`/`Dict`/...) and constructs the right `Data<T>`; mutable refs (List, Dict) are snapshot-cloned via JSON roundtrip so later `set %x.field% = ...` against the source doesn't bleed through. Cold types fall through to a reflection construction (`typeof(Data<>).MakeGenericType`).
 

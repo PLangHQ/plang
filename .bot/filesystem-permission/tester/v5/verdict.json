@@ -1,0 +1,24 @@
+{
+  "status": "needs-work",
+  "reviewed_version": "v6",
+  "summary": "coder v6's F-A fix (persistent-grant durability) is correct and the suite is green — C# 2854/2854, PLang 203/203 after the app-lowercase merge. But the SkipFreshnessCheck flag neutralises TWO independent checks (step 2 wire-freshness, step 4 nonce-replay) and only the step-2 half has a test. The new Scenario4 durability test advances NowUtc +10 min so it dies on step 2's age check; it never re-presents a nonce. Mutation true->false kills exactly 1 test. F1 (major): no test verifies a persisted grant twice — a regression re-enabling step 4 for grants would survive the full suite and silently re-break 'always allow' for any app that re-reads a foreign resource. Confirmed by a scratch probe (app2 reads twice: re-prompts under mutation, covered with the fix). One added test closes it; result.md hands over the exact test, mutation-verified.",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "major",
+      "type": "missing-coverage",
+      "title": "Nonce-replay half of the F-A fix is ungated",
+      "file": "PLang.Tests/App/FileSystem/Stage5MessagesEndToEndTests.cs",
+      "detail": "SkipFreshnessCheck=true skips Ed25519 step 2 (wire-freshness) AND step 4 (nonce-replay). Only step 2 is tested. Persisted Find re-deserializes a fresh Data each call (SettingsStore.GetAll), so two Finds = two VerifySignature passes; with step 4 active the second hits NonceReplay and re-prompts. No test does two verifications of a persisted grant. A step-4-only revert passes all 2854 tests.",
+      "fix": "Add Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt (full test in v5/result.md) — app1 creates a persisted grant, app2 reads twice with a StatelessChannel, assert neither read is Type 'ask'. Mutation-verified by tester: fails under SkipFreshnessCheck=false, passes with the fix."
+    }
+  ],
+  "non_blocking_notes": [
+    { "id": "N1", "detail": "ValidatePathTests.UpperCasedRootPrefix_..._OnUnix docstring still over-claims the RootComparison gate (carried from tester v4 N1)." },
+    { "id": "N4", "detail": "auditor F-5 (attributed to tester): MoveCopyBundledConsentTests covers bundled consent only on the v2 Path surface; the real copy.cs/move.cs handlers issue two prompts. Add a note or a handler-path test. Fair to defer with F-C/D/E." }
+  ],
+  "suites": {
+    "csharp": { "total": 2854, "passed": 2854, "failed": 0, "skipped": 0 },
+    "plang": { "total": 203, "passed": 203, "failed": 0, "skipped": 0 }
+  }
+}

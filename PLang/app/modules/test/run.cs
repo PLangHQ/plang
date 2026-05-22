@@ -18,7 +18,7 @@ namespace app.modules.test;
 /// </summary>
 [System.ComponentModel.Description("Execute a list of discovered TestFiles in parallel and accumulate results")]
 [Example("run tests %tests%, write to %results%",
-    "test.run Tests([object] %tests%) | variable.set Name([string] %results%), Value([object] %__data__%)")]
+    "test.run Tests([object] %tests%) | variable.set Name([string] %results%), Value([object] %!data%)")]
 [Action("run", Cacheable = false)]
 public partial class run : IContext
 {
@@ -76,6 +76,14 @@ public partial class run : IContext
         await using var childApp = new app.@this(test.Directory);
         childApp.OsDirectory = parentApp.OsDirectory;
         childApp.Tester.IsEnabled = true;
+
+        // Freeze foundational channels NOW — before any user code (channel.set,
+        // etc.) registers overlays. Without this, FoundationalChannels lazy-
+        // snapshots on first read, which is AFTER user-installed goal channels;
+        // a goal-channel answerer then finds itself as its own "input" and
+        // recurses to stack overflow.
+        childApp.System.FreezeFoundational();
+        childApp.User.FreezeFoundational();
         var testRun = new global::app.tester.Run(test);
         childApp.Tester.CurrentTest = testRun;
 

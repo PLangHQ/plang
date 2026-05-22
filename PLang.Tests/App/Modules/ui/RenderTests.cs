@@ -1,8 +1,8 @@
 using app;
-using global::app.actor.context;
-using global::app.variables;
-using global::app.modules.ui;
-using global::app.modules.ui.code;
+using app.actor.context;
+using app.variables;
+using app.modules.ui;
+using app.modules.ui.code;
 
 namespace PLang.Tests.App.Modules.ui;
 

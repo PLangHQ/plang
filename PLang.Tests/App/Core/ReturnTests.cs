@@ -1,5 +1,5 @@
-using global::app.errors;
-using global::app.variables;
+using app.errors;
+using app.variables;
 
 namespace PLang.Tests.App.Core;
 

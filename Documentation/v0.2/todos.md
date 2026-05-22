@@ -1,5 +1,13 @@
 # TODOs
 
+## Polymorphic `Path` (file:// + http:// + s3://… via scheme registry)
+
+**Date:** 2026-05-21
+
+`Path` becomes abstract; `FilePath`, `HttpPath`, etc. implement the verb surface (ReadText/WriteText/Save/Delete/Stat/List/CopyTo/MoveTo) per scheme. `Path.From(string)` factory routes by scheme prefix. File action handlers degenerate to one-liners (`Path.Value!.ReadText()`); legacy `IFile.Read/Save/...` dies. Closes codeanalyzer v2 finding #1 (handler-layer authorize copy-paste) on a new branch — deliberately not on `filesystem-permission`.
+
+Plan + phasing: `Documentation/v0.2/path-polymorphism-plan.md`. Hand to architect.
+
 ## Replace `GoalCall` parameter type with `list<action>` everywhere
 
 **Date:** 2026-04-22
@@ -311,7 +319,7 @@ The first form attaches a rollback to a single step (like `on error` does, but d
 
 **Out of scope for now.** This is a sketch, not a spec. Revisit when we finalize the transaction / saga story.
 
-Motivation surfaced: during the build-trace-viewer branch, chasing a null-valued `%__data__%` required four ad-hoc C# Console.Error.WriteLine additions spread across `OpenAiProvider`, `Action.RunAsync`, `Variables.Set`, and `validateResponse`. Only two of those were truly missing from `--debug`; the others were me flailing. With action-return logging + module-scoped LLM response trace, zero would have been needed.
+Motivation surfaced: during the build-trace-viewer branch, chasing a null-valued `%!data%` required four ad-hoc C# Console.Error.WriteLine additions spread across `OpenAiProvider`, `Action.RunAsync`, `Variables.Set`, and `validateResponse`. Only two of those were truly missing from `--debug`; the others were me flailing. With action-return logging + module-scoped LLM response trace, zero would have been needed.
 
 ### Further design (2026-04-23)
 

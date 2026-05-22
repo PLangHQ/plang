@@ -19,7 +19,7 @@
           "action": "set",
           "parameters": [
             { "name": "Name", "value": "content" },
-            { "name": "Value", "value": "%__data__%" }
+            { "name": "Value", "value": "%!data%" }
           ]
         }
       ]

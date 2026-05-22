@@ -1,0 +1,10 @@
+Start
+/ Pattern-match answerer: VerbBasedAnswerer.goal captures the question text
+/ from %!data% into a local %access% (since %!data% gets clobbered by every
+/ action's result), then returns "y" for write, "a" for read, "n" for delete.
+/ Here we exercise WRITE (returns "y") then READ (returns "a") — both succeed,
+/ //tmp/plang-pattern.txt round-trips.
+- set channel "input" call VerbBasedAnswerer
+- file.save 'pattern-test-content' to //tmp/plang-pattern.txt
+- file.read //tmp/plang-pattern.txt, write to %content%
+- assert %content% equals "pattern-test-content"

@@ -1,4 +1,4 @@
-using global::app.modules.builder.code;
+using app.modules.builder.code;
 
 namespace PLang.Tests.App.Modules.builder;
 

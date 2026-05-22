@@ -49,9 +49,6 @@ global using Variables = app.variables.@this;
 global using Snapshot = app.snapshot.@this;
 global using ISnapshot = app.snapshot.ISnapshot;
 
-// Callback subsystem
-global using AppCallback = app.modules.callback.@this;
-global using ICallback = app.modules.callback.ICallback;
 
 // Statics — app-scoped key/value store extracted from app._statics
 global using AppStatics = app.Statics.@this;

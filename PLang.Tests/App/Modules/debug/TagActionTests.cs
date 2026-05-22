@@ -1,4 +1,4 @@
-using global::app.modules.debug;
+using app.modules.debug;
 using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.Modules.debug;

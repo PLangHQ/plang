@@ -1,6 +1,6 @@
-using global::app.modules.condition;
-using global::app.modules.condition.code;
-using global::app.tester;
+using app.modules.condition;
+using app.modules.condition.code;
+using app.tester;
 
 namespace PLang.Tests.App.Tester;
 

@@ -1,0 +1,35 @@
+{
+  "tester": "tester",
+  "branch": "filesystem-permission",
+  "timestamp": "2026-05-21T23:30:00Z",
+  "tested_version": "v7",
+  "test_run": {
+    "csharp": { "total": 2855, "passed": 2855, "failed": 0, "skipped": 0 },
+    "plang": { "total": 203, "passed": 203, "failed": 0, "skipped": 0 }
+  },
+  "plang_failures_note": "203 excludes the 4 intentional fail-fixtures (Tests/{TestModule,Modules/Test}/Report/_fixtures_fail + _fixtures_sensitive). The single 'Failed to deserialize List`1' stdout line is a negative-path mock test feeding bad JSON, not a failure. Unchanged from v4/v5 baseline.",
+  "scope": "Re-review of coder v7 (8b42b0d31) — test-only change closing tester v5 F1. coder v7 added Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt verbatim from v5's handed-over spec.",
+  "mutation_verification": {
+    "mutation": "permission/this.cs:147 SkipFreshnessCheck true -> false, clean rebuild, run Scenario4*",
+    "result": "2 tests fail independently — Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow (secondRead, step 2 wire-freshness) and Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt (read2, step 4 nonce-replay). Scenario4_RestartStillNoPrompt passes (one verify only).",
+    "assessment": "One mutation, two independent failures on different assertions. Each half of SkipFreshnessCheck is now its own regression gate — the F1 gap tester v5 identified is closed. Production code restored, suite re-confirmed green."
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "major",
+      "type": "missing-coverage",
+      "title": "Nonce-replay half of the F-A fix is ungated",
+      "status": "closed",
+      "detail": "Closed by coder v7. Added Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt — app1 creates a persisted grant, app2 reads the foreign file twice with a StatelessChannel; each Find re-deserializes Data so each read is a real VerifySignature pass. Mutation true->false now kills this test on read2 (step 4 nonce-replay) independently of the step-2 _WireFreshnessWindow test.",
+      "fix": "Done — test added verbatim from tester v5 spec."
+    }
+  ],
+  "non_blocking_notes": [
+    { "id": "N1", "severity": "minor", "detail": "ValidatePathTests.UpperCasedRootPrefix_..._OnUnix docstring still over-claims the RootComparison gate (carried from tester v4 N1)." },
+    { "id": "N4", "severity": "minor", "detail": "auditor F-5: MoveCopyBundledConsentTests covers bundled consent only on the v2 Path surface; real copy.cs/move.cs handlers issue two prompts. Fairly deferred with auditor F-C/D/E." }
+  ],
+  "verdict": "pass",
+  "verdict_note": "coder v7 closes tester v5 F1 — the only finding — with the exact test handed over, mutation-verified. The F-A regression guard now covers the full mechanism (wire-freshness AND nonce-replay). Suites green: C# 2855/2855, PLang 203/203.",
+  "summary": "Clean rebuild: C# 2855/2855 (+1 vs v5 = the new test), PLang 203/203, 0 fail, 0 skip. coder v7 added Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt verbatim from tester v5's spec. Mutation SkipFreshnessCheck true->false now produces two independent Scenario4 failures (step 2 wire-freshness, step 4 nonce-replay) — the F1 gap is closed, each half its own regression gate. Verdict: pass, no open findings."
+}

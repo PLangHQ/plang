@@ -1,0 +1,184 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set channel \u0022input\u0022 call VerbBasedAnswerer",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "Pattern-match answerer: VerbBasedAnswerer.goal captures the question text\nfrom %!data% into a local %access% (since %!data% gets clobbered by every\naction\u0027s result), then returns \u0022y\u0022 for write, \u0022a\u0022 for read, \u0022n\u0022 for delete.\nHere we exercise WRITE (returns \u0022y\u0022) then READ (returns \u0022a\u0022) \u2014 both succeed,\n//tmp/plang-pattern.txt round-trips.",
+      "actions": [
+        {
+          "module": "channel",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "input",
+              "type": "string"
+            },
+            {
+              "name": "Goal",
+              "value": {
+                "name": "VerbBasedAnswerer",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set/replace the named \u0027input\u0027 channel to be backed by a goal call to VerbBasedAnswerer, so subsequent input reads are answered by that goal.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "file.save \u0027pattern-test-content\u0027 to //tmp/plang-pattern.txt",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "//tmp/plang-pattern.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "pattern-test-content",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Save the literal string \u0027pattern-test-content\u0027 to the file path //tmp/plang-pattern.txt.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "file.read //tmp/plang-pattern.txt, write to %content%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "//tmp/plang-pattern.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "resolvevariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%content%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Read the file //tmp/plang-pattern.txt and write its content into %content%.",
+      "level": "high",
+      "confidence": 96,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %content% equals \u0022pattern-test-content\u0022",
+      "lineNumber": 10,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "pattern-test-content",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Post-condition: ensure %content% equals the expected string.",
+      "level": "high",
+      "confidence": 93,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Authorize/StatefulAuthorizeGrantsAndContinues/Start.test.goal",
+  "prPath": "/Authorize/StatefulAuthorizeGrantsAndContinues/.build/start.test.pr",
+  "hash": "13f0422405570f2618b464676d86159d91961d9e9491e83d36baacc33074d13f",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

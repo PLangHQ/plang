@@ -1,4 +1,4 @@
-using global::app.modules.crypto;
+using app.modules.crypto;
 
 namespace PLang.Tests.App.Modules.crypto;
 

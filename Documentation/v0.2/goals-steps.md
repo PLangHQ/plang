@@ -151,7 +151,7 @@ Task<Data> RunAsync(App app, PLangContext context, CancellationToken ct = defaul
 **Run sequence:**
 1. `Libraries.GetCodeGenerated(Module, ActionName)` — find handler
 2. `ICodeGenerated.CodeGeneratedExecuteAsync(Parameters, app, context)`
-3. Store result as `%__data__%` on `context.Variables` — available to the next action or caller
+3. Store result as `%!data%` on `context.Variables` — available to the next action or caller
 
 ---
 
@@ -221,7 +221,7 @@ App.RunGoalAsync(goalName, context)
         │       │   └── foreach action in Actions
         │       │       ├── Libraries.GetCodeGenerated(action.Module, action.ActionName)
         │       │       ├── ICodeGenerated.CodeGeneratedExecuteAsync(params, app, context)
-        │       │       └── Store result as %__data__% in Variables
+        │       │       └── Store result as %!data% in Variables
         │       └── After.Run events
         ├── After.Run events
         └── CallStack.Pop()
