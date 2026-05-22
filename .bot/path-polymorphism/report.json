@@ -21,7 +21,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batch 1 \u2014 Stage 1 (namespace move) survey tests + Stage 4 ([PathScheme] attribute). Survey tests specified as string-based reflection so they survive the old types being deleted; no compile-time typeof of a moved symbol."
+          "context": "Batch 1 — Stage 1 (namespace move) survey tests + Stage 4 ([PathScheme] attribute). Survey tests specified as string-based reflection so they survive the old types being deleted; no compile-time typeof of a moved symbol."
         },
         {
           "paths": [
@@ -33,7 +33,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batches 2-3 \u2014 Stage 2: scheme registry Register/From, bare/schemed/unknown dispatch, multi-App isolation; abstract path hierarchy shape; FilePath verb round-trips; PLang type-mapper dispatch through the registry."
+          "context": "Batches 2-3 — Stage 2: scheme registry Register/From, bare/schemed/unknown dispatch, multi-App isolation; abstract path hierarchy shape; FilePath verb round-trips; PLang type-mapper dispatch through the registry."
         },
         {
           "paths": [
@@ -42,7 +42,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batch 4 \u2014 Stage 3: survey tests asserting IFile/DefaultFileProvider/PLangFileSystem wrapper layer are absent and no [Code]-partial provider remains on file handlers, plus behavioural checks that the gate still fires from inside Path verbs. Existing Tests/Modules/File/File.test.goal is the PLang-level regression net (no new goal file)."
+          "context": "Batch 4 — Stage 3: survey tests asserting IFile/DefaultFileProvider/PLangFileSystem wrapper layer are absent and no [Code]-partial provider remains on file handlers, plus behavioural checks that the gate still fires from inside Path verbs. Existing Tests/Modules/File/File.test.goal is the PLang-level regression net (no new goal file)."
         },
         {
           "paths": [
@@ -53,7 +53,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batches 5-6 \u2014 Stage 5 HttpPath (GET/POST/DELETE/HEAD, 404/405, identity, network error, HttpClient pooling) with an HttpTestServer skeleton (HttpListener-shaped, no new package); Stage 6 per-scheme Absolute canonical-form, one test per rule."
+          "context": "Batches 5-6 — Stage 5 HttpPath (GET/POST/DELETE/HEAD, 404/405, identity, network error, HttpClient pooling) with an HttpTestServer skeleton (HttpListener-shaped, no new package); Stage 6 per-scheme Absolute canonical-form, one test per rule."
         },
         {
           "paths": [
@@ -69,7 +69,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Batch 7 \u2014 Stage 7: the generic PathSchemeContractTests<TFixture> base (8 contract assertions), the IPathSchemeFixture interface + VerbName enum, FilePath/Http fixture skeletons, two [InheritsTests] concrete subclasses, and cross-scheme CopyTo. Contract files alias the path type to the CURRENT app.filesystem.path so the project compiles today; stage 1's rename sweep repoints them."
+          "context": "Batch 7 — Stage 7: the generic PathSchemeContractTests<TFixture> base (8 contract assertions), the IPathSchemeFixture interface + VerbName enum, FilePath/Http fixture skeletons, two [InheritsTests] concrete subclasses, and cross-scheme CopyTo. Contract files alias the path type to the CURRENT app.filesystem.path so the project compiles today; stage 1's rename sweep repoints them."
         },
         {
           "paths": [
@@ -84,7 +84,7 @@
       "after": {
         "status": "Complete. 14 test files created under PLang.Tests/App/Types/PathTests/. 94 tests, all discovered and red ('Not implemented'). PLang.Tests builds with 0 errors.",
         "health": "Green build. All path-polymorphism tests in proper TDD red state. No existing test affected.",
-        "notes": "Coder picks up next. Two non-blocking decisions surfaced: (1) use HttpListener for the test server (csproj: no new package needed); (2) HttpTestServer.cs and the two fixtures are skeletons (throw NotImplementedException) for the coder to implement in stages 5/7. Contract/ files intentionally alias the current app.filesystem.path \u2014 stage 1's rename sweep migrates them along with the existing PathAuthorizeTests/FileHandlerTests aliases."
+        "notes": "Coder picks up next. Two non-blocking decisions surfaced: (1) use HttpListener for the test server (csproj: no new package needed); (2) HttpTestServer.cs and the two fixtures are skeletons (throw NotImplementedException) for the coder to implement in stages 5/7. Contract/ files intentionally alias the current app.filesystem.path — stage 1's rename sweep migrates them along with the existing PathAuthorizeTests/FileHandlerTests aliases."
       }
     },
     {
@@ -168,7 +168,7 @@
       "after": {
         "status": "All 7 stages implemented. C# 2875 pass / 1 deliberate red (wrapper-layer flag-and-split). PLang --test 203/203 pass.",
         "health": "Green except the one documented deferral red.",
-        "notes": "Wrapper-layer (PLangFileSystem + Default/*) removal deferred \u2014 ~14 non-action App.FileSystem callers. No global Path alias (System.IO.Path clash). PLangPath test-alias name collision flagged for discussion with Ingi."
+        "notes": "Wrapper-layer (PLangFileSystem + Default/*) removal deferred — ~14 non-action App.FileSystem callers. No global Path alias (System.IO.Path clash). PLangPath test-alias name collision flagged for discussion with Ingi."
       }
     },
     {
@@ -179,7 +179,7 @@
       "intent": "Lowercase path aliases + Stage 8: remove the System.IO.Abstractions wrapper layer, per Ingi.",
       "before": {
         "assumptions": "Stages 1-7 landed (commit ae2206c9). PascalCase Path alias removed earlier due to System.IO.Path clash.",
-        "risk": "IO.Abstractions removal touches ~18 production + ~20 test files. ValidatePath feared security-sensitive \u2014 turned out to be dead root-jail, now pure normalization."
+        "risk": "IO.Abstractions removal touches ~18 production + ~20 test files. ValidatePath feared security-sensitive — turned out to be dead root-jail, now pure normalization."
       },
       "plan": ".bot/path-polymorphism/coder/v2/plan.md",
       "actions": [
@@ -191,7 +191,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Lowercase global aliases path/filepath/httppath \u2014 no System.IO.Path clash (case-sensitive). Production call sites cleaned to use them."
+          "context": "Lowercase global aliases path/filepath/httppath — no System.IO.Path clash (case-sensitive). Production call sites cleaned to use them."
         },
         {
           "paths": [
@@ -200,7 +200,7 @@
           "type": "create",
           "category": "code",
           "confidence": "high",
-          "context": "ValidatePath relocated from PLangFileSystem as a static on filepath \u2014 pure path normalization, not a security gate (Authorize is). filepath.OsAbsolutePath exposes the os/ folder."
+          "context": "ValidatePath relocated from PLangFileSystem as a static on filepath — pure path normalization, not a security gate (Authorize is). filepath.OsAbsolutePath exposes the os/ folder."
         },
         {
           "paths": [
@@ -210,7 +210,7 @@
           "type": "delete",
           "category": "code",
           "confidence": "high",
-          "context": "IPLangFileSystem + 9 System.IO.Abstractions wrapper types deleted. The root-jail (FileAccessControl) was already dead \u2014 replaced by Path.Authorize/Actor.Permission. Pure double-wrapping removed. System.IO.Abstractions NuGet package dropped."
+          "context": "IPLangFileSystem + 9 System.IO.Abstractions wrapper types deleted. The root-jail (FileAccessControl) was already dead — replaced by Path.Authorize/Actor.Permission. Pure double-wrapping removed. System.IO.Abstractions NuGet package dropped."
         },
         {
           "paths": [
@@ -243,6 +243,68 @@
         "status": "All 8 stages complete. C# 2875/2875 pass. PLang --test 202 pass / 0 fail / 1 stale.",
         "health": "Green. The 1 stale (ContextVars2.test.goal) is blocked by a pre-existing plang build breakage (builder.app->builder.load staleness in os/system/builder/, untouched on this branch, being fixed elsewhere by Ingi).",
         "notes": "Ready for codeanalyzer review. Two follow-up items for discussion: PLangPath test-alias name collision; filepath/httppath alias casing not finalized by Ingi."
+      }
+    },
+    {
+      "id": "ca1d0e5e-9b2a-4c71-8f30-pathpoly0001",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-22T14:00:00Z",
+      "timestamp_end": "2026-05-22T15:30:00Z",
+      "intent": "Five-pass codeanalyzer review of the 8-stage path-polymorphism branch.",
+      "before": {
+        "assumptions": "Coder reports all 8 stages complete, C# 2875/2875, plang 202/0/1-stale. No prior codeanalyzer version on this branch.",
+        "risk": "Large surface (~6k lines). The polymorphism seams (handler dispatch, base/subclass split) are where shape errors hide; mechanical line-correctness can pass while the abstraction leaks."
+      },
+      "plan": ".bot/path-polymorphism/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/this.cs",
+            "PLang/app/types/path/this.Operations.cs",
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/types/path/scheme/this.cs",
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/file/this.Validate.cs",
+            "PLang/app/types/path/http/this.cs",
+            "PLang/app/types/path/permission/this.cs",
+            "PLang/app/types/Conversion.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Reviewed the new app/types/path tree: abstract base, scheme registry, FilePath/HttpPath, Permission gate, Conversion dispatch. Registry is a clean @this type; gate centralisation genuinely closes v2 #1; GlobMatches rewrite correct. Flagged: base class keeps file-only live properties (Exists/Size) wrong for HttpPath; Relative ignores RootComparison; base Authorize references concrete file subclass."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/file/save.cs",
+            "PLang/app/modules/file/copy.cs",
+            "PLang/app/modules/file/move.cs",
+            "PLang/app/modules/file/delete.cs",
+            "PLang/app/modules/file/exists.cs",
+            "PLang/app/modules/file/list.cs",
+            "PLang/app/modules/file/read.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Pass 1+4: 6 of 8 handlers downcast 'Path.Value is filepath fp' (F1) — polymorphism violation, FS-only options silently dropped for HttpPath. file.exists returns path vs bool per scheme (F3). Traced: unregistered scheme -> Path.Value null -> NRE inside Run() before the clean SchemeNotRegistered error can surface (F4)."
+        },
+        {
+          "paths": [
+            ".bot/path-polymorphism/codeanalyzer/v1/report.md",
+            ".bot/path-polymorphism/codeanalyzer/v1/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Verdict NEEDS WORK. 8 findings: F1 handler downcast (High), F2 base file-semantics leak / F3 file.exists shape / F4 unregistered-scheme NRE (Med), F5-F8 (Low). Build clean, plang --test 202/0/1-stale verified on a clean rebuild."
+        }
+      ],
+      "after": {
+        "status": "Review complete. Verdict: NEEDS WORK (fail). Build green, tests green; findings are structural/correctness, not regressions.",
+        "health": "Branch compiles and tests pass. The polymorphism abstraction leaks at the handler-dispatch and base/subclass seams — F1–F4 should be fixed before done.",
+        "notes": "Headline: a branch named path-polymorphism has 6/8 handlers branching on concrete type. Fix is structural — lift FilePath's option-bearing verb overloads onto the abstract base as virtual. Next: coder addresses F1–F4."
       }
     }
   ]
