@@ -8,7 +8,7 @@
       "text": "if %stepResult.keep% is true, call ApplyKeptStep",
       "lineNumber": 5,
       "indent": 0,
-      "comment": "Validates and applies step result\nkeep:true \u2192 reuse prior .pr actions, no merge, no detail pass\notherwise level=high \u2192 use as-is, medium/low \u2192 run BuildStep with guidance",
+      "comment": "Validates and applies step result\nkeep:true → reuse prior .pr actions, no merge, no detail pass\notherwise level=high → use as-is, medium/low → run BuildStep with guidance",
       "actions": [
         {
           "module": "condition",
@@ -137,10 +137,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Kept prior mapping for step %stepResult.index%\u0022",
+          "text": "write out \"  Kept prior mapping for step %stepResult.index%\"",
           "lineNumber": 12,
           "indent": 0,
-          "comment": "keep:true short-circuit \u2014 prior actions are already on the step from MergeFrom\nNothing to validate, nothing to merge. The step is ready as-is.",
+          "comment": "keep:true short-circuit — prior actions are already on the step from MergeFrom\nNothing to validate, nothing to merge. The step is ready as-is.",
           "actions": [
             {
               "module": "output",
@@ -201,7 +201,7 @@
                 {
                   "name": "Actions",
                   "value": "%stepResult.actions%",
-                  "type": "list\u003Caction\u003E"
+                  "type": "list<action>"
                 }
               ],
               "defaults": null,
@@ -229,7 +229,7 @@
                           "modifiers": []
                         }
                       ],
-                      "type": "list\u00601"
+                      "type": "list`1"
                     }
                   ],
                   "defaults": [
@@ -312,7 +312,7 @@
         },
         {
           "index": 2,
-          "text": "if %stepResult.level% != \u0022high\u0022, call BuildStep",
+          "text": "if %stepResult.level% != \"high\", call BuildStep",
           "lineNumber": 19,
           "indent": 0,
           "comment": null,
@@ -366,7 +366,7 @@
             }
           ],
           "intent": null,
-          "guidance": "If the incoming stepResult.level is not \u0027high\u0027, call BuildStep to refine/build the step.",
+          "guidance": "If the incoming stepResult.level is not 'high', call BuildStep to refine/build the step.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -393,7 +393,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Validation error: %!error.Message%\u0022",
+          "text": "write out \"  Validation error: %!error.Message%\"",
           "lineNumber": 23,
           "indent": 0,
           "comment": null,
@@ -453,7 +453,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Store the current error object into the goal step\u0027s validationError variable using variable.set. The @known mapping indicates the exact prior action should be reused.",
+          "guidance": "Store the current error object into the goal step's validationError variable using variable.set. The @known mapping indicates the exact prior action should be reused.",
           "level": "high",
           "confidence": 90,
           "formal": null,

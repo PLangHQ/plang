@@ -956,6 +956,22 @@ public partial class @this
             return UnwrapNewtonsoftToken(value, depth);
         }
 
+        // System.Text.Json.Nodes DOM types (JsonObject, JsonArray, JsonValue) flow through
+        // variable.set when the source value is parsed as a mutable JSON DOM — the
+        // builder's `set %messages% = [{...}], type=json` produces these. Unwrap to the
+        // canonical List<object?>/Dict<string,object?> the walker recognises so nested
+        // `%var%` strings inside JSON values get substituted on read (the alternative is
+        // the LLM seeing literal `%goalForLlm%` in its user message — which is the
+        // regression that surfaced after the App→app rename merge).
+        if (value is System.Text.Json.Nodes.JsonNode jsonNode)
+        {
+            // Round-trip via the JsonElement path — keeps numeric / null / bool semantics
+            // identical to the System.Text.Json branch above and reuses the existing
+            // UnwrapJsonObject/UnwrapJsonArray walkers without duplicating their logic.
+            using var doc = System.Text.Json.JsonDocument.Parse(jsonNode.ToJsonString());
+            return UnwrapJsonElement(doc.RootElement, depth);
+        }
+
         return value;
     }
 
