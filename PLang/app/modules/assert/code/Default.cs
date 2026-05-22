@@ -135,16 +135,18 @@ public class Default : IAssert
 
     /// <summary>
     /// Truthiness of an asserted Data. A value that knows how to answer for
-    /// itself (<see cref="app.data.IBooleanResolvable"/> — a path) is asked
-    /// directly; everything else falls through to the sync rules. Mirrors the
-    /// condition pipeline's dispatch so `assert %path% is true` is correct.
-    /// (codeanalyzer v1 F3)
+    /// itself (<see cref="app.data.IBooleanResolvable"/> — a path) is routed
+    /// through <see cref="data.@this.ToBooleanAsync"/> so the resolvable-dispatch
+    /// rule has a single home; everything else falls through to the sync rules.
+    /// `assert %path% is true` is thus correct via the same path the condition
+    /// pipeline uses. (codeanalyzer v1 F3 / v2 N3)
     /// </summary>
     private static async Task<bool> ResolveTruthy(data.@this? data)
     {
-        if (data?.Value is app.data.IBooleanResolvable resolvable)
-            return await resolvable.AsBooleanAsync();
-        return IsTruthy(data?.Value);
+        if (data == null) return false;
+        if (data.Value is app.data.IBooleanResolvable)
+            return await data.ToBooleanAsync();
+        return IsTruthy(data.Value);
     }
 
     private static bool IsTruthy(object? value)

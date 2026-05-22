@@ -109,11 +109,17 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// Truthiness of a file path is "does it exist". Sync filesystem probe —
-    /// no AuthGate: existence is not content. (codeanalyzer v1 F3)
+    /// Truthiness of a file path is "does it exist". Routes through the gated
+    /// <see cref="ExistsAsync"/> — the same shape as <c>HttpPath.AsBooleanAsync</c>:
+    /// a denied or errored probe answers false. Keeps the existence check behind
+    /// <see cref="@this.AuthGate"/> so an out-of-root probe still needs a Read
+    /// grant (in-root is free via IsInRoot). (codeanalyzer v2 N1)
     /// </summary>
-    public override Task<bool> AsBooleanAsync() =>
-        Task.FromResult(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
+    public override async Task<bool> AsBooleanAsync()
+    {
+        var existsResult = await ExistsAsync();
+        return existsResult.Success && existsResult.Value is true;
+    }
 
     /// <summary>
     /// List directory entries matching <paramref name="pattern"/>. Returns an

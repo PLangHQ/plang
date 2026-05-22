@@ -160,12 +160,17 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
 
     public override string ToString() => Content?.ToString() ?? Relative;
 
+    // Path equality follows RootComparison — the same case-sensitivity rule
+    // Relative/IsUnder/ValidatePath use, so they can't drift apart. Hard-coding
+    // OrdinalIgnoreCase here would make /srv/x and /SRV/x — distinct files on
+    // Linux — compare equal and hash-collide. (codeanalyzer v2 N2)
     public override bool Equals(object? obj) => obj switch
     {
-        @this other => string.Equals(_absolutePath, other._absolutePath, StringComparison.OrdinalIgnoreCase),
-        string str => string.Equals(_absolutePath, str, StringComparison.OrdinalIgnoreCase),
+        @this other => string.Equals(_absolutePath, other._absolutePath, RootComparison),
+        string str => string.Equals(_absolutePath, str, RootComparison),
         _ => false
     };
 
-    public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_absolutePath);
+    public override int GetHashCode() =>
+        StringComparer.FromComparison(RootComparison).GetHashCode(_absolutePath);
 }

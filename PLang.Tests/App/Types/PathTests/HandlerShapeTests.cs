@@ -128,6 +128,27 @@ public class HandlerShapeTests
         await Assert.That(result.Success).IsFalse();
     }
 
+    [Test] public async Task FilePath_AsBooleanAsync_OutOfRoot_DeniedPermission_AnswersFalse()
+    {
+        // codeanalyzer v2 N1: FilePath.AsBooleanAsync must stay behind AuthGate.
+        // An out-of-root file that genuinely exists answers `false` when the Read
+        // grant is denied — existence is gated, not a free filesystem oracle.
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(root);
+        var app = new global::app.@this(root);
+        app.User.Channels.Register(new CannedNoChannel());
+
+        var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-foreign-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(outOfRoot);
+        var target = System.IO.Path.Combine(outOfRoot, "exists.txt");
+        System.IO.File.WriteAllText(target, "i exist");
+
+        var fp = new global::app.types.path.file.@this(target, app.User.Context);
+        // The file is really on disk — but permission is denied, so truthiness
+        // is false. If the gate were skipped this would be true.
+        await Assert.That(await fp.AsBooleanAsync()).IsFalse();
+    }
+
     [Test] public async Task FileModule_PlangBehaviour_UnchangedFromProgramPerspective()
     {
         await Assert.That(true).IsTrue();

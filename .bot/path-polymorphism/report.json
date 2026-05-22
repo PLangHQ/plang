@@ -533,6 +533,62 @@
         "health": "green",
         "notes": "9 Modules/Http/* tests are flaky (hit httpbin.org) \u2014 failed transiently on one run, passed on re-run. Not a merge regression."
       }
+    },
+    {
+      "id": "dd318edf-fed6-4442-bebd-dd2d8d90bcf4",
+      "bot": "coder",
+      "timestamp_start": "2026-05-22T16:43:07Z",
+      "timestamp_end": "2026-05-22T16:58:00Z",
+      "intent": "Address codeanalyzer v2 findings N1-N3 on path-polymorphism.",
+      "before": {
+        "assumptions": "F1-F8 confirmed fixed by codeanalyzer v2. N1 (file.exists lost AuthGate) is the substantive item; N2/N3 are low. Baseline: C# 2881/2881, PLang 203/203/0 stale.",
+        "risk": "N1 adds AuthGate to AsBooleanAsync which the condition pipeline calls often \u2014 must stay free for in-root paths (IsInRoot) and only prompt out-of-root."
+      },
+      "plan": ".bot/path-polymorphism/coder/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/file/this.Operations.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "N1: FilePath.AsBooleanAsync now routes through the gated ExistsAsync (mirrors HttpPath) instead of an ungated File.Exists. Restores the authorization gate F3 dropped; symmetric across schemes."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "N2: path.Equals/GetHashCode switched from hard-coded OrdinalIgnoreCase to RootComparison \u2014 kills case-sensitivity drift on Linux."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/assert/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "N3: ResolveTruthy delegates IBooleanResolvable dispatch to Data.ToBooleanAsync instead of duplicating it; plain-value IsTruthy path kept."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/HandlerShapeTests.cs",
+            "PLang.Tests/App/Modules/condition/DefaultEvaluatorTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "New test proving the N1 gate (out-of-root denied -> false). Two IfExists condition tests given context-bearing in-root paths since AuthGate needs Context.Actor."
+        }
+      ],
+      "after": {
+        "status": "Complete. All 3 codeanalyzer v2 findings (N1/N2/N3) addressed.",
+        "health": "green",
+        "notes": "Build clean; C# 2882/2882; PLang --test 203/203/0 stale. N1 decision (gate it) confirmed with Ingi."
+      }
     }
   ]
 }

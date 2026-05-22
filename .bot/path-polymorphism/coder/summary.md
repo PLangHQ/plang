@@ -2,8 +2,25 @@
 
 ## Version
 
-v4 (v1 = stages 1–7; v2 = lowercase aliases + Stage 8; v3 = codeanalyzer v1
-review response; v4 = merge `origin/runtime2`). Single branch.
+v5 (v1 = stages 1–7; v2 = lowercase aliases + Stage 8; v3 = codeanalyzer v1
+review response; v4 = merge `origin/runtime2`; v5 = codeanalyzer v2 review
+response). Single branch.
+
+## What was done — v5 (codeanalyzer v2 response)
+
+codeanalyzer v2 confirmed F1–F8 genuinely fixed, raised three new findings.
+All addressed — see `v5/result.md`.
+
+- **N1 (Medium)** — the F3 refactor dropped `file.exists`'s `AuthGate`. Decision
+  (Ingi): **gate it.** `FilePath.AsBooleanAsync` now routes through the gated
+  `ExistsAsync`, symmetric with `HttpPath`. New test proves an out-of-root
+  denied probe answers `false`; two condition tests given context-bearing paths.
+- **N2 (Low)** — `path.Equals`/`GetHashCode` switched `OrdinalIgnoreCase` →
+  `RootComparison`.
+- **N3 (Low)** — `assert.ResolveTruthy` delegates `IBooleanResolvable` dispatch
+  to `Data.ToBooleanAsync` instead of duplicating it.
+
+C# **2882 / 2882**; PLang `--test` **203 / 203 / 0 stale**. Build clean.
 
 ## What this is
 

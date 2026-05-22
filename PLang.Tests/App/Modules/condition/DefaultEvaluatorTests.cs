@@ -150,22 +150,29 @@ public class DefaultEvaluatorTests
     // IBooleanResolvable and AsBooleanAsync() probes the filesystem, so the
     // condition reflects actual existence.
 
+    // The paths carry a Context whose app root contains them — in-root, so
+    // AsBooleanAsync's AuthGate (codeanalyzer v2 N1) auto-grants. A context-less
+    // path can't be gated and isn't a shape production produces.
     [Test] public async Task IfExists_PathToExistingFile_IsTrue()
     {
-        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-eval-" + System.Guid.NewGuid().ToString("N"));
-        System.IO.Directory.CreateDirectory(dir);
-        var file = System.IO.Path.Combine(dir, "present.txt");
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-eval-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(root);
+        var app = new global::app.@this(root);
+        var file = System.IO.Path.Combine(root, "present.txt");
         System.IO.File.WriteAllText(file, "x");
-        var fp = new global::app.types.path.file.@this(file);
+        var fp = new global::app.types.path.file.@this(file, app.User.Context);
         await Assert.That(IsTrue(await EvalIf(fp, "==", true))).IsTrue();
-        System.IO.Directory.Delete(dir, true);
+        System.IO.Directory.Delete(root, true);
     }
 
     [Test] public async Task IfExists_PathToMissingFile_IsFalse()
     {
-        var missing = System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-eval-missing-" + System.Guid.NewGuid().ToString("N") + ".txt");
-        var fp = new global::app.types.path.file.@this(missing);
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-eval-missing-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(root);
+        var app = new global::app.@this(root);
+        var missing = System.IO.Path.Combine(root, "not-here.txt");
+        var fp = new global::app.types.path.file.@this(missing, app.User.Context);
         await Assert.That(IsFalse(await EvalIf(fp, "==", true))).IsTrue();
+        System.IO.Directory.Delete(root, true);
     }
 }
