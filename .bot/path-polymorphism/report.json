@@ -688,6 +688,60 @@
         "health": "green",
         "notes": "Build clean; C# 2882/2882; PLang 203/203/0 stale."
       }
+    },
+    {
+      "id": "1521b127-d4f1-4e7b-ac6f-c817e69082ae",
+      "bot": "tester",
+      "timestamp_start": "2026-05-22T17:21:32Z",
+      "timestamp_end": "2026-05-22T17:23:22Z",
+      "intent": "Validate test honesty for coder v5 (codeanalyzer v2 N1-N3 response) on path-polymorphism.",
+      "before": {
+        "assumptions": "Both suites green per coder/codeanalyzer; codeanalyzer v3 verdict CLEAN. Risk concentrates in review-driven fixes N2/N3 whose tests are most likely missing.",
+        "risk": "A green 2882+203 suite can still hide false greens \u2014 vacuous tests and untested review-driven edits."
+      },
+      "plan": ".bot/path-polymorphism/tester/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PlangConsole/bin",
+            "PLang.Tests/bin"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild (stale-binary trap) then ran both suites: C# 2882/2882, plang 203/203/0 stale. Reproduces coder/codeanalyzer numbers, no regressions vs v5 baseline."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/",
+            "PLang.Tests/App/Modules/condition/DefaultEvaluatorTests.cs",
+            "PLang.Tests/App/Modules/file/FileHandlerTests.cs",
+            "PLang.Tests/App/Modules/assert/AssertTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Read the path-polymorphism C# suite and deletion-tested the three v5 review-driven fixes (N1/N2/N3). N1 well covered; N2 and N3 have zero coverage."
+        },
+        {
+          "paths": [
+            ".bot/path-polymorphism/tester/v5/result.md",
+            ".bot/path-polymorphism/tester/v5/coverage.json",
+            ".bot/path-polymorphism/tester/v5/verdict.json",
+            ".bot/path-polymorphism/test-report.json",
+            ".bot/path-polymorphism/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote 6 findings: 1 false-green (Assert.That(true)), N2+N3 missing-coverage, F3 plang negative branch missing, 2 weak assertions. Verdict needs-fixes."
+        }
+      ],
+      "after": {
+        "status": "FAIL \u2014 needs-fixes",
+        "health": "Both suites green (C# 2882/2882, plang 203/203/0 stale), no regressions; feature C# coverage strong overall.",
+        "notes": "Six test-honesty gaps. Costly two: review-driven v5 fixes N2 (path.Equals/GetHashCode) and N3 (assert path-truthiness) ship with zero coverage \u2014 reverting either keeps the suite green. Plus a vacuous Assert.That(true) test. All six are small/mechanical to close."
+      }
     }
   ]
 }

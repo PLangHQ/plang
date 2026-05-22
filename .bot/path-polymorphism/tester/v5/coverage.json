@@ -1,0 +1,22 @@
+{
+  "tested_version": "v5",
+  "branch": "path-polymorphism",
+  "timestamp": "2026-05-22T17:21:32Z",
+  "method": "Qualitative coverage map over the core feature production files. Per file: does at least one C# or plang test exercise its changed behaviour with a real oracle (not just Success==Ok)? Full coverlet run not executed — the findings here are qualitative false-green / missing-coverage gaps, not a line-percentage shortfall.",
+  "files": [
+    { "path": "PLang/app/types/path/this.cs", "covered": "partial", "by": ["PathAbstractTests", "PathSchemeContractTests"], "gap": "Equals/GetHashCode (N2) untested — finding 2" },
+    { "path": "PLang/app/types/path/this.Authorize.cs", "covered": "yes", "by": ["PathSchemeContractTests.Unauthorized_*", "HandlerShapeTests N1 test"] },
+    { "path": "PLang/app/types/path/this.Operations.cs", "covered": "yes", "by": ["PathSchemeContractTests CopyTo/MoveTo round-trips"] },
+    { "path": "PLang/app/types/path/file/this.cs", "covered": "yes", "by": ["FilePathVerbTests", "PathAbstractTests"] },
+    { "path": "PLang/app/types/path/file/this.Operations.cs", "covered": "yes", "by": ["FilePathVerbTests", "HandlerShapeTests.FilePath_AsBooleanAsync_OutOfRoot_DeniedPermission_AnswersFalse (N1)"] },
+    { "path": "PLang/app/types/path/file/this.Validate.cs", "covered": "yes", "by": ["FilePathVerbTests in-root paths", "ValidatePathTests"] },
+    { "path": "PLang/app/types/path/http/this.cs", "covered": "yes", "by": ["HttpPathTests", "PathSchemeContractTests via HttpPathFixture"] },
+    { "path": "PLang/app/types/path/scheme/this.cs", "covered": "yes", "by": ["SchemeRegistryTests"] },
+    { "path": "PLang/app/types/path/permission/*", "covered": "yes", "by": ["PathSchemeContractTests.Unauthorized_* / Failure_Shape_Is_Uniform"] },
+    { "path": "PLang/app/types/path/PathSchemeAttribute.cs", "covered": "yes", "by": ["PathSchemeAttributeTests"] },
+    { "path": "PLang/app/modules/file/*.cs (handlers)", "covered": "yes", "by": ["FileHandlerTests", "HandlerShapeTests", "Tests/Modules/File/File.test.goal"] },
+    { "path": "PLang/app/modules/condition/code/Default.cs", "covered": "partial", "by": ["DefaultEvaluatorTests.IfExists_* (both branches)", "ConditionFileExistsSubSteps.test.goal (true branch only)"], "gap": "plang-layer false branch untested — finding 4" },
+    { "path": "PLang/app/modules/assert/code/Default.cs", "covered": "partial", "by": ["AssertTests (plain values only)"], "gap": "ResolveTruthy IBooleanResolvable branch (N3) untested — finding 3" }
+  ],
+  "summary": "11 of 13 core feature files have honest coverage. 2 are reached by tests but the specific v5 review-driven edit in each (path.Equals/GetHashCode — N2; assert ResolveTruthy resolvable branch — N3) has no oracle. condition/Default.cs is C#-covered on both branches but plang-covered on the true branch only."
+}
