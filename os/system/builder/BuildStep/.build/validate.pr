@@ -92,15 +92,19 @@
               "name": "Operator",
               "value": "isempty",
               "type": "operator"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "negate",
+              "name": "Right",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Negate",
               "value": false,
               "type": "bool"
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -172,7 +176,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/system/builder/BuildStep/.build/validate.pr"
               },
               "type": "goal.call"
             }

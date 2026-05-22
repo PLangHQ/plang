@@ -99,7 +99,7 @@
     },
     {
       "index": 2,
-      "text": "render template \u0022/system/actions/v2/summary.md\u0022, write to %actionSummary%",
+      "text": "render template \"/system/actions/v2/summary.md\", write to %actionSummary%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -152,7 +152,7 @@
     },
     {
       "index": 3,
-      "text": "render template \u0022/system/builder/templates/v2/goalFormatForLlm.v2.template\u0022, write to %goalForLlm%",
+      "text": "render template \"/system/builder/templates/v2/goalFormatForLlm.v2.template\", write to %goalForLlm%",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -205,7 +205,7 @@
     },
     {
       "index": 4,
-      "text": "render template \u0022/system/builder/llm/Plan.llm\u0022, write to %planPrompt%",
+      "text": "render template \"/system/builder/llm/Plan.llm\", write to %planPrompt%",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -258,7 +258,7 @@
     },
     {
       "index": 5,
-      "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%planPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%goalForLlm%\u0022}], type=json",
+      "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}], type=json",
       "lineNumber": 11,
       "indent": 0,
       "comment": null,
@@ -284,7 +284,7 @@
                   "Content": "%goalForLlm%"
                 }
               ],
-              "type": "list\u00601"
+              "type": "list`1"
             },
             {
               "name": "Type",
@@ -303,7 +303,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Set %messages% to a JSON array of LLM messages (system \u002B user) using %planPrompt% and %goalForLlm%.",
+      "guidance": "Set %messages% to a JSON array of LLM messages (system + user) using %planPrompt% and %goalForLlm%.",
       "level": "high",
       "confidence": 92,
       "formal": null,
@@ -315,7 +315,7 @@
       "text": "call QueryAndValidatePlan, on error call LlmFixer, then retry 2 times",
       "lineNumber": 17,
       "indent": 0,
-      "comment": "Wrap llm.query \u002B Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and structural validation failures\n(Validate throws step-count-mismatch, etc.). RetryCount=2 is the runtime\u0027s\njob. LlmFixer re-prompts with previousConversation=%plan%.",
+      "comment": "Wrap llm.query + Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and structural validation failures\n(Validate throws step-count-mismatch, etc.). RetryCount=2 is the runtime's\njob. LlmFixer re-prompts with previousConversation=%plan%.",
       "actions": [
         {
           "module": "goal",
@@ -327,7 +327,7 @@
                 "name": "QueryAndValidatePlan",
                 "parallel": false,
                 "parameters": [],
-                "prPath": null
+                "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               },
               "type": "goal.call"
             }
@@ -349,15 +349,24 @@
                           "name": "GoalName",
                           "value": {
                             "name": "LlmFixer",
-                            "parameters": []
+                            "parameters": [],
+                            "prPath": "/system/builder/BuildGoal/.build/llmfixer.pr"
                           },
                           "type": "goal.call"
                         }
                       ]
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
-                },
+                  "type": "list<action>"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
                 {
                   "name": "RetryCount",
                   "value": 2,
@@ -399,7 +408,7 @@
                 {
                   "name": "Messages",
                   "value": "%messages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -411,11 +420,11 @@
                         "actions": [
                           "string"
                         ],
-                        "group": "string"
+                        "group": "string?"
                       }
                     ]
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Cache",
@@ -502,7 +511,7 @@
                     "name": "Validate",
                     "parallel": false,
                     "parameters": [],
-                    "prPath": null
+                    "prPath": "/system/builder/BuildGoal/.build/validate.pr"
                   },
                   "type": "goal.call"
                 }

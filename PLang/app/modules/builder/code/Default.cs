@@ -47,15 +47,24 @@ public class Default : IBuilder
         var searchPath = string.IsNullOrWhiteSpace(action.Path.Value) ? "." : action.Path.Value!;
 
         // builder.goals.Path is project-root-relative ("the directory the user is
-        // building"), not goal-relative. filesystem.path.Resolve combines a bare
-        // relative path with the CALLING GOAL's folder — and the caller here is the
-        // builder's own Build.goal under /system/builder/, so Resolve(".", …) would
-        // walk the builder's own tree instead of the user's cwd. Force absolute
-        // resolution by prefixing "/" — Resolve then anchors at fs.RootDirectory
-        // (which is the user's cwd / app root, set when the App was wired).
-        var rootRelative = searchPath.StartsWith('/') || searchPath.StartsWith('\\')
-            ? searchPath
-            : "/" + searchPath;
+        // building"), not goal-relative. The runtime auto-seeds %path% to the
+        // app root before Build.goal runs, so by the time we get here
+        // action.Path.Value is typically already the absolute cwd. For the literal
+        // "/" / "." / empty cases (no auto-seed), fall back to app.AbsolutePath.
+        // For any other input that doesn't start with the root or with
+        // "/", treat as a sibling-relative subpath under the root.
+        var rootDir = app.AbsolutePath;
+        string rootRelative;
+        if (searchPath == "." || searchPath == "/" || searchPath == "\\")
+            rootRelative = rootDir;
+        else if (searchPath.StartsWith(rootDir, path.RootComparison))
+            rootRelative = searchPath;  // already absolute under root — pass through
+        else if (searchPath.StartsWith('/') || searchPath.StartsWith('\\'))
+            rootRelative = searchPath;  // PLang-rooted, ValidatePath will anchor
+        else
+            rootRelative = global::System.IO.Path.GetFullPath(
+                global::System.IO.Path.Combine(rootDir, searchPath));
+
         var listAction = new file.List
         {
             Context = context,
@@ -204,6 +213,50 @@ public class Default : IBuilder
         _buildTimer.Restart();
 
         return saveResult.Success ? data.@this.Ok(true) : saveResult;
+    }
+
+    // --- ValidateStepActions ---
+
+    public data.@this ValidateStepActions(validateStepActions action)
+    {
+        var step = action.Step.Value!;
+        var input = action.Actions.Value ?? new List<string>();
+        var modules = action.Context.App.Modules;
+
+        var result = new List<string>();
+
+        // Validate the planner's suggestions — drop any that don't exist in the
+        // runtime catalog. A hallucinated entry would feed the compiler a
+        // non-resolving row and degrade into "missing-actions" anyway.
+        foreach (var entry in input)
+        {
+            if (string.IsNullOrWhiteSpace(entry)) continue;
+            var parts = entry.Split('.', 2);
+            if (parts.Length != 2) continue;
+            if (!modules.Contains(parts[0], parts[1])) continue;
+            result.Add(entry);
+        }
+
+        // Scan step text for explicit `<module>.<action>` tokens. Append any
+        // that exist in the runtime catalog and aren't already in the set.
+        // Append-only — the planner's order survives; explicit-mentions land
+        // after. Word-boundary regex keeps false positives (%goal.Name%,
+        // result.actions, dotted property paths) out — they get filtered
+        // again by the catalog Contains check.
+        foreach (var m in System.Text.RegularExpressions.Regex.Matches(
+                     step.Text, @"\b([a-z][a-zA-Z0-9_]*)\.([a-z][a-zA-Z0-9_]*)\b")
+                 .Cast<System.Text.RegularExpressions.Match>())
+        {
+            var mod = m.Groups[1].Value;
+            var act = m.Groups[2].Value;
+            if (!modules.Contains(mod, act)) continue;
+
+            var key = $"{mod}.{act}";
+            if (result.Any(s => s.Equals(key, StringComparison.OrdinalIgnoreCase))) continue;
+            result.Add(key);
+        }
+
+        return data.@this.Ok(result);
     }
 
     // --- Validate ---
@@ -798,49 +851,53 @@ public class Default : IBuilder
     {
         foreach (var action in actions)
         {
-            if (action.Parameters == null) continue;
+            await ResolveGoalCallsInAction(action, app, context);
 
-            foreach (var param in action.Parameters)
+            // Modifiers (e.g. error.handle's `then call LogRetryError`) hold their own
+            // goal.call parameters — same resolution rule applies.
+            if (action.Modifiers != null)
             {
-                if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var goalCall = ToGoalCall(param.Value);
-                if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
-                    continue;
-
-                if (goalCall.Name.Contains('%'))
-                {
-                    param.Value = goalCall;
-                    continue;
-                }
-
-                // Derive PrPath using Goal's own convention
-                var goalPath = goalCall.Name;
-                if (!goalPath.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
-                    goalPath += ".goal";
-                if (!goalPath.StartsWith('/') && !goalPath.StartsWith('\\'))
-                    goalPath = "/" + goalPath;
-
-                var tempGoal = new Goal { Path = goalPath };
-                var expectedPrPath = tempGoal.PrPath;
-                if (expectedPrPath != null)
-                {
-                    // Check existence via file.exists — don't read the whole file
-                    var existsAction = new file.Exists
-                    {
-                        Context = context,
-                        Path = data.@this<path>.Ok(path.Resolve(expectedPrPath, context))
-                    };
-                    var existsResult = await app.RunAction(existsAction, context);
-                    if (existsResult.Success && existsResult.Value is path pathData && await pathData.AsBooleanAsync())
-                    {
-                        goalCall.PrPath = expectedPrPath;
-                    }
-                }
-
-                param.Value = goalCall;
+                foreach (var mod in action.Modifiers)
+                    await ResolveGoalCallsInAction(mod, app, context);
             }
+        }
+    }
+
+    private static async Task ResolveGoalCallsInAction(
+        global::app.goals.goal.steps.step.actions.action.@this action,
+        app.@this app, actor.context.@this context)
+    {
+        if (action.Parameters == null) return;
+
+        foreach (var param in action.Parameters)
+        {
+            if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var goalCall = ToGoalCall(param.Value);
+            if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
+                continue;
+
+            if (goalCall.Name.Contains('%'))
+            {
+                param.Value = goalCall;
+                continue;
+            }
+
+            // Ask the runtime to resolve the goal — same path/name lookup logic
+            // GoalCall uses at dispatch. If it returns a Goal, copy that goal's
+            // PrPath onto our GoalCall so the saved .pr carries an explicit path
+            // (per "every goal.call should carry prPath" rule). Null result means
+            // the goal couldn't be found — leave PrPath null, the validator's
+            // downstream checks (or runtime) will surface a NotFound for it.
+            goalCall.Action ??= action;
+            var resolved = await goalCall.GetGoalAsync(app, context);
+            if (resolved.Success && resolved.Value is Goal g && !string.IsNullOrEmpty(g.PrPath))
+            {
+                goalCall.PrPath = g.PrPath;
+            }
+
+            param.Value = goalCall;
         }
     }
 

@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%path%",
+              "value": "default",
               "type": "variable"
             },
             {
@@ -60,8 +60,8 @@
             },
             {
               "name": "Value",
-              "value": "%!build.cache%",
-              "type": "object"
+              "value": true,
+              "type": "bool"
             },
             {
               "name": "AsDefault",
@@ -251,33 +251,39 @@
       "actions": [
         {
           "module": "builder",
-          "action": "goalsSave",
+          "action": "goals",
           "parameters": [
             {
-              "name": "Goal",
-              "value": {
-                "name": "%goals%",
-                "description": "",
-                "comment": "",
-                "steps": [],
-                "goals": [],
-                "visibility": 0,
-                "path": null,
-                "prPath": null,
-                "hash": null,
-                "builderVersion": null,
-                "isSetup": false,
-                "isEvent": false,
-                "isSystem": false,
-                "isTest": false,
-                "inputParameters": {
-                  "path": "%path%"
-                }
-              },
-              "type": "this"
+              "name": "Path",
+              "value": "%path%",
+              "type": "string"
             }
           ],
           "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goals%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -354,7 +360,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/system/builder/.build/buildgoal.pr"
               },
               "type": "goal.call"
             }

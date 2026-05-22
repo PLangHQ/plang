@@ -22,7 +22,7 @@ The one exception is the *initial bootstrap* when source `.goal` semantics chang
 
 ```bash
 cd os/
-plang '--build={"files":["Build.goal","BuildGoal.goal","BuildStep.goal","ApplyStep.goal","ValidateBuildResponse.goal"]}' build
+plang '--build={"files":["Build.goal","BuildGoal.goal","BuildGoal/Start.goal","BuildGoal/Plan.goal","BuildGoal/Validate.goal","BuildGoal/LlmFixer.goal","BuildStep/Start.goal","BuildStep/Validate.goal"]}' build
 ```
 
 Two things matter and both are non-obvious:
@@ -40,10 +40,13 @@ The builder's `.pr` files stamp paths like `/system/builder/.build/buildgoal.pr`
 Pass the explicit ordered list via `--build={"files":[...]}` whenever you rebuild the builder. The order is the call chain, entry first, leaves last:
 
 1. `Build.goal` — builder entry
-2. `BuildGoal.goal` — orchestrator (owns `BuildGoalCore`, `BuildSubGoal`, `ProcessGroup`, `LlmFixer`, `HandleBuildGoalFailure` as inner sub-goals)
-3. `BuildStep.goal` — detail pass
-4. `ApplyStep.goal` — validate + merge
-5. `ValidateBuildResponse.goal` — structural integrity checks
+2. `BuildGoal.goal` — per-goal driver (one LLM Plan call per goal, then delegates each step to BuildStep)
+3. `BuildGoal/Start.goal` — orchestrator (owns `BuildSubGoal`, `HandleBuildFailure`)
+4. `BuildGoal/Plan.goal` — single LLM call that returns the action sets per step (owns `QueryAndValidatePlan`)
+5. `BuildGoal/Validate.goal` — structural validation after step compile
+6. `BuildGoal/LlmFixer.goal` — re-prompt on validation failure
+7. `BuildStep/Start.goal` — per-step compile (owns `Compile`, `QueryAndVerify`, `RefineActions`, `FixValidation`, `HandleStepFailure`, `EmitSummary`)
+8. `BuildStep/Validate.goal` — per-step action validation (owns `ValidateAction`)
 
 **Why:** during the rebuild the running app uses the *previous* in-memory build pipeline. If `BuildGoal`'s `.pr` is rewritten before its dependencies are stable, subsequent goal builds may pick up a partially-updated pipeline and produce inconsistent output. The list order is honoured by `DefaultBuilderProvider.LoadFiles` (`PLang/app/modules/builder/code/Default.cs`) — files in the `files` filter are queued in the order they appear.
 
@@ -92,9 +95,9 @@ When you fix the prompt so one of these stops happening, delete the correspondin
 ## Related files
 
 - `os/system/Build.goal` — system entry (delegates to `/system/builder/Build`).
-- `os/system/builder/*.goal` — the builder's own goals (5 files, listed in the recipe above).
-- `os/system/builder/llm/BuildGoal.llm`, `BuildStep.llm` — the LLM prompts.
-- `PLang/app/modules/builder/code/Default.cs` — `IBuilder` actions: `goals`, `validate`, `enrichResponse`, `validateResponse`, `goalsSave`.
+- `os/system/builder/*.goal` and `os/system/builder/{BuildGoal,BuildStep}/*.goal` — the builder's own goals (8 files in v3, listed in the recipe above).
+- `os/system/builder/llm/Plan.llm`, `Compile.llm` — the LLM prompts (Plan = one-call-per-goal action sets; Compile = one-call-per-step chain).
+- `PLang/app/modules/builder/code/Default.cs` — `IBuilder` actions: `goals`, `validate`, `validateStepActions`, `enrichResponse`, `validateResponse`, `goalsSave`, `merge`, `promoteGroups`, `load`, `appSave`, `types`, `actions`.
 - `Documentation/v0.2/build.md` — general `plang build` CLI usage (not bootstrap-specific).
 - `Documentation/v0.2/build_process.md` — what each builder goal does at runtime.
 - `docs/modules/builder.md` — builder module action reference.
