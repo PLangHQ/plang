@@ -360,7 +360,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/system/builder/.build/buildgoal.pr"
               },
               "type": "goal.call"
             }

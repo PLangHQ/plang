@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "write out \u0022Building goal: %goal.Name%\u0022",
+      "text": "write out \"Building goal: %goal.Name%\"",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -74,7 +74,7 @@
     },
     {
       "index": 2,
-      "text": "set %trace% = {\u0022id\u0022: \u0022%!trace.id%\u0022, \u0022timestamp\u0022: \u0022%Now%\u0022, \u0022goal\u0022: %goal%, \u0022plan\u0022: null, \u0022stepPasses\u0022: [], \u0022subGoals\u0022: [], \u0022durationMs\u0022: 0}, type=json",
+      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"plan\": null, \"stepPasses\": [], \"subGoals\": [], \"durationMs\": 0}, type=json",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -99,7 +99,7 @@
                 "subGoals": [],
                 "durationMs": 0
               },
-              "type": "dictionary\u00602"
+              "type": "dictionary`2"
             },
             {
               "name": "Type",
@@ -142,7 +142,7 @@
                 "name": "Plan",
                 "parallel": false,
                 "parameters": [],
-                "prPath": null
+                "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               },
               "type": "goal.call"
             }
@@ -164,14 +164,15 @@
                           "name": "GoalName",
                           "value": {
                             "name": "HandleBuildFailure",
-                            "parameters": []
+                            "parameters": [],
+                            "prPath": "/system/builder/BuildGoal/.build/start.pr"
                           },
                           "type": "goal.call"
                         }
                       ]
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list<action>"
                 }
               ],
               "defaults": null,
@@ -255,7 +256,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "BuildStep/Start",
+                "name": "Start",
                 "parallel": false,
                 "parameters": [
                   {
@@ -264,7 +265,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/system/builder/BuildStep/.build/start.pr"
               },
               "type": "goal.call"
             }
@@ -357,7 +358,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/system/builder/BuildGoal/.build/start.pr"
               },
               "type": "goal.call"
             }
@@ -572,7 +573,7 @@
     },
     {
       "index": 12,
-      "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%goal.Name%.json\u0027",
+      "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
       "lineNumber": 21,
       "indent": 0,
       "comment": null,
@@ -722,7 +723,7 @@
         },
         {
           "index": 1,
-          "text": "write out \u0022  Building sub-goal: %goal.Name%\u0022",
+          "text": "write out \"  Building sub-goal: %goal.Name%\"",
           "lineNumber": 30,
           "indent": 0,
           "comment": null,
@@ -766,7 +767,7 @@
                     "name": "Plan",
                     "parallel": false,
                     "parameters": [],
-                    "prPath": null
+                    "prPath": "/system/builder/BuildGoal/.build/plan.pr"
                   },
                   "type": "goal.call"
                 }
@@ -788,14 +789,15 @@
                               "name": "GoalName",
                               "value": {
                                 "name": "HandleBuildFailure",
-                                "parameters": []
+                                "parameters": [],
+                                "prPath": "/system/builder/BuildGoal/.build/start.pr"
                               },
                               "type": "goal.call"
                             }
                           ]
                         }
                       ],
-                      "type": "list\u003Caction\u003E"
+                      "type": "list<action>"
                     }
                   ],
                   "defaults": null,
@@ -839,7 +841,7 @@
                 {
                   "name": "GoalName",
                   "value": {
-                    "name": "BuildStep/Start",
+                    "name": "Start",
                     "parallel": false,
                     "parameters": [
                       {
@@ -848,7 +850,7 @@
                         "type": "string"
                       }
                     ],
-                    "prPath": null
+                    "prPath": "/system/builder/BuildStep/.build/start.pr"
                   },
                   "type": "goal.call"
                 }
@@ -928,7 +930,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Build error in %goal.Name%: %!error.Message%\u0022",
+          "text": "write out \"  Build error in %goal.Name%: %!error.Message%\"",
           "lineNumber": 39,
           "indent": 0,
           "comment": null,
@@ -957,7 +959,7 @@
         },
         {
           "index": 1,
-          "text": "set %trace.buildError% = {\u0022key\u0022: \u0022%!error.Key%\u0022, \u0022message\u0022: \u0022%!error.Message%\u0022, \u0022goal\u0022: \u0022%goal.Name%\u0022}, type=json",
+          "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}, type=json",
           "lineNumber": 40,
           "indent": 0,
           "comment": null,
@@ -978,7 +980,7 @@
                     "message": "%!error.Message%",
                     "goal": "%goal.Name%"
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Type",
@@ -1006,7 +1008,7 @@
         },
         {
           "index": 2,
-          "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%goal.Name%.json\u0027",
+          "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
           "lineNumber": 41,
           "indent": 0,
           "comment": null,

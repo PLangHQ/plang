@@ -8,6 +8,11 @@ Start
 
 
 Compile
+/ Validate planner's action set against runtime catalog + augment with explicit
+/ module.action tokens from step text. Drops hallucinated entries; appends any
+/ literal `module.action` mention the planner missed. See building-the-builder.md
+/ "preventing self-rebuild corruption" for the rationale.
+- builder.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%
 - builder.actions include=%planStep.actions%, write to %actions%
 - builder.types, write to %typeInfo%
 - render template "/system/builder/templates/v2/stepForLlm.template", write to %stepForLlm%

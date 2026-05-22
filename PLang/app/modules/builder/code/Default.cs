@@ -206,6 +206,50 @@ public class Default : IBuilder
         return saveResult.Success ? data.@this.Ok(true) : saveResult;
     }
 
+    // --- ValidateStepActions ---
+
+    public data.@this ValidateStepActions(validateStepActions action)
+    {
+        var step = action.Step.Value!;
+        var input = action.Actions.Value ?? new List<string>();
+        var modules = action.Context.App.Modules;
+
+        var result = new List<string>();
+
+        // Validate the planner's suggestions — drop any that don't exist in the
+        // runtime catalog. A hallucinated entry would feed the compiler a
+        // non-resolving row and degrade into "missing-actions" anyway.
+        foreach (var entry in input)
+        {
+            if (string.IsNullOrWhiteSpace(entry)) continue;
+            var parts = entry.Split('.', 2);
+            if (parts.Length != 2) continue;
+            if (!modules.Contains(parts[0], parts[1])) continue;
+            result.Add(entry);
+        }
+
+        // Scan step text for explicit `<module>.<action>` tokens. Append any
+        // that exist in the runtime catalog and aren't already in the set.
+        // Append-only — the planner's order survives; explicit-mentions land
+        // after. Word-boundary regex keeps false positives (%goal.Name%,
+        // result.actions, dotted property paths) out — they get filtered
+        // again by the catalog Contains check.
+        foreach (var m in System.Text.RegularExpressions.Regex.Matches(
+                     step.Text, @"\b([a-z][a-zA-Z0-9_]*)\.([a-z][a-zA-Z0-9_]*)\b")
+                 .Cast<System.Text.RegularExpressions.Match>())
+        {
+            var mod = m.Groups[1].Value;
+            var act = m.Groups[2].Value;
+            if (!modules.Contains(mod, act)) continue;
+
+            var key = $"{mod}.{act}";
+            if (result.Any(s => s.Equals(key, StringComparison.OrdinalIgnoreCase))) continue;
+            result.Add(key);
+        }
+
+        return data.@this.Ok(result);
+    }
+
     // --- Validate ---
 
     public async Task<data.@this> Validate(validate action)
