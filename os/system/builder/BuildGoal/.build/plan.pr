@@ -327,7 +327,7 @@
                 "name": "QueryAndValidatePlan",
                 "parallel": false,
                 "parameters": null,
-                "prPath": null
+                "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               },
               "type": "goal.call"
             }
@@ -354,7 +354,8 @@
                           "name": "GoalName",
                           "value": {
                             "name": "LlmFixer",
-                            "parameters": null
+                            "parameters": null,
+                            "prPath": "/system/builder/BuildGoal/.build/llmfixer.pr"
                           },
                           "type": "goal.call"
                         }
@@ -497,7 +498,7 @@
                     "name": "Validate",
                     "parallel": false,
                     "parameters": [],
-                    "prPath": null
+                    "prPath": "/system/builder/BuildGoal/.build/validate.pr"
                   },
                   "type": "goal.call"
                 }

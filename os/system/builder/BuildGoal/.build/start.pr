@@ -142,7 +142,7 @@
                 "name": "Plan",
                 "parallel": false,
                 "parameters": null,
-                "prPath": null
+                "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               },
               "type": "goal.call"
             }
@@ -164,7 +164,8 @@
                           "name": "GoalName",
                           "value": {
                             "name": "HandleBuildFailure",
-                            "parameters": null
+                            "parameters": null,
+                            "prPath": "/system/builder/BuildGoal/.build/start.pr"
                           },
                           "type": "goal.call"
                         }
@@ -255,7 +256,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "BuildStep/Start",
+                "name": "Start",
                 "parallel": false,
                 "parameters": [
                   {
@@ -264,7 +265,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/system/builder/BuildStep/.build/start.pr"
               },
               "type": "goal.call"
             }
@@ -357,7 +358,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/system/builder/BuildGoal/.build/start.pr"
               },
               "type": "goal.call"
             }
@@ -768,7 +769,7 @@
                     "name": "Plan",
                     "parallel": false,
                     "parameters": null,
-                    "prPath": null
+                    "prPath": "/system/builder/BuildGoal/.build/plan.pr"
                   },
                   "type": "goal.call"
                 }
@@ -790,7 +791,8 @@
                               "name": "GoalName",
                               "value": {
                                 "name": "HandleBuildFailure",
-                                "parameters": null
+                                "parameters": null,
+                                "prPath": "/system/builder/BuildGoal/.build/start.pr"
                               },
                               "type": "goal.call"
                             }
@@ -841,7 +843,7 @@
                 {
                   "name": "GoalName",
                   "value": {
-                    "name": "BuildStep/Start",
+                    "name": "Start",
                     "parallel": false,
                     "parameters": [
                       {
@@ -850,7 +852,7 @@
                         "type": "string"
                       }
                     ],
-                    "prPath": null
+                    "prPath": "/system/builder/BuildStep/.build/start.pr"
                   },
                   "type": "goal.call"
                 }

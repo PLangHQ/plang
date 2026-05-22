@@ -172,7 +172,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": null
+                "prPath": "/system/builder/BuildStep/.build/validate.pr"
               },
               "type": "goal.call"
             }
