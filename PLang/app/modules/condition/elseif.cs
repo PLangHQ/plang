@@ -19,12 +19,12 @@ public partial class Elseif : IContext, IStep
     [Code]
     public partial IEvaluator Evaluator { get; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
-        var evalResult = Evaluator.Evaluate(this);
-        if (!evalResult.Success) return Task.FromResult(evalResult);
+        var evalResult = await Evaluator.Evaluate(this);
+        if (!evalResult.Success) return evalResult;
         var b = evalResult.Value is true;
         if (Negate.Value) b = !b;
-        return Task.FromResult(Data(b));
+        return Data(b);
     }
 }

@@ -71,6 +71,15 @@ public sealed partial class @this : IAsyncDisposable
     public string? OsDirectory { get; set; }
 
     /// <summary>
+    /// The computed <c>os/</c> folder next to the executable. App-level constant
+    /// (not file-scheme-specific): the path base's <c>Authorize</c> and
+    /// <c>FilePath.ValidatePath</c> both anchor system goals against it, so it
+    /// belongs on <c>app</c> rather than on a concrete path subclass.
+    /// </summary>
+    public string OsAbsolutePath =>
+        global::System.IO.Path.GetFullPath(global::System.IO.Path.Combine(AppContext.BaseDirectory, "os"));
+
+    /// <summary>
     /// Environment name (e.g., "production", "development").
     /// </summary>
     public string Environment { get; set; }

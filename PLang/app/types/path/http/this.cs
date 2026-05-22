@@ -155,11 +155,30 @@ public sealed class @this : global::app.types.path.@this
         }
     }
 
-    /// <summary>HTTP has no universal directory listing — returns a Fail so the
-    /// uniform failure-shape contract holds across schemes.</summary>
-    public override Task<data.@this> List() =>
-        Task.FromResult(data.@this.FromError(new Error(
-            "HTTP scheme does not support directory listing.", "NotSupported", 400)));
+    /// <summary>
+    /// HTTP has no universal directory listing. <paramref name="pattern"/> /
+    /// <paramref name="recursive"/> are filesystem-only — no-ops here. Returns a
+    /// Fail, but routes through <see cref="@this.AuthGate"/> first so the verb
+    /// surface is consistent with every other HttpPath verb.
+    /// (codeanalyzer v1 F1, F8)
+    /// </summary>
+    public override async Task<data.@this> List(string pattern, bool recursive)
+    {
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
+        return data.@this.FromError(new Error(
+            "HTTP scheme does not support directory listing.", "NotSupported", 400));
+    }
+
+    /// <summary>
+    /// Truthiness of an http path is "does the resource exist" — an HTTP HEAD.
+    /// Reuses <see cref="ExistsAsync"/>; a denied or errored probe answers false.
+    /// (codeanalyzer v1 F3)
+    /// </summary>
+    public override async Task<bool> AsBooleanAsync()
+    {
+        var existsResult = await ExistsAsync();
+        return existsResult.Success && existsResult.Value is true;
+    }
 
     public override async Task<data.@this> Stat()
     {
@@ -209,14 +228,36 @@ public sealed class @this : global::app.types.path.@this
         return await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false);
     }
 
-    /// <summary>HTTP has no mkdir — Fail with a uniform shape.</summary>
-    public override Task<data.@this> Mkdir() =>
-        Task.FromResult(data.@this.FromError(new Error(
-            "HTTP scheme does not support directory creation.", "NotSupported", 400)));
+    /// <summary>
+    /// HTTP has no mkdir — Fail, routed through <see cref="@this.AuthGate"/>
+    /// first for verb-surface consistency. (codeanalyzer v1 F8)
+    /// </summary>
+    public override async Task<data.@this> Mkdir()
+    {
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        return data.@this.FromError(new Error(
+            "HTTP scheme does not support directory creation.", "NotSupported", 400));
+    }
+
+    /// <summary>
+    /// Write the value to the resource: a byte payload POSTs as bytes,
+    /// everything else POSTs as text. Authorization happens inside
+    /// WriteBytes/WriteText. (codeanalyzer v1 F1)
+    /// </summary>
+    public override async Task<data.@this> Save(data.@this? value)
+    {
+        var raw = value?.Value;
+        if (raw is byte[] bytes) return await WriteBytes(bytes);
+        return await WriteText(raw?.ToString() ?? "");
+    }
 
     // --- Destructive ---------------------------------------------------------
 
-    public override async Task<data.@this> Delete()
+    /// <summary>
+    /// HTTP DELETE. <paramref name="recursive"/> / <paramref name="ignoreIfNotFound"/>
+    /// are filesystem-only — no-ops here; the server decides. (codeanalyzer v1 F1)
+    /// </summary>
+    public override async Task<data.@this> Delete(bool recursive, bool ignoreIfNotFound)
     {
         if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return early;
         return await Send(HttpMethod.Delete, content: null, readBody: false);

@@ -15,8 +15,9 @@ public partial class Move : IContext
 
     public async Task<data.@this> Run()
     {
-        if (Source.Value is filepath fp)
-            return await fp.MoveTo(Destination.Value!, Overwrite.Value);
-        return await Source.Value!.MoveTo(Destination.Value!);
+        // codeanalyzer v1 F4 — typed scheme error, not an NRE on .Value.
+        if (!Source.Success) return Source;
+        if (!Destination.Success) return Destination;
+        return await Source.Value!.MoveTo(Destination.Value!, Overwrite.Value);
     }
 }

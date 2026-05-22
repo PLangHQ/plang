@@ -114,6 +114,22 @@ public class HttpPathTests
         await Assert.That(info.Modified).IsNotNull();
     }
 
+    [Test] public async Task AsBooleanAsync_TrueWhenPresent_FalseWhenAbsent()
+    {
+        // http path truthiness is "does the resource exist" — an HTTP HEAD,
+        // the async dispatch target for `if %url% exists`. (codeanalyzer v1 F3)
+        using var server = new HttpTestServer();
+        var (app, ctx) = MakeApp();
+        var present = server.NewResourceUrl();
+        var absent = server.NewResourceUrl();
+        await Grant(app, ctx, present);
+        await Grant(app, ctx, absent);
+        await new HttpPath(present, ctx).WriteText("here");
+
+        await Assert.That(await new HttpPath(present, ctx).AsBooleanAsync()).IsTrue();
+        await Assert.That(await new HttpPath(absent, ctx).AsBooleanAsync()).IsFalse();
+    }
+
     [Test] public async Task Exists_2xx_True_4xx_False()
     {
         using var server = new HttpTestServer();

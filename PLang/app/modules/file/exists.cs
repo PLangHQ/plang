@@ -3,6 +3,16 @@ using app.types;
 
 namespace app.modules.file;
 
+/// <summary>
+/// Resolves Path and returns it as Data&lt;Path&gt; — uniformly, for every
+/// scheme. Existence itself is answered by the path: a comparison such as
+/// <c>if %result% exists</c> routes <c>== true</c> through
+/// <c>Data.ToBooleanAsync()</c> → <c>path.AsBooleanAsync()</c>, which probes
+/// the filesystem (file scheme) or issues an HTTP HEAD (http scheme).
+///
+/// The action does no I/O of its own: the path stays live, so re-testing it
+/// reflects the current state. (codeanalyzer v1 F3)
+/// </summary>
 [System.ComponentModel.Description("Check whether a file or directory exists at Path and return file info")]
 [Example("check if file.txt exists, write to %fileInfo%",
     "file.exists Path([path] file.txt) | variable.set Name([string] %fileInfo%), Value([object] %!data%)")]
@@ -11,10 +21,8 @@ public partial class Exists : IContext
 {
     public partial data.@this<path> Path { get; init; }
 
-    public async Task<data.@this> Run()
-    {
-        if (Path.Value is filepath fp)
-            return await fp.ExistsPathAsync();
-        return await Path.Value!.ExistsAsync();
-    }
+    // Returns Path directly — a failed scheme resolution (unregistered s3://)
+    // is itself a non-Success Data, so the typed SchemeNotRegistered error
+    // propagates instead of an NRE. (codeanalyzer v1 F4)
+    public Task<data.@this> Run() => Task.FromResult<data.@this>(Path);
 }

@@ -17,7 +17,7 @@ public partial class Any : IContext
     public partial data.@this<condition.Operator> Operator { get; init; }
     public partial data.@this Value { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var key = Key.Value!;
@@ -26,10 +26,10 @@ public partial class Any : IContext
         foreach (var (_, item) in data.EnumerateItems())
         {
             var left = item.GetChild(key);
-            if (Operator.Value!.Evaluate(left, right))
-                return Task.FromResult(Data(true, app.data.type.FromName("bool")));
+            if (await Operator.Value!.Evaluate(left, right))
+                return Data(true, app.data.type.FromName("bool"));
         }
 
-        return Task.FromResult(Data(false, app.data.type.FromName("bool")));
+        return Data(false, app.data.type.FromName("bool"));
     }
 }

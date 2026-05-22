@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using app.variables;
 using app.modules.code;
 
@@ -7,8 +8,10 @@ public interface IAssert : ICode
 {
     data.@this Equals(Equals action);
     data.@this NotEquals(NotEquals action);
-    data.@this IsTrue(IsTrue action);
-    data.@this IsFalse(IsFalse action);
+    // IsTrue/IsFalse are async — an asserted value may be IBooleanResolvable
+    // (a path), whose truthiness is resolved with I/O. (codeanalyzer v1 F3)
+    Task<data.@this> IsTrue(IsTrue action);
+    Task<data.@this> IsFalse(IsFalse action);
     data.@this IsNull(IsNull action);
     data.@this IsNotNull(IsNotNull action);
     data.@this Contains(Contains action);

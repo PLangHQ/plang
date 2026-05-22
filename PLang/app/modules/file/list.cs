@@ -19,8 +19,7 @@ public partial class List : IContext
 
     public async Task<data.@this> Run()
     {
-        if (Path.Value is filepath fp)
-            return await fp.List(Pattern.Value!, Recursive.Value);
-        return await Path.Value!.List();
+        if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
+        return await Path.Value!.List(Pattern.Value!, Recursive.Value);
     }
 }

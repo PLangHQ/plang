@@ -74,6 +74,25 @@ public class FileHandlerTests : IDisposable
     }
 
     [Test]
+    public async Task Read_UnregisteredSchemePath_SurfacesTypedError_NotNre()
+    {
+        // codeanalyzer v1 F4 — a path whose scheme conversion failed (e.g. the
+        // unregistered s3:// scheme) is a non-Success data.@this<path>. The
+        // handler must surface that typed SchemeNotRegistered error, not NRE
+        // on Path.Value.
+        var ctx = _app.User.Context;
+        var failedPath = new Data("path", "s3://bucket/key") { Context = ctx }
+            .As<PLangPath>(ctx);
+        await Assert.That(failedPath.Success).IsFalse();   // conversion already failed
+
+        var action = new Read { Context = ctx, Path = failedPath };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("SchemeNotRegistered");
+    }
+
+    [Test]
     public async Task Read_ContentIsLazy()
     {
         System.IO.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
@@ -248,7 +267,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(result.Success).IsTrue();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Exists).IsFalse();
+        await Assert.That(await f!.AsBooleanAsync()).IsFalse();
     }
 
     [Test]
@@ -296,7 +315,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(result.Success).IsTrue();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Exists).IsTrue();
+        await Assert.That(await f!.AsBooleanAsync()).IsTrue();
     }
 
     [Test]
@@ -308,7 +327,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(result.Success).IsTrue();
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Exists).IsFalse();
+        await Assert.That(await f!.AsBooleanAsync()).IsFalse();
     }
 
     // --- List ---
@@ -480,7 +499,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(fileData).IsNotNull();
         var fileObj = fileData!.Value as PLangPath;
         await Assert.That(fileObj).IsNotNull();
-        await Assert.That(fileObj!.Exists).IsTrue();
+        await Assert.That(await fileObj!.AsBooleanAsync()).IsTrue();
 
         var existsData = context.Variables.Get("fileResult.Exists");
         await Assert.That(existsData).IsNotNull();

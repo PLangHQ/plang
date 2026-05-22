@@ -55,6 +55,17 @@ public class FilePathVerbTests
         await Assert.That(after.Value).IsEqualTo(true);
     }
 
+    [Test] public async Task AsBooleanAsync_FalseBeforeWrite_TrueAfterWrite()
+    {
+        // path truthiness is "does it exist" — the dispatch target for
+        // `if %path% exists`. (codeanalyzer v1 F3)
+        var (app, root) = MakeApp();
+        var p = At(app, root, "asbool.txt");
+        await Assert.That(await p.AsBooleanAsync()).IsFalse();
+        await p.WriteText("now exists");
+        await Assert.That(await p.AsBooleanAsync()).IsTrue();
+    }
+
     [Test] public async Task Delete_RemovesFile_ExistsBecomesFalse()
     {
         var (app, root) = MakeApp();

@@ -791,7 +791,7 @@ public class Default : IBuilder
                         Path = data.@this<path>.Ok(path.Resolve(expectedPrPath, context))
                     };
                     var existsResult = await app.RunAction(existsAction, context);
-                    if (existsResult.Success && existsResult.Value is path pathData && pathData.Exists)
+                    if (existsResult.Success && existsResult.Value is path pathData && await pathData.AsBooleanAsync())
                     {
                         goalCall.PrPath = expectedPrPath;
                     }

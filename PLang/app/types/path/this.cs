@@ -10,7 +10,7 @@ namespace app.types.path;
 /// </summary>
 [PlangType("path",
     Example = "/some/file.json")]
-public abstract partial class @this : modules.IContext
+public abstract partial class @this : modules.IContext, global::app.data.IBooleanResolvable
 {
     /// <summary>
     /// Scheme name for this path (e.g. "file", "http", "https"). Subclasses
@@ -103,9 +103,9 @@ public abstract partial class @this : modules.IContext
             if (!rootWithSeparator.EndsWith(System.IO.Path.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(System.IO.Path.AltDirectorySeparatorChar))
                 rootWithSeparator += System.IO.Path.DirectorySeparatorChar;
 
-            if (_absolutePath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
+            if (_absolutePath.StartsWith(rootWithSeparator, RootComparison))
                 _relative = _absolutePath[rootWithSeparator.Length..];
-            else if (string.Equals(_absolutePath, rootAbsolutePath, StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(_absolutePath, rootAbsolutePath, RootComparison))
                 _relative = ".";
             else
                 _relative = _absolutePath;
@@ -140,18 +140,13 @@ public abstract partial class @this : modules.IContext
         }
     }
 
-    // --- Live filesystem properties ---
-
-    [LlmBuilder] public bool Exists => System.IO.File.Exists(_absolutePath) || System.IO.Directory.Exists(_absolutePath);
-
-    [LlmBuilder] public long Size
-    {
-        get
-        {
-            var info = new System.IO.FileInfo(_absolutePath);
-            return info.Exists ? info.Length : 0;
-        }
-    }
+    // --- Live filesystem state ---
+    //
+    // The base deliberately exposes NO sync live-state property. `Exists` and
+    // `Size` used to live here as `System.IO.File.Exists` / `FileInfo` calls —
+    // wrong for an HttpPath (always-false / throws on Windows). They moved to
+    // FilePath. The cross-scheme liveness query is the async `path.Stat()`;
+    // truthiness ("does it exist") is `AsBooleanAsync()`. (codeanalyzer v1 F2)
 
     // --- Content (file content when set by provider, e.g., after file.read) ---
 

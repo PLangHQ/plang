@@ -12,10 +12,7 @@ public partial class Save : IContext
 
     public async Task<data.@this> Run()
     {
-        if (Path.Value is filepath fp)
-            return await fp.Save(Value);
-        var raw = Value?.Value;
-        if (raw is byte[] bytes) return await Path.Value!.WriteBytes(bytes);
-        return await Path.Value!.WriteText(raw?.ToString() ?? "");
+        if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
+        return await Path.Value!.Save(Value);
     }
 }

@@ -1,11 +1,14 @@
+using System.Threading.Tasks;
 using app.variables;
 using app.modules.code;
 
 namespace app.modules.condition.code;
 
+// Evaluation is async: an operand may be IBooleanResolvable (a path), whose
+// truthiness is resolved with I/O. (codeanalyzer v1 F3)
 public interface IEvaluator : ICode
 {
-    data.@this Evaluate(If action);
-    data.@this Evaluate(Elseif action);
-    data.@this Evaluate(Compare action);
+    Task<data.@this> Evaluate(If action);
+    Task<data.@this> Evaluate(Elseif action);
+    Task<data.@this> Evaluate(Compare action);
 }

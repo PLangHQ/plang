@@ -22,7 +22,7 @@ public partial class If : IContext, IStep
 
     public async Task<data.@this> Run()
     {
-        var evalResult = Evaluator.Evaluate(this);
+        var evalResult = await Evaluator.Evaluate(this);
         // Evaluation errored → leave branchIndex unpublished (architect §5.7 / Batch 7 #6).
         if (!evalResult.Success) return evalResult;
 

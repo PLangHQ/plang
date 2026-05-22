@@ -95,7 +95,7 @@ public partial class @this
         // computed os path so it holds even when App.OsDirectory was not set.
         return IsUnder(app.AbsolutePath, RootComparison)
             || IsUnder(app.OsDirectory, RootComparison)
-            || IsUnder(global::app.types.path.file.@this.OsAbsolutePath, RootComparison);
+            || IsUnder(app.OsAbsolutePath, RootComparison);
     }
 
     /// <summary>

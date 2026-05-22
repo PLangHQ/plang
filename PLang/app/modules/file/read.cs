@@ -25,6 +25,7 @@ public partial class Read : IContext
 
     public async Task<data.@this> Run()
     {
+        if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
         var read = await Path.Value!.ReadText();
         if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
         if (ResolveVariables.Value && read.Value is string content)

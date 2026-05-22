@@ -109,13 +109,17 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// List directory entries. Pattern + recursive defaults to "all entries,
-    /// shallow"; the file.list action passes its own values through. Returns
-    /// an array of FilePaths (Data&lt;Path[]&gt;), each Context-wired.
+    /// Truthiness of a file path is "does it exist". Sync filesystem probe —
+    /// no AuthGate: existence is not content. (codeanalyzer v1 F3)
     /// </summary>
-    public override async Task<data.@this> List() => await List("*", recursive: false);
+    public override Task<bool> AsBooleanAsync() =>
+        Task.FromResult(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
 
-    public async Task<data.@this> List(string pattern, bool recursive)
+    /// <summary>
+    /// List directory entries matching <paramref name="pattern"/>. Returns an
+    /// array of FilePaths (Data&lt;Path[]&gt;), each Context-wired.
+    /// </summary>
+    public override async Task<data.@this> List(string pattern, bool recursive)
     {
         if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
         if (!System.IO.Directory.Exists(Absolute))
@@ -167,7 +171,7 @@ public sealed partial class @this
     /// Data so the .pr's typed slot round-trips. Replaces today's
     /// <c>file/code/Default.cs::Default.Save</c>.
     /// </summary>
-    public async Task<data.@this> Save(data.@this? value)
+    public override async Task<data.@this> Save(data.@this? value)
     {
         if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
 
@@ -197,17 +201,6 @@ public sealed partial class @this
         }
     }
 
-    /// <summary>
-    /// Existence probe wrapped as Path. The handler returns the Path itself
-    /// (with <see cref="Exists"/> / <see cref="Size"/> readable from it)
-    /// instead of a bare bool — preserving today's file.exists semantics.
-    /// </summary>
-    public async Task<data.@this> ExistsPathAsync()
-    {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
-        return data.@this<global::app.types.path.@this>.Ok(this);
-    }
-
     public override async Task<data.@this> WriteBytes(byte[] content)
     {
         if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
@@ -233,17 +226,14 @@ public sealed partial class @this
 
     // --- Destructive ---------------------------------------------------------
 
-    public override async Task<data.@this> Delete() => await Delete(recursive: false, ignoreIfNotFound: false);
-
     /// <summary>
     /// Delete with file-action options. Non-recursive directory deletes refuse
     /// non-empty directories with <c>DirectoryNotEmpty</c>; missing targets
     /// surface <c>NotFound</c> unless <paramref name="ignoreIfNotFound"/> is
     /// set. Returns the resulting Path (post-delete) wrapped in Data so the
-    /// caller can read <see cref="Exists"/> on it. Replaces
-    /// <c>file/code/Default.cs::Default.Delete</c>.
+    /// caller can read <see cref="Exists"/> on it.
     /// </summary>
-    public async Task<data.@this> Delete(bool recursive, bool ignoreIfNotFound)
+    public override async Task<data.@this> Delete(bool recursive, bool ignoreIfNotFound)
     {
         if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return early;
         try
@@ -270,30 +260,24 @@ public sealed partial class @this
 
     // --- Same-scheme fast paths for Move/Copy --------------------------------
 
-    public override Task<data.@this> MoveTo(global::app.types.path.@this destination) =>
-        MoveTo(destination, overwrite: true);
-
-    public override Task<data.@this> CopyTo(global::app.types.path.@this destination) =>
-        CopyTo(destination, overwrite: true, includeSubfolders: true);
-
     /// <summary>
     /// Same-scheme move with action-level options. Bundled-consent for the
     /// out-of-root pair stays — calls into BundledTransfer with the overwrite
     /// option threaded through PerformTransfer. Cross-scheme moves fall
     /// through to the base default (ReadBytes → WriteBytes → Delete).
     /// </summary>
-    public async Task<data.@this> MoveTo(global::app.types.path.@this destination, bool overwrite)
+    public override async Task<data.@this> MoveTo(global::app.types.path.@this destination, bool overwrite)
     {
-        if (destination is not @this fileDest) return await base.MoveTo(destination);
+        if (destination is not @this fileDest) return await base.MoveTo(destination, overwrite);
         return await BundledTransfer(fileDest, isMove: true, overwrite: overwrite, includeSubfolders: true);
     }
 
     /// <summary>
     /// Same-scheme copy with action-level options. See <see cref="MoveTo(global::app.types.path.@this, bool)"/>.
     /// </summary>
-    public async Task<data.@this> CopyTo(global::app.types.path.@this destination, bool overwrite, bool includeSubfolders)
+    public override async Task<data.@this> CopyTo(global::app.types.path.@this destination, bool overwrite, bool includeSubfolders)
     {
-        if (destination is not @this fileDest) return await base.CopyTo(destination);
+        if (destination is not @this fileDest) return await base.CopyTo(destination, overwrite, includeSubfolders);
         return await BundledTransfer(fileDest, isMove: false, overwrite: overwrite, includeSubfolders: includeSubfolders);
     }
 

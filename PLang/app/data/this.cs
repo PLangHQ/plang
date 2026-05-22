@@ -661,7 +661,8 @@ public partial class @this
                     null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
-                var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
+                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, ctx);
+                if (resolveError != null) return resolveError;
                 if (resolvedObj is T result)
                     return ConstructWrap<T>(result, ctx);
             }
@@ -689,12 +690,41 @@ public partial class @this
                     null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
-                var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
+                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, ctx);
+                if (resolveError != null) return resolveError;
                 if (resolvedObj is T result)
                     return ConstructWrap<T>(result, ctx);
             }
         }
         return WrapAs<T>(raw, ctx);
+    }
+
+    /// <summary>
+    /// Invokes a domain type's static <c>Resolve(string, context)</c> via reflection.
+    /// <c>Resolve</c> can legitimately throw (e.g. <c>path</c> raises
+    /// <c>SchemeNotRegistered</c> for an unregistered scheme like <c>s3://</c>) —
+    /// reflection surfaces that as <see cref="System.Reflection.TargetInvocationException"/>.
+    /// Rather than let it escape <c>As&lt;T&gt;</c>, the inner exception is shaped
+    /// into a failed <c>Data&lt;T&gt;</c> so the conversion failure flows as a typed
+    /// error the handler can surface. (codeanalyzer v1 F4)
+    /// </summary>
+    private static (object? value, @this<T>? error) InvokeResolve<T>(
+        System.Reflection.MethodInfo resolveMethod, string raw, actor.context.@this ctx)
+    {
+        try
+        {
+            return (resolveMethod.Invoke(null, new object[] { raw, ctx }), null);
+        }
+        catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
+        {
+            var inner = tie.InnerException;
+            if (inner is global::app.types.path.scheme.SchemeNotRegistered snr)
+                return (null, @this<T>.FromError(new global::app.errors.Error(snr.Message, "SchemeNotRegistered", 400)
+                {
+                    FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Types.Scheme.Register, or use a bare/file:// path.",
+                }));
+            return (null, @this<T>.FromError(new global::app.errors.Error(inner.Message, "ResolveFailed", 400)));
+        }
     }
 
     /// <summary>
@@ -850,6 +880,22 @@ public partial class @this
         if (val is short sh) return sh != 0;
         if (val is byte by) return by != 0;
         return true;
+    }
+
+    /// <summary>
+    /// Boolean meaning of this Data, async — when the wrapped value knows how to
+    /// answer for itself (<see cref="IBooleanResolvable"/>) the question is
+    /// delegated to it; otherwise it falls through to the sync <see cref="ToBoolean"/>.
+    /// The canonical resolvable is <c>path</c>: <c>path.AsBooleanAsync()</c> means
+    /// "does this resource exist", which the http scheme answers with I/O — hence
+    /// the async signature, and hence the condition pipeline is async.
+    /// (codeanalyzer v1 F3)
+    /// </summary>
+    public virtual async System.Threading.Tasks.Task<bool> ToBooleanAsync()
+    {
+        if (IsInitialized && Value is IBooleanResolvable resolvable)
+            return await resolvable.AsBooleanAsync();
+        return ToBoolean();
     }
 
     /// <summary>

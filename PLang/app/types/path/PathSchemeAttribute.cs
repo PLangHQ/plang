@@ -9,9 +9,14 @@ namespace app.types.path;
 /// </summary>
 /// <remarks>
 /// Classes decorated with <see cref="PathSchemeAttribute"/> MUST expose a
-/// public single-string constructor (<c>public @this(string raw)</c>) — or the
-/// future-reflection registration path won't be able to mint them. Built-ins
-/// today (<c>FilePath</c>, <c>HttpPath</c>) honour this signature.
+/// public static factory
+/// <c>Resolve(string raw, actor.context.@this context)</c> returning the
+/// scheme's Path subclass. The registered scheme factories call <c>Resolve</c>,
+/// and the future-reflection registration path discovers it the same way.
+/// <c>Resolve</c> — not a bare single-string constructor — is the contract
+/// because it performs the goal-relative resolution and path normalization a
+/// raw ctor would skip (a ctor-minted Path would be un-normalized). Built-ins
+/// today (<c>FilePath</c>, <c>HttpPath</c>) expose this static.
 ///
 /// <see cref="AllowMultiple"/> is true: <c>HttpPath</c> carries
 /// <c>[PathScheme("http")]</c> and <c>[PathScheme("https")]</c> together.

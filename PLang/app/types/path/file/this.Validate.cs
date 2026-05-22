@@ -23,10 +23,6 @@ namespace app.types.path.file;
 /// </summary>
 public sealed partial class @this
 {
-    /// <summary>OS directory — the <c>os/</c> folder next to the executable.</summary>
-    public static string OsAbsolutePath =>
-        System.IO.Path.GetFullPath(System.IO.Path.Combine(AppContext.BaseDirectory, "os"));
-
     /// <summary>
     /// Normalizes <paramref name="path"/> to an absolute OS path, anchored to
     /// the App root. See the type doc for the rules.
@@ -38,7 +34,7 @@ public sealed partial class @this
 
         var rootAbsolutePath = System.IO.Path.GetFullPath(app.AbsolutePath).AdjustPathToOs()
             .TrimEnd(System.IO.Path.DirectorySeparatorChar);
-        var osAbsolutePath = OsAbsolutePath;
+        var osAbsolutePath = app.OsAbsolutePath;
 
         if (IsOsRooted(path))
         {

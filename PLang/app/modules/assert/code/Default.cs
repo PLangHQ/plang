@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Threading.Tasks;
 using app.errors;
 using app.variables;
 
@@ -28,18 +29,18 @@ public class Default : IAssert
             action.Message?.Value ?? "Values should not be equal"));
     }
 
-    public data.@this IsTrue(IsTrue action)
+    public async Task<data.@this> IsTrue(IsTrue action)
     {
-        if (IsTruthy(action.Value?.Value))
+        if (await ResolveTruthy(action.Value))
             return app.data.@this.Ok(true);
 
         return app.data.@this.FromError(new AssertionError(true, action.Value?.Value,
             action.Message?.Value ?? "Expected truthy value"));
     }
 
-    public data.@this IsFalse(IsFalse action)
+    public async Task<data.@this> IsFalse(IsFalse action)
     {
-        if (!IsTruthy(action.Value?.Value))
+        if (!await ResolveTruthy(action.Value))
             return app.data.@this.Ok(true);
 
         return app.data.@this.FromError(new AssertionError(false, action.Value?.Value,
@@ -130,6 +131,20 @@ public class Default : IAssert
             return Convert.ToDouble(expected) == Convert.ToDouble(actual);
 
         return expected.Equals(actual) || string.Equals(expected.ToString(), actual.ToString(), StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Truthiness of an asserted Data. A value that knows how to answer for
+    /// itself (<see cref="app.data.IBooleanResolvable"/> — a path) is asked
+    /// directly; everything else falls through to the sync rules. Mirrors the
+    /// condition pipeline's dispatch so `assert %path% is true` is correct.
+    /// (codeanalyzer v1 F3)
+    /// </summary>
+    private static async Task<bool> ResolveTruthy(data.@this? data)
+    {
+        if (data?.Value is app.data.IBooleanResolvable resolvable)
+            return await resolvable.AsBooleanAsync();
+        return IsTruthy(data?.Value);
     }
 
     private static bool IsTruthy(object? value)

@@ -19,8 +19,10 @@ public partial class Copy : IContext
 
     public async Task<data.@this> Run()
     {
-        if (Source.Value is filepath fp)
-            return await fp.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
-        return await Source.Value!.CopyTo(Destination.Value!);
+        // Failed scheme resolution (e.g. unregistered s3://) surfaces the typed
+        // SchemeNotRegistered error instead of an NRE on .Value. (codeanalyzer v1 F4)
+        if (!Source.Success) return Source;
+        if (!Destination.Success) return Destination;
+        return await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
     }
 }

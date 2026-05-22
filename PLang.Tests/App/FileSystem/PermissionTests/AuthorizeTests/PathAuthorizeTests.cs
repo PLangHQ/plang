@@ -187,7 +187,7 @@ public class PathAuthorizeTests
         // No channel registered — if Authorize tried to prompt, it would
         // throw or return non-Ok. Auto-grant means Ok with no ask.
         var ctx = app.User.Context;
-        var osDir = global::app.types.path.file.@this.OsAbsolutePath;
+        var osDir = app.OsAbsolutePath;
         var osPath = System.IO.Path.Combine(osDir, "system", "test", "fixture.goal");
         var path = new Path(osPath, ctx);
 

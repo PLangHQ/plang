@@ -36,7 +36,7 @@ namespace PLang
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
 			var engine = new app.@this(startupDirectory);
-			engine.OsDirectory = global::app.types.path.file.@this.OsAbsolutePath;
+			engine.OsDirectory = engine.OsAbsolutePath;
 
 			var userVars = engine.User.Context.Variables;
 

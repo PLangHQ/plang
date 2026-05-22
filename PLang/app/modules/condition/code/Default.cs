@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using app.errors;
 using app.variables;
 
@@ -10,11 +11,11 @@ public sealed class Default : IEvaluator
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public data.@this Evaluate(If action)
+    public async Task<data.@this> Evaluate(If action)
     {
         try
         {
-            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
+            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
             return global::app.data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
@@ -23,11 +24,11 @@ public sealed class Default : IEvaluator
         }
     }
 
-    public data.@this Evaluate(Elseif action)
+    public async Task<data.@this> Evaluate(Elseif action)
     {
         try
         {
-            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
+            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
             return global::app.data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
@@ -36,11 +37,11 @@ public sealed class Default : IEvaluator
         }
     }
 
-    public data.@this Evaluate(Compare action)
+    public async Task<data.@this> Evaluate(Compare action)
     {
         try
         {
-            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
+            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
             return global::app.data.@this.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)

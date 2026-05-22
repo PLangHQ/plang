@@ -36,7 +36,7 @@ public class Fluid : ITemplate
         if (isFile == true || (isFile == null && LooksLikeFilePath(templateContent)))
         {
             var pathData = path.Resolve(templateContent, action.Context);
-            if (!pathData.Exists)
+            if (!await pathData.AsBooleanAsync())
                 return app.data.@this.FromError(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 

@@ -14,11 +14,23 @@ namespace PLang.Tests.App.Types.PathTests;
 /// </summary>
 public class PathAbstractTests
 {
-    private static readonly string[] AbstractVerbs =
+    // The abstract verb surface. Delete/List/Save carry the option-bearing
+    // signatures lifted onto the base (codeanalyzer v1 F1); the parameterless
+    // Delete()/List() are non-abstract convenience and are not listed here.
+    private static readonly (string Name, System.Type[] Params)[] AbstractVerbs =
     {
-        nameof(PLangPath.ReadText), nameof(PLangPath.ReadBytes), nameof(PLangPath.WriteText),
-        nameof(PLangPath.WriteBytes), nameof(PLangPath.Append), nameof(PLangPath.Delete),
-        nameof(PLangPath.ExistsAsync), nameof(PLangPath.Stat), nameof(PLangPath.List),
+        (nameof(PLangPath.ReadText), System.Type.EmptyTypes),
+        (nameof(PLangPath.ReadBytes), System.Type.EmptyTypes),
+        (nameof(PLangPath.WriteText), new[] { typeof(string) }),
+        (nameof(PLangPath.WriteBytes), new[] { typeof(byte[]) }),
+        (nameof(PLangPath.Append), new[] { typeof(string) }),
+        (nameof(PLangPath.ExistsAsync), System.Type.EmptyTypes),
+        (nameof(PLangPath.Stat), System.Type.EmptyTypes),
+        (nameof(PLangPath.Mkdir), System.Type.EmptyTypes),
+        (nameof(PLangPath.AsBooleanAsync), System.Type.EmptyTypes),
+        (nameof(PLangPath.Delete), new[] { typeof(bool), typeof(bool) }),
+        (nameof(PLangPath.List), new[] { typeof(string), typeof(bool) }),
+        (nameof(PLangPath.Save), new[] { typeof(global::app.data.@this) }),
     };
 
     [Test] public async Task Path_IsAbstract_CannotInstantiateDirectly()
@@ -33,11 +45,23 @@ public class PathAbstractTests
 
     [Test] public async Task Path_DeclaresAbstract_VerbSurface()
     {
-        foreach (var name in AbstractVerbs)
+        foreach (var (name, paramTypes) in AbstractVerbs)
         {
-            var m = typeof(PLangPath).GetMethod(name, BindingFlags.Public | BindingFlags.Instance);
+            var m = typeof(PLangPath).GetMethod(
+                name, BindingFlags.Public | BindingFlags.Instance, binder: null, paramTypes, modifiers: null);
             await Assert.That(m).IsNotNull();
             await Assert.That(m!.IsAbstract).IsTrue();
+        }
+    }
+
+    [Test] public async Task Path_Delete_List_Parameterless_AreConvenience_NotAbstract()
+    {
+        foreach (var name in new[] { nameof(PLangPath.Delete), nameof(PLangPath.List) })
+        {
+            var m = typeof(PLangPath).GetMethod(
+                name, BindingFlags.Public | BindingFlags.Instance, binder: null, System.Type.EmptyTypes, modifiers: null);
+            await Assert.That(m).IsNotNull();
+            await Assert.That(m!.IsAbstract).IsFalse();
         }
     }
 
