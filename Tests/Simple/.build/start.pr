@@ -102,7 +102,7 @@
             {
               "name": "Value",
               "value": "\u0027%greeting% %name%\u0027",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -137,7 +137,7 @@
             {
               "name": "Data",
               "value": "%message%",
-              "type": "object"
+              "type": "tstring"
             }
           ],
           "defaults": null,
