@@ -141,7 +141,7 @@
               "value": {
                 "name": "Plan",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               },
               "type": "goal.call"
@@ -164,10 +164,7 @@
                           "name": "GoalName",
                           "value": {
                             "name": "HandleBuildFailure",
-                            "description": "",
-                            "comment": "",
-                            "visibility": "Public",
-                            "inputParameters": {},
+                            "parameters": [],
                             "prPath": "/system/builder/BuildGoal/.build/start.pr"
                           },
                           "type": "goal.call"
@@ -628,15 +625,14 @@
               "name": "Value",
               "value": "%goal.Name%",
               "type": "object"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "atindex",
+              "name": "AtIndex",
               "value": -1,
               "type": "int"
             }
           ],
+          "defaults": null,
           "modifiers": []
         }
       ],
@@ -889,13 +885,7 @@
                 {
                   "name": "Value",
                   "value": {
-                    "goal": {
-                      "name": "%goal.Name%",
-                      "description": "",
-                      "comment": "",
-                      "visibility": "Private",
-                      "inputParameters": {}
-                    },
+                    "goal": "%goal.Name%",
                     "plan": "%plan%"
                   },
                   "type": "object"

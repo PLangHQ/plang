@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "if %compileResult.errors% is not empty, throw error 'Step %step.Index% (%step.Text%): %compileResult.errors%' key=\"GoalBug\"",
+      "text": "if %compileResult.errors% is not empty, throw error \u0027Step %step.Index% (%step.Text%): %compileResult.errors%\u0027 key=\u0022GoalBug\u0022",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -26,16 +26,17 @@
             },
             {
               "name": "Right",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Negate",
-              "value": true,
+              "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -73,7 +74,7 @@
     },
     {
       "index": 1,
-      "text": "if %compileResult.actions% is empty, throw error 'Step %step.Index% (%step.Text%) has no actions.' key=\"GoalBug\"",
+      "text": "if %compileResult.actions% is empty, throw error \u0027Step %step.Index% (%step.Text%) has no actions.\u0027 key=\u0022GoalBug\u0022",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -116,17 +117,18 @@
               "type": "string"
             },
             {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
-            },
-            {
               "name": "Key",
               "value": "GoalBug",
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -200,7 +202,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %__vAct__.errors% is not empty, throw error 'Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%' key=\"GoalBug\"",
+          "text": "if %__vAct__.errors% is not empty, throw error \u0027Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%\u0027 key=\u0022GoalBug\u0022",
           "lineNumber": 10,
           "indent": 0,
           "comment": null,
@@ -223,15 +225,14 @@
                   "name": "Right",
                   "value": false,
                   "type": "bool"
-                }
-              ],
-              "defaults": [
+                },
                 {
-                  "name": "negate",
+                  "name": "Negate",
                   "value": false,
                   "type": "bool"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             },
             {

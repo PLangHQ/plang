@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \"/\"",
+      "text": "set default %path% = \u0022/\u0022",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%path%",
+              "value": "default",
               "type": "variable"
             },
             {
@@ -94,13 +94,13 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "default %!build.summary%",
+              "value": "default",
               "type": "variable"
             },
             {
               "name": "Value",
-              "value": true,
-              "type": "bool"
+              "value": "%!build.summary%",
+              "type": "object"
             },
             {
               "name": "AsDefault",
@@ -162,7 +162,7 @@
     },
     {
       "index": 4,
-      "text": "write out \"Building path: %path%\"",
+      "text": "write out \u0022Building path: %path%\u0022",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -297,7 +297,7 @@
     },
     {
       "index": 7,
-      "text": "write out \"Found %goals.Count% goals\"",
+      "text": "write out \u0022Found %goals.Count% goals\u0022",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
@@ -379,7 +379,7 @@
     },
     {
       "index": 9,
-      "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+      "text": "save %traceGoals% to file \u0027/.build/traces/%!trace.id%/manifest.json\u0027",
       "lineNumber": 15,
       "indent": 0,
       "comment": null,

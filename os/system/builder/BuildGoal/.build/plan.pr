@@ -358,7 +358,15 @@
                     }
                   ],
                   "type": "list<action>"
-                },
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
                 {
                   "name": "RetryCount",
                   "value": 2,
@@ -412,7 +420,7 @@
                         "actions": [
                           "string"
                         ],
-                        "group": "string"
+                        "group": "string?"
                       }
                     ]
                   },

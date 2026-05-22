@@ -90,50 +90,7 @@
           "lineNumber": 15,
           "indent": 0,
           "comment": "Validate planner's action set against runtime catalog + augment with explicit\nmodule.action tokens from step text. Drops hallucinated entries; appends any\nliteral `module.action` mention the planner missed. See building-the-builder.md\n\"preventing self-rebuild corruption\" for the rationale.",
-          "actions": [
-            {
-              "module": "builder",
-              "action": "validateStepActions",
-              "parameters": [
-                {
-                  "name": "Step",
-                  "value": "%step%",
-                  "type": "step"
-                },
-                {
-                  "name": "Actions",
-                  "value": "%planStep.actions%",
-                  "type": "list<string>"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            },
-            {
-              "module": "variable",
-              "action": "set",
-              "parameters": [
-                {
-                  "name": "Name",
-                  "value": "%planStep.actions%",
-                  "type": "variable"
-                },
-                {
-                  "name": "Value",
-                  "value": "%!data%",
-                  "type": "object"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
-              "modifiers": []
-            }
-          ],
+          "actions": [],
           "intent": null,
           "guidance": null,
           "level": "high",
@@ -152,7 +109,13 @@
             {
               "module": "builder",
               "action": "actions",
-              "parameters": [],
+              "parameters": [
+                {
+                  "name": "Include",
+                  "value": "%planStep.actions%",
+                  "type": "list<string>"
+                }
+              ],
               "defaults": null,
               "modifiers": []
             },
@@ -397,7 +360,7 @@
         },
         {
           "index": 6,
-          "text": "set %__userMsg__% = \"## Action Detail\\n\\n%actionDetails%\\n\\n## Step\\n\\nSTEP TEXT (the exact source line to compile — values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):\\n--- BEGIN STEP TEXT ---\\n%step.Text%\\n--- END STEP TEXT ---\\n\\nActions involved (planner's set — compiler decides chain order and shape from the action examples):\\n%planStep.actions%\\n\\nProduce the actions for this step.\", type=string",
+          "text": "set %__userMsg__% = \"## Action Detail\\n\\n%actionDetails%\\n\\n## Step\\n\\nSTEP TEXT (the exact source line to compile \u2014 values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):\\n--- BEGIN STEP TEXT ---\\n%step.Text%\\n--- END STEP TEXT ---\\n\\nActions involved (planner's set \u2014 compiler decides chain order and shape from the action examples):\\n%planStep.actions%\\n\\nProduce the actions for this step.\", type=string",
           "lineNumber": 21,
           "indent": 0,
           "comment": null,
@@ -413,8 +376,8 @@
                 },
                 {
                   "name": "Value",
-                  "value": "## Action Detail\n\n%actionDetails%\n\n## Step\n\nSTEP TEXT (the exact source line to compile — values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):\n--- BEGIN STEP TEXT ---\n%step.Text%\n--- END STEP TEXT ---\n\nActions involved (planner's set — compiler decides chain order and shape from the action examples):\n%planStep.actions%\n\nProduce the actions for this step.",
-                  "type": "object"
+                  "value": "## Action Detail\n\n%actionDetails%\n\n## Step\n\nSTEP TEXT (the exact source line to compile \u2014 values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):\n--- BEGIN STEP TEXT ---\n%step.Text%\n--- END STEP TEXT ---\n\nActions involved (planner's set \u2014 compiler decides chain order and shape from the action examples):\n%planStep.actions%\n\nProduce the actions for this step.",
+                  "type": "string"
                 },
                 {
                   "name": "Type",
@@ -740,7 +703,7 @@
                 {
                   "name": "Right",
                   "value": true,
-                  "type": "object"
+                  "type": "bool"
                 }
               ],
               "defaults": [
@@ -1300,7 +1263,7 @@
         },
         {
           "index": 5,
-          "text": "write out \"  Step %step.Index% missing-actions — expanding set\"",
+          "text": "write out \"  Step %step.Index% missing-actions \u2014 expanding set\"",
           "lineNumber": 53,
           "indent": 0,
           "comment": null,
@@ -1311,7 +1274,7 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  Step %step.Index% missing-actions — expanding set",
+                  "value": "  Step %step.Index% missing-actions \u2014 expanding set",
                   "type": "tstring"
                 }
               ],
@@ -1366,7 +1329,7 @@
                   "value": [
                     {
                       "Role": "user",
-                      "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (actions, errors, warnings) for this step only."
+                      "Content": "Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (actions, errors, warnings) for this step only."
                     }
                   ],
                   "type": "list`1"
@@ -1565,7 +1528,7 @@
         },
         {
           "index": 3,
-          "text": "write out \"  Step %step.Index% validation error — retrying: %!error.Message%\"",
+          "text": "write out \"  Step %step.Index% validation error \u2014 retrying: %!error.Message%\"",
           "lineNumber": 63,
           "indent": 0,
           "comment": null,
@@ -1576,7 +1539,7 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  Step %step.Index% validation error — retrying: %!error.Message%",
+                  "value": "  Step %step.Index% validation error \u2014 retrying: %!error.Message%",
                   "type": "tstring"
                 }
               ],
@@ -1694,10 +1657,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %compileResult.Cached% is true, output.write Data=\"  [≡] %step.Text%\",",
+          "text": "if %compileResult.Cached% is true, output.write Data=\"  [\u2261] %step.Text%\",",
           "lineNumber": 73,
           "indent": 0,
-          "comment": "One line per step. [≡] for cache hits, [✓] for fresh.",
+          "comment": "One line per step. [\u2261] for cache hits, [\u2713] for fresh.",
           "actions": [
             {
               "module": "condition",
@@ -1734,7 +1697,7 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  [≡] %step.Text%",
+                  "value": "  [\u2261] %step.Text%",
                   "type": "object"
                 }
               ],
@@ -1752,7 +1715,7 @@
         },
         {
           "index": 1,
-          "text": "if %compileResult.Cached% is not true, output.write Data=\"  [✓] %step.Text%\",",
+          "text": "if %compileResult.Cached% is not true, output.write Data=\"  [\u2713] %step.Text%\",",
           "lineNumber": 74,
           "indent": 0,
           "comment": null,
@@ -1764,7 +1727,7 @@
                 {
                   "name": "Left",
                   "value": "%compileResult.Cached%",
-                  "type": "object"
+                  "type": "bool"
                 },
                 {
                   "name": "Operator",
@@ -1792,8 +1755,8 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  [✓] %step.Text%,",
-                  "type": "tstring"
+                  "value": "  [\u2713] %step.Text%",
+                  "type": "object"
                 }
               ],
               "defaults": null,

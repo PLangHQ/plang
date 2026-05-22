@@ -62,7 +62,7 @@
             {
               "name": "Value",
               "value": "plang",
-              "type": "object"
+              "type": "string"
             }
           ],
           "defaults": [
@@ -101,8 +101,8 @@
             },
             {
               "name": "Value",
-              "value": "%\u0027greeting% %name%\u0027%",
-              "type": "object"
+              "value": "\u0027%greeting% %name%\u0027",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -137,7 +137,7 @@
             {
               "name": "Data",
               "value": "%message%",
-              "type": "tstring"
+              "type": "object"
             }
           ],
           "defaults": null,
