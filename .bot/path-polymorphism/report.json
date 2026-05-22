@@ -431,6 +431,58 @@
         "health": "green",
         "notes": "All 8 codeanalyzer v1 findings addressed. C# 2881/2881 pass (+6 new tests). PLang 202 pass / 0 fail / 1 pre-existing stale (ContextVars2) \u2014 matches baseline, no regressions. Build clean."
       }
+    },
+    {
+      "id": "08808a65-6f2a-4673-b759-0583b5391e60",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-22T13:48:00Z",
+      "timestamp_end": "2026-05-22T14:05:00Z",
+      "intent": "Re-review path-polymorphism after coder v3 addressed codeanalyzer v1 findings F1-F8.",
+      "before": {
+        "assumptions": "Coder v3 (commit eb85fcbd) claims all 8 v1 findings addressed; build clean, 2881 C# / 202 plang pass. F1 (lift option verbs to base), F3 (async truthiness pipeline + IBooleanResolvable), F4 (As<T> InvokeResolve catch) are the structural ones \u2014 verify they hold and ripple correctly.",
+        "risk": "F3 turned the whole condition/assert pipeline async \u2014 wide ripple. file.exists became an identity passthrough; need to check it did not silently drop the authorization gate the old ExistsPathAsync carried."
+      },
+      "plan": ".bot/path-polymorphism/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/path-polymorphism/codeanalyzer/v2/plan.md",
+            ".bot/path-polymorphism/codeanalyzer/v2/report.md",
+            ".bot/path-polymorphism/codeanalyzer/v2/verdict.json",
+            ".bot/path-polymorphism/codeanalyzer/summary.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Re-reviewed coder v3 (eb85fcbd) against v1 F1-F8. Verified each fix by reading every changed production file, tree-wide grep for residual downcasts, and tracing the F3 async ripple. All eight genuinely fixed."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/file/exists.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/http/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "N1 (Medium): F3 refactor turned file.exists into an identity passthrough; old ExistsPathAsync gated on Read verb, new FilePath.AsBooleanAsync deliberately skips AuthGate. Out-of-root file-existence probing is now ungated, and asymmetric vs HttpPath.AsBooleanAsync which authorizes. Needs an explicit decision."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/this.cs",
+            "PLang/app/modules/assert/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "N2 (Low): path.Equals/GetHashCode still hard-code OrdinalIgnoreCase, same drift F5 fixed in Relative. N3 (Low): assert.ResolveTruthy duplicates the IBooleanResolvable dispatch instead of reusing Data.ToBooleanAsync()."
+        }
+      ],
+      "after": {
+        "status": "NEEDS WORK \u2014 verdict FAIL",
+        "health": "Build clean (0 err). C# 2881/2881 pass. plang 201/203 pass (1 fail = external httpbin.org 502/503 outage, not code; 1 stale pre-existing).",
+        "notes": "F1-F8 all genuinely fixed. One substantive new finding (N1 \u2014 silently-dropped file.exists auth gate) + two low (N2, N3). Next: coder addresses N1."
+      }
     }
   ]
 }
