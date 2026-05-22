@@ -1,0 +1,290 @@
+{
+  "name": "Validate",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %compileResult.errors% is not empty, throw error \u0027Step %step.Index% (%step.Text%): %compileResult.errors%\u0027 key=\u0022GoalBug\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%compileResult.errors%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "isempty",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "Negate",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "Step %step.Index% (%step.Text%): %compileResult.errors%",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "GoalBug",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "if %compileResult.actions% is empty, throw error \u0027Step %step.Index% (%step.Text%) has no actions.\u0027 key=\u0022GoalBug\u0022",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%compileResult.actions%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "isempty",
+              "type": "operator"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "Step %step.Index% (%step.Text%) has no actions.",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "GoalBug",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "foreach %compileResult.actions%, call ValidateAction __vAct__=%item%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%compileResult.actions%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ValidateAction",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "__vAct__",
+                    "value": "%item%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/system/builder/BuildStep/.build/validate.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "ValidateAction",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "if %__vAct__.errors% is not empty, throw error \u0027Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%\u0027 key=\u0022GoalBug\u0022",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "condition",
+              "action": "if",
+              "parameters": [
+                {
+                  "name": "Left",
+                  "value": "%__vAct__.errors%",
+                  "type": "object"
+                },
+                {
+                  "name": "Operator",
+                  "value": "isempty",
+                  "type": "operator"
+                },
+                {
+                  "name": "Right",
+                  "value": false,
+                  "type": "bool"
+                },
+                {
+                  "name": "Negate",
+                  "value": true,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "error",
+              "action": "throw",
+              "parameters": [
+                {
+                  "name": "Message",
+                  "value": "Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%",
+                  "type": "string"
+                },
+                {
+                  "name": "Key",
+                  "value": "GoalBug",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "statuscode",
+                  "value": 500,
+                  "type": "int"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/builder/BuildStep/Validate.goal",
+      "prPath": "/system/builder/BuildStep/.build/validate.pr",
+      "hash": "5af414658718072be3b593226d6656fd875199970fe6549978bf0caa30dbbb09",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/system/builder/BuildStep/Validate.goal",
+  "prPath": "/system/builder/BuildStep/.build/validate.pr",
+  "hash": "b7a5024f0b9742b5180c4760826a7d0c5398880aac431629f2a7b8f8e2d6c672",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null
+}
