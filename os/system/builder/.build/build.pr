@@ -6,7 +6,7 @@
     {
       "index": 0,
       "text": "set default %path% = \"/\"",
-      "lineNumber": 10,
+      "lineNumber": 6,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -17,12 +17,12 @@
             {
               "name": "Name",
               "value": "%path%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "/",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "AsDefault",
@@ -56,12 +56,12 @@
             {
               "name": "Name",
               "value": "%!build.cache%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": true,
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "AsDefault",
@@ -83,7 +83,7 @@
     },
     {
       "index": 2,
-      "text": "set %traceGoals% = []",
+      "text": "set default %!build.summary% = true",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -94,13 +94,18 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%traceGoals%",
-              "type": "string"
+              "value": "%!build.summary%",
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": [],
-              "type": "json"
+              "value": true,
+              "type": "bool"
+            },
+            {
+              "name": "AsDefault",
+              "value": true,
+              "type": "bool"
             }
           ],
           "defaults": null,
@@ -108,17 +113,57 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Set default for %!build.summary% to true using variable.set with AsDefault=true.",
+      "level": "high",
+      "confidence": 95,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "write out \"Building path: %path%\"",
+      "text": "set %traceGoals% = []",
       "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%traceGoals%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": [],
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Initialize %traceGoals% to an empty JSON array. Use variable.set with Value type json.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "write out \"Building path: %path%\" channel=builder",
+      "lineNumber": 10,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -145,9 +190,9 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "builder.load, write to %app%",
-      "lineNumber": 10,
+      "lineNumber": 11,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -157,7 +202,7 @@
           "parameters": [
             {
               "name": "Path",
-              "value": "%path%",
+              "value": ".",
               "type": "string"
             }
           ],
@@ -190,17 +235,17 @@
         }
       ],
       "intent": null,
-      "guidance": "Load app-level build context from the directory in %path%, then store the returned object into %app% via variable.set.",
+      "guidance": "Load app build context from %path% using builder.load, then assign result to %app% via variable.set.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "builder.goals path=%path%, write to %goals%",
-      "lineNumber": 11,
+      "lineNumber": 12,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -243,17 +288,17 @@
         }
       ],
       "intent": null,
-      "guidance": "Discover/load all goal files from %path% into %goals% by calling builder.goals and assigning its output to %goals%.",
+      "guidance": "Load goals from %path% using builder.goals, then assign to %goals% via variable.set.",
       "level": "high",
-      "confidence": 92,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 6,
-      "text": "write out \"Found %goals.Count% goals\"",
-      "lineNumber": 12,
+      "index": 7,
+      "text": "write out \"Found %goals.Count% goals\" channel=builder",
+      "lineNumber": 13,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -272,17 +317,17 @@
         }
       ],
       "intent": null,
-      "guidance": "Write a message to output including the goal count. %goals.Count% is used as a runtime expression inside the tstring.",
-      "level": "high",
-      "confidence": 90,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 7,
-      "text": "foreach %goals%, call BuildGoal, goal=%item%",
-      "lineNumber": 13,
+      "index": 8,
+      "text": "foreach %goals%, call BuildGoal goal=%item%",
+      "lineNumber": 14,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -294,16 +339,6 @@
               "name": "Collection",
               "value": "%goals%",
               "type": "object"
-            },
-            {
-              "name": "ItemName",
-              "value": "item",
-              "type": "variable"
-            },
-            {
-              "name": "KeyName",
-              "value": "key",
-              "type": "variable"
             }
           ],
           "defaults": null,
@@ -322,7 +357,7 @@
                   {
                     "name": "goal",
                     "value": "%item%",
-                    "type": "object"
+                    "type": "string"
                   }
                 ],
                 "prPath": null
@@ -335,17 +370,17 @@
         }
       ],
       "intent": null,
-      "guidance": "Iterate over %goals% and for each item call the BuildGoal goal, binding the loop item to the parameter name 'item' as %goal%.",
-      "level": "medium",
-      "confidence": 70,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
-      "lineNumber": 14,
+      "lineNumber": 15,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -369,17 +404,17 @@
         }
       ],
       "intent": null,
-      "guidance": "Save the %traceGoals% value to the manifest.json file under /.build/traces/%!trace.id%/.",
+      "guidance": "Save %traceGoals% to the specified manifest.json path using file.save.",
       "level": "high",
-      "confidence": 88,
+      "confidence": 85,
       "formal": null,
       "source": null,
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "builder.appSave",
-      "lineNumber": 15,
+      "lineNumber": 16,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -404,8 +439,8 @@
   "visibility": 1,
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "9b136eceaf1ab5d6275975d010f23e2d5ffa4c5eed21f200b673242f1a6b3480",
-  "builderVersion": "0.2.2",
+  "hash": "229d6bb2c3cfca4b8e2236e99ab8bf4130602c30f7084a61169843b8c3c3d7da",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

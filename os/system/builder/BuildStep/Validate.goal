@@ -1,0 +1,10 @@
+Validate
+/ Check compiler response for response-level and action-level errors.
+
+- if %compileResult.errors% is not empty, throw error 'Step %step.Index% (%step.Text%): %compileResult.errors%' key="GoalBug"
+- if %compileResult.actions% is empty, throw error 'Step %step.Index% (%step.Text%) has no actions.' key="GoalBug"
+- foreach %compileResult.actions%, call ValidateAction __vAct__=%item%
+
+
+ValidateAction
+- if %__vAct__.errors% is not empty, throw error 'Action %__vAct__.module%.%__vAct__.action% failed for step %step.Index% (%step.Text%): %__vAct__.errors%' key="GoalBug"

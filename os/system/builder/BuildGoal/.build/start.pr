@@ -1,0 +1,1104 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "write out \"Building goal: %goal.Name%\" channel=builder",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Building goal: %goal.Name%",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %buildStart% = %Now.Ticks%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%buildStart%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%Now.Ticks%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Capture build start timestamp ticks into %buildStart%.",
+      "level": "high",
+      "confidence": 95,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"plan\": null, \"stepPasses\": [], \"subGoals\": [], \"durationMs\": 0}, type=json",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%trace%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "id": "%!trace.id%",
+                "timestamp": "%Now%",
+                "goal": "%goal%",
+                "plan": null,
+                "stepPasses": [],
+                "subGoals": [],
+                "durationMs": 0
+              },
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Initialize %trace% as a JSON object with runtime substitutions; must use type=json for the inline object.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "call Plan, on error call HandleBuildFailure",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Plan",
+                "parallel": false,
+                "parameters": null,
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "HandleBuildFailure",
+                            "parameters": null
+                          },
+                          "type": "goal.call"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": "list<action>"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
+        }
+      ],
+      "intent": null,
+      "guidance": "Call Plan goal; on error, run HandleBuildFailure goal as recovery chain.",
+      "level": "high",
+      "confidence": 92,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "set %trace.plan% = %plan%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%trace.plan%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%plan%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Store the produced plan into %trace.plan% (trace is JSON; assignment is via variable.set).",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%",
+      "lineNumber": 11,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%plan.steps%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "BuildStep/Start",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "planStep",
+                    "value": "%item%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "set %parentGoal% = %goal%",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%parentGoal%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%goal%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set %parentGoal% to the current %goal% reference.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "loop",
+          "action": "foreach",
+          "parameters": [
+            {
+              "name": "Collection",
+              "value": "%parentGoal.Goals%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "BuildSubGoal",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "subGoal",
+                    "value": "%item%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "set %goal% = %parentGoal%",
+      "lineNumber": 15,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goal%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%parentGoal%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Update %goal% to the modified %parentGoal%.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
+      "lineNumber": 17,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "subtract",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%Now.Ticks%",
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": "%buildStart%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%elapsedTicks%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Compute elapsed ticks = Now.Ticks - buildStart into %elapsedTicks%.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
+      "lineNumber": 18,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "math",
+          "action": "divide",
+          "parameters": [
+            {
+              "name": "A",
+              "value": "%elapsedTicks%",
+              "type": "object"
+            },
+            {
+              "name": "B",
+              "value": 10000,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%elapsedMs%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Compute elapsed ms = elapsedTicks / 10000 into %elapsedMs%.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "set %trace.durationMs% = %elapsedMs%",
+      "lineNumber": 19,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%trace.durationMs%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%elapsedMs%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Set trace.durationMs to computed elapsed ms.",
+      "level": "high",
+      "confidence": 85,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
+      "lineNumber": 21,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": {
+                "rawPath": "/.build/traces/%!trace.id%/%goal.Name%.json"
+              },
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "%trace%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Save %trace% JSON to the specified file path.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "add %goal.Name% to %traceGoals%",
+      "lineNumber": 22,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "list",
+          "action": "add",
+          "parameters": [
+            {
+              "name": "ListName",
+              "value": "%traceGoals%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%goal.Name%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "atindex",
+              "value": -1,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Append the goal name to %traceGoals% list.",
+      "level": "high",
+      "confidence": 88,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "builder.goalsSave Goal=%goal%",
+      "lineNumber": 23,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "builder",
+          "action": "goalsSave",
+          "parameters": [
+            {
+              "name": "Goal",
+              "value": "%goal%",
+              "type": "goal"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Persist built goal(s) using builder.goalsSave for the current %goal%.",
+      "level": "high",
+      "confidence": 93,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "BuildSubGoal",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "set %goal% = %subGoal%",
+          "lineNumber": 29,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%goal%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%subGoal%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Assign the incoming %subGoal% into %goal% so later steps can reference %goal.Name%.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "write out \"  Building sub-goal: %goal.Name%\" channel=builder",
+          "lineNumber": 30,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "  Building sub-goal: %goal.Name%",
+                  "type": "tstring"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "call Plan, on error call HandleBuildFailure",
+          "lineNumber": 31,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "Plan",
+                    "parallel": false,
+                    "parameters": null,
+                    "prPath": null
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": [
+                {
+                  "module": "error",
+                  "action": "handle",
+                  "parameters": [
+                    {
+                      "name": "Actions",
+                      "value": [
+                        {
+                          "module": "goal",
+                          "action": "call",
+                          "parameters": [
+                            {
+                              "name": "GoalName",
+                              "value": {
+                                "name": "HandleBuildFailure",
+                                "parameters": null
+                              },
+                              "type": "goal.call"
+                            }
+                          ]
+                        }
+                      ],
+                      "type": "list<action>"
+                    }
+                  ],
+                  "defaults": null,
+                  "modifiers": []
+                }
+              ]
+            }
+          ],
+          "intent": null,
+          "guidance": "Call Plan to produce %plan% (or its equivalent). If it errors, recover by calling HandleBuildFailure.",
+          "level": "high",
+          "confidence": 85,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%",
+          "lineNumber": 32,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "loop",
+              "action": "foreach",
+              "parameters": [
+                {
+                  "name": "Collection",
+                  "value": "%plan.steps%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "goal",
+              "action": "call",
+              "parameters": [
+                {
+                  "name": "GoalName",
+                  "value": {
+                    "name": "BuildStep/Start",
+                    "parallel": false,
+                    "parameters": [
+                      {
+                        "name": "planStep",
+                        "value": "%item%",
+                        "type": "string"
+                      }
+                    ],
+                    "prPath": null
+                  },
+                  "type": "goal.call"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 4,
+          "text": "add {goal: %goal.Name%, plan: %plan%} to %trace.subGoals%",
+          "lineNumber": 33,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "list",
+              "action": "add",
+              "parameters": [
+                {
+                  "name": "ListName",
+                  "value": "%trace.subGoals%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": {
+                    "goal": {
+                      "name": "%goal.Name%"
+                    },
+                    "plan": "%plan%"
+                  },
+                  "type": "jsonobject"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "atindex",
+                  "value": -1,
+                  "type": "int"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "Append a trace entry object containing the sub-goal name and the plan into %trace.subGoals%.",
+          "level": "medium",
+          "confidence": 60,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/builder/BuildGoal/Start.goal",
+      "prPath": "/system/builder/BuildGoal/.build/start.pr",
+      "hash": "d225b56fa7b01f1e112297050e755da6e253628b0a6e265efb30bcce331bd729",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "HandleBuildFailure",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \"  Build error in %goal.Name%: %!error.Message%\" channel=builder",
+          "lineNumber": 39,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "  Build error in %goal.Name%: %!error.Message%",
+                  "type": "tstring"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}, type=json",
+          "lineNumber": 40,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%trace.buildError%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": {
+                    "key": "%!error.Key%",
+                    "message": "%!error.Message%",
+                    "goal": "%goal.Name%"
+                  },
+                  "type": "jsonobject"
+                },
+                {
+                  "name": "Type",
+                  "value": "json",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
+          "lineNumber": 41,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "file",
+              "action": "save",
+              "parameters": [
+                {
+                  "name": "Path",
+                  "value": "/.build/traces/%!trace.id%/%goal.Name%.json",
+                  "type": "path"
+                },
+                {
+                  "name": "Value",
+                  "value": "%trace%",
+                  "type": "object"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "save the %trace% variable to the specified trace file path.",
+          "level": "high",
+          "confidence": 90,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 3,
+          "text": "throw %!error%",
+          "lineNumber": 42,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "error",
+              "action": "throw",
+              "parameters": [
+                {
+                  "name": "Message",
+                  "value": "%!error%",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "statuscode",
+                  "value": 500,
+                  "type": "int"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": "throw the current error object (%!error%).",
+          "level": "medium",
+          "confidence": 55,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/system/builder/BuildGoal/Start.goal",
+      "prPath": "/system/builder/BuildGoal/.build/start.pr",
+      "hash": "ecc9d691ee52c837cce5e853784e891c5875912ac71fed57e56078f0e929b4f5",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": true,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/system/builder/BuildGoal/Start.goal",
+  "prPath": "/system/builder/BuildGoal/.build/start.pr",
+  "hash": "7b41d3e17bf501814c036edc43d3938f2fd34be66043625cf33584b9bcb87ec6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null
+}

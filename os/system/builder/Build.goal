@@ -1,19 +1,16 @@
 Build
 / Main entry point for the PLang builder
 / Transforms .goal files (natural language) into .pr files (JSON the Runtime executes)
-/ Parameters: %path% - folder to build (default: "/" — project root).
-/   "/" anchors at the user's cwd (PLangFileSystem.RootDirectory), where
-/   the user's .goal files actually live. ".", as a goal-relative path,
-/   would resolve to /system/builder/ — the builder's own tree, not the
-/   user's project.
+/ Parameters: %path% - folder to build (default: ".")
 
 - set default %path% = "/"
 - set default %!build.cache% = true
+- set default %!build.summary% = true
 - set %traceGoals% = []
 - write out "Building path: %path%"
 - builder.load, write to %app%
 - builder.goals path=%path%, write to %goals%
 - write out "Found %goals.Count% goals"
-- foreach %goals%, call BuildGoal, goal=%item%
+- foreach %goals%, call BuildGoal goal=%item%
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
 - builder.appSave

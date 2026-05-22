@@ -1,9 +1,6 @@
 {% if step.Comment %}/ {{ step.Comment }}
-{% endif %}{% if variables and variables.size > 0 %}/* Variables in scope */
-{% for kv in variables %}%{{ kv[0] }}%({{ kv[1] }})
-{% endfor %}/* end variables */
 {% endif %}- {{ step.Text }}
-{% if step.Actions.size > 0 %}  <= actions: [{% for a in step.Actions %}{"module":"{{ a.Module }}","action":"{{ a.ActionName }}"{% if a.Parameters.size > 0 %},"parameters":[{% for p in a.Parameters %}{"name":"{{ p.Name }}","value":"{{ p.Value }}"}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}{% if a.Return %},"return":[{% for r in a.Return %}{"name":"{{ r.Name }}"}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}
+{% if step.Actions.size > 0 %}  <= actions: [{% for a in step.Actions %}{"module":"{{ a.Module }}","action":"{{ a.ActionName }}"{% if a.Parameters.size > 0 %},"parameters":[{% for p in a.Parameters %}{"name":"{{ p.Name }}","value":{{ p.Value | jsonval }}}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}{% if a.Return %},"return":[{% for r in a.Return %}{"name":"{{ r.Name }}"}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}}{% unless forloop.last %},{% endunless %}{% endfor %}]{% endif %}
 {% if step.HasSubSteps %}  <= hasSubSteps: true (runtime handles branching via indent){% endif %}
 {% if stepResult.guidance %}  <= guidance from pass 1: {{ stepResult.guidance }}{% endif %}
 {% if stepResult.validationError %}  <= ⚠️ VALIDATION FAILED: {{ stepResult.validationError }}{% endif %}
