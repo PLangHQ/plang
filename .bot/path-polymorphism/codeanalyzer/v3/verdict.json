@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "v2 findings N1-N3 all genuinely fixed — file.exists auth gate restored (file/http parity), path Equals/GetHashCode use RootComparison, assert truthiness de-duplicated. No new findings. Build clean, C# 2882/2882, plang 203/203/0 stale." }

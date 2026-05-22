@@ -1,6 +1,6 @@
 # codeanalyzer — path-polymorphism
 
-**Version:** v2
+**Version:** v3
 
 ## What this is
 
@@ -12,57 +12,50 @@ risk.
 
 ## What was done
 
-**v1** reviewed the initial branch — verdict NEEDS WORK, 8 findings (F1 High,
-F2–F4 Med, F5–F8 Low). Headline: handlers downcast to the concrete `filepath`
-type (F1) and the base carried file-only semantics broken for `HttpPath` (F2).
+**v1** reviewed the initial branch — NEEDS WORK, 8 findings (F1 High, F2–F4 Med,
+F5–F8 Low).
 
-**v2** (this version) re-reviewed coder v3's response (commit `eb85fcbd`).
-All eight v1 findings are **genuinely fixed** — verified, not suppressed:
+**v2** re-reviewed coder's response to F1–F8 — all eight genuinely fixed.
+NEEDS WORK with three new findings: N1 (Med — `file.exists` lost its auth gate
+as a side effect of the F3 refactor), N2 (Low — `path.Equals`/`GetHashCode`
+case drift), N3 (Low — assert truthiness duplication).
 
-- F1 — option-bearing verbs lifted onto the abstract base; handlers are
-  one-liners; zero `is filepath` downcasts remain tree-wide.
-- F2 — `Exists`/`Size` moved to `FilePath`; base carries only address props.
-- F3 — `IBooleanResolvable` + async condition/assert pipeline; `file.exists`
-  returns `Data<Path>` uniformly.
-- F4 — `As<T>.InvokeResolve` catches a thrown `Resolve`, returns failed `Data`.
-- F5–F8 — `RootComparison` in `Relative`, `OsAbsolutePath` on `app`, attribute
-  doc fixed, `HttpPath.List/Mkdir` route through `AuthGate`.
+**v3** (this version) re-reviewed coder's response to N1–N3 (commit
+`a1c3f9563`). **All three genuinely fixed:**
 
-Build clean (0 errors). C# 2881/2881 pass. plang 201/203 pass — the 1 fail is
-an external `httpbin.org` 502/503 outage (not code); 1 stale is pre-existing.
+- **N1** — `FilePath.AsBooleanAsync` now routes through the gated `ExistsAsync`
+  (was an ungated `File.Exists`). A denied out-of-root probe answers `false`;
+  structurally identical to `HttpPath.AsBooleanAsync` — the per-scheme auth
+  asymmetry is gone. Ingi's recorded decision: gate it. New test
+  `FilePath_AsBooleanAsync_OutOfRoot_DeniedPermission_AnswersFalse` is a real
+  regression guard.
+- **N2** — `path.Equals`/`GetHashCode` switched `OrdinalIgnoreCase` →
+  `RootComparison`, the rule `Relative`/`IsUnder`/`ValidatePath` already share.
+- **N3** — `assert.ResolveTruthy` delegates the `IBooleanResolvable` branch to
+  `Data.ToBooleanAsync()` instead of duplicating the dispatch; the plain-value
+  `IsTruthy` branch (string-`"false"` semantics) stays, deliberately.
 
-**Verdict: NEEDS WORK** — a small one. Three new findings, one substantive:
+Build clean (0 errors). C# 2882/2882. plang 203/203, 0 stale — fully green, no
+external flake this round.
 
-- **N1 (Med)** — the F3 refactor silently dropped `file.exists`'s `Read`
-  authorization gate. Old `ExistsPathAsync` gated; new `file.exists` is a pure
-  identity passthrough and `FilePath.AsBooleanAsync` deliberately skips
-  `AuthGate`. Out-of-root file-existence probing is now ungated. Worse, it's
-  asymmetric: `HttpPath.AsBooleanAsync` *does* authorize. A permission gate
-  changing by side effect needs an explicit, recorded decision.
-- **N2 (Low)** — `path.Equals`/`GetHashCode` still hard-code `OrdinalIgnoreCase`;
-  same drift F5 fixed in `Relative`. Use `RootComparison`.
-- **N3 (Low)** — assert's `ResolveTruthy` re-implements the `IBooleanResolvable`
-  dispatch instead of reusing `Data.ToBooleanAsync()`.
+**Verdict: CLEAN.** No new findings. The path-polymorphism branch is sound.
 
 ## What to do next
 
-Coder addresses N1 (decide: restore the gate, or confirm + document ungated
-file-existence). N2/N3 can ride along. Full detail: `v2/report.md`.
+Run the tester. The branch is ready for behavioral validation.
 
 ## Code example
 
-The F1 fix — the abstract base now carries the *option-bearing* verb surface so
-handlers never downcast:
+The N1 fix — file truthiness now goes through the same gated path as http:
 
 ```csharp
-// types/path/this.Operations.cs — base
-public abstract Task<data.@this> Delete(bool recursive, bool ignoreIfNotFound);
-public Task<data.@this> Delete() => Delete(false, false);   // convenience
-
-// modules/file/delete.cs — handler collapses to a one-liner
-public async Task<data.@this> Run()
+// types/path/file/this.Operations.cs — was an ungated File.Exists probe
+public override async Task<bool> AsBooleanAsync()
 {
-    if (!Path.Success) return Path;          // F4 — typed scheme error, not NRE
-    return await Path.Value!.Delete(Recursive.Value, IgnoreIfNotFound.Value);
+    var existsResult = await ExistsAsync();   // ExistsAsync runs AuthGate(Read)
+    return existsResult.Success && existsResult.Value is true;
 }
 ```
+
+A denied probe → `Success == false` → `false`. Same shape as
+`HttpPath.AsBooleanAsync` — the per-scheme asymmetry v2 flagged is closed.

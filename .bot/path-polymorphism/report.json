@@ -589,6 +589,49 @@
         "health": "green",
         "notes": "Build clean; C# 2882/2882; PLang --test 203/203/0 stale. N1 decision (gate it) confirmed with Ingi."
       }
+    },
+    {
+      "id": "52cfea2f-ed03-4ca6-aa42-2089bda421ce",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-22T17:03:23Z",
+      "timestamp_end": "2026-05-22T17:03:23Z",
+      "intent": "Re-review coder's response to codeanalyzer v2 findings N1-N3 on path-polymorphism.",
+      "before": {
+        "assumptions": "Coder addressed N1-N3 in commit a1c3f9563; v2 verified F1-F8 already fixed.",
+        "risk": "N1 is a permission-gate restoration \u2014 must confirm the gate actually fires and file/http behavior is symmetric, not just that a test passes."
+      },
+      "plan": ".bot/path-polymorphism/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/modules/assert/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified N1 (FilePath.AsBooleanAsync routes through gated ExistsAsync, parity with HttpPath), N2 (Equals/GetHashCode use RootComparison), N3 (assert.ResolveTruthy delegates IBooleanResolvable dispatch to Data.ToBooleanAsync). All three genuinely fixed; deletion test + pass 1b clean; traced the IsInitialized guard in ToBooleanAsync and confirmed no behavioral divergence."
+        },
+        {
+          "paths": [
+            ".bot/path-polymorphism/codeanalyzer/v3/report.md",
+            ".bot/path-polymorphism/codeanalyzer/v3/verdict.json",
+            ".bot/path-polymorphism/codeanalyzer/v3/plan.md",
+            ".bot/path-polymorphism/codeanalyzer/v3/v2_review_summary.md",
+            ".bot/path-polymorphism/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 review output. Verdict CLEAN."
+        }
+      ],
+      "after": {
+        "status": "CLEAN \u2014 N1-N3 all genuinely fixed, no new findings",
+        "health": "Build clean (0 errors); C# 2882/2882; plang 203/203, 0 stale.",
+        "notes": "path-polymorphism branch is sound. Next: tester."
+      }
     }
   ]
 }
