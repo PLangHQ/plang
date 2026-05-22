@@ -1,11 +1,11 @@
 {
   "name": "Start",
-  "description": "Writes the literal text 'hello plang world' to the output channel.",
+  "description": null,
   "comment": null,
   "steps": [
     {
       "index": 0,
-      "text": "write out 'hello plang world'",
+      "text": "write out \u0027hello plang world\u0027",
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
@@ -17,12 +17,7 @@
             {
               "name": "Data",
               "value": "hello plang world",
-              "type": "string"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null,
@@ -30,6 +25,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],

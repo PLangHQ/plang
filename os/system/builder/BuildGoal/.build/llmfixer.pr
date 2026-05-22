@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "write out \"  Planner validation failed: %!error.Message% — retrying...\" channel=builder",
+      "text": "write out \u0022  Planner validation failed: %!error.Message% \u2014 retrying...\u0022",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Data",
-              "value": "  Planner validation failed: %!error.Message% — retrying...",
+              "value": "  Planner validation failed: %!error.Message% \u2014 retrying...",
               "type": "tstring"
             }
           ],
@@ -34,7 +34,7 @@
     },
     {
       "index": 1,
-      "text": "set %fixerMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of `\\\"module.action\\\"` strings from the catalog (e.g. `\\\"variable.set\\\"`, `\\\"file.read\\\"`). `index` is 0-based.\"}], type=json",
+      "text": "set %fixerMessages% = [{\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step\u0027s \u0060actions\u0060 MUST be a non-empty array of \u0060\\\u0022module.action\\\u0022\u0060 strings from the catalog (e.g. \u0060\\\u0022variable.set\\\u0022\u0060, \u0060\\\u0022file.read\\\u0022\u0060). \u0060index\u0060 is 0-based.\u0022}], type=json",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -53,10 +53,10 @@
               "value": [
                 {
                   "Role": "user",
-                  "Content": "Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step's `actions` MUST be a non-empty array of \\\"module.action\\\" strings from the catalog (e.g. \\\"variable.set\\\", \\\"file.read\\\"). `index` is 0-based."
+                  "Content": "Your previous response was rejected: %!error.Message%\n\nReturn the corrected plan. Each step\u0027s \u0060actions\u0060 MUST be a non-empty array of \u0060\u0022module.action\u0022\u0060 strings from the catalog (e.g. \u0060\u0022variable.set\u0022\u0060, \u0060\u0022file.read\u0022\u0060). \u0060index\u0060 is 0-based."
                 }
               ],
-              "type": "jsonarray"
+              "type": "list\u00601"
             },
             {
               "name": "Type",
@@ -96,7 +96,7 @@
             {
               "name": "Messages",
               "value": "%fixerMessages%",
-              "type": "list<llmmessage>"
+              "type": "list\u003Cllmmessage\u003E"
             },
             {
               "name": "Schema",
@@ -112,7 +112,7 @@
                   }
                 ]
               },
-              "type": "jsonobject"
+              "type": "dictionary\u00602"
             },
             {
               "name": "Cache",
@@ -120,9 +120,9 @@
               "type": "bool"
             },
             {
-              "name": "PreviousConversation",
+              "name": "ContinuePreviousConversation",
               "value": "%plan%",
-              "type": "object"
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -187,7 +187,7 @@
   "visibility": 1,
   "path": "/system/builder/BuildGoal/LlmFixer.goal",
   "prPath": "/system/builder/BuildGoal/.build/llmfixer.pr",
-  "hash": "4151ed98a23be97f74f1498ced77ef4b775adb0f6561613f118518cebc9150e9",
+  "hash": "ed35574c3c2de43126ae634db1e0a0537e7e7a8a87d923366a74b7a482d3acd3",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

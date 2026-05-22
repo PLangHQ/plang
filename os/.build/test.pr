@@ -1,6 +1,6 @@
 {
   "name": "Test",
-  "description": "Writes the provided greeting text to the output, preserving the %name% placeholder for runtime substitution.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -9,8 +9,27 @@
       "lineNumber": 2,
       "indent": 0,
       "comment": null,
-      "actions": [],
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "Hello %name%",
+              "type": "tstring"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],

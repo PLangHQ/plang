@@ -17,7 +17,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "Start",
+                "name": "BuildGoal/Start",
                 "parallel": false,
                 "parameters": [
                   {
@@ -26,7 +26,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/system/builder/BuildGoal/.build/start.pr"
+                "prPath": null
               },
               "type": "goal.call"
             }

@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "write out \"Building goal: %goal.Name%\" channel=builder",
+      "text": "write out \u0022Building goal: %goal.Name%\u0022",
       "lineNumber": 4,
       "indent": 0,
       "comment": null,
@@ -74,7 +74,7 @@
     },
     {
       "index": 2,
-      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"plan\": null, \"stepPasses\": [], \"subGoals\": [], \"durationMs\": 0}, type=json",
+      "text": "set %trace% = {\u0022id\u0022: \u0022%!trace.id%\u0022, \u0022timestamp\u0022: \u0022%Now%\u0022, \u0022goal\u0022: %goal%, \u0022plan\u0022: null, \u0022stepPasses\u0022: [], \u0022subGoals\u0022: [], \u0022durationMs\u0022: 0}, type=json",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -99,7 +99,7 @@
                 "subGoals": [],
                 "durationMs": 0
               },
-              "type": "object"
+              "type": "dictionary\u00602"
             },
             {
               "name": "Type",
@@ -141,8 +141,8 @@
               "value": {
                 "name": "Plan",
                 "parallel": false,
-                "parameters": null,
-                "prPath": "/system/builder/BuildGoal/.build/plan.pr"
+                "parameters": [],
+                "prPath": null
               },
               "type": "goal.call"
             }
@@ -164,15 +164,14 @@
                           "name": "GoalName",
                           "value": {
                             "name": "HandleBuildFailure",
-                            "parameters": null,
-                            "prPath": "/system/builder/BuildGoal/.build/start.pr"
+                            "parameters": []
                           },
                           "type": "goal.call"
                         }
                       ]
                     }
                   ],
-                  "type": "list<action>"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
               "defaults": null,
@@ -256,7 +255,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "Start",
+                "name": "BuildStep/Start",
                 "parallel": false,
                 "parameters": [
                   {
@@ -265,7 +264,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/system/builder/BuildStep/.build/start.pr"
+                "prPath": null
               },
               "type": "goal.call"
             }
@@ -358,7 +357,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/system/builder/BuildGoal/.build/start.pr"
+                "prPath": null
               },
               "type": "goal.call"
             }
@@ -573,7 +572,7 @@
     },
     {
       "index": 12,
-      "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
+      "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%goal.Name%.json\u0027",
       "lineNumber": 21,
       "indent": 0,
       "comment": null,
@@ -723,7 +722,7 @@
         },
         {
           "index": 1,
-          "text": "write out \"  Building sub-goal: %goal.Name%\" channel=builder",
+          "text": "write out \u0022  Building sub-goal: %goal.Name%\u0022",
           "lineNumber": 30,
           "indent": 0,
           "comment": null,
@@ -766,8 +765,8 @@
                   "value": {
                     "name": "Plan",
                     "parallel": false,
-                    "parameters": null,
-                    "prPath": "/system/builder/BuildGoal/.build/plan.pr"
+                    "parameters": [],
+                    "prPath": null
                   },
                   "type": "goal.call"
                 }
@@ -789,15 +788,14 @@
                               "name": "GoalName",
                               "value": {
                                 "name": "HandleBuildFailure",
-                                "parameters": null,
-                                "prPath": "/system/builder/BuildGoal/.build/start.pr"
+                                "parameters": []
                               },
                               "type": "goal.call"
                             }
                           ]
                         }
                       ],
-                      "type": "list<action>"
+                      "type": "list\u003Caction\u003E"
                     }
                   ],
                   "defaults": null,
@@ -841,7 +839,7 @@
                 {
                   "name": "GoalName",
                   "value": {
-                    "name": "Start",
+                    "name": "BuildStep/Start",
                     "parallel": false,
                     "parameters": [
                       {
@@ -850,7 +848,7 @@
                         "type": "string"
                       }
                     ],
-                    "prPath": "/system/builder/BuildStep/.build/start.pr"
+                    "prPath": null
                   },
                   "type": "goal.call"
                 }
@@ -886,12 +884,10 @@
                 {
                   "name": "Value",
                   "value": {
-                    "goal": {
-                      "name": "%goal.Name%"
-                    },
+                    "goal": "%goal.Name%",
                     "plan": "%plan%"
                   },
-                  "type": "jsonobject"
+                  "type": "object"
                 }
               ],
               "defaults": [
@@ -917,7 +913,7 @@
       "visibility": 0,
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "d225b56fa7b01f1e112297050e755da6e253628b0a6e265efb30bcce331bd729",
+      "hash": "ad9523b74a1eb5f6244f1566f5cef917543d55f04a6d007f3510855ce76e6359",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -932,7 +928,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \"  Build error in %goal.Name%: %!error.Message%\" channel=builder",
+          "text": "write out \u0022  Build error in %goal.Name%: %!error.Message%\u0022",
           "lineNumber": 39,
           "indent": 0,
           "comment": null,
@@ -961,7 +957,7 @@
         },
         {
           "index": 1,
-          "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}, type=json",
+          "text": "set %trace.buildError% = {\u0022key\u0022: \u0022%!error.Key%\u0022, \u0022message\u0022: \u0022%!error.Message%\u0022, \u0022goal\u0022: \u0022%goal.Name%\u0022}, type=json",
           "lineNumber": 40,
           "indent": 0,
           "comment": null,
@@ -982,7 +978,7 @@
                     "message": "%!error.Message%",
                     "goal": "%goal.Name%"
                   },
-                  "type": "jsonobject"
+                  "type": "dictionary\u00602"
                 },
                 {
                   "name": "Type",
@@ -1010,7 +1006,7 @@
         },
         {
           "index": 2,
-          "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
+          "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%goal.Name%.json\u0027",
           "lineNumber": 41,
           "indent": 0,
           "comment": null,
@@ -1082,7 +1078,7 @@
       "visibility": 0,
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "ecc9d691ee52c837cce5e853784e891c5875912ac71fed57e56078f0e929b4f5",
+      "hash": "ff3a649935b37cf06146fb06f3c35c2c91610037e087533b0cbab8ccdec57432",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -1094,7 +1090,7 @@
   "visibility": 1,
   "path": "/system/builder/BuildGoal/Start.goal",
   "prPath": "/system/builder/BuildGoal/.build/start.pr",
-  "hash": "7b41d3e17bf501814c036edc43d3938f2fd34be66043625cf33584b9bcb87ec6",
+  "hash": "f5e79879a5beecc291058ca6962bf3dca85282db11974e32dba4c49bcfa8dc18",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

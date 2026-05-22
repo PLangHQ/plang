@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \"/\"",
+      "text": "set default %path% = \u0022/\u0022",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -22,7 +22,7 @@
             {
               "name": "Value",
               "value": "/",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "AsDefault",
@@ -55,12 +55,12 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%!build.cache%",
+              "value": "default",
               "type": "variable"
             },
             {
               "name": "Value",
-              "value": true,
+              "value": "%!build.cache%",
               "type": "object"
             },
             {
@@ -94,13 +94,13 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%!build.summary%",
+              "value": "default",
               "type": "variable"
             },
             {
               "name": "Value",
-              "value": true,
-              "type": "bool"
+              "value": "%!build.summary%",
+              "type": "object"
             },
             {
               "name": "AsDefault",
@@ -162,7 +162,7 @@
     },
     {
       "index": 4,
-      "text": "write out \"Building path: %path%\" channel=builder",
+      "text": "write out \u0022Building path: %path%\u0022",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -251,39 +251,33 @@
       "actions": [
         {
           "module": "builder",
-          "action": "goals",
+          "action": "goalsSave",
           "parameters": [
             {
-              "name": "Path",
-              "value": "%path%",
-              "type": "string"
+              "name": "Goal",
+              "value": {
+                "name": "%goals%",
+                "description": "",
+                "comment": "",
+                "steps": [],
+                "goals": [],
+                "visibility": 0,
+                "path": null,
+                "prPath": null,
+                "hash": null,
+                "builderVersion": null,
+                "isSetup": false,
+                "isEvent": false,
+                "isSystem": false,
+                "isTest": false,
+                "inputParameters": {
+                  "path": "%path%"
+                }
+              },
+              "type": "this"
             }
           ],
           "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%goals%",
-              "type": "variable"
-            },
-            {
-              "name": "Value",
-              "value": "%!data%",
-              "type": "object"
-            }
-          ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
           "modifiers": []
         }
       ],
@@ -297,7 +291,7 @@
     },
     {
       "index": 7,
-      "text": "write out \"Found %goals.Count% goals\" channel=builder",
+      "text": "write out \u0022Found %goals.Count% goals\u0022",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
@@ -360,7 +354,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/system/builder/.build/buildgoal.pr"
+                "prPath": null
               },
               "type": "goal.call"
             }
@@ -379,7 +373,7 @@
     },
     {
       "index": 9,
-      "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+      "text": "save %traceGoals% to file \u0027/.build/traces/%!trace.id%/manifest.json\u0027",
       "lineNumber": 15,
       "indent": 0,
       "comment": null,
@@ -439,7 +433,7 @@
   "visibility": 1,
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "229d6bb2c3cfca4b8e2236e99ab8bf4130602c30f7084a61169843b8c3c3d7da",
+  "hash": "3010e8e25e8cb4b25b74d39bb5bf7c64b802a34747d3c01fc0702366f5fe35c5",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
