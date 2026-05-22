@@ -42,10 +42,34 @@ Everything else auto-merged cleanly: `data/this.cs`, `data/JsonString.cs`,
 `errors/Error.cs`, `Generators/Emission/Action/this.cs`, the `os/system/builder/`
 tree restructure.
 
-**Tests:** C# **2881 / 2881 pass**. PLang `--test` **202 pass / 0 fail / 1
-stale** — identical to the v3 baseline, no regressions. Build clean (0 errors).
-(9 `Modules/Http/*` tests hit `httpbin.org` and are flaky — they failed
-transiently on one run, passed on re-run. Not a merge regression.)
+## Second merge — runtime2 builder fixes
+
+After the first merge the builder turned out to be bricked: runtime2's last
+self-build had saved a corrupted `build.pr` (step 6 bound `builder.goals` →
+`builder.goalsSave`, the classic bad-self-build trap). Reported to Ingi, who
+fixed it properly on runtime2 (`67151df00` build.pr step 6, `390d83961` new
+`builder.validateStepActions` validator to stop the corruption recurring,
+`1a2afecaf` prPath on static `goal.call`). Pulled those in.
+
+**One conflict** — `Default.cs` `ResolveGoalCallPaths`: runtime2 refactored the
+inline goal.call-resolution into a shared `ResolveGoalCallsInAction` (resolves
+via `GetGoalAsync`) applied to both actions and modifiers. Took runtime2's
+version. runtime2's new `builder.goals` path resolution also used `app.FileSystem`
+and `app.filesystem.path` — both removed/renamed on this branch — adapted to
+`app.AbsolutePath` and `path.RootComparison`.
+
+**Stale test fixed** — `ContextVars2.test.goal` lost its `%!fileSystem%`
+assertion in Stage 8 but the `.pr` still carried it (hash mismatch → stale).
+Corrected the `.pr` directly: dropped the step, renumbered, recomputed
+`hash = SHA256(Name + step texts)`. Commit `b847167df`.
+
+**Tests:** C# **2881 / 2881 pass**. PLang `--test` **203 pass / 0 fail / 0
+stale** (was 202 / 1 stale — the stale test is now green). Build clean.
+
+**Builder still not 100%** (runtime2's in-progress work, not the merge): the
+`--build={"files":[...]}` filter doesn't populate `Builder.Files` so it builds
+all goals; and it fails to compile some goals (`TestGoalFirstReturnsRecoveryValue`
+step 1 → "no actions"). Both are builder-quality bugs Ingi owns on runtime2.
 
 ## Code example — the two updated generator tests
 
@@ -65,10 +89,8 @@ await Assert.That(generated).Contains("__runResult = await Run();");
 
 ## Carry-forward
 
-- The 1 stale plang test (`ContextVars2.test.goal`) is pre-existing and
-  documented in v3 — its `%!fileSystem%` assertion was removed with the Stage 8
-  wrapper deletion. Unblocked now that the builder is fixed; rebuilding its `.pr`
-  is follow-up work, not part of this merge.
 - codeanalyzer v2 verdict was **NEEDS WORK** — not addressed in v4 (v4 is the
   merge only). Read `.bot/path-polymorphism/codeanalyzer/v2/report.md` for the
   v2 findings before the next coder pass.
+- The builder's `files` filter and the `TestGoalFirstReturnsRecoveryValue`
+  compile failure remain open on runtime2 — not this branch's scope.
