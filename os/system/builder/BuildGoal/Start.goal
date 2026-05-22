@@ -1,0 +1,42 @@
+Start
+/ Build one .goal file: planner pass, per-step compile, recurse sub-goals.
+
+- write out "Building goal: %goal.Name%"
+- set %buildStart% = %Now.Ticks%
+- set %trace% = {"id": "%!trace.id%", "timestamp": "%Now%", "goal": %goal%, "plan": null, "stepPasses": [], "subGoals": [], "durationMs": 0}, type=json
+
+- call Plan, on error call HandleBuildFailure
+- set %trace.plan% = %plan%
+
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%
+
+- set %parentGoal% = %goal%
+- foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
+- set %goal% = %parentGoal%
+
+- math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%
+- math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%
+- set %trace.durationMs% = %elapsedMs%
+
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- add %goal.Name% to %traceGoals%
+- builder.goalsSave Goal=%goal%
+
+
+BuildSubGoal
+/ Sub-goal recursion — same Plan + per-step pipeline, attach to parent trace.
+
+- set %goal% = %subGoal%
+- write out "  Building sub-goal: %goal.Name%"
+- call Plan, on error call HandleBuildFailure
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%
+- add {goal: %goal.Name%, plan: %plan%} to %trace.subGoals%
+
+
+HandleBuildFailure
+/ Capture error onto trace, save, rethrow. No null-pass inference.
+
+- write out "  Build error in %goal.Name%: %!error.Message%"
+- set %trace.buildError% = {"key": "%!error.Key%", "message": "%!error.Message%", "goal": "%goal.Name%"}, type=json
+- save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'
+- throw %!error%

@@ -1,8 +1,9 @@
 # Coder — path-polymorphism
 
 ## Version
-v3 (v1 = stages 1–7; v2 = lowercase aliases + Stage 8; v3 = codeanalyzer v1
-review response). Single branch.
+
+v4 (v1 = stages 1–7; v2 = lowercase aliases + Stage 8; v3 = codeanalyzer v1
+review response; v4 = merge `origin/runtime2`). Single branch.
 
 ## What this is
 
@@ -10,85 +11,64 @@ PLang's `path` is scheme-polymorphic: an abstract `path` base with `FilePath` /
 `HttpPath` subclasses, a per-App scheme registry, file handlers collapsed onto
 `path.X()`, and the old `System.IO.Abstractions` wrapper layer deleted.
 
-v3 addresses the codeanalyzer v1 verdict (**NEEDS WORK**, 8 findings F1–F8) —
-the polymorphism leaked at two seams: handlers downcast to the concrete type,
-and the base class carried file-only semantics that misbehaved for `HttpPath`.
+**v4** merges `origin/runtime2` into the branch. The plang builder was fixed on
+runtime2 (builder v3 rework: `BuildGoal`/`BuildStep` folder split, per-step
+variable types in LLM prompts, path-resolution fixes, JSON-repair stages). The
+branch needed those wins.
 
-## Status — v3 COMPLETE, all 8 findings addressed
+## What was done — v4 (merge)
 
-| # | Finding | Fix |
-|---|---------|-----|
-| F1 | 6/8 file handlers downcast `is filepath fp` | Option-bearing verbs (`Delete(recursive,ignore)`, `List(pattern,recursive)`, `CopyTo(dest,overwrite,subfolders)`, `MoveTo(dest,overwrite)`, `Save`) lifted onto the abstract base. HttpPath implements them, FS-only options as documented no-ops. All 7 handlers are one-liners — no downcast. |
-| F2 | base `path` has file-only `Exists`/`Size` | Moved onto `FilePath`. Base keeps only address/string-derived properties; `path.Stat()` is the cross-scheme liveness query. |
-| F3 | `file.exists` returns `path` for file, `bool` for http; `if X exists` was **always true** | `file.exists` returns `Data<Path>` uniformly. `path` implements `IBooleanResolvable.AsBooleanAsync()` (FilePath: sync FS probe; HttpPath: HTTP HEAD). `Data.ToBooleanAsync()` dispatches to it. Condition pipeline (`Operator`/`IEvaluator`/`Default`/`if`/`elseif`/`compare`) and `assert` `IsTrue`/`IsFalse` made **async** so the path answers its own truthiness. |
-| F4 | unregistered scheme (`s3://`) → exception escapes `Run()` | `Data.As<T>` now catches a thrown `Resolve` (`SchemeNotRegistered`) and returns a failed `Data<T>`; file handlers guard with `if (!Path.Success) return Path;` — the typed error surfaces, no NRE. |
-| F5 | `Relative` hard-codes `OrdinalIgnoreCase` | Uses `RootComparison`. |
-| F6 | base `Authorize` reaches into `file.OsAbsolutePath` | `OsAbsolutePath` moved onto `app.@this`. |
-| F7 | `[PathScheme]` doc promises a bare ctor | Doc corrected to the `Resolve(string,context)` static factory contract. |
-| F8 | `HttpPath.List`/`Mkdir` skip `AuthGate` | Both route through `AuthGate` now. |
+Fast-forwarded local `path-polymorphism` to `origin/path-polymorphism` (picked
+up codeanalyzer v2), then merged `origin/runtime2` (merge-base `e30354a0f`, so
+the full runtime2 builder rework came in).
 
-**Tests:** C# **2881 / 2881 pass** (+6 new). PLang `--test` **202 pass / 0 fail
-/ 1 stale** — identical to baseline, no regressions. Build clean.
+**One conflict** — `PLang/app/modules/builder/code/Default.cs`:
+- runtime2 added a path-resolution fix: a `rootRelative` variable that prefixes
+  `/` so the builder's `file.List` anchors at the user's cwd, not the builder's
+  own `/system/builder/` tree.
+- This branch had renamed `filesystem.path` → `path`.
+- **Resolved** by keeping runtime2's fix and using this branch's type:
+  `Path = data.@this<path>.Ok(path.Resolve(rootRelative, context))`.
 
-## Two design decisions (confirmed with Ingi)
+**One design divergence** — runtime2 commit `8166e753b` re-added a try/catch
+*inside* the generated action handler (around `Run()`), wrapping bare CLR
+exceptions as `ServiceError` with `{module}.{action}: {ExType}: {msg}` context.
+This branch's "Phase 3" made the handler thin (no try/catch; wrapping lives in
+`Call.ExecuteAsync`). **Ingi chose to keep runtime2's wrap** — it strictly
+improves error messages and catches NRE that `Call.ExecuteAsync` deliberately
+excludes. Two stale generator tests were updated to match (see below).
 
-1. **`file.exists` returns `Data<Path>`, not bool.** The `path` object owns the
-   truthiness question. `Data.ToBoolean()` used to return a blind `true` for any
-   non-null object — so `if X exists` (which the builder lowers to
-   `path == true`) was *always true*. Now `path` is `IBooleanResolvable` and
-   `AsBooleanAsync()` does the real probe. Because the http scheme answers with
-   I/O, **the condition-evaluation pipeline went async end to end**
-   (`IEvaluator.Evaluate` → `Task<data.@this>`, `Operator.Evaluate` →
-   `Func<…,Task<bool>>`). `assert.IsTrue/IsFalse` got the same dispatch.
+Everything else auto-merged cleanly: `data/this.cs`, `data/JsonString.cs`,
+`errors/Error.cs`, `Generators/Emission/Action/this.cs`, the `os/system/builder/`
+tree restructure.
 
-2. **F4 guard is handler-level** — `if (!Path.Success) return Path;`. This
-   required a prerequisite fix the codeanalyzer's trace had slightly wrong:
-   `As<path>` *threw* (reflection-invoked `Resolve` raising
-   `SchemeNotRegistered`) rather than returning a failed `Data`. `As<T>` now
-   catches it via `InvokeResolve<T>`, so the handler guard has a failed `Data`
-   to return.
+**Tests:** C# **2881 / 2881 pass**. PLang `--test` **202 pass / 0 fail / 1
+stale** — identical to the v3 baseline, no regressions. Build clean (0 errors).
+(9 `Modules/Http/*` tests hit `httpbin.org` and are flaky — they failed
+transiently on one run, passed on re-run. Not a merge regression.)
 
-## Code example — handler shape, before/after
+## Code example — the two updated generator tests
 
-Before (F1 — downcast on concrete type, http options silently dropped):
+`PLang.Tests/Generator/GeneratorValidationTests.cs` — the Phase-3 thin-handler
+assertions, before/after:
+
 ```csharp
-public async Task<data.@this> Run()
-{
-    if (Source.Value is filepath fp)
-        return await fp.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
-    return await Source.Value!.CopyTo(Destination.Value!);   // options dropped
-}
-```
-After:
-```csharp
-public async Task<data.@this> Run()
-{
-    if (!Source.Success) return Source;            // F4 — typed scheme error
-    if (!Destination.Success) return Destination;
-    return await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
-}
+// BEFORE — asserted the generated handler has NO try block
+await Assert.That(generated.Contains("try {") /* ... */).IsFalse();
+await Assert.That(generated).Contains("var __runResult = await Run();");
+
+// AFTER — asserts runtime2's narrow try/catch wrap, no finally
+await Assert.That(generated).Contains("try { __runResult = await Run(); }");
+await Assert.That(generated.Contains("finally {") /* ... */).IsFalse();
+await Assert.That(generated).Contains("__runResult = await Run();");
 ```
 
-## `if %path% exists` — the F3 mechanism
+## Carry-forward
 
-```
-file.exists report.txt  →  Data<Path>            (no I/O; path stays live)
-condition.if  Left=%!data%(path) Op(==) Right(true)
-  → Operator.Equal  →  await left.ToBooleanAsync()
-  → path is IBooleanResolvable  →  await path.AsBooleanAsync()
-  → FilePath: File.Exists  /  HttpPath: HTTP HEAD
-```
-
-## Not done / follow-ups
-
-- The disabled negative-case PLang tests (`ConditionFileNotExists.test.goal2`,
-  `ConditionFileExists.test.goal2`) were disabled *by* the always-true bug F3
-  fixes. They can be re-enabled once `plang build` is repaired (the pre-existing
-  `builder.app`→`builder.load` staleness — not a path-polymorphism defect). The
-  F3 negative case is covered deterministically in C#
-  (`DefaultEvaluatorTests.IfExists_PathToMissingFile_IsFalse`).
-- 1 PLang stale (`ContextVars2.test.goal`) — pre-existing, documented in v2.
-
-## Branch state
-
-All v3 changes committed and pushed to `path-polymorphism`. Ready for re-review.
+- The 1 stale plang test (`ContextVars2.test.goal`) is pre-existing and
+  documented in v3 — its `%!fileSystem%` assertion was removed with the Stage 8
+  wrapper deletion. Unblocked now that the builder is fixed; rebuilding its `.pr`
+  is follow-up work, not part of this merge.
+- codeanalyzer v2 verdict was **NEEDS WORK** — not addressed in v4 (v4 is the
+  merge only). Read `.bot/path-polymorphism/codeanalyzer/v2/report.md` for the
+  v2 findings before the next coder pass.

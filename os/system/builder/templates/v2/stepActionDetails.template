@@ -1,8 +1,21 @@
-{% for sa in stepResult.Actions %}{% for a in actions %}{% if a.Module == sa.Module and a.ActionName == sa.ActionName %}
+{% comment %}
+v3 action-set: planner emits %planStep.actions% as a flat list of "module.action"
+strings. Render schemas + examples for each unique action, dedup'd. The compiler
+decides chain order, modifier nesting, and recovery placement from the action
+examples themselves — the planner no longer commits to a chain shape.
+{% endcomment %}
+{% assign seen = "" %}
+{% for actName in planStep.actions %}{% assign key = actName | strip %}{% unless seen contains key %}{% assign seen = seen | append: "|" | append: key %}{% assign parts = key | split: "." %}{% assign segModule = parts[0] %}{% assign segAction = parts[1] %}{% for a in actions %}{% if a.Module == segModule and a.ActionName == segAction %}
 ## {{ a.Module }}.{{ a.ActionName }}{% unless a.Cacheable %} [no-cache]{% endunless %}
 
 Parameters:
 {% if a.Parameters.size > 0 %}{% for p in a.Parameters %}  - {{ p.Name }}: {{ p.Value }}
 {% endfor %}{% else %}  (no parameters)
 {% endif %}
-{% endif %}{% endfor %}{% endfor %}
+{% if a.Examples.size > 0 %}Examples:
+{% for ex in a.Examples %}  Step text: `{{ ex.Name }}`
+  ```json
+  {{ ex.Value }}
+  ```
+{% endfor %}{% endif %}
+{% endif %}{% endfor %}{% endunless %}{% endfor %}

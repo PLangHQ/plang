@@ -27,12 +27,12 @@ public sealed partial class @this : modules.IDataWrappable
     [Store, LlmBuilder, Debug, Default]
     [JsonPropertyName("module")]
     [Newtonsoft.Json.JsonProperty("module")]
-    public string Module { get; init; } = "";
+    public string Module { get; set; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     [JsonPropertyName("action")]
     [Newtonsoft.Json.JsonProperty("action")]
-    public string ActionName { get; init; } = "";
+    public string ActionName { get; set; } = "";
 
     [Store, LlmBuilder, Debug, Default]
     public List<global::app.data.@this> Parameters { get; init; } = new();
@@ -265,8 +265,28 @@ public sealed partial class @this : modules.IDataWrappable
         var (handler, error) = context.App!.Modules.GetCodeGenerated(this);
         if (error != null) return (null, error);
         if (handler is not modules.IModifier mod)
+        {
+            // Pinpoint WHERE the misplaced "modifier" lives. Modifier Actions don't
+            // have their own Step propagated from the host (the Actions container only
+            // sets Step on top-level items), so fall back to the live runtime context
+            // for goal/step info.
+            var step = Step ?? context.Step;
+            var goalName = step?.Goal?.Name;
+            var goalPath = step?.Goal?.Path;
+            var stepText = step?.Text;
+            var stepIndex = step?.Index;
+            var loc = (goalName, goalPath, stepText, stepIndex) switch
+            {
+                ({ } g, { } p, { } t, { } i) => $" — in goal {g} ({p}) step [{i}] \"{t}\"",
+                ({ } g, _, { } t, { } i) => $" — in goal {g} step [{i}] \"{t}\"",
+                (_, _, { } t, { } i) => $" — in step [{i}] \"{t}\"",
+                _ => ""
+            };
             return (null, new global::app.errors.ActionError(
-                $"{Module}.{ActionName} is not a modifier", "ModifierError", 400));
+                $"{Module}.{ActionName} is not a modifier (it was placed in a modifiers array but isn't one). " +
+                $"Move it out as a peer action in the step's top-level actions array.{loc}",
+                "ModifierError", 400));
+        }
 
         await handler.ExecuteAsync(this, context);
         return (mod.Wrap(next, context), null);

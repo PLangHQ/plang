@@ -1,0 +1,87 @@
+{
+  "name": "Validate",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "if %plan.steps.Count% is not %goal.Steps.Count%, throw error \u0027Planner returned %plan.steps.Count% step plans but goal has %goal.Steps.Count% steps.\u0027 key=\u0022LlmTransient\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%plan.steps.Count%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "!=",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": "%goal.Steps.Count%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "error",
+          "action": "throw",
+          "parameters": [
+            {
+              "name": "Message",
+              "value": "Planner returned %plan.steps.Count% step plans but goal has %goal.Steps.Count% steps.",
+              "type": "string"
+            },
+            {
+              "name": "Key",
+              "value": "LlmTransient",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/system/builder/BuildGoal/Validate.goal",
+  "prPath": "/system/builder/BuildGoal/.build/validate.pr",
+  "hash": "c38419b7d8530cca4b68e2f03d122c8295a476fccaa9ac720184de9e58ac4112",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false,
+  "inputParameters": null
+}

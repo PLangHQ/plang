@@ -483,6 +483,56 @@
         "health": "Build clean (0 err). C# 2881/2881 pass. plang 201/203 pass (1 fail = external httpbin.org 502/503 outage, not code; 1 stale pre-existing).",
         "notes": "F1-F8 all genuinely fixed. One substantive new finding (N1 \u2014 silently-dropped file.exists auth gate) + two low (N2, N3). Next: coder addresses N1."
       }
+    },
+    {
+      "id": "3ae37ae8-6000-49a3-8d45-a226c0605b83",
+      "bot": "coder",
+      "timestamp_start": "2026-05-22T14:05:30Z",
+      "timestamp_end": "2026-05-22T14:13:00Z",
+      "intent": "Merge origin/runtime2 (fixed plang builder) into path-polymorphism.",
+      "before": {
+        "assumptions": "runtime2 builder fixes are wanted; merge-base is e30354a0f so the whole runtime2 builder rework comes in. v3 baseline: C# 2881 pass, PLang 202 pass / 0 fail / 1 stale.",
+        "risk": "Path rework on this branch (filesystem.path -> path) collides with runtime2's path-resolution changes; runtime2's generator change may contradict this branch's thin-handler invariant."
+      },
+      "plan": ".bot/path-polymorphism/coder/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/builder/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Sole merge conflict. Kept runtime2's rootRelative path-resolution fix, adapted type filesystem.path -> path (this branch's rename)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Generator/GeneratorValidationTests.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "runtime2 commit 8166e753b re-added a try/catch around Run() in the generated handler. Ingi chose to keep it. Updated two stale Phase-3 thin-handler tests: HasNoTryCatchFinally -> WrapsRunInTryCatch (asserts try/catch present, no finally); CallsRunDirectly assertion relaxed to '__runResult = await Run();'."
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs",
+            "PLang/app/data/JsonString.cs",
+            "PLang/app/errors/Error.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "os/system/builder/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Auto-merged cleanly from runtime2 (builder v3 rework, BuildGoal/BuildStep folder split, JsonString repair stages, Error.Details rendering). Verified build clean and tests green."
+        }
+      ],
+      "after": {
+        "status": "Merge complete. Build clean (0 errors). C# 2881/2881 pass. PLang --test 202 pass / 0 fail / 1 stale (pre-existing ContextVars2). Identical to v3 baseline.",
+        "health": "green",
+        "notes": "9 Modules/Http/* tests are flaky (hit httpbin.org) \u2014 failed transiently on one run, passed on re-run. Not a merge regression."
+      }
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "Test",
-  "description": "Sets default %path%, discovers tests under %path% recursively into %tests%, runs them into %results%, then reports %results%.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -40,6 +40,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -87,6 +92,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -129,6 +139,11 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     },
     {
@@ -153,15 +168,20 @@
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/PlangConsole/bin/Debug/net10.0/system/test.goal",
-  "prPath": "/PlangConsole/bin/Debug/net10.0/system/.build/test.pr",
+  "path": "/test.goal",
+  "prPath": "/.build/test.pr",
   "hash": "925df3ab6a65e8b48f5efa755fba3f08ee9b9eee225babc23ab1393e862b5aa3",
-  "builderVersion": null,
+  "builderVersion": "0.2.2",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

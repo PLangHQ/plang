@@ -1,6 +1,111 @@
-# Builder Self-Rebuild Reliability Plan
+# Building the Builder
 
-Self-rebuild of `system/builder` produces inconsistent action+modifier shapes for complex steps — different combination of failures every run (goal-name→CLR-type, error.handle.Key holding a goal name, Path expanded to a record, Data wrapped as `{Value, Key}`, etc.).
+How to rebuild PLang's own builder (`os/system/builder/`) — the part written in PLang that compiles `.goal` files into `.pr`. This is the bootstrap case: PLang building PLang. Get the invocation wrong and the builder either won't run or will silently produce broken `.pr` files that look like LLM hallucinations.
+
+The reliability notes at the bottom of this file describe ongoing work to make the LLM-driven compile more deterministic — read those if you're touching builder prompts or the validator. If you just need to rebuild, the recipe is right here.
+
+## The cardinal rule
+
+**Never hand-edit a builder `.pr` file after a self-rebuild has produced an error.**
+
+If you self-rebuild the builder and notice the output is wrong — an action is mis-bound, a parameter is missing, a `goal.call` got a CLR type name, anything — **scream the error**. Surface it. Make it noisy. The fix belongs in:
+
+- the LLM prompt (`os/system/builder/llm/*.llm`), or
+- the validator (`PLang/app/modules/builder/code/Default.cs:Validate`), or
+- the action catalog / type teaching (`os/system/actions/v2/summary.md`, `PLang/app/data/types.cs`).
+
+**Never** in the `.pr` file. Editing the `.pr` after a bad rebuild masks the bug, lets the same LLM mistake reappear next rebuild, and corrupts the source of truth (the builder produces `.pr` — the `.pr` is downstream of the builder, not a place to compensate for it).
+
+The one exception is the *initial bootstrap* when source `.goal` semantics change faster than the builder can re-derive them — that's documented in the pre-flight audit below and is a one-time hand-patch before the first successful rebuild, not a post-build cleanup.
+
+## The recipe
+
+```bash
+cd os/
+plang '--build={"files":["Build.goal","BuildGoal.goal","BuildStep.goal","ApplyStep.goal","ValidateBuildResponse.goal"]}' build
+```
+
+Two things matter and both are non-obvious:
+
+### 1. `cwd = os/`
+
+Not `os/system/`. Not `os/system/builder/`. Not the repo root. Only `os/`.
+
+The builder's `.pr` files stamp paths like `/system/builder/.build/buildgoal.pr` — those resolve relative to cwd. Only `cd os/` makes those land on the actual files. Run from anywhere else and you get `File not found: /.build/buildgoal.pr` or the build emits short-form paths that break the next run.
+
+`os/.build/app.pr` is the app-root marker (`name: "os"`). All builder pathing assumes that app root.
+
+### 2. File order matters — outer to inner
+
+Pass the explicit ordered list via `--build={"files":[...]}` whenever you rebuild the builder. The order is the call chain, entry first, leaves last:
+
+1. `Build.goal` — builder entry
+2. `BuildGoal.goal` — orchestrator (owns `BuildGoalCore`, `BuildSubGoal`, `ProcessGroup`, `LlmFixer`, `HandleBuildGoalFailure` as inner sub-goals)
+3. `BuildStep.goal` — detail pass
+4. `ApplyStep.goal` — validate + merge
+5. `ValidateBuildResponse.goal` — structural integrity checks
+
+**Why:** during the rebuild the running app uses the *previous* in-memory build pipeline. If `BuildGoal`'s `.pr` is rewritten before its dependencies are stable, subsequent goal builds may pick up a partially-updated pipeline and produce inconsistent output. The list order is honoured by `DefaultBuilderProvider.LoadFiles` (`PLang/app/modules/builder/code/Default.cs`) — files in the `files` filter are queued in the order they appear.
+
+**Wrong-order symptom:** every goal logs `Validation failed: StepResults or Goal is null — retrying...` on first attempt and `LlmFixer` fires. The build still saves, but with empty-action regressions in the `.pr`.
+
+## Pre-flight check
+
+Before kicking off a self-rebuild, audit the existing builder `.pr` files. They may carry baked-in mistakes from a previous broken run — and the LLM-driven compile will preserve them via `Kept prior mapping for step N`.
+
+Things to look for:
+
+- **Path stamps wrong:** top-level `path` should be `/system/builder/<Goal>.goal`, `prPath` `/system/builder/.build/<goal>.pr`. Sub-goals share the parent's path/prPath. Anything else (e.g. short `/Build.goal`, `/.build/build.pr`) means a prior build ran with the wrong cwd — rewrite all stamps before rebuilding.
+- **`Actor=%goal%` or `Actor=%action%` on `goal.call`:** the LLM mis-parses `foreach X, call Y, item=%var%` and emits `%var%` as the `Actor` parameter on `goal.call`. The runtime then fails at dispatch with `TypeMismatch: Cannot convert app.goals.goal.this to app.actor.this`. Strip every `Actor` entry from `goal.call` parameter lists (none of the builder's calls cross actors).
+- **`goal.call` references that don't resolve:** every `goal.call`'s `prPath` (when set) must point at a file that exists on disk relative to `os/`. A stale `prPath` from a renamed sub-goal will surface as `File not found` once the dispatch fires.
+
+A quick Python audit covers all three:
+
+```python
+import json, glob, os
+for path in sorted(glob.glob('os/system/builder/.build/*.pr')):
+    pr = json.load(open(path))
+    name = path.split('/')[-1]
+    print(name, pr.get('path'), pr.get('prPath'))
+    # walk goal.call actions, list Actor params and check prPath existence
+```
+
+## Verifying the result
+
+After the self-rebuild succeeds, sanity-check the builder by building something else with it:
+
+```bash
+cd Tests/Simple && plang build
+```
+
+Should report `Saved Start` with no LLM re-call (`Kept prior mapping for step N` for every step). If that fails, the just-rebuilt builder has a real regression and the change should be reverted before pushing.
+
+## Known LLM regressions — fix upstream, do not strip
+
+These are deterministic LLM mistakes the current prompts emit on self-rebuild. Per the cardinal rule, **do not hand-strip them from the `.pr`**. The fix is in the prompt or the validator. List exists so the next person touching builder prompts knows what to target.
+
+- **`Actor=%goal%` / `Actor=%action%` on `goal.call`** — appears on every `foreach X, call Y, item=%var%` step. The LLM mis-binds `%var%` as the `Actor` parameter of `goal.call` instead of recognising it as the foreach `ItemName`. Fix candidate: tighten `BuildGoal.llm` / `BuildStep.llm` examples on the foreach+call pattern, or have the validator reject `goal.call` with `Actor` set and force a retry.
+- **`goal.call.Name='goal.call'`** — the LLM occasionally drops the action type name as the `Name` of a `goal.call`'s GoalCall value. The validator's type-name guard already catches it and `BuildStepFixer` retries (see retry-wrap on `BuildStep.goal` step 5) — usually self-heals on the second pass.
+
+When you fix the prompt so one of these stops happening, delete the corresponding line.
+
+## Related files
+
+- `os/system/Build.goal` — system entry (delegates to `/system/builder/Build`).
+- `os/system/builder/*.goal` — the builder's own goals (5 files, listed in the recipe above).
+- `os/system/builder/llm/BuildGoal.llm`, `BuildStep.llm` — the LLM prompts.
+- `PLang/app/modules/builder/code/Default.cs` — `IBuilder` actions: `goals`, `validate`, `enrichResponse`, `validateResponse`, `goalsSave`.
+- `Documentation/v0.2/build.md` — general `plang build` CLI usage (not bootstrap-specific).
+- `Documentation/v0.2/build_process.md` — what each builder goal does at runtime.
+- `docs/modules/builder.md` — builder module action reference.
+
+---
+
+# Appendix: reliability work
+
+The rest of this file tracks the ongoing effort to make self-rebuild deterministic. Read this if you're touching builder prompts, the action catalog, the validator, or any LLM-facing type teaching.
+
+Self-rebuild of `system/builder` historically produced inconsistent action+modifier shapes for complex steps — different combination of failures every run (goal-name→CLR-type, error.handle.Key holding a goal name, Path expanded to a record, Data wrapped as `{Value, Key}`, etc.).
 
 Shared root cause: the **formal language** (the syntax the LLM thinks in before emitting JSON) and the catalog **Examples** (per-action teaching) underspecify compound parameter values, so the LLM extrapolates JSON-dump conventions from one Example to another. The fix direction is to make each type own its own LLM teaching, then align Examples with it.
 

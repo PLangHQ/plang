@@ -46,10 +46,20 @@ public class Default : IBuilder
         var context = action.Context;
         var searchPath = string.IsNullOrWhiteSpace(action.Path.Value) ? "." : action.Path.Value!;
 
+        // builder.goals.Path is project-root-relative ("the directory the user is
+        // building"), not goal-relative. filesystem.path.Resolve combines a bare
+        // relative path with the CALLING GOAL's folder — and the caller here is the
+        // builder's own Build.goal under /system/builder/, so Resolve(".", …) would
+        // walk the builder's own tree instead of the user's cwd. Force absolute
+        // resolution by prefixing "/" — Resolve then anchors at fs.RootDirectory
+        // (which is the user's cwd / app root, set when the App was wired).
+        var rootRelative = searchPath.StartsWith('/') || searchPath.StartsWith('\\')
+            ? searchPath
+            : "/" + searchPath;
         var listAction = new file.List
         {
             Context = context,
-            Path = data.@this<path>.Ok(path.Resolve(searchPath, context)),
+            Path = data.@this<path>.Ok(path.Resolve(rootRelative, context)),
             Pattern = new data.@this<string>("", "*.goal"),
             Recursive = new data.@this<bool>("", true)
         };
@@ -212,6 +222,38 @@ public class Default : IBuilder
         var notFound = new List<string>();
         foreach (var a in actions)
         {
+            // Cheap repair for the recurring LLM hallucination of stuffing the
+            // module/action separator into the module name:
+            //   {"module": "ui.render",     "action": "render"} → module="ui",        action="render"
+            //   {"module": "goal.call",     "action": "call"}   → module="goal",      action="call"
+            //   {"module": "condition.if",  "action": "if"}     → module="condition", action="if"
+            //   {"module": "loop.foreach",  "action": "foreach"} → module="loop",     action="foreach"
+            // Both shapes appear: head.tail with action duplicating tail, and head.tail
+            // with action being the genuine tail. Try both before reporting "not found"
+            // so the fixer doesn't have to round-trip a deterministic mistake.
+            if (!modules.Contains(a.Module, a.ActionName) && a.Module.Contains('.'))
+            {
+                var parts = a.Module.Split('.', 2);
+                var head = parts[0];
+                var tail = parts[1];
+                if (modules.Contains(head, tail))
+                {
+                    a.Warnings.Add(new Info {
+                        Key = "ModuleNameRepaired",
+                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}', action='{tail}' (was action='{a.ActionName}')."
+                    });
+                    a.Module = head;
+                    a.ActionName = tail;
+                }
+                else if (modules.Contains(head, a.ActionName))
+                {
+                    a.Warnings.Add(new Info {
+                        Key = "ModuleNameRepaired",
+                        Message = $"Module name '{a.Module}' contained the action separator; repaired to module='{head}' (action='{a.ActionName}' kept)."
+                    });
+                    a.Module = head;
+                }
+            }
             if (!modules.Contains(a.Module, a.ActionName))
             {
                 var available = modules.GetActions(a.Module);

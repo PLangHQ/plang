@@ -17,15 +17,9 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "/builder/Build",
+                "name": "goal /builder/Build",
                 "parallel": false,
-                "parameters": [
-                  {
-                    "name": "GoalName",
-                    "value": "[goal.call]",
-                    "type": "string"
-                  }
-                ],
+                "parameters": [],
                 "prPath": null
               },
               "type": "goal.call"
@@ -49,7 +43,7 @@
   "path": "/system/Build.goal",
   "prPath": "/system/.build/build.pr",
   "hash": "c73e799da0870eabbaaaabffa1683b9e654da2b41f5984db5efda0d76f46d30c",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

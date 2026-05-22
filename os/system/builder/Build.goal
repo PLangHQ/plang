@@ -3,13 +3,14 @@ Build
 / Transforms .goal files (natural language) into .pr files (JSON the Runtime executes)
 / Parameters: %path% - folder to build (default: ".")
 
-- set default %path% = "."
+- set default %path% = "/"
 - set default %!build.cache% = true
+- set default %!build.summary% = true
 - set %traceGoals% = []
 - write out "Building path: %path%"
-- builder.app, write to %app%
+- builder.load, write to %app%
 - builder.goals path=%path%, write to %goals%
 - write out "Found %goals.Count% goals"
-- foreach %goals%, call BuildGoal, item=%goal%
+- foreach %goals%, call BuildGoal goal=%item%
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
 - builder.appSave

@@ -208,6 +208,31 @@ public class Error : IError
             sb.AppendLine($"{indent}    {error.HelpfulLinks}");
         }
 
+        // Details \u2014 stashed by action handlers (RawResponse, Model, etc.). Without
+        // this, JsonParseError and friends leave the actual response invisible in
+        // the trace and the reader has to re-run with --debug to recover the data
+        // that was already captured.
+        if (error is Error errWithDetails && errWithDetails.Details is { Count: > 0 } details)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"{indent}\ud83d\udcce Details:");
+            foreach (var kvp in details)
+            {
+                // RawResponse, Content, and similar payload fields are the point of
+                // showing Details \u2014 truncating them defeats the diagnostic. Pass
+                // through full-length for these; truncate the others (Model, Schema,
+                // etc.) the normal way.
+                var full = kvp.Key.Contains("Raw", StringComparison.OrdinalIgnoreCase)
+                        || kvp.Key.Contains("Response", StringComparison.OrdinalIgnoreCase)
+                        || kvp.Key.Contains("Content", StringComparison.OrdinalIgnoreCase)
+                        || kvp.Key.Contains("Request", StringComparison.OrdinalIgnoreCase);
+                var val = full && kvp.Value is string fullStr
+                    ? $"\"{fullStr}\""
+                    : FormatVerboseValue(kvp.Value);
+                sb.AppendLine($"{indent}    {kvp.Key}: {val}");
+            }
+        }
+
         // Variables snapshot
         if (error.Variables.Count > 0)
         {

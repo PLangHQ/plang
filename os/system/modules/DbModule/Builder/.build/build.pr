@@ -8,7 +8,7 @@
   "path": "/system/modules/DbModule/Builder/Build.goal",
   "prPath": "/system/modules/DbModule/Builder/.build/build.pr",
   "hash": null,
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
