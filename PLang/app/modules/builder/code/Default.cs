@@ -46,10 +46,20 @@ public class Default : IBuilder
         var context = action.Context;
         var searchPath = string.IsNullOrWhiteSpace(action.Path.Value) ? "." : action.Path.Value!;
 
+        // builder.goals.Path is project-root-relative ("the directory the user is
+        // building"), not goal-relative. filesystem.path.Resolve combines a bare
+        // relative path with the CALLING GOAL's folder — and the caller here is the
+        // builder's own Build.goal under /system/builder/, so Resolve(".", …) would
+        // walk the builder's own tree instead of the user's cwd. Force absolute
+        // resolution by prefixing "/" — Resolve then anchors at fs.RootDirectory
+        // (which is the user's cwd / app root, set when the App was wired).
+        var rootRelative = searchPath.StartsWith('/') || searchPath.StartsWith('\\')
+            ? searchPath
+            : "/" + searchPath;
         var listAction = new file.List
         {
             Context = context,
-            Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(searchPath, context)),
+            Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(rootRelative, context)),
             Pattern = new data.@this<string>("", "*.goal"),
             Recursive = new data.@this<bool>("", true)
         };

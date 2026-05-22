@@ -324,7 +324,7 @@
               "type": "goal.call"
             },
             {
-              "name": "item",
+              "name": "goal",
               "value": "%goal%",
               "type": "object"
             }

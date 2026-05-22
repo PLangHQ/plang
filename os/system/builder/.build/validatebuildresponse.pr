@@ -100,13 +100,7 @@
               "value": {
                 "name": "ValidateStep",
                 "parallel": false,
-                "parameters": [
-                  {
-                    "name": "item",
-                    "value": "%step%",
-                    "type": "string"
-                  }
-                ],
+                "parameters": null,
                 "prPath": null
               },
               "type": "goal.call"

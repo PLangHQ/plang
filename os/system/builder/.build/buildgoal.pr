@@ -1214,6 +1214,30 @@
                 }
               ],
               "modifiers": []
+            },
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%stepResults%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%!data%",
+                  "type": "object"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
             }
           ],
           "intent": null,
@@ -2124,13 +2148,7 @@
                   "value": {
                     "name": "BuildStep",
                     "parallel": false,
-                    "parameters": [
-                      {
-                        "name": "item",
-                        "value": "%stepResult%",
-                        "type": "string"
-                      }
-                    ],
+                    "parameters": null,
                     "prPath": "/system/builder/.build/buildstep.pr"
                   },
                   "type": "goal.call"
@@ -2182,13 +2200,7 @@
                   "value": {
                     "name": "ApplyStep",
                     "parallel": false,
-                    "parameters": [
-                      {
-                        "name": "item",
-                        "value": "%stepResult%",
-                        "type": "string"
-                      }
-                    ],
+                    "parameters": null,
                     "prPath": "/system/builder/.build/applystep.pr"
                   },
                   "type": "goal.call"
