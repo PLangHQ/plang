@@ -1,0 +1,89 @@
+{
+  "branch": "path-polymorphism",
+  "sessions": [
+    {
+      "id": "f807b0a5-b856-4278-bab5-d5b9ca960dc0",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-22T00:14:27Z",
+      "timestamp_end": "2026-05-22T01:05:00Z",
+      "intent": "Translate the architect's 7-stage path-polymorphism design into C# TUnit test suites that define the behavioral contract for the coder.",
+      "before": {
+        "assumptions": "Architect plan is final (committed at fa703be9f). Post-runtime2 merge state: app.filesystem namespace still present, will move under app.types.path. Test folders under PLang.Tests/App/ stay PascalCase per CLAUDE.md.",
+        "risk": "Large surface (7 stages). Stage 7 contract base is the centerpiece. HttpPath in-process server needs an ASP.NET/HttpListener dependency the test csproj does not yet have. Forward-stage tests referencing not-yet-existent types could break the whole test project."
+      },
+      "plan": ".bot/path-polymorphism/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/NamespaceMoveTests.cs",
+            "PLang.Tests/App/Types/PathTests/PathSchemeAttributeTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 1 — Stage 1 (namespace move) survey tests + Stage 4 ([PathScheme] attribute). Survey tests specified as string-based reflection so they survive the old types being deleted; no compile-time typeof of a moved symbol."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/SchemeRegistryTests.cs",
+            "PLang.Tests/App/Types/PathTests/PathAbstractTests.cs",
+            "PLang.Tests/App/Types/PathTests/FilePathVerbTests.cs",
+            "PLang.Tests/App/Types/PathTests/PathTypeMapperTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batches 2-3 — Stage 2: scheme registry Register/From, bare/schemed/unknown dispatch, multi-App isolation; abstract path hierarchy shape; FilePath verb round-trips; PLang type-mapper dispatch through the registry."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/HandlerShapeTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 4 — Stage 3: survey tests asserting IFile/DefaultFileProvider/PLangFileSystem wrapper layer are absent and no [Code]-partial provider remains on file handlers, plus behavioural checks that the gate still fires from inside Path verbs. Existing Tests/Modules/File/File.test.goal is the PLang-level regression net (no new goal file)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/Http/HttpTestServer.cs",
+            "PLang.Tests/App/Types/PathTests/Http/HttpPathTests.cs",
+            "PLang.Tests/App/Types/PathTests/AbsoluteCanonicalFormTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batches 5-6 — Stage 5 HttpPath (GET/POST/DELETE/HEAD, 404/405, identity, network error, HttpClient pooling) with an HttpTestServer skeleton (HttpListener-shaped, no new package); Stage 6 per-scheme Absolute canonical-form, one test per rule."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/Contract/VerbName.cs",
+            "PLang.Tests/App/Types/PathTests/Contract/IPathSchemeFixture.cs",
+            "PLang.Tests/App/Types/PathTests/Contract/PathSchemeContractTests.cs",
+            "PLang.Tests/App/Types/PathTests/Contract/FilePathFixture.cs",
+            "PLang.Tests/App/Types/PathTests/Contract/HttpPathFixture.cs",
+            "PLang.Tests/App/Types/PathTests/Contract/FilePathContractTests.cs",
+            "PLang.Tests/App/Types/PathTests/Contract/HttpPathContractTests.cs",
+            "PLang.Tests/App/Types/PathTests/Contract/CrossSchemeTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Batch 7 — Stage 7: the generic PathSchemeContractTests<TFixture> base (8 contract assertions), the IPathSchemeFixture interface + VerbName enum, FilePath/Http fixture skeletons, two [InheritsTests] concrete subclasses, and cross-scheme CopyTo. Contract files alias the path type to the CURRENT app.filesystem.path so the project compiles today; stage 1's rename sweep repoints them."
+        },
+        {
+          "paths": ["PLang.Tests/PLang.Tests.csproj"],
+          "type": "review",
+          "category": "config",
+          "confidence": "medium",
+          "context": "Decision: HttpPath in-process test server should use System.Net.HttpListener (in-box) rather than Kestrel, to avoid adding a Microsoft.AspNetCore.App framework reference. Flagged for the coder; no csproj edit made by test-designer."
+        }
+      ],
+      "after": {
+        "status": "Complete. 14 test files created under PLang.Tests/App/Types/PathTests/. 94 tests, all discovered and red ('Not implemented'). PLang.Tests builds with 0 errors.",
+        "health": "Green build. All path-polymorphism tests in proper TDD red state. No existing test affected.",
+        "notes": "Coder picks up next. Two non-blocking decisions surfaced: (1) use HttpListener for the test server (csproj: no new package needed); (2) HttpTestServer.cs and the two fixtures are skeletons (throw NotImplementedException) for the coder to implement in stages 5/7. Contract/ files intentionally alias the current app.filesystem.path — stage 1's rename sweep migrates them along with the existing PathAuthorizeTests/FileHandlerTests aliases."
+      }
+    }
+  ]
+}
