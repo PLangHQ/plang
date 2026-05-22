@@ -36,27 +36,35 @@ public sealed partial class @this
     internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;
 
     /// <summary>Attempts to convert a value to the specified type. Generic convenience overload.</summary>
-    public static T? ConvertTo<T>(object? value) => (T?)ConvertTo(value, typeof(T));
+    public static T? ConvertTo<T>(object? value, actor.context.@this? context = null)
+        => (T?)ConvertTo(value, typeof(T), context);
 
-    /// <summary>Attempts to convert a value to the specified type. Returns null on failure — use TryConvertTo for error details.</summary>
-    public static object? ConvertTo(object? value, System.Type targetType)
+    /// <summary>
+    /// Attempts to convert a value to the specified type. Returns null on failure — use TryConvertTo for error details.
+    /// A <paramref name="context"/> is required to convert a string into a <see cref="path.@this"/> (the per-App
+    /// scheme registry needs it); without one, string→path conversions yield null.
+    /// </summary>
+    public static object? ConvertTo(object? value, System.Type targetType, actor.context.@this? context = null)
     {
-        var (result, _) = TryConvertTo(value, targetType);
+        var (result, _) = TryConvertTo(value, targetType, context);
         return result;
     }
 
     /// <summary>
     /// Populates an object's public writable properties from a dictionary.
     /// Keys are matched case-insensitively to property names. Values are converted via ConvertTo.
+    /// Pass <paramref name="context"/> when any target property is <see cref="path.@this"/>-typed
+    /// (or a list of them) — without it those properties stay unset.
     /// </summary>
-    public static void Populate(object target, IDictionary<string, object?> values)
+    public static void Populate(object target, IDictionary<string, object?> values,
+        actor.context.@this? context = null)
     {
         foreach (var kvp in values)
         {
             var prop = target.GetType().GetProperty(kvp.Key,
                 BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
             if (prop?.CanWrite != true) continue;
-            var converted = ConvertTo(kvp.Value, prop.PropertyType);
+            var converted = ConvertTo(kvp.Value, prop.PropertyType, context);
             if (converted != null) prop.SetValue(target, converted);
         }
     }

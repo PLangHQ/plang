@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "assert %!goal.Name% equals \"Start\"",
+      "text": "assert %!goal.Name% equals \u0022Start\u0022",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Test: goal name is accessible",
@@ -17,12 +17,12 @@
             {
               "name": "Expected",
               "value": "Start",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%!goal.Name%",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -52,11 +52,6 @@
               "name": "Value",
               "value": "%!step%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -86,11 +81,6 @@
               "name": "Value",
               "value": "%!context%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -120,11 +110,6 @@
               "name": "Value",
               "value": "%!callStack%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -142,10 +127,10 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ContextVars2.test.goal",
-  "prPath": "/.build/contextvars2.test.pr",
+  "path": "/Modules/Variable/ContextVars/Advanced/ContextVars2.test.goal",
+  "prPath": "/Modules/Variable/ContextVars/Advanced/.build/contextvars2.test.pr",
   "hash": "1d317d0df6f76494ec623e7e05a44fa19d69017c283724d907a20057a34ebff2",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

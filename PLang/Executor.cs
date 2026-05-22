@@ -68,18 +68,26 @@ namespace PLang
 
 			// App settings (--app={"create":true})
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
-				global::app.types.@this.Populate(engine, appDict);
+				global::app.types.@this.Populate(engine, appDict, engine.User.Context);
 
-			// Builder mode (--builder or legacy --build)
-			if ((parameters.TryGetValue("!builder", out var buildValue) && buildValue is not false) ||
-			    (parameters.TryGetValue("!build", out buildValue) && buildValue is not false))
+			// Builder mode (--builder or legacy --build). Either flag may be a bare
+			// `true` (e.g. `plang build` normalizes the subcommand to `--builder`) or
+			// carry a JSON config dict (`--build={"files":[...]}`). Both keys must be
+			// read into separate variables — folding them into one `||` with a shared
+			// `out` variable lets the short-circuit drop whichever key carries the dict.
+			parameters.TryGetValue("!builder", out var builderValue);
+			parameters.TryGetValue("!build", out var buildValue);
+			if (builderValue is not (null or false) || buildValue is not (null or false))
 			{
 				engine.Builder.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 
-				if (buildValue is IDictionary<string, object?> buildDict)
-					global::app.types.@this.Populate(engine.Builder, buildDict);
+				// Whichever flag carried the JSON object holds the build config.
+				var buildDict = builderValue as IDictionary<string, object?>
+				             ?? buildValue as IDictionary<string, object?>;
+				if (buildDict != null)
+					global::app.types.@this.Populate(engine.Builder, buildDict, engine.User.Context);
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", engine.Builder.Cache);
