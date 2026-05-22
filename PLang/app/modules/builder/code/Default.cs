@@ -850,49 +850,53 @@ public class Default : IBuilder
     {
         foreach (var action in actions)
         {
-            if (action.Parameters == null) continue;
+            await ResolveGoalCallsInAction(action, app, context);
 
-            foreach (var param in action.Parameters)
+            // Modifiers (e.g. error.handle's `then call LogRetryError`) hold their own
+            // goal.call parameters — same resolution rule applies.
+            if (action.Modifiers != null)
             {
-                if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var goalCall = ToGoalCall(param.Value);
-                if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
-                    continue;
-
-                if (goalCall.Name.Contains('%'))
-                {
-                    param.Value = goalCall;
-                    continue;
-                }
-
-                // Derive PrPath using Goal's own convention
-                var goalPath = goalCall.Name;
-                if (!goalPath.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
-                    goalPath += ".goal";
-                if (!goalPath.StartsWith('/') && !goalPath.StartsWith('\\'))
-                    goalPath = "/" + goalPath;
-
-                var tempGoal = new Goal { Path = goalPath };
-                var expectedPrPath = tempGoal.PrPath;
-                if (expectedPrPath != null)
-                {
-                    // Check existence via file.exists — don't read the whole file
-                    var existsAction = new file.Exists
-                    {
-                        Context = context,
-                        Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(expectedPrPath, context))
-                    };
-                    var existsResult = await app.RunAction(existsAction, context);
-                    if (existsResult.Success && existsResult.Value is filesystem.path pathData && pathData.Exists)
-                    {
-                        goalCall.PrPath = expectedPrPath;
-                    }
-                }
-
-                param.Value = goalCall;
+                foreach (var mod in action.Modifiers)
+                    await ResolveGoalCallsInAction(mod, app, context);
             }
+        }
+    }
+
+    private static async Task ResolveGoalCallsInAction(
+        global::app.goals.goal.steps.step.actions.action.@this action,
+        app.@this app, actor.context.@this context)
+    {
+        if (action.Parameters == null) return;
+
+        foreach (var param in action.Parameters)
+        {
+            if (!string.Equals(param.Type?.Value, "goal.call", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var goalCall = ToGoalCall(param.Value);
+            if (goalCall == null || string.IsNullOrEmpty(goalCall.Name))
+                continue;
+
+            if (goalCall.Name.Contains('%'))
+            {
+                param.Value = goalCall;
+                continue;
+            }
+
+            // Ask the runtime to resolve the goal — same path/name lookup logic
+            // GoalCall uses at dispatch. If it returns a Goal, copy that goal's
+            // PrPath onto our GoalCall so the saved .pr carries an explicit path
+            // (per "every goal.call should carry prPath" rule). Null result means
+            // the goal couldn't be found — leave PrPath null, the validator's
+            // downstream checks (or runtime) will surface a NotFound for it.
+            goalCall.Action ??= action;
+            var resolved = await goalCall.GetGoalAsync(app, context);
+            if (resolved.Success && resolved.Value is Goal g && !string.IsNullOrEmpty(g.PrPath))
+            {
+                goalCall.PrPath = g.PrPath;
+            }
+
+            param.Value = goalCall;
         }
     }
 
