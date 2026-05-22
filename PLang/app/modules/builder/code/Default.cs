@@ -47,15 +47,23 @@ public class Default : IBuilder
         var searchPath = string.IsNullOrWhiteSpace(action.Path.Value) ? "." : action.Path.Value!;
 
         // builder.goals.Path is project-root-relative ("the directory the user is
-        // building"), not goal-relative. filesystem.path.Resolve combines a bare
-        // relative path with the CALLING GOAL's folder — and the caller here is the
-        // builder's own Build.goal under /system/builder/, so Resolve(".", …) would
-        // walk the builder's own tree instead of the user's cwd. Force absolute
-        // resolution by prefixing "/" — Resolve then anchors at fs.RootDirectory
-        // (which is the user's cwd / app root, set when the App was wired).
-        var rootRelative = searchPath.StartsWith('/') || searchPath.StartsWith('\\')
-            ? searchPath
-            : "/" + searchPath;
+        // building"), not goal-relative. The runtime auto-seeds %path% to
+        // fs.RootDirectory before Build.goal runs, so by the time we get here
+        // action.Path.Value is typically already the absolute cwd. For the literal
+        // "/" / "." / empty cases (no auto-seed), fall back to fs.RootDirectory.
+        // For any other input that doesn't start with the RootDirectory or with
+        // "/", treat as a sibling-relative subpath under RootDirectory.
+        var fs = app.FileSystem;
+        string rootRelative;
+        if (searchPath == "." || searchPath == "/" || searchPath == "\\")
+            rootRelative = fs.RootDirectory;
+        else if (searchPath.StartsWith(fs.RootDirectory, global::app.filesystem.path.RootComparison))
+            rootRelative = searchPath;  // already absolute under root — pass through
+        else if (searchPath.StartsWith('/') || searchPath.StartsWith('\\'))
+            rootRelative = searchPath;  // PLang-rooted, ValidatePath will anchor
+        else
+            rootRelative = fs.Path.GetFullPath(fs.Path.Combine(fs.RootDirectory, searchPath));
+
         var listAction = new file.List
         {
             Context = context,

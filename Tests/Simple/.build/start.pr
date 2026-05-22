@@ -22,7 +22,7 @@
             {
               "name": "Value",
               "value": "hello",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -137,7 +137,7 @@
             {
               "name": "Data",
               "value": "%message%",
-              "type": "object"
+              "type": "tstring"
             }
           ],
           "defaults": null,

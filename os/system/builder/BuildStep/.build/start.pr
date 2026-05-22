@@ -167,7 +167,7 @@
                 },
                 {
                   "name": "Value",
-                  "value": "%planStep.actions%",
+                  "value": "%!data%",
                   "type": "object"
                 }
               ],
