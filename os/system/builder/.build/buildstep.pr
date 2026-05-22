@@ -8,7 +8,7 @@
       "text": "set %step% = %goal.Steps[stepResult.index]%",
       "lineNumber": 4,
       "indent": 0,
-      "comment": "Builds a step that needs detailed action info\nAction suggestions (module \u002B action) already on step from BuildGoal",
+      "comment": "Builds a step that needs detailed action info\nAction suggestions (module + action) already on step from BuildGoal",
       "actions": [
         {
           "module": "variable",
@@ -138,7 +138,7 @@
     },
     {
       "index": 3,
-      "text": "render template \u0022/system/builder/llm/BuildStep.user.llm\u0022, write to %stepForLlm%",
+      "text": "render template \"/system/builder/llm/BuildStep.user.llm\", write to %stepForLlm%",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -196,7 +196,7 @@
     },
     {
       "index": 4,
-      "text": "render template \u0022/system/builder/llm/BuildStep.actionDetails.partial.llm\u0022, write to %actionDetails%",
+      "text": "render template \"/system/builder/llm/BuildStep.actionDetails.partial.llm\", write to %actionDetails%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -254,7 +254,7 @@
     },
     {
       "index": 5,
-      "text": "render template \u0022/system/builder/llm/BuildStep.system.llm\u0022, write to %buildStepPrompt%",
+      "text": "render template \"/system/builder/llm/BuildStep.system.llm\", write to %buildStepPrompt%",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -312,7 +312,7 @@
     },
     {
       "index": 6,
-      "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildStepPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%stepForLlm%\u0022}], type=json",
+      "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildStepPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%stepForLlm%\"}], type=json",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -338,7 +338,7 @@
                   "Content": "%stepForLlm%"
                 }
               ],
-              "type": "list\u00601"
+              "type": "list`1"
             }
           ],
           "defaults": [
@@ -364,7 +364,7 @@
       "text": "call QueryAndValidateBuildStep, on error call BuildStepFixer, then retry 2 times",
       "lineNumber": 15,
       "indent": 0,
-      "comment": "Wrap llm.query \u002B Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and validator failures (type-name guard,\nunknown action, missing required param). BuildStepFixer re-prompts with\nthe error message; runtime retries the wrapped goal up to 2 times.",
+      "comment": "Wrap llm.query + Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and validator failures (type-name guard,\nunknown action, missing required param). BuildStepFixer re-prompts with\nthe error message; runtime retries the wrapped goal up to 2 times.",
       "actions": [
         {
           "module": "goal",
@@ -416,7 +416,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u00601"
+                  "type": "list`1"
                 }
               ],
               "defaults": [
@@ -460,7 +460,7 @@
                 {
                   "name": "Messages",
                   "value": "%messages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -503,7 +503,7 @@
                       }
                     ]
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Cache",
@@ -599,7 +599,7 @@
                     "user": "%stepForLlm%",
                     "response": "%result%"
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 }
               ],
               "defaults": [
@@ -622,7 +622,7 @@
         },
         {
           "index": 2,
-          "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027",
+          "text": "save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'",
           "lineNumber": 20,
           "indent": 0,
           "comment": null,
@@ -726,7 +726,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Store the validated actions list into the current goal step\u0027s Actions field using variable.set.",
+          "guidance": "Store the validated actions list into the current goal step's Actions field using variable.set.",
           "level": "high",
           "confidence": 85,
           "formal": null,
@@ -747,7 +747,7 @@
                 {
                   "name": "Actions",
                   "value": "%goal.Steps[stepResult.index].Actions%",
-                  "type": "list\u003Caction\u003E"
+                  "type": "list<action>"
                 }
               ],
               "defaults": null,
@@ -782,10 +782,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Step validation failed: %!error.Message% \u2014 retrying...\u0022",
+          "text": "write out \"  Step validation failed: %!error.Message% — retrying...\"",
           "lineNumber": 27,
           "indent": 0,
-          "comment": "LLM produced invalid output for a step \u2014 retry with error context",
+          "comment": "LLM produced invalid output for a step — retry with error context",
           "actions": [
             {
               "module": "output",
@@ -793,7 +793,7 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  Step validation failed: %!error.Message% \u2014 retrying...",
+                  "value": "  Step validation failed: %!error.Message% — retrying...",
                   "type": "tstring"
                 }
               ],
@@ -811,7 +811,7 @@
         },
         {
           "index": 1,
-          "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildStepPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response had validation errors:\\n%!error.Message%\\n\\nThe step to build:\\n%stepForLlm%\\n\\nFix the errors above and return the complete corrected response.\u0022}], type=json",
+          "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildStepPrompt%\"}, {\"Role\":\"user\", \"Content\":\"Your previous response had validation errors:\\n%!error.Message%\\n\\nThe step to build:\\n%stepForLlm%\\n\\nFix the errors above and return the complete corrected response.\"}], type=json",
           "lineNumber": 28,
           "indent": 0,
           "comment": null,
@@ -837,7 +837,7 @@
                       "Content": "Your previous response had validation errors:\n%!error.Message%\n\nThe step to build:\n%stepForLlm%\n\nFix the errors above and return the complete corrected response."
                     }
                   ],
-                  "type": "list\u00601"
+                  "type": "list`1"
                 }
               ],
               "defaults": [
@@ -851,7 +851,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Construct the LLM conversation messages array (system \u002B user) embedding the prior validation error message and the step prompt, then store it in %messages% as a JSON value for the next llm.query retry.",
+          "guidance": "Construct the LLM conversation messages array (system + user) embedding the prior validation error message and the step prompt, then store it in %messages% as a JSON value for the next llm.query retry.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -1021,7 +1021,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error \u0022BuildStep failed for step \u0027%step.Text%\u0027: %result.errors%\u0022",
+          "text": "throw error \"BuildStep failed for step '%step.Text%': %result.errors%\"",
           "lineNumber": 36,
           "indent": 0,
           "comment": null,
@@ -1032,7 +1032,7 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "BuildStep failed for step \u0027%step.Text%\u0027: %result.errors%",
+                  "value": "BuildStep failed for step '%step.Text%': %result.errors%",
                   "type": "tstring"
                 }
               ],
@@ -1148,7 +1148,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "throw error \u0022Action %action.module%.%action.action% failed for step \u0027%step.Text%\u0027: %action.errors%\u0022",
+          "text": "throw error \"Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%\"",
           "lineNumber": 42,
           "indent": 0,
           "comment": null,
@@ -1159,7 +1159,7 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "Action %action.module%.%action.action% failed for step \u0027%step.Text%\u0027: %action.errors%",
+                  "value": "Action %action.module%.%action.action% failed for step '%step.Text%': %action.errors%",
                   "type": "tstring"
                 }
               ],
@@ -1195,7 +1195,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Build step error: %!error.Message%\u0022",
+          "text": "write out \"  Build step error: %!error.Message%\"",
           "lineNumber": 45,
           "indent": 0,
           "comment": null,

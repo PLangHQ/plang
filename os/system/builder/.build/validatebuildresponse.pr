@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "if %stepResults.steps.Count% is not %goal.Steps.Count%, throw error \u0027LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with \u0027- \u0027. Return exactly one result per goal step, with one or more actions per step.\u0027",
+      "text": "if %stepResults.steps.Count% is not %goal.Steps.Count%, throw error 'LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step, with one or more actions per step.'",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Validates the LLM build response",
@@ -44,7 +44,7 @@
           "parameters": [
             {
               "name": "Message",
-              "value": "LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with \u0027- \u0027. Return exactly one result per goal step, with one or more actions per step.",
+              "value": "LLM returned %stepResults.steps.Count% steps but goal has %goal.Steps.Count% steps. Steps are lines starting with '- '. Return exactly one result per goal step, with one or more actions per step.",
               "type": "string"
             }
           ],
@@ -136,7 +136,7 @@
           "text": "if %step.keep% is true, call ValidateKeptStep",
           "lineNumber": 10,
           "indent": 0,
-          "comment": "Validates a single step from the LLM response\nkeep:true is a shortcut \u2014 valid only when the prior .pr has actions for this step\nand the response has no fresh actions. Other steps must include actions as usual.",
+          "comment": "Validates a single step from the LLM response\nkeep:true is a shortcut — valid only when the prior .pr has actions for this step\nand the response has no fresh actions. Other steps must include actions as usual.",
           "actions": [
             {
               "module": "condition",
@@ -276,7 +276,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %step.actions% is not empty, throw error \u0027Step at index %step.index% has keep:true but also emitted actions. keep:true means reuse the prior mapping \u2014 emit one or the other, not both.\u0027",
+          "text": "if %step.actions% is not empty, throw error 'Step at index %step.index% has keep:true but also emitted actions. keep:true means reuse the prior mapping — emit one or the other, not both.'",
           "lineNumber": 15,
           "indent": 0,
           "comment": "keep:true guard rails: must have prior actions, must not also emit fresh actions",
@@ -316,7 +316,7 @@
               "parameters": [
                 {
                   "name": "Message",
-                  "value": "Step at index %step.index% has keep:true but also emitted actions. keep:true means reuse the prior mapping \u2014 emit one or the other, not both.",
+                  "value": "Step at index %step.index% has keep:true but also emitted actions. keep:true means reuse the prior mapping — emit one or the other, not both.",
                   "type": "string"
                 }
               ],
@@ -340,7 +340,7 @@
         },
         {
           "index": 1,
-          "text": "if %goal.Steps[step.index].Actions.Count% is 0, throw error \u0027Step at index %step.index% has keep:true but the prior .pr has no actions. keep:true requires a prior mapping that was offered as @known.\u0027",
+          "text": "if %goal.Steps[step.index].Actions.Count% is 0, throw error 'Step at index %step.index% has keep:true but the prior .pr has no actions. keep:true requires a prior mapping that was offered as @known.'",
           "lineNumber": 16,
           "indent": 0,
           "comment": null,
@@ -422,7 +422,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %step.actions% is empty, throw error \u0027Step at index %step.index% has no actions. Every step must include actions with module and action filled in.\u0027",
+          "text": "if %step.actions% is empty, throw error 'Step at index %step.index% has no actions. Every step must include actions with module and action filled in.'",
           "lineNumber": 20,
           "indent": 0,
           "comment": "Standard validation for fresh-build steps",
@@ -498,7 +498,7 @@
                 {
                   "name": "Actions",
                   "value": "%step.actions%",
-                  "type": "list\u003Caction\u003E"
+                  "type": "list<action>"
                 }
               ],
               "defaults": null,

@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "write out \u0022Building goal: %goal.Name%\u0022",
+      "text": "write out \"Building goal: %goal.Name%\"",
       "lineNumber": 5,
       "indent": 0,
       "comment": null,
@@ -79,7 +79,7 @@
     },
     {
       "index": 2,
-      "text": "set %trace% = {\u0022id\u0022: \u0022%!trace.id%\u0022, \u0022timestamp\u0022: \u0022%Now%\u0022, \u0022goal\u0022: %goal%, \u0022pass1\u0022: null, \u0022subGoals\u0022: [], \u0022detailPasses\u0022: [], \u0022durationMs\u0022: 0}, type=json",
+      "text": "set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": %goal%, \"pass1\": null, \"subGoals\": [], \"detailPasses\": [], \"durationMs\": 0}, type=json",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -104,7 +104,7 @@
                 "detailPasses": [],
                 "durationMs": 0
               },
-              "type": "dictionary\u00602"
+              "type": "dictionary`2"
             },
             {
               "name": "Type",
@@ -178,7 +178,7 @@
                       "modifiers": []
                     }
                   ],
-                  "type": "list\u00601"
+                  "type": "list`1"
                 }
               ],
               "defaults": [
@@ -243,7 +243,7 @@
     },
     {
       "index": 5,
-      "text": "set %goal.BuilderVersion% = \u00220.2.2\u0022",
+      "text": "set %goal.BuilderVersion% = \"0.2.2\"",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -274,7 +274,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Set %goal.BuilderVersion% to literal \u00220.2.2\u0022.",
+      "guidance": "Set %goal.BuilderVersion% to literal \"0.2.2\".",
       "level": "high",
       "confidence": 95,
       "formal": null,
@@ -582,7 +582,7 @@
     },
     {
       "index": 12,
-      "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027",
+      "text": "save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'",
       "lineNumber": 17,
       "indent": 0,
       "comment": null,
@@ -607,7 +607,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Save %trace% to file path \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027 using file.save.",
+      "guidance": "Save %trace% to file path '/.build/traces/%!trace.id%/%trace.goal.name%.json' using file.save.",
       "level": "high",
       "confidence": 88,
       "formal": null,
@@ -825,7 +825,7 @@
         },
         {
           "index": 3,
-          "text": "render template \u0022/system/actions/v2/summary.md\u0022, write to %actionSummary%",
+          "text": "render template \"/system/actions/v2/summary.md\", write to %actionSummary%",
           "lineNumber": 29,
           "indent": 0,
           "comment": null,
@@ -936,7 +936,7 @@
         },
         {
           "index": 5,
-          "text": "render template \u0022/system/builder/llm/BuildGoal.user.llm\u0022, write to %goalForLlm%",
+          "text": "render template \"/system/builder/llm/BuildGoal.user.llm\", write to %goalForLlm%",
           "lineNumber": 31,
           "indent": 0,
           "comment": null,
@@ -994,7 +994,7 @@
         },
         {
           "index": 6,
-          "text": "render template \u0022/system/builder/llm/BuildGoal.system.llm\u0022, write to %buildGoalPrompt%",
+          "text": "render template \"/system/builder/llm/BuildGoal.system.llm\", write to %buildGoalPrompt%",
           "lineNumber": 32,
           "indent": 0,
           "comment": null,
@@ -1052,7 +1052,7 @@
         },
         {
           "index": 7,
-          "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildGoalPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%goalForLlm%\u0022}], type=json",
+          "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildGoalPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}], type=json",
           "lineNumber": 33,
           "indent": 0,
           "comment": null,
@@ -1078,7 +1078,7 @@
                       "Content": "%goalForLlm%"
                     }
                   ],
-                  "type": "list\u00601"
+                  "type": "list`1"
                 }
               ],
               "defaults": [
@@ -1092,7 +1092,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Create %messages% as a JSON array of llm messages (system \u002B user) and store it.",
+          "guidance": "Create %messages% as a JSON array of llm messages (system + user) and store it.",
           "level": "high",
           "confidence": 85,
           "formal": null,
@@ -1113,7 +1113,7 @@
                 {
                   "name": "Messages",
                   "value": "%messages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -1179,7 +1179,7 @@
                       }
                     ]
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Cache",
@@ -1301,7 +1301,7 @@
                           "modifiers": []
                         }
                       ],
-                      "type": "list\u00601"
+                      "type": "list`1"
                     }
                   ],
                   "defaults": [
@@ -1401,7 +1401,7 @@
                 {
                   "name": "Value",
                   "value": {},
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 }
               ],
               "defaults": [
@@ -1740,7 +1740,7 @@
         },
         {
           "index": 19,
-          "text": "group %stepResults.steps% by \u0022level\u0022, write to %groupedSteps%",
+          "text": "group %stepResults.steps% by \"level\", write to %groupedSteps%",
           "lineNumber": 45,
           "indent": 0,
           "comment": null,
@@ -1789,7 +1789,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Group %stepResults.steps% by the \u0027level\u0027 property into %groupedSteps%.",
+          "guidance": "Group %stepResults.steps% by the 'level' property into %groupedSteps%.",
           "level": "medium",
           "confidence": 60,
           "formal": null,
@@ -1835,7 +1835,13 @@
                   "value": {
                     "name": "ProcessGroup",
                     "parallel": false,
-                    "parameters": null,
+                    "parameters": [
+                      {
+                        "name": "group",
+                        "value": "%item%",
+                        "type": "object"
+                      }
+                    ],
                     "prPath": null
                   },
                   "type": "goal.call"
@@ -1881,7 +1887,7 @@
           "text": "set %goal% = %subGoal%",
           "lineNumber": 52,
           "indent": 0,
-          "comment": "Builds a single sub-goal \u2014 no version, no sub-goal recursion, no save.\nAdds its pass data to the parent\u0027s %trace.subGoals%.",
+          "comment": "Builds a single sub-goal — no version, no sub-goal recursion, no save.\nAdds its pass data to the parent's %trace.subGoals%.",
           "actions": [
             {
               "module": "variable",
@@ -1918,7 +1924,7 @@
         },
         {
           "index": 1,
-          "text": "write out \u0022  Building sub-goal: %goal.Name%\u0022",
+          "text": "write out \"  Building sub-goal: %goal.Name%\"",
           "lineNumber": 53,
           "indent": 0,
           "comment": null,
@@ -1992,7 +1998,7 @@
                           "modifiers": []
                         }
                       ],
-                      "type": "list\u00601"
+                      "type": "list`1"
                     }
                   ],
                   "defaults": [
@@ -2074,7 +2080,7 @@
       "steps": [
         {
           "index": 0,
-          "text": "if %group.steps[0].level% is \u0022low\u0022 or \u0022medium\u0022",
+          "text": "if %group.steps[0].level% is \"low\" or \"medium\"",
           "lineNumber": 60,
           "indent": 0,
           "comment": "Process a group of steps with the same confidence level",
@@ -2112,7 +2118,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Use condition.if to check whether %group.steps[0].level% is in [\u0022low\u0022,\u0022medium\u0022]. The step is annotated @known, so the engine will reuse the prior mapping.",
+          "guidance": "Use condition.if to check whether %group.steps[0].level% is in [\"low\",\"medium\"]. The step is annotated @known, so the engine will reuse the prior mapping.",
           "level": "high",
           "confidence": 92,
           "formal": null,
@@ -2255,10 +2261,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Validation failed: %!error.Message% \u2014 retrying...\u0022",
+          "text": "write out \"  Validation failed: %!error.Message% — retrying...\"",
           "lineNumber": 67,
           "indent": 0,
-          "comment": "LLM produced invalid output \u2014 retry with error context",
+          "comment": "LLM produced invalid output — retry with error context",
           "actions": [
             {
               "module": "output",
@@ -2266,7 +2272,7 @@
               "parameters": [
                 {
                   "name": "Data",
-                  "value": "  Validation failed: %!error.Message% \u2014 retrying...",
+                  "value": "  Validation failed: %!error.Message% — retrying...",
                   "type": "tstring"
                 }
               ],
@@ -2284,7 +2290,7 @@
         },
         {
           "index": 1,
-          "text": "set %fixerMessages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%buildGoalPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022Your previous response had validation errors:\\n%!error.Message%\\n\\nThe PLang code to build:\\n%goalForLlm%\\n\\nFix the errors listed above and return the complete corrected response.\u0022}], type=json",
+          "text": "set %fixerMessages% = [{\"Role\":\"system\", \"Content\":\"%buildGoalPrompt%\"}, {\"Role\":\"user\", \"Content\":\"Your previous response had validation errors:\\n%!error.Message%\\n\\nThe PLang code to build:\\n%goalForLlm%\\n\\nFix the errors listed above and return the complete corrected response.\"}], type=json",
           "lineNumber": 68,
           "indent": 0,
           "comment": null,
@@ -2310,7 +2316,7 @@
                       "Content": "Your previous response had validation errors:\n%!error.Message%\n\nThe PLang code to build:\n%goalForLlm%\n\nFix the errors listed above and return the complete corrected response."
                     }
                   ],
-                  "type": "list\u00601"
+                  "type": "list`1"
                 }
               ],
               "defaults": [
@@ -2345,7 +2351,7 @@
                 {
                   "name": "Messages",
                   "value": "%fixerMessages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -2413,7 +2419,7 @@
                     "level": "string",
                     "confidence": "int"
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Cache",
@@ -2537,10 +2543,10 @@
       "steps": [
         {
           "index": 0,
-          "text": "write out \u0022  Build error: %!error.Message%\u0022",
+          "text": "write out \"  Build error: %!error.Message%\"",
           "lineNumber": 78,
           "indent": 0,
-          "comment": "Capture error into the parent trace and save it. Parent\u0027s %trace% is in\nscope because BuildGoal created it before calling BuildGoalCore.\nThe error is tagged on the failing pass itself so the viewer can tie the\nbuildError to the specific goal (parent vs. specific sub-goal).",
+          "comment": "Capture error into the parent trace and save it. Parent's %trace% is in\nscope because BuildGoal created it before calling BuildGoalCore.\nThe error is tagged on the failing pass itself so the viewer can tie the\nbuildError to the specific goal (parent vs. specific sub-goal).",
           "actions": [
             {
               "module": "output",
@@ -2566,7 +2572,7 @@
         },
         {
           "index": 1,
-          "text": "set %currentPass.buildError% = {\u0022key\u0022: \u0022%!error.Key%\u0022, \u0022message\u0022: \u0022%!error.Message%\u0022, \u0022statusCode\u0022: %!error.StatusCode%, \u0022details\u0022: %!error.Details%}, type=json",
+          "text": "set %currentPass.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"statusCode\": %!error.StatusCode%, \"details\": %!error.Details%}, type=json",
           "lineNumber": 79,
           "indent": 0,
           "comment": null,
@@ -2588,7 +2594,7 @@
                     "statusCode": "%!error.StatusCode%",
                     "details": "%!error.Details%"
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Type",
@@ -2607,7 +2613,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the current pass\u0027s buildError object (key/message/statusCode/details) as JSON.",
+          "guidance": "Set the current pass's buildError object (key/message/statusCode/details) as JSON.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2616,7 +2622,7 @@
         },
         {
           "index": 2,
-          "text": "set %trace.buildError% = {\u0022key\u0022: \u0022%!error.Key%\u0022, \u0022message\u0022: \u0022%!error.Message%\u0022, \u0022statusCode\u0022: %!error.StatusCode%, \u0022details\u0022: %!error.Details%}, type=json",
+          "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"statusCode\": %!error.StatusCode%, \"details\": %!error.Details%}, type=json",
           "lineNumber": 80,
           "indent": 0,
           "comment": null,
@@ -2638,7 +2644,7 @@
                     "statusCode": "%!error.StatusCode%",
                     "details": "%!error.Details%"
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Type",
@@ -2657,7 +2663,7 @@
             }
           ],
           "intent": null,
-          "guidance": "Set the parent trace\u0027s buildError object (key/message/statusCode/details) as JSON.",
+          "guidance": "Set the parent trace's buildError object (key/message/statusCode/details) as JSON.",
           "level": "high",
           "confidence": 90,
           "formal": null,
@@ -2801,7 +2807,7 @@
         },
         {
           "index": 5,
-          "text": "save %trace% to file \u0027/.build/traces/%!trace.id%/%trace.goal.name%.json\u0027",
+          "text": "save %trace% to file '/.build/traces/%!trace.id%/%trace.goal.name%.json'",
           "lineNumber": 83,
           "indent": 0,
           "comment": null,
