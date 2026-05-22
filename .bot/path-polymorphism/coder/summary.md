@@ -1,129 +1,154 @@
-# Coder — path-polymorphism (v1)
+# Coder — path-polymorphism
 
 ## Version
-v1.
+v1 (single continuous session — all 7 stages).
 
 ## What this is
 
-Implements the architect's 7-stage path-polymorphism plan. PLang's `path` becomes
-scheme-polymorphic — `FilePath`, `HttpPath`, future `S3Path`/`GitPath` each implement the
-same verb surface. File handlers degenerate to one-liners. The whole `app.filesystem`
-namespace folds under `app.types.path/`.
+PLang's `path` becomes scheme-polymorphic. `FilePath` and `HttpPath` (and future
+`S3Path`/`GitPath`/…) each implement the same verb surface (Read/Write/Delete/Stat/
+List/Copy/Move). File action handlers degenerate to one-liners over `Path.X()`.
+`IFile`/`DefaultFileProvider` are deleted. The `app.filesystem` namespace folds
+under `app.types/path/`.
 
-Closes codeanalyzer v2 finding #1 on `filesystem-permission` (handler-layer authorize
-copy-paste) — once Stage 3 lands.
+Closes codeanalyzer v2 finding #1 on `filesystem-permission` (handler-layer
+authorize copy-paste).
 
-## What was done — v1
+## Status — all 7 stages implemented
 
-**Complete:** Stages 1, 2 (structural + most tests), 4.
+| # | Stage | Status |
+|---|-------|--------|
+| 1 | Namespace move `app.filesystem` → `app.types.path` + `@this` convention | **Done** |
+| 2 | `path` abstract + FilePath + Scheme registry | **Done** |
+| 3 | Handler one-liners + IFile/DefaultFileProvider deleted | **Done (flag-and-split, see below)** |
+| 4 | `[PathScheme]` attribute (marker) | **Done** |
+| 5 | HttpPath impl | **Done** |
+| 6 | Per-scheme `Absolute` canonical form | **Done** |
+| 7 | Contract test framework + fixtures | **Done** |
 
-**Deferred:** Stages 3, 5, 6, 7.
+**Tests:** C# 2875 pass / 1 red; PLang `--test` 203/203 pass.
 
-### Stage 1 — Namespace move (done)
-- All `PLang/app/filesystem/*` moved to `PLang/app/types/path/*`.
-- `class path` → `class @this` (`app.filesystem.path` → `app.types.path.@this`).
-- Permission + verb folders moved under `path/permission/` and `path/permission/verb/`.
-- `IPLangFileSystem` + `Default/*` (System.IO.Abstractions wrappers) moved to `path/`
-  (will be deleted in Stage 3).
-- `Registry.cs`: skip-abstract narrowed to "abstract && no [PlangType]" so the new
-  abstract base remains indexed (otherwise `GetTypeName(typeof(data.@this<Path>))`
-  returned `"this"` instead of `"path"`).
-- `PathExtension.cs` (`Path.DirectorySeparatorChar` → `System.IO.Path.DirectorySeparatorChar`).
-- Test aliases updated: `PLang.Tests/GlobalUsings.cs` re-points `FileSystem`/`PLangFileSystem`.
-- ~50 references swept across `PLang/`, `PLang.Tests/`, `PlangConsole/`, `PLang.Generators/`.
+The single C# red — `HandlerShapeTests.PLangFileSystem_AndWrapperLayer_AbsentFromProductionAssembly`
+— is a **deliberate, honest red**: see "Flag-and-split" below.
 
-### Stage 2 — `path` abstract + FilePath + Scheme registry (structural done)
-- `path/this.cs`: `public abstract partial class @this`. Constructor `protected`.
-  `_absolutePath` `protected`. Static `Resolve` kept for the type-mapper's
-  scalar-PlangType check; delegates to `Scheme.From`.
-- `path/this.Operations.cs`: abstract verb declarations (ReadText/WriteText/.../Delete) +
-  virtual `CopyTo`/`MoveTo` with cross-scheme defaults (ReadBytes→WriteBytes). `AuthGate`
-  helper stays here (`protected`).
-- `path/this.Authorize.cs`: helpers (`BuildRequest`, `IsInRoot`, `SignAndStore`) made
-  `protected` so FilePath's `BundledTransfer` can call them.
-- `path/file/this.cs` (new): `FilePath : Path`, `[PathScheme("file")]`. Constructor with
-  the existing absolutePath+context+content+source signature. `Resolve` static factory
-  (the FS-specific path-resolution logic — relative-to-goal, ValidatePath, etc.).
-- `path/file/this.Operations.cs` (new): FilePath's verb overrides — the existing
-  `System.IO.File.X` impls moved from the base verbatim. Same-scheme `MoveTo`/`CopyTo`
-  override the base's naive default with `System.IO.File.Move`/`Copy` and the
-  bundled-consent prompt.
-- `path/scheme/this.cs` (new): per-App registry. `ConcurrentDictionary<string, Func<string, Context, Path>>`,
-  case-insensitive scheme matching, `From(raw, context)` parses scheme and dispatches,
-  unknown schemes throw `SchemeNotRegistered`.
-- `app/types/this.cs`: exposes `Scheme { get; } = new()` next to `Choices`.
-- `app/this.cs`: registers `"file"` factory in the App constructor.
-- `app/types/Conversion.cs`: new branch — when target type is assignable to
-  `path.@this`, route through `context.App.Types.Scheme.From(raw, context)`. Catches
-  `SchemeNotRegistered` and returns a clean `data.@this.Fail` shape.
-- Construction-site sweep: `new types.path.@this(...)` → `new types.path.file.@this(...)`
-  in `file/code/Default.cs`, `GetGoalsTests.cs`, etc.
+## Stage detail
 
-### Stage 4 — `[PathScheme]` attribute (done)
-- `PLang/app/types/path/PathSchemeAttribute.cs`: `[AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]`,
-  one `Scheme` string property + single-string ctor.
-- Applied to `FilePath` as `[PathScheme("file")]`. Documentation-only — built-ins are
-  still registered explicitly by name at App startup.
+### Stage 1 — Namespace move
+- `PLang/app/filesystem/**` → `PLang/app/types/path/**` (git-mv, history preserved).
+- `class path` → `class @this` (`app.types.path.@this`); partials `this.cs` /
+  `this.Operations.cs` / `this.Authorize.cs`.
+- `permission/` + `verb/` moved under `path/`.
+- `Registry.cs`: abstract types that declare `[PlangType]` are now indexed (the
+  abstract `path` base must resolve to the PLang name `path`).
+- ~50-reference sweep across PLang/PLang.Tests/PlangConsole/PLang.Generators.
 
-### Test bodies written
-- `SchemeRegistryTests.cs` — 10 tests.
-- `PathAbstractTests.cs` — 6 tests.
-- `PathSchemeAttributeTests.cs` — 5 tests.
-- Tests pass: 2875 green, 74 red. Reds are TDD placeholders for Stages 3, 5, 6, 7.
+### Stage 2 — abstract path + FilePath + Scheme registry
+- `path.@this` abstract; verb surface abstract; `CopyTo`/`MoveTo` virtual with
+  cross-scheme defaults (ReadBytes→WriteBytes; CopyTo+Delete).
+- `path/file/this.cs` — `FilePath`, holds the file verb impls.
+- `path/scheme/this.cs` — per-App registry; `ConcurrentDictionary`,
+  case-insensitive, `From(raw, context)`, unknown scheme → `SchemeNotRegistered`.
+- `app.types.@this` exposes `Scheme`; App ctor registers `"file"`.
+- `Conversion.cs` routes `path` conversion through `Scheme.From`.
 
-## What's still to do
+### Stage 3 — handler one-liners + IFile death
+- 7 file handlers collapsed to delegations over `Path.Value!.X()`. Authorize
+  preamble gone — gate fires inside the Path verb (`AuthGate`).
+- `IFile` + `DefaultFileProvider` deleted (~280 lines absorbed into FilePath:
+  MIME-aware ReadText, options-bearing Delete/Copy/Move/List, Serializers Save).
+- `PathTests.cs` (968 lines testing the deleted provider) deleted.
 
-- **Stage 3** — collapse file handlers to `Path.Value!.X()` one-liners, delete
-  `IFile`/`DefaultFileProvider`/`[Code]`-partial mechanism on file handlers, migrate
-  the ~50 non-action callers (Builder, App.Save, http module, etc.), delete the
-  `path/Default/*` System.IO.Abstractions wrapper layer. Highest-risk stage.
-- **Stage 5** — `HttpPath` (GET/POST/DELETE/HEAD), `[PathScheme("http")]/[PathScheme("https")]`,
-  identity wiring, App-startup registration for `"http"`/`"https"`. "Let the server respond"
-  error shaping.
-- **Stage 6** — `HttpPath.Absolute` per-scheme canonical form (lowercased host,
-  default-port stripped, sorted query, fragment stripped, path normalized).
-- **Stage 7** — `PathSchemeContractTests<TFixture>` generic base + FilePath/HttpPath
-  fixtures + HttpTestServer (HttpListener-based per test-designer's note).
+### Stage 4 — `[PathScheme]` attribute
+- `AttributeTargets.Class`, `AllowMultiple = true`. Applied to FilePath/HttpPath.
+  Marker only — built-ins registered explicitly; future `code.load` consumes it.
 
-## Key files modified or added
+### Stage 5 — HttpPath
+- `path/http/this.cs` — `HttpPath : Path`, `[PathScheme("http")] [PathScheme("https")]`.
+- Verbs map to HTTP methods; `static readonly HttpClient` (process-shared).
+- "Let the server respond": non-2xx → `data.@this.Fail` with status preserved;
+  network failure → Fail/`NetworkError`.
+- Every request signed via the `signing.sign` action (X-Signature header).
+- App ctor registers `"http"` / `"https"`.
 
-- Added: `PLang/app/types/path/file/this.cs`, `PLang/app/types/path/file/this.Operations.cs`,
-  `PLang/app/types/path/scheme/this.cs`, `PLang/app/types/path/PathSchemeAttribute.cs`.
-- Moved: `PLang/app/filesystem/**` → `PLang/app/types/path/**` (git-mv preserves history).
-- Modified: `PLang/app/types/path/this.cs` (abstract), `this.Operations.cs` (abstract verbs),
-  `this.Authorize.cs` (protected helpers), `PLang/app/types/this.cs` (Scheme accessor),
-  `PLang/app/types/Conversion.cs` (Scheme.From routing), `PLang/app/types/Registry.cs`
-  (abstract+[PlangType] indexed), `PLang/app/this.cs` (file registration),
-  `PLang/app/GlobalUsings.cs` (no global Path alias — collides with System.IO.Path),
-  `PLang/app/Utils/PathExtension.cs` (System.IO.Path.DirectorySeparatorChar).
-- Test sweep: removed/repointed dozens of per-file `using Path = ...` aliases.
+### Stage 6 — per-scheme Absolute
+- `Absolute` now virtual; FilePath unchanged (OS-normalized).
+- `HttpPath.Absolute` canonical form: lowercase scheme+host, strip default port,
+  normalize path, root→single-slash, sort query keys, strip fragment.
+- `permission/this.cs` `GlobMatches` rewritten glob→regex (the FileSystemGlobbing
+  matcher chokes on `://`); works for file paths and URLs uniformly.
 
-## Code example — handler shape (current, post-Stage-2; pre-Stage-3)
+### Stage 7 — contract test framework
+- `HttpTestServer` (HttpListener-based, in-box).
+- `PathSchemeContractTests<TFixture>` generic base — 8 contract assertions
+  (verb round-trips, permission gate, uniform failure shape).
+- `FilePathFixture` + `HttpPathFixture` — both mint out-of-root paths so the
+  Permission gate fires uniformly; the suite drives auth via a canned channel.
+- `FilePathContractTests` + `HttpPathContractTests` (`[InheritsTests]`).
+- `CrossSchemeTests` — file↔http CopyTo/MoveTo via the base default.
 
-Before (with `using Path = ...` per-file alias):
+## Flag-and-split — deferred work
+
+The architect's Stage 3 also called for deleting the System.IO.Abstractions
+wrapper layer (`PLangFileSystem` + `PLangFile`/`PLangDirectoryWrapper`/… under
+`path/Default/`). That is **NOT done** — ~14 non-action callers still consume
+`App.FileSystem` (`App.Save/Load`, `Builder`, `settings.Sqlite`, `llm/OpenAi`,
+`ui/Fluid`, `http/code/Default`, `Executor`, `goals/*`, `test/discover`,
+`test/report`, `code/load`, `actor/context`, `PlangConsole/Program`). Many use it
+for app-identity concerns (`RootDirectory`, `ValidatePath`, `OsDirectory`) rather
+than file I/O. Migrating them is a separate effort.
+
+`HandlerShapeTests.PLangFileSystem_AndWrapperLayer_AbsentFromProductionAssembly`
+asserts the wrapper is absent — it fails by design until that migration lands.
+The test carries a code comment explaining the deviation; it is a truthful red,
+not a stub.
+
+## Decisions / deviations
+
+- **No global `Path` alias.** The architect plan called for
+  `global using Path = app.types.path.@this;` — it collides with `System.IO.Path`
+  across dozens of files. Reverted to per-file aliases; production code uses
+  `global::app.types.path.@this` or `FilePath`/`HttpPath` per-file aliases.
+  Documented in `GlobalUsings.cs`.
+- **Scheme registry factory is `Func<string, Context, Path>`** (not the
+  architect-sketched `Func<string, Path>`). Path construction needs Context
+  (goal-dir resolution, App.FileSystem); passing it explicitly beats relying on
+  post-construction IContext state. `Scheme.From(raw, context)`.
+- **Abstract `[PlangType]` types are now indexed** by `app.types.Registry`
+  (previously a hard skip) — required for `path` to resolve to its PLang name.
+- **`GlobMatches` rewritten** from FileSystemGlobbing to a glob→regex compile.
+  Necessary for URL grants; file-glob semantics (`*` = one segment) preserved.
+
+## Open item for discussion (Ingi flagged)
+
+The test alias `PLangPath` (`using PLangPath = app.types.path.@this;`, pre-existing
+in test files, repointed by Stage 1) collides by *name* with the production
+wrapper class `app.types.path.Default.PLangPath`. Harmless (different scopes), and
+resolves itself when the wrapper layer is deleted — Ingi wants to discuss after
+the stages land.
+
+## Code example — handler shape before/after
+
+Before (Stage 3 input):
 ```csharp
-[Action("read")]
-public partial class Read : IContext
+[Code] public partial IFile Files { get; }
+public async Task<data.@this> Run()
 {
-    public partial data.@this<global::app.types.path.@this> Path { get; init; }
-    public partial data.@this<bool> ResolveVariables { get; init; }
-    [Code] public partial IFile Files { get; }
-
-    public async Task<data.@this> Run()
-    {
-        var auth = await Path.Value!.Authorize(new Verb { Read = new ReadVerb() });
-        if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
-        var result = Files.Read(this);
-        // ... ResolveVariables ...
-    }
+    var auth = await Path.Value!.Authorize(new Verb { Read = new ReadVerb() });
+    if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
+    var result = Files.Read(this);
+    // ... ResolveVariables ...
 }
 ```
 
-After Stage 3 will be (per architect plan):
+After:
 ```csharp
 public async Task<data.@this> Run()
 {
-    var read = await Path.Value!.ReadText();
-    // ResolveVariables post-processing only — no Authorize, no Files.
+    var read = await Path.Value!.ReadText();   // Authorize is inside the verb
+    if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
+    if (ResolveVariables.Value && read.Value is string content)
+        return new data.@this(read.Name,
+            Context.Variables.Resolve(content, skipInfrastructure: true), read.Type);
+    return read;
 }
 ```

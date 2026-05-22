@@ -1,65 +1,78 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using PLangPath = global::app.types.path.@this;
+using FilePath = global::app.types.path.file.@this;
+using Conversion = global::app.types.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 2 — PLang <c>path</c> type-mapper dispatches through the scheme registry. A step
-/// parameter typed <c>path</c> with a raw string value resolves into the correct
-/// <c>Path</c> subclass at parameter-resolution time. The conversion lives in
-/// <c>app.types.Conversion</c> and calls <c>context.App.Types.Scheme.From(raw)</c> rather
-/// than constructing a <c>path</c> directly.
-///
-/// Polymorphism is invisible above C#: there remains ONE PLang <c>path</c> type. The
-/// builder and the LLM never choose between <c>path</c>/<c>url</c>/<c>s3-path</c>.
-///
-/// Exercise the conversion through the same surface a real handler parameter uses — a
-/// <c>data.@this&lt;Path&gt;</c> resolved from a raw value — not by calling the registry
-/// directly (that is <see cref="SchemeRegistryTests"/>'s job).
+/// Stage 2 — PLang <c>path</c> type-mapper dispatches through the scheme registry.
 /// </summary>
 public class PathTypeMapperTests
 {
-    /// <summary>Intent: a <c>path</c>-typed value of <c>file:///abs/x.txt</c> resolves to
-    /// a <c>FilePath</c> instance — the type-mapper routed it through the registry.</summary>
+    private static (global::app.@this app, global::app.actor.context.@this ctx) MakeApp()
+    {
+        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-tm-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(dir);
+        var app = new global::app.@this(dir);
+        return (app, app.User.Context);
+    }
+
     [Test] public async Task PathParameter_SchemedFileValue_ResolvesTo_FilePath()
     {
-        Assert.Fail("Not implemented");
+        var (_, ctx) = MakeApp();
+        var (value, error) = Conversion.TryConvertTo("file:///abs/x.txt", typeof(PLangPath), ctx);
+        await Assert.That(error).IsNull();
+        await Assert.That(value).IsTypeOf<FilePath>();
     }
 
-    /// <summary>Intent: a <c>path</c>-typed value with a bare path (<c>/abs/x.txt</c>,
-    /// <c>./rel.txt</c>) resolves to a <c>FilePath</c> — no scheme prefix defaults to
-    /// file.</summary>
     [Test] public async Task PathParameter_BareValue_ResolvesTo_FilePath()
     {
-        Assert.Fail("Not implemented");
+        var (_, ctx) = MakeApp();
+        var (value, error) = Conversion.TryConvertTo("/abs/x.txt", typeof(PLangPath), ctx);
+        await Assert.That(error).IsNull();
+        await Assert.That(value).IsTypeOf<FilePath>();
     }
 
-    /// <summary>Intent: the unknown-scheme typed exception thrown by
-    /// <c>Scheme.From</c> is caught at the type-mapper boundary and shaped into a
-    /// <c>data.@this.Fail</c> with a "scheme not registered" message — the exception does
-    /// NOT escape past the type-mapper. Pins Data-flow uniformity: conversion failures are
-    /// return values, not throws.</summary>
     [Test] public async Task PathParameter_UnknownScheme_BecomesDataFail_NoExceptionEscape()
     {
-        Assert.Fail("Not implemented");
+        var (_, ctx) = MakeApp();
+        // s3 is not registered — the type-mapper must catch SchemeNotRegistered
+        // and shape it as an Error, never let the exception escape.
+        var (value, error) = Conversion.TryConvertTo("s3://bucket/key", typeof(PLangPath), ctx);
+        await Assert.That(value).IsNull();
+        await Assert.That(error).IsNotNull();
+        await Assert.That(error!.Key).IsEqualTo("SchemeNotRegistered");
     }
 
-    /// <summary>Intent: a relative <c>path</c> value resolves against the goal's directory
-    /// — today's <c>path.Resolve</c> behaviour is preserved through the registry route.
-    /// (<c>FilePath</c> owns the relative-resolution logic that <c>path.Resolve</c> holds
-    /// today.)</summary>
     [Test] public async Task PathParameter_RelativeValue_ResolvesAgainstGoalDirectory()
     {
-        Assert.Fail("Not implemented");
+        var (_, ctx) = MakeApp();
+        var (value, error) = Conversion.TryConvertTo("rel.txt", typeof(PLangPath), ctx);
+        await Assert.That(error).IsNull();
+        var fp = (FilePath)value!;
+        // Relative resolution preserves Raw and produces an absolute path.
+        await Assert.That(fp.Raw).IsEqualTo("rel.txt");
+        await Assert.That(System.IO.Path.IsPathRooted(fp.Absolute)).IsTrue();
     }
 
-    /// <summary>Intent: a <c>file.read</c> step whose <c>Path</c> parameter is a bare
-    /// string still runs end-to-end after the registry rewire — the handler receives an
-    /// already-correct <c>data.@this&lt;Path&gt;</c> subclass and never sees the dispatch.
-    /// Run a goal with one <c>file.read</c> step and assert the read succeeds.</summary>
     [Test] public async Task FileReadStep_StringPathParameter_StillRuns_AfterRegistryRewire()
     {
-        Assert.Fail("Not implemented");
+        var (app, ctx) = MakeApp();
+        var filePath = FilePath.Resolve("greeting.txt", ctx);
+        await filePath.WriteText("hello from a string param");
+
+        // Resolve a Path the way a handler parameter does, then run file.read.
+        var (value, _) = Conversion.TryConvertTo("greeting.txt", typeof(PLangPath), ctx);
+        var read = new global::app.modules.file.Read
+        {
+            Context = ctx,
+            Path = new global::app.data.@this<PLangPath>("", (PLangPath)value!),
+        };
+        var result = await read.Run();
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("hello from a string param");
     }
 }

@@ -1,40 +1,47 @@
 using Path = global::app.types.path.@this;
+using HttpPath = global::app.types.path.http.@this;
 using System;
 using System.Threading.Tasks;
 using PLang.Tests.App.Types.PathTests.Http;
-// See IPathSchemeFixture.cs — current-type alias, repointed by stage 1's rename sweep.
 
 namespace PLang.Tests.App.Types.PathTests.Contract;
 
 /// <summary>
-/// SKELETON — the <see cref="IPathSchemeFixture"/> for the <c>http</c> scheme. The coder
-/// implements this in stage 7.
-///
-/// Required behaviour:
-///  - Constructor spins up an <see cref="HttpTestServer"/> (in-process loopback) and an App
-///    so minted HttpPaths have a Context/Actor for Authorize.
-///  - <see cref="CreateFresh"/> mints an <c>HttpPath</c> at a fresh
-///    <c>HttpTestServer.NewResourceUrl()</c>, Context-wired. The server's verb-aware
-///    in-memory store backs Write/Read/Delete/Exists/Stat round-trips.
-///  - <see cref="Cleanup"/> removes the server-side entry — idempotent.
-///  - <see cref="CanPerform"/> returns false for <see cref="VerbName.List"/> (the test
-///    server has no directory-listing concept) and true for the rest. This SCOPES the
-///    <c>List</c> contract test out for HTTP — it does not skip an assertion on a verb the
-///    server merely refuses.
-///  - Implement <c>IDisposable</c> — dispose the <see cref="HttpTestServer"/>.
+/// <see cref="IPathSchemeFixture"/> for the <c>http</c> scheme. Spins up an
+/// in-process <see cref="HttpTestServer"/> and mints HttpPaths at fresh server
+/// URLs. The HTTP test server has no directory-listing concept, so
+/// <see cref="CanPerform"/> scopes <see cref="VerbName.List"/> out.
 /// </summary>
 public sealed class HttpPathFixture : IPathSchemeFixture, IDisposable
 {
-    /// <summary>See class doc — mints a Context-wired HttpPath at a fresh server URL.</summary>
-    public Task<Path> CreateFresh() => throw new NotImplementedException();
+    private readonly HttpTestServer _server;
+    private readonly string _appRoot;
+    private readonly global::app.@this _app;
 
-    /// <summary>See class doc — removes the server-side entry, idempotent.</summary>
-    public Task Cleanup(Path p) => throw new NotImplementedException();
+    public HttpPathFixture()
+    {
+        _server = new HttpTestServer();
+        _appRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-chx-" + Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(_appRoot);
+        _app = new global::app.@this(_appRoot);
+    }
 
-    /// <summary>The HTTP test server has no directory-listing concept — scope List out.</summary>
+    public Task<Path> CreateFresh()
+    {
+        var url = _server.NewResourceUrl();
+        return Task.FromResult<Path>(new HttpPath(url, _app.User.Context));
+    }
+
+    public Task Cleanup(Path p) => Task.CompletedTask;   // server entries die with the server
+
     public bool CanPerform(VerbName verb) => verb != VerbName.List;
 
     public string Scheme => "http";
 
-    public void Dispose() => throw new NotImplementedException();
+    public void Dispose()
+    {
+        _app.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        _server.Dispose();
+        try { if (System.IO.Directory.Exists(_appRoot)) System.IO.Directory.Delete(_appRoot, true); } catch { }
+    }
 }

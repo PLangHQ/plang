@@ -1,41 +1,66 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using System.Threading;
 
 namespace PLang.Tests.App.Types.PathTests.Contract;
 
 /// <summary>
-/// Stage 7 — cross-scheme transfer. Lives outside the generic contract base because it
-/// needs two fixtures (two schemes) at once. Proves the base-class default
-/// <c>CopyTo</c>/<c>MoveTo</c> (ReadBytes → WriteBytes; CopyTo + Delete) work when source
-/// and destination are different schemes — the case that makes "copy a file to an HTTP
-/// endpoint" just work with no scheme-pair-specific code.
-///
-/// Each test mints one Path from a <see cref="FilePathFixture"/> and one from a
-/// <see cref="HttpPathFixture"/>, and tears both down in a <c>finally</c>.
+/// Stage 7 — cross-scheme transfer. Proves the base-class default
+/// CopyTo/MoveTo (ReadBytes → WriteBytes; CopyTo + Delete) work across schemes.
 /// </summary>
 public class CrossSchemeTests
 {
-    /// <summary>Intent: <c>FilePath.CopyTo(HttpPath)</c> uses the base default
-    /// (ReadBytes + WriteBytes). After the copy, <c>httpDst.ReadText()</c> equals the
-    /// FilePath source content, and the source FilePath still exists.</summary>
+    private static void Authorize(global::app.types.path.@this p)
+        => p.Context!.Actor!.Channels.Register(new CannedAnswerChannel("a"));
+
     [Test] public async Task CopyTo_FilePath_To_HttpPath_UsesBaseDefault_RoundTrips()
     {
-        Assert.Fail("Not implemented");
+        using var fileFx = new FilePathFixture();
+        using var httpFx = new HttpPathFixture();
+        var src = await fileFx.CreateFresh();
+        var dst = await httpFx.CreateFresh();
+        Authorize(src);
+        Authorize(dst);
+
+        await src.WriteText("cross hello");
+        var copied = await src.CopyTo(dst);
+        await Assert.That(copied.Success).IsTrue();
+        var read = await dst.ReadText();
+        await Assert.That(read.Value).IsEqualTo("cross hello");
     }
 
-    /// <summary>Intent: the reverse direction — <c>HttpPath.CopyTo(FilePath)</c> — also
-    /// uses the base default and round-trips. Confirms the default is direction-agnostic.</summary>
     [Test] public async Task CopyTo_HttpPath_To_FilePath_UsesBaseDefault_RoundTrips()
     {
-        Assert.Fail("Not implemented");
+        using var fileFx = new FilePathFixture();
+        using var httpFx = new HttpPathFixture();
+        var src = await httpFx.CreateFresh();
+        var dst = await fileFx.CreateFresh();
+        Authorize(src);
+        Authorize(dst);
+
+        await src.WriteText("reverse hello");
+        var copied = await src.CopyTo(dst);
+        await Assert.That(copied.Success).IsTrue();
+        var read = await dst.ReadText();
+        await Assert.That(read.Value).IsEqualTo("reverse hello");
     }
 
-    /// <summary>Intent: <c>FilePath.MoveTo(HttpPath)</c> is CopyTo + Delete across schemes
-    /// — after the move the HttpPath holds the content and the source FilePath no longer
-    /// <c>Exists</c>.</summary>
     [Test] public async Task MoveTo_FilePath_To_HttpPath_CopiesThenDeletesSource()
     {
-        Assert.Fail("Not implemented");
+        using var fileFx = new FilePathFixture();
+        using var httpFx = new HttpPathFixture();
+        var src = await fileFx.CreateFresh();
+        var dst = await httpFx.CreateFresh();
+        Authorize(src);
+        Authorize(dst);
+
+        await src.WriteText("move cross");
+        var moved = await src.MoveTo(dst);
+        await Assert.That(moved.Success).IsTrue();
+        var read = await dst.ReadText();
+        await Assert.That(read.Value).IsEqualTo("move cross");
+        var srcGone = await src.ExistsAsync();
+        await Assert.That(srcGone.Value).IsEqualTo(false);
     }
 }

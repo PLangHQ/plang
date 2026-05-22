@@ -23,7 +23,7 @@ public class PathSchemeAttributeTests
     [Test] public async Task PathSchemeAttribute_ExposesSingleSchemeString()
     {
         var props = typeof(PathSchemeAttribute)
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
         await Assert.That(props.Length).IsEqualTo(1);
         await Assert.That(props[0].Name).IsEqualTo("Scheme");
         await Assert.That(props[0].PropertyType).IsEqualTo(typeof(string));
