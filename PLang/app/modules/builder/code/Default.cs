@@ -894,6 +894,9 @@ public class Default : IBuilder
             var resolved = await goalCall.GetGoalAsync(app, context);
             if (resolved.Success && resolved.Value is Goal g && !string.IsNullOrEmpty(g.PrPath))
             {
+                // Pre-resolve the .pr path. A slash-qualified Name keeps its
+                // folder prefix in the saved .pr — LoadFromFile leaf-matches it
+                // against the loaded goal's own (unqualified) Name at dispatch.
                 goalCall.PrPath = g.PrPath;
             }
 

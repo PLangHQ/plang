@@ -632,6 +632,62 @@
         "health": "Build clean (0 errors); C# 2882/2882; plang 203/203, 0 stale.",
         "notes": "path-polymorphism branch is sound. Next: tester."
       }
+    },
+    {
+      "id": "7004c599-67f8-449f-adc6-b299b719d17f",
+      "bot": "coder",
+      "timestamp_start": "2026-05-22T17:28:16Z",
+      "timestamp_end": null,
+      "intent": "Address builder bot's 3-class self-rebuild regression report.",
+      "before": {
+        "assumptions": "Builder bot has low C# understanding \u2014 validated each claim. Class 1a (slash names) real; 1b (nested bare names) NOT a bug (error.handle stamps Step); Class 2 real LLM mis-compile; Class 3 unvalidated/intermittent.",
+        "risk": "GetGoalAsync change touches dispatch resolution \u2014 must not regress bare-name or root-relative resolution."
+      },
+      "plan": ".bot/path-polymorphism/coder/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/goals/goal/GoalCall.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Class 1a: GetGoalAsync resolves slash-qualified names as {folder}/.build/{leaf}.pr with an ancestor walk; LoadFromFile leaf-matches a slash Name. Verified via self-rebuild \u2014 all 3 slash calls resolve."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/builder/code/Default.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "ResolveGoalCallsInAction sets PrPath on resolved slash calls (LoadFromFile leaf-matches at dispatch). Did NOT add list<action> recursion \u2014 Class 1b validated as a non-bug (error.handle stamps Step)."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/builder/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Inverted File.Exists at builder bootstrap \u2014 fired 'no app' when the marker existed. Verified: self-rebuild now runs without --app=create."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/builder/actions.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Class 2 re-diagnosed: builder.actions has no Include param (Builder.Actions returns the full catalog); the builder bot's 'LLM drops Include' is wrong. Real defect is non-deterministic write-to mis-compile. Validator needs step text, which builder.validate lacks \u2014 escalated to Ingi."
+        }
+      ],
+      "after": {
+        "status": "Class 1a + inverted check done & verified via self-rebuild. Class 2 re-diagnosed (builder bot wrong); Class 2/3 pending an Ingi decision on validator placement.",
+        "health": "green",
+        "notes": "Build clean; C# 2882/2882; PLang 203/203/0 stale."
+      }
     }
   ]
 }

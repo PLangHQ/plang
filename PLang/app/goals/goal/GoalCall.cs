@@ -64,19 +64,45 @@ public sealed class GoalCall : modules.IEvent
         var loaded = app.Goals.Get(Name);
         if (loaded != null) return data.@this.Ok(loaded);
 
-        // 3. Derive PrPath from Name and file.read
-        var prFile = $".build/{Name.ToLowerInvariant()}.pr";
+        // 3. Derive the .pr path from Name and file.read.
+        var name = Name.Replace('\\', '/');
+
+        // Caller's folder — the anchor for relative resolution.
+        var callerDir = Action?.Step?.Goal?.Path;
+        if (callerDir != null)
+        {
+            var cut = callerDir.LastIndexOf('/');
+            callerDir = cut >= 0 ? callerDir[..cut] : "";
+        }
+
+        var slashAt = name.LastIndexOf('/');
+        if (slashAt >= 0)
+        {
+            // Slash-qualified name (BuildGoal/Start): the goal lives in a named
+            // folder whose own .build holds the .pr — {folder}/.build/{leaf}.pr,
+            // NOT .build/{whole/name}.pr. That folder may be a sibling or an
+            // ancestor of the caller's folder, so walk the caller's ancestors
+            // before falling back to root- and context-relative.
+            var subPath = $"{name[..slashAt]}/.build/{name[(slashAt + 1)..].ToLowerInvariant()}.pr";
+            for (var dir = callerDir; !string.IsNullOrEmpty(dir);)
+            {
+                var hit = await LoadFromFile($"{dir}/{subPath}", app, context);
+                if (hit.Success) return hit;
+                var up = dir.LastIndexOf('/');
+                dir = up > 0 ? dir[..up] : "";
+            }
+            var slashRoot = await LoadFromFile("/" + subPath, app, context);
+            if (slashRoot.Success) return slashRoot;
+            return await LoadFromFile(subPath, app, context);
+        }
+
+        // Bare name — the .pr sits in the caller's own .build, else root/context.
+        var prFile = $".build/{name.ToLowerInvariant()}.pr";
 
         // Try relative to the calling goal's folder first (e.g., test sub-goals)
-        var callingGoal = Action?.Step?.Goal;
-        if (callingGoal?.Path != null)
+        if (callerDir != null)
         {
-            var goalDir = callingGoal.Path;
-            var lastSlash = goalDir.LastIndexOf('/');
-            if (lastSlash >= 0)
-                goalDir = goalDir[..lastSlash];
-            var goalRelative = $"{goalDir}/{prFile}";
-            var goalResult = await LoadFromFile(goalRelative, app, context);
+            var goalResult = await LoadFromFile($"{callerDir}/{prFile}", app, context);
             if (goalResult.Success) return goalResult;
         }
 
@@ -122,12 +148,18 @@ public sealed class GoalCall : modules.IEvent
         foreach (var subGoal in goal.Goals)
             subGoal.LoadedFromPrPath = prPath;
 
-        // Match by name — the loaded goal or one of its sub-goals
+        // Match by name — the loaded goal or one of its sub-goals. A slash-
+        // qualified Name (BuildGoal/Start) carries a folder prefix that the
+        // loaded goal's own Name never has, so match on the leaf segment.
+        var matchName = Name;
+        var nameSlash = matchName.LastIndexOfAny(new[] { '/', '\\' });
+        if (nameSlash >= 0) matchName = matchName[(nameSlash + 1)..];
+
         @this? found;
-        if (string.IsNullOrEmpty(Name) || string.Equals(goal.Name, Name, StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrEmpty(matchName) || string.Equals(goal.Name, matchName, StringComparison.OrdinalIgnoreCase))
             found = goal;
         else
-            found = goal.Goals.FirstOrDefault(g => string.Equals(g.Name, Name, StringComparison.OrdinalIgnoreCase));
+            found = goal.Goals.FirstOrDefault(g => string.Equals(g.Name, matchName, StringComparison.OrdinalIgnoreCase));
 
         if (found == null)
             return data.@this.FromError(new global::app.errors.ActionError(
