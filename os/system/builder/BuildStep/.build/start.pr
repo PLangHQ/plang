@@ -533,7 +533,7 @@
         },
         {
           "index": 9,
-          "text": "add {index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, response: %compileResult%} to %trace.stepPasses%",
+          "text": "- add {index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, system: %buildStepPrompt%, user: %buildStepUserMsg%, response: %compileResult%} to %trace.stepPasses%",
           "lineNumber": 29,
           "indent": 0,
           "comment": null,
@@ -553,6 +553,8 @@
                     "index": "%step.Index%",
                     "stepText": "%step.Text%",
                     "actions": "%planStep.actions%",
+                    "system": "%buildStepPrompt%",
+                    "user": "%buildStepUserMsg%",
                     "response": "%compileResult%"
                   },
                   "type": "object"

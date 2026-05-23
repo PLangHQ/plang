@@ -937,6 +937,11 @@ function passToGoalSection(passOrTrace, isParent) {
         finalLevel: gp(src, 'Level', 'level') || 'high',
         finalConfidence: gp(src, 'Confidence', 'confidence') || 0,
         actions,
+        // Per-step LLM prompts (v3): captured into trace.stepPasses[i].
+        // The system prompt is shared across steps in a goal but we attach it
+        // per-step so the UI can show it inline without cross-referencing.
+        system: compiled.system || '',
+        user: compiled.user || '',
         raw: { source: src, compiled },
       };
     });
@@ -1594,10 +1599,28 @@ function renderStepRow(entry, goalSection, step, subKey) {
 
   if (depth >= 1) {
     html += `<div class="sublayer">`;
+    // JSON sublayer (depth 1+) — clicking closes back to text-only.
     html += renderSublayer(stepKey, 'json', sizeLabel(step.raw || {}), true,
       `<div class="sublayer-body"><pre>${esc(JSON.stringify(step.raw || { actions: step.actions }, null, 2))}</pre></div>`,
-      0  // clicking closes json back to depth 0
+      0
     );
+    // User Prompt sublayer (depth 2+) — the per-step user message sent to the LLM.
+    if (step.user) {
+      const userOpen = depth >= 2;
+      html += renderSublayer(stepKey, 'user prompt', sizeLabel(step.user), userOpen,
+        `<div class="sublayer-body"><pre>${esc(typeof step.user === 'string' ? step.user : JSON.stringify(step.user, null, 2))}</pre></div>`,
+        userOpen ? 1 : 2
+      );
+    }
+    // System Prompt sublayer (depth 3+) — the Compile.llm system prompt.
+    // Shared across all steps in the goal, but shown per-step for convenience.
+    if (step.system) {
+      const sysOpen = depth >= 3;
+      html += renderSublayer(stepKey, 'system prompt', sizeLabel(step.system), sysOpen,
+        `<div class="sublayer-body"><pre>${esc(typeof step.system === 'string' ? step.system : JSON.stringify(step.system, null, 2))}</pre></div>`,
+        sysOpen ? 2 : 3
+      );
+    }
     html += `</div>`;
   }
 
