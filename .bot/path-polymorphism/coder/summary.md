@@ -1,113 +1,85 @@
-# Coder — path-polymorphism
+# coder summary — path-polymorphism branch
 
-## Version
-
-v5 (v1 = stages 1–7; v2 = lowercase aliases + Stage 8; v3 = codeanalyzer v1
-review response; v4 = merge `origin/runtime2`; v5 = codeanalyzer v2 review
-response). Single branch.
-
-## What was done — v5 (codeanalyzer v2 response)
-
-codeanalyzer v2 confirmed F1–F8 genuinely fixed, raised three new findings.
-All addressed — see `v5/result.md`.
-
-- **N1 (Medium)** — the F3 refactor dropped `file.exists`'s `AuthGate`. Decision
-  (Ingi): **gate it.** `FilePath.AsBooleanAsync` now routes through the gated
-  `ExistsAsync`, symmetric with `HttpPath`. New test proves an out-of-root
-  denied probe answers `false`; two condition tests given context-bearing paths.
-- **N2 (Low)** — `path.Equals`/`GetHashCode` switched `OrdinalIgnoreCase` →
-  `RootComparison`.
-- **N3 (Low)** — `assert.ResolveTruthy` delegates `IBooleanResolvable` dispatch
-  to `Data.ToBooleanAsync` instead of duplicating it.
-
-C# **2882 / 2882**; PLang `--test` **203 / 203 / 0 stale**. Build clean.
+**Latest version:** v8
 
 ## What this is
 
-PLang's `path` is scheme-polymorphic: an abstract `path` base with `FilePath` /
-`HttpPath` subclasses, a per-App scheme registry, file handlers collapsed onto
-`path.X()`, and the old `System.IO.Abstractions` wrapper layer deleted.
+The `path-polymorphism` branch hosts the typed-returns sweep, the path
+scheme polymorphism work (FilePath / HttpPath under a common `IPath`), and
+the bootstrap fixes that fell out of the self-rebuild loop. v8 closes the
+test-coverage gaps that tester v7 flagged after the v6/v7 code landed.
 
-**v4** merges `origin/runtime2` into the branch. The plang builder was fixed on
-runtime2 (builder v3 rework: `BuildGoal`/`BuildStep` folder split, per-step
-variable types in LLM prompts, path-resolution fixes, JSON-repair stages). The
-branch needed those wins.
+## v8 (this version) — tests-only
 
-## What was done — v4 (merge)
+Five findings from tester v7 (4 missing-coverage + 1 parked-file + 1
+process). Two new C# test files, four new tests appended to an existing
+file, one renamed PLang `.test.goal`. No production code touched.
 
-Fast-forwarded local `path-polymorphism` to `origin/path-polymorphism` (picked
-up codeanalyzer v2), then merged `origin/runtime2` (merge-base `e30354a0f`, so
-the full runtime2 builder rework came in).
+### Files added
 
-**One conflict** — `PLang/app/modules/builder/code/Default.cs`:
-- runtime2 added a path-resolution fix: a `rootRelative` variable that prefixes
-  `/` so the builder's `file.List` anchors at the user's cwd, not the builder's
-  own `/system/builder/` tree.
-- This branch had renamed `filesystem.path` → `path`.
-- **Resolved** by keeping runtime2's fix and using this branch's type:
-  `Path = data.@this<path>.Ok(path.Resolve(rootRelative, context))`.
+- `PLang.Tests/App/Goals/GoalCallResolutionTests.cs` — 4 tests for the
+  slash-qualified resolution coder v6 introduced.
+- `PLang.Tests/App/Modules/builder/BuilderRunAsyncTests.cs` — 2 tests
+  guarding the inverted `File.Exists` bootstrap check.
+- `PLang.Tests/App/Modules/ModulesDescribeReturnTypeTests.cs` — 7 tests
+  pinning `Action.ReturnTypeName` for a representative slice of the live
+  catalog plus a sanity sweep ("every catalog row carries a value").
 
-**One design divergence** — runtime2 commit `8166e753b` re-added a try/catch
-*inside* the generated action handler (around `Run()`), wrapping bare CLR
-exceptions as `ServiceError` with `{module}.{action}: {ExType}: {msg}` context.
-This branch's "Phase 3" made the handler thin (no try/catch; wrapping lives in
-`Call.ExecuteAsync`). **Ingi chose to keep runtime2's wrap** — it strictly
-improves error messages and catches NRE that `Call.ExecuteAsync` deliberately
-excludes. Two stale generator tests were updated to match (see below).
+### Files modified
 
-Everything else auto-merged cleanly: `data/this.cs`, `data/JsonString.cs`,
-`errors/Error.cs`, `Generators/Emission/Action/this.cs`, the `os/system/builder/`
-tree restructure.
+- `PLang.Tests/App/Modules/builder/GetActionsTests.cs` — appended 4 tests
+  for the new `Actions` filter parameter (named restrict, empty-list as
+  no-filter, unknown name → empty, case-insensitive).
+- `Tests/Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal`
+  — renamed from `.goal2` (the parked extension wasn't discovered by
+  `plang --test`, so the negative-branch guard for `if X exists` was inert).
+  Built the .pr alongside its two callees (WhenExists.goal, WhenMissing.goal).
 
-## Second merge — runtime2 builder fixes
+### Code example — N4 sanity sweep
 
-After the first merge the builder turned out to be bricked: runtime2's last
-self-build had saved a corrupted `build.pr` (step 6 bound `builder.goals` →
-`builder.goalsSave`, the classic bad-self-build trap). Reported to Ingi, who
-fixed it properly on runtime2 (`67151df00` build.pr step 6, `390d83961` new
-`builder.validateStepActions` validator to stop the corruption recurring,
-`1a2afecaf` prPath on static `goal.call`). Pulled those in.
-
-**One conflict** — `Default.cs` `ResolveGoalCallPaths`: runtime2 refactored the
-inline goal.call-resolution into a shared `ResolveGoalCallsInAction` (resolves
-via `GetGoalAsync`) applied to both actions and modifiers. Took runtime2's
-version. runtime2's new `builder.goals` path resolution also used `app.FileSystem`
-and `app.filesystem.path` — both removed/renamed on this branch — adapted to
-`app.AbsolutePath` and `path.RootComparison`.
-
-**Stale test fixed** — `ContextVars2.test.goal` lost its `%!fileSystem%`
-assertion in Stage 8 but the `.pr` still carried it (hash mismatch → stale).
-Corrected the `.pr` directly: dropped the step, renumbered, recomputed
-`hash = SHA256(Name + step texts)`. Commit `b847167df`.
-
-**Tests:** C# **2881 / 2881 pass**. PLang `--test` **203 pass / 0 fail / 0
-stale** (was 202 / 1 stale — the stale test is now green). Build clean.
-
-**Builder still not 100%** (runtime2's in-progress work, not the merge): the
-`--build={"files":[...]}` filter doesn't populate `Builder.Files` so it builds
-all goals; and it fails to compile some goals (`TestGoalFirstReturnsRecoveryValue`
-step 1 → "no actions"). Both are builder-quality bugs Ingi owns on runtime2.
-
-## Code example — the two updated generator tests
-
-`PLang.Tests/Generator/GeneratorValidationTests.cs` — the Phase-3 thin-handler
-assertions, before/after:
+The interesting pattern here is the "every catalog row carries a value"
+sweep — it pins the *contract* of `DescribeReturnTypeName` (a row must
+always describe its return: "data" for polymorphic, real T name otherwise)
+without enumerating every action by hand:
 
 ```csharp
-// BEFORE — asserted the generated handler has NO try block
-await Assert.That(generated.Contains("try {") /* ... */).IsFalse();
-await Assert.That(generated).Contains("var __runResult = await Run();");
+[Test]
+public async Task ReturnTypeName_AllCatalogRows_HaveAValue()
+{
+    var catalog = _app.Modules.Describe();
+    var missing = catalog.Where(a => string.IsNullOrEmpty(a.ReturnTypeName))
+                         .Select(a => $"{a.Module}.{a.ActionName}")
+                         .ToList();
 
-// AFTER — asserts runtime2's narrow try/catch wrap, no finally
-await Assert.That(generated).Contains("try { __runResult = await Run(); }");
-await Assert.That(generated.Contains("finally {") /* ... */).IsFalse();
-await Assert.That(generated).Contains("__runResult = await Run();");
+    await Assert.That(missing.Count)
+        .IsEqualTo(0)
+        .Because($"actions missing ReturnTypeName: {string.Join(", ", missing)}");
+}
 ```
 
-## Carry-forward
+A future Run() that doesn't return `Task<Data>` / `Task<Data<T>>` (e.g. a
+new return wrapper shape) goes red here with the offending row's name in
+the message.
 
-- codeanalyzer v2 verdict was **NEEDS WORK** — not addressed in v4 (v4 is the
-  merge only). Read `.bot/path-polymorphism/codeanalyzer/v2/report.md` for the
-  v2 findings before the next coder pass.
-- The builder's `files` filter and the `TestGoalFirstReturnsRecoveryValue`
-  compile failure remain open on runtime2 — not this branch's scope.
+### Baseline (this round)
+
+- C# `dotnet run --project PLang.Tests` — **2906 / 2906** (+17 from v7's 2889)
+- PLang `plang --test` — **204 / 204** (+1 from v7's 203, 0 stale)
+- Build — 0 errors, 454 pre-existing nullable warnings (unchanged)
+
+### Process note
+
+`baseline-tests.md` is in this version — addresses tester v7's N5 nudge.
+
+---
+
+## Prior versions (one-liners)
+
+- **v7** — codeanalyzer v4 F1 (Data<T>.From docstring tightened) + F2
+  (orphan `<summary>` block on `DescribeReturnTypeName` removed). Doc-only.
+- **v6** — Slash-qualified `goal.call` resolution (ancestor walk), inverted
+  `File.Exists` bootstrap check, `builder.actions` Include parameter, two
+  builder validators.
+- **v5 and earlier** — typed-returns sweep (~70 handlers, 9 provider
+  interfaces); IPath, IIdentity, IStore.Exists/Tables typed; runtime2 merge
+  + conflict resolution.

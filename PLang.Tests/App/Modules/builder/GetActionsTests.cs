@@ -132,4 +132,85 @@ public class GetActionsTests
                 .Because($"{a.Module}.{a.ActionName} should not expose [Code] interface properties");
         }
     }
+
+    // --- Actions filter (tester v7 N2) ----------------------------------------
+    //
+    // The Actions param restricts the returned catalog to a named set of
+    // module.action entries. Null/empty → full catalog. The Compile step uses
+    // it to keep the prompt focused. These guard the filter so a silent no-op
+    // (case-insensitive match broken, empty-list-as-empty-result confusion,
+    // unknown name throwing instead of dropping) can't slip past.
+
+    [Test]
+    public async Task GetActions_ActionsFilter_RestrictsToNamed()
+    {
+        var action = new GetActions
+        {
+            Context = _app.User.Context,
+            Actions = new global::app.data.@this<List<string>>("", new List<string> { "file.read", "file.save" })
+        };
+        var result = await _app.RunAction(action, _app.User.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var actions = result.Value as StepActions;
+        await Assert.That(actions).IsNotNull();
+        await Assert.That(actions!.Count).IsEqualTo(2);
+        await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "read")).IsTrue();
+        await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "save")).IsTrue();
+    }
+
+    [Test]
+    public async Task GetActions_ActionsFilter_Empty_ReturnsFullCatalog()
+    {
+        // Empty list semantic = "no filter" (matches the Default.cs check
+        // `if (filter is { Count: > 0 })`). A regression that flipped this to
+        // "filter to nothing" would silently drop every action.
+        var unfiltered = new GetActions { Context = _app.User.Context };
+        var fullResult = await _app.RunAction(unfiltered, _app.User.Context);
+        var fullCount = ((StepActions)fullResult.Value!).Count;
+
+        var action = new GetActions
+        {
+            Context = _app.User.Context,
+            Actions = new global::app.data.@this<List<string>>("", new List<string>())
+        };
+        var result = await _app.RunAction(action, _app.User.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var actions = result.Value as StepActions;
+        await Assert.That(actions).IsNotNull();
+        await Assert.That(actions!.Count).IsEqualTo(fullCount);
+    }
+
+    [Test]
+    public async Task GetActions_ActionsFilter_UnknownName_ReturnsEmptyNoError()
+    {
+        var action = new GetActions
+        {
+            Context = _app.User.Context,
+            Actions = new global::app.data.@this<List<string>>("", new List<string> { "nonexistent.action" })
+        };
+        var result = await _app.RunAction(action, _app.User.Context);
+
+        await Assert.That(result.Success).IsTrue();
+        var actions = result.Value as StepActions;
+        await Assert.That(actions).IsNotNull();
+        await Assert.That(actions!.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task GetActions_ActionsFilter_IsCaseInsensitive()
+    {
+        var action = new GetActions
+        {
+            Context = _app.User.Context,
+            Actions = new global::app.data.@this<List<string>>("", new List<string> { "File.Read", "FILE.SAVE" })
+        };
+        var result = await _app.RunAction(action, _app.User.Context);
+
+        var actions = (StepActions)result.Value!;
+        await Assert.That(actions.Count).IsEqualTo(2);
+        await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "read")).IsTrue();
+        await Assert.That(actions.Any(a => a.Module == "file" && a.ActionName == "save")).IsTrue();
+    }
 }
