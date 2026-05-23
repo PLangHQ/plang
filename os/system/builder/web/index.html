@@ -989,11 +989,21 @@ function passToGoalSection(passOrTrace, isParent) {
   const sourceSteps = goalObj && Array.isArray(gp(goalObj, 'Steps', 'steps')) ? gp(goalObj, 'Steps', 'steps') : [];
 
   // Index stepPasses by step index for quick zip.
+  //
+  // trace.stepPasses is a flat list shared across the parent goal AND its
+  // sub-goals (BuildStep appends to %trace.stepPasses% from every level).
+  // Multiple entries can therefore share the same index — e.g. parent step 0
+  // AND a sub-goal's step 0. v3 traces stamp `goal: <Name>` on each entry so
+  // we can filter to the current section's goal; older traces don't, in which
+  // case we fall back to "first occurrence wins" — parent steps are recorded
+  // before sub-goal steps, so that keeps the parent display correct.
   const passByIndex = new Map();
   const stepPasses = Array.isArray(p.stepPasses) ? p.stepPasses : [];
   for (const sp of stepPasses) {
     const v = unwrapDataWrapper(sp) || {};
-    if (typeof v.index === 'number') passByIndex.set(v.index, v);
+    if (typeof v.index !== 'number') continue;
+    if (v.goal && goalName && v.goal !== goalName) continue;
+    if (!passByIndex.has(v.index)) passByIndex.set(v.index, v);
   }
 
   // Aggregate goal-level errors/warnings across stepPasses (v3) + legacy.
