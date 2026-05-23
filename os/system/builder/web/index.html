@@ -496,6 +496,36 @@
   .step-row { border-left: 3px solid transparent; }
   .step-row.open { border-left-color: var(--accent); background: rgba(91,155,213,0.03); }
   .step-row.has-error { border-left-color: var(--accent); background: rgba(233,69,96,0.04); }
+  .step-row.has-warning { border-left-color: var(--orange); background: rgba(232,112,64,0.04); }
+  .step-note {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+  .step-note.err  { background: rgba(233,69,96,0.10); color: #ffb0bd; }
+  .step-note.warn { background: rgba(232,112,64,0.10); color: #ffc89e; }
+  .step-note-tag {
+    display: inline-block;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-right: 6px;
+    letter-spacing: 0.5px;
+  }
+  .step-note.err  .step-note-tag { background: var(--accent); color: #fff; }
+  .step-note.warn .step-note-tag { background: var(--orange); color: #fff; }
+  .step-note-key {
+    display: inline-block;
+    font-weight: 600;
+    margin-right: 6px;
+    opacity: 0.85;
+  }
   .step-line {
     padding: 6px 16px 6px 12px;
     font-size: 13px;
@@ -996,6 +1026,10 @@ function passToGoalSection(passOrTrace, isParent) {
         finalLevel: gp(src, 'Level', 'level') || 'high',
         finalConfidence: gp(src, 'Confidence', 'confidence') || 0,
         actions,
+        // Per-step errors/warnings — kept on the step (NOT pooled at goal
+        // level) so renderStepRow can show them inline next to the step.
+        errors: Array.isArray(resp.errors) ? resp.errors : [],
+        warnings: Array.isArray(resp.warnings) ? resp.warnings : [],
         // Per-step LLM prompts (v3): captured into trace.stepPasses[i].
         // The system prompt is shared across steps in a goal but we attach it
         // per-step so the UI can show it inline without cross-referencing.
@@ -1625,7 +1659,11 @@ function renderStepRow(entry, goalSection, step, subKey) {
   const stepKey = entry.traceId + '::' + goalSection.name + '::' + step.index;
   // Disclosure: 0 = text+formal only, 1 = +json. (LLM request is goal-level.)
   const depth = stepDepth.get(stepKey) || 0;
-  const hasError = ((goalSection.errors || []).some(e => stepIndexFromKey(e.key) === step.index));
+  const stepErrors = step.errors || [];
+  const stepWarnings = step.warnings || [];
+  const hasError = stepErrors.length > 0
+    || ((goalSection.errors || []).some(e => stepIndexFromKey(e.key) === step.index));
+  const hasWarning = stepWarnings.length > 0;
 
   const conf = step.finalConfidence;
   const confCls = step.finalLevel === 'medium' ? 'medium' : step.finalLevel === 'low' ? 'low' : '';
@@ -1646,13 +1684,19 @@ function renderStepRow(entry, goalSection, step, subKey) {
     ? `setStepDepth('${stepKey}', ${depth >= 1 ? 0 : 1})`
     : '';
 
+  const noteRows = [
+    ...stepErrors.map(e => `<div class="step-note err"><span class="step-note-tag">error</span> <span class="step-note-key">${esc(e.key || '')}</span> ${esc(e.message || '')}</div>`),
+    ...stepWarnings.map(w => `<div class="step-note warn"><span class="step-note-tag">warning</span> <span class="step-note-key">${esc(w.key || '')}</span> ${esc(w.message || '')}</div>`),
+  ].join('');
+
   let html = `
-    <div class="step-row ${depth > 0 ? 'open' : ''} ${hasError ? 'has-error' : ''}">
+    <div class="step-row ${depth > 0 ? 'open' : ''} ${hasError ? 'has-error' : ''} ${hasWarning && !hasError ? 'has-warning' : ''}">
       <div class="step-line">
         <span class="idx">${step.index}</span>
         <div class="body">
           <div class="text">${esc(step.text || '').replace(/\n/g, '<br>')}</div>
           ${hideFormal ? '' : `<div class="${formalCls}" ${formalClick ? `onclick="${formalClick}"` : ''}>${formalHtml}</div>`}
+          ${noteRows}
         </div>
         <span class="conf ${confCls}">${conf}%</span>
       </div>
