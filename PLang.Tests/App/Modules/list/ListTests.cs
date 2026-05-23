@@ -249,7 +249,7 @@ public class ListTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var list = result.Value as System.Collections.IList;
+        var list = (result.Value as global::app.modules.list.types.list)?.value as System.Collections.IList;
         await Assert.That(list!.Count).IsEqualTo(3);
     }
 
@@ -280,7 +280,7 @@ public class ListTests
         var action = new Unique { Context = context, ListName = new Variable("myList") };
         var result = await action.Run();
 
-        var list = result.Value as List<object?>;
+        var list = (result.Value as global::app.modules.list.types.list)?.value as List<object?>;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
         await Assert.That(list).Contains("a");
@@ -413,7 +413,7 @@ public class ListTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var groups = result.Value as List<Dictionary<string, object?>>;
+        var groups = (result.Value as global::app.modules.list.types.list)?.value as List<Dictionary<string, object?>>;
         await Assert.That(groups).IsNotNull();
         await Assert.That(groups!.Count).IsEqualTo(2);
 
@@ -436,7 +436,7 @@ public class ListTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var groups = result.Value as List<Dictionary<string, object?>>;
+        var groups = (result.Value as global::app.modules.list.types.list)?.value as List<Dictionary<string, object?>>;
         await Assert.That(groups!.Count).IsEqualTo(0);
     }
 
@@ -454,7 +454,7 @@ public class ListTests
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        var groups = result.Value as List<Dictionary<string, object?>>;
+        var groups = (result.Value as global::app.modules.list.types.list)?.value as List<Dictionary<string, object?>>;
         // All items grouped under empty key since "category" doesn't exist
         await Assert.That(groups!.Count).IsEqualTo(1);
         await Assert.That(groups[0]["key"]).IsEqualTo("");

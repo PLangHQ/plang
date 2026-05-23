@@ -12,7 +12,7 @@ public partial class Split : IContext
     [Default(false)]
     public partial data.@this<bool> RemoveEmpty { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this<types.list>> Run()
     {
         var options = RemoveEmpty.Value
             ? StringSplitOptions.RemoveEmptyEntries
@@ -21,6 +21,7 @@ public partial class Split : IContext
         var parts = Value.Value!.Split(new[] { Separator.Value! }, options);
         var list = parts.Cast<object?>().ToList();
 
-        return Task.FromResult(Data(list, app.data.type.FromName("list")));
+        return Task.FromResult(global::app.data.@this<types.list>.Ok(
+            new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
     }
 }

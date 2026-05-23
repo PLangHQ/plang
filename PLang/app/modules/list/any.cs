@@ -17,7 +17,7 @@ public partial class Any : IContext
     public partial data.@this<condition.Operator> Operator { get; init; }
     public partial data.@this Value { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<bool>> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var key = Key.Value!;
@@ -27,9 +27,9 @@ public partial class Any : IContext
         {
             var left = item.GetChild(key);
             if (await Operator.Value!.Evaluate(left, right))
-                return Data(true, app.data.type.FromName("bool"));
+                return global::app.data.@this<bool>.Ok(true, app.data.type.FromName("bool"));
         }
 
-        return Data(false, app.data.type.FromName("bool"));
+        return global::app.data.@this<bool>.Ok(false, app.data.type.FromName("bool"));
     }
 }
