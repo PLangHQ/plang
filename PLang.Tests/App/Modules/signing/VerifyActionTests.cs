@@ -483,9 +483,9 @@ public class VerifyActionTests
 
         public string? Source { get; set; }
         public global::app.data.@this<KeyPair> GenerateKeyPair() => global::app.data.@this<KeyPair>.FromError(new ActionError("Key generation failed", "KeyGenerationError", 500));
-        public Data Sign(byte[] data, string privateKey) => Data.FromError(new ActionError("Sign failed", "SigningError", 500));
-        public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
-        public Task<Data> SignAsync(sign action) => Task.FromResult(Data.FromError(new ActionError("Sign failed", "SigningError", 500)));
-        public Task<Data> VerifyAsync(verify action) => Task.FromResult(Data.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
+        public global::app.data.@this<byte[]> Sign(byte[] data, string privateKey) => global::app.data.@this<byte[]>.FromError(new ActionError("Sign failed", "SigningError", 500));
+        public global::app.data.@this<bool> Verify(byte[] data, byte[] signature, string publicKey) => global::app.data.@this<bool>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400));
+        public Task<global::app.data.@this<object>> SignAsync(sign action) => Task.FromResult(global::app.data.@this<object>.FromError(new ActionError("Sign failed", "SigningError", 500)));
+        public Task<global::app.data.@this<bool>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<bool>.FromError(new ActionError("Verify failed", "SignatureInvalid", 400)));
     }
 }
