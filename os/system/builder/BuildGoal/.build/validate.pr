@@ -49,17 +49,18 @@
               "type": "string"
             },
             {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
-            },
-            {
               "name": "Key",
               "value": "LlmTransient",
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         }
       ],

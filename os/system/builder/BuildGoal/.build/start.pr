@@ -52,11 +52,6 @@
               "name": "Value",
               "value": "%Now.Ticks%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -169,7 +164,8 @@
                           "name": "GoalName",
                           "value": {
                             "name": "HandleBuildFailure",
-                            "parameters": []
+                            "parameters": [],
+                            "prPath": "/system/builder/BuildGoal/.build/start.pr"
                           },
                           "type": "goal.call"
                         }
@@ -213,11 +209,6 @@
               "name": "Value",
               "value": "%plan%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -265,7 +256,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "BuildStep/Start",
+                "name": "Start",
                 "parallel": false,
                 "parameters": [
                   {
@@ -311,11 +302,6 @@
               "name": "Value",
               "value": "%goal%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -409,11 +395,6 @@
               "name": "Value",
               "value": "%parentGoal%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -570,11 +551,6 @@
               "name": "Value",
               "value": "%elapsedMs%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -724,11 +700,6 @@
                   "name": "Value",
                   "value": "%subGoal%",
                   "type": "object"
-                },
-                {
-                  "name": "Type",
-                  "value": "object",
-                  "type": "string"
                 }
               ],
               "defaults": [
@@ -817,7 +788,8 @@
                               "name": "GoalName",
                               "value": {
                                 "name": "HandleBuildFailure",
-                                "parameters": []
+                                "parameters": [],
+                                "prPath": "/system/builder/BuildGoal/.build/start.pr"
                               },
                               "type": "goal.call"
                             }
@@ -868,7 +840,7 @@
                 {
                   "name": "GoalName",
                   "value": {
-                    "name": "BuildStep/Start",
+                    "name": "Start",
                     "parallel": false,
                     "parameters": [
                       {
@@ -1082,14 +1054,15 @@
                   "name": "Message",
                   "value": "%!error%",
                   "type": "string"
-                },
+                }
+              ],
+              "defaults": [
                 {
-                  "name": "StatusCode",
+                  "name": "statuscode",
                   "value": 500,
                   "type": "int"
                 }
               ],
-              "defaults": null,
               "modifiers": []
             }
           ],

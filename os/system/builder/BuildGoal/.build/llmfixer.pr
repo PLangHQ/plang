@@ -53,7 +53,7 @@
               "value": [
                 {
                   "Role": "user",
-                  "Content": "Your previous response was rejected: %!error.Message%\n\nReturn the corrected plan. Each step\u0027s \u0060actions\u0060 MUST be a non-empty array of \u0022module.action\u0022 strings from the catalog (e.g. \u0022variable.set\u0022, \u0022file.read\u0022). \u0060index\u0060 is 0-based."
+                  "Content": "Your previous response was rejected: %!error.Message%\\n\\nReturn the corrected plan. Each step\u0027s \u0060actions\u0060 MUST be a non-empty array of \\\u0022module.action\\\u0022 strings from the catalog (e.g. \\\u0022variable.set\\\u0022, \\\u0022file.read\\\u0022). \u0060index\u0060 is 0-based."
                 }
               ],
               "type": "list\u00601"
@@ -108,7 +108,7 @@
                     "actions": [
                       "string"
                     ],
-                    "group?": "string"
+                    "group": "string"
                   }
                 ]
               },

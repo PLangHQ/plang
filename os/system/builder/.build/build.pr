@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%path%",
+              "value": "default",
               "type": "variable"
             },
             {
@@ -28,11 +28,6 @@
               "name": "AsDefault",
               "value": true,
               "type": "bool"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -60,7 +55,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%!build.cache%",
+              "value": "default",
               "type": "variable"
             },
             {
@@ -99,13 +94,13 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%!build.summary%",
+              "value": "default",
               "type": "variable"
             },
             {
               "name": "Value",
-              "value": true,
-              "type": "bool"
+              "value": "%!build.summary%",
+              "type": "object"
             },
             {
               "name": "AsDefault",
@@ -127,7 +122,7 @@
     },
     {
       "index": 3,
-      "text": "set %traceGoals% = [], type=json",
+      "text": "set %traceGoals% = []",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -144,12 +139,7 @@
             {
               "name": "Value",
               "value": [],
-              "type": "list\u00601"
-            },
-            {
-              "name": "Type",
-              "value": "json",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -163,9 +153,9 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
+      "guidance": "Initialize %traceGoals% to an empty JSON array. Use variable.set with Value type json.",
+      "level": "high",
+      "confidence": 90,
       "formal": null,
       "source": null,
       "waitForExecution": true
@@ -231,7 +221,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -449,7 +439,7 @@
   "visibility": 1,
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "042916afa9fed4ffd0bf355fc21ea2ce88bdc8e9494b4cb7ce102d6c10648796",
+  "hash": "3010e8e25e8cb4b25b74d39bb5bf7c64b802a34747d3c01fc0702366f5fe35c5",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

@@ -49,17 +49,18 @@
               "type": "string"
             },
             {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
-            },
-            {
               "name": "Key",
               "value": "GoalBug",
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -91,15 +92,19 @@
               "name": "Operator",
               "value": "isempty",
               "type": "operator"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "negate",
+              "name": "Right",
+              "value": null,
+              "type": "object"
+            },
+            {
+              "name": "Negate",
               "value": false,
               "type": "bool"
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -112,17 +117,18 @@
               "type": "string"
             },
             {
-              "name": "StatusCode",
-              "value": 500,
-              "type": "int"
-            },
-            {
               "name": "Key",
               "value": "GoalBug",
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "statuscode",
+              "value": 500,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -219,15 +225,14 @@
                   "name": "Right",
                   "value": false,
                   "type": "bool"
-                }
-              ],
-              "defaults": [
+                },
                 {
-                  "name": "negate",
+                  "name": "Negate",
                   "value": false,
                   "type": "bool"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             },
             {
@@ -240,17 +245,18 @@
                   "type": "string"
                 },
                 {
-                  "name": "StatusCode",
-                  "value": 500,
-                  "type": "int"
-                },
-                {
                   "name": "Key",
                   "value": "GoalBug",
                   "type": "string"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "statuscode",
+                  "value": 500,
+                  "type": "int"
+                }
+              ],
               "modifiers": []
             }
           ],

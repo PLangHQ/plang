@@ -13,13 +13,7 @@
         {
           "module": "builder",
           "action": "actions",
-          "parameters": [
-            {
-              "name": "Actions",
-              "value": "%actions%",
-              "type": "list<string>"
-            }
-          ],
+          "parameters": [],
           "defaults": null,
           "modifiers": []
         },
@@ -83,11 +77,6 @@
               "name": "Value",
               "value": "%!data%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -141,11 +130,6 @@
               "name": "Value",
               "value": "%!data%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -199,11 +183,6 @@
               "name": "Value",
               "value": "%!data%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -257,11 +236,6 @@
               "name": "Value",
               "value": "%!data%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -375,7 +349,8 @@
                           "name": "GoalName",
                           "value": {
                             "name": "LlmFixer",
-                            "parameters": []
+                            "parameters": [],
+                            "prPath": "/system/builder/BuildGoal/.build/llmfixer.pr"
                           },
                           "type": "goal.call"
                         }
@@ -383,7 +358,15 @@
                     }
                   ],
                   "type": "list<action>"
-                },
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            },
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
                 {
                   "name": "RetryCount",
                   "value": 2,
@@ -406,10 +389,10 @@
     },
     {
       "index": 7,
-      "text": "set %plan.system% = %planPrompt%",
-      "lineNumber": 21,
+      "text": "- set %plan.system% = %planPrompt%",
+      "lineNumber": 0,
       "indent": 0,
-      "comment": "Stamp the planner's prompts onto %plan% so the parent's set %trace.plan% = %plan%\ncarries them into the trace for the viewer.",
+      "comment": null,
       "actions": [
         {
           "module": "variable",
@@ -424,35 +407,17 @@
               "name": "Value",
               "value": "%planPrompt%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
-            }
-          ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
             }
           ],
           "modifiers": []
         }
       ],
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
       "waitForExecution": true
     },
     {
       "index": 8,
-      "text": "set %plan.user% = %goalForLlm%",
-      "lineNumber": 22,
+      "text": "- set %plan.user% = %goalForLlm%",
+      "lineNumber": 0,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -471,22 +436,9 @@
               "type": "object"
             }
           ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
           "modifiers": []
         }
       ],
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
       "waitForExecution": true
     }
   ],
@@ -499,7 +451,7 @@
         {
           "index": 0,
           "text": "llm.query Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], group?: string}]}, cache=%!build.cache%, write to %plan%",
-          "lineNumber": 26,
+          "lineNumber": 21,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -522,7 +474,7 @@
                         "actions": [
                           "string"
                         ],
-                        "group?": "string"
+                        "group": "string?"
                       }
                     ]
                   },
@@ -576,11 +528,6 @@
                   "name": "Value",
                   "value": "%!data%",
                   "type": "object"
-                },
-                {
-                  "name": "Type",
-                  "value": "object",
-                  "type": "string"
                 }
               ],
               "defaults": [
@@ -604,7 +551,7 @@
         {
           "index": 1,
           "text": "call Validate",
-          "lineNumber": 27,
+          "lineNumber": 22,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -652,7 +599,7 @@
   "visibility": 1,
   "path": "/system/builder/BuildGoal/Plan.goal",
   "prPath": "/system/builder/BuildGoal/.build/plan.pr",
-  "hash": "3dc9f9328b8dc972a8920b15e73dd085bcf955455566ea6b8a0ea9bf9575ed4a",
+  "hash": "13266eef38090ed8f3b1d290597cb31527f1fe69907c93b4640a1bfc1a0544a5",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
