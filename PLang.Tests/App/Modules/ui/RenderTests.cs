@@ -719,9 +719,9 @@ public class RenderTests : IDisposable
 
         public string? Source { get; set; }
 
-        public Task<Data> Render(Render action)
+        public Task<global::app.data.@this<string>> Render(Render action)
         {
-            return Task.FromResult(Data.Ok((object)"stub-rendered"));
+            return Task.FromResult(global::app.data.@this<string>.Ok("stub-rendered"));
         }
     }
 }

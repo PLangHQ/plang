@@ -38,23 +38,23 @@ public partial class report : IContext
         await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, console.ToString());
 
         // Write the file artefact. .test/ lives at the app root per Q4 decision.
-        var fs = Context.App.FileSystem;
-        var outDir = fs.Path.Combine(fs.RootDirectory, ".test");
-        if (!fs.Directory.Exists(outDir)) fs.Directory.CreateDirectory(outDir);
+        var app = Context.App;
+        var outDir = System.IO.Path.Combine(app.AbsolutePath, ".test");
+        if (!System.IO.Directory.Exists(outDir)) System.IO.Directory.CreateDirectory(outDir);
 
         string reportFile;
         string content;
         switch (format)
         {
             case "junit":
-                content = BuildJUnit(results, fs);
-                reportFile = fs.Path.Combine(outDir, "junit.xml");
-                await fs.File.WriteAllTextAsync(reportFile, content);
+                content = BuildJUnit(results);
+                reportFile = System.IO.Path.Combine(outDir, "junit.xml");
+                await System.IO.File.WriteAllTextAsync(reportFile, content);
                 break;
             default: // "json"
                 content = BuildJson(results, testing);
-                reportFile = fs.Path.Combine(outDir, "results.json");
-                await fs.File.WriteAllTextAsync(reportFile, content);
+                reportFile = System.IO.Path.Combine(outDir, "results.json");
+                await System.IO.File.WriteAllTextAsync(reportFile, content);
                 break;
         }
 
@@ -72,7 +72,7 @@ public partial class report : IContext
                 variableSnapshotCount++;
         }
 
-        var result = app.data.@this.Ok(results);
+        var result = global::app.data.@this.Ok(results);
         result.Properties.Set("format", format);
         result.Properties.Set("reportPath", reportFile);
         result.Properties.Set("content", content);
@@ -280,12 +280,12 @@ public partial class report : IContext
         return JsonSerializer.Serialize(envelope, global::app.Diagnostics.Format.Options);
     }
 
-    private static string BuildJUnit(app.tester.Results results, filesystem.IPLangFileSystem fs)
+    private static string BuildJUnit(app.tester.Results results)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::app.tester.Status.Fail)}\" errors=\"0\">");
-        var byPath = results.GroupBy(r => fs.Path.GetDirectoryName(r.File.Path) ?? "");
+        var byPath = results.GroupBy(r => System.IO.Path.GetDirectoryName(r.File.Path) ?? "");
         foreach (var group in byPath)
         {
             var suiteTests = group.ToList();

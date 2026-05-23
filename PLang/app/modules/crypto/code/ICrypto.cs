@@ -5,6 +5,6 @@ namespace app.modules.crypto.code;
 
 public interface ICrypto : ICode
 {
-    data.@this Hash(Hash action);
-    data.@this Verify(Verify action);
+    data.@this<byte[]> Hash(Hash action);
+    data.@this<bool> Verify(Verify action);
 }

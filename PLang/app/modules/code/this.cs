@@ -221,7 +221,8 @@ public sealed partial class @this : IAsyncDisposable
             "http" or "ihttpprovider" => typeof(modules.http.code.IHttp),
             "evaluator" or "ievaluator" => typeof(modules.condition.code.IEvaluator),
             "assert" or "iassertprovider" => typeof(modules.assert.code.IAssert),
-            "file" or "ifileprovider" => typeof(modules.file.code.IFile),
+            // "file" / "ifileprovider" removed — file actions no longer route through a
+            // [Code]-partial provider; FilePath holds the verb impls directly.
             "template" or "itemplateprovider" => typeof(ITemplate),
             "llm" or "illmprovider" => typeof(modules.llm.code.ILlm),
             "builder" or "ibuilderprovider" => typeof(modules.builder.code.IBuilder),
@@ -247,7 +248,7 @@ public sealed partial class @this : IAsyncDisposable
         RegisterBuiltIn<modules.http.code.IHttp>(new modules.http.code.Default());
         RegisterBuiltIn<modules.condition.code.IEvaluator>(new modules.condition.code.Default());
         RegisterBuiltIn<modules.assert.code.IAssert>(new modules.assert.code.Default());
-        RegisterBuiltIn<modules.file.code.IFile>(new modules.file.code.Default());
+        // modules.file.code.IFile registration removed in Stage 3.
         RegisterBuiltIn<ITemplate>(new modules.ui.code.Fluid());
         RegisterBuiltIn<modules.llm.code.ILlm>(new modules.llm.code.OpenAi());
         RegisterBuiltIn<modules.builder.code.IBuilder>(new modules.builder.code.Default());

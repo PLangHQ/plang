@@ -4,10 +4,9 @@ using Fluid.Ast;
 using Fluid.Values;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
-using app.filesystem;
-using app.filesystem.Default;
+using app.types.path;
 using app.errors;
-using app.filesystem;
+using app.types.path;
 using app.goals.goal;
 using app.variables;
 
@@ -27,7 +26,7 @@ public class Fluid : ITemplate
         return parser;
     }
 
-    public async Task<data.@this> Render(Render action)
+    public async Task<data.@this<string>> Render(Render action)
     {
         var templateContent = action.Template.Value!;
         var isFile = action.IsFile?.Value;
@@ -36,20 +35,19 @@ public class Fluid : ITemplate
         // Resolve template content: file or inline
         if (isFile == true || (isFile == null && LooksLikeFilePath(templateContent)))
         {
-            var pathData = global::app.filesystem.path.Resolve(templateContent, action.Context);
-            if (!pathData.Exists)
-                return app.data.@this.FromError(new ServiceError(
+            var pathData = path.Resolve(templateContent, action.Context);
+            if (!await pathData.AsBooleanAsync())
+                return app.data.@this<string>.FromError(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative;
             try
             {
-                var fs = action.Context.App.FileSystem;
-                templateContent = fs.File.ReadAllText(pathData.Absolute);
+                templateContent = System.IO.File.ReadAllText(pathData.Absolute);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
-                return app.data.@this.FromError(new ServiceError(ex.Message, "IOError", 500));
+                return app.data.@this<string>.FromError(new ServiceError(ex.Message, "IOError", 500));
             }
         }
 
@@ -58,7 +56,7 @@ public class Fluid : ITemplate
         if (!parser.TryParse(templateContent, out var fluidTemplate, out var parseError))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return app.data.@this.FromError(new ServiceError(
+            return app.data.@this<string>.FromError(new ServiceError(
                 $"Template syntax error{location}: {parseError}", "TemplateError", 400));
         }
 
@@ -81,9 +79,8 @@ public class Fluid : ITemplate
             new StringValue(FormatFormalValue(input.ToObjectValue())));
 
         // Configure file provider for {% include %} / {% render %} tags
-        var fs2 = action.Context.App.FileSystem;
         var basePath = GetTemplateBaseDir(action);
-        options.FileProvider = new PlangFileProvider(fs2, basePath);
+        options.FileProvider = new PlangFileProvider(action.Context.App, basePath);
 
         var fluidContext = new TemplateContext(options);
 
@@ -112,12 +109,12 @@ public class Fluid : ITemplate
         {
             var writer = new StringWriter();
             await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
-            return app.data.@this.Ok(writer.ToString());
+            return app.data.@this<string>.Ok(writer.ToString());
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            return app.data.@this.FromError(new ServiceError(
+            return app.data.@this<string>.FromError(new ServiceError(
                 $"Template render error{location}: {ex.Message}", "RenderError", 500));
         }
     }
@@ -202,10 +199,9 @@ public class Fluid : ITemplate
         var goalPath = action.Context.Goal?.Path;
         if (!string.IsNullOrEmpty(goalPath))
         {
-            var fs = app.FileSystem;
-            var goalDir = fs.Path.GetDirectoryName(goalPath);
+            var goalDir = System.IO.Path.GetDirectoryName(goalPath);
             if (!string.IsNullOrEmpty(goalDir))
-                return fs.ValidatePath(goalDir);
+                return global::app.types.path.file.@this.ValidatePath(goalDir, app);
         }
         return app.AbsolutePath;
     }
@@ -258,12 +254,12 @@ public class Fluid : ITemplate
 
     private sealed class PlangFileProvider : IFileProvider
     {
-        private readonly IPLangFileSystem _fs;
+        private readonly global::app.@this _app;
         private readonly string _basePath;
 
-        public PlangFileProvider(IPLangFileSystem fs, string basePath)
+        public PlangFileProvider(global::app.@this app, string basePath)
         {
-            _fs = fs;
+            _app = app;
             _basePath = basePath;
         }
 
@@ -275,8 +271,8 @@ public class Fluid : ITemplate
             {
                 if (string.IsNullOrEmpty(candidate)) continue;
                 var fullPath = TryResolvePath(candidate);
-                if (fullPath != null && _fs.File.Exists(fullPath))
-                    return new PlangFileInfo(_fs, fullPath, candidate);
+                if (fullPath != null && System.IO.File.Exists(fullPath))
+                    return new PlangFileInfo(fullPath, candidate);
             }
             return new NotFoundFileInfo(subpath);
         }
@@ -285,7 +281,7 @@ public class Fluid : ITemplate
         {
             try
             {
-                return _fs.ValidatePath(_fs.Path.Combine(_basePath, candidate));
+                return global::app.types.path.file.@this.ValidatePath(System.IO.Path.Combine(_basePath, candidate), _app);
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
@@ -313,18 +309,16 @@ public class Fluid : ITemplate
 
     private sealed class PlangFileInfo : IFileInfo
     {
-        private readonly IPLangFileSystem _fs;
         private readonly string _fullPath;
 
-        public PlangFileInfo(IPLangFileSystem fs, string fullPath, string name)
+        public PlangFileInfo(string fullPath, string name)
         {
-            _fs = fs;
             _fullPath = fullPath;
             Name = name;
         }
 
         public bool Exists => true;
-        public long Length => _fs.FileInfo.New(_fullPath).Length;
+        public long Length => new System.IO.FileInfo(_fullPath).Length;
         public string? PhysicalPath => _fullPath;
         public string Name { get; }
         public DateTimeOffset LastModified => DateTimeOffset.UtcNow;
@@ -332,7 +326,7 @@ public class Fluid : ITemplate
 
         public Stream CreateReadStream()
         {
-            var content = _fs.File.ReadAllText(_fullPath);
+            var content = System.IO.File.ReadAllText(_fullPath);
             return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
         }
     }

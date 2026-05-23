@@ -1,6 +1,4 @@
 using PLang;
-using app.filesystem;
-using app.filesystem.Default;
 using app.Utils;
 using Path = System.IO.Path;
 
@@ -17,9 +15,7 @@ Console.CancelKeyPress += (_, e) =>
 
 (string currentDirectory, args) = GetCurrentDirectory(args);
 
-var fileSystem = new PLangFileSystem(currentDirectory, Path.DirectorySeparatorChar.ToString());
-
-var executor = new Executor(fileSystem);
+var executor = new Executor(Path.GetFullPath(currentDirectory));
 var result = executor.Run(args, cts.Token).GetAwaiter().GetResult();
 if (!result.Success && result.Error != null)
 {

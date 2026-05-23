@@ -1,6 +1,6 @@
 {
   "name": "WhenExists",
-  "description": "Sets %result% to the string \u0022exists\u0022 using variable.set.",
+  "description": null,
   "comment": null,
   "steps": [
     {
@@ -17,26 +17,42 @@
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "exists",
               "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
       "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "variable.set(Name=%result%, Value=\u0022exists\u0022, Type=string)",
+      "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/WhenExists.goal",
-  "prPath": "/.build/whenexists.pr",
+  "path": "/Tests/Modules/Condition/Files/FileNotExists/WhenExists.goal",
+  "prPath": "/Tests/Modules/Condition/Files/FileNotExists/.build/whenexists.pr",
   "hash": "06288c6029e1a4704f721e5d1c84cbdb25f97a6c9fc8ba8dde4833e738b8e4a4",
   "builderVersion": null,
   "isSetup": false,

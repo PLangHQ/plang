@@ -1,0 +1,4 @@
+{
+  "status": "needs-work",
+  "summary": "Authorize migration into Path verbs is structurally sound (every FilePath + HttpPath verb gates before I/O; cross-scheme CopyTo/MoveTo delegates without skip; scheme registry not reachable from PLang programs). The new attack surface is HttpPath — three findings: S1 HIGH SSRF via AllowAutoRedirect=true (cloud-IMDS / loopback reachable post-consent to a public host), S2 MEDIUM X-Signature identity leak across redirect and to arbitrary origins (not destination-scoped, custom-header survives .NET redirect-strip), S3 LOW URL grants persist query-string secrets verbatim with no warning. F1 (signer authority not pinned) + F2 (unsigned-row auto-trust) + F4 (Regex ReDoS) carried forward from filesystem-permission unchanged. No critical."
+}

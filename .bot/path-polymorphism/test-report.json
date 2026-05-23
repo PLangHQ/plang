@@ -1,0 +1,44 @@
+{
+  "tester": "tester",
+  "branch": "path-polymorphism",
+  "timestamp": "2026-05-23T20:45:00Z",
+  "tested_version": "v8",
+  "verdict": "PASS",
+  "test_run": {
+    "csharp": { "total": 2906, "passed": 2906, "failed": 0, "skipped": 0 },
+    "plang":  { "total": 204,  "passed": 204,  "failed": 0, "skipped": 0, "stale": 0 }
+  },
+  "build": { "errors": 0, "warnings": 454, "warnings_note": "unchanged from v7, pre-existing generator nullables" },
+  "coverage": {
+    "v7_findings_closed": ["F4-CARRY", "N1", "N2", "N3", "N4", "N5-baseline"],
+    "previously_uncovered_now_covered": [
+      "PLang/app/goals/goal/GoalCall.cs (GetGoalAsync slash-resolve + LoadFromFile leaf-match)",
+      "PLang/app/modules/builder/code/Default.cs (GetActions.Actions filter)",
+      "PLang/app/modules/builder/this.cs (Builder.RunAsync bootstrap)",
+      "PLang/app/modules/this.cs (DescribeReturnTypeName)"
+    ]
+  },
+  "mutation_tests": [
+    { "finding": "N1", "mutation": "GoalCall.cs:86 subPath -> bare-name shape", "expected_red": 2, "observed_red": 2, "result": "honest" },
+    { "finding": "N1", "mutation": "GoalCall.cs:154-156 skip leaf-match",       "expected_red": 3, "observed_red": 3, "result": "honest" },
+    { "finding": "N2", "mutation": "Default.cs:30 if(false && filter ...)",     "expected_red": 3, "observed_red": 3, "result": "honest" },
+    { "finding": "N3", "mutation": "builder/this.cs:113 drop !",                "expected_red": 2, "observed_red": 2, "result": "honest" },
+    { "finding": "N4", "mutation": "modules/this.cs:397 bare-Data -> WRONG",    "expected_red": 1, "observed_red": 1, "result": "honest" }
+  ],
+  "bonus_production_fix_audited": {
+    "commit": "02eb2e1ca",
+    "change": "drop identitydata alias in RegisterDomainTypes; Identity now resolves via class-level [PlangType(\"identity\")]",
+    "audit": "no live source references to 'identitydata' remain (only frozen LLM-trace JSONs under Tests/Error/Multilingual/.build/traces/). Pinned by N4 test ReturnTypeName_DataOfIdentity_IsIdentity.",
+    "result": "honest"
+  },
+  "findings": [],
+  "observations": [
+    {
+      "id": "v8-O1",
+      "severity": "informational",
+      "title": "RegisterDomainTypes is now empty - no guard against future [PlangType] shadowing",
+      "where": "PLang/app/types/this.cs:RegisterDomainTypes",
+      "note": "After dropping the identitydata alias, the method is a no-op hook. A future Register(\"x\", typeof(X)) that re-shadows a [PlangType] attribute would only surface incidentally (if X is among N4's seven pinned types). A generic 'attribute name beats runtime override' test would close it. Speculative; not blocking."
+    }
+  ]
+}

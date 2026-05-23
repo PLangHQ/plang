@@ -1,0 +1,158 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "if missing_file_abc123.txt exists, call WhenExists, else call WhenMissing",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": "Test: multi-action condition \u2014 file doesn\u0027t exist, else branch runs",
+      "actions": [
+        {
+          "module": "file",
+          "action": "exists",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "missing_file_abc123.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%!data%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenExists",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "else",
+          "parameters": [],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "WhenMissing",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "file.exists(Path=\u0022missing_file_abc123.txt\u0022) | condition.if(Left=%!data%, Operator=\u0022==\u0022, Right=true) , goal.call(GoalName={name:\u0022WhenExists\u0022}) , condition.else() , goal.call(GoalName={name:\u0022WhenMissing\u0022})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %result% equals \u0022missing\u0022, \u0022GoalIfFalse should run when file doesn\u0027t exist\u0022",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "missing",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "GoalIfFalse should run when file doesn\u0027t exist",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "assert.equals(Expected=\u0022missing\u0022, Actual=%result%, Message=\u0022GoalIfFalse should run when file doesn\u0027t exist\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal",
+  "prPath": "/Tests/Modules/Condition/Files/FileNotExists/.build/conditionfilenotexists.test.pr",
+  "hash": "b17b110757d9dbd9b8ed32e12ba0e0a180835dcc3db2e8913153d6317998fd72",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

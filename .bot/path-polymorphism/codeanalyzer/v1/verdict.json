@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Polymorphism leaks: handlers downcast to filepath (F1), base class keeps file-only semantics broken for HttpPath (F2), file.exists shape differs per scheme (F3), unregistered scheme NREs in Run() (F4). Build/tests green." }

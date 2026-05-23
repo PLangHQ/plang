@@ -44,9 +44,12 @@ global using TString = global::app.data.TString;
 // Variables (was MemoryStack)
 global using Variables = app.variables.@this;
 
-// FileSystem types
-global using FileSystem = app.filesystem;
-global using PLangFileSystem = app.filesystem.Default.PLangFileSystem;
+// Path types (formerly FileSystem)
+global using FileSystem = app.types.path;
+// Lowercase path aliases — match PLang concept names, no System.IO.Path clash.
+global using path = app.types.path.@this;
+global using filepath = app.types.path.file.@this;
+global using httppath = app.types.path.http.@this;
 
 // Type system
 global using EngineTypes = app.types.@this;

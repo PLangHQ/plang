@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Suite green (C# 2882/2882, plang 203/203/0 stale, no regressions) but 6 test-honesty gaps — a vacuous Assert.That(true) test, and both review-driven v5 fixes N2 (path.Equals) and N3 (assert path-truthiness) ship with zero coverage." }

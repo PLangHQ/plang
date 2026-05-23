@@ -30,7 +30,14 @@ global using Serializers = app.channels.serializers.@this;
 global using SerializeOptions = app.channels.serializers.SerializeOptions;
 global using DeserializeOptions = app.channels.serializers.DeserializeOptions;
 
-// FileSystem types
+// Path types (formerly FileSystem)
+// Lowercase aliases — match the PLang concept names, and (unlike PascalCase
+// `Path`) do not collide with System.IO.Path. Inside `namespace app.types`
+// the bare name `path` is ambiguous with the child namespace `app.types.path`;
+// those few files qualify with `global::app.types.path.@this`.
+global using path = app.types.path.@this;
+global using filepath = app.types.path.file.@this;
+global using httppath = app.types.path.http.@this;
 
 // Config subsystem
 global using AppConfig = app.config.@this;

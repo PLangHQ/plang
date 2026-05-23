@@ -23,5 +23,5 @@ public partial class Create : IContext
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<data.@this> Run() => await Identity.CreateAsync(this);
+    public async Task<data.@this<Identity>> Run() => await Identity.CreateAsync(this);
 }

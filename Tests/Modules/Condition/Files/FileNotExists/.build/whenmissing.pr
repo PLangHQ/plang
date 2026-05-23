@@ -1,0 +1,63 @@
+{
+  "name": "WhenMissing",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %result% = \u0022missing\u0022",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%result%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "missing",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "variable.set(Name=%result%, Value=\u0022missing\u0022, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Tests/Modules/Condition/Files/FileNotExists/WhenMissing.goal",
+  "prPath": "/Tests/Modules/Condition/Files/FileNotExists/.build/whenmissing.pr",
+  "hash": "7d583ce279569ddf336cbb7c7453473420e4935986969420c7206fd300c1c73c",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

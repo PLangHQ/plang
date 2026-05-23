@@ -21,8 +21,23 @@ public class Default : IBuilder
 
     public Task<data.@this> Actions(GetActions action)
     {
+        var catalog = action.Context.App.Modules.Describe();
 
-        return Task.FromResult(data.@this.Ok(action.Context.App.Modules.Describe()));
+        // Optional filter: restrict the catalog to the named module.action
+        // entries. The Compile step passes the planner's action set so the
+        // prompt carries only the relevant rows. Null/empty → full catalog.
+        var filter = action.Actions?.Value;
+        if (filter is { Count: > 0 })
+        {
+            var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
+            var subset = new StepActions();
+            foreach (var a in catalog)
+                if (wanted.Contains($"{a.Module}.{a.ActionName}"))
+                    subset.Add(a);
+            return Task.FromResult(data.@this.Ok(subset));
+        }
+
+        return Task.FromResult(data.@this.Ok(catalog));
     }
 
     // --- Types ---
@@ -34,7 +49,77 @@ public class Default : IBuilder
         // discovered record/enum entries. It pre-renders TypeNames/TypeSchemas for
         // the Liquid template, and keeps Types/PrimitiveNames for introspection
         // (JSON, UI, trace viewer).
-        return data.@this.Ok(action.Context.App.Modules.Schema.Build());
+        var modules = action.Context.App.Modules;
+        var schema = modules.Schema.Build();
+
+        // Optional Actions filter: restrict the Types list to entries actually
+        // referenced by the named module.action set. Primitive types and the
+        // entries renderer (TypeSchemas/TypeNames) all stay intact. Empty/null
+        // filter → full catalog (back-compat).
+        var filter = action.Actions?.Value;
+        if (filter is { Count: > 0 })
+        {
+            var allTypeNames = new HashSet<string>(
+                schema.Types.Select(t => t.Name), StringComparer.OrdinalIgnoreCase);
+            var refs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var tokenRx = new System.Text.RegularExpressions.Regex(@"\b[a-zA-Z][\w]*\b");
+            var wantedActions = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
+
+            // Walk every catalog-described action; for the ones in the filter,
+            // collect type tokens from each parameter's rendered description and
+            // from the return-type name. The Parameter.Value strings already
+            // carry PLang type names (e.g. "path", "actor?", "%var% string"), so
+            // tokenize on word boundaries and intersect with the type catalog.
+            foreach (var a in modules.Describe())
+            {
+                if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
+                foreach (var p in a.Parameters ?? new())
+                {
+                    var desc = p.Value as string ?? string.Empty;
+                    foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
+                        if (allTypeNames.Contains(m.Value)) refs.Add(m.Value);
+                }
+                if (!string.IsNullOrEmpty(a.ReturnTypeName)
+                    && allTypeNames.Contains(a.ReturnTypeName))
+                    refs.Add(a.ReturnTypeName);
+            }
+
+            // Transitive closure: types referenced by kept types should also be
+            // kept (a record field might reference another record). The pass is
+            // cheap — Types is in the dozens, and we only re-walk newly added
+            // entries each iteration.
+            bool changed = true;
+            while (changed)
+            {
+                changed = false;
+                foreach (var t in schema.Types)
+                {
+                    if (!refs.Contains(t.Name)) continue;
+                    var pieces = new[] { t.ConstructorSignature ?? "" };
+                    foreach (var s in pieces)
+                        foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(s))
+                            if (allTypeNames.Contains(m.Value) && refs.Add(m.Value))
+                                changed = true;
+                    if (t.Fields != null)
+                        foreach (var f in t.Fields)
+                            if (allTypeNames.Contains(f.TypeName) && refs.Add(f.TypeName))
+                                changed = true;
+                    if (t.Properties != null)
+                        foreach (var pr in t.Properties)
+                            if (allTypeNames.Contains(pr.TypeName) && refs.Add(pr.TypeName))
+                                changed = true;
+                }
+            }
+
+            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
+            schema = new global::app.modules.Schema.@this(modules)
+            {
+                PrimitiveNames = schema.PrimitiveNames,
+                Types = filteredTypes,
+            };
+        }
+
+        return data.@this.Ok(schema);
     }
 
     // --- Goals ---
@@ -47,27 +132,28 @@ public class Default : IBuilder
         var searchPath = string.IsNullOrWhiteSpace(action.Path.Value) ? "." : action.Path.Value!;
 
         // builder.goals.Path is project-root-relative ("the directory the user is
-        // building"), not goal-relative. The runtime auto-seeds %path% to
-        // fs.RootDirectory before Build.goal runs, so by the time we get here
+        // building"), not goal-relative. The runtime auto-seeds %path% to the
+        // app root before Build.goal runs, so by the time we get here
         // action.Path.Value is typically already the absolute cwd. For the literal
-        // "/" / "." / empty cases (no auto-seed), fall back to fs.RootDirectory.
-        // For any other input that doesn't start with the RootDirectory or with
-        // "/", treat as a sibling-relative subpath under RootDirectory.
-        var fs = app.FileSystem;
+        // "/" / "." / empty cases (no auto-seed), fall back to app.AbsolutePath.
+        // For any other input that doesn't start with the root or with
+        // "/", treat as a sibling-relative subpath under the root.
+        var rootDir = app.AbsolutePath;
         string rootRelative;
         if (searchPath == "." || searchPath == "/" || searchPath == "\\")
-            rootRelative = fs.RootDirectory;
-        else if (searchPath.StartsWith(fs.RootDirectory, global::app.filesystem.path.RootComparison))
+            rootRelative = rootDir;
+        else if (searchPath.StartsWith(rootDir, path.RootComparison))
             rootRelative = searchPath;  // already absolute under root — pass through
         else if (searchPath.StartsWith('/') || searchPath.StartsWith('\\'))
             rootRelative = searchPath;  // PLang-rooted, ValidatePath will anchor
         else
-            rootRelative = fs.Path.GetFullPath(fs.Path.Combine(fs.RootDirectory, searchPath));
+            rootRelative = global::System.IO.Path.GetFullPath(
+                global::System.IO.Path.Combine(rootDir, searchPath));
 
         var listAction = new file.List
         {
             Context = context,
-            Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(rootRelative, context)),
+            Path = data.@this<path>.Ok(path.Resolve(rootRelative, context)),
             Pattern = new data.@this<string>("", "*.goal"),
             Recursive = new data.@this<bool>("", true)
         };
@@ -75,8 +161,8 @@ public class Default : IBuilder
         if (!listResult.Success)
             return listResult;
 
-        var files = listResult.Value as filesystem.path[];
-        if (files == null || files.Length == 0)
+        var files = listResult.Value as List<path>;
+        if (files == null || files.Count == 0)
             return data.@this.Ok(new List<Goal>());
 
         // Filter by app.Builder.Files if set (--build={"files":[...]})
@@ -90,7 +176,7 @@ public class Default : IBuilder
             foreach (var bf in buildFiles)
                 bf.Context ??= context;
 
-            bool MatchesPattern(filesystem.path f, filesystem.path bf)
+            bool MatchesPattern(path f, path bf)
             {
                 // Use bf.Relative as the source of truth — bf.Raw is only set when a
                 // Path is built via Path.Resolve, but TypeConverter constructs paths
@@ -106,7 +192,7 @@ public class Default : IBuilder
                 return f.FileName.Equals(bf.FileName, StringComparison.OrdinalIgnoreCase);
             }
 
-            var ordered = new List<filesystem.path>();
+            var ordered = new List<path>();
             var seen = new HashSet<string>();
             foreach (var bf in buildFiles)
             {
@@ -116,8 +202,8 @@ public class Default : IBuilder
                     if (seen.Add(f.Absolute)) ordered.Add(f);
                 }
             }
-            files = ordered.ToArray();
-            if (files.Length == 0)
+            files = ordered;
+            if (files.Count == 0)
                 return data.@this.Ok(new List<Goal>());
         }
 
@@ -126,7 +212,7 @@ public class Default : IBuilder
 
         foreach (var file in files)
         {
-            var readAction = new file.Read { Context = context, Path = data.@this<filesystem.path>.Ok(file) };
+            var readAction = new file.Read { Context = context, Path = data.@this<path>.Ok(file) };
             var readResult = await app.RunAction(readAction, context);
             if (!readResult.Success)
             {
@@ -201,7 +287,7 @@ public class Default : IBuilder
         var saveAction = new file.Save
         {
             Context = context,
-            Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(prPath, context)),
+            Path = data.@this<path>.Ok(path.Resolve(prPath, context)),
             Value = new data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
@@ -823,7 +909,7 @@ public class Default : IBuilder
         var readAction = new file.Read
         {
             Context = context,
-            Path = data.@this<filesystem.path>.Ok(filesystem.path.Resolve(prPath, context))
+            Path = data.@this<path>.Ok(path.Resolve(prPath, context))
         };
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
@@ -893,6 +979,9 @@ public class Default : IBuilder
             var resolved = await goalCall.GetGoalAsync(app, context);
             if (resolved.Success && resolved.Value is Goal g && !string.IsNullOrEmpty(g.PrPath))
             {
+                // Pre-resolve the .pr path. A slash-qualified Name keeps its
+                // folder prefix in the saved .pr — LoadFromFile leaf-matches it
+                // against the loaded goal's own (unqualified) Name at dispatch.
                 goalCall.PrPath = g.PrPath;
             }
 

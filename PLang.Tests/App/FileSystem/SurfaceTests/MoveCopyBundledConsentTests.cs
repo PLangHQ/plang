@@ -1,10 +1,10 @@
+using Path = global::app.types.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::app.filesystem.path;
-using Verb = global::app.filesystem.permission.verb.@this;
-using Read = global::app.filesystem.permission.verb.Read;
-using Write = global::app.filesystem.permission.verb.Write;
+using Verb = global::app.types.path.permission.verb.@this;
+using Read = global::app.types.path.permission.verb.Read;
+using Write = global::app.types.path.permission.verb.Write;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -65,7 +65,7 @@ public class MoveCopyBundledConsentTests
         var src = new Path(srcFile, app.User.Context);
         var dst = new Path(System.IO.Path.Combine(root, "y"), app.User.Context);
 
-        var result = await src.MoveTo(dst);
+        var result = await src.MoveTo(dst, overwrite: true);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(ch.AskCount).IsEqualTo(1);
         await Assert.That(ch.LastQuestion).Contains(srcFile);
@@ -91,7 +91,7 @@ public class MoveCopyBundledConsentTests
         var src = new Path(srcFile, app.User.Context);
         var dst = new Path(dstFile, app.User.Context);
 
-        var result = await src.MoveTo(dst);
+        var result = await src.MoveTo(dst, overwrite: true);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(ch.AskCount).IsEqualTo(1); // single bundled question
         await Assert.That(ch.LastQuestion).Contains(srcFile);
@@ -117,7 +117,7 @@ public class MoveCopyBundledConsentTests
         var src = new Path(srcFile, app.User.Context);
         var dst = new Path(dstFile, app.User.Context);
 
-        var result = await src.CopyTo(dst);
+        var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
         await Assert.That(result.Success).IsTrue();
         await Assert.That(ch.AskCount).IsEqualTo(1);
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue(); // copy keeps source
@@ -138,7 +138,7 @@ public class MoveCopyBundledConsentTests
 
         var src = new Path(srcFile, app.User.Context);
         var dst = new Path(dstFile, app.User.Context);
-        await src.MoveTo(dst);
+        await src.MoveTo(dst, overwrite: true);
 
         // Both grants landed.
         await Assert.That(await app.User.Permission.Find(src, new Verb { Read = new Read() })).IsNotNull();
@@ -169,7 +169,7 @@ public class MoveCopyBundledConsentTests
         var src = new Path(srcFile, app.User.Context);
         var dst = new Path(dstFile, app.User.Context);
 
-        var result = await src.MoveTo(dst);
+        var result = await src.MoveTo(dst, overwrite: true);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
         // No grants stored, no filesystem mutation.
@@ -194,7 +194,7 @@ public class MoveCopyBundledConsentTests
         var src = new Path(srcFile, app.User.Context);
         var dst = new Path(dstFile, app.User.Context);
 
-        var result = await src.CopyTo(dst);
+        var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error).IsTypeOf<global::app.errors.PermissionDenied>();
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
@@ -215,7 +215,7 @@ public class MoveCopyBundledConsentTests
         var src = new Path(srcFile, app.User.Context);
         var dst = new Path(dstFile, app.User.Context);
 
-        var result = await src.MoveTo(dst);
+        var result = await src.MoveTo(dst, overwrite: true);
         // Stateless: ask result is Exit-typed — Move bubbles it unchanged.
         await Assert.That(result.Type?.Value).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
@@ -233,8 +233,8 @@ public class MoveCopyBundledConsentTests
         var app = NewApp(out var root);
         var rel = "legacy-roundtrip.txt";
         var abs = System.IO.Path.Combine(root, rel);
-        await app.FileSystem.File.WriteAllTextAsync(abs, "v1-still-here");
-        var roundTripped = await app.FileSystem.File.ReadAllTextAsync(abs);
+        await System.IO.File.WriteAllTextAsync(abs, "v1-still-here");
+        var roundTripped = await System.IO.File.ReadAllTextAsync(abs);
         await Assert.That(roundTripped).IsEqualTo("v1-still-here");
         // And the v2 surface sees the same bytes.
         var v2 = new Path(abs, app.User.Context);

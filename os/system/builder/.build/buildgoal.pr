@@ -17,7 +17,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "Start",
+                "name": "BuildGoal/Start",
                 "parallel": false,
                 "parameters": [
                   {

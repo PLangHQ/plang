@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using app.variables;
 using app.modules.code;
 
@@ -5,14 +6,17 @@ namespace app.modules.assert.code;
 
 public interface IAssert : ICode
 {
-    data.@this Equals(Equals action);
-    data.@this NotEquals(NotEquals action);
-    data.@this IsTrue(IsTrue action);
-    data.@this IsFalse(IsFalse action);
-    data.@this IsNull(IsNull action);
-    data.@this IsNotNull(IsNotNull action);
-    data.@this Contains(Contains action);
-    data.@this NotContains(NotContains action);
-    data.@this GreaterThan(GreaterThan action);
-    data.@this LessThan(LessThan action);
+    // Every assert returns Data<bool>: Ok(true) on pass, FromError(AssertionError) on fail.
+    data.@this<bool> Equals(Equals action);
+    data.@this<bool> NotEquals(NotEquals action);
+    // IsTrue/IsFalse are async — an asserted value may be IBooleanResolvable
+    // (a path), whose truthiness is resolved with I/O. (codeanalyzer v1 F3)
+    Task<data.@this<bool>> IsTrue(IsTrue action);
+    Task<data.@this<bool>> IsFalse(IsFalse action);
+    data.@this<bool> IsNull(IsNull action);
+    data.@this<bool> IsNotNull(IsNotNull action);
+    data.@this<bool> Contains(Contains action);
+    data.@this<bool> NotContains(NotContains action);
+    data.@this<bool> GreaterThan(GreaterThan action);
+    data.@this<bool> LessThan(LessThan action);
 }

@@ -44,14 +44,6 @@ public class ContextVariableTests
         await Assert.That(value).IsTypeOf<global::app.actor.context.@this>();
     }
 
-    [Test]
-    public async Task ContextVar_FileSystem_ReturnsFileSystem()
-    {
-        var vars = _app.User.Context.Variables;
-        var value = vars.GetValue("!fileSystem");
-
-        await Assert.That(value).IsNotNull();
-    }
 
     [Test]
     public async Task ContextVar_CallStack_ReturnsCallStack()

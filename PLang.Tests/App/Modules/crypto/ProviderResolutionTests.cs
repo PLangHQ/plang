@@ -87,8 +87,8 @@ public class ProviderResolutionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public Data Hash(Hash action) => Data.Ok(new byte[32]); // all zeros
-        public Data Verify(Verify action) => Data.Ok(false);
+        public global::app.data.@this<byte[]> Hash(Hash action) => global::app.data.@this<byte[]>.Ok(new byte[32]); // all zeros
+        public global::app.data.@this<bool> Verify(Verify action) => global::app.data.@this<bool>.Ok(false);
     }
 
     private class AlwaysTrueVerifier : ICrypto
@@ -99,7 +99,7 @@ public class ProviderResolutionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public Data Hash(Hash action) => Data.Ok(new byte[32]);
-        public Data Verify(Verify action) => Data.Ok(true);
+        public global::app.data.@this<byte[]> Hash(Hash action) => global::app.data.@this<byte[]>.Ok(new byte[32]);
+        public global::app.data.@this<bool> Verify(Verify action) => global::app.data.@this<bool>.Ok(true);
     }
 }

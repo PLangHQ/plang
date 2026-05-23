@@ -1,11 +1,11 @@
+using Path = global::app.types.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::app.filesystem.path;
-using Verb = global::app.filesystem.permission.verb.@this;
-using Read = global::app.filesystem.permission.verb.Read;
-using Write = global::app.filesystem.permission.verb.Write;
-using Delete = global::app.filesystem.permission.verb.Delete;
+using Verb = global::app.types.path.permission.verb.@this;
+using Read = global::app.types.path.permission.verb.Read;
+using Write = global::app.types.path.permission.verb.Write;
+using Delete = global::app.types.path.permission.verb.Delete;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
@@ -44,18 +44,20 @@ public class FileSystemPermissionFlowTests
         public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
-    private static Task<global::app.data.@this> Dispatch(string method, Path path) => method switch
+    // Typed verbs (Data<bool>, Data<byte[]>, Data<path>, …) widen to base Data
+    // through an explicit await/cast so the test can stay shape-agnostic.
+    private static async Task<global::app.data.@this> Dispatch(string method, Path path) => method switch
     {
-        "ReadText"   => path.ReadText(),
-        "ReadBytes"  => path.ReadBytes(),
-        "Exists"     => path.ExistsAsync(),
-        "List"       => path.List(),
-        "Stat"       => path.Stat(),
-        "WriteText"  => path.WriteText("hello"),
-        "WriteBytes" => path.WriteBytes(new byte[] { 1, 2, 3 }),
-        "Append"     => path.Append("more"),
-        "Mkdir"      => path.Mkdir(),
-        "Delete"     => path.Delete(),
+        "ReadText"   => await path.ReadText(),
+        "ReadBytes"  => await path.ReadBytes(),
+        "Exists"     => await path.ExistsAsync(),
+        "List"       => await path.List(),
+        "Stat"       => await path.Stat(),
+        "WriteText"  => await path.WriteText("hello"),
+        "WriteBytes" => await path.WriteBytes(new byte[] { 1, 2, 3 }),
+        "Append"     => await path.Append("more"),
+        "Mkdir"      => await path.Mkdir(),
+        "Delete"     => await path.Delete(),
         _            => throw new System.ArgumentException($"unknown method {method}"),
     };
 

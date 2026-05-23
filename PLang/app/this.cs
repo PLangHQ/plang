@@ -71,6 +71,15 @@ public sealed partial class @this : IAsyncDisposable
     public string? OsDirectory { get; set; }
 
     /// <summary>
+    /// The computed <c>os/</c> folder next to the executable. App-level constant
+    /// (not file-scheme-specific): the path base's <c>Authorize</c> and
+    /// <c>FilePath.ValidatePath</c> both anchor system goals against it, so it
+    /// belongs on <c>app</c> rather than on a concrete path subclass.
+    /// </summary>
+    public string OsAbsolutePath =>
+        global::System.IO.Path.GetFullPath(global::System.IO.Path.Combine(AppContext.BaseDirectory, "os"));
+
+    /// <summary>
     /// Environment name (e.g., "production", "development").
     /// </summary>
     public string Environment { get; set; }
@@ -134,7 +143,6 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// The file system abstraction.
     /// </summary>
-    public app.filesystem.IPLangFileSystem FileSystem { get; set; }
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -272,13 +280,7 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public callstack.@this CallStack { get; } = new();
 
-    public @this(app.filesystem.IPLangFileSystem fileSystem)
-        : this(fileSystem.RootDirectory, fileSystem: fileSystem)
-    {
-    }
-
     public @this(string absolutePath, AppModules? modules = null,
-        app.filesystem.IPLangFileSystem? fileSystem = null,
         string? environment = null,
         bool autoWireConsoleChannels = true)
     {
@@ -300,12 +302,14 @@ public sealed partial class @this : IAsyncDisposable
         _modules = modules ?? new AppModules();
         _modules.App = this;
         _goals = new AppGoals { App = this };
-        FileSystem = fileSystem ?? CreateDefaultFileSystem(absolutePath);
 
         Errors = new global::app.errors.@this(this);
 
         Code.RegisterDefaults();
         Types.RegisterDomainTypes();
+        Types.Scheme.Register("file", (raw, ctx) => global::app.types.path.file.@this.Resolve(raw, ctx));
+        Types.Scheme.Register("http", (raw, ctx) => global::app.types.path.http.@this.Resolve(raw, ctx));
+        Types.Scheme.Register("https", (raw, ctx) => global::app.types.path.http.@this.Resolve(raw, ctx));
         Navigators.RegisterDefaults();
 
         // Default actor is User — Start() switches to System for bootstrap
@@ -356,9 +360,9 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task Load()
     {
-        var path = FileSystem.ValidatePath(".build/app.pr");
-        if (!FileSystem.File.Exists(path)) return;
-        var json = await FileSystem.File.ReadAllTextAsync(path);
+        var path = global::System.IO.Path.Combine(AbsolutePath, ".build", "app.pr");
+        if (!global::System.IO.File.Exists(path)) return;
+        var json = await global::System.IO.File.ReadAllTextAsync(path);
         if (string.IsNullOrWhiteSpace(json)) return;
         try
         {
@@ -395,11 +399,11 @@ public sealed partial class @this : IAsyncDisposable
         var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
             CamelCaseIndented);
-        var path = FileSystem.ValidatePath(".build/app.pr");
+        var path = global::System.IO.Path.Combine(AbsolutePath, ".build", "app.pr");
         var dir = global::System.IO.Path.GetDirectoryName(path);
-        if (dir != null && !FileSystem.Directory.Exists(dir))
-            FileSystem.Directory.CreateDirectory(dir);
-        await FileSystem.File.WriteAllTextAsync(path, json);
+        if (dir != null && !global::System.IO.Directory.Exists(dir))
+            global::System.IO.Directory.CreateDirectory(dir);
+        await global::System.IO.File.WriteAllTextAsync(path, json);
         return app.data.@this.Ok(this);
     }
 
@@ -507,6 +511,8 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Runs a goal via GoalCall. Resolves the goal then delegates to Goal.RunAsync.
     /// </summary>
+    // Returns bare Data — the catalog renders this as `→ returns data`
+    // (polymorphic; called goal can return any value).
     public async Task<data.@this> RunGoalAsync(GoalCall goalCall, actor.context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
@@ -546,24 +552,9 @@ public sealed partial class @this : IAsyncDisposable
         if (Tester.IsEnabled)
             return global::app.modules.settings.Sqlite.InMemory($"system-{Id}");
 
-        var dbDir = FileSystem.Path.Combine(AbsolutePath, ".db");
-        var dbPath = FileSystem.Path.Combine(dbDir, "system.sqlite");
-        return new global::app.modules.settings.Sqlite(dbPath, FileSystem);
-    }
-
-    private static app.filesystem.IPLangFileSystem CreateDefaultFileSystem(string rootPath)
-    {
-        try
-        {
-            var fullPath = global::System.IO.Path.GetFullPath(rootPath);
-            return new app.filesystem.Default.PLangFileSystem(fullPath, "");
-        }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-        {
-            // If rootPath is not a valid filesystem path (e.g., "/app" in tests),
-            // fall back to PLangFileSystem with current directory
-            return new app.filesystem.Default.PLangFileSystem(global::System.IO.Directory.GetCurrentDirectory(), "");
-        }
+        var dbDir = global::System.IO.Path.Combine(AbsolutePath, ".db");
+        var dbPath = global::System.IO.Path.Combine(dbDir, "system.sqlite");
+        return new global::app.modules.settings.Sqlite(dbPath);
     }
 
     public async ValueTask DisposeAsync()

@@ -52,6 +52,11 @@
               "name": "Value",
               "value": "%Now.Ticks%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "object",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -164,8 +169,7 @@
                           "name": "GoalName",
                           "value": {
                             "name": "HandleBuildFailure",
-                            "parameters": [],
-                            "prPath": "/system/builder/BuildGoal/.build/start.pr"
+                            "parameters": []
                           },
                           "type": "goal.call"
                         }
@@ -231,8 +235,61 @@
     },
     {
       "index": 5,
+      "text": "goal.getTypes Goal=%goal%, write to %varTypes%",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": "Forward-walk the goal once to infer variable types per step. Result is a list\nof dicts indexed by step position; BuildStep/Start reads %varTypes[step.Index]%\nto render an \"Available variables\" section in the compile user prompt.",
+      "actions": [
+        {
+          "module": "goal",
+          "action": "getTypes",
+          "parameters": [
+            {
+              "name": "Goal",
+              "value": "%goal%",
+              "type": "goal"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%varTypes%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
       "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%",
-      "lineNumber": 11,
+      "lineNumber": 16,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -256,7 +313,7 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "Start",
+                "name": "BuildStep/Start",
                 "parallel": false,
                 "parameters": [
                   {
@@ -283,9 +340,9 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "set %parentGoal% = %goal%",
-      "lineNumber": 13,
+      "lineNumber": 18,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -302,6 +359,11 @@
               "name": "Value",
               "value": "%goal%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "object",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -323,9 +385,9 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%",
-      "lineNumber": 14,
+      "lineNumber": 19,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -376,9 +438,9 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "set %goal% = %parentGoal%",
-      "lineNumber": 15,
+      "lineNumber": 20,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -395,6 +457,11 @@
               "name": "Value",
               "value": "%parentGoal%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "object",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -416,9 +483,9 @@
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
-      "lineNumber": 17,
+      "lineNumber": 22,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -474,9 +541,9 @@
       "waitForExecution": true
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
-      "lineNumber": 18,
+      "lineNumber": 23,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -532,9 +599,9 @@
       "waitForExecution": true
     },
     {
-      "index": 11,
+      "index": 12,
       "text": "set %trace.durationMs% = %elapsedMs%",
-      "lineNumber": 19,
+      "lineNumber": 24,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -572,9 +639,9 @@
       "waitForExecution": true
     },
     {
-      "index": 12,
+      "index": 13,
       "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
-      "lineNumber": 21,
+      "lineNumber": 26,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -606,9 +673,9 @@
       "waitForExecution": true
     },
     {
-      "index": 13,
+      "index": 14,
       "text": "add %goal.Name% to %traceGoals%",
-      "lineNumber": 22,
+      "lineNumber": 27,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -645,9 +712,9 @@
       "waitForExecution": true
     },
     {
-      "index": 14,
+      "index": 15,
       "text": "builder.goalsSave Goal=%goal%",
-      "lineNumber": 23,
+      "lineNumber": 28,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -683,7 +750,7 @@
         {
           "index": 0,
           "text": "set %goal% = %subGoal%",
-          "lineNumber": 29,
+          "lineNumber": 34,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -723,7 +790,7 @@
         {
           "index": 1,
           "text": "write out \"  Building sub-goal: %goal.Name%\"",
-          "lineNumber": 30,
+          "lineNumber": 35,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -752,7 +819,7 @@
         {
           "index": 2,
           "text": "call Plan, on error call HandleBuildFailure",
-          "lineNumber": 31,
+          "lineNumber": 36,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -765,7 +832,7 @@
                   "value": {
                     "name": "Plan",
                     "parallel": false,
-                    "parameters": [],
+                    "parameters": null,
                     "prPath": "/system/builder/BuildGoal/.build/plan.pr"
                   },
                   "type": "goal.call"
@@ -787,9 +854,7 @@
                             {
                               "name": "GoalName",
                               "value": {
-                                "name": "HandleBuildFailure",
-                                "parameters": [],
-                                "prPath": "/system/builder/BuildGoal/.build/start.pr"
+                                "name": "HandleBuildFailure"
                               },
                               "type": "goal.call"
                             }
@@ -816,7 +881,7 @@
         {
           "index": 3,
           "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%",
-          "lineNumber": 32,
+          "lineNumber": 37,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -840,7 +905,7 @@
                 {
                   "name": "GoalName",
                   "value": {
-                    "name": "Start",
+                    "name": "BuildStep/Start",
                     "parallel": false,
                     "parameters": [
                       {
@@ -868,8 +933,8 @@
         },
         {
           "index": 4,
-          "text": "add {goal: %goal.Name%, plan: %plan%} to %trace.subGoals%",
-          "lineNumber": 33,
+          "text": "- add {goal: %goal%, plan: %plan%} to %trace.subGoals%",
+          "lineNumber": 38,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -885,19 +950,18 @@
                 {
                   "name": "Value",
                   "value": {
-                    "goal": "%goal.Name%",
+                    "goal": "%goal%",
                     "plan": "%plan%"
                   },
                   "type": "object"
-                }
-              ],
-              "defaults": [
+                },
                 {
-                  "name": "atindex",
+                  "name": "AtIndex",
                   "value": -1,
                   "type": "int"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             }
           ],
@@ -930,7 +994,7 @@
         {
           "index": 0,
           "text": "write out \"  Build error in %goal.Name%: %!error.Message%\"",
-          "lineNumber": 39,
+          "lineNumber": 44,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -959,7 +1023,7 @@
         {
           "index": 1,
           "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}, type=json",
-          "lineNumber": 40,
+          "lineNumber": 45,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1008,7 +1072,7 @@
         {
           "index": 2,
           "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
-          "lineNumber": 41,
+          "lineNumber": 46,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1042,7 +1106,7 @@
         {
           "index": 3,
           "text": "throw %!error%",
-          "lineNumber": 42,
+          "lineNumber": 47,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1054,15 +1118,14 @@
                   "name": "Message",
                   "value": "%!error%",
                   "type": "string"
-                }
-              ],
-              "defaults": [
+                },
                 {
-                  "name": "statuscode",
+                  "name": "StatusCode",
                   "value": 500,
                   "type": "int"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             }
           ],
@@ -1091,7 +1154,7 @@
   "visibility": 1,
   "path": "/system/builder/BuildGoal/Start.goal",
   "prPath": "/system/builder/BuildGoal/.build/start.pr",
-  "hash": "f5e79879a5beecc291058ca6962bf3dca85282db11974e32dba4c49bcfa8dc18",
+  "hash": "dc245c96a07336652fb85b28d36738e7b676c18458548994cd7bc7174de6b030",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

@@ -12,14 +12,14 @@ public partial class Remove : IContext
 {
     public partial data.@this<string> Key { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<types.setting>> Run()
     {
         var store = Context.App.SettingsStore;
         var result = await store.Remove("settings", Key.Value!);
 
         if (!result.Success)
-            return result;
+            return data.@this<types.setting>.From(result);
 
-        return Data(new types.setting { key = Key.Value! });
+        return data.@this<types.setting>.Ok(new types.setting { key = Key.Value! });
     }
 }

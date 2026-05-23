@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "F1-F8 all genuinely fixed; one new issue (N1) — the F3 refactor silently dropped file.exists's authorization gate and introduced a file/http AsBooleanAsync auth asymmetry that needs an explicit decision." }

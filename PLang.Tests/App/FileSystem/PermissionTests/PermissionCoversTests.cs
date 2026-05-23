@@ -2,10 +2,10 @@ using System.Text.Json;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Permission = global::app.filesystem.permission.@this;
-using Match = global::app.filesystem.permission.Match;
-using Verb = global::app.filesystem.permission.verb.@this;
-using Write = global::app.filesystem.permission.verb.Write;
+using Permission = global::app.types.path.permission.@this;
+using Match = global::app.types.path.permission.Match;
+using Verb = global::app.types.path.permission.verb.@this;
+using Write = global::app.types.path.permission.verb.Write;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 

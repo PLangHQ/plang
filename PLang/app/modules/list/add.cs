@@ -12,7 +12,7 @@ public partial class Add : IContext
     [Default(-1)]
     public partial data.@this<int> AtIndex { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this<types.list>> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var existing = data.Value;
@@ -69,6 +69,6 @@ public partial class Add : IContext
         else
             list.Add(snapshot);
 
-        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
+        return Task.FromResult(global::app.data.@this<types.list>.Ok(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
     }
 }

@@ -7,8 +7,7 @@ using app.errors;
 using app.goals.goal;
 using app.variables;
 using app.modules.settings;
-using app.filesystem;
-using app.filesystem.Default;
+using app.types.path;
 using app.modules.http;
 using PlangHttpMethod = app.modules.http.HttpMethod;
 
@@ -36,7 +35,7 @@ public sealed class OpenAi : ILlm
     private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
-    public async Task<data.@this> Query(query action)
+    public async Task<data.@this<object>> Query(query action)
     {
         var app = action.Context.App;
         var context = action.Context;
@@ -52,7 +51,7 @@ public sealed class OpenAi : ILlm
 
         // --- Validate ---
         if (action.Messages.Value!.Count == 0)
-            return global::app.data.@this.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
+            return global::app.data.@this<object>.FromError(new ActionError("Messages list is empty", "ValidationError", 400));
 
         // --- Build messages ---
         var messages = CloneMessages(action.Messages.Value!);
@@ -111,7 +110,7 @@ public sealed class OpenAi : ILlm
             var cached = await settings.Get(CacheTable, cacheKey);
             if (cached.Success && cached.Value != null)
             {
-                return RestoreFromCache(cached);
+                return global::app.data.@this<object>.From(RestoreFromCache(cached));
             }
         }
 
@@ -145,7 +144,7 @@ public sealed class OpenAi : ILlm
             var body = new Dictionary<string, object?>
             {
                 ["model"] = model,
-                ["messages"] = ToApiMessages(messages, app.FileSystem),
+                ["messages"] = ToApiMessages(messages, app),
                 ["temperature"] = action.Temperature.Value,
                 ["max_completion_tokens"] = action.MaxTokens.Value
             };
@@ -186,15 +185,15 @@ public sealed class OpenAi : ILlm
             }
 
             if (!httpResult.Success)
-                return httpResult;
+                return global::app.data.@this<object>.From(httpResult);
 
             // --- Parse response ---
             var (responseJson, parseEx) = ParseApiResponse(httpResult.Value);
             if (responseJson == null)
             {
                 if (parseEx != null)
-                    return global::app.data.@this.FromError(ActionError.FromException(parseEx, "ParseError", 500));
-                return global::app.data.@this.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
+                    return global::app.data.@this<object>.FromError(ActionError.FromException(parseEx, "ParseError", 500));
+                return global::app.data.@this<object>.FromError(new ActionError("Failed to parse LLM API response", "ParseError", 500));
             }
 
             // Extract usage
@@ -207,7 +206,7 @@ public sealed class OpenAi : ILlm
 
             // Get first choice
             if (!responseJson.Value.TryGetProperty("choices", out var choices) || choices.GetArrayLength() == 0)
-                return global::app.data.@this.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
+                return global::app.data.@this<object>.FromError(new ActionError("No choices in LLM response", "EmptyResponse", 500));
 
             var choice = choices[0];
             var message = choice.GetProperty("message");
@@ -238,7 +237,7 @@ public sealed class OpenAi : ILlm
                     : finishReason == "content_filter"
                     ? "LLM refused the request via content filter."
                     : $"LLM response ended abnormally (finish_reason={finishReason}).";
-                return global::app.data.@this.FromError(new ActionError(msg, key, 400)
+                return global::app.data.@this<object>.FromError(new ActionError(msg, key, 400)
                 {
                     Details = new Dictionary<string, object?>
                     {
@@ -328,7 +327,7 @@ public sealed class OpenAi : ILlm
                         parsed = TryParseJson(fromBlock);
 
                     if (parsed == null)
-                        return global::app.data.@this.FromError(new ActionError(
+                        return global::app.data.@this<object>.FromError(new ActionError(
                             "Response is not valid JSON", "JsonParseError", 400)
                         {
                             Details = new Dictionary<string, object?>
@@ -362,7 +361,7 @@ public sealed class OpenAi : ILlm
                     {
                         await app.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output,
                             $"  Validation failed (no retries left): {validationError}{Environment.NewLine}");
-                        return global::app.data.@this.FromError(new ActionError(
+                        return global::app.data.@this<object>.FromError(new ActionError(
                             $"LLM validation failed: {validationError}",
                             "ValidationFailed", 400));
                     }
@@ -429,7 +428,7 @@ public sealed class OpenAi : ILlm
             SetProp(result, "Format", effectiveFormat);
             SetProp(result, "Schema", schema);
 
-            return result;
+            return global::app.data.@this<object>.From(result);
         }
 
         // Loop exited via break (MaxToolCalls or streaming)
@@ -440,7 +439,7 @@ public sealed class OpenAi : ILlm
         SetProp(exitResult, "CompletionTokens", totalCompletionTokens);
         SetProp(exitResult, "TotalTokens", totalPromptTokens + totalCompletionTokens);
         SetProp(exitResult, "Truncated", true);
-        return exitResult;
+        return global::app.data.@this<object>.From(exitResult);
     }
 
     // --- Tool execution ---
@@ -553,7 +552,7 @@ public sealed class OpenAi : ILlm
             // Return error Data so the caller sees the parse failure with full exception
             return new List<data.@this>
             {
-                global::app.data.@this.FromError(ActionError.FromException(ex, "JsonParseError", 400))
+                global::app.data.@this<object>.FromError(ActionError.FromException(ex, "JsonParseError", 400))
             };
         }
 
@@ -572,7 +571,7 @@ public sealed class OpenAi : ILlm
 
     // --- Message formatting ---
 
-    private static List<object> ToApiMessages(List<LlmMessage> messages, IPLangFileSystem fileSystem)
+    private static List<object> ToApiMessages(List<LlmMessage> messages, global::app.@this app)
     {
         var result = new List<object>();
         foreach (var msg in messages)
@@ -619,7 +618,7 @@ public sealed class OpenAi : ILlm
 
                 foreach (var image in msg.Images)
                 {
-                    var imageContent = ResolveImage(image, fileSystem);
+                    var imageContent = ResolveImage(image, app);
                     contentParts.Add(imageContent);
                 }
 
@@ -641,7 +640,7 @@ public sealed class OpenAi : ILlm
         return result;
     }
 
-    private static object ResolveImage(string image, IPLangFileSystem fileSystem)
+    private static object ResolveImage(string image, global::app.@this app)
     {
         if (image.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -656,11 +655,11 @@ public sealed class OpenAi : ILlm
         // Try file path
         try
         {
-            if (fileSystem.File.Exists(image))
+            if (System.IO.File.Exists(image))
             {
-                var bytes = fileSystem.File.ReadAllBytes(image);
+                var bytes = System.IO.File.ReadAllBytes(image);
                 var base64 = Convert.ToBase64String(bytes);
-                var extension = fileSystem.Path.GetExtension(image).TrimStart('.').ToLowerInvariant();
+                var extension = System.IO.Path.GetExtension(image).TrimStart('.').ToLowerInvariant();
                 var mimeType = extension switch
                 {
                     "jpg" or "jpeg" => "image/jpeg",

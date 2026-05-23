@@ -36,5 +36,5 @@ public partial class verify : IContext
     [Code]
     public partial ISigning Signer { get; }
 
-    public async Task<data.@this> Run() => await Signer.VerifyAsync(this);
+    public async Task<data.@this<bool>> Run() => await Signer.VerifyAsync(this);
 }

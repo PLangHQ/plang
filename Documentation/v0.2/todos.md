@@ -1,12 +1,12 @@
 # TODOs
 
-## Polymorphic `Path` (file:// + http:// + s3://… via scheme registry)
+## ~~Polymorphic `Path` (file:// + http:// + s3://… via scheme registry)~~ — Phase 1 + 2 shipped
 
-**Date:** 2026-05-21
+**Date:** 2026-05-21 → **Closed:** 2026-05-23 on branch `path-polymorphism`.
 
-`Path` becomes abstract; `FilePath`, `HttpPath`, etc. implement the verb surface (ReadText/WriteText/Save/Delete/Stat/List/CopyTo/MoveTo) per scheme. `Path.From(string)` factory routes by scheme prefix. File action handlers degenerate to one-liners (`Path.Value!.ReadText()`); legacy `IFile.Read/Save/...` dies. Closes codeanalyzer v2 finding #1 (handler-layer authorize copy-paste) on a new branch — deliberately not on `filesystem-permission`.
+`Path` is abstract; `FilePath` and `HttpPath` are live (`PLang/app/types/path/{file,http}/this.cs`), discovered via `[PathScheme("…")]`. File action handlers degenerated to one-liners over `Path.Value!.X()`; legacy `IFile.Read/Save/...` is gone. Codeanalyzer v2 finding #1 closed. `IBooleanResolvable` ships path-truthiness so `if %url% exists` works directly.
 
-Plan + phasing: `Documentation/v0.2/path-polymorphism-plan.md`. Hand to architect.
+Phase 3 (S3, Git, …) stays open — drop a `[PathScheme(...)]` class in and it lights up. See `Documentation/v0.2/path-polymorphism-plan.md` for the original design and status banner.
 
 ## Replace `GoalCall` parameter type with `list<action>` everywhere
 
@@ -441,3 +441,37 @@ JsonSerializerOptions, the `private static` lifecycle handlers in
 from `context.App.Debug`, not from static fields). But the *rule* to
 enforce: no `static` mutable state in any code path that an `App`
 instance touches. Worth a sweep when multi-App lands.
+
+## 2026-05-23 — Provider typing follow-ups (deferred from path-polymorphism)
+
+After the IPath / IIdentity / IStore.Exists+Tables typing pass, three larger
+cascades were deliberately left for later. The current convention is bare
+`Task<Data>` = polymorphic ("data" in the catalog), `Task<Data<T>>` = typed.
+
+1. **IHttp typing** (`PLang/app/modules/http/code/IHttp.cs` + `Default.cs`).
+   Four public methods plus a non-trivial internal helper chain (Request /
+   Download / Configure / SignRequest helpers). Moderate user value — the
+   LLM catalog would learn `http.request → returns ...`, `http.download →
+   returns path`, etc. — but the internal helper cascade makes it more work
+   than IIdentity. Plan: type the four public methods at the interface
+   boundary, leave the helper methods bare and bridge with `Data<T>.From`.
+
+2. **Goal / Step / action.@this RunAsync deep cascade**. Currently all three
+   return bare `Task<Data>` so dispatch through the engine stays polymorphic.
+   Typing them would let `condition.if`, `condition.elseif`, and
+   `loop.foreach` carry the inner action's `T` instead of collapsing to bare
+   Data — those actions rarely have `write to`, so the LLM-catalog payoff is
+   lower than IPath/IIdentity. Plan deferred until we have a use case where
+   the lost typing actually shows up in a builder regression or a runtime
+   error.
+
+3. **Deep `IStore` typing — `Get` / `GetAll` / `Set` / `Remove`**. These four
+   stayed bare in the IStore pass because they're genuinely polymorphic over
+   "any stored value's type". A clean fix needs a generic-over-stored-value
+   design pass (do we want `IStore.Get<T>` everywhere? Per-table type
+   registration? A Data envelope with stamped Type?). Not worth a half
+   measure — `Exists` and `Tables` are the only naturally-typed ones, and
+   those landed.
+
+Reference: branch path-polymorphism, commits `0ba3c041a` (convention flip),
+`84644d91e` (IPath), `2aa0e18c7` (IIdentity + IStore.Exists/Tables).

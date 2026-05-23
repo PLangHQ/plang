@@ -5,7 +5,7 @@ Start
 - assert %content% equals "hello world"
 / exists
 - check if file 'test_output.txt' exists, write to %info%
-- assert %info% is not null
+- assert %info% is true
 / copy
 - copy file 'test_output.txt' to 'test_copy.txt'
 - read file 'test_copy.txt', write to %copied%

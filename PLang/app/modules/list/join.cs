@@ -10,7 +10,7 @@ public partial class Join : IContext
     [Default(",")]
     public partial data.@this<string> Separator { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this<string>> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var strings = new List<string>();
@@ -19,6 +19,6 @@ public partial class Join : IContext
             strings.Add(item.Value?.ToString() ?? "");
 
         var result = string.Join(Separator.Value!, strings);
-        return Task.FromResult(Data(result, app.data.type.String));
+        return Task.FromResult(global::app.data.@this<string>.Ok(result, app.data.type.String));
     }
 }

@@ -39,44 +39,52 @@ public partial class discover : IContext
 
     public Task<data.@this> Run()
     {
-        var fs = Context.App!.FileSystem;
+        var app = Context.App!;
 
-        app.data.@this empty = app.data.@this.Ok(new List<global::app.tester.File>());
+        global::app.data.@this empty = global::app.data.@this.Ok(new List<global::app.tester.File>());
 
         string absRoot;
-        try { absRoot = fs.ValidatePath(Path.Value); }
-        catch (UnauthorizedAccessException)
+        try { absRoot = global::app.types.path.file.@this.ValidatePath(Path.Value, app); }
+        catch (ArgumentException)
         {
-            // Traversal outside the app root → return empty list, don't throw.
-            // Other ValidatePath failures (empty path, fs not initialized) propagate.
+            // Empty/invalid path → return empty list, don't throw.
             return Task.FromResult(empty);
         }
 
-        if (!fs.Directory.Exists(absRoot))
+        // Discovery is constrained to the app root — a traversal path
+        // (../../etc) that ValidatePath normalised outside the root is
+        // rejected, so a malicious --test config can't enumerate system
+        // directories. ValidatePath no longer gates (Authorize does, for
+        // file actions); discovery scopes itself explicitly.
+        var rootPrefix = System.IO.Path.GetFullPath(app.AbsolutePath);
+        if (!absRoot.StartsWith(rootPrefix, global::app.types.path.@this.RootComparison))
+            return Task.FromResult(empty);
+
+        if (!System.IO.Directory.Exists(absRoot))
             return Task.FromResult(empty);
 
         var option = Recursive.Value ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-        var matches = fs.Directory.EnumerateFiles(absRoot, Pattern.Value, option);
+        var matches = System.IO.Directory.EnumerateFiles(absRoot, Pattern.Value, option);
 
         var include = Context.App.Tester.Include;
         var exclude = Context.App.Tester.Exclude;
 
         var files = new List<global::app.tester.File>();
         foreach (var match in matches)
-            files.Add(DiscoverOne(match, fs, include, exclude));
+            files.Add(DiscoverOne(match, app, include, exclude));
 
-        return Task.FromResult(app.data.@this.Ok(files));
+        return Task.FromResult(global::app.data.@this.Ok(files));
     }
 
     /// <summary>Discovers metadata for a single .test.goal file.</summary>
-    private global::app.tester.File DiscoverOne(string absGoalPath, filesystem.IPLangFileSystem fs,
+    private global::app.tester.File DiscoverOne(string absGoalPath, global::app.@this app,
         HashSet<string> include, HashSet<string> exclude)
     {
-        var dir = fs.Path.GetDirectoryName(absGoalPath) ?? fs.RootDirectory;
-        var relGoalPath = NormalizeRelative(fs.Path.GetRelativePath(fs.RootDirectory, absGoalPath));
-        var fileName = fs.Path.GetFileName(absGoalPath);
-        var prFileName = fs.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
-        var absPrPath = fs.Path.Combine(dir, ".build", prFileName);
+        var dir = System.IO.Path.GetDirectoryName(absGoalPath) ?? app.AbsolutePath;
+        var relGoalPath = NormalizeRelative(System.IO.Path.GetRelativePath(app.AbsolutePath, absGoalPath));
+        var fileName = System.IO.Path.GetFileName(absGoalPath);
+        var prFileName = System.IO.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
+        var absPrPath = System.IO.Path.Combine(dir, ".build", prFileName);
         // PrPath is relative to the test's own directory (not the parent app root) so
         // the per-test child App — rooted at global::app.tester.File.Directory — can resolve it directly.
         var relPrPath = ".build/" + prFileName;
@@ -88,7 +96,7 @@ public partial class discover : IContext
             PrPath = relPrPath
         };
 
-        if (!fs.File.Exists(absPrPath))
+        if (!System.IO.File.Exists(absPrPath))
         {
             stub.Status = global::app.tester.Status.Stale;
             stub.StatusReason = "no .pr";
@@ -101,7 +109,7 @@ public partial class discover : IContext
         Goal? prGoal;
         try
         {
-            var prText = fs.File.ReadAllText(absPrPath);
+            var prText = System.IO.File.ReadAllText(absPrPath);
             var (converted, err) = global::app.types.@this.TryConvertTo(prText, typeof(Goal));
             prGoal = converted as Goal;
             if (prGoal == null)
@@ -123,7 +131,7 @@ public partial class discover : IContext
         Goal? currentGoal;
         try
         {
-            var goalText = fs.File.ReadAllText(absGoalPath);
+            var goalText = System.IO.File.ReadAllText(absGoalPath);
             currentGoal = Goal.Parse(goalText, relGoalPath);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

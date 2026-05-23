@@ -11,10 +11,10 @@ public partial class Range : IContext
     [Default(1)]
     public partial data.@this<int> Step { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this<types.list>> Run()
     {
         if (Step.Value == 0)
-            return Task.FromResult(Error(
+            return Task.FromResult(global::app.data.@this<types.list>.FromError(
                 new app.errors.ValidationError("Step cannot be zero", "InvalidStep")));
 
         var list = new List<object?>();
@@ -29,6 +29,6 @@ public partial class Range : IContext
                 list.Add(i);
         }
 
-        return Task.FromResult(Data(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
+        return Task.FromResult(global::app.data.@this<types.list>.Ok(new types.list { count = list.Count, value = list }, app.data.type.FromName("list")));
     }
 }

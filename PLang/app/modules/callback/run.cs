@@ -23,6 +23,6 @@ public partial class run : IContext
         if (Callback.Snapshot == null)
             return global::app.data.@this.FromError(new ServiceError(
                 "Resume invoked on Data without a Snapshot", "NoSnapshot", 400));
-        return await Callback.Snapshot.Resume(Context);
+        return (await Callback.Snapshot.Resume(Context));
     }
 }

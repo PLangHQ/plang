@@ -11,6 +11,7 @@ examples themselves — the planner no longer commits to a chain shape.
 Parameters:
 {% if a.Parameters.size > 0 %}{% for p in a.Parameters %}  - {{ p.Name }}: {{ p.Value }}
 {% endfor %}{% else %}  (no parameters)
+{% endif %}{% if a.ReturnTypeName %}→ returns {{ a.ReturnTypeName }}
 {% endif %}
 {% if a.Examples.size > 0 %}Examples:
 {% for ex in a.Examples %}  Step text: `{{ ex.Name }}`

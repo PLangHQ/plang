@@ -1,5 +1,3 @@
-using app.filesystem;
-using app.filesystem.Default;
 using app.Utils;
 using System.Reflection;
 
@@ -7,11 +5,11 @@ namespace PLang
 {
 	public class Executor
 	{
-		private readonly IPLangFileSystem fileSystem;
+		private readonly string startupDirectory;
 
-		public Executor(IPLangFileSystem fileSystem)
+		public Executor(string startupDirectory)
 		{
-			this.fileSystem = fileSystem;
+			this.startupDirectory = startupDirectory;
 		}
 
 		public async Task<app.data.@this> Run(string[] args, CancellationToken cancellationToken = default)
@@ -37,8 +35,8 @@ namespace PLang
 
 			var (goalFile, parameters) = CommandLineParser.Parse(args);
 
-			var engine = new app.@this(fileSystem);
-			engine.OsDirectory = fileSystem.OsDirectory;
+			var engine = new app.@this(startupDirectory);
+			engine.OsDirectory = engine.OsAbsolutePath;
 
 			var userVars = engine.User.Context.Variables;
 
@@ -59,7 +57,7 @@ namespace PLang
 			{
 				engine.Tester.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
-					userVars.Set("path", fileSystem.RootDirectory);
+					userVars.Set("path", startupDirectory);
 
 				if (testValue is IDictionary<string, object?> testDict)
 				{
@@ -70,18 +68,26 @@ namespace PLang
 
 			// App settings (--app={"create":true})
 			if (parameters.TryGetValue("!app", out var appValue) && appValue is IDictionary<string, object?> appDict)
-				global::app.types.@this.Populate(engine, appDict);
+				global::app.types.@this.Populate(engine, appDict, engine.User.Context);
 
-			// Builder mode (--builder or legacy --build)
-			if ((parameters.TryGetValue("!builder", out var buildValue) && buildValue is not false) ||
-			    (parameters.TryGetValue("!build", out buildValue) && buildValue is not false))
+			// Builder mode (--builder or legacy --build). Either flag may be a bare
+			// `true` (e.g. `plang build` normalizes the subcommand to `--builder`) or
+			// carry a JSON config dict (`--build={"files":[...]}`). Both keys must be
+			// read into separate variables — folding them into one `||` with a shared
+			// `out` variable lets the short-circuit drop whichever key carries the dict.
+			parameters.TryGetValue("!builder", out var builderValue);
+			parameters.TryGetValue("!build", out var buildValue);
+			if (builderValue is not (null or false) || buildValue is not (null or false))
 			{
 				engine.Builder.IsEnabled = true;
 				if (!parameters.ContainsKey("path"))
-					userVars.Set("path", fileSystem.RootDirectory);
+					userVars.Set("path", startupDirectory);
 
-				if (buildValue is IDictionary<string, object?> buildDict)
-					global::app.types.@this.Populate(engine.Builder, buildDict);
+				// Whichever flag carried the JSON object holds the build config.
+				var buildDict = builderValue as IDictionary<string, object?>
+				             ?? buildValue as IDictionary<string, object?>;
+				if (buildDict != null)
+					global::app.types.@this.Populate(engine.Builder, buildDict, engine.User.Context);
 
 				// Sync cache flag to %!build.cache% for Build.goal
 				userVars.Set("!build.cache", engine.Builder.Cache);

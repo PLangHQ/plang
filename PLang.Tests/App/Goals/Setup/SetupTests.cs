@@ -16,8 +16,7 @@ public class SetupTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        var fs = new global::app.filesystem.Default.PLangFileSystem(_tempDir, "");
-        _app = new global::app.@this(fs);
+        _app = new global::app.@this(_tempDir);
     }
 
     [After(Test)]

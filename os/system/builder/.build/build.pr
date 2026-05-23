@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "set default %path% = \u0022/\u0022",
+      "text": "set default %path% = \"/\"",
       "lineNumber": 6,
       "indent": 0,
       "comment": null,
@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "default",
+              "value": "%path%",
               "type": "variable"
             },
             {
@@ -28,6 +28,11 @@
               "name": "AsDefault",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -55,13 +60,18 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "default",
+              "value": "%!build.cache%",
               "type": "variable"
             },
             {
               "name": "Value",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             },
             {
               "name": "AsDefault",
@@ -94,18 +104,23 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "default",
+              "value": "%default%",
               "type": "variable"
             },
             {
               "name": "Value",
-              "value": "%!build.summary%",
-              "type": "object"
+              "value": true,
+              "type": "bool"
             },
             {
               "name": "AsDefault",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -140,6 +155,11 @@
               "name": "Value",
               "value": [],
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -162,7 +182,7 @@
     },
     {
       "index": 4,
-      "text": "write out \u0022Building path: %path%\u0022",
+      "text": "write out \"Building path: %path%\"",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -297,7 +317,7 @@
     },
     {
       "index": 7,
-      "text": "write out \u0022Found %goals.Count% goals\u0022",
+      "text": "write out \"Found %goals.Count% goals\"",
       "lineNumber": 13,
       "indent": 0,
       "comment": null,
@@ -379,7 +399,7 @@
     },
     {
       "index": 9,
-      "text": "save %traceGoals% to file \u0027/.build/traces/%!trace.id%/manifest.json\u0027",
+      "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
       "lineNumber": 15,
       "indent": 0,
       "comment": null,

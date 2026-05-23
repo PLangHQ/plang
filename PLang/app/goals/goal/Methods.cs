@@ -7,17 +7,16 @@ public sealed partial class @this
 {
 	public async Task<string> FormatForLlm(actor.context.@this? context = null)
 	{
-		var fs = context?.App?.FileSystem;
-		if (fs == null)
+		if (context?.App == null)
 			return FormatForLlmFallback();
 
-		var templatePath = fs.Path.Combine(
-			fs.RootDirectory, "system", "builder", "templates", "goalFormatForLlm.template");
+		var templatePath = System.IO.Path.Combine(
+			context.App.AbsolutePath, "system", "builder", "templates", "goalFormatForLlm.template");
 
-		if (!fs.File.Exists(templatePath))
+		if (!System.IO.File.Exists(templatePath))
 			return FormatForLlmFallback();
 
-		var templateText = await fs.File.ReadAllTextAsync(templatePath);
+		var templateText = await System.IO.File.ReadAllTextAsync(templatePath);
 		var scribanTemplate = Template.Parse(templateText);
 		if (scribanTemplate.HasErrors)
 			return FormatForLlmFallback();

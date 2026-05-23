@@ -1,0 +1,10 @@
+{
+  "version": "v8",
+  "verdict": "PASS",
+  "csharp": { "total": 2906, "passed": 2906, "failed": 0 },
+  "plang":   { "total": 204,  "passed": 204,  "failed": 0, "stale": 0 },
+  "build":   { "errors": 0, "warnings": 454, "note": "warnings unchanged from v7 — generator nullables" },
+  "v7_findings_closed": ["F4-CARRY", "N1", "N2", "N3", "N4", "N5(baseline)"],
+  "new_findings": [],
+  "minor_observations": ["v8-O1"]
+}

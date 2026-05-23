@@ -661,7 +661,8 @@ public partial class @this
                     null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
-                var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
+                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, ctx);
+                if (resolveError != null) return resolveError;
                 if (resolvedObj is T result)
                     return ConstructWrap<T>(result, ctx);
             }
@@ -689,12 +690,41 @@ public partial class @this
                     null, new[] { typeof(string), typeof(actor.context.@this) }, null));
             if (resolveMethod != null)
             {
-                var resolvedObj = resolveMethod.Invoke(null, new object[] { srStr, ctx });
+                var (resolvedObj, resolveError) = InvokeResolve<T>(resolveMethod, srStr, ctx);
+                if (resolveError != null) return resolveError;
                 if (resolvedObj is T result)
                     return ConstructWrap<T>(result, ctx);
             }
         }
         return WrapAs<T>(raw, ctx);
+    }
+
+    /// <summary>
+    /// Invokes a domain type's static <c>Resolve(string, context)</c> via reflection.
+    /// <c>Resolve</c> can legitimately throw (e.g. <c>path</c> raises
+    /// <c>SchemeNotRegistered</c> for an unregistered scheme like <c>s3://</c>) —
+    /// reflection surfaces that as <see cref="System.Reflection.TargetInvocationException"/>.
+    /// Rather than let it escape <c>As&lt;T&gt;</c>, the inner exception is shaped
+    /// into a failed <c>Data&lt;T&gt;</c> so the conversion failure flows as a typed
+    /// error the handler can surface. (codeanalyzer v1 F4)
+    /// </summary>
+    private static (object? value, @this<T>? error) InvokeResolve<T>(
+        System.Reflection.MethodInfo resolveMethod, string raw, actor.context.@this ctx)
+    {
+        try
+        {
+            return (resolveMethod.Invoke(null, new object[] { raw, ctx }), null);
+        }
+        catch (System.Reflection.TargetInvocationException tie) when (tie.InnerException != null)
+        {
+            var inner = tie.InnerException;
+            if (inner is global::app.types.path.scheme.SchemeNotRegistered snr)
+                return (null, @this<T>.FromError(new global::app.errors.Error(snr.Message, "SchemeNotRegistered", 400)
+                {
+                    FixSuggestion = $"Register a factory for scheme '{snr.Scheme}' via app.Types.Scheme.Register, or use a bare/file:// path.",
+                }));
+            return (null, @this<T>.FromError(new global::app.errors.Error(inner.Message, "ResolveFailed", 400)));
+        }
     }
 
     /// <summary>
@@ -850,6 +880,22 @@ public partial class @this
         if (val is short sh) return sh != 0;
         if (val is byte by) return by != 0;
         return true;
+    }
+
+    /// <summary>
+    /// Boolean meaning of this Data, async — when the wrapped value knows how to
+    /// answer for itself (<see cref="IBooleanResolvable"/>) the question is
+    /// delegated to it; otherwise it falls through to the sync <see cref="ToBoolean"/>.
+    /// The canonical resolvable is <c>path</c>: <c>path.AsBooleanAsync()</c> means
+    /// "does this resource exist", which the http scheme answers with I/O — hence
+    /// the async signature, and hence the condition pipeline is async.
+    /// (codeanalyzer v1 F3)
+    /// </summary>
+    public virtual async System.Threading.Tasks.Task<bool> ToBooleanAsync()
+    {
+        if (IsInitialized && Value is IBooleanResolvable resolvable)
+            return await resolvable.AsBooleanAsync();
+        return ToBoolean();
     }
 
     /// <summary>
@@ -1063,7 +1109,55 @@ public class @this<T> : @this
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
     public new static @this<T> FromError(IError error) => new() { Error = error };
 
-    /// <summary>Allows direct assignment of T values to data.@this&lt;T&gt; properties.</summary>
+    /// <summary>
+    /// Explicit pass-through: retype a base <see cref="@this"/> as
+    /// <see cref="@this{T}"/> without re-wrapping. Use this when a method
+    /// declared <c>Task&lt;Data&lt;T&gt;&gt;</c> needs to forward a base
+    /// <see cref="@this"/> coming back from a provider/dispatch — bypasses the
+    /// implicit-operator double-wrap (`Data&lt;T&gt;{ Value = innerData }`)
+    /// because the compiler prefers this explicit factory.
+    ///
+    /// Intended for error/sentinel propagation across typed boundaries — the
+    /// idiomatic call site is <c>if (!source.Success) return Data&lt;T&gt;.From(source);</c>.
+    ///
+    /// What is forwarded: Type, Error, Handled, Returned, ReturnDepth, Warnings,
+    /// Signature, Snapshot, and Properties (shared reference — forwarded
+    /// metadata, not deep-cloned; mutating the new Data's Properties mutates
+    /// the source's).
+    ///
+    /// Value handling is lossy by design: <c>source.Value is T t ? t : default</c>.
+    /// When the source carries a successful value not assignable to T, Value
+    /// silently coerces to <c>default(T?)</c>. Safe at the idiomatic call site
+    /// because that branch only fires on an errored source (Value typically
+    /// null already). For the round-trip case where T = object, every value is
+    /// an object and Value is always preserved. If the source is already
+    /// <see cref="@this{T}"/>, it is returned unchanged.
+    /// </summary>
+    public static @this<T> From(@this source)
+    {
+        if (source is @this<T> already) return already;
+        var copy = new @this<T>(source.Name, source.Value is T t ? t : default, source.Type)
+        {
+            Error = source.Error,
+            Handled = source.Handled,
+            Returned = source.Returned,
+            ReturnDepth = source.ReturnDepth,
+            Warnings = source.Warnings != null ? new List<Info>(source.Warnings) : null,
+            Signature = source.Signature,
+            Properties = source.Properties,
+            Snapshot = source.Snapshot,
+        };
+        return copy;
+    }
+
+    /// <summary>
+    /// Allows direct assignment of T values to data.@this&lt;T&gt; properties.
+    /// FOOTGUN: when T = object and the source is itself a Data subtype, this
+    /// silently wraps (Data&lt;object&gt;{ Value = Data&lt;bool&gt;{...} }) instead of
+    /// passing through. Code that intentionally returns a Data&lt;T&gt; from a
+    /// method declared Task&lt;Data&lt;object&gt;&gt; must use the explicit factory
+    /// (`data.@this&lt;object&gt;.Ok(...)`) — never `return innerData;`.
+    /// </summary>
     public static implicit operator @this<T>(T value) => new("", value);
 }
 

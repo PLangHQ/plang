@@ -398,7 +398,7 @@ public sealed class @this
             sb.AppendLine($"=== END {title} ===");
             try
             {
-                _engine.FileSystem.File.AppendAllText(_currentLlmFilePath, sb.ToString());
+                System.IO.File.AppendAllText(_currentLlmFilePath, sb.ToString());
             }
             catch (System.IO.IOException ex)
             {
@@ -428,7 +428,6 @@ public sealed class @this
     {
         _llmCallCounter++;
 
-        var fs = _engine.FileSystem;
         var traceId = context.Trace.Id;
 
         // Pull goal/step from PLang variables — these reflect what the *builder script*
@@ -455,25 +454,25 @@ public sealed class @this
         }
 
         var safeGoal = SanitizeFilenamePart(goalName);
-        var dir = fs.Path.Combine(fs.BuildPath, "traces", traceId, "llm");
-        fs.Directory.CreateDirectory(dir);
+        var dir = System.IO.Path.Combine(_engine.AbsolutePath, ".build", "traces", traceId, "llm");
+        System.IO.Directory.CreateDirectory(dir);
 
         // First call to a given (goal, step) gets a clean name; subsequent retries get _N.
-        var basePath = fs.Path.Combine(dir, $"{safeGoal}_{stepKey}.txt");
-        if (!fs.File.Exists(basePath)) return basePath;
+        var basePath = System.IO.Path.Combine(dir, $"{safeGoal}_{stepKey}.txt");
+        if (!System.IO.File.Exists(basePath)) return basePath;
 
         for (int n = 2; n < 100; n++)
         {
-            var path = fs.Path.Combine(dir, $"{safeGoal}_{stepKey}_{n}.txt");
-            if (!fs.File.Exists(path)) return path;
+            var path = System.IO.Path.Combine(dir, $"{safeGoal}_{stepKey}_{n}.txt");
+            if (!System.IO.File.Exists(path)) return path;
         }
         // Fallback if 100 retries somehow aren't enough — counter guarantees uniqueness.
-        return fs.Path.Combine(dir, $"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");
+        return System.IO.Path.Combine(dir, $"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");
     }
 
     private string SanitizeFilenamePart(string s)
     {
-        var invalid = _engine.FileSystem.Path.GetInvalidFileNameChars();
+        var invalid = System.IO.Path.GetInvalidFileNameChars();
         var sb = new StringBuilder(s.Length);
         foreach (var c in s)
             sb.Append(Array.IndexOf(invalid, c) >= 0 ? '_' : c);

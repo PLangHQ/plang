@@ -23,7 +23,7 @@ public partial class Get : IContext
             return result;
 
         if (result.Value == null)
-            return Error(new AskError(
+            return global::app.data.@this.FromError(new AskError(
                 $"Settings value '{Key.Value}' is not set. Please provide a value.",
                 "settings", Key.Value!));
 

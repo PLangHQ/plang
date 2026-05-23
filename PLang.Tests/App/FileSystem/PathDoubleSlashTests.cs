@@ -1,7 +1,7 @@
+using Path = global::app.types.path.file.@this;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Path = global::app.filesystem.path;
 
 namespace PLang.Tests.App.FileSystem;
 
@@ -25,13 +25,12 @@ public class PathDoubleSlashTests
             "plang-pds-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
         var app = new global::app.@this(root);
-        var fs = app.FileSystem;
         var realPath = "/tmp/plang-ds-test-" + System.Guid.NewGuid().ToString("N")[..8] + ".txt";
         var doubleSlash = "/" + realPath;
-        await fs.File.WriteAllTextAsync(doubleSlash, "fs-content");
+        await System.IO.File.WriteAllTextAsync(doubleSlash, "fs-content");
         var existsAtReal = System.IO.File.Exists(realPath);
         await Assert.That(existsAtReal).IsTrue();
-        var content = await fs.File.ReadAllTextAsync(doubleSlash);
+        var content = await System.IO.File.ReadAllTextAsync(doubleSlash);
         await Assert.That(content).IsEqualTo("fs-content");
         System.IO.File.Delete(realPath);
     }

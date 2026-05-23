@@ -2,8 +2,7 @@ using app;
 using app.actor.context;
 using app.variables;
 using app.modules.condition;
-using app.filesystem;
-using app.filesystem.Default;
+using app.types.path;
 using Action = global::app.goals.goal.steps.step.actions.action.@this;
 
 namespace PLang.Tests.App.Modules.condition;
@@ -11,15 +10,13 @@ namespace PLang.Tests.App.Modules.condition;
 public class IfHandlerTests : IDisposable
 {
     private readonly string _tempDir;
-    private readonly PLangFileSystem _fs;
     private readonly global::app.@this _app;
 
     public IfHandlerTests()
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _fs = new PLangFileSystem(_tempDir, "");
-        _app = new global::app.@this(_tempDir, fileSystem: _fs);
+        _app = new global::app.@this(_tempDir);
     }
 
     public void Dispose()

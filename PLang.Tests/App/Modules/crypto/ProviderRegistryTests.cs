@@ -112,7 +112,7 @@ public class ProviderRegistryTests
 
         public NamedCryptoProvider(string name) { Name = name; }
 
-        public Data Hash(Hash action) => Data.Ok(new byte[32]);
-        public Data Verify(Verify action) => Data.Ok(true);
+        public global::app.data.@this<byte[]> Hash(Hash action) => global::app.data.@this<byte[]>.Ok(new byte[32]);
+        public global::app.data.@this<bool> Verify(Verify action) => global::app.data.@this<bool>.Ok(true);
     }
 }

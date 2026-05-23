@@ -351,8 +351,8 @@ public class IdentityErrorPathTests
                 new SettingsError("Simulated save failure", "IOError", 500)
                 { TableName = table, KeyName = key }));
         public Task<Data> Remove(string table, string key) => _inner.Remove(table, key);
-        public Task<Data> Exists(string table, string key) => _inner.Exists(table, key);
-        public Task<Data> Tables() => _inner.Tables();
+        public Task<global::app.data.@this<bool>> Exists(string table, string key) => _inner.Exists(table, key);
+        public Task<global::app.data.@this<List<string>>> Tables() => _inner.Tables();
         public void Dispose() { }
     }
 
@@ -373,8 +373,8 @@ public class IdentityErrorPathTests
             => Task.FromResult(Data.FromError(
                 new SettingsError("Simulated remove failure", "IOError", 500)
                 { TableName = table, KeyName = key }));
-        public Task<Data> Exists(string table, string key) => _inner.Exists(table, key);
-        public Task<Data> Tables() => _inner.Tables();
+        public Task<global::app.data.@this<bool>> Exists(string table, string key) => _inner.Exists(table, key);
+        public Task<global::app.data.@this<List<string>>> Tables() => _inner.Tables();
         public void Dispose() { }
     }
 
@@ -394,10 +394,10 @@ public class IdentityErrorPathTests
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
         public Task<Data> Remove(string table, string key)
             => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
-        public Task<Data> Exists(string table, string key)
-            => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
-        public Task<Data> Tables()
-            => Task.FromResult(Data.FromError(new SettingsError("Simulated failure")));
+        public Task<global::app.data.@this<bool>> Exists(string table, string key)
+            => Task.FromResult(global::app.data.@this<bool>.FromError(new SettingsError("Simulated failure")));
+        public Task<global::app.data.@this<List<string>>> Tables()
+            => Task.FromResult(global::app.data.@this<List<string>>.FromError(new SettingsError("Simulated failure")));
         public void Dispose() { }
     }
 }

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace app.modules.condition;
 
@@ -11,29 +12,32 @@ namespace app.modules.condition;
 /// </summary>
 public sealed class Operator
 {
-    private static readonly Dictionary<string, Func<data.@this?, data.@this?, bool>> Registry =
+    // Evaluators are async: a Data value may be IBooleanResolvable (a path,
+    // whose truthiness is "does it exist" — I/O for the http scheme). Pure-sync
+    // comparisons wrap their result in Task.FromResult. (codeanalyzer v1 F3)
+    private static readonly Dictionary<string, Func<data.@this?, data.@this?, Task<bool>>> Registry =
         new(StringComparer.OrdinalIgnoreCase)
         {
             ["=="] = Equal,
-            ["!="] = (l, r) => !Equal(l, r),
-            [">"] = (l, r) => Compare(Val(l), Val(r)) > 0,
-            ["<"] = (l, r) => Compare(Val(l), Val(r)) < 0,
-            [">="] = (l, r) => Compare(Val(l), Val(r)) >= 0,
-            ["<="] = (l, r) => Compare(Val(l), Val(r)) <= 0,
-            ["contains"] = (l, r) => Contains(Val(l), Val(r)),
-            ["startswith"] = (l, r) => StringOp(Val(l), Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase)),
-            ["endswith"] = (l, r) => StringOp(Val(l), Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase)),
-            ["in"] = (l, r) => In(Val(l), Val(r)),
-            ["isempty"] = (l, _) => IsEmpty(Val(l)),
-            ["and"] = (l, r) => IsTruthy(l) && IsTruthy(r),
-            ["or"] = (l, r) => IsTruthy(l) || IsTruthy(r),
+            ["!="] = async (l, r) => !await Equal(l, r),
+            [">"] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) > 0),
+            ["<"] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) < 0),
+            [">="] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) >= 0),
+            ["<="] = (l, r) => Task.FromResult(Compare(Val(l), Val(r)) <= 0),
+            ["contains"] = (l, r) => Task.FromResult(Contains(Val(l), Val(r))),
+            ["startswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase))),
+            ["endswith"] = (l, r) => Task.FromResult(StringOp(Val(l), Val(r), (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase))),
+            ["in"] = (l, r) => Task.FromResult(In(Val(l), Val(r))),
+            ["isempty"] = (l, _) => Task.FromResult(IsEmpty(Val(l))),
+            ["and"] = async (l, r) => await IsTruthy(l) && await IsTruthy(r),
+            ["or"] = async (l, r) => await IsTruthy(l) || await IsTruthy(r),
         };
 
     [app.Attributes.Choices]
     public static string[] Choices(actor.context.@this? ctx) => [.. Registry.Keys];
 
     public string Value { get; }
-    public Func<data.@this?, data.@this?, bool> Evaluate { get; }
+    public Func<data.@this?, data.@this?, Task<bool>> Evaluate { get; }
 
     public Operator(string value)
     {
@@ -54,23 +58,27 @@ public sealed class Operator
     private static object? Val(data.@this? data) => data?.Value;
 
     /// <summary>
-    /// Truthy check on Data. If the value is bool, check the bool.
-    /// If the value is not bool, check IsInitialized — "does this variable exist?"
+    /// Truthy check on Data. Routes through <c>Data.ToBooleanAsync()</c> so an
+    /// <see cref="app.data.IBooleanResolvable"/> value (a path) answers for
+    /// itself; otherwise the usual null/false/0/"" rules apply.
     /// </summary>
-    public static bool IsTruthy(data.@this? data)
+    public static async Task<bool> IsTruthy(data.@this? data)
     {
         if (data == null) return false;
-        if (data.Value is bool b) return b;
-        return data.ToBoolean();
+        return await data.ToBooleanAsync();
     }
 
     // --- Equality ---
 
-    private static bool Equal(data.@this? left, data.@this? right)
+    private static async Task<bool> Equal(data.@this? left, data.@this? right)
     {
-        // == true with non-bool left: delegates to Data.ToBoolean()
+        // == true with non-bool left: delegates to Data.ToBooleanAsync(), so an
+        // IBooleanResolvable left (a path) answers `if %path% exists` itself.
         if (right?.Value is bool rb && left?.Value is not bool)
-            return rb ? left?.ToBoolean() == true : left?.ToBoolean() != true;
+        {
+            bool leftTruthy = left != null && await left.ToBooleanAsync();
+            return rb ? leftTruthy : !leftTruthy;
+        }
 
         // == true/false with bool left: normal equality
         return AreEqual(Val(left), Val(right));

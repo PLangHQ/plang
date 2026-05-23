@@ -79,6 +79,32 @@ def comments_path() -> Path:
     return architect_dir() / "comments.json"
 
 
+def ink_dir() -> Path:
+    return REPO_ROOT / ".bot" / "architect" / "ink"
+
+
+def _safe_ink_name(rel: str) -> str:
+    return rel.replace("/", "__").replace("\\", "__")
+
+
+def ink_json_path(rel: str) -> Path:
+    return ink_dir() / (_safe_ink_name(rel) + ".json")
+
+
+def ink_png_path(rel: str) -> Path:
+    return ink_dir() / (_safe_ink_name(rel) + ".png")
+
+
+def files_with_ink() -> list[str]:
+    d = ink_dir()
+    if not d.exists():
+        return []
+    out = []
+    for p in d.glob("*.json"):
+        out.append(p.stem.replace("__", "/"))
+    return out
+
+
 def load_comments() -> dict:
     p = comments_path()
     if not p.exists():
@@ -434,6 +460,26 @@ INDEX_HTML = r"""<!doctype html>
   #send-architect { background:#0e639c; color:#fff; border:0; padding:6px 12px; cursor:pointer; border-radius:3px; font-size:12px; }
   #send-architect:hover { background:#1177bb; }
   #send-architect:disabled { background:#3a3d41; cursor:not-allowed; }
+  /* Ink layer */
+  #content { position: relative; }
+  #ink-canvas { position: absolute; left:0; top:0; pointer-events: none; z-index: 5; }
+  #ink-canvas.active { pointer-events: auto; touch-action: none; cursor: crosshair; }
+  #ink-toolbar { position: fixed; right: 16px; bottom: 16px; z-index: 40;
+    background: #2d2d30; border: 1px solid #444; border-radius: 24px;
+    padding: 6px; display: flex; gap: 4px; align-items: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+  #ink-toolbar button { width: 36px; height: 36px; border: 0; border-radius: 50%;
+    background: #3a3d41; color: #ccc; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; }
+  #ink-toolbar button:hover { background: #4a4d51; }
+  #ink-toolbar button.active { background: #0e639c; color: #fff; }
+  #ink-toolbar .swatch { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+  #ink-toolbar .swatch.active { border-color: #fff; }
+  #ink-toolbar .sep { width:1px; height:24px; background:#444; margin: 0 2px; }
+  #ink-toolbar .save-ink { background:#0e639c; color:#fff; width: auto; padding: 0 12px; border-radius: 18px; font-size: 13px; }
+  #ink-toolbar .save-ink:hover { background:#1177bb; }
+  #ink-toolbar .save-ink.dirty::after { content: " ●"; }
+  #sidebar li .ink-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#c586c0; margin-right:6px; vertical-align:middle; }
   #toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#2d3a4e; color:#fff; padding:14px 18px; border-radius:6px; border:1px solid #569cd6; box-shadow:0 4px 16px rgba(0,0,0,0.4); display:none; z-index:50; max-width:90vw; font-size:13px; line-height:1.5; }
   #toast.show { display:block; }
   #toast .prompt { background:#1e1e1e; padding:8px; border-radius:3px; margin-top:8px; font-family:monospace; font-size:12px; word-break:break-word; white-space:pre-wrap; }
@@ -490,6 +536,19 @@ INDEX_HTML = r"""<!doctype html>
   <div id="toast"></div>
   <div id="scrim"></div>
   <div id="content" class="md"><div class="empty">Pick a file from the left.</div></div>
+  <div id="ink-toolbar" style="display:none">
+    <button id="ink-pen" title="Toggle pen (Apple Pencil only)">✏️</button>
+    <button id="ink-anymode" title="Also accept finger touch (otherwise touch scrolls)">👆</button>
+    <span class="sep"></span>
+    <span class="swatch active" data-color="#f48771" style="background:#f48771" title="Red"></span>
+    <span class="swatch" data-color="#dcdcaa" style="background:#dcdcaa" title="Yellow"></span>
+    <span class="swatch" data-color="#9cdcfe" style="background:#9cdcfe" title="Blue"></span>
+    <span class="sep"></span>
+    <button id="ink-undo" title="Undo last stroke">↶</button>
+    <button id="ink-clear" title="Clear all ink on this file">🗑</button>
+    <span class="sep"></span>
+    <button class="save-ink" id="ink-save" title="Save ink for this file">Save</button>
+  </div>
 </div>
 
 <script>
@@ -500,6 +559,7 @@ let viewMode = 'rendered';   // or 'raw'
 let currentRaw = '';         // raw text of current file
 let currentBlocks = [];      // server-parsed blocks for current file
 let modifiedSinceReview = []; // files touched after last "Send to Architect"
+let filesWithInk = [];          // files that have saved ink
 
 async function loadFiles() {
   const r = await fetch('/api/files');
@@ -507,6 +567,7 @@ async function loadFiles() {
   files = j.files;
   comments = j.comments;
   modifiedSinceReview = j.modifiedSinceReview || [];
+  filesWithInk = j.filesWithInk || [];
   renderSidebar();
   if (files.length && !currentFile) {
     let initial = files[0];
@@ -524,6 +585,7 @@ function renderSidebar() {
   const ul = document.getElementById('filelist');
   ul.innerHTML = '';
   const modSet = new Set(modifiedSinceReview);
+  const inkSet = new Set(filesWithInk);
   for (const f of files) {
     const li = document.createElement('li');
     if (modSet.has(f)) {
@@ -531,6 +593,12 @@ function renderSidebar() {
       dot.className = 'modified';
       dot.title = 'Modified since last review request';
       li.appendChild(dot);
+    }
+    if (inkSet.has(f)) {
+      const ink = document.createElement('span');
+      ink.className = 'ink-dot';
+      ink.title = 'Has ink annotations';
+      li.appendChild(ink);
     }
     li.appendChild(document.createTextNode(f));
     if (f === currentFile) li.className = 'active';
@@ -587,6 +655,7 @@ function renderView() {
   document.getElementById('toggle-view').textContent =
     'view: ' + viewMode + ' ▾';
   if (viewMode === 'raw') renderRaw(); else renderRendered();
+  Ink.afterRender();
 }
 
 function fileComments() {
@@ -884,6 +953,300 @@ document.getElementById('scrim').onclick = drawerToggle;
 const _origOpen = openFile;
 openFile = async (p, opts) => { await _origOpen(p, opts); if (window.innerWidth <= 760) document.body.classList.remove('drawer-open'); };
 
+// --- Ink module: Apple Pencil drawing layer over #content ---
+const Ink = (() => {
+  let canvas = null, ctx = null;
+  let strokes = [];          // [{color,width,points:[{x,y,p}],anchors:[lineNo]}]
+  let current = null;        // stroke in progress
+  let penEnabled = false;
+  let anyMode = false;       // accept finger/mouse in addition to pen
+  let color = '#f48771';
+  let dirty = false;
+  let savedDims = null;      // dims of last loaded strokes (for rescale)
+
+  function el(id) { return document.getElementById(id); }
+
+  function setDirty(v) {
+    dirty = v;
+    const btn = el('ink-save');
+    if (btn) btn.classList.toggle('dirty', !!v);
+  }
+
+  function ensureCanvas() {
+    const content = el('content');
+    if (!content) return null;
+    if (!canvas || canvas.parentNode !== content) {
+      canvas = document.createElement('canvas');
+      canvas.id = 'ink-canvas';
+      content.appendChild(canvas);
+      ctx = canvas.getContext('2d');
+      attachPointer();
+    }
+    return canvas;
+  }
+
+  function resize() {
+    if (!canvas) return;
+    const content = el('content');
+    // Use scrollWidth/Height so canvas covers the full scrollable content area.
+    const w = content.scrollWidth;
+    const h = Math.max(content.scrollHeight, content.clientHeight);
+    if (canvas.width === w && canvas.height === h) return;
+    canvas.width = w;
+    canvas.height = h;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    redraw();
+  }
+
+  function pointFromEvent(ev) {
+    const r = canvas.getBoundingClientRect();
+    return {
+      x: ev.clientX - r.left,
+      y: ev.clientY - r.top,
+      p: ev.pressure && ev.pressure > 0 ? ev.pressure : 0.5,
+    };
+  }
+
+  function anchorLinesAt(clientX, clientY) {
+    // Hit-test the underlying DOM via elementsFromPoint while canvas pointer-events
+    // are momentarily ignored — we just walk to nearest [data-line]/[data-start].
+    const prev = canvas.style.pointerEvents;
+    canvas.style.pointerEvents = 'none';
+    const els = document.elementsFromPoint(clientX, clientY);
+    canvas.style.pointerEvents = prev;
+    for (const e of els) {
+      const ln = e.closest && e.closest('[data-line]');
+      if (ln) return parseInt(ln.dataset.line, 10);
+      const blk = e.closest && e.closest('.block');
+      if (blk && blk.dataset.start) return parseInt(blk.dataset.start, 10);
+      const lr = e.closest && e.closest('.line-row');
+      if (lr) {
+        const lnEl = lr.querySelector('.ln');
+        if (lnEl) return parseInt(lnEl.textContent, 10);
+      }
+    }
+    return null;
+  }
+
+  function accepts(ev) {
+    if (!penEnabled) return false;
+    if (ev.pointerType === 'pen') return true;
+    if (ev.pointerType === 'mouse') return true;
+    if (ev.pointerType === 'touch') return anyMode;
+    return false;
+  }
+
+  function onDown(ev) {
+    if (!accepts(ev)) return;
+    ev.preventDefault();
+    canvas.setPointerCapture && canvas.setPointerCapture(ev.pointerId);
+    const p = pointFromEvent(ev);
+    const anchor = anchorLinesAt(ev.clientX, ev.clientY);
+    current = {
+      color, width: 2.2,
+      points: [p],
+      anchors: anchor != null ? [anchor] : [],
+    };
+  }
+
+  function onMove(ev) {
+    if (!current) return;
+    if (!accepts(ev)) return;
+    ev.preventDefault();
+    const p = pointFromEvent(ev);
+    const last = current.points[current.points.length - 1];
+    const dx = p.x - last.x, dy = p.y - last.y;
+    if (dx * dx + dy * dy < 1.5) return;  // dedupe
+    current.points.push(p);
+    drawSegment(current, current.points.length - 2);
+    const a = anchorLinesAt(ev.clientX, ev.clientY);
+    if (a != null && !current.anchors.includes(a)) current.anchors.push(a);
+  }
+
+  function onUp(ev) {
+    if (!current) return;
+    if (current.points.length >= 2) {
+      strokes.push(current);
+      setDirty(true);
+    } else {
+      // Single tap — discard, but redraw to clear any half-drawn dot.
+      redraw();
+    }
+    current = null;
+  }
+
+  function attachPointer() {
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    canvas.addEventListener('pointerup', onUp);
+    canvas.addEventListener('pointercancel', onUp);
+  }
+
+  function drawSegment(stroke, i) {
+    const a = stroke.points[i], b = stroke.points[i + 1];
+    if (!a || !b) return;
+    ctx.strokeStyle = stroke.color;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = stroke.width * (0.5 + (b.p || 0.5));
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.quadraticCurveTo(a.x, a.y, (a.x + b.x) / 2, (a.y + b.y) / 2);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+
+  function drawStroke(s) {
+    for (let i = 0; i < s.points.length - 1; i++) drawSegment(s, i);
+  }
+
+  function redraw() {
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // If strokes were saved at different dims, scale them to current canvas.
+    let sx = 1, sy = 1;
+    if (savedDims && savedDims.w && savedDims.h) {
+      sx = canvas.width / savedDims.w;
+      sy = canvas.height / savedDims.h;
+    }
+    for (const s of strokes) {
+      if (sx !== 1 || sy !== 1) {
+        const scaled = {
+          color: s.color, width: s.width,
+          points: s.points.map(p => ({ x: p.x * sx, y: p.y * sy, p: p.p })),
+        };
+        drawStroke(scaled);
+      } else {
+        drawStroke(s);
+      }
+    }
+  }
+
+  async function load(file) {
+    strokes = [];
+    savedDims = null;
+    setDirty(false);
+    try {
+      const r = await fetch('/api/ink?path=' + encodeURIComponent(file));
+      const j = await r.json();
+      strokes = j.strokes || [];
+      savedDims = j.dims || null;
+    } catch (e) {}
+    redraw();
+  }
+
+  async function save() {
+    if (!currentFile) return;
+    // Compose payload, snapshot canvas to PNG.
+    const png = canvas ? canvas.toDataURL('image/png') : '';
+    // Bake the in-memory strokes into current-canvas coordinates so the file on
+    // disk always reflects what the user just saw.
+    if (savedDims && (savedDims.w !== canvas.width || savedDims.h !== canvas.height)) {
+      const sx = canvas.width / savedDims.w, sy = canvas.height / savedDims.h;
+      strokes = strokes.map(s => ({
+        color: s.color, width: s.width, anchors: s.anchors || [],
+        points: s.points.map(p => ({ x: p.x * sx, y: p.y * sy, p: p.p })),
+      }));
+    }
+    savedDims = { w: canvas.width, h: canvas.height };
+    const body = { file: currentFile, strokes, dims: savedDims, png };
+    const r = await fetch('/api/ink', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const j = await r.json();
+    filesWithInk = j.filesWithInk || filesWithInk;
+    setDirty(false);
+    renderSidebar();
+    showInkToast(j.jsonPath, j.pngPath);
+  }
+
+  async function clearAll() {
+    if (!currentFile) return;
+    if (strokes.length && !confirm('Clear all ink on this file?')) return;
+    strokes = [];
+    redraw();
+    setDirty(false);
+    await fetch('/api/ink?path=' + encodeURIComponent(currentFile), { method: 'DELETE' });
+    const r = await fetch('/api/files');
+    const j = await r.json();
+    filesWithInk = j.filesWithInk || [];
+    renderSidebar();
+  }
+
+  function undo() {
+    if (!strokes.length) return;
+    strokes.pop();
+    redraw();
+    setDirty(true);
+  }
+
+  function setPen(on) {
+    penEnabled = on;
+    el('ink-pen').classList.toggle('active', on);
+    if (canvas) canvas.classList.toggle('active', on);
+  }
+
+  function setAny(on) {
+    anyMode = on;
+    el('ink-anymode').classList.toggle('active', on);
+  }
+
+  function setColor(c) {
+    color = c;
+    document.querySelectorAll('#ink-toolbar .swatch').forEach(s => {
+      s.classList.toggle('active', s.dataset.color === c);
+    });
+  }
+
+  function bindUI() {
+    el('ink-pen').onclick = () => setPen(!penEnabled);
+    el('ink-anymode').onclick = () => setAny(!anyMode);
+    el('ink-undo').onclick = undo;
+    el('ink-clear').onclick = clearAll;
+    el('ink-save').onclick = save;
+    document.querySelectorAll('#ink-toolbar .swatch').forEach(s => {
+      s.onclick = () => setColor(s.dataset.color);
+    });
+    window.addEventListener('resize', () => { if (canvas) resize(); });
+  }
+
+  function afterRender() {
+    if (!currentFile) return;
+    el('ink-toolbar').style.display = 'flex';
+    ensureCanvas();
+    // Defer to next frame so content has laid out before measuring scrollHeight.
+    requestAnimationFrame(() => { resize(); redraw(); });
+  }
+
+  function onFileChanged(file) {
+    if (canvas) ctx && ctx.clearRect(0, 0, canvas.width, canvas.height);
+    strokes = [];
+    setDirty(false);
+    load(file);
+  }
+
+  bindUI();
+  return { afterRender, onFileChanged };
+})();
+
+// Wire ink load into file open.
+const _origOpen2 = openFile;
+openFile = async (p, opts) => {
+  await _origOpen2(p, opts);
+  if (currentFile) Ink.onFileChanged(currentFile);
+};
+
+function showInkToast(jsonPath, pngPath) {
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span class="close" onclick="document.getElementById('toast').classList.remove('show')">✕</span>
+    <strong>Ink saved.</strong><br>
+    <div class="prompt">${jsonPath}\n${pngPath}</div>`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 6000);
+}
+
 loadFiles();
 </script>
 </body></html>
@@ -916,7 +1279,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 "files": list_files(),
                 "comments": load_comments_normalized(),
                 "modifiedSinceReview": files_modified_since_review(),
+                "filesWithInk": files_with_ink(),
             })
+            return
+        if u.path == "/api/ink":
+            qs = urllib.parse.parse_qs(u.query)
+            rel = qs.get("path", [""])[0]
+            p = ink_json_path(rel)
+            if not p.exists():
+                self._json(200, {"strokes": [], "dims": None})
+                return
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                self._json(200, data)
+            except Exception:
+                self._json(200, {"strokes": [], "dims": None})
             return
         if u.path == "/api/file":
             qs = urllib.parse.parse_qs(u.query)
@@ -934,6 +1311,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path == "/api/ink":
+            rel = urllib.parse.parse_qs(u.query).get("path", [""])[0]
+            for p in (ink_json_path(rel), ink_png_path(rel)):
+                if p.exists():
+                    p.unlink()
+            self._json(200, {"ok": True, "filesWithInk": files_with_ink()})
+            return
         if u.path != "/api/comment":
             self._send(404, "not found", "text/plain"); return
         cid = urllib.parse.parse_qs(u.query).get("id", [""])[0]
@@ -965,6 +1349,41 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         u = urllib.parse.urlparse(self.path)
+        if u.path == "/api/ink":
+            import base64, datetime
+            length = int(self.headers.get("Content-Length", "0"))
+            body = json.loads(self.rfile.read(length).decode("utf-8"))
+            rel = body.get("file")
+            strokes = body.get("strokes", [])
+            dims = body.get("dims")
+            png_b64 = body.get("png", "")
+            if not rel:
+                self._json(400, {"error": "missing file"}); return
+            ink_dir().mkdir(parents=True, exist_ok=True)
+            payload = {
+                "file": rel,
+                "ts": datetime.datetime.now().isoformat(timespec="seconds"),
+                "dims": dims,
+                "strokes": strokes,
+            }
+            ink_json_path(rel).write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            if png_b64.startswith("data:image"):
+                png_b64 = png_b64.split(",", 1)[1]
+            if png_b64:
+                try:
+                    ink_png_path(rel).write_bytes(base64.b64decode(png_b64))
+                except Exception:
+                    pass
+            self._json(200, {
+                "ok": True,
+                "jsonPath": str(ink_json_path(rel).relative_to(REPO_ROOT)),
+                "pngPath": str(ink_png_path(rel).relative_to(REPO_ROOT)),
+                "filesWithInk": files_with_ink(),
+            })
+            return
         if u.path == "/api/request-review":
             import datetime
             comments = load_comments_normalized()

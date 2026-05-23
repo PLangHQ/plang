@@ -29,6 +29,6 @@ public partial class BoolPlain : global::app.modules.IContext
 [global::app.modules.Action("pathplain")]
 public partial class PathPlain : global::app.modules.IContext
 {
-    public partial global::app.data.@this<global::app.filesystem.path> File { get; init; }
+    public partial global::app.data.@this<global::app.types.path.@this> File { get; init; }
     public Task<global::app.data.@this> Run() => Task.FromResult<global::app.data.@this>(File);
 }

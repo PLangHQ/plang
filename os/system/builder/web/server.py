@@ -153,31 +153,58 @@ def _summarize_trace(full_path: str) -> dict | None:
         return None
     if not isinstance(data, dict):
         return None
-    resp = (data.get('pass1') or {}).get('response') or {}
-    if not isinstance(resp, dict):
-        resp = {}
-    steps = resp.get('steps') if isinstance(resp.get('steps'), list) else []
-    errors = resp.get('errors') if isinstance(resp.get('errors'), list) else []
-    warnings = resp.get('warnings') if isinstance(resp.get('warnings'), list) else []
-    # New traces nest the full Goal object under `goal` (with name/path/visibility).
-    # Legacy traces had those as flat top-level strings — fall back when needed.
+    # v3 trace shape: top-level `goal` (object, PascalCase keys), `plan`, and
+    # `stepPasses` (per-step compile responses). v1 shape had `pass1.response`
+    # with lower-case `steps/errors/warnings` and a string `goal` — keep the
+    # fallback so old traces still render.
     goal_obj = data.get('goal')
     if isinstance(goal_obj, dict):
-        goal_name = goal_obj.get('name', '')
-        goal_path = goal_obj.get('path', '')
-        goal_vis = goal_obj.get('visibility', '')
+        # PascalCase from the new Goal serializer; lowercase fallback for any
+        # in-between traces that still used the old field names.
+        goal_name = goal_obj.get('Name') or goal_obj.get('name') or ''
+        goal_path = goal_obj.get('Path') or goal_obj.get('path') or ''
+        goal_vis = goal_obj.get('Visibility') or goal_obj.get('visibility') or ''
+        goal_steps = goal_obj.get('Steps') or goal_obj.get('steps') or []
     else:
         goal_name = goal_obj or ''
         goal_path = data.get('path', '')
         goal_vis = data.get('visibility', '')
+        goal_steps = []
+
+    # stepCount: use the source goal's step count when present (matches what
+    # the user sees in the .goal file). Fall back to legacy pass1.response.
+    if goal_steps:
+        steps = goal_steps
+    else:
+        legacy_resp = (data.get('pass1') or {}).get('response') or {}
+        steps = legacy_resp.get('steps') if isinstance(legacy_resp.get('steps'), list) else []
+
+    # Errors/warnings aggregate across v3 stepPasses (each entry's
+    # value.response carries the compile-time errors/warnings) and the legacy
+    # pass1.response slot. The .value wrapper is the data envelope from the
+    # builder pipeline — older v3 traces nest the response directly.
+    errors_count = 0
+    warnings_count = 0
+    step_passes = data.get('stepPasses')
+    if isinstance(step_passes, list):
+        for sp in step_passes:
+            if not isinstance(sp, dict): continue
+            payload = sp.get('value') if isinstance(sp.get('value'), dict) else sp
+            resp = payload.get('response') if isinstance(payload.get('response'), dict) else {}
+            errors_count += len(resp.get('errors') or [])
+            warnings_count += len(resp.get('warnings') or [])
+    legacy_resp = (data.get('pass1') or {}).get('response') or {}
+    if isinstance(legacy_resp, dict):
+        errors_count += len(legacy_resp.get('errors') or [])
+        warnings_count += len(legacy_resp.get('warnings') or [])
     return {
         'goal': goal_name,
         'path': goal_path,
         'visibility': goal_vis,
         'timestamp': data.get('timestamp', ''),
         'stepCount': len(steps),
-        'errors': len(errors),
-        'warnings': len(warnings),
+        'errors': errors_count,
+        'warnings': warnings_count,
         'buildError': bool(data.get('buildError')),
     }
 

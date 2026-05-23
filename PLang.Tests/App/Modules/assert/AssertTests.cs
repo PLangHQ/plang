@@ -190,6 +190,75 @@ public class AssertTests
         await Assert.That(result.Success).IsTrue();
     }
 
+    // --- IsTrue/IsFalse over a path (codeanalyzer v2 N3) ---
+    //
+    // ResolveTruthy must route an IBooleanResolvable value (a path) through
+    // Data.ToBooleanAsync — not fall to IsTruthy, whose `return true` catch-all
+    // for any non-null object is the precise F3 always-true bug class.
+    // Revert N3 (delete the IBooleanResolvable branch in ResolveTruthy) and
+    // both Missing_Fails / Existing_Passes go red — the deletion test that
+    // proves the fix matters.
+
+    private static (global::app.@this app, string root) MakeAppRoot(string tag)
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-assertpath-" + tag + "-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(root);
+        return (new global::app.@this(root), root);
+    }
+
+    [Test]
+    public async Task IsTrue_PathToExistingFile_Passes()
+    {
+        var (app, root) = MakeAppRoot("istrue-yes");
+        var filePath = System.IO.Path.Combine(root, "exists.txt");
+        System.IO.File.WriteAllText(filePath, "x");
+        var fp = new global::app.types.path.file.@this(filePath, app.User.Context);
+        var action = new AssertIsTrue { Context = app.User.Context, Value = D(fp) };
+        var result = await action.Run();
+        await Assert.That(result.Success).IsTrue();
+        System.IO.Directory.Delete(root, true);
+    }
+
+    [Test]
+    public async Task IsTrue_PathToMissingFile_Fails()
+    {
+        var (app, root) = MakeAppRoot("istrue-no");
+        var missing = System.IO.Path.Combine(root, "nope.txt");
+        var fp = new global::app.types.path.file.@this(missing, app.User.Context);
+        var action = new AssertIsTrue { Context = app.User.Context, Value = D(fp) };
+        var result = await action.Run();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error is AssertionError).IsTrue();
+        System.IO.Directory.Delete(root, true);
+    }
+
+    [Test]
+    public async Task IsFalse_PathToMissingFile_Passes()
+    {
+        var (app, root) = MakeAppRoot("isfalse-yes");
+        var missing = System.IO.Path.Combine(root, "still-nope.txt");
+        var fp = new global::app.types.path.file.@this(missing, app.User.Context);
+        var action = new AssertIsFalse { Context = app.User.Context, Value = D(fp) };
+        var result = await action.Run();
+        await Assert.That(result.Success).IsTrue();
+        System.IO.Directory.Delete(root, true);
+    }
+
+    [Test]
+    public async Task IsFalse_PathToExistingFile_Fails()
+    {
+        var (app, root) = MakeAppRoot("isfalse-no");
+        var filePath = System.IO.Path.Combine(root, "really-here.txt");
+        System.IO.File.WriteAllText(filePath, "x");
+        var fp = new global::app.types.path.file.@this(filePath, app.User.Context);
+        var action = new AssertIsFalse { Context = app.User.Context, Value = D(fp) };
+        var result = await action.Run();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error is AssertionError).IsTrue();
+        System.IO.Directory.Delete(root, true);
+    }
+
     // --- IsNull ---
 
     [Test]

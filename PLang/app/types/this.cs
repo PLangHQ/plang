@@ -21,6 +21,14 @@ public sealed partial class @this
     /// <summary>[Choices] vocabulary registry — reachable as <c>app.types.choices</c>.</summary>
     public choices.@this Choices { get; } = new();
 
+    /// <summary>
+    /// Per-App scheme registry for <see cref="path.@this"/>. Populated at App
+    /// construction with built-in factories (<c>"file"</c>; later <c>"http"</c>
+    /// and <c>"https"</c>). External DLLs loaded via <c>code.load</c> add their
+    /// own schemes via <see cref="path.scheme.@this.Register"/>.
+    /// </summary>
+    public path.scheme.@this Scheme { get; } = new();
+
     // --- Primitive lookup tables — read-only constant data, no per-App divergence. ---
 
     private static readonly Dictionary<string, System.Type> Primitives = new(StringComparer.OrdinalIgnoreCase)
@@ -330,11 +338,14 @@ public sealed partial class @this
 
     /// <summary>
     /// Registers domain types needed for settings store rehydration.
-    /// Called by App constructor.
+    /// Called by App constructor. Today this is a no-op — Identity carries
+    /// <c>[PlangType("identity")]</c> on the class itself, which the assembly
+    /// scan picks up. The hook stays so future domain types that need
+    /// runtime registration (test harness shims, dynamically loaded plugins)
+    /// have an obvious entry point.
     /// </summary>
     public void RegisterDomainTypes()
     {
-        Register("identitydata", typeof(modules.identity.Identity));
     }
 
     // --- Constrained-value catalog ---

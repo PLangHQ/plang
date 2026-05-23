@@ -10,18 +10,10 @@ The engine has **modules** (namespaces) with **actions**. Each action has proper
 
 {{ actionSummary }}
 
-## Type Information
-
-Primitive types: {{ typeInfo.TypeNames }}
-
-Types referenced by the actions below:
-{{ typeInfo.TypeSchemas }}
-
 ## Output Per Step
 
 - `index` — step index in the goal (0-based)
 - `actions` — array of `"module.action"` strings the step uses. Unordered; the compiler decides chain order from action examples.
-- `group` — optional; for related steps the compiler should see together
 
 ## How to read a step
 
@@ -60,15 +52,6 @@ Exception: explicit `<module>.<action> <params>` syntax (e.g. `builder.validate 
     - `save "..."` / `write "..."` → emit `file.save` plus any candidate save/write actions.
   When in doubt, include more, not fewer. A wrong-only set deadlocks the build because RefineActions just re-asks you and you'll repeat the same mistake; a superset always converges.
 
-## Step Grouping
-
-Group related steps so the compiler sees them together. Group when:
-- Steps form a multi-step pattern (read → process → write)
-- A condition and its body steps are related
-- Steps share data flow
-
-Use short names: `file-processing`, `auth-flow`, `data-transform`. Skip the field for unrelated steps.
-
 ## Example
 
 Goal:
@@ -89,9 +72,9 @@ Response:
   "description": "Calls Greet, reads cached config, conditional debug output, iterates items, saves with retry.",
   "steps": [
     {"index": 0, "actions": ["goal.call"]},
-    {"index": 1, "actions": ["file.read", "cache.wrap", "variable.set"], "group": "config-check"},
-    {"index": 2, "actions": ["condition.if"], "group": "config-check"},
-    {"index": 3, "actions": ["output.write"], "group": "config-check"},
+    {"index": 1, "actions": ["file.read", "cache.wrap", "variable.set"]},
+    {"index": 2, "actions": ["condition.if"]},
+    {"index": 3, "actions": ["output.write"]},
     {"index": 4, "actions": ["loop.foreach", "goal.call"]},
     {"index": 5, "actions": ["goal.call", "error.handle"]}
   ]

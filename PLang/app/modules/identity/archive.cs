@@ -23,5 +23,5 @@ public partial class Archive : IContext
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<data.@this> Run() => await Identity.ArchiveAsync(this);
+    public async Task<data.@this<Identity>> Run() => await Identity.ArchiveAsync(this);
 }

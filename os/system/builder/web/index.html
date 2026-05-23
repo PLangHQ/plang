@@ -496,6 +496,36 @@
   .step-row { border-left: 3px solid transparent; }
   .step-row.open { border-left-color: var(--accent); background: rgba(91,155,213,0.03); }
   .step-row.has-error { border-left-color: var(--accent); background: rgba(233,69,96,0.04); }
+  .step-row.has-warning { border-left-color: var(--orange); background: rgba(232,112,64,0.04); }
+  .step-note {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+  .step-note.err  { background: rgba(233,69,96,0.10); color: #ffb0bd; }
+  .step-note.warn { background: rgba(232,112,64,0.10); color: #ffc89e; }
+  .step-note-tag {
+    display: inline-block;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-right: 6px;
+    letter-spacing: 0.5px;
+  }
+  .step-note.err  .step-note-tag { background: var(--accent); color: #fff; }
+  .step-note.warn .step-note-tag { background: var(--orange); color: #fff; }
+  .step-note-key {
+    display: inline-block;
+    font-weight: 600;
+    margin-right: 6px;
+    opacity: 0.85;
+  }
   .step-line {
     padding: 6px 16px 6px 12px;
     font-size: 13px;
@@ -614,6 +644,55 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
+
+  /* Markdown-rendered prompt bodies (system/user) */
+  .md-body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .md-body h1, .md-body h2, .md-body h3, .md-body h4 {
+    margin: 14px 0 6px;
+    color: var(--blue);
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .md-body h1 { font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .md-body h2 { font-size: 15px; }
+  .md-body h3 { font-size: 13px; color: var(--orange); }
+  .md-body h4 { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .md-body p  { margin: 6px 0; }
+  .md-body ul, .md-body ol { margin: 6px 0 6px 22px; padding: 0; }
+  .md-body li { margin: 2px 0; }
+  .md-body code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    background: rgba(0,0,0,0.25);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--orange);
+  }
+  .md-body pre.code-block {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    overflow-x: auto;
+  }
+  .md-body pre.code-block code {
+    background: none; padding: 0; color: var(--text);
+    font-size: 12px;
+  }
+  .md-body blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 6px 0;
+    padding: 2px 12px;
+    color: var(--text-dim);
+  }
+  .md-body strong { color: var(--text); font-weight: 600; }
 
   /* Prompt/Response blocks (used inside LLM sublayer and build-failure) */
   .block {
@@ -771,6 +850,16 @@ const expandedBuckets = new Set();
 // in goalLlmOpen (below) rather than duplicating under each step.
 const stepDepth = new Map();
 
+// Per-step open accordion sections (system, user, source, compiled).
+// Key = stepKey, value = Set<sectionName>.
+const stepSections = new Map();
+function toggleStepSection(stepKey, name) {
+  let s = stepSections.get(stepKey);
+  if (!s) { s = new Set(); stepSections.set(stepKey, s); }
+  if (s.has(name)) s.delete(name); else s.add(name);
+  repaintCurrentFile();
+}
+
 // Which goal sections have the "LLM Request" panel expanded. Keyed by subKey.
 const goalLlmOpen = new Set();
 
@@ -873,30 +962,121 @@ function unwrapDataWrapper(obj) {
   return obj;
 }
 
-// Turn one pass ({goal, system, user, response}) into a goal-section entry
-// with steps pre-zipped from source.steps[].text.
-function passToGoalSection(pass, isParent) {
-  const p = unwrapDataWrapper(pass) || {};
-  const goalObj = (p.goal && typeof p.goal === 'object') ? p.goal : null;
-  const goalName = goalObj ? (goalObj.name || '?') : (typeof p.goal === 'string' ? p.goal : '?');
-  const goalPath = goalObj ? (goalObj.path || '') : '';
-  const goalVis  = goalObj ? goalObj.visibility : null;
-  const sourceSteps = goalObj && Array.isArray(goalObj.steps) ? goalObj.steps : [];
-  const resp = unwrapDataWrapper(p.response) || {};
+// PascalCase-or-lowercase property reader. v3 trace JSON uses PascalCase on
+// Goal/Step records (.NET default serializer); legacy v1 traces used
+// lowercase. Read both so old traces still open.
+function gp(obj, ...names) {
+  if (!obj || typeof obj !== 'object') return undefined;
+  for (const n of names) {
+    if (obj[n] !== undefined) return obj[n];
+  }
+  return undefined;
+}
 
-  const steps = (resp.steps || []).map(s => {
-    const src = sourceSteps.find(ss => ss && ss.index === s.index);
-    return {
+// Turn one trace-or-sub-trace into a goal-section entry. v3 shape:
+//   { goal: {Name, Path, Visibility, Steps:[{Index,Text,Actions,...}]},
+//     plan: {steps:[{index, actions:[...]}]},
+//     stepPasses: [{value:{index, stepText, actions, response:{actions, errors, warnings}}}],
+//     subGoals: [...], durationMs, buildError }
+// Source-step text comes from goal.Steps; compile-time errors/warnings come
+// from stepPasses[i].value.response.
+function passToGoalSection(passOrTrace, isParent) {
+  const p = unwrapDataWrapper(passOrTrace) || {};
+  const goalObj = (p.goal && typeof p.goal === 'object') ? p.goal : null;
+  const goalName = goalObj ? (gp(goalObj, 'Name', 'name') || '?') : (typeof p.goal === 'string' ? p.goal : '?');
+  const goalPath = goalObj ? (gp(goalObj, 'Path', 'path') || '') : '';
+  const goalVis  = goalObj ? gp(goalObj, 'Visibility', 'visibility') : null;
+  const sourceSteps = goalObj && Array.isArray(gp(goalObj, 'Steps', 'steps')) ? gp(goalObj, 'Steps', 'steps') : [];
+
+  // Index stepPasses by step index for quick zip.
+  //
+  // trace.stepPasses is a flat list shared across the parent goal AND its
+  // sub-goals (BuildStep appends to %trace.stepPasses% from every level).
+  // Multiple entries can therefore share the same index — e.g. parent step 0
+  // AND a sub-goal's step 0. v3 traces stamp `goal: <Name>` on each entry so
+  // we can filter to the current section's goal; older traces don't, in which
+  // case we fall back to "first occurrence wins" — parent steps are recorded
+  // before sub-goal steps, so that keeps the parent display correct.
+  const passByIndex = new Map();
+  const stepPasses = Array.isArray(p.stepPasses) ? p.stepPasses : [];
+  for (const sp of stepPasses) {
+    const v = unwrapDataWrapper(sp) || {};
+    if (typeof v.index !== 'number') continue;
+    if (v.goal && goalName && v.goal !== goalName) continue;
+    if (!passByIndex.has(v.index)) passByIndex.set(v.index, v);
+  }
+
+  // Aggregate goal-level errors/warnings across stepPasses (v3) + legacy.
+  let allErrors = [];
+  let allWarnings = [];
+  for (const v of passByIndex.values()) {
+    const resp = (v && typeof v.response === 'object') ? v.response : {};
+    if (Array.isArray(resp.errors)) allErrors = allErrors.concat(resp.errors);
+    if (Array.isArray(resp.warnings)) allWarnings = allWarnings.concat(resp.warnings);
+  }
+
+  let steps;
+  if (sourceSteps.length > 0) {
+    // v3: drive the step list from the source goal; merge compile result by index.
+    steps = sourceSteps.map(src => {
+      const idx = gp(src, 'Index', 'index');
+      const compiled = passByIndex.get(idx) || {};
+      const resp = (compiled && typeof compiled.response === 'object') ? compiled.response : {};
+      const actions = Array.isArray(resp.actions) ? resp.actions
+                    : Array.isArray(gp(src, 'Actions', 'actions')) ? gp(src, 'Actions', 'actions')
+                    : Array.isArray(compiled.actions) ? compiled.actions
+                    : [];
+      return {
+        index: idx,
+        text: gp(src, 'Text', 'text') || gp(src, 'Guidance', 'guidance') || '',
+        guidance: gp(src, 'Guidance', 'guidance') || '',
+        // Formal: prefer the LLM's last emission (compiled.response.formal)
+        // since the step's saved Formal may lag if the merge line wasn't run.
+        formal: (resp && resp.formal) || gp(src, 'Formal', 'formal') || '',
+        finalLevel: gp(src, 'Level', 'level') || 'high',
+        finalConfidence: gp(src, 'Confidence', 'confidence') || 0,
+        actions,
+        // Per-step errors/warnings — kept on the step (NOT pooled at goal
+        // level) so renderStepRow can show them inline next to the step.
+        errors: Array.isArray(resp.errors) ? resp.errors : [],
+        warnings: Array.isArray(resp.warnings) ? resp.warnings : [],
+        // Per-step LLM prompts (v3): captured into trace.stepPasses[i].
+        // The system prompt is shared across steps in a goal but we attach it
+        // per-step so the UI can show it inline without cross-referencing.
+        system: compiled.system || '',
+        user: compiled.user || '',
+        raw: { source: src, compiled },
+      };
+    });
+  } else {
+    // Legacy v1 fallback: pass1.response.steps.
+    const resp = unwrapDataWrapper(p.response) || {};
+    steps = (resp.steps || []).map(s => ({
       index: s.index,
-      text: (src && src.text) || s.guidance || '',
+      text: s.guidance || '',
       guidance: s.guidance || '',
       formal: s.formal || '',
       finalLevel: s.level || 'high',
       finalConfidence: s.confidence || 0,
       actions: s.actions || [],
       raw: s,
-    };
-  });
+    }));
+    if (Array.isArray(resp.errors)) allErrors = allErrors.concat(resp.errors);
+    if (Array.isArray(resp.warnings)) allWarnings = allWarnings.concat(resp.warnings);
+  }
+
+  // Goal-level "LLM Request" panel — shows the PLANNER's prompts/response
+  // (the planner runs once per goal). Per-step compile prompts live on each
+  // step (see step.system/step.user above). Legacy v1 traces had a single
+  // pass1 — fall back to that when no plan is present.
+  const plan = (p.plan && typeof p.plan === 'object') ? p.plan : null;
+  const buildGoal = {
+    system: (plan && plan.system) || p.system || '',
+    user: (plan && plan.user) || p.user || '',
+    response: plan
+      ? { description: plan.description, steps: plan.steps }
+      : (unwrapDataWrapper(p.response) || {}),
+  };
 
   return {
     isParent,
@@ -904,26 +1084,44 @@ function passToGoalSection(pass, isParent) {
     path: goalPath,
     visibility: normalizeVisibility(goalVis),
     steps,
-    warnings: Array.isArray(resp.warnings) ? resp.warnings : [],
-    errors: Array.isArray(resp.errors) ? resp.errors : [],
+    warnings: allWarnings,
+    errors: allErrors,
     durationMs: typeof p.durationMs === 'number' ? p.durationMs : null,
-    buildError: p.buildError || null,   // per-goal build failure (captured on the failing pass)
-    buildGoal: { system: p.system || '', user: p.user || '', response: resp },
+    buildError: p.buildError || null,
+    buildGoal,
   };
 }
 
 function traceToEntry(trace) {
-  // Legacy traces had flat `goal`/`path`/`visibility` strings + single `pass1`.
-  // New traces wrap the whole parent Goal under `goal` AND carry sub-goal passes
-  // in `subGoals[]`. Both formats produce one or more goal sections.
+  // v3: top-level trace IS the parent pass. Has goal{Name,Steps,...}, plan,
+  // stepPasses, subGoals. v1 legacy: flat goal/path strings + a pass1 field.
   const goalObj = (trace.goal && typeof trace.goal === 'object') ? trace.goal : null;
-  const rootName = goalObj ? (goalObj.name || '?') : (trace.goal || '?');
-  const rootPath = goalObj ? (goalObj.path || '') : (trace.path || '');
+  const rootName = goalObj ? (gp(goalObj, 'Name', 'name') || '?') : (trace.goal || '?');
+  const rootPath = goalObj ? (gp(goalObj, 'Path', 'path') || '') : (trace.path || '');
 
-  const parentPass = trace.pass1 ? { ...unwrapDataWrapper(trace.pass1), goal: goalObj || trace.goal } : null;
-  const parentSection = parentPass ? passToGoalSection(parentPass, /*isParent*/ true) : null;
+  let parentSection;
+  if (trace.pass1) {
+    // Legacy: wrap pass1 with the legacy goal string/object.
+    const parentPass = { ...unwrapDataWrapper(trace.pass1), goal: goalObj || trace.goal };
+    parentSection = passToGoalSection(parentPass, /*isParent*/ true);
+  } else if (goalObj || Array.isArray(trace.stepPasses)) {
+    // v3: the trace itself is the parent pass.
+    parentSection = passToGoalSection(trace, /*isParent*/ true);
+  } else {
+    parentSection = null;
+  }
+
+  // Sub-goal entries in trace.subGoals carry {goal, plan} but NOT their own
+  // stepPasses — the parent trace's flat stepPasses list holds compile records
+  // from every level. Enrich each sub-goal entry with the parent's stepPasses
+  // so passToGoalSection's goal-name filter (by stepPass.goal) can pull each
+  // sub-goal's slice without a per-level trace nest.
   const subSections = Array.isArray(trace.subGoals)
-    ? trace.subGoals.map(sg => passToGoalSection(sg, /*isParent*/ false))
+    ? trace.subGoals.map(sg => {
+        const sgUnwrapped = unwrapDataWrapper(sg) || {};
+        const enriched = { ...sgUnwrapped, stepPasses: trace.stepPasses };
+        return passToGoalSection(enriched, /*isParent*/ false);
+      })
     : [];
 
   const goals = parentSection ? [parentSection, ...subSections] : subSections;
@@ -934,7 +1132,7 @@ function traceToEntry(trace) {
     name: rootName,
     path: rootPath,
     bucket: trace.bucket || '',
-    visibility: normalizeVisibility(goalObj ? goalObj.visibility : trace.visibility),
+    visibility: normalizeVisibility(goalObj ? gp(goalObj, 'Visibility', 'visibility') : trace.visibility),
     timestamp: trace.timestamp || '',
     stepCount: totalSteps,
     durationMs: typeof trace.durationMs === 'number' ? trace.durationMs : null,
@@ -1284,11 +1482,18 @@ function renderFileHeader(file, entry) {
   // The full path users usually want on their clipboard is bucket + path —
   // e.g. "Tests/Simple/Start.goal" — so you can jump to the source directly.
   const fullPath = [file.bucket || '', file.path || ''].filter(Boolean).join('').replace(/\/+/g, '/');
+  // Trace path: <bucket>/.build/traces/<traceId>/<goalName>.json — the disk
+  // location of the currently-loaded trace JSON. Only meaningful once the
+  // entry is fetched (entry.traceId arrives with it).
+  const tracePath = (entry?.traceId)
+    ? `${file.bucket}/.build/traces/${entry.traceId}/${entry.name}.json`.replace(/\/+/g, '/')
+    : '';
   return `
     <div class="file-header">
       <h1>
         ${esc(file.label)}
         ${fullPath ? `<button class="copy-btn" onclick="copyPath(this, '${esc(fullPath)}')" title="Copy path: ${esc(fullPath)}">copy path</button>` : ''}
+        ${tracePath ? `<button class="copy-btn" onclick="copyPath(this, '${esc(tracePath)}')" title="Copy trace path: ${esc(tracePath)}">copy trace path</button>` : ''}
       </h1>
       <div class="subtitle">
         <span>${esc(file.bucket)}</span>
@@ -1480,7 +1685,11 @@ function renderStepRow(entry, goalSection, step, subKey) {
   const stepKey = entry.traceId + '::' + goalSection.name + '::' + step.index;
   // Disclosure: 0 = text+formal only, 1 = +json. (LLM request is goal-level.)
   const depth = stepDepth.get(stepKey) || 0;
-  const hasError = ((goalSection.errors || []).some(e => stepIndexFromKey(e.key) === step.index));
+  const stepErrors = step.errors || [];
+  const stepWarnings = step.warnings || [];
+  const hasError = stepErrors.length > 0
+    || ((goalSection.errors || []).some(e => stepIndexFromKey(e.key) === step.index));
+  const hasWarning = stepWarnings.length > 0;
 
   const conf = step.finalConfidence;
   const confCls = step.finalLevel === 'medium' ? 'medium' : step.finalLevel === 'low' ? 'low' : '';
@@ -1501,24 +1710,33 @@ function renderStepRow(entry, goalSection, step, subKey) {
     ? `setStepDepth('${stepKey}', ${depth >= 1 ? 0 : 1})`
     : '';
 
+  const noteRows = [
+    ...stepErrors.map(e => `<div class="step-note err"><span class="step-note-tag">error</span> <span class="step-note-key">${esc(e.key || '')}</span> ${esc(e.message || '')}</div>`),
+    ...stepWarnings.map(w => `<div class="step-note warn"><span class="step-note-tag">warning</span> <span class="step-note-key">${esc(w.key || '')}</span> ${esc(w.message || '')}</div>`),
+  ].join('');
+
   let html = `
-    <div class="step-row ${depth > 0 ? 'open' : ''} ${hasError ? 'has-error' : ''}">
+    <div class="step-row ${depth > 0 ? 'open' : ''} ${hasError ? 'has-error' : ''} ${hasWarning && !hasError ? 'has-warning' : ''}">
       <div class="step-line">
         <span class="idx">${step.index}</span>
         <div class="body">
           <div class="text">${esc(step.text || '').replace(/\n/g, '<br>')}</div>
           ${hideFormal ? '' : `<div class="${formalCls}" ${formalClick ? `onclick="${formalClick}"` : ''}>${formalHtml}</div>`}
+          ${noteRows}
         </div>
         <span class="conf ${confCls}">${conf}%</span>
       </div>
   `;
 
   if (depth >= 1) {
+    const open = stepSections.get(stepKey) || new Set();
+    const source = step.raw && step.raw.source ? step.raw.source : null;
+    const compiled = step.raw && step.raw.compiled ? step.raw.compiled : null;
     html += `<div class="sublayer">`;
-    html += renderSublayer(stepKey, 'json', sizeLabel(step.raw || {}), true,
-      `<div class="sublayer-body"><pre>${esc(JSON.stringify(step.raw || { actions: step.actions }, null, 2))}</pre></div>`,
-      0  // clicking closes json back to depth 0
-    );
+    html += renderAccordionSection(stepKey, 'system', step.system, open.has('system'), 'md');
+    html += renderAccordionSection(stepKey, 'user',   step.user,   open.has('user'),   'md');
+    html += renderAccordionSection(stepKey, 'source', source,      open.has('source'), 'json');
+    html += renderAccordionSection(stepKey, 'compiled', compiled,  open.has('compiled'), 'json');
     html += `</div>`;
   }
 
@@ -1535,6 +1753,80 @@ function renderSublayer(stepKey, label, meta, open, body, nextDepth) {
     </div>
     ${open && body ? body : ''}
   `;
+}
+
+// Per-step accordion: 4 named sections (system/user/source/compiled), each
+// independently open/closed. value is the section's content (string for md,
+// any for json); mode is 'md' or 'json'.
+function renderAccordionSection(stepKey, name, value, open, mode) {
+  const hasContent = value != null && (typeof value !== 'string' || value.length > 0);
+  const meta = hasContent ? sizeLabel(value) : '(empty)';
+  let body = '';
+  if (open && hasContent) {
+    if (mode === 'md') {
+      body = `<div class="sublayer-body md-body">${mdToHtml(String(value))}</div>`;
+    } else {
+      body = `<div class="sublayer-body"><pre>${esc(JSON.stringify(value, null, 2))}</pre></div>`;
+    }
+  }
+  return `
+    <div class="sublayer-row ${open ? 'open' : ''}" onclick="toggleStepSection('${stepKey}', '${name}')">
+      <span class="tree-caret ${open ? 'open' : ''}">&#9656;</span>
+      <span>${esc(name)}</span>
+      <span class="sub-meta">${esc(meta)}</span>
+    </div>
+    ${body}
+  `;
+}
+
+// Tiny markdown-to-HTML for prompt bodies. Handles ATX headers, fenced code
+// blocks, inline code, bold, italic, blockquotes, lists, and paragraph breaks.
+// Intentionally minimal — full CommonMark would be overkill for prompt text.
+function mdToHtml(src) {
+  // Normalise line endings.
+  src = src.replace(/\r\n?/g, '\n');
+  // Pull out fenced code blocks first so their content is not re-processed.
+  const codeBlocks = [];
+  src = src.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)\n```/g, (m, lang, code) => {
+    codeBlocks.push(`<pre class="code-block"${lang ? ` data-lang="${esc(lang)}"` : ''}><code>${esc(code)}</code></pre>`);
+    return ` CODE${codeBlocks.length - 1} `;
+  });
+  // Escape HTML in the remaining text.
+  src = esc(src);
+  // Inline code (single backticks).
+  src = src.replace(/`([^`\n]+)`/g, (m, c) => `<code>${c}</code>`);
+  // Bold / italic.
+  src = src.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  src = src.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  // Headers (after escape, # is literal).
+  src = src.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+  src = src.replace(/^#####\s+(.+)$/gm,  '<h5>$1</h5>');
+  src = src.replace(/^####\s+(.+)$/gm,   '<h4>$1</h4>');
+  src = src.replace(/^###\s+(.+)$/gm,    '<h3>$1</h3>');
+  src = src.replace(/^##\s+(.+)$/gm,     '<h2>$1</h2>');
+  src = src.replace(/^#\s+(.+)$/gm,      '<h1>$1</h1>');
+  // Blockquotes.
+  src = src.replace(/^&gt;\s?(.*)$/gm, '<blockquote>$1</blockquote>');
+  // Unordered list items (group consecutive).
+  src = src.replace(/(^|\n)((?:[-*]\s+.+\n?)+)/g, (m, lead, block) => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^[-*]\s+/, '')}</li>`).join('');
+    return `${lead}<ul>${items}</ul>`;
+  });
+  // Ordered list items.
+  src = src.replace(/(^|\n)((?:\d+\.\s+.+\n?)+)/g, (m, lead, block) => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^\d+\.\s+/, '')}</li>`).join('');
+    return `${lead}<ol>${items}</ol>`;
+  });
+  // Paragraph breaks: blank lines become </p><p>.
+  // Wrap remaining loose text in <p>, but skip block-level tags we already emitted.
+  src = src.split(/\n{2,}/).map(block => {
+    if (/^\s*<(h[1-6]|ul|ol|pre|blockquote)/.test(block)) return block;
+    if (/^\s* CODE\d+ \s*$/.test(block)) return block;
+    return block.trim() ? `<p>${block.replace(/\n/g, '<br>')}</p>` : '';
+  }).join('\n');
+  // Restore code blocks.
+  src = src.replace(/ CODE(\d+) /g, (m, i) => codeBlocks[+i]);
+  return src;
 }
 
 function setStepDepth(stepKey, target) {
@@ -1626,19 +1918,21 @@ function renderBuildFailure(be) {
 function renderPromptBlocks(system, user, response) {
   let html = '';
   if (system) {
+    const md = typeof system === 'string' ? mdToHtml(system) : `<pre>${esc(JSON.stringify(system, null, 2))}</pre>`;
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
         <span>System Prompt</span><span>${sizeLabel(system)}</span>
       </div>
-      <div class="block-content"><pre>${esc(typeof system === 'string' ? system : JSON.stringify(system, null, 2))}</pre></div>
+      <div class="block-content md-body">${md}</div>
     </div>`;
   }
   if (user) {
+    const md = typeof user === 'string' ? mdToHtml(user) : `<pre>${esc(JSON.stringify(user, null, 2))}</pre>`;
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
         <span>User Prompt</span><span>${sizeLabel(user)}</span>
       </div>
-      <div class="block-content open"><pre>${esc(typeof user === 'string' ? user : JSON.stringify(user, null, 2))}</pre></div>
+      <div class="block-content md-body open">${md}</div>
     </div>`;
   }
   if (response) {

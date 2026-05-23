@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "NEEDS WORK (low) — F1: Data<T>.From silent-value-drop is a doc gap; F2: orphan <summary> block on DescribeReturnTypeName. No correctness bugs. Typed-returns sweep + GoalCall slash-resolution land cleanly (build clean, C# 2889/2889, plang 202/203 + 1 external LLM 503)." }

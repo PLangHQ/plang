@@ -73,19 +73,23 @@ public sealed partial class @this
                 }
                 else if (t.Kind == EntryKind.Scalar)
                 {
+                    // Scalar: emit just the constructor-input type, not the
+                    // `constructor(name: type), properties: ...` verbose form.
+                    // The verbose form misleads the LLM into emitting a record
+                    // (dict) for parameters of this type; what it actually wants
+                    // is a scalar matching the input form (e.g. a string for
+                    // `path`). The dot-path properties (extension, exists, ...)
+                    // stay accessible at runtime via type registration; they
+                    // don't need to live in the catalog summary.
                     if (t.ConstructorSignature != null)
-                        sb.Append("constructor(").Append(t.ConstructorSignature).Append(')');
-                    else if (t.Shape != null)
-                        sb.Append(t.Shape);
-                    if (t.Properties != null && t.Properties.Count > 0)
                     {
-                        sb.Append(", properties: ");
-                        for (int i = 0; i < t.Properties.Count; i++)
-                        {
-                            if (i > 0) sb.Append(", ");
-                            sb.Append(t.Properties[i].Name)
-                              .Append('(').Append(t.Properties[i].TypeName).Append(')');
-                        }
+                        var sig = t.ConstructorSignature;
+                        var colonIdx = sig.IndexOf(':');
+                        sb.Append(colonIdx > 0 ? sig[(colonIdx + 1)..].Trim() : sig);
+                    }
+                    else if (t.Shape != null)
+                    {
+                        sb.Append(t.Shape);
                     }
                 }
                 if (!string.IsNullOrEmpty(t.Description))

@@ -1,8 +1,8 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using Verb = global::app.filesystem.permission.verb.@this;
-using Write = global::app.filesystem.permission.verb.Write;
+using Verb = global::app.types.path.permission.verb.@this;
+using Write = global::app.types.path.permission.verb.Write;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 

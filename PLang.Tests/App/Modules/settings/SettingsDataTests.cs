@@ -168,8 +168,8 @@ public class SettingsDataTests
         var ds = _app.SettingsStore;
         await Assert.That(ds).IsNotNull();
 
-        var dbDir = _app.FileSystem.Path.Combine(_tempDir, ".db");
-        await Assert.That(_app.FileSystem.Directory.Exists(dbDir)).IsTrue();
+        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
+        await Assert.That(System.IO.Directory.Exists(dbDir)).IsTrue();
     }
 
     // --- Nested settings path test ---

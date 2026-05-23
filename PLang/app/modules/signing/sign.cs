@@ -28,5 +28,5 @@ public partial class sign : IContext
     [Code]
     public partial ISigning Signer { get; }
 
-    public async Task<data.@this> Run() => await Signer.SignAsync(this);
+    public async Task<data.@this<object>> Run() => await Signer.SignAsync(this);
 }

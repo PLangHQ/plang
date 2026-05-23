@@ -10,7 +10,7 @@ public partial class Group : IContext
     [IsNotNull]
     public partial data.@this<string> Key { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this<types.list>> Run()
     {
         var data = Context.Variables.Get(ListName.Value);
         var key = Key.Value!;
@@ -34,6 +34,7 @@ public partial class Group : IContext
             ["steps"] = g.Value
         }).ToList();
 
-        return Task.FromResult(Data(result, app.data.type.FromName("list")));
+        return Task.FromResult(global::app.data.@this<types.list>.Ok(
+            new types.list { count = result.Count, value = result }, app.data.type.FromName("list")));
     }
 }

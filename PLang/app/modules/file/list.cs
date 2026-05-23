@@ -1,8 +1,5 @@
 using app.variables;
-using app.modules.file.code;
 using app.types;
-using Verb = global::app.filesystem.permission.verb.@this;
-using ReadVerb = global::app.filesystem.permission.verb.Read;
 
 namespace app.modules.file;
 
@@ -12,7 +9,7 @@ namespace app.modules.file;
 [Action("list")]
 public partial class List : IContext
 {
-    public partial data.@this<filesystem.path> Path { get; init; }
+    public partial data.@this<path> Path { get; init; }
 
     [Default("*")]
     public partial data.@this<string> Pattern { get; init; }
@@ -20,13 +17,9 @@ public partial class List : IContext
     [Default(false)]
     public partial data.@this<bool> Recursive { get; init; }
 
-    [Code]
-    public partial IFile Files { get; }
-
-    public async Task<data.@this> Run()
+    public async Task<data.@this<List<path>>> Run()
     {
-        var auth = await Path.Value!.Authorize(new Verb { Read = new ReadVerb() });
-        if (auth.Type?.ClrType.Exit() == true || !auth.Success) return auth;
-        return Files.List(this);
+        if (!Path.Success) return data.@this<List<path>>.From(Path);   // codeanalyzer v1 F4 — typed scheme error, not an NRE
+        return await Path.Value!.List(Pattern.Value!, Recursive.Value);
     }
 }

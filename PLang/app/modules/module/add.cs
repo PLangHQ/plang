@@ -14,10 +14,9 @@ public partial class Add : IContext
     public Task<data.@this> Run()
     {
         var app = Context.App!;
-        var fs = app.FileSystem;
-        var absPath = fs.Path.GetFullPath(Path.Value!);
+        var absPath = System.IO.Path.GetFullPath(Path.Value!);
 
-        if (!fs.File.Exists(absPath))
+        if (!System.IO.File.Exists(absPath))
             return Task.FromResult(Error(
                 new app.errors.ServiceError($"Module not found: {Path.Value}")));
 
@@ -25,6 +24,6 @@ public partial class Add : IContext
         var count = app.Modules.Discover(assembly, Namespace?.Value);
 
         return Task.FromResult(Data(
-            new types.module { name = fs.Path.GetFileNameWithoutExtension(absPath), actions = count }));
+            new types.module { name = System.IO.Path.GetFileNameWithoutExtension(absPath), actions = count }));
     }
 }

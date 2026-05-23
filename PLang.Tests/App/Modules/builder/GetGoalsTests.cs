@@ -145,7 +145,7 @@ public class GetGoalsTests
             "Other\n- write out 'other'");
 
         // Set files filter to only build Start.goal
-        _app.Builder.Files.Add(new global::app.filesystem.path("Start.goal"));
+        _app.Builder.Files.Add(new global::app.types.path.file.@this("Start.goal"));
 
         var action = new goals { Context = _app.User.Context, Path = "." };
         var result = await _app.RunAction(action, _app.User.Context);
@@ -165,7 +165,7 @@ public class GetGoalsTests
             "MyGoal\n- step one");
 
         // Filter with different casing
-        _app.Builder.Files.Add(new global::app.filesystem.path("mygoal.goal"));
+        _app.Builder.Files.Add(new global::app.types.path.file.@this("mygoal.goal"));
 
         var action = new goals { Context = _app.User.Context, Path = "." };
         var result = await _app.RunAction(action, _app.User.Context);
@@ -185,7 +185,7 @@ public class GetGoalsTests
             "Start\n- write out 'hello'");
 
         // Filter for a file that doesn't exist
-        _app.Builder.Files.Add(new global::app.filesystem.path("NonExistent.goal"));
+        _app.Builder.Files.Add(new global::app.types.path.file.@this("NonExistent.goal"));
 
         var action = new goals { Context = _app.User.Context, Path = "." };
         var result = await _app.RunAction(action, _app.User.Context);
@@ -209,8 +209,8 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Third.goal"),
             "Third\n- step three");
 
-        _app.Builder.Files.Add(new global::app.filesystem.path("First.goal"));
-        _app.Builder.Files.Add(new global::app.filesystem.path("Third.goal"));
+        _app.Builder.Files.Add(new global::app.types.path.file.@this("First.goal"));
+        _app.Builder.Files.Add(new global::app.types.path.file.@this("Third.goal"));
 
         var action = new goals { Context = _app.User.Context, Path = "." };
         var result = await _app.RunAction(action, _app.User.Context);

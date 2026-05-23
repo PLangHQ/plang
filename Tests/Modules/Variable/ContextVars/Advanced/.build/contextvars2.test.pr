@@ -17,12 +17,12 @@
             {
               "name": "Expected",
               "value": "Start",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%!goal.Name%",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -52,11 +52,6 @@
               "name": "Value",
               "value": "%!step%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -86,11 +81,6 @@
               "name": "Value",
               "value": "%!context%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -107,42 +97,8 @@
     },
     {
       "index": 3,
-      "text": "assert %!fileSystem% is not null",
-      "lineNumber": 9,
-      "indent": 0,
-      "comment": "Test: fileSystem is accessible",
-      "actions": [
-        {
-          "module": "assert",
-          "action": "isNotNull",
-          "parameters": [
-            {
-              "name": "Value",
-              "value": "%!fileSystem%",
-              "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 4,
       "text": "assert %!callStack% is not null",
-      "lineNumber": 11,
+      "lineNumber": 9,
       "indent": 0,
       "comment": "Test: callStack is accessible",
       "actions": [
@@ -154,11 +110,6 @@
               "name": "Value",
               "value": "%!callStack%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -176,10 +127,10 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ContextVars2.test.goal",
-  "prPath": "/.build/contextvars2.test.pr",
-  "hash": "85619f863448eb43ec701fc1850de420df2fea3a522ce131303290d8f6ae53de",
-  "builderVersion": "0.2.2",
+  "path": "/Modules/Variable/ContextVars/Advanced/ContextVars2.test.goal",
+  "prPath": "/Modules/Variable/ContextVars/Advanced/.build/contextvars2.test.pr",
+  "hash": "1d317d0df6f76494ec623e7e05a44fa19d69017c283724d907a20057a34ebff2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

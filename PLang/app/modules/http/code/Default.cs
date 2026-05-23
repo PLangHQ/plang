@@ -182,7 +182,6 @@ public sealed class Default : IHttp
     {
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
-        var fs = app.FileSystem;
 
         var unsigned = action.Unsigned.Value || config.Resolve("Unsigned", false);
         var timeout = action.TimeoutInSec.Value > 0 ? action.TimeoutInSec.Value : config.Resolve("TimeoutInSec", 30);
@@ -194,7 +193,7 @@ public sealed class Default : IHttp
 
         var headers = MergeHeaders(action.Headers?.Value, config);
 
-        var httpContent = await ResolveUploadContentAsync(action, fs, encoding);
+        var httpContent = await ResolveUploadContentAsync(action, app, encoding);
 
         var httpMethod = ToSystemMethod(action.Method.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
@@ -998,16 +997,16 @@ public sealed class Default : IHttp
     // --- Upload content resolution ---
 
     private static async Task<HttpContent> ResolveUploadContentAsync(
-        upload action, app.filesystem.IPLangFileSystem fs, string encoding)
+        upload action, global::app.@this app, string encoding)
     {
         var content = action.Content.Value;
         if (action.As?.Value is ContentAs contentAs)
         {
             return contentAs switch
             {
-                ContentAs.File => await CreateFileContentAsync(fs, content!.ToString()!),
+                ContentAs.File => await CreateFileContentAsync(app, content!.ToString()!),
                 ContentAs.Base64 => CreateBase64Content(content!.ToString()!),
-                ContentAs.Form => await CreateFormContentAsync(fs, content!),
+                ContentAs.Form => await CreateFormContentAsync(app, content!),
                 ContentAs.Text => new StringContent(
                     content is string s ? s : JsonSerializer.Serialize(content),
                     Encoding.GetEncoding(encoding)),
@@ -1019,14 +1018,14 @@ public sealed class Default : IHttp
         if (content is Dictionary<string, object> ||
             content is JsonElement je && je.ValueKind == JsonValueKind.Object)
         {
-            return await CreateFormContentAsync(fs, content);
+            return await CreateFormContentAsync(app, content);
         }
 
         if (content is string str)
         {
-            var path = fs.ValidatePath(str);
-            if (fs.File.Exists(path))
-                return await CreateFileContentAsync(fs, path);
+            var path = global::app.types.path.file.@this.ValidatePath(str, app);
+            if (System.IO.File.Exists(path))
+                return await CreateFileContentAsync(app, path);
 
             return new StringContent(str, Encoding.GetEncoding(encoding));
         }
@@ -1037,10 +1036,10 @@ public sealed class Default : IHttp
             "application/json");
     }
 
-    private static async Task<HttpContent> CreateFileContentAsync(app.filesystem.IPLangFileSystem fs, string path)
+    private static async Task<HttpContent> CreateFileContentAsync(global::app.@this app, string path)
     {
-        var validPath = fs.ValidatePath(path);
-        var bytes = await fs.File.ReadAllBytesAsync(validPath);
+        var validPath = global::app.types.path.file.@this.ValidatePath(path, app);
+        var bytes = await System.IO.File.ReadAllBytesAsync(validPath);
         var content = new ByteArrayContent(bytes);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         return content;
@@ -1054,7 +1053,7 @@ public sealed class Default : IHttp
         return content;
     }
 
-    private static async Task<HttpContent> CreateFormContentAsync(app.filesystem.IPLangFileSystem fs, object content)
+    private static async Task<HttpContent> CreateFormContentAsync(global::app.@this app, object content)
     {
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;
@@ -1075,11 +1074,11 @@ public sealed class Default : IHttp
             var value = kvp.Value?.ToString() ?? "";
             if (value.StartsWith('@'))
             {
-                var filePath = fs.ValidatePath(value[1..]);
-                var bytes = await fs.File.ReadAllBytesAsync(filePath);
+                var filePath = global::app.types.path.file.@this.ValidatePath(value[1..], app);
+                var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
                 var fileContent = new ByteArrayContent(bytes);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                var fileName = fs.Path.GetFileName(filePath);
+                var fileName = System.IO.Path.GetFileName(filePath);
                 form.Add(fileContent, kvp.Key, fileName);
             }
             else

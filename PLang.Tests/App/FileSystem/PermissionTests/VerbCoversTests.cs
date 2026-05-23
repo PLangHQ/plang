@@ -1,11 +1,11 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using app.filesystem.permission;
-using Verb = global::app.filesystem.permission.verb.@this;
-using Read = global::app.filesystem.permission.verb.Read;
-using Write = global::app.filesystem.permission.verb.Write;
-using Delete = global::app.filesystem.permission.verb.Delete;
+using app.types.path.permission;
+using Verb = global::app.types.path.permission.verb.@this;
+using Read = global::app.types.path.permission.verb.Read;
+using Write = global::app.types.path.permission.verb.Write;
+using Delete = global::app.types.path.permission.verb.Delete;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 

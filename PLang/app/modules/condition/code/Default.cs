@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using app.errors;
 using app.variables;
 
@@ -10,12 +11,12 @@ public sealed class Default : IEvaluator
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public data.@this Evaluate(If action)
+    public async Task<data.@this<bool>> Evaluate(If action)
     {
         try
         {
-            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
-            return global::app.data.@this.Ok(result);
+            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
+            return global::app.data.@this<bool>.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -23,12 +24,12 @@ public sealed class Default : IEvaluator
         }
     }
 
-    public data.@this Evaluate(Elseif action)
+    public async Task<data.@this<bool>> Evaluate(Elseif action)
     {
         try
         {
-            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
-            return global::app.data.@this.Ok(result);
+            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
+            return global::app.data.@this<bool>.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -36,12 +37,12 @@ public sealed class Default : IEvaluator
         }
     }
 
-    public data.@this Evaluate(Compare action)
+    public async Task<data.@this<bool>> Evaluate(Compare action)
     {
         try
         {
-            bool result = action.Operator.Value.Evaluate(action.Left, action.Right);
-            return global::app.data.@this.Ok(result);
+            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
+            return global::app.data.@this<bool>.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
@@ -49,12 +50,12 @@ public sealed class Default : IEvaluator
         }
     }
 
-    private static data.@this EvaluationError(data.@this? left, Operator op, data.@this? right, Exception ex)
+    private static data.@this<bool> EvaluationError(data.@this? left, Operator op, data.@this? right, Exception ex)
     {
         var leftType = left?.Value?.GetType().Name ?? "null";
         var rightType = right?.Value?.GetType().Name ?? "null";
 
-        return global::app.data.@this.FromError(new ValidationError(
+        return global::app.data.@this<bool>.FromError(new ValidationError(
             $"Condition evaluation failed: '{left?.Value}' ({leftType}) {op.Value} '{right?.Value}' ({rightType}) — {ex.Message}",
             "EvaluationError")
         {

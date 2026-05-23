@@ -24,7 +24,7 @@ public sealed partial class @this
     /// Optional file filter. When set, only these files are built — IN ORDER.
     /// Set via --build={"files":"test.goal"} or --build={"files":["test.goal","run.goal"]}
     /// </summary>
-    public List<global::app.filesystem.path> Files { get; set; } = new();
+    public List<path> Files { get; set; } = new();
 
     /// <summary>
     /// Whether to use LLM cache. Default true. Set via --build={"cache":false}
@@ -106,8 +106,11 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> RunAsync()
     {
-        var appPrPath = _app.FileSystem.ValidatePath(".build/app.pr");
-        if (!_app.FileSystem.File.Exists(appPrPath) && !_app.Create)
+        var appPrPath = System.IO.Path.Combine(_app.AbsolutePath, ".build", "app.pr");
+        // No app marker on disk → confirm creation (or error when headless).
+        // Was inverted (fired when the marker DID exist) — that forced every
+        // build of an existing app to need --app={"create":true}.
+        if (!System.IO.File.Exists(appPrPath) && !_app.Create)
         {
             if (Console.IsInputRedirected)
                 return data.@this.FromError(new global::app.errors.ServiceError(

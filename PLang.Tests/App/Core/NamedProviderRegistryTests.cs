@@ -363,9 +363,9 @@ public class NamedProviderRegistryTests
         public MockSigningProvider(string name) { Name = name; }
 
         public global::app.data.@this<KeyPair> GenerateKeyPair() => global::app.data.@this<KeyPair>.Ok(new KeyPair("mockPub", "mockPriv"));
-        public Data Sign(byte[] data, string privateKey) => Data.Ok(new byte[64]);
-        public Data Verify(byte[] data, byte[] signature, string publicKey) => Data.Ok(true);
-        public Task<Data> SignAsync(sign action) => Task.FromResult(Data.Ok());
-        public Task<Data> VerifyAsync(verify action) => Task.FromResult(Data.Ok(true));
+        public global::app.data.@this<byte[]> Sign(byte[] data, string privateKey) => global::app.data.@this<byte[]>.Ok(new byte[64]);
+        public global::app.data.@this<bool> Verify(byte[] data, byte[] signature, string publicKey) => global::app.data.@this<bool>.Ok(true);
+        public Task<global::app.data.@this<object>> SignAsync(sign action) => Task.FromResult(new global::app.data.@this<object>());
+        public Task<global::app.data.@this<bool>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<bool>.Ok(true));
     }
 }

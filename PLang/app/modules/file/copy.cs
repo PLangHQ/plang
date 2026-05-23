@@ -1,9 +1,5 @@
 using app.variables;
-using app.modules.file.code;
 using app.types;
-using Verb = global::app.filesystem.permission.verb.@this;
-using ReadVerb = global::app.filesystem.permission.verb.Read;
-using WriteVerb = global::app.filesystem.permission.verb.Write;
 
 namespace app.modules.file;
 
@@ -12,8 +8,8 @@ namespace app.modules.file;
 [Action("copy", Cacheable = false)]
 public partial class Copy : IContext
 {
-    public partial data.@this<filesystem.path> Source { get; init; }
-    public partial data.@this<filesystem.path> Destination { get; init; }
+    public partial data.@this<path> Source { get; init; }
+    public partial data.@this<path> Destination { get; init; }
 
     [Default(false)]
     public partial data.@this<bool> Overwrite { get; init; }
@@ -21,21 +17,12 @@ public partial class Copy : IContext
     [Default(true)]
     public partial data.@this<bool> IncludeSubfolders { get; init; }
 
-    [Code]
-    public partial IFile Files { get; }
-
-    /// <summary>
-    /// Authorize source (Read) then destination (Write) in sequence. v1
-    /// degradation: two separate prompts on a fresh out-of-root pair.
-    /// Bundled-consent UX is pinned by the C# path.MoveTo/CopyTo path
-    /// and tracked as a follow-up for the action-handler surface.
-    /// </summary>
-    public async Task<data.@this> Run()
+    public async Task<data.@this<path>> Run()
     {
-        var srcAuth = await Source.Value!.Authorize(new Verb { Read = new ReadVerb() });
-        if (srcAuth.Type?.ClrType.Exit() == true || !srcAuth.Success) return srcAuth;
-        var dstAuth = await Destination.Value!.Authorize(new Verb { Write = new WriteVerb() });
-        if (dstAuth.Type?.ClrType.Exit() == true || !dstAuth.Success) return dstAuth;
-        return Files.Copy(this);
+        // Failed scheme resolution (e.g. unregistered s3://) surfaces the typed
+        // SchemeNotRegistered error instead of an NRE on .Value. (codeanalyzer v1 F4)
+        if (!Source.Success) return data.@this<path>.From(Source);
+        if (!Destination.Success) return data.@this<path>.From(Destination);
+        return await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
     }
 }

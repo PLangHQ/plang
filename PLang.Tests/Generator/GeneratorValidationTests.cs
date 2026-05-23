@@ -177,26 +177,27 @@ public class GeneratorValidationTests
     }
 
     [Test]
-    public async Task GeneratedExecuteAsync_HasNoTryCatchFinally()
+    public async Task GeneratedExecuteAsync_WrapsRunInTryCatch()
     {
         var generated = ReadAnyGeneratedHandler();
-        // Phase 3 moved try/catch/finally to App.Run. Generated body should NOT contain
-        // a try block (the existing generator writes "try" inline).
-        // We allow "ExecuteAsync" to contain "try" only inside string literals; check the keyword.
-        // Heuristic: the generated body starts with the opening "{" after ExecuteAsync's signature
-        // and ends with the matching "}". Look for "try\n" or "try {" — both indicate a real try block.
-        await Assert.That(generated.Contains("try\n") || generated.Contains("try {")
-            || generated.Contains("try\r\n") || generated.Contains("try    {")).IsFalse();
+        // runtime2's builder-quality pass wraps Run() in a narrow try/catch so a bare
+        // CLR exception (NRE, InvalidCast) surfaces as a ServiceError carrying
+        // "{module}.{action}: {ExType}: {msg}" instead of an anonymous bare throw.
+        // The catch converts to a ServiceError; there is deliberately no finally —
+        // lifecycle/cleanup still lives in Call.ExecuteAsync, not the generated body.
+        await Assert.That(generated).Contains("try { __runResult = await Run(); }");
+        await Assert.That(generated.Contains("finally\n") || generated.Contains("finally {")
+            || generated.Contains("finally\r\n") || generated.Contains("finally    {")).IsFalse();
     }
 
     [Test]
     public async Task GeneratedExecuteAsync_CallsRunDirectly()
     {
         var generated = ReadAnyGeneratedHandler();
-        // Phase 3 thin form: ExecuteAsync invokes Run() inline, not via a wrapper.
-        // v6 split the call into capture-and-recheck so Data<T> getters that capture
-        // resolution errors during Run can surface them post-Run.
-        await Assert.That(generated).Contains("var __runResult = await Run();");
+        // ExecuteAsync invokes Run() inline (inside the try/catch wrap), not via a
+        // wrapper method. v6 split the call into capture-and-recheck so Data<T> getters
+        // that capture resolution errors during Run can surface them post-Run.
+        await Assert.That(generated).Contains("__runResult = await Run();");
     }
 
     [Test]
