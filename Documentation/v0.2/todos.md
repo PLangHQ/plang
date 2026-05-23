@@ -1,12 +1,12 @@
 # TODOs
 
-## Polymorphic `Path` (file:// + http:// + s3://… via scheme registry)
+## ~~Polymorphic `Path` (file:// + http:// + s3://… via scheme registry)~~ — Phase 1 + 2 shipped
 
-**Date:** 2026-05-21
+**Date:** 2026-05-21 → **Closed:** 2026-05-23 on branch `path-polymorphism`.
 
-`Path` becomes abstract; `FilePath`, `HttpPath`, etc. implement the verb surface (ReadText/WriteText/Save/Delete/Stat/List/CopyTo/MoveTo) per scheme. `Path.From(string)` factory routes by scheme prefix. File action handlers degenerate to one-liners (`Path.Value!.ReadText()`); legacy `IFile.Read/Save/...` dies. Closes codeanalyzer v2 finding #1 (handler-layer authorize copy-paste) on a new branch — deliberately not on `filesystem-permission`.
+`Path` is abstract; `FilePath` and `HttpPath` are live (`PLang/app/types/path/{file,http}/this.cs`), discovered via `[PathScheme("…")]`. File action handlers degenerated to one-liners over `Path.Value!.X()`; legacy `IFile.Read/Save/...` is gone. Codeanalyzer v2 finding #1 closed. `IBooleanResolvable` ships path-truthiness so `if %url% exists` works directly.
 
-Plan + phasing: `Documentation/v0.2/path-polymorphism-plan.md`. Hand to architect.
+Phase 3 (S3, Git, …) stays open — drop a `[PathScheme(...)]` class in and it lights up. See `Documentation/v0.2/path-polymorphism-plan.md` for the original design and status banner.
 
 ## Replace `GoalCall` parameter type with `list<action>` everywhere
 

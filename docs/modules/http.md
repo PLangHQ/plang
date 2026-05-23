@@ -2,6 +2,8 @@
 
 Send HTTP requests, download and upload files, and stream responses. Supports request signing, configurable defaults, and streaming in multiple formats.
 
+> **Shorthand:** if you only need to GET a URL and grab the body, the [File module](file.md#paths-can-be-urls) accepts URLs directly — `- read 'https://...' into %x%` is the same as `- get 'https://...', write to %x%`. Use this module when you need method/header/body control, signing, streaming, or want a typed response object.
+
 ## Actions
 
 ### request

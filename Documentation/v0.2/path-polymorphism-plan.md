@@ -1,5 +1,9 @@
 # Path Polymorphism Plan
 
+**Status (2026-05-23):** Phase 1 + Phase 2 shipped on branch `path-polymorphism`. `Path` is abstract; `FilePath` (`PLang/app/types/path/file/`) and `HttpPath` (`PLang/app/types/path/http/`) are the two live schemes, registered via `[PathScheme("…")]` and discovered by the source generator. File action handlers are one-liners over `Path.Value!.X()`. `IBooleanResolvable` is wired through the condition/assert pipeline so `if %path% exists` (and `if %url% exists`) work without an explicit `check if … exists` step. User-facing docs: `docs/modules/file.md` *Paths can be URLs*, `docs/modules/condition.md` *Path truthiness*. Internal: `Documentation/v0.2/good_to_know.md` "Truthiness — `IBooleanResolvable`…". Phase 3 (S3, Git, …) remains open — drop a new `[PathScheme(...)]` class in and it lights up. The rest of this document is the original plan, preserved for design rationale.
+
+---
+
 Handoff to architect. **Target: a new branch (not `filesystem-permission`).** The `filesystem-permission` branch closes with codeanalyzer v2 finding #1 (handler-layer authorize copy-paste) intentionally deferred to this plan.
 
 ## Why now
