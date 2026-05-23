@@ -17,10 +17,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "goal /builder/Build",
+                "name": "/builder/Build",
                 "parallel": false,
                 "parameters": [],
-                "prPath": null
+                "prPath": "/system/builder/.build/build.pr"
               },
               "type": "goal.call"
             }

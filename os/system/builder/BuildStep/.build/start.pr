@@ -23,6 +23,11 @@
               "name": "Value",
               "value": "%goal.Steps[planStep.index]%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "object",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -59,7 +64,7 @@
               "value": {
                 "name": "Compile",
                 "parallel": false,
-                "parameters": [],
+                "parameters": null,
                 "prPath": "/system/builder/BuildStep/.build/start.pr"
               },
               "type": "goal.call"
@@ -90,7 +95,31 @@
           "lineNumber": 15,
           "indent": 0,
           "comment": "Validate planner's action set against runtime catalog + augment with explicit\nmodule.action tokens from step text. Drops hallucinated entries; appends any\nliteral `module.action` mention the planner missed. See building-the-builder.md\n\"preventing self-rebuild corruption\" for the rationale.",
-          "actions": [],
+          "actions": [
+            {
+              "module": "builder",
+              "action": "validateStepActions",
+              "parameters": [
+                {
+                  "name": "Step",
+                  "value": "%step%",
+                  "type": "step"
+                },
+                {
+                  "name": "Actions",
+                  "value": "%planStep.actions%",
+                  "type": "list<string>"
+                },
+                {
+                  "name": "writeTo",
+                  "value": "%planStep.actions%",
+                  "type": "list<string>"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
           "intent": null,
           "guidance": null,
           "level": "high",
@@ -131,7 +160,7 @@
                 {
                   "name": "Value",
                   "value": "%!data%",
-                  "type": "object"
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -360,7 +389,7 @@
         },
         {
           "index": 6,
-          "text": "- render template \"/system/builder/llm/CompileUser.llm\", write to %buildStepUserMsg%",
+          "text": "render template \"/system/builder/llm/CompileUser.llm\", write to %buildStepUserMsg%",
           "lineNumber": 21,
           "indent": 0,
           "comment": null,
@@ -375,6 +404,7 @@
                   "type": "string"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             },
             {
@@ -392,6 +422,13 @@
                   "type": "object"
                 }
               ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ],
@@ -405,7 +442,7 @@
         },
         {
           "index": 7,
-          "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildStepPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%__userMsg__%\"}], type=json",
+          "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildStepPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%buildStepUserMsg%\"}], type=json",
           "lineNumber": 22,
           "indent": 0,
           "comment": null,
@@ -450,9 +487,9 @@
             }
           ],
           "intent": null,
-          "guidance": "Set %messages% to a JSON array of LLM messages (system + user), using %buildStepPrompt% and %__userMsg__%.",
-          "level": "high",
-          "confidence": 95,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
           "formal": null,
           "source": null,
           "waitForExecution": true
@@ -491,6 +528,11 @@
                       "type": "string"
                     },
                     {
+                      "name": "RetryCount",
+                      "value": 2,
+                      "type": "int"
+                    },
+                    {
                       "name": "Actions",
                       "value": [
                         {
@@ -501,8 +543,7 @@
                               "name": "GoalName",
                               "value": {
                                 "name": "RefineActions",
-                                "parameters": [],
-                                "prPath": "/system/builder/BuildStep/.build/start.pr"
+                                "parameters": []
                               },
                               "type": "goal.call"
                             }
@@ -510,11 +551,6 @@
                         }
                       ],
                       "type": "list<action>"
-                    },
-                    {
-                      "name": "RetryCount",
-                      "value": 2,
-                      "type": "int"
                     }
                   ],
                   "defaults": null,
@@ -533,7 +569,7 @@
         },
         {
           "index": 9,
-          "text": "- add {index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, system: %buildStepPrompt%, user: %buildStepUserMsg%, response: %compileResult%} to %trace.stepPasses%",
+          "text": "add {index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, system: %buildStepPrompt%, user: %buildStepUserMsg%, response: %compileResult%} to %trace.stepPasses%",
           "lineNumber": 29,
           "indent": 0,
           "comment": null,
@@ -561,7 +597,7 @@
                 },
                 {
                   "name": "AtIndex",
-                  "value": -1,
+                  "value": "%step.Index%",
                   "type": "int"
                 }
               ],
@@ -619,8 +655,53 @@
         },
         {
           "index": 11,
+          "text": "set %goal.Steps[step.Index].Formal% = %compileResult.formal%",
+          "lineNumber": 32,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%goal.Steps[step.Index].Formal%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%compileResult.formal%",
+                  "type": "string"
+                },
+                {
+                  "name": "Type",
+                  "value": "object",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 12,
           "text": "builder.validate actions=%goal.Steps[step.Index].Actions%, on error call FixValidation, then retry 2 times",
-          "lineNumber": 36,
+          "lineNumber": 37,
           "indent": 0,
           "comment": "Validation retry: FixValidation re-queries the LLM with the validator's complaint as\npreviousConversation context, writes the corrected compileResult, updates goal.Steps.\nThen retry builder.validate against the corrected actions.",
           "actions": [
@@ -650,9 +731,7 @@
                             {
                               "name": "GoalName",
                               "value": {
-                                "name": "FixValidation",
-                                "parameters": [],
-                                "prPath": "/system/builder/BuildStep/.build/start.pr"
+                                "name": "FixValidation"
                               },
                               "type": "goal.call"
                             }
@@ -682,9 +761,9 @@
           "waitForExecution": true
         },
         {
-          "index": 12,
+          "index": 13,
           "text": "if %!build.summary% is true, call EmitSummary",
-          "lineNumber": 38,
+          "lineNumber": 39,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -749,7 +828,7 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "f328a6d099c4ca532b15029d290ebd8e504a4a6ccf9466180fea85121e8fa019",
+      "hash": "cc11b1d22e30d3238f008f0ee4d1623e8efb2fae5dad5110b4b77e51087d57a2",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -764,8 +843,8 @@
       "steps": [
         {
           "index": 0,
-          "text": "llm.query Messages=%messages%, Schema={actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%",
-          "lineNumber": 42,
+          "text": "llm.query Messages=%messages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%",
+          "lineNumber": 43,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -786,14 +865,14 @@
                       {
                         "module": "string",
                         "action": "string",
-                        "parameters": [
+                        "parameters?": [
                           {
                             "name": "string",
-                            "value": "object",
-                            "type": "string"
+                            "value?": "object",
+                            "type?": "string"
                           }
                         ],
-                        "errors": [
+                        "errors?": [
                           {
                             "key": "string",
                             "message": "string"
@@ -801,7 +880,7 @@
                         ]
                       }
                     ],
-                    "errors": [
+                    "errors?": [
                       {
                         "key": "string",
                         "message": "string"
@@ -858,9 +937,7 @@
                             {
                               "name": "GoalName",
                               "value": {
-                                "name": "HandleStepFailure",
-                                "parameters": [],
-                                "prPath": "/system/builder/BuildStep/.build/start.pr"
+                                "name": "HandleStepFailure"
                               },
                               "type": "goal.call"
                             }
@@ -888,6 +965,11 @@
                   "name": "Value",
                   "value": "%!data%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "object",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -911,7 +993,7 @@
         {
           "index": 1,
           "text": "if %compileResult.errors[0].key% is \"missing-actions\", throw error \"missing-actions: %compileResult.errors[0].message%\" key=\"missing-actions\"",
-          "lineNumber": 43,
+          "lineNumber": 44,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -954,18 +1036,17 @@
                   "type": "string"
                 },
                 {
+                  "name": "StatusCode",
+                  "value": 500,
+                  "type": "int"
+                },
+                {
                   "name": "Key",
                   "value": "missing-actions",
                   "type": "string"
                 }
               ],
-              "defaults": [
-                {
-                  "name": "statuscode",
-                  "value": 500,
-                  "type": "int"
-                }
-              ],
+              "defaults": null,
               "modifiers": []
             }
           ],
@@ -982,7 +1063,7 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "e77b915debc3cd50ca161d38ba41ebcbfcd73c31c5bca1b12302bd5d4313c1cd",
+      "hash": "44bccdeaf0a75bff82aef10a5ea7a42f3f932345fc31a551bec68b435e8b1c4e",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -998,7 +1079,7 @@
         {
           "index": 0,
           "text": "set %complaint% = \"Compiler returned missing-actions for step %step.Index% (text: '%step.Text%'). Current action set is insufficient: %planStep.actions%. Reason: %!error.Message%. Return a corrected action set for step %step.Index% only.\", type=string",
-          "lineNumber": 48,
+          "lineNumber": 49,
           "indent": 0,
           "comment": "Planner continuation: hand the LLM the compiler's complaint, get an expanded action set.",
           "actions": [
@@ -1043,7 +1124,7 @@
         {
           "index": 1,
           "text": "set %refineMessages% = [{\"Role\":\"user\", \"Content\":\"%complaint%\"}], type=json",
-          "lineNumber": 49,
+          "lineNumber": 50,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1093,7 +1174,7 @@
         {
           "index": 2,
           "text": "llm.query Messages=%refineMessages%, Schema={index: int, actions: [string]}, cache=%!build.cache%, previousConversation=%plan%, write to %correction%",
-          "lineNumber": 50,
+          "lineNumber": 51,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1187,7 +1268,7 @@
         {
           "index": 3,
           "text": "set %planStep.actions% = %correction.actions%",
-          "lineNumber": 51,
+          "lineNumber": 52,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1204,6 +1285,11 @@
                   "name": "Value",
                   "value": "%correction.actions%",
                   "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "object",
+                  "type": "string"
                 }
               ],
               "defaults": [
@@ -1227,7 +1313,7 @@
         {
           "index": 4,
           "text": "set %trace.plan.steps[step.Index].actions% = %correction.actions%",
-          "lineNumber": 52,
+          "lineNumber": 53,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1267,7 +1353,7 @@
         {
           "index": 5,
           "text": "write out \"  Step %step.Index% missing-actions \u2014 expanding set\"",
-          "lineNumber": 53,
+          "lineNumber": 54,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1313,8 +1399,8 @@
       "steps": [
         {
           "index": 0,
-          "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (actions, errors, warnings) for this step only.\"}], type=json",
-          "lineNumber": 60,
+          "text": "set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (formal, actions, errors, warnings) for this step only.\"}], type=json",
+          "lineNumber": 61,
           "indent": 0,
           "comment": "Validator rejected the compiled actions. Re-prompt the LLM with the validator's\ncomplaint, write corrected compileResult, update goal.Steps so the subsequent retry\nof builder.validate sees the corrected actions.",
           "actions": [
@@ -1332,7 +1418,7 @@
                   "value": [
                     {
                       "Role": "user",
-                      "Content": "Your previous response was rejected by the validator: %!error.Message%\\n\\nReturn the corrected response in the same Output Shape (actions, errors, warnings) for this step only."
+                      "Content": "Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, errors, warnings) for this step only."
                     }
                   ],
                   "type": "list`1"
@@ -1363,8 +1449,8 @@
         },
         {
           "index": 1,
-          "text": "llm.query Messages=%fixMessages%, Schema={actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], modifiers?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}]}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%",
-          "lineNumber": 61,
+          "text": "llm.query Messages=%fixMessages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], modifiers?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}]}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%",
+          "lineNumber": 62,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1493,7 +1579,7 @@
         {
           "index": 2,
           "text": "set %goal.Steps[step.Index].Actions% = %compileResult.actions%",
-          "lineNumber": 62,
+          "lineNumber": 63,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1532,8 +1618,53 @@
         },
         {
           "index": 3,
+          "text": "set %goal.Steps[step.Index].Formal% = %compileResult.formal%",
+          "lineNumber": 64,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%goal.Steps[step.Index].Formal%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%compileResult.formal%",
+                  "type": "object"
+                },
+                {
+                  "name": "Type",
+                  "value": "object",
+                  "type": "string"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": null,
+          "source": null,
+          "waitForExecution": true
+        },
+        {
+          "index": 4,
           "text": "write out \"  Step %step.Index% validation error \u2014 retrying: %!error.Message%\"",
-          "lineNumber": 63,
+          "lineNumber": 65,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1564,7 +1695,7 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "baf91bac6c6be8d26f1fb8e189a719c08aca837f599b49847bd8e2aab9f8600e",
+      "hash": "a7c1a0dfefb23680d0103b4aa7bd1feeec845a1b1d5a06234de5e61e2e3f91dc",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
@@ -1580,7 +1711,7 @@
         {
           "index": 0,
           "text": "write out \"  Step %step.Index% build error: %!error.Message%\"",
-          "lineNumber": 67,
+          "lineNumber": 69,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1609,7 +1740,7 @@
         {
           "index": 1,
           "text": "throw %!error%",
-          "lineNumber": 68,
+          "lineNumber": 70,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1621,15 +1752,14 @@
                   "name": "Message",
                   "value": "%!error%",
                   "type": "string"
-                }
-              ],
-              "defaults": [
+                },
                 {
-                  "name": "statuscode",
+                  "name": "StatusCode",
                   "value": 500,
                   "type": "int"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             }
           ],
@@ -1662,7 +1792,7 @@
         {
           "index": 0,
           "text": "if %compileResult.Cached% is true, output.write Data=\"  [\u2261] %step.Text%\",",
-          "lineNumber": 73,
+          "lineNumber": 75,
           "indent": 0,
           "comment": "One line per step. [\u2261] for cache hits, [\u2713] for fresh.",
           "actions": [
@@ -1683,7 +1813,7 @@
                 {
                   "name": "Right",
                   "value": true,
-                  "type": "object"
+                  "type": "bool"
                 }
               ],
               "defaults": [
@@ -1720,7 +1850,7 @@
         {
           "index": 1,
           "text": "if %compileResult.Cached% is not true, output.write Data=\"  [\u2713] %step.Text%\",",
-          "lineNumber": 74,
+          "lineNumber": 76,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1731,7 +1861,7 @@
                 {
                   "name": "Left",
                   "value": "%compileResult.Cached%",
-                  "type": "bool"
+                  "type": "object"
                 },
                 {
                   "name": "Operator",
