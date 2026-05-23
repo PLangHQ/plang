@@ -20,7 +20,7 @@ public partial class Call : IContext
     /// </summary>
     public partial data.@this<actor.@this>? Actor { get; init; }
 
-    public async Task<data.@this<object>> Run()
+    public async Task<data.@this> Run()
     {
         var goalCall = GoalName.Value!;
         // Stamp THIS action as the anchor so GetGoalAsync can navigate step → goal → sub-goals.

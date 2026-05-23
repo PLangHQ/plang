@@ -108,5 +108,5 @@ public partial class query : IContext, IBuildValidatable
     // Polymorphic: response shape depends on Schema (raw string, structured
     // object, tool-call envelope). The provider declares Data<object>; the
     // action forwards cleanly.
-    public async Task<data.@this<object>> Run() => await Llm.Query(this);
+    public async Task<data.@this> Run() => await Llm.Query(this);
 }

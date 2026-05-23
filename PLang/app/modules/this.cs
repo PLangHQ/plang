@@ -381,10 +381,10 @@ public sealed class @this : IAsyncDisposable
     /// </summary>
     /// <summary>
     /// Reads the PLang name of T from <c>Run()</c>'s declared return type
-    /// <c>Task&lt;Data&lt;T&gt;&gt;</c>. Returns null for bare <c>Task&lt;Data&gt;</c> — that's
-    /// the explicit void signal (action has no value to write). For <c>Task&lt;Data&lt;object&gt;&gt;</c>
-    /// (genuinely polymorphic actions like goal.call) returns "data".
-    /// Source of truth = the method signature, never an attribute.
+    /// <c>Task&lt;Data&lt;T&gt;&gt;</c>. Bare <c>Task&lt;Data&gt;</c> renders as <c>data</c>
+    /// — the polymorphic default (everything is a Data, value type unknown statically).
+    /// <c>Task&lt;Data&lt;object&gt;&gt;</c> renders the same — same intent, redundant T.
+    /// Real types surface their PLang name. Source of truth = the method signature.
     /// </summary>
     private string? DescribeReturnTypeName(System.Type actionType)
     {
@@ -395,10 +395,12 @@ public sealed class @this : IAsyncDisposable
         if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
             returnType = returnType.GetGenericArguments()[0];
 
-        // Bare Data — the explicit void form.
-        if (returnType == typeof(data.@this)) return null;
+        // Bare Data → "data" (polymorphic by default). An action that genuinely
+        // never produces a value still returns *some* Data — empty Properties,
+        // null Value — so "data" is honest. Saves declaring Data<object> everywhere.
+        if (returnType == typeof(data.@this)) return "data";
 
-        // Data<T> — surface T's PLang name (with `object` rendered as the universal "data").
+        // Data<T>
         if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(data.@this<>))
         {
             var t = returnType.GetGenericArguments()[0];

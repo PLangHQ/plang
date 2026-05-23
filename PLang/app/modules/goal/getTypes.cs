@@ -35,7 +35,7 @@ public partial class getTypes : IContext
 {
     public partial data.@this<global::app.goals.goal.@this> Goal { get; init; }
 
-    public Task<data.@this<object>> Run()
+    public Task<data.@this> Run()
     {
         var goal = Goal.Value!;
         var modules = Context.App!.Modules;
@@ -62,7 +62,7 @@ public partial class getTypes : IContext
 
         // List indexed by step position — `%variablesByStep[stepResult.index]%` works
         // out of the box without dict-key coercion.
-        return Task.FromResult(global::app.data.@this<object>.Ok(perStep));
+        return Task.FromResult(global::app.data.@this.Ok(perStep));
     }
 
     private static void ProcessAction(

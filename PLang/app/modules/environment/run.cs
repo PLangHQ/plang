@@ -17,7 +17,7 @@ public partial class run : IContext
     public partial data.@this<goals.goal.steps.step.actions.action.@this>? Action { get; init; }
     public partial data.@this<actor.@this>? Actor { get; init; }
 
-    public async Task<data.@this<object>> Run()
+    public async Task<data.@this> Run()
     {
         // Polymorphic: forwarded result type depends on the dispatched target.
         if (GoalName?.Value != null)
