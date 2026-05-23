@@ -118,8 +118,8 @@ public class FilePathVerbTests
         var dir = new FilePath(root, app.User.Context);
         var list = await dir.List();
         await Assert.That(list.Success).IsTrue();
-        var entries = (System.Array)list.Value!;
-        await Assert.That(entries.Length).IsGreaterThanOrEqualTo(2);
+        var entries = list.Value!;
+        await Assert.That(entries.Count).IsGreaterThanOrEqualTo(2);
     }
 
     [Test] public async Task WriteText_CreatesMissingParentDirectory()

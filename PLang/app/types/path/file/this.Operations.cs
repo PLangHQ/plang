@@ -96,16 +96,16 @@ public sealed partial class @this
         }
     }
 
-    public override async Task<data.@this> ReadBytes()
+    public override async Task<data.@this<byte[]>> ReadBytes()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
-        return data.@this.Ok(await System.IO.File.ReadAllBytesAsync(Absolute));
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<byte[]>.From(early);
+        return data.@this<byte[]>.Ok(await System.IO.File.ReadAllBytesAsync(Absolute));
     }
 
-    public override async Task<data.@this> ExistsAsync()
+    public override async Task<data.@this<bool>> ExistsAsync()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
-        return data.@this.Ok(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<bool>.From(early);
+        return data.@this<bool>.Ok(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
     }
 
     /// <summary>
@@ -125,49 +125,49 @@ public sealed partial class @this
     /// List directory entries matching <paramref name="pattern"/>. Returns an
     /// array of FilePaths (Data&lt;Path[]&gt;), each Context-wired.
     /// </summary>
-    public override async Task<data.@this> List(string pattern, bool recursive)
+    public override async Task<data.@this<List<global::app.types.path.@this>>> List(string pattern, bool recursive)
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<List<global::app.types.path.@this>>.From(early);
         if (!System.IO.Directory.Exists(Absolute))
-            return data.@this.FromError(new errors.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
+            return data.@this<List<global::app.types.path.@this>>.FromError(new errors.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
         {
             var option = recursive ? System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly;
             var files = System.IO.Directory.GetFiles(Absolute, pattern, option)
                 .Select(f => (global::app.types.path.@this)new @this(f, Context))
-                .ToArray();
-            return data.@this.Ok(files);
+                .ToList();
+            return data.@this<List<global::app.types.path.@this>>.Ok(files);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this.FromError(new errors.ServiceError(ex.Message, "IOError", 500));
+            return data.@this<List<global::app.types.path.@this>>.FromError(new errors.ServiceError(ex.Message, "IOError", 500));
         }
     }
 
-    public override async Task<data.@this> Stat()
+    public override async Task<data.@this<global::app.types.path.@this.StatInfo>> Stat()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb(Metadata: true) }) is { } early) return early;
+        if (await AuthGate(new Verb { Read = new ReadVerb(Metadata: true) }) is { } early) return data.@this<global::app.types.path.@this.StatInfo>.From(early);
         if (System.IO.File.Exists(Absolute))
         {
             var info = new System.IO.FileInfo(Absolute);
-            return data.@this.Ok(new StatInfo(Exists: true, IsFile: true, Length: info.Length, Modified: info.LastWriteTimeUtc));
+            return data.@this<global::app.types.path.@this.StatInfo>.Ok(new StatInfo(Exists: true, IsFile: true, Length: info.Length, Modified: info.LastWriteTimeUtc));
         }
         if (System.IO.Directory.Exists(Absolute))
         {
             var info = new System.IO.DirectoryInfo(Absolute);
-            return data.@this.Ok(new StatInfo(Exists: true, IsFile: false, Modified: info.LastWriteTimeUtc));
+            return data.@this<global::app.types.path.@this.StatInfo>.Ok(new StatInfo(Exists: true, IsFile: false, Modified: info.LastWriteTimeUtc));
         }
-        return data.@this.Ok(new StatInfo(Exists: false));
+        return data.@this<global::app.types.path.@this.StatInfo>.Ok(new StatInfo(Exists: false));
     }
 
     // --- Writes --------------------------------------------------------------
 
-    public override async Task<data.@this> WriteText(string content)
+    public override async Task<data.@this<global::app.types.path.@this>> WriteText(string content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.WriteAllTextAsync(Absolute, content);
-        return data.@this.Ok();
+        return data.@this<global::app.types.path.@this>.Ok(this);
     }
 
     /// <summary>
@@ -177,9 +177,9 @@ public sealed partial class @this
     /// Data so the .pr's typed slot round-trips. Replaces today's
     /// <c>file/code/Default.cs::Default.Save</c>.
     /// </summary>
-    public override async Task<data.@this> Save(data.@this? value)
+    public override async Task<data.@this<global::app.types.path.@this>> Save(data.@this? value)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
 
         try
         {
@@ -199,35 +199,35 @@ public sealed partial class @this
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this.FromError(new errors.ServiceError(ex.Message, "IOError", 500));
+            return data.@this<global::app.types.path.@this>.FromError(new errors.ServiceError(ex.Message, "IOError", 500));
         }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.NotSupportedException)
         {
-            return data.@this.FromError(new errors.ServiceError(ex.Message, "SerializationError", 500));
+            return data.@this<global::app.types.path.@this>.FromError(new errors.ServiceError(ex.Message, "SerializationError", 500));
         }
     }
 
-    public override async Task<data.@this> WriteBytes(byte[] content)
+    public override async Task<data.@this<global::app.types.path.@this>> WriteBytes(byte[] content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.WriteAllBytesAsync(Absolute, content);
-        return data.@this.Ok();
+        return data.@this<global::app.types.path.@this>.Ok(this);
     }
 
-    public override async Task<data.@this> Append(string content)
+    public override async Task<data.@this<global::app.types.path.@this>> Append(string content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
         EnsureParentDir();
         await System.IO.File.AppendAllTextAsync(Absolute, content);
-        return data.@this.Ok();
+        return data.@this<global::app.types.path.@this>.Ok(this);
     }
 
-    public override async Task<data.@this> Mkdir()
+    public override async Task<data.@this<global::app.types.path.@this>> Mkdir()
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
         System.IO.Directory.CreateDirectory(Absolute);
-        return data.@this.Ok();
+        return data.@this<global::app.types.path.@this>.Ok(this);
     }
 
     // --- Destructive ---------------------------------------------------------
@@ -239,9 +239,9 @@ public sealed partial class @this
     /// set. Returns the resulting Path (post-delete) wrapped in Data so the
     /// caller can read <see cref="Exists"/> on it.
     /// </summary>
-    public override async Task<data.@this> Delete(bool recursive, bool ignoreIfNotFound)
+    public override async Task<data.@this<global::app.types.path.@this>> Delete(bool recursive, bool ignoreIfNotFound)
     {
-        if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return early;
+        if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
         try
         {
             if (System.IO.File.Exists(Absolute))
@@ -249,18 +249,18 @@ public sealed partial class @this
             else if (System.IO.Directory.Exists(Absolute))
             {
                 if (!recursive && System.IO.Directory.GetFileSystemEntries(Absolute).Length > 0)
-                    return data.@this.FromError(new errors.ServiceError(
+                    return data.@this<global::app.types.path.@this>.FromError(new errors.ServiceError(
                         $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
                 System.IO.Directory.Delete(Absolute, recursive);
             }
             else if (!ignoreIfNotFound)
-                return data.@this.FromError(new errors.ServiceError($"Not found: {Raw}", "NotFound", 404));
+                return data.@this<global::app.types.path.@this>.FromError(new errors.ServiceError($"Not found: {Raw}", "NotFound", 404));
 
             return data.@this<global::app.types.path.@this>.Ok(this);
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return data.@this.FromError(new errors.ServiceError(ex.Message, "IOError", 500));
+            return data.@this<global::app.types.path.@this>.FromError(new errors.ServiceError(ex.Message, "IOError", 500));
         }
     }
 
@@ -272,7 +272,7 @@ public sealed partial class @this
     /// option threaded through PerformTransfer. Cross-scheme moves fall
     /// through to the base default (ReadBytes → WriteBytes → Delete).
     /// </summary>
-    public override async Task<data.@this> MoveTo(global::app.types.path.@this destination, bool overwrite)
+    public override async Task<data.@this<global::app.types.path.@this>> MoveTo(global::app.types.path.@this destination, bool overwrite)
     {
         if (destination is not @this fileDest) return await base.MoveTo(destination, overwrite);
         return await BundledTransfer(fileDest, isMove: true, overwrite: overwrite, includeSubfolders: true);
@@ -281,7 +281,7 @@ public sealed partial class @this
     /// <summary>
     /// Same-scheme copy with action-level options. See <see cref="MoveTo(global::app.types.path.@this, bool)"/>.
     /// </summary>
-    public override async Task<data.@this> CopyTo(global::app.types.path.@this destination, bool overwrite, bool includeSubfolders)
+    public override async Task<data.@this<global::app.types.path.@this>> CopyTo(global::app.types.path.@this destination, bool overwrite, bool includeSubfolders)
     {
         if (destination is not @this fileDest) return await base.CopyTo(destination, overwrite, includeSubfolders);
         return await BundledTransfer(fileDest, isMove: false, overwrite: overwrite, includeSubfolders: includeSubfolders);
@@ -318,7 +318,7 @@ public sealed partial class @this
     /// (overwrite=true, includeSubfolders=true) matches the prior
     /// permission-only behavior.
     /// </summary>
-    private async Task<data.@this> BundledTransfer(@this destination, bool isMove, bool overwrite = true, bool includeSubfolders = true)
+    private async Task<data.@this<global::app.types.path.@this>> BundledTransfer(@this destination, bool isMove, bool overwrite = true, bool includeSubfolders = true)
     {
         var sourceVerb = new Verb { Read = new ReadVerb() };
         var destVerb   = new Verb { Write = new WriteVerb() };
@@ -349,8 +349,8 @@ public sealed partial class @this
             };
             var askResult = await Context!.App.RunAction(askAction, Context);
 
-            if (askResult.Type?.ClrType.Exit() == true) return askResult;
-            if (!askResult.Success) return askResult;
+            if (askResult.Type?.ClrType.Exit() == true) return data.@this<global::app.types.path.@this>.From(askResult);
+            if (!askResult.Success) return data.@this<global::app.types.path.@this>.From(askResult);
 
             var answer = askResult.Value?.ToString()?.Trim();
             switch (answer)
@@ -367,7 +367,7 @@ public sealed partial class @this
                     var denied = !sourceOk
                         ? new global::app.errors.PermissionDenied(BuildRequest(Context!.Actor!, sourceVerb))
                         : new global::app.errors.PermissionDenied(BuildRequest(Context!.Actor!, destVerb));
-                    return data.@this.FromError(denied);
+                    return data.@this<global::app.types.path.@this>.FromError(denied);
                 default:
                     prefix = $"Invalid answer '{answer}'. ";
                     continue;
@@ -397,12 +397,12 @@ public sealed partial class @this
     /// Returns the new Path (post-transfer) wrapped in Data, with Source set
     /// to the original Absolute so action-handler consumers can read it.
     /// </summary>
-    private Task<data.@this> PerformTransfer(@this destination, bool isMove, bool overwrite, bool includeSubfolders)
+    private Task<data.@this<global::app.types.path.@this>> PerformTransfer(@this destination, bool isMove, bool overwrite, bool includeSubfolders)
     {
         try
         {
             if (!System.IO.File.Exists(Absolute) && !System.IO.Directory.Exists(Absolute))
-                return Task.FromResult(data.@this.FromError(new errors.ServiceError($"Not found: {Raw}", "NotFound", 404)));
+                return Task.FromResult(data.@this<global::app.types.path.@this>.FromError(new errors.ServiceError($"Not found: {Raw}", "NotFound", 404)));
 
             // Directory transfer ------------------------------------------------
             if (System.IO.Directory.Exists(Absolute))
@@ -416,12 +416,12 @@ public sealed partial class @this
                     if (overwrite && System.IO.Directory.Exists(destination.Absolute))
                         System.IO.Directory.Delete(destination.Absolute, recursive: true);
                     System.IO.Directory.Move(Absolute, destination.Absolute);
-                    return Task.FromResult<global::app.data.@this>(
+                    return Task.FromResult(
                         data.@this<global::app.types.path.@this>.Ok(new @this(destination.Absolute, Context, source: Absolute)));
                 }
 
                 CopyDirectory(Absolute, destination.Absolute, overwrite, includeSubfolders);
-                return Task.FromResult<global::app.data.@this>(
+                return Task.FromResult(
                     data.@this<global::app.types.path.@this>.Ok(new @this(destination.Absolute, Context, source: Absolute)));
             }
 
@@ -434,12 +434,12 @@ public sealed partial class @this
             if (isMove) System.IO.File.Move(Absolute, destPath, overwrite);
             else        System.IO.File.Copy(Absolute, destPath, overwrite);
 
-            return Task.FromResult<global::app.data.@this>(
+            return Task.FromResult(
                 data.@this<global::app.types.path.@this>.Ok(new @this(destPath, Context, source: Absolute)));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
-            return Task.FromResult(data.@this.FromError(new errors.ServiceError(ex.Message, "IOError", 500)));
+            return Task.FromResult(data.@this<global::app.types.path.@this>.FromError(new errors.ServiceError(ex.Message, "IOError", 500)));
         }
     }
 }

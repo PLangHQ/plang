@@ -1119,8 +1119,8 @@ public class @this<T> : @this
     ///
     /// Preserves all wrapper state: Value (cast to T?), Type, Error, Handled,
     /// Returned, ReturnDepth, Warnings, Signature, Properties (shared ref —
-    /// forwarded metadata, not deep-cloned). If the source already is a
-    /// <see cref="@this{T}"/>, returns it unchanged.
+    /// forwarded metadata, not deep-cloned), Snapshot. If the source already
+    /// is a <see cref="@this{T}"/>, returns it unchanged.
     /// </summary>
     public static @this<T> From(@this source)
     {
@@ -1134,6 +1134,7 @@ public class @this<T> : @this
             Warnings = source.Warnings != null ? new List<Info>(source.Warnings) : null,
             Signature = source.Signature,
             Properties = source.Properties,
+            Snapshot = source.Snapshot,
         };
         return copy;
     }

@@ -21,8 +21,8 @@ public partial class Copy : IContext
     {
         // Failed scheme resolution (e.g. unregistered s3://) surfaces the typed
         // SchemeNotRegistered error instead of an NRE on .Value. (codeanalyzer v1 F4)
-        if (!Source.Success) return global::app.data.@this<path>.From(Source);
-        if (!Destination.Success) return global::app.data.@this<path>.From(Destination);
-        return global::app.data.@this<path>.From(await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value));
+        if (!Source.Success) return data.@this<path>.From(Source);
+        if (!Destination.Success) return data.@this<path>.From(Destination);
+        return await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
     }
 }

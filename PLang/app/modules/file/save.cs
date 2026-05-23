@@ -12,7 +12,7 @@ public partial class Save : IContext
 
     public async Task<data.@this<path>> Run()
     {
-        if (!Path.Success) return global::app.data.@this<path>.From(Path);   // codeanalyzer v1 F4 — typed scheme error, not an NRE
-        return global::app.data.@this<path>.From(await Path.Value!.Save(Value));
+        if (!Path.Success) return data.@this<path>.From(Path);   // codeanalyzer v1 F4 — typed scheme error, not an NRE
+        return await Path.Value!.Save(Value);
     }
 }

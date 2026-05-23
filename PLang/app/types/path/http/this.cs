@@ -128,15 +128,15 @@ public sealed class @this : global::app.types.path.@this
         return await Send(HttpMethod.Get, content: null, readBody: true);
     }
 
-    public override async Task<data.@this> ReadBytes()
+    public override async Task<data.@this<byte[]>> ReadBytes()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
-        return await Send(HttpMethod.Get, content: null, readBody: true, asBytes: true);
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<byte[]>.From(early);
+        return data.@this<byte[]>.From(await Send(HttpMethod.Get, content: null, readBody: true, asBytes: true));
     }
 
-    public override async Task<data.@this> ExistsAsync()
+    public override async Task<data.@this<bool>> ExistsAsync()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<bool>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
@@ -144,14 +144,14 @@ public sealed class @this : global::app.types.path.@this
             using var resp = await _client.SendAsync(req);
             // Exists answers a question — 2xx → true, 4xx → false, both Success.
             if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 300)
-                return data.@this.Ok(true);
+                return data.@this<bool>.Ok(true);
             if ((int)resp.StatusCode >= 400 && (int)resp.StatusCode < 500)
-                return data.@this.Ok(false);
-            return data.@this.FromError(MapStatus(resp.StatusCode));
+                return data.@this<bool>.Ok(false);
+            return data.@this<bool>.FromError(MapStatus(resp.StatusCode));
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return data.@this.FromError(NetworkError(ex));
+            return data.@this<bool>.FromError(NetworkError(ex));
         }
     }
 
@@ -162,10 +162,10 @@ public sealed class @this : global::app.types.path.@this
     /// surface is consistent with every other HttpPath verb.
     /// (codeanalyzer v1 F1, F8)
     /// </summary>
-    public override async Task<data.@this> List(string pattern, bool recursive)
+    public override async Task<data.@this<List<global::app.types.path.@this>>> List(string pattern, bool recursive)
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
-        return data.@this.FromError(new Error(
+        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<List<global::app.types.path.@this>>.From(early);
+        return data.@this<List<global::app.types.path.@this>>.FromError(new Error(
             "HTTP scheme does not support directory listing.", "NotSupported", 400));
     }
 
@@ -180,9 +180,9 @@ public sealed class @this : global::app.types.path.@this
         return existsResult.Success && existsResult.Value is true;
     }
 
-    public override async Task<data.@this> Stat()
+    public override async Task<data.@this<global::app.types.path.@this.StatInfo>> Stat()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb(Metadata: true) }) is { } early) return early;
+        if (await AuthGate(new Verb { Read = new ReadVerb(Metadata: true) }) is { } early) return data.@this<global::app.types.path.@this.StatInfo>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
@@ -191,10 +191,10 @@ public sealed class @this : global::app.types.path.@this
             if (!resp.IsSuccessStatusCode)
             {
                 if ((int)resp.StatusCode == 404)
-                    return data.@this.Ok(new StatInfo(Exists: false));
-                return data.@this.FromError(MapStatus(resp.StatusCode));
+                    return data.@this<global::app.types.path.@this.StatInfo>.Ok(new StatInfo(Exists: false));
+                return data.@this<global::app.types.path.@this.StatInfo>.FromError(MapStatus(resp.StatusCode));
             }
-            return data.@this.Ok(new StatInfo(
+            return data.@this<global::app.types.path.@this.StatInfo>.Ok(new StatInfo(
                 Exists: true,
                 IsFile: true,
                 Length: resp.Content.Headers.ContentLength,
@@ -202,40 +202,43 @@ public sealed class @this : global::app.types.path.@this
         }
         catch (System.Exception ex) when (IsNetworkError(ex))
         {
-            return data.@this.FromError(NetworkError(ex));
+            return data.@this<global::app.types.path.@this.StatInfo>.FromError(NetworkError(ex));
         }
     }
 
     // --- Writes --------------------------------------------------------------
 
-    public override async Task<data.@this> WriteText(string content)
+    public override async Task<data.@this<global::app.types.path.@this>> WriteText(string content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
-        return await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false);
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false);
+        return sent.Success ? data.@this<global::app.types.path.@this>.Ok(this) : data.@this<global::app.types.path.@this>.From(sent);
     }
 
-    public override async Task<data.@this> WriteBytes(byte[] content)
+    public override async Task<data.@this<global::app.types.path.@this>> WriteBytes(byte[] content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
-        return await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false);
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false);
+        return sent.Success ? data.@this<global::app.types.path.@this>.Ok(this) : data.@this<global::app.types.path.@this>.From(sent);
     }
 
     /// <summary>HTTP append maps onto a second POST — servers that support
     /// appending interpret it; others overwrite or 405. "Let the server respond."</summary>
-    public override async Task<data.@this> Append(string content)
+    public override async Task<data.@this<global::app.types.path.@this>> Append(string content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
-        return await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false);
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false);
+        return sent.Success ? data.@this<global::app.types.path.@this>.Ok(this) : data.@this<global::app.types.path.@this>.From(sent);
     }
 
     /// <summary>
     /// HTTP has no mkdir — Fail, routed through <see cref="@this.AuthGate"/>
     /// first for verb-surface consistency. (codeanalyzer v1 F8)
     /// </summary>
-    public override async Task<data.@this> Mkdir()
+    public override async Task<data.@this<global::app.types.path.@this>> Mkdir()
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return early;
-        return data.@this.FromError(new Error(
+        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        return data.@this<global::app.types.path.@this>.FromError(new Error(
             "HTTP scheme does not support directory creation.", "NotSupported", 400));
     }
 
@@ -244,7 +247,7 @@ public sealed class @this : global::app.types.path.@this
     /// everything else POSTs as text. Authorization happens inside
     /// WriteBytes/WriteText. (codeanalyzer v1 F1)
     /// </summary>
-    public override async Task<data.@this> Save(data.@this? value)
+    public override async Task<data.@this<global::app.types.path.@this>> Save(data.@this? value)
     {
         var raw = value?.Value;
         if (raw is byte[] bytes) return await WriteBytes(bytes);
@@ -257,10 +260,11 @@ public sealed class @this : global::app.types.path.@this
     /// HTTP DELETE. <paramref name="recursive"/> / <paramref name="ignoreIfNotFound"/>
     /// are filesystem-only — no-ops here; the server decides. (codeanalyzer v1 F1)
     /// </summary>
-    public override async Task<data.@this> Delete(bool recursive, bool ignoreIfNotFound)
+    public override async Task<data.@this<global::app.types.path.@this>> Delete(bool recursive, bool ignoreIfNotFound)
     {
-        if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return early;
-        return await Send(HttpMethod.Delete, content: null, readBody: false);
+        if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Delete, content: null, readBody: false);
+        return sent.Success ? data.@this<global::app.types.path.@this>.Ok(this) : data.@this<global::app.types.path.@this>.From(sent);
     }
 
     // --- HTTP plumbing -------------------------------------------------------

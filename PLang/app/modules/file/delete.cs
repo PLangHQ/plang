@@ -15,7 +15,7 @@ public partial class Delete : IContext
     [Default(false)]
     public partial data.@this<bool> Recursive { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<path>> Run()
     {
         if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
         return await Path.Value!.Delete(Recursive.Value, IgnoreIfNotFound.Value);

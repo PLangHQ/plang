@@ -91,8 +91,8 @@ public class Default : IBuilder
         if (!listResult.Success)
             return listResult;
 
-        var files = listResult.Value as path[];
-        if (files == null || files.Length == 0)
+        var files = listResult.Value as List<path>;
+        if (files == null || files.Count == 0)
             return data.@this.Ok(new List<Goal>());
 
         // Filter by app.Builder.Files if set (--build={"files":[...]})
@@ -132,8 +132,8 @@ public class Default : IBuilder
                     if (seen.Add(f.Absolute)) ordered.Add(f);
                 }
             }
-            files = ordered.ToArray();
-            if (files.Length == 0)
+            files = ordered;
+            if (files.Count == 0)
                 return data.@this.Ok(new List<Goal>());
         }
 
