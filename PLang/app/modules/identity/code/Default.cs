@@ -12,7 +12,8 @@ namespace app.modules.identity.code;
 /// <summary>
 /// Default identity provider backed by System DataSource (SQLite).
 /// All methods take the action and navigate to app/context/datasource.
-/// Identity is a plain class — all results are wrapped in data.@this.
+/// Identity is a plain class — all results are wrapped in data.@this&lt;Identity&gt;
+/// (list results in data.@this&lt;List&lt;Identity&gt;&gt;).
 /// </summary>
 public sealed class Default : IIdentity
 {
@@ -23,34 +24,34 @@ public sealed class Default : IIdentity
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public async Task<data.@this> GetAsync(Get action)
+    public async Task<data.@this<Identity>> GetAsync(Get action)
     {
         var result = await ResolveIdentityAsync(action, action.Name?.Value);
         if (!result.Success) return result;
 
         // Refresh cached %MyIdentity% when resolving the default
         if (action.Name?.Value == null)
-            action.Context.App.System.Identity = (Identity)result.Value!;
+            action.Context.App.System.Identity = result.Value!;
 
         return result;
     }
 
-    public async Task<data.@this> CreateAsync(Create action)
+    public async Task<data.@this<Identity>> CreateAsync(Create action)
     {
         var app = action.Context.App;
 
         if (string.IsNullOrWhiteSpace(action.Name.Value))
-            return global::app.data.@this.FromError(new ActionError("Identity name cannot be empty", "ValidationError", 400));
+            return data.@this<Identity>.FromError(new ActionError("Identity name cannot be empty", "ValidationError", 400));
 
         var all = await LoadAllAsync(action);
-        if (!all.Success) return all;
-        var items = (List<Identity>)all.Value!;
+        if (!all.Success) return data.@this<Identity>.From(all);
+        var items = all.Value!;
         if (items.Exists(i => string.Equals(i.Name, action.Name.Value, StringComparison.OrdinalIgnoreCase)))
-            return global::app.data.@this.FromError(new ActionError($"Identity '{action.Name.Value}' already exists", "DuplicateName", 409));
+            return data.@this<Identity>.FromError(new ActionError($"Identity '{action.Name.Value}' already exists", "DuplicateName", 409));
 
         var genResult = GenerateIdentity(action, action.Name.Value!, action.SetAsDefault.Value, action.Provider?.Value);
         if (!genResult.Success) return genResult;
-        var identity = (Identity)genResult.Value!;
+        var identity = genResult.Value!;
 
         if (action.SetAsDefault.Value)
         {
@@ -58,130 +59,129 @@ public sealed class Default : IIdentity
             {
                 existing.IsDefault = false;
                 var saveResult = await SaveAsync(action, existing);
-                if (!saveResult.Success) return saveResult;
+                if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
             }
         }
 
         var result = await SaveAsync(action, identity);
-        if (!result.Success) return result;
+        if (!result.Success) return data.@this<Identity>.From(result);
 
         if (action.SetAsDefault.Value)
             app.System.Identity = identity;
 
-        return global::app.data.@this.Ok(identity);
+        return data.@this<Identity>.Ok(identity);
     }
 
-    public async Task<data.@this> ArchiveAsync(Archive action)
+    public async Task<data.@this<Identity>> ArchiveAsync(Archive action)
     {
         var loadResult = await LoadAsync(action, action.Name.Value!);
         if (!loadResult.Success) return loadResult;
-        var identity = (Identity)loadResult.Value!;
+        var identity = loadResult.Value!;
 
         if (identity.IsDefault && !action.Force.Value)
-            return global::app.data.@this.FromError(new ActionError(
+            return data.@this<Identity>.FromError(new ActionError(
                 "Cannot archive the default identity. Set a different default first, or use force.",
                 "CannotArchiveDefault", 400));
 
         if (identity.IsArchived)
-            return global::app.data.@this.Ok(identity);
+            return data.@this<Identity>.Ok(identity);
 
         identity.IsArchived = true;
         var saveResult = await SaveAsync(action, identity);
-        if (!saveResult.Success) return saveResult;
-        return global::app.data.@this.Ok(identity);
+        if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
+        return data.@this<Identity>.Ok(identity);
     }
 
-    public async Task<data.@this> UnarchiveAsync(Unarchive action)
+    public async Task<data.@this<Identity>> UnarchiveAsync(Unarchive action)
     {
         var loadResult = await LoadAsync(action, action.Name.Value!);
         if (!loadResult.Success) return loadResult;
-        var identity = (Identity)loadResult.Value!;
+        var identity = loadResult.Value!;
 
         if (!identity.IsArchived)
-            return global::app.data.@this.Ok(identity);
+            return data.@this<Identity>.Ok(identity);
 
         identity.IsArchived = false;
         var saveResult = await SaveAsync(action, identity);
-        if (!saveResult.Success) return saveResult;
-        return global::app.data.@this.Ok(identity);
+        if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
+        return data.@this<Identity>.Ok(identity);
     }
 
-    public async Task<data.@this> SetDefaultAsync(SetDefault action)
+    public async Task<data.@this<Identity>> SetDefaultAsync(SetDefault action)
     {
         var app = action.Context.App;
         var all = await LoadAllAsync(action);
-        if (!all.Success) return all;
-        var items = (List<Identity>)all.Value!;
+        if (!all.Success) return data.@this<Identity>.From(all);
+        var items = all.Value!;
 
         var target = items.Find(i => string.Equals(i.Name, action.Name.Value, StringComparison.OrdinalIgnoreCase));
         if (target == null)
-            return global::app.data.@this.FromError(new ActionError($"Identity '{action.Name.Value}' not found", "NotFound", 404));
+            return data.@this<Identity>.FromError(new ActionError($"Identity '{action.Name.Value}' not found", "NotFound", 404));
 
         if (target.IsArchived)
-            return global::app.data.@this.FromError(new ActionError($"Cannot set archived identity '{action.Name.Value}' as default", "ArchivedIdentity", 400));
+            return data.@this<Identity>.FromError(new ActionError($"Cannot set archived identity '{action.Name.Value}' as default", "ArchivedIdentity", 400));
 
         if (target.IsDefault)
-            return global::app.data.@this.Ok(target);
+            return data.@this<Identity>.Ok(target);
 
         foreach (var identity in items.Where(i => i.IsDefault))
         {
             identity.IsDefault = false;
             var result = await SaveAsync(action, identity);
-            if (!result.Success) return result;
+            if (!result.Success) return data.@this<Identity>.From(result);
         }
 
         target.IsDefault = true;
         var saveResult = await SaveAsync(action, target);
-        if (!saveResult.Success) return saveResult;
+        if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
 
         app.System.Identity = target;
-        return global::app.data.@this.Ok(target);
+        return data.@this<Identity>.Ok(target);
     }
 
-    public async Task<data.@this> RenameAsync(Rename action)
+    public async Task<data.@this<Identity>> RenameAsync(Rename action)
     {
         var app = action.Context.App;
 
         if (string.IsNullOrWhiteSpace(action.NewName.Value))
-            return global::app.data.@this.FromError(new ActionError("New name cannot be empty", "ValidationError", 400));
+            return data.@this<Identity>.FromError(new ActionError("New name cannot be empty", "ValidationError", 400));
 
         var loadResult = await LoadAsync(action, action.Name.Value!);
         if (!loadResult.Success) return loadResult;
-        var identity = (Identity)loadResult.Value!;
+        var identity = loadResult.Value!;
 
         var all = await LoadAllAsync(action);
-        if (!all.Success) return all;
-        var items = (List<Identity>)all.Value!;
+        if (!all.Success) return data.@this<Identity>.From(all);
+        var items = all.Value!;
         if (items.Exists(i => string.Equals(i.Name, action.NewName.Value, StringComparison.OrdinalIgnoreCase)))
-            return global::app.data.@this.FromError(new ActionError($"Identity '{action.NewName.Value}' already exists", "DuplicateName", 409));
+            return data.@this<Identity>.FromError(new ActionError($"Identity '{action.NewName.Value}' already exists", "DuplicateName", 409));
 
         // Save with new name first, then remove old — no data loss on failure
         var oldName = identity.Name;
         identity.Name = action.NewName.Value!;
         var saveResult = await SaveAsync(action, identity);
-        if (!saveResult.Success) return saveResult;
+        if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
 
         identity.Name = oldName;
         var removeResult = await RemoveAsync(action, identity);
         identity.Name = action.NewName.Value!;
-        if (!removeResult.Success) return removeResult;
+        if (!removeResult.Success) return data.@this<Identity>.From(removeResult);
 
         if (identity.IsDefault)
             app.System.Identity = identity;
 
-        return global::app.data.@this.Ok(identity);
+        return data.@this<Identity>.Ok(identity);
     }
 
-    public async Task<data.@this> ListAsync(list action)
+    public async Task<data.@this<List<Identity>>> ListAsync(list action)
     {
         var all = await LoadAllAsync(action);
         if (!all.Success) return all;
-        var items = (List<Identity>)all.Value!;
-        var active = items.Where(i => !i.IsArchived).ToList();
-        return global::app.data.@this.Ok(active);
+        var active = all.Value!.Where(i => !i.IsArchived).ToList();
+        return data.@this<List<Identity>>.Ok(active);
     }
 
-    public async Task<data.@this> ExportAsync(Export action)
+    public async Task<data.@this<Identity>> ExportAsync(Export action)
     {
         return await ResolveIdentityAsync(action, action.Name?.Value);
     }
@@ -191,7 +191,7 @@ public sealed class Default : IIdentity
     /// <summary>
     /// Resolves an identity by name, or gets/creates the default if name is null.
     /// </summary>
-    private async Task<data.@this> ResolveIdentityAsync(IContext action, string? name)
+    private async Task<data.@this<Identity>> ResolveIdentityAsync(IContext action, string? name)
     {
         if (name != null)
             return await LoadAsync(action, name);
@@ -202,30 +202,30 @@ public sealed class Default : IIdentity
     // --- Persistence helpers ---
 
     /// <summary>Loads a single identity by name from the settings store.</summary>
-    internal async Task<data.@this> LoadAsync(IContext action, string name)
+    internal async Task<data.@this<Identity>> LoadAsync(IContext action, string name)
     {
         var store = action.Context.App.SettingsStore;
         var result = await store.Get(Table, name);
 
         if (!result.Success)
-            return result;
+            return data.@this<Identity>.From(result);
 
         if (result.Value == null)
-            return global::app.data.@this.FromError(new ActionError($"Identity '{name}' not found", "NotFound", 404));
+            return data.@this<Identity>.FromError(new ActionError($"Identity '{name}' not found", "NotFound", 404));
 
         var identity = ConvertToIdentity(result.Value);
         if (identity == null)
-            return global::app.data.@this.FromError(new ActionError($"Failed to deserialize identity '{name}'", "DeserializationError", 500));
+            return data.@this<Identity>.FromError(new ActionError($"Failed to deserialize identity '{name}'", "DeserializationError", 500));
 
-        return global::app.data.@this.Ok(identity);
+        return data.@this<Identity>.Ok(identity);
     }
 
     /// <summary>Loads all identities (including archived) from the settings store.</summary>
-    internal async Task<data.@this> LoadAllAsync(IContext action)
+    internal async Task<data.@this<List<Identity>>> LoadAllAsync(IContext action)
     {
         var store = action.Context.App.SettingsStore;
         var result = await store.GetAll(Table);
-        if (!result.Success) return result;
+        if (!result.Success) return data.@this<List<Identity>>.From(result);
 
         var identities = new List<Identity>();
         if (result.Value is List<data.@this> dataList)
@@ -237,20 +237,20 @@ public sealed class Default : IIdentity
                     identities.Add(identity);
             }
         }
-        return global::app.data.@this.Ok(identities);
+        return data.@this<List<Identity>>.Ok(identities);
     }
 
     /// <summary>
     /// Gets the default non-archived identity, or auto-creates one if none exist.
     /// </summary>
-    public async Task<data.@this> GetOrCreateDefaultAsync(IContext action)
+    public async Task<data.@this<Identity>> GetOrCreateDefaultAsync(IContext action)
     {
         var all = await LoadAllAsync(action);
-        if (!all.Success) return all;
-        var items = (List<Identity>)all.Value!;
+        if (!all.Success) return data.@this<Identity>.From(all);
+        var items = all.Value!;
 
         var def = items.Find(i => i.IsDefault && !i.IsArchived);
-        if (def != null) return global::app.data.@this.Ok(def);
+        if (def != null) return data.@this<Identity>.Ok(def);
 
         // Promote an existing non-archived identity
         var candidate = items.Find(i => !i.IsArchived);
@@ -258,20 +258,21 @@ public sealed class Default : IIdentity
         {
             candidate.IsDefault = true;
             var saveResult = await SaveAsync(action, candidate);
-            if (!saveResult.Success) return saveResult;
-            return global::app.data.@this.Ok(candidate);
+            if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
+            return data.@this<Identity>.Ok(candidate);
         }
 
         // No identities at all — auto-create
         var genResult = GenerateIdentity(action, "default", true);
         if (!genResult.Success) return genResult;
-        var identity = (Identity)genResult.Value!;
+        var identity = genResult.Value!;
         var result = await SaveAsync(action, identity);
-        if (!result.Success) return result;
-        return global::app.data.@this.Ok(identity);
+        if (!result.Success) return data.@this<Identity>.From(result);
+        return data.@this<Identity>.Ok(identity);
     }
 
-    /// <summary>Persists an identity to the settings store.</summary>
+    /// <summary>Persists an identity to the settings store. Bare Data — the
+    /// store decides the success shape; callers only check .Success / .Error.</summary>
     private async Task<data.@this> SaveAsync(IContext action, Identity identity)
     {
         var store = action.Context.App.SettingsStore;
@@ -279,7 +280,7 @@ public sealed class Default : IIdentity
         return await store.Set(Table, identity.Name, data);
     }
 
-    /// <summary>Removes an identity from store.</summary>
+    /// <summary>Removes an identity from store. Bare — same as SaveAsync.</summary>
     private async Task<data.@this> RemoveAsync(IContext action, Identity identity)
     {
         var store = action.Context.App.SettingsStore;
@@ -289,18 +290,17 @@ public sealed class Default : IIdentity
     /// <summary>
     /// Generates a new identity with keys from the configured key provider.
     /// Owns the full sequence: resolve provider -> generate keys -> build Identity.
-    /// Returns data.@this with Identity as value on success.
     /// </summary>
-    private data.@this GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
+    private data.@this<Identity> GenerateIdentity(IContext action, string name, bool isDefault, string? providerName = null)
     {
         var app = action.Context.App;
         var keyResult = app.Code.Get<IKey>(providerName);
         if (!keyResult.Success)
-            return global::app.data.@this.FromError(keyResult.Error!);
+            return data.@this<Identity>.FromError(keyResult.Error!);
 
         var keysResult = keyResult.Value!.GenerateKeyPair();
         if (!keysResult.Success)
-            return global::app.data.@this.FromError(keysResult.Error!);
+            return data.@this<Identity>.FromError(keysResult.Error!);
 
         var now = (DateTimeOffset)action.Context.Variables.GetValue("NowUtc")!;
 
@@ -312,7 +312,7 @@ public sealed class Default : IIdentity
             IsArchived = false,
             Created = now
         };
-        return global::app.data.@this.Ok(identity);
+        return data.@this<Identity>.Ok(identity);
     }
 
     /// <summary>

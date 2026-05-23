@@ -49,13 +49,13 @@ public interface IStore : IDisposable
     /// Checks if a key exists in a table.
     /// Returns Data with bool value.
     /// </summary>
-    Task<data.@this> Exists(string table, string key);
+    Task<data.@this<bool>> Exists(string table, string key);
 
     /// <summary>
     /// Lists all tables in this store.
     /// Returns Data with List&lt;string&gt; value.
     /// </summary>
-    Task<data.@this> Tables();
+    Task<data.@this<List<string>>> Tables();
 
     /// <summary>
     /// Resolves the table name from a System.Type.

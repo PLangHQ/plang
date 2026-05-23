@@ -18,5 +18,5 @@ public partial class Rename : IContext
     [Code]
     public partial IIdentity Identity { get; }
 
-    public async Task<data.@this> Run() => await Identity.RenameAsync(this);
+    public async Task<data.@this<Identity>> Run() => await Identity.RenameAsync(this);
 }
