@@ -314,6 +314,7 @@ public sealed class @this : IAsyncDisposable
                 }
 
                 var returnType = DescribeReturnType(parameterType);
+                var returnTypeName = DescribeReturnTypeName(parameterType);
 
                 // Action-level description from [System.ComponentModel.Description]
                 var descAttr = parameterType.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>();
@@ -347,6 +348,7 @@ public sealed class @this : IAsyncDisposable
                     Cacheable = cacheable,
                     Examples = examples,
                     ReturnType = returnType,
+                    ReturnTypeName = returnTypeName,
                     Description = actionDescription,
                     ModuleDescription = moduleDescription,
                     IsModifier = isModifier
@@ -377,6 +379,37 @@ public sealed class @this : IAsyncDisposable
     /// Reads the Run() method's return type. If it returns a concrete Data subtype,
     /// reflects its public properties for the builder summary. Returns null for plain Data.
     /// </summary>
+    /// <summary>
+    /// Reads the PLang name of T from <c>Run()</c>'s declared return type
+    /// <c>Task&lt;Data&lt;T&gt;&gt;</c>. Returns null for bare <c>Task&lt;Data&gt;</c> — that's
+    /// the explicit void signal (action has no value to write). For <c>Task&lt;Data&lt;object&gt;&gt;</c>
+    /// (genuinely polymorphic actions like goal.call) returns "data".
+    /// Source of truth = the method signature, never an attribute.
+    /// </summary>
+    private string? DescribeReturnTypeName(System.Type actionType)
+    {
+        var runMethod = actionType.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);
+        if (runMethod == null) return null;
+
+        var returnType = runMethod.ReturnType;
+        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+            returnType = returnType.GetGenericArguments()[0];
+
+        // Bare Data — the explicit void form.
+        if (returnType == typeof(data.@this)) return null;
+
+        // Data<T> — surface T's PLang name (with `object` rendered as the universal "data").
+        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(data.@this<>))
+        {
+            var t = returnType.GetGenericArguments()[0];
+            if (t == typeof(object)) return "data";
+            return App?.Types.GetTypeName(t) ?? global::app.types.@this.GetTypeNameStatic(t);
+        }
+
+        // Something else — not a Data variant; surface nothing.
+        return null;
+    }
+
     private List<data.@this>? DescribeReturnType(System.Type actionType)
     {
         var runMethod = actionType.GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes);

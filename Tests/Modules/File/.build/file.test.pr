@@ -69,7 +69,7 @@
             {
               "name": "Name",
               "value": "%content%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -77,7 +77,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -108,7 +114,7 @@
             {
               "name": "Actual",
               "value": "%content%",
-              "type": "object"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -150,15 +156,21 @@
             {
               "name": "Name",
               "value": "%info%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "path"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -172,14 +184,14 @@
     },
     {
       "index": 4,
-      "text": "assert %info% is not null",
+      "text": "assert %info% is true",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "isNotNull",
+          "action": "isTrue",
           "parameters": [
             {
               "name": "Value",
@@ -275,7 +287,7 @@
             {
               "name": "Name",
               "value": "%copied%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -283,7 +295,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -308,12 +326,12 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "hello world",
-              "type": "string"
+              "value": "%copied%",
+              "type": "object"
             },
             {
               "name": "Actual",
-              "value": "%copied%",
+              "value": "hello world",
               "type": "object"
             }
           ],
@@ -400,7 +418,7 @@
             {
               "name": "Name",
               "value": "%moved%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -408,7 +426,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -434,12 +458,17 @@
             {
               "name": "Expected",
               "value": "hello world",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%moved%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "equals \u0022hello world\u0022",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -491,7 +520,7 @@
             {
               "name": "Name",
               "value": "%files%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -499,7 +528,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -623,8 +658,8 @@
   "visibility": 1,
   "path": "/Modules/File/File.test.goal",
   "prPath": "/Modules/File/.build/file.test.pr",
-  "hash": "10dc1d6f914c66e6f522885478af03e53d89874069e7d0eebe8434a8c04aefcc",
-  "builderVersion": "0.2.2",
+  "hash": "76c55dcdf79afa056896b69c63e8f68404ff25ce8c28b24abbee504f25103c45",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

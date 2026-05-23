@@ -10,7 +10,7 @@ Notation: `?` = optional, `=val` = default, `%var%` = runtime variable reference
 ## {{ mod }}{% if first.ModuleDescription %} — {{ first.ModuleDescription }}{% endif %}
 
 {% for a in non_mod %}{% if a.Description %}/ {{ a.Description }}
-{% endif %}- {{ a.Module }}.{{ a.ActionName }}{% if a.Parameters.size > 0 %} {% for p in a.Parameters %}{{ p.Name }}([{{ p.Value }}]){% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% if a.Examples.size > 0 %}{% for ex in a.Examples %}
+{% endif %}- {{ a.Module }}.{{ a.ActionName }}{% if a.Parameters.size > 0 %} {% for p in a.Parameters %}{{ p.Name }}([{{ p.Value }}]){% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% if a.ReturnTypeName %} → returns {{ a.ReturnTypeName }}{% endif %}{% if a.Examples.size > 0 %}{% for ex in a.Examples %}
   e.g. `{{ ex.Name }}` → {{ ex.Value }}{% endfor %}{% endif %}
 
 {% endfor %}{% endif %}{% endfor %}

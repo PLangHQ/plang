@@ -15,7 +15,7 @@ namespace app.modules.file;
 /// </summary>
 [System.ComponentModel.Description("Check whether a file or directory exists at Path and return file info")]
 [Example("check if file.txt exists, write to %fileInfo%",
-    "file.exists Path([path] file.txt) | variable.set Name([string] %fileInfo%), Value([object] %!data%)")]
+    "file.exists Path([path] file.txt) | variable.set Name([variable] %fileInfo%), Value([path] %!data%)")]
 [Action("exists")]
 public partial class Exists : IContext
 {
@@ -24,5 +24,9 @@ public partial class Exists : IContext
     // Returns Path directly — a failed scheme resolution (unregistered s3://)
     // is itself a non-Success Data, so the typed SchemeNotRegistered error
     // propagates instead of an NRE. (codeanalyzer v1 F4)
-    public Task<data.@this> Run() => Task.FromResult<data.@this>(Path);
+    //
+    // Run returns Task<Data<path>> — method-signature-as-truth so the catalog
+    // surfaces `→ returns path` and the compile LLM picks the right Type for
+    // any trailing `variable.set` after a `write to %x%` (typed-returns work).
+    public Task<data.@this<path>> Run() => Task.FromResult(Path);
 }
