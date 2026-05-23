@@ -197,7 +197,7 @@
         },
         {
           "index": 2,
-          "text": "builder.types, write to %typeInfo%",
+          "text": "- builder.types actions=%planStep.actions%, write to %typeInfo%",
           "lineNumber": 17,
           "indent": 0,
           "comment": null,
@@ -205,7 +205,13 @@
             {
               "module": "builder",
               "action": "types",
-              "parameters": [],
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": "%planStep.actions%",
+                  "type": "list<string>"
+                }
+              ],
               "defaults": null,
               "modifiers": []
             },

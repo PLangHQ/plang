@@ -1,3 +1,10 @@
+## Type Information
+
+Primitive types: {{ typeInfo.TypeNames }}
+{% if typeInfo.TypeSchemas != "" %}
+Catalog types referenced by this step's actions:
+{{ typeInfo.TypeSchemas }}{% endif %}
+
 ## Action Detail
 
 {{ actionDetails }}

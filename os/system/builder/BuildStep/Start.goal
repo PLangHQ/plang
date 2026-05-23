@@ -14,7 +14,7 @@ Compile
 / "preventing self-rebuild corruption" for the rationale.
 - builder.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%
 - builder.actions actions=%planStep.actions%, write to %actions%
-- builder.types, write to %typeInfo%
+- builder.types actions=%planStep.actions%, write to %typeInfo%
 / %varTypes% is computed once per goal in BuildGoal/Start; index by this step.
 - set %stepVarTypes% = %varTypes[step.Index]%
 - render template "/system/builder/templates/v2/stepForLlm.template", write to %stepForLlm%

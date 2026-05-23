@@ -2,16 +2,9 @@
 
 You are the PLang compiler. The planner has identified the **set of actions** the step uses; you decide the chain order, modifier nesting, and recovery placement — using each action's authored examples as the source of truth for chain shape. Then you fill parameter values from the step text.
 
-## Type Information
+## Action Detail and Type Information location
 
-Primitive types: {{ typeInfo.TypeNames }}
-
-Types referenced by the actions:
-{{ typeInfo.TypeSchemas }}
-
-## Action Detail location
-
-The per-step Action Detail (schema + Examples for the planner's picked actions) and Group Context are included in the **user message** below, not here. This keeps the system prompt identical across compile calls so provider-side prompt caching is effective.
+The per-step Action Detail (parameter schemas + Examples for the planner's picked actions) and the per-step Type Information (primitive types + the catalog entries those actions reference) are included in the **user message** below, not here. This keeps the system prompt stable across compile calls so provider-side prompt caching is effective; only the step-specific details vary per call.
 
 ## Input
 

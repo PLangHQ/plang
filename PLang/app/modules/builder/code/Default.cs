@@ -49,7 +49,77 @@ public class Default : IBuilder
         // discovered record/enum entries. It pre-renders TypeNames/TypeSchemas for
         // the Liquid template, and keeps Types/PrimitiveNames for introspection
         // (JSON, UI, trace viewer).
-        return data.@this.Ok(action.Context.App.Modules.Schema.Build());
+        var modules = action.Context.App.Modules;
+        var schema = modules.Schema.Build();
+
+        // Optional Actions filter: restrict the Types list to entries actually
+        // referenced by the named module.action set. Primitive types and the
+        // entries renderer (TypeSchemas/TypeNames) all stay intact. Empty/null
+        // filter → full catalog (back-compat).
+        var filter = action.Actions?.Value;
+        if (filter is { Count: > 0 })
+        {
+            var allTypeNames = new HashSet<string>(
+                schema.Types.Select(t => t.Name), StringComparer.OrdinalIgnoreCase);
+            var refs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var tokenRx = new System.Text.RegularExpressions.Regex(@"\b[a-zA-Z][\w]*\b");
+            var wantedActions = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
+
+            // Walk every catalog-described action; for the ones in the filter,
+            // collect type tokens from each parameter's rendered description and
+            // from the return-type name. The Parameter.Value strings already
+            // carry PLang type names (e.g. "path", "actor?", "%var% string"), so
+            // tokenize on word boundaries and intersect with the type catalog.
+            foreach (var a in modules.Describe())
+            {
+                if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
+                foreach (var p in a.Parameters ?? new())
+                {
+                    var desc = p.Value as string ?? string.Empty;
+                    foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(desc))
+                        if (allTypeNames.Contains(m.Value)) refs.Add(m.Value);
+                }
+                if (!string.IsNullOrEmpty(a.ReturnTypeName)
+                    && allTypeNames.Contains(a.ReturnTypeName))
+                    refs.Add(a.ReturnTypeName);
+            }
+
+            // Transitive closure: types referenced by kept types should also be
+            // kept (a record field might reference another record). The pass is
+            // cheap — Types is in the dozens, and we only re-walk newly added
+            // entries each iteration.
+            bool changed = true;
+            while (changed)
+            {
+                changed = false;
+                foreach (var t in schema.Types)
+                {
+                    if (!refs.Contains(t.Name)) continue;
+                    var pieces = new[] { t.ConstructorSignature ?? "" };
+                    foreach (var s in pieces)
+                        foreach (System.Text.RegularExpressions.Match m in tokenRx.Matches(s))
+                            if (allTypeNames.Contains(m.Value) && refs.Add(m.Value))
+                                changed = true;
+                    if (t.Fields != null)
+                        foreach (var f in t.Fields)
+                            if (allTypeNames.Contains(f.TypeName) && refs.Add(f.TypeName))
+                                changed = true;
+                    if (t.Properties != null)
+                        foreach (var pr in t.Properties)
+                            if (allTypeNames.Contains(pr.TypeName) && refs.Add(pr.TypeName))
+                                changed = true;
+                }
+            }
+
+            var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
+            schema = new global::app.modules.Schema.@this(modules)
+            {
+                PrimitiveNames = schema.PrimitiveNames,
+                Types = filteredTypes,
+            };
+        }
+
+        return data.@this.Ok(schema);
     }
 
     // --- Goals ---
