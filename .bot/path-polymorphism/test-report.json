@@ -1,83 +1,74 @@
 {
   "tester": "tester",
   "branch": "path-polymorphism",
-  "timestamp": "2026-05-22T17:21:32Z",
-  "tested_version": "v5",
+  "timestamp": "2026-05-23T00:00:00Z",
+  "tested_version": "v7",
   "test_run": {
-    "csharp": { "total": 2882, "passed": 2882, "failed": 0, "skipped": 0 },
-    "plang": { "total": 203, "passed": 203, "failed": 0, "skipped": 0 }
+    "csharp": { "total": 2889, "passed": 2889, "failed": 0, "skipped": 0 },
+    "plang":  { "total": 203,  "passed": 203,  "failed": 0, "skipped": 0 }
   },
   "coverage": {
-    "changed_files_covered": 11,
-    "changed_files_total": 13,
+    "changed_files_covered": 0,
+    "changed_files_total": 0,
     "uncovered_files": [
-      "PLang/app/types/path/this.cs (Equals/GetHashCode — N2 — untested)",
-      "PLang/app/modules/assert/code/Default.cs (ResolveTruthy IBooleanResolvable branch — N3 — untested)"
-    ],
-    "note": "Qualitative mapping over the 13 core feature production files (path types, file/assert/condition modules). 'Covered' = at least one C# or plang test exercises the file's changed behaviour with a real oracle. The two listed files are reached by tests but the specific v5 review-driven edit in each is not — see findings 2 and 3."
+      "PLang/app/goals/goal/GoalCall.cs",
+      "PLang/app/modules/builder/actions.cs",
+      "PLang/app/modules/builder/this.cs",
+      "PLang/app/goals/goal/steps/step/actions/action/this.cs"
+    ]
   },
   "findings": [
     {
       "id": 1,
       "severity": "major",
-      "type": "false-green",
-      "test_file": "PLang.Tests/App/Types/PathTests/HandlerShapeTests.cs",
-      "code_file": "PLang/app/modules/file/*.cs",
-      "issue": "Test FileModule_PlangBehaviour_UnchangedFromProgramPerspective has a single statement: Assert.That(true).IsTrue(). It verifies a literal, not the file module.",
-      "impact": "A named test claims to guard 'file module behaviour from the program's perspective' and guards nothing. Any regression there passes. Placebo in the branch's headline test file.",
-      "suggestion": "Delete it, or make it real — drive a file save/read round-trip through the Read/Save handlers and assert the bytes (HandlerShapeTests.ReadHandler_Delegates_To_PathReadText is the model)."
+      "type": "missing-plang-test",
+      "test_file": "Tests/Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal2",
+      "code_file": "PLang/app/types/path/file/this.Operations.cs",
+      "issue": "Negative-branch plang test for `if X exists` is written as `.test.goal2`, which `plang --test` does not discover. The file is parked. v5 finding F4 stands.",
+      "impact": "A revert of the F3 fix (where `if X exists` always recurses) is not caught at the plang layer — only C# DefaultEvaluatorTests does. Worse than no file, because the directory listing suggests coverage that does not execute.",
+      "suggestion": "Rename `.test.goal2` -> `.test.goal`, delete the stale `.build/whenexists.pr`, and rebuild from project root."
     },
     {
       "id": 2,
       "severity": "major",
       "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Types/PathTests/ (none)",
-      "code_file": "PLang/app/types/path/this.cs",
-      "issue": "codeanalyzer v2 N2 switched path.Equals/GetHashCode from OrdinalIgnoreCase to RootComparison. No test anywhere constructs two paths and compares them — grep for Equals/GetHashCode in PathTests returns nothing.",
-      "impact": "Reverting line 169 to OrdinalIgnoreCase, or deleting the Equals override, keeps the whole suite green. The N2 fix (Linux /srv/x vs /SRV/x distinctness) is completely unguarded against regression.",
-      "suggestion": "Add a PathEqualityTests: same absolute path -> equal + equal hash; case-variant paths -> on Linux not-equal + distinct hash, on Windows equal (gate on OperatingSystem.IsWindows()); cover the path.Equals(string) overload too."
+      "test_file": "(none)",
+      "code_file": "PLang/app/goals/goal/GoalCall.cs",
+      "issue": "Slash-qualified `goal.call` resolution (`GetGoalAsync`) and `LoadFromFile` leaf-match (coder v6 core fix) have zero unit tests. Validated only by self-rebuild smoke.",
+      "impact": "The four-tier resolution order (caller-ancestor -> context -> root -> leaf-match) can drift on the next refactor with no test going red. The bug coder v6 fixed comes back silently until someone rebuilds the system/builder tree.",
+      "suggestion": "Add `PLang.Tests/App/Goals/GoalCallResolutionTests.cs` covering: (1) slash name resolved by caller-ancestor walk; (2) slash name resolved root-relative; (3) bare-name regression guard; (4) `LoadFromFile` leaf-match with pre-resolved `prPath` + qualified `Name`."
     },
     {
       "id": 3,
       "severity": "major",
       "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Modules/assert/AssertTests.cs",
-      "code_file": "PLang/app/modules/assert/code/Default.cs",
-      "issue": "codeanalyzer v2 N3 added the IBooleanResolvable branch to ResolveTruthy and the source comment claims 'assert %path% is true is thus correct'. AssertTests was not touched since the merge base and never passes a path (or any IBooleanResolvable) as the asserted value.",
-      "impact": "Delete the 'if (data.Value is IBooleanResolvable)' branch and a path falls through to IsTruthy(object), which returns true for any non-null object (Default.cs:159). 'assert %missing_path% is true' then wrongly passes — the exact F3 always-true bug — and no test goes red.",
-      "suggestion": "Add AssertTests: IsTrue of a Data wrapping a FilePath to an existing in-root file -> Success true; IsTrue of a FilePath to a missing file -> Success false with Error is AssertionError. Mirror for IsFalse."
+      "test_file": "PLang.Tests/App/Modules/builder/GetActionsTests.cs",
+      "code_file": "PLang/app/modules/builder/actions.cs",
+      "issue": "`builder.actions`'s new `Actions` filter parameter (coder v6) has no test setting `Actions = ...`. The filter path in `Builder.Actions` is unguarded.",
+      "impact": "Filter could no-op silently (broken case-insensitive match, empty-list semantics flipped). Plang side doesn't notice — LLM gets a larger catalog than asked for, builds still pass because it's a superset.",
+      "suggestion": "Three cases: Actions=[\"file.read\",\"file.save\"] -> exactly those; Actions=[] -> full catalog (no filter); Actions=[\"nonexistent.action\"] -> empty, no error."
     },
     {
       "id": 4,
-      "severity": "major",
-      "type": "missing-plang-test",
-      "test_file": "Tests/Modules/Condition/Files/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal",
-      "code_file": "PLang/app/modules/condition/code/Default.cs",
-      "issue": "The F3 fix (if %path% exists reflects actual existence) is exercised at the plang level only by ConditionFileExistsSubSteps, which creates the file first and tests the TRUE branch. No plang test covers a missing file -> inner block must not run. No plang .goal files were added for the whole feature.",
-      "impact": "Revert the F3 fix so 'if X exists' is always-true and ConditionFileExistsSubSteps still passes (the file exists; the inner block runs either way). The headline semantic fix has no plang regression guard for its failing side. C# (DefaultEvaluatorTests.IfExists_PathToMissingFile_IsFalse) covers it, so this is a plang-layer gap, not a total blind spot.",
-      "suggestion": "Add a sibling .goal: 'if not-here.txt exists' with an inner set %innerRan%='yes', then assert %innerRan% equals 'no'."
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Modules/builder/AppTests.cs",
+      "code_file": "PLang/app/modules/builder/this.cs",
+      "issue": "Inverted `File.Exists` fix at line 113 (coder v6) has no regression guard. `AppTests` exercises `Load`/`Save` but never `Builder.@this.RunAsync()`.",
+      "impact": "Flip `!File.Exists` back to `File.Exists` and the suite stays green; existing apps once again refuse to build without `--app={\"create\":true}`.",
+      "suggestion": "Two tests in `AppTests.cs` (or new `BuilderRunAsyncTests.cs`): existing `.build/app.pr` + Create=false -> proceeds; missing marker + Create=false + stdin redirected -> `NoAppFound` ServiceError."
     },
     {
       "id": 5,
       "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "Tests/Modules/File/File.test.goal",
-      "code_file": "PLang/app/modules/file/exists.cs",
-      "issue": "The '/ exists' section does 'check if file exists, write to %info%' then 'assert %info% is not null'. Post-F3, file.exists always returns a non-null path object regardless of whether the file exists.",
-      "impact": "The assertion passes for a present and an absent file — it verifies 'exists returned an object', not 'exists reported the right answer'. Pre-existing test, but the F3 change makes its weakness actively misleading.",
-      "suggestion": "Tighten to 'assert %info% is true', or read existence semantically."
-    },
-    {
-      "id": 6,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/Types/PathTests/HandlerShapeTests.cs",
-      "code_file": "PLang/app/types/path/",
-      "issue": "PLangFileSystem_AndWrapperLayer_AbsentFromProductionAssembly probes one hard-coded type name (app.types.path.Default.PLangFileSystem) and its comment claims the assertion 'fails by design — an honest red'. The wrapper layer is actually gone (no PLangFileSystem class, no System.IO.Abstractions ref under PLang/), so the test is green, not red — the comment is stale.",
-      "impact": "Low today (wrapper genuinely absent), but the stale comment misleads the next reader, and a single-namespace probe would miss a wrapper reintroduced under any other namespace — unlike its assembly-wide sister test NoProductionType_References_IFile.",
-      "suggestion": "Correct the comment to state the wrapper is removed; scan by simple type name across the assembly like the IFile sister test."
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "PLang/app/goals/goal/steps/step/actions/action/this.cs",
+      "issue": "New public `Action.ReturnTypeName` property (typed-returns sweep) has zero test coverage.",
+      "impact": "This is the LLM's signal for which CLR type a `write to %x%` result will produce — a wrong/null value here cascades into the exact mis-compile classes the builder bot reported. The entire sweep was justified by this signal; the signal isn't tested.",
+      "suggestion": "Add `DescribeReturnTypeTests`: Task<Data> -> null; Task<Data<bool>> -> \"bool\"; Task<Data<path>> -> \"path\"; Task<Data<List<path>>> -> mapped PLang name. Cross-check against `Utility/TypeMapping.cs`."
     }
   ],
   "verdict": "needs-fixes",
-  "summary": "Clean rebuild reproduces the green numbers exactly — C# 2882/2882, plang 203/203/0 stale, no regressions. The path-polymorphism C# suite is genuinely strong where it counts (the PathSchemeContractTests contract base, the F3 two-branch oracle, the N1 denied-probe oracle, typed-error assertions). But six findings hold it back from approval: a vacuous Assert.That(true).IsTrue() test posing as a behaviour guard; and — the costly ones — both N2 (path.Equals/GetHashCode) and N3 (assert path-truthiness), the two review-driven v5 fixes, ship with zero test coverage, so reverting either keeps the suite green. The branch's headline F3 fix has no plang regression guard for its failing side. Verdict: needs-fixes. All six are small, mechanical to close — roughly three C# tests, one plang .goal, one deleted/rewritten test, one corrected comment."
+  "summary": "Test suite is green and stronger than v5 — five of six prior findings honestly closed (F2/F3 mutation-verified red, F1/F5/F6 removed/fixed). One v5 carry-forward (F4: negative-branch plang test parked as `.goal2`, not discovered by the runner). Four new missing-coverage gaps on coder v6 / typed-returns sweep surfaces: GoalCall slash resolution, `builder.actions` Actions filter, inverted `File.Exists`, and `Action.ReturnTypeName`. All structurally fixable with small targeted test additions; none are correctness regressions."
 }
