@@ -742,6 +742,37 @@
         "health": "Both suites green (C# 2882/2882, plang 203/203/0 stale), no regressions; feature C# coverage strong overall.",
         "notes": "Six test-honesty gaps. Costly two: review-driven v5 fixes N2 (path.Equals/GetHashCode) and N3 (assert path-truthiness) ship with zero coverage \u2014 reverting either keeps the suite green. Plus a vacuous Assert.That(true) test. All six are small/mechanical to close."
       }
+    },
+    {
+      "id": "99c0eac0-e14f-4d2e-98d6-e685e21b0849",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-23T19:16:00Z",
+      "intent": "v4 \u2014 five-pass review of all post-v3 work: coder v6 (slash goal.call, builder validators) and the strongly-typed-returns sweep (~70 action handlers + IPath/IIdentity/IStore provider typing).",
+      "before": {
+        "assumptions": "Coder v6 fixed builder regressions (slash-qualified goal.call, inverted File.Exists, builder.actions filter). Then a massive sweep flipped 69 action handlers from Task<Data> to Task<Data<T>> per the builder bot's strongly-typed-returns spec, plus provider interface typing (IPath/IIdentity/IStore).",
+        "risk": "Mechanical sweep across 100+ files \u2014 easy to mis-pick T, double-wrap via Data<T> implicit operator, or lose error-path returns. Provider interface changes ripple into every caller. New validators in builder/Default.cs may misfire."
+      },
+      "plan": ".bot/path-polymorphism/codeanalyzer/v4/plan.md",
+      "timestamp_end": "2026-05-23T19:30:00Z",
+      "actions": [
+        {
+          "paths": [
+            ".bot/path-polymorphism/codeanalyzer/v4/plan.md",
+            ".bot/path-polymorphism/codeanalyzer/v4/result.md",
+            ".bot/path-polymorphism/codeanalyzer/v4/verdict.json",
+            ".bot/path-polymorphism/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Five-pass review of post-v3 work (~30 commits): coder v6 builder-regression fixes + the strongly-typed-returns sweep across ~70 action handlers and 8 provider interfaces. NEEDS WORK (low-severity doc-class only): F1 (Data<T>.From silent-value-drop is a doc gap), F2 (orphan <summary> block in DescribeReturnTypeName). One informational observation: path writes now return the path in Value, intentional per spec. No correctness bugs."
+        }
+      ],
+      "after": {
+        "status": "NEEDS WORK (low)",
+        "health": "Build clean. C# 2889/2889. PLang 202/203 + 1 external LLM 503 + 0 stale.",
+        "notes": "Two trivial doc-class findings. Branch is functionally CLEAN. Coder can patch in one commit or defer."
+      }
     }
   ]
 }
