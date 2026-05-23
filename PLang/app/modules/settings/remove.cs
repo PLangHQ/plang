@@ -20,6 +20,6 @@ public partial class Remove : IContext
         if (!result.Success)
             return result;
 
-        return Data(new types.setting { key = Key.Value! });
+        return global::app.data.@this.Ok(new types.setting { key = Key.Value! });
     }
 }

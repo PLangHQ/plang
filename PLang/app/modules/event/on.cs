@@ -41,7 +41,7 @@ public partial class On : IContext
     /// <summary>Channel-name filter for channel lifecycle events (BeforeWrite/AfterWrite/BeforeRead/AfterRead/OnAsk). Null = no filter.</summary>
     public partial data.@this<string>? ChannelName { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this<string>> Run()
     {
         // Resolve target actor — default to current context's actor
         var targetActor = Actor?.Value ?? Context.Actor ?? Context.App!.User;
@@ -64,6 +64,6 @@ public partial class On : IContext
         // Register on the target actor's event scope
         targetActor.Context.Events.Register(binding);
 
-        return Task.FromResult(Data(binding.Id));
+        return Task.FromResult(global::app.data.@this<string>.Ok(binding.Id));
     }
 }

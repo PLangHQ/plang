@@ -21,6 +21,6 @@ public partial class Set : IContext
         if (!result.Success)
             return result;
 
-        return Data(new types.setting { key = Key.Value!, value = Value?.Value });
+        return global::app.data.@this.Ok(new types.setting { key = Key.Value!, value = Value?.Value });
     }
 }
