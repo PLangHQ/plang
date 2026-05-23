@@ -87,6 +87,14 @@ CaptureError
 - set %capturedStatus% = %!error.StatusCode%
 ```
 
+`%!error` properties available to the handler goal:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `Message` | string | The error message from `throw error '...'` or the underlying failure |
+| `Key` | string | The error key (e.g. `"UserError"`, `"ValidationError"`, or a system key like `"NotFound"`) |
+| `StatusCode` | int | HTTP-style status code (defaults to 500 for `throw`, set by the failing action otherwise) |
+
 ### Retry + goal ordering
 
 When both a retry count and an error goal are supplied, `error.handle` decides which runs first from an `Order` parameter:

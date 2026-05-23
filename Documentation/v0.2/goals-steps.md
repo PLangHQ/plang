@@ -229,9 +229,9 @@ App.RunGoalAsync(goalName, context)
 
 ## Relationships
 
-- `Goals` is stored in [App](app.md)
+- `Goals` is stored on `App` (see [app-tree.md](app-tree.md))
 - `Goal` contains `Step` instances, each containing `Action` instances
-- `Action` references handlers from [Libraries](modules.md)
-- Action execution stores results in [Variables](memory-stack.md)
-- Execution is tracked via [CallStack](call-stack.md)
-- Entity events fire through [EntityEvents](events.md)
+- `Action` references handlers from `app.Modules` (see [action-catalog.md](action-catalog.md))
+- Action execution stores results in [Variables](variables.md)
+- Execution is tracked via CallStack (see [execution-flow.md](execution-flow.md))
+- Entity events fire through the same lifecycle described in [architecture.md](architecture.md)

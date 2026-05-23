@@ -191,7 +191,7 @@ Responses are cached by default (persistent, hash-based). The cache key includes
 
 ## Response Properties
 
-The returned value carries metadata accessible via `%!` syntax:
+The returned value carries metadata alongside the value itself. Read metadata properties with the `!` accessor — `%result!TotalTokens%` reads the `TotalTokens` metadata, while `%result.sentiment%` reads a field on the value. The `!` accessor works on any variable returned from an action that attaches metadata.
 
 | Property | Type | Description |
 |----------|------|-------------|

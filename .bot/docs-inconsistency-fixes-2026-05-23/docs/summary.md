@@ -30,6 +30,25 @@ Five factual fixes applied:
 
 ### Code example of the pattern
 
+### v1 follow-up — fresh-eyes pass (same session)
+
+Ingi asked for a second read-through. Found and applied four more:
+
+- `Documentation/v0.2/goals-steps.md` — Relationships block had 5 broken links (`app.md`, `modules.md`, `memory-stack.md`, `call-stack.md`, `events.md`). Same templated pattern as variables.md. Repointed to live docs.
+- `Documentation/v0.2/io-channels.md` — Relationships block had 4 broken links (`serializers.md`, `goal-result.md`, `events.md`, `contexts.md`). Same pattern. Repointed.
+- `docs/modules/error.md` — `%!error.Message/Key/StatusCode%` were shown in an example but never listed anywhere on the page; added a properties table right after the example so readers can discover them.
+- `docs/modules/llm.md` — the `%var!Property%` metadata accessor was only obliquely described ("accessible via `%!` syntax"). Rewrote the intro line to explain the `!` accessor explicitly and contrast it with `.` field access.
+
+**Findings raised but NOT acted on, pending Ingi:**
+
+- `Data.FromError(...)` vs `Data.Fail(...)` — both names used widely; canonical name needs Ingi's call.
+- `docs/modules/llm.md:35` default model `gpt-4.1-mini` — looks like a stale OpenAI name; needs confirmation.
+- `Documentation/v0.2/builder-data-t-roadmap.md` — describes work already shipped; candidate for delete or archive.
+- `Documentation/v0.2/path-polymorphism-plan.md` — handed off to a branch that was never opened; reframe-or-delete decision pending.
+- `Documentation/v0.2/building-the-builder.md:86-92` "Known LLM regressions" — needs a date/status stamp.
+
+### Code example of the pattern
+
 The `.Providers → .Code` fix is the representative one:
 
 ```diff

@@ -266,8 +266,8 @@ Every subsequent `write out` invokes `Logger`. The recursion guard on `Channel.G
 
 ## Relationships
 
-- The channels registry uses [Serializers](serializers.md) for content-type routing on `Stream` channels.
-- All channel I/O returns [`Data`](goal-result.md) — `Success`/`Error`, never throws across the boundary.
-- Channel events plug into the same [event](events.md) lifecycle that goal/step events use; bindings live on the per-actor Context Events list and on per-app Events, with per-channel bindings on `Channel.Events`.
-- Each [Actor](contexts.md) owns one `Channels` instance; goal-channels capture the actor at register time so events run with the right `Context`.
+- The channels registry uses serializers in `app/formats/` for content-type routing on `Stream` channels.
+- All channel I/O returns [`Data`](data-generic-design.md) — `Success`/`Error`, never throws across the boundary.
+- Channel events plug into the same event lifecycle that goal/step events use (see [architecture.md](architecture.md)); bindings live on the per-actor Context Events list and on per-app Events, with per-channel bindings on `Channel.Events`.
+- Each Actor owns one `Channels` instance (see [architecture.md](architecture.md) — Actors); goal-channels capture the actor at register time so events run with the right `Context`.
 - The Console.* discipline rule for production C# lives in `Documentation/v0.2/good_to_know.md` "Console.* Is Banned in Production C#".
