@@ -33,14 +33,25 @@ public class HandlerShapeTests
 
     [Test] public async Task PLangFileSystem_AndWrapperLayer_AbsentFromProductionAssembly()
     {
-        // DEVIATION (coder flag-and-split — see .bot summary): the System.IO.Abstractions
-        // wrapper layer (PLangFileSystem + PLangFile/PLangDirectoryWrapper/...) is NOT
-        // removed on this branch — ~14 non-action callers still consume App.FileSystem
-        // (App.Save/Load, Builder, settings.Sqlite, llm/OpenAi, ui/Fluid, http/Default,
-        // Executor, ...). Removing it is a follow-up migration. This assertion fails by
-        // design until that migration lands — an honest red, not a stub.
-        var wrapper = AppAssembly.GetType("app.types.path.Default.PLangFileSystem");
-        await Assert.That(wrapper).IsNull();
+        // The System.IO.Abstractions wrapper layer (PLangFileSystem + PLang*Wrapper
+        // siblings) was deleted as part of the path-polymorphism work (Stage 8).
+        // Scan by simple name across the whole assembly so a reintroduction under
+        // any namespace gets caught — a single-namespace probe would miss a
+        // refactor that moves the type. Same pattern as
+        // NoProductionType_References_IFile below.
+        string[] wrapperNames =
+        {
+            "PLangFileSystem",
+            "PLangFile",
+            "PLangDirectory",
+            "PLangDirectoryWrapper",
+            "PLangPath",
+        };
+        var offenders = AppAssembly.GetTypes()
+            .Where(t => wrapperNames.Contains(t.Name))
+            .Select(t => t.FullName)
+            .ToList();
+        await Assert.That(offenders.Count).IsEqualTo(0);
     }
 
     [Test] public async Task NoProductionType_References_IFile()
@@ -147,11 +158,6 @@ public class HandlerShapeTests
         // The file is really on disk — but permission is denied, so truthiness
         // is false. If the gate were skipped this would be true.
         await Assert.That(await fp.AsBooleanAsync()).IsFalse();
-    }
-
-    [Test] public async Task FileModule_PlangBehaviour_UnchangedFromProgramPerspective()
-    {
-        await Assert.That(true).IsTrue();
     }
 
     private sealed class CannedNoChannel : global::app.channels.channel.@this
