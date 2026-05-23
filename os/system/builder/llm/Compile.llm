@@ -49,13 +49,20 @@ Examples (matching the JSON `actions[]` directly below them):
 
 `variable.set(Name=%greeting%, Value="hello", Type=string)`
 
-`output.write(Data="hi", channel="logger") | error.handle(Actions=[variable.set(Name=%writeFailed%, Value=true)])`
+`output.write(Data=%message%)` — default channel, step text didn't name one. The `channel` parameter is OMITTED, not filled with `%!data%` or any placeholder.
+
+`output.write(Data="hi", channel="logger") | error.handle(Actions=[variable.set(Name=%writeFailed%, Value=true)])` — `channel="logger"` only because the step text named it.
 
 `condition.if(Left=%!build.summary%, Operator="==", Right=true), goal.call(GoalName={name:"EmitSummary"})`
 
 `loop.foreach(Collection=%sections%), goal.call(GoalName={name:"ParseSection", parameters:[section=%item%]})`
 
 If you can't write a coherent `formal` line, the action set is wrong — emit `missing-actions` instead of guessing.
+
+**`formal` must mirror `actions[]` exactly.** Every `Param=value` segment in the formal line MUST correspond to a real entry in the action's `parameters` array, and every parameter you emit in `parameters` MUST appear in formal. No extras in either direction. In particular:
+
+- If the step text does not name an optional parameter, OMIT it from BOTH formal and actions[]. Do NOT write `channel=%!data%`, `Path=%!data%`, `Format=%!data%`, etc. as a placeholder — the rule "%!data% is the prior action's result, used to chain into the next intended slot" applies to formal too. If a slot wasn't named, leave it out of formal.
+- If you find yourself adding a parameter to formal that you wouldn't include in actions[], DELETE it from formal. The two are the same decision rendered twice; they must agree.
 
 ## Trust the action examples
 
