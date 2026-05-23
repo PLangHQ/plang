@@ -220,7 +220,7 @@ public class HashActionTests
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
-        public Data Hash(Hash action) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
-        public Data Verify(Verify action) => Data.FromError(new ActionError("Provider failure", "ProviderError", 500));
+        public global::app.data.@this<byte[]> Hash(Hash action) => global::app.data.@this<byte[]>.FromError(new ActionError("Provider failure", "ProviderError", 500));
+        public global::app.data.@this<bool> Verify(Verify action) => global::app.data.@this<bool>.FromError(new ActionError("Provider failure", "ProviderError", 500));
     }
 }

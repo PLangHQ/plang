@@ -19,5 +19,5 @@ public partial class Hash : IContext
     [Code]
     public partial ICrypto Crypto { get; }
 
-    public async Task<data.@this> Run() => Crypto.Hash(this);
+    public async Task<data.@this<byte[]>> Run() => Crypto.Hash(this);
 }

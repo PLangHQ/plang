@@ -12,6 +12,6 @@ public partial class decrypt : IContext
     [IsNotNull]
     public partial data.@this<byte[]> Input { get; init; }
 
-    public Task<data.@this> Run() =>
-        Task.FromResult(global::app.data.@this.Ok(Input.Value));
+    public Task<data.@this<byte[]>> Run() =>
+        Task.FromResult(global::app.data.@this<byte[]>.Ok(Input.Value));
 }

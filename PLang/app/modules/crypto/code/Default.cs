@@ -14,7 +14,7 @@ public class Default : ICrypto
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public data.@this Hash(Hash action)
+    public data.@this<byte[]> Hash(Hash action)
     {
         var value = action.Data.Value;
         var bytes = value is byte[] raw ? raw : Encoding.UTF8.GetBytes(JsonSerializer.Serialize(value));
@@ -27,20 +27,20 @@ public class Default : ICrypto
         };
 
         if (hashBytes == null)
-            return global::app.data.@this.FromError(new ActionError($"Algorithm '{action.Algorithm.Value}' is not supported", "UnsupportedAlgorithm", 400));
+            return global::app.data.@this<byte[]>.FromError(new ActionError($"Algorithm '{action.Algorithm.Value}' is not supported", "UnsupportedAlgorithm", 400));
 
-        return global::app.data.@this.Ok(hashBytes, data.type.FromName(algorithm));
+        return global::app.data.@this<byte[]>.Ok(hashBytes, data.type.FromName(algorithm));
     }
 
-    public data.@this Verify(Verify action)
+    public data.@this<bool> Verify(Verify action)
     {
         byte[] expectedHash;
         try { expectedHash = Convert.FromBase64String(action.Hash.Value!); }
-        catch (FormatException) { return global::app.data.@this.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
+        catch (FormatException) { return global::app.data.@this<bool>.FromError(new ActionError("Hash string is not valid base64", "InvalidHash", 400)); }
 
         var hashResult = Hash(new Hash { Context = action.Context, Data = action.Data, Algorithm = action.Algorithm });
-        if (!hashResult.Success) return hashResult;
+        if (!hashResult.Success) return global::app.data.@this<bool>.FromError(hashResult.Error!);
 
-        return global::app.data.@this.Ok(((byte[])hashResult.Value!).AsSpan().SequenceEqual(expectedHash));
+        return global::app.data.@this<bool>.Ok(((byte[])hashResult.Value!).AsSpan().SequenceEqual(expectedHash));
     }
 }
