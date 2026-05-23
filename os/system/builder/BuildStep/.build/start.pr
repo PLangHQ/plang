@@ -360,36 +360,36 @@
         },
         {
           "index": 6,
-          "text": "set %__userMsg__% = \"## Action Detail\\n\\n%actionDetails%\\n\\n## Step\\n\\nSTEP TEXT (the exact source line to compile \u2014 values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):\\n--- BEGIN STEP TEXT ---\\n%step.Text%\\n--- END STEP TEXT ---\\n\\nActions involved (planner's set \u2014 compiler decides chain order and shape from the action examples):\\n%planStep.actions%\\n\\nProduce the actions for this step.\", type=string",
+          "text": "- render template \"/system/builder/llm/CompileUser.llm\", write to %buildStepUserMsg%",
           "lineNumber": 21,
           "indent": 0,
           "comment": null,
           "actions": [
+            {
+              "module": "ui",
+              "action": "render",
+              "parameters": [
+                {
+                  "name": "Template",
+                  "value": "/system/builder/llm/CompileUser.llm",
+                  "type": "string"
+                }
+              ],
+              "modifiers": []
+            },
             {
               "module": "variable",
               "action": "set",
               "parameters": [
                 {
                   "name": "Name",
-                  "value": "%__userMsg__%",
+                  "value": "%buildStepUserMsg%",
                   "type": "variable"
                 },
                 {
                   "name": "Value",
-                  "value": "## Action Detail\n\n%actionDetails%\n\n## Step\n\nSTEP TEXT (the exact source line to compile \u2014 values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):\n--- BEGIN STEP TEXT ---\n%step.Text%\n--- END STEP TEXT ---\n\nActions involved (planner's set \u2014 compiler decides chain order and shape from the action examples):\n%planStep.actions%\n\nProduce the actions for this step.",
-                  "type": "string"
-                },
-                {
-                  "name": "Type",
-                  "value": "string",
-                  "type": "string"
-                }
-              ],
-              "defaults": [
-                {
-                  "name": "asdefault",
-                  "value": false,
-                  "type": "bool"
+                  "value": "%!data%",
+                  "type": "object"
                 }
               ],
               "modifiers": []
@@ -428,7 +428,7 @@
                     },
                     {
                       "Role": "user",
-                      "Content": "%__userMsg__%"
+                      "Content": "%buildStepUserMsg%"
                     }
                   ],
                   "type": "list`1"
@@ -779,6 +779,7 @@
                 {
                   "name": "Schema",
                   "value": {
+                    "formal": "string",
                     "actions": [
                       {
                         "module": "string",
@@ -1377,6 +1378,7 @@
                 {
                   "name": "Schema",
                   "value": {
+                    "formal": "string",
                     "actions": [
                       {
                         "module": "string",

@@ -34,6 +34,7 @@ If the planner's set doesn't include an action the step text obviously requires,
 
 ```json
 {
+  "formal": "module.action(Param=value, ...) [| modifier.action(...)] [, peer.action(...)]",
   "actions": [...],     // ordered chain, modifiers nested under their host action's `modifiers` array
   "errors": [...],
   "warnings": [...]
@@ -41,6 +42,27 @@ If the planner's set doesn't include an action the step text obviously requires,
 ```
 
 Each action: `{module, action, parameters: [{name, value, type}], modifiers?: [...]}`. Modifiers (e.g. `error.handle`, `cache.wrap`, `timeout.after`) go in the host action's `modifiers` array, NOT as peer entries in the top-level `actions`.
+
+### `formal` — write this BEFORE you fill `actions`
+
+A one-line canonical render of the chain you've decided on. Forces you to commit to module/action selection and chain shape; the JSON below it then just mirrors the same decision. Syntax:
+
+- Each action: `module.action(ParamName=value, ParamName=value, ...)`. Use the actual schema parameter names. Quote string literals; keep `%vars%` as `%vars%`. Numbers and bools unquoted.
+- Modifiers follow their host with ` | `: `<host>(...) | error.handle(Actions=[<recovery>(...)])`.
+- Peer actions in the same step's chain follow with `, `.
+- Nested action values (e.g. `error.handle.Actions`, `goal.call.GoalName.parameters`) use `[...]` lists with the same sub-syntax.
+
+Examples (matching the JSON `actions[]` directly below them):
+
+`variable.set(Name=%greeting%, Value="hello", Type=string)`
+
+`output.write(Data="hi", channel="logger") | error.handle(Actions=[variable.set(Name=%writeFailed%, Value=true)])`
+
+`condition.if(Left=%!build.summary%, Operator="==", Right=true), goal.call(GoalName={name:"EmitSummary"})`
+
+`loop.foreach(Collection=%sections%), goal.call(GoalName={name:"ParseSection", parameters:[section=%item%]})`
+
+If you can't write a coherent `formal` line, the action set is wrong — emit `missing-actions` instead of guessing.
 
 ## Trust the action examples
 

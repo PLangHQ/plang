@@ -18,8 +18,8 @@ Compile
 - render template "/system/builder/templates/v2/stepForLlm.template", write to %stepForLlm%
 - render template "/system/builder/templates/v2/stepActionDetails.template", write to %actionDetails%
 - render template "/system/builder/llm/Compile.llm", write to %buildStepPrompt%
-- set %__userMsg__% = "## Action Detail\n\n%actionDetails%\n\n## Step\n\nSTEP TEXT (the exact source line to compile — values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):\n--- BEGIN STEP TEXT ---\n%step.Text%\n--- END STEP TEXT ---\n\nActions involved (planner's set — compiler decides chain order and shape from the action examples):\n%planStep.actions%\n\nProduce the actions for this step.", type=string
-- set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"%__userMsg__%"}], type=json
+- render template "/system/builder/llm/CompileUser.llm", write to %buildStepUserMsg%
+- set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"%buildStepUserMsg%"}], type=json
 
 / QueryAndVerify wraps llm.query + a missing-actions check (throws on missing-actions).
 / on error key="missing-actions": run RefineActions first (expands %planStep.actions%),
@@ -29,6 +29,7 @@ Compile
 - add {index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, response: %compileResult%} to %trace.stepPasses%
 
 - set %goal.Steps[step.Index].Actions% = %compileResult.actions%
+- set %goal.Steps[step.Index].Formal% = %compileResult.formal%
 
 / Validation retry: FixValidation re-queries the LLM with the validator's complaint as
 / previousConversation context, writes the corrected compileResult, updates goal.Steps.
@@ -39,7 +40,7 @@ Compile
 
 
 QueryAndVerify
-- llm.query Messages=%messages%, Schema={actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%
+- llm.query Messages=%messages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, on error call HandleStepFailure, write to %compileResult%
 - if %compileResult.errors[0].key% is "missing-actions", throw error "missing-actions: %compileResult.errors[0].message%" key="missing-actions"
 
 
@@ -57,9 +58,10 @@ FixValidation
 / Validator rejected the compiled actions. Re-prompt the LLM with the validator's
 / complaint, write corrected compileResult, update goal.Steps so the subsequent retry
 / of builder.validate sees the corrected actions.
-- set %fixMessages% = [{"Role":"user", "Content":"Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (actions, errors, warnings) for this step only."}], type=json
-- llm.query Messages=%fixMessages%, Schema={actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], modifiers?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}]}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%
+- set %fixMessages% = [{"Role":"user", "Content":"Your previous response was rejected by the validator: %!error.Message%\n\nReturn the corrected response in the same Output Shape (formal, actions, errors, warnings) for this step only."}], type=json
+- llm.query Messages=%fixMessages%, Schema={formal: string, actions: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}], modifiers?: [{module: string, action: string, parameters?: [{name: string, value?: object, type?: string}]}], errors?: [{key: string, message: string}]}], errors?: [{key: string, message: string}]}, cache=%!build.cache%, previousConversation=%compileResult%, write to %compileResult%
 - set %goal.Steps[step.Index].Actions% = %compileResult.actions%
+- set %goal.Steps[step.Index].Formal% = %compileResult.formal%
 - write out "  Step %step.Index% validation error — retrying: %!error.Message%"
 
 

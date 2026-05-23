@@ -931,7 +931,9 @@ function passToGoalSection(passOrTrace, isParent) {
         index: idx,
         text: gp(src, 'Text', 'text') || gp(src, 'Guidance', 'guidance') || '',
         guidance: gp(src, 'Guidance', 'guidance') || '',
-        formal: gp(src, 'Formal', 'formal') || '',
+        // Formal: prefer the LLM's last emission (compiled.response.formal)
+        // since the step's saved Formal may lag if the merge line wasn't run.
+        formal: (resp && resp.formal) || gp(src, 'Formal', 'formal') || '',
         finalLevel: gp(src, 'Level', 'level') || 'high',
         finalConfidence: gp(src, 'Confidence', 'confidence') || 0,
         actions,

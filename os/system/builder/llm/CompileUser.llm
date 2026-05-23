@@ -1,0 +1,15 @@
+## Action Detail
+
+{{ actionDetails }}
+
+## Step
+
+STEP TEXT (the exact source line to compile — values inside it are LITERAL, do not expand or include the surrounding prompt content into any value):
+--- BEGIN STEP TEXT ---
+{{ step.Text }}
+--- END STEP TEXT ---
+
+Actions involved (planner's set — compiler decides chain order and shape from the action examples):
+{{ planStep.actions }}
+
+Produce the actions for this step.
