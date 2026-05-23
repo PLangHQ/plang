@@ -69,6 +69,20 @@ public sealed class @this : global::app.types.path.@this
     {
         if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
             throw new ArgumentException($"Not a valid http(s) URL: '{raw}'", nameof(raw));
+
+        // Strip embedded userinfo at construction (security v2 S4.b).
+        // Otherwise the consent prompt (which renders Absolute) hides the
+        // userinfo while _uri still carries it on the wire — and the
+        // userinfo-stripped Absolute persists as the grant key, so an
+        // attacker-controlled redirect to `user:pwd@trusted-host/` would
+        // silently match the existing grant for `trusted-host/`. Stripping
+        // here makes Absolute, the fetched URL, and the grant key all the
+        // same string.
+        if (!string.IsNullOrEmpty(uri.UserInfo))
+        {
+            var builder = new UriBuilder(uri) { UserName = "", Password = "" };
+            uri = builder.Uri;
+        }
         _uri = uri;
     }
 
@@ -117,7 +131,13 @@ public sealed class @this : global::app.types.path.@this
         get
         {
             var scheme = _uri.Scheme.ToLowerInvariant();
-            var host = _uri.Host.ToLowerInvariant();
+            // Use IdnHost (punycode) instead of Host (Unicode) so a homograph
+            // attack on the consent prompt — e.g. Cyrillic 'а' in аpple.com —
+            // renders as `xn--pple-43d.com` and the user sees that something
+            // is off. Same canonical form lands in the persisted grant key,
+            // so cache hits also use punycode and a homograph variant doesn't
+            // silently match a previously-trusted ASCII host. (security v2 S4.a)
+            var host = _uri.IdnHost.ToLowerInvariant();
 
             // Rule 2: strip default port.
             var sb = new StringBuilder();
@@ -376,7 +396,22 @@ public sealed class @this : global::app.types.path.@this
 
         // Method/body downgrade per RFC 7231 §6.4.4 — 303 is "see other" with GET.
         var nextMethod = (int)resp.StatusCode == 303 ? HttpMethod.Get : method;
-        var nextContent = nextMethod == HttpMethod.Get ? null : content;
+
+        // Re-buffer the body for the next hop. HttpContent is single-send —
+        // .NET disposes the underlying stream after the first SendAsync, so
+        // passing the same instance into the next request fails with
+        // "The request message was already sent." Buffer once into a
+        // ByteArrayContent that can be (re-)read per hop, preserving any
+        // headers the caller set on the original (Content-Type etc.).
+        HttpContent? nextContent = null;
+        if (nextMethod != HttpMethod.Get && content != null)
+        {
+            var bytes = await content.ReadAsByteArrayAsync();
+            var rebuilt = new ByteArrayContent(bytes);
+            foreach (var h in content.Headers)
+                rebuilt.Headers.TryAddWithoutValidation(h.Key, h.Value);
+            nextContent = rebuilt;
+        }
 
         var nextPath = new @this(target.ToString(), Context);
 

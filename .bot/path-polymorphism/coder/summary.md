@@ -1,91 +1,78 @@
 # coder summary — path-polymorphism branch
 
-**Latest version:** v9
+**Latest version:** v10
 
-## What this is
+## v10 (this version) — security v2 S4 + 307 body fix
 
-`path-polymorphism` hosts the typed-returns sweep, the path scheme
-polymorphism work (FilePath / HttpPath under a common `IPath`), and the
-bootstrap fixes that fell out of the self-rebuild loop. v9 closes the
-three security findings on HttpPath that security v1 flagged after the
-sweep landed.
+Two consent-fidelity vectors closed plus a reliability fix the security
+bot's red team turned up.
 
-## v9 (this version) — security v1 S1 + S2-partial + S3
+**S4.a (LOW)** — `Absolute` rendered `_uri.Host` (Unicode IDN), so a
+homograph host like `аpple.com` (Cyrillic 'а', U+0430) appeared visually
+identical to the trusted brand in the prompt while the wire fetched
+`xn--pple-43d.com` — a different origin. The persisted grant key was
+also the Unicode form, so cache hits silently matched the spoof too.
+**Fix:** `Absolute` now uses `_uri.IdnHost.ToLowerInvariant()`. Punycode
+shows as `xn--…` everywhere — prompt, wire, grant key — so a homograph
+variant is visually obvious and never matches a previously-trusted ASCII
+host.
 
-**S1 (HIGH)** — `HttpClient.AllowAutoRedirect = true` was an SSRF
-primitive. The user's consent prompt showed the original URL, then the
-client silently followed 3xx to IMDS / loopback / private IPs.
-**Fix:** `AllowAutoRedirect = false`; manual redirect handling builds a
-fresh `HttpPath` per hop, runs its own `AuthGate` (separate consent
-prompt for the new URL), signs with the new destination's URL.
-Hop cap = 5 → `TooManyRedirects`. Non-http(s) schemes rejected.
-RFC 7231 method/body downgrade for 303.
+**S4.b (LOW)** — `Absolute` silently dropped `_uri.UserInfo`. A redirect
+to `https://attacker:pwd@victim.example/` prompted as
+`https://victim.example/` while the HttpPath's `_uri` still carried the
+userinfo on the wire, and the persisted grant key was the userinfo-free
+form. A single user-approved entry covered any userinfo-bearing variant.
+**Fix:** strip UserInfo at HttpPath construction via `UriBuilder
+{ UserName="", Password="" }`. Prompt, wire, and grant key all collapse
+to the same string — consent contract is sealed.
 
-**S2 (MEDIUM, partial)** — `X-Signature` is a custom header, so .NET
-didn't strip it on cross-origin redirect. The S1 fix takes redirect
-control, so the prior hop's signature never reaches the next origin —
-each hop signs fresh for its own URL. Test decodes the captured
-`X-Signature` envelope on the destination and asserts the signed `url`
-claim is the destination, not the origin.
-Full S2 (destination-pinned signing envelopes verified host-side) is
-signing-module work, deferred.
+**307/308 body reliability** — security's red team noted `HttpContent`
+is single-send. After the first `SendAsync` .NET disposes the underlying
+stream, so the original `FollowRedirect` passed a disposed instance to
+the next hop and 307/308 POSTs silently sent empty bodies. **Fix:**
+re-buffer `content` into a fresh `ByteArrayContent` per hop, preserving
+the original Content headers.
 
-**S3 (LOW)** — When the user answers 'a' to a prompt for
-`https://api/x?token=secret`, the URL persists to local sqlite verbatim.
-**Fix:** new `virtual AuthorizationHint(verb)` hook on the base
-`path.@this`. Base returns "". HttpPath overrides to append a one-line
-warning when the URI has a query string.
-
-### Files modified
-
-- `PLang/app/types/path/http/this.cs` — `AllowAutoRedirect=false`,
-  `SendWithHops`/`FollowRedirect`, `AuthorizationHint` override, verb
-  threaded through Send call sites.
-- `PLang/app/types/path/this.Authorize.cs` — virtual `AuthorizationHint`
-  hook; prompt construction renders the hint.
-
-### Tests added
-
-- `PLang.Tests/App/Types/PathTests/Http/HttpPathRedirectTests.cs` (5):
-  302-to-unauthorized denied; 302-to-authorized followed; unsupported
-  scheme rejected; hop cap fires; signature fresh for destination.
-- `PLang.Tests/App/Types/PathTests/Http/HttpPathPromptHintTests.cs` (3):
-  query-string → warning; no query → no warning; FilePath → no warning.
-- `HttpTestServer.cs` extended with `MapRedirect(status, location)` and
-  `MapStoredBody(bytes)`.
-
-### Code example — the redirect hop pattern
-
-The structural shape worth pointing at — *each hop is a fresh consent +
-fresh signature*, no auto-follow trust:
+### Code example — UserInfo strip at construction
 
 ```csharp
-private async Task<data.@this> FollowRedirect(HttpResponseMessage resp, ...)
+public @this(string raw, ...)
+    : base(raw, context, content, source)
 {
-    if (hopsLeft <= 0) return ... "TooManyRedirects";
+    if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
+        throw new ArgumentException(...);
 
-    var target = resp.Headers.Location!.IsAbsoluteUri
-        ? resp.Headers.Location
-        : new Uri(_uri, resp.Headers.Location);
-
-    if (target.Scheme != "http" && target.Scheme != "https")
-        return ... "UnsupportedRedirectScheme";
-
-    var nextMethod = (int)resp.StatusCode == 303 ? HttpMethod.Get : method;
-    var nextContent = nextMethod == HttpMethod.Get ? null : content;
-
-    var nextPath = new @this(target.ToString(), Context);
-
-    // Consent for the new URL — own prompt, own answer.
-    if (await nextPath.AuthGate(verb) is { } denial) return denial;
-
-    return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, asBytes, hopsLeft - 1);
+    if (!string.IsNullOrEmpty(uri.UserInfo))
+    {
+        var builder = new UriBuilder(uri) { UserName = "", Password = "" };
+        uri = builder.Uri;
+    }
+    _uri = uri;
 }
 ```
 
-### Baseline (this round)
+The structural shape worth remembering: when the consent prompt is the
+trust anchor, every component of the URL must travel the same path —
+what the user reads must be the wire string and the cache key. Anything
+that re-renders or strips silently is a fidelity break, and `_uri.Host`
++ silent UserInfo drop were both that.
 
-- C# `dotnet run --project PLang.Tests` — **2914 / 2914** (+8 from v8)
+### Files modified
+
+- `PLang/app/types/path/http/this.cs` — UserInfo strip in ctor;
+  `IdnHost` in `Absolute`; body re-buffer in `FollowRedirect`.
+
+### Tests added
+
+- `HttpPathConsentFidelityTests.cs` (5 tests): IDN homograph → punycode in
+  prompt+Absolute; ASCII host unchanged; UserInfo stripped from Absolute;
+  UserInfo stripped from `_uri.Uri`; prompt shows clean URL.
+- `HttpPathRedirectTests.Redirect_307_PreservesPostBody_AcrossHops` — body
+  round-trips through 307 to target.
+
+### Baseline
+
+- C# `dotnet run --project PLang.Tests` — **2920 / 2920** (+6 from v9)
 - PLang `plang --test` — **204 / 204** (unchanged, 0 stale)
 - Build — 0 errors, 454 pre-existing nullable warnings
 
@@ -93,12 +80,11 @@ private async Task<data.@this> FollowRedirect(HttpResponseMessage resp, ...)
 
 ## Prior versions (one-liners)
 
-- **v8** — tester v7 NEEDS-FIXES: F4 (rename `.test.goal2`), N1 (GoalCall
-  slash resolution), N2 (Actions filter), N3 (RunAsync bootstrap guard),
-  N4 (ReturnTypeName), N5 (baseline file). Tests-only +
-  the `identitydata` → `identity` SSOT fix.
-- **v7** — codeanalyzer v4 F1+F2 docstring + orphan-`<summary>` cleanup.
-- **v6** — Slash-qualified `goal.call` resolution, inverted `File.Exists`
-  bootstrap, `builder.actions` Include parameter, two builder validators.
+- **v9** — security v1: S1 (HIGH SSRF), S2-partial (MEDIUM signature
+  cross-origin), S3 (LOW query-string warning).
+- **v8** — tester v7 NEEDS-FIXES: F4 / N1 / N2 / N3 / N4 / N5; plus the
+  `identitydata` → `identity` SSOT fix.
+- **v7** — codeanalyzer v4 doc-only cleanups.
+- **v6** — Slash-qualified `goal.call` resolution + builder bootstrap fixes.
 - **v5 and earlier** — typed-returns sweep, IPath/IIdentity/IStore typing,
   runtime2 merge.

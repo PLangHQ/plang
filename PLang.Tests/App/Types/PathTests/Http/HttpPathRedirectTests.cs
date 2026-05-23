@@ -126,6 +126,34 @@ public class HttpPathRedirectTests
     }
 
     [Test]
+    public async Task Redirect_307_PreservesPostBody_AcrossHops()
+    {
+        // HttpContent is single-send: .NET disposes the underlying stream after
+        // the first SendAsync, so the original implementation passed a
+        // disposed-content instance to the next hop. v10 re-buffers the body
+        // into a fresh ByteArrayContent per hop. This test fails red with the
+        // old shape because the second POST silently sends no body — target
+        // store ends up with an empty entry instead of "preserved-body".
+        using var server = new HttpTestServer();
+        var (_, ctx) = MakeApp();
+
+        // Target — an unwritten URL the server's POST handler will populate.
+        var target = server.NewResourceUrl();
+        var origin = server.MapRedirect(307, target);
+
+        await Grant(ctx, origin);
+        await Grant(ctx, target);
+
+        var writeResult = await new HttpPath(origin, ctx).WriteText("preserved-body");
+        await Assert.That(writeResult.Success).IsTrue();
+
+        // Round-trip: the target should now hold the body that 307 carried.
+        var readResult = await new HttpPath(target, ctx).ReadText();
+        await Assert.That(readResult.Success).IsTrue();
+        await Assert.That(readResult.Value).IsEqualTo("preserved-body");
+    }
+
+    [Test]
     public async Task Redirect_Signature_IsFreshForDestination_NotOriginalUrl()
     {
         using var server = new HttpTestServer();
