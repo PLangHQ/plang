@@ -9,10 +9,6 @@ namespace app.modules.llm;
 /// Sends a query to an LLM provider. Supports tools, streaming, validation,
 /// conversation continuity, caching, and structured output (JSON/code block extraction).
 /// </summary>
-[ModuleDescription("Send prompts to an LLM and receive structured or streamed responses, with optional tool use")]
-[System.ComponentModel.Description("Send a conversation (system + user messages) to an LLM and return the response, with optional schema or tool use")]
-[Example("system: analyze sentiment, user: %comment%, schema: {sentiment: string}, write to %result%",
-    "llm.query Messages([list<LlmMessage>] [{\"Role\":\"system\",\"Content\":\"analyze sentiment\"},{\"Role\":\"user\",\"Content\":\"%comment%\"}]), Schema([string] {sentiment: string}) | variable.set Name([string] %result%), Value([object] %!data%)")]
 [Action("query")]
 [RequiresCapability("llm")]
 public partial class query : IContext, IBuildValidatable

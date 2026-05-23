@@ -11,7 +11,6 @@ namespace app.modules.builder;
 /// preserved. Used to fold a freshly-built step result back onto the parser's
 /// step shape before persistence.
 /// </summary>
-[System.ComponentModel.Description("Merge an LLM-generated step result onto the existing step, preserving runtime fields")]
 [Action("merge")]
 public partial class merge : IContext
 {

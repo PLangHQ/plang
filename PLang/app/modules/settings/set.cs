@@ -6,7 +6,6 @@ namespace app.modules.settings;
 /// Sets a settings value by key in the System actor's settings store.
 /// PLang: set settings 'ApiKey' = 'sk-123...'
 /// </summary>
-[System.ComponentModel.Description("Persist a key-value pair in the System actor's settings store")]
 [Action("set", Cacheable = false)]
 public partial class Set : IContext
 {

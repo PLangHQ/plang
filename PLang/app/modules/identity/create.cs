@@ -7,7 +7,6 @@ namespace app.modules.identity;
 /// Creates a new identity with a key pair from the registered IKey.
 /// PLang: create identity 'alice', set as default
 /// </summary>
-[System.ComponentModel.Description("Create a new named identity with a generated key pair, optionally setting it as default")]
 [Action("create", Cacheable = false)]
 public partial class Create : IContext
 {

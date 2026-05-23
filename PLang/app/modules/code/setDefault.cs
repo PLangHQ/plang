@@ -6,7 +6,6 @@ namespace app.modules.code;
 /// Sets a named provider as the default for its type.
 /// PLang: set default signing provider to 'custom'
 /// </summary>
-[System.ComponentModel.Description("Set a named provider as the default for its type (signing, crypto, identity, key)")]
 [Action("setDefault", Cacheable = false)]
 public partial class setDefault : IContext
 {

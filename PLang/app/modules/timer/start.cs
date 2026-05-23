@@ -5,7 +5,6 @@ namespace app.modules.timer;
 /// <c>timer.end</c> with the same name (or no name, to target the last started) returns
 /// the elapsed duration. Use for performance tracing and simple stopwatch measurements.
 /// </summary>
-[System.ComponentModel.Description("Record a named start time so a later timer.end can compute elapsed duration")]
 [Action("start", Cacheable = false)]
 public partial class Start : IContext, IStatic
 {

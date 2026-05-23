@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Round Value to the specified number of Decimals (default 0, ties away from zero)")]
 [Action("round")]
 public partial class Round : IContext
 {

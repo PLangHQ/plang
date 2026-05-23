@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Return the larger of A and B")]
 [Action("max")]
 public partial class Max : IContext
 {

@@ -11,7 +11,6 @@ namespace app.modules.http;
 /// to persist to disk. One-concern-per-action (OBP): download fetches, save writes.
 /// Reports progress via an optional callback goal.
 /// </summary>
-[System.ComponentModel.Description("Download bytes from a URL and return them in Data; chain with file.save to write to disk")]
 [Action("download", Cacheable = false)]
 [RequiresCapability("network")]
 public partial class download : IContext

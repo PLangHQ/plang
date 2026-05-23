@@ -11,7 +11,6 @@ namespace app.modules.builder;
 /// IDictionary forks — the framework's Data&lt;BuildResponse&gt; pipeline deserializes
 /// the LLM's JsonElement once with Json.CaseInsensitiveRead.
 /// </summary>
-[System.ComponentModel.Description("Validate an LLM build response for structural integrity — step count, indexes, empty actions, keep:true with no prior")]
 [Action("validateResponse")]
 public partial class validateResponse : IContext
 {

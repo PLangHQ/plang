@@ -2,8 +2,6 @@ using app.variables;
 
 namespace app.modules.list;
 
-[ModuleDescription("Inspect and manipulate in-memory lists: add, remove, sort, search, split, join, and group items")]
-[System.ComponentModel.Description("Append or insert a value into a list variable at an optional index")]
 [Action("add", Cacheable = false)]
 public partial class Add : IContext
 {

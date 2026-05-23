@@ -3,9 +3,6 @@ using app.types;
 
 namespace app.modules.file;
 
-[System.ComponentModel.Description("List files in a directory matching an optional glob pattern, optionally recursing into subdirectories")]
-[Example("list files in docs/ recursive, write to %files%",
-    "file.list Path([path] docs/), Recursive([bool] true) | variable.set Name([string] %files%), Value([object] %!data%)")]
 [Action("list")]
 public partial class List : IContext
 {

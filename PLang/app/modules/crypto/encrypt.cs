@@ -6,8 +6,6 @@ namespace app.modules.crypto;
 /// in Documentation/Runtime2/todos.md) only this body changes. Async signature even
 /// though v1 returns immediately — real impl will be async (key access, hardware modules).
 /// </summary>
-[ModuleDescription("Symmetric encryption (v1: identity pass-through)")]
-[System.ComponentModel.Description("Encrypt input bytes — v1 returns input unchanged")]
 [Action("encrypt", Cacheable = false)]
 public partial class encrypt : IContext
 {

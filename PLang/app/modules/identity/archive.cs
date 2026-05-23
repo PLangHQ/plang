@@ -9,8 +9,6 @@ namespace app.modules.identity;
 /// PLang: archive identity 'alice'
 /// PLang: archive identity 'alice', force
 /// </summary>
-[ModuleDescription("Manage cryptographic identities: create, list, set default, rename, archive, and export keys")]
-[System.ComponentModel.Description("Soft-delete an identity by archiving it; hidden from listings but keys are preserved")]
 [Action("archive", Cacheable = false)]
 public partial class Archive : IContext
 {

@@ -1,3 +1,6 @@
+using Fluid;
+using PrAction2 = global::app.goals.goal.steps.step.actions.action.@this;
+
 namespace PLang.Tests.Builder.CompilePromptTests;
 
 /// <summary>
@@ -13,76 +16,142 @@ namespace PLang.Tests.Builder.CompilePromptTests;
 ///   - Modifier actions (error.handle, cache.wrap, timeout.after) render via
 ///     the same path — no special-case.
 ///
-/// And the architect's verification check #1:
+/// Architect verification check #1:
 ///   - System prompt for a `Tests/Simple` step compile drops below 16 KB
-///     (was ~20.8 KB). The drop is structural, not cosmetic.
+///     (was ~20.8 KB). Pinned here as a static-file size check on Compile.llm
+///     (the system prompt body); the per-step user message is unaffected.
 /// </summary>
 public class StepActionDetailsRenderTests
 {
+    private static readonly string RepoRoot = LocateRepoRoot();
+    private static readonly string TemplatePath =
+        Path.Combine(RepoRoot, "os", "system", "builder", "templates", "v2", "stepActionDetails.template");
+    private static readonly string CompileLlmPath =
+        Path.Combine(RepoRoot, "os", "system", "builder", "llm", "Compile.llm");
+
+    private static string LocateRepoRoot()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (dir != null && !Directory.Exists(Path.Combine(dir, "os", "system", "builder")))
+            dir = Path.GetDirectoryName(dir);
+        if (dir == null) throw new InvalidOperationException("Could not locate repo root from " + AppContext.BaseDirectory);
+        return dir;
+    }
+
+    private static async Task<string> RenderAsync(List<PrAction2> actions, List<string> plannerSet)
+    {
+        var parser = new FluidParser();
+        var template = await File.ReadAllTextAsync(TemplatePath);
+        if (!parser.TryParse(template, out var fluidTemplate, out var err))
+            throw new InvalidOperationException("template parse error: " + err);
+
+        var options = new TemplateOptions { MemberAccessStrategy = new UnsafeMemberAccessStrategy() };
+        options.MemberAccessStrategy.IgnoreCasing = true;
+        var ctx = new TemplateContext(options);
+        ctx.SetValue("actions", actions);
+        ctx.SetValue("planStep", new { actions = plannerSet });
+
+        var writer = new StringWriter();
+        await fluidTemplate.RenderAsync(writer, Fluid.NullEncoder.Default, ctx);
+        return writer.ToString();
+    }
+
+    private static PrAction2 Action(
+        string module, string action,
+        string? notes = null, string? moduleNotes = null,
+        string? description = null, string? moduleDescription = null,
+        List<string>? examplesMd = null)
+    {
+        return new PrAction2
+        {
+            Module = module,
+            ActionName = action,
+            Cacheable = true,
+            Notes = notes,
+            ModuleNotes = moduleNotes,
+            Description = description,
+            ModuleDescription = moduleDescription,
+            ExamplesMd = examplesMd ?? new List<string>(),
+        };
+    }
+
     [Test]
     public async Task Render_NotesBlockAppearsForActionInPlannerSet()
     {
-        // planStep.actions = ["variable.set"], catalog entry for variable.set has
-        // Notes="AsDefault rule text". Rendered template contains a "Notes:" line
-        // followed by "AsDefault rule text" inside the variable.set section.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var rendered = await RenderAsync(
+            new() { Action("variable", "set", notes: "AsDefault rule text") },
+            new() { "variable.set" });
+
+        await Assert.That(rendered).Contains("## variable.set");
+        await Assert.That(rendered).Contains("Notes:");
+        await Assert.That(rendered).Contains("AsDefault rule text");
     }
 
     [Test]
     public async Task Render_NotesBlockOmittedWhenTextEmpty()
     {
-        // planStep.actions = ["variable.set"], catalog Notes/ModuleNotes both
-        // null. Rendered template contains the variable.set section but NO
-        // "Notes:" header (omit the block, don't render an empty one).
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var rendered = await RenderAsync(
+            new() { Action("variable", "set") },
+            new() { "variable.set" });
+
+        await Assert.That(rendered).Contains("## variable.set");
+        await Assert.That(rendered).DoesNotContain("Notes:");
     }
 
     [Test]
     public async Task Render_NotesNotLeakedForActionsOutsidePlannerSet()
     {
-        // planStep.actions = ["variable.set"]. error.handle has notes in its
-        // markdown (large block). Rendered template MUST NOT contain any
-        // error.handle section, header, or notes text. This is the core win
-        // of the branch — notes only fire when relevant.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var rendered = await RenderAsync(
+            new()
+            {
+                Action("variable", "set"),
+                Action("error", "handle", notes: "huge recovery semantics block"),
+            },
+            new() { "variable.set" });  // error.handle NOT in planner's set
+
+        await Assert.That(rendered).Contains("## variable.set");
+        await Assert.That(rendered).DoesNotContain("error.handle");
+        await Assert.That(rendered).DoesNotContain("huge recovery semantics block");
     }
 
     [Test]
     public async Task Render_BothLayersConcatModuleFirstActionSecond()
     {
-        // ModuleNotes="Module rule." + Notes="Action rule." → rendered Notes
-        // body shows module text first, blank line, then action text. Same
-        // order rule under Description and Examples sections.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var rendered = await RenderAsync(
+            new() { Action("variable", "set", notes: "Action rule.", moduleNotes: "Module rule.") },
+            new() { "variable.set" });
+
+        var notesIdx = rendered.IndexOf("Notes:", StringComparison.Ordinal);
+        await Assert.That(notesIdx).IsGreaterThan(-1);
+        var modIdx = rendered.IndexOf("Module rule.", notesIdx, StringComparison.Ordinal);
+        var actIdx = rendered.IndexOf("Action rule.", notesIdx, StringComparison.Ordinal);
+        await Assert.That(modIdx).IsGreaterThan(-1);
+        await Assert.That(actIdx).IsGreaterThan(modIdx);
     }
 
     [Test]
     public async Task Render_ModifierActionInPlannerSet_GetsItsNotesRendered()
     {
-        // planStep.actions = ["variable.set", "error.handle"]. error.handle's
-        // notes (recovery-semantics text) render under its section. Modifiers
-        // use the same code path as peer actions — no special casing.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var rendered = await RenderAsync(
+            new()
+            {
+                Action("variable", "set"),
+                Action("error", "handle", notes: "recovery-semantics text"),
+            },
+            new() { "variable.set", "error.handle" });
+
+        await Assert.That(rendered).Contains("## error.handle");
+        await Assert.That(rendered).Contains("recovery-semantics text");
     }
 
     [Test]
     public async Task CompileSystemPrompt_TestsSimpleStep_DropsBelow16Kb()
     {
-        // Architect verification check #1. The compile-step system prompt
-        // (rendered from os/system/builder/llm/Compile.llm, NOT the per-step
-        // user message) for a representative `Tests/Simple` step now sits
-        // below 16 KB. Was ~20.8 KB before this branch.
-        //
-        // Why the bound: ~5 KB of per-action teaching was deleted from the
-        // system prompt and moved to per-action markdown rendered in the user
-        // message instead. The system prompt should now be ~15 KB; 16 KB is
-        // the conservative ceiling that proves the deletion landed.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        // Static-file check: the system prompt body is the Compile.llm file
+        // (rendered as-is — its size IS the system-prompt size for a step compile
+        // since no per-step substitution happens in this file). Per-action
+        // teaching now lives in markdown rendered into the user message.
+        var size = new FileInfo(CompileLlmPath).Length;
+        await Assert.That(size).IsLessThan(16 * 1024);
     }
 }

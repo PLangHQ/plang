@@ -1,13 +1,13 @@
 AskUserLlm
 - validate %developerInstructionForResult%, %text%, %options% is not empty
-- read file %!plang.osPath%/modules/OutputModule/llm/AskUserSystem.llm, load vars, write to %askSystem%
+- read file %!plang.osPath%/modules/output/llm/AskUserSystem.llm, load vars, write to %askSystem%
 - [llm] system: %askSystem%
     continue from last: false
     model: "gpt-4o"
     response type: %!plang.output%
     write to %content%
 - ask user %content%, write to %answer%
-- read file %!plang.osPath%/modules/OutputModule/llm/AnswerUserSystem.llm, load vars, write to %answerSystem%
+- read file %!plang.osPath%/modules/output/llm/AnswerUserSystem.llm, load vars, write to %answerSystem%
 - set default value %scheme% = "{result:object|null}"
 - [llm]  system: %answerSystem%
     user: %answer%

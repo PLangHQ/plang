@@ -19,32 +19,54 @@ namespace PLang.Tests.App.Modules.CatalogTests;
 /// </summary>
 public class CodeAttributeRegressionTests
 {
+    private static Assembly PLangAssembly =>
+        typeof(global::app.modules.@this).Assembly;
+
     [Test]
     public async Task CodeAttribute_TypeExistsInAppModulesNamespace()
     {
-        // app.modules.CodeAttribute must exist. Test by name to catch namespace
-        // moves; the source generator and Describe() both look for this exact
-        // attribute (see PLang/app/modules/this.cs Describe()).
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        var type = PLangAssembly.GetType("app.modules.CodeAttribute", throwOnError: false);
+        await Assert.That(type).IsNotNull();
+        await Assert.That(typeof(Attribute).IsAssignableFrom(type!)).IsTrue();
     }
 
     [Test]
     public async Task ProviderAttribute_DoesNotExistAnymore()
     {
-        // Guard against reintroduction. No public type named ProviderAttribute
-        // inside the app.modules namespace of the PLang assembly.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        // Guard against reintroduction. No public type literally named
+        // ProviderAttribute anywhere in the app.modules namespace tree.
+        var bad = PLangAssembly.GetTypes()
+            .Where(t => t.IsPublic
+                     && t.Namespace != null
+                     && t.Namespace.StartsWith("app.modules", StringComparison.Ordinal)
+                     && t.Name == "ProviderAttribute")
+            .ToList();
+        await Assert.That(bad.Count).IsEqualTo(0);
     }
 
     [Test]
     public async Task PLNG001DiagnosticText_ReferencesCodeNotProvider()
     {
-        // The PLNG001 build-warning text in the source generator must mention
-        // [Code] (not [Provider]). Authors triggered by PLNG001 need to be
-        // taught the current attribute name, not a removed one.
-        await Task.Yield();
-        Assert.Fail("Not implemented");
+        // Source-generator file is build-time only and not loaded into the
+        // PLang runtime assembly; verify its text by reading the source file.
+        // The diagnostic title + messageFormat live in PLang.Generators/Discovery/this.cs.
+        var generatorSource = LocateGeneratorSource();
+        var text = File.ReadAllText(generatorSource);
+
+        // The current [Code] name must appear in the diagnostic text.
+        await Assert.That(text).Contains("[Code]");
+        // The old [Provider] name must NOT appear anywhere in the generator
+        // source — same guard as the runtime, applied to the build text.
+        await Assert.That(text).DoesNotContain("[Provider]");
+        await Assert.That(text).DoesNotContain("ProviderAttribute");
+    }
+
+    private static string LocateGeneratorSource()
+    {
+        var dir = AppContext.BaseDirectory;
+        while (dir != null && !Directory.Exists(Path.Combine(dir, "PLang.Generators")))
+            dir = Path.GetDirectoryName(dir);
+        if (dir == null) throw new InvalidOperationException("repo root not found");
+        return Path.Combine(dir, "PLang.Generators", "Discovery", "this.cs");
     }
 }

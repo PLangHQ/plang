@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.list;
 
-[System.ComponentModel.Description("Return the first item of the list, or empty Data if the list is empty")]
 [Action("first")]
 public partial class First : IContext
 {

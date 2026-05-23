@@ -3,7 +3,6 @@ using app.types;
 
 namespace app.modules.file;
 
-[System.ComponentModel.Description("Delete a file or directory at Path, optionally recursively or ignoring missing targets")]
 [Action("delete", Cacheable = false)]
 public partial class Delete : IContext
 {

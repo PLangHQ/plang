@@ -3,7 +3,6 @@ using app.modules.assert.code;
 
 namespace app.modules.assert;
 
-[System.ComponentModel.Description("Assert that Value is truthy (non-null, non-zero, non-empty); fails with an error if falsy")]
 [Action("isTrue")]
 public partial class IsTrue : IContext
 {

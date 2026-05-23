@@ -5,9 +5,6 @@ using Action = app.goals.goal.steps.step.actions.action.@this;
 
 namespace app.modules.condition;
 
-[System.ComponentModel.Description("Evaluate a condition and execute the then-branch actions; pair with elseif/else for full branching")]
-[Example("if %count% > 0, call ProcessItems",
-    "condition.if Left([object] %count%), Operator([operator] >), Right([int] 0) | goal.call GoalName([goal.call] ProcessItems)")]
 [Action("if")]
 public partial class If : IContext, IStep
 {

@@ -4,7 +4,6 @@ using ActionSpec = app.modules.Schema.Spec.Action;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Raise Base to the power of Exponent")]
 [Action("power")]
 public partial class Power : IContext
 {

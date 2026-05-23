@@ -1,21 +1,23 @@
 TestOutputWriteHasNoSpuriousChannel
 / Drift case 1 — the load-bearing reason this branch exists.
 /
-/ Step text `- write out %message%` carries no channel clause. With per-action
-/ notes (os/system/modules/output/write.notes.md) carrying the channel routing
-/ rule only when output.write is in the planner's set, the LLM should emit:
-/   formal='output.write(Data=%message%)'
+/ Step text `- write out %message%` (from Tests/Simple/Start.goal:5) carries no
+/ channel clause. With per-action notes (os/system/modules/output/write.notes.md)
+/ carrying the channel routing rule only when output.write is in the planner's
+/ set, the LLM should emit:
 /   parameters: { Data: %message% }   (no channel key)
+/   formal contains output.write(Data=%message%) and no `channel=` token.
 /
 / Pre-fix shape that this test forbids:
 /   formal='output.write(Data=%message%, channel=%!data%)'  -- forbidden
 /   any 'channel' key in parameters with a %!data% value    -- forbidden
 /
-/ Non-determinism: real LLM + cache. The verification rule (architect's): pass
-/ across 3 fresh-cache builds in a row. Before declaring green:
-/   rm -rf PlangConsole/bin PlangConsole/obj PLang/bin PLang/obj \
-/          PLang.Tests/bin PLang.Tests/obj \
-/          PLang.Generators/bin PLang.Generators/obj
-/   dotnet build PlangConsole
-/   cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test  (x3)
-- throw "not implemented"
+/ This test reads the last-built start.pr for Tests/Simple and asserts on its
+/ content. The architect's verification rule (3 fresh-cache builds in a row)
+/ runs externally:
+/   rm -rf Tests/Simple/.build
+/   ../PlangConsole/bin/Debug/net10.0/plang build /Tests/Simple   # then this test  (x3)
+- read file '/Tests/Simple/.build/start.pr', write to %pr%
+- assert %pr% contains '"text": "write out %message%"'
+- assert %pr% does not contain 'channel=%!data%'
+- assert %pr% does not contain '"name": "channel"'

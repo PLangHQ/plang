@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Return the smallest integer greater than or equal to Value (ceiling)")]
 [Action("ceiling")]
 public partial class Ceiling : IContext
 {

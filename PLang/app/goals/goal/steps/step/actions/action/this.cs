@@ -130,6 +130,77 @@ public sealed partial class @this : modules.IDataWrappable
     public string? ModuleDescription { get; init; }
 
     /// <summary>
+    /// Action-specific LLM teaching read from
+    /// <c>os/system/modules/&lt;module&gt;/&lt;action&gt;.notes.md</c>.
+    /// Renderer concats ModuleNotes (first) + a blank line + Notes at render time;
+    /// the two layers are kept split here for debuggability.
+    /// </summary>
+    [JsonIgnore]
+    public string? Notes { get; init; }
+
+    /// <summary>
+    /// Module-wide LLM teaching read from
+    /// <c>os/system/modules/&lt;module&gt;/module.notes.md</c>.
+    /// Applies to every action in the module; renderer concats with action-level
+    /// Notes when both are present (module first).
+    /// </summary>
+    [JsonIgnore]
+    public string? ModuleNotes { get; init; }
+
+    /// <summary>
+    /// Action-specific examples loaded as raw markdown paragraphs from
+    /// <c>os/system/modules/&lt;module&gt;/&lt;action&gt;.examples.md</c>.
+    /// Each entry is one paragraph (paragraphs separated by blank lines in the
+    /// source file). After the migration this is the source of truth for examples
+    /// previously declared via <c>[Example]</c> attributes. Structured
+    /// <c>ExamplesForLlm()</c> output continues to populate <see cref="Examples"/>.
+    /// </summary>
+    [JsonIgnore]
+    public List<string> ExamplesMd { get; init; } = new();
+
+    /// <summary>
+    /// Module-wide examples (raw markdown paragraphs) from
+    /// <c>os/system/modules/&lt;module&gt;/module.examples.md</c>. Renderer prepends
+    /// these to <see cref="ExamplesMd"/> with a blank line separator when both present.
+    /// </summary>
+    [JsonIgnore]
+    public List<string> ModuleExamplesMd { get; init; } = new();
+
+    /// <summary>
+    /// Concat of <see cref="ModuleNotes"/> + blank line + <see cref="Notes"/>, per
+    /// architect's "Renderer" spec. Null when both are empty — template omits the
+    /// Notes block entirely.
+    /// </summary>
+    [JsonIgnore]
+    public string? NotesRendered
+        => global::app.modules.MarkdownTeaching.MergeLayers(ModuleNotes, Notes);
+
+    /// <summary>
+    /// Concat of <see cref="ModuleDescription"/> + blank line + <see cref="Description"/>.
+    /// Null when both are empty — template omits the Description block entirely.
+    /// </summary>
+    [JsonIgnore]
+    public string? DescriptionRendered
+        => global::app.modules.MarkdownTeaching.MergeLayers(ModuleDescription, Description);
+
+    /// <summary>
+    /// Module markdown examples first, then action markdown examples (each entry one
+    /// paragraph). Used by the renderer for the markdown side; structured
+    /// <see cref="Examples"/> continues to render via the existing per-entry path.
+    /// </summary>
+    [JsonIgnore]
+    public List<string> ExamplesMdRendered
+    {
+        get
+        {
+            var result = new List<string>(ModuleExamplesMd.Count + ExamplesMd.Count);
+            result.AddRange(ModuleExamplesMd);
+            result.AddRange(ExamplesMd);
+            return result;
+        }
+    }
+
+    /// <summary>
     /// True when this action is declared as a modifier via [Modifier] on its class.
     /// Modifier actions wrap the preceding action rather than standing on their own
     /// (e.g. cache.wrap, error.handle, timeout.after). The catalog renders modifier

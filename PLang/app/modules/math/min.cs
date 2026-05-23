@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Return the smaller of A and B")]
 [Action("min")]
 public partial class Min : IContext
 {

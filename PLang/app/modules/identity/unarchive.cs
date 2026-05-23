@@ -8,7 +8,6 @@ namespace app.modules.identity;
 /// Idempotent — unarchiving an active identity succeeds.
 /// PLang: unarchive identity 'alice'
 /// </summary>
-[System.ComponentModel.Description("Restore a previously archived identity, making it active and visible again")]
 [Action("unarchive", Cacheable = false)]
 public partial class Unarchive : IContext
 {

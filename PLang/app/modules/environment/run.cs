@@ -7,8 +7,6 @@ namespace app.modules.environment;
 /// Unified run action — runs a GoalCall, Step, or Action.
 /// Actor switching is handled by the source generator.
 /// </summary>
-[ModuleDescription("Run a goal, step, or action on a specified actor")]
-[System.ComponentModel.Description("Run a goal, step, or individual action, optionally switching to another actor")]
 [Action("run")]
 public partial class run : IContext
 {

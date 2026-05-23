@@ -8,8 +8,6 @@ namespace app.modules.goal;
 /// Calls a named goal, optionally on a different actor.
 /// Parameters are injected into the target goal's context by the GoalCall resolver.
 /// </summary>
-[ModuleDescription("Call and return from goals, enabling goal composition and early exit with a value")]
-[System.ComponentModel.Description("Call a named goal, injecting parameters into its context, optionally on a different actor")]
 [Action("call")]
 public partial class Call : IContext
 {

@@ -10,10 +10,6 @@ namespace app.modules.@event;
 /// Consolidates all event types (BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction)
 /// into a single action with a Type parameter. Returns the binding ID for later removal.
 /// </summary>
-[ModuleDescription("Lifecycle event hooks: register callbacks that run before or after goals, steps, or actions")]
-[System.ComponentModel.Description("Register a goal callback to fire at a lifecycle event (BeforeGoal, AfterStep, BeforeAction, etc.)")]
-[Example("before step, call LogStep, on goal pattern 'Api/*'",
-    "event.on Type([eventtype] BeforeStep), GoalToCall([goal.call] LogStep), GoalPattern([string] Api/*)")]
 [Action("on", Cacheable = false)]
 public partial class On : IContext
 {

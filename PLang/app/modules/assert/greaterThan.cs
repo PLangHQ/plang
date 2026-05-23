@@ -3,7 +3,6 @@ using app.modules.assert.code;
 
 namespace app.modules.assert;
 
-[System.ComponentModel.Description("Assert that A is greater than B; fails with an error if not")]
 [Action("greaterThan")]
 public partial class GreaterThan : IContext
 {

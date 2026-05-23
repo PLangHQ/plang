@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.list;
 
-[System.ComponentModel.Description("Sort the list in place ascending by default, or descending when Descending is true")]
 [Action("sort", Cacheable = false)]
 public partial class Sort : IContext
 {

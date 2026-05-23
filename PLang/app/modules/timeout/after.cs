@@ -6,8 +6,6 @@ namespace app.modules.timeout;
 /// Modifier: wraps an action with a hard deadline. Cancels the action if it
 /// exceeds Ms milliseconds and returns a 408 Timeout error.
 /// </summary>
-[ModuleDescription("Modifier that wraps any action with a hard deadline, returning a 408 error on expiry")]
-[System.ComponentModel.Description("Cancel the decorated action and return a timeout error if it exceeds Ms milliseconds")]
 [Action("after", Cacheable = false)]
 [Modifier(Order = 1)]
 public partial class After : IContext, IModifier

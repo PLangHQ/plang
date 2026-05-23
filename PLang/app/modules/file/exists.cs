@@ -13,9 +13,6 @@ namespace app.modules.file;
 /// The action does no I/O of its own: the path stays live, so re-testing it
 /// reflects the current state. (codeanalyzer v1 F3)
 /// </summary>
-[System.ComponentModel.Description("Check whether a file or directory exists at Path and return file info")]
-[Example("check if file.txt exists, write to %fileInfo%",
-    "file.exists Path([path] file.txt) | variable.set Name([variable] %fileInfo%), Value([path] %!data%)")]
 [Action("exists")]
 public partial class Exists : IContext
 {

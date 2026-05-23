@@ -6,8 +6,6 @@ namespace app.modules.code;
 /// Lists registered providers, optionally filtered by type.
 /// PLang: list signing providers
 /// </summary>
-[ModuleDescription("Manage the provider registry: list, load, remove, and change defaults for signing, crypto, etc.")]
-[System.ComponentModel.Description("List registered providers, optionally filtered by type (signing, crypto, identity, key)")]
 [Action("list", Cacheable = false)]
 public partial class list : IContext
 {

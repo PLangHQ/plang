@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.list;
 
-[System.ComponentModel.Description("Return the number of items in the list")]
 [Action("count")]
 public partial class Count : IContext
 {
