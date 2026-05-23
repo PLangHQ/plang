@@ -52,54 +52,7 @@
     },
     {
       "index": 1,
-      "text": "builder.types, write to %typeInfo%",
-      "lineNumber": 7,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "builder",
-          "action": "types",
-          "parameters": [],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%typeInfo%",
-              "type": "variable"
-            },
-            {
-              "name": "Value",
-              "value": "%!data%",
-              "type": "object"
-            }
-          ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "guidance": "Load the registered PLang type names via builder.types and store it in %typeInfo%.",
-      "level": "high",
-      "confidence": 95,
-      "formal": null,
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "render template \"/system/actions/v2/summary.md\", write to %actionSummary%",
+      "text": "render template \"/system/actions/v2/summary.planner.md\", write to %actionSummary%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -110,7 +63,7 @@
           "parameters": [
             {
               "name": "Template",
-              "value": "/system/actions/v2/summary.md",
+              "value": "/system/actions/v2/summary.planner.md",
               "type": "string"
             }
           ],
@@ -151,7 +104,7 @@
       "waitForExecution": true
     },
     {
-      "index": 3,
+      "index": 2,
       "text": "render template \"/system/builder/templates/v2/goalFormatForLlm.v2.template\", write to %goalForLlm%",
       "lineNumber": 9,
       "indent": 0,
@@ -204,7 +157,7 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 3,
       "text": "render template \"/system/builder/llm/Plan.llm\", write to %planPrompt%",
       "lineNumber": 10,
       "indent": 0,
@@ -257,7 +210,7 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 4,
       "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}], type=json",
       "lineNumber": 11,
       "indent": 0,
@@ -311,7 +264,7 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 5,
       "text": "call QueryAndValidatePlan, on error call LlmFixer, then retry 2 times",
       "lineNumber": 17,
       "indent": 0,
@@ -388,7 +341,7 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 6,
       "text": "- set %plan.system% = %planPrompt%",
       "lineNumber": 0,
       "indent": 0,
@@ -415,7 +368,7 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 7,
       "text": "- set %plan.user% = %goalForLlm%",
       "lineNumber": 0,
       "indent": 0,
@@ -473,8 +426,7 @@
                         "index": "int",
                         "actions": [
                           "string"
-                        ],
-                        "group": "string?"
+                        ]
                       }
                     ]
                   },
