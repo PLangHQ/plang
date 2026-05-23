@@ -8,7 +8,7 @@ namespace app.modules.condition.code;
 // truthiness is resolved with I/O. (codeanalyzer v1 F3)
 public interface IEvaluator : ICode
 {
-    Task<data.@this> Evaluate(If action);
-    Task<data.@this> Evaluate(Elseif action);
-    Task<data.@this> Evaluate(Compare action);
+    Task<data.@this<bool>> Evaluate(If action);
+    Task<data.@this<bool>> Evaluate(Elseif action);
+    Task<data.@this<bool>> Evaluate(Compare action);
 }
