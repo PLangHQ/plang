@@ -201,6 +201,33 @@
         },
         {
           "index": 3,
+          "text": "- set %stepVarTypes% = %varTypes[step.Index]%",
+          "lineNumber": 0,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "variable",
+              "action": "set",
+              "parameters": [
+                {
+                  "name": "Name",
+                  "value": "%stepVarTypes%",
+                  "type": "variable"
+                },
+                {
+                  "name": "Value",
+                  "value": "%varTypes[step.Index]%",
+                  "type": "object"
+                }
+              ],
+              "modifiers": []
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 4,
           "text": "render template \"/system/builder/templates/v2/stepForLlm.template\", write to %stepForLlm%",
           "lineNumber": 18,
           "indent": 0,
@@ -253,7 +280,7 @@
           "waitForExecution": true
         },
         {
-          "index": 4,
+          "index": 5,
           "text": "render template \"/system/builder/templates/v2/stepActionDetails.template\", write to %actionDetails%",
           "lineNumber": 19,
           "indent": 0,
@@ -306,7 +333,7 @@
           "waitForExecution": true
         },
         {
-          "index": 5,
+          "index": 6,
           "text": "render template \"/system/builder/llm/Compile.llm\", write to %buildStepPrompt%",
           "lineNumber": 20,
           "indent": 0,
@@ -359,7 +386,7 @@
           "waitForExecution": true
         },
         {
-          "index": 6,
+          "index": 7,
           "text": "- render template \"/system/builder/llm/CompileUser.llm\", write to %buildStepUserMsg%",
           "lineNumber": 21,
           "indent": 0,
@@ -404,7 +431,7 @@
           "waitForExecution": true
         },
         {
-          "index": 7,
+          "index": 8,
           "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%buildStepPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%__userMsg__%\"}], type=json",
           "lineNumber": 22,
           "indent": 0,
@@ -458,7 +485,7 @@
           "waitForExecution": true
         },
         {
-          "index": 8,
+          "index": 9,
           "text": "call QueryAndVerify, on error key \"missing-actions\" call RefineActions, then retry 2 times",
           "lineNumber": 27,
           "indent": 0,
@@ -532,7 +559,7 @@
           "waitForExecution": true
         },
         {
-          "index": 9,
+          "index": 10,
           "text": "- add {index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, system: %buildStepPrompt%, user: %buildStepUserMsg%, response: %compileResult%} to %trace.stepPasses%",
           "lineNumber": 29,
           "indent": 0,
@@ -578,7 +605,7 @@
           "waitForExecution": true
         },
         {
-          "index": 10,
+          "index": 11,
           "text": "set %goal.Steps[step.Index].Actions% = %compileResult.actions%",
           "lineNumber": 31,
           "indent": 0,
@@ -618,7 +645,7 @@
           "waitForExecution": true
         },
         {
-          "index": 11,
+          "index": 12,
           "text": "builder.validate actions=%goal.Steps[step.Index].Actions%, on error call FixValidation, then retry 2 times",
           "lineNumber": 36,
           "indent": 0,
@@ -682,7 +709,7 @@
           "waitForExecution": true
         },
         {
-          "index": 12,
+          "index": 13,
           "text": "if %!build.summary% is true, call EmitSummary",
           "lineNumber": 38,
           "indent": 0,

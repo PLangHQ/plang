@@ -231,6 +231,45 @@
     },
     {
       "index": 5,
+      "text": "- goal.getTypes Goal=%goal%, write to %varTypes%",
+      "lineNumber": 0,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "getTypes",
+          "parameters": [
+            {
+              "name": "Goal",
+              "value": "%goal%",
+              "type": "goal"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%varTypes%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
       "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%",
       "lineNumber": 11,
       "indent": 0,
@@ -283,7 +322,7 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "set %parentGoal% = %goal%",
       "lineNumber": 13,
       "indent": 0,
@@ -323,7 +362,7 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%",
       "lineNumber": 14,
       "indent": 0,
@@ -376,7 +415,7 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "set %goal% = %parentGoal%",
       "lineNumber": 15,
       "indent": 0,
@@ -416,7 +455,7 @@
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
       "lineNumber": 17,
       "indent": 0,
@@ -474,7 +513,7 @@
       "waitForExecution": true
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
       "lineNumber": 18,
       "indent": 0,
@@ -532,7 +571,7 @@
       "waitForExecution": true
     },
     {
-      "index": 11,
+      "index": 12,
       "text": "set %trace.durationMs% = %elapsedMs%",
       "lineNumber": 19,
       "indent": 0,
@@ -572,7 +611,7 @@
       "waitForExecution": true
     },
     {
-      "index": 12,
+      "index": 13,
       "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
       "lineNumber": 21,
       "indent": 0,
@@ -606,7 +645,7 @@
       "waitForExecution": true
     },
     {
-      "index": 13,
+      "index": 14,
       "text": "add %goal.Name% to %traceGoals%",
       "lineNumber": 22,
       "indent": 0,
@@ -645,7 +684,7 @@
       "waitForExecution": true
     },
     {
-      "index": 14,
+      "index": 15,
       "text": "builder.goalsSave Goal=%goal%",
       "lineNumber": 23,
       "indent": 0,
