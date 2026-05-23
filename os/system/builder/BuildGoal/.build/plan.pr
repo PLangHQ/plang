@@ -386,6 +386,60 @@
       "formal": null,
       "source": null,
       "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "- set %plan.system% = %planPrompt%",
+      "lineNumber": 0,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%plan.system%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%planPrompt%",
+              "type": "object"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "- set %plan.user% = %goalForLlm%",
+      "lineNumber": 0,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%plan.user%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%goalForLlm%",
+              "type": "object"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "waitForExecution": true
     }
   ],
   "goals": [

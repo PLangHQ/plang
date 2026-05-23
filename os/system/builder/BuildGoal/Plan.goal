@@ -16,6 +16,11 @@ Plan
 / job. LlmFixer re-prompts with previousConversation=%plan%.
 - call QueryAndValidatePlan, on error call LlmFixer, then retry 2 times
 
+/ Stamp the planner's prompts onto %plan% so the parent's set %trace.plan% = %plan%
+/ carries them into the trace for the viewer.
+- set %plan.system% = %planPrompt%
+- set %plan.user% = %goalForLlm%
+
 
 QueryAndValidatePlan
 - llm.query Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string], group?: string}]}, cache=%!build.cache%, write to %plan%

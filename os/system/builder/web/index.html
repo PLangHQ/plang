@@ -615,6 +615,55 @@
     word-break: break-word;
   }
 
+  /* Markdown-rendered prompt bodies (system/user) */
+  .md-body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .md-body h1, .md-body h2, .md-body h3, .md-body h4 {
+    margin: 14px 0 6px;
+    color: var(--blue);
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .md-body h1 { font-size: 18px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .md-body h2 { font-size: 15px; }
+  .md-body h3 { font-size: 13px; color: var(--orange); }
+  .md-body h4 { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .md-body p  { margin: 6px 0; }
+  .md-body ul, .md-body ol { margin: 6px 0 6px 22px; padding: 0; }
+  .md-body li { margin: 2px 0; }
+  .md-body code {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    background: rgba(0,0,0,0.25);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--orange);
+  }
+  .md-body pre.code-block {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    overflow-x: auto;
+  }
+  .md-body pre.code-block code {
+    background: none; padding: 0; color: var(--text);
+    font-size: 12px;
+  }
+  .md-body blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 6px 0;
+    padding: 2px 12px;
+    color: var(--text-dim);
+  }
+  .md-body strong { color: var(--text); font-weight: 600; }
+
   /* Prompt/Response blocks (used inside LLM sublayer and build-failure) */
   .block {
     border: 1px solid var(--border);
@@ -770,6 +819,16 @@ const expandedBuckets = new Set();
 // across the whole trace (same system/user prompt for every step), so it lives
 // in goalLlmOpen (below) rather than duplicating under each step.
 const stepDepth = new Map();
+
+// Per-step open accordion sections (system, user, source, compiled).
+// Key = stepKey, value = Set<sectionName>.
+const stepSections = new Map();
+function toggleStepSection(stepKey, name) {
+  let s = stepSections.get(stepKey);
+  if (!s) { s = new Set(); stepSections.set(stepKey, s); }
+  if (s.has(name)) s.delete(name); else s.add(name);
+  repaintCurrentFile();
+}
 
 // Which goal sections have the "LLM Request" panel expanded. Keyed by subKey.
 const goalLlmOpen = new Set();
@@ -962,15 +1021,17 @@ function passToGoalSection(passOrTrace, isParent) {
     if (Array.isArray(resp.warnings)) allWarnings = allWarnings.concat(resp.warnings);
   }
 
-  // For the LLM-debug panel: v3 has no system/user prompts on the trace
-  // (those moved to .build/traces/<id>/llm/*.txt files). Surface the planner
-  // output and per-step compile responses instead so the panel isn't blank.
+  // Goal-level "LLM Request" panel — shows the PLANNER's prompts/response
+  // (the planner runs once per goal). Per-step compile prompts live on each
+  // step (see step.system/step.user above). Legacy v1 traces had a single
+  // pass1 — fall back to that when no plan is present.
   const plan = (p.plan && typeof p.plan === 'object') ? p.plan : null;
   const buildGoal = {
-    system: p.system || '',
-    user: p.user || '',
-    response: plan ? { plan, stepPasses: Array.from(passByIndex.values()) }
-                   : (unwrapDataWrapper(p.response) || {}),
+    system: (plan && plan.system) || p.system || '',
+    user: (plan && plan.user) || p.user || '',
+    response: plan
+      ? { description: plan.description, steps: plan.steps }
+      : (unwrapDataWrapper(p.response) || {}),
   };
 
   return {
@@ -1598,29 +1659,14 @@ function renderStepRow(entry, goalSection, step, subKey) {
   `;
 
   if (depth >= 1) {
+    const open = stepSections.get(stepKey) || new Set();
+    const source = step.raw && step.raw.source ? step.raw.source : null;
+    const compiled = step.raw && step.raw.compiled ? step.raw.compiled : null;
     html += `<div class="sublayer">`;
-    // JSON sublayer (depth 1+) — clicking closes back to text-only.
-    html += renderSublayer(stepKey, 'json', sizeLabel(step.raw || {}), true,
-      `<div class="sublayer-body"><pre>${esc(JSON.stringify(step.raw || { actions: step.actions }, null, 2))}</pre></div>`,
-      0
-    );
-    // User Prompt sublayer (depth 2+) — the per-step user message sent to the LLM.
-    if (step.user) {
-      const userOpen = depth >= 2;
-      html += renderSublayer(stepKey, 'user prompt', sizeLabel(step.user), userOpen,
-        `<div class="sublayer-body"><pre>${esc(typeof step.user === 'string' ? step.user : JSON.stringify(step.user, null, 2))}</pre></div>`,
-        userOpen ? 1 : 2
-      );
-    }
-    // System Prompt sublayer (depth 3+) — the Compile.llm system prompt.
-    // Shared across all steps in the goal, but shown per-step for convenience.
-    if (step.system) {
-      const sysOpen = depth >= 3;
-      html += renderSublayer(stepKey, 'system prompt', sizeLabel(step.system), sysOpen,
-        `<div class="sublayer-body"><pre>${esc(typeof step.system === 'string' ? step.system : JSON.stringify(step.system, null, 2))}</pre></div>`,
-        sysOpen ? 2 : 3
-      );
-    }
+    html += renderAccordionSection(stepKey, 'system', step.system, open.has('system'), 'md');
+    html += renderAccordionSection(stepKey, 'user',   step.user,   open.has('user'),   'md');
+    html += renderAccordionSection(stepKey, 'source', source,      open.has('source'), 'json');
+    html += renderAccordionSection(stepKey, 'compiled', compiled,  open.has('compiled'), 'json');
     html += `</div>`;
   }
 
@@ -1637,6 +1683,80 @@ function renderSublayer(stepKey, label, meta, open, body, nextDepth) {
     </div>
     ${open && body ? body : ''}
   `;
+}
+
+// Per-step accordion: 4 named sections (system/user/source/compiled), each
+// independently open/closed. value is the section's content (string for md,
+// any for json); mode is 'md' or 'json'.
+function renderAccordionSection(stepKey, name, value, open, mode) {
+  const hasContent = value != null && (typeof value !== 'string' || value.length > 0);
+  const meta = hasContent ? sizeLabel(value) : '(empty)';
+  let body = '';
+  if (open && hasContent) {
+    if (mode === 'md') {
+      body = `<div class="sublayer-body md-body">${mdToHtml(String(value))}</div>`;
+    } else {
+      body = `<div class="sublayer-body"><pre>${esc(JSON.stringify(value, null, 2))}</pre></div>`;
+    }
+  }
+  return `
+    <div class="sublayer-row ${open ? 'open' : ''}" onclick="toggleStepSection('${stepKey}', '${name}')">
+      <span class="tree-caret ${open ? 'open' : ''}">&#9656;</span>
+      <span>${esc(name)}</span>
+      <span class="sub-meta">${esc(meta)}</span>
+    </div>
+    ${body}
+  `;
+}
+
+// Tiny markdown-to-HTML for prompt bodies. Handles ATX headers, fenced code
+// blocks, inline code, bold, italic, blockquotes, lists, and paragraph breaks.
+// Intentionally minimal — full CommonMark would be overkill for prompt text.
+function mdToHtml(src) {
+  // Normalise line endings.
+  src = src.replace(/\r\n?/g, '\n');
+  // Pull out fenced code blocks first so their content is not re-processed.
+  const codeBlocks = [];
+  src = src.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)\n```/g, (m, lang, code) => {
+    codeBlocks.push(`<pre class="code-block"${lang ? ` data-lang="${esc(lang)}"` : ''}><code>${esc(code)}</code></pre>`);
+    return ` CODE${codeBlocks.length - 1} `;
+  });
+  // Escape HTML in the remaining text.
+  src = esc(src);
+  // Inline code (single backticks).
+  src = src.replace(/`([^`\n]+)`/g, (m, c) => `<code>${c}</code>`);
+  // Bold / italic.
+  src = src.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  src = src.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  // Headers (after escape, # is literal).
+  src = src.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
+  src = src.replace(/^#####\s+(.+)$/gm,  '<h5>$1</h5>');
+  src = src.replace(/^####\s+(.+)$/gm,   '<h4>$1</h4>');
+  src = src.replace(/^###\s+(.+)$/gm,    '<h3>$1</h3>');
+  src = src.replace(/^##\s+(.+)$/gm,     '<h2>$1</h2>');
+  src = src.replace(/^#\s+(.+)$/gm,      '<h1>$1</h1>');
+  // Blockquotes.
+  src = src.replace(/^&gt;\s?(.*)$/gm, '<blockquote>$1</blockquote>');
+  // Unordered list items (group consecutive).
+  src = src.replace(/(^|\n)((?:[-*]\s+.+\n?)+)/g, (m, lead, block) => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^[-*]\s+/, '')}</li>`).join('');
+    return `${lead}<ul>${items}</ul>`;
+  });
+  // Ordered list items.
+  src = src.replace(/(^|\n)((?:\d+\.\s+.+\n?)+)/g, (m, lead, block) => {
+    const items = block.trim().split('\n').map(l => `<li>${l.replace(/^\d+\.\s+/, '')}</li>`).join('');
+    return `${lead}<ol>${items}</ol>`;
+  });
+  // Paragraph breaks: blank lines become </p><p>.
+  // Wrap remaining loose text in <p>, but skip block-level tags we already emitted.
+  src = src.split(/\n{2,}/).map(block => {
+    if (/^\s*<(h[1-6]|ul|ol|pre|blockquote)/.test(block)) return block;
+    if (/^\s* CODE\d+ \s*$/.test(block)) return block;
+    return block.trim() ? `<p>${block.replace(/\n/g, '<br>')}</p>` : '';
+  }).join('\n');
+  // Restore code blocks.
+  src = src.replace(/ CODE(\d+) /g, (m, i) => codeBlocks[+i]);
+  return src;
 }
 
 function setStepDepth(stepKey, target) {
@@ -1728,19 +1848,21 @@ function renderBuildFailure(be) {
 function renderPromptBlocks(system, user, response) {
   let html = '';
   if (system) {
+    const md = typeof system === 'string' ? mdToHtml(system) : `<pre>${esc(JSON.stringify(system, null, 2))}</pre>`;
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
         <span>System Prompt</span><span>${sizeLabel(system)}</span>
       </div>
-      <div class="block-content"><pre>${esc(typeof system === 'string' ? system : JSON.stringify(system, null, 2))}</pre></div>
+      <div class="block-content md-body">${md}</div>
     </div>`;
   }
   if (user) {
+    const md = typeof user === 'string' ? mdToHtml(user) : `<pre>${esc(JSON.stringify(user, null, 2))}</pre>`;
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
         <span>User Prompt</span><span>${sizeLabel(user)}</span>
       </div>
-      <div class="block-content open"><pre>${esc(typeof user === 'string' ? user : JSON.stringify(user, null, 2))}</pre></div>
+      <div class="block-content md-body open">${md}</div>
     </div>`;
   }
   if (response) {
