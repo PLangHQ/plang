@@ -28,5 +28,5 @@ public partial class Render : IContext
     [Code]
     public partial ITemplate Provider { get; }
 
-    public async Task<data.@this> Run() => await Provider.Render(this);
+    public async Task<data.@this<string>> Run() => await Provider.Render(this);
 }
