@@ -33,7 +33,34 @@ list<action>" fixes a non-problem — skipped (Ingi confirmed). The 6 remaining
 Flipped to `!File.Exists`. **Verified:** self-rebuild now runs without the
 `--app={"create":true}` workaround.
 
-## Re-diagnosed — needs an Ingi decision (Class 2)
+## Class 2 — root-cause fix landed (after re-diagnosis with Ingi)
+
+The builder bot's "LLM drops the `Include` param" was wrong — `builder.actions`
+had **no parameters at all**, so the step text `builder.actions include=…,
+write to %x%` left a dangling `include=%X%` arg with no slot to bind to; the
+LLM then absorbed `%X%` into the `write to` target's `variable.set` value
+instead of `%!data%`.
+
+Fix: give `builder.actions` the parameter the goal author intended.
+
+- `PLang/app/modules/builder/actions.cs` — `GetActions` now exposes
+  `Data<List<string>>? Actions` (the `module.action` names to restrict the
+  catalog to; null/empty → full catalog).
+- `PLang/app/modules/builder/code/Default.cs` — `Builder.Actions` filters
+  `Modules.Describe()` by `Actions` when set.
+- `os/system/builder/BuildStep/Start.goal:16` — renamed the param so the
+  plang side matches the C# property:
+  `builder.actions include=%planStep.actions%, write to %actions%` →
+  `builder.actions actions=%planStep.actions%, write to %actions%`.
+
+`%planStep.actions%` stays a string list (per Ingi — defer the typed-Actions
+conversion). The template's nested filter against `%actions%` is now
+redundant (the catalog is pre-filtered) but harmless; leave it as-is. The
+goal-file change needs a builder rebuild to take effect — builder bot's job.
+
+Class 3 — still unvalidated (intermittent, not in the snapshot).
+
+## ~~Re-diagnosed — needs an Ingi decision (Class 2)~~ (resolved above)
 
 The builder bot's Class 2 ("LLM drops the `Include` param of `builder.actions`")
 is **wrong**. `builder.actions` (`GetActions`) has **no parameters at all** —

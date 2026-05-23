@@ -21,8 +21,23 @@ public class Default : IBuilder
 
     public Task<data.@this> Actions(GetActions action)
     {
+        var catalog = action.Context.App.Modules.Describe();
 
-        return Task.FromResult(data.@this.Ok(action.Context.App.Modules.Describe()));
+        // Optional filter: restrict the catalog to the named module.action
+        // entries. The Compile step passes the planner's action set so the
+        // prompt carries only the relevant rows. Null/empty → full catalog.
+        var filter = action.Actions?.Value;
+        if (filter is { Count: > 0 })
+        {
+            var wanted = new HashSet<string>(filter, StringComparer.OrdinalIgnoreCase);
+            var subset = new StepActions();
+            foreach (var a in catalog)
+                if (wanted.Contains($"{a.Module}.{a.ActionName}"))
+                    subset.Add(a);
+            return Task.FromResult(data.@this.Ok(subset));
+        }
+
+        return Task.FromResult(data.@this.Ok(catalog));
     }
 
     // --- Types ---
