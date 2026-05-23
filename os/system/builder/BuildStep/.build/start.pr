@@ -101,7 +101,7 @@
         },
         {
           "index": 1,
-          "text": "builder.actions include=%planStep.actions%, write to %actions%",
+          "text": "builder.actions actions=%planStep.actions%, write to %actions%",
           "lineNumber": 16,
           "indent": 0,
           "comment": null,
@@ -111,7 +111,7 @@
               "action": "actions",
               "parameters": [
                 {
-                  "name": "Include",
+                  "name": "Actions",
                   "value": "%planStep.actions%",
                   "type": "list<string>"
                 }
@@ -747,7 +747,7 @@
       "visibility": 0,
       "path": "/system/builder/BuildStep/Start.goal",
       "prPath": "/system/builder/BuildStep/.build/start.pr",
-      "hash": "fbd193fb344f114a11128351b513c969ba3e3c6dc96984c6812c1001b0af3e8b",
+      "hash": "f328a6d099c4ca532b15029d290ebd8e504a4a6ccf9466180fea85121e8fa019",
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
