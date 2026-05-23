@@ -23,7 +23,7 @@ public partial class Foreach : IContext, IStep
     public async Task<data.@this> Run()
     {
         if (Collection.Value == null)
-            return Data(new types.loop { itemCount = 0, completed = true });
+            return global::app.data.@this.Ok(new types.loop { itemCount = 0, completed = true });
 
         var variableName = ItemName?.Value?.Name ?? "item";
         int count = 0;
@@ -35,7 +35,7 @@ public partial class Foreach : IContext, IStep
         foreach (var (key, item) in Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
-                return Data(new types.loop { itemCount = count, completed = false });
+                return global::app.data.@this.Ok(new types.loop { itemCount = count, completed = false });
 
             Context.Variables.Set(variableName, item);
             if (KeyName != null)
@@ -50,7 +50,7 @@ public partial class Foreach : IContext, IStep
             count++;
         }
 
-        var loopResult = Data(new types.loop { itemCount = count, completed = true });
+        var loopResult = global::app.data.@this.Ok(new types.loop { itemCount = count, completed = true });
         if (bodyActions.Count > 0)
             loopResult.Handled = true;
         return loopResult;
