@@ -1,0 +1,14 @@
+{
+  "plan.md": [
+    {
+      "id": "cd088e9439",
+      "line": 13,
+      "text": "it should be os/system/modules/{module}/",
+      "anchor": "Per-action prose lives at `os/system/actions/<module>/`. Three files per concern, action-prefixed for action-specific text, `module.`-prefixed for module-wide text:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-23T21:32:16"
+    }
+  ]
+}
