@@ -873,30 +873,98 @@ function unwrapDataWrapper(obj) {
   return obj;
 }
 
-// Turn one pass ({goal, system, user, response}) into a goal-section entry
-// with steps pre-zipped from source.steps[].text.
-function passToGoalSection(pass, isParent) {
-  const p = unwrapDataWrapper(pass) || {};
-  const goalObj = (p.goal && typeof p.goal === 'object') ? p.goal : null;
-  const goalName = goalObj ? (goalObj.name || '?') : (typeof p.goal === 'string' ? p.goal : '?');
-  const goalPath = goalObj ? (goalObj.path || '') : '';
-  const goalVis  = goalObj ? goalObj.visibility : null;
-  const sourceSteps = goalObj && Array.isArray(goalObj.steps) ? goalObj.steps : [];
-  const resp = unwrapDataWrapper(p.response) || {};
+// PascalCase-or-lowercase property reader. v3 trace JSON uses PascalCase on
+// Goal/Step records (.NET default serializer); legacy v1 traces used
+// lowercase. Read both so old traces still open.
+function gp(obj, ...names) {
+  if (!obj || typeof obj !== 'object') return undefined;
+  for (const n of names) {
+    if (obj[n] !== undefined) return obj[n];
+  }
+  return undefined;
+}
 
-  const steps = (resp.steps || []).map(s => {
-    const src = sourceSteps.find(ss => ss && ss.index === s.index);
-    return {
+// Turn one trace-or-sub-trace into a goal-section entry. v3 shape:
+//   { goal: {Name, Path, Visibility, Steps:[{Index,Text,Actions,...}]},
+//     plan: {steps:[{index, actions:[...]}]},
+//     stepPasses: [{value:{index, stepText, actions, response:{actions, errors, warnings}}}],
+//     subGoals: [...], durationMs, buildError }
+// Source-step text comes from goal.Steps; compile-time errors/warnings come
+// from stepPasses[i].value.response.
+function passToGoalSection(passOrTrace, isParent) {
+  const p = unwrapDataWrapper(passOrTrace) || {};
+  const goalObj = (p.goal && typeof p.goal === 'object') ? p.goal : null;
+  const goalName = goalObj ? (gp(goalObj, 'Name', 'name') || '?') : (typeof p.goal === 'string' ? p.goal : '?');
+  const goalPath = goalObj ? (gp(goalObj, 'Path', 'path') || '') : '';
+  const goalVis  = goalObj ? gp(goalObj, 'Visibility', 'visibility') : null;
+  const sourceSteps = goalObj && Array.isArray(gp(goalObj, 'Steps', 'steps')) ? gp(goalObj, 'Steps', 'steps') : [];
+
+  // Index stepPasses by step index for quick zip.
+  const passByIndex = new Map();
+  const stepPasses = Array.isArray(p.stepPasses) ? p.stepPasses : [];
+  for (const sp of stepPasses) {
+    const v = unwrapDataWrapper(sp) || {};
+    if (typeof v.index === 'number') passByIndex.set(v.index, v);
+  }
+
+  // Aggregate goal-level errors/warnings across stepPasses (v3) + legacy.
+  let allErrors = [];
+  let allWarnings = [];
+  for (const v of passByIndex.values()) {
+    const resp = (v && typeof v.response === 'object') ? v.response : {};
+    if (Array.isArray(resp.errors)) allErrors = allErrors.concat(resp.errors);
+    if (Array.isArray(resp.warnings)) allWarnings = allWarnings.concat(resp.warnings);
+  }
+
+  let steps;
+  if (sourceSteps.length > 0) {
+    // v3: drive the step list from the source goal; merge compile result by index.
+    steps = sourceSteps.map(src => {
+      const idx = gp(src, 'Index', 'index');
+      const compiled = passByIndex.get(idx) || {};
+      const resp = (compiled && typeof compiled.response === 'object') ? compiled.response : {};
+      const actions = Array.isArray(resp.actions) ? resp.actions
+                    : Array.isArray(gp(src, 'Actions', 'actions')) ? gp(src, 'Actions', 'actions')
+                    : Array.isArray(compiled.actions) ? compiled.actions
+                    : [];
+      return {
+        index: idx,
+        text: gp(src, 'Text', 'text') || gp(src, 'Guidance', 'guidance') || '',
+        guidance: gp(src, 'Guidance', 'guidance') || '',
+        formal: gp(src, 'Formal', 'formal') || '',
+        finalLevel: gp(src, 'Level', 'level') || 'high',
+        finalConfidence: gp(src, 'Confidence', 'confidence') || 0,
+        actions,
+        raw: { source: src, compiled },
+      };
+    });
+  } else {
+    // Legacy v1 fallback: pass1.response.steps.
+    const resp = unwrapDataWrapper(p.response) || {};
+    steps = (resp.steps || []).map(s => ({
       index: s.index,
-      text: (src && src.text) || s.guidance || '',
+      text: s.guidance || '',
       guidance: s.guidance || '',
       formal: s.formal || '',
       finalLevel: s.level || 'high',
       finalConfidence: s.confidence || 0,
       actions: s.actions || [],
       raw: s,
-    };
-  });
+    }));
+    if (Array.isArray(resp.errors)) allErrors = allErrors.concat(resp.errors);
+    if (Array.isArray(resp.warnings)) allWarnings = allWarnings.concat(resp.warnings);
+  }
+
+  // For the LLM-debug panel: v3 has no system/user prompts on the trace
+  // (those moved to .build/traces/<id>/llm/*.txt files). Surface the planner
+  // output and per-step compile responses instead so the panel isn't blank.
+  const plan = (p.plan && typeof p.plan === 'object') ? p.plan : null;
+  const buildGoal = {
+    system: p.system || '',
+    user: p.user || '',
+    response: plan ? { plan, stepPasses: Array.from(passByIndex.values()) }
+                   : (unwrapDataWrapper(p.response) || {}),
+  };
 
   return {
     isParent,
@@ -904,24 +972,33 @@ function passToGoalSection(pass, isParent) {
     path: goalPath,
     visibility: normalizeVisibility(goalVis),
     steps,
-    warnings: Array.isArray(resp.warnings) ? resp.warnings : [],
-    errors: Array.isArray(resp.errors) ? resp.errors : [],
+    warnings: allWarnings,
+    errors: allErrors,
     durationMs: typeof p.durationMs === 'number' ? p.durationMs : null,
-    buildError: p.buildError || null,   // per-goal build failure (captured on the failing pass)
-    buildGoal: { system: p.system || '', user: p.user || '', response: resp },
+    buildError: p.buildError || null,
+    buildGoal,
   };
 }
 
 function traceToEntry(trace) {
-  // Legacy traces had flat `goal`/`path`/`visibility` strings + single `pass1`.
-  // New traces wrap the whole parent Goal under `goal` AND carry sub-goal passes
-  // in `subGoals[]`. Both formats produce one or more goal sections.
+  // v3: top-level trace IS the parent pass. Has goal{Name,Steps,...}, plan,
+  // stepPasses, subGoals. v1 legacy: flat goal/path strings + a pass1 field.
   const goalObj = (trace.goal && typeof trace.goal === 'object') ? trace.goal : null;
-  const rootName = goalObj ? (goalObj.name || '?') : (trace.goal || '?');
-  const rootPath = goalObj ? (goalObj.path || '') : (trace.path || '');
+  const rootName = goalObj ? (gp(goalObj, 'Name', 'name') || '?') : (trace.goal || '?');
+  const rootPath = goalObj ? (gp(goalObj, 'Path', 'path') || '') : (trace.path || '');
 
-  const parentPass = trace.pass1 ? { ...unwrapDataWrapper(trace.pass1), goal: goalObj || trace.goal } : null;
-  const parentSection = parentPass ? passToGoalSection(parentPass, /*isParent*/ true) : null;
+  let parentSection;
+  if (trace.pass1) {
+    // Legacy: wrap pass1 with the legacy goal string/object.
+    const parentPass = { ...unwrapDataWrapper(trace.pass1), goal: goalObj || trace.goal };
+    parentSection = passToGoalSection(parentPass, /*isParent*/ true);
+  } else if (goalObj || Array.isArray(trace.stepPasses)) {
+    // v3: the trace itself is the parent pass.
+    parentSection = passToGoalSection(trace, /*isParent*/ true);
+  } else {
+    parentSection = null;
+  }
+
   const subSections = Array.isArray(trace.subGoals)
     ? trace.subGoals.map(sg => passToGoalSection(sg, /*isParent*/ false))
     : [];
@@ -934,7 +1011,7 @@ function traceToEntry(trace) {
     name: rootName,
     path: rootPath,
     bucket: trace.bucket || '',
-    visibility: normalizeVisibility(goalObj ? goalObj.visibility : trace.visibility),
+    visibility: normalizeVisibility(goalObj ? gp(goalObj, 'Visibility', 'visibility') : trace.visibility),
     timestamp: trace.timestamp || '',
     stepCount: totalSteps,
     durationMs: typeof trace.durationMs === 'number' ? trace.durationMs : null,
