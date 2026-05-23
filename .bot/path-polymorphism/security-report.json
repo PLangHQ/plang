@@ -1,0 +1,165 @@
+{
+  "analyst": "security",
+  "branch": "path-polymorphism",
+  "timestamp": "2026-05-23T00:00:00Z",
+  "phase": "both",
+  "audit_version": "v1",
+  "scope": "First security pass on path-polymorphism. Branch makes `path` scheme-polymorphic (FilePath + HttpPath), moves consent gate from action handlers into Path verbs, kills IFile/DefaultFileProvider. codeanalyzer v4 NEEDS-WORK doc-only, tester v7 FAIL coverage-only — both quality, not safety. This audit covers the trust boundaries the new HTTP scheme introduces (origin = attacker) plus re-verification of filesystem-permission F1/F2/F4 at HEAD.",
+  "build": {
+    "status": "clean",
+    "cs_tests": "2906/2906 pass, 0 fail, 0 skip",
+    "plang_tests": "204/204 pass, 0 stale, 0 skip",
+    "rebuild": "clean (cleared bin/obj across PlangConsole/PLang/PLang.Tests/PLang.Generators)"
+  },
+  "attack_surface": [
+    {
+      "area": "Authorize coverage on Path verbs",
+      "exposure": "Every FilePath verb (ReadText, ReadBytes, ExistsAsync, Stat, List, WriteText, WriteBytes, Append, Mkdir, Save, Delete, MoveTo, CopyTo, AsBooleanAsync) and every HttpPath verb (same set) calls AuthGate(verb) before any I/O. Cross-scheme base CopyTo/MoveTo delegate to per-side verbs which gate again. BundledTransfer prompts a combined consent only when both source+dest gates require it.",
+      "trust_boundary": "User consent via output.ask, persisted via Permission.Add. In-root paths auto-grant via IsInRoot (App.AbsolutePath + App.OsAbsolutePath + App.OsDirectory).",
+      "mitigations": [
+        "AuthGate is the single shared helper; impossible to add a verb without seeing the pattern",
+        "PerformTransfer (the byte-level work) is private and only reachable through BundledTransfer which gates first",
+        "IsInRoot uses path-separator-anchored StartsWith — prefix collisions like /home/userX vs /home/user prevented",
+        "Authorize uses a loop not recursion, so adversarial channel input cannot blow the async state machine"
+      ],
+      "gaps": [
+        "None found in the migration itself."
+      ]
+    },
+    {
+      "area": "Scheme registry (Scheme.Register / Scheme.From / ParseScheme)",
+      "exposure": "Per-App ConcurrentDictionary<string, Func<string, Context, Path>>. Register/From are public C# on the per-App instance. Built-ins (file/http/https) registered in App ctor before any user code. Unknown schemes throw SchemeNotRegistered which Conversion maps to Data.Fail.",
+      "trust_boundary": "PLang programs cannot reach Scheme.Register today — there is no module action exposing it. App ctor is C# infrastructure.",
+      "mitigations": [
+        "ParseScheme enforces RFC 3986 scheme charset (alphanumeric + +/-/.) — non-conforming strings fall back to file (bare path)",
+        "ConcurrentDictionary atomic Register; ordering of built-in registrations preserved (file before user surface)"
+      ],
+      "gaps": [
+        "Design-note for the future: Scheme.Register overwrites on duplicate key silently. When code.load (out of branch scope, Stage 4 attribute is the seam) lands, a malicious assembly with [PathScheme(\"file\")] will silently MITM the file scheme across the process. Re-registration of a built-in should require explicit consent or hard-error."
+      ]
+    },
+    {
+      "area": "HttpPath — outbound request lifecycle",
+      "exposure": "HttpClient(SocketsHttpHandler{AllowAutoRedirect=true}, Timeout=100s), shared process-wide static. Every verb routes through Send/SendAsync which calls SignRequest first. Authorize gate runs on the original URL (HttpPath.Absolute); the dispatched request can follow up to 50 redirects to anywhere.",
+      "trust_boundary": "The remote origin — this is the branch's new attacker.",
+      "mitigations": [
+        "TLS validation is default (not disabled)",
+        "Per-request HttpRequestMessage; HttpClient handler is stateless",
+        "Non-2xx responses become Data.Fail with the status preserved — `let the server respond`"
+      ],
+      "gaps": [
+        "S1: AllowAutoRedirect=true with no host/IP filter and no per-hop re-authorize. Single redirect from a consented public host to 169.254.169.254 / 127.0.0.1 / RFC1918 reaches IMDS/internal services and returns the body to PLang. High severity.",
+        "S2: X-Signature is a custom header — .NET does not strip it on cross-origin redirect (only Authorization). Pairs with S1 and also leaks the PLang identity signature to any directly-fetched origin. Signing envelope is not destination-scoped, so a server downstream that trusts it has no way to verify it was issued for THIS origin.",
+        "S3: HttpPath.Absolute canonicalisation includes the query string; on `a` the URL is persisted verbatim into sqlite — query-string secrets (tokens, API keys) become disk-resident with no user warning at consent time."
+      ]
+    },
+    {
+      "area": "FilePath ValidatePath + IsInRoot",
+      "exposure": "ValidatePath resolves relative/PlangRooted/OsRooted paths to absolute OS paths. IsInRoot does StartsWith-with-trailing-sep check against AbsolutePath/OsDirectory/OsAbsolutePath.",
+      "trust_boundary": "The PLang program may pass arbitrary path strings; Authorize is the gate.",
+      "mitigations": [
+        "Out-of-root paths are returned as-is from ValidatePath — Authorize sees the unmodified Absolute and prompts the user",
+        "GetFullPath normalises `..` segments, so `<root>/file:/../../etc/passwd` lands outside root and triggers consent (visible to user, denyable)",
+        "On Linux, OS-rooted paths require leading `//` — single-leading-/ stays PlangRooted and re-anchors under app root"
+      ],
+      "gaps": [
+        "None new on this branch."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "ssrf",
+      "vector": "HttpClient(SocketsHttpHandler{AllowAutoRedirect=true}) at PLang/app/types/path/http/this.cs:42. Authorize prompts the user with the original URL (HttpPath.Absolute). On grant, _client.SendAsync follows up to 50 redirects (.NET default) silently. No host check, no scheme check, no private/loopback/link-local IP filter, no per-hop re-authorize. A consented request to a public host whose origin returns 302 Location: http://169.254.169.254/latest/meta-data/... reaches cloud IMDS; the response body is returned to PLang as data.@this.Ok.",
+      "preconditions": "User consents to ANY https URL whose origin is attacker-controlled OR compromisable. No further conditions — the response controls the redirect target.",
+      "impact": "Full SSRF: read cloud-IMDS credentials (AWS/GCP/Azure/Alibaba), reach loopback admin UIs, reach RFC1918 internal services, scan internal network from the PLang host. Blast radius is whatever the redirect target returns + whatever the PLang program does with the body.",
+      "affected_files": ["PLang/app/types/path/http/this.cs"],
+      "exploit_sketch": "1. Stand up evil.example.com responding 302 Location: http://169.254.169.254/latest/meta-data/iam/security-credentials/<role>. 2. Send phishing PLang goal that reads %url% where url is provided by user with a hint of legitimacy (URL shortener / vendor proxy). 3. User answers `y` to `Allow X to read https://evil.example.com/data?`. 4. HttpPath.ReadText: GET evil.example.com -> 302 -> GET IMDS -> body returned. 5. Program forwards body via http.post or stores via file.save — credentials exfiltrated.",
+      "proposed_fix": "AllowAutoRedirect=false. In Send, on 3xx parse Location, construct fresh HttpPath via Scheme.From, call AuthGate(verb) on the new path, recurse with a hop cap (5-10). Each hop is a fresh consent prompt the user can deny. Composes with the existing consent model.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "medium",
+      "category": "identity-leak",
+      "vector": "SignRequest at PLang/app/types/path/http/this.cs:308-334 adds X-Signature header before dispatch. Signing envelope covers {url, method, body} of the ORIGINAL request. The header is a custom name; .NET's HttpClient only strips standard auth headers (Authorization) on redirect, so X-Signature is forwarded on every redirect hop and is also sent to every direct origin a PLang program reaches. Identity is not destination-scoped — the signed envelope does not commit to a host the server can cross-check.",
+      "preconditions": "Any HttpPath request to any origin discloses the actor's identity envelope; combined with S1 the attacker can choose arbitrary (URL, body, method) tuples to sign by 302-ing from one consented endpoint.",
+      "impact": "Identity disclosure to arbitrary origins. If any PLang-aware server downstream trusts the signed envelope to authenticate the bearer (filesystem-permission F1 = signer authority not pinned on the verify side; same shape applies here on the issuing side), this is replay material. Even without that, it enables actor fingerprinting and cross-app tracking.",
+      "affected_files": ["PLang/app/types/path/http/this.cs", "PLang/app/modules/signing/sign.cs"],
+      "exploit_sketch": "1. Lure consent to https://attacker.tld/. 2. Attacker logs X-Signature. 3. Either: (a) replay against a PLang-aware service that does not pin host in the verify envelope (filesystem-permission F1), or (b) build an identity-fingerprint database across actors.",
+      "proposed_fix": "Two-layer: (i) drop X-Signature when the request is being sent to a different scheme+host+port than the one Authorize approved (relevant on redirect); (ii) make the signing envelope destination-aware — include host (or canonical URL) inside the signed payload and have signing.verify cross-check on the wire side. Cleanly closes filesystem-permission F1 at the same time.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "secret-persistence",
+      "vector": "HttpPath.Absolute (PLang/app/types/path/http/this.cs:85-121) canonicalises the URL including the sorted query string. BuildRequest (this.Authorize.cs:84-88) uses Absolute as the Permission.Path key. On `a` the grant is persisted to sqlite with this key as-is. The consent prompt shows the URL but does not warn that query-string contents will be persisted to disk.",
+      "preconditions": "User answers `a` to an HttpPath prompt whose URL carries credentials/tokens in the query string.",
+      "impact": "Tokens / API keys / session IDs end up in <settings>/permission as clear text, surviving `new App()`. User intent (consent to a one-off action) is heavier than user signal (no persistence warning).",
+      "affected_files": ["PLang/app/types/path/this.Authorize.cs", "PLang/app/types/path/http/this.cs"],
+      "exploit_sketch": "Not an exploit per se — this is informed-consent failure. Worst case: user pastes a tokenized URL, answers `a`, token is now in the user's local sqlite forever.",
+      "proposed_fix": "Either: (a) the prompt text for non-file schemes mentions `(this URL including query string will be saved to your local settings)`, or (b) on persist for http schemes, replace query values with placeholders and use Match.Glob so any value matches the path under that host — opt-in.",
+      "status": "open"
+    },
+    {
+      "id": "F1",
+      "severity": "medium",
+      "category": "carry-forward",
+      "vector": "Re-verified at HEAD: Actor.Permission.VerifySignature (PLang/app/actor/permission/this.cs:146-152) calls signing.verify and trusts result.Success. Ed25519 verify checks signature integrity against the Identity public key embedded INSIDE the signature envelope; it does not constrain whose key signed.",
+      "preconditions": "An attacker must land a forged-but-self-consistently-signed row in the per-actor sqlite 'permission' table. Today the only writers are Permission.Add/Revoke (user-consent-gated).",
+      "impact": "Full consent-gate bypass for any path/verb if a non-disk write path to 'permission' ever appears. Ratchet to Critical at that point.",
+      "affected_files": ["PLang/app/actor/permission/this.cs", "PLang/app/modules/signing/code/Ed25519.cs"],
+      "proposed_fix": "Pin signer: after signing.verify, assert RawSignature.Identity equals actor's trusted identity public key.",
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F1 — unchanged by path-polymorphism rename/refactor."
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "category": "carry-forward",
+      "vector": "PLang/app/actor/permission/this.cs:127 `if (grantData.RawSignature == null) return true;` shortcuts verification. Comment says 'in-memory unsigned grant', but TryCover is called from both the in-memory and persisted loops; safety depends on Add (line 82) routing unsigned -> in-memory only.",
+      "preconditions": "An unsigned row in the sqlite 'permission' table (refactor drift, migration import, manual edit).",
+      "impact": "Auto-trust of an unsigned forged grant. Consent bypass without crypto needed.",
+      "affected_files": ["PLang/app/actor/permission/this.cs"],
+      "proposed_fix": "Split TryCover by provenance (in-memory may trust unsigned; persisted must deny null-signature rows).",
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F2 — unchanged."
+    },
+    {
+      "id": "F4",
+      "severity": "low",
+      "category": "carry-forward",
+      "vector": "PLang/app/types/path/permission/this.cs:54-90 — GlobMatches and RegexMatches use Regex.IsMatch with no MatchTimeout. BuildRequest writes Match.Exact today; the latent risk is any future writer (or hand-crafted row) storing a pathological Match.Regex/Glob pattern.",
+      "preconditions": "A grant row with Match=Regex/Glob and a pathological pattern reaches Find/TryCover.",
+      "impact": "ReDoS hangs Authorize and therefore every gated I/O.",
+      "affected_files": ["PLang/app/types/path/permission/this.cs"],
+      "proposed_fix": "Add a Regex MatchTimeout (e.g. 100ms) and treat timeout as no-match.",
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F4 — unchanged."
+    }
+  ],
+  "observations": [
+    {
+      "id": "O1",
+      "note": "Pre-existing vulnerable NuGet packages surface as NU1902/NU1903 on `dotnet test`: SixLabors.ImageSharp 2.0.0 (incl. one high CVE), HtmlSanitizer 9.0.884, MimeKit 4.10.0. Pre-dates this branch — flagged for a separate dependency-hygiene pass."
+    },
+    {
+      "id": "O2",
+      "note": "SignRequest exception filter at this.cs:330 swallows OperationCanceledException (only NullReferenceException/OOM/StackOverflow are re-thrown). Cancellation during signing then lets the request fly unsigned. Tiny; tighten or document."
+    },
+    {
+      "id": "O3",
+      "note": "Out-of-scope but flagged: when code.load lands (Stage 4 [PathScheme] attribute is the seam), a malicious assembly with [PathScheme(\"file\")] silently MITMs the file scheme because Scheme.Register overwrites on duplicate key. Design code.load to require explicit consent for re-registering a built-in."
+    }
+  ],
+  "verdict": "needs-work",
+  "deliverables": {
+    "plan": ".bot/path-polymorphism/security/v1/plan.md",
+    "result": ".bot/path-polymorphism/security/v1/result.md",
+    "verdict": ".bot/path-polymorphism/security/v1/verdict.json",
+    "summary": ".bot/path-polymorphism/security/summary.md"
+  }
+}
