@@ -1,74 +1,44 @@
 {
   "tester": "tester",
   "branch": "path-polymorphism",
-  "timestamp": "2026-05-23T00:00:00Z",
-  "tested_version": "v7",
+  "timestamp": "2026-05-23T20:45:00Z",
+  "tested_version": "v8",
+  "verdict": "PASS",
   "test_run": {
-    "csharp": { "total": 2889, "passed": 2889, "failed": 0, "skipped": 0 },
-    "plang":  { "total": 203,  "passed": 203,  "failed": 0, "skipped": 0 }
+    "csharp": { "total": 2906, "passed": 2906, "failed": 0, "skipped": 0 },
+    "plang":  { "total": 204,  "passed": 204,  "failed": 0, "skipped": 0, "stale": 0 }
   },
+  "build": { "errors": 0, "warnings": 454, "warnings_note": "unchanged from v7, pre-existing generator nullables" },
   "coverage": {
-    "changed_files_covered": 0,
-    "changed_files_total": 0,
-    "uncovered_files": [
-      "PLang/app/goals/goal/GoalCall.cs",
-      "PLang/app/modules/builder/actions.cs",
-      "PLang/app/modules/builder/this.cs",
-      "PLang/app/goals/goal/steps/step/actions/action/this.cs"
+    "v7_findings_closed": ["F4-CARRY", "N1", "N2", "N3", "N4", "N5-baseline"],
+    "previously_uncovered_now_covered": [
+      "PLang/app/goals/goal/GoalCall.cs (GetGoalAsync slash-resolve + LoadFromFile leaf-match)",
+      "PLang/app/modules/builder/code/Default.cs (GetActions.Actions filter)",
+      "PLang/app/modules/builder/this.cs (Builder.RunAsync bootstrap)",
+      "PLang/app/modules/this.cs (DescribeReturnTypeName)"
     ]
   },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "major",
-      "type": "missing-plang-test",
-      "test_file": "Tests/Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal2",
-      "code_file": "PLang/app/types/path/file/this.Operations.cs",
-      "issue": "Negative-branch plang test for `if X exists` is written as `.test.goal2`, which `plang --test` does not discover. The file is parked. v5 finding F4 stands.",
-      "impact": "A revert of the F3 fix (where `if X exists` always recurses) is not caught at the plang layer — only C# DefaultEvaluatorTests does. Worse than no file, because the directory listing suggests coverage that does not execute.",
-      "suggestion": "Rename `.test.goal2` -> `.test.goal`, delete the stale `.build/whenexists.pr`, and rebuild from project root."
-    },
-    {
-      "id": 2,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "(none)",
-      "code_file": "PLang/app/goals/goal/GoalCall.cs",
-      "issue": "Slash-qualified `goal.call` resolution (`GetGoalAsync`) and `LoadFromFile` leaf-match (coder v6 core fix) have zero unit tests. Validated only by self-rebuild smoke.",
-      "impact": "The four-tier resolution order (caller-ancestor -> context -> root -> leaf-match) can drift on the next refactor with no test going red. The bug coder v6 fixed comes back silently until someone rebuilds the system/builder tree.",
-      "suggestion": "Add `PLang.Tests/App/Goals/GoalCallResolutionTests.cs` covering: (1) slash name resolved by caller-ancestor walk; (2) slash name resolved root-relative; (3) bare-name regression guard; (4) `LoadFromFile` leaf-match with pre-resolved `prPath` + qualified `Name`."
-    },
-    {
-      "id": 3,
-      "severity": "major",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Modules/builder/GetActionsTests.cs",
-      "code_file": "PLang/app/modules/builder/actions.cs",
-      "issue": "`builder.actions`'s new `Actions` filter parameter (coder v6) has no test setting `Actions = ...`. The filter path in `Builder.Actions` is unguarded.",
-      "impact": "Filter could no-op silently (broken case-insensitive match, empty-list semantics flipped). Plang side doesn't notice — LLM gets a larger catalog than asked for, builds still pass because it's a superset.",
-      "suggestion": "Three cases: Actions=[\"file.read\",\"file.save\"] -> exactly those; Actions=[] -> full catalog (no filter); Actions=[\"nonexistent.action\"] -> empty, no error."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Modules/builder/AppTests.cs",
-      "code_file": "PLang/app/modules/builder/this.cs",
-      "issue": "Inverted `File.Exists` fix at line 113 (coder v6) has no regression guard. `AppTests` exercises `Load`/`Save` but never `Builder.@this.RunAsync()`.",
-      "impact": "Flip `!File.Exists` back to `File.Exists` and the suite stays green; existing apps once again refuse to build without `--app={\"create\":true}`.",
-      "suggestion": "Two tests in `AppTests.cs` (or new `BuilderRunAsyncTests.cs`): existing `.build/app.pr` + Create=false -> proceeds; missing marker + Create=false + stdin redirected -> `NoAppFound` ServiceError."
-    },
-    {
-      "id": 5,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "(none)",
-      "code_file": "PLang/app/goals/goal/steps/step/actions/action/this.cs",
-      "issue": "New public `Action.ReturnTypeName` property (typed-returns sweep) has zero test coverage.",
-      "impact": "This is the LLM's signal for which CLR type a `write to %x%` result will produce — a wrong/null value here cascades into the exact mis-compile classes the builder bot reported. The entire sweep was justified by this signal; the signal isn't tested.",
-      "suggestion": "Add `DescribeReturnTypeTests`: Task<Data> -> null; Task<Data<bool>> -> \"bool\"; Task<Data<path>> -> \"path\"; Task<Data<List<path>>> -> mapped PLang name. Cross-check against `Utility/TypeMapping.cs`."
-    }
+  "mutation_tests": [
+    { "finding": "N1", "mutation": "GoalCall.cs:86 subPath -> bare-name shape", "expected_red": 2, "observed_red": 2, "result": "honest" },
+    { "finding": "N1", "mutation": "GoalCall.cs:154-156 skip leaf-match",       "expected_red": 3, "observed_red": 3, "result": "honest" },
+    { "finding": "N2", "mutation": "Default.cs:30 if(false && filter ...)",     "expected_red": 3, "observed_red": 3, "result": "honest" },
+    { "finding": "N3", "mutation": "builder/this.cs:113 drop !",                "expected_red": 2, "observed_red": 2, "result": "honest" },
+    { "finding": "N4", "mutation": "modules/this.cs:397 bare-Data -> WRONG",    "expected_red": 1, "observed_red": 1, "result": "honest" }
   ],
-  "verdict": "needs-fixes",
-  "summary": "Test suite is green and stronger than v5 — five of six prior findings honestly closed (F2/F3 mutation-verified red, F1/F5/F6 removed/fixed). One v5 carry-forward (F4: negative-branch plang test parked as `.goal2`, not discovered by the runner). Four new missing-coverage gaps on coder v6 / typed-returns sweep surfaces: GoalCall slash resolution, `builder.actions` Actions filter, inverted `File.Exists`, and `Action.ReturnTypeName`. All structurally fixable with small targeted test additions; none are correctness regressions."
+  "bonus_production_fix_audited": {
+    "commit": "02eb2e1ca",
+    "change": "drop identitydata alias in RegisterDomainTypes; Identity now resolves via class-level [PlangType(\"identity\")]",
+    "audit": "no live source references to 'identitydata' remain (only frozen LLM-trace JSONs under Tests/Error/Multilingual/.build/traces/). Pinned by N4 test ReturnTypeName_DataOfIdentity_IsIdentity.",
+    "result": "honest"
+  },
+  "findings": [],
+  "observations": [
+    {
+      "id": "v8-O1",
+      "severity": "informational",
+      "title": "RegisterDomainTypes is now empty - no guard against future [PlangType] shadowing",
+      "where": "PLang/app/types/this.cs:RegisterDomainTypes",
+      "note": "After dropping the identitydata alias, the method is a no-op hook. A future Register(\"x\", typeof(X)) that re-shadows a [PlangType] attribute would only surface incidentally (if X is among N4's seven pinned types). A generic 'attribute name beats runtime override' test would close it. Speculative; not blocking."
+    }
+  ]
 }
