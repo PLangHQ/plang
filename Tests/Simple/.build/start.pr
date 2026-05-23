@@ -22,7 +22,12 @@
             {
               "name": "Value",
               "value": "hello",
-              "type": "object"
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -36,10 +41,10 @@
         }
       ],
       "intent": null,
-      "guidance": "Assign literal \u0027hello\u0027 to %greeting% using variable.set.",
-      "level": "high",
-      "confidence": 99,
-      "formal": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "variable.set(Name=%greeting%, Value=\u0022hello\u0022, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -63,6 +68,11 @@
               "name": "Value",
               "value": "plang",
               "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -76,10 +86,10 @@
         }
       ],
       "intent": null,
-      "guidance": "Assign literal \u0027plang\u0027 to %name% using variable.set.",
-      "level": "high",
-      "confidence": 99,
-      "formal": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "variable.set(Name=%name%, Value=\u0022plang\u0022, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -101,8 +111,8 @@
             },
             {
               "name": "Value",
-              "value": "\u0027%greeting% %name%\u0027",
-              "type": "string"
+              "value": "%greeting% %name%",
+              "type": "tstring"
             }
           ],
           "defaults": [
@@ -116,10 +126,10 @@
         }
       ],
       "intent": null,
-      "guidance": "Compose %message% from %greeting% and %name% using variable.set. Value is a string with runtime variable references.",
-      "level": "high",
-      "confidence": 90,
-      "formal": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "variable.set(Name=%message%, Value=\u0022%greeting% %name%\u0022, Type=tstring)",
       "source": null,
       "waitForExecution": true
     },
@@ -145,10 +155,10 @@
         }
       ],
       "intent": null,
-      "guidance": "Write out the computed %message% to the current output channel using output.write.",
-      "level": "high",
-      "confidence": 98,
-      "formal": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "output.write(Data=%message%)",
       "source": null,
       "waitForExecution": true
     },
@@ -166,7 +176,7 @@
             {
               "name": "Expected",
               "value": "hello plang",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actual",
@@ -179,18 +189,18 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion: %message% must equal \u0027hello plang\u0027. Use assert.equals.",
-      "level": "high",
-      "confidence": 98,
-      "formal": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "assert.equals(Expected=\u0022hello plang\u0022, Actual=%message%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Start.goal",
-  "prPath": "/.build/start.pr",
+  "path": "/Simple/Start.goal",
+  "prPath": "/Simple/.build/start.pr",
   "hash": "4c13f9ebf4e5ad86ae18eeb092585a8141afe8b1758d677901ed8a109658e70a",
   "builderVersion": null,
   "isSetup": false,
