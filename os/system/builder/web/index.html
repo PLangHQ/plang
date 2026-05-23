@@ -1111,8 +1111,17 @@ function traceToEntry(trace) {
     parentSection = null;
   }
 
+  // Sub-goal entries in trace.subGoals carry {goal, plan} but NOT their own
+  // stepPasses — the parent trace's flat stepPasses list holds compile records
+  // from every level. Enrich each sub-goal entry with the parent's stepPasses
+  // so passToGoalSection's goal-name filter (by stepPass.goal) can pull each
+  // sub-goal's slice without a per-level trace nest.
   const subSections = Array.isArray(trace.subGoals)
-    ? trace.subGoals.map(sg => passToGoalSection(sg, /*isParent*/ false))
+    ? trace.subGoals.map(sg => {
+        const sgUnwrapped = unwrapDataWrapper(sg) || {};
+        const enriched = { ...sgUnwrapped, stepPasses: trace.stepPasses };
+        return passToGoalSection(enriched, /*isParent*/ false);
+      })
     : [];
 
   const goals = parentSection ? [parentSection, ...subSections] : subSections;

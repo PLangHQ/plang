@@ -35,7 +35,7 @@ BuildSubGoal
 - write out "  Building sub-goal: %goal.Name%"
 - call Plan, on error call HandleBuildFailure
 - foreach %plan.steps%, call BuildStep/Start planStep=%item%
-- add {goal: %goal.Name%, plan: %plan%} to %trace.subGoals%
+- add {goal: %goal%, plan: %plan%} to %trace.subGoals%
 
 
 HandleBuildFailure

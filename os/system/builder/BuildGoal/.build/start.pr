@@ -933,7 +933,7 @@
         },
         {
           "index": 4,
-          "text": "add {goal: %goal.Name%, plan: %plan%} to %trace.subGoals%",
+          "text": "- add {goal: %goal%, plan: %plan%} to %trace.subGoals%",
           "lineNumber": 38,
           "indent": 0,
           "comment": null,
@@ -950,7 +950,7 @@
                 {
                   "name": "Value",
                   "value": {
-                    "goal": "%goal.Name%",
+                    "goal": "%goal%",
                     "plan": "%plan%"
                   },
                   "type": "object"

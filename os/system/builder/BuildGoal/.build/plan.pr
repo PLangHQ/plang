@@ -13,13 +13,7 @@
         {
           "module": "builder",
           "action": "actions",
-          "parameters": [
-            {
-              "name": "Actions",
-              "value": null,
-              "type": "list\u003Cstring\u003E"
-            }
-          ],
+          "parameters": [],
           "defaults": null,
           "modifiers": []
         },
@@ -35,7 +29,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "data"
             }
           ],
           "defaults": [
@@ -52,7 +46,7 @@
       "guidance": "Load the registered action catalog via builder.actions and store it in %actions%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "builder.actions(Actions=%!data%) , variable.set(Name=%actions%, Value=%!data%, type=data)",
       "source": null,
       "waitForExecution": true
     },
@@ -105,7 +99,7 @@
       "guidance": "Render the summary template from the given template path and store rendered markdown in %actionSummary%.",
       "level": "medium",
       "confidence": 70,
-      "formal": null,
+      "formal": "ui.render(Template=\u0022/system/actions/v2/summary.planner.md\u0022) , variable.set(Name=%actionSummary%, Value=%!data%, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -158,7 +152,7 @@
       "guidance": "Render the goal-format template and store it in %goalForLlm%.",
       "level": "medium",
       "confidence": 70,
-      "formal": null,
+      "formal": "ui.render(Template=\u0022/system/builder/templates/v2/goalFormatForLlm.v2.template\u0022) , variable.set(Name=%goalForLlm%, Value=%!data%, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -177,11 +171,6 @@
               "name": "Template",
               "value": "/system/builder/llm/Plan.llm",
               "type": "string"
-            },
-            {
-              "name": "IsFile",
-              "value": true,
-              "type": "bool"
             }
           ],
           "defaults": null,
@@ -216,7 +205,7 @@
       "guidance": "Render the Plan LLM prompt template and store it in %planPrompt%.",
       "level": "medium",
       "confidence": 70,
-      "formal": null,
+      "formal": "ui.render(Template=\u0022/system/builder/llm/Plan.llm\u0022) | variable.set(Name=%planPrompt%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -270,7 +259,7 @@
       "guidance": "Set %messages% to a JSON array of LLM messages (system \u002B user) using %planPrompt% and %goalForLlm%.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "variable.set(Name=%messages%, Value=[{\u0022Role\u0022:\u0022system\u0022,\u0022Content\u0022:\u0022%planPrompt%\u0022},{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022%goalForLlm%\u0022}], Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -338,7 +327,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022QueryAndValidatePlan\u0022}) | error.handle(Actions=[goal.call(GoalName={name:\u0022LlmFixer\u0022})], RetryCount=2)",
       "source": null,
       "waitForExecution": true
     },
@@ -383,7 +372,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%plan.system%, Value=%planPrompt%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -407,6 +396,11 @@
               "name": "Value",
               "value": "%goalForLlm%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "object",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -423,7 +417,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%plan.user%, Value=%goalForLlm%, Type=object)",
       "source": null,
       "waitForExecution": true
     }
@@ -505,7 +499,7 @@
                   "parameters": [
                     {
                       "name": "DurationMs",
-                      "value": "%!build.cacheDurationMs%",
+                      "value": "%!build.cache%",
                       "type": "long"
                     },
                     {
@@ -548,7 +542,7 @@
           "guidance": null,
           "level": null,
           "confidence": null,
-          "formal": null,
+          "formal": "llm.query(Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string]}]}, Cache=%!build.cache%) | cache.wrap(DurationMs=%!build.cache%, Sliding=false) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
           "source": null,
           "waitForExecution": true
         },
@@ -582,7 +576,7 @@
           "guidance": null,
           "level": null,
           "confidence": null,
-          "formal": null,
+          "formal": "goal.call(GoalName={name:\u0022Validate\u0022})",
           "source": null,
           "waitForExecution": true
         }
