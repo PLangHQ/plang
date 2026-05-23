@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "v10 cleanly closes v2 S4.a (Absolute uses _uri.IdnHost — punycode breaks the homograph spoof) and S4.b (constructor strips _uri.UserInfo via UriBuilder so prompt, fetched URL, and persisted grant key all agree). Also closes O3 (HttpContent re-buffered for 307/308 hops). No new attack surface; UriBuilder round-trip preserves scheme/path; only `content.Headers` copied across hops — no request-auth header survival. F1/F2/F4 carry-forwards from filesystem-permission unchanged; S2 host-side verify still deferred to signing-module work. C# 2920/2920, plang 204/204, 0 stale. Ship the branch."
+}

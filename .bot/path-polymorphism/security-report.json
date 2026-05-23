@@ -1,13 +1,13 @@
 {
   "analyst": "security",
   "branch": "path-polymorphism",
-  "timestamp": "2026-05-23T22:00:00Z",
+  "timestamp": "2026-05-23T23:30:00Z",
   "phase": "both",
-  "audit_version": "v2",
-  "scope": "Re-audit of v9 — coder addresses security v1 S1/S2/S3 on HttpPath (AllowAutoRedirect=true SSRF, X-Signature cross-origin leak, query-string secret persistence). v2 covers the v9 delta (a4a6e5f00..e3309e136): http/this.cs (+122 lines: redirect rewrite + AuthorizationHint) and path/this.Authorize.cs (+16 lines: hint hook). Carry-forwards (F1/F2/F4) re-verified unchanged at HEAD.",
+  "audit_version": "v3",
+  "scope": "Re-audit of v10 — coder addresses security v2 S4.a/S4.b (consent-prompt fidelity) and O3 (HttpContent reuse on 307/308). v3 covers the v10 delta (2beb8eb1b..a8e1e6107): http/this.cs constructor (UserInfo strip), Absolute (Host → IdnHost), FollowRedirect (re-buffered body + content-header copy). Carry-forwards (F1/F2/F4) re-verified unchanged.",
   "build": {
     "status": "clean",
-    "cs_tests": "2914/2914 pass, 0 fail, 0 skip (TUnit on .NET 10 via `dotnet run --project PLang.Tests`)",
+    "cs_tests": "2920/2920 pass, 0 fail, 0 skip (TUnit on .NET 10 via `dotnet run --project PLang.Tests`)",
     "plang_tests": "204/204 pass, 0 stale, 0 skip",
     "rebuild": "clean (cleared bin/obj across PlangConsole/PLang/PLang.Tests/PLang.Generators)"
   },
@@ -25,7 +25,7 @@
         "Verb threaded through Send so the new hop is re-Authorized for the same verb the original call started with"
       ],
       "gaps": [
-        "S4 (NEW, Low) — Absolute (the URL shown in the per-hop consent prompt and persisted as the grant key) is built from _uri.Host (Unicode IDN form, homograph-spoofable) and omits _uri.UserInfo. The user's view of the URL diverges from what is fetched and from what gets stored as the grant key."
+        "None — v10 closes S4."
       ]
     },
     {
@@ -71,13 +71,9 @@
       "id": "S4",
       "severity": "low",
       "category": "consent-prompt-fidelity",
-      "vector": "HttpPath.Absolute (PLang/app/types/path/http/this.cs:115-151) is the only URL shown in the per-hop consent prompt and is also the Permission grant key. Two divergences from what is fetched: (a) `_uri.Host.ToLowerInvariant()` renders an IDN-encoded host in its Unicode form — a Cyrillic-`а` `аpple.com` is visually indistinguishable from `apple.com` in the prompt; (b) `Absolute` builds `scheme://host[:port]/path?query` and silently omits `_uri.UserInfo`, so a redirect to `https://attacker:pwd@victim.example/` displays as `https://victim.example/`. The fresh HttpPath constructed via `target.ToString()` preserves the userinfo on its `_uri`.",
-      "preconditions": "Attacker controls a previously-consented origin and issues a 3xx whose Location uses an IDN homograph host or embeds userinfo. User accepts the per-hop consent prompt — the entire v9 mitigation relies on the user reading the prompt.",
-      "impact": "Consent-contract integrity: what the user sees ≠ what is fetched ≠ what is stored as the grant key. (a) IDN homograph spoof bypasses the user's read of the prompt. (b) Userinfo-bearing URLs are persisted as their userinfo-free Absolute form, so once the user grants `https://victim.example/path`, every future `attacker:pwd@victim.example/path` matches the cached grant. .NET does not auto-Basic from userinfo, so no direct credential send.",
-      "affected_files": ["PLang/app/types/path/http/this.cs"],
-      "exploit_sketch": "1. Lure user-consent to https://api.partner.com/x (legitimate). 2. partner.com is later compromised. 3. Origin returns 302 Location: https://%D0%B0pple.com/login (Cyrillic а). 4. User sees: `Allow X to read https://аpple.com/login? (y/n/a)`. 5. User reads `apple.com`, answers `y`. 6. PLang fetches xn--pple-43d.com, returns body to program.",
-      "proposed_fix": "Render Absolute via `_uri.IdnHost` (punycode) instead of `_uri.Host`. Punycode is visibly distinct (`xn--…`). Either strip `_uri.UserInfo` at construction (recommended) or include it in `Absolute` so the user sees the credentials in the prompt and the grant key.",
-      "status": "open"
+      "vector": "HttpPath.Absolute diverged from the fetched URL via (a) Unicode IDN host and (b) silently-stripped UserInfo.",
+      "status": "fixed",
+      "fixed_in": "v10 — http/this.cs constructor (:81-86) strips UserInfo via UriBuilder before storing _uri; Absolute (:140) renders via _uri.IdnHost.ToLowerInvariant() (punycode). Prompt-shown URL, fetched URL, and persisted grant key now all agree. Verified by HttpPathConsentFidelityTests."
     },
     {
       "id": "F1",
@@ -118,7 +114,11 @@
     },
     {
       "id": "O3",
-      "note": "HttpContent reuse across 307/308 hops (`nextContent = nextMethod==GET ? null : content`) re-passes the same HttpContent instance — single-send semantics; reliability bug not a security finding."
+      "note": "HttpContent reuse on 307/308 hops — FIXED in v10 (http/this.cs:399-413 buffers body via ReadAsByteArrayAsync into a fresh ByteArrayContent, copies content headers). No request-auth header survival — only content.Headers (Content-Type etc.) iterated, not request-level headers."
+    },
+    {
+      "id": "O6",
+      "note": "_uri.IdnHost for IPv6 returns the bare hex without brackets (`::1` vs `[::1]`), so an IPv6 HttpPath renders a malformed Absolute. Prompt and grant key agree (the S4 divergence is not re-introduced), so it's a display/cache-key annoyance for IPv6 HTTP, not a security finding."
     },
     {
       "id": "O4",
@@ -129,11 +129,11 @@
       "note": "Out-of-scope: code.load + [PathScheme] — same Stage-4 concern from v1."
     }
   ],
-  "verdict": "needs-work",
+  "verdict": "pass",
   "deliverables": {
-    "plan": ".bot/path-polymorphism/security/v2/plan.md",
-    "result": ".bot/path-polymorphism/security/v2/result.md",
-    "verdict": ".bot/path-polymorphism/security/v2/verdict.json",
+    "plan": ".bot/path-polymorphism/security/v3/plan.md",
+    "result": ".bot/path-polymorphism/security/v3/result.md",
+    "verdict": ".bot/path-polymorphism/security/v3/verdict.json",
     "summary": ".bot/path-polymorphism/security/summary.md"
   }
 }

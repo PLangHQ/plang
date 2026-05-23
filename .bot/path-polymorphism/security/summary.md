@@ -1,7 +1,7 @@
 # security — path-polymorphism
 
 ## Version
-v2 (latest)
+v3 (latest) — **PASS**
 
 ## What this is
 Trust-boundary audit of `path-polymorphism`. The branch makes `path`
@@ -13,91 +13,63 @@ reaches.
 
 ## What was done
 
-### v2 (this version, NEEDS WORK)
+### v3 (this version, PASS)
 
-Clean rebuild (stale-binary trap avoided). C# **2914/2914**
-(`dotnet run --project PLang.Tests` — TUnit on .NET 10), plang
-**204/204**, 0 stale. Audited only the v9 delta against v1 findings:
+Clean rebuild (stale-binary trap avoided). C# **2920/2920** (TUnit on
+.NET 10 via `dotnet run --project PLang.Tests`), plang **204/204**,
+0 stale. Audited only the v10 delta against v2 S4 + O3.
 
-1. **S1 (HIGH SSRF) — fixed.** `AllowAutoRedirect=false` on the static
-   client; `Send` delegates to `SendWithHops` which on 3xx hands off to
-   `FollowRedirect`. Each hop builds a fresh `HttpPath(target.ToString(),
-   Context)`, calls `AuthGate(verb)` so the user sees and consents to the
-   new URL, re-signs with the new destination's URL, and recurses.
-   Scheme allowlisted to http/https. Hop cap = 5. RFC 7231 §6.4 method/
-   body downgrade on 303. Verified by `HttpPathRedirectTests`.
-2. **S2 (MEDIUM cross-origin shape) — fixed.** Per-hop `SignRequest`
-   reads the new instance's `_uri.ToString()` for the envelope's `url`
-   claim. The prior hop's signature never crosses an origin boundary.
-   Test decodes the captured `X-Signature` and asserts the signed `url`
-   matches the destination. Destination-pinned verification on the host
-   side is signing-module work — same shape as `filesystem-permission`
-   F1, stays deferred.
-3. **S3 (LOW persistence-warning) — fixed.** Virtual
-   `AuthorizationHint(verb)` on `path.@this` returns empty by default;
-   `HttpPath` overrides to emit a one-line warning when the URI carries
-   a query string. Base `Authorize` appends the hint before y/n/a.
-   Constant string — no injection surface. `HttpPathPromptHintTests`
-   covers query-present/absent/trailing-?.
-4. **One new finding (S4, Low).**
+1. **S4.a (LOW IDN homograph) — fixed.** `Absolute` now uses
+   `_uri.IdnHost.ToLowerInvariant()`. A Location of `https://аpple.com/`
+   (Cyrillic `а`) renders as `https://xn--pple-43d.com/` in the consent
+   prompt — visibly distinct from `apple.com`. Punycode also persists as
+   the grant key, so a homograph variant cannot silently match a prior
+   ASCII grant.
+2. **S4.b (LOW userinfo strip) — fixed.** Constructor strips
+   `_uri.UserInfo` via `UriBuilder { UserName="", Password="" }` before
+   storing the single `_uri` field. Every downstream consumer (Absolute,
+   AuthGate, SignRequest, SendAsync) reads the userinfo-free form —
+   prompt URL, fetched URL, and persisted grant key all agree.
+3. **O3 (reliability) — fixed.** `FollowRedirect` now re-buffers the body
+   via `ReadAsByteArrayAsync` into a fresh `ByteArrayContent`, copying
+   the original content headers. 307/308 POSTs no longer fail on the
+   second hop. Only `content.Headers` is copied (Content-Type etc.), not
+   request-level headers — no auth-header cross-origin survival.
 
-**S4 (Low) — Consent-prompt URL diverges from fetched URL.** The entire
-v9 mitigation rests on the user reading the per-hop consent prompt.
-`HttpPath.Absolute` — the URL shown in the prompt and the Permission
-grant key — has two divergences from what gets fetched:
+No new findings. F1/F2/F4 carry-forwards from `filesystem-permission`
+re-verified at v10 HEAD — unchanged. S2's deferred host-side verify
+remains tracked at the signing-module layer.
 
-- **IDN homograph rendering.** `Absolute` uses `_uri.Host` (Unicode form)
-  not `_uri.IdnHost` (punycode). A redirect Location of
-  `https://аpple.com/` (Cyrillic `а`) displays identically to `apple.com`
-  in the prompt, but the fetched host is a different origin.
-- **Userinfo stripped.** `Absolute` omits `_uri.UserInfo`. A redirect to
-  `https://attacker:pwd@victim.example/` shows `https://victim.example/`
-  in the prompt, and `attacker:pwd@victim.example` matches the cached
-  `victim.example` grant on next visit.
+### v2 (NEEDS WORK)
 
-Fix shape: render `Absolute` via `_uri.IdnHost`; either strip
-`UserInfo` at construction or include it in `Absolute` so the prompt and
-grant key match what is fetched.
-
-**F1/F2/F4 carry-forwards** from `filesystem-permission` re-verified at
-v9 HEAD — unchanged.
+Re-audit of v9 redirect rewrite. S1 closed, S2 cross-origin shape
+closed, S3 closed. One new finding (S4 Low — consent prompt diverged
+from fetched URL via Unicode IDN host + stripped UserInfo).
 
 ### v1 (NEEDS WORK)
 
 First pass. Three findings on HttpPath (S1 HIGH SSRF, S2 MEDIUM identity
 leak, S3 LOW query-string persistence) plus F1/F2/F4 carry-forwards.
-All three Sn closed in v2.
 
-## Code example
-
-The v9 redirect mitigation:
+## Code example — v10 fix
 
 ```csharp
-// PLang/app/types/path/http/this.cs:51
-private static readonly HttpClient _client = new(new SocketsHttpHandler
+// PLang/app/types/path/http/this.cs:81
+// Constructor strips userinfo — eliminates the divergence between
+// what the prompt shows, what gets fetched, and what gets persisted.
+if (!string.IsNullOrEmpty(uri.UserInfo))
 {
-    PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-    AllowAutoRedirect = false,   // security v1 S1
-});
+    var builder = new UriBuilder(uri) { UserName = "", Password = "" };
+    uri = builder.Uri;
+}
+_uri = uri;
 
-// :360 — each 3xx is a fresh consent + fresh signing
-var nextPath = new @this(target.ToString(), Context);
-if (await nextPath.AuthGate(verb) is { } denial) return denial;
-return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, asBytes, hopsLeft - 1);
-```
-
-The v2 S4 finding — Absolute strips both userinfo and the IDN punycode
-distinction that the user needs to spot a homograph:
-
-```csharp
-// PLang/app/types/path/http/this.cs:120
-var host = _uri.Host.ToLowerInvariant();   // ← _uri.IdnHost
-// ...                                     // (UserInfo never appended)
-sb.Append(scheme).Append("://").Append(host);
+// :140 — IdnHost (punycode) breaks the homograph spoof on display.
+var host = _uri.IdnHost.ToLowerInvariant();
 ```
 
 ## What to do next
 
-Coder picks up S4 — small fix (one-line `_uri.Host` → `_uri.IdnHost`
-plus a UserInfo decision). All three v1 Sn findings are now closed.
-F1/F2/F4 stay tracked at their `filesystem-permission` severities.
+Branch is ready to ship from the security side. Remaining items
+(F1/F2/F4 + S2 host-side verify) are pre-existing tracked work on
+`permission/` and `signing/`, not blockers for `path-polymorphism`.
