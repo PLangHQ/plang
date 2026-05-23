@@ -13,6 +13,6 @@ public partial class IsFalse : IContext
     [Code]
     public partial IAssert Assert { get; }
 
-    public async Task<data.@this> Run() =>
+    public async Task<data.@this<bool>> Run() =>
         AssertSnapshot.WithVariables(await Assert.IsFalse(this), Context);
 }
