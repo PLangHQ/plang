@@ -1110,6 +1110,35 @@ public class @this<T> : @this
     public new static @this<T> FromError(IError error) => new() { Error = error };
 
     /// <summary>
+    /// Explicit pass-through: retype a base <see cref="@this"/> as
+    /// <see cref="@this{T}"/> without re-wrapping. Use this when a method
+    /// declared <c>Task&lt;Data&lt;T&gt;&gt;</c> needs to forward a base
+    /// <see cref="@this"/> coming back from a provider/dispatch — bypasses the
+    /// implicit-operator double-wrap (`Data&lt;T&gt;{ Value = innerData }`)
+    /// because the compiler prefers this explicit factory.
+    ///
+    /// Preserves all wrapper state: Value (cast to T?), Type, Error, Handled,
+    /// Returned, ReturnDepth, Warnings, Signature, Properties (shared ref —
+    /// forwarded metadata, not deep-cloned). If the source already is a
+    /// <see cref="@this{T}"/>, returns it unchanged.
+    /// </summary>
+    public static @this<T> From(@this source)
+    {
+        if (source is @this<T> already) return already;
+        var copy = new @this<T>(source.Name, source.Value is T t ? t : default, source.Type)
+        {
+            Error = source.Error,
+            Handled = source.Handled,
+            Returned = source.Returned,
+            ReturnDepth = source.ReturnDepth,
+            Warnings = source.Warnings != null ? new List<Info>(source.Warnings) : null,
+            Signature = source.Signature,
+            Properties = source.Properties,
+        };
+        return copy;
+    }
+
+    /// <summary>
     /// Allows direct assignment of T values to data.@this&lt;T&gt; properties.
     /// FOOTGUN: when T = object and the source is itself a Data subtype, this
     /// silently wraps (Data&lt;object&gt;{ Value = Data&lt;bool&gt;{...} }) instead of

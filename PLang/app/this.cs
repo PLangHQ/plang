@@ -511,11 +511,15 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>
     /// Runs a goal via GoalCall. Resolves the goal then delegates to Goal.RunAsync.
     /// </summary>
-    public async Task<data.@this> RunGoalAsync(GoalCall goalCall, actor.context.@this? context = null, CancellationToken ct = default)
+    // Polymorphic — a called goal can return any T (string content, structured
+    // dict, list, an Exit envelope, …). Declares Data<object>; the body uses
+    // Data<object>.From to retype base-Data values it forwards from
+    // GetGoalAsync and Goal.RunAsync without the implicit-operator wrap.
+    public async Task<data.@this<object>> RunGoalAsync(GoalCall goalCall, actor.context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
         var goalResult = await goalCall.GetGoalAsync(this, context);
-        if (!goalResult.Success) return goalResult;
+        if (!goalResult.Success) return data.@this<object>.From(goalResult);
 
         // Inject parameters — GetGoalAsync only injects when loading from file,
         // but goals found in memory (app.goals.Get) need parameters too.
@@ -530,16 +534,16 @@ public sealed partial class @this : IAsyncDisposable
             foreach (var param in goalCall.Parameters)
                 context.Variables.Set(param.Name, param);
 
-        return await ((Goal)goalResult.Value!).RunAsync(context);
+        return data.@this<object>.From(await ((Goal)goalResult.Value!).RunAsync(context));
     }
 
     /// <summary>
     /// Runs a goal already in memory. Delegates to Goal.RunAsync.
     /// </summary>
-    public async Task<data.@this> RunGoalAsync(Goal goal, actor.context.@this? context = null, CancellationToken ct = default)
+    public async Task<data.@this<object>> RunGoalAsync(Goal goal, actor.context.@this? context = null, CancellationToken ct = default)
     {
         context ??= User.Context;
-        return await goal.RunAsync(context);
+        return data.@this<object>.From(await goal.RunAsync(context));
     }
 
     private global::app.modules.settings.IStore CreateSettingsStore()
