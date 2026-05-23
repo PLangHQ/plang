@@ -1,0 +1,4 @@
+{
+  "status": "needs-work",
+  "summary": "v9 closes S1 (HIGH SSRF) and S2-cross-origin shape (MEDIUM partial) with the right fix shape — AllowAutoRedirect=false, manual per-hop re-Authorize via fresh HttpPath, scheme allowlist, hop cap 5, RFC 7231 method/body downgrade, per-hop signing bound to new URL. S3 hint correct (no injection surface). One new Low: S4 — Absolute (the URL shown in the consent prompt and persisted as the grant key) uses _uri.Host (Unicode IDN, homograph-spoofable) and silently strips _uri.UserInfo, so the consent contract diverges from what gets fetched and stored. Fix: render Absolute via _uri.IdnHost (punycode) and either strip UserInfo at construction or include it in Absolute. F1/F2/F4 carry-forwards unchanged. No critical/high open."
+}

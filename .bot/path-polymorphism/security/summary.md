@@ -1,87 +1,103 @@
 # security — path-polymorphism
 
 ## Version
-v1 (latest)
+v2 (latest)
 
 ## What this is
-First security trust-boundary audit of `path-polymorphism`. The branch
-makes `path` scheme-polymorphic (`FilePath`, `HttpPath`), moves the consent
-gate from action handlers into Path verbs, and kills `IFile` /
+Trust-boundary audit of `path-polymorphism`. The branch makes `path`
+scheme-polymorphic (`FilePath`, `HttpPath`), moves the consent gate from
+action handlers into Path verbs, and kills `IFile` /
 `DefaultFileProvider`. Threat model: PLang is user-sovereign — the real
 new attacker is the **remote HTTP origin** that an `HttpPath` request
 reaches.
 
 ## What was done
 
-### v1 (this version, NEEDS WORK)
+### v2 (this version, NEEDS WORK)
 
-Clean rebuild (stale-binary trap avoided). C# **2906/2906**, plang
-**204/204**, 0 stale. Then:
+Clean rebuild (stale-binary trap avoided). C# **2914/2914**
+(`dotnet run --project PLang.Tests` — TUnit on .NET 10), plang
+**204/204**, 0 stale. Audited only the v9 delta against v1 findings:
 
-1. Mapped Authorize coverage on every Path verb (FilePath + HttpPath +
-   base `CopyTo`/`MoveTo`). Every verb gates through `AuthGate` before any
-   I/O. Bundled-transfer fast path checks both source and dest gates and
-   only skips the prompt when both already grant. **Sound.**
-2. Audited the scheme registry. Per-App, `ConcurrentDictionary`, built-ins
-   registered in App ctor. `Scheme.Register` is not reachable from any
-   PLang module surface today. `ParseScheme` validates per RFC 3986.
-   **Sound for today; design note for `code.load`** — a malicious
-   assembly with `[PathScheme("file")]` would silently MITM the file
-   scheme; flag that when `code.load` lands.
-3. Red-teamed HttpPath. Three findings.
-4. Re-verified F1/F2/F4 carry-forwards from `filesystem-permission` at
-   HEAD — unchanged in shape and severity.
+1. **S1 (HIGH SSRF) — fixed.** `AllowAutoRedirect=false` on the static
+   client; `Send` delegates to `SendWithHops` which on 3xx hands off to
+   `FollowRedirect`. Each hop builds a fresh `HttpPath(target.ToString(),
+   Context)`, calls `AuthGate(verb)` so the user sees and consents to the
+   new URL, re-signs with the new destination's URL, and recurses.
+   Scheme allowlisted to http/https. Hop cap = 5. RFC 7231 §6.4 method/
+   body downgrade on 303. Verified by `HttpPathRedirectTests`.
+2. **S2 (MEDIUM cross-origin shape) — fixed.** Per-hop `SignRequest`
+   reads the new instance's `_uri.ToString()` for the envelope's `url`
+   claim. The prior hop's signature never crosses an origin boundary.
+   Test decodes the captured `X-Signature` and asserts the signed `url`
+   matches the destination. Destination-pinned verification on the host
+   side is signing-module work — same shape as `filesystem-permission`
+   F1, stays deferred.
+3. **S3 (LOW persistence-warning) — fixed.** Virtual
+   `AuthorizationHint(verb)` on `path.@this` returns empty by default;
+   `HttpPath` overrides to emit a one-line warning when the URI carries
+   a query string. Base `Authorize` appends the hint before y/n/a.
+   Constant string — no injection surface. `HttpPathPromptHintTests`
+   covers query-present/absent/trailing-?.
+4. **One new finding (S4, Low).**
 
-**Findings:**
+**S4 (Low) — Consent-prompt URL diverges from fetched URL.** The entire
+v9 mitigation rests on the user reading the per-hop consent prompt.
+`HttpPath.Absolute` — the URL shown in the prompt and the Permission
+grant key — has two divergences from what gets fetched:
 
-- **S1 (High)** — SSRF via `HttpClient.AllowAutoRedirect = true`. Authorize
-  prompts the original URL; redirects to cloud IMDS / loopback / private
-  IPs are not re-authorized. One redirect hop is enough to read AWS/GCP/
-  Azure metadata after consent to any public host. Fix: handle 3xx
-  manually, re-prompt per hop.
-- **S2 (Medium)** — `X-Signature` (PLang identity) leaks across redirect
-  and to arbitrary origins. Custom header survives .NET's redirect-strip;
-  signing envelope is not destination-scoped. Pairs with S1 to harvest
-  signatures for attacker-chosen (URL, body) pairs.
-- **S3 (Low)** — `a` (always-allow) persists URL grants verbatim,
-  including query-string secrets, to sqlite without warning the user.
-- **F1/F2/F4** — carry-forwards from `filesystem-permission`, unchanged.
+- **IDN homograph rendering.** `Absolute` uses `_uri.Host` (Unicode form)
+  not `_uri.IdnHost` (punycode). A redirect Location of
+  `https://аpple.com/` (Cyrillic `а`) displays identically to `apple.com`
+  in the prompt, but the fetched host is a different origin.
+- **Userinfo stripped.** `Absolute` omits `_uri.UserInfo`. A redirect to
+  `https://attacker:pwd@victim.example/` shows `https://victim.example/`
+  in the prompt, and `attacker:pwd@victim.example` matches the cached
+  `victim.example` grant on next visit.
+
+Fix shape: render `Absolute` via `_uri.IdnHost`; either strip
+`UserInfo` at construction or include it in `Absolute` so the prompt and
+grant key match what is fetched.
+
+**F1/F2/F4 carry-forwards** from `filesystem-permission` re-verified at
+v9 HEAD — unchanged.
+
+### v1 (NEEDS WORK)
+
+First pass. Three findings on HttpPath (S1 HIGH SSRF, S2 MEDIUM identity
+leak, S3 LOW query-string persistence) plus F1/F2/F4 carry-forwards.
+All three Sn closed in v2.
 
 ## Code example
 
-The SSRF primitive:
+The v9 redirect mitigation:
 
 ```csharp
-// PLang/app/types/path/http/this.cs:40
+// PLang/app/types/path/http/this.cs:51
 private static readonly HttpClient _client = new(new SocketsHttpHandler
 {
     PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-    AllowAutoRedirect = true,    // ← consent matches original URL only;
-                                 //   redirect target is never gated.
+    AllowAutoRedirect = false,   // security v1 S1
 });
+
+// :360 — each 3xx is a fresh consent + fresh signing
+var nextPath = new @this(target.ToString(), Context);
+if (await nextPath.AuthGate(verb) is { } denial) return denial;
+return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, asBytes, hopsLeft - 1);
 ```
 
-After `Authorize` succeeds for `https://api.public-saas.com/x`, a 302
-`Location: http://169.254.169.254/latest/meta-data/...` returns the IMDS
-body to the program as a normal `data.@this.Ok`.
-
-The fix shape (handle the 3xx, re-authorize each hop):
+The v2 S4 finding — Absolute strips both userinfo and the IDN punycode
+distinction that the user needs to spot a homograph:
 
 ```csharp
-// Send(): AllowAutoRedirect=false, then in the response handler —
-if ((int)resp.StatusCode is >= 300 and < 400
-    && resp.Headers.Location is { } loc
-    && hops < MaxHops)
-{
-    var next = HttpPath.Resolve(loc.ToString(), Context);
-    if (await next.AuthGate(verb) is { } denied) return denied;
-    return await next.SendCore(method, content, readBody, asBytes, hops + 1);
-}
+// PLang/app/types/path/http/this.cs:120
+var host = _uri.Host.ToLowerInvariant();   // ← _uri.IdnHost
+// ...                                     // (UserInfo never appended)
+sb.Append(scheme).Append("://").Append(host);
 ```
 
 ## What to do next
 
-Coder picks up S1 as the headline fix (the redirect rewrite is the right
-shape and unblocks closing S2 cleanly at the same point). S3 is a one-line
-prompt-text change. F1/F2/F4 stay tracked at their `filesystem-permission`
-severities.
+Coder picks up S4 — small fix (one-line `_uri.Host` → `_uri.IdnHost`
+plus a UserInfo decision). All three v1 Sn findings are now closed.
+F1/F2/F4 stay tracked at their `filesystem-permission` severities.
