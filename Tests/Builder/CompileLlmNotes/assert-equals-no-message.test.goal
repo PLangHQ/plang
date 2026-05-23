@@ -1,0 +1,20 @@
+TestAssertEqualsOmitsMessageWhenNotInStepText
+/ Drift case 2 — the load-bearing reason this branch exists.
+/
+/ Step text `- assert %message% equals 'hello plang'` carries no custom error
+/ message. With os/system/modules/assert/module.notes.md saying "omit Message
+/ from parameters and from formal unless the step text names a custom error
+/ message; Expected is taken from the step text literal", the LLM should emit:
+/   parameters: { Expected: 'hello plang', Actual: %message% }   (no Message key)
+/   formal contains Expected='hello plang' and no Message=...
+/   formal and parameters agree on Expected ('hello plang', not %!data%).
+/
+/ Pre-fix shape that this test forbids:
+/   any Message key in parameters duplicating Expected            -- forbidden
+/   Message='hello plang' in formal                               -- forbidden
+/   formal='assert.equals(Expected=%!data%, ...)' (disagrees)     -- forbidden
+/
+/ Non-determinism: real LLM + cache. Verification (architect's rule):
+/ pass 3 fresh-cache builds in a row. See the sibling drift case for the
+/ clean-rebuild incantation; same trap applies here.
+- throw "not implemented"

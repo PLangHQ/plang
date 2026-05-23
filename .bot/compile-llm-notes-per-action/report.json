@@ -1,0 +1,74 @@
+{
+  "branch": "compile-llm-notes-per-action",
+  "sessions": [
+    {
+      "id": "58d95ebc-deb0-4695-8018-35e2fd8e7dad",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-23T22:57:26Z",
+      "timestamp_end": "2026-05-23T23:05:00Z",
+      "intent": "Define failing-test contract for moving per-action LLM teaching from C# attributes/Compile.llm to markdown files at os/system/modules/<module>/.",
+      "before": {
+        "assumptions": "Architect plan in .bot/compile-llm-notes-per-action/architect/plan.md is approved. Catalog entry (app.goals.goal.steps.step.actions.action.@this) already exposes Description/ModuleDescription/Examples — coder will add Notes/ModuleNotes (action-level + module-level), populate Description/ModuleDescription/Examples from markdown after migration script runs, and surface text fields per the merge-at-render rule. Provider→Code attribute rename already in source.",
+        "risk": "Drift cases are LLM-sensitive; assertions must accept the structural shape (no spurious channel/Message) without overfitting to literal prompt text. Loader/renderer tests reference a markdown-fixture filesystem; need to fit existing MockFileSystem patterns rather than touching real os/system/modules/. Modifier folder rename (AiModule/ → ai/) is part of branch but I am NOT testing rename — only the loader behavior on the new lowercase paths."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+            "Tests/Builder/CompileLlmNotes/assert-equals-no-message.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Drift cases — the load-bearing pair from the architect's brief. Plang `--test` goals; bodies are `throw \"not implemented\"`. Commentary pins the pre-fix shape that is forbidden and the architect's 3-fresh-cache-builds rule."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/CatalogTests/MarkdownTeachingLoaderTests.cs",
+            "PLang.Tests/App/Modules/CatalogTests/MarkdownTeachingMergeTests.cs",
+            "PLang.Tests/App/Modules/CatalogTests/MarkdownTeachingOrphanTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mechanism tests for the markdown teaching loader: per-layer reads (module vs action), merge order (module first, blank line, action), and orphan-file warnings. New folder `CatalogTests/` per the project alias-clash convention (PLang.Tests/GlobalUsings.cs aliases `Data`). TUnit `[Test]` + `Assert.Fail(\"Not implemented\")`."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Renderer tests: per-action blocks only render for planner's set; modifier actions render via same path; system-prompt size on a Tests/Simple step compile drops below 16 KB (architect verification check #1)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/CatalogTests/CodeAttributeRegressionTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Provider→Code rename guard. Source already shows [Code] everywhere — guards against the old name reappearing and pins that PLNG001 diagnostic text teaches [Code]."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/test-designer/v1/plan.md",
+            ".bot/compile-llm-notes-per-action/test-designer/v1/verdict.json",
+            ".bot/compile-llm-notes-per-action/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot-output artifacts: plan.md, verdict.json (pass), summary.md."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All test files written failing-by-construction per character contract. Two plang drift tests + 22 C# tests across 5 files.",
+        "notes": "User skipped per-batch approval. Coder is next; the two drift cases are the load-bearing tests — verify across 3 fresh-cache builds (CLAUDE.md \"Stale-binary trap\")."
+      }
+    }
+  ]
+}

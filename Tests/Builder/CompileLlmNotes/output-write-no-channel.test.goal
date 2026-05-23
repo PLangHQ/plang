@@ -1,0 +1,21 @@
+TestOutputWriteHasNoSpuriousChannel
+/ Drift case 1 — the load-bearing reason this branch exists.
+/
+/ Step text `- write out %message%` carries no channel clause. With per-action
+/ notes (os/system/modules/output/write.notes.md) carrying the channel routing
+/ rule only when output.write is in the planner's set, the LLM should emit:
+/   formal='output.write(Data=%message%)'
+/   parameters: { Data: %message% }   (no channel key)
+/
+/ Pre-fix shape that this test forbids:
+/   formal='output.write(Data=%message%, channel=%!data%)'  -- forbidden
+/   any 'channel' key in parameters with a %!data% value    -- forbidden
+/
+/ Non-determinism: real LLM + cache. The verification rule (architect's): pass
+/ across 3 fresh-cache builds in a row. Before declaring green:
+/   rm -rf PlangConsole/bin PlangConsole/obj PLang/bin PLang/obj \
+/          PLang.Tests/bin PLang.Tests/obj \
+/          PLang.Generators/bin PLang.Generators/obj
+/   dotnet build PlangConsole
+/   cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test  (x3)
+- throw "not implemented"
