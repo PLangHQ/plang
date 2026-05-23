@@ -338,11 +338,14 @@ public sealed partial class @this
 
     /// <summary>
     /// Registers domain types needed for settings store rehydration.
-    /// Called by App constructor.
+    /// Called by App constructor. Today this is a no-op — Identity carries
+    /// <c>[PlangType("identity")]</c> on the class itself, which the assembly
+    /// scan picks up. The hook stays so future domain types that need
+    /// runtime registration (test harness shims, dynamically loaded plugins)
+    /// have an obvious entry point.
     /// </summary>
     public void RegisterDomainTypes()
     {
-        Register("identitydata", typeof(modules.identity.Identity));
     }
 
     // --- Constrained-value catalog ---

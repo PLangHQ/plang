@@ -93,26 +93,21 @@ public class ModulesDescribeReturnTypeTests
         await Assert.That(row.ReturnTypeName).IsEqualTo("list<path>");
     }
 
-    // Data<Identity> — domain type. The class declares [PlangType("identity")]
-    // but app.types.RegisterDomainTypes() re-registers it as "identitydata"
-    // for settings-store rehydration; the runtime registration wins. Pin
-    // whatever the live registry resolves so this test surfaces a future
-    // change to either side.
+    // Data<Identity> — domain type. [PlangType("identity")] on the class
+    // is the single source of truth and the assembly scan picks it up.
     [Test]
-    public async Task ReturnTypeName_DataOfIdentity_MatchesLiveRegistry()
+    public async Task ReturnTypeName_DataOfIdentity_IsIdentity()
     {
         var row = Find("identity", "get");
-        var expected = _app.Types.GetTypeName(typeof(global::app.modules.identity.Identity));
-        await Assert.That(row.ReturnTypeName).IsEqualTo(expected);
+        await Assert.That(row.ReturnTypeName).IsEqualTo("identity");
     }
 
     // Data<List<Identity>> — list of domain type.
     [Test]
-    public async Task ReturnTypeName_DataOfListOfIdentity_MatchesLiveRegistry()
+    public async Task ReturnTypeName_DataOfListOfIdentity_IsListOfIdentity()
     {
         var row = Find("identity", "list");
-        var inner = _app.Types.GetTypeName(typeof(global::app.modules.identity.Identity));
-        await Assert.That(row.ReturnTypeName).IsEqualTo($"list<{inner}>");
+        await Assert.That(row.ReturnTypeName).IsEqualTo("list<identity>");
     }
 
     // Sanity: every catalog row carries a non-empty value (a row's
