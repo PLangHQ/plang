@@ -1482,11 +1482,18 @@ function renderFileHeader(file, entry) {
   // The full path users usually want on their clipboard is bucket + path —
   // e.g. "Tests/Simple/Start.goal" — so you can jump to the source directly.
   const fullPath = [file.bucket || '', file.path || ''].filter(Boolean).join('').replace(/\/+/g, '/');
+  // Trace path: <bucket>/.build/traces/<traceId>/<goalName>.json — the disk
+  // location of the currently-loaded trace JSON. Only meaningful once the
+  // entry is fetched (entry.traceId arrives with it).
+  const tracePath = (entry?.traceId)
+    ? `${file.bucket}/.build/traces/${entry.traceId}/${entry.name}.json`.replace(/\/+/g, '/')
+    : '';
   return `
     <div class="file-header">
       <h1>
         ${esc(file.label)}
         ${fullPath ? `<button class="copy-btn" onclick="copyPath(this, '${esc(fullPath)}')" title="Copy path: ${esc(fullPath)}">copy path</button>` : ''}
+        ${tracePath ? `<button class="copy-btn" onclick="copyPath(this, '${esc(tracePath)}')" title="Copy trace path: ${esc(tracePath)}">copy trace path</button>` : ''}
       </h1>
       <div class="subtitle">
         <span>${esc(file.bucket)}</span>
