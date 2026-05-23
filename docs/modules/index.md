@@ -83,7 +83,7 @@ Modifiers attach to a single action and change how it runs — retry on failure,
 |--------|-------------|---------|
 | [module](module.md) | Load/unload external handler libraries | add, remove |
 | [code](code.md) | Manage pluggable code implementations | load, remove, list, setDefault |
-| [builder](builder.md) | Build-time goal parsing, validation, and persistence (internal) | actions, types, goals, goals.save, actions.validate, steps.merge, app, app.save |
+| [builder](builder.md) | Build-time goal parsing, validation, and persistence (internal) | actions, types, goals, goals.save, actions.validate, steps.merge, app, app.save, validateResponse, enrichResponse, promoteGroups, merge |
 
 ## PLang Syntax Basics
 

@@ -38,7 +38,7 @@ The shape is intentionally narrow — no full Snapshot. The resumed run boots a 
 
 For the error-retry issuer. Single field: a complete `Snapshot.@this` (App tree). On Run, constructs a fresh App, calls `app.Restore(snapshot, ctx)`, and dispatches from `BottomFrame`.
 
-The **wire shape is narrower than the in-process Snapshot fidelity**. `ErrorCallback.Serialize` only writes the `CallStack` and `Variables` subsections; `Errors.Trail` entries, `Providers` registrations, and `Statics` bags don't round-trip. That's deliberate — it's what current tests need, and full fidelity is a separate engineering haul. The narrow shape is enforced both by what `Serialize` emits and what `app.Restore` gates on (each subsystem's Restore is keyed on `HasSection` so missing subtrees stay missing).
+The **wire shape is narrower than the in-process Snapshot fidelity**. `ErrorCallback.Serialize` only writes the `CallStack` and `Variables` subsections; `Errors.Trail` entries, `Code` registrations, and `Statics` bags don't round-trip. That's deliberate — it's what current tests need, and full fidelity is a separate engineering haul. The narrow shape is enforced both by what `Serialize` emits and what `app.Restore` gates on (each subsystem's Restore is keyed on `HasSection` so missing subtrees stay missing).
 
 ## The seal-then-verify gate (`callback.run`)
 

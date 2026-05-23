@@ -1,0 +1,59 @@
+{
+  "branch": "docs/inconsistency-fixes-2026-05-23",
+  "sessions": [
+    {
+      "id": "8a3c4f7e-2026-05-23-docs-inconsistency",
+      "bot": "docs",
+      "timestamp_start": "2026-05-23T00:00:00Z",
+      "timestamp_end": "2026-05-23T00:30:00Z",
+      "intent": "Scan all PLang docs for inconsistencies; apply factual fixes Ingi approves.",
+      "before": {
+        "assumptions": "User-driven session, not pipeline. Scan three doc trees; report findings; fix the ones Ingi greenlights.",
+        "risk": "Over-fixing — touching phrasing differences that PLang's intent-mapping tolerates by design. Mitigated by Ingi's reframing mid-session."
+      },
+      "plan": ".bot/docs-inconsistency-fixes-2026-05-23/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["docs/", "Documentation/v0.2/", "Documentation/Runtime2/"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Parallel Explore agents read all 61 doc files. Findings triaged into syntax/phrasing (rejected per Ingi's intent-based reframing) vs factual contradictions/staleness/broken refs (acted on)."
+        },
+        {
+          "paths": ["Documentation/v0.2/architecture.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Line 15: Providers -> Code (rename completed elsewhere months ago). Line 398: .pr binary -> JSON (confirmed by user; head-on contradiction with build_process.md)."
+        },
+        {
+          "paths": ["Documentation/v0.2/callbacks.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Line 41: Providers registrations -> Code registrations. Same rename swept."
+        },
+        {
+          "paths": ["Documentation/v0.2/variables.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Five broken links repaired (goal-result.md, contexts.md, app.md, call-stack.md, modules.md none exist). Inline Data links retargeted to data-generic-design.md. Relationships block rewritten with prose references to existing docs."
+        },
+        {
+          "paths": ["docs/modules/index.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Line 86: builder module row extended with validateResponse, enrichResponse, promoteGroups, merge (documented in builder.md but missing from index)."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "clean",
+        "notes": "Five factual fixes shipped. Phrasing variations intentionally not touched per Ingi's intent-based-language reframing. Side discovery: variables.md had 5 broken links not just 1, all repaired. Worth a wider broken-link sweep across Documentation/v0.2/ in a follow-up."
+      }
+    }
+  ]
+}

@@ -115,7 +115,7 @@ var copy = memory.Clone();
 
 ## Data (as Variable Container)
 
-Each variable in Variables is stored as a `Data` object. See [Data](goal-result.md) for full documentation.
+Each variable in Variables is stored as a `Data` object. See [Data<T> Design](data-generic-design.md) for full documentation.
 
 Key properties for variable use:
 - `Name` — variable identifier (auto-cleaned of `%` markers)
@@ -163,9 +163,9 @@ The Runtime resolves `%name%`, `%age%`, and `%user.id%` by calling `Variables.Ge
 
 ## Relationships
 
-- Stored in [PLangContext](contexts.md)
-- Variables are [Data](goal-result.md) objects
-- Used by [App](app.md) to store action return values
+- Stored on `PLangContext` (see [architecture.md](architecture.md))
+- Variables are [Data](data-generic-design.md) objects
+- Used by `App` to store action return values (see [app-tree.md](app-tree.md))
 - Used by action handlers (e.g., `variable.set`) for variable operations
-- Cloned for [CallStack](call-stack.md) change tracking when debugging
-- Type metadata uses [Type](goal-result.md) and [TypeMapping](modules.md)
+- Cloned for CallStack change tracking when debugging (see [debug.md](debug.md))
+- Type metadata uses `Data.Type` and `TypeMapping` (see [data-generic-design.md](data-generic-design.md))

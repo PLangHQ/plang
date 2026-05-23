@@ -12,7 +12,7 @@ App
   .Goals                        — loaded goals
   .Modules                      — action registry (dispatcher)
   .Channels                     — named I/O streams
-  .Providers                    — pluggable implementations
+  .Code                         — pluggable implementations registry
   .FileSystem                   — sandboxed file access
   .Events                       — app-level lifecycle hooks
   .Config                       — goal-scoped settings
@@ -395,7 +395,7 @@ Each channel has a Stream, Direction (Input/Output/Bidirectional), and ContentTy
 
 Routes content-type to serializer:
 - `JsonStreamSerializer` — JSON
-- `PlangSerializer` — .pr files (PLang binary format)
+- `PlangSerializer` — .pr files (JSON format; see [build_process.md](build_process.md))
 - `TextStreamSerializer` — plain text
 
 `Channels.ReadAsync<T>(path)` reads a file, determines content type from extension, deserializes via the matching serializer.
