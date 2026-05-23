@@ -14,6 +14,7 @@ The 7-step sequence is in `plan.md` under "Order of work (suggested)". Follow it
 
 | Step | Owns | Approx size |
 |---|---|---|
+| 0 | Rename legacy PascalCase `os/system/modules/*Module/` folders to lowercase (`AiModule/` → `ai/`, …). Fix path references. Flag ambiguous mappings before proceeding. | Small |
 | 1 | Loader: `Modules.Describe()` reads `os/system/modules/<module>/{module,<action>}.{notes,examples,description}.md` into catalog entries | Medium |
 | 2 | Renderer: per-action Description/Notes/Examples blocks in `stepActionDetails.template` (or its equivalent — locate it) | Small |
 | 3 | Migration script: extract `[Example]` + `[Description]` from `PLang/app/modules/<module>/<action>.cs` → markdown files; delete the attribute usages | Medium |
@@ -21,10 +22,11 @@ The 7-step sequence is in `plan.md` under "Order of work (suggested)". Follow it
 | 5 | Delete the corresponding action-specific sections from `os/system/builder/llm/Compile.llm` | Small |
 | 6 | Run verification (see below) | Small |
 | 7 | Orphan-file validation at catalog load | Small |
+| 8 | Rename `[Provider]` → `[Code]` (attribute + source generator + PLNG001 text + `CLAUDE.md`) | Small, mechanical |
 
 ## Things easy to get wrong
 
-- **`os/system/modules/` already contains legacy PascalCase `*Module` folders** (`AiModule`, `OutputModule`, etc.). New files go into lowercase folders matching `PLang/app/modules/<module>/` — `assert/`, `error/`, `output/`, etc. Do not place anything inside the PascalCase folders. Do not rename them in this pass.
+- **Legacy PascalCase `*Module/` folders are renamed to lowercase in step 0** (`AiModule/` → `ai/`, `OutputModule/` → `output/`, etc.). Content there is deprecated; rename, don't delete, unless you find it's already dead. Path references in `.goal` / `.llm` / `.cs` files need to follow. Flag any ambiguous mapping (e.g. `EventsModule/` plural vs `PLang/app/modules/event/` singular) before guessing.
 - **`module.` is the reserved prefix.** `module.notes.md` is module-wide. Bare `notes.md` is not a valid file in this scheme — don't accept it as a fallback.
 - **Concat merge, module first.** `module.notes.md` text precedes `<action>.notes.md` text in the rendered output, separated by a blank line. Not override; not action-first.
 - **Render only for actions in the planner's set.** Same path as today's per-step action details. Modifiers (`error.handle`, `cache.wrap`, `timeout.after`) render through this path uniformly; no special case.
@@ -38,7 +40,7 @@ The 7-step sequence is in `plan.md` under "Order of work (suggested)". Follow it
 - **OBP folder layout:** singular folder name, `@this` is the type. See `CLAUDE.md` "OBP Shape Smells".
 - **No `Console.*` writes in production C#.** The orphan-file warning at startup uses `app.CurrentActor.Channels.WriteTextAsync(Output, …)`, not `Console.WriteLine`. See `CLAUDE.md` "Console.* Is Banned in Production C#".
 - **Stale-binary trap:** `plang --test` uses `PlangConsole/bin/Debug/net10.0/plang`. Rebuild from clean (`rm -rf` the bin/obj trees, `dotnet build PlangConsole`) before claiming any `plang --test` result. C# tests are immune.
-- **PLNG001:** action handler properties must be `Data<T>` or `[Provider] T`. Not relevant to this branch (no new action handlers), but worth knowing if the migration script grows scope.
+- **PLNG001 rename in this branch:** `[Provider]` → `[Code]` across the attribute, the source generator, the PLNG001 build-warning text, every action-handler call site, and the `CLAUDE.md` paragraph that mentions `[Provider] T`. Mechanical rename, no behavior change. Step 8 in the order of work.
 
 ## Verification
 

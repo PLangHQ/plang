@@ -23,7 +23,7 @@ os/system/modules/
     <action>.description.md
 ```
 
-Module folder names are lowercase, matching `PLang/app/modules/<module>/` (`assert/`, `error/`, `output/`, …). Note: `os/system/modules/` already contains legacy PascalCase `*Module` folders (`AiModule`, `OutputModule`, etc.) — those are unrelated; do not place new files inside them and do not rename them in this pass.
+Module folder names are lowercase, matching `PLang/app/modules/<module>/` (`assert/`, `error/`, `output/`, …). `os/system/modules/` currently holds legacy PascalCase `*Module` folders (`AiModule`, `OutputModule`, etc.) whose content is deprecated; rename them to lowercase as part of this branch (`AiModule/` → `ai/`, `OutputModule/` → `output/`, …) so the new markdown files land in the canonical layout from day one. If any rename collides with a name already implied by `PLang/app/modules/`, flag it before proceeding — don't guess the mapping.
 
 `module.` is a reserved action-name prefix inside `os/system/modules/<module>/`. No module may have an action literally named `module`. Document this convention in `Documentation/v0.2/good_to_know.md` so it isn't a surprise.
 
@@ -119,6 +119,10 @@ Two checks from the brief, unchanged:
 
 If both hold across 3 fresh-cache builds in a row, the structural fix is working.
 
+## Opportunistic rename — `[Provider]` → `[Code]`
+
+While the action-handler call sites are open for this work, rename the `[Provider]` attribute to `[Code]` across the source generator, the attribute definition, every action-handler call site that uses it, and the PLNG001 build-warning text. Mechanical rename — no behavior change. Update `CLAUDE.md` references (`[Provider] T` → `[Code] T` in the PLNG001 paragraph) in the same pass.
+
 ## Out of scope
 
 Named explicitly so scope creep is named when it happens:
@@ -131,6 +135,7 @@ Named explicitly so scope creep is named when it happens:
 
 ## Order of work (suggested)
 
+0. Rename legacy PascalCase `*Module/` folders under `os/system/modules/` to lowercase (`AiModule/` → `ai/`, etc.). Fix any path references in `.goal` / `.llm` / `.cs` files. Flag ambiguous mappings before proceeding.
 1. Loader change: `Describe()` reads `os/system/modules/<module>/{module,<action>}.{notes,examples,description}.md`, attaches text fields to catalog entries.
 2. Renderer change: per-action blocks in `stepActionDetails.template`.
 3. Migration script: extract `[Example]` and `[Description]` from C# into markdown, delete attributes.
@@ -138,5 +143,6 @@ Named explicitly so scope creep is named when it happens:
 5. Delete the corresponding sections from `Compile.llm`.
 6. Run the two verification checks.
 7. Add orphan-file validation at catalog load.
+8. Rename `[Provider]` → `[Code]` (attribute + source generator + PLNG001 text + `CLAUDE.md`).
 
 Step 7 last because it is a safety net, not a feature — it catches the next mistake, not this one.
