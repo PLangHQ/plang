@@ -17,12 +17,12 @@ public partial class Copy : IContext
     [Default(true)]
     public partial data.@this<bool> IncludeSubfolders { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<path>> Run()
     {
         // Failed scheme resolution (e.g. unregistered s3://) surfaces the typed
         // SchemeNotRegistered error instead of an NRE on .Value. (codeanalyzer v1 F4)
-        if (!Source.Success) return Source;
-        if (!Destination.Success) return Destination;
-        return await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);
+        if (!Source.Success) return global::app.data.@this<path>.From(Source);
+        if (!Destination.Success) return global::app.data.@this<path>.From(Destination);
+        return global::app.data.@this<path>.From(await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value));
     }
 }

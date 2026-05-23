@@ -23,16 +23,16 @@ public partial class Read : IContext
     [Default(false)]
     public partial data.@this<bool> ResolveVariables { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<object>> Run()
     {
-        if (!Path.Success) return Path;   // codeanalyzer v1 F4 — typed scheme error, not an NRE
+        if (!Path.Success) return global::app.data.@this<object>.From(Path);   // codeanalyzer v1 F4 — typed scheme error, not an NRE
         var read = await Path.Value!.ReadText();
-        if (!read.Success || read.Type?.ClrType.Exit() == true) return read;
+        if (!read.Success || read.Type?.ClrType.Exit() == true) return global::app.data.@this<object>.From(read);
         if (ResolveVariables.Value && read.Value is string content)
         {
             var resolved = Context.Variables.Resolve(content, skipInfrastructure: true);
-            return new data.@this(read.Name, resolved, read.Type);
+            return new global::app.data.@this<object>(read.Name, resolved, read.Type);
         }
-        return read;
+        return global::app.data.@this<object>.From(read);
     }
 }
