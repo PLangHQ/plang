@@ -1,0 +1,139 @@
+{
+  "analyst": "security",
+  "branch": "path-polymorphism",
+  "timestamp": "2026-05-23T23:30:00Z",
+  "phase": "both",
+  "audit_version": "v3",
+  "scope": "Re-audit of v10 — coder addresses security v2 S4.a/S4.b (consent-prompt fidelity) and O3 (HttpContent reuse on 307/308). v3 covers the v10 delta (2beb8eb1b..a8e1e6107): http/this.cs constructor (UserInfo strip), Absolute (Host → IdnHost), FollowRedirect (re-buffered body + content-header copy). Carry-forwards (F1/F2/F4) re-verified unchanged.",
+  "build": {
+    "status": "clean",
+    "cs_tests": "2920/2920 pass, 0 fail, 0 skip (TUnit on .NET 10 via `dotnet run --project PLang.Tests`)",
+    "plang_tests": "204/204 pass, 0 stale, 0 skip",
+    "rebuild": "clean (cleared bin/obj across PlangConsole/PLang/PLang.Tests/PLang.Generators)"
+  },
+  "attack_surface": [
+    {
+      "area": "HttpPath redirect handling (v9 rewrite)",
+      "exposure": "AllowAutoRedirect=false on the static client. Send -> SendWithHops -> FollowRedirect on 3xx. Each hop builds a fresh @this(target.ToString(), Context), calls AuthGate(verb) so the user sees and consents to the new URL, re-signs with the new destination's URL, and recurses. Hop cap MaxRedirectHops=5; scheme allowlisted to http/https; RFC 7231 §6.4 method/body downgrade on 303.",
+      "trust_boundary": "Remote origin per hop. The user is the gate — Authorize prompt is the trust signal.",
+      "mitigations": [
+        "Manual redirect — no silent .NET-handler hop",
+        "Fresh HttpPath per hop ensures Permission.Find / Add operate on the new URL",
+        "Per-hop SignRequest binds the X-Signature envelope's url claim to the new destination — prior hop's signature never reaches a different origin (S2 cross-origin shape)",
+        "Scheme allowlist rejects file://, gopher://, ftp:// etc. with UnsupportedRedirectScheme/400",
+        "Hop cap protects against loops and exhaustion regardless of consent",
+        "Verb threaded through Send so the new hop is re-Authorized for the same verb the original call started with"
+      ],
+      "gaps": [
+        "None — v10 closes S4."
+      ]
+    },
+    {
+      "area": "Consent-prompt rendering (v9 AuthorizationHint hook)",
+      "exposure": "path.@this defines virtual AuthorizationHint(verb) returning empty by default; this.Authorize.cs calls it in the prompt loop and appends to the y/n/a choices. HttpPath overrides to emit a one-line constant warning when _uri.Query is non-empty.",
+      "trust_boundary": "Human-readable terminal output to the user.",
+      "mitigations": [
+        "Hint string is a constant — no URL content interpolated, so no injection surface",
+        "Suppressed cleanly when Query is empty or trailing-? only"
+      ],
+      "gaps": [
+        "None."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "S1",
+      "severity": "high",
+      "category": "ssrf",
+      "vector": "AllowAutoRedirect=true silently followed 3xx to anywhere from a single user-consent.",
+      "status": "fixed",
+      "fixed_in": "v9 — http/this.cs:51-58 (AllowAutoRedirect=false), :320-387 (SendWithHops + FollowRedirect with per-hop AuthGate, scheme allowlist, hop cap, RFC 7231 303 downgrade). Verified by HttpPathRedirectTests."
+    },
+    {
+      "id": "S2",
+      "severity": "medium",
+      "category": "identity-leak",
+      "vector": "X-Signature signed against the original URL and forwarded on every redirect hop / sent to any origin.",
+      "status": "partially-fixed",
+      "fixed_in": "v9 cross-origin shape closed — http/this.cs:381-386 + :396-422. Each hop builds a fresh HttpPath whose SignRequest reads _uri.ToString() for the envelope's url claim. Verified by signature-decode assertion in HttpPathRedirectTests.",
+      "open_residual": "Destination-pinned signing envelope verified host-side is still signing-module work — same shape as filesystem-permission F1. Deferred to a signing/* change."
+    },
+    {
+      "id": "S3",
+      "severity": "low",
+      "category": "secret-persistence",
+      "vector": "On `a`, full URL (query string included) persisted to sqlite with no user warning.",
+      "status": "fixed",
+      "fixed_in": "v9 — virtual AuthorizationHint on path.@this (:96-100 on HttpPath override) renders a one-line warning into the consent prompt when a query string is present. HttpPathPromptHintTests covers present/absent/trailing-? cases."
+    },
+    {
+      "id": "S4",
+      "severity": "low",
+      "category": "consent-prompt-fidelity",
+      "vector": "HttpPath.Absolute diverged from the fetched URL via (a) Unicode IDN host and (b) silently-stripped UserInfo.",
+      "status": "fixed",
+      "fixed_in": "v10 — http/this.cs constructor (:81-86) strips UserInfo via UriBuilder before storing _uri; Absolute (:140) renders via _uri.IdnHost.ToLowerInvariant() (punycode). Prompt-shown URL, fetched URL, and persisted grant key now all agree. Verified by HttpPathConsentFidelityTests."
+    },
+    {
+      "id": "F1",
+      "severity": "medium",
+      "category": "carry-forward",
+      "vector": "Actor.Permission.VerifySignature trusts signing.verify integrity without pinning signer identity.",
+      "affected_files": ["PLang/app/actor/permission/this.cs"],
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F1 — re-verified at v9 HEAD, unchanged."
+    },
+    {
+      "id": "F2",
+      "severity": "low",
+      "category": "carry-forward",
+      "vector": "permission/this.cs:127 — null-signature row short-circuits to trust.",
+      "affected_files": ["PLang/app/actor/permission/this.cs"],
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F2 — unchanged."
+    },
+    {
+      "id": "F4",
+      "severity": "low",
+      "category": "carry-forward",
+      "vector": "Regex/Glob match has no MatchTimeout.",
+      "affected_files": ["PLang/app/types/path/permission/this.cs"],
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F4 — unchanged."
+    }
+  ],
+  "observations": [
+    {
+      "id": "O1",
+      "note": "Pre-existing vulnerable NuGet packages (SixLabors.ImageSharp 2.0.0 incl. one high CVE, HtmlSanitizer 9.0.884, MimeKit 4.10.0). Pre-dates this branch — separate dependency-hygiene pass."
+    },
+    {
+      "id": "O2",
+      "note": "SignRequest exception filter swallows OperationCanceledException; cancellation during signing still ships the request unsigned. Tiny; tighten or document."
+    },
+    {
+      "id": "O3",
+      "note": "HttpContent reuse on 307/308 hops — FIXED in v10 (http/this.cs:399-413 buffers body via ReadAsByteArrayAsync into a fresh ByteArrayContent, copies content headers). No request-auth header survival — only content.Headers (Content-Type etc.) iterated, not request-level headers."
+    },
+    {
+      "id": "O6",
+      "note": "_uri.IdnHost for IPv6 returns the bare hex without brackets (`::1` vs `[::1]`), so an IPv6 HttpPath renders a malformed Absolute. Prompt and grant key agree (the S4 divergence is not re-introduced), so it's a display/cache-key annoyance for IPv6 HTTP, not a security finding."
+    },
+    {
+      "id": "O4",
+      "note": "Cached Permission grant for a host previously consented to (for some legitimate direct use) silently re-approves a redirect that lands on that host. Design tension — not a bug under the consent model — but worth a doc note."
+    },
+    {
+      "id": "O5",
+      "note": "Out-of-scope: code.load + [PathScheme] — same Stage-4 concern from v1."
+    }
+  ],
+  "verdict": "pass",
+  "deliverables": {
+    "plan": ".bot/path-polymorphism/security/v3/plan.md",
+    "result": ".bot/path-polymorphism/security/v3/result.md",
+    "verdict": ".bot/path-polymorphism/security/v3/verdict.json",
+    "summary": ".bot/path-polymorphism/security/summary.md"
+  }
+}

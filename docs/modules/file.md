@@ -1,6 +1,38 @@
 # File Module
 
-Read, write, copy, move, and delete files. All paths are relative to the project root unless absolute.
+Read, write, copy, move, and delete files. Local paths are relative to the project root unless absolute. **URLs work too** — see *Paths can be URLs* below.
+
+## Paths can be URLs
+
+The `Path` parameter on every action in this module is polymorphic. Anything that looks like a URL is routed to the matching scheme handler; bare paths and `file://` go to the local filesystem.
+
+```plang
+/ Local file
+- read 'config.json' into %config%
+
+/ HTTPS URL — same action, GET request under the covers
+- read 'https://api.example.com/users.json' into %users%
+
+/ Variable holding either — the program doesn't care which
+- read %source%, write to %content%
+```
+
+Today the registered schemes are `file://` (and bare paths) and `http(s)://`. The mapping per scheme:
+
+| Action | `file://` (local) | `http(s)://` |
+|--------|-------------------|--------------|
+| `read` | open + read | GET |
+| `save` | write to disk | POST (server decides; 405 → `on error`) |
+| `exists` | stat | HEAD, 2xx = true |
+| `delete` | unlink | DELETE |
+| `list` | directory entries | server-defined (usually unsupported) |
+| `copy` / `move` | filesystem rename / copy | base default: read source → write destination |
+
+**Consent prompts apply to any path.** The first time your program touches an HTTPS URL the runtime asks for permission the same way it does for a local file — `Allow worker to read https://api.example.com/users.json? (y/n/a)`. Grants are scoped per `(actor, canonical-path, verb)`. For HTTP that means scheme + lowercased host + default-port-stripped + normalized path + sorted query — so `HTTPS://API.example.com/users.json?b=2&a=1` and `https://api.example.com/users.json?a=1&b=2` count as the same resource.
+
+**Errors come back as data.** A non-2xx HTTP response is not an exception — it surfaces the same way a permission-denied or disk-full does, and you handle it via `on error`. See the [HTTP module](http.md) for the status-to-error-key mapping (`NotFound`, `MethodNotAllowed`, `NetworkError`, …).
+
+**When to use which.** `read %url%` is the shorthand for "GET this and give me the body." Reach for the explicit [HTTP module](http.md) (`- get %url%, write to %x%`) when you need to set method, headers, or a request body — the HTTP module exposes the full verb surface; this one is the one-liner.
 
 ## Actions
 

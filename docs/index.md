@@ -24,7 +24,7 @@ That's it. PLang reads the JSON file, extracts the fields, and prints them.
 
 ## What Can PLang Do?
 
-- **File operations** — read, write, copy, move, delete files
+- **File operations** — read, write, copy, move, delete files (paths can be URLs — `read 'https://…'` does a GET)
 - **Variables** — set, get, manipulate data with `%variable%` syntax
 - **Lists** — add, remove, sort, filter, join collections
 - **Math** — arithmetic, rounding, random numbers

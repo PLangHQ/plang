@@ -26,6 +26,10 @@ Execute a goal conditionally.
 
 / Boolean variable (cast)
 - if %Valid% (bool) then call IsValid, else call NotValid
+
+/ Path existence shorthand — works for files and URLs
+- if %configFile% exists then call Load, else call UseDefaults
+- if 'https://api.example.com/health' exists then call Healthy, else call Degraded
 ```
 
 **Parameters:**
@@ -41,6 +45,8 @@ Execute a goal conditionally.
 ## Important
 
 PLang conditions compile to a boolean at build time. The LLM interprets your natural language condition and produces a boolean expression. Complex conditions like `and`/`or` are supported.
+
+**Path truthiness.** A path-typed value evaluates its own truthiness against the underlying resource: local paths stat the file, HTTP(S) paths send a HEAD. That makes `if %path% exists` (and even bare `if %path% then …`) work without an explicit `check if … exists` step first. The probe is real I/O — fast for files, one network round-trip for URLs — and is gated by the same consent prompt as `read`/`save`. A denied prompt makes the condition false, not an error.
 
 There is no standalone `else` step — the else clause is part of the `if` step:
 

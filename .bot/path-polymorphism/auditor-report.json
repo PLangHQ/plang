@@ -1,0 +1,46 @@
+{
+  "reviewer": "auditor",
+  "branch": "path-polymorphism",
+  "head": "f5eecaf7143d9bc94ad893dea6d923c18a8207d0",
+  "timestamp": "2026-05-23T22:28:30Z",
+  "reviewed_version": "v10 (coder) / v4 (codeanalyzer) / v3 (security) / v8 (tester)",
+  "verdict": "pass",
+  "summary": "First cross-cutting audit on path-polymorphism. The pipeline (security v3 PASS, codeanalyzer v4 NEEDS WORK low-only, tester v8 PASS) holds up under independent verification. Traced every closed security finding to the actual code: S1 (AllowAutoRedirect=false + manual FollowRedirect with fresh per-hop AuthGate, MaxRedirectHops=5, non-http(s) redirect rejection), S2 (SignRequest re-signs the next hop's destination because each hop builds a fresh @this), S3 (AuthorizationHint emits on query-bearing URLs only), S4.a (_uri.IdnHost.ToLowerInvariant() lands punycode in prompt+key+wire), S4.b (UriBuilder UserName/Password='' strips userinfo before _uri is stored, gate/wire/key all agree), O3 (ReadAsByteArrayAsync → fresh ByteArrayContent copying content.Headers only, no request-auth survival). Codeanalyzer v4 F1+F2 closed by coder v7 without a re-review: Data<T>.From docstring explicitly documents the lossy coercion + shared Properties; orphan summary block removed. Architect's 7 stages all delivered cleanly: app.filesystem move complete (only a comment marker remains), Path abstract + per-App ConcurrentDictionary Scheme registry registered in App ctor before any user-facing entry, FilePath+HttpPath decorate [PathScheme], IFile/DefaultFileProvider deleted, cross-scheme CopyTo/MoveTo tested bidirectionally in CrossSchemeTests. No PascalCase namespaces under PLang/app/. No Console.* writes in path types. Permission doc-comments consistent (persisted 'a' = permanent across both actor/permission and types/path/permission). Independent clean rebuild; C# 2920/2920 pass; plang 204/204 pass, 0 stale. One new latent informational nit on HttpPath.Raw preserving userinfo; F1/F2/F4 carry-forwards unchanged at prior severities. Ship.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "agree — F1 (Data<T>.From doc) and F2 (orphan summary) are both legitimate low-only finds and both genuinely closed by coder v7 (d30f84c77) even without a re-review. v4's typed-returns sweep coverage is honest.",
+    "security": "agree — S1 through S4.b all closed structurally, not just surface-touched. The fresh-@this-per-hop design is the right shape for the SSRF mitigation (each hop's signature pins its own destination, addressing S2 with the same edit). v3 O5/O6 are genuinely informational. The S2 host-side residual stays correctly deferred to signing-module work.",
+    "tester": "agree — v8 mutation cycles are reproducible from disk; pass counts hold across an independent rebuild (C# +14 over v8's count is normal test-additions drift in this gap). Identitydata alias drop verified — grep returns zero live hits."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "informational",
+      "category": "latent-leak",
+      "file": "PLang/app/types/path/http/this.cs",
+      "line": 94,
+      "issue": "HttpPath.Resolve does `new @this(rawPath, context) { Raw = rawPath }`. The constructor strips _uri.UserInfo (S4.b) so Absolute, AuthGate, SignRequest, and the persisted grant key are all userinfo-free. But the public Raw init-only property is set from the *original* rawPath — if the caller passed https://user:pwd@host/x, Raw retains user:pwd@host. The S4.b triple (gate/wire/key) is airtight; this is the off-triple field. Today there are only three .Raw consumers across PLang/ and none of them currently see an HttpPath in a logging/serialization context, so impact is zero — but a future debug-trace or error-message consumer that reads path.Raw would leak the credentials. Filing as informational so the invariant ('every public string surface on an HttpPath is userinfo-free') gets adjudicated now, not after an incident.",
+      "missed_by": "security",
+      "impact": "Latent — zero observable leak today. A future change that logs, traces, or serializes path.Raw on HttpPath would resurface S4.b on the off-triple field.",
+      "suggestion": "Compute Raw from the post-strip _uri.ToString() (or from a userinfo-stripped projection of rawPath). Five-line change in HttpPath.Resolve and/or the ctor. Pins the invariant in one place. Non-blocking — would not block ship if the team wants to wait for a future Raw consumer to actually exist."
+    }
+  ],
+  "carry_forwards": [
+    { "id": "F1", "severity": "medium", "from": "filesystem-permission", "unchanged": true, "note": "signing.verify checks integrity but not signer authority (actor/permission/this.cs:146-152)" },
+    { "id": "F2", "severity": "low", "from": "filesystem-permission", "unchanged": true, "note": "unsigned persisted-row auto-trust (actor/permission/this.cs:127)" },
+    { "id": "F4", "severity": "low", "from": "filesystem-permission", "unchanged": true, "note": "Regex/Glob match has no MatchTimeout (types/path/permission/this.cs:54-90)" },
+    { "id": "O5", "severity": "informational", "from": "security v3", "unchanged": true, "note": "[PathScheme] attribute is a marker only — no production consumer reflects on it yet. Per architect Stage-4 plan." },
+    { "id": "O6", "severity": "informational", "from": "security v3", "unchanged": true, "note": "_uri.IdnHost for IPv6 returns bare hex without brackets — display-only, prompt/key still agree." }
+  ],
+  "verification": {
+    "build": { "rebuild": "clean Debug net10.0 from rm -rf */bin */obj", "errors": 0, "warnings": "~456 pre-existing generator nullable warnings, unchanged from tester v8" },
+    "csharp_tests": { "command": "PLang.Tests/bin/Debug/net10.0/PLang.Tests", "total": 2920, "passed": 2920, "failed": 0, "skipped": 0, "duration_seconds": 14 },
+    "plang_tests":  { "command": "cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test", "total": 204, "passed": 204, "failed": 0, "stale": 0 },
+    "architecture": {
+      "lowercase_namespace_under_app": "verified — `grep ^namespace [A-Z] PLang/app/` returns zero",
+      "console_writes_in_path_types":  "verified — `grep Console\\. PLang/app/types/path/` returns zero",
+      "app_filesystem_residue":        "verified — one comment marker in modules/code/this.cs:251; no live namespace",
+      "permission_doc_consistency":    "verified — actor/permission/this.cs and types/path/permission/this.cs agree on persisted 'a' = signed, Expires==null (permanent)",
+      "scheme_registration_order":     "verified — PLang/app/this.cs:310-312 registers file/http/https in App ctor before CurrentActor assignment and before Navigators.RegisterDefaults"
+    }
+  }
+}

@@ -1079,3 +1079,42 @@ The two `Console.*` references that **stay**:
 - `PlangConsole/Program.cs:26` — the process boundary. If `executor.Run` itself fails before channels are wired, this is the last-resort error sink. Single explicit exemption.
 
 Test fixtures that capture stderr by `Console.SetError(...)` are broken under the channel model — the `error` channel was registered with `Console.OpenStandardError()` *at boot*, and re-pointing `Console.Error` later doesn't affect the captured Stream reference. Capture by registering a memory channel as `"error"` on the System actor instead — that's the redirection model channels exist to provide.
+
+## Action `Run()` returns are typed — and the `Data<T>` implicit-operator footgun
+
+Action handlers declare their return shape on the method signature, not via a separate attribute:
+
+- `Task<Data<T>>` for a concrete T (`Data<string>`, `Data<bool>`, `Data<byte[]>`, `Data<path>`, `Data<List<path>>`, …). Renders in the action catalog as `→ returns T`.
+- `Task<Data<object>>` for genuinely polymorphic actions (`goal.call`, `environment.run`, `llm.query`, `callback.run`, `mock.verify`, `loop.foreach`, the `list.*` cascade, `math.*`, `condition.*` operators returning bool/string/…). Renders as `→ returns data`.
+- Bare `Task<Data>` for actions that produce no value (`output.write`, `error.throw`, side-effect-only writes). The catalog omits the `→ returns` line and the compile LLM rule treats `write to %x%` after such a step as invalid.
+
+`Modules.Describe()` reads the signature by reflection; `action.@this.ReturnTypeName` carries T's PLang name; the per-step template (`stepActionDetails.template`) renders the return line; the compile LLM uses T as the type-annotation on the trailing `variable.set`'s `Value`. There is no separate `Type=` parameter — the `Data<T>` wrapper carries it.
+
+**The footgun.** `data.@this<T>` defines an implicit operator `@this<T>(T value)` (`PLang/app/data/this.cs`). When `T = object` and the source value is itself a `Data` subtype, the operator silently wraps it — you get `Data<object>{ Value = Data<bool>{ Value = true } }` instead of the inner `Data<bool>` passing through. Bites every method declared `Task<Data<object>>` whose body returns a base `Data` or `Data<U>` it received from another call. Symptom: downstream `Value.As<bool>()` sees a `Data<bool>` where it expected a `bool` and either resolves to `default(bool)` or throws.
+
+Mitigations:
+
+- **For polymorphic forwarding actions** (the body genuinely returns a `Data` produced elsewhere — `goal.call`, `llm.query`, `condition.if` evaluators), stay on bare `Task<Data>` until a `Data.As<T>` passthrough or a `Data<T>.From(Data source)` helper lands. The convention is captured in `todos.md` under *Provider typing follow-ups*.
+- **For owned-construction actions** (the body produces the value), explicit factory: `data.@this<object>.Ok(value)`. Never `return innerDataInstance;` from a `Task<Data<object>>` method.
+
+Migration status as of branch `path-polymorphism`: ~60% of handlers typed (73 `Task<data.@this<…>>` vs 48 bare `Task<data.@this>`). The remaining bare handlers are either the polymorphic-forwarding carve-out above or genuinely void; both are correct shapes, not pending work. Audit before flipping a bare signature.
+
+## Truthiness — `IBooleanResolvable` and async condition evaluation
+
+A value's boolean meaning belongs to the value, not to `Data`. `Data.ToBoolean()` is the sync fallback (null/false/0/"" falsy, everything else truthy); **do not** add type-specific cases to it. A type that knows its own truthiness implements `app.data.IBooleanResolvable`:
+
+```csharp
+public interface IBooleanResolvable
+{
+    Task<bool> AsBooleanAsync();
+}
+```
+
+`path` implements it — truthiness means "does the resource exist". For `FilePath` that's a stat; for `HttpPath` it's a HEAD request. Because the probe can be I/O, the entire condition-evaluation pipeline is **async**:
+
+- `IEvaluator.Evaluate` returns `Task<data.@this>` (`PLang/app/modules/condition/code/IEvaluator.cs`).
+- `Operator.Evaluate` is `Func<data.@this?, data.@this?, Task<bool>>` (`PLang/app/modules/condition/Operator.cs`).
+- `assert.IsTrue` / `assert.IsFalse` are async (`PLang/app/modules/assert/code/Default.cs:138`).
+- `Data.ToBooleanAsync()` dispatches to `IBooleanResolvable` when present and falls back to `ToBoolean()` otherwise (`PLang/app/data/this.cs:896`).
+
+A new operator or evaluator must `await`. A new type that wants scheme-defined truthiness implements `IBooleanResolvable` — never edit `Data.ToBoolean()` to special-case it.

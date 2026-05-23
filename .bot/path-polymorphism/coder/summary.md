@@ -1,85 +1,90 @@
 # coder summary — path-polymorphism branch
 
-**Latest version:** v8
+**Latest version:** v10
 
-## What this is
+## v10 (this version) — security v2 S4 + 307 body fix
 
-The `path-polymorphism` branch hosts the typed-returns sweep, the path
-scheme polymorphism work (FilePath / HttpPath under a common `IPath`), and
-the bootstrap fixes that fell out of the self-rebuild loop. v8 closes the
-test-coverage gaps that tester v7 flagged after the v6/v7 code landed.
+Two consent-fidelity vectors closed plus a reliability fix the security
+bot's red team turned up.
 
-## v8 (this version) — tests-only
+**S4.a (LOW)** — `Absolute` rendered `_uri.Host` (Unicode IDN), so a
+homograph host like `аpple.com` (Cyrillic 'а', U+0430) appeared visually
+identical to the trusted brand in the prompt while the wire fetched
+`xn--pple-43d.com` — a different origin. The persisted grant key was
+also the Unicode form, so cache hits silently matched the spoof too.
+**Fix:** `Absolute` now uses `_uri.IdnHost.ToLowerInvariant()`. Punycode
+shows as `xn--…` everywhere — prompt, wire, grant key — so a homograph
+variant is visually obvious and never matches a previously-trusted ASCII
+host.
 
-Five findings from tester v7 (4 missing-coverage + 1 parked-file + 1
-process). Two new C# test files, four new tests appended to an existing
-file, one renamed PLang `.test.goal`. No production code touched.
+**S4.b (LOW)** — `Absolute` silently dropped `_uri.UserInfo`. A redirect
+to `https://attacker:pwd@victim.example/` prompted as
+`https://victim.example/` while the HttpPath's `_uri` still carried the
+userinfo on the wire, and the persisted grant key was the userinfo-free
+form. A single user-approved entry covered any userinfo-bearing variant.
+**Fix:** strip UserInfo at HttpPath construction via `UriBuilder
+{ UserName="", Password="" }`. Prompt, wire, and grant key all collapse
+to the same string — consent contract is sealed.
 
-### Files added
+**307/308 body reliability** — security's red team noted `HttpContent`
+is single-send. After the first `SendAsync` .NET disposes the underlying
+stream, so the original `FollowRedirect` passed a disposed instance to
+the next hop and 307/308 POSTs silently sent empty bodies. **Fix:**
+re-buffer `content` into a fresh `ByteArrayContent` per hop, preserving
+the original Content headers.
 
-- `PLang.Tests/App/Goals/GoalCallResolutionTests.cs` — 4 tests for the
-  slash-qualified resolution coder v6 introduced.
-- `PLang.Tests/App/Modules/builder/BuilderRunAsyncTests.cs` — 2 tests
-  guarding the inverted `File.Exists` bootstrap check.
-- `PLang.Tests/App/Modules/ModulesDescribeReturnTypeTests.cs` — 7 tests
-  pinning `Action.ReturnTypeName` for a representative slice of the live
-  catalog plus a sanity sweep ("every catalog row carries a value").
-
-### Files modified
-
-- `PLang.Tests/App/Modules/builder/GetActionsTests.cs` — appended 4 tests
-  for the new `Actions` filter parameter (named restrict, empty-list as
-  no-filter, unknown name → empty, case-insensitive).
-- `Tests/Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal`
-  — renamed from `.goal2` (the parked extension wasn't discovered by
-  `plang --test`, so the negative-branch guard for `if X exists` was inert).
-  Built the .pr alongside its two callees (WhenExists.goal, WhenMissing.goal).
-
-### Code example — N4 sanity sweep
-
-The interesting pattern here is the "every catalog row carries a value"
-sweep — it pins the *contract* of `DescribeReturnTypeName` (a row must
-always describe its return: "data" for polymorphic, real T name otherwise)
-without enumerating every action by hand:
+### Code example — UserInfo strip at construction
 
 ```csharp
-[Test]
-public async Task ReturnTypeName_AllCatalogRows_HaveAValue()
+public @this(string raw, ...)
+    : base(raw, context, content, source)
 {
-    var catalog = _app.Modules.Describe();
-    var missing = catalog.Where(a => string.IsNullOrEmpty(a.ReturnTypeName))
-                         .Select(a => $"{a.Module}.{a.ActionName}")
-                         .ToList();
+    if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
+        throw new ArgumentException(...);
 
-    await Assert.That(missing.Count)
-        .IsEqualTo(0)
-        .Because($"actions missing ReturnTypeName: {string.Join(", ", missing)}");
+    if (!string.IsNullOrEmpty(uri.UserInfo))
+    {
+        var builder = new UriBuilder(uri) { UserName = "", Password = "" };
+        uri = builder.Uri;
+    }
+    _uri = uri;
 }
 ```
 
-A future Run() that doesn't return `Task<Data>` / `Task<Data<T>>` (e.g. a
-new return wrapper shape) goes red here with the offending row's name in
-the message.
+The structural shape worth remembering: when the consent prompt is the
+trust anchor, every component of the URL must travel the same path —
+what the user reads must be the wire string and the cache key. Anything
+that re-renders or strips silently is a fidelity break, and `_uri.Host`
++ silent UserInfo drop were both that.
 
-### Baseline (this round)
+### Files modified
 
-- C# `dotnet run --project PLang.Tests` — **2906 / 2906** (+17 from v7's 2889)
-- PLang `plang --test` — **204 / 204** (+1 from v7's 203, 0 stale)
-- Build — 0 errors, 454 pre-existing nullable warnings (unchanged)
+- `PLang/app/types/path/http/this.cs` — UserInfo strip in ctor;
+  `IdnHost` in `Absolute`; body re-buffer in `FollowRedirect`.
 
-### Process note
+### Tests added
 
-`baseline-tests.md` is in this version — addresses tester v7's N5 nudge.
+- `HttpPathConsentFidelityTests.cs` (5 tests): IDN homograph → punycode in
+  prompt+Absolute; ASCII host unchanged; UserInfo stripped from Absolute;
+  UserInfo stripped from `_uri.Uri`; prompt shows clean URL.
+- `HttpPathRedirectTests.Redirect_307_PreservesPostBody_AcrossHops` — body
+  round-trips through 307 to target.
+
+### Baseline
+
+- C# `dotnet run --project PLang.Tests` — **2920 / 2920** (+6 from v9)
+- PLang `plang --test` — **204 / 204** (unchanged, 0 stale)
+- Build — 0 errors, 454 pre-existing nullable warnings
 
 ---
 
 ## Prior versions (one-liners)
 
-- **v7** — codeanalyzer v4 F1 (Data<T>.From docstring tightened) + F2
-  (orphan `<summary>` block on `DescribeReturnTypeName` removed). Doc-only.
-- **v6** — Slash-qualified `goal.call` resolution (ancestor walk), inverted
-  `File.Exists` bootstrap check, `builder.actions` Include parameter, two
-  builder validators.
-- **v5 and earlier** — typed-returns sweep (~70 handlers, 9 provider
-  interfaces); IPath, IIdentity, IStore.Exists/Tables typed; runtime2 merge
-  + conflict resolution.
+- **v9** — security v1: S1 (HIGH SSRF), S2-partial (MEDIUM signature
+  cross-origin), S3 (LOW query-string warning).
+- **v8** — tester v7 NEEDS-FIXES: F4 / N1 / N2 / N3 / N4 / N5; plus the
+  `identitydata` → `identity` SSOT fix.
+- **v7** — codeanalyzer v4 doc-only cleanups.
+- **v6** — Slash-qualified `goal.call` resolution + builder bootstrap fixes.
+- **v5 and earlier** — typed-returns sweep, IPath/IIdentity/IStore typing,
+  runtime2 merge.
