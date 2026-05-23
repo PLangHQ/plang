@@ -1109,7 +1109,14 @@ public class @this<T> : @this
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
     public new static @this<T> FromError(IError error) => new() { Error = error };
 
-    /// <summary>Allows direct assignment of T values to data.@this&lt;T&gt; properties.</summary>
+    /// <summary>
+    /// Allows direct assignment of T values to data.@this&lt;T&gt; properties.
+    /// FOOTGUN: when T = object and the source is itself a Data subtype, this
+    /// silently wraps (Data&lt;object&gt;{ Value = Data&lt;bool&gt;{...} }) instead of
+    /// passing through. Code that intentionally returns a Data&lt;T&gt; from a
+    /// method declared Task&lt;Data&lt;object&gt;&gt; must use the explicit factory
+    /// (`data.@this&lt;object&gt;.Ok(...)`) — never `return innerData;`.
+    /// </summary>
     public static implicit operator @this<T>(T value) => new("", value);
 }
 
