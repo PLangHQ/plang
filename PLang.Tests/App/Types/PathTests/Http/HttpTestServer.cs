@@ -30,6 +30,7 @@ public sealed class HttpTestServer : IDisposable
     private readonly Uri _baseAddress;
     private readonly ConcurrentDictionary<string, byte[]> _store = new();
     private readonly ConcurrentDictionary<string, int> _forcedStatus = new();
+    private readonly ConcurrentDictionary<string, (int Status, string Location)> _redirects = new();
     private readonly ConcurrentBag<string> _getOnlyPaths = new();
     private readonly ConcurrentBag<string> _identityPaths = new();
     private readonly List<RequestRecord> _requests = new();
@@ -65,6 +66,32 @@ public sealed class HttpTestServer : IDisposable
         var path = $"/getonly/{Guid.NewGuid():N}";
         _getOnlyPaths.Add(path);
         _store[path] = Encoding.UTF8.GetBytes("get-only resource");
+        return _baseAddress.GetLeftPart(UriPartial.Authority) + path;
+    }
+
+    /// <summary>
+    /// Registers a path that responds with the given 3xx status and Location
+    /// header. Used by the security v1 S1 redirect tests — without manual
+    /// follow + re-Authorize, this would be an SSRF primitive.
+    /// </summary>
+    public string MapRedirect(int status, string targetUrl)
+    {
+        var path = $"/redirect/{Guid.NewGuid():N}";
+        _redirects[path] = (status, targetUrl);
+        return _baseAddress.GetLeftPart(UriPartial.Authority) + path;
+    }
+
+    /// <summary>
+    /// Pre-populates a path with the given body and returns its URL —
+    /// bypasses the PLang gate that <see cref="HttpPath.WriteText"/> would
+    /// otherwise need a grant for. Used in security v1 S1 tests so the
+    /// "attacker's secret" can be seeded without granting the test actor
+    /// permission to that URL.
+    /// </summary>
+    public string MapStoredBody(byte[] body)
+    {
+        var path = $"/seed/{Guid.NewGuid():N}";
+        _store[path] = body;
         return _baseAddress.GetLeftPart(UriPartial.Authority) + path;
     }
 
@@ -130,6 +157,15 @@ public sealed class HttpTestServer : IDisposable
             if (_forcedStatus.TryGetValue(path, out var forced))
             {
                 resp.StatusCode = forced;
+                resp.Close();
+                return;
+            }
+
+            // Redirect responses (security v1 S1 — manual-follow tests).
+            if (_redirects.TryGetValue(path, out var redirect))
+            {
+                resp.StatusCode = redirect.Status;
+                resp.Headers["Location"] = redirect.Location;
                 resp.Close();
                 return;
             }

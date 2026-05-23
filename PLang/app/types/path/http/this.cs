@@ -37,14 +37,30 @@ namespace app.types.path.http;
 public sealed class @this : global::app.types.path.@this
 {
     /// <summary>Process-shared HTTP client — see the class remarks.</summary>
+    /// <remarks>
+    /// <c>AllowAutoRedirect = false</c> by design (security v1 S1). Letting
+    /// the client follow 3xx silently lets a consented host trade us into
+    /// reading something else — IMDS at <c>169.254.169.254</c>, loopback
+    /// services, private-IP ranges — with the user only ever consenting to
+    /// the original URL. Redirects are now handled in <see cref="SendWithRedirects"/>:
+    /// each hop builds a fresh <see cref="@this"/>, calls <see cref="@this.AuthGate"/>
+    /// on it (separate consent prompt for the new host), and signs the new
+    /// destination's URL fresh — the prior hop's <c>X-Signature</c> never
+    /// reaches a different origin (security v1 S2 partial).
+    /// </remarks>
     private static readonly HttpClient _client = new(new SocketsHttpHandler
     {
         PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-        AllowAutoRedirect = true,
+        AllowAutoRedirect = false,
     })
     {
         Timeout = TimeSpan.FromSeconds(100),
     };
+
+    /// <summary>Maximum redirect hops a single verb call will follow. Each
+    /// hop costs the user a fresh consent prompt; the cap protects against
+    /// loops and exhaustion attacks regardless.</summary>
+    private const int MaxRedirectHops = 5;
 
     private readonly Uri _uri;
 
@@ -68,6 +84,20 @@ public sealed class @this : global::app.types.path.@this
 
     /// <summary>The parsed request URI.</summary>
     public Uri Uri => _uri;
+
+    /// <summary>
+    /// Warn the user before persisting a URL whose query string carries
+    /// likely secrets (tokens, keys, signatures). Answering 'a' writes the
+    /// full Absolute — query string included — into the local permission
+    /// store; this hint lands in the consent prompt so a user who would
+    /// strip <c>?token=…</c> before sharing the URL elsewhere gets the same
+    /// signal here. Suppressed when there is no query string. (security v1 S3)
+    /// </summary>
+    protected override string AuthorizationHint(global::app.types.path.permission.verb.@this verb)
+    {
+        if (string.IsNullOrEmpty(_uri.Query) || _uri.Query == "?") return "";
+        return "(note: answering 'a' saves the full URL — query string included — to your local permission store)";
+    }
 
     /// <summary>
     /// Canonical-form URL — two HttpPaths addressing the same logical resource
@@ -124,14 +154,16 @@ public sealed class @this : global::app.types.path.@this
 
     public override async Task<data.@this> ReadText()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return early;
-        return await Send(HttpMethod.Get, content: null, readBody: true);
+        var verb = new Verb { Read = new ReadVerb() };
+        if (await AuthGate(verb) is { } early) return early;
+        return await Send(HttpMethod.Get, content: null, readBody: true, verb);
     }
 
     public override async Task<data.@this<byte[]>> ReadBytes()
     {
-        if (await AuthGate(new Verb { Read = new ReadVerb() }) is { } early) return data.@this<byte[]>.From(early);
-        return data.@this<byte[]>.From(await Send(HttpMethod.Get, content: null, readBody: true, asBytes: true));
+        var verb = new Verb { Read = new ReadVerb() };
+        if (await AuthGate(verb) is { } early) return data.@this<byte[]>.From(early);
+        return data.@this<byte[]>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, asBytes: true));
     }
 
     public override async Task<data.@this<bool>> ExistsAsync()
@@ -210,15 +242,17 @@ public sealed class @this : global::app.types.path.@this
 
     public override async Task<data.@this<global::app.types.path.@this>> WriteText(string content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false);
+        var verb = new Verb { Write = new WriteVerb() };
+        if (await AuthGate(verb) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb);
         return sent.Success ? data.@this<global::app.types.path.@this>.Ok(this) : data.@this<global::app.types.path.@this>.From(sent);
     }
 
     public override async Task<data.@this<global::app.types.path.@this>> WriteBytes(byte[] content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false);
+        var verb = new Verb { Write = new WriteVerb() };
+        if (await AuthGate(verb) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false, verb);
         return sent.Success ? data.@this<global::app.types.path.@this>.Ok(this) : data.@this<global::app.types.path.@this>.From(sent);
     }
 
@@ -226,8 +260,9 @@ public sealed class @this : global::app.types.path.@this
     /// appending interpret it; others overwrite or 405. "Let the server respond."</summary>
     public override async Task<data.@this<global::app.types.path.@this>> Append(string content)
     {
-        if (await AuthGate(new Verb { Write = new WriteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false);
+        var verb = new Verb { Write = new WriteVerb() };
+        if (await AuthGate(verb) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb);
         return sent.Success ? data.@this<global::app.types.path.@this>.Ok(this) : data.@this<global::app.types.path.@this>.From(sent);
     }
 
@@ -262,19 +297,30 @@ public sealed class @this : global::app.types.path.@this
     /// </summary>
     public override async Task<data.@this<global::app.types.path.@this>> Delete(bool recursive, bool ignoreIfNotFound)
     {
-        if (await AuthGate(new Verb { Delete = new DeleteVerb() }) is { } early) return data.@this<global::app.types.path.@this>.From(early);
-        var sent = await Send(HttpMethod.Delete, content: null, readBody: false);
+        var verb = new Verb { Delete = new DeleteVerb() };
+        if (await AuthGate(verb) is { } early) return data.@this<global::app.types.path.@this>.From(early);
+        var sent = await Send(HttpMethod.Delete, content: null, readBody: false, verb);
         return sent.Success ? data.@this<global::app.types.path.@this>.Ok(this) : data.@this<global::app.types.path.@this>.From(sent);
     }
 
     // --- HTTP plumbing -------------------------------------------------------
 
     /// <summary>
-    /// Issues one HTTP request and shapes the response. 2xx → Ok (body when
-    /// <paramref name="readBody"/>); non-2xx → Fail with the status; network
-    /// failure → Fail/NetworkError.
+    /// Issues an HTTP request and shapes the response. 2xx → Ok (body when
+    /// <paramref name="readBody"/>); non-2xx (non-3xx) → Fail with the status;
+    /// network failure → Fail/NetworkError. 3xx responses delegate to
+    /// <see cref="FollowRedirect"/> — each hop costs a fresh
+    /// <see cref="@this.AuthGate"/> prompt on the new URL and signs with that
+    /// host's destination, so the user's consent and identity never cross
+    /// the trust boundary of an origin they didn't explicitly OK.
+    ///
+    /// <paramref name="verb"/> rides along so the redirect hop's AuthGate
+    /// uses the same verb the calling FS-action started with.
     /// </summary>
-    private async Task<data.@this> Send(HttpMethod method, HttpContent? content, bool readBody, bool asBytes = false)
+    private Task<data.@this> Send(HttpMethod method, HttpContent? content, bool readBody, Verb verb, bool asBytes = false)
+        => SendWithHops(method, content, readBody, verb, asBytes, MaxRedirectHops);
+
+    private async Task<data.@this> SendWithHops(HttpMethod method, HttpContent? content, bool readBody, Verb verb, bool asBytes, int hopsLeft)
     {
         try
         {
@@ -283,6 +329,11 @@ public sealed class @this : global::app.types.path.@this
             await SignRequest(req, bodyForSign, method.Method);
 
             using var resp = await _client.SendAsync(req);
+
+            // 3xx → manual redirect with consent + fresh signing on each hop.
+            if ((int)resp.StatusCode >= 300 && (int)resp.StatusCode < 400 && resp.Headers.Location != null)
+                return await FollowRedirect(resp, method, content, readBody, verb, asBytes, hopsLeft);
+
             if (!resp.IsSuccessStatusCode)
                 return data.@this.FromError(MapStatus(resp.StatusCode));
 
@@ -296,6 +347,43 @@ public sealed class @this : global::app.types.path.@this
         {
             return data.@this.FromError(NetworkError(ex));
         }
+    }
+
+    /// <summary>
+    /// Handles a 3xx by resolving the Location header against the current
+    /// URI, constructing a fresh <see cref="@this"/>, gating it through
+    /// <see cref="@this.AuthGate"/> (the user sees and consents to the new
+    /// URL), and sending the next request from that path. Method/body
+    /// preservation mirrors RFC 7231: 303 → GET (no body); 301/302/307/308 →
+    /// keep method and body. (security v1 S1)
+    /// </summary>
+    private async Task<data.@this> FollowRedirect(HttpResponseMessage resp, HttpMethod method, HttpContent? content,
+        bool readBody, Verb verb, bool asBytes, int hopsLeft)
+    {
+        if (hopsLeft <= 0)
+            return data.@this.FromError(new Error(
+                $"Too many redirects (>{MaxRedirectHops}) — refusing to follow further.",
+                "TooManyRedirects", 508));
+
+        var target = resp.Headers.Location!.IsAbsoluteUri
+            ? resp.Headers.Location
+            : new Uri(_uri, resp.Headers.Location);
+
+        if (target.Scheme != "http" && target.Scheme != "https")
+            return data.@this.FromError(new Error(
+                $"Redirect target uses unsupported scheme '{target.Scheme}'.",
+                "UnsupportedRedirectScheme", 400));
+
+        // Method/body downgrade per RFC 7231 §6.4.4 — 303 is "see other" with GET.
+        var nextMethod = (int)resp.StatusCode == 303 ? HttpMethod.Get : method;
+        var nextContent = nextMethod == HttpMethod.Get ? null : content;
+
+        var nextPath = new @this(target.ToString(), Context);
+
+        // The consent prompt for the new host. AuthGate returns null on grant.
+        if (await nextPath.AuthGate(verb) is { } denial) return denial;
+
+        return await nextPath.SendWithHops(nextMethod, nextContent, readBody, verb, asBytes, hopsLeft - 1);
     }
 
     /// <summary>

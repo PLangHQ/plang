@@ -43,7 +43,12 @@ public partial class @this
         string prefix = "";
         while (true)
         {
-            var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}? (y/n/a)";
+            // Schemes can append a hint — e.g. HttpPath warns when answering
+            // 'a' would persist a URL with a query string verbatim to the
+            // local sqlite (security v1 S3). Base returns "".
+            var hint = AuthorizationHint(verb);
+            var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
+            var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)";
             var askAction = new modules.output.ask
             {
                 Context = Context,
@@ -121,4 +126,13 @@ public partial class @this
         if (verb.Delete  != null) return "delete";
         return "access";
     }
+
+    /// <summary>
+    /// Scheme-specific extra text appended to the Authorize prompt before the
+    /// y/n/a choices. Base returns empty. HttpPath overrides to warn when an
+    /// 'a' would persist a URL with query-string secrets verbatim to the
+    /// local sqlite (security v1 S3). Subclasses can append any other
+    /// scheme-specific consent signal here.
+    /// </summary>
+    protected virtual string AuthorizationHint(Verb verb) => "";
 }
