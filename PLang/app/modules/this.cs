@@ -376,10 +376,6 @@ public sealed class @this : IAsyncDisposable
     }
 
     /// <summary>
-    /// Reads the Run() method's return type. If it returns a concrete Data subtype,
-    /// reflects its public properties for the builder summary. Returns null for plain Data.
-    /// </summary>
-    /// <summary>
     /// Reads the PLang name of T from <c>Run()</c>'s declared return type
     /// <c>Task&lt;Data&lt;T&gt;&gt;</c>. Bare <c>Task&lt;Data&gt;</c> renders as <c>data</c>
     /// — the polymorphic default (everything is a Data, value type unknown statically).

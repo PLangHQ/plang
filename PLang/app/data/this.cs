@@ -1117,10 +1117,21 @@ public class @this<T> : @this
     /// implicit-operator double-wrap (`Data&lt;T&gt;{ Value = innerData }`)
     /// because the compiler prefers this explicit factory.
     ///
-    /// Preserves all wrapper state: Value (cast to T?), Type, Error, Handled,
-    /// Returned, ReturnDepth, Warnings, Signature, Properties (shared ref —
-    /// forwarded metadata, not deep-cloned), Snapshot. If the source already
-    /// is a <see cref="@this{T}"/>, returns it unchanged.
+    /// Intended for error/sentinel propagation across typed boundaries — the
+    /// idiomatic call site is <c>if (!source.Success) return Data&lt;T&gt;.From(source);</c>.
+    ///
+    /// What is forwarded: Type, Error, Handled, Returned, ReturnDepth, Warnings,
+    /// Signature, Snapshot, and Properties (shared reference — forwarded
+    /// metadata, not deep-cloned; mutating the new Data's Properties mutates
+    /// the source's).
+    ///
+    /// Value handling is lossy by design: <c>source.Value is T t ? t : default</c>.
+    /// When the source carries a successful value not assignable to T, Value
+    /// silently coerces to <c>default(T?)</c>. Safe at the idiomatic call site
+    /// because that branch only fires on an errored source (Value typically
+    /// null already). For the round-trip case where T = object, every value is
+    /// an object and Value is always preserved. If the source is already
+    /// <see cref="@this{T}"/>, it is returned unchanged.
     /// </summary>
     public static @this<T> From(@this source)
     {
