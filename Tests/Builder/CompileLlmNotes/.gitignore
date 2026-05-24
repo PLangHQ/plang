@@ -1,0 +1,3 @@
+# Per-run artifact: each drift test copies start.pr → start.txt so file.read
+# returns raw text (instead of the Goal object that .pr's MIME deserializes to).
+start.txt

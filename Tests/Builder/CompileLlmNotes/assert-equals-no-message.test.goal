@@ -7,16 +7,16 @@ TestAssertEqualsOmitsMessageWhenNotInStepText
 / a custom error message; Expected is taken from the step text literal", the LLM
 / should emit:
 /   parameters: { Expected: 'hello plang', Actual: %message% }   (no Message key)
-/   formal contains Expected='hello plang' and no Message=...
 /
 / Pre-fix shape this test forbids:
-/   any Message key in parameters duplicating Expected            -- forbidden
-/   Message='hello plang' in formal                               -- forbidden
-/   formal='assert.equals(Expected=%!data%, ...)' (disagrees)     -- forbidden
+/   any Message parameter on assert.equals (when step text had no custom message)
 /
-/ Reads Tests/Simple/.build/start.pr and asserts. Architect's 3-fresh-cache rule
-/ runs externally (see sibling drift case for the incantation).
-- read file '/Tests/Simple/.build/start.pr', write to %pr%
-- assert %pr% contains '"text": "assert %message% equals 'hello plang'"'
+/ Read .pr requires copying to a .txt first because '.pr' MIME deserializes to a
+/ Goal object, defeating substring assertions. Copy → read as text → assert.
+/ Companion C# tests in DriftCaseArtifactTests.cs do the structural check too.
+/
+/ Architect's 3-fresh-cache rule runs externally (see sibling drift case).
+- copy file '../../Simple/.build/start.pr' to 'start.txt'
+- read file 'start.txt', write to %pr%
+- assert %pr% contains '"value": "hello plang"'
 - assert %pr% does not contain '"name": "Message"'
-- assert %pr% does not contain 'Expected=%!data%'

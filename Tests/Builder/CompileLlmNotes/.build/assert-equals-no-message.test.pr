@@ -1,0 +1,183 @@
+{
+  "name": "TestAssertEqualsOmitsMessageWhenNotInStepText",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "copy file '../../Simple/.build/start.pr' to 'start.txt'",
+      "lineNumber": 22,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "copy",
+          "parameters": [
+            {
+              "name": "Source",
+              "value": "../../Simple/.build/start.pr",
+              "type": "path"
+            },
+            {
+              "name": "Destination",
+              "value": "start.txt",
+              "type": "path"
+            },
+            {
+              "name": "Overwrite",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Copy start.pr to a .txt file so file.read returns raw text (not a Goal object) and downstream substring assertions can run.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "read file 'start.txt', write to %pr%",
+      "lineNumber": 23,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "file",
+          "action": "read",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "start.txt",
+              "type": "path"
+            },
+            {
+              "name": "ResolveVariables",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%pr%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Read the copied .txt as raw text so the next steps can substring-assert against it.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %pr% contains '\"value\": \"hello plang\"'",
+      "lineNumber": 24,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "contains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%pr%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "\"value\": \"hello plang\"",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Anchor: confirm the loaded start.pr text contains the inspected step.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %pr% does not contain '\"name\": \"Message\"'",
+      "lineNumber": 25,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "notContains",
+          "parameters": [
+            {
+              "name": "Value",
+              "value": "%pr%",
+              "type": "object"
+            },
+            {
+              "name": "Container",
+              "value": "\"name\": \"Message\"",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Drift assertion: the forbidden substring must not appear in start.pr.",
+      "level": "high",
+      "confidence": 98,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Builder/CompileLlmNotes/assert-equals-no-message.test.goal",
+  "prPath": "/Builder/CompileLlmNotes/.build/assert-equals-no-message.test.pr",
+  "hash": "aa9376d9ce0fc7511c09c077953cd848ac5f8b76e7c0d94e3e4e12a10e62fcf1",
+  "builderVersion": "0.2.2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

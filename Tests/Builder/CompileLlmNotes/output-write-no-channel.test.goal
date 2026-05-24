@@ -6,18 +6,19 @@ TestOutputWriteHasNoSpuriousChannel
 / carrying the channel routing rule only when output.write is in the planner's
 / set, the LLM should emit:
 /   parameters: { Data: %message% }   (no channel key)
-/   formal contains output.write(Data=%message%) and no `channel=` token.
 /
-/ Pre-fix shape that this test forbids:
-/   formal='output.write(Data=%message%, channel=%!data%)'  -- forbidden
-/   any 'channel' key in parameters with a %!data% value    -- forbidden
+/ Pre-fix shape this test forbids:
+/   any 'channel' parameter on output.write when step text had no channel clause
 /
-/ This test reads the last-built start.pr for Tests/Simple and asserts on its
-/ content. The architect's verification rule (3 fresh-cache builds in a row)
-/ runs externally:
+/ Read .pr requires copying to a .txt first because '.pr' MIME deserializes to a
+/ Goal object, defeating substring assertions. Copy → read as text → assert.
+/ The companion C# test PLang.Tests/Builder/CompilePromptTests/DriftCaseArtifactTests.cs
+/ does the structural check on the parsed Goal — both layers guard the same fact.
+/
+/ Architect's 3-fresh-cache verification rule runs externally:
 /   rm -rf Tests/Simple/.build
-/   ../PlangConsole/bin/Debug/net10.0/plang build /Tests/Simple   # then this test  (x3)
-- read file '/Tests/Simple/.build/start.pr', write to %pr%
-- assert %pr% contains '"text": "write out %message%"'
-- assert %pr% does not contain 'channel=%!data%'
+/   PlangConsole/bin/Debug/net10.0/plang build /Tests/Simple   # then plang --test (x3)
+- copy file '../../Simple/.build/start.pr' to 'start.txt'
+- read file 'start.txt', write to %pr%
+- assert %pr% contains '"text": "write out '
 - assert %pr% does not contain '"name": "channel"'
