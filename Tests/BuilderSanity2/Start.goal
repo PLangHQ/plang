@@ -1,0 +1,13 @@
+Start
+- set default %retries% = 3
+- set %prompt% = 'summarize this text'
+- call ProcessUser id=42, name='ada'
+- ask llm system='you are concise', user=%prompt%, write to %reply%
+- if %retries% > 0 and %reply% is not empty, call Continue retries=%retries%
+- write 'done' to log channel
+
+ProcessUser
+- write out 'processing %name% (%id%)'
+
+Continue
+- write out 'continuing'

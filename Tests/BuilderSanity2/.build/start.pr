@@ -1,0 +1,463 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set default %retries% = 3",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%retries%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 3,
+              "type": "object"
+            },
+            {
+              "name": "AsDefault",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "variable.set(Name=%retries%, Value=3, AsDefault=true)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %prompt% = \u0027summarize this text\u0027",
+      "lineNumber": 3,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%prompt%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "summarize this text",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "variable.set(Name=%prompt%, Value=\u0022summarize this text\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "call ProcessUser id=42, name=\u0027ada\u0027",
+      "lineNumber": 4,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "ProcessUser",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "id",
+                    "value": 42,
+                    "type": "long"
+                  },
+                  {
+                    "name": "name",
+                    "value": "ada",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/BuilderSanity2/.build/start.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "goal.call(GoalName={name:\u0022ProcessUser\u0022, parameters:[{name:\u0022id\u0022, value:42, type:\u0022int\u0022}, {name:\u0022name\u0022, value:\u0022ada\u0022, type:\u0022string\u0022}]})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "ask llm system=\u0027you are concise\u0027, user=%prompt%, write to %reply%",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "llm",
+          "action": "query",
+          "parameters": [
+            {
+              "name": "Messages",
+              "value": [
+                {
+                  "role": "system",
+                  "content": "you are concise",
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
+                },
+                {
+                  "role": "user",
+                  "content": "%prompt%",
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
+                }
+              ],
+              "type": "list\u00601"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "continuepreviousconversation",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%reply%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "llm.query(Messages=[{Role:\u0022system\u0022, Content:\u0022you are concise\u0022},{Role:\u0022user\u0022, Content:%prompt%}]) | variable.set(Name=%reply%, Value=%!data%, type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "if %retries% \u003E 0 and %reply% is not empty, call Continue retries=%retries%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%retries%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": 0,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%reply%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "isnotempty",
+              "type": "operator"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
+            {
+              "name": "GoalName",
+              "value": {
+                "name": "Continue",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "retries",
+                    "value": "%retries%",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/BuilderSanity2/.build/start.pr"
+              },
+              "type": "goal.call"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "condition.if(Left=%retries%, Operator=\u0022\u003E\u0022, Right=0), condition.if(Left=%reply%, Operator=\u0022isnotempty\u0022), goal.call(GoalName={name:\u0022Continue\u0022, parameters:[{\u0022name\u0022:\u0022retries\u0022,\u0022value\u0022:\u0022%retries%\u0022,\u0022type\u0022:\u0022string\u0022}]})",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "write \u0027done\u0027 to log channel",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "output",
+          "action": "write",
+          "parameters": [
+            {
+              "name": "Data",
+              "value": "done",
+              "type": "object"
+            },
+            {
+              "name": "channel",
+              "value": "log",
+              "type": "this"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "output.write(Data=\u0022done\u0022, channel=\u0022log\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [
+    {
+      "name": "ProcessUser",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \u0027processing %name% (%id%)\u0027",
+          "lineNumber": 10,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "processing %name% (%id%)",
+                  "type": "object"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": "output.write(Data=\u0022processing %name% (%id%)\u0022)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/BuilderSanity2/Start.goal",
+      "prPath": "/BuilderSanity2/.build/start.pr",
+      "hash": "b4e288c7890f28c2268c8434bf6768552ff7e66873a17485f2de17d3812fcb64",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    },
+    {
+      "name": "Continue",
+      "description": null,
+      "comment": null,
+      "steps": [
+        {
+          "index": 0,
+          "text": "write out \u0027continuing\u0027",
+          "lineNumber": 13,
+          "indent": 0,
+          "comment": null,
+          "actions": [
+            {
+              "module": "output",
+              "action": "write",
+              "parameters": [
+                {
+                  "name": "Data",
+                  "value": "continuing",
+                  "type": "object"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ],
+          "intent": null,
+          "guidance": null,
+          "level": null,
+          "confidence": null,
+          "formal": "output.write(Data=\u0022continuing\u0022)",
+          "source": null,
+          "waitForExecution": true
+        }
+      ],
+      "goals": [],
+      "visibility": 0,
+      "path": "/BuilderSanity2/Start.goal",
+      "prPath": "/BuilderSanity2/.build/start.pr",
+      "hash": "743240d836ccaea2d536224082df638c6493daf99e7631458f08fece10bc591a",
+      "builderVersion": null,
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false,
+      "inputParameters": null
+    }
+  ],
+  "visibility": 1,
+  "path": "/BuilderSanity2/Start.goal",
+  "prPath": "/BuilderSanity2/.build/start.pr",
+  "hash": "91939a791dbb5a38d35a2e41ee16e94d0dbf39c5f920bade9fdb0abe7f078969",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

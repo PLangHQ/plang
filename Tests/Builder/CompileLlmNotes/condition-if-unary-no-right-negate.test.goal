@@ -1,0 +1,21 @@
+TestConditionIfUnaryHasNoRightOrNegate
+/ Drift case 3 — unary condition operators emitted Right=%!data%, Negate=false
+/ as placeholders before the per-action notes fix.
+/
+/ Step text `- if %message% is not empty, write out %message%` uses the unary
+/ `isnotempty` operator. With the rule in os/system/modules/condition/if.notes.md
+/ ("omit Right and Negate when the operator is unary"), the LLM should emit:
+/   parameters: { Left: %message%, Operator: "isnotempty" }
+/   formal:     condition.if(Left=%message%, Operator="isnotempty")
+/
+/ Pre-fix shape this test forbids: any 'Right' or 'Negate' parameter on
+/ condition.if when the operator is unary.
+/ Inspect the `formal` string — it mirrors LLM-emitted parameters exactly.
+/ The pr also carries a builder-reflected `defaults[]` array containing
+/ `negate=false` for `condition.if`; that's runtime enrichment, not drift,
+/ so we don't assert on the raw pr substring.
+- copy file 'fixture/.build/start.pr' to 'condition-out.txt', overwrite
+- read file 'condition-out.txt', write to %pr%
+- assert %pr% contains '"value": "isnotempty"'
+- assert %pr% does not contain 'Right=%!data%'
+- assert %pr% does not contain 'Negate=false'

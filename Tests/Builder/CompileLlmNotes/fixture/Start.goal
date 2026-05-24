@@ -1,0 +1,3 @@
+Start
+- set %message% = 'hello plang'
+- if %message% is not empty, write out %message%
