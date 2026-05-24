@@ -221,12 +221,60 @@ public sealed class @this : IAsyncDisposable
         typeof(modules.IStatic),
     };
 
+    /// <summary>
+    /// Filesystem root for per-action LLM teaching markdown.
+    /// Defaults to <c>{App.OsDirectory}/system/modules</c>; tests stage fixtures
+    /// in a temp folder and assign this directly. Null disables markdown teaching
+    /// (catalog still assembles — fields just stay null/empty).
+    /// </summary>
+    public string? MarkdownTeachingRoot { get; set; }
+
+    /// <summary>
+    /// Resolves the markdown root: explicit override wins, else derives from
+    /// <c>App.OsDirectory</c>. Null when neither is available.
+    /// </summary>
+    public string? ResolveMarkdownTeachingRoot()
+    {
+        if (!string.IsNullOrEmpty(MarkdownTeachingRoot)) return MarkdownTeachingRoot;
+        if (string.IsNullOrEmpty(App?.OsDirectory)) return null;
+        return System.IO.Path.Combine(App.OsDirectory!, "system", "modules");
+    }
+
+    /// <summary>
+    /// Scans <see cref="ResolveMarkdownTeachingRoot"/> for orphan teaching files
+    /// (stem is not <c>module</c> and not a registered action in its module folder).
+    /// Writes one line per orphan to the supplied actor's <c>Output</c> channel —
+    /// CLAUDE.md "No Console.* writes in production C#" applies, and architect's
+    /// coder plan pins the channel: <c>WriteTextAsync(Output, …)</c>. Returns the
+    /// orphans seen (handy for tests / instrumentation); throws nothing — orphans
+    /// must never block a build.
+    /// </summary>
+    public async Task<IReadOnlyList<MarkdownTeaching.Orphan>> WarnOrphansAsync(
+        global::app.actor.@this actor,
+        CancellationToken cancellationToken = default)
+    {
+        var root = ResolveMarkdownTeachingRoot();
+        var orphans = MarkdownTeaching.ScanOrphans(root,
+            moduleName => _modules.TryGetValue(moduleName, out var actions)
+                ? actions.Keys
+                : Array.Empty<string>()).ToList();
+
+        foreach (var o in orphans)
+        {
+            var msg = $"Orphan teaching markdown: {o.Path} (no registered action '{o.Module}.{o.Stem}'). Rename the file, register the action, or delete the file.\n";
+            await actor.Channels.WriteTextAsync(channels.@this.Output, msg, cancellationToken);
+        }
+
+        return orphans;
+    }
+
     public StepActions Describe()
     {
         var result = new StepActions();
         var nCtx = new NullabilityInfoContext();
         // Cache module descriptions by namespace — populated on first encounter per namespace
         var moduleDescriptionCache = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var markdownRoot = ResolveMarkdownTeachingRoot();
 
         foreach (var ns in Names)
         {
@@ -339,6 +387,13 @@ public sealed class @this : IAsyncDisposable
                 // Per-action modifier classification from [Modifier] on the class
                 bool isModifier = parameterType.GetCustomAttribute<modules.ModifierAttribute>() != null;
 
+                // Per-action LLM teaching from markdown files. Falls back to
+                // C# attribute-sourced Description when the markdown file is
+                // absent — keeps the catalog populated while the migration runs.
+                var teaching = MarkdownTeaching.Load(markdownRoot, ns, actionName);
+                var mergedDescription = teaching.Description ?? actionDescription;
+                var mergedModuleDescription = teaching.ModuleDescription ?? moduleDescription;
+
                 result.Add(new global::app.goals.goal.steps.step.actions.action.@this
                 {
                     Module = ns,
@@ -349,8 +404,12 @@ public sealed class @this : IAsyncDisposable
                     Examples = examples,
                     ReturnType = returnType,
                     ReturnTypeName = returnTypeName,
-                    Description = actionDescription,
-                    ModuleDescription = moduleDescription,
+                    Description = mergedDescription,
+                    ModuleDescription = mergedModuleDescription,
+                    Notes = teaching.Notes,
+                    ModuleNotes = teaching.ModuleNotes,
+                    ExamplesMd = teaching.ExamplesMd,
+                    ModuleExamplesMd = teaching.ModuleExamplesMd,
                     IsModifier = isModifier
                 });
             }

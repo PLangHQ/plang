@@ -4,7 +4,6 @@ namespace app.modules.crypto;
 /// Symmetric decryption v1 — identity pass-through. Sibling of <see cref="encrypt"/>;
 /// see its docs for the v1 contract.
 /// </summary>
-[System.ComponentModel.Description("Decrypt input bytes — v1 returns input unchanged")]
 [Action("decrypt", Cacheable = false)]
 public partial class decrypt : IContext
 {

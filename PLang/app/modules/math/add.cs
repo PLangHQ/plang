@@ -4,7 +4,6 @@ using ActionSpec = app.modules.Schema.Spec.Action;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Add A and B together and return the numeric result")]
 [Action("add")]
 public partial class Add : IContext
 {

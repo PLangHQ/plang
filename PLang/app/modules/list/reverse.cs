@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.list;
 
-[System.ComponentModel.Description("Reverse the order of items in the list in place")]
 [Action("reverse", Cacheable = false)]
 public partial class Reverse : IContext
 {

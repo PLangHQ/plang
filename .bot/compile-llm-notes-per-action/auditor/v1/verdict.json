@@ -1,0 +1,35 @@
+{
+  "status": "pass",
+  "version": "v1",
+  "branch": "compile-llm-notes-per-action",
+  "head": "c1657d396",
+  "stages_delivered": "8/8 (Stage 7 mechanism-only, Stage 8 CLAUDE.md miss)",
+  "verifications": {
+    "compile_llm_size_bytes": 14905,
+    "compile_llm_under_16kb": true,
+    "drift_3_fresh_cache_rounds": "3/3 both cases pass",
+    "csharp_tests": "2945/2945"
+  },
+  "new_findings": [
+    {
+      "id": "F1",
+      "severity": "low",
+      "summary": "Orphan markdown scan never runs in production — Stage 7 mechanism shipped, invocation missed.",
+      "blocking": false
+    },
+    {
+      "id": "F2",
+      "severity": "retracted",
+      "summary": "Initially filed re: CLAUDE.md [Provider] references. Retracted on rebase — docs commit 65538f9dc landed concurrently and closed it. Auditor process gap: didn't git fetch before reporting.",
+      "blocking": false
+    }
+  ],
+  "carry_forwards": [
+    "HttpPath.Raw userinfo (path-polymorphism F1 latent)",
+    "signing.verify integrity-only (filesystem-permission F1)",
+    "unsigned persisted-row auto-trust (filesystem-permission F2)",
+    "Regex/Glob no MatchTimeout (filesystem-permission F4)",
+    "[PathScheme] decorated-unconsumed (path-polymorphism O5)",
+    "_uri.IdnHost IPv6 bare hex (path-polymorphism O6)"
+  ]
+}

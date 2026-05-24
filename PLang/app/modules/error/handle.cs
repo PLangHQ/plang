@@ -13,8 +13,6 @@ namespace app.modules.error;
 /// Message); if matched, either ignores, retries, or runs Actions — ordered by
 /// Order (RetryFirst default, GoalFirst runs Actions before retry).
 /// </summary>
-[ModuleDescription("Error handling: throw errors from a step, or wrap the preceding action with retry/handle-actions/ignore semantics")]
-[System.ComponentModel.Description("Intercept errors from the preceding action; optionally retry, run a recovery action chain, or suppress the error")]
 [Action("handle", Cacheable = false)]
 [Modifier(Order = 3)]
 public partial class Handle : IContext, IModifier

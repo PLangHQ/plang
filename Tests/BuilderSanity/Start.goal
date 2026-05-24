@@ -1,0 +1,14 @@
+Start
+- set %items% = '["a","b","c"]'
+- foreach %items%, call HandleItem item=%item%
+- read file 'data.txt' into %content%, on error call HandleError
+- if %content% is not empty, call DoWork
+
+HandleItem
+- write out %item%
+
+HandleError
+- write out 'failed'
+
+DoWork
+- write out 'working'

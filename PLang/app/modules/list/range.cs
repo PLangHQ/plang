@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.list;
 
-[System.ComponentModel.Description("Generate a list of integers from Start to End inclusive, stepping by Step (default 1)")]
 [Action("range")]
 public partial class Range : IContext
 {

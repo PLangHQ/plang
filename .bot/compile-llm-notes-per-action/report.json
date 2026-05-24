@@ -1,0 +1,316 @@
+{
+  "branch": "compile-llm-notes-per-action",
+  "sessions": [
+    {
+      "id": "58d95ebc-deb0-4695-8018-35e2fd8e7dad",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-23T22:57:26Z",
+      "timestamp_end": "2026-05-23T23:05:00Z",
+      "intent": "Define failing-test contract for moving per-action LLM teaching from C# attributes/Compile.llm to markdown files at os/system/modules/<module>/.",
+      "before": {
+        "assumptions": "Architect plan in .bot/compile-llm-notes-per-action/architect/plan.md is approved. Catalog entry (app.goals.goal.steps.step.actions.action.@this) already exposes Description/ModuleDescription/Examples — coder will add Notes/ModuleNotes (action-level + module-level), populate Description/ModuleDescription/Examples from markdown after migration script runs, and surface text fields per the merge-at-render rule. Provider→Code attribute rename already in source.",
+        "risk": "Drift cases are LLM-sensitive; assertions must accept the structural shape (no spurious channel/Message) without overfitting to literal prompt text. Loader/renderer tests reference a markdown-fixture filesystem; need to fit existing MockFileSystem patterns rather than touching real os/system/modules/. Modifier folder rename (AiModule/ → ai/) is part of branch but I am NOT testing rename — only the loader behavior on the new lowercase paths."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+            "Tests/Builder/CompileLlmNotes/assert-equals-no-message.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Drift cases — the load-bearing pair from the architect's brief. Plang `--test` goals; bodies are `throw \"not implemented\"`. Commentary pins the pre-fix shape that is forbidden and the architect's 3-fresh-cache-builds rule."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/CatalogTests/MarkdownTeachingLoaderTests.cs",
+            "PLang.Tests/App/Modules/CatalogTests/MarkdownTeachingMergeTests.cs",
+            "PLang.Tests/App/Modules/CatalogTests/MarkdownTeachingOrphanTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mechanism tests for the markdown teaching loader: per-layer reads (module vs action), merge order (module first, blank line, action), and orphan-file warnings. New folder `CatalogTests/` per the project alias-clash convention (PLang.Tests/GlobalUsings.cs aliases `Data`). TUnit `[Test]` + `Assert.Fail(\"Not implemented\")`."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Renderer tests: per-action blocks only render for planner's set; modifier actions render via same path; system-prompt size on a Tests/Simple step compile drops below 16 KB (architect verification check #1)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Modules/CatalogTests/CodeAttributeRegressionTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Provider→Code rename guard. Source already shows [Code] everywhere — guards against the old name reappearing and pins that PLNG001 diagnostic text teaches [Code]."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/test-designer/v1/plan.md",
+            ".bot/compile-llm-notes-per-action/test-designer/v1/verdict.json",
+            ".bot/compile-llm-notes-per-action/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot-output artifacts: plan.md, verdict.json (pass), summary.md."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "All test files written failing-by-construction per character contract. Two plang drift tests + 22 C# tests across 5 files.",
+        "notes": "User skipped per-batch approval. Coder is next; the two drift cases are the load-bearing tests — verify across 3 fresh-cache builds (CLAUDE.md \"Stale-binary trap\")."
+      }
+    },
+    {
+      "id": "tester-v1",
+      "bot": "tester",
+      "timestamp_start": "2026-05-24T00:00:00Z",
+      "timestamp_end": "2026-05-24T00:00:00Z",
+      "intent": "Verify coder v1 against the test-designer's contract on a clean build, then mutation-test the load-bearing C# rules and attempt the architect's 3-fresh-cache drift validation.",
+      "before": {
+        "assumptions": "Coder v1 (commit 067c1e1b7) closed the drift cycle by migrating per-action teaching to markdown under os/system/modules/<module>/*.md and gating the renderer block on the planner's action set. The 22 C# tests were authored failing-by-construction; coder should have made them pass. The two plang drift cases (.test.goal) should also pass via 3 fresh-cache builds of Tests/Simple.",
+        "risk": "Stale-binary trap when running plang --test; pre-existing wedges in the builder pipeline; drift tests passing-by-no-execution (Stale) if .pr files weren't built."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [],
+          "type": "verify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild (rm -rf bin/obj for all four projects + dotnet build PlangConsole). 0 errors. Full C# suite via TUnit binary: 2942/2942 pass. 22 new tests across 5 classes all pass on first run."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "os/system/builder/templates/v2/stepActionDetails.template"
+          ],
+          "type": "mutation-test",
+          "category": "test",
+          "confidence": "high",
+          "context": "Four mutations to verify the C# tests pin load-bearing behavior — all 4 caught, source reverted clean. (1) MergeLayers order swap caught by MergeTests; (2) ModuleStem orphan-skip removal caught by OrphanTests; (3) notes/modNotes constructor swap caught by LoaderTests; (4) planStep.actions gate removal in template caught by RenderTests (5/6 fail)."
+        },
+        {
+          "paths": [
+            "Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+            "Tests/Builder/CompileLlmNotes/assert-equals-no-message.test.goal"
+          ],
+          "type": "finding",
+          "category": "test",
+          "confidence": "high",
+          "context": "F1 (medium): .test.goal files committed without .pr companions. plang --test reports both as [Stale] — assertions never run. plang build wedges before reaching them on a pre-existing retry-path bug (Cannot convert Dictionary to Boolean) that fires earlier on this branch via Publish.goal (planner returned 10 vs 9 steps). Inner wedge pre-existing on parent; outer trigger is branch-shape-sensitive. Coder v2 must ship .pr files (built or seeded) so plang --test reports 2 pass."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/tester/v1/plan.md",
+            ".bot/compile-llm-notes-per-action/tester/v1/verdict.md",
+            ".bot/compile-llm-notes-per-action/tester/v1/verdict.json",
+            ".bot/compile-llm-notes-per-action/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot artifacts: plan, verdict (md + json), summary."
+        }
+      ],
+      "after": {
+        "status": "needs-fixes",
+        "severity": "medium",
+        "health": "C# layer green and mutation-verified; committed Tests/Simple/.build/start.pr exhibits the correct post-fix shape (no channel=, no Message=). One load-bearing finding: drift .test.goal files Stale (.pr never built).",
+        "notes": "Coder v2 next. Required fix: ship .pr files for the two drift cases. Optional: unwedge plang build pipeline so 3-fresh-cache rule is mechanically reproducible."
+      }
+    },
+    {
+      "id": "tester-v2",
+      "bot": "tester",
+      "timestamp_start": "2026-05-24T00:35:00Z",
+      "timestamp_end": "2026-05-24T00:45:00Z",
+      "intent": "Verify coder v2 (.test.goal reshape + DriftCaseArtifactTests) and v3 (real-builder .pr regeneration via --build={\"files\":[…]}) closes tester v1 F1.",
+      "before": {
+        "assumptions": "Coder v3 commit message claims 3-fresh-cache: 206 total, 206 pass, 0 stale, ~9s per round. Verify independently on a clean rebuild.",
+        "risk": "Stale-binary trap (use clean rebuild). LLM variation across builds could shift non-load-bearing shape — check whether drift assertions still hold."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/tester/v2/verdict.md (no separate plan.md — single-pass verification)",
+      "actions": [
+        {
+          "paths": [],
+          "type": "verify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + C# suite 2945/2945 pass (+3 DriftCaseArtifactTests from v2). Architect's 3-fresh-cache rule reproduced independently with --build={\"files\":[\"Tests/Simple/Start.goal\"],\"cache\":false}: round 1/2/3 = Pass/Pass, Pass/Pass, Pass/Pass; 0 Stale on any round. Mutation test (inject \"name\":\"channel\" into start.pr) correctly fails the drift case; reverted clean."
+        },
+        {
+          "paths": [],
+          "type": "observation",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Non-blocking: fresh-build start.pr differs from coder v3's committed version (added Type=string parameter to two variable.set calls, flipped one Value type tstring→string). Drift assertions hold on both shapes — real LLM variation within the unconstrained-by-architect surface. Flagging only so a future reviewer doesn't mis-read the diff."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/tester/v2/verdict.md",
+            ".bot/compile-llm-notes-per-action/tester/v2/verdict.json",
+            ".bot/compile-llm-notes-per-action/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot artifacts. summary.md updated to v2."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "Branch ready for next pipeline stage (security). F1 closed by coder v3. C# layer + plang drift layer + mutation tests all green.",
+        "notes": "Next bot: security."
+      }
+    },
+    {
+      "id": "security-v1",
+      "bot": "security",
+      "timestamp_start": "2026-05-24T00:55:00Z",
+      "timestamp_end": "2026-05-24T01:00:00Z",
+      "intent": "Trust-boundary audit of the branch delta past the runtime2 merge (d8c18e257..55da8f529): per-action LLM teaching extracted from C# [Description]/[Example] attributes into repo-tracked .md files, read at build time by a new MarkdownTeaching loader.",
+      "before": {
+        "assumptions": "Tester v2 PASS — clean rebuild, C# 2945/2945, plang 204/204 + drift 2/2 across 3 fresh-cache rounds. Production C# diff narrow: MarkdownTeaching.cs (new ~140 LOC), app/modules/this.cs (+63), action/this.cs (+71), plus ~130 mechanical attribute deletions.",
+        "risk": "Path traversal via moduleName/actionName if either turned out to be externally influenceable; symlink escape through Directory.Enumerate*; attribute deletions silently dropping security-bearing surface; orphan-scan side-channel leaking filesystem layout to a remote sink."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/goals/goal/steps/step/actions/action/this.cs"
+          ],
+          "type": "review",
+          "category": "security",
+          "confidence": "high",
+          "context": "Traced both loader call sites. Single Load(...) call at modules/this.cs:393 inside Describe(); moduleName=ns iterates Names[] (compile-time namespace registry), actionName from reflection over registered handlers — neither reachable from a PLang program. modulesRoot resolves from App.OsDirectory. ScanOrphans is a pure directory walk under modulesRoot with no caller-supplied path component."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/modules/output/write.cs",
+            "PLang/app/modules/signing/sign.cs",
+            "PLang/app/modules/signing/verify.cs",
+            "PLang/app/modules/settings/get.cs",
+            "PLang/app/modules/settings/set.cs",
+            "PLang/app/modules/settings/remove.cs",
+            "PLang/app/modules/mock/action.cs"
+          ],
+          "type": "review",
+          "category": "security",
+          "confidence": "high",
+          "context": "Spot-checked attribute deletions on higher-risk modules. Every deletion is documentation prose ([Description]/[Example]) only — no behavior, gating, auth, signing, or permission surface changed. Content migrated to os/system/modules/<module>/*.md."
+        },
+        {
+          "paths": [
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/types/path/permission/this.cs"
+          ],
+          "type": "review",
+          "category": "security",
+          "confidence": "high",
+          "context": "Carry-forward verification — F1/F2/F4 from filesystem-permission and path-polymorphism. Files appear nowhere in the branch C# diff; carry-forward severities unchanged."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/security/v1/plan.md",
+            ".bot/compile-llm-notes-per-action/security/v1/result.md",
+            ".bot/compile-llm-notes-per-action/security/v1/verdict.json",
+            ".bot/compile-llm-notes-per-action/security/summary.md",
+            ".bot/compile-llm-notes-per-action/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot-output artifacts: plan.md, result.md, verdict.json (pass), summary.md, security-report.json."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "0 new critical/high/medium/low. New surface is a read-only filesystem loader scoped to a process-rooted directory and called only with reflection-derived identifiers; sink is the LLM compile prompt (excluded per ruleset). Attribute deletions are mechanical documentation migration. Carry-forwards unchanged.",
+        "notes": "Branch ready to ship. Next bot per pipeline norm: auditor."
+      }
+    },
+    {
+      "id": "auditor-v1",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-24T01:10:00Z",
+      "timestamp_end": "2026-05-24T01:30:00Z",
+      "intent": "Cross-cutting integrity audit on compile-llm-notes-per-action: trace every architect stage to disk, independently reproduce the two verification checks, hunt for cross-axis seams nobody owned.",
+      "before": {
+        "assumptions": "Per-axis verdicts (tester v2 PASS 3 fresh-cache rounds, security v1 PASS no new surface) presumed sound but not yet independently verified. Architect plan has 8 numbered stages; coder/tester/security each addressed slices.",
+        "risk": "Stale-binary trap on plang --test; per-axis bots scoping past 'is this mechanism wired into a real run' and past CLAUDE.md (which no axis owns)."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [],
+          "type": "verify",
+          "category": "build",
+          "confidence": "high",
+          "context": "Clean rebuild from zero (rm -rf for all four bin/obj + dotnet build PlangConsole + dotnet run --project PLang.Tests). 0 errors. C# suite 2945/2945 pass."
+        },
+        {
+          "paths": [],
+          "type": "verify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Architect's 3-fresh-cache rule reproduced independently with --build={\"files\":[\"Tests/Simple/Start.goal\"],\"cache\":false}. Round 1: 9.6s build, both drift cases Pass. Round 2: 10.4s, Pass/Pass. Round 3: 9.7s, Pass/Pass. Zero Stale."
+        },
+        {
+          "paths": ["os/system/builder/llm/Compile.llm"],
+          "type": "verify",
+          "category": "size",
+          "confidence": "high",
+          "context": "Architect Verification #1 — Compile.llm = 14905 bytes (< 16 KB bound, was ~20.8 KB). Pinned by StepActionDetailsRenderTests.cs:154."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "PLang/app/modules/this.cs"
+          ],
+          "type": "finding",
+          "category": "deliverable-half-shipped",
+          "confidence": "high",
+          "context": "F1 (low/informational) — orphan-scan mechanism shipped (ScanOrphans + WarnOrphansAsync) but no production code path invokes it. Architect Stage 7 specified warning fires 'at startup'. Today 0 orphans exist; risk is latent. Missed by tester (verified function works by direct call) + security (verified mechanism is safe). Non-blocking; ~5-line fix."
+        },
+        {
+          "paths": ["CLAUDE.md"],
+          "type": "finding",
+          "category": "docs-drift",
+          "confidence": "high",
+          "context": "F2 (low/informational) — architect Stage 8 said update CLAUDE.md [Provider] → [Code]; source-side rename complete but CLAUDE.md lines 38 + 42 still reference [Provider] / Emission/Property/Provider/. Per workflow, file as claude-md-proposal not direct edit. Coder skipped a documented deliverable; no reviewer axis owns docs."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/auditor/v1/plan.md",
+            ".bot/compile-llm-notes-per-action/auditor/v1/result.md",
+            ".bot/compile-llm-notes-per-action/auditor/v1/verdict.json",
+            ".bot/compile-llm-notes-per-action/auditor/summary.md",
+            ".bot/compile-llm-notes-per-action/auditor-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot artifacts: plan, result, verdict (json), summary, branch-level auditor-report.json."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "All 8 architect stages delivered (Stage 7 + 8 with caveats — see F1/F2). Both verification checks reproduce on independent clean rebuild. C# 2945/2945; drift 2/2 across 3 fresh-cache rounds. Carry-forwards unchanged.",
+        "notes": "Branch ready to ship. F1 + F2 non-blocking but should be picked up by next docs/maintenance pass."
+      }
+    }
+  ]
+}

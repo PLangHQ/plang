@@ -20,8 +20,6 @@ namespace app.modules.builder;
 /// closest neighbour. With this action wired in, the explicit <c>module.action</c>
 /// from the step text always lands in the compiler's catalog detail.
 /// </summary>
-[ModuleDescription("Builder internals: load, merge, validate, and save goal and step data during the build pipeline")]
-[System.ComponentModel.Description("Validate and enrich a step's action set from explicit module.action tokens in the step text")]
 [Action("validateStepActions")]
 public partial class validateStepActions : IContext
 {

@@ -1,0 +1,71 @@
+{
+  "reviewer": "auditor",
+  "branch": "compile-llm-notes-per-action",
+  "head": "c1657d396",
+  "timestamp": "2026-05-24T01:30:00Z",
+  "reviewed_version": "v3 (coder) / v2 (tester) / v1 (security)",
+  "verdict": "pass",
+  "summary": "Cross-cutting audit on compile-llm-notes-per-action. Pipeline (tester v2 PASS 3 fresh-cache rounds, security v1 PASS) holds on independent verification. All 8 architect stages delivered. Both verification checks reproduced independently: Compile.llm = 14905 bytes (< 16 KB bound, was ~20.8 KB); drift cases 2/2 across 3 fresh-cache plang builds (9.6s/10.4s/9.7s). C# suite 2945/2945 on clean rebuild. One new low/informational finding (F1) — orphan-scan mechanism (ScanOrphans + WarnOrphansAsync) shipped but never invoked from production code path; Stage 7 half-done (testable but doesn't actually warn on a real build). Fell in the seam between per-axis bots (tester verified by direct call, security audited mechanism safety, neither asked 'is it invoked?'). Non-blocking. A second finding (F2) was filed re: CLAUDE.md [Provider] references but retracted on rebase — docs commit 65538f9dc landed concurrently and closed it; auditor process gap (didn't git fetch before reporting). Carry-forwards from prior branches unchanged.",
+  "previous_reviews_assessed": {
+    "tester": "agree — v2 PASS holds. The 3-fresh-cache rule reproduces (Round1/Round2/Round3 all Pass/Pass). The non-blocking 'LLM shape variation' observation v2 flagged is the right call to file as info-not-finding. The broad plang suite's 6 fixture failures (_fixtures_fail/_fixtures_sensitive) are intentional negative-path test infrastructure, pre-existing on parent — not regressions.",
+    "security": "agree — v1 PASS. Trust-boundary analysis correct: moduleName/actionName come from compile-time reflection, modulesRoot from App.OsDirectory; no PLang-program-reachable input. Attribute deletions are documentation prose only, no behavior/auth/signing surface changed. The mechanism is safe. Scope correctly stopped at 'is this safe' — invocation-coverage (F1) is the auditor's seam."
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "low",
+      "category": "deliverable-half-shipped",
+      "file": "PLang/app/modules/this.cs",
+      "line": 252,
+      "issue": "WarnOrphansAsync exists and the mechanism is sound, but no production code path invokes it. Searching `WarnOrphansAsync|ScanOrphans` across PLang/ and PlangConsole/ returns only the definition sites and tests under PLang.Tests/App/Modules/CatalogTests/MarkdownTeachingOrphanTests.cs. Architect Stage 7: 'At catalog load, fail loud on orphan markdown files. One clear warning per orphan at startup.' Today 0 orphans exist (verified — every stem under os/system/modules/**/*.{notes,examples,description}.md maps to a registered action), so observable impact is zero. Risk is latent: a future rename, typo, or removed action with leftover .md will not produce the warning the stage promised.",
+      "missed_by": "tester (verified function works when called), security (verified mechanism is safe), coder (marked Stage 7 done on mechanism existence)",
+      "impact": "Latent — zero observable today. Next orphan introduced by a refactor will silently fail to warn, defeating the stated purpose of Stage 7 (replacement for compile-time catch of attribute typos).",
+      "suggestion": "Wire `await Modules.WarnOrphansAsync(actor)` into builder startup (after module registration, before first Describe()) or fold into the first Describe() call with a once-per-process guard. ~5 lines. Non-blocking."
+    },
+    {
+      "id": "F2",
+      "severity": "retracted",
+      "category": "auditor-process-gap",
+      "file": "CLAUDE.md",
+      "issue": "Initially filed: CLAUDE.md lines 38 + 42 still referenced [Provider] / Emission/Property/Provider after Stage 8 source-side rename. Retracted on rebase — docs commit 65538f9dc landed concurrently (01:14 UTC) and closed it; CLAUDE.md now reads [Code] / Emission/Property/{Data,Code}/ at lines 39 + 43. The docs pass picked up the rename from the docs queue without an explicit claude-md-proposal from this branch.",
+      "missed_by": "the auditor (this bot) — didn't git fetch before reporting; committed on top of a stale local branch and only discovered the resolution when push was rejected",
+      "impact": "Zero. The drift was real at the moment I started auditing but closed before my commit landed. Filing as a process note rather than silently dropping the finding.",
+      "suggestion": "Auditor protocol: git fetch + check for concurrent commits before filing the report."
+    }
+  ],
+  "carry_forwards": [
+    { "id": "F1-pathpoly", "severity": "informational", "from": "path-polymorphism auditor v1", "unchanged": true, "note": "HttpPath.Raw preserves userinfo (PLang/app/types/path/http/this.cs:94) — file not in this branch's diff" },
+    { "id": "F1-fsperm",   "severity": "medium",        "from": "filesystem-permission",         "unchanged": true, "note": "signing.verify integrity-only, no signer-authority check" },
+    { "id": "F2-fsperm",   "severity": "low",           "from": "filesystem-permission",         "unchanged": true, "note": "unsigned persisted-row auto-trust" },
+    { "id": "F4-fsperm",   "severity": "low",           "from": "filesystem-permission",         "unchanged": true, "note": "Regex/Glob has no MatchTimeout" },
+    { "id": "O5",          "severity": "informational", "from": "path-polymorphism security v3", "unchanged": true, "note": "[PathScheme] marker-only attribute" },
+    { "id": "O6",          "severity": "informational", "from": "path-polymorphism security v3", "unchanged": true, "note": "_uri.IdnHost IPv6 bare hex" }
+  ],
+  "verification": {
+    "build": { "rebuild": "clean Debug net10.0 from rm -rf */bin */obj", "errors": 0, "warnings": "~456 pre-existing generator nullable warnings, unchanged from prior bots" },
+    "csharp_tests": { "command": "dotnet run --project PLang.Tests", "total": 2945, "passed": 2945, "failed": 0, "skipped": 0, "duration_seconds": 15.7 },
+    "plang_drift_3_rounds": {
+      "command": "for i in 1 2 3; do rm -rf Tests/Simple/.build; plang build '--build={\"files\":[\"Tests/Simple/Start.goal\"],\"cache\":false}'; cd Tests && plang --test Builder/CompileLlmNotes; done",
+      "round_1": { "build_seconds": 9.6, "output_write_no_channel": "Pass (65ms)", "assert_equals_no_message": "Pass (6ms)" },
+      "round_2": { "build_seconds": 10.4, "output_write_no_channel": "Pass (11ms)", "assert_equals_no_message": "Pass (4ms)" },
+      "round_3": { "build_seconds": 9.7, "output_write_no_channel": "Pass (42ms)", "assert_equals_no_message": "Pass (11ms)" },
+      "stale": 0
+    },
+    "architect_checks": {
+      "compile_llm_size_bytes": 14905,
+      "compile_llm_under_16kb": true,
+      "drift_cases_pass_across_3_fresh_cache_rounds": true
+    },
+    "stage_delivery": {
+      "stage_0_lowercase_rename":           "verified — `ls os/system/modules/` shows no *Module folders",
+      "stage_1_loader":                     "verified — MarkdownTeaching.cs + Modules.Describe() wires Notes/ModuleNotes/Description/ModuleDescription/ExamplesMd/ModuleExamplesMd",
+      "stage_2_renderer":                   "verified — stepActionDetails.template gates blocks on planStep.actions",
+      "stage_3_migration":                  "verified — zero class-level [Description] / [Example] on action handlers; one property-level [Description] (latent, unused) on goal/return.cs:14",
+      "stage_4_notes_authored":             "verified — 184 teaching files under os/system/modules/**/*.{notes,examples,description}.md; assert/module.notes.md present",
+      "stage_5_compile_llm_pruned":         "verified — 14905 bytes, was ~20.8 KB",
+      "stage_6_verification":               "verified independently — see plang_drift_3_rounds and compile_llm_size_bytes above",
+      "stage_7_orphan_validation":          "PARTIAL — see F1 (mechanism shipped, not invoked in production)",
+      "stage_8_provider_to_code_rename":    "PARTIAL — see F2 (source-side complete, CLAUDE.md stale)"
+    }
+  }
+}

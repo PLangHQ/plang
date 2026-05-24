@@ -3,7 +3,6 @@ using app.types;
 
 namespace app.modules.file;
 
-[System.ComponentModel.Description("Write Value to a file at Path, creating directories as needed")]
 [Action("save", Cacheable = false)]
 public partial class Save : IContext
 {

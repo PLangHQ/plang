@@ -4,7 +4,6 @@ using ActionSpec = app.modules.Schema.Spec.Action;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Multiply A by B and return the numeric result")]
 [Action("multiply")]
 public partial class Multiply : IContext
 {

@@ -4,7 +4,6 @@ using ActionSpec = app.modules.Schema.Spec.Action;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Divide A by B and return the result; fails on division by zero")]
 [Action("divide")]
 public partial class Divide : IContext
 {

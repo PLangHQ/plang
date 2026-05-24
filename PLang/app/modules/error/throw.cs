@@ -3,7 +3,6 @@ using app.variables;
 
 namespace app.modules.error;
 
-[System.ComponentModel.Description("Immediately fail the step with a structured error message, status code, and optional key")]
 [Action("throw", Cacheable = false)]
 public partial class Throw : IContext
 {

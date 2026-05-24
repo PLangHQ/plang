@@ -7,8 +7,6 @@ namespace app.modules.cache;
 /// On a cache hit, the inner delegate is skipped entirely and the cached result
 /// is returned (also published as %!data% for the next action in the step).
 /// </summary>
-[ModuleDescription("Modifier that wraps the preceding action with result caching for a given duration")]
-[System.ComponentModel.Description("Cache the result of the preceding action for DurationMs milliseconds, skipping re-execution on hit")]
 [Action("wrap", Cacheable = false)]
 [Modifier(Order = 2)]
 public partial class CacheWrap : IContext, IModifier

@@ -3,20 +3,35 @@ v3 action-set: planner emits %planStep.actions% as a flat list of "module.action
 strings. Render schemas + examples for each unique action, dedup'd. The compiler
 decides chain order, modifier nesting, and recovery placement from the action
 examples themselves — the planner no longer commits to a chain shape.
+
+v4: per-action LLM teaching (Description / Notes / Examples) is sourced from
+markdown files at os/system/modules/<module>/{module,<action>}.{notes,examples,description}.md
+and rendered ONLY for actions in the planner's set. See
+.bot/compile-llm-notes-per-action/architect/plan.md "Renderer" section.
+Modifiers (error.handle, cache.wrap, timeout.after) render through this same
+path — no special-case.
 {% endcomment %}
 {% assign seen = "" %}
 {% for actName in planStep.actions %}{% assign key = actName | strip %}{% unless seen contains key %}{% assign seen = seen | append: "|" | append: key %}{% assign parts = key | split: "." %}{% assign segModule = parts[0] %}{% assign segAction = parts[1] %}{% for a in actions %}{% if a.Module == segModule and a.ActionName == segAction %}
 ## {{ a.Module }}.{{ a.ActionName }}{% unless a.Cacheable %} [no-cache]{% endunless %}
-
+{% if a.DescriptionRendered %}
+Description:
+{{ a.DescriptionRendered }}
+{% endif %}
 Parameters:
 {% if a.Parameters.size > 0 %}{% for p in a.Parameters %}  - {{ p.Name }}: {{ p.Value }}
 {% endfor %}{% else %}  (no parameters)
 {% endif %}{% if a.ReturnTypeName %}→ returns {{ a.ReturnTypeName }}
+{% endif %}{% if a.NotesRendered %}
+Notes:
+{{ a.NotesRendered }}
 {% endif %}
-{% if a.Examples.size > 0 %}Examples:
+{% if a.Examples.size > 0 or a.ExamplesMdRendered.size > 0 %}Examples:
 {% for ex in a.Examples %}  Step text: `{{ ex.Name }}`
   ```json
   {{ ex.Value }}
   ```
+{% endfor %}{% for ex in a.ExamplesMdRendered %}  {{ ex }}
+
 {% endfor %}{% endif %}
 {% endif %}{% endfor %}{% endunless %}{% endfor %}

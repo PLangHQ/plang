@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Return the largest integer less than or equal to Value (floor)")]
 [Action("floor")]
 public partial class Floor : IContext
 {

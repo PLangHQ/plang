@@ -13,8 +13,6 @@ namespace app.modules.debug;
 /// the moment Run() returns (its Tags would vanish from the live tree before the next
 /// assertion could read them).
 /// </summary>
-[ModuleDescription("Write tag metadata onto the current call frame for diagnostics")]
-[System.ComponentModel.Description("Attach diagnostic tags (key=value pairs or a single label) to the current call")]
 [Action("tag", Cacheable = false)]
 public partial class Tag : IContext
 {

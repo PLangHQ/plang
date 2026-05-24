@@ -1,0 +1,19 @@
+{
+  "bot": "tester",
+  "branch": "compile-llm-notes-per-action",
+  "version": "v2",
+  "status": "pass",
+  "previous_findings_closed": ["F1"],
+  "findings": [],
+  "checks": {
+    "clean_build_errors": 0,
+    "csharp_total": 2945,
+    "csharp_passed": 2945,
+    "drift_case_artifact_tests": "3/3",
+    "fresh_cache_rounds": 3,
+    "fresh_cache_drift_pass_per_round": [2, 2, 2],
+    "fresh_cache_drift_stale_per_round": [0, 0, 0],
+    "mutation_test_drift_case": "fail-when-channel-injected: confirmed"
+  },
+  "notes": "Fresh-build start.pr differs from coder v3's committed start.pr in non-load-bearing ways (Type=string parameter added to two variable.set calls). Drift assertions hold on both shapes. Real LLM variation, not a regression."
+}

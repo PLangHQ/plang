@@ -7,8 +7,6 @@ namespace app.modules.output;
 /// source-gen resolves the action's "channel" parameter against the current actor's
 /// Channels at ExecuteAsync time. No name → Output role channel.
 /// </summary>
-[ModuleDescription("Send text or data to a channel (console, logger, audit, etc.)")]
-[System.ComponentModel.Description("Write Data to a named channel — defaults to the actor's output channel.")]
 [Action("write", Cacheable = false)]
 public partial class Write : IContext, IChannel
 {

@@ -3,7 +3,6 @@ using app.modules.builder.code;
 
 namespace app.modules.builder;
 
-[System.ComponentModel.Description("Load all goal files from a directory for processing by the builder")]
 [Action("goals")]
 public partial class goals : IContext
 {

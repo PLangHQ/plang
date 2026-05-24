@@ -28,8 +28,6 @@ namespace app.modules.goal;
 /// indexing syntax (which works for List&lt;T&gt; the same way `goal.Steps[N]` does) resolves
 /// cleanly without needing a key-type coercion.
 /// </summary>
-[ModuleDescription("Goal introspection — extract per-step variable types for build-time prompt enrichment")]
-[System.ComponentModel.Description("Walk the goal's steps and return a per-step map of variable names to their inferred PLang types")]
 [Action("getTypes")]
 public partial class getTypes : IContext
 {

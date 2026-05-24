@@ -3,7 +3,6 @@ using app.modules.assert.code;
 
 namespace app.modules.assert;
 
-[System.ComponentModel.Description("Assert that Expected does not equal Actual; fails with an error if they match")]
 [Action("notEquals")]
 public partial class NotEquals : IContext
 {

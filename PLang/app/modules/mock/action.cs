@@ -6,8 +6,6 @@ using EventBinding = app.events.lifecycle.bindings.binding.@this;
 
 namespace app.modules.mock;
 
-[ModuleDescription("Test mocking: intercept actions by pattern and replace them with fixed responses or spy on calls")]
-[System.ComponentModel.Description("Intercept actions matching a pattern and replace their result with a fixed value or goal call")]
 [Action("intercept", Cacheable = false)]
 public partial class MockAction : IContext
 {

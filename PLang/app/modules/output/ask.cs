@@ -24,12 +24,6 @@ public sealed class Ask : global::app.IExitsGoal { }
 ///
 /// PLang: <c>- ask user "what's your name?", write to %name%</c>
 /// </summary>
-[ModuleDescription("Ask the actor a question via the input channel. Stateful channels (Stream, goal-channel) answer synchronously; stateless channels (Message) return Data<Ask> + Snapshot so the engine can serialise and resume after the user answers.")]
-[System.ComponentModel.Description("Ask the input channel a question. Stateful: synchronous answer. Stateless: Data<Ask> + Snapshot for suspend/resume.")]
-[Example("ask user 'what's your name?', write to %name%",
-    "output.ask Question([string] what's your name?) | variable.set Name([string] %name%), Value([object] %!data%)")]
-[Example("output.ask question='Allow access? (y/n/a)', write to %answer%",
-    "output.ask Question([string] Allow access? (y/n/a)) | variable.set Name([string] %answer%), Value([object] %!data%)")]
 [Action("ask", Cacheable = false)]
 public partial class ask : IContext
 {

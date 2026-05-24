@@ -3,8 +3,6 @@ using app.types;
 
 namespace app.modules.file;
 
-[ModuleDescription("Read, write, copy, move, delete, and list files through the configured filesystem abstraction")]
-[System.ComponentModel.Description("Copy a file or folder from Source to Destination, optionally overwriting and including subfolders")]
 [Action("copy", Cacheable = false)]
 public partial class Copy : IContext
 {

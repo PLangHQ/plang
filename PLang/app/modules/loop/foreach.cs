@@ -9,10 +9,6 @@ namespace app.modules.loop;
 /// Supports dictionaries (key/value), lists (index/value), and any IEnumerable.
 /// Respects goal.return (Returned flag) and cancellation.
 /// </summary>
-[ModuleDescription("Iterate over a collection, executing the remaining step actions once per item")]
-[System.ComponentModel.Description("Iterate over Collection, binding each item to ItemName and executing the remaining step actions")]
-[Example("foreach %items%, call ProcessItem item=%item%",
-    "loop.foreach Collection([object] %items%), ItemName([string] item) | goal.call GoalName([goal.call] ProcessItem)")]
 [Action("foreach")]
 public partial class Foreach : IContext, IStep
 {

@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.list;
 
-[System.ComponentModel.Description("Recursively flatten nested lists into a single flat list")]
 [Action("flatten")]
 public partial class Flatten : IContext
 {

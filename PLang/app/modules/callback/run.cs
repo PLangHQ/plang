@@ -9,8 +9,6 @@ namespace app.modules.callback;
 /// Data carries a Snapshot, delegate to <c>Snapshot.Resume(ctx)</c>; otherwise
 /// raise a clear error.
 /// </summary>
-[ModuleDescription("Run a callback — resume execution from the Data's Snapshot.")]
-[System.ComponentModel.Description("Resume from a Data's Snapshot")]
 [Action("run", Cacheable = false)]
 public partial class run : IContext
 {

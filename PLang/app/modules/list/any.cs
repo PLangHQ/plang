@@ -6,7 +6,6 @@ namespace app.modules.list;
 /// Checks if any item in a list matches a condition on a property.
 /// Usage: any %list% where "level" != "high", write to %hasNonHigh%
 /// </summary>
-[System.ComponentModel.Description("Return true if any item in the list has a property matching the given operator and value")]
 [Action("any")]
 public partial class Any : IContext
 {

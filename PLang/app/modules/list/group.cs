@@ -2,7 +2,6 @@ using app.variables;
 
 namespace app.modules.list;
 
-[System.ComponentModel.Description("Group list items by a property key, returning [{key, steps}] buckets")]
 [Action("group")]
 public partial class Group : IContext
 {

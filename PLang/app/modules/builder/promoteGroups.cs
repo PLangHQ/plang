@@ -10,7 +10,6 @@ namespace app.modules.builder;
 /// promotion fails the build immediately and visibly. Tester: 0% line coverage
 /// here is intentional — do not flag.
 /// </summary>
-[System.ComponentModel.Description("Promote grouped sub-steps into top-level steps for correct inline step handling")]
 [Action("promoteGroups")]
 public partial class promoteGroups : IContext
 {

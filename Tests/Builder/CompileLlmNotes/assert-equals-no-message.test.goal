@@ -1,0 +1,22 @@
+TestAssertEqualsOmitsMessageWhenNotInStepText
+/ Drift case 2 — the load-bearing reason this branch exists.
+/
+/ Step text `- assert %message% equals 'hello plang'` (Tests/Simple/Start.goal:6)
+/ carries no custom error message. With os/system/modules/assert/module.notes.md
+/ saying "omit Message from parameters and from formal unless the step text names
+/ a custom error message; Expected is taken from the step text literal", the LLM
+/ should emit:
+/   parameters: { Expected: 'hello plang', Actual: %message% }   (no Message key)
+/
+/ Pre-fix shape this test forbids:
+/   any Message parameter on assert.equals (when step text had no custom message)
+/
+/ Read .pr requires copying to a .txt first because '.pr' MIME deserializes to a
+/ Goal object, defeating substring assertions. Copy → read as text → assert.
+/ Companion C# tests in DriftCaseArtifactTests.cs do the structural check too.
+/
+/ Architect's 3-fresh-cache rule runs externally (see sibling drift case).
+- copy file '../../Simple/.build/start.pr' to 'start-eq.txt', overwrite
+- read file 'start-eq.txt', write to %pr%
+- assert %pr% contains '"value": "hello plang"'
+- assert %pr% does not contain '"name": "Message"'

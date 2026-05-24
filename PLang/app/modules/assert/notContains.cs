@@ -3,7 +3,6 @@ using app.modules.assert.code;
 
 namespace app.modules.assert;
 
-[System.ComponentModel.Description("Assert that Value does not contain Container; fails with an error if it does")]
 [Action("notContains")]
 public partial class NotContains : IContext
 {

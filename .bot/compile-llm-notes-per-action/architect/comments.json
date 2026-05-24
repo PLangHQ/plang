@@ -1,0 +1,38 @@
+{
+  "plan.md": [
+    {
+      "id": "cd088e9439",
+      "line": 13,
+      "text": "it should be os/system/modules/{module}/",
+      "anchor": "Per-action prose lives at `os/system/actions/<module>/`. Three files per concern, action-prefixed for action-specific text, `module.`-prefixed for module-wide text:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-23T21:32:16",
+      "drifted": true
+    }
+  ],
+  "plan-coder.md": [
+    {
+      "id": "564139ecd6",
+      "line": 27,
+      "text": "let's rename the folder to lowercase, that stuff there is depricated",
+      "anchor": "- **`os/system/modules/` already contains legacy PascalCase `*Module` folders** (`AiModule`, `OutputModule`, etc.). New files go into lowercase folders matching `PLang/app/modules/<module>/` — `assert/`, `error/`, `output/`, etc. Do not place anything inside the PascalCase folders. Do not rename them in this pass.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-23T21:42:37",
+      "drifted": false
+    },
+    {
+      "id": "422829db69",
+      "line": 41,
+      "text": "we can use the opportunity and change from [provider] to [code] in the build warnings",
+      "anchor": "- **PLNG001:** action handler properties must be `Data<T>` or `[Provider] T`. Not relevant to this branch (no new action handlers), but worth knowing if the migration script grows scope.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-23T21:44:50"
+    }
+  ]
+}

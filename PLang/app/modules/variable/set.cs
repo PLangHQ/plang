@@ -12,11 +12,7 @@ namespace app.modules.variable;
 /// update the existing binding in place (same type) or replace it (type changed),
 /// and carries Properties + event subscribers across replacement.
 /// </summary>
-[System.ComponentModel.Description("Assign a value to a named variable, optionally coercing to a type or setting only when unset")]
 [Action("set", Cacheable = false)]
-[Example(
-    "set %data% = {\"name\": \"%user%\", \"age\": 30}, type=json",
-    "variable.set Name([string] %data%), Value([json] {\"name\":\"%user%\",\"age\":30}), Type([string] json)")]
 public partial class Set : IContext, IBuildValidatable
 {
     public static string? ValidateBuild(List<data.@this> parameters)

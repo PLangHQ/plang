@@ -4,7 +4,6 @@ using ActionSpec = app.modules.Schema.Spec.Action;
 
 namespace app.modules.math;
 
-[System.ComponentModel.Description("Subtract B from A and return the numeric result")]
 [Action("subtract")]
 public partial class Subtract : IContext
 {

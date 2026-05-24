@@ -3,7 +3,6 @@ using app.events;
 
 namespace app.modules.mock;
 
-[System.ComponentModel.Description("Remove a specific mock or all active mocks, clearing their interceptors and call history")]
 [Action("reset", Cacheable = false)]
 public partial class Reset : IContext
 {

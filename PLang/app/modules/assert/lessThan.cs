@@ -3,7 +3,6 @@ using app.modules.assert.code;
 
 namespace app.modules.assert;
 
-[System.ComponentModel.Description("Assert that A is less than B; fails with an error if not")]
 [Action("lessThan")]
 public partial class LessThan : IContext
 {

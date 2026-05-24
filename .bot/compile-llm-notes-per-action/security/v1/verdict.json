@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Branch moves per-action LLM-teaching prose from C# [Description]/[Example] attributes into repo-tracked .md files under os/system/modules/. New surface is a read-only loader (MarkdownTeaching.cs) called only with reflection-derived module/action names and a process-rooted modulesRoot — no value reachable from a PLang program, HTTP origin, or deserialized payload. Content sink is the build-time LLM compile prompt (excluded per ruleset rule 14) and the developer terminal (WarnOrphansAsync). Attribute deletions across ~130 handlers are mechanical: documentation prose only, no behavior/gating/auth surface changed. Carry-forwards from filesystem-permission and path-polymorphism (F1/F2/F4 each) untouched and unchanged. 0 new critical/high/medium/low. Ship."
+}

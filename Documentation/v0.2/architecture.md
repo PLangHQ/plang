@@ -218,7 +218,7 @@ Collections own their loops (OBP rule 5). Steps iterates its own steps, Actions 
 
 Flat `module.action` registry. No hierarchy, no inheritance.
 
-The catalog rendered into the LLM builder's system prompt — module/action names, parameter type tags, examples — is derived from these registered handlers via `app.modules.Describe()` plus `app.modules.Schema.@this.Build()`. See [action-catalog.md](action-catalog.md) for the attribute model (`[Action]`, `[ModuleDescription]`, `[Example]`, `[Default]`, etc.) and the rules for writing structured `ExamplesForLlm()` static methods. Variable-name slots are typed via `Data<app.variables.Variable>` (no attribute), and the catalog renders them as `Name([string] %var%)` based on the wrapped type.
+The catalog rendered for the LLM builder is derived from these registered handlers via `app.modules.Describe()` plus `app.modules.Schema.@this.Build()`. Describe() reads class shape from C# attributes (`[Action]`, `[Modifier]`, `[Default]`, `[Code]`) and per-action prose (Description / Notes / Examples) from markdown files at `os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md` via `MarkdownTeaching.Load(...)`. Per-action Notes/Examples render in the **user message** of each Compile call only for actions the planner picked — the cross-cutting system prompt carries only the kernel (modifier-vs-peer classification, formal-mirroring rule, type conventions). See [action-catalog.md](action-catalog.md) for the full attribute + markdown contract. Variable-name slots are typed via `Data<app.variables.Variable>` (no attribute) and render as `Name([string] %var%)` based on the wrapped type.
 
 ### Discovery
 

@@ -6,7 +6,6 @@ namespace app.modules.goal;
 /// <summary>
 /// Returns a value from the current goal. If the value is a failing Data, it propagates the error.
 /// </summary>
-[System.ComponentModel.Description("Return early from the current goal, propagating Data as the goal result")]
 [Action("return", Cacheable = false)]
 public partial class Return : IContext
 {

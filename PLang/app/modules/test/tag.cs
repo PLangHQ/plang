@@ -9,9 +9,6 @@ namespace app.modules.test;
 /// (Testing.CurrentTest == null, e.g. when a shared goal is reused in production),
 /// the action no-ops rather than erroring so shared goals work in both modes.
 /// </summary>
-[System.ComponentModel.Description("Attach user-defined tags to the currently running test for filtering and reporting")]
-[Example("tag this test 'http', 'fast'",
-    "test.tag Tags([list<string>] [\"http\", \"fast\"])")]
 [Action("tag")]
 public partial class Tag : IContext
 {

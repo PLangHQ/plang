@@ -3,7 +3,6 @@ using app.modules.assert.code;
 
 namespace app.modules.assert;
 
-[System.ComponentModel.Description("Assert that Value is not null or empty; fails with an error if null")]
 [Action("isNotNull")]
 public partial class IsNotNull : IContext
 {

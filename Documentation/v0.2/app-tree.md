@@ -148,7 +148,7 @@ app.Modules
 The handler for each action is a record under `modules/<name>/`, paired with a
 `*Handler` partial completed by the source generator (`PLang.Generators`).
 See `Documentation/v0.2/object_pattern_formal.md` for OBP rules and
-`good_to_know.md` for the property-kind contract (`Data<T>` vs `[Provider] T`).
+`good_to_know.md` for the property-kind contract (`Data<T>` vs `[Code] T`).
 
 ## Data — the universal result envelope
 
@@ -183,7 +183,7 @@ managed by `await using`. Structural data is always captured; richer capture
 | `app.Providers` | `app.Code` (renamed in runtime2-cleanup) |
 | `app.Console` | nowhere — write through `app.CurrentActor.Channels` |
 | `app.Logger` | nowhere — diagnostics through `app.Debug.Write` |
-| `app.HttpClient` | nowhere — actions in `app.Modules.http` use the `[Provider]`-injected client |
+| `app.HttpClient` | nowhere — actions in `app.Modules.http` use the `[Code]`-injected client |
 | Per-call I/O state | `app.Services` (one entry per outbound call), not `app.User` |
 
 ## Maintenance

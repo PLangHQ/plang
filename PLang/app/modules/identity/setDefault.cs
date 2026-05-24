@@ -7,7 +7,6 @@ namespace app.modules.identity;
 /// Switches which identity is the default. Only one default at a time.
 /// PLang: set default identity to 'alice'
 /// </summary>
-[System.ComponentModel.Description("Switch the default identity to the named one; only one identity can be default at a time")]
 [Action("setDefault", Cacheable = false)]
 public partial class SetDefault : IContext
 {
