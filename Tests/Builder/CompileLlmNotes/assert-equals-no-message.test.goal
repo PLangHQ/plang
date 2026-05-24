@@ -16,7 +16,7 @@ TestAssertEqualsOmitsMessageWhenNotInStepText
 / Companion C# tests in DriftCaseArtifactTests.cs do the structural check too.
 /
 / Architect's 3-fresh-cache rule runs externally (see sibling drift case).
-- copy file '../../Simple/.build/start.pr' to 'start.txt'
-- read file 'start.txt', write to %pr%
+- copy file '../../Simple/.build/start.pr' to 'start-eq.txt', overwrite
+- read file 'start-eq.txt', write to %pr%
 - assert %pr% contains '"value": "hello plang"'
 - assert %pr% does not contain '"name": "Message"'

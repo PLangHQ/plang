@@ -22,12 +22,7 @@
             {
               "name": "Value",
               "value": "hello",
-              "type": "string"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -44,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "variable.set(Name=%greeting%, Value=\u0022hello\u0022, Type=string)",
+      "formal": "variable.set(Name=%greeting%, Value=\u0022hello\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -199,8 +194,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Simple/Start.goal",
-  "prPath": "/Simple/.build/start.pr",
+  "path": "/Tests/Simple/Start.goal",
+  "prPath": "/Tests/Simple/.build/start.pr",
   "hash": "4c13f9ebf4e5ad86ae18eeb092585a8141afe8b1758d677901ed8a109658e70a",
   "builderVersion": null,
   "isSetup": false,
