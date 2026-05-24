@@ -8,11 +8,6 @@ Start
 - call Plan, on error call HandleBuildFailure
 - set %trace.plan% = %plan%
 
-/ Forward-walk the goal once to infer variable types per step. Result is a list
-/ of dicts indexed by step position; BuildStep/Start reads %varTypes[step.Index]%
-/ to render an "Available variables" section in the compile user prompt.
-- goal.getTypes Goal=%goal%, write to %varTypes%
-
 - foreach %plan.steps%, call BuildStep/Start planStep=%item%
 
 - set %parentGoal% = %goal%
