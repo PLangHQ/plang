@@ -172,6 +172,75 @@
         "health": "Branch ready for next pipeline stage (security). F1 closed by coder v3. C# layer + plang drift layer + mutation tests all green.",
         "notes": "Next bot: security."
       }
+    },
+    {
+      "id": "security-v1",
+      "bot": "security",
+      "timestamp_start": "2026-05-24T00:55:00Z",
+      "timestamp_end": "2026-05-24T01:00:00Z",
+      "intent": "Trust-boundary audit of the branch delta past the runtime2 merge (d8c18e257..55da8f529): per-action LLM teaching extracted from C# [Description]/[Example] attributes into repo-tracked .md files, read at build time by a new MarkdownTeaching loader.",
+      "before": {
+        "assumptions": "Tester v2 PASS — clean rebuild, C# 2945/2945, plang 204/204 + drift 2/2 across 3 fresh-cache rounds. Production C# diff narrow: MarkdownTeaching.cs (new ~140 LOC), app/modules/this.cs (+63), action/this.cs (+71), plus ~130 mechanical attribute deletions.",
+        "risk": "Path traversal via moduleName/actionName if either turned out to be externally influenceable; symlink escape through Directory.Enumerate*; attribute deletions silently dropping security-bearing surface; orphan-scan side-channel leaking filesystem layout to a remote sink."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/goals/goal/steps/step/actions/action/this.cs"
+          ],
+          "type": "review",
+          "category": "security",
+          "confidence": "high",
+          "context": "Traced both loader call sites. Single Load(...) call at modules/this.cs:393 inside Describe(); moduleName=ns iterates Names[] (compile-time namespace registry), actionName from reflection over registered handlers — neither reachable from a PLang program. modulesRoot resolves from App.OsDirectory. ScanOrphans is a pure directory walk under modulesRoot with no caller-supplied path component."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/modules/output/write.cs",
+            "PLang/app/modules/signing/sign.cs",
+            "PLang/app/modules/signing/verify.cs",
+            "PLang/app/modules/settings/get.cs",
+            "PLang/app/modules/settings/set.cs",
+            "PLang/app/modules/settings/remove.cs",
+            "PLang/app/modules/mock/action.cs"
+          ],
+          "type": "review",
+          "category": "security",
+          "confidence": "high",
+          "context": "Spot-checked attribute deletions on higher-risk modules. Every deletion is documentation prose ([Description]/[Example]) only — no behavior, gating, auth, signing, or permission surface changed. Content migrated to os/system/modules/<module>/*.md."
+        },
+        {
+          "paths": [
+            "PLang/app/actor/permission/this.cs",
+            "PLang/app/types/path/permission/this.cs"
+          ],
+          "type": "review",
+          "category": "security",
+          "confidence": "high",
+          "context": "Carry-forward verification — F1/F2/F4 from filesystem-permission and path-polymorphism. Files appear nowhere in the branch C# diff; carry-forward severities unchanged."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/security/v1/plan.md",
+            ".bot/compile-llm-notes-per-action/security/v1/result.md",
+            ".bot/compile-llm-notes-per-action/security/v1/verdict.json",
+            ".bot/compile-llm-notes-per-action/security/summary.md",
+            ".bot/compile-llm-notes-per-action/security-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot-output artifacts: plan.md, result.md, verdict.json (pass), summary.md, security-report.json."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "0 new critical/high/medium/low. New surface is a read-only filesystem loader scoped to a process-rooted directory and called only with reflection-derived identifiers; sink is the LLM compile prompt (excluded per ruleset). Attribute deletions are mechanical documentation migration. Carry-forwards unchanged.",
+        "notes": "Branch ready to ship. Next bot per pipeline norm: auditor."
+      }
     }
   ]
 }

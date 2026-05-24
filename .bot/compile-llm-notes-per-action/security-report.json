@@ -1,0 +1,98 @@
+{
+  "analyst": "security",
+  "branch": "compile-llm-notes-per-action",
+  "timestamp": "2026-05-24T01:00:00Z",
+  "phase": "review",
+  "audit_version": "v1",
+  "scope": "Branch delta past the runtime2 merge (d8c18e257..55da8f529). Production C# net additions: PLang/app/modules/MarkdownTeaching.cs (new, ~140 LOC), PLang/app/modules/this.cs (+63 — MarkdownTeachingRoot, ResolveMarkdownTeachingRoot, WarnOrphansAsync, Describe() integration), PLang/app/goals/goal/steps/step/actions/action/this.cs (+71 — Notes/ModuleNotes/ExamplesMd/ModuleExamplesMd record fields + *Rendered accessors). Plus mechanical [Description]/[Example] attribute deletions across ~130 action-handler files; content migrated to os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md.",
+  "build": {
+    "status": "inherited",
+    "baseline": "tester v2 clean-rebuild baseline stands (C# 2945/2945, plang 204/204 + drift 2/2 across 3 fresh-cache rounds). No production-C# surface changes since tester v2 that would invalidate the build numbers."
+  },
+  "attack_surface": [
+    {
+      "area": "MarkdownTeaching.Load — per-action markdown read",
+      "exposure": "Reads {modulesRoot}/{moduleName}/{actionName}.{notes,examples,description}.md and the module-level {module}.* counterparts via File.ReadAllText. Single call site: app/modules/this.cs:393 inside Describe().",
+      "trust_boundary": "Build-time host process; loader called only with reflection-derived values.",
+      "mitigations": [
+        "modulesRoot resolves from App.OsDirectory (process-rooted)",
+        "moduleName iterates the compile-time Names[] registry (Namespace of registered handler types)",
+        "actionName comes from reflection over handler types — not from program input",
+        "Loader is read-only; no writes, no exec",
+        "Sink is the LLM compile prompt (excluded per ruleset rule 14) — not a security boundary"
+      ],
+      "gaps": ["None."]
+    },
+    {
+      "area": "MarkdownTeaching.ScanOrphans — orphan-file warner",
+      "exposure": "Enumerates modulesRoot subdirectories and reports .md files whose stem is not 'module' and not in the registered action set. Output routed by app.modules.@this.WarnOrphansAsync to actor.Channels.WriteTextAsync(Output, …).",
+      "trust_boundary": "Developer terminal at plang build time.",
+      "mitigations": [
+        "No caller-supplied path component — pure directory walk under modulesRoot",
+        "Channel destination is the developer's own terminal — no remote exposure"
+      ],
+      "gaps": ["None."]
+    },
+    {
+      "area": "Attribute-to-markdown migration (~130 handler files)",
+      "exposure": "Bulk removal of [Description] / [Example] attributes from action handlers; content migrated to repo-tracked .md files.",
+      "trust_boundary": "n/a — documentation prose only.",
+      "mitigations": [
+        "Both sources (attribute strings, .md files) are repo-tracked and developer-authored — equal trust level",
+        "Both flow into the same sink (LLM compile prompt) — no new boundary crossed",
+        "Spot-check confirmed no behavior/gating/auth/signing/permission code changed on output/*, signing/*, settings/*, mock/action"
+      ],
+      "gaps": ["None."]
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1-cf",
+      "severity": "medium",
+      "category": "carry-forward",
+      "vector": "Actor.Permission.VerifySignature trusts signing.verify integrity without pinning signer identity.",
+      "affected_files": ["PLang/app/actor/permission/this.cs"],
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F1 → path-polymorphism v3 F1 — untouched on this branch (file not in C# diff)."
+    },
+    {
+      "id": "F2-cf",
+      "severity": "low",
+      "category": "carry-forward",
+      "vector": "permission/this.cs — null-signature row short-circuits to trust.",
+      "affected_files": ["PLang/app/actor/permission/this.cs"],
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F2 → path-polymorphism v3 F2 — untouched on this branch."
+    },
+    {
+      "id": "F4-cf",
+      "severity": "low",
+      "category": "carry-forward",
+      "vector": "Regex/Glob match has no MatchTimeout.",
+      "affected_files": ["PLang/app/types/path/permission/this.cs"],
+      "status": "open",
+      "carried_from": "filesystem-permission v1/v2 F4 → path-polymorphism v3 F4 — untouched on this branch."
+    }
+  ],
+  "observations": [
+    {
+      "id": "O1",
+      "note": "MarkdownTeachingRoot is a public string? setter on the catalog singleton. Used by tests to stage fixtures in a temp folder. Not reachable from a PLang program (catalog instance not exposed as an action target, no [Code]-attributed parameter type points at it, not IDataWrappable). Host-process trusted code only."
+    },
+    {
+      "id": "O2",
+      "note": "Directory.EnumerateDirectories/EnumerateFiles will follow symlinks on .NET. A planted symlink inside os/system/modules/ could redirect ScanOrphans' walk — but writing there requires repo write access, at which point an attacker would edit C# directly. No new boundary; not scored."
+    },
+    {
+      "id": "O3",
+      "note": "File.ReadAllText has no size guard. Content sink is the LLM compile prompt (rule 14 excluded) and not user-controlled to begin with. DOS/resource-exhaustion concerns are excluded by rules 1/4."
+    }
+  ],
+  "verdict": "pass",
+  "deliverables": {
+    "plan": ".bot/compile-llm-notes-per-action/security/v1/plan.md",
+    "result": ".bot/compile-llm-notes-per-action/security/v1/result.md",
+    "verdict": ".bot/compile-llm-notes-per-action/security/v1/verdict.json",
+    "summary": ".bot/compile-llm-notes-per-action/security/summary.md"
+  }
+}
