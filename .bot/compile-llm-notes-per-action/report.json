@@ -241,6 +241,76 @@
         "health": "0 new critical/high/medium/low. New surface is a read-only filesystem loader scoped to a process-rooted directory and called only with reflection-derived identifiers; sink is the LLM compile prompt (excluded per ruleset). Attribute deletions are mechanical documentation migration. Carry-forwards unchanged.",
         "notes": "Branch ready to ship. Next bot per pipeline norm: auditor."
       }
+    },
+    {
+      "id": "auditor-v1",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-24T01:10:00Z",
+      "timestamp_end": "2026-05-24T01:30:00Z",
+      "intent": "Cross-cutting integrity audit on compile-llm-notes-per-action: trace every architect stage to disk, independently reproduce the two verification checks, hunt for cross-axis seams nobody owned.",
+      "before": {
+        "assumptions": "Per-axis verdicts (tester v2 PASS 3 fresh-cache rounds, security v1 PASS no new surface) presumed sound but not yet independently verified. Architect plan has 8 numbered stages; coder/tester/security each addressed slices.",
+        "risk": "Stale-binary trap on plang --test; per-axis bots scoping past 'is this mechanism wired into a real run' and past CLAUDE.md (which no axis owns)."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [],
+          "type": "verify",
+          "category": "build",
+          "confidence": "high",
+          "context": "Clean rebuild from zero (rm -rf for all four bin/obj + dotnet build PlangConsole + dotnet run --project PLang.Tests). 0 errors. C# suite 2945/2945 pass."
+        },
+        {
+          "paths": [],
+          "type": "verify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Architect's 3-fresh-cache rule reproduced independently with --build={\"files\":[\"Tests/Simple/Start.goal\"],\"cache\":false}. Round 1: 9.6s build, both drift cases Pass. Round 2: 10.4s, Pass/Pass. Round 3: 9.7s, Pass/Pass. Zero Stale."
+        },
+        {
+          "paths": ["os/system/builder/llm/Compile.llm"],
+          "type": "verify",
+          "category": "size",
+          "confidence": "high",
+          "context": "Architect Verification #1 — Compile.llm = 14905 bytes (< 16 KB bound, was ~20.8 KB). Pinned by StepActionDetailsRenderTests.cs:154."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "PLang/app/modules/this.cs"
+          ],
+          "type": "finding",
+          "category": "deliverable-half-shipped",
+          "confidence": "high",
+          "context": "F1 (low/informational) — orphan-scan mechanism shipped (ScanOrphans + WarnOrphansAsync) but no production code path invokes it. Architect Stage 7 specified warning fires 'at startup'. Today 0 orphans exist; risk is latent. Missed by tester (verified function works by direct call) + security (verified mechanism is safe). Non-blocking; ~5-line fix."
+        },
+        {
+          "paths": ["CLAUDE.md"],
+          "type": "finding",
+          "category": "docs-drift",
+          "confidence": "high",
+          "context": "F2 (low/informational) — architect Stage 8 said update CLAUDE.md [Provider] → [Code]; source-side rename complete but CLAUDE.md lines 38 + 42 still reference [Provider] / Emission/Property/Provider/. Per workflow, file as claude-md-proposal not direct edit. Coder skipped a documented deliverable; no reviewer axis owns docs."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/auditor/v1/plan.md",
+            ".bot/compile-llm-notes-per-action/auditor/v1/result.md",
+            ".bot/compile-llm-notes-per-action/auditor/v1/verdict.json",
+            ".bot/compile-llm-notes-per-action/auditor/summary.md",
+            ".bot/compile-llm-notes-per-action/auditor-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot artifacts: plan, result, verdict (json), summary, branch-level auditor-report.json."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "All 8 architect stages delivered (Stage 7 + 8 with caveats — see F1/F2). Both verification checks reproduce on independent clean rebuild. C# 2945/2945; drift 2/2 across 3 fresh-cache rounds. Carry-forwards unchanged.",
+        "notes": "Branch ready to ship. F1 + F2 non-blocking but should be picked up by next docs/maintenance pass."
+      }
     }
   ]
 }
