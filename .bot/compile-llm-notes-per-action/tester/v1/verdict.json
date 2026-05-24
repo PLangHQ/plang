@@ -1,0 +1,36 @@
+{
+  "bot": "tester",
+  "branch": "compile-llm-notes-per-action",
+  "version": "v1",
+  "status": "needs-fixes",
+  "severity": "medium",
+  "summary": "22/22 new C# tests pass; 2942/2942 total C# pass; mutation tests caught all 4 load-bearing mutations (merge order, orphan exclusion, layer split, planner-set filter). But the 2 architect-spec'd plang drift cases are committed without .pr companions and report [Stale] in plang --test — the load-bearing safeguard never executes. plang build wedges before reaching them on a pre-existing retry-path bug that triggers earlier on this branch (Publish.goal planner returned 10 vs 9 steps).",
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "medium",
+      "kind": "missing-test-execution",
+      "title": "Drift .test.goal files commit without .pr — assertions never run",
+      "files": [
+        "Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+        "Tests/Builder/CompileLlmNotes/assert-equals-no-message.test.goal"
+      ],
+      "evidence": "plang --test reports: 2 stale; plang build exits 2 on Publish.goal before reaching CompileLlmNotes; same wedge fires on parent path-polymorphism on a different goal (pre-existing) but on this branch the planner emits 10 plans for Publish.goal's 9 steps and triggers retry earlier.",
+      "fix": "Ship .pr files for both drift cases (built once builder is unwedged, or hand-seeded). Optionally unwedge plang build or document a manual workaround."
+    }
+  ],
+  "checks": {
+    "clean_build_errors": 0,
+    "csharp_total": 2942,
+    "csharp_passed": 2942,
+    "csharp_new_passed": 22,
+    "csharp_new_total": 22,
+    "plang_total": 206,
+    "plang_passed": 204,
+    "plang_failed": 0,
+    "plang_stale": 2,
+    "mutation_tests_caught": 4,
+    "mutation_tests_total": 4,
+    "post_fix_shape_in_committed_pr": "verified"
+  }
+}

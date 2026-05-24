@@ -69,6 +69,65 @@
         "health": "All test files written failing-by-construction per character contract. Two plang drift tests + 22 C# tests across 5 files.",
         "notes": "User skipped per-batch approval. Coder is next; the two drift cases are the load-bearing tests — verify across 3 fresh-cache builds (CLAUDE.md \"Stale-binary trap\")."
       }
+    },
+    {
+      "id": "tester-v1",
+      "bot": "tester",
+      "timestamp_start": "2026-05-24T00:00:00Z",
+      "timestamp_end": "2026-05-24T00:00:00Z",
+      "intent": "Verify coder v1 against the test-designer's contract on a clean build, then mutation-test the load-bearing C# rules and attempt the architect's 3-fresh-cache drift validation.",
+      "before": {
+        "assumptions": "Coder v1 (commit 067c1e1b7) closed the drift cycle by migrating per-action teaching to markdown under os/system/modules/<module>/*.md and gating the renderer block on the planner's action set. The 22 C# tests were authored failing-by-construction; coder should have made them pass. The two plang drift cases (.test.goal) should also pass via 3 fresh-cache builds of Tests/Simple.",
+        "risk": "Stale-binary trap when running plang --test; pre-existing wedges in the builder pipeline; drift tests passing-by-no-execution (Stale) if .pr files weren't built."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [],
+          "type": "verify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild (rm -rf bin/obj for all four projects + dotnet build PlangConsole). 0 errors. Full C# suite via TUnit binary: 2942/2942 pass. 22 new tests across 5 classes all pass on first run."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "os/system/builder/templates/v2/stepActionDetails.template"
+          ],
+          "type": "mutation-test",
+          "category": "test",
+          "confidence": "high",
+          "context": "Four mutations to verify the C# tests pin load-bearing behavior — all 4 caught, source reverted clean. (1) MergeLayers order swap caught by MergeTests; (2) ModuleStem orphan-skip removal caught by OrphanTests; (3) notes/modNotes constructor swap caught by LoaderTests; (4) planStep.actions gate removal in template caught by RenderTests (5/6 fail)."
+        },
+        {
+          "paths": [
+            "Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+            "Tests/Builder/CompileLlmNotes/assert-equals-no-message.test.goal"
+          ],
+          "type": "finding",
+          "category": "test",
+          "confidence": "high",
+          "context": "F1 (medium): .test.goal files committed without .pr companions. plang --test reports both as [Stale] — assertions never run. plang build wedges before reaching them on a pre-existing retry-path bug (Cannot convert Dictionary to Boolean) that fires earlier on this branch via Publish.goal (planner returned 10 vs 9 steps). Inner wedge pre-existing on parent; outer trigger is branch-shape-sensitive. Coder v2 must ship .pr files (built or seeded) so plang --test reports 2 pass."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/tester/v1/plan.md",
+            ".bot/compile-llm-notes-per-action/tester/v1/verdict.md",
+            ".bot/compile-llm-notes-per-action/tester/v1/verdict.json",
+            ".bot/compile-llm-notes-per-action/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot artifacts: plan, verdict (md + json), summary."
+        }
+      ],
+      "after": {
+        "status": "needs-fixes",
+        "severity": "medium",
+        "health": "C# layer green and mutation-verified; committed Tests/Simple/.build/start.pr exhibits the correct post-fix shape (no channel=, no Message=). One load-bearing finding: drift .test.goal files Stale (.pr never built).",
+        "notes": "Coder v2 next. Required fix: ship .pr files for the two drift cases. Optional: unwedge plang build pipeline so 3-fresh-cache rule is mechanically reproducible."
+      }
     }
   ]
 }
