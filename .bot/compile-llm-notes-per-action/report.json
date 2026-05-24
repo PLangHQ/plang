@@ -128,6 +128,50 @@
         "health": "C# layer green and mutation-verified; committed Tests/Simple/.build/start.pr exhibits the correct post-fix shape (no channel=, no Message=). One load-bearing finding: drift .test.goal files Stale (.pr never built).",
         "notes": "Coder v2 next. Required fix: ship .pr files for the two drift cases. Optional: unwedge plang build pipeline so 3-fresh-cache rule is mechanically reproducible."
       }
+    },
+    {
+      "id": "tester-v2",
+      "bot": "tester",
+      "timestamp_start": "2026-05-24T00:35:00Z",
+      "timestamp_end": "2026-05-24T00:45:00Z",
+      "intent": "Verify coder v2 (.test.goal reshape + DriftCaseArtifactTests) and v3 (real-builder .pr regeneration via --build={\"files\":[…]}) closes tester v1 F1.",
+      "before": {
+        "assumptions": "Coder v3 commit message claims 3-fresh-cache: 206 total, 206 pass, 0 stale, ~9s per round. Verify independently on a clean rebuild.",
+        "risk": "Stale-binary trap (use clean rebuild). LLM variation across builds could shift non-load-bearing shape — check whether drift assertions still hold."
+      },
+      "plan": ".bot/compile-llm-notes-per-action/tester/v2/verdict.md (no separate plan.md — single-pass verification)",
+      "actions": [
+        {
+          "paths": [],
+          "type": "verify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + C# suite 2945/2945 pass (+3 DriftCaseArtifactTests from v2). Architect's 3-fresh-cache rule reproduced independently with --build={\"files\":[\"Tests/Simple/Start.goal\"],\"cache\":false}: round 1/2/3 = Pass/Pass, Pass/Pass, Pass/Pass; 0 Stale on any round. Mutation test (inject \"name\":\"channel\" into start.pr) correctly fails the drift case; reverted clean."
+        },
+        {
+          "paths": [],
+          "type": "observation",
+          "category": "test",
+          "confidence": "medium",
+          "context": "Non-blocking: fresh-build start.pr differs from coder v3's committed version (added Type=string parameter to two variable.set calls, flipped one Value type tstring→string). Drift assertions hold on both shapes — real LLM variation within the unconstrained-by-architect surface. Flagging only so a future reviewer doesn't mis-read the diff."
+        },
+        {
+          "paths": [
+            ".bot/compile-llm-notes-per-action/tester/v2/verdict.md",
+            ".bot/compile-llm-notes-per-action/tester/v2/verdict.json",
+            ".bot/compile-llm-notes-per-action/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Bot artifacts. summary.md updated to v2."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "Branch ready for next pipeline stage (security). F1 closed by coder v3. C# layer + plang drift layer + mutation tests all green.",
+        "notes": "Next bot: security."
+      }
     }
   ]
 }
