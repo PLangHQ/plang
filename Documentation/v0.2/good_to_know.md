@@ -1118,3 +1118,19 @@ public interface IBooleanResolvable
 - `Data.ToBooleanAsync()` dispatches to `IBooleanResolvable` when present and falls back to `ToBoolean()` otherwise (`PLang/app/data/this.cs:896`).
 
 A new operator or evaluator must `await`. A new type that wants scheme-defined truthiness implements `IBooleanResolvable` — never edit `Data.ToBoolean()` to special-case it.
+
+## Per-action LLM teaching lives in markdown, not attributes
+
+Action **shape** (what parameters exist, what types, what defaults, is-it-a-modifier) is declared in C# attributes on the handler class — that has to be reflection-readable at compile time. Action **prose** (Description, Notes, Examples) is declared in markdown files at `os/system/modules/<module>/{module,<action>}.{description,notes,examples}.md` and read at catalog-build time by `app.modules.MarkdownTeaching.Load(...)`.
+
+`[Description]`, `[ModuleDescription]`, and `[Example]` no longer exist on action handlers. Don't add them back; the rename from "attribute prose" to "markdown prose" was a deliberate move (branch `compile-llm-notes-per-action`) for three reasons:
+
+- **Tuning teaching doesn't rebuild C#.** Edit the `.md`, run the next build, the LLM sees the new prose.
+- **Per-action Notes ship scoped, not global.** Notes for one action render in the user message of the Compile call *only when the planner picked that action*. The system prompt keeps just the cross-cutting kernel (modifier-vs-peer classification, formal-mirroring rule, `%!data%`-never-as-fallback). Rules about one action belong with that action.
+- **Two-layer merge kills the drift cycle.** `module.<file>.md` is module-wide; `<action>.<file>.md` is action-specific. Renderer concats module-first + blank + action — no override semantics, so a family rule lives **once** at the module layer.
+
+`module` is a reserved stem inside a module folder; no action may be named `module`. Orphan markdown files (stem is neither `module` nor a registered action) are surfaced via `MarkdownTeaching.ScanOrphans` as warnings on the developer's `Output` channel — loud, not fatal.
+
+Renamed attribute: **`[Provider]` → `[Code]`** across the source generator, the attribute definition, every call site, and the PLNG001 diagnostic text. Mechanical, no behaviour change.
+
+Full guide: [`action-catalog.md`](action-catalog.md). Loader source: `PLang/app/modules/MarkdownTeaching.cs`. Architect plan: `.bot/compile-llm-notes-per-action/architect/plan.md`.
