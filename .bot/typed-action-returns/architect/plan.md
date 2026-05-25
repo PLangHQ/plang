@@ -3,15 +3,20 @@
 **From:** architect
 **Branch:** `typed-action-returns` (off `runtime2`); sibling work on `test-report-typed-object` (also off `runtime2`)
 **Inputs:** `.bot/typed-action-returns/builder/architect-handoff.md`, `.bot/test-report-typed-object/brief.md`
-**Status:** v3.1 — third redline absorbed (Build() shape collapsed; Data.Warnings added; materialization API OBP-cleaned)
+**Status:** v3.2 — warnings as channel (Ingi's reframe), not as Data field
+
+## What v3.2 changed (from v3.1)
+
+One reframe — but it's a good one:
+
+- **Warnings are a channel, not a Data field.** Ingi proposed it; strictly better than my Data.Warnings shape change. The crystallized rule: **in-band for control flow, out-of-band for diagnostics.** `Error` stays on Data (fatal, caller short-circuits, must be in return path). Warnings go to a `warnings` channel alongside `Output` / `Input` / `Debug`. Action handlers write to the channel during Build() (and at runtime); the builder.validate pass subscribes and accumulates them into the build trace. No Data shape change. Same channel mechanism covers Build-time warnings AND runtime warnings (slow http, file.save overwrites, etc.). Multiple subscribers without aggregation logic.
 
 ## What v3.1 changed (from v3)
 
-Three OBP critiques shaped the third pass:
+Two OBP critiques shaped that pass:
 
-- **`BuildContext` and `BuildResult` killed.** Wrapper-classes-for-nothing. The action `@this` already carries args + step; Build() operates on `this`. Result is `Data` (universal result type — Ok with inferred type name, or Fail, or carry Warnings). A.6 contract collapsed to `Task<Data> Build()`.
+- **`BuildContext` and `BuildResult` killed.** Wrapper-classes-for-nothing. The action `@this` already carries args + step; Build() operates on `this`. Result is `Data` (universal result type — Ok with inferred type name, or Fail). A.6 contract collapsed to `Task<Data> Build()`.
 - **`Data.As<T>()` framing dropped.** The caller shouldn't pick the materializer via a generic — that leaks the choice to the call site. Data owns the materializer lookup via its own `.Type`. A.4 reworded: property access goes through Data; `Data.As(string typeName)` exists only for explicit cross-type coercion.
-- **`Data.Warnings` added as first-class.** Build() needs non-fatal diagnostics (e.g., `file.read 'foo.csv'` at build time when the file doesn't exist yet — warn, don't fail). Data has `Error` but no Warning. Adding `Warnings: IReadOnlyList<IWarning>` to Data, mirroring Error. Broadly useful beyond Build() — runtime warnings on slow http, file.save overwrites, etc.
 
 ## What v3 changed (from v2)
 
@@ -37,8 +42,8 @@ Five things from the second redline pass reshape the plan:
 | `tester/File` → `tester/Test` | rename. `app.tester.Test.@this` at `app/tester/Test/this.cs`. `test.discover` returns `List<Test>`. See A.7. |
 | `variable.set` | tags Data with `.Type=<T>`, **no parsing at set time**. Materialization is lazy on first access; **Data owns the materializer lookup via its own `.Type`** — caller never picks via a generic. |
 | `(type)` hint | not new PLang syntax. Free-form text the LLM reads. Hint lands on the **step's terminal `variable.set`** Type, not on the immediate next op. |
-| `Build()` method | new optional method on `IClass`: `Task<Data> Build()`. Runs from `builder.validate`. No wrapper classes — action `@this` carries its own args + step. Returns `Data` (Ok with inferred type name, Fail, or warnings). |
-| `Data.Warnings` | new first-class field on Data (mirrors `Error`). `IWarning` interface. Enables Build() to emit non-fatal diagnostics (e.g., file path doesn't exist at build time). |
+| `Build()` method | new optional method on `IClass`: `Task<Data> Build()`. Runs from `builder.validate`. No wrapper classes — action `@this` carries its own args + step. Returns `Data` (Ok with inferred type name, or Fail). |
+| Warnings | new `warnings` channel alongside `Output` / `Input` / `Debug`. Build() and runtime write non-fatal diagnostics there. Builder.validate subscribes; trace renders per-step. No Data shape change. **In-band Error stays on Data; out-of-band warnings go to the channel.** |
 | `test.report` | pure compute → `Data<Report>`; persistence is explicit `file.save` in PLang; `Format` param dies; JUnit becomes `JunitSerializer` keyed on `.junit.xml` (multi-segment via extended `GetByExtension`) |
 | `ReportResult` | not introduced; type is `Report`. No `[PlangType]` attribute — derived from class name. |
 
@@ -154,7 +159,8 @@ public interface IClass
 - `Data.Ok("csv")` — success; `Data.Value` carries the inferred terminal type name. Validator reads it and sets the terminal `variable.set` Type.
 - `Data.Fail(error)` — build-time error (e.g., contradictory args). Validator surfaces it; emit fails.
 - `Data.Ok()` (no value) — Build() ran but had nothing to contribute. Normal.
-- `Data.Ok("csv").WithWarning(...)` — success plus a warning (see Warnings section below).
+
+Non-fatal diagnostics (warnings) don't go through the return value — they go on the warnings channel, see below.
 
 **Hook point.** `builder.validate` — by the time validate runs the actions are resolved, args are bound, and emit hasn't happened yet, so Build() can influence the .pr output. Coder verifies the existing validate pass shape and slots Build() in; if validate doesn't currently iterate per-action, that's the one piece of plumbing this branch lands.
 
@@ -162,15 +168,20 @@ public interface IClass
 
 ```csharp
 // file.read
-public Task<Data> Build()
+public async Task<Data> Build()
 {
-    if (Path.Value is string p && System.IO.Path.HasExtension(p))
+    if (Path.Value is string p)
     {
-        var mime = Context.App.Formats.Mime(System.IO.Path.GetExtension(p));
-        var typeName = data.type.FromMime(mime).Name;
-        return Task.FromResult(Data.Ok(typeName));
+        if (!System.IO.File.Exists(p))
+            await Channels.Warnings.WriteAsync(new MissingFileAtBuild(p));
+
+        if (System.IO.Path.HasExtension(p))
+        {
+            var mime = Context.App.Formats.Mime(System.IO.Path.GetExtension(p));
+            return Data.Ok(data.type.FromMime(mime).Name);
+        }
     }
-    return Task.FromResult(Data.Ok());
+    return Data.Ok();
 }
 
 // llm.query
@@ -184,23 +195,25 @@ public Task<Data> Build()
 
 `output.ask.Build()` returns `Data.Ok()` — defaults handled by the `(type)` hint in A.5.
 
-**Warnings on Data (new).** Build() needs to emit non-fatal diagnostics — e.g., `file.read 'foo.csv'` at build time when `foo.csv` doesn't exist on disk yet is a *warning*, not an error (the file might exist at run time). Data has `Error` but no `Warning` today. Adding:
+**Warnings via channel (new).** Build() — and runtime, by symmetry — emits non-fatal diagnostics by writing to a `warnings` channel, alongside `Output` / `Input` / `Debug`:
 
 ```csharp
-public partial record Data
-{
-    public IReadOnlyList<IWarning> Warnings { get; init; } = Array.Empty<IWarning>();
-    public Data WithWarning(IWarning w) => this with { Warnings = [..Warnings, w] };
-}
-
-public interface IWarning  // mirrors IError, minus fatal severity
-{
-    string Message { get; }
-    // ... fields grow with use; start small
-}
+// In any action's Build() or Run() that wants to warn:
+await Channels.Warnings.WriteAsync(new MissingFileAtBuild(p));
 ```
 
-Validator collects Build()'s warnings into the build trace alongside any compile-time warnings the LLM emitted. Not Build-specific — Warnings on Data are broadly useful (runtime warns about slow http, file.save warns about overwrite, etc.).
+The framing: **in-band for control flow, out-of-band for diagnostics.** Errors stop computation; they must travel in the return path on Data. Warnings don't stop computation; they're a side stream. The channels system already exists for redirectable I/O — `warnings` slots in naturally.
+
+Subscribers:
+
+- **Builder.validate** subscribes during the build pass, accumulates warnings into the build trace alongside the inferred types from Build()'s return.
+- **CLI / debug output** can subscribe to surface warnings to stderr or the debug panel.
+- **`--strict` build mode** (future) subscribes and fails the build on any warning.
+- At runtime: same channel, same writes. Slow http, file.save overwrite, llm.query rate-limit hit — anything that wants to warn writes here.
+
+**`IWarning` shape:** start small — `Message` + caller identity (which the channel infra tags automatically, see open note). Grows with use. No global `IDiagnostic` unification this branch.
+
+**Source attribution** — when a warning lands, the consumer needs to know which action wrote it. Lean: channel-side scoping, same pattern as `Debug.Write`. The channel infra tags writes with caller identity automatically; the action writer just says "warn about this." Coder verifies what the existing channels mechanism gives us; if `Debug.Write` already tags with caller info, `Warnings` inherits the same.
 
 **User cast wins over Build() inference.** If the LLM already emitted a `(type)` hint into the terminal `variable.set` Type via A.5, Build() doesn't override it. Build() fills in the deterministic inference where the user didn't specify.
 
@@ -333,5 +346,5 @@ Across the `Tests/` corpus, the 729 `(object)` occurrences in Category A should 
 6. **`[PlangType]` derivation** — follow-up: source generator could derive PLang type from class name (lowercased) by default, with `[PlangType("…")]` as explicit override only on collision. CLAUDE.md proposal worth filing.
 7. **CLAUDE.md proposal** — file under `.bot/typed-action-returns/claude-md-proposals.md`: the "Key Files" section still references `PLang/Runtime2/Engine/Utility/TypeMapping.cs`; the actual location is `PLang/app/types/this.cs ClrFromMime`.
 8. **`Build()` contract refinement** — first cut in A.6 is intentionally minimal (returns Data carrying type-name string, or Ok/Fail, plus optional Warnings). Other compile-time signals can grow into Data.Properties without re-litigating the Build() shape.
-9. **`IDiagnostic` generalization** — `Data` now has `Error` (fatal) and `Warnings` (non-fatal). At some point these probably want to collapse into `IDiagnostic` with severity, sharing common machinery (location, source span, etc.). Not for this branch; capture as follow-up.
+9. **Warnings channel API shape** — TBD by coder. Lean on whatever pattern `Debug.Write` already uses for caller-identity tagging. The new `warnings` channel slots into the existing `Output` / `Input` / `Debug` infrastructure. `IWarning` starts as just `Message` + auto-tagged caller; grows with use.
 10. **Data API shape for materialization** — A.4 leaves the exact method name open (`Materialize()` vs internal `Value` getter override vs `As(string)` for cross-type). Coder picks during implementation; the locked rule is that Data picks the materializer from `.Type`, never the caller via a generic.
