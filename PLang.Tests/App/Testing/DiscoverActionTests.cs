@@ -139,7 +139,7 @@ public class DiscoverActionTests
         var action = new global::app.modules.test.discover
         {
             Context = _app.User.Context,
-            Path = new global::app.data.@this<string>("Path", path),
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(path),
             Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<bool>("Recursive", recursive)
         };
