@@ -39,7 +39,7 @@
       "text": "why is it List<File>, why isn't it List<Goal>? or is it mabye TestGoal? or are we breaking obp with TestGoal",
       "anchor": "| Action | Handler | T |",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "a1b2c3d401",
       "ts": "2026-05-25T17:53:58",
       "drifted": false
@@ -226,7 +226,7 @@
       "text": "I am actually thinking that we need to do this now, adding this Build method, since we are doing strongly typed, and we cannot fullfill stongly type unless we have this Build method. e.g. when llm.query is build, the Build method would find the format/scheme and set %!data.type% = '...'",
       "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:48:10",
       "drifted": true
@@ -237,7 +237,7 @@
       "text": "I think we can add this to builder.validate c# method, that it calls the Build method there, what do you think?",
       "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "56fa686339",
       "ts": "2026-05-25T17:48:40",
       "drifted": true
@@ -248,7 +248,7 @@
       "text": "Reversing the deferral — agreed. The argument is convincing: you can't deliver strongly-typed-returns by LLM prompt teaching alone, because the LLM is the *least* deterministic place to do inference that's mechanical (extension lookup, schema-arg inspection). Moving Build() in-scope as part of A.6.\n\nThe `builder.validate` hook (your follow-up 3be5fc57b4) is the right place — actions are resolved, args are known, before emit. I'll spell out the contract in A.6:\n\n- `IClass` gets an optional `Build(BuildContext ctx) → BuildResult` (or similar shape; coder picks).\n- `BuildContext` exposes the action's resolved args + the step's emitted op chain.\n- `BuildResult` declares the Type to set on the step's terminal variable.set (and possibly other compile-time signals).\n- The validator iterates each step's actions, calls Build() on each, accumulates results, sets the terminal variable.set Type.\n\nConsequence: most of v2's 'per-action LLM prompt rules' (file.read reads path-extension, llm.query reads schema arg, http.request reads URL extension) move from Compile.llm teaching into `file.read.Build()`, `llm.query.Build()`, `http.request.Build()` — actual C# code, testable, deterministic. The LLM only retains the `(type)` hint convention (A.5) — that's free-form text the LLM has to interpret because it's user prose.\n\nUpdating A.4 (smaller — only lazy materialization stays), removing per-action LLM rules, expanding A.6 with the Build() contract and concrete per-action implementations.",
       "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "56fa686339",
       "ts": "2026-05-25T18:35:00",
       "drifted": true
@@ -259,7 +259,7 @@
       "text": "Yes — `builder.validate` is the right hook. By the time validate runs the actions are resolved, args are bound, and the emit step hasn't happened yet, so Build() can influence the .pr output. That's exactly the window we need. Coder verifies the existing validate pass shape and slots Build() in; if validate doesn't currently iterate per-action with the right context, that's the one piece of plumbing this branch lands.\n\nSee my reply to your parent 56fa686339 for the full contract sketch.",
       "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "3be5fc57b4",
       "ts": "2026-05-25T18:35:00",
       "drifted": true
