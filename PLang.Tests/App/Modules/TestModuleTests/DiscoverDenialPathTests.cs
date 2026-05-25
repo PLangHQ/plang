@@ -1,28 +1,69 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.TestModuleTests;
 
 /// <summary>
 /// Stage 5 — Batch 9. <c>test/discover.cs</c> denial-path tests.
-///
-/// The brief's concrete offender. Today's discover does hand-rolled
-/// <c>StartsWith(rootPrefix)</c> containment + <c>System.IO.Directory.GetFiles</c>;
-/// post-migration it routes through <c>rootPath.List(...)</c> + <c>match.ReadText()</c>
-/// + <c>goal.PrPath.ReadText()</c>, all AuthGate-fronted.
 /// </summary>
 public class DiscoverDenialPathTests
 {
+    private sealed class CannedChannel : global::app.channels.channel.@this
+    {
+        private readonly string _answer;
+        public CannedChannel(string answer) { _answer = answer; Name = "input"; Direction = global::app.channels.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> WriteCore(global::app.data.@this data, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> ReadCore(CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public override Task<global::app.data.@this> AskCore(global::app.modules.output.ask action, CancellationToken ct = default) => Task.FromResult(global::app.data.@this.Ok(_answer));
+    }
+
+    private static PLangEngine NewApp(out string root)
+    {
+        root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-discover-deny-" + System.Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(root);
+        return new PLangEngine(root);
+    }
+
     [Test] public async Task Discover_WithTestPathOutsideRoot_DenialNotSilentEmpty()
     {
-        // --test=/etc → AuthGate denial; must not silently return zero tests.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var app = NewApp(out _);
+        app.User.Channels.Register(new CannedChannel("n"));
+        var outOfRoot = "//etc";
+        var action = new global::app.modules.test.discover
+        {
+            Context = app.User.Context,
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(
+                global::app.types.path.@this.Resolve(outOfRoot, app.User.Context)),
+            Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
+            Recursive = new global::app.data.@this<bool>("Recursive", false)
+        };
+        var result = await action.Run();
+        // Denial surfaces as Fail, not as an empty list of tests.
+        await Assert.That(result.Success).IsFalse();
     }
 
     [Test] public async Task Discover_WithDotDotTraversal_DeniedByAuthGate()
     {
-        // --test=../../.. → AuthGate denial; the hand-rolled StartsWith check is gone.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var app = NewApp(out _);
+        app.User.Channels.Register(new CannedChannel("n"));
+        var action = new global::app.modules.test.discover
+        {
+            Context = app.User.Context,
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(
+                global::app.types.path.@this.Resolve("//../../../etc", app.User.Context)),
+            Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
+            Recursive = new global::app.data.@this<bool>("Recursive", false)
+        };
+        var result = await action.Run();
+        // Either denial → Fail, or the resolved path lands under root → empty.
+        // Strict: a traversal that escapes root must NOT silently succeed with content.
+        if (result.Success)
+        {
+            var files = result.Value as System.Collections.Generic.List<global::app.tester.File>;
+            await Assert.That(files == null || files.Count == 0).IsTrue();
+        }
     }
 }

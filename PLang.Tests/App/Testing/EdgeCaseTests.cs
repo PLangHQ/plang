@@ -106,13 +106,15 @@ public class EdgeCaseTests
             Recursive = new global::app.data.@this<bool>("Recursive", true)
         };
 
-        // discover catches traversal and returns an empty list — does not throw,
-        // does not leak filesystem entries from outside the app root.
+        // Post-Stage-5: discover routes through path.List → AuthGate. An
+        // out-of-root traversal either denies (Fail) or returns empty —
+        // either way, no filesystem entries from outside leak.
         var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        var files = result.Value as List<global::app.tester.File> ?? new List<global::app.tester.File>();
-        await Assert.That(files.Count).IsEqualTo(0);
+        if (result.Success)
+        {
+            var files = result.Value as List<global::app.tester.File> ?? new List<global::app.tester.File>();
+            await Assert.That(files.Count).IsEqualTo(0);
+        }
     }
 
     // A test that writes ANSI escape sequences via output.write: when the

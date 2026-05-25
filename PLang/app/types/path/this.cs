@@ -131,7 +131,11 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
 
     /// <summary>
     /// Converts this path to a GoalCall. Derives PrPath from the .goal file path.
+    /// Excluded from default JSON serialization — it builds a new GoalCall (which
+    /// holds a Path which has a GoalCall ...) and would cycle infinitely when a
+    /// caller serializes a Goal without the PathJsonConverter registered.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public GoalCall GoalCall
     {
         get
@@ -205,7 +209,9 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
     /// Lets <c>Assert.That(path).IsEqualTo("/some/path")</c> compile as a
     /// string-vs-string check (with the right value surfaced in failure messages),
     /// and rescues string interpolation across third-party libs that don't call
-    /// ToString themselves.
+    /// ToString themselves. Returns null for null Path so null-aware assertions
+    /// (e.g. <c>IsNull()</c>) don't get fooled by the implicit conversion into
+    /// reading an empty string as "found a value".
     /// </summary>
-    public static implicit operator string(@this? p) => p?.ToString() ?? "";
+    public static implicit operator string?(@this? p) => p?.ToString();
 }

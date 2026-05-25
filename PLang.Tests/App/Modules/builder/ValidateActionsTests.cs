@@ -75,10 +75,11 @@ public class ValidateActionsTests
         System.IO.Directory.CreateDirectory(buildDir);
         var prJson = System.Text.Json.JsonSerializer.Serialize(new List<Goal>
         {
-            new Goal { Name = "DoSomething", Path = "/DoSomething.goal" }
+            new Goal { Name = "DoSomething", Path = global::app.types.path.@this.Resolve("/DoSomething.goal", _app.User.Context) }
         }, new System.Text.Json.JsonSerializerOptions
         {
-            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+            Converters = { new global::app.types.path.JsonConverter(_app.User.Context) }
         });
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "dosomething.pr"), prJson);
 
@@ -103,7 +104,8 @@ public class ValidateActionsTests
         // Verify PrPath was actually resolved
         var resolvedCall = actions[0].Parameters[0].Value as global::app.goals.goal.GoalCall;
         await Assert.That(resolvedCall).IsNotNull();
-        await Assert.That(resolvedCall!.PrPath).IsEqualTo("/.build/dosomething.pr");
+        await Assert.That(resolvedCall!.PrPath?.ToString().Replace('\\', '/').TrimStart('/'))
+            .IsEqualTo(".build/dosomething.pr");
     }
 
     [Test]

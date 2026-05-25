@@ -441,7 +441,8 @@ public class RunActionTests
         await Assert.That(run.Status).IsEqualTo(global::app.tester.Status.Pass);
 
         // Site key format: "<goalPath>:<stepIndex>" — matches run.cs:91-95.
-        var site = "/Cond.test.goal:0";
+        // Path.ToString() returns the Relative form (root-stripped, no leading "/").
+        var site = "Cond.test.goal:0";
 
         // BranchLabels populated via the production subscriber reading
         // result.Properties["branchLabel"] and calling RecordBranchLabel.

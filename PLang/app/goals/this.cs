@@ -303,7 +303,7 @@ public sealed class @this
         if (App == null) return null;
         var resolved = global::app.types.path.@this.Resolve(prPath, App.System.Context!);
         var exists = await resolved.ExistsAsync();
-        if (exists.Success && exists.Value == true)
+        if (!exists.Success || exists.Value != true)
             return null;
 
         var loadResult = await LoadFromFileAsync(App, resolved.Absolute, cancellationToken: ct);

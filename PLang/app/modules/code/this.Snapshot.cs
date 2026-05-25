@@ -96,8 +96,12 @@ public sealed partial class @this : ISnapshot
             {
                 // Restore is sync — sync-wait on path.LoadAssemblyAsync.
                 // AuthGate fires; for snapshot-restore the original Source was
-                // already gated at first load, so an in-root resource fast-passes.
-                var dllPath = global::app.types.path.@this.Resolve(reg.Source, ctx);
+                // already gated at first load. reg.Source is an OS-absolute path;
+                // prefix with "/" so path.Resolve's ValidatePath treats it as
+                // OS-rooted (// convention on Linux) instead of anchoring against
+                // the new App's root.
+                var sourceForResolve = reg.Source.StartsWith("/") ? "/" + reg.Source : reg.Source;
+                var dllPath = global::app.types.path.@this.Resolve(sourceForResolve, ctx);
                 var loadResult = dllPath.LoadAssemblyAsync().GetAwaiter().GetResult();
                 if (!loadResult.Success)
                     throw new System.IO.FileNotFoundException(

@@ -105,7 +105,9 @@ public sealed partial class @this : modules.IDataWrappable
     {
         get
         {
-            if (Path == null) return null;
+            // Empty or null Path → no PrPath. Treat "" the same as null so the
+            // old IsNullOrEmpty(Path) → null shape (pre-Stage-3) still holds.
+            if (Path == null || string.IsNullOrEmpty(Path.Absolute)) return null;
             // Derive via the generic verbs: parent dir → .build folder → lowercase stem + .pr
             var stem = Path.FileNameWithoutExtension.ToLowerInvariant();
             var parent = Path.Parent;

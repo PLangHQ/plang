@@ -243,7 +243,12 @@ public sealed class @this
         [".llm"] = "text/plain",
 
         // plang
-        [".goal"] = "application/plang-goal-source",
+        // .goal is plain source text. The path-typed FilePath.ReadText still
+        // exposes Goal.Parse via the .goal extension branch for callers that
+        // want a typed result (discover.cs's auto-flow); the default file.read
+        // action returns the raw string so existing PLang scripts that grep
+        // through .goal contents keep working.
+        [".goal"] = "text/plain",
         [".pr"] = "application/plang-goal",
 
         // image

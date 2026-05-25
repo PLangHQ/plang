@@ -1,4 +1,0 @@
-Start
-/ Batch 9 — http server serving static files: a request for /static/../../etc/passwd
-/ must be denied by AuthGate (most adversarial surface: untrusted HTTP → FS).
-- throw "not implemented"

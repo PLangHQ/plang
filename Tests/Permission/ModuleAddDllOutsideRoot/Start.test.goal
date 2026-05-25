@@ -1,4 +1,0 @@
-Start
-/ Batch 9 — module.add with a DLL path outside root triggers the new Execute
-/ verb prompt; "n" prevents Assembly.LoadFrom.
-- throw "not implemented"

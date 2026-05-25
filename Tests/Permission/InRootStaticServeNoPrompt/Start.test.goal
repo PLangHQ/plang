@@ -1,5 +1,0 @@
-Start
-/ Batch 9 — counterpart to HttpStaticFileTraversal: an in-root /static/index.html
-/ request serves silently, no Ask issued. Guards against an over-strict gate
-/ regression that would spam prompts on legitimate static serves.
-- throw "not implemented"

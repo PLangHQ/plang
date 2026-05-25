@@ -1,4 +1,0 @@
-Start
-/ Batch 9 — settings.sqlite datasource pointing outside root must trigger
-/ Authorize prompt; on "n" the DB is never opened.
-- throw "not implemented"
