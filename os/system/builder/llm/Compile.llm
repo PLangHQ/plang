@@ -43,6 +43,38 @@ Step-text name lowercased:           notsetanywhere
 No snapshot entry matches            → warning is justified.
 ```
 
+## `missingVariable` is heavily over-flagged — when NOT to raise it
+
+The snapshot only tracks variables introduced by the parent goal's TOP-LEVEL `variable.set` actions and `loop.foreach` ItemName bindings. Many legitimate assignment paths do NOT appear in it. Do NOT raise `missingVariable` for any of these:
+
+1. **The step IS the introduction.** `set %noFlag% = false` — `%noFlag%` is the WRITE target; the step creates it. Never warn on the Name parameter of `variable.set`. Same for `write to %x%` capture targets — `%x%` is being introduced *by this step*, not read.
+
+2. **A prior step called a sub-goal.** `call SetTrue` may have set `%wasTrue%`; you cannot see inside `SetTrue` from this prompt. If a prior step is a `goal.call`, assume the called goal might have set any variable the current step references. Do NOT warn.
+
+3. **A prior `on error` recovery handler set it.** `read file 'x', on error set %caught% = true` — the `%caught%` assignment is nested inside `error.handle.Actions[]` and the snapshot doesn't see it. A later `assert %caught% is true` is legitimate. Do NOT warn.
+
+4. **A prior `foreach` body call set it.** `foreach %xs%, call ProcessItem item=%x%` — `ProcessItem` may set variables in the parent scope. Same rule as #2.
+
+Concrete examples (DO NOT WARN):
+
+```
+Step text:  set %noFlag% = false
+            → %noFlag% is the write target. Do NOT raise missingVariable.
+
+Step text:  assert %wasTrue% is true
+Prior step: if %flag%, call SetTrue
+            → %wasTrue% may be set inside SetTrue. Do NOT warn.
+
+Step text:  assert %caught% is true
+Prior step: read file 'x.txt', on error set %caught% = true
+            → %caught% is set in the recovery body. Do NOT warn.
+
+Step text:  list.any %tests% where ... write to %hasFoo%
+            → %hasFoo% is the write target. Do NOT warn.
+```
+
+Reserve `missingVariable` for the case where the variable name appears nowhere in the goal's prior step text — neither as a write target, nor as a call to a sub-goal that might set it, nor in any recovery handler. When in doubt, do NOT warn.
+
 ## What `%!data%` means
 
 `%!data%` is a runtime-only token: it resolves to **the return value of the immediately preceding action in the same step's chain.** Nothing else. It is not a NULL marker, not a "fill in later" placeholder, not a default value.
