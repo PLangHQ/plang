@@ -67,6 +67,41 @@ public abstract partial class @this
             new errors.ServiceError(
                 $"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
+    // --- Content-shape verbs (D9a) ---
+    //
+    // When a third-party API needs the file's content in a specific shape
+    // (base64, data URI, parsed JSON, ...), the verb lives on Path so the
+    // gate fires inside and the action handler never reaches for
+    // <see cref="Absolute"/>. Each composes <see cref="ReadBytes"/> +
+    // formatting on top — same AuthGate path as every other read.
+
+    /// <summary>
+    /// Reads the file as bytes (gated) and base64-encodes them. Use sites:
+    /// OpenAI image attachments, sealing binary payloads into JSON-only
+    /// transports. Auth is bundled (single Read prompt).
+    /// </summary>
+    public virtual async Task<data.@this<string>> ReadAsBase64()
+    {
+        var bytes = await ReadBytes();
+        if (!bytes.Success || bytes.Value == null)
+            return data.@this<string>.From(bytes);
+        return data.@this<string>.Ok(System.Convert.ToBase64String(bytes.Value));
+    }
+
+    /// <summary>
+    /// Reads the file as bytes (gated), base64-encodes them, and wraps with
+    /// <c>data:&lt;mime&gt;;base64,</c>. Use sites: embedded image tags, mail
+    /// attachments, any wire payload that wants self-contained binary.
+    /// </summary>
+    public virtual async Task<data.@this<string>> ReadAsDataUri()
+    {
+        var bytes = await ReadBytes();
+        if (!bytes.Success || bytes.Value == null)
+            return data.@this<string>.From(bytes);
+        var mime = string.IsNullOrEmpty(MimeType) ? "application/octet-stream" : MimeType;
+        return data.@this<string>.Ok($"data:{mime};base64,{System.Convert.ToBase64String(bytes.Value)}");
+    }
+
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
     public abstract Task<data.@this<@this>> Delete(bool recursive, bool ignoreIfNotFound);
 

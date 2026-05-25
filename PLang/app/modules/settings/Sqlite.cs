@@ -22,17 +22,34 @@ public sealed class Sqlite : IStore
 
     /// <summary>
     /// Creates a Sqlite at the specified database path, creating the parent
-    /// directory if absent.
+    /// directory if absent. D9b take-over API: sqlite opens the file itself,
+    /// so we explicitly Authorize(Write) on the path before handing its
+    /// Absolute string to the connection string. Out-of-root paths the
+    /// actor hasn't granted bubble up as an exception — sqlite never sees them.
     /// </summary>
-    public Sqlite(string dbPath)
+    public Sqlite(global::app.types.path.@this dbPath)
     {
-        var parent = System.IO.Path.GetDirectoryName(dbPath);
-        if (!string.IsNullOrEmpty(parent) && !System.IO.Directory.Exists(parent))
-            System.IO.Directory.CreateDirectory(parent);
+        // D9b: take-over API. Authorize before passing .Absolute. Sync-wait
+        // — Sqlite ctor is sync and the gate is the bootstrap path.
+        var verb = new global::app.types.path.permission.verb.@this
+        {
+            Write = new global::app.types.path.permission.verb.Write()
+        };
+        var auth = dbPath.Authorize(verb).GetAwaiter().GetResult();
+        if (!auth.Success)
+            throw new InvalidOperationException(
+                $"Sqlite path '{dbPath}' is not authorized for write: {auth.Error?.Message}");
+
+        // Create parent dir via path verb (gated). Mkdir on the parent path
+        // — fast-passes in-root, prompts/denies out-of-root (but Authorize
+        // above already covered the dbPath's write).
+        var parent = dbPath.Parent;
+        if (parent != null)
+            parent.Mkdir().GetAwaiter().GetResult();
 
         _connectionString = new SqliteConnectionStringBuilder
         {
-            DataSource = dbPath,
+            DataSource = dbPath.Absolute,
             Mode = SqliteOpenMode.ReadWriteCreate,
             Cache = SqliteCacheMode.Shared
         }.ToString();

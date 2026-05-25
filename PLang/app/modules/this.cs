@@ -236,8 +236,12 @@ public sealed class @this : IAsyncDisposable
     public string? ResolveMarkdownTeachingRoot()
     {
         if (!string.IsNullOrEmpty(MarkdownTeachingRoot)) return MarkdownTeachingRoot;
-        if (string.IsNullOrEmpty(App?.OsDirectory)) return null;
-        return System.IO.Path.Combine(App.OsDirectory!, "system", "modules");
+        if (App?.System?.Context == null) return null;
+        // Resolve "/system/modules" through the scheme registry — FilePath's
+        // ValidatePath redirects /system/* to <OsDirectory>/system/* when the
+        // path isn't present under the App root.
+        var p = global::app.types.path.@this.Resolve("/system/modules", App.System.Context);
+        return p.Absolute;
     }
 
     /// <summary>

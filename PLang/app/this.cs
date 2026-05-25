@@ -566,8 +566,9 @@ public sealed partial class @this : IAsyncDisposable
         if (Tester.IsEnabled)
             return global::app.modules.settings.Sqlite.InMemory($"system-{Id}");
 
-        var dbDir = global::System.IO.Path.Combine(AbsolutePath, ".db");
-        var dbPath = global::System.IO.Path.Combine(dbDir, "system.sqlite");
+        // Lift to Path: AuthGate fires inside the Sqlite ctor on Write,
+        // parent dir creation via path.Mkdir.
+        var dbPath = global::app.types.path.@this.Resolve("/.db/system.sqlite", System.Context!);
         return new global::app.modules.settings.Sqlite(dbPath);
     }
 

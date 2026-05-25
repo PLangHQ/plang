@@ -1000,13 +1000,14 @@ public sealed class Default : IHttp
         upload action, global::app.@this app, string encoding)
     {
         var content = action.Content.Value;
+        var ctx = action.Context;
         if (action.As?.Value is ContentAs contentAs)
         {
             return contentAs switch
             {
-                ContentAs.File => await CreateFileContentAsync(app, content!.ToString()!),
+                ContentAs.File => await CreateFileContentAsync(app, ctx, content!.ToString()!),
                 ContentAs.Base64 => CreateBase64Content(content!.ToString()!),
-                ContentAs.Form => await CreateFormContentAsync(app, content!),
+                ContentAs.Form => await CreateFormContentAsync(app, ctx, content!),
                 ContentAs.Text => new StringContent(
                     content is string s ? s : JsonSerializer.Serialize(content),
                     Encoding.GetEncoding(encoding)),
@@ -1018,14 +1019,19 @@ public sealed class Default : IHttp
         if (content is Dictionary<string, object> ||
             content is JsonElement je && je.ValueKind == JsonValueKind.Object)
         {
-            return await CreateFormContentAsync(app, content);
+            return await CreateFormContentAsync(app, ctx, content);
         }
 
         if (content is string str)
         {
-            var path = global::app.types.path.file.@this.ValidatePath(str, app);
-            if (System.IO.File.Exists(path))
-                return await CreateFileContentAsync(app, path);
+            // Try as file path — gated through path.ExistsAsync (AuthGate(Read)).
+            // Out-of-root probes prompt or deny; in-root fast-passes. Any failure
+            // (including denial) falls through to "treat as a string body" —
+            // matches the prior "if not a file, send as string" shape.
+            var p = global::app.types.path.@this.Resolve(str, ctx);
+            var exists = await p.ExistsAsync();
+            if (exists.Success && exists.Value == true)
+                return await CreateFileContentAsync(app, ctx, str);
 
             return new StringContent(str, Encoding.GetEncoding(encoding));
         }
@@ -1036,11 +1042,15 @@ public sealed class Default : IHttp
             "application/json");
     }
 
-    private static async Task<HttpContent> CreateFileContentAsync(global::app.@this app, string path)
+    private static async Task<HttpContent> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
     {
-        var validPath = global::app.types.path.file.@this.ValidatePath(path, app);
-        var bytes = await System.IO.File.ReadAllBytesAsync(validPath);
-        var content = new ByteArrayContent(bytes);
+        // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
+        // out-of-root paths the actor hasn't granted bubble up as Fail.
+        var resolved = global::app.types.path.@this.Resolve(path, context);
+        var read = await resolved.ReadBytes();
+        if (!read.Success || read.Value == null)
+            throw new System.IO.IOException(read.Error?.Message ?? $"Could not read file: {path}");
+        var content = new ByteArrayContent(read.Value);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
         return content;
     }
@@ -1053,7 +1063,7 @@ public sealed class Default : IHttp
         return content;
     }
 
-    private static async Task<HttpContent> CreateFormContentAsync(global::app.@this app, object content)
+    private static async Task<HttpContent> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
     {
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;
@@ -1074,12 +1084,16 @@ public sealed class Default : IHttp
             var value = kvp.Value?.ToString() ?? "";
             if (value.StartsWith('@'))
             {
-                var filePath = global::app.types.path.file.@this.ValidatePath(value[1..], app);
-                var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
-                var fileContent = new ByteArrayContent(bytes);
+                // Gated read via path verb. AuthGate(Read) fires; out-of-root
+                // form fields the actor hasn't authorized get denied at the
+                // gate, not silently exfiltrated.
+                var fp = global::app.types.path.@this.Resolve(value[1..], context);
+                var read = await fp.ReadBytes();
+                if (!read.Success || read.Value == null)
+                    throw new System.IO.IOException(read.Error?.Message ?? $"Could not read form file: {value[1..]}");
+                var fileContent = new ByteArrayContent(read.Value);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                var fileName = System.IO.Path.GetFileName(filePath);
-                form.Add(fileContent, kvp.Key, fileName);
+                form.Add(fileContent, kvp.Key, fp.FileName);
             }
             else
             {
