@@ -12,8 +12,14 @@ namespace app.goals;
 /// </summary>
 public sealed class @this
 {
-    private readonly ConcurrentDictionary<string, goal.@this> _goals = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, goal.@this> _byPath = new(StringComparer.OrdinalIgnoreCase);
+    // Path-keyed dicts (D4). Path's own Equals/GetHashCode uses RootComparison
+    // (OrdinalIgnoreCase on Windows, Ordinal on Linux) — no separate
+    // StringComparer needed; the canonical-form keying lives on Path itself.
+    private readonly ConcurrentDictionary<global::app.types.path.@this, goal.@this> _goals = new();
+    private readonly ConcurrentDictionary<global::app.types.path.@this, goal.@this> _byPath = new();
+    // Separate by-name index for fuzzy `Get("Name")` — name lookups are not a
+    // Path-equality question (Ingi C1 / architect D4).
+    private readonly ConcurrentDictionary<string, goal.@this> _byName = new(StringComparer.OrdinalIgnoreCase);
     internal app.@this App { get; set; } = null!;
 
     /// <summary>
@@ -35,11 +41,11 @@ public sealed class @this
         goal.App = App;
         if (goal.PrPath == null)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
-        // String-key the dicts on the Path's portable form (Relative) — Stage 4
-        // will switch to Path-keyed dicts that key on the Path's own Equals/Hash.
-        _goals[goal.PrPath.ToString()] = goal;
+        _goals[goal.PrPath] = goal;
         if (goal.Path != null)
-            _byPath[goal.Path.ToString()] = goal;
+            _byPath[goal.Path] = goal;
+        if (!string.IsNullOrEmpty(goal.Name))
+            _byName[goal.Name] = goal;
     }
 
     /// <summary>
@@ -55,38 +61,44 @@ public sealed class @this
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             name = name[..^5];
 
-        // Try by PrPath key (exact match)
-        if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
+        // By-name fuzzy lookup uses the dedicated _byName index — name matching
+        // is not a Path-equality question (architect D4 / Ingi C1).
+        if (_byName.TryGetValue(name, out var goal) && !goal.IsSetup)
             return goal;
 
-        // Try by path index
-        if (_byPath.TryGetValue(name, out goal) && !goal.IsSetup)
-            return goal;
-
-        // Search by goal Name across all values (since _goals is keyed by PrPath)
-        goal = _goals.Values.FirstOrDefault(g => !g.IsSetup
-            && g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (goal != null)
-            return goal;
-
-        // Try with different extensions/variations
-        var variations = new[]
+        // Path-form lookup — caller passed a path string (.goal or .pr).
+        // Scan _goals.Values (PrPath-keyed) and _byPath.Values (Path-keyed) by
+        // their canonical Relative form. Path-keyed dicts can't be queried by
+        // raw string, but the candidate set is small.
+        var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
+        bool MatchesByForm(string canonical) =>
+            canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
+            || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase)
+            || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
+            || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase);
+        foreach (var kv in _byPath)
         {
-            name + ".goal",
-            name.TrimStart('/'),
-            name.Replace('\\', '/'),
-            name.Replace('/', '\\')
-        };
-
-        foreach (var variation in variations)
+            if (kv.Value.IsSetup) continue;
+            if (MatchesByForm(kv.Key.ToString().Replace('\\', '/')))
+                return kv.Value;
+        }
+        // PrPath form (`.build/foo.pr`) used by callstack.Restore — match the
+        // _goals dict by canonical Relative.
+        foreach (var kv in _goals)
         {
-            if (_goals.TryGetValue(variation, out goal) && !goal.IsSetup)
-                return goal;
-            if (_byPath.TryGetValue(variation, out goal) && !goal.IsSetup)
-                return goal;
-            goal = _goals.Values.FirstOrDefault(g => !g.IsSetup
-                && g.Name.Equals(variation, StringComparison.OrdinalIgnoreCase));
-            if (goal != null)
+            if (kv.Value.IsSetup) continue;
+            var canonical = kv.Key.ToString().Replace('\\', '/');
+            if (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
+                || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase))
+                return kv.Value;
+        }
+
+        // Slash-qualified — match a sub-goal of the qualified parent path.
+        if (name.Contains('/') || name.Contains('\\'))
+        {
+            var qualLeaf = name.Replace('\\', '/');
+            var leafName = qualLeaf[(qualLeaf.LastIndexOf('/') + 1)..];
+            if (_byName.TryGetValue(leafName, out goal) && !goal.IsSetup)
                 return goal;
         }
 
@@ -158,7 +170,7 @@ public sealed class @this
                 var goal = result.Value as goal.@this;
                 if (goal is { IsSetup: true }) return null;
                 if (goal != null && !string.IsNullOrEmpty(name))
-                    _byPath[name] = goal;
+                    _byName[name] = goal;
                 return goal;
             }
         }
@@ -201,24 +213,15 @@ public sealed class @this
     /// </summary>
     public bool Remove(string name)
     {
-        // Try removing by key directly (PrPath)
-        if (_goals.TryRemove(name, out var goal))
-        {
-            if (goal.Path != null)
-                _byPath.TryRemove(goal.Path.ToString(), out _);
-            return true;
-        }
-
-        // Find by name and remove by its PrPath key
-        var found = _goals.FirstOrDefault(kv => kv.Value.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (found.Value != null && _goals.TryRemove(found.Key, out goal))
-        {
-            if (goal.Path != null)
-                _byPath.TryRemove(goal.Path.ToString(), out _);
-            return true;
-        }
-
-        return false;
+        // Locate by name (path-keyed dict can't be queried by raw string).
+        var found = _byName.TryGetValue(name, out var byName)
+            ? byName
+            : _goals.Values.FirstOrDefault(g => g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (found == null) return false;
+        if (found.PrPath != null) _goals.TryRemove(found.PrPath, out _);
+        if (found.Path != null) _byPath.TryRemove(found.Path, out _);
+        if (!string.IsNullOrEmpty(found.Name)) _byName.TryRemove(found.Name, out _);
+        return true;
     }
 
     /// <summary>
@@ -228,6 +231,7 @@ public sealed class @this
     {
         _goals.Clear();
         _byPath.Clear();
+        _byName.Clear();
     }
 
     /// <summary>
@@ -278,18 +282,21 @@ public sealed class @this
         if (string.IsNullOrEmpty(prPath))
             return null;
 
-        // Check cache first — return null for setup goals (only reachable via Setup.RunAsync)
-        if (_goals.TryGetValue(prPath, out var cached))
+        // Resolve the raw string through the scheme registry when App is wired
+        // so dict lookups key on the canonical Path. Test fixtures often skip
+        // App wiring — fall back to the implicit string→Path stub.
+        global::app.types.path.@this key = App?.System?.Context is { } ctx
+            ? global::app.types.path.@this.Resolve(prPath, ctx)
+            : prPath;
+        if (_goals.TryGetValue(key, out var cached))
             return cached.IsSetup ? null : cached;
-        if (_byPath.TryGetValue(prPath, out cached))
+        if (_byPath.TryGetValue(key, out cached))
             return cached.IsSetup ? null : cached;
 
-        // Resolve relative path against root directory
-        var absolutePath = System.IO.Path.IsPathRooted(prPath)
-            ? prPath
-            : System.IO.Path.Combine(App.AbsolutePath, prPath);
-
-        if (System.IO.File.Exists(absolutePath))
+        var absolutePath = App != null && System.IO.Path.IsPathRooted(prPath) == false
+            ? System.IO.Path.Combine(App.AbsolutePath, prPath)
+            : prPath;
+        if (App == null || System.IO.File.Exists(absolutePath))
             return null;
 
         var loadResult = await LoadFromFileAsync(App, absolutePath, cancellationToken: ct);
@@ -299,7 +306,7 @@ public sealed class @this
         var loaded = loadResult.Value as goal.@this;
         if (loaded is { IsSetup: true }) return null;
         if (loaded != null)
-            _byPath[prPath] = loaded;
+            _byPath[key] = loaded;
         return loaded;
     }
 

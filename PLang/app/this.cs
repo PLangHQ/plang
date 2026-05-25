@@ -360,9 +360,22 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task Load()
     {
-        var path = global::System.IO.Path.Combine(AbsolutePath, ".build", "app.pr");
-        if (!global::System.IO.File.Exists(path)) return;
-        var json = await global::System.IO.File.ReadAllTextAsync(path);
+        var prPath = global::app.types.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var exists = await prPath.ExistsAsync();
+        if (!exists.Success || exists.Value != true) return;
+        var readResult = await prPath.ReadText();
+        if (!readResult.Success) return;
+        var json = readResult.Value as string;
+        // .pr deserialized to Goal via FilePath.ReadText's MIME path — fall back
+        // to the raw text by reading directly through ReadBytes when .pr's MIME
+        // converted the JSON to a typed object. For app.pr we only need the
+        // identity fields.
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            var bytes = await prPath.ReadBytes();
+            if (!bytes.Success || bytes.Value == null) return;
+            json = global::System.Text.Encoding.UTF8.GetString(bytes.Value);
+        }
         if (string.IsNullOrWhiteSpace(json)) return;
         try
         {
@@ -399,11 +412,9 @@ public sealed partial class @this : IAsyncDisposable
         var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
             CamelCaseIndented);
-        var path = global::System.IO.Path.Combine(AbsolutePath, ".build", "app.pr");
-        var dir = global::System.IO.Path.GetDirectoryName(path);
-        if (dir != null && !global::System.IO.Directory.Exists(dir))
-            global::System.IO.Directory.CreateDirectory(dir);
-        await global::System.IO.File.WriteAllTextAsync(path, json);
+        var prPath = global::app.types.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var written = await prPath.WriteText(json);
+        if (!written.Success) return written;
         return app.data.@this.Ok(this);
     }
 
