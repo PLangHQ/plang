@@ -13,26 +13,23 @@ namespace app.modules.code;
 public partial class load : IContext
 {
     /// <summary>Path to the DLL to load (relative to app root or absolute).</summary>
-    public partial data.@this<string>? Path { get; init; }
+    public partial data.@this<global::app.types.path.@this>? Path { get; init; }
 
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
     public partial data.@this<string>? Name { get; init; }
 
     public async Task<data.@this> Run()
     {
-        if (string.IsNullOrEmpty(Path?.Value))
+        var dllPath = Path?.Value;
+        if (dllPath == null)
             return Error(new ActionError("Provider path is required", "ValidationError", 400));
 
-        Assembly assembly;
-        try
-        {
-            var fullPath = System.IO.Path.GetFullPath(Path.Value!, Context.App.AbsolutePath);
-            assembly = Assembly.LoadFrom(fullPath);
-        }
-        catch (Exception ex)
-        {
-            return Error(ActionError.FromException(ex, "LoadError", 500));
-        }
+        // LoadAssemblyAsync gates on Execute (Unix r/w/x model) — a user who
+        // granted Read on the folder still gets a separate Execute prompt
+        // before the DLL is loaded.
+        var loadResult = await dllPath.LoadAssemblyAsync();
+        if (!loadResult.Success) return Error(loadResult.Error!);
+        var assembly = loadResult.Value!;
 
         var providerTypes = assembly.GetExportedTypes()
             .Where(t => typeof(ICode).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
@@ -50,7 +47,7 @@ public partial class load : IContext
 
             var instance = (ICode)ctor.Invoke(null);
             // Stamp DLL origin so snapshot capture / restore can reload from the same source.
-            instance.Source = System.IO.Path.GetFullPath(Path.Value!, Context.App.AbsolutePath);
+            instance.Source = dllPath.Absolute;
 
             // Register for each ICode-derived interface the type implements
             var interfaces = type.GetInterfaces()

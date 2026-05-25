@@ -77,7 +77,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = "/nonexistent/path/fake.dll"
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
         };
         var result = await action.Run();
 
@@ -112,7 +112,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = dllPath
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -135,7 +135,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = dllPath
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -156,7 +156,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = dllPath
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(dllPath, Ctx)),
         };
         var result = await action.Run();
 

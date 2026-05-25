@@ -17,6 +17,29 @@ namespace app.types.path.file;
 /// </summary>
 public sealed partial class @this
 {
+    /// <summary>
+    /// Loads a .NET assembly from this path. Gated by
+    /// <see cref="@this.Authorize"/> on <c>Verb { Execute }</c> — Read grants
+    /// do NOT cover Execute (Unix r/w/x model). The actor sees a separate
+    /// "execute" prompt distinct from "read", so granting read access to a
+    /// folder doesn't accidentally permit code loading from it.
+    /// </summary>
+    public override async Task<data.@this<System.Reflection.Assembly>> LoadAssemblyAsync()
+    {
+        if (await AuthGate(new Verb { Execute = new global::app.types.path.permission.verb.Execute() }) is { } early)
+            return data.@this<System.Reflection.Assembly>.From(early);
+        try
+        {
+            var asm = System.Reflection.Assembly.LoadFrom(Absolute);
+            return data.@this<System.Reflection.Assembly>.Ok(asm);
+        }
+        catch (System.Exception ex) when (ex is System.IO.FileNotFoundException or System.IO.FileLoadException or System.BadImageFormatException)
+        {
+            return data.@this<System.Reflection.Assembly>.FromError(
+                new errors.ServiceError($"Failed to load assembly: {ex.Message}", "AssemblyLoadFailed", 500));
+        }
+    }
+
     private void EnsureParentDir()
     {
         var dir = System.IO.Path.GetDirectoryName(Absolute);

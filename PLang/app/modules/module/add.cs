@@ -6,22 +6,20 @@ namespace app.modules.module;
 [Action("add", Cacheable = false)]
 public partial class Add : IContext
 {
-    public partial data.@this<string> Path { get; init; }
+    public partial data.@this<global::app.types.path.@this> Path { get; init; }
     public partial data.@this<string>? Namespace { get; init; }
 
-    public Task<data.@this> Run()
+    public async Task<data.@this> Run()
     {
         var app = Context.App!;
-        var absPath = System.IO.Path.GetFullPath(Path.Value!);
+        var dllPath = Path.Value!;
 
-        if (!System.IO.File.Exists(absPath))
-            return Task.FromResult(Error(
-                new app.errors.ServiceError($"Module not found: {Path.Value}")));
+        // LoadAssemblyAsync gates on Execute — distinct from Read so a Read
+        // grant on the folder doesn't accidentally permit code loading.
+        var loadResult = await dllPath.LoadAssemblyAsync();
+        if (!loadResult.Success) return Error(loadResult.Error!);
 
-        var assembly = System.Reflection.Assembly.LoadFrom(absPath);
-        var count = app.Modules.Discover(assembly, Namespace?.Value);
-
-        return Task.FromResult(Data(
-            new types.module { name = System.IO.Path.GetFileNameWithoutExtension(absPath), actions = count }));
+        var count = app.Modules.Discover(loadResult.Value!, Namespace?.Value);
+        return Data(new types.module { name = dllPath.FileNameWithoutExtension, actions = count });
     }
 }

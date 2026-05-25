@@ -94,9 +94,15 @@ public sealed partial class @this : ISnapshot
             Assembly assembly;
             try
             {
-                if (!System.IO.File.Exists(reg.Source))
-                    throw new System.IO.FileNotFoundException("Provider source DLL not found.", reg.Source);
-                assembly = Assembly.LoadFrom(reg.Source);
+                // Restore is sync — sync-wait on path.LoadAssemblyAsync.
+                // AuthGate fires; for snapshot-restore the original Source was
+                // already gated at first load, so an in-root resource fast-passes.
+                var dllPath = global::app.types.path.@this.Resolve(reg.Source, ctx);
+                var loadResult = dllPath.LoadAssemblyAsync().GetAwaiter().GetResult();
+                if (!loadResult.Success)
+                    throw new System.IO.FileNotFoundException(
+                        loadResult.Error?.Message ?? "Provider source DLL not loadable.");
+                assembly = loadResult.Value!;
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {

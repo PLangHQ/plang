@@ -124,6 +124,7 @@ public partial class @this
         if (verb.Read    != null) return "read";
         if (verb.Write   != null) return "write";
         if (verb.Delete  != null) return "delete";
+        if (verb.Execute != null) return "execute";
         return "access";
     }
 

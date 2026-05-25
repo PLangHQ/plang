@@ -57,6 +57,16 @@ public abstract partial class @this
     public abstract Task<data.@this<@this>> Append(string content);
     public abstract Task<data.@this<@this>> Mkdir();
 
+    /// <summary>
+    /// Loads a .NET assembly from this path. Gated by <c>Verb { Execute }</c>
+    /// — distinct from Read (Unix r/w/x model: reading a DLL is not permission
+    /// to load it). FilePath implements; non-filesystem schemes return Fail.
+    /// </summary>
+    public virtual Task<data.@this<System.Reflection.Assembly>> LoadAssemblyAsync() =>
+        Task.FromResult(data.@this<System.Reflection.Assembly>.FromError(
+            new errors.ServiceError(
+                $"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
+
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
     public abstract Task<data.@this<@this>> Delete(bool recursive, bool ignoreIfNotFound);
 
