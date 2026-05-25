@@ -552,7 +552,7 @@
   .step-row.open { border-left-color: var(--accent); background: rgba(91,155,213,0.03); }
   .step-row.has-error { border-left-color: var(--accent); background: rgba(233,69,96,0.04); }
   .step-row.has-warning { border-left-color: var(--orange); background: rgba(232,112,64,0.04); }
-  /* Small dim chip showing token + cost. Sits between step body and confidence. */
+  /* Small dim chip showing token + cost. Sits above confidence in the .meta cluster. */
   .usage-chip {
     font-size: 10px;
     color: var(--text-dim);
@@ -561,8 +561,6 @@
     border-radius: 3px;
     padding: 2px 6px;
     white-space: nowrap;
-    align-self: flex-start;
-    margin-top: 2px;
   }
   .step-note {
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
@@ -601,6 +599,14 @@
     grid-template-columns: 28px 1fr auto;
     gap: 10px;
     align-items: start;
+  }
+  /* Trailing right-aligned chip cluster: usage + confidence. Single grid cell
+     so the grid stays at 3 columns; empty cluster collapses cleanly. */
+  .step-line .meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
   }
   .step-line .idx {
     color: var(--text-dim);
@@ -1890,8 +1896,10 @@ function renderStepRow(entry, goalSection, step, subKey) {
           ${hideFormal ? '' : `<div class="${formalCls}" ${formalClick ? `onclick="${formalClick}"` : ''}>${formalHtml}</div>`}
           ${noteRows}
         </div>
-        ${usageChip}
-        <span class="conf ${confCls}">${conf}%</span>
+        <div class="meta">
+          ${usageChip}
+          <span class="conf ${confCls}">${conf}%</span>
+        </div>
       </div>
   `;
 
