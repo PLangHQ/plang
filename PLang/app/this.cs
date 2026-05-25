@@ -402,7 +402,10 @@ public sealed partial class @this : IAsyncDisposable
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
-        Converters = { new global::app.channels.serializers.TimeSpanIso8601() }
+        Converters = {
+            new global::app.channels.serializers.TimeSpanIso8601(),
+            new global::app.types.path.JsonConverter()
+        }
     };
 
     public async Task<data.@this> Save()
