@@ -122,10 +122,10 @@ public partial class report : IContext
         {
             sb.AppendLine($"      Error: {run.Error?.Message}");
         }
-        if (!string.IsNullOrEmpty(run.CapturedOutput))
+        if (!string.IsNullOrEmpty(run.Output))
         {
             sb.AppendLine("      Output:");
-            foreach (var line in StripAnsi(run.CapturedOutput).Split('\n'))
+            foreach (var line in StripAnsi(run.Output).Split('\n'))
                 sb.AppendLine("        " + line);
         }
     }
@@ -253,7 +253,9 @@ public partial class report : IContext
                 error = run.Error?.Message,
                 expected = (run.Error as AssertionError)?.Expected,
                 actual = (run.Error as AssertionError)?.Actual,
-                variables = (run.Error as AssertionError)?.Variables
+                variables = (run.Error as AssertionError)?.Variables,
+                output = run.Output ?? "",
+                timings = run.Timings.Select(t => new { stepIndex = t.StepIndex, ms = t.Ms }).ToList()
             });
         }
         // Structured coverage block — no emoji; downstream tooling renders as it likes.
