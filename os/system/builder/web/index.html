@@ -1809,6 +1809,21 @@ function toggleFormal(subKey) {
   repaintCurrentFile();
 }
 
+// Holds raw prompt/markdown source so the copy buttons can grab it without
+// dumping multi-KB content into HTML attributes (escape minefield). Tokens
+// are generated per render; the map grows over a session but each entry is
+// just a string ref so the footprint is bounded by trace count.
+const copyBuf = new Map();
+let copyBufSeq = 0;
+function stashCopy(text) {
+  const token = 'cb' + (++copyBufSeq);
+  copyBuf.set(token, text == null ? '' : String(text));
+  return token;
+}
+function copyStashed(btn, token) {
+  copyPath(btn, copyBuf.get(token) || '');
+}
+
 function copyPath(btn, path) {
   // navigator.clipboard needs https or localhost; fall back to a textarea hack
   // for broader compatibility (older Safari on iOS, some WebViews).
@@ -1954,6 +1969,14 @@ function renderAccordionSection(stepKey, name, value, open, mode, sourceFile) {
   const hasContent = value != null && (typeof value !== 'string' || value.length > 0);
   const meta = hasContent ? sizeLabel(value) : '(empty)';
   const label = sourceFile ? `${name} (${sourceFile})` : name;
+  // Raw text for the copy button: prompt text for md sections, pretty JSON for json sections.
+  const copyText = hasContent
+    ? (mode === 'md' ? String(value) : JSON.stringify(value, null, 2))
+    : null;
+  const copyToken = copyText != null ? stashCopy(copyText) : null;
+  const copyBtn = copyToken
+    ? `<button class="copy-btn" onclick="event.stopPropagation(); copyStashed(this, '${copyToken}')" title="Copy ${esc(label)} content">copy</button>`
+    : '';
   let body = '';
   if (open && hasContent) {
     if (mode === 'md') {
@@ -1967,6 +1990,7 @@ function renderAccordionSection(stepKey, name, value, open, mode, sourceFile) {
       <span class="tree-caret ${open ? 'open' : ''}">&#9656;</span>
       <span>${esc(label)}</span>
       <span class="sub-meta">${esc(meta)}</span>
+      ${copyBtn}
     </div>
     ${body}
   `;
@@ -2110,13 +2134,19 @@ function renderBuildFailure(be) {
 
 function renderPromptBlocks(system, user, response, sources) {
   sources = sources || {};
+  // Stop the copy click from also toggling the block — buttons sit on the
+  // same header row as the open/close click target.
+  const copyBtn = (text, label) => {
+    const t = stashCopy(typeof text === 'string' ? text : JSON.stringify(text, null, 2));
+    return `<button class="copy-btn" onclick="event.stopPropagation(); copyStashed(this, '${t}')" title="Copy ${esc(label)}">copy</button>`;
+  };
   let html = '';
   if (system) {
     const md = typeof system === 'string' ? mdToHtml(system) : `<pre>${esc(JSON.stringify(system, null, 2))}</pre>`;
     const label = sources.system ? `System Prompt (${esc(sources.system)})` : 'System Prompt';
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
-        <span>${label}</span><span>${sizeLabel(system)}</span>
+        <span>${label}</span><span>${sizeLabel(system)} ${copyBtn(system, label)}</span>
       </div>
       <div class="block-content md-body">${md}</div>
     </div>`;
@@ -2126,7 +2156,7 @@ function renderPromptBlocks(system, user, response, sources) {
     const label = sources.user ? `User Prompt (${esc(sources.user)})` : 'User Prompt';
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
-        <span>${label}</span><span>${sizeLabel(user)}</span>
+        <span>${label}</span><span>${sizeLabel(user)} ${copyBtn(user, label)}</span>
       </div>
       <div class="block-content md-body open">${md}</div>
     </div>`;
@@ -2134,7 +2164,7 @@ function renderPromptBlocks(system, user, response, sources) {
   if (response) {
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
-        <span>LLM Response</span><span>${sizeLabel(response)}</span>
+        <span>LLM Response</span><span>${sizeLabel(response)} ${copyBtn(response, 'LLM Response')}</span>
       </div>
       <div class="block-content open"><pre>${esc(typeof response === 'string' ? response : JSON.stringify(response, null, 2))}</pre></div>
     </div>`;
