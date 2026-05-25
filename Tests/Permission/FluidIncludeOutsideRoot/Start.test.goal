@@ -1,0 +1,4 @@
+Start
+/ Batch 9 — Fluid template with {% include '../../../etc/passwd' %} must be
+/ denied; render fails cleanly, no content leak.
+- throw "not implemented"

@@ -1,0 +1,82 @@
+{
+  "branch": "purge-systemio-from-actions",
+  "sessions": [
+    {
+      "id": "128f1b8d-c042-4cba-b941-c143cc965c6c",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-25T16:30:36+00:00",
+      "timestamp_end": "2026-05-25T16:55:00+00:00",
+      "intent": "Design test contract for purging System.IO from PLang — derivation verbs, .goal MIME, Goal/Path typing flip, AppGoals migration, action-handler denial paths, PLNG002 analyzer, and the .Absolute discipline rule.",
+      "before": {
+        "assumptions": "Architect plan v(final) approved by Ingi; 13 design decisions settled. Stage 1 is greenfield (no derivation verbs yet). Existing FileSystem/Surface/Permission tests give the canned-channel + root-setup pattern I'll reuse.",
+        "risk": "Tests must define behaviour for code that doesn't yet compile (handlers still hold string Path). Signatures only — Assert.Fail bodies until coder implements."
+      },
+      "plan": ".bot/purge-systemio-from-actions/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/DerivationTests/PathDerivationVerbTests.cs",
+            "PLang.Tests/Generator/Diagnostics/Plng002SystemIoBanTests.cs",
+            "PLang.Tests/App/Types/PathTests/GoalMimeDeserializationTests.cs",
+            "PLang.Tests/App/Goals/PathTypingTests/GoalPathTypingTests.cs",
+            "PLang.Tests/App/Goals/AppGoalsMigrationTests/AppGoalsThroughPathVerbsTests.cs",
+            "PLang.Tests/App/FileSystem/PermissionTests/ExecuteVerbTests/ExecuteVerbTests.cs",
+            "PLang.Tests/App/Types/PathTests/ContentShapeVerbTests.cs",
+            "PLang.Tests/App/FileSystem/SurfaceTests/AbsoluteDisciplineTests.cs",
+            "PLang.Tests/App/Modules/Test/DiscoverDenialPathTests.cs",
+            "PLang.Tests/App/Modules/Http/HttpStaticFileDenialTests.cs",
+            "PLang.Tests/App/Modules/Ui/FluidIncludeDenialTests.cs",
+            "PLang.Tests/App/Modules/Settings/SqliteAuthorizeDenialTests.cs",
+            "PLang.Tests/App/Modules/Llm/OpenAiImageDenialTests.cs",
+            "PLang.Tests/App/Modules/Debug/DebugTraceWriteTests.cs",
+            "PLang.Tests/App/FileSystem/SurfaceTests/InRootSilentFastPathTests.cs",
+            "PLang.Tests/App/Types/PathTests/RootComparisonKeyingTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit test signatures (Assert.Fail bodies) covering 11 batches mapped 1:1 onto the architect's stages 1–6. Reuses CannedChannel/StatelessChannel patterns from FileSystemPermissionFlowTests for actor + permission-prompt setup."
+        },
+        {
+          "paths": [
+            "Tests/Permission/DiscoverOutsideRoot/Start.test.goal",
+            "Tests/Permission/DiscoverDotDotTraversal/Start.test.goal",
+            "Tests/Permission/HttpStaticFileTraversal/Start.test.goal",
+            "Tests/Permission/FluidIncludeOutsideRoot/Start.test.goal",
+            "Tests/Permission/SqliteOutsideRoot/Start.test.goal",
+            "Tests/Permission/OpenAiImageOutsideRoot/Start.test.goal",
+            "Tests/Permission/ModuleAddDllOutsideRoot/Start.test.goal",
+            "Tests/Permission/InRootStaticServeNoPrompt/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang .test.goal scaffolds (throw 'not implemented') for ring-2 handler denial paths. Follows the repo convention <Scenario>/Start.test.goal used by existing Tests/Permission/Authorize/ tests."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/test-designer/v1/plan.md",
+            ".bot/purge-systemio-from-actions/test-designer/v1/verdict.json",
+            ".bot/purge-systemio-from-actions/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session output."
+        },
+        {
+          "paths": [".bot/purge-systemio-from-actions/test-designer/v1/plan.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "One deliberate divergence from architect: pulled D13 (.Absolute discipline) out of Stage 7 (docs) and gave it its own test batch with a mutation-test placeholder. The rule is only real if a test catches a missing Authorize."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "~80 C# test signatures + 8 PLang .test.goal scaffolds written across 11 batches. All bodies are Assert.Fail/throw — coder bot picks up next, stage order 1→7 from architect's plan."
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+Start
+/ Batch 9 — test/discover.cs with --test=/etc must be denied by AuthGate.
+/ Today's hand-rolled StartsWith check silently returns zero; post-migration
+/ it must surface a denial.
+- throw "not implemented"

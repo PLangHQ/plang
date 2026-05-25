@@ -1,0 +1,4 @@
+Start
+/ Batch 9 — llm.query with an image attachment outside root: ReadAsBase64
+/ must deny on "n"; no image bytes leak in the request.
+- throw "not implemented"
