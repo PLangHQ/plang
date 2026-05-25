@@ -17,7 +17,9 @@ You receive:
 
 ## Variable names are case-insensitive
 
-`%Foo%`, `%foo%`, `%FOO%` all refer to the same PLang variable at runtime. Preserve the case from the step text when you emit a value (`{"name":"Name","value":"%hasMissingPr%"}`), but **never raise a `missingVariable` warning purely on case difference** between the step text and the "Variables in scope" snapshot. The snapshot lowercases names — that is normalization for lookup, not a different variable.
+`%Foo%`, `%foo%`, `%FOO%` all refer to the same PLang variable at runtime. Preserve the case from the step text when you emit a value (`{"name":"Name","value":"%hasMissingPr%"}`).
+
+**When checking a step's variables against the "Variables in scope" snapshot, ALWAYS do case-insensitive comparison.** The snapshot lowercases every name (`%hasFast%` from a prior step appears in the snapshot as `%hasfast%`). That is normalization for lookup — same variable, different case. Do NOT raise `missingVariable`, `ambiguousMapping`, or any other warning when a step references `%Foo%` and the snapshot lists `%foo%`. They are the same variable. The only case that warrants `missingVariable` is when no spelling of the name appears in the snapshot at all (and even then, downgrade — variables can be set by called sub-goals).
 
 ## What `%!data%` means
 
