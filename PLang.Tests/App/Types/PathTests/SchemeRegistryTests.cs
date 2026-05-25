@@ -27,7 +27,7 @@ public class SchemeRegistryTests
         app.Types.Scheme.Register("test", (raw, c) => new FilePath(raw, c) { Raw = raw });
         var p = app.Types.Scheme.From("test://hello", ctx);
         await Assert.That(p).IsNotNull();
-        await Assert.That(p).IsTypeOf<FilePath>();
+        await Assert.That(p is FilePath).IsTrue();
     }
 
     [Test] public async Task Register_SameSchemeTwice_SecondRegistrationReplacesFirst()
@@ -38,14 +38,14 @@ public class SchemeRegistryTests
         app.Types.Scheme.Register("dup", (raw, c) => first);
         app.Types.Scheme.Register("dup", (raw, c) => second);
         var p = app.Types.Scheme.From("dup://x", ctx);
-        await Assert.That(p).IsSameReferenceAs(second);
+        await Assert.That(object.ReferenceEquals(p, second)).IsTrue();
     }
 
     [Test] public async Task From_BareAbsolutePath_RoutesToFilePath()
     {
         var (app, ctx) = MakeApp();
         var p = app.Types.Scheme.From("/tmp/anywhere/x.txt", ctx);
-        await Assert.That(p).IsTypeOf<FilePath>();
+        await Assert.That(p is FilePath).IsTrue();
         await Assert.That(p.Scheme).IsEqualTo("file");
     }
 
@@ -53,7 +53,7 @@ public class SchemeRegistryTests
     {
         var (app, ctx) = MakeApp();
         var p = app.Types.Scheme.From("relative.txt", ctx);
-        await Assert.That(p).IsTypeOf<FilePath>();
+        await Assert.That(p is FilePath).IsTrue();
     }
 
     [Test] public async Task From_WindowsDriveLetterPath_RoutesToFilePath_NotSchemeColon()
@@ -61,14 +61,14 @@ public class SchemeRegistryTests
         var (app, ctx) = MakeApp();
         // C:\... has a colon but is NOT "scheme://" — must not be treated as a scheme.
         var p = app.Types.Scheme.From("C:\\Users\\x.txt", ctx);
-        await Assert.That(p).IsTypeOf<FilePath>();
+        await Assert.That(p is FilePath).IsTrue();
     }
 
     [Test] public async Task From_ExplicitFileScheme_RoutesToFilePath()
     {
         var (app, ctx) = MakeApp();
         var p = app.Types.Scheme.From("file:///home/user/x.txt", ctx);
-        await Assert.That(p).IsTypeOf<FilePath>();
+        await Assert.That(p is FilePath).IsTrue();
         await Assert.That(p.Scheme).IsEqualTo("file");
     }
 
@@ -77,7 +77,7 @@ public class SchemeRegistryTests
         var (app, ctx) = MakeApp();
         // Built-in "file" registered lowercase; FILE:// must resolve to it.
         var p = app.Types.Scheme.From("FILE:///x.txt", ctx);
-        await Assert.That(p).IsTypeOf<FilePath>();
+        await Assert.That(p is FilePath).IsTrue();
     }
 
     [Test] public async Task From_UnknownScheme_ThrowsTypedSchemeNotRegistered()
@@ -103,6 +103,6 @@ public class SchemeRegistryTests
         var r1 = app.Types.Scheme;
         var r2 = app.Types.Scheme;
         await Assert.That(r1).IsNotNull();
-        await Assert.That(r1).IsSameReferenceAs(r2);
+        await Assert.That(object.ReferenceEquals(r1, r2)).IsTrue();
     }
 }

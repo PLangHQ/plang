@@ -96,8 +96,8 @@ public sealed partial class @this
         // PrPath is the identity (goal Name can collide across an app's goal tree).
         var goalPath = action.Step?.Goal?.PrPath;
         var callerGoalPath = caller?.Action.Step?.Goal?.PrPath;
-        if (!string.IsNullOrEmpty(goalPath)
-            && !string.Equals(goalPath, callerGoalPath, StringComparison.OrdinalIgnoreCase)
+        if (goalPath != null
+            && !goalPath.Equals(callerGoalPath)
             && ContainsGoal(goalPath))
             throw new CallStackOverflowException(MaxDepth);
 
@@ -130,14 +130,13 @@ public sealed partial class @this
     /// goal Name alone can collide across an app's goal tree. Used by Push to enforce
     /// indirect goal-cycle detection.
     /// </summary>
-    public bool ContainsGoal(string prPath)
+    public bool ContainsGoal(global::app.types.path.@this prPath)
     {
         var node = _current.Value;
         while (node != null)
         {
             var path = node.Action.Step?.Goal?.PrPath;
-            if (!string.IsNullOrEmpty(path)
-                && string.Equals(path, prPath, StringComparison.OrdinalIgnoreCase))
+            if (path != null && path.Equals(prPath))
                 return true;
             node = node.Caller;
         }

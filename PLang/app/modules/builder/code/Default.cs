@@ -227,11 +227,7 @@ public class Default : IBuilder
             var text = readResult.Value?.ToString();
             if (string.IsNullOrWhiteSpace(text)) continue;
 
-            var relativePath = file.Relative ?? file.Raw;
-            if (!relativePath.StartsWith('/') && !relativePath.StartsWith('\\'))
-                relativePath = "/" + relativePath;
-
-            var goal = Goal.Parse(text, relativePath);
+            var goal = Goal.Parse(text, file);
             if (goal == null) continue;
 
             var mergeErrors = await MergePrData(goal, app, context);
@@ -266,7 +262,7 @@ public class Default : IBuilder
         }
 
         var prPath = goal.PrPath;
-        if (string.IsNullOrEmpty(prPath))
+        if (prPath == null)
             return data.@this.FromError(new errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Group modifier actions onto their preceding executable action — recursive so
@@ -287,7 +283,7 @@ public class Default : IBuilder
         var saveAction = new file.Save
         {
             Context = context,
-            Path = data.@this<path>.Ok(path.Resolve(prPath, context)),
+            Path = data.@this<path>.Ok(prPath),
             Value = new data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
@@ -904,12 +900,12 @@ public class Default : IBuilder
     {
         var errors = new List<Info>();
         var prPath = goal.PrPath;
-        if (string.IsNullOrEmpty(prPath)) return errors;
+        if (prPath == null) return errors;
 
         var readAction = new file.Read
         {
             Context = context,
-            Path = data.@this<path>.Ok(path.Resolve(prPath, context))
+            Path = data.@this<path>.Ok(prPath)
         };
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
@@ -977,7 +973,7 @@ public class Default : IBuilder
             // downstream checks (or runtime) will surface a NotFound for it.
             goalCall.Action ??= action;
             var resolved = await goalCall.GetGoalAsync(app, context);
-            if (resolved.Success && resolved.Value is Goal g && !string.IsNullOrEmpty(g.PrPath))
+            if (resolved.Success && resolved.Value is Goal g && g.PrPath != null)
             {
                 // Pre-resolve the .pr path. A slash-qualified Name keeps its
                 // folder prefix in the saved .pr — LoadFromFile leaf-matches it

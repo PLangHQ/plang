@@ -31,7 +31,8 @@ public sealed class Json : ISerializer
             },
             Converters =
             {
-                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                new global::app.types.path.JsonConverter()
             }
         };
     }

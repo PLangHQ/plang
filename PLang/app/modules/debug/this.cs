@@ -336,7 +336,7 @@ public sealed class @this
                 var stepIdx = call.Action.Step?.Index ?? -1;
                 var name = goal?.Name ?? call.Action.Module;
                 var stepInfo = stepIdx >= 0 ? $" (step {stepIdx + 1})" : "";
-                var pathInfo = !string.IsNullOrEmpty(goal?.Path) ? $" in {goal.Path}" : "";
+                var pathInfo = goal?.Path != null ? $" in {goal.Path}" : "";
                 sb.AppendLine($"    at {name}.{call.Action.ActionName}{stepInfo}{pathInfo}");
             }
         }

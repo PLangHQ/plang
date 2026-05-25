@@ -197,11 +197,11 @@ public class Fluid : ITemplate
     {
         var app = action.Context.App;
         var goalPath = action.Context.Goal?.Path;
-        if (!string.IsNullOrEmpty(goalPath))
+        if (goalPath != null)
         {
-            var goalDir = System.IO.Path.GetDirectoryName(goalPath);
-            if (!string.IsNullOrEmpty(goalDir))
-                return global::app.types.path.file.@this.ValidatePath(goalDir, app);
+            var goalDir = goalPath.Parent;
+            if (goalDir != null)
+                return goalDir.Absolute;
         }
         return app.AbsolutePath;
     }

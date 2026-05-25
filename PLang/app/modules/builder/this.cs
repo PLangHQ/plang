@@ -136,7 +136,7 @@ public sealed partial class @this
         }
 
         _app.CurrentActor = _app.User;
-        var buildCall = new GoalCall { Name = "Build", PrPath = "/system/builder/.build/build.pr" };
+        var buildCall = new GoalCall { Name = "Build", PrPath = global::app.types.path.@this.Resolve("/system/builder/.build/build.pr", _app.User.Context) };
         return await _app.RunGoalAsync(buildCall, _app.User.Context);
     }
 }

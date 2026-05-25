@@ -33,11 +33,13 @@ public sealed class @this
     public void Add(goal.@this goal)
     {
         goal.App = App;
-        if (string.IsNullOrEmpty(goal.PrPath))
+        if (goal.PrPath == null)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
-        _goals[goal.PrPath] = goal;
-        if (!string.IsNullOrEmpty(goal.Path))
-            _byPath[goal.Path] = goal;
+        // String-key the dicts on the Path's portable form (Relative) — Stage 4
+        // will switch to Path-keyed dicts that key on the Path's own Equals/Hash.
+        _goals[goal.PrPath.ToString()] = goal;
+        if (goal.Path != null)
+            _byPath[goal.Path.ToString()] = goal;
     }
 
     /// <summary>
@@ -202,8 +204,8 @@ public sealed class @this
         // Try removing by key directly (PrPath)
         if (_goals.TryRemove(name, out var goal))
         {
-            if (!string.IsNullOrEmpty(goal.Path))
-                _byPath.TryRemove(goal.Path, out _);
+            if (goal.Path != null)
+                _byPath.TryRemove(goal.Path.ToString(), out _);
             return true;
         }
 
@@ -211,8 +213,8 @@ public sealed class @this
         var found = _goals.FirstOrDefault(kv => kv.Value.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
         if (found.Value != null && _goals.TryRemove(found.Key, out goal))
         {
-            if (!string.IsNullOrEmpty(goal.Path))
-                _byPath.TryRemove(goal.Path, out _);
+            if (goal.Path != null)
+                _byPath.TryRemove(goal.Path.ToString(), out _);
             return true;
         }
 
@@ -319,6 +321,10 @@ public sealed class @this
 
             List<goal.@this>? goals = null;
             var trimmed = content.TrimStart();
+            // PathDeserializationScope: pushes the context so PathJsonConverter
+            // can call path.Resolve while reading Goal.Path / GoalCall.PrPath.
+            var deserializeContext = context ?? app.System.Context!;
+            using var _scope = global::app.types.path.DeserializationScope.Push(deserializeContext);
             if (trimmed.StartsWith('['))
             {
                 goals = app.System.Channels.Serializers.Deserialize<List<goal.@this>>(

@@ -58,18 +58,18 @@ public sealed partial class @this : global::app.types.path.@this
         {
             var goal = context.Goal;
             var runtimeDir = goal?.GetRuntimeDirectory();
-            if (!string.IsNullOrEmpty(runtimeDir))
+            if (runtimeDir != null)
             {
-                resolved = System.IO.Path.Combine(runtimeDir, rawPath);
+                resolved = System.IO.Path.Combine(runtimeDir.Absolute, rawPath);
             }
             else
             {
                 var goalPath = goal?.Path;
-                if (!string.IsNullOrEmpty(goalPath))
+                if (goalPath != null)
                 {
-                    var goalDir = System.IO.Path.GetDirectoryName(goalPath);
-                    if (!string.IsNullOrEmpty(goalDir))
-                        resolved = System.IO.Path.Combine(goalDir, rawPath);
+                    var goalDir = goalPath.Parent;
+                    if (goalDir != null)
+                        resolved = System.IO.Path.Combine(goalDir.Absolute, rawPath);
                 }
             }
         }

@@ -28,7 +28,12 @@ public sealed partial class @this
     internal static readonly JsonSerializerOptions _caseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new global::app.channels.serializers.TimeSpanIso8601() },
+        Converters = {
+            new JsonStringEnumConverter(allowIntegerValues: true),
+            new app.data.EmptyStringToNullEnumConverterFactory(),
+            new global::app.channels.serializers.TimeSpanIso8601(),
+            new global::app.types.path.JsonConverter(),
+        },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
 
@@ -338,7 +343,10 @@ public sealed partial class @this
                         "ClrTypeNameInGoalSlot", 500)
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
                             "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
-                var prPath = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
+                var prPathStr = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
+                var prPath = (prPathStr != null && context != null)
+                    ? global::app.types.path.@this.Resolve(prPathStr, context)
+                    : null;
                 List<data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
                 {

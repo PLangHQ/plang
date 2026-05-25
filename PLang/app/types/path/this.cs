@@ -98,6 +98,11 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
         {
             if (_relative != null) return _relative;
 
+            // No Context (test fixtures, JSON deserialize without scope) — no root
+            // anchor, so the portable form is just Raw or absolute as-is.
+            if (Context?.App == null)
+                return _relative = !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath;
+
             var rootAbsolutePath = RootAbsolutePath;
             var rootWithSeparator = rootAbsolutePath;
             if (!rootWithSeparator.EndsWith(System.IO.Path.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(System.IO.Path.AltDirectorySeparatorChar))
@@ -131,11 +136,13 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
     {
         get
         {
-            var rel = Relative.Replace('\\', '/');
-            var dir = System.IO.Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
-            var baseName = System.IO.Path.GetFileNameWithoutExtension(rel);
-            var prDir = string.IsNullOrEmpty(dir) ? ".build" : $"{dir}/.build";
-            var prPath = $"/{prDir}/{baseName.ToLowerInvariant()}.pr";
+            // Derive the .pr sibling path via the generic derivation verbs.
+            // .goal-file → parent/.build/<lowercase-stem>.pr.
+            var stem = FileNameWithoutExtension.ToLowerInvariant();
+            var parent = Parent;
+            var prPath = parent != null
+                ? parent.Combine(".build").Combine(stem + ".pr")
+                : this.Combine(".build").Combine(stem + ".pr");
             return new GoalCall { Name = "", PrPath = prPath };
         }
     }
@@ -158,7 +165,15 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
 
     // --- Display ---
 
-    public override string ToString() => Content?.ToString() ?? Relative;
+    public override string ToString()
+    {
+        if (Content?.ToString() is { } c) return c;
+        // No Context means Relative would throw — fall back to the raw or
+        // absolute form so dictionary-keying / interpolation of stub Paths
+        // (test fixtures, JSON deserialize without scope) still works.
+        if (Context == null) return !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath;
+        try { return Relative; } catch { return !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath; }
+    }
 
     // Path equality follows RootComparison — the same case-sensitivity rule
     // Relative/IsUnder/ValidatePath use, so they can't drift apart. Hard-coding
@@ -173,4 +188,24 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
 
     public override int GetHashCode() =>
         StringComparer.FromComparison(RootComparison).GetHashCode(_absolutePath);
+
+    /// <summary>
+    /// Convenience: <c>"some/file.goal"</c> automatically lifts to a file-scheme
+    /// Path with Context=null. Use sites are test fixtures, in-memory Goals
+    /// built from string literals, and JSON deserialize paths that don't have
+    /// a Context available. Production code with a Context in scope should go
+    /// through <see cref="Resolve(string, actor.context.@this)"/> instead so the
+    /// scheme registry picks the right subclass and Context wires immediately.
+    /// </summary>
+    public static implicit operator @this(string raw)
+        => new file.@this(raw) { Raw = raw };
+
+    /// <summary>
+    /// A Path implicitly stringifies to its <see cref="ToString"/> representation.
+    /// Lets <c>Assert.That(path).IsEqualTo("/some/path")</c> compile as a
+    /// string-vs-string check (with the right value surfaced in failure messages),
+    /// and rescues string interpolation across third-party libs that don't call
+    /// ToString themselves.
+    /// </summary>
+    public static implicit operator string(@this? p) => p?.ToString() ?? "";
 }

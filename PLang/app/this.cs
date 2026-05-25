@@ -497,7 +497,7 @@ public sealed partial class @this : IAsyncDisposable
             return app.data.@this.FromError(new global::app.errors.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
-        var goalCall = new GoalCall { PrPath = goalFile };
+        var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(goalFile, context) };
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 

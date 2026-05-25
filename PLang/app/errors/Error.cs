@@ -161,7 +161,7 @@ public class Error : IError
 
     private static void FormatError(IError error, StringBuilder sb, string indent)
     {
-        var goalPath = error.Goal?.Path ?? error.Step?.Goal?.Path;
+        var goalPath = (error.Goal?.Path ?? error.Step?.Goal?.Path)?.ToString();
         var file = goalPath != null && error.Step != null ? $"{goalPath}:{error.Step.LineNumber}" : goalPath;
 
         // Header

@@ -128,7 +128,7 @@ public partial class discover : IContext
         try
         {
             var goalText = System.IO.File.ReadAllText(absGoalPath);
-            currentGoal = Goal.Parse(goalText, relGoalPath);
+            currentGoal = Goal.Parse(goalText, global::app.types.path.@this.Resolve(relGoalPath, Context));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -279,7 +279,7 @@ public partial class discover : IContext
         if (depth > 50) return;
         if (!visited.Add(goal.Name)) return;
 
-        var goalId = goal.Path ?? goal.Name ?? "?";
+        var goalId = goal.Path?.ToString() ?? goal.Name ?? "?";
         var seededSteps = new HashSet<int>();
         var subGoals = new List<Goal>();
 

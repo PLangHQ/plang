@@ -30,7 +30,7 @@ public class CallSnapshotTests
         var snap = new Snapshot();
         call.Capture(snap);
 
-        await Assert.That(snap.Read<string>("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath);
+        await Assert.That(snap.Read<string>("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath?.ToString());
         await Assert.That(snap.Read<string>("goalHash")).IsEqualTo(action.Step.Goal.Hash);
         // Wire shape is the stub triple — no full goal serialised.
         await Assert.That(snap.Has("goal")).IsFalse();

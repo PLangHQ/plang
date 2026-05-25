@@ -81,7 +81,7 @@ public sealed partial class @this
                 {
                     // .goal source — parse via Goal.Parse, NOT JSON. The .pr branch
                     // (mime application/plang-goal) keeps the existing JSON path.
-                    var goal = app.goals.goal.@this.Parse(text, Relative);
+                    var goal = app.goals.goal.@this.Parse(text, this);
                     if (goal == null)
                         return data.@this.FromError(new errors.ServiceError(
                             $"Failed to parse .goal file: {Raw}", "ParseError", 400));
