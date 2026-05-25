@@ -3,7 +3,15 @@
 **From:** architect
 **Branch:** `typed-action-returns` (off `runtime2`); sibling work on `test-report-typed-object` (also off `runtime2`)
 **Inputs:** `.bot/typed-action-returns/builder/architect-handoff.md`, `.bot/test-report-typed-object/brief.md`
-**Status:** v3 — second redline round absorbed
+**Status:** v3.1 — third redline absorbed (Build() shape collapsed; Data.Warnings added; materialization API OBP-cleaned)
+
+## What v3.1 changed (from v3)
+
+Three OBP critiques shaped the third pass:
+
+- **`BuildContext` and `BuildResult` killed.** Wrapper-classes-for-nothing. The action `@this` already carries args + step; Build() operates on `this`. Result is `Data` (universal result type — Ok with inferred type name, or Fail, or carry Warnings). A.6 contract collapsed to `Task<Data> Build()`.
+- **`Data.As<T>()` framing dropped.** The caller shouldn't pick the materializer via a generic — that leaks the choice to the call site. Data owns the materializer lookup via its own `.Type`. A.4 reworded: property access goes through Data; `Data.As(string typeName)` exists only for explicit cross-type coercion.
+- **`Data.Warnings` added as first-class.** Build() needs non-fatal diagnostics (e.g., `file.read 'foo.csv'` at build time when the file doesn't exist yet — warn, don't fail). Data has `Error` but no Warning. Adding `Warnings: IReadOnlyList<IWarning>` to Data, mirroring Error. Broadly useful beyond Build() — runtime warnings on slow http, file.save overwrites, etc.
 
 ## What v3 changed (from v2)
 
@@ -27,9 +35,10 @@ Five things from the second redline pass reshape the plan:
 | `output.ask` | `Data<string>` at C#; user-provided `(type)` hint on the write target overrides; lazy materializer parses the string |
 | `Response` record | `app/http/Response/this.cs` (no `Http` prefix — owner is in namespace) |
 | `tester/File` → `tester/Test` | rename. `app.tester.Test.@this` at `app/tester/Test/this.cs`. `test.discover` returns `List<Test>`. See A.7. |
-| `variable.set` | tags Data with `.Type=<T>`, **no parsing at set time**. Materialization is lazy on first access — `%var.rows%` / `Data.As<Csv>()` triggers the materializer from the `Serializers` registry, parses once, caches. |
+| `variable.set` | tags Data with `.Type=<T>`, **no parsing at set time**. Materialization is lazy on first access; **Data owns the materializer lookup via its own `.Type`** — caller never picks via a generic. |
 | `(type)` hint | not new PLang syntax. Free-form text the LLM reads. Hint lands on the **step's terminal `variable.set`** Type, not on the immediate next op. |
-| `Build()` method | new contract on `IClass`. Runs from `builder.validate`. Per-action C# code that inspects resolved args and declares the terminal `variable.set` Type. |
+| `Build()` method | new optional method on `IClass`: `Task<Data> Build()`. Runs from `builder.validate`. No wrapper classes — action `@this` carries its own args + step. Returns `Data` (Ok with inferred type name, Fail, or warnings). |
+| `Data.Warnings` | new first-class field on Data (mirrors `Error`). `IWarning` interface. Enables Build() to emit non-fatal diagnostics (e.g., file path doesn't exist at build time). |
 | `test.report` | pure compute → `Data<Report>`; persistence is explicit `file.save` in PLang; `Format` param dies; JUnit becomes `JunitSerializer` keyed on `.junit.xml` (multi-segment via extended `GetByExtension`) |
 | `ReportResult` | not introduced; type is `Report`. No `[PlangType]` attribute — derived from class name. |
 
@@ -97,15 +106,12 @@ public sealed record Response(
 
 Runtime mechanism. `variable.set Type=<T>` tags the Data object with `.Type=<T>` and stores the raw value untouched. **No parsing at set time** — same discipline as Lazy params and `IBooleanResolvable`'s deferred I/O.
 
-The first access that actually needs the typed view triggers the materializer:
+**Data owns the materializer lookup, not the caller.** A consumer never picks the materializer via a generic — `Data.As<JsonNode>()` is the wrong shape because it leaks the materializer choice to the call site. Instead:
 
-- Property dereference like `%var.rows%` for csv-tagged data
-- Explicit `Data.As<JsonNode>()` for json-tagged data
-- Any other typed-shape access path
+- **Default case.** Property dereference (`%var.rows%`, `%var.foo.bar%`) and any C# accessor that wants the materialized value goes through a Data method that uses Data's own declared `.Type` to look up the materializer from the `Serializers` registry, runs it once on `Data.Value`, caches the result. Exact name (`Materialize()`, internal `Value` getter override, etc.) is the coder's call — the rule is that Data picks the materializer from `.Type`, not the caller.
+- **Cross-type coercion.** `Data.As(string typeName)` for the rare case where someone has csv-tagged data and explicitly wants it as a different type. Data looks up the materializer for the *requested* type and runs it. Still owned by Data; the parameter is the requested target, not a generic.
 
-The materializer parses once via the `Serializers` registry (`Deserialize` is exactly the "raw → typed" step needed) and caches the result on Data for subsequent accesses.
-
-Discipline: nothing in `variable.set` does I/O or parsing. It records intent. If the declared Type has no materializer registered, the error surfaces at the first access site, not at set time — that's where the developer's mental model lives (the access is where they expected the typed shape).
+Discipline: nothing in `variable.set` does I/O or parsing. It records intent. If the declared `.Type` has no materializer registered, the error surfaces at the first access site, not at set time — that's where the developer's mental model lives (the access is where they expected the typed shape).
 
 This section is purely runtime. Compile-time type inference is A.5 + A.6 below.
 
@@ -131,36 +137,70 @@ The rule lives in `Compile.llm` (cross-cutting kernel teaching). No schema chang
 
 This is the v3 keystone. Per-action C# code does the deterministic compile-time inference that the LLM is the wrong tool for.
 
-**Contract.**
+**Contract.** No wrapper classes — the action `@this` already carries its args (source-generated properties) and reaches its Step. Result is `Data` (universal result type, no separate `BuildResult` needed):
 
 ```csharp
 public interface IClass
 {
     // existing surface...
-    // new optional method:
-    BuildResult? Build(BuildContext ctx);
+    Task<Data> Build();   // optional; default impl returns Data.Ok()
 }
-
-public sealed record BuildContext(
-    Step Step,                       // the step being built
-    IReadOnlyList<Op> EmittedChain,  // the chain of ops emitted for this step (read.file | list.where | variable.set)
-    /* + access to resolved args */);
-
-public sealed record BuildResult(
-    string? TerminalType,            // PLang type to set on the step's terminal variable.set
-    /* + other compile-time signals as the design matures */);
 ```
 
-`Build()` is optional — handlers that don't need compile-time inference just don't implement it (or return `null`). The validator iterates each step's actions, calls `Build()` on each one that has it, accumulates the results, and sets the terminal `variable.set` Type accordingly.
+`Build()` is optional — handlers that don't need compile-time inference just don't implement it (or return `Data.Ok()`). The validator iterates each step's actions, calls `Build()` on each, accumulates the results, and sets the terminal `variable.set` Type accordingly.
 
-**Hook point.** `builder.validate` — by the time validate runs the actions are resolved, args are bound, and emit hasn't happened yet, so Build() can influence the .pr output. That's the window we need. Coder verifies the existing validate pass shape and slots Build() in; if validate doesn't currently iterate per-action with the right context, that's the one piece of plumbing this branch lands.
+**Return convention via Data.**
+
+- `Data.Ok("csv")` — success; `Data.Value` carries the inferred terminal type name. Validator reads it and sets the terminal `variable.set` Type.
+- `Data.Fail(error)` — build-time error (e.g., contradictory args). Validator surfaces it; emit fails.
+- `Data.Ok()` (no value) — Build() ran but had nothing to contribute. Normal.
+- `Data.Ok("csv").WithWarning(...)` — success plus a warning (see Warnings section below).
+
+**Hook point.** `builder.validate` — by the time validate runs the actions are resolved, args are bound, and emit hasn't happened yet, so Build() can influence the .pr output. Coder verifies the existing validate pass shape and slots Build() in; if validate doesn't currently iterate per-action, that's the one piece of plumbing this branch lands.
 
 **Concrete per-action implementations.**
 
-- **`file.read.Build()`** — if Path arg is a literal, parse extension via `Path.GetExtension`, look up `Formats.Mime(ext)`, map to PLang type via `ClrFromMime`/`data.type.FromMime`. Return `BuildResult { TerminalType = "csv" }` (or whatever the extension maps to). For variable paths (`file.read %p%`), return `null` — no inference possible.
-- **`http.request.Build()` / `http.upload.Build()`** — same against URL: literal URL extension drives the type. Variable URL → `null`.
-- **`llm.query.Build()`** — if `schema` arg is non-empty, return `{ TerminalType = "json" }`. Else if `format` arg is set (`.md`, `csharp`, …), return that format as type.
-- **`output.ask.Build()`** — defaults handled by `(type)` hint in A.5; Build() returns `null` for the common case.
+```csharp
+// file.read
+public Task<Data> Build()
+{
+    if (Path.Value is string p && System.IO.Path.HasExtension(p))
+    {
+        var mime = Context.App.Formats.Mime(System.IO.Path.GetExtension(p));
+        var typeName = data.type.FromMime(mime).Name;
+        return Task.FromResult(Data.Ok(typeName));
+    }
+    return Task.FromResult(Data.Ok());
+}
+
+// llm.query
+public Task<Data> Build()
+    => !string.IsNullOrEmpty(Schema.Value) ? Task.FromResult(Data.Ok("json"))
+     : !string.IsNullOrEmpty(Format.Value) ? Task.FromResult(Data.Ok(Format.Value))
+     : Task.FromResult(Data.Ok());
+
+// http.request / http.upload — same pattern against URL literal
+```
+
+`output.ask.Build()` returns `Data.Ok()` — defaults handled by the `(type)` hint in A.5.
+
+**Warnings on Data (new).** Build() needs to emit non-fatal diagnostics — e.g., `file.read 'foo.csv'` at build time when `foo.csv` doesn't exist on disk yet is a *warning*, not an error (the file might exist at run time). Data has `Error` but no `Warning` today. Adding:
+
+```csharp
+public partial record Data
+{
+    public IReadOnlyList<IWarning> Warnings { get; init; } = Array.Empty<IWarning>();
+    public Data WithWarning(IWarning w) => this with { Warnings = [..Warnings, w] };
+}
+
+public interface IWarning  // mirrors IError, minus fatal severity
+{
+    string Message { get; }
+    // ... fields grow with use; start small
+}
+```
+
+Validator collects Build()'s warnings into the build trace alongside any compile-time warnings the LLM emitted. Not Build-specific — Warnings on Data are broadly useful (runtime warns about slow http, file.save warns about overwrite, etc.).
 
 **User cast wins over Build() inference.** If the LLM already emitted a `(type)` hint into the terminal `variable.set` Type via A.5, Build() doesn't override it. Build() fills in the deterministic inference where the user didn't specify.
 
@@ -292,4 +332,6 @@ Across the `Tests/` corpus, the 729 `(object)` occurrences in Category A should 
 5. **`variable.set` materializer table** — `variable.set` itself only tags Data with `.Type`; the lazy materializers (`json` → `JsonNode`, `csv` → `Csv`, `xlsx` → `Workbook`, …) live on `Data.As<T>()` / property access, hooked through the existing `Serializers` registry where possible. `Primitives` table at `app/types/this.cs` is the source of truth for which types exist.
 6. **`[PlangType]` derivation** — follow-up: source generator could derive PLang type from class name (lowercased) by default, with `[PlangType("…")]` as explicit override only on collision. CLAUDE.md proposal worth filing.
 7. **CLAUDE.md proposal** — file under `.bot/typed-action-returns/claude-md-proposals.md`: the "Key Files" section still references `PLang/Runtime2/Engine/Utility/TypeMapping.cs`; the actual location is `PLang/app/types/this.cs ClrFromMime`.
-8. **`Build()` contract refinement** — first cut in A.6 is intentionally minimal (`TerminalType` only). Once we have it landing, other compile-time signals can be added (warnings, derived metadata, etc.) without re-litigating the shape.
+8. **`Build()` contract refinement** — first cut in A.6 is intentionally minimal (returns Data carrying type-name string, or Ok/Fail, plus optional Warnings). Other compile-time signals can grow into Data.Properties without re-litigating the Build() shape.
+9. **`IDiagnostic` generalization** — `Data` now has `Error` (fatal) and `Warnings` (non-fatal). At some point these probably want to collapse into `IDiagnostic` with severity, sharing common machinery (location, source span, etc.). Not for this branch; capture as follow-up.
+10. **Data API shape for materialization** — A.4 leaves the exact method name open (`Materialize()` vs internal `Value` getter override vs `As(string)` for cross-type). Coder picks during implementation; the locked rule is that Data picks the materializer from `.Type`, never the caller via a generic.
