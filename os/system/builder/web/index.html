@@ -1583,6 +1583,23 @@ async function renderFile(file) {
   }
 }
 
+// Sum usage across each goal's currently-active trace tab (or fall back to
+// the latest trace when no tab has been clicked yet). Returns the shape
+// formatUsage() expects, with cost: null when no trace had a known model.
+function computeActiveFileUsage(file) {
+  let totalTokens = 0, totalCached = 0, totalCost = 0, costSeen = false;
+  for (const g of file.goals) {
+    const activeId = activeTraceByGoal.get(file.key + '::' + g.name);
+    const trace = (activeId && g.traces.find(t => t.traceId === activeId)) || g.traces[0];
+    const u = trace && trace.usage;
+    if (!u) continue;
+    totalTokens += u.totalTokens || 0;
+    totalCached += u.cachedTokens || 0;
+    if (u.cost != null) { totalCost += u.cost; costSeen = true; }
+  }
+  return { totalTokens, cachedTokens: totalCached, cost: costSeen ? totalCost : null };
+}
+
 function renderFileHeader(file, entry) {
   // When the active trace is loaded we use its goals (parent + subGoals); that
   // way the stat chips count sub-goals and include confidence breakdown. Before
@@ -1605,19 +1622,12 @@ function renderFileHeader(file, entry) {
     ? entryGoals.filter(g => g.visibility === 'private').length
     : fileGoals.filter(g => g.visibility === 'private').length;
 
-  // Token + cost across the file's latest trace per goal. Summary entries from
-  // the sidebar already carry usage (server-aggregated planner + stepPasses);
-  // file-level total is the sum across goals.
-  let totalTokens = 0, totalCached = 0, totalCost = 0, costSeen = false;
-  for (const g of fileGoals) {
-    const latest = g.traces[0];
-    const u = latest && latest.usage;
-    if (!u) continue;
-    totalTokens += u.totalTokens || 0;
-    totalCached += u.cachedTokens || 0;
-    if (u.cost != null) { totalCost += u.cost; costSeen = true; }
-  }
-  const fileUsageLabel = formatUsage({totalTokens, cachedTokens: totalCached, cost: costSeen ? totalCost : null});
+  // Token + cost across the file's CURRENTLY ACTIVE trace per goal (not the
+  // latest — switching trace tabs must update this number). Summary entries
+  // from the sidebar already carry usage (server-aggregated planner +
+  // stepPasses), so we don't need the full trace loaded.
+  const activeUsage = computeActiveFileUsage(file);
+  const fileUsageLabel = formatUsage(activeUsage);
 
   let totalSteps = 0, totalErr = 0, totalWarn = 0, lowCount = 0, medCount = 0;
   if (entryGoals) {
@@ -1663,6 +1673,7 @@ function renderFileHeader(file, entry) {
       <div class="subtitle">
         <span>${esc(file.bucket)}</span>
         <span>last built ${esc(formatTs(latestTs))}</span>
+        ${fileUsageLabel ? `<span title="planner + per-step compile, summed across goals (active trace per tab)">${fileUsageLabel}</span>` : ''}
       </div>
       <div class="file-stats">
         ${goalsChip}
@@ -1673,7 +1684,6 @@ function renderFileHeader(file, entry) {
         <span class="stat-chip"><strong>${totalTraces}</strong> trace${totalTraces === 1 ? '' : 's'}</span>
         ${totalErr > 0 ? `<span class="stat-chip err"><strong>${totalErr}</strong> error${totalErr === 1 ? '' : 's'}</span>` : ''}
         ${totalWarn > 0 ? `<span class="stat-chip warn"><strong>${totalWarn}</strong> warning${totalWarn === 1 ? '' : 's'}</span>` : ''}
-        ${fileUsageLabel ? `<span class="stat-chip" title="planner + per-step compile, summed across goals">${fileUsageLabel}</span>` : ''}
       </div>
     </div>
   `;
@@ -1733,6 +1743,13 @@ function activateTab(fileKey, goalName, traceId) {
   const file = findFile(fileKey);
   const goal = file?.goals.find(g => g.name === goalName);
   if (goal) renderGoalSection(file, goal);
+  // Re-render the file header so the cost in the subtitle reflects the
+  // newly-active trace's usage (computeActiveFileUsage reads activeTraceByGoal).
+  const slot = file ? document.getElementById('file-header-slot') : null;
+  if (slot) {
+    const cachedEntry = file.goals[0] && traceCache.get(activeTraceByGoal.get(file.key + '::' + file.goals[0].name));
+    slot.innerHTML = renderFileHeader(file, cachedEntry || null);
+  }
 }
 
 function renderTraceBody(entry) {
