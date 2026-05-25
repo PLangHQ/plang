@@ -387,8 +387,39 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_trace_list()
         elif self.path.startswith('/api/traces/'):
             self.send_trace_file(self.path[len('/api/traces/'):])
+        elif self.path == '/api/test-results':
+            self.send_test_results()
         else:
             super().do_GET()
+
+    def send_test_results(self):
+        """Scan every `*/.test/results.json` under PLANG_ROOT and return a dict
+        keyed by bucket (the directory under PLANG_ROOT that contains `.test/`).
+        Client looks up `byBucket[file.bucket]` and finds the run whose `path`
+        matches `file.path`. Tiny files (~50KB for 200 tests); no caching yet."""
+        out = {}
+        # Walk REPO_ROOT (repo top), not PLANG_ROOT (os/) — Tests/.test/ lives
+        # at the repo top alongside os/, so the os/-rooted walk misses it.
+        for dirpath, dirnames, filenames in os.walk(REPO_ROOT):
+            dirnames[:] = [d for d in dirnames if d not in ('.git', 'node_modules', 'bin', 'obj', '.build')]
+            if os.path.basename(dirpath) != '.test':
+                continue
+            results_file = os.path.join(dirpath, 'results.json')
+            if not os.path.isfile(results_file):
+                continue
+            bucket_root = os.path.dirname(dirpath)
+            bucket = os.path.relpath(bucket_root, REPO_ROOT).replace(os.sep, '/')
+            if bucket == '.':
+                bucket = ''
+            try:
+                with open(results_file, 'r', encoding='utf-8') as f:
+                    out[bucket] = {
+                        'mtime': os.path.getmtime(results_file),
+                        'data': json.load(f),
+                    }
+            except Exception as e:
+                out[bucket] = {'mtime': 0, 'error': str(e)}
+        self.send_json(out)
 
     def send_trace_list(self):
         traces = _list_all_traces(with_summary=True)

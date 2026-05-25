@@ -223,6 +223,68 @@
   .tree-children { display: none; }
   .tree-children.open { display: block; }
 
+  /* Test-run status glyph in the sidebar tree, left of the file name. */
+  .test-glyph {
+    display: inline-block;
+    width: 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dim);
+  }
+  .test-glyph.test-pass    { color: var(--green); }
+  .test-glyph.test-fail    { color: var(--accent); }
+  .test-glyph.test-timeout { color: var(--orange); }
+  .test-glyph.test-stale   { color: var(--yellow); }
+  .test-glyph.test-skip    { color: var(--text-dim); }
+  .test-glyph.test-ready   { color: var(--blue); }
+
+  /* File-header test-result panel — collapsed pass summary, expanded fail detail. */
+  .test-result-panel {
+    margin: 8px 0;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-left: 3px solid var(--text-dim);
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .test-result-panel.test-pass    { border-left-color: var(--green); }
+  .test-result-panel.test-fail    { border-left-color: var(--accent); background: rgba(233,69,96,0.08); }
+  .test-result-panel.test-timeout { border-left-color: var(--orange); background: rgba(232,112,64,0.08); }
+  .test-result-panel.test-stale   { border-left-color: var(--yellow); }
+  .test-result-panel .tr-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-weight: 600;
+  }
+  .test-result-panel .tr-status { font-size: 13px; }
+  .test-result-panel .tr-meta   { color: var(--text-dim); font-weight: normal; }
+  .test-result-panel .tr-error  { margin-top: 8px; color: var(--text); }
+  .test-result-panel .tr-pair {
+    margin-top: 4px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .test-result-panel .tr-pair-label { color: var(--text-dim); margin-right: 6px; }
+  .test-result-panel .tr-vars {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .test-result-panel .tr-vars pre {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    background: rgba(0,0,0,0.2);
+    padding: 6px 8px;
+    border-radius: 3px;
+    overflow-x: auto;
+    margin-top: 4px;
+  }
+
   #controls {
     padding: 12px 16px;
     border-top: 1px solid var(--border);
@@ -933,6 +995,18 @@ let filterQuery = '';
 // failures, 'warnings' = only files with warnings. Combines AND with filterQuery.
 let issueFilter = null;
 
+// Per-bucket test results from /api/test-results — bucket → Map(path → run).
+// Each run carries {status, durationMs, error, expected, actual, variables, ...}.
+// Updated on every poll alongside /api/traces.
+const testResults = new Map();
+function lookupTestResult(file) {
+  const byPath = testResults.get(file.bucket);
+  if (!byPath) return null;
+  // results.json stores paths without leading slash; file.path has one.
+  const stripped = (file.path || '').replace(/^\/+/, '');
+  return byPath.get(stripped) || null;
+}
+
 // Per-step disclosure depth: 0 = text+formal only, 1 = +json.
 // Key is traceId + "::" + stepIdx. The goal-level LLM Request block is shared
 // across the whole trace (same system/user prompt for every step), so it lives
@@ -991,6 +1065,23 @@ function setMeta(text, live) {
 
 async function poll() {
   try {
+    // Test results first — small file, cheap; the sidebar's badges and the
+    // file header's test-result panel both need this. Failures here don't
+    // block the traces fetch.
+    try {
+      const trR = await fetch('/api/test-results', { cache: 'no-store' });
+      if (trR.ok) {
+        const tr = await trR.json();
+        testResults.clear();
+        for (const [bucket, b] of Object.entries(tr)) {
+          if (!b || !b.data || !Array.isArray(b.data.runs)) continue;
+          const byPath = new Map();
+          for (const run of b.data.runs) byPath.set(run.path, run);
+          testResults.set(bucket, byPath);
+        }
+      }
+    } catch (_) { /* tolerate missing results.json */ }
+
     const apiR = await fetch('/api/traces', { cache: 'no-store' }).catch(() => null);
     if (!apiR?.ok) { setMeta('no data', false); return; }
     const items = await apiR.json();
@@ -1525,7 +1616,9 @@ function renderFileNode(file, depth) {
   row.className = 'tree-row tree-file-row' + (file.key === selectedFileKey ? ' active' : '');
   row.style.paddingLeft = (10 + depth * 14) + 'px';
   const counts = fileIssueCounts(file);
+  const tr = lookupTestResult(file);
   row.innerHTML = `
+    ${testStatusGlyph(tr)}
     <span class="tree-label">${esc(file.label)}</span>
     <span class="badge badge-steps">${file.goals.length}</span>
     ${issueBadges(counts)}
@@ -1535,6 +1628,22 @@ function renderFileNode(file, depth) {
     selectFile(file);
   };
   return row;
+}
+
+// Compact unicode glyph for a test run's status — sits left of the file name.
+// Empty string when there's no test result (non-test files or never-run).
+function testStatusGlyph(run) {
+  if (!run) return '';
+  const m = {
+    Pass:    { ch: '✔', cls: 'test-pass',    title: 'Pass' },          // ✔
+    Fail:    { ch: '✖', cls: 'test-fail',    title: 'Fail' },          // ✖
+    Timeout: { ch: '⧖', cls: 'test-timeout', title: 'Timeout' },        // ⧖
+    Stale:   { ch: '○', cls: 'test-stale',   title: 'Stale (.pr mismatch)' }, // ○
+    Skipped: { ch: '—', cls: 'test-skip',    title: 'Skipped (tag filter)' }, // —
+    Ready:   { ch: '▷', cls: 'test-ready',   title: 'Ready (not run)' },// ▷
+  }[run.status] || { ch: '?', cls: '', title: run.status || '?' };
+  const dur = (typeof run.durationMs === 'number') ? ` (${formatDuration(run.durationMs)})` : '';
+  return `<span class="test-glyph ${m.cls}" title="${esc(m.title + dur)}">${m.ch}</span>`;
 }
 
 // ---------- File view (main panel) ----------
@@ -1604,6 +1713,47 @@ function computeActiveFileUsage(file) {
     if (u.cost != null) { totalCost += u.cost; costSeen = true; }
   }
   return { totalTokens, cachedTokens: totalCached, cost: costSeen ? totalCost : null };
+}
+
+function renderTestResultPanel(file) {
+  const run = lookupTestResult(file);
+  if (!run) return '';
+  const status = run.status || 'Ready';
+  const cls = {
+    Pass:    'test-pass',
+    Fail:    'test-fail',
+    Timeout: 'test-timeout',
+    Stale:   'test-stale',
+    Skipped: 'test-skip',
+    Ready:   'test-ready',
+  }[status] || '';
+  const dur = (typeof run.durationMs === 'number') ? formatDuration(run.durationMs) : '';
+  const tags = (run.tags && run.tags.length) ? ` · tags: ${run.tags.map(esc).join(', ')}` : '';
+
+  // Expected / Actual / Variables only when present (failures, typically).
+  const fmtVal = (v) => (v == null ? '<em>null</em>' : esc(typeof v === 'string' ? v : JSON.stringify(v, null, 2)));
+  const hasPair = run.expected !== undefined && run.expected !== null
+                  || run.actual !== undefined && run.actual !== null;
+  const pairs = hasPair ? `
+    <div class="tr-pair"><span class="tr-pair-label">expected:</span>${fmtVal(run.expected)}</div>
+    <div class="tr-pair"><span class="tr-pair-label">actual:  </span>${fmtVal(run.actual)}</div>
+  ` : '';
+  const errorLine = run.error ? `<div class="tr-error">${esc(run.error)}</div>` : '';
+  const vars = (run.variables && typeof run.variables === 'object' && Object.keys(run.variables).length)
+    ? `<div class="tr-vars"><div class="tr-pair-label">variables at failure:</div><pre>${esc(JSON.stringify(run.variables, null, 2))}</pre></div>`
+    : '';
+
+  return `
+    <div class="test-result-panel ${cls}">
+      <div class="tr-header">
+        <span class="tr-status">${esc(status)}</span>
+        <span class="tr-meta">${esc(dur)}${tags}</span>
+      </div>
+      ${errorLine}
+      ${pairs}
+      ${vars}
+    </div>
+  `;
 }
 
 function renderFileHeader(file, entry) {
@@ -1691,6 +1841,7 @@ function renderFileHeader(file, entry) {
         ${totalErr > 0 ? `<span class="stat-chip err"><strong>${totalErr}</strong> error${totalErr === 1 ? '' : 's'}</span>` : ''}
         ${totalWarn > 0 ? `<span class="stat-chip warn"><strong>${totalWarn}</strong> warning${totalWarn === 1 ? '' : 's'}</span>` : ''}
       </div>
+      ${renderTestResultPanel(file)}
     </div>
   `;
 }
