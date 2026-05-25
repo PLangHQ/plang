@@ -84,9 +84,9 @@ Examples (matching the JSON `actions[]` directly below them):
 
 `variable.set(Name=%greeting%, Value="hello", Type=string)`
 
-`output.write(Data=%message%)` — default channel, step text didn't name one. The `channel` parameter is OMITTED, not filled with `%!data%` or any placeholder.
+`output.write(Data=%message%)`
 
-`output.write(Data="hi", channel="logger") | error.handle(Actions=[variable.set(Name=%writeFailed%, Value=true)])` — `channel="logger"` only because the step text named it.
+`output.write(Data="hi", channel="logger") | error.handle(Actions=[variable.set(Name=%writeFailed%, Value=true)])`
 
 `condition.if(Left=%!build.summary%, Operator="==", Right=true), goal.call(GoalName={name:"EmitSummary"})`
 
@@ -94,26 +94,13 @@ Examples (matching the JSON `actions[]` directly below them):
 
 If you can't write a coherent `formal` line, the action set is wrong — emit `missing-actions` instead of guessing.
 
-**`formal` must mirror `actions[]` exactly.** Every `Param=value` segment in the formal line MUST correspond to a real entry in the action's `parameters` array, and every parameter you emit in `parameters` MUST appear in formal. No extras in either direction. In particular:
+**`formal` must mirror `actions[]` exactly.** Every `Param=value` segment in the formal line MUST correspond to a real entry in the action's `parameters` array, and every parameter you emit in `parameters` MUST appear in formal. No extras in either direction. If the step text does not name an optional parameter, OMIT it from BOTH formal and actions[]. The %!data% rule applies to formal too (see the dedicated %!data% section).
 
-- If the step text does not name an optional parameter, OMIT it from BOTH formal and actions[]. Do NOT write `channel=%!data%`, `Path=%!data%`, `Format=%!data%`, etc. as a placeholder — the rule "%!data% is the prior action's result, used to chain into the next intended slot" applies to formal too. If a slot wasn't named, leave it out of formal.
-- If you find yourself adding a parameter to formal that you wouldn't include in actions[], DELETE it from formal. The two are the same decision rendered twice; they must agree.
+## Cross-cutting reminders
 
-## Trust the action Notes and examples
+The action's authored Notes and Examples show the canonical chain shape — **don't invent shapes the examples don't demonstrate.** Most "this looks too simple" reactions are wrong: PLang actions handle whole clauses, almost always one action per clause. When you're tempted to emit two actions for what reads as one operation, re-check the per-action notes first.
 
-The action's authored Notes and Examples show the canonical chain shape. **Don't invent shapes the examples don't demonstrate.** A few cross-cutting reminders (action-specific rules live in each action's Notes):
-
-- Most "this looks too simple" reactions are wrong — PLang actions handle whole clauses.
-  - `set %x% = 'literal'` → ONE `variable.set` with parameters `[{"name":"Name","value":"%x%","type":"variable"},{"name":"Value","value":"literal","type":"string"}]`.
-  - `set %x% = '%greeting% %name%'` → ONE `variable.set` with `Value="%greeting% %name%"` and `type=tstring`.
-  - `set %x% = 5` → ONE `variable.set`. Numbers are scalars; no math action needed.
-  - `set %x% = %y%` (Value is a single `%var%` reference, NOT a literal) → ONE `variable.set` with `Type="object"`. The runtime resolves `%y%` at dispatch and infers the actual type. **NEVER pick `Type="string"` for a bare `%var%` reference** — if `%y%` resolves to a non-string at runtime, the runtime fails with `PrimitiveConversionFailed`. The only exceptions: when the step text expresses an explicit "as text" / "as string" / "som streng" / "sem texta" intent → then `Type="string"`. Same principle for explicit `int`/`bool`/`json`/etc. intent. Match by INTENT, not surface words.
-  - `<action>, write to %x%` → producer action + trailing `variable.set` with `Name=%x%` (type `variable`) and `Value=%!data%`. The catalog declares each action's return type via `→ returns T`; use that T as `Value`'s **type annotation**: `{"name":"Value","value":"%!data%","type":"<T>"}`. Do **NOT** emit a separate `Type` parameter on the trailing `variable.set` — the `Data<T>` wrapper from the producer carries the type; a `Type` param would force a coercion that fights the typed return. (`Type` on `variable.set` is reserved for explicit user-supplied intent like `set %x% = "hi", type=string`.)
-  - `write out "Hello %name%"` → ONE `output.write` with `Data` as the tstring template.
-
-The JSON `"name"` field on every parameter is ALWAYS the literal schema property name (`Name`, `Value`, `AsDefault`, `Collection`, ...). The `%var%` token shown in the catalog (e.g. `- Name: %var%`) is a *type hint* meaning "this slot takes a variable reference"; it is never the parameter name. NEVER emit `"name":"%var%"` or `"name":"var"` — that's the catalog's value-type hint mistakenly copied into the name slot. The `%var%` marker alone says nothing about what the variable holds at runtime (list, dict, bool, object — anything); do NOT raise `ambiguousMapping` just because the in-scope variable's declared type differs from a `%var%`-typed slot.
-- Modifiers wrap their host action — they're nested in `modifiers`, not appended as peers.
-- Recovery actions (the action that runs `on error <verb>`) nest into `error.handle.Actions`, not as peers. (See `error.handle` Notes for the full rule.)
+The JSON `"name"` field on every parameter is ALWAYS the literal schema property name (`Name`, `Value`, `Collection`, ...). The `%var%` token shown in the catalog (e.g. `- Name: %var%`) is a *type hint* meaning "this slot takes a variable reference"; it is never the parameter name. NEVER emit `"name":"%var%"` or `"name":"var"`. The `%var%` marker says nothing about what the variable holds at runtime (list, dict, bool, object — anything); do NOT raise `ambiguousMapping` just because the in-scope variable's declared type differs from a `%var%`-typed slot.
 
 If the action set names actions the step doesn't actually use, just don't emit them — extras in the set are fine. Only raise `missing-actions` when the set is genuinely insufficient.
 
@@ -215,9 +202,7 @@ Action-level (on individual action):
 - `module` is a SINGLE identifier with no dots. The dot in `ui.render` is the SEPARATOR between module and action — `{"module": "ui", "action": "render"}`, NEVER `{"module": "ui.render", "action": "render"}`. Same for every action: `file.read` → `{"module":"file","action":"read"}`, `goal.call` → `{"module":"goal","action":"call"}`, `loop.foreach` → `{"module":"loop","action":"foreach"}`.
 - Valid type names: `string`, `int`, `long`, `float`, `double`, `decimal`, `bool`, `datetime`, `timespan`, `guid`, `json`, `list`, `dict`, `bytes`, `object`, `actor`, `goal`, `goal.call`, `path`, `tstring`, `llmmessage`. Lists: `list<T>` (e.g. `list<string>`).
 - **Use the type the catalog declares verbatim.** If the catalog says `Goal([goal])`, the type is `goal` (the Goal entity), NOT `goal.call` (a goal-call payload). They look similar; they're different. The catalog is the single source of truth — don't substitute one type for another just because the parameter name resembles a known type.
-- `tstring` is a runtime hint; JSON value is a plain string. Step text `write out "Hello %name%"` → parameter `{"name": "Data", "value": "Hello %name%", "type": "tstring"}`.
+- `tstring` is a runtime hint for value strings that contain `%var%` interpolations; the JSON value is a plain string with the literal `%var%` tokens preserved.
 - Omit nullable parameters (types ending `?`) when not applicable. NEVER emit `""` as a placeholder; leave the slot out entirely. Constrained types (`actor`, enums) reject empty strings.
-- NEVER copy a type *descriptor* into a value slot. The catalog says things like `Actor: actor?` or `Type: eventtype` — those are SCHEMA annotations, never values. If you can't determine a concrete value from the step text for a nullable parameter, OMIT it entirely. Do NOT emit `Actor="this?(user|service|system)"`, `Actor="actor?"`, or any variant.
-- NEVER use `%!data%` to fill an optional parameter that wasn't named in the step text. `%!data%` is the prior action's result, used to CHAIN data into the next intended slot (e.g. `variable.set Value=%!data%` after `file.read`). Don't sprinkle it into Format, Path, Message, or any other unrelated optional slot just because the slot exists. If the step text doesn't mention a value, the parameter stays out.
-- Modifier shape: modifiers go inside the host action's `modifiers` array, NOT as peer entries in the top-level `actions` array.
+- NEVER copy a type *descriptor* into a value slot. The catalog says things like `Actor: actor?` or `Type: eventtype` — those are SCHEMA annotations, never values. If you can't determine a concrete value from the step text for a nullable parameter, OMIT it entirely.
 - Actions within a step execute in order. Later actions can reference earlier ones via `%!data%` (the implicit prior result) or named return variables.
