@@ -1063,6 +1063,76 @@ The dispatch path is: callbacks read `RestoredFrame` to identify the resume `Pos
 
 ---
 
+## System.IO Is Banned in Production C# (use `path.@this`)
+
+Action handlers and engine code under `PLang/app/**` must NOT call
+`System.IO.*` directly. The only allowed filesystem surface is the
+`app.types.path.@this` verb set (`ReadText`, `ReadBytes`, `WriteText`,
+`WriteBytes`, `Append`, `Mkdir`, `Delete`, `List`, `Stat`, `MoveTo`,
+`CopyTo`, `ExistsAsync`, `AsBooleanAsync`). Every one of those methods
+passes through `FilePath.AuthGate(verb)` before touching the disk.
+
+A handler reaching for `System.IO.File`, `System.IO.Directory`,
+`System.IO.FileInfo`, or `System.IO.Path.*` (Combine/GetDirectoryName/
+GetFullPath/...) is reaching **under** the auth gate. That means an
+out-of-root path the actor never consented to gets read / written
+silently. It's the filesystem analogue of the `Console.*` ban below.
+
+**The rule.** A filesystem path in interior C# is `app.types.path.@this`
+(the lowercase `path` alias). `string` only appears at the perimeter:
+CLI args, JSON-on-disk shape (the wire format), scheme-resolved DLL
+loads, and the App root anchors (`App.AbsolutePath`, `App.OsDirectory`,
+`App.OsAbsolutePath` — they define the root, so they can't be lifted).
+Crossing the perimeter into memory means calling
+`path.Resolve(rawString, context)`.
+
+**Build-time gate (PLNG002).** The PLang source generator emits a
+`PLNG002` diagnostic on every `System.IO.*` member-access reach and
+every `Data<string>` action-handler property named `Path` / `PrPath` /
+`Source` / `Destination` / `Directory` / `Folder` / `FilePath` under
+`PLang/app/**`. Today it lands as a **warning**; the plan is to flip to
+**error** once the remaining handler migrations complete (the
+`purge-systemio-from-actions` branch landed Stages 1–5; Stages 6–7
+finish the work).
+
+Allowlist: `System.IO.Path.DirectorySeparatorChar` /
+`AltDirectorySeparatorChar` / `PathSeparator` / `VolumeSeparatorChar` —
+separator constants, not IO reaches. Exempt namespaces:
+`app.types.path.**` (the verb surface legitimately uses `System.IO`
+post-AuthGate), and the `PLang.Generators` project.
+
+**`.Absolute` discipline (D13).** `path.Absolute` is an easy-to-misuse
+escape hatch. Any reach for `.Absolute` outside `app.types.path.**`
+means a third-party API (sqlite, image library, `Assembly.LoadFrom`) is
+about to touch the filesystem with no gate. Handlers MUST `await
+path.Authorize(verb)` first and check `auth.Success` before reading
+`.Absolute`. The verb surface (`ReadText`, `WriteText`, `List`, `Stat`,
+`ReadBytes`, ...) does this automatically — reach for verbs first;
+only fall through to `.Absolute` + manual `Authorize` when a
+third-party API genuinely takes over the file (D9b — sqlite is the
+canonical case).
+
+**Migration status (purge-systemio-from-actions branch).**
+
+- Stage 1 (done) — derivation verbs (`Parent`/`WithName`/`WithExtension`/
+  `Combine`/`InFolder`) + PLNG002 analyzer in warning mode.
+- Stage 2 (done) — `.goal` MIME → Goal deserialization (FilePath.ReadText
+  parses `.goal` via Goal.Parse, stamps Path back-reference).
+- Stage 3 (done) — Goal.Path / PrPath / LoadedFromPrPath / GoalCall.PrPath
+  flip to path?. JSON converter with AsyncLocal `DeserializationScope`
+  threads Context to Path during deserialise.
+- Stage 4 (done) — AppGoals path-keyed dicts (separate `_byName` index for
+  fuzzy lookups); App.Load/Save through path verbs.
+- Stage 5 (partial) — `test/discover` + `test/report` lifted; remaining
+  ring-2 handlers (settings/Sqlite D9b, llm/OpenAi D9a, module/add +
+  code/load D8 Execute verb, ui/Fluid + http/Default file providers,
+  debug trace writes, modules.MarkdownTeaching root) deferred — they
+  need new verb-surface infrastructure (Execute verb,
+  `path.LoadAssemblyAsync`, `path.ReadAsBase64`) that's substantial
+  greenfield work.
+- Stage 6 (deferred) — PLNG002 flips to error once Stage 5 finishes
+  removing the remaining ~142 PLNG002 warning sites.
+
 ## Console.* Is Banned in Production C#
 
 Channels exist so that I/O is **redirectable** — a user can re-register the `output`/`error`/`debug` channel to a file, an in-memory buffer, an HTTP response, or a goal. Any `Console.WriteLine` / `Console.Write` / `Console.Error.WriteLine` in production C# silently bypasses that surface and breaks the contract.
