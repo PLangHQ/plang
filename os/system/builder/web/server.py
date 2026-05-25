@@ -37,12 +37,16 @@ REPO_ROOT = os.path.abspath(os.path.join(VIEWER_DIR, '..', '..', '..', '..'))
 PLANG_ROOT = STATIC_ROOT  # back-compat alias
 
 # Display caps.
-# - MAX_PATHS_TOTAL: at most this many distinct (bucket, goalName) groups
-#   show up in the sidebar — i.e. 20 goal-paths max.
+# - MAX_PATHS_TOTAL: keep the (bucket, goalName) groups whose newest trace is
+#   among the most recent. Was 20 — too small for the sidebar search box,
+#   which can only filter what's already returned. Raised to a large value
+#   that effectively removes the cap for typical test corpuses (~200 goals)
+#   while still bounding the worst case. The Recent panel still slices its
+#   own newest 20 from this larger pool.
 # - MAX_TRACES_PER_GOAL: within each group, at most this many recent traces
 #   (= different build runs that produced a trace for this goal). Stops a hot
-#   iteration cycle on one goal from burying everything else.
-MAX_PATHS_TOTAL = 20
+#   iteration cycle on one goal from burying everything else in tabs.
+MAX_PATHS_TOTAL = 2000
 MAX_TRACES_PER_GOAL = 3
 
 # Summary cache: path → (mtime, summary_dict). Parsing every trace (some 40KB+)
