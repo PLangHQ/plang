@@ -52,7 +52,7 @@
     },
     {
       "index": 1,
-      "text": "render template \u0022/system/actions/v2/summary.planner.md\u0022, write to %actionSummary%",
+      "text": "render template \"/system/actions/v2/summary.planner.md\", write to %actionSummary%",
       "lineNumber": 7,
       "indent": 0,
       "comment": null,
@@ -99,13 +99,13 @@
       "guidance": "Render the summary template from the given template path and store rendered markdown in %actionSummary%.",
       "level": "medium",
       "confidence": 70,
-      "formal": "ui.render(Template=\u0022/system/actions/v2/summary.planner.md\u0022) , variable.set(Name=%actionSummary%, Value=%!data%, Type=string)",
+      "formal": "ui.render(Template=\"/system/actions/v2/summary.planner.md\") , variable.set(Name=%actionSummary%, Value=%!data%, Type=string)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "render template \u0022/system/builder/templates/v2/goalFormatForLlm.v2.template\u0022, write to %goalForLlm%",
+      "text": "render template \"/system/builder/templates/v2/goalFormatForLlm.v2.template\", write to %goalForLlm%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -152,13 +152,13 @@
       "guidance": "Render the goal-format template and store it in %goalForLlm%.",
       "level": "medium",
       "confidence": 70,
-      "formal": "ui.render(Template=\u0022/system/builder/templates/v2/goalFormatForLlm.v2.template\u0022) , variable.set(Name=%goalForLlm%, Value=%!data%, Type=string)",
+      "formal": "ui.render(Template=\"/system/builder/templates/v2/goalFormatForLlm.v2.template\") , variable.set(Name=%goalForLlm%, Value=%!data%, Type=string)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 3,
-      "text": "render template \u0022/system/builder/llm/Plan.llm\u0022, write to %planPrompt%",
+      "text": "render template \"/system/builder/llm/Plan.llm\", write to %planPrompt%",
       "lineNumber": 9,
       "indent": 0,
       "comment": null,
@@ -205,13 +205,13 @@
       "guidance": "Render the Plan LLM prompt template and store it in %planPrompt%.",
       "level": "medium",
       "confidence": 70,
-      "formal": "ui.render(Template=\u0022/system/builder/llm/Plan.llm\u0022) | variable.set(Name=%planPrompt%, Value=%!data%)",
+      "formal": "ui.render(Template=\"/system/builder/llm/Plan.llm\") | variable.set(Name=%planPrompt%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 4,
-      "text": "set %messages% = [{\u0022Role\u0022:\u0022system\u0022, \u0022Content\u0022:\u0022%planPrompt%\u0022}, {\u0022Role\u0022:\u0022user\u0022, \u0022Content\u0022:\u0022%goalForLlm%\u0022}], type=json",
+      "text": "set %messages% = [{\"Role\":\"system\", \"Content\":\"%planPrompt%\"}, {\"Role\":\"user\", \"Content\":\"%goalForLlm%\"}], type=json",
       "lineNumber": 10,
       "indent": 0,
       "comment": null,
@@ -237,7 +237,7 @@
                   "Content": "%goalForLlm%"
                 }
               ],
-              "type": "list\u00601"
+              "type": "list`1"
             },
             {
               "name": "Type",
@@ -256,10 +256,10 @@
         }
       ],
       "intent": null,
-      "guidance": "Set %messages% to a JSON array of LLM messages (system \u002B user) using %planPrompt% and %goalForLlm%.",
+      "guidance": "Set %messages% to a JSON array of LLM messages (system + user) using %planPrompt% and %goalForLlm%.",
       "level": "high",
       "confidence": 92,
-      "formal": "variable.set(Name=%messages%, Value=[{\u0022Role\u0022:\u0022system\u0022,\u0022Content\u0022:\u0022%planPrompt%\u0022},{\u0022Role\u0022:\u0022user\u0022,\u0022Content\u0022:\u0022%goalForLlm%\u0022}], Type=json)",
+      "formal": "variable.set(Name=%messages%, Value=[{\"Role\":\"system\",\"Content\":\"%planPrompt%\"},{\"Role\":\"user\",\"Content\":\"%goalForLlm%\"}], Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -268,7 +268,7 @@
       "text": "call QueryAndValidatePlan, on error call LlmFixer, then retry 2 times",
       "lineNumber": 16,
       "indent": 0,
-      "comment": "Wrap llm.query \u002B Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and structural validation failures\n(Validate throws step-count-mismatch, etc.). RetryCount=2 is the runtime\u0027s\njob. LlmFixer re-prompts with previousConversation=%plan%.",
+      "comment": "Wrap llm.query + Validate together so the retry surface catches BOTH\nmalformed-JSON (llm.query throws) and structural validation failures\n(Validate throws step-count-mismatch, etc.). RetryCount=2 is the runtime's\njob. LlmFixer re-prompts with previousConversation=%plan%.",
       "actions": [
         {
           "module": "goal",
@@ -309,7 +309,7 @@
                       ]
                     }
                   ],
-                  "type": "list\u003Caction\u003E"
+                  "type": "list<action>"
                 },
                 {
                   "name": "RetryCount",
@@ -327,7 +327,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "goal.call(GoalName={name:\u0022QueryAndValidatePlan\u0022}) | error.handle(Actions=[goal.call(GoalName={name:\u0022LlmFixer\u0022})], RetryCount=2)",
+      "formal": "goal.call(GoalName={name:\"QueryAndValidatePlan\"}) | error.handle(Actions=[goal.call(GoalName={name:\"LlmFixer\"})], RetryCount=2)",
       "source": null,
       "waitForExecution": true
     },
@@ -336,7 +336,7 @@
       "text": "set %plan.system% = %planPrompt%",
       "lineNumber": 20,
       "indent": 0,
-      "comment": "Stamp the planner\u0027s prompts onto %plan% so the parent\u0027s set %trace.plan% = %plan%\ncarries them into the trace for the viewer.",
+      "comment": "Stamp the planner's prompts onto %plan% so the parent's set %trace.plan% = %plan%\ncarries them into the trace for the viewer.",
       "actions": [
         {
           "module": "variable",
@@ -420,6 +420,54 @@
       "formal": "variable.set(Name=%plan.user%, Value=%goalForLlm%, Type=object)",
       "source": null,
       "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "set %plan.usage% = {model: %plan.Model%, promptTokens: %plan.PromptTokens%, cachedTokens: %plan.CachedTokens%, completionTokens: %plan.CompletionTokens%, totalTokens: %plan.TotalTokens%, cost: %plan.Cost%, cached: %plan.Cached%}",
+      "lineNumber": 22,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%plan.usage%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "model": "%plan.Model%",
+                "promptTokens": "%plan.PromptTokens%",
+                "cachedTokens": "%plan.CachedTokens%",
+                "completionTokens": "%plan.CompletionTokens%",
+                "totalTokens": "%plan.TotalTokens%",
+                "cost": "%plan.Cost%",
+                "cached": "%plan.Cached%"
+              },
+              "type": "json"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Stamp the usage block onto %plan% so it carries into the trace alongside system/user prompts.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
     }
   ],
   "goals": [
@@ -431,7 +479,7 @@
         {
           "index": 0,
           "text": "llm.query Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string]}]}, cache=%!build.cache%, write to %plan%",
-          "lineNumber": 25,
+          "lineNumber": 26,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -442,7 +490,7 @@
                 {
                   "name": "Messages",
                   "value": "%messages%",
-                  "type": "list\u003Cllmmessage\u003E"
+                  "type": "list<llmmessage>"
                 },
                 {
                   "name": "Schema",
@@ -457,7 +505,7 @@
                       }
                     ]
                   },
-                  "type": "dictionary\u00602"
+                  "type": "dictionary`2"
                 },
                 {
                   "name": "Cache",
@@ -549,7 +597,7 @@
         {
           "index": 1,
           "text": "call Validate",
-          "lineNumber": 26,
+          "lineNumber": 27,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -576,7 +624,7 @@
           "guidance": null,
           "level": null,
           "confidence": null,
-          "formal": "goal.call(GoalName={name:\u0022Validate\u0022})",
+          "formal": "goal.call(GoalName={name:\"Validate\"})",
           "source": null,
           "waitForExecution": true
         }
@@ -597,7 +645,7 @@
   "visibility": 1,
   "path": "/system/builder/BuildGoal/Plan.goal",
   "prPath": "/system/builder/BuildGoal/.build/plan.pr",
-  "hash": "7243a9a09747c554510180e481196cafbe20bd18e6af449fbff3e2c62710d603",
+  "hash": null,
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

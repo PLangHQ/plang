@@ -552,6 +552,18 @@
   .step-row.open { border-left-color: var(--accent); background: rgba(91,155,213,0.03); }
   .step-row.has-error { border-left-color: var(--accent); background: rgba(233,69,96,0.04); }
   .step-row.has-warning { border-left-color: var(--orange); background: rgba(232,112,64,0.04); }
+  /* Small dim chip showing token + cost. Sits between step body and confidence. */
+  .usage-chip {
+    font-size: 10px;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
   .step-note {
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     font-size: 11px;
@@ -1019,8 +1031,33 @@ function summaryToEntry(item) {
     errorCount: item.errors || 0,
     warningCount: item.warnings || 0,
     buildError: item.buildError || null,
+    usage: item.usage || {},
     _isSummary: true,
   };
+}
+
+// Compact token + cost formatter. Tokens humanized (1.2k, 3.4M); cost in USD
+// with adaptive precision (< 1¢ → 5 decimals, < $1 → 4, otherwise 2).
+function formatTokens(n) {
+  n = n || 0;
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
+  if (n >= 10_000)    return (n / 1_000).toFixed(1) + 'k';
+  if (n >= 1_000)     return (n / 1_000).toFixed(2) + 'k';
+  return String(n);
+}
+function formatCost(c) {
+  if (c == null) return '—';
+  if (c < 0.01)  return '$' + c.toFixed(5);
+  if (c < 1)     return '$' + c.toFixed(4);
+  return '$' + c.toFixed(2);
+}
+// Compose a one-line usage label: "5.5k tokens (4.9k cached) · $0.0004"
+// Hides cached if 0; hides cost if null. Empty string if no tokens at all.
+function formatUsage(u) {
+  if (!u || !u.totalTokens) return '';
+  const cached = u.cachedTokens > 0 ? ` (${formatTokens(u.cachedTokens)} cached)` : '';
+  const cost = u.cost != null ? ` · ${formatCost(u.cost)}` : '';
+  return `${formatTokens(u.totalTokens)} tokens${cached}${cost}`;
 }
 
 // list.add stores Data wrappers like {name, value, type}. Sub-goal passes live
@@ -1116,6 +1153,7 @@ function passToGoalSection(passOrTrace, isParent) {
         // per-step so the UI can show it inline without cross-referencing.
         system: compiled.system || '',
         user: compiled.user || '',
+        usage: compiled.usage || {},
         raw: { source: src, compiled },
       };
     });
@@ -1144,6 +1182,7 @@ function passToGoalSection(passOrTrace, isParent) {
   const buildGoal = {
     system: (plan && plan.system) || p.system || '',
     user: (plan && plan.user) || p.user || '',
+    usage: (plan && plan.usage) || {},
     response: plan
       ? { description: plan.description, steps: plan.steps }
       : (unwrapDataWrapper(p.response) || {}),
@@ -1560,6 +1599,20 @@ function renderFileHeader(file, entry) {
     ? entryGoals.filter(g => g.visibility === 'private').length
     : fileGoals.filter(g => g.visibility === 'private').length;
 
+  // Token + cost across the file's latest trace per goal. Summary entries from
+  // the sidebar already carry usage (server-aggregated planner + stepPasses);
+  // file-level total is the sum across goals.
+  let totalTokens = 0, totalCached = 0, totalCost = 0, costSeen = false;
+  for (const g of fileGoals) {
+    const latest = g.traces[0];
+    const u = latest && latest.usage;
+    if (!u) continue;
+    totalTokens += u.totalTokens || 0;
+    totalCached += u.cachedTokens || 0;
+    if (u.cost != null) { totalCost += u.cost; costSeen = true; }
+  }
+  const fileUsageLabel = formatUsage({totalTokens, cachedTokens: totalCached, cost: costSeen ? totalCost : null});
+
   let totalSteps = 0, totalErr = 0, totalWarn = 0, lowCount = 0, medCount = 0;
   if (entryGoals) {
     for (const g of entryGoals) {
@@ -1614,6 +1667,7 @@ function renderFileHeader(file, entry) {
         <span class="stat-chip"><strong>${totalTraces}</strong> trace${totalTraces === 1 ? '' : 's'}</span>
         ${totalErr > 0 ? `<span class="stat-chip err"><strong>${totalErr}</strong> error${totalErr === 1 ? '' : 's'}</span>` : ''}
         ${totalWarn > 0 ? `<span class="stat-chip warn"><strong>${totalWarn}</strong> warning${totalWarn === 1 ? '' : 's'}</span>` : ''}
+        ${fileUsageLabel ? `<span class="stat-chip" title="planner + per-step compile, summed across goals">${fileUsageLabel}</span>` : ''}
       </div>
     </div>
   `;
@@ -1764,7 +1818,8 @@ function renderGoalLlmBlockForSection(goalSection, subKey) {
   if (!bg || (!bg.system && !bg.user && !bg.response)) return '';
   const open = goalLlmOpen.has(subKey);
   const respSize = bg.response ? sizeLabel(bg.response) : '0B';
-  const meta = `${sizeLabel(bg.system || '')} system · ${sizeLabel(bg.user || '')} user · ${respSize} response`;
+  const usagePart = formatUsage(bg.usage);
+  const meta = `${sizeLabel(bg.system || '')} system · ${sizeLabel(bg.user || '')} user · ${respSize} response${usagePart ? ' · ' + usagePart : ''}`;
   return `
     <div class="goal-llm">
       <div class="goal-llm-header ${open ? 'open' : ''}"
@@ -1821,6 +1876,11 @@ function renderStepRow(entry, goalSection, step, subKey) {
     ...stepWarnings.map(w => `<div class="step-note warn"><span class="step-note-tag">warning</span> <span class="step-note-key">${esc(w.key || '')}</span> ${esc(w.message || '')}</div>`),
   ].join('');
 
+  const usageLabel = formatUsage(step.usage);
+  const usageChip = usageLabel
+    ? `<span class="usage-chip" title="prompt ${step.usage.promptTokens||0} · cached ${step.usage.cachedTokens||0} · completion ${step.usage.completionTokens||0} · model ${step.usage.model||'?'}">${usageLabel}</span>`
+    : '';
+
   let html = `
     <div class="step-row ${depth > 0 ? 'open' : ''} ${hasError ? 'has-error' : ''} ${hasWarning && !hasError ? 'has-warning' : ''}">
       <div class="step-line">
@@ -1830,6 +1890,7 @@ function renderStepRow(entry, goalSection, step, subKey) {
           ${hideFormal ? '' : `<div class="${formalCls}" ${formalClick ? `onclick="${formalClick}"` : ''}>${formalHtml}</div>`}
           ${noteRows}
         </div>
+        ${usageChip}
         <span class="conf ${confCls}">${conf}%</span>
       </div>
   `;

@@ -185,6 +185,22 @@ def _summarize_trace(full_path: str) -> dict | None:
     # builder pipeline — older v3 traces nest the response directly.
     errors_count = 0
     warnings_count = 0
+    # Token + cost aggregates: planner usage + every stepPass usage, summed.
+    # Cost may be null (unknown model); skip those entries to avoid 0 + None.
+    prompt_tokens = 0
+    cached_tokens = 0
+    completion_tokens = 0
+    total_tokens = 0
+    cost_sum = 0.0
+    cost_seen = False
+    plan_usage = (data.get('plan') or {}).get('usage') if isinstance(data.get('plan'), dict) else None
+    if isinstance(plan_usage, dict):
+        prompt_tokens     += int(plan_usage.get('promptTokens') or 0)
+        cached_tokens     += int(plan_usage.get('cachedTokens') or 0)
+        completion_tokens += int(plan_usage.get('completionTokens') or 0)
+        total_tokens      += int(plan_usage.get('totalTokens') or 0)
+        if plan_usage.get('cost') is not None:
+            cost_sum += float(plan_usage['cost']); cost_seen = True
     step_passes = data.get('stepPasses')
     if isinstance(step_passes, list):
         for sp in step_passes:
@@ -193,6 +209,14 @@ def _summarize_trace(full_path: str) -> dict | None:
             resp = payload.get('response') if isinstance(payload.get('response'), dict) else {}
             errors_count += len(resp.get('errors') or [])
             warnings_count += len(resp.get('warnings') or [])
+            usage = payload.get('usage') if isinstance(payload.get('usage'), dict) else None
+            if usage:
+                prompt_tokens     += int(usage.get('promptTokens') or 0)
+                cached_tokens     += int(usage.get('cachedTokens') or 0)
+                completion_tokens += int(usage.get('completionTokens') or 0)
+                total_tokens      += int(usage.get('totalTokens') or 0)
+                if usage.get('cost') is not None:
+                    cost_sum += float(usage['cost']); cost_seen = True
     legacy_resp = (data.get('pass1') or {}).get('response') or {}
     if isinstance(legacy_resp, dict):
         errors_count += len(legacy_resp.get('errors') or [])
@@ -206,6 +230,13 @@ def _summarize_trace(full_path: str) -> dict | None:
         'errors': errors_count,
         'warnings': warnings_count,
         'buildError': bool(data.get('buildError')),
+        'usage': {
+            'promptTokens': prompt_tokens,
+            'cachedTokens': cached_tokens,
+            'completionTokens': completion_tokens,
+            'totalTokens': total_tokens,
+            'cost': cost_sum if cost_seen else None,
+        },
     }
 
 
@@ -354,6 +385,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 'errors': t.get('errors', 0),
                 'warnings': t.get('warnings', 0),
                 'buildError': t.get('buildError', False),
+                'usage': t.get('usage') or {},
             }
             for t in traces
         ])

@@ -19,6 +19,7 @@ Plan
 / carries them into the trace for the viewer.
 - set %plan.system% = %planPrompt%
 - set %plan.user% = %goalForLlm%
+- set %plan.usage% = {model: %plan.Model%, promptTokens: %plan.PromptTokens%, cachedTokens: %plan.CachedTokens%, completionTokens: %plan.CompletionTokens%, totalTokens: %plan.TotalTokens%, cost: %plan.Cost%, cached: %plan.Cached%}
 
 
 QueryAndValidatePlan

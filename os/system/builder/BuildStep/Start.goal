@@ -29,7 +29,7 @@ Compile
 / then retry the whole QueryAndVerify. RetryCount is the runtime's job, no counter.
 - call QueryAndVerify, on error key "missing-actions" call RefineActions, then retry 2 times
 
-- add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, system: %buildStepPrompt%, user: %buildStepUserMsg%, response: %compileResult%} to %trace.stepPasses%
+- add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, system: %buildStepPrompt%, user: %buildStepUserMsg%, response: %compileResult%, usage: {model: %compileResult.Model%, promptTokens: %compileResult.PromptTokens%, cachedTokens: %compileResult.CachedTokens%, completionTokens: %compileResult.CompletionTokens%, totalTokens: %compileResult.TotalTokens%, cost: %compileResult.Cost%, cached: %compileResult.Cached%}} to %trace.stepPasses%
 
 - set %goal.Steps[step.Index].Actions% = %compileResult.actions%
 - set %goal.Steps[step.Index].Formal% = %compileResult.formal%
