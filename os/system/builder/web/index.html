@@ -1938,7 +1938,15 @@ function renderStepRow(entry, goalSection, step, subKey) {
   if (depth >= 1) {
     const open = stepSections.get(stepKey) || new Set();
     const source = step.raw && step.raw.source ? step.raw.source : null;
-    const compiled = step.raw && step.raw.compiled ? step.raw.compiled : null;
+    // Strip system/user/usage from the compiled view — they have their own
+    // accordion sections above; duplicating multi-KB prompt content here just
+    // makes the JSON unscannable when what you want is the .pr-shaped output
+    // (formal + actions + errors + warnings).
+    const compiledRaw = step.raw && step.raw.compiled ? step.raw.compiled : null;
+    const compiled = compiledRaw ? (() => {
+      const { system, user, usage, ...rest } = compiledRaw;
+      return rest;
+    })() : null;
     html += `<div class="sublayer">`;
     html += renderAccordionSection(stepKey, 'system', step.system, open.has('system'), 'md', 'Compile.llm');
     html += renderAccordionSection(stepKey, 'user',   step.user,   open.has('user'),   'md', 'CompileUser.llm');
