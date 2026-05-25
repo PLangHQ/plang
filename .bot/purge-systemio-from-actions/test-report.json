@@ -1,0 +1,146 @@
+{
+  "tester": "tester",
+  "branch": "purge-systemio-from-actions",
+  "timestamp": "2026-05-25T23:55:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 3025, "passed": 3025, "failed": 0, "skipped": 0 },
+    "plang":  { "total": 206,  "passed": 206,  "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "overall_line_rate": 0.7694,
+    "overall_branch_rate": 0.3963,
+    "package_PLangLibrary_line": 0.5515,
+    "package_PLangLibrary_branch": 0.3686,
+    "package_PLangTests_line": 0.9488,
+    "package_PLangTests_branch": 0.5362,
+    "package_PLangGenerators_line": 0.8417,
+    "package_PLangGenerators_branch": 0.6602,
+    "changed_files_undercovered": [
+      "PLang/app/modules/debug/this.cs",
+      "PLang/app/modules/ui/code/Fluid.cs",
+      "PLang/app/modules/builder/code/Default.cs"
+    ]
+  },
+  "process_violations": [
+    {
+      "issue": "baseline-tests.md missing from coder/v1/ and coder/v2/",
+      "impact": "Tester cannot mechanically separate regressions from pre-existing failures. Not blocking this pass because suite is fully green; would block a noisier branch.",
+      "suggestion": "Coder writes .bot/<branch>/coder/v<N>/baseline-tests.md before starting each iteration."
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/Http/HttpStaticFileDenialTests.cs",
+      "code_file": "PLang/app/modules/http/code/Default.cs",
+      "issue": "Tests claim to verify http upload-file gating (CreateFileContent / auto-detect) but never instantiate the http handler — they only call `FilePath.ReadBytes()` directly. The path verbs are tested elsewhere; the handler's routing through them is not.",
+      "impact": "If CreateFileContent reverted to reading bytes outside of path verbs (without re-introducing System.IO, e.g. via a stale FilePath built without context), these tests would still pass. PLNG002 is the only real seatbelt here.",
+      "suggestion": "Either invoke `http.code.Default.CreateFileContent` (or the upload action's Run()) and assert behaviour at that level, or rename the tests to make clear they only verify the underlying verb."
+    },
+    {
+      "id": 2,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/Ui/FluidIncludeDenialTests.cs",
+      "code_file": "PLang/app/modules/ui/code/Fluid.cs",
+      "issue": "Tests claim to verify Fluid `{% include %}` template gating via PlangFileProvider/PlangFileInfo but only call `FilePath.ReadText()` directly. Coverage on `modules/ui/code/Fluid.cs` is 42.6% line / 27.6% branch — the PlangFileProvider glue is barely exercised.",
+      "impact": "A Fluid renderer that bypassed PlangFileProvider and reached for files another way would not be caught by these tests. Combined with the cold coverage, the migration claim for Fluid is weakly evidenced.",
+      "suggestion": "Drive a Fluid render of `{% include 'tpl.liquid' %}` end-to-end and assert (a) in-root inclusion succeeds, (b) out-of-root inclusion is denied via AuthGate."
+    },
+    {
+      "id": 3,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/Llm/OpenAiImageDenialTests.cs",
+      "code_file": "PLang/app/modules/llm/code/OpenAi.cs",
+      "issue": "Test names `ImageAttachment_PathOutsideRoot_DeniedAnswer_NotIncludedInRequest` and `ImageAttachment_PathInRoot_BytesShipBase64Encoded` imply behaviour at the OpenAi request layer; bodies only exercise `FilePath.ReadAsDataUri()`. The OpenAi.ResolveImage code path is never invoked.",
+      "impact": "If ResolveImage stopped calling ReadAsDataUri and went back to ReadAllBytes (or simply forgot to forward the denial up the stack and shipped a request with no image), neither test would notice.",
+      "suggestion": "Invoke `OpenAi.ResolveImage(filePathArg, context)` directly and assert (a) the result on denial does not contain the base64-encoded bytes, (b) the result on success does contain them with the right MIME prefix."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "false-green",
+      "test_file": "PLang.Tests/App/Modules/Debug/DebugTraceWriteTests.cs",
+      "code_file": "PLang/app/modules/debug/this.cs",
+      "issue": "Both tests labelled `…_GoesThroughPathVerbs_NotFileWriteAllText` and `GenerateLlmFilePath_ProducedViaPathDerivationVerbs` exercise path verbs directly. The `debug/this.cs` LLM trace writer is never invoked. Coverage: 35.2% line / 20.2% branch on `modules/debug/this.cs`.",
+      "impact": "Same pattern as findings 1-3. The new derivation-verb composition is asserted; the handler's use of it is not.",
+      "suggestion": "Stand up a fake LLM call that triggers `debug.this.WriteLlmTrace(...)` and assert the trace file lands at the expected path *and* contains the LLM payload. Alternatively, accept these as derivation-verb tests and rename to `PathDerivation_BuildsLlmTraceShape`."
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Goals/AppGoalsMigrationTests/AppGoalsThroughPathVerbsTests.cs",
+      "code_file": "PLang/app/this.cs",
+      "issue": "`AppLoad_OnCorruptAppPr_ReturnsFailureNotCrash` writes invalid JSON to `app.pr`, awaits `app.Load()`, then has zero assertions. The name promises 'returns failure'; the body merely demonstrates 'does not throw'. A `Load()` that silently swallows the parse error and reports success would also pass.",
+      "impact": "If `App.Load` regresses to silent corrupt-state behaviour, this test will not catch it.",
+      "suggestion": "Capture `Load`'s return (it returns a Data — make that visible if it's currently void) and assert `Success == false` plus a specific `Error.Key`."
+    },
+    {
+      "id": 6,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/Llm/OpenAiImageDenialTests.cs, PLang.Tests/App/Modules/Http/HttpStaticFileDenialTests.cs, PLang.Tests/App/Modules/Ui/FluidIncludeDenialTests.cs, PLang.Tests/App/FileSystem/PermissionTests/ExecuteVerbTests/ExecuteVerbTests.cs",
+      "code_file": "PLang/app/types/path/this.Authorize.cs",
+      "issue": "Denial assertions check only `result.Success).IsFalse()` without inspecting `Error.Key` / `Error.StatusCode`. Character guide: this is the standard 'weak denial' anti-pattern.",
+      "impact": "A read that failed for a non-permission reason (file-not-found, disk error, ctor exception) would also report Success=false and pass the test under the heading of 'denial'.",
+      "suggestion": "Add `await Assert.That(result.Error!.Key).IsEqualTo(\"<the actual key the gate emits>\");` to each denial assertion."
+    },
+    {
+      "id": 7,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/TestModuleTests/DiscoverDenialPathTests.cs",
+      "code_file": "PLang/app/modules/test/discover.cs",
+      "issue": "`Discover_WithDotDotTraversal_DeniedByAuthGate` wraps the only assertion inside `if (result.Success)`. When denial flips Success false, no assertion runs and the test passes vacuously.",
+      "impact": "A discover.Run() that swallowed the traversal denial and returned `Success=false` with no other validation would pass without our knowledge of *what* was tested.",
+      "suggestion": "Restructure as `await Assert.That(result.Success ? (filesEmpty) : true).IsTrue();` plus a second `Assert.That` covering the denied case explicitly (e.g. `Error.Key`)."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "missing-plang-test",
+      "test_file": "Tests/Permission/*OutsideRoot/Start.test.goal (all 8 deleted)",
+      "code_file": "PLang/app/modules/test/discover.cs and siblings",
+      "issue": "Eight `Tests/Permission/*OutsideRoot/Start.test.goal` stubs were deleted in 003c5267e without PLang-side replacements. The C# denial tests are now the only coverage for these scenarios; the CLI end-to-end (`plang --test=/etc` against a real .test.goal) is uncovered.",
+      "impact": "A regression at the CLI/test-runner boundary (argument parsing, root inference, channel wiring at top level) wouldn't be caught by the unit-level C# denial tests.",
+      "suggestion": "Add at least one PLang denial test per Stage 5 area (sqlite, openai image, fluid include, http static, module add DLL) that drives the scenario through the real plang.exe."
+    },
+    {
+      "id": 9,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "(N/A)",
+      "code_file": "PLang/app/modules/debug/this.cs, PLang/app/modules/ui/code/Fluid.cs",
+      "issue": "Coverage on Fluid handler 42.6% line / 27.6% branch; debug handler 35.2% line / 20.2% branch — both substantially below the rest of the changed code.",
+      "impact": "Quiet bug surface area inside the migrated handlers.",
+      "suggestion": "Either accept (these are infrastructure boundaries with limited test seams) or carve out end-to-end fixtures driving Fluid render with includes and debug trace under `--debug={...}`."
+    },
+    {
+      "id": 10,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Types/SurfaceTests/AbsoluteDisciplineTests.cs",
+      "code_file": "PLang/app/types/path/this.Operations.cs",
+      "issue": "`PathInternals_ReachForAbsolute_IsAllowed_NoDiagnostic` and `DiagnosticString_UsesAbsolute_InErrorMessage_IsAllowed` claim to verify analyzer/diagnostic behaviour but only exercise runtime path operations. No diagnostic-emission probe is in scope of these tests.",
+      "impact": "The names promise PLNG002 behaviour; the bodies test runtime IO. If PLNG002 stopped exempting `this.Operations.cs` or stopped allowing `ToString` interpolation, neither test would catch it (the analyzer is tested separately in `Plng002SystemIoBanTests` — those are the real source of truth).",
+      "suggestion": "Either rename to drop the analyzer/diagnostic implication, or move to `Plng002SystemIoBanTests` as compile-time probes."
+    },
+    {
+      "id": 11,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Goals/AppGoalsMigrationTests/AppGoalsThroughPathVerbsTests.cs",
+      "code_file": "PLang/app/goals/this.cs",
+      "issue": "Test names `LoadFromDirectoryAsync_UsesPathListNotDirectoryGetFiles` and `LoadFromFileAsync_UsesPathReadTextNotFileReadAllText` promise to verify a specific underlying API was used. The bodies only verify the visible effect (goals load).",
+      "impact": "Reverting to `Directory.GetFiles` (impossible under PLNG002-as-error, but conceivable if the analyzer ever flips back to warning) would not be detected here. The name overpromises; reviewers reading the test name might believe the implementation property is locked in.",
+      "suggestion": "Rename to e.g. `LoadFromDirectoryAsync_LoadsAllPrFiles`, or add a probe (custom filesystem with a counting `List` verb) that proves the path was taken."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "Build is clean (zero PLNG002), suite is fully green (C# 3025/3025, PLang 206/206), and the headline 'test.discover denial' + Execute-verb claims are honestly exercised. But four denial-test files (Http, Fluid, OpenAi, DebugTrace) only test path verbs directly — they don't invoke the handlers they name. One test (`AppLoad_OnCorruptAppPr`) has no assertions at all. Several denial assertions are bare `Success).IsFalse()`. PLNG002-at-error is the actual seatbelt for the migration; these tests overstate their contribution. The production migration itself is sound."
+}

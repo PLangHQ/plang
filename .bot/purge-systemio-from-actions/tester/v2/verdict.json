@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "Suite all green (C# 3025/3025, PLang 206/206) and PLNG002 enforced at error severity — but four handler-routing test files (Http, Fluid, OpenAi, DebugTrace) exercise path verbs directly instead of the handler they claim to verify; deleting the handler's path call would not flip them red. Plus one fully-assertion-less test (AppLoad_OnCorruptAppPr) and several weak result.Success-only checks lacking Error.Key. Headline DiscoverDenialPath + ExecuteVerb tests are honest."
+}
