@@ -1094,7 +1094,7 @@ function gp(obj, ...names) {
 //     subGoals: [...], durationMs, buildError }
 // Source-step text comes from goal.Steps; compile-time errors/warnings come
 // from stepPasses[i].value.response.
-function passToGoalSection(passOrTrace, isParent) {
+function passToGoalSection(passOrTrace, isParent, compileSystemFallback) {
   const p = unwrapDataWrapper(passOrTrace) || {};
   const goalObj = (p.goal && typeof p.goal === 'object') ? p.goal : null;
   const goalName = goalObj ? (gp(goalObj, 'Name', 'name') || '?') : (typeof p.goal === 'string' ? p.goal : '?');
@@ -1154,10 +1154,11 @@ function passToGoalSection(passOrTrace, isParent) {
         // level) so renderStepRow can show them inline next to the step.
         errors: Array.isArray(resp.errors) ? resp.errors : [],
         warnings: Array.isArray(resp.warnings) ? resp.warnings : [],
-        // Per-step LLM prompts (v3): captured into trace.stepPasses[i].
-        // The system prompt is shared across steps in a goal but we attach it
-        // per-step so the UI can show it inline without cross-referencing.
-        system: compiled.system || '',
+        // Per-step LLM prompts (v3): user is captured per stepPass; system is
+        // stashed once per trace at trace.compileSystem (it's the same
+        // Compile.llm render for every step). Fall back to per-step `compiled.system`
+        // for older traces that pre-dated the dedup.
+        system: compiled.system || compileSystemFallback || '',
         user: compiled.user || '',
         usage: compiled.usage || {},
         raw: { source: src, compiled },
@@ -1215,14 +1216,19 @@ function traceToEntry(trace) {
   const rootName = goalObj ? (gp(goalObj, 'Name', 'name') || '?') : (trace.goal || '?');
   const rootPath = goalObj ? (gp(goalObj, 'Path', 'path') || '') : (trace.path || '');
 
+  // Compile system prompt is stashed once at trace level (dedup) — pass it
+  // down so each step's accordion can fall back to it when the per-step
+  // `system` field is absent.
+  const compileSystem = trace.compileSystem || '';
+
   let parentSection;
   if (trace.pass1) {
     // Legacy: wrap pass1 with the legacy goal string/object.
     const parentPass = { ...unwrapDataWrapper(trace.pass1), goal: goalObj || trace.goal };
-    parentSection = passToGoalSection(parentPass, /*isParent*/ true);
+    parentSection = passToGoalSection(parentPass, /*isParent*/ true, compileSystem);
   } else if (goalObj || Array.isArray(trace.stepPasses)) {
     // v3: the trace itself is the parent pass.
-    parentSection = passToGoalSection(trace, /*isParent*/ true);
+    parentSection = passToGoalSection(trace, /*isParent*/ true, compileSystem);
   } else {
     parentSection = null;
   }
@@ -1236,7 +1242,7 @@ function traceToEntry(trace) {
     ? trace.subGoals.map(sg => {
         const sgUnwrapped = unwrapDataWrapper(sg) || {};
         const enriched = { ...sgUnwrapped, stepPasses: trace.stepPasses };
-        return passToGoalSection(enriched, /*isParent*/ false);
+        return passToGoalSection(enriched, /*isParent*/ false, compileSystem);
       })
     : [];
 

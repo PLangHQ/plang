@@ -235,8 +235,101 @@
     },
     {
       "index": 5,
+      "text": "render template \"/system/builder/llm/Compile.llm\", write to %compileSystemPrompt%",
+      "lineNumber": 13,
+      "indent": 0,
+      "comment": "The compile system prompt is static across every step in every goal — render\nit once at goal level so the trace doesn't duplicate ~14KB per step.",
+      "actions": [
+        {
+          "module": "ui",
+          "action": "render",
+          "parameters": [
+            {
+              "name": "Template",
+              "value": "/system/builder/llm/Compile.llm",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%compileSystemPrompt%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Render the Compile.llm template once at goal level so all per-step compiles share the same system-prompt text (and the trace stores it once, not per step).",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "set %trace.compileSystem% = %compileSystemPrompt%",
+      "lineNumber": 14,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%trace.compileSystem%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%compileSystemPrompt%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Stamp the compile system prompt onto %trace% so the viewer can show it without it being duplicated per stepPass.",
+      "level": "high",
+      "confidence": 90,
+      "formal": null,
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
       "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure",
-      "lineNumber": 11,
+      "lineNumber": 17,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -316,9 +409,9 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 8,
       "text": "set %parentGoal% = %goal%",
-      "lineNumber": 13,
+      "lineNumber": 19,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -361,9 +454,9 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 9,
       "text": "foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%",
-      "lineNumber": 14,
+      "lineNumber": 20,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -414,9 +507,9 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 10,
       "text": "set %goal% = %parentGoal%",
-      "lineNumber": 15,
+      "lineNumber": 21,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -459,9 +552,9 @@
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 11,
       "text": "math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%",
-      "lineNumber": 17,
+      "lineNumber": 23,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -517,9 +610,9 @@
       "waitForExecution": true
     },
     {
-      "index": 10,
+      "index": 12,
       "text": "math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%",
-      "lineNumber": 18,
+      "lineNumber": 24,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -575,9 +668,9 @@
       "waitForExecution": true
     },
     {
-      "index": 11,
+      "index": 13,
       "text": "set %trace.durationMs% = %elapsedMs%",
-      "lineNumber": 19,
+      "lineNumber": 25,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -615,9 +708,9 @@
       "waitForExecution": true
     },
     {
-      "index": 12,
+      "index": 14,
       "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
-      "lineNumber": 21,
+      "lineNumber": 27,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -649,9 +742,9 @@
       "waitForExecution": true
     },
     {
-      "index": 13,
+      "index": 15,
       "text": "add %goal.Name% to %traceGoals%",
-      "lineNumber": 22,
+      "lineNumber": 28,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -688,9 +781,9 @@
       "waitForExecution": true
     },
     {
-      "index": 14,
+      "index": 16,
       "text": "builder.goalsSave Goal=%goal%",
-      "lineNumber": 23,
+      "lineNumber": 29,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -726,7 +819,7 @@
         {
           "index": 0,
           "text": "set %goal% = %subGoal%",
-          "lineNumber": 34,
+          "lineNumber": 40,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -766,7 +859,7 @@
         {
           "index": 1,
           "text": "write out \"  Building sub-goal: %goal.Name%\"",
-          "lineNumber": 35,
+          "lineNumber": 41,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -795,7 +888,7 @@
         {
           "index": 2,
           "text": "call Plan, on error call HandleBuildFailure",
-          "lineNumber": 36,
+          "lineNumber": 42,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -857,7 +950,7 @@
         {
           "index": 3,
           "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure",
-          "lineNumber": 37,
+          "lineNumber": 43,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -939,7 +1032,7 @@
         {
           "index": 4,
           "text": "- add {goal: %goal%, plan: %plan%} to %trace.subGoals%",
-          "lineNumber": 38,
+          "lineNumber": 44,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -999,7 +1092,7 @@
         {
           "index": 0,
           "text": "write out \"  Build error in %goal.Name%: %!error.Message%\"",
-          "lineNumber": 44,
+          "lineNumber": 50,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1028,7 +1121,7 @@
         {
           "index": 1,
           "text": "set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}, type=json",
-          "lineNumber": 45,
+          "lineNumber": 51,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1077,7 +1170,7 @@
         {
           "index": 2,
           "text": "save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'",
-          "lineNumber": 46,
+          "lineNumber": 52,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -1111,7 +1204,7 @@
         {
           "index": 3,
           "text": "throw %!error%",
-          "lineNumber": 47,
+          "lineNumber": 53,
           "indent": 0,
           "comment": null,
           "actions": [
