@@ -17,7 +17,7 @@ STEP TEXT (the exact source line to compile — values inside it are LITERAL, do
 --- END STEP TEXT ---
 
 Actions involved (planner's set — compiler decides chain order and shape from the action examples):
-{{ planStep.actions }}
+{% for a in planStep.actions %}{{ a }}{% unless forloop.last %}, {% endunless %}{% endfor %}
 
 Variables in scope at this step (name → PLang type, derived from prior steps). Lookups are case-INSENSITIVE; the snapshot may lowercase names for display.
 {% if stepVarTypes %}{% for kv in stepVarTypes %}%{{ kv[0] }}%({{ kv[1] }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none — this is the first step or no variables introduced yet){% endif %}
