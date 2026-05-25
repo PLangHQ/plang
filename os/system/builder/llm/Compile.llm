@@ -15,6 +15,10 @@ You receive:
 - The planner's **action set** — a list of `"module.action"` strings the step uses (unordered)
 - For each action: parameter schema, Notes, and example chain shapes (`Notes:` / `Examples:` blocks above)
 
+## Variable names are case-insensitive
+
+`%Foo%`, `%foo%`, `%FOO%` all refer to the same PLang variable at runtime. Preserve the case from the step text when you emit a value (`{"name":"Name","value":"%hasMissingPr%"}`), but **never raise a `missingVariable` warning purely on case difference** between the step text and the "Variables in scope" snapshot. The snapshot lowercases names — that is normalization for lookup, not a different variable.
+
 ## What `%!data%` means
 
 `%!data%` is a runtime-only token: it resolves to **the return value of the immediately preceding action in the same step's chain.** Nothing else. It is not a NULL marker, not a "fill in later" placeholder, not a default value.
@@ -97,6 +101,8 @@ The action's authored Notes and Examples show the canonical chain shape. **Don't
   - `write out "Hello %name%"` → ONE `output.write` with `Data` as the tstring template.
 
 The JSON `"name"` field on every parameter is ALWAYS the literal schema property name (`Name`, `Value`, `AsDefault`, `Collection`, ...). The `%var%` token shown in the catalog (e.g. `- Name: %var% string`) is a *type hint* meaning "this slot takes a variable reference"; it is never the parameter name. NEVER emit `"name":"%var%"` or `"name":"var"` — that's the catalog's value-type hint mistakenly copied into the name slot.
+
+The trailing token after `%var%` (e.g. `string` in `%var% string`) is a generic placeholder, **not** a type claim on what the variable holds — the variable can resolve to anything at runtime (list, dict, bool, object). Do NOT raise `ambiguousMapping` because the in-scope variable's type differs from this placeholder (e.g. step uses `%results%(object)` against a slot advertised as `%var% string`). They are not in conflict.
 - Modifiers wrap their host action — they're nested in `modifiers`, not appended as peers.
 - Recovery actions (the action that runs `on error <verb>`) nest into `error.handle.Actions`, not as peers. (See `error.handle` Notes for the full rule.)
 
