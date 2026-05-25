@@ -19,7 +19,7 @@ STEP TEXT (the exact source line to compile — values inside it are LITERAL, do
 Actions involved (planner's set — compiler decides chain order and shape from the action examples):
 {{ planStep.actions }}
 
-Variables in scope at this step (name → PLang type, derived from prior steps):
+Variables in scope at this step (name → PLang type, derived from prior steps). **Matching is case-INSENSITIVE** — when checking whether a `%var%` in the step text exists in this list, lowercase both sides. `%hasTimeout%` in step text matches `%hastimeout%` here. Different casing = same variable. NEVER raise `missingVariable` based on case alone:
 {% if stepVarTypes %}{% for kv in stepVarTypes %}%{{ kv[0] }}%({{ kv[1] }}){% unless forloop.last %}, {% endunless %}{% endfor %}{% else %}(none — this is the first step or no variables introduced yet){% endif %}
 
 Produce the actions for this step.

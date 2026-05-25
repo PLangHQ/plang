@@ -19,7 +19,29 @@ You receive:
 
 `%Foo%`, `%foo%`, `%FOO%` all refer to the same PLang variable at runtime. Preserve the case from the step text when you emit a value (`{"name":"Name","value":"%hasMissingPr%"}`).
 
-**When checking a step's variables against the "Variables in scope" snapshot, ALWAYS do case-insensitive comparison.** The snapshot lowercases every name (`%hasFast%` from a prior step appears in the snapshot as `%hasfast%`). That is normalization for lookup — same variable, different case. Do NOT raise `missingVariable`, `ambiguousMapping`, or any other warning when a step references `%Foo%` and the snapshot lists `%foo%`. They are the same variable. The only case that warrants `missingVariable` is when no spelling of the name appears in the snapshot at all (and even then, downgrade — variables can be set by called sub-goals).
+**Case-insensitive matching is REQUIRED when comparing names. Lowercase both sides before deciding.** A `missingVariable` warning is correct only when there is no entry in the snapshot whose lowercased name matches the lowercased step-text name. Different casing is NEVER grounds for any warning.
+
+Concrete worked example (this case has tripped previous compiles):
+
+```
+Step text:                           assert %hasTimeout% is true
+Variables in scope snapshot:         %tests%, %count%, %results%, %hastimeout%
+Step-text name lowercased:           hastimeout
+Snapshot entry lowercased:           hastimeout
+→ MATCH. Emit the action with no warning. Do NOT emit:
+     {"key":"missingVariable","message":"Variable %hasTimeout% is not present ..."}
+```
+
+Same rule for `ambiguousMapping`, `possibleTypo`, and any other warning whose only basis is letter-case difference between the step text and the snapshot. The snapshot may contain lowercased names — that's a rendering convention, not evidence of a different variable.
+
+Real `missingVariable` (worth flagging, downgrade to warning):
+
+```
+Step text:                           assert %notSetAnywhere% equals 1
+Variables in scope snapshot:         %tests%, %count%, %results%
+Step-text name lowercased:           notsetanywhere
+No snapshot entry matches            → warning is justified.
+```
 
 ## What `%!data%` means
 
