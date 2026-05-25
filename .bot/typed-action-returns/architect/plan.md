@@ -238,9 +238,9 @@ No `IDiagnostic` interface, no `IWarning` abstraction — the channel carries `B
 
 ### A.7 `tester/File` → `tester/Test` rename
 
-Today: `app/tester/File.cs` named `File`, with `[PlangType("testfile")]`. Carries Path + 9 test-domain fields (PrPath, EntryGoalName, Status, Directory, Goal, GoalHash, BuilderVersion, Tags, StatusReason).
+Today: `app/tester/File.cs` named `File`. Carries Path + 9 test-domain fields (PrPath, EntryGoalName, Status, Directory, Goal, GoalHash, BuilderVersion, Tags, StatusReason).
 
-After: `app/tester/Test/this.cs` named `Test`. Class name derives the PLang type (`test`) — no attribute needed.
+After: `app/tester/Test/this.cs` named `Test`. PLang type name is derived from the class name (`Test` → `test`). No `[PlangType]` attribute — the source generator does the derivation; the attribute is dropped from the codebase as part of this work.
 
 **Why `Test` and not the alternatives:**
 
@@ -251,7 +251,7 @@ After: `app/tester/Test/this.cs` named `Test`. Class name derives the PLang type
 
 **Touch surface.**
 
-- Rename `app/tester/File.cs` → `app/tester/Test/this.cs`; class `File` → `Test`; drop `[PlangType("testfile")]`.
+- Rename `app/tester/File.cs` → `app/tester/Test/this.cs`; class `File` → `Test`. Existing `[PlangType("testfile")]` attribute is dropped — PLang type derives from the class name.
 - `test.discover` (A.1): return `List<Test>`.
 - `test.run` (A.1): input is `Test` (was `File`).
 - `test.report` (B.2): `Report.Runs` carries `Run`s; nothing changes there (Run already references File via property — that becomes Test).
@@ -276,7 +276,7 @@ public sealed record Report(
     Coverage BranchCoverage);
 ```
 
-No `[PlangType("report")]` — the PLang type name derives from the class name (lowercased). The attribute is a drift hazard. Legitimate uses exist when the class name would collide with a module name (the old `tester/File` used it to avoid colliding with the `file` module — now moot post-A.7), but `Report` has no collision.
+No `[PlangType]` attribute — the PLang type name derives from the class name. The attribute is a drift hazard and is being phased out across the codebase; new types don't add it, and the existing `[PlangType("testfile")]` on `tester/File` goes away as part of A.7.
 
 `Runs` is the existing `Results` collection — no new projection. `Run` already carries `CapturedOutput`, `Duration`, `Error`, `UserTags`.
 
@@ -360,7 +360,7 @@ Across the `Tests/` corpus, the 729 `(object)` occurrences in Category A should 
 3. **`mock.intercept`** location — flagged in original survey; coder locates and types as `Mock`.
 4. **`test.tag`** is marginal — coder's discretion. Worth it if one-liner.
 5. **`variable.set` materializer table** — `variable.set` itself only tags Data with `.Type`; the lazy materializers (`json` → `JsonNode`, `csv` → `Csv`, `xlsx` → `Workbook`, …) live on `Data.As<T>()` / property access, hooked through the existing `Serializers` registry where possible. `Primitives` table at `app/types/this.cs` is the source of truth for which types exist.
-6. **`[PlangType]` derivation** — follow-up: source generator could derive PLang type from class name (lowercased) by default, with `[PlangType("…")]` as explicit override only on collision. CLAUDE.md proposal worth filing.
+6. **`[PlangType]` attribute is gone** — source generator derives PLang type name from class name. No exceptions. Existing usages (including `[PlangType("testfile")]` on tester/File) are removed as part of this branch. CLAUDE.md proposal: document the derivation rule and that the attribute does not exist as an escape hatch.
 7. **CLAUDE.md proposal** — file under `.bot/typed-action-returns/claude-md-proposals.md`: the "Key Files" section still references `PLang/Runtime2/Engine/Utility/TypeMapping.cs`; the actual location is `PLang/app/types/this.cs ClrFromMime`.
 8. **`Build()` contract refinement** — first cut in A.6 is intentionally minimal (returns Data carrying type-name string, or Ok/Fail, plus optional Warnings). Other compile-time signals can grow into Data.Properties without re-litigating the Build() shape.
 9. **Warnings channel lookup API** — `Channel("builder")` in the plan is shorthand; coder picks whether that's `app.CurrentActor.Channels.Get("builder")`, a typed identifier (`Channels.Builder`), or both. The locked rule is: lookup by name returns either the channel or a no-op sink; writers don't null-check. `BuildWarning` record shape (`IClass Action`, `string Message`) is the initial payload; grows with use.

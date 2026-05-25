@@ -2,18 +2,18 @@
   "plan.md": [
     {
       "id": "1cf99f4bf2",
-      "line": 49,
+      "line": 70,
       "text": "List<path>? instead of List<File>\nouput.ask should also allow for hinting, 'ask user \"give me stuff\", write to %answer%(json)\", aha, actually the variable.set should be the 'converter', what do you think, we always call variable.set after gettings something.\nI dont like MockHandle, why not just mock?",
       "anchor": "| Action | Handler | T |",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:20:50",
       "drifted": false
     },
     {
       "id": "900fbb7833",
-      "line": 49,
+      "line": 70,
       "text": "what does goal.getTypes give us, feels wrong that it's not strongly typed, but maybe it needs to be?",
       "anchor": "| Action | Handler | T |",
       "author": "user",
@@ -24,7 +24,7 @@
     },
     {
       "id": "69f7f48c4b",
-      "line": 49,
+      "line": 70,
       "text": "but it is important not to do the convert until it's needed, so the data object that is stored knows that it's csv, but it doesnt process it in any way. just wanted to make sure",
       "anchor": "| Action | Handler | T |",
       "author": "user",
@@ -35,7 +35,7 @@
     },
     {
       "id": "16ae9e968a",
-      "line": 49,
+      "line": 70,
       "text": "why is it List<File>, why isn't it List<Goal>? or is it mabye TestGoal? or are we breaking obp with TestGoal",
       "anchor": "| Action | Handler | T |",
       "author": "user",
@@ -46,18 +46,18 @@
     },
     {
       "id": "a1b2c3d401",
-      "line": 49,
+      "line": 70,
       "text": "Three parts:\n\n(1) **List<File> stays.** I checked app/tester/File.cs — it carries 9 fields beyond Path (PrPath, EntryGoalName, Status, Directory, Goal, GoalHash, BuilderVersion, Tags, StatusReason). It's a real test-domain object, not a path wrapper. Collapsing to List<path> would lose all that. If at some later point those fields move onto path itself, we'd revisit, but that's a bigger refactor than this branch.\n\n(2) **variable.set as universal converter — adopted.** This is the keystone insight and it collapses a huge chunk of v1. Every action's capture is already `variable.set Value=%!data% Type=<T>`. If variable.set knows how to coerce by Type (json → JsonNode, csv → Csv, xlsx → Workbook), every action becomes type-coercible without the action knowing about types. output.ask, file.read, http.request, llm.query all become 'annotate the trailing variable.set Type' — no per-action infrastructure. New section A.4 is built around this. Section A.5 (cast hint) drops to one paragraph because there's nothing to parse — the LLM reads `%var%(type)` as prompt text and uses it for the Type annotation; the converter on variable.set does the work at runtime.\n\n(3) **MockHandle → Mock.** Renamed. Lives at app/mock/Mock/this.cs per the singular-folder rule; the doubled name is the accepted cost.",
       "anchor": "| Action | Handler | T |",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "1cf99f4bf2",
       "ts": "2026-05-25T17:55:00",
       "drifted": false
     },
     {
       "id": "a1b2c3d402",
-      "line": 49,
+      "line": 70,
       "text": "Agreed — `List<Dictionary<string,string>>` was lazy. Plan updated: coder reads the current `Builder.Types(this)` implementation and extracts the actual shape into a strongly-typed record (likely `app/builder/Types/TypeInfo/this.cs` or reuses an existing type model if one fits — there's already an `app/types/` model that may slot in directly). The string-keyed dict goes away.",
       "anchor": "| Action | Handler | T |",
       "author": "architect",
@@ -68,7 +68,7 @@
     },
     {
       "id": "b2c3d4e501",
-      "line": 49,
+      "line": 70,
       "text": "Yes — load-bearing correction. My A.4 wording was eager (\"variable.set coerces via the registry\"); that's wrong. Updated to: variable.set tags Data with .Type and stores the raw value untouched. No parsing at set time. The materializer (from the Serializers registry) runs lazily on first access — `%var.rows%` or `Data.As<Csv>()` triggers it, parses once, caches the typed view on Data for subsequent accesses. Same discipline as Lazy params and IBooleanResolvable's deferred I/O.\n\nOne consequence worth flagging: if a declared Type has no materializer, the error surfaces at the first **access** site, not at the set site. I think that's right — the access is where the developer expected the typed shape, so it's where the error makes sense — but it's a small contract decision. Locked unless you want it loud-at-set instead.\n\nUpdated plan: decisions table + A.4 + open-note #5.",
       "anchor": "| Action | Handler | T |",
       "author": "architect",
@@ -79,18 +79,18 @@
     },
     {
       "id": "c3d4e5f601",
-      "line": 49,
+      "line": 70,
       "text": "Good OBP catch. My answer: rename to `tester/Test/this.cs`.\n\nReasoning:\n- `TestGoal` carries the prefix-smell you sniffed — `{Domain}{Thing}` naming, which is what OBP-strict design avoids.\n- `Goal` collides nominally with `app.goals.goal.@this`. Both exist; using both via aliases gets confusing.\n- `Test` is the noun of the tester domain. It pairs symmetrically: a `Test` gets discovered → is `Run` → produces a `Run` → collected in `Results`. Reads naturally.\n- `app.tester.Test.@this` — doubled name is the accepted OBP cost per the singular-folder rule.\n- The current `File` framing leads with file-ness; the actual identity is test-ness. Files are an implementation detail (it happens to live in a *.test.goal file).\n\nScope flag: this is a rename of an existing type, not just a new return type. It touches test.discover (return), test.run (input), test.report (consumer), and the C# unit tests that reference `tester.File`. Bigger than a one-line signature change, but cleaner than locking in the wrong name when we're already touching the surface.\n\nUpdating plan: A.1 row says `List<Test>`; a new A.7 section captures the rename + OBP reasoning.",
       "anchor": "| Action | Handler | T |",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "16ae9e968a",
       "ts": "2026-05-25T18:35:00",
       "drifted": false
     },
     {
       "id": "6da4441f3d",
-      "line": 68,
+      "line": 89,
       "text": "llm.query can be figured out by when the user request, because he send format/scheme to llm, when he sends scheme it's json, also format can be '.md' => md, 'csharp' => csharp, etc...",
       "anchor": "| Action | Why |",
       "author": "user",
@@ -101,7 +101,7 @@
     },
     {
       "id": "a1b2c3d403",
-      "line": 68,
+      "line": 89,
       "text": "Right — moved out of 'stay polymorphic'. llm.query is determinable from its own args: `schema` set → Type=`json`; `format` arg → that format. The C# signature stays `Data<object>` (the value still is whatever the LLM returns), but the trailing variable.set gets a real Type annotation via the per-action prompt rules in A.4. Only two actions are now genuinely polymorphic at the C# level: `goal.call` (needs cross-goal analysis) and `settings.get` (depends on what was stored).",
       "anchor": "| Action | Why |",
       "author": "architect",
@@ -138,10 +138,10 @@
       "text": "you say: \"Explicit Data.As<JsonNode>() for json-tagged data\", I think it should be more generic than that, more Data.As(type), the As method would then find the correct deserializer for the job, if it is json then use json deserializer, if it xlsx then use xlsx deserializer, etc. obp is that each object owns it responsiblity, doing As(type), the method finds the correct serializer by type and runs it on data.value",
       "anchor": "- Property dereference like `%var.rows%` for csv-tagged data",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T18:08:26",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "d4e5f60701",
@@ -149,10 +149,10 @@
       "text": "Right — `Data.As<T>()` leaks the materializer choice to the caller, which is exactly the OBP violation. The caller already told Data what it is (via `.Type`); Data should resolve the materializer itself.\n\nShape:\n\n- **Default case — Data owns it via .Type.** Property access `%var.foo%` and any C# consumer that wants the materialized value gets it through a Data method that uses Data's own declared `.Type` to look up the materializer (from the Serializers registry), runs it once on `Data.Value`, caches the result. No type parameter from the caller. Signature could be `Data.Materialize()` or just an internal getter that property access goes through.\n- **Cross-type coercion — `Data.As(string typeName)`.** Rare; for cases where someone has csv-tagged data and explicitly wants it as json. Data looks up the materializer for the *requested* type and runs it. Still owned by Data; the type parameter is the requested target, not a generic.\n\nKilling the `Data.As<JsonNode>()` framing from A.4. Coder picks the exact method shape — `Materialize()`, `Value` getter, `As(string)`, all defensible — but the OBP rule is locked: Data picks the materializer based on `.Type`, never the caller via generic.",
       "anchor": "- Property dereference like `%var.rows%` for csv-tagged data",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "486ba3e9f7",
       "ts": "2026-05-25T19:15:00",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "6b2c267f8f",
@@ -160,7 +160,7 @@
       "text": "I think this is basically happening on the variable.set, so even though we say '- read file.xlsx', it is always read into %!data% at runtime, that %!data% can have .type='xlsx'. when we build, hmmm.... yeah, then we dont know the type, so it must be up to the file.read module to somehow give that information to the builder. I think we are coming to the part where we need to create a Build method for actions, that runs the build method on each action after it has built. Then we could have Build() in file/read.cs that would parse the filename and propigate the type to the builder. ok, this is another branch, so lets leave it for now.",
       "anchor": "**Open question.** Does the cast survive into the `.pr` so runtime can use it for things like format coercion later? My read: **pure compile-time for now**, can persist later if a use case emerges. Don't widen the contract before there is a consumer.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:33:12",
       "drifted": true
@@ -171,7 +171,7 @@
       "text": "Per-action `Build()` method captured as section A.6 (deferred) and as open-note #8. The plan ships LLM-only inference for now (per-action prompt rules in A.4, plus the `(type)` hint convention in A.5); the `Build()` method generalizes those into actual code on its own future branch. Will add a `todos.md` entry for it. Good idea — it's the natural place for the path-parsing logic and would replace prompt-language inference with something testable.",
       "anchor": "**Open question.** Does the cast survive into the `.pr` so runtime can use it for things like format coercion later? My read: **pure compile-time for now**, can persist later if a use case emerges. Don't widen the contract before there is a consumer.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "6b2c267f8f",
       "ts": "2026-05-25T17:55:00",
       "drifted": true
@@ -182,7 +182,7 @@
       "text": "just want to note, not all are written to action variable.set, here is exmple \n\n'- read file.csv, where zip=101, write to %list%'\n\nread.file | list.where | variable.set",
       "anchor": "> When a variable reference or string literal is followed by `(type)` in an action argument, treat `type` as a PLang type hint for the slot. If the action would emit a trailing `variable.set` for that arg's data, use the hint as the Type. Unknown type names should still be passed through — coercion happens at runtime, where `variable.set` will error if it can't convert.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:46:27",
       "drifted": true
@@ -193,7 +193,7 @@
       "text": "Right — important clarification. The step `- read file.csv, where zip=101, write to %list%` compiles to a chain: `read.file | list.where | variable.set`. The (type) hint lands on the **step's final** `variable.set`, not on the op immediately after the action. Through the chain, types may transform — `read.file` produces csv-tagged data, `list.where` filters it (still csv? or a new list-of-rows type?), the final `variable.set` carries whatever Type is appropriate for `%list%`.\n\nUpdating A.4 to clarify: 'the step's terminal variable.set, after any intermediate transforms in the chain.' Adding the worked example you gave. The (type) hint convention in A.5 stays the same — it just annotates the *destination* slot, not any particular op in the middle.\n\nThis also reinforces why Build() (A.6, now in scope per your other comment) is the right place to compute the trailing Type — it can see the whole emitted chain for the step, not just the single producer action.",
       "anchor": "> When a variable reference or string literal is followed by `(type)` in an action argument, treat `type` as a PLang type hint for the slot. If the action would emit a trailing `variable.set` for that arg's data, use the hint as the Type. Unknown type names should still be passed through — coercion happens at runtime, where `variable.set` will error if it can't convert.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "61ca88a75b",
       "ts": "2026-05-25T18:35:00",
       "drifted": true
@@ -270,10 +270,10 @@
       "text": "I dont like BuildContext or BuildResult, obp violation. plus when you would call Build, I believe just send in the action, that has everything, it has the step, which has all the actions, you are just creating a class for nothing. The BuildResult is either success, or error, correct?? so isn't just Data?",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T18:11:02",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "858c7e8636",
@@ -281,9 +281,10 @@
       "text": "actually I think we need Warning also, e.g. when we do file.read the build method for it could be to check if file exists, if it doesn't it can be a warning. But since Data doesn't have a warning, how do we solve that??",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "c87d3d9319",
-      "ts": "2026-05-25T18:12:09"
+      "ts": "2026-05-25T18:12:09",
+      "drifted": true
     },
     {
       "id": "d4e5f60702",
@@ -291,10 +292,10 @@
       "text": "Both critiques accepted — dropping BuildContext and BuildResult.\n\n**New shape:**\n\n```csharp\npublic interface IClass\n{\n    // existing surface...\n    Task<Data> Build();  // optional default impl returns Data.Ok()\n}\n```\n\nThat's it. The action `@this` already carries its own args (source-generated properties) and reaches its Step (and through Step, the chain of sibling actions). Build() operates on `this`. No wrapper classes.\n\n**Return convention via Data:**\n- `Data.Ok(\"csv\")` — success; Value carries the inferred terminal type name (or whatever build-time signal makes sense). The validator reads `Data.Value as string` and sets the terminal variable.set Type.\n- `Data.Fail(error)` — Build() found a build-time error. Validator surfaces it; .pr emit fails.\n- Build() that contributes nothing returns `Data.Ok()` (or just doesn't override — handlers without compile-time inference skip implementing it).\n\n**Concrete per-action implementations get simpler:**\n\n```csharp\n// file.read\npublic Task<Data> Build()\n    => Path.Value is string p && System.IO.Path.HasExtension(p)\n        ? Task.FromResult(Data.Ok(MimeToType(System.IO.Path.GetExtension(p))))\n        : Task.FromResult(Data.Ok());\n\n// llm.query\npublic Task<Data> Build()\n    => !string.IsNullOrEmpty(Schema.Value) ? Data.Ok(\"json\")\n     : !string.IsNullOrEmpty(Format.Value) ? Data.Ok(Format.Value)\n     : Data.Ok();\n```",
       "anchor": "```csharp",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "c87d3d9319",
       "ts": "2026-05-25T19:15:00",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "d4e5f60703",
@@ -302,10 +303,10 @@
       "text": "Warnings are real and Data is the right place for them. Two options I see:\n\n**Option A — add Warnings as first-class on Data.** Mirror Error: `IReadOnlyList<IWarning> Warnings { get; }` defined alongside `IError`. Data has `WithWarning(IWarning w)` and `WithWarnings(...)` builders. `IWarning` is a small interface (Message + maybe Source/Location, mirroring IError's shape minus the fatal severity). Build() returns `Data.Ok(\"csv\").WithWarning(new MissingFileAtBuild(path))`. Validator collects warnings into the build trace; .pr emit proceeds.\n\n**Option B — Properties-bag for now.** Stuff warnings into `Data.Properties[\"warnings\"]` as a List<IWarning>. No Data shape change. Uglier in code, weaker contract, but doesn't widen the Data surface.\n\n**My pick: A.** Warnings are a recurring result-level concern, not just a Build() thing — file.save might warn it overwrote, http.request might warn on slow response, etc. Properties-stuffing for something this common would be the kind of thing that ends up regretted later. Adding `Warnings` to Data is a small shape change with broad payoff.\n\n**What Warning is:** at minimum, an `IWarning` interface with a `Message` string. Whether it gets richer (Source, Location, Severity beyond binary error/warning) can grow with use. Start small, mirror IError's shape so existing diagnostic infrastructure can handle both. Open question worth a separate design pass: do we eventually generalize to `IDiagnostic` with severity, collapsing IError + IWarning into one? Worth filing but not for this branch.\n\nA.6 will reflect this; plan note added about the small Data shape change.",
       "anchor": "```csharp",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "858c7e8636",
       "ts": "2026-05-25T19:15:00",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "e5f6070801",
@@ -313,10 +314,10 @@
       "text": "Strictly better than my Data.Warnings proposal. Adopting.\n\nThe framing that crystallizes: **in-band for control flow, out-of-band for diagnostics.**\n\n- `Error` stays on Data — fatal, the caller has to short-circuit on it. Has to be in the return path.\n- Warnings go to a channel — non-fatal, doesn't affect control flow. Side stream.\n\nThe asymmetry isn't arbitrary; it tracks how the signal participates in the pipeline.\n\n**Why this beats Data.Warnings:**\n\n1. No Data shape change. Universal result type stays universal.\n2. Consistent with existing channels (Output, Input, Debug) — same WriteAsync surface, same redirectability. A `--strict` build mode subscribes and fails on any warning; a quiet mode counts them; the trace renders them per-step. Subscribers, not propagation.\n3. Runtime parity — same channel carries Build-time warnings (file.read at build time when path doesn't exist) AND runtime warnings (slow http, file.save overwrite, llm.query rate-limit hit). One mechanism.\n4. Multiple consumers without aggregation. The builder collects everything during validate; the cli might log to stderr; the trace UI shows them in the panel. All from the same channel.\n\n**Mechanics:**\n\n- New channel: `warnings` (alongside `Output`, `Input`, `Debug`).\n- Action handlers in Build() write via `await ctx.App.CurrentActor.Channels.WriteAsync(Channels.Warnings, warning)` — or whatever shape matches existing channel API. Coder verifies.\n- Builder.validate subscribes during the build pass, accumulates warnings into the build trace alongside the inferred types.\n- At runtime the same channel exists; anything that writes (slow http, file overwrite, etc.) goes through it; subscribers decide what to do.\n\n**Build() return becomes simpler:**\n\n```csharp\npublic Task<Data> Build()\n{\n    if (Path.Value is string p && !System.IO.File.Exists(p))\n        await Channels.Warnings.WriteAsync(new MissingFileAtBuild(p));\n    if (Path.Value is string lit && System.IO.Path.HasExtension(lit))\n        return Data.Ok(MimeToType(System.IO.Path.GetExtension(lit)));\n    return Data.Ok();\n}\n```\n\nReturn carries the type signal (in-band, affects emit); warnings go sideways (out-of-band).\n\n**One open question — source attribution.** When a warning lands on the channel, the consumer (builder trace) needs to know which step/action emitted it so it can attach to the right line. Two ways:\n\n- **Channel-side scoping.** The action's view of the channel auto-scopes to its identity — the channel infra knows which action is currently writing and tags accordingly. Same pattern Debug.Write already uses. Less to remember, harder to lie about.\n- **Warning-side metadata.** Each IWarning carries its own source/location fields; writer fills them.\n\nI'd lean channel-side scoping. Coder verifies what the existing channels system gives us for caller-identity tagging — if Debug.Write already tags with caller info, Warnings inherits the same mechanism.\n\n**Plan updates:** removing Data.Warnings; A.6 Build() rewrites with channel writes; decisions table updates; open-note #9 changes from 'IDiagnostic generalization' to 'warning channel API shape — TBD by coder, lean on existing Debug pattern.'",
       "anchor": "```csharp",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "858c7e8636",
       "ts": "2026-05-25T19:35:00",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "30bdc7c28f",
@@ -324,7 +325,7 @@
       "text": "let fork this from runtime2, I will merge that purge-systemio-from-actions  into it when done",
       "anchor": "```",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:35:01",
       "drifted": true
@@ -335,7 +336,7 @@
       "text": "Sequencing diagram updated. All three branches fork from `runtime2`. You merge `purge-systemio-from-actions` into `typed-action-returns` when it's ready (the report.cs rewrite on test-report-typed-object picks up the System.IO purge through whichever merge order makes sense at the time). test-report-typed-object is independent of both during its own work.",
       "anchor": "```",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "30bdc7c28f",
       "ts": "2026-05-25T17:55:00",
       "drifted": true
@@ -385,23 +386,45 @@
       "drifted": true
     },
     {
+      "id": "0b163106f9",
+      "line": 241,
+      "text": "again: [PlangType(\"testfile\")], derive from type name dont use plangtype",
+      "anchor": "Today: `app/tester/File.cs` named `File`, with `[PlangType(\"testfile\")]`. Carries Path + 9 test-domain fields (PrPath, EntryGoalName, Status, Directory, Goal, GoalHash, BuilderVersion, Tags, StatusReason).",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-25T18:27:57",
+      "drifted": false
+    },
+    {
+      "id": "f7080901aa",
+      "line": 241,
+      "text": "Right — I kept a 'legitimate when class collides with module name' caveat in B.1 and a `[PlangType(\"testfile\")]` mention in A.7's 'Today:' line. Both gone now. Locked rule: PLang type name derives from class name, no exceptions, attribute does not exist as an escape hatch. Existing `[PlangType(\"testfile\")]` is removed as part of A.7's rename.\n\nUpdated:\n- A.7 'Today:' line drops the attribute mention; rewritten so the section is about the class, not the attribute.\n- A.7 'Touch surface': existing attribute is removed as part of the rename.\n- B.1 caveat dropped — no more 'legitimate uses exist when X.' Just: attribute gone.\n- Open-note #6 rewritten: derivation is the rule, attribute is gone, CLAUDE.md proposal documents the rule (not the escape hatch).\n- Decisions table already said 'No [PlangType] attribute — derived'; that's consistent now.",
+      "anchor": "Today: `app/tester/File.cs` named `File`, with `[PlangType(\"testfile\")]`. Carries Path + 9 test-domain fields (PrPath, EntryGoalName, Status, Directory, Goal, GoalHash, BuilderVersion, Tags, StatusReason).",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "0b163106f9",
+      "ts": "2026-05-25T20:00:00",
+      "drifted": false
+    },
+    {
       "id": "07d156e712",
-      "line": 256,
+      "line": 326,
       "text": "I think you can just remove all reference to purge-systemio-from-actions, it is unrelated after we have merged it into runtime2",
       "anchor": "- file.save %report% to '.test/results.json'",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "a1b2c3d407",
       "ts": "2026-05-25T17:49:53",
       "drifted": false
     },
     {
       "id": "c3d4e5f605",
-      "line": 256,
+      "line": 326,
       "text": "Right — once purge-systemio is merged into runtime2 it's invisible from here. Removing the sequencing diagram and all 'after purge-systemio finishes' mentions. The plan just assumes its baseline includes whatever's currently in runtime2.",
       "anchor": "- file.save %report% to '.test/results.json'",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "07d156e712",
       "ts": "2026-05-25T18:35:00",
       "drifted": false
