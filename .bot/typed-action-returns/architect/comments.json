@@ -17,7 +17,7 @@
       "text": "what does goal.getTypes give us, feels wrong that it's not strongly typed, but maybe it needs to be?",
       "anchor": "| Action | Handler | T |",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:21:44",
       "drifted": false
@@ -28,21 +28,20 @@
       "text": "but it is important not to do the convert until it's needed, so the data object that is stored knows that it's csv, but it doesnt process it in any way. just wanted to make sure",
       "anchor": "| Action | Handler | T |",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "a1b2c3d401",
       "ts": "2026-05-25T17:44:33",
       "drifted": false
     },
     {
-      "id": "b2c3d4e501",
+      "id": "16ae9e968a",
       "line": 47,
-      "text": "Yes — load-bearing correction. My A.4 wording was eager (\"variable.set coerces via the registry\"); that's wrong. Updated to: variable.set tags Data with .Type and stores the raw value untouched. No parsing at set time. The materializer (from the Serializers registry) runs lazily on first access — `%var.rows%` or `Data.As<Csv>()` triggers it, parses once, caches the typed view on Data for subsequent accesses. Same discipline as Lazy params and IBooleanResolvable's deferred I/O.\n\nOne consequence worth flagging: if a declared Type has no materializer, the error surfaces at the first **access** site, not at the set site. I think that's right — the access is where the developer expected the typed shape, so it's where the error makes sense — but it's a small contract decision. Locked unless you want it loud-at-set instead.\n\nUpdated plan: decisions table + A.4 + open-note #5.",
+      "text": "why is it List<File>, why isn't it List<Goal>? or is it mabye TestGoal? or are we breaking obp with TestGoal",
       "anchor": "| Action | Handler | T |",
-      "author": "architect",
+      "author": "user",
       "status": "open",
-      "parent_id": "69f7f48c4b",
-      "ts": "2026-05-25T18:10:00",
-      "drifted": false
+      "parent_id": "a1b2c3d401",
+      "ts": "2026-05-25T17:53:58"
     },
     {
       "id": "a1b2c3d401",
@@ -61,9 +60,31 @@
       "text": "Agreed — `List<Dictionary<string,string>>` was lazy. Plan updated: coder reads the current `Builder.Types(this)` implementation and extracts the actual shape into a strongly-typed record (likely `app/builder/Types/TypeInfo/this.cs` or reuses an existing type model if one fits — there's already an `app/types/` model that may slot in directly). The string-keyed dict goes away.",
       "anchor": "| Action | Handler | T |",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "900fbb7833",
       "ts": "2026-05-25T17:55:00",
+      "drifted": false
+    },
+    {
+      "id": "b2c3d4e501",
+      "line": 47,
+      "text": "Yes — load-bearing correction. My A.4 wording was eager (\"variable.set coerces via the registry\"); that's wrong. Updated to: variable.set tags Data with .Type and stores the raw value untouched. No parsing at set time. The materializer (from the Serializers registry) runs lazily on first access — `%var.rows%` or `Data.As<Csv>()` triggers it, parses once, caches the typed view on Data for subsequent accesses. Same discipline as Lazy params and IBooleanResolvable's deferred I/O.\n\nOne consequence worth flagging: if a declared Type has no materializer, the error surfaces at the first **access** site, not at the set site. I think that's right — the access is where the developer expected the typed shape, so it's where the error makes sense — but it's a small contract decision. Locked unless you want it loud-at-set instead.\n\nUpdated plan: decisions table + A.4 + open-note #5.",
+      "anchor": "| Action | Handler | T |",
+      "author": "architect",
+      "status": "resolved",
+      "parent_id": "69f7f48c4b",
+      "ts": "2026-05-25T18:10:00",
+      "drifted": false
+    },
+    {
+      "id": "c3d4e5f601",
+      "line": 47,
+      "text": "Good OBP catch. My answer: rename to `tester/Test/this.cs`.\n\nReasoning:\n- `TestGoal` carries the prefix-smell you sniffed — `{Domain}{Thing}` naming, which is what OBP-strict design avoids.\n- `Goal` collides nominally with `app.goals.goal.@this`. Both exist; using both via aliases gets confusing.\n- `Test` is the noun of the tester domain. It pairs symmetrically: a `Test` gets discovered → is `Run` → produces a `Run` → collected in `Results`. Reads naturally.\n- `app.tester.Test.@this` — doubled name is the accepted OBP cost per the singular-folder rule.\n- The current `File` framing leads with file-ness; the actual identity is test-ness. Files are an implementation detail (it happens to live in a *.test.goal file).\n\nScope flag: this is a rename of an existing type, not just a new return type. It touches test.discover (return), test.run (input), test.report (consumer), and the C# unit tests that reference `tester.File`. Bigger than a one-line signature change, but cleaner than locking in the wrong name when we're already touching the surface.\n\nUpdating plan: A.1 row says `List<Test>`; a new A.7 section captures the rename + OBP reasoning.",
+      "anchor": "| Action | Handler | T |",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "16ae9e968a",
+      "ts": "2026-05-25T18:35:00",
       "drifted": false
     },
     {
@@ -72,7 +93,7 @@
       "text": "llm.query can be figured out by when the user request, because he send format/scheme to llm, when he sends scheme it's json, also format can be '.md' => md, 'csharp' => csharp, etc...",
       "anchor": "| Action | Why |",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:23:18",
       "drifted": false
@@ -83,7 +104,7 @@
       "text": "Right — moved out of 'stay polymorphic'. llm.query is determinable from its own args: `schema` set → Type=`json`; `format` arg → that format. The C# signature stays `Data<object>` (the value still is whatever the LLM returns), but the trailing variable.set gets a real Type annotation via the per-action prompt rules in A.4. Only two actions are now genuinely polymorphic at the C# level: `goal.call` (needs cross-goal analysis) and `settings.get` (depends on what was stored).",
       "anchor": "| Action | Why |",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "6da4441f3d",
       "ts": "2026-05-25T17:55:00",
       "drifted": false
@@ -94,7 +115,7 @@
       "text": "no no no no, there is not syntax in plang. this is just a hint to the llm. c# never parses this.",
       "anchor": "### A.5 The `%var%(type)` cast syntax",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:26:50",
       "drifted": true
@@ -105,7 +126,7 @@
       "text": "Critical correction accepted. Section A.5 rewritten — it's now one paragraph instead of ~30 lines. There is no new PLang syntax, no schema change, no parser work, no `castType` field. The dev writes `file.read %path%(csv)` as plain step text; the LLM reads it; Compile.llm has one rule (\"variable followed by `(type)` is a Type hint for the slot\") that tells the LLM to put that type on the trailing variable.set's existing `Type` parameter. PLang's tokenizer never sees `(csv)` — it's free-form prose like any other text in step descriptions. The runtime converter on variable.set (A.4) does the actual work.",
       "anchor": "### A.5 The `%var%(type)` cast syntax",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "971460206f",
       "ts": "2026-05-25T17:55:00",
       "drifted": true
@@ -134,7 +155,7 @@
     },
     {
       "id": "61ca88a75b",
-      "line": 115,
+      "line": 117,
       "text": "just want to note, not all are written to action variable.set, here is exmple \n\n'- read file.csv, where zip=101, write to %list%'\n\nread.file | list.where | variable.set",
       "anchor": "> When a variable reference or string literal is followed by `(type)` in an action argument, treat `type` as a PLang type hint for the slot. If the action would emit a trailing `variable.set` for that arg's data, use the hint as the Type. Unknown type names should still be passed through — coercion happens at runtime, where `variable.set` will error if it can't convert.",
       "author": "user",
@@ -144,12 +165,23 @@
       "drifted": false
     },
     {
+      "id": "c3d4e5f602",
+      "line": 117,
+      "text": "Right — important clarification. The step `- read file.csv, where zip=101, write to %list%` compiles to a chain: `read.file | list.where | variable.set`. The (type) hint lands on the **step's final** `variable.set`, not on the op immediately after the action. Through the chain, types may transform — `read.file` produces csv-tagged data, `list.where` filters it (still csv? or a new list-of-rows type?), the final `variable.set` carries whatever Type is appropriate for `%list%`.\n\nUpdating A.4 to clarify: 'the step's terminal variable.set, after any intermediate transforms in the chain.' Adding the worked example you gave. The (type) hint convention in A.5 stays the same — it just annotates the *destination* slot, not any particular op in the middle.\n\nThis also reinforces why Build() (A.6, now in scope per your other comment) is the right place to compute the trailing Type — it can see the whole emitted chain for the step, not just the single producer action.",
+      "anchor": "> When a variable reference or string literal is followed by `(type)` in an action argument, treat `type` as a PLang type hint for the slot. If the action would emit a trailing `variable.set` for that arg's data, use the hint as the Type. Unknown type names should still be passed through — coercion happens at runtime, where `variable.set` will error if it can't convert.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "61ca88a75b",
+      "ts": "2026-05-25T18:35:00",
+      "drifted": false
+    },
+    {
       "id": "78760a688b",
       "line": 120,
       "text": "[PlangType(\"report\")] are we really using this attribute? I feel like the type should come from the class otherwise we could have drift",
       "anchor": "```csharp",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:33:49",
       "drifted": true
@@ -160,14 +192,14 @@
       "text": "Agreed — dropped from `Report`. The PLang type name should derive from the class name (lowercased) by default. The attribute does have a legitimate use when the class name would collide with a module name (e.g. `app/tester/File.cs` uses `[PlangType(\"testfile\")]` because bare `file` would clash with the `file` module), but `Report` has no collision so no attribute. Filed as open-note #6: source generator should derive by default, attribute becomes an explicit override on collision only. CLAUDE.md proposal worth writing on this branch.",
       "anchor": "```csharp",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "78760a688b",
       "ts": "2026-05-25T17:55:00",
       "drifted": true
     },
     {
       "id": "56fa686339",
-      "line": 123,
+      "line": 125,
       "text": "I am actually thinking that we need to do this now, adding this Build method, since we are doing strongly typed, and we cannot fullfill stongly type unless we have this Build method. e.g. when llm.query is build, the Build method would find the format/scheme and set %!data.type% = '...'",
       "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
       "author": "user",
@@ -177,14 +209,36 @@
       "drifted": false
     },
     {
+      "id": "c3d4e5f603",
+      "line": 125,
+      "text": "Reversing the deferral — agreed. The argument is convincing: you can't deliver strongly-typed-returns by LLM prompt teaching alone, because the LLM is the *least* deterministic place to do inference that's mechanical (extension lookup, schema-arg inspection). Moving Build() in-scope as part of A.6.\n\nThe `builder.validate` hook (your follow-up 3be5fc57b4) is the right place — actions are resolved, args are known, before emit. I'll spell out the contract in A.6:\n\n- `IClass` gets an optional `Build(BuildContext ctx) → BuildResult` (or similar shape; coder picks).\n- `BuildContext` exposes the action's resolved args + the step's emitted op chain.\n- `BuildResult` declares the Type to set on the step's terminal variable.set (and possibly other compile-time signals).\n- The validator iterates each step's actions, calls Build() on each, accumulates results, sets the terminal variable.set Type.\n\nConsequence: most of v2's 'per-action LLM prompt rules' (file.read reads path-extension, llm.query reads schema arg, http.request reads URL extension) move from Compile.llm teaching into `file.read.Build()`, `llm.query.Build()`, `http.request.Build()` — actual C# code, testable, deterministic. The LLM only retains the `(type)` hint convention (A.5) — that's free-form text the LLM has to interpret because it's user prose.\n\nUpdating A.4 (smaller — only lazy materialization stays), removing per-action LLM rules, expanding A.6 with the Build() contract and concrete per-action implementations.",
+      "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "56fa686339",
+      "ts": "2026-05-25T18:35:00",
+      "drifted": false
+    },
+    {
       "id": "3be5fc57b4",
-      "line": 123,
+      "line": 125,
       "text": "I think we can add this to builder.validate c# method, that it calls the Build method there, what do you think?",
       "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
       "author": "user",
       "status": "open",
       "parent_id": "56fa686339",
       "ts": "2026-05-25T17:48:40",
+      "drifted": false
+    },
+    {
+      "id": "c3d4e5f604",
+      "line": 125,
+      "text": "Yes — `builder.validate` is the right hook. By the time validate runs the actions are resolved, args are bound, and the emit step hasn't happened yet, so Build() can influence the .pr output. That's exactly the window we need. Coder verifies the existing validate pass shape and slots Build() in; if validate doesn't currently iterate per-action with the right context, that's the one piece of plumbing this branch lands.\n\nSee my reply to your parent 56fa686339 for the full contract sketch.",
+      "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "3be5fc57b4",
+      "ts": "2026-05-25T18:35:00",
       "drifted": false
     },
     {
@@ -199,16 +253,6 @@
       "drifted": true
     },
     {
-      "id": "07d156e712",
-      "line": 188,
-      "text": "I think you can just remove all reference to purge-systemio-from-actions, it is unrelated after we have merged it into runtime2",
-      "anchor": "- file.save %report% to '.test/results.json'",
-      "author": "user",
-      "status": "open",
-      "parent_id": "a1b2c3d407",
-      "ts": "2026-05-25T17:49:53"
-    },
-    {
       "id": "a1b2c3d407",
       "line": 188,
       "text": "Sequencing diagram updated. All three branches fork from `runtime2`. You merge `purge-systemio-from-actions` into `typed-action-returns` when it's ready (the report.cs rewrite on test-report-typed-object picks up the System.IO purge through whichever merge order makes sense at the time). test-report-typed-object is independent of both during its own work.",
@@ -220,12 +264,34 @@
       "drifted": true
     },
     {
+      "id": "07d156e712",
+      "line": 190,
+      "text": "I think you can just remove all reference to purge-systemio-from-actions, it is unrelated after we have merged it into runtime2",
+      "anchor": "- file.save %report% to '.test/results.json'",
+      "author": "user",
+      "status": "open",
+      "parent_id": "a1b2c3d407",
+      "ts": "2026-05-25T17:49:53",
+      "drifted": false
+    },
+    {
+      "id": "c3d4e5f605",
+      "line": 190,
+      "text": "Right — once purge-systemio is merged into runtime2 it's invisible from here. Removing the sequencing diagram and all 'after purge-systemio finishes' mentions. The plan just assumes its baseline includes whatever's currently in runtime2.",
+      "anchor": "- file.save %report% to '.test/results.json'",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "07d156e712",
+      "ts": "2026-05-25T18:35:00",
+      "drifted": false
+    },
+    {
       "id": "ec1140ac22",
       "line": 214,
       "text": "yes, extend",
       "anchor": "1. **JUnit extension dispatch.** `.junit.xml` is two extensions; `GetByExtension` currently keys on one. Either extend the registry to walk multi-segment extensions, or pick `.xml` and disambiguate by content shape, or pick `.junit` (uglier). Lean: extend the registry — one-line change to make `GetByExtension` walk multi-segment.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:35:35",
       "drifted": true
@@ -236,7 +302,7 @@
       "text": "Locked. `GetByExtension` walks multi-segment extensions; `.junit.xml` resolves to `JunitSerializer`. Coder lands the registry change as part of B.3.",
       "anchor": "1. **JUnit extension dispatch.** `.junit.xml` is two extensions; `GetByExtension` currently keys on one. Either extend the registry to walk multi-segment extensions, or pick `.xml` and disambiguate by content shape, or pick `.junit` (uglier). Lean: extend the registry — one-line change to make `GetByExtension` walk multi-segment.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "ec1140ac22",
       "ts": "2026-05-25T17:55:00",
       "drifted": true
@@ -247,7 +313,7 @@
       "text": "no castType, why?",
       "anchor": "5. **Persisting `castType` into `.pr`** — deferred. Pure compile-time for v1.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-25T17:36:01",
       "drifted": true
@@ -258,7 +324,7 @@
       "text": "Bullet dropped. Per comment 971460206f — there is no separate `castType` field anywhere. The cast hint translates into the trailing variable.set's existing `Type` parameter, which is already persisted in the .pr. Nothing to 'persist later'; nothing to defer. Open-notes section is renumbered.",
       "anchor": "5. **Persisting `castType` into `.pr`** — deferred. Pure compile-time for v1.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "a32be70470",
       "ts": "2026-05-25T17:55:00",
       "drifted": true
