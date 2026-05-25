@@ -284,6 +284,44 @@
     overflow-x: auto;
     margin-top: 4px;
   }
+  .test-result-panel .tr-output,
+  .test-result-panel .tr-timings {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .test-result-panel .tr-output summary,
+  .test-result-panel .tr-timings summary {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 11px;
+    user-select: none;
+  }
+  .test-result-panel .tr-output summary:hover,
+  .test-result-panel .tr-timings summary:hover { color: var(--text); }
+  .test-result-panel .tr-output pre {
+    margin-top: 6px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    background: rgba(0,0,0,0.2);
+    padding: 6px 8px;
+    border-radius: 3px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .test-result-panel .tr-tgrid {
+    margin-top: 6px;
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 4px 12px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+  }
+  .test-result-panel .tr-tline { display: contents; }
+  .test-result-panel .tr-tidx { color: var(--text-dim); }
+  .test-result-panel .tr-tdur { color: var(--text); text-align: right; }
+  .test-result-panel .tr-tnote { color: var(--text-dim); font-style: italic; }
 
   #controls {
     padding: 12px 16px;
@@ -1743,6 +1781,16 @@ function renderTestResultPanel(file) {
     ? `<div class="tr-vars"><div class="tr-pair-label">variables at failure:</div><pre>${esc(JSON.stringify(run.variables, null, 2))}</pre></div>`
     : '';
 
+  // Captured output (test's stdout via output.write). Collapsed by default —
+  // <details> gives a free click-to-expand without state plumbing.
+  const output = (typeof run.output === 'string' && run.output.length)
+    ? `<details class="tr-output"><summary>output (${run.output.length} chars)</summary><pre>${esc(run.output)}</pre></details>`
+    : '';
+
+  // Per-step durations. Group by stepIndex (a chained step may produce multiple
+  // entries — chain action + write-to peer); sum for display, show count when >1.
+  const timings = renderTimings(run.timings);
+
   return `
     <div class="test-result-panel ${cls}">
       <div class="tr-header">
@@ -1752,8 +1800,28 @@ function renderTestResultPanel(file) {
       ${errorLine}
       ${pairs}
       ${vars}
+      ${output}
+      ${timings}
     </div>
   `;
+}
+
+function renderTimings(timings) {
+  if (!Array.isArray(timings) || timings.length === 0) return '';
+  // Group by stepIndex — sub-actions of one step land as separate entries.
+  const byStep = new Map();
+  for (const t of timings) {
+    const idx = t.stepIndex;
+    if (!byStep.has(idx)) byStep.set(idx, { total: 0, count: 0 });
+    const e = byStep.get(idx);
+    e.total += t.ms || 0;
+    e.count += 1;
+  }
+  const rows = [...byStep.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([idx, e]) => `<div class="tr-tline"><span class="tr-tidx">step ${idx}</span><span class="tr-tdur">${e.total.toFixed(1)}ms</span>${e.count > 1 ? `<span class="tr-tnote">(${e.count} actions)</span>` : ''}</div>`)
+    .join('');
+  return `<details class="tr-timings"><summary>step timings (${byStep.size} steps)</summary><div class="tr-tgrid">${rows}</div></details>`;
 }
 
 function renderFileHeader(file, entry) {
