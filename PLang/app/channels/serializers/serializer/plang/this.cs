@@ -18,15 +18,26 @@ public sealed class @this : ISerializer
     private readonly JsonSerializerOptions _serializeOptions;
     private readonly JsonSerializerOptions _deserializeOptions;
 
-    public @this()
+    public @this() : this(null) { }
+
+    /// <summary>
+    /// Construct with an actor Context — the bundled PathJsonConverter will
+    /// route through <c>path.Resolve(raw, context)</c> on read, so deserialized
+    /// Goal/GoalCall/... carry Path-typed fields fully Context-wired. Per-Actor
+    /// instances pass their Context here.
+    /// </summary>
+    public @this(actor.context.@this? context)
     {
+        var pathConverter = context != null
+            ? new global::app.types.path.JsonConverter(context)
+            : new global::app.types.path.JsonConverter();
         _serializeOptions = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.data.Json(), new global::app.types.path.JsonConverter() },
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.data.Json(), pathConverter },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
@@ -38,7 +49,7 @@ public sealed class @this : ISerializer
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.data.Json(), new global::app.types.path.JsonConverter() },
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.data.Json(), pathConverter },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { global::app.channels.serializers.filters.Transport.ForInbound }

@@ -48,7 +48,7 @@ public sealed partial class @this
                 var snapshotClr = snapshotType.ClrType;
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
-                    var (converted, _) = global::app.types.@this.TryConvertTo(snapshot, snapshotClr);
+                    var (converted, _) = global::app.types.@this.TryConvertTo(snapshot, snapshotClr, Context!);
                     if (converted != null)
                         return new data.@this(Raw, converted, snapshotType);
                 }
@@ -92,7 +92,10 @@ public sealed partial class @this
                 }
                 else if (clr != null && clr != typeof(string))
                 {
-                    var (converted, _) = global::app.types.@this.TryConvertTo(text, clr);
+                    // Pass Context so the per-call options bag uses a Context-
+                    // bound PathJsonConverter — Path fields inside the result
+                    // (Goal.Path, GoalCall.PrPath, ...) land fully wired.
+                    var (converted, _) = global::app.types.@this.TryConvertTo(text, clr, Context!);
                     content = converted ?? text;
                 }
                 else

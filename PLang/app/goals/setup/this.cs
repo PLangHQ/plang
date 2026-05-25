@@ -36,24 +36,28 @@ public sealed class @this
     /// </summary>
     private async Task<data.@this> DiscoverAsync(app.@this app, CancellationToken ct = default)
     {
-        var root = app.AbsolutePath;
-
-        var candidates = new[]
+        var ctx = app.System.Context!;
+        var candidates = new global::app.types.path.@this[]
         {
-            System.IO.Path.Combine(root, ".build", "setup.pr"),
-            System.IO.Path.Combine(root, "Setup", ".build", "setup.pr"),
+            global::app.types.path.@this.Resolve("/.build/setup.pr", ctx),
+            global::app.types.path.@this.Resolve("/Setup/.build/setup.pr", ctx),
         };
 
         foreach (var file in candidates)
         {
-            if (!System.IO.File.Exists(file)) continue;
+            // ExistsAsync routes through AuthGate(Read) — in-root setup probes
+            // fast-pass via IsInRoot. Out-of-root would prompt, but setup paths
+            // are derived from App.AbsolutePath so this is always in-root.
+            var exists = await file.ExistsAsync();
+            if (!exists.Success || exists.Value != true) continue;
 
             try
             {
-                var content = await System.IO.File.ReadAllTextAsync(file, ct);
-                var ext = System.IO.Path.GetExtension(file);
-                var goal = app.System.Channels.Serializers.Deserialize<goal.@this>(new app.channels.serializers.DeserializeOptions { Value = content, Extension = ext });
-                if (goal == null || !goal.IsSetup) continue;
+                // ReadText already MIME-deserializes .pr → Goal via the
+                // FilePath.ReadText path. The per-Actor serializer carries a
+                // Context-bound PathJsonConverter so Path fields land wired.
+                var read = await file.ReadText();
+                if (!read.Success || read.Value is not goal.@this goal || !goal.IsSetup) continue;
 
                 foreach (var step in goal.Steps)
                 {

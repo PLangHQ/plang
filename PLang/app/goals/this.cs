@@ -328,10 +328,8 @@ public sealed class @this
 
             List<goal.@this>? goals = null;
             var trimmed = content.TrimStart();
-            // PathDeserializationScope: pushes the context so PathJsonConverter
-            // can call path.Resolve while reading Goal.Path / GoalCall.PrPath.
-            var deserializeContext = context ?? app.System.Context!;
-            using var _scope = global::app.types.path.DeserializationScope.Push(deserializeContext);
+            // Channels.Serializers is per-Actor with a Context-bound
+            // PathJsonConverter baked in — Path fields land wired.
             if (trimmed.StartsWith('['))
             {
                 goals = app.System.Channels.Serializers.Deserialize<List<goal.@this>>(

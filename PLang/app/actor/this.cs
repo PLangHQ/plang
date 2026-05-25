@@ -127,7 +127,9 @@ public sealed class @this : IAsyncDisposable
         Context = new context.@this(app, parentToken: _cts.Token);
         Context.Actor = this;
         Permission = new permission.@this(this);
-        _channels = new AppChannels(app) { Actor = this };
+        // Per-Actor Serializers: bound to this actor's Context so PathJsonConverter
+        // produces Context-wired Paths on deserialize without any ambient state.
+        _channels = new AppChannels(app, new global::app.channels.serializers.@this(Context)) { Actor = this };
 
         // Register %Settings.X% as a navigable mount on this actor's Variables.
         // Resolution dispatches to app.Settings.Get(path, this.Context); the
