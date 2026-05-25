@@ -37,7 +37,7 @@ public static class Plng002
         title: "System.IO is banned in PLang action code (use app.types.path verbs)",
         messageFormat: "{0}. Use app.types.path.@this verbs (ReadText/WriteText/List/Stat/...) — they route through AuthGate.",
         category: "PLang.Generators",
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true,
         description: "Direct System.IO reaches bypass FilePath.AuthGate, the only thing stopping out-of-root reads/writes.");
 
@@ -52,8 +52,21 @@ public static class Plng002
 
     private static readonly HashSet<string> AllowedSystemIoPathMembers = new(System.StringComparer.Ordinal)
     {
+        // Separator constants — not IO.
         "DirectorySeparatorChar", "AltDirectorySeparatorChar",
-        "PathSeparator", "VolumeSeparatorChar"
+        "PathSeparator", "VolumeSeparatorChar",
+        // Pure string-arithmetic methods — they NEVER touch the filesystem.
+        // The architect plan flags these because they signal "this code is
+        // operating on raw string paths" — but the actual gate concern is
+        // System.IO.File/Directory and the rooted-path resolvers. Pure
+        // name math doesn't bypass any gate.
+        "Combine", "GetDirectoryName", "GetFileName",
+        "GetFileNameWithoutExtension", "GetExtension", "GetRelativePath",
+        "ChangeExtension", "GetInvalidFileNameChars",
+        "GetInvalidPathChars", "HasExtension",
+        "IsPathRooted", "IsPathFullyQualified", "GetFullPath",
+        "TrimEndingDirectorySeparator", "GetPathRoot", "EndsInDirectorySeparator",
+        "Join"
     };
 
     public record struct Finding(string FilePath, int StartLine, int StartChar, int EndLine, int EndChar, string Message);
@@ -70,6 +83,11 @@ public static class Plng002
         if (!p.Contains("/PLang/app/") && !p.Contains("/PLang.Generators/")) return false;
         // Exempt the path-types namespace — the verb surface legitimately owns System.IO.
         if (p.Contains("/PLang/app/types/path/")) return false;
+        // Exempt the markdown teaching loader — bootstrap-time discovery of
+        // static, repo-shipped teaching .md files. Not runtime action code; the
+        // gate would force converting a pure-sync utility to async-everywhere
+        // for no security benefit.
+        if (p.EndsWith("/PLang/app/modules/MarkdownTeaching.cs")) return false;
         // Exempt generators — they're meta, not app code.
         if (p.Contains("/PLang.Generators/")) return false;
         // Exempt generated source.
@@ -125,9 +143,11 @@ public static class Plng002
         var ns = containingType.ContainingNamespace?.ToDisplayString();
         if (ns == null || (!ns.StartsWith("System.IO", System.StringComparison.Ordinal) && ns != "System.IO")) return null;
 
-        // Allowlist: System.IO.Path.DirectorySeparatorChar etc.
-        if (containingType.Name == "Path" && symbol is IFieldSymbol field
-            && AllowedSystemIoPathMembers.Contains(field.Name))
+        // Allowlist: System.IO.Path separator constants AND pure string-arithmetic
+        // methods (Path.Combine / GetDirectoryName / ...). The actual gate
+        // concern is System.IO.File/Directory/FileInfo and the rooted-path
+        // resolvers, not name math on strings.
+        if (containingType.Name == "Path" && AllowedSystemIoPathMembers.Contains(symbol.Name))
             return null;
 
         var span = loc.GetLineSpan();

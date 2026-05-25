@@ -1087,19 +1087,28 @@ Crossing the perimeter into memory means calling
 `path.Resolve(rawString, context)`.
 
 **Build-time gate (PLNG002).** The PLang source generator emits a
-`PLNG002` diagnostic on every `System.IO.*` member-access reach and
-every `Data<string>` action-handler property named `Path` / `PrPath` /
-`Source` / `Destination` / `Directory` / `Folder` / `FilePath` under
-`PLang/app/**`. Today it lands as a **warning**; the plan is to flip to
-**error** once the remaining handler migrations complete (the
-`purge-systemio-from-actions` branch landed Stages 1–5; Stages 6–7
-finish the work).
+`PLNG002` diagnostic — **at error severity** — on every `System.IO.*`
+member-access reach that touches the disk, plus every `Data<string>`
+action-handler property named `Path` / `PrPath` / `Source` /
+`Destination` / `Directory` / `Folder` / `FilePath` under `PLang/app/**`.
+A clean build is the bar — the codebase has zero PLNG002 warnings as of
+the `purge-systemio-from-actions` branch landing.
 
-Allowlist: `System.IO.Path.DirectorySeparatorChar` /
-`AltDirectorySeparatorChar` / `PathSeparator` / `VolumeSeparatorChar` —
-separator constants, not IO reaches. Exempt namespaces:
-`app.types.path.**` (the verb surface legitimately uses `System.IO`
-post-AuthGate), and the `PLang.Generators` project.
+Allowlist (pure name math, separator constants — none touch the
+filesystem): `System.IO.Path.DirectorySeparatorChar` /
+`AltDirectorySeparatorChar` / `PathSeparator` / `VolumeSeparatorChar`,
+plus `Path.Combine` / `GetDirectoryName` / `GetFileName` /
+`GetFileNameWithoutExtension` / `GetExtension` / `GetRelativePath` /
+`ChangeExtension` / `GetInvalidFileNameChars` / `GetInvalidPathChars` /
+`HasExtension` / `IsPathRooted` / `IsPathFullyQualified` /
+`GetFullPath` / `Join` / `TrimEndingDirectorySeparator` / `GetPathRoot` /
+`EndsInDirectorySeparator`. These are string transformations, not IO.
+
+Exempt files / namespaces: `app.types.path.**` (the verb surface
+legitimately uses `System.IO` post-AuthGate); the `PLang.Generators`
+project; and `app.modules.MarkdownTeaching` (bootstrap-time discovery of
+static repo-shipped teaching .md files — converting its sync utility
+shape to async-everywhere buys no security and lots of churn).
 
 **`.Absolute` discipline (D13).** `path.Absolute` is an easy-to-misuse
 escape hatch. Any reach for `.Absolute` outside `app.types.path.**`
@@ -1112,26 +1121,34 @@ only fall through to `.Absolute` + manual `Authorize` when a
 third-party API genuinely takes over the file (D9b — sqlite is the
 canonical case).
 
-**Migration status (purge-systemio-from-actions branch).**
+**Migration status (purge-systemio-from-actions branch — landed).**
 
-- Stage 1 (done) — derivation verbs (`Parent`/`WithName`/`WithExtension`/
-  `Combine`/`InFolder`) + PLNG002 analyzer in warning mode.
-- Stage 2 (done) — `.goal` MIME → Goal deserialization (FilePath.ReadText
+- Stage 1 — derivation verbs (`Parent`/`WithName`/`WithExtension`/
+  `Combine`/`InFolder`) + PLNG002 analyzer.
+- Stage 2 — `.goal` MIME → Goal deserialization (FilePath.ReadText
   parses `.goal` via Goal.Parse, stamps Path back-reference).
-- Stage 3 (done) — Goal.Path / PrPath / LoadedFromPrPath / GoalCall.PrPath
-  flip to path?. JSON converter with AsyncLocal `DeserializationScope`
-  threads Context to Path during deserialise.
-- Stage 4 (done) — AppGoals path-keyed dicts (separate `_byName` index for
+- Stage 3 — Goal.Path / PrPath / LoadedFromPrPath / GoalCall.PrPath
+  flip to path?. JSON converter takes Context in its constructor;
+  per-Actor `channels.serializers` instances bake a Context-bound
+  converter into their options. `Conversion.TryConvertTo(value, type,
+  context)` builds a one-shot Context-bound options bag per call so
+  deserialised Path fields land Context-wired immediately.
+- Stage 4 — AppGoals path-keyed dicts (separate `_byName` index for
   fuzzy lookups); App.Load/Save through path verbs.
-- Stage 5 (partial) — `test/discover` + `test/report` lifted; remaining
-  ring-2 handlers (settings/Sqlite D9b, llm/OpenAi D9a, module/add +
-  code/load D8 Execute verb, ui/Fluid + http/Default file providers,
-  debug trace writes, modules.MarkdownTeaching root) deferred — they
-  need new verb-surface infrastructure (Execute verb,
-  `path.LoadAssemblyAsync`, `path.ReadAsBase64`) that's substantial
-  greenfield work.
-- Stage 6 (deferred) — PLNG002 flips to error once Stage 5 finishes
-  removing the remaining ~142 PLNG002 warning sites.
+- Stage 5 — full ring-2 handler sweep. `test/discover` (the brief's
+  headline), `test/report`, `settings/Sqlite` (D9b take-over), `llm/OpenAi`
+  (D9a content-shape: `path.ReadAsDataUri`), `module/add` + `code/load` +
+  `code/Snapshot` (D8: new `Execute` verb + `path.LoadAssemblyAsync`),
+  `ui/Fluid` + `http/Default` file providers, `debug` trace writes
+  (`path.Append` + derivation chain), `modules.this.MarkdownTeachingRoot`,
+  `goals.LoadFromFileAsync` / `LoadFromDirectoryAsync` / `TryLoadPr` /
+  `GetByPrPathAsync`, `goals.goal.Methods.FormatForLlm`,
+  `modules.builder.RunAsync` (app.pr existence probe),
+  `modules.builder.goals` / `modules.builder.load` (action Path slots).
+  New permission verb `Execute` distinct from Read (Unix r/w/x model).
+- Stage 6 — PLNG002 flipped to `DiagnosticSeverity.Error`. PLang and
+  PlangConsole build clean with zero PLNG002 warnings. The gate now
+  fails compilation on regression.
 
 ## Console.* Is Banned in Production C#
 

@@ -159,12 +159,17 @@ public sealed class @this
     private async Task<goal.@this?> TryLoadPr(string dir, string file, string name, CancellationToken ct)
     {
         var prFile = file.ToLowerInvariant() + ".pr";
+        var ctx = App.System.Context!;
 
-        // 1. Try user's root directory
-        var rootPath = System.IO.Path.Combine(App.AbsolutePath, dir, ".build", prFile);
-        if (System.IO.File.Exists(rootPath))
+        // 1. Try user's root via path verbs (gated). Anchor at "/" (App root),
+        // append dir, then .build/<file>.pr. ExistsAsync fast-passes in-root.
+        var rootCandidate = global::app.types.path.@this.Resolve("/", ctx);
+        if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
+        rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
+        var rootExists = await rootCandidate.ExistsAsync();
+        if (rootExists.Success && rootExists.Value == true)
         {
-            var result = await LoadFromFileAsync(App, rootPath, cancellationToken: ct);
+            var result = await LoadFromFileAsync(App, rootCandidate.Absolute, cancellationToken: ct);
             if (result.Success)
             {
                 var goal = result.Value as goal.@this;
@@ -175,27 +180,26 @@ public sealed class @this
             }
         }
 
-        // 2. Try os directory — only for paths under system/
-        if (!string.IsNullOrEmpty(App.OsDirectory))
+        // 2. /system/* fallback: path.Resolve already redirects /system/* to
+        // <OsDirectory>/system/* when not present under the App root, so a
+        // single Resolve covers both rings of the look-up.
+        var normalized = dir.Replace('\\', '/');
+        if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
         {
-            var normalized = dir.Replace('\\', '/');
-            if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
-                || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
+            var sysCandidate = global::app.types.path.@this.Resolve(
+                "/" + normalized + "/.build/" + prFile, ctx);
+            var sysExists = await sysCandidate.ExistsAsync();
+            if (sysExists.Success && sysExists.Value == true)
             {
-                // Strip the "system/" prefix — system tree lives at <OsDirectory>/system
-                var withinSystem = normalized.Length > 7 ? normalized[7..] : "";
-                var osPath = System.IO.Path.Combine(App.OsDirectory, "system", withinSystem, ".build", prFile);
-                if (System.IO.File.Exists(osPath))
+                var result = await LoadFromFileAsync(App, sysCandidate.Absolute, cancellationToken: ct);
+                if (result.Success)
                 {
-                    var result = await LoadFromFileAsync(App, osPath, cancellationToken: ct);
-                    if (result.Success)
-                    {
-                        var goal = result.Value as goal.@this;
-                        if (goal is { IsSetup: true }) return null;
-                        if (goal != null && !string.IsNullOrEmpty(name))
-                            _byPath[name] = goal;
-                        return goal;
-                    }
+                    var goal = result.Value as goal.@this;
+                    if (goal is { IsSetup: true }) return null;
+                    if (goal != null && !string.IsNullOrEmpty(name))
+                        _byName[name] = goal;
+                    return goal;
                 }
             }
         }
@@ -293,13 +297,13 @@ public sealed class @this
         if (_byPath.TryGetValue(key, out cached))
             return cached.IsSetup ? null : cached;
 
-        var absolutePath = App != null && System.IO.Path.IsPathRooted(prPath) == false
-            ? System.IO.Path.Combine(App.AbsolutePath, prPath)
-            : prPath;
-        if (App == null || System.IO.File.Exists(absolutePath))
+        if (App == null) return null;
+        var resolved = global::app.types.path.@this.Resolve(prPath, App.System.Context!);
+        var exists = await resolved.ExistsAsync();
+        if (exists.Success && exists.Value == true)
             return null;
 
-        var loadResult = await LoadFromFileAsync(App, absolutePath, cancellationToken: ct);
+        var loadResult = await LoadFromFileAsync(App, resolved.Absolute, cancellationToken: ct);
         if (!loadResult.Success)
             return null;
 
@@ -317,14 +321,17 @@ public sealed class @this
     {
         try
         {
-            // Normalize against the App root — the old IPLangFileSystem wrapper
-            // did this implicitly on every read; System.IO.File does not, so a
-            // relative prFilePath would otherwise resolve against the CWD.
-            prFilePath = global::app.types.path.file.@this.ValidatePath(prFilePath, app);
-
-            // .pr files can be an array of goals (multiple goals per .goal file) or a single goal object
-            var content = await System.IO.File.ReadAllTextAsync(prFilePath, cancellationToken);
-            var ext = System.IO.Path.GetExtension(prFilePath);
+            // Lift to Path verb. AuthGate(Read) fires inside; for in-root .pr
+            // files this is the silent fast-path. Resolve handles relative paths
+            // (anchored against the App root) and the /system/* → <OsDirectory>
+            // fallback.
+            var deserializeCtx = context ?? app.System.Context!;
+            var prPath = global::app.types.path.@this.Resolve(prFilePath, deserializeCtx);
+            var readResult = await prPath.ReadBytes();
+            if (!readResult.Success || readResult.Value == null)
+                return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prFilePath}"));
+            var content = System.Text.Encoding.UTF8.GetString(readResult.Value);
+            var ext = prPath.Extension;
 
             List<goal.@this>? goals = null;
             var trimmed = content.TrimStart();
@@ -375,18 +382,20 @@ public sealed class @this
     {
         try
         {
-            // Direct filesystem access for bootstrapping — the file.list action handler
-            // exists for use in PLang steps, but goal loading happens before step execution.
-            var files = System.IO.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
+            // Lift to path.List — gated through AuthGate(Read). In-root walks
+            // fast-pass; out-of-root would prompt or deny.
+            var ctx = context ?? app.System.Context!;
+            var dirPath = global::app.types.path.@this.Resolve(directory, ctx);
+            var listed = await dirPath.List(pattern, recursive: true);
+            if (!listed.Success || listed.Value == null)
+                return data.@this.Ok(0);
+
             var loadedCount = 0;
-
-            foreach (var file in files)
+            foreach (var file in listed.Value)
             {
-                var result = await LoadFromFileAsync(app, file, context, cancellationToken);
-                if (result)
-                    loadedCount++;
+                var result = await LoadFromFileAsync(app, file.Absolute, context, cancellationToken);
+                if (result) loadedCount++;
             }
-
             return data.@this.Ok(loadedCount);
         }
         catch (Exception ex)

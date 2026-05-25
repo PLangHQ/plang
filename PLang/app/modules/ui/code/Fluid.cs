@@ -41,14 +41,11 @@ public class Fluid : ITemplate
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative;
-            try
-            {
-                templateContent = System.IO.File.ReadAllText(pathData.Absolute);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                return app.data.@this<string>.FromError(new ServiceError(ex.Message, "IOError", 500));
-            }
+            var readResult = await pathData.ReadText();
+            if (!readResult.Success)
+                return app.data.@this<string>.FromError(readResult.Error
+                    ?? new ServiceError("Template read failed", "IOError", 500));
+            templateContent = readResult.Value?.ToString() ?? "";
         }
 
         // Parse

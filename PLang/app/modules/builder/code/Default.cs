@@ -129,7 +129,8 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         var context = action.Context;
-        var searchPath = string.IsNullOrWhiteSpace(action.Path.Value) ? "." : action.Path.Value!;
+        var searchPathValue = action.Path.Value?.ToString();
+        var searchPath = string.IsNullOrWhiteSpace(searchPathValue) ? "." : searchPathValue!;
 
         // builder.goals.Path is project-root-relative ("the directory the user is
         // building"), not goal-relative. The runtime auto-seeds %path% to the
