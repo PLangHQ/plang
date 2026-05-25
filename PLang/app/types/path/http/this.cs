@@ -34,7 +34,7 @@ namespace app.types.path.http;
 /// </remarks>
 [PathScheme("http")]
 [PathScheme("https")]
-public sealed class @this : global::app.types.path.@this
+public sealed partial class @this : global::app.types.path.@this
 {
     /// <summary>Process-shared HTTP client — see the class remarks.</summary>
     /// <remarks>

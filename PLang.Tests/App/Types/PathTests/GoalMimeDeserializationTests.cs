@@ -2,7 +2,6 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 using FilePath = global::app.types.path.file.@this;
-using Goal = global::app.goals.goal.@this;
 
 namespace PLang.Tests.App.Types.PathTests;
 

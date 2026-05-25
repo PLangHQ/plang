@@ -1,5 +1,6 @@
 using System.Linq;
 using Microsoft.CodeAnalysis;
+using PLang.Generators.Diagnostics;
 using PLang.Generators.Discovery;
 using ActionEmitter = PLang.Generators.Emission.Action.@this;
 
@@ -55,6 +56,8 @@ public class @this : IIncrementalGenerator
             var source = ActionEmitter.Emit(info);
             spc.AddSource(SanitizeHintName($"{info.FullName}.Action.g.cs"), source);
         });
+
+        Plng002.Register(context);
     }
 
     private static string SanitizeHintName(string hintName) => hintName.Replace("@", "");

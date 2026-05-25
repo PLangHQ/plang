@@ -2,7 +2,7 @@ using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
 
-namespace PLang.Tests.App.Modules.Test;
+namespace PLang.Tests.App.Modules.TestModuleTests;
 
 /// <summary>
 /// Stage 5 — Batch 9. <c>test/discover.cs</c> denial-path tests.

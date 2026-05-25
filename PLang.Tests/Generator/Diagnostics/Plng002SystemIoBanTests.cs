@@ -1,3 +1,5 @@
+using System.IO;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using TUnit.Core;
@@ -8,7 +10,7 @@ namespace PLang.Tests.Generator.Diagnostics;
 
 /// <summary>
 /// PLNG002 — bans <c>System.IO.*</c> reaches and <c>data.@this&lt;string&gt;</c>
-/// Path-typed properties under <c>PLang/app/**</c> (excluding
+/// path-named properties under <c>PLang/app/**</c> (excluding
 /// <c>PLang/app/types/path/**</c> and Generators).
 ///
 /// Stage 1 lands the diagnostic in <b>warning</b> mode; Stage 6 flips to
@@ -20,50 +22,154 @@ namespace PLang.Tests.Generator.Diagnostics;
 /// </summary>
 public class Plng002SystemIoBanTests
 {
+    private const string Stubs = """
+        using System;
+        namespace app.modules {
+            public class ActionAttribute : Attribute {}
+            public class CodeAttribute : Attribute {}
+            public interface IContext {}
+            public interface ICodeGenerated {}
+        }
+        namespace app.data {
+            public partial class @this { public class type {} }
+            public partial class @this<T> : @this {}
+        }
+        """;
+
+    private static System.Collections.Immutable.ImmutableArray<Diagnostic> Run(string source, string filePath)
+    {
+        var systemIoRef = MetadataReference.CreateFromFile(typeof(File).Assembly.Location);
+        var compilation = CSharpCompilation.Create(
+            "Plng002Test",
+            new[] { CSharpSyntaxTree.ParseText(source,
+                new CSharpParseOptions(LanguageVersion.Preview),
+                path: filePath) },
+            new[]
+            {
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                systemIoRef,
+                MetadataReference.CreateFromFile(typeof(System.Runtime.CompilerServices.RuntimeHelpers).Assembly.Location),
+            },
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var driver = (GeneratorDriver)CSharpGeneratorDriver.Create(
+            new[] { new PLang.Generators.@this().AsSourceGenerator() });
+        return driver.RunGenerators(compilation).GetRunResult().Diagnostics;
+    }
+
+    private const string ModulesPath = "/workspace/plang/PLang/app/modules/foo/Test.cs";
+    private const string PathTypesPath = "/workspace/plang/PLang/app/types/path/test/Test.cs";
+
     [Test] public async Task Fires_OnFileReadAllText_UnderModulesNamespace()
     {
-        // System.IO.File.ReadAllText in PLang.app.modules.foo → PLNG002.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var source = """
+            namespace app.modules.foo {
+                public class Handler {
+                    public string Read() => System.IO.File.ReadAllText("x.txt");
+                }
+            }
+            """;
+        var diags = Run(source, ModulesPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsTrue();
     }
 
     [Test] public async Task Fires_OnDirectoryGetFiles_UnderModulesNamespace()
     {
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var source = """
+            namespace app.modules.foo {
+                public class Handler {
+                    public string[] Walk() => System.IO.Directory.GetFiles("/tmp");
+                }
+            }
+            """;
+        var diags = Run(source, ModulesPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsTrue();
     }
 
     [Test] public async Task Fires_OnSystemIoPathCombine_UnderModulesNamespace()
     {
-        // System.IO.Path.Combine is the most common offender; must be flagged.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var source = """
+            namespace app.modules.foo {
+                public class Handler {
+                    public string Join() => System.IO.Path.Combine("a", "b");
+                }
+            }
+            """;
+        var diags = Run(source, ModulesPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsTrue();
     }
 
     [Test] public async Task Fires_OnDataOfString_NamedPath_InActionHandler()
     {
-        // [Action] handler with `Data<string> Path { get; init; }` must trip PLNG002.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var source = Stubs + """
+            namespace app.modules.foo {
+                [app.modules.Action]
+                public partial class Handler {
+                    public partial app.data.@this<string> Path { get; init; }
+                }
+            }
+            """;
+        var diags = Run(source, ModulesPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsTrue();
     }
 
     [Test] public async Task DoesNotFire_OnSystemIoPathDirectorySeparatorChar()
     {
-        // Separator constants are allowlisted — not an IO reach.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var source = """
+            namespace app.modules.foo {
+                public class Handler {
+                    public char Sep() => System.IO.Path.DirectorySeparatorChar;
+                }
+            }
+            """;
+        var diags = Run(source, ModulesPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsFalse();
     }
 
     [Test] public async Task DoesNotFire_InsidePathTypesNamespace()
     {
-        // app.types.path.** legitimately uses System.IO behind AuthGate — exempt.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var source = """
+            namespace app.types.path.test {
+                public class FsImpl {
+                    public string Read() => System.IO.File.ReadAllText("x.txt");
+                }
+            }
+            """;
+        var diags = Run(source, PathTypesPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsFalse();
     }
 
     [Test] public async Task DoesNotFire_OnDataOfPath_InActionHandler()
     {
-        // Data<path> is the correct shape — must not trip.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        // Data<some-non-string> is the correct shape — must not trip PLNG002.
+        var source = Stubs + """
+            namespace app.types.path { public class @this {} }
+            namespace app.modules.foo {
+                [app.modules.Action]
+                public partial class Handler {
+                    public partial app.data.@this<app.types.path.@this> Path { get; init; }
+                }
+            }
+            """;
+        var diags = Run(source, ModulesPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsFalse();
     }
 
     [Test] public async Task DiagnosticLocation_UnderlinesOffendingMemberAccess()
     {
-        // Squiggle pins to the offending call/property — mirror PLNG001 location pin.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var source = """
+            namespace app.modules.foo {
+                public class Handler {
+                    public string Read() => System.IO.File.ReadAllText("x.txt");
+                }
+            }
+            """;
+        var diags = Run(source, ModulesPath);
+        var plng = diags.FirstOrDefault(d => d.Id == "PLNG002");
+        await Assert.That(plng).IsNotNull();
+        var span = plng!.Location.GetLineSpan();
+        // Must pin to a real source line, not Location.None.
+        await Assert.That(span.Path).IsEqualTo(ModulesPath);
+        await Assert.That(span.StartLinePosition.Line).IsGreaterThan(0);
     }
 }

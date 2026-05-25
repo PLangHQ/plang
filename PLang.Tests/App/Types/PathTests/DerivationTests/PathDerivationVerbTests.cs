@@ -16,63 +16,97 @@ namespace PLang.Tests.App.Types.PathTests.DerivationTests;
 /// </summary>
 public class PathDerivationVerbTests
 {
+    private static (global::app.@this app, FilePath path) FileAt(string relUnderRoot)
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(root);
+        var app = new global::app.@this(root);
+        var abs = System.IO.Path.Combine(root, relUnderRoot.TrimStart('/'));
+        return (app, new FilePath(abs, app.User.Context));
+    }
+
+    private static HttpPath Http(string url)
+    {
+        // HttpPath only needs Context to be non-null for derivation tests that
+        // check inheritance; an App with arbitrary root is fine.
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(root);
+        var app = new global::app.@this(root);
+        return new HttpPath(url, app.User.Context);
+    }
+
     [Test] public async Task Parent_OfFileInDirectory_ReturnsContainingDirectory()
     {
-        // /Cache/Start.goal → /Cache/
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (_, p) = FileAt("Cache/Start.goal");
+        var parent = p.Parent;
+        await Assert.That(parent.Absolute).EndsWith("Cache");
     }
 
     [Test] public async Task Parent_OfRoot_ReturnsRootOrNullDeterministically()
     {
-        // Edge: Parent of "/" — must not throw; behaviour is documented (null or self).
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var sep = System.IO.Path.DirectorySeparatorChar;
+        var root = sep.ToString();
+        var p = new FilePath(root);
+        var parent = p.Parent;
+        // Root returns itself — no further parent, never throws.
+        await Assert.That(parent.Absolute).IsEqualTo(root);
     }
 
     [Test] public async Task WithName_ReplacesFileNameAndKeepsDirectory()
     {
-        // /Cache/Start.goal → /Cache/Other.goal
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (_, p) = FileAt("Cache/Start.goal");
+        var renamed = p.WithName("Other.goal");
+        await Assert.That(renamed.Absolute).EndsWith("Cache" + System.IO.Path.DirectorySeparatorChar + "Other.goal");
     }
 
     [Test] public async Task WithExtension_SwapsExtensionInPlace_PureTransformation()
     {
-        // /Cache/Start.goal → /Cache/Start.pr — not a search, no IO.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (_, p) = FileAt("Cache/Start.goal");
+        var pr = p.WithExtension(".pr");
+        await Assert.That(pr.Absolute).EndsWith("Start.pr");
     }
 
     [Test] public async Task WithExtension_OnFileWithoutExtension_AddsExtension()
     {
-        // /foo → /foo.txt
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (_, p) = FileAt("foo");
+        var txt = p.WithExtension(".txt");
+        await Assert.That(txt.Absolute).EndsWith("foo.txt");
     }
 
     [Test] public async Task Combine_AppendsChildSegment()
     {
-        // /Cache/ + "Start.goal" → /Cache/Start.goal
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (_, p) = FileAt("Cache");
+        var child = p.Combine("Start.goal");
+        await Assert.That(child.Absolute).EndsWith("Cache" + System.IO.Path.DirectorySeparatorChar + "Start.goal");
     }
 
     [Test] public async Task InFolder_InsertsSiblingFolderBetweenParentAndFile()
     {
-        // /Cache/Start.goal + ".build" → /Cache/.build/Start.goal
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (_, p) = FileAt("Cache/Start.goal");
+        var build = p.InFolder(".build");
+        var sep = System.IO.Path.DirectorySeparatorChar;
+        await Assert.That(build.Absolute).EndsWith("Cache" + sep + ".build" + sep + "Start.goal");
     }
 
     [Test] public async Task DerivedPath_InheritsContext_FromSource()
     {
-        // path.Combine(...).Context must equal path.Context — no orphan derivatives.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (app, p) = FileAt("Cache/Start.goal");
+        var child = p.Combine("nested");
+        await Assert.That(child.Context).IsEqualTo(app.User.Context);
     }
 
     [Test] public async Task DerivedPath_OnFilePath_StaysFilePath_ViaSchemeRegistry()
     {
-        // FilePath.Parent must be FilePath, not abstract Path. Dispatch through scheme.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (_, p) = FileAt("Cache/Start.goal");
+        var parent = p.Parent;
+        await Assert.That(parent is FilePath).IsTrue();
     }
 
     [Test] public async Task DerivedPath_OnHttpPath_StaysHttpPath_NoSilentSchemeSwitch()
     {
-        // HttpPath.Parent must be HttpPath. A cross-scheme silent switch is a bug.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var p = Http("https://example.com/a/b/c");
+        var parent = p.Parent;
+        await Assert.That(parent is HttpPath).IsTrue();
+        await Assert.That(parent.Absolute).IsEqualTo("https://example.com/a/b");
     }
 }
