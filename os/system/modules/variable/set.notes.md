@@ -21,7 +21,29 @@ producer.action(...) | variable.set(Name=%x%, Value=%!data%)
 
 The trailing `variable.set` is a **peer**, NEVER a modifier on the producer (the runtime rejects `variable.set is not a modifier`).
 
-Use the producer's declared return type (catalog shows `→ returns T`) as the `Value` parameter's `type` annotation: `{"name":"Value","value":"%!data%","type":"<T>"}`. Do **NOT** emit a separate `Type` parameter on the trailing `variable.set` — the `Data<T>` wrapper from the producer carries the type; a `Type` param forces a coercion that fights the typed return. (`Type` on `variable.set` is reserved for explicit user-supplied intent like `set %x% = "hi", type=string`.)
+### The trailing Value's `type` MUST match the producer's `→ returns T`
+
+This is the biggest source of typing drift in compile snapshots. Before you emit the trailing `variable.set`, **look up the producer's `→ returns T` line in the Action Detail section above** and use that exact `T` as the `type` on the `Value` parameter. Do not default to `"object"` when the catalog has told you a more specific type.
+
+Worked examples — match the producer's returns line, copy the `T`:
+
+| Producer step | Producer's `→ returns` | Trailing `variable.set Value` type |
+|---|---|---|
+| `list.count %xs%, write to %n%` | `int` | `"int"` |
+| `list.contains %xs% has 'foo', write to %has%` | `bool` | `"bool"` |
+| `list.any %xs% where Status equals 'Fail', write to %hasFail%` | `bool` | `"bool"` |
+| `list.join %xs% with ", ", write to %csv%` | `string` | `"string"` |
+| `list.split "a,b" by ",", write to %parts%` | `list` | `"list"` |
+| `variable.exists %x%, write to %ok%` | `bool` | `"bool"` |
+| `file.exists 'foo.txt', write to %present%` | `path` | `"path"` |
+| `ui.render template, write to %html%` | `string` | `"string"` |
+| `crypto.hash %data%, write to %h%` | `byte[]` | `"byte[]"` |
+| `llm.query …, write to %r%` | `object` | `"object"` *(genuinely polymorphic)* |
+| `file.read 'data.txt', write to %c%` | *(no `→ returns` line)* | `"object"` *(fall back)* |
+
+Rule of thumb: `"object"` is the fallback ONLY when the producer's catalog entry has no `→ returns` line. If the line is present, the LLM is dropping it.
+
+Do **NOT** emit a separate `Type` parameter on the trailing `variable.set` — the `Data<T>` wrapper from the producer carries the type at runtime; a `Type` param forces a coercion that fights the typed return. (`Type` on `variable.set` is reserved for explicit user-supplied intent like `set %x% = "hi", type=string`.)
 
 Correct (`llm.query system=…, user=…, write to %result%` — `llm.query` returns `object`):
 
@@ -31,6 +53,18 @@ Correct (`llm.query system=…, user=…, write to %result%` — `llm.query` ret
   {"module":"variable","action":"set","parameters":[
     {"name":"Name","value":"%result%","type":"variable"},
     {"name":"Value","value":"%!data%","type":"object"}
+  ]}
+]}
+```
+
+Correct (`list.count %tests%, write to %count%` — `list.count` returns `int`):
+
+```json
+{"actions": [
+  {"module":"list","action":"count","parameters":[{"name":"ListName","value":"%tests%","type":"variable"}]},
+  {"module":"variable","action":"set","parameters":[
+    {"name":"Name","value":"%count%","type":"variable"},
+    {"name":"Value","value":"%!data%","type":"int"}
   ]}
 ]}
 ```
