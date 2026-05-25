@@ -17,63 +17,18 @@ You receive:
 
 ## Variable names are case-insensitive
 
-`%Foo%`, `%foo%`, `%FOO%` all refer to the same PLang variable at runtime. Preserve the case from the step text when you emit a value (`{"name":"Name","value":"%hasMissingPr%"}`).
+`%Foo%`, `%foo%`, `%FOO%` all refer to the same PLang variable at runtime. Preserve the case from the step text when you emit a value (`{"name":"Name","value":"%hasMissingPr%"}`). The "Variables in scope" snapshot may lowercase names for display — that's rendering, not evidence of a different variable. Never raise `ambiguousMapping`, `possibleTypo`, or any other warning based on letter-case difference alone.
 
-**Case-insensitive matching is REQUIRED when comparing names. Lowercase both sides before deciding.** A `missingVariable` warning is correct only when there is no entry in the snapshot whose lowercased name matches the lowercased step-text name. Different casing is NEVER grounds for any warning.
+## Do NOT emit `missingVariable` warnings
 
-Concrete worked example (this case has tripped previous compiles):
+The compile-time snapshot tracks only variables introduced by the parent goal's top-level `variable.set` actions and `loop.foreach` ItemName bindings. Many legitimate assignment paths do NOT appear in it:
 
-```
-Step text:                           assert %hasTimeout% is true
-Variables in scope snapshot:         %tests%, %count%, %results%, %hastimeout%
-Step-text name lowercased:           hastimeout
-Snapshot entry lowercased:           hastimeout
-→ MATCH. Emit the action with no warning. Do NOT emit:
-     {"key":"missingVariable","message":"Variable %hasTimeout% is not present ..."}
-```
+- Write targets the current step introduces (`set %x% = …`, `, write to %x%`)
+- Variables set by a sub-goal called from a prior step
+- Variables set inside an `on error` recovery handler
+- Variables set by a `foreach` body call
 
-Same rule for `ambiguousMapping`, `possibleTypo`, and any other warning whose only basis is letter-case difference between the step text and the snapshot. The snapshot may contain lowercased names — that's a rendering convention, not evidence of a different variable.
-
-Real `missingVariable` (worth flagging, downgrade to warning):
-
-```
-Step text:                           assert %notSetAnywhere% equals 1
-Variables in scope snapshot:         %tests%, %count%, %results%
-Step-text name lowercased:           notsetanywhere
-No snapshot entry matches            → warning is justified.
-```
-
-## `missingVariable` is heavily over-flagged — when NOT to raise it
-
-The snapshot only tracks variables introduced by the parent goal's TOP-LEVEL `variable.set` actions and `loop.foreach` ItemName bindings. Many legitimate assignment paths do NOT appear in it. Do NOT raise `missingVariable` for any of these:
-
-1. **The step IS the introduction.** `set %noFlag% = false` — `%noFlag%` is the WRITE target; the step creates it. Never warn on the Name parameter of `variable.set`. Same for `write to %x%` capture targets — `%x%` is being introduced *by this step*, not read.
-
-2. **A prior step called a sub-goal.** `call SetTrue` may have set `%wasTrue%`; you cannot see inside `SetTrue` from this prompt. If a prior step is a `goal.call`, assume the called goal might have set any variable the current step references. Do NOT warn.
-
-3. **A prior `on error` recovery handler set it.** `read file 'x', on error set %caught% = true` — the `%caught%` assignment is nested inside `error.handle.Actions[]` and the snapshot doesn't see it. A later `assert %caught% is true` is legitimate. Do NOT warn.
-
-4. **A prior `foreach` body call set it.** `foreach %xs%, call ProcessItem item=%x%` — `ProcessItem` may set variables in the parent scope. Same rule as #2.
-
-Concrete examples (DO NOT WARN):
-
-```
-Step text:  set %noFlag% = false
-            → %noFlag% is the write target. Do NOT raise missingVariable.
-
-Step text:  assert %wasTrue% is true
-Prior step: if %flag%, call SetTrue
-            → %wasTrue% may be set inside SetTrue. Do NOT warn.
-
-Step text:  assert %caught% is true
-Prior step: read file 'x.txt', on error set %caught% = true
-            → %caught% is set in the recovery body. Do NOT warn.
-
-Step text:  list.any %tests% where ... write to %hasFoo%
-            → %hasFoo% is the write target. Do NOT warn.
-```
-
-Reserve `missingVariable` for the case where the variable name appears nowhere in the goal's prior step text — neither as a write target, nor as a call to a sub-goal that might set it, nor in any recovery handler. When in doubt, do NOT warn.
+Detecting all those paths reliably is hard, so the warning has consistently been wrong. The runtime catches genuinely missing variables at execution; the compile-time hint adds noise without value. **Never emit `missingVariable` warnings.**
 
 ## What `%!data%` means
 
@@ -251,7 +206,6 @@ Top-level (on response):
 Action-level (on individual action):
 - `ambiguousMapping` — built, not confident
 - `possibleTypo` — step text appears to have a typo
-- `missingVariable` — references a variable not set earlier (ALWAYS warning, never error — variables can be set by called goals)
 
 ## Rules
 
