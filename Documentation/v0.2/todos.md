@@ -475,3 +475,35 @@ cascades were deliberately left for later. The current convention is bare
 
 Reference: branch path-polymorphism, commits `0ba3c041a` (convention flip),
 `84644d91e` (IPath), `2aa0e18c7` (IIdentity + IStore.Exists/Tables).
+
+---
+
+## 2026-05-25 — Prune Error/CallFrame from AssertionError.Variables snapshot
+
+**Source:** branch `fix-stepvartypes-incremental`, commit (forthcoming),
+follow-up to the IgnoreCycles fix in `PLang/app/modules/test/report.cs`.
+
+**Problem:** when a test fails, `AssertionError.Variables` captures the
+runtime variable map. At least one variable transitively references the
+`App.CallStack` tree (Error → CallFrames → Caller → Chain → …), which
+cycles. `test.report` JSON serialization aborts → no `results.json` is
+written for the whole run.
+
+**Stopgap (shipped):** `BuildJson` uses a local `JsonSerializerOptions`
+clone with `ReferenceHandler.IgnoreCycles`. Unblocks the file, but the
+JSON contains half-truncated nested call-chain objects under each variable.
+
+**Long-term fix:** prune at the *capture* site, not the serializer.
+The Variables snapshot is meant to record user-space variable values at the
+moment of assertion failure. An `IError` / `CallFrame` / `Call` instance
+showing up there is leakage from infrastructure into a user-facing record.
+When `AssertionError` records `Variables`, filter the map: drop or
+short-stringify any value whose type lives under `app.errors.*`,
+`app.callstack.*`, or anywhere that owns a reference back into
+`App.CallStack`. Once that lands, the local `IgnoreCycles` workaround in
+`report.cs` can come out — defaults catch real bugs again.
+
+**Why deferred:** stopgap unblocks the webui dependency this branch; the
+prune wants a small audit of where `AssertionError.Variables` is filled and
+which types should be in the filter (~ a half-day's careful work, doesn't
+belong on this branch).

@@ -1,6 +1,7 @@
 using System.Security;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using app.errors;
 using app.tester;
@@ -276,8 +277,18 @@ public partial class report : IContext
             runs,
             branchCoverage
         };
-        return JsonSerializer.Serialize(envelope, global::app.Diagnostics.Format.Options);
+        return JsonSerializer.Serialize(envelope, ReportOptions);
     }
+
+    // Local options clone with IgnoreCycles. Needed because AssertionError.Variables
+    // can carry runtime objects whose graph reaches back into App.CallStack
+    // (Error → CallFrames → Caller → Chain → …). Default options abort on cycle and
+    // the whole results.json fails to write. Clone (not mutate the shared Format.Options)
+    // — other callers of Format.Options should not silently lose cycle detection.
+    // Follow-up: prune Error/CallFrame instances out of the Variables snapshot at
+    // capture time (see Documentation/v0.2/todos.md "Variables snapshot cycle prune").
+    private static readonly JsonSerializerOptions ReportOptions
+        = new(global::app.Diagnostics.Format.Options) { ReferenceHandler = ReferenceHandler.IgnoreCycles };
 
     private static string BuildJUnit(app.tester.Results results)
     {
