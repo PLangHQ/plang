@@ -2,7 +2,7 @@
   "plan.md": [
     {
       "id": "1cf99f4bf2",
-      "line": 37,
+      "line": 47,
       "text": "List<path>? instead of List<File>\nouput.ask should also allow for hinting, 'ask user \"give me stuff\", write to %answer%(json)\", aha, actually the variable.set should be the 'converter', what do you think, we always call variable.set after gettings something.\nI dont like MockHandle, why not just mock?",
       "anchor": "| Action | Handler | T |",
       "author": "user",
@@ -12,19 +12,8 @@
       "drifted": false
     },
     {
-      "id": "a1b2c3d401",
-      "line": 37,
-      "text": "Three parts:\n\n(1) **List<File> stays.** I checked app/tester/File.cs — it carries 9 fields beyond Path (PrPath, EntryGoalName, Status, Directory, Goal, GoalHash, BuilderVersion, Tags, StatusReason). It's a real test-domain object, not a path wrapper. Collapsing to List<path> would lose all that. If at some later point those fields move onto path itself, we'd revisit, but that's a bigger refactor than this branch.\n\n(2) **variable.set as universal converter — adopted.** This is the keystone insight and it collapses a huge chunk of v1. Every action's capture is already `variable.set Value=%!data% Type=<T>`. If variable.set knows how to coerce by Type (json → JsonNode, csv → Csv, xlsx → Workbook), every action becomes type-coercible without the action knowing about types. output.ask, file.read, http.request, llm.query all become 'annotate the trailing variable.set Type' — no per-action infrastructure. New section A.4 is built around this. Section A.5 (cast hint) drops to one paragraph because there's nothing to parse — the LLM reads `%var%(type)` as prompt text and uses it for the Type annotation; the converter on variable.set does the work at runtime.\n\n(3) **MockHandle → Mock.** Renamed. Lives at app/mock/Mock/this.cs per the singular-folder rule; the doubled name is the accepted cost.",
-      "anchor": "| Action | Handler | T |",
-      "author": "architect",
-      "status": "open",
-      "parent_id": "1cf99f4bf2",
-      "ts": "2026-05-25T17:55:00",
-      "drifted": false
-    },
-    {
       "id": "900fbb7833",
-      "line": 37,
+      "line": 47,
       "text": "what does goal.getTypes give us, feels wrong that it's not strongly typed, but maybe it needs to be?",
       "anchor": "| Action | Handler | T |",
       "author": "user",
@@ -34,8 +23,41 @@
       "drifted": false
     },
     {
+      "id": "69f7f48c4b",
+      "line": 47,
+      "text": "but it is important not to do the convert until it's needed, so the data object that is stored knows that it's csv, but it doesnt process it in any way. just wanted to make sure",
+      "anchor": "| Action | Handler | T |",
+      "author": "user",
+      "status": "open",
+      "parent_id": "a1b2c3d401",
+      "ts": "2026-05-25T17:44:33",
+      "drifted": false
+    },
+    {
+      "id": "b2c3d4e501",
+      "line": 47,
+      "text": "Yes — load-bearing correction. My A.4 wording was eager (\"variable.set coerces via the registry\"); that's wrong. Updated to: variable.set tags Data with .Type and stores the raw value untouched. No parsing at set time. The materializer (from the Serializers registry) runs lazily on first access — `%var.rows%` or `Data.As<Csv>()` triggers it, parses once, caches the typed view on Data for subsequent accesses. Same discipline as Lazy params and IBooleanResolvable's deferred I/O.\n\nOne consequence worth flagging: if a declared Type has no materializer, the error surfaces at the first **access** site, not at the set site. I think that's right — the access is where the developer expected the typed shape, so it's where the error makes sense — but it's a small contract decision. Locked unless you want it loud-at-set instead.\n\nUpdated plan: decisions table + A.4 + open-note #5.",
+      "anchor": "| Action | Handler | T |",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "69f7f48c4b",
+      "ts": "2026-05-25T18:10:00",
+      "drifted": false
+    },
+    {
+      "id": "a1b2c3d401",
+      "line": 47,
+      "text": "Three parts:\n\n(1) **List<File> stays.** I checked app/tester/File.cs — it carries 9 fields beyond Path (PrPath, EntryGoalName, Status, Directory, Goal, GoalHash, BuilderVersion, Tags, StatusReason). It's a real test-domain object, not a path wrapper. Collapsing to List<path> would lose all that. If at some later point those fields move onto path itself, we'd revisit, but that's a bigger refactor than this branch.\n\n(2) **variable.set as universal converter — adopted.** This is the keystone insight and it collapses a huge chunk of v1. Every action's capture is already `variable.set Value=%!data% Type=<T>`. If variable.set knows how to coerce by Type (json → JsonNode, csv → Csv, xlsx → Workbook), every action becomes type-coercible without the action knowing about types. output.ask, file.read, http.request, llm.query all become 'annotate the trailing variable.set Type' — no per-action infrastructure. New section A.4 is built around this. Section A.5 (cast hint) drops to one paragraph because there's nothing to parse — the LLM reads `%var%(type)` as prompt text and uses it for the Type annotation; the converter on variable.set does the work at runtime.\n\n(3) **MockHandle → Mock.** Renamed. Lives at app/mock/Mock/this.cs per the singular-folder rule; the doubled name is the accepted cost.",
+      "anchor": "| Action | Handler | T |",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "1cf99f4bf2",
+      "ts": "2026-05-25T17:55:00",
+      "drifted": false
+    },
+    {
       "id": "a1b2c3d402",
-      "line": 37,
+      "line": 47,
       "text": "Agreed — `List<Dictionary<string,string>>` was lazy. Plan updated: coder reads the current `Builder.Types(this)` implementation and extracts the actual shape into a strongly-typed record (likely `app/builder/Types/TypeInfo/this.cs` or reuses an existing type model if one fits — there's already an `app/types/` model that may slot in directly). The string-keyed dict goes away.",
       "anchor": "| Action | Handler | T |",
       "author": "architect",
@@ -46,7 +68,7 @@
     },
     {
       "id": "6da4441f3d",
-      "line": 54,
+      "line": 66,
       "text": "llm.query can be figured out by when the user request, because he send format/scheme to llm, when he sends scheme it's json, also format can be '.md' => md, 'csharp' => csharp, etc...",
       "anchor": "| Action | Why |",
       "author": "user",
@@ -57,7 +79,7 @@
     },
     {
       "id": "a1b2c3d403",
-      "line": 54,
+      "line": 66,
       "text": "Right — moved out of 'stay polymorphic'. llm.query is determinable from its own args: `schema` set → Type=`json`; `format` arg → that format. The C# signature stays `Data<object>` (the value still is whatever the LLM returns), but the trailing variable.set gets a real Type annotation via the per-action prompt rules in A.4. Only two actions are now genuinely polymorphic at the C# level: `goal.call` (needs cross-goal analysis) and `settings.get` (depends on what was stored).",
       "anchor": "| Action | Why |",
       "author": "architect",
@@ -75,7 +97,7 @@
       "status": "open",
       "parent_id": null,
       "ts": "2026-05-25T17:26:50",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "a1b2c3d404",
@@ -86,7 +108,7 @@
       "status": "open",
       "parent_id": "971460206f",
       "ts": "2026-05-25T17:55:00",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "6b2c267f8f",
@@ -97,7 +119,7 @@
       "status": "open",
       "parent_id": null,
       "ts": "2026-05-25T17:33:12",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "a1b2c3d405",
@@ -108,6 +130,17 @@
       "status": "open",
       "parent_id": "6b2c267f8f",
       "ts": "2026-05-25T17:55:00",
+      "drifted": true
+    },
+    {
+      "id": "61ca88a75b",
+      "line": 115,
+      "text": "just want to note, not all are written to action variable.set, here is exmple \n\n'- read file.csv, where zip=101, write to %list%'\n\nread.file | list.where | variable.set",
+      "anchor": "> When a variable reference or string literal is followed by `(type)` in an action argument, treat `type` as a PLang type hint for the slot. If the action would emit a trailing `variable.set` for that arg's data, use the hint as the Type. Unknown type names should still be passed through — coercion happens at runtime, where `variable.set` will error if it can't convert.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-25T17:46:27",
       "drifted": false
     },
     {
@@ -119,7 +152,7 @@
       "status": "open",
       "parent_id": null,
       "ts": "2026-05-25T17:33:49",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "a1b2c3d406",
@@ -130,6 +163,28 @@
       "status": "open",
       "parent_id": "78760a688b",
       "ts": "2026-05-25T17:55:00",
+      "drifted": true
+    },
+    {
+      "id": "56fa686339",
+      "line": 123,
+      "text": "I am actually thinking that we need to do this now, adding this Build method, since we are doing strongly typed, and we cannot fullfill stongly type unless we have this Build method. e.g. when llm.query is build, the Build method would find the format/scheme and set %!data.type% = '...'",
+      "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-25T17:48:10",
+      "drifted": false
+    },
+    {
+      "id": "3be5fc57b4",
+      "line": 123,
+      "text": "I think we can add this to builder.validate c# method, that it calls the Build method there, what do you think?",
+      "anchor": "**Deferred to its own branch.** A.4 + A.5 ship the LLM-only inference; the `Build()` method generalization comes later. Filed as `Documentation/Runtime2/todos.md` candidate.",
+      "author": "user",
+      "status": "open",
+      "parent_id": "56fa686339",
+      "ts": "2026-05-25T17:48:40",
       "drifted": false
     },
     {
@@ -141,7 +196,17 @@
       "status": "open",
       "parent_id": null,
       "ts": "2026-05-25T17:35:01",
-      "drifted": false
+      "drifted": true
+    },
+    {
+      "id": "07d156e712",
+      "line": 188,
+      "text": "I think you can just remove all reference to purge-systemio-from-actions, it is unrelated after we have merged it into runtime2",
+      "anchor": "- file.save %report% to '.test/results.json'",
+      "author": "user",
+      "status": "open",
+      "parent_id": "a1b2c3d407",
+      "ts": "2026-05-25T17:49:53"
     },
     {
       "id": "a1b2c3d407",
@@ -152,7 +217,7 @@
       "status": "open",
       "parent_id": "30bdc7c28f",
       "ts": "2026-05-25T17:55:00",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "ec1140ac22",
@@ -163,7 +228,7 @@
       "status": "open",
       "parent_id": null,
       "ts": "2026-05-25T17:35:35",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "a1b2c3d408",
@@ -174,7 +239,7 @@
       "status": "open",
       "parent_id": "ec1140ac22",
       "ts": "2026-05-25T17:55:00",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "a32be70470",
@@ -184,7 +249,8 @@
       "author": "user",
       "status": "open",
       "parent_id": null,
-      "ts": "2026-05-25T17:36:01"
+      "ts": "2026-05-25T17:36:01",
+      "drifted": true
     },
     {
       "id": "a1b2c3d409",
@@ -195,7 +261,7 @@
       "status": "open",
       "parent_id": "a32be70470",
       "ts": "2026-05-25T17:55:00",
-      "drifted": false
+      "drifted": true
     }
   ]
 }

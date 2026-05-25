@@ -10,7 +10,7 @@
 Two of Ingi's comments collapse big sections of v1:
 
 - **`%var%(type)` is not new PLang syntax.** It's text the LLM reads. C# parses nothing. No castType field in the .pr. The cast-hint is purely a **Compile.llm prompt convention**. Section A.5 dropped from ~30 lines to one paragraph; the "Persisting castType" open note dies entirely (there's nothing separate to persist — the cast just decorates the existing `Type` field on the trailing `variable.set`).
-- **`variable.set` is the universal converter.** Every action's capture already lands as `variable.set Value=%!data% Type=<T>`. If `variable.set` knows how to coerce raw data into the named type (Type=`json` → parse string to `JsonNode`; Type=`csv` → parse to `Csv`; …), then **any** action becomes type-coercible without the action itself knowing about types. `output.ask`, `file.read`, `http.request`, `llm.query` all stop being special cases — they each just need their trailing `variable.set` annotated with the right Type, and the converter handles the rest.
+- **`variable.set` carries the declared type; materialization is lazy.** Every action's capture already lands as `variable.set Value=%!data% Type=<T>`. `variable.set` tags Data with `.Type=<T>`; **no parsing happens at set time**. The first access that needs the typed view (`%var.rows%`, `Data.As<Csv>()`) triggers the materializer from the `Serializers` registry, parses once, caches on Data. `output.ask`, `file.read`, `http.request`, `llm.query` all stop being special cases — they each just need their trailing `variable.set` annotated with the right Type, and the lazy materializer handles the rest only if/when something asks.
 
 These two together delete most of v1's section A.4/A.5 infrastructure and turn type inference into a prompt-language story plus a small converter table on `variable.set`.
 
@@ -91,11 +91,13 @@ public sealed record Response(
 
 `http.download` is unchanged (its job is to save a file, not return parsed content).
 
-### A.4 Trailing `variable.set` — universal converter
+### A.4 Trailing `variable.set` — declared type, lazy materialization
 
 This is the keystone. Every action's capture is `variable.set Value=%!data% Type=<T>`. Two changes make all the inferrable-but-polymorphic actions land their types in the snapshot:
 
-**(a) `variable.set` becomes a converter.** When the runtime executes `variable.set` with a `Type` it doesn't already match (data carries one type, the slot's Type wants another), it coerces via the serializer registry. Type=`json` + raw string → `JsonNode`. Type=`csv` + raw string → `Csv`. Type=`xlsx` + bytes → `Workbook`. The same `Serializers` registry that A.3 uses on HTTP responses handles this. If no converter exists for a given Type, `variable.set` errors clearly.
+**(a) `variable.set` tags Data with `.Type`; conversion is lazy.** When the runtime executes `variable.set Type=csv`, the Data object is tagged with `.Type='csv'`. The raw value is **not parsed** at set time — same discipline as Lazy params and `IBooleanResolvable`. The first access that actually needs the typed view (property dereference like `%var.rows%`, or an explicit `Data.As<Csv>()`) triggers the materializer for that Type, parses once, and caches the result on Data for subsequent accesses. The materializer registry reuses the existing `Serializers` registry from A.3 — `Deserialize` is exactly the "raw → typed" step needed.
+
+Discipline: nothing in `variable.set` itself does I/O or parsing. It records intent. If the declared Type has no materializer, the error surfaces at the first access site, not at set time — which is where the developer's mental model lives anyway (the access is where they expected the typed shape).
 
 **(b) The LLM annotates the trailing `variable.set`'s Type from action-specific cues.** Compile.llm gets a small block of per-action rules:
 
@@ -238,7 +240,7 @@ Across the `Tests/` corpus, the 729 `(object)` occurrences in Category A should 
 2. **`builder.types` / `actions` / `goals` records** — coder reads current implementations and names them; OBP-singular folders under `app/builder/`.
 3. **`mock.intercept`** location — flagged in original survey; coder locates and types as `Mock`.
 4. **`test.tag`** is marginal — coder's discretion. Worth it if one-liner.
-5. **`variable.set` converter table** — coder defines the initial coercions (`json` ↔ string, `csv` ↔ string, `xlsx` ↔ bytes, …). Hooked through the existing `Serializers` registry where possible; `Primitives` table at `app/types/this.cs` is the source of truth for which types exist.
+5. **`variable.set` materializer table** — `variable.set` itself only tags Data with `.Type`; the lazy materializers (`json` → `JsonNode`, `csv` → `Csv`, `xlsx` → `Workbook`, …) live on `Data.As<T>()` / property access, hooked through the existing `Serializers` registry where possible. `Primitives` table at `app/types/this.cs` is the source of truth for which types exist. Coder defines the first batch of materializers; missing ones surface at access time, not set time.
 6. **`[PlangType]` derivation** — follow-up: source generator could derive PLang type from class name (lowercased) by default, with `[PlangType("…")]` as explicit override only on collision. Filed as a CLAUDE.md / good-to-know proposal in this branch's `claude-md-proposals.md`.
 7. **CLAUDE.md proposal** — file under `.bot/typed-action-returns/claude-md-proposals.md`: the "Key Files" section still references `PLang/Runtime2/Engine/Utility/TypeMapping.cs`; the actual location is `PLang/app/types/this.cs ClrFromMime`.
 8. **Per-action `Build()` method (deferred)** — Ingi's idea for action handlers to expose a builder-time hook. Generalizes A.4's prompt rules into code. Own branch later; capture in `todos.md`.
