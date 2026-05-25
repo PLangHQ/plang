@@ -304,10 +304,31 @@ def _list_all_traces(with_summary: bool = True):
 
     # Global cap on distinct goal-paths: keep the MAX_PATHS_TOTAL groups whose
     # newest trace is most recent. Goals that haven't been touched in a while
-    # drop off the sidebar even if older traces still exist on disk.
-    groups = sorted(by_goal.values(),
-                    key=lambda entries: entries[0]['traceId'],
-                    reverse=True)[:MAX_PATHS_TOTAL]
+    # drop off the sidebar even if older traces still exist on disk — EXCEPT
+    # when the group's newest trace carries warnings, errors, or a buildError:
+    # those are always surfaced so the webui's errors/warnings filter has the
+    # full set to filter over, regardless of recency. Summary lookup is cached
+    # by fullPath+mtime so the extra parse per excluded group amortizes to ~0.
+    all_sorted = sorted(by_goal.values(),
+                        key=lambda entries: entries[0]['traceId'],
+                        reverse=True)
+    def _head_has_issue(entries):
+        head = entries[0] if entries else None
+        if not head: return False
+        cached = _SUMMARY_CACHE.get(head['fullPath'])
+        if cached is not None and cached[0] == head['mtime']:
+            s = cached[1]
+        else:
+            s = _summarize_trace(head['fullPath'])
+            _SUMMARY_CACHE[head['fullPath']] = (head['mtime'], s)
+        if s is None: return False
+        return bool(s.get('errors', 0) or s.get('warnings', 0) or s.get('buildError'))
+    top_recent = all_sorted[:MAX_PATHS_TOTAL]
+    # Append any group with issues that didn't make the top cut.
+    for g in all_sorted[MAX_PATHS_TOTAL:]:
+        if _head_has_issue(g):
+            top_recent.append(g)
+    groups = top_recent
 
     # Per-goal cap inside each surviving group, then flatten newest-first.
     capped = []
