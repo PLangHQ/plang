@@ -472,12 +472,17 @@ public sealed class @this
         return traceDir.Combine($"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");
     }
 
+    // Conservative invalid-filename character set covering both Unix and
+    // Windows — keeps the sanitizer free of System.IO.Path reaches per the
+    // PLNG002 ban.
+    private static readonly char[] _invalidFileNameChars =
+        ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '\0'];
+
     private string SanitizeFilenamePart(string s)
     {
-        var invalid = System.IO.Path.GetInvalidFileNameChars();
         var sb = new StringBuilder(s.Length);
         foreach (var c in s)
-            sb.Append(Array.IndexOf(invalid, c) >= 0 ? '_' : c);
+            sb.Append(Array.IndexOf(_invalidFileNameChars, c) >= 0 || char.IsControl(c) ? '_' : c);
         return sb.ToString();
     }
 

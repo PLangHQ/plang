@@ -26,9 +26,11 @@ public partial class load : IContext
 
         // LoadAssemblyAsync gates on Execute (Unix r/w/x model) — a user who
         // granted Read on the folder still gets a separate Execute prompt
-        // before the DLL is loaded.
+        // before the DLL is loaded. Preserve the original "LoadError" key
+        // so existing tests that branch on that don't churn.
         var loadResult = await dllPath.LoadAssemblyAsync();
-        if (!loadResult.Success) return Error(loadResult.Error!);
+        if (!loadResult.Success)
+            return Error(new ActionError(loadResult.Error?.Message ?? "Load failed", "LoadError", 500));
         var assembly = loadResult.Value!;
 
         var providerTypes = assembly.GetExportedTypes()

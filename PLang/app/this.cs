@@ -76,8 +76,14 @@ public sealed partial class @this : IAsyncDisposable
     /// <c>FilePath.ValidatePath</c> both anchor system goals against it, so it
     /// belongs on <c>app</c> rather than on a concrete path subclass.
     /// </summary>
+    // The os/ root anchor. Per architect D7 this is the one of three
+    // "outside the rule" sites (the definition of the rule's boundary).
+    // System.IO.Path math here is intentional — we have no Context yet
+    // (App ctor hasn't finished) so path.Resolve isn't available.
+#pragma warning disable PLNG002
     public string OsAbsolutePath =>
         global::System.IO.Path.GetFullPath(global::System.IO.Path.Combine(AppContext.BaseDirectory, "os"));
+#pragma warning restore PLNG002
 
     /// <summary>
     /// Environment name (e.g., "production", "development").

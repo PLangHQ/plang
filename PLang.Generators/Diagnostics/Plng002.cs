@@ -52,21 +52,12 @@ public static class Plng002
 
     private static readonly HashSet<string> AllowedSystemIoPathMembers = new(System.StringComparer.Ordinal)
     {
-        // Separator constants — not IO.
+        // Separator constants only — pure path-arithmetic methods stay banned
+        // per architect plan: they signal "this code is doing string-path math
+        // that probably leaks into IO". Anyone with a legitimate need uses the
+        // Path-type derivation verbs (Parent / Combine / WithName / …) instead.
         "DirectorySeparatorChar", "AltDirectorySeparatorChar",
-        "PathSeparator", "VolumeSeparatorChar",
-        // Pure string-arithmetic methods — they NEVER touch the filesystem.
-        // The architect plan flags these because they signal "this code is
-        // operating on raw string paths" — but the actual gate concern is
-        // System.IO.File/Directory and the rooted-path resolvers. Pure
-        // name math doesn't bypass any gate.
-        "Combine", "GetDirectoryName", "GetFileName",
-        "GetFileNameWithoutExtension", "GetExtension", "GetRelativePath",
-        "ChangeExtension", "GetInvalidFileNameChars",
-        "GetInvalidPathChars", "HasExtension",
-        "IsPathRooted", "IsPathFullyQualified", "GetFullPath",
-        "TrimEndingDirectorySeparator", "GetPathRoot", "EndsInDirectorySeparator",
-        "Join"
+        "PathSeparator", "VolumeSeparatorChar"
     };
 
     public record struct Finding(string FilePath, int StartLine, int StartChar, int EndLine, int EndChar, string Message);
@@ -88,6 +79,12 @@ public static class Plng002
         // gate would force converting a pure-sync utility to async-everywhere
         // for no security benefit.
         if (p.EndsWith("/PLang/app/modules/MarkdownTeaching.cs")) return false;
+        // Exempt App.OsAbsolutePath's host file — architect D7's "outside the
+        // rule" exception (this property literally *defines* the OS-folder
+        // anchor; path.Resolve can't be used because App is mid-construction).
+        // The #pragma directive used inline isn't honored by source-generator
+        // diagnostics, so the carve-out lives here in the analyzer config.
+        if (p.EndsWith("/PLang/app/this.cs")) return false;
         // Exempt generators — they're meta, not app code.
         if (p.Contains("/PLang.Generators/")) return false;
         // Exempt generated source.

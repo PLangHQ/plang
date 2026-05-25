@@ -14,6 +14,12 @@ public partial class Add : IContext
         var app = Context.App!;
         var dllPath = Path.Value!;
 
+        // ExistsAsync runs first so the "Module not found" message stays the
+        // canonical error for missing DLLs (matches the pre-Stage-5 shape).
+        var exists = await dllPath.ExistsAsync();
+        if (!exists.Success || exists.Value != true)
+            return Error(new app.errors.ServiceError($"Module not found: {dllPath}"));
+
         // LoadAssemblyAsync gates on Execute — distinct from Read so a Read
         // grant on the folder doesn't accidentally permit code loading.
         var loadResult = await dllPath.LoadAssemblyAsync();

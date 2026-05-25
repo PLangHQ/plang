@@ -285,7 +285,13 @@ public partial class report : IContext
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::app.tester.Status.Fail)}\" errors=\"0\">");
-        var byPath = results.GroupBy(r => System.IO.Path.GetDirectoryName(r.File.Path) ?? "");
+        // Pure string-name math: strip the trailing segment after the last separator.
+        var byPath = results.GroupBy(r =>
+        {
+            var p = r.File.Path ?? "";
+            var sep = p.LastIndexOfAny(new[] { '/', '\\' });
+            return sep >= 0 ? p[..sep] : "";
+        });
         foreach (var group in byPath)
         {
             var suiteTests = group.ToList();

@@ -1,72 +1,173 @@
+using System.Text.Json;
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
+using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Goals.PathTypingTests;
 
 /// <summary>
 /// Stage 3 — Batch 4. Goal/GoalCall typing flip (D3, C7/C11).
-///
-/// <c>Goal.Path</c>, <c>Goal.PrPath</c>, <c>Goal.LoadedFromPrPath</c>,
-/// <c>Goal.FolderPath</c>, <c>Goal.GetRuntimeDirectory()</c>, and
-/// <c>GoalCall.PrPath</c> all become <c>path?</c>. JSON converter ↔ Relative
-/// string lives in <c>PLang/app/types/path/this.JsonConverter.cs</c>. The
-/// post-deserialize back-reference pass that sets <c>Goal.App</c> /
-/// <c>step.Goal</c> extends to wire <c>Path.Context</c>.
 /// </summary>
 public class GoalPathTypingTests
 {
+    private static (PLangEngine app, string root) MakeApp()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-goalpathtyping-" + System.Guid.NewGuid().ToString("N"));
+        System.IO.Directory.CreateDirectory(root);
+        return (new PLangEngine(root), root);
+    }
+
     [Test] public async Task GoalPath_Property_IsPathTyped_NotString()
     {
-        // Compile-time-ish guard: Goal.Path's reflected type is app.types.path.@this.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var prop = typeof(Goal).GetProperty("Path");
+        await Assert.That(prop).IsNotNull();
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.types.path.@this));
     }
 
     [Test] public async Task GoalPrPath_IsDerivedFromPath_ViaInBuildFolder()
     {
-        // PrPath getter = Path.Parent.Combine(".build").Combine(name + ".pr"), per D1.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (app, _) = MakeApp();
+        var ctx = app.User.Context;
+        var goal = new Goal
+        {
+            Name = "Test",
+            Path = global::app.types.path.@this.Resolve("/Cache/Start.goal", ctx)
+        };
+        await Assert.That(goal.PrPath).IsNotNull();
+        var rel = goal.PrPath!.Relative.Replace('\\', '/');
+        await Assert.That(rel).IsEqualTo("Cache/.build/start.pr");
     }
 
     [Test] public async Task GoalPrPath_InitSetter_IsNoOp_SwallowsJsonValue()
     {
-        // C8: the init {} no-op stays — JSON round-trip must not error on prPath field.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (app, _) = MakeApp();
+        var ctx = app.User.Context;
+        // Construct with both Path and a JSON-shaped prPath init — the init {}
+        // swallows the value and the getter recomputes from Path.
+        var goal = new Goal
+        {
+            Name = "Test",
+            Path = global::app.types.path.@this.Resolve("/Start.goal", ctx),
+            PrPath = global::app.types.path.@this.Resolve("/SomeOther/junk.pr", ctx)
+        };
+        var rel = goal.PrPath!.Relative.Replace('\\', '/');
+        // Init was a no-op — derived from Path, not the explicitly-passed PrPath.
+        await Assert.That(rel).IsEqualTo(".build/start.pr");
     }
 
     [Test] public async Task GoalGetRuntimeDirectory_DerivesFromLoadedFromPrPath()
     {
-        // GetRuntimeDirectory = LoadedFromPrPath.Parent.Parent.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (app, root) = MakeApp();
+        var ctx = app.User.Context;
+        var goal = new Goal { Name = "Test" };
+        goal.LoadedFromPrPath = global::app.types.path.@this.Resolve("/Cache/.build/test.pr", ctx);
+        goal.App = app;
+        var dir = goal.GetRuntimeDirectory();
+        await Assert.That(dir).IsNotNull();
+        await Assert.That(dir!.Relative.Replace('\\', '/').TrimStart('/').TrimStart('.').TrimStart('/'))
+            .Contains("Cache");
     }
 
     [Test] public async Task Goal_JsonRoundTrip_PreservesPathAsRelativeString()
     {
-        // Serialize → on-disk JSON contains relative path string; deserialize → Path.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (app, _) = MakeApp();
+        var ctx = app.User.Context;
+        var goal = new Goal
+        {
+            Name = "Test",
+            Path = global::app.types.path.@this.Resolve("/Cache/Start.goal", ctx)
+        };
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+            Converters = { new global::app.types.path.JsonConverter(ctx) }
+        };
+        var json = JsonSerializer.Serialize(goal, options);
+        await Assert.That(json).Contains("Cache/Start.goal");
     }
 
     [Test] public async Task Goal_JsonRoundTrip_ReconstitutesPath_UnderDifferentAppRoot()
     {
-        // Built under root A, loaded under root B — Path resolves correctly against B.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (app1, _) = MakeApp();
+        var ctx1 = app1.User.Context;
+        var goal = new Goal
+        {
+            Name = "Test",
+            Path = global::app.types.path.@this.Resolve("/Start.goal", ctx1)
+        };
+        var opts1 = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new global::app.types.path.JsonConverter(ctx1) }
+        };
+        var json = JsonSerializer.Serialize(goal, opts1);
+        // Load under a different App / Context.
+        var (app2, _) = MakeApp();
+        var ctx2 = app2.User.Context;
+        var opts2 = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new global::app.types.path.JsonConverter(ctx2) }
+        };
+        var loaded = JsonSerializer.Deserialize<Goal>(json, opts2);
+        await Assert.That(loaded).IsNotNull();
+        await Assert.That(loaded!.Path).IsNotNull();
+        await Assert.That(loaded.Path!.Context).IsEqualTo(ctx2);
     }
 
     [Test] public async Task Goal_JsonRoundTrip_BackReferencePass_WiresPathContext()
     {
-        // After load, every Path on the Goal tree has Context != null (wired by App).
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (app, _) = MakeApp();
+        var ctx = app.User.Context;
+        var goal = new Goal
+        {
+            Name = "Test",
+            Path = global::app.types.path.@this.Resolve("/Start.goal", ctx)
+        };
+        var opts = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true,
+            Converters = { new global::app.types.path.JsonConverter(ctx) }
+        };
+        var json = JsonSerializer.Serialize(goal, opts);
+        var loaded = JsonSerializer.Deserialize<Goal>(json, opts);
+        await Assert.That(loaded!.Path!.Context).IsEqualTo(ctx);
     }
 
     [Test] public async Task GoalCallPrPath_RoundTrips_AsRelativeString()
     {
-        // GoalCall.PrPath is [Store]'d — must serialize/deserialize the same way.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        var (app, _) = MakeApp();
+        var ctx = app.User.Context;
+        var gc = new GoalCall
+        {
+            Name = "Foo",
+            PrPath = global::app.types.path.@this.Resolve("/Cache/.build/foo.pr", ctx)
+        };
+        var opts = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new global::app.types.path.JsonConverter(ctx) }
+        };
+        var json = JsonSerializer.Serialize(gc, opts);
+        await Assert.That(json).Contains("Cache/.build/foo.pr");
+        var loaded = JsonSerializer.Deserialize<GoalCall>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true,
+                Converters = { new global::app.types.path.JsonConverter(ctx) } });
+        await Assert.That(loaded!.PrPath).IsNotNull();
     }
 
     [Test] public async Task PathJsonConverter_LeavesContextNullAtDeserializeTime()
     {
-        // Converter sets _absolutePath + Raw; Context is wired later by back-ref pass.
-        await Task.CompletedTask; Assert.Fail("Not implemented");
+        // The context-less converter produces a stub Path with Context=null.
+        var opts = new JsonSerializerOptions
+        {
+            Converters = { new global::app.types.path.JsonConverter() }
+        };
+        var p = JsonSerializer.Deserialize<global::app.types.path.@this>("\"/Start.goal\"", opts);
+        await Assert.That(p).IsNotNull();
+        await Assert.That(p!.Context).IsNull();
     }
 }

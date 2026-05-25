@@ -148,8 +148,9 @@ public class Default : IBuilder
         else if (searchPath.StartsWith('/') || searchPath.StartsWith('\\'))
             rootRelative = searchPath;  // PLang-rooted, ValidatePath will anchor
         else
-            rootRelative = global::System.IO.Path.GetFullPath(
-                global::System.IO.Path.Combine(rootDir, searchPath));
+            // Lift to path verbs — Resolve handles normalization, no
+            // System.IO.Path arithmetic needed.
+            rootRelative = global::app.types.path.@this.Resolve(searchPath, context).Absolute;
 
         var listAction = new file.List
         {

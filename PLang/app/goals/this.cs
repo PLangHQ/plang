@@ -126,14 +126,17 @@ public sealed class @this
         if (isAbsolute)
             cleanName = cleanName.TrimStart('/', '\\');
 
-        var file = System.IO.Path.GetFileName(cleanName);
-        var nameDir = System.IO.Path.GetDirectoryName(cleanName) ?? "";
+        // Split on the last separator without reaching for System.IO.Path —
+        // this is pure name math and shouldn't pretend to be a filesystem op.
+        var lastSep = cleanName.LastIndexOfAny(new[] { '/', '\\' });
+        var file = lastSep >= 0 ? cleanName[(lastSep + 1)..] : cleanName;
+        var nameDir = lastSep >= 0 ? cleanName[..lastSep] : "";
 
         // If relative and we have a calling folder, try resolving relative to it first
         if (!isAbsolute && !string.IsNullOrEmpty(callingFolderPath))
         {
             var relativeDir = callingFolderPath.Trim('/', '\\');
-            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : System.IO.Path.Combine(relativeDir, nameDir);
+            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : (relativeDir + "/" + nameDir);
 
             var loaded = await TryLoadPr(combinedDir, file, name, cancellationToken);
             if (loaded != null) return loaded;

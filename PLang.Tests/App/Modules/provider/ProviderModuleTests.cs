@@ -47,6 +47,30 @@ public class ProviderModuleTests
     private static string FixtureDll(string project) =>
         System.IO.Path.Combine(FixtureBase, $"{project}.dll");
 
+    /// <summary>
+    /// Pre-grant Execute (+ Read) on a fixture DLL path. The fixture DLLs
+    /// live outside the per-test App root, so AuthGate would prompt
+    /// without an explicit grant.
+    /// </summary>
+    private async Task GrantExecute(string dllPath)
+    {
+        // Use the exact resolved path so the grant's Path key matches the
+        // canonical-form path that AuthGate compares against.
+        var resolved = global::app.types.path.@this.Resolve("/" + dllPath, Ctx);
+        var verb = new global::app.types.path.permission.verb.@this
+        {
+            Read = new global::app.types.path.permission.verb.Read(),
+            Execute = new global::app.types.path.permission.verb.Execute()
+        };
+        var permission = new global::app.types.path.permission.@this(
+            Actor: _app.System.Name,
+            Path: resolved.Absolute,
+            Verb: verb,
+            Match: global::app.types.path.permission.Match.Exact);
+        var data = new global::app.data.@this<global::app.types.path.permission.@this>("", permission) { Context = Ctx };
+        await _app.System.Permission.Add(data);
+    }
+
     #region Load
 
     [Test]
@@ -103,6 +127,7 @@ public class ProviderModuleTests
     public async Task LoadAction_ValidDll_RegistersProvider()
     {
         var dllPath = FixtureDll("TestProvider");
+        await GrantExecute(dllPath);
         if (!System.IO.File.Exists(dllPath))
         {
             Assert.Fail($"Fixture DLL not found: {dllPath}. Build TestProvider project first.");
@@ -112,7 +137,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(dllPath, Ctx)),
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -126,6 +151,7 @@ public class ProviderModuleTests
     public async Task LoadAction_EmptyDll_ReturnsNoProviders()
     {
         var dllPath = FixtureDll("EmptyProvider");
+        await GrantExecute(dllPath);
         if (!System.IO.File.Exists(dllPath))
         {
             Assert.Fail($"Fixture DLL not found: {dllPath}. Build EmptyProvider project first.");
@@ -135,7 +161,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(dllPath, Ctx)),
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
@@ -147,6 +173,7 @@ public class ProviderModuleTests
     public async Task LoadAction_NoCtorDll_ReturnsProviderConstructorError()
     {
         var dllPath = FixtureDll("NoCtorProvider");
+        await GrantExecute(dllPath);
         if (!System.IO.File.Exists(dllPath))
         {
             Assert.Fail($"Fixture DLL not found: {dllPath}. Build NoCtorProvider project first.");
@@ -156,7 +183,7 @@ public class ProviderModuleTests
         var action = new global::app.modules.code.load
         {
             Context = Ctx,
-            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve(dllPath, Ctx)),
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(global::app.types.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Run();
 
