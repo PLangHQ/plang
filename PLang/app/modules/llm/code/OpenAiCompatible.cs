@@ -14,13 +14,33 @@ using PlangHttpMethod = app.modules.http.HttpMethod;
 namespace app.modules.llm.code;
 
 /// <summary>
-/// OpenAI-compatible LLM provider. Owns the full lifecycle:
-/// config, message formatting, HTTP calls (via http module), tool loop,
-/// caching (via SettingsStore), streaming, validation, conversation continuity.
+/// Base for any LLM provider that speaks the OpenAI chat-completions wire
+/// format (OpenAI, DeepSeek, Groq, Together, vLLM, Ollama-OpenAI-shim, …).
+/// Owns the full lifecycle: config, message formatting, HTTP calls (via the
+/// http module), tool loop, caching (via SettingsStore), streaming,
+/// validation, conversation continuity. Subclasses override the
+/// <c>protected virtual</c> hooks below to point at their own endpoint,
+/// env vars, default model, and pricing table — nothing else changes.
 /// </summary>
-public sealed class OpenAi : ILlm
+public class OpenAiCompatible : ILlm
 {
-    public string Name { get; init; } = "OpenAi";
+    public virtual string Name { get; init; } = "OpenAiCompatible";
+
+    // --- Provider-specific overrides ---
+    // Subclasses (OpenAi, DeepSeek, …) override these. Everything else —
+    // message formatting, tool loop, caching, validation — stays identical
+    // across OpenAI-compatible providers.
+    protected virtual string DefaultEndpoint    => "https://api.openai.com/v1/chat/completions";
+    protected virtual string EndpointSettingKey => "llm.endpoint";
+    protected virtual string ApiKeySettingKey   => "llm.apiKey";
+    protected virtual string ModelSettingKey    => "llm.model";
+    protected virtual string EndpointEnvVar     => "OPENAI_API_ENDPOINT";
+    protected virtual string ApiKeyEnvVar       => "OPENAI_API_KEY";
+    protected virtual string DefaultModel       => "";
+    /// <summary>USD per 1M tokens, longest-prefix match. Empty by default — subclasses ship the price book for their models.</summary>
+    protected virtual (string prefix, decimal input, decimal cached, decimal output)[] PricingTable
+        => Array.Empty<(string, decimal, decimal, decimal)>();
+
     public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
@@ -35,20 +55,11 @@ public sealed class OpenAi : ILlm
     private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
-    // USD per 1M tokens. Longest matching prefix wins; missing model → null cost.
-    // Prices as of 2026-05 — bump when OpenAI publishes a change.
-    private static readonly (string prefix, decimal input, decimal cached, decimal output)[] Pricing = new[]
-    {
-        ("gpt-5.4-nano", 0.20m, 0.02m,   1.25m),
-        ("gpt-5.4-mini", 0.75m, 0.075m,  4.50m),
-        ("gpt-5.4",      2.50m, 0.25m,  15.00m),
-    };
-
-    private static (decimal input, decimal cached, decimal output)? PriceFor(string? model)
+    private (decimal input, decimal cached, decimal output)? PriceFor(string? model)
     {
         if (string.IsNullOrEmpty(model)) return null;
         (string prefix, decimal input, decimal cached, decimal output)? best = null;
-        foreach (var row in Pricing)
+        foreach (var row in PricingTable)
             if (model.StartsWith(row.prefix, StringComparison.OrdinalIgnoreCase)
                 && (best is null || row.prefix.Length > best.Value.prefix.Length))
                 best = row;
@@ -63,11 +74,10 @@ public sealed class OpenAi : ILlm
 
         // --- Config ---
         var settings = app.SettingsStore;
-        var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
-            "https://api.openai.com/v1/chat/completions");
-        var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
+        var endpoint = await ResolveConfigAsync(settings, EndpointSettingKey, EndpointEnvVar, DefaultEndpoint);
+        var apiKey = await ResolveConfigAsync(settings, ApiKeySettingKey, ApiKeyEnvVar, null);
         var model = string.IsNullOrWhiteSpace(action.Model?.Value) ? null : action.Model.Value;
-        model ??= await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
+        model ??= await ResolveConfigAsync(settings, ModelSettingKey, null, DefaultModel);
 
         // --- Validate ---
         if (action.Messages.Value!.Count == 0)

@@ -250,7 +250,7 @@ public sealed partial class @this : IAsyncDisposable
         RegisterBuiltIn<modules.assert.code.IAssert>(new modules.assert.code.Default());
         // modules.file.code.IFile registration removed in Stage 3.
         RegisterBuiltIn<ITemplate>(new modules.ui.code.Fluid());
-        RegisterBuiltIn<modules.llm.code.ILlm>(new modules.llm.code.OpenAi());
+        RegisterBuiltIn<modules.llm.code.ILlm>(new modules.llm.code.DeepSeek());
         RegisterBuiltIn<modules.builder.code.IBuilder>(new modules.builder.code.Default());
         RegisterBuiltIn<global::app.data.code.IGrep>(new global::app.data.code.Default());
     }
