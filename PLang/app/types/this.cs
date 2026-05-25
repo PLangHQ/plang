@@ -241,6 +241,8 @@ public sealed partial class @this
             return typeof(object);
         if (mimeType.Equals("application/plang-goal", StringComparison.OrdinalIgnoreCase))
             return typeof(app.goals.goal.@this);
+        if (mimeType.Equals("application/plang-goal-source", StringComparison.OrdinalIgnoreCase))
+            return typeof(app.goals.goal.@this);
         if (mimeType.Equals("application/octet-stream", StringComparison.OrdinalIgnoreCase))
             return typeof(byte[]);
 

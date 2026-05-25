@@ -243,7 +243,7 @@ public sealed class @this
         [".llm"] = "text/plain",
 
         // plang
-        [".goal"] = "text/plain",
+        [".goal"] = "application/plang-goal-source",
         [".pr"] = "application/plang-goal",
 
         // image

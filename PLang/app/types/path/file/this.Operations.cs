@@ -77,7 +77,20 @@ public sealed partial class @this
                     Context!.App.Builder.SnapshotPrFile(Absolute, text);
 
                 var clr = type.ClrType;
-                if (clr != null && clr != typeof(string))
+                if (clr == typeof(app.goals.goal.@this) && mime.Equals("application/plang-goal-source", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    // .goal source — parse via Goal.Parse, NOT JSON. The .pr branch
+                    // (mime application/plang-goal) keeps the existing JSON path.
+                    var goal = app.goals.goal.@this.Parse(text, Relative);
+                    if (goal == null)
+                        return data.@this.FromError(new errors.ServiceError(
+                            $"Failed to parse .goal file: {Raw}", "ParseError", 400));
+                    // Post-conversion back-reference: the Goal knows the path it
+                    // was read from. Stage 3 will flip Goal.Path to a Path object
+                    // and let us assign `goal.Path = this` directly.
+                    content = goal;
+                }
+                else if (clr != null && clr != typeof(string))
                 {
                     var (converted, _) = global::app.types.@this.TryConvertTo(text, clr);
                     content = converted ?? text;
