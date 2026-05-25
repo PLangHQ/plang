@@ -78,7 +78,7 @@ The step's trailing clause compiles directly into the callback's `Actions([list<
 4. Sweep the remaining callbacks.
 5. Rebuild every user `.pr` that uses any of the touched params.
 6. Delete `error.handle.Goal` deprecated alias.
-7. Update `BuildGoal.llm` examples.
+7. Update the relevant per-action notes (`os/system/modules/<m>/<action>.notes.md` / `.examples.md`) for the touched callback shapes.
 8. Update `Documentation/v0.2/action-catalog.md` with the "callbacks are action chains" section.
 
 Leaving `goal.call.GoalName` and the `[goal.call]` type in place is deliberate. Revisit only if the sweep reveals a different shape is cleaner.
@@ -243,7 +243,7 @@ Not fixed — captured as a developer-ergonomics improvement.
 
 ## 2026-04-21 — Builder bug: LLM emits dotted module paths, builder should auto-resolve
 
-Observed during Wave 4 per-folder rebuild of `Tests/` on `runtime2-green-plang-tests`. Even after adding explicit prompt rules ("Module names never contain dots") to `system/builder/llm/BuildGoal.llm`, the LLM still periodically produces actions like:
+Observed during Wave 4 per-folder rebuild of `Tests/` on `runtime2-green-plang-tests`. Even after adding explicit prompt rules ("Module names never contain dots") to the builder system prompt (at the time this was `system/builder/llm/BuildGoal.llm`; the equivalent today is `system/builder/llm/Compile.llm`), the LLM still periodically produces actions like:
 
 - `condition.assert.equals` — should be two actions: `condition.if` (or similar) + `assert.equals`
 - `condition.event.on` — should be `event.on` alone

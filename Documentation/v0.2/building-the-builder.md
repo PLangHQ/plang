@@ -87,8 +87,8 @@ Should report `Saved Start` with no LLM re-call (`Kept prior mapping for step N`
 
 These are deterministic LLM mistakes the current prompts emit on self-rebuild. Per the cardinal rule, **do not hand-strip them from the `.pr`**. The fix is in the prompt or the validator. List exists so the next person touching builder prompts knows what to target.
 
-- **`Actor=%goal%` / `Actor=%action%` on `goal.call`** — appears on every `foreach X, call Y, item=%var%` step. The LLM mis-binds `%var%` as the `Actor` parameter of `goal.call` instead of recognising it as the foreach `ItemName`. Fix candidate: tighten `BuildGoal.llm` / `BuildStep.llm` examples on the foreach+call pattern, or have the validator reject `goal.call` with `Actor` set and force a retry.
-- **`goal.call.Name='goal.call'`** — the LLM occasionally drops the action type name as the `Name` of a `goal.call`'s GoalCall value. The validator's type-name guard already catches it and `BuildStepFixer` retries (see retry-wrap on `BuildStep.goal` step 5) — usually self-heals on the second pass.
+- **`Actor=%goal%` / `Actor=%action%` on `goal.call`** — appears on every `foreach X, call Y, item=%var%` step. The LLM mis-binds `%var%` as the `Actor` parameter of `goal.call` instead of recognising it as the foreach `ItemName`. Fix candidate: tighten the foreach+call examples in `os/system/modules/loop/foreach.examples.md` and `os/system/modules/goal/call.notes.md`, or have the validator reject `goal.call` with `Actor` set and force a retry.
+- **`goal.call.Name='goal.call'`** — the LLM occasionally drops the action type name as the `Name` of a `goal.call`'s GoalCall value. The validator's type-name guard catches it and the `FixValidation` retry path in `BuildStep/Start.goal` (the `builder.validate ..., on error call FixValidation` step) re-prompts — usually self-heals on the second pass.
 
 When you fix the prompt so one of these stops happening, delete the corresponding line.
 
