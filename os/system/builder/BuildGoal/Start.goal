@@ -8,7 +8,7 @@ Start
 - call Plan, on error call HandleBuildFailure
 - set %trace.plan% = %plan%
 
-- foreach %plan.steps%, call BuildStep/Start planStep=%item%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
 
 - set %parentGoal% = %goal%
 - foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
@@ -29,7 +29,7 @@ BuildSubGoal
 - set %goal% = %subGoal%
 - write out "  Building sub-goal: %goal.Name%"
 - call Plan, on error call HandleBuildFailure
-- foreach %plan.steps%, call BuildStep/Start planStep=%item%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
 - add {goal: %goal%, plan: %plan%} to %trace.subGoals%
 
 

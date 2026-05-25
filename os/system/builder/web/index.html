@@ -57,6 +57,61 @@
     padding: 8px;
   }
 
+  #filter-panel {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.10);
+    flex-shrink: 0;
+  }
+  #filter-input {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+  }
+  #filter-input:focus {
+    border-color: var(--accent);
+  }
+  #filter-input::placeholder {
+    color: var(--text-dim);
+  }
+  .filter-toggles {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .filter-toggle {
+    flex: 1;
+    padding: 4px 8px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    text-transform: lowercase;
+  }
+  .filter-toggle:hover {
+    color: var(--text);
+    border-color: var(--text-dim);
+  }
+  #filter-errors.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  #filter-warnings.active {
+    background: var(--orange);
+    color: #fff;
+    border-color: var(--orange);
+  }
+
   /* Recent traces panel — so you can see at a glance which build was most
      recent and jump straight into it without hunting through the tree. */
   #recent-panel {
@@ -815,6 +870,13 @@
     <div class="recent-title">Recent builds</div>
     <div id="recent-list"></div>
   </div>
+  <div id="filter-panel">
+    <input type="text" id="filter-input" placeholder="Search goals (e.g. Channels/Events/Add)" autocomplete="off">
+    <div class="filter-toggles">
+      <button type="button" id="filter-errors" class="filter-toggle" title="Show only goals with errors or build failures">errors</button>
+      <button type="button" id="filter-warnings" class="filter-toggle" title="Show only goals with warnings">warnings</button>
+    </div>
+  </div>
   <div id="goal-list"></div>
   <div id="controls">
     <input type="checkbox" id="auto-refresh" checked>
@@ -843,6 +905,15 @@ const activeTraceByGoal = new Map();
 
 // Sidebar expansion (bucket only — file is a leaf now).
 const expandedBuckets = new Set();
+
+// Case-insensitive substring filter applied to the goal tree. Empty = show all.
+// Matched against file.bucket + file.path so users can search by either folder
+// (e.g. "Channels/Events") or filename (e.g. "AddBeforeWrite").
+let filterQuery = '';
+
+// Issue filter: null = no filter, 'errors' = only files with errors or build
+// failures, 'warnings' = only files with warnings. Combines AND with filterQuery.
+let issueFilter = null;
 
 // Per-step disclosure depth: 0 = text+formal only, 1 = +json.
 // Key is traceId + "::" + stepIdx. The goal-level LLM Request block is shared
@@ -1318,23 +1389,58 @@ async function jumpToTraceEntry(e) {
   if (file) await selectFile(file);
 }
 
+// Returns a filtered tree (same shape as bucketTree) containing only the dirs
+// and files that pass the predicate `filePred`, or null if nothing matches.
+// A dir matches when any descendant matches.
+function filterTree(node, filePred) {
+  const filteredDirs = [];
+  for (const d of node.dirs) {
+    const f = filterTree(d, filePred);
+    if (f) filteredDirs.push(f);
+  }
+  const filteredFiles = node.files.filter(filePred);
+  if (filteredDirs.length === 0 && filteredFiles.length === 0) return null;
+  return { label: node.label, fullPath: node.fullPath, dirs: filteredDirs, files: filteredFiles };
+}
+
 function renderTree() {
   const list = document.getElementById('goal-list');
   list.innerHTML = '';
-  // Root directories render at depth 0. Each dir recurses with depth+1 for
-  // progressive indentation; files inside a dir share that dir's depth + 1.
-  for (const dir of bucketTree.dirs) {
-    list.appendChild(renderDirNode(dir, 0));
+  const q = filterQuery.trim().toLowerCase();
+  // Compose: text query AND issue filter. Both default to "pass through".
+  const matchesQuery = q
+    ? (f) => ((f.bucket || '') + (f.path || '')).toLowerCase().includes(q)
+    : null;
+  const matchesIssue = issueFilter
+    ? (f) => {
+        const c = fileIssueCounts(f);
+        if (issueFilter === 'errors') return (c.errors + c.failed) > 0;
+        if (issueFilter === 'warnings') return c.warnings > 0;
+        return true;
+      }
+    : null;
+  const filterActive = !!(matchesQuery || matchesIssue);
+  const filePred = (f) =>
+    (!matchesQuery || matchesQuery(f)) && (!matchesIssue || matchesIssue(f));
+  const tree = filterActive ? (filterTree(bucketTree, filePred) || { dirs: [], files: [] }) : bucketTree;
+  const forceOpen = filterActive;
+  if (filterActive && tree.dirs.length === 0 && tree.files.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding: 10px; font-size: 11px; color: var(--text-dim);';
+    empty.textContent = 'No goals match.';
+    list.appendChild(empty);
+    return;
   }
-  // Files that live directly at the root (rare — happens when a bucket label
-  // is empty). Still render so we don't silently drop them.
-  for (const file of bucketTree.files) {
+  for (const dir of tree.dirs) {
+    list.appendChild(renderDirNode(dir, 0, forceOpen));
+  }
+  for (const file of tree.files) {
     list.appendChild(renderFileNode(file, 0));
   }
 }
 
-function renderDirNode(dir, depth) {
-  const open = expandedBuckets.has(dir.fullPath);
+function renderDirNode(dir, depth, forceOpen) {
+  const open = forceOpen || expandedBuckets.has(dir.fullPath);
   const wrap = document.createElement('div');
   wrap.className = 'tree-bucket';
 
@@ -1357,7 +1463,7 @@ function renderDirNode(dir, depth) {
 
   const children = document.createElement('div');
   children.className = 'tree-children' + (open ? ' open' : '');
-  for (const sub of dir.dirs) children.appendChild(renderDirNode(sub, depth + 1));
+  for (const sub of dir.dirs) children.appendChild(renderDirNode(sub, depth + 1, forceOpen));
   for (const file of dir.files) children.appendChild(renderFileNode(file, depth + 1));
   wrap.appendChild(children);
   return wrap;
@@ -1667,7 +1773,7 @@ function renderGoalLlmBlockForSection(goalSection, subKey) {
         <span class="goal-llm-label">LLM Request</span>
         <span class="goal-llm-meta">${esc(meta)}</span>
       </div>
-      ${open ? `<div class="goal-llm-body">${renderPromptBlocks(bg.system, bg.user, bg.response)}</div>` : ''}
+      ${open ? `<div class="goal-llm-body">${renderPromptBlocks(bg.system, bg.user, bg.response, {system: 'Plan.llm'})}</div>` : ''}
     </div>
   `;
 }
@@ -1733,8 +1839,8 @@ function renderStepRow(entry, goalSection, step, subKey) {
     const source = step.raw && step.raw.source ? step.raw.source : null;
     const compiled = step.raw && step.raw.compiled ? step.raw.compiled : null;
     html += `<div class="sublayer">`;
-    html += renderAccordionSection(stepKey, 'system', step.system, open.has('system'), 'md');
-    html += renderAccordionSection(stepKey, 'user',   step.user,   open.has('user'),   'md');
+    html += renderAccordionSection(stepKey, 'system', step.system, open.has('system'), 'md', 'Compile.llm');
+    html += renderAccordionSection(stepKey, 'user',   step.user,   open.has('user'),   'md', 'CompileUser.llm');
     html += renderAccordionSection(stepKey, 'source', source,      open.has('source'), 'json');
     html += renderAccordionSection(stepKey, 'compiled', compiled,  open.has('compiled'), 'json');
     html += `</div>`;
@@ -1758,9 +1864,10 @@ function renderSublayer(stepKey, label, meta, open, body, nextDepth) {
 // Per-step accordion: 4 named sections (system/user/source/compiled), each
 // independently open/closed. value is the section's content (string for md,
 // any for json); mode is 'md' or 'json'.
-function renderAccordionSection(stepKey, name, value, open, mode) {
+function renderAccordionSection(stepKey, name, value, open, mode, sourceFile) {
   const hasContent = value != null && (typeof value !== 'string' || value.length > 0);
   const meta = hasContent ? sizeLabel(value) : '(empty)';
+  const label = sourceFile ? `${name} (${sourceFile})` : name;
   let body = '';
   if (open && hasContent) {
     if (mode === 'md') {
@@ -1772,7 +1879,7 @@ function renderAccordionSection(stepKey, name, value, open, mode) {
   return `
     <div class="sublayer-row ${open ? 'open' : ''}" onclick="toggleStepSection('${stepKey}', '${name}')">
       <span class="tree-caret ${open ? 'open' : ''}">&#9656;</span>
-      <span>${esc(name)}</span>
+      <span>${esc(label)}</span>
       <span class="sub-meta">${esc(meta)}</span>
     </div>
     ${body}
@@ -1915,22 +2022,25 @@ function renderBuildFailure(be) {
 
 // ---------- Prompt/Response blocks ----------
 
-function renderPromptBlocks(system, user, response) {
+function renderPromptBlocks(system, user, response, sources) {
+  sources = sources || {};
   let html = '';
   if (system) {
     const md = typeof system === 'string' ? mdToHtml(system) : `<pre>${esc(JSON.stringify(system, null, 2))}</pre>`;
+    const label = sources.system ? `System Prompt (${esc(sources.system)})` : 'System Prompt';
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
-        <span>System Prompt</span><span>${sizeLabel(system)}</span>
+        <span>${label}</span><span>${sizeLabel(system)}</span>
       </div>
       <div class="block-content md-body">${md}</div>
     </div>`;
   }
   if (user) {
     const md = typeof user === 'string' ? mdToHtml(user) : `<pre>${esc(JSON.stringify(user, null, 2))}</pre>`;
+    const label = sources.user ? `User Prompt (${esc(sources.user)})` : 'User Prompt';
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
-        <span>User Prompt</span><span>${sizeLabel(user)}</span>
+        <span>${label}</span><span>${sizeLabel(user)}</span>
       </div>
       <div class="block-content md-body open">${md}</div>
     </div>`;
@@ -1966,6 +2076,20 @@ function closeDrawer() {
 }
 
 // ---------- Polling ----------
+
+document.getElementById('filter-input').addEventListener('input', (ev) => {
+  filterQuery = ev.target.value;
+  renderTree();
+});
+
+function toggleIssueFilter(kind) {
+  issueFilter = (issueFilter === kind) ? null : kind;
+  document.getElementById('filter-errors').classList.toggle('active', issueFilter === 'errors');
+  document.getElementById('filter-warnings').classList.toggle('active', issueFilter === 'warnings');
+  renderTree();
+}
+document.getElementById('filter-errors').addEventListener('click', () => toggleIssueFilter('errors'));
+document.getElementById('filter-warnings').addEventListener('click', () => toggleIssueFilter('warnings'));
 
 poll();
 setInterval(() => {

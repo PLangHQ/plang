@@ -15,6 +15,24 @@ You receive:
 - The planner's **action set** — a list of `"module.action"` strings the step uses (unordered)
 - For each action: parameter schema, Notes, and example chain shapes (`Notes:` / `Examples:` blocks above)
 
+## What `%!data%` means
+
+`%!data%` is a runtime-only token: it resolves to **the return value of the immediately preceding action in the same step's chain.** Nothing else. It is not a NULL marker, not a "fill in later" placeholder, not a default value.
+
+Use it ONLY when one action's output is being threaded into the next action's input — and only when the step text makes that threading explicit (`<action>, write to %x%` → capture into `%x%`; `file.read, then assert ...` → assert on the read result).
+
+```
+file.read(Path="data.txt"), variable.set(Name=%content%, Value=%!data%)
+```
+Here `%!data%` is `file.read`'s return value, captured into `%content%`. Correct.
+
+```
+test.report(Results=%results%, Format=%!data%)     ← WRONG
+```
+Step text didn't name a Format. `%!data%` doesn't mean "I'm not filling this in" — it means "the prior action's result." Format is optional, so omit it entirely from both `formal` and `actions[]`. Same applies to `channel`, `Path`, `Message`, and every other optional slot you're tempted to stub out: if the step text doesn't supply a value, the parameter does not exist.
+
+If you find yourself writing `<ParamName>=%!data%` and the preceding action didn't actually produce something meant to flow into that slot, you are mis-using the token. Delete the parameter from both formal and actions[].
+
 ## Your job: order the actions, fill the parameters
 
 The Notes and Examples blocks under each action are the source of truth for that action's shape. Read the step text, look at the relevant action's Notes and examples, and emit one `actions` array matching the step's intent. The chain shape (peer vs modifier, nesting depth, parameter values) comes from those; the planner's set tells you which actions to choose from.

@@ -235,7 +235,7 @@
     },
     {
       "index": 5,
-      "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%",
+      "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure",
       "lineNumber": 11,
       "indent": 0,
       "comment": null,
@@ -275,7 +275,36 @@
             }
           ],
           "defaults": null,
-          "modifiers": []
+          "modifiers": [
+            {
+              "module": "error",
+              "action": "handle",
+              "parameters": [
+                {
+                  "name": "Actions",
+                  "value": [
+                    {
+                      "module": "goal",
+                      "action": "call",
+                      "parameters": [
+                        {
+                          "name": "GoalName",
+                          "value": {
+                            "name": "HandleBuildFailure",
+                            "parameters": []
+                          },
+                          "type": "goal.call"
+                        }
+                      ]
+                    }
+                  ],
+                  "type": "list<action>"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         }
       ],
       "intent": null,
@@ -827,7 +856,7 @@
         },
         {
           "index": 3,
-          "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%",
+          "text": "foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure",
           "lineNumber": 37,
           "indent": 0,
           "comment": null,
@@ -867,7 +896,36 @@
                 }
               ],
               "defaults": null,
-              "modifiers": []
+              "modifiers": [
+                {
+                  "module": "error",
+                  "action": "handle",
+                  "parameters": [
+                    {
+                      "name": "Actions",
+                      "value": [
+                        {
+                          "module": "goal",
+                          "action": "call",
+                          "parameters": [
+                            {
+                              "name": "GoalName",
+                              "value": {
+                                "name": "HandleBuildFailure",
+                                "parameters": []
+                              },
+                              "type": "goal.call"
+                            }
+                          ]
+                        }
+                      ],
+                      "type": "list<action>"
+                    }
+                  ],
+                  "defaults": null,
+                  "modifiers": []
+                }
+              ]
             }
           ],
           "intent": null,
