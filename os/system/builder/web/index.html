@@ -662,6 +662,16 @@
     padding: 2px 6px;
     white-space: nowrap;
   }
+  /* Runtime per-step duration from the last test run — sits between usage and conf. */
+  .timing-chip {
+    font-size: 10px;
+    color: var(--green);
+    background: rgba(78,204,163,0.06);
+    border: 1px solid rgba(78,204,163,0.25);
+    border-radius: 3px;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
   .step-note {
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     font-size: 11px;
@@ -2144,6 +2154,25 @@ function renderStepRow(entry, goalSection, step, subKey) {
     ? `<span class="usage-chip" title="prompt ${step.usage.promptTokens||0} · cached ${step.usage.cachedTokens||0} · completion ${step.usage.completionTokens||0} · model ${step.usage.model||'?'}">${usageLabel}</span>`
     : '';
 
+  // Test-run step timing: only meaningful on the parent goal (sub-goal step
+  // durations roll up into the parent's call). Look up the file from the
+  // active selection — entry/goalSection don't carry it directly.
+  const timingChip = (goalSection.isParent && selectedFileKey)
+    ? (() => {
+        const file = findFile(selectedFileKey);
+        const tr = file ? lookupTestResult(file) : null;
+        const timings = (tr && Array.isArray(tr.timings)) ? tr.timings : null;
+        if (!timings) return '';
+        // A chained step (e.g. file.read + variable.set) emits multiple entries
+        // for the same stepIndex; sum them.
+        let total = 0, count = 0;
+        for (const t of timings) if (t.stepIndex === step.index) { total += t.ms || 0; count++; }
+        if (count === 0) return '';
+        const label = total < 1 ? `${total.toFixed(2)}ms` : total < 10 ? `${total.toFixed(1)}ms` : `${Math.round(total)}ms`;
+        return `<span class="timing-chip" title="runtime: sum of ${count} action${count===1?'':'s'} from last test run">${label}</span>`;
+      })()
+    : '';
+
   let html = `
     <div class="step-row ${depth > 0 ? 'open' : ''} ${hasError ? 'has-error' : ''} ${hasWarning && !hasError ? 'has-warning' : ''}">
       <div class="step-line">
@@ -2155,6 +2184,7 @@ function renderStepRow(entry, goalSection, step, subKey) {
         </div>
         <div class="meta">
           ${usageChip}
+          ${timingChip}
           <span class="conf ${confCls}">${conf}%</span>
         </div>
       </div>
