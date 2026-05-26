@@ -75,7 +75,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/GrantAStoresPersisted/ProbeAnswerer.goal",
-  "prPath": "/GrantAStoresPersisted/.build/probeanswerer.pr",
+  "prPath": "/Permission/GrantAStoresPersisted/.build/probeanswerer.pr",
   "hash": "5454ba03ddff54a51bef8e9f816179ad428ef48ffe57e28a158f3af55693fcac",
   "builderVersion": "0.2.2",
   "isSetup": false,

@@ -160,7 +160,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Tests/App/CallStack/DepthRestoresAfterCall.test.goal",
-  "prPath": "/Tests/App/CallStack/.build/depthrestoresaftercall.test.pr",
+  "prPath": "/App/CallStack/.build/depthrestoresaftercall.test.pr",
   "hash": "99b88d7b32fd34e416c7b12a4409360490c6413054bd18de23f0bfc5ebf3313b",
   "builderVersion": "0.2.2",
   "isSetup": false,

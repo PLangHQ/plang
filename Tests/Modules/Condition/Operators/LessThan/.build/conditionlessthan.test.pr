@@ -82,7 +82,7 @@
                 "name": "WhenLess",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whenless.pr"
+                "prPath": "/Modules/Condition/Operators/LessThan/.build/whenless.pr"
               },
               "type": "goal.call"
             }
@@ -141,8 +141,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionLessThan.test.goal",
-  "prPath": "/.build/conditionlessthan.test.pr",
+  "path": "/Modules/Condition/Operators/LessThan/ConditionLessThan.test.goal",
+  "prPath": "/Modules/Condition/Operators/LessThan/.build/conditionlessthan.test.pr",
   "hash": "b4b4a4c64a60145503c6c66e5743d1be6e41e579c8b2f9bd02c39a39f16bd75c",
   "builderVersion": "0.2.2",
   "isSetup": false,

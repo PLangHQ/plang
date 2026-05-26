@@ -119,7 +119,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Tests/App/CallStack/DirectGoalCycleThrows.test.goal",
-  "prPath": "/Tests/App/CallStack/.build/directgoalcyclethrows.test.pr",
+  "prPath": "/App/CallStack/.build/directgoalcyclethrows.test.pr",
   "hash": "bd2bd032fc9f574706f9b6377eb4272706f4152dcd85b46a28fe899ce6a02486",
   "builderVersion": "0.2.2",
   "isSetup": false,

@@ -172,7 +172,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/GrantAStoresPersisted/Start.test.goal",
-  "prPath": "/GrantAStoresPersisted/.build/start.test.pr",
+  "prPath": "/Permission/GrantAStoresPersisted/.build/start.test.pr",
   "hash": "73bf5e83fbbfc0698251679392d71ea4ec1649f12c12620e1a12125078f37bcc",
   "builderVersion": "0.2.2",
   "isSetup": false,

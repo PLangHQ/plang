@@ -33,7 +33,7 @@
                 "name": "CaptchaGoal",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/Events/AddOnAsk/.build/captchagoal.pr"
+                "prPath": "/Channels/Events/AddOnAsk/.build/captchagoal.pr"
               },
               "type": "goal.call"
             }

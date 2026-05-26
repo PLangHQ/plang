@@ -65,7 +65,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/StatelessCrossGoalResumes/AskAQuestion.goal",
-  "prPath": "/StatelessCrossGoalResumes/.build/askaquestion.pr",
+  "prPath": "/Callback/StatelessCrossGoalResumes/.build/askaquestion.pr",
   "hash": "b10f855a7b868c9f3b1a85b15c3b2eacd9e83b2d2d5242664f6b141d89b8201f",
   "builderVersion": "0.2.2",
   "isSetup": false,

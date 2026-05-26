@@ -47,7 +47,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Events/AddBeforeWrite/ApprovalGoal.goal",
-  "prPath": "/Events/AddBeforeWrite/.build/approvalgoal.pr",
+  "prPath": "/Channels/Events/AddBeforeWrite/.build/approvalgoal.pr",
   "hash": "e7bbc838ba640c60b01f539a6cfb9675d0678e7ca0000c676d3bfc8440fcf005",
   "builderVersion": "0.2.2",
   "isSetup": false,

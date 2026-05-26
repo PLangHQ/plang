@@ -158,7 +158,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Tests/App/CallStack/ThrowItem.goal",
-  "prPath": "/Tests/App/CallStack/.build/throwitem.pr",
+  "prPath": "/App/CallStack/.build/throwitem.pr",
   "hash": "14f7bb116587bdef4a7aa40345dadc085ef624465f68c8906e698f8f428cf255",
   "builderVersion": "0.2.2",
   "isSetup": false,

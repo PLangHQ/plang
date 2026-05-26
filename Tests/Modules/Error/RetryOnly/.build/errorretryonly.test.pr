@@ -88,7 +88,7 @@
                 "name": "BareRetryGoal",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/bareretrygoal.pr"
+                "prPath": "/Modules/Error/RetryOnly/.build/bareretrygoal.pr"
               },
               "type": "goal.call"
             },
@@ -314,7 +314,7 @@
                 "name": "TimedRetryGoal",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/timedretrygoal.pr"
+                "prPath": "/Modules/Error/RetryOnly/.build/timedretrygoal.pr"
               },
               "type": "goal.call"
             },
@@ -468,8 +468,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ErrorRetryOnly.test.goal",
-  "prPath": "/.build/errorretryonly.test.pr",
+  "path": "/Modules/Error/RetryOnly/ErrorRetryOnly.test.goal",
+  "prPath": "/Modules/Error/RetryOnly/.build/errorretryonly.test.pr",
   "hash": "96a26b749f43cc186e430e26b98692236ef09efc220d4930e9241da1aa50525d",
   "builderVersion": "0.2.2",
   "isSetup": false,

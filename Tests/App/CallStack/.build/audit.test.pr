@@ -84,7 +84,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/Tests/App/CallStack/.build/throwitem.pr"
+                "prPath": "/App/CallStack/.build/throwitem.pr"
               },
               "type": "goal.call"
             }

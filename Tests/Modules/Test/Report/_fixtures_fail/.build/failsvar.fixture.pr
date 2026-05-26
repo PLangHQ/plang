@@ -75,7 +75,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/_fixtures_fail/failsvar.fixture.goal",
-  "prPath": "/_fixtures_fail/.build/failsvar.fixture.pr",
+  "prPath": "/Modules/Test/Report/_fixtures_fail/.build/failsvar.fixture.pr",
   "hash": "6e25b0b9ea78d3cae7db9ebca5d34f0d47946fd71f04616153de8314869b4a27",
   "builderVersion": "0.2.2",
   "isSetup": false,

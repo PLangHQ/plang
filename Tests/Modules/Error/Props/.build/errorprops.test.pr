@@ -20,7 +20,7 @@
                 "name": "ThrowCustomError",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/throwcustomerror.pr"
+                "prPath": "/Modules/Error/Props/.build/throwcustomerror.pr"
               },
               "type": "goal.call"
             }

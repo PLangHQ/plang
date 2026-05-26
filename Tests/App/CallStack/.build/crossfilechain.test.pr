@@ -20,7 +20,7 @@
                 "name": "ChainOuter",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/Tests/App/CallStack/.build/chainouter.pr"
+                "prPath": "/App/CallStack/.build/chainouter.pr"
               },
               "type": "goal.call"
             }

@@ -6,7 +6,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Tests/Runtime2/Builder/ParseGoal/parse_test/Test.goal",
-  "prPath": "/Tests/Runtime2/Builder/ParseGoal/parse_test/.build/test.pr",
+  "prPath": "/Modules/Builder/ParseGoal/Tests/Runtime2/Builder/ParseGoal/parse_test/.build/test.pr",
   "hash": null,
   "builderVersion": "0.2.2",
   "isSetup": false,

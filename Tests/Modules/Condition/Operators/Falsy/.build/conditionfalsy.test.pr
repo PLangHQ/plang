@@ -89,7 +89,7 @@
                 "name": "HandleTrue",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/handletrue.pr"
+                "prPath": "/Modules/Condition/Operators/Falsy/.build/handletrue.pr"
               },
               "type": "goal.call"
             }
@@ -114,7 +114,7 @@
                 "name": "HandleFalse",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/handlefalse.pr"
+                "prPath": "/Modules/Condition/Operators/Falsy/.build/handlefalse.pr"
               },
               "type": "goal.call"
             }

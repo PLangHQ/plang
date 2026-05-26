@@ -94,7 +94,7 @@
                 "name": "WhenFalse",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/whenfalse.pr"
+                "prPath": "/Modules/Condition/Operators/Not/.build/whenfalse.pr"
               },
               "type": "goal.call"
             }

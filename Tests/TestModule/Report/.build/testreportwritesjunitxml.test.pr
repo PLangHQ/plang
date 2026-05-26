@@ -344,7 +344,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Report/TestReportWritesJunitXml.test.goal",
-  "prPath": "/Report/.build/testreportwritesjunitxml.test.pr",
+  "prPath": "/TestModule/Report/.build/testreportwritesjunitxml.test.pr",
   "hash": "ebbd2c30032f7282dbbd208efd557578ab21b33141284d8b06d8527140e5f0b6",
   "builderVersion": "0.2.2",
   "isSetup": false,

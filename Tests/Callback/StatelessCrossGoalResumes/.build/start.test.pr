@@ -115,7 +115,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/StatelessCrossGoalResumes/Start.test.goal",
-  "prPath": "/StatelessCrossGoalResumes/.build/start.test.pr",
+  "prPath": "/Callback/StatelessCrossGoalResumes/.build/start.test.pr",
   "hash": "5890941f04b48b8a027bd284556322a93e86337d1748be2cd7fd942d63931e8e",
   "builderVersion": "0.2.2",
   "isSetup": false,

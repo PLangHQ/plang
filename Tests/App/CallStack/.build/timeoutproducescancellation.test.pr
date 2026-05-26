@@ -122,7 +122,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Tests/App/CallStack/TimeoutProducesCancellation.test.goal",
-  "prPath": "/Tests/App/CallStack/.build/timeoutproducescancellation.test.pr",
+  "prPath": "/App/CallStack/.build/timeoutproducescancellation.test.pr",
   "hash": "4cd6d19ee089a5b40bacd52ed7f63c2fad1b9d574b7c10e10e9184351c79646a",
   "builderVersion": "0.2.2",
   "isSetup": false,

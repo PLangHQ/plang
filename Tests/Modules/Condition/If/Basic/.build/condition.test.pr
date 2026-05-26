@@ -89,7 +89,7 @@
                 "name": "SetTrue",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/settrue.pr"
+                "prPath": "/Modules/Condition/If/Basic/.build/settrue.pr"
               },
               "type": "goal.call"
             }
@@ -238,7 +238,7 @@
                 "name": "SetWrong",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/setwrong.pr"
+                "prPath": "/Modules/Condition/If/Basic/.build/setwrong.pr"
               },
               "type": "goal.call"
             }
@@ -256,7 +256,7 @@
                 "name": "SetFalse",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/setfalse.pr"
+                "prPath": "/Modules/Condition/If/Basic/.build/setfalse.pr"
               },
               "type": "goal.call"
             }

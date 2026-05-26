@@ -247,7 +247,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
-  "prPath": "/Condition/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
+  "prPath": "/TestModule/Condition/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
   "hash": "34b23a0ea3c04a6a7bb7fddd9311e553b113bc68b9ba9f26aaa3318ef2290f59",
   "builderVersion": "0.2.2",
   "isSetup": false,

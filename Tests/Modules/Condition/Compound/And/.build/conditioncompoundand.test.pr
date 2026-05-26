@@ -158,7 +158,7 @@
                 "name": "DoThing",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/dothing.pr"
+                "prPath": "/Modules/Condition/Compound/And/.build/dothing.pr"
               },
               "type": "goal.call"
             }

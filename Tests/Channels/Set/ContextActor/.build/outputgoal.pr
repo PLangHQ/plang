@@ -47,7 +47,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Set/ContextActor/OutputGoal.goal",
-  "prPath": "/Set/ContextActor/.build/outputgoal.pr",
+  "prPath": "/Channels/Set/ContextActor/.build/outputgoal.pr",
   "hash": "dc342261eefbd336ff840cb6c7ffa4be0ee52f472339d37a63b459e5b427e997",
   "builderVersion": "0.2.2",
   "isSetup": false,

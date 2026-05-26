@@ -54,7 +54,7 @@
                 "name": "FailOnce",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/failonce.pr"
+                "prPath": "/Modules/Error/Ordering/.build/failonce.pr"
               },
               "type": "goal.call"
             },
@@ -164,8 +164,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ErrorOrdering.test.goal",
-  "prPath": "/.build/errorordering.test.pr",
+  "path": "/Modules/Error/Ordering/ErrorOrdering.test.goal",
+  "prPath": "/Modules/Error/Ordering/.build/errorordering.test.pr",
   "hash": "38ca5305ba8097ecc606cd908d65fc442a1a0650aee0c20e2cc4526b22a82f8c",
   "builderVersion": "0.2.2",
   "isSetup": false,

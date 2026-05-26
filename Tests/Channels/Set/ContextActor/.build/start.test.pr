@@ -25,7 +25,7 @@
                 "name": "OutputGoal",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/Set/ContextActor/.build/outputgoal.pr"
+                "prPath": "/Channels/Set/ContextActor/.build/outputgoal.pr"
               },
               "type": "goal.call"
             }

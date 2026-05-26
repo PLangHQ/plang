@@ -47,7 +47,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Events/AddOnAsk/CaptchaGoal.goal",
-  "prPath": "/Events/AddOnAsk/.build/captchagoal.pr",
+  "prPath": "/Channels/Events/AddOnAsk/.build/captchagoal.pr",
   "hash": "e92a6e2fb534b7bc5d3810830d4766a58c8679d5c6c214b197d8da93fbdaee4c",
   "builderVersion": "0.2.2",
   "isSetup": false,
