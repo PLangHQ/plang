@@ -47,6 +47,53 @@
         "health": "clean",
         "notes": "8-file C# diff is clean. One pre-existing System.IO debt in test/report.cs noted at top of report (not introduced on this branch — predates merge base). Low-priority readability suggestion to extract four event-binding blocks in test/run.cs RunSingleAsync if a fifth gets added later — not requested now."
       }
+    },
+    {
+      "id": "31c0d884-9a05-43e3-a234-37071b2daede",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-26T14:19:20Z",
+      "timestamp_end": "2026-05-26T14:25:00Z",
+      "intent": "Post-merge re-validation of v1 PASS — branch was caught up with runtime2 (purge-systemio-from-actions merged in) plus a coder one-line fix",
+      "before": {
+        "assumptions": "v1 PASSed pre-merge. Merge brought in 65 C# files / 1525+ lines from purge-systemio-from-actions (already PASS-verdicted on its source branch) — not re-litigating that content. Re-validating the 8 v1-reviewed files against post-merge state and the coder's .ToString() fix at test/run.cs:163.",
+        "risk": "Merge may have left dead code or mis-adapted patterns in the previously-reviewed files; coder fix may not be idiomatic."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/builder/BuildResponse.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs",
+            "PLang/app/modules/test/report.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/tester/Run.cs",
+            "PLang/app/tester/Timing.cs",
+            "PLang/app/tester/Timings.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Post-merge re-validation. v1 findings still hold. v1 pre-existing System.IO debt in report.cs is CLOSED via merge (now uses path.@this.Resolve+WriteText). Coder's .ToString() fix at test/run.cs:163 is mechanically correct and idiomatic (matches GoalCall.cs:75, cache/wrap.cs:52). One LOW finding introduced by merge cleanup: dead local 'var app = Context.App;' at report.cs:40."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/codeanalyzer/v2/plan.md",
+            ".bot/fix-stepvartypes-incremental/codeanalyzer/v2/report.md",
+            ".bot/fix-stepvartypes-incremental/codeanalyzer/v2/verdict.json",
+            ".bot/fix-stepvartypes-incremental/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Codeanalyzer v2 outputs — PASS verdict with one LOW finding."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "clean",
+        "notes": "Post-merge state is clean. One LOW: dead local at report.cs:40 (merge cleanup leftover, trivial delete). Optional micro: hoist new[] { '/', '\\' } at report.cs:302 to a static readonly field. Not gating on either."
+      }
     }
   ]
 }
