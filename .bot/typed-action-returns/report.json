@@ -9,7 +9,7 @@
       "intent": "Write failing-test contract for the 5 stages of typed-action-returns (Branch A)",
       "before": {
         "assumptions": "Architect plan v3.3 + stages.md are locked. Stages 0-4 ship Branch A; Branch B is separate. Tests are signatures-only with Assert.Fail / throw 'not implemented'. C# under PLang.Tests/App/TypedReturnsTests/, PLang under Tests/TestModule/TypedReturns/.",
-        "risk": "Build() interface + named-channels are new infra — easy to mis-shape the tests if coder's exact API names differ. Mitigation: test against documented contract surfaces (interface presence, return shape), not internal naming."
+        "risk": "Build() interface + named-channels are new infra \u2014 easy to mis-shape the tests if coder's exact API names differ. Mitigation: test against documented contract surfaces (interface presence, return shape), not internal naming."
       },
       "plan": ".bot/typed-action-returns/test-designer/v1/plan.md",
       "actions": [
@@ -26,11 +26,13 @@
           "context": "Stage 0 foundation infra: PlangType removal (6), Build() interface (8), named channels + BuildWarning (9), Data materialization API (7). 30 C# unit signatures total."
         },
         {
-          "paths": ["PLang.Tests/App/TypedReturnsTests/Stage1_TesterFileRenameTests.cs"],
+          "paths": [
+            "PLang.Tests/App/TypedReturnsTests/Stage1_TesterFileRenameTests.cs"
+          ],
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 1 tester/File → tester/Test rename. 6 C# units verify type existence, field carryover, and absence of old name everywhere."
+          "context": "Stage 1 tester/File \u2192 tester/Test rename. 6 C# units verify type existence, field carryover, and absence of old name everywhere."
         },
         {
           "paths": [
@@ -40,7 +42,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 2 mechanical typings — 10 handlers split into two batches. Each handler covered for (a) Run() signature shape, (b) Modules.Describe() catalog return-line, (c) no Data<object> double-wrap. 19 C# units total."
+          "context": "Stage 2 mechanical typings \u2014 10 handlers split into two batches. Each handler covered for (a) Run() signature shape, (b) Modules.Describe() catalog return-line, (c) no Data<object> double-wrap. 19 C# units total."
         },
         {
           "paths": [
@@ -50,7 +52,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Stage 3 HTTP Response record (6) + runtime Content-Type body dispatch (8) — covers all four fields, the four content-type branches (json/text/binary/missing/text-fallback/csv-materializer), and that http.download is exempt."
+          "context": "Stage 3 HTTP Response record (6) + runtime Content-Type body dispatch (8) \u2014 covers all four fields, the four content-type branches (json/text/binary/missing/text-fallback/csv-materializer), and that http.download is exempt."
         },
         {
           "paths": [
@@ -80,7 +82,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "12 PLang .test.goal files — the user-visible end-to-end contract. Each pins a single behaviour (trace-snapshot annotation, build warning surfacing, hint precedence, lazy materialization). Bodies are throw 'not implemented'."
+          "context": "12 PLang .test.goal files \u2014 the user-visible end-to-end contract. Each pins a single behaviour (trace-snapshot annotation, build warning surfacing, hint precedence, lazy materialization). Bodies are throw 'not implemented'."
         },
         {
           "paths": [
@@ -98,6 +100,57 @@
         "status": "complete",
         "health": "PLang.Tests builds clean (0 errors). 88 C# unit signatures + 12 PLang behaviour goals = 100 failing tests staged for coder.",
         "notes": "User approved all 11 batches in a single pass. No blockers. Recommended next bot: coder, starting at Stage 0."
+      }
+    },
+    {
+      "id": "8b16ddfd-19ca-4455-b091-51b80597e2cb",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-26T22:00:00Z",
+      "timestamp_end": "2026-05-26T22:04:18Z",
+      "intent": "Review Stage 0 production code on typed-action-returns",
+      "before": {
+        "assumptions": "Stage 0 = 6 coder commits c4404b9c5..3c8285760: IClass interface, Build() pass in validate, named channels w/ noop, slim [PlangType], public Data.As(string), generator SetAction. Coder handoff says 30/30 Stage 0 tests green.",
+        "risk": "Diff is small but architecturally dense \u2014 generator emission, attribute redesign, validate hook, materialization API split."
+      },
+      "plan": ".bot/typed-action-returns/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/IClass.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/builder/warning/this.cs",
+            "PLang/app/channels/channel/noop/this.cs",
+            "PLang/app/channels/this.cs",
+            "PLang/app/data/this.cs",
+            "PLang/app/Attributes/PlangTypeAttribute.cs",
+            "PLang/app/types/this.cs",
+            "PLang/app/types/Registry.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang.Tests/App/TypedReturnsTests/Handlers.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage0_BuildMethodTests.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Read each file, ran 5 passes. Findings are all LOW severity polish. Real cleanup: AllowMultiple=false vs Registry's multi-attr loop is dead code + stale doc."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/codeanalyzer/v1/plan.md",
+            ".bot/typed-action-returns/codeanalyzer/v1/report.md",
+            ".bot/typed-action-returns/codeanalyzer/v1/verdict.json",
+            ".bot/typed-action-returns/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard codeanalyzer artifacts."
+        }
+      ],
+      "after": {
+        "status": "FAIL \u2014 NEEDS WORK (low severity)",
+        "health": "green \u2014 no blocker; Stage 0 tests green per handoff; findings are polish/follow-up.",
+        "notes": "8 findings: 7 LOW + 1 design call (IClass.SetAction default). Most actionable: [PlangType] AllowMultiple=false contradicts Registry comment+loop."
       }
     }
   ]
