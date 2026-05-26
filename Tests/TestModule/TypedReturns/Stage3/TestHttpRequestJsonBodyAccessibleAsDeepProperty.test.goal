@@ -1,0 +1,5 @@
+TestHttpRequestJsonBodyAccessibleAsDeepProperty
+/ Mock endpoint returns Content-Type "application/json" with body {"a":{"b":42}}.
+/ After http.request, %resp.Body.a.b% reads 42 directly — no explicit parse step needed.
+/ Validates the Stage 3 runtime Content-Type dispatch end-to-end.
+- throw "not implemented"

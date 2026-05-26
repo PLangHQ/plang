@@ -1,0 +1,4 @@
+TestUserTypeHintWinsOverBuildInference
+/ Build: `- read file 'foo.csv', write to %x%(json)`. Even though file.read.Build() infers csv,
+/ the user (type) hint json wins. Downstream snapshot reads %x%(json).
+- throw "not implemented"

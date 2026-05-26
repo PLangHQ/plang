@@ -1,0 +1,5 @@
+TestFileReadMissingLiteralEmitsBuildWarning
+/ Build a goal calling file.read on a literal path that doesn't exist on disk. The build trace
+/ must contain a warning emitted from file.read.Build() via Channel("builder"). Build still
+/ succeeds — the warning is non-fatal.
+- throw "not implemented"

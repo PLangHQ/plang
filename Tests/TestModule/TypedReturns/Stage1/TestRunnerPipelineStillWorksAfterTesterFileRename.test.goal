@@ -1,0 +1,5 @@
+TestRunnerPipelineStillWorksAfterTesterFileRename
+/ Smoke: test.discover → test.run → test.report still works end-to-end.
+/ Confirms the rename did not break the runner pipeline; downstream variables now annotate as
+/ list<test> instead of list<file>.
+- throw "not implemented"

@@ -1,0 +1,4 @@
+TestOutputAskWithJsonHintMaterializesOnFirstAccess
+/ Build: `- ask "give me json", write to %a%(json)`. After the ask, %a% holds the raw string
+/ until first property access; %a.foo% materializes via the json serializer.
+- throw "not implemented"

@@ -1,0 +1,104 @@
+{
+  "branch": "typed-action-returns",
+  "sessions": [
+    {
+      "id": "01J5T-test-designer-v1",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-26T19:55:00Z",
+      "timestamp_end": "2026-05-26T20:02:02Z",
+      "intent": "Write failing-test contract for the 5 stages of typed-action-returns (Branch A)",
+      "before": {
+        "assumptions": "Architect plan v3.3 + stages.md are locked. Stages 0-4 ship Branch A; Branch B is separate. Tests are signatures-only with Assert.Fail / throw 'not implemented'. C# under PLang.Tests/App/TypedReturnsTests/, PLang under Tests/TestModule/TypedReturns/.",
+        "risk": "Build() interface + named-channels are new infra — easy to mis-shape the tests if coder's exact API names differ. Mitigation: test against documented contract surfaces (interface presence, return shape), not internal naming."
+      },
+      "plan": ".bot/typed-action-returns/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/TypedReturnsTests/Stage0_PlangTypeRemovalTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage0_BuildMethodTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage0_NamedChannelsTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage0_DataMaterializationTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 0 foundation infra: PlangType removal (6), Build() interface (8), named channels + BuildWarning (9), Data materialization API (7). 30 C# unit signatures total."
+        },
+        {
+          "paths": ["PLang.Tests/App/TypedReturnsTests/Stage1_TesterFileRenameTests.cs"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 1 tester/File → tester/Test rename. 6 C# units verify type existence, field carryover, and absence of old name everywhere."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypedReturnsTests/Stage2_MechanicalTypings_Part1Tests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage2_MechanicalTypings_Part2Tests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 2 mechanical typings — 10 handlers split into two batches. Each handler covered for (a) Run() signature shape, (b) Modules.Describe() catalog return-line, (c) no Data<object> double-wrap. 19 C# units total."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypedReturnsTests/Stage3_HttpResponseTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 3 HTTP Response record (6) + runtime Content-Type body dispatch (8) — covers all four fields, the four content-type branches (json/text/binary/missing/text-fallback/csv-materializer), and that http.download is exempt."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage4_TypeHintPrecedenceTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Stage 4 per-action Build() impls (11) + (type) hint Compile rule + multi-segment GetByExtension + precedence (8). The precedence file is the trickiest: distinguishing explicit-object from default-object is called out explicitly."
+        },
+        {
+          "paths": [
+            "Tests/TestModule/TypedReturns/Stage0/TestBuildMethodSetsTerminalVariableSetType.test.goal",
+            "Tests/TestModule/TypedReturns/Stage1/TestRunnerPipelineStillWorksAfterTesterFileRename.test.goal",
+            "Tests/TestModule/TypedReturns/Stage2/TestDiscoverDownstreamVariableAnnotatesAsListOfTest.test.goal",
+            "Tests/TestModule/TypedReturns/Stage2/TestRunDownstreamVariableAnnotatesAsResults.test.goal",
+            "Tests/TestModule/TypedReturns/Stage2/TestOutputAskDownstreamVariableAnnotatesAsString.test.goal",
+            "Tests/TestModule/TypedReturns/Stage2/TestMockInterceptDownstreamVariableAnnotatesAsMock.test.goal",
+            "Tests/TestModule/TypedReturns/Stage3/TestHttpRequestJsonBodyAccessibleAsDeepProperty.test.goal",
+            "Tests/TestModule/TypedReturns/Stage4/TestFileReadCsvLiteralAnnotatesDownstreamAsCsv.test.goal",
+            "Tests/TestModule/TypedReturns/Stage4/TestLlmQueryWithSchemaAnnotatesDownstreamAsJson.test.goal",
+            "Tests/TestModule/TypedReturns/Stage4/TestUserTypeHintWinsOverBuildInference.test.goal",
+            "Tests/TestModule/TypedReturns/Stage4/TestFileReadMissingLiteralEmitsBuildWarning.test.goal",
+            "Tests/TestModule/TypedReturns/Stage4/TestOutputAskWithJsonHintMaterializesOnFirstAccess.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "12 PLang .test.goal files — the user-visible end-to-end contract. Each pins a single behaviour (trace-snapshot annotation, build warning surfacing, hint precedence, lazy materialization). Bodies are throw 'not implemented'."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/test-designer/v1/plan.md",
+            ".bot/typed-action-returns/test-designer/v1/verdict.json",
+            ".bot/typed-action-returns/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan + verdict + summary per character-file workflow."
+        }
+      ],
+      "after": {
+        "status": "complete",
+        "health": "PLang.Tests builds clean (0 errors). 88 C# unit signatures + 12 PLang behaviour goals = 100 failing tests staged for coder.",
+        "notes": "User approved all 11 batches in a single pass. No blockers. Recommended next bot: coder, starting at Stage 0."
+      }
+    }
+  ]
+}

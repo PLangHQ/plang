@@ -1,0 +1,3 @@
+TestOutputAskDownstreamVariableAnnotatesAsString
+/ output.ask write-target variable annotates as (string) downstream.
+- throw "not implemented"

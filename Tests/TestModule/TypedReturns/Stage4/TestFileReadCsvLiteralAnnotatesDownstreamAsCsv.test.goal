@@ -1,0 +1,4 @@
+TestFileReadCsvLiteralAnnotatesDownstreamAsCsv
+/ Build: `- read file 'foo.csv', write to %x%` followed by a downstream step.
+/ The downstream "Variables in scope" snapshot must read %x%(csv), driven by file.read.Build().
+- throw "not implemented"

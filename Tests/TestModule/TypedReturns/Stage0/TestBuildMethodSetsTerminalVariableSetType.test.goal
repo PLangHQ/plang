@@ -1,0 +1,5 @@
+TestBuildMethodSetsTerminalVariableSetType
+/ Builds a goal that uses a test handler whose Build() returns Data.Ok("foo").
+/ The resulting .pr's trailing variable.set must carry Type="foo".
+/ This is the user-visible contract for Stage 0 — Build() flows through to the .pr.
+- throw "not implemented"

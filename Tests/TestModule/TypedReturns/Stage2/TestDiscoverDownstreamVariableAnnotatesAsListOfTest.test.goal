@@ -1,0 +1,4 @@
+TestDiscoverDownstreamVariableAnnotatesAsListOfTest
+/ Builds a goal calling test.discover, then a downstream step. The trace's "Variables in scope"
+/ snapshot for the downstream step must show %tests%(list<test>), not (object).
+- throw "not implemented"

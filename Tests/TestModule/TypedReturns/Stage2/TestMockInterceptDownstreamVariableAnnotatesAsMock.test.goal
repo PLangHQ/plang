@@ -1,0 +1,3 @@
+TestMockInterceptDownstreamVariableAnnotatesAsMock
+/ mock.intercept write-target annotates as (mock) downstream — not (object).
+- throw "not implemented"

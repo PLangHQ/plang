@@ -1,0 +1,3 @@
+TestLlmQueryWithSchemaAnnotatesDownstreamAsJson
+/ Build a goal calling llm.query with a Schema arg. Downstream snapshot reads (json), via llm.query.Build().
+- throw "not implemented"
