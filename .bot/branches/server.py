@@ -557,7 +557,20 @@ INDEX_HTML = r"""<!doctype html>
     justify-content: space-between;
     word-break: break-all;
     gap: 8px;
+    align-items: center;
   }
+  #preview .header .hdr-right { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+  #preview .open-btn {
+    background: var(--panel2);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 8px;
+    text-decoration: none;
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+  }
+  #preview .open-btn:hover { background: var(--accent); color: var(--bg); }
   #preview .placeholder { color: var(--muted); font-style: italic; }
   #preview pre {
     margin: 0;
@@ -915,6 +928,19 @@ const preview = document.getElementById("preview");
 let previewGen = 0;
 let activeLi = null;
 
+function architectUrl(branch, fullPath) {
+  // fullPath = ".bot/<branch>/<dir>/<rel>"; the architect server (8081)
+  // takes ?branch=&dir= as overrides and uses the URL hash to select a file.
+  const prefix = `.bot/${branch}/`;
+  if (!fullPath.startsWith(prefix)) return null;
+  const tail = fullPath.slice(prefix.length);
+  const slash = tail.indexOf("/");
+  if (slash < 0) return null;
+  const dir = tail.slice(0, slash);
+  const rel = tail.slice(slash + 1);
+  return `http://localhost:8081/?branch=${encodeURIComponent(branch)}&dir=${encodeURIComponent(dir)}#${encodeURIComponent(rel)}`;
+}
+
 async function loadPreview(li) {
   if (activeLi) activeLi.classList.remove("selected");
   activeLi = li;
@@ -938,7 +964,12 @@ async function loadPreview(li) {
   const body = payload.ok
     ? payload.html + (payload.truncated ? '<div class="trunc">(preview truncated)</div>' : "")
     : `<em>${payload.error || "failed to load"}</em>`;
-  preview.innerHTML = `<div class="header"><span>${path}</span><span>${payload.kind || ""}</span></div>${body}`;
+  const isMd = payload.kind === "md";
+  const url = isMd ? architectUrl(branch, path) : null;
+  const openBtn = url
+    ? `<a class="open-btn" href="${url}" target="_blank" rel="noopener" title="Open in architect viewer (8081) to add comments">open ↗</a>`
+    : "";
+  preview.innerHTML = `<div class="header"><span>${path}</span><span class="hdr-right">${openBtn}<span>${payload.kind || ""}</span></span></div>${body}`;
   preview.scrollTop = 0;
 }
 
