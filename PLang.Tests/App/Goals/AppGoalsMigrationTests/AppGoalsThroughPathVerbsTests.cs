@@ -101,8 +101,16 @@ public class AppGoalsThroughPathVerbsTests
         var prDir = System.IO.Path.Combine(root, ".build");
         System.IO.Directory.CreateDirectory(prDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(prDir, "app.pr"), "this is not json");
-        // Load must not throw on corrupt content.
+        var idBefore = app.Id;
+        var nameBefore = app.Name;
+        // Load must not throw on corrupt content AND must leave the App in a
+        // usable state (no half-applied mutations — identity/name unchanged).
         await app.Load();
+        await Assert.That(app.Id).IsEqualTo(idBefore);
+        await Assert.That(app.Name).IsEqualTo(nameBefore);
+        // And the App is still operable — subsequent Save round-trips.
+        var savedResult = await app.Save();
+        await Assert.That(savedResult.Success).IsTrue();
     }
 
     [Test] public async Task AppSave_RoundTrip_WrittenAppPr_RehydratesUnderAppLoad()

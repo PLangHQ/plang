@@ -77,7 +77,7 @@ public sealed class @this
     /// LLM calls are sync so a single field suffices — no queue needed.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    private global::app.types.path.@this? _currentLlmFilePath;
+    internal global::app.types.path.@this? _currentLlmFilePath;
 
     /// <summary>
     /// Per-process counter for disambiguating LLM call retries. Increments on every
@@ -387,7 +387,9 @@ public sealed class @this
     /// the maxLength truncation and stderr — the whole point of file mode is to
     /// capture the full untruncated content for callers that exceed the terminal limit.
     /// </summary>
-    private void EmitLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context, bool toFile)
+    // internal for DebugTraceWriteTests to drive the trace-write path
+    // (driving the full event lifecycle requires a real LLM call).
+    internal void EmitLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context, bool toFile)
     {
         if (toFile && _currentLlmFilePath != null)
         {
@@ -425,7 +427,7 @@ public sealed class @this
     /// - <c>_llmCallCounter</c> appended when the same (goal, step) fires more than once
     ///   in this process (LlmFixer retries reuse the same key).
     /// </summary>
-    private global::app.types.path.@this ResolveLlmFilePath(actor.context.@this context)
+    internal global::app.types.path.@this ResolveLlmFilePath(actor.context.@this context)
     {
         _llmCallCounter++;
 

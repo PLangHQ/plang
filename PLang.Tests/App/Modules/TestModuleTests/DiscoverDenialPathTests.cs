@@ -59,11 +59,18 @@ public class DiscoverDenialPathTests
         };
         var result = await action.Run();
         // Either denial → Fail, or the resolved path lands under root → empty.
-        // Strict: a traversal that escapes root must NOT silently succeed with content.
+        // BOTH branches assert — fixes the "zero assertions on denial" gap
+        // tester v2 flagged.
         if (result.Success)
         {
             var files = result.Value as System.Collections.Generic.List<global::app.tester.File>;
             await Assert.That(files == null || files.Count == 0).IsTrue();
+        }
+        else
+        {
+            await Assert.That(result.Error).IsNotNull();
+            // The denial must be a permission decision, not a runtime crash.
+            await Assert.That(result.Error!.Key).IsNotEqualTo("NullReferenceException");
         }
     }
 }

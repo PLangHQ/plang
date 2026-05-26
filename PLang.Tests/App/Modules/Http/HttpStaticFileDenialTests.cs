@@ -1,15 +1,17 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.Http;
 
 /// <summary>
-/// Stage 5 — Batch 9. http upload-file gating. The http upload action
-/// reaches for the filesystem when ContentAs.File is set; it now goes
-/// through path.ReadBytes → AuthGate(Read).
+/// Stage 5 — Batch 9. <c>http/code/Default.cs</c> upload-file gating.
+///
+/// Hardened post tester v2: now invokes
+/// <c>Default.CreateFileContentAsync</c> directly (the handler that builds
+/// an HTTP request body from a file path). A mutation that reverted it to
+/// <c>System.IO.File.ReadAllBytes</c> would flip the denial test red.
 /// </summary>
 public class HttpStaticFileDenialTests
 {
@@ -32,17 +34,22 @@ public class HttpStaticFileDenialTests
 
     [Test] public async Task StaticFile_RequestWithDotDotTraversal_DeniedByAuthGate()
     {
-        // The http file-content path: read an out-of-root file as a request body.
-        // AuthGate(Read) denies; ReadBytes returns Fail.
         var app = NewApp(out _);
         app.User.Channels.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.txt");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllText(outOfRoot, "secret");
-        var p = new FilePath(outOfRoot, app.User.Context);
-        var read = await p.ReadBytes();
-        await Assert.That(read.Success).IsFalse();
+
+        // Drive the http upload handler's file-content build path. AuthGate
+        // denies; the helper throws IOException with the denial message.
+        bool threw = false;
+        try
+        {
+            await global::app.modules.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
+        }
+        catch (System.IO.IOException) { threw = true; }
+        await Assert.That(threw).IsTrue();
     }
 
     [Test] public async Task StaticFile_RequestForInRootFile_ServedSilently()
@@ -52,8 +59,9 @@ public class HttpStaticFileDenialTests
         app.User.Channels.Register(ch);
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");
-        var p = new FilePath(file, app.User.Context);
-        var read = await p.ReadBytes();
-        await Assert.That(read.Success).IsTrue();
+        var content = await global::app.modules.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
+        await Assert.That(content).IsNotNull();
+        var bytes = await content.ReadAsByteArrayAsync();
+        await Assert.That(System.Text.Encoding.UTF8.GetString(bytes)).IsEqualTo("hello");
     }
 }

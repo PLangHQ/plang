@@ -1042,7 +1042,10 @@ public sealed class Default : IHttp
             "application/json");
     }
 
-    private static async Task<HttpContent> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
+    // internal so HttpStaticFileDenialTests can invoke the handler's read
+    // path directly (driving the full upload action requires a real HTTP
+    // endpoint).
+    internal static async Task<HttpContent> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
     {
         // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
         // out-of-root paths the actor hasn't granted bubble up as Fail.

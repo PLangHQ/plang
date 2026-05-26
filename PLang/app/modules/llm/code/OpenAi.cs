@@ -640,7 +640,9 @@ public sealed class OpenAi : ILlm
         return result;
     }
 
-    private static object ResolveImage(string image, global::app.@this app, actor.context.@this context)
+    // internal so OpenAiImageDenialTests can invoke the handler directly
+    // (the public Query path requires a real OpenAI HTTP setup).
+    internal static object ResolveImage(string image, global::app.@this app, actor.context.@this context)
     {
         if (image.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))

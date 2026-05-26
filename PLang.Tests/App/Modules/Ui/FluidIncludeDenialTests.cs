@@ -1,14 +1,18 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.Ui;
 
 /// <summary>
-/// Stage 5 — Batch 9. Fluid template-read gating. Exercises the underlying
-/// path.ReadText that PlangFileInfo.CreateReadStream now routes through.
+/// Stage 5 — Batch 9. Fluid include-denial tests.
+///
+/// Hardened post tester v2: drives <see cref="global::app.modules.ui.code.Fluid.Render"/>
+/// with a real <c>{% include %}</c> template. The handler instantiates
+/// <c>PlangFileProvider</c>+<c>PlangFileInfo</c>, which route reads through
+/// <c>path.ReadText</c>. A mutation that reverted to <c>System.IO.File.ReadAllText</c>
+/// in <c>PlangFileInfo.CreateReadStream</c> would flip the denial test red.
 /// </summary>
 public class FluidIncludeDenialTests
 {
@@ -36,15 +40,35 @@ public class FluidIncludeDenialTests
 
     [Test] public async Task FluidInclude_TemplateOutsideRoot_DeniedByAuthGate()
     {
-        var app = NewApp(out _);
+        var app = NewApp(out var root);
         app.User.Channels.Register(new CannedChannel("n"));
+        // Anchor the goal under the App root so GetTemplateBaseDir picks
+        // the goal's parent; the include path "../../foreign/secret.liquid"
+        // walks out and AuthGate denies.
+        var goal = new Goal
+        {
+            Name = "Host",
+            Path = global::app.types.path.@this.Resolve("/host.goal", app.User.Context)
+        };
+        app.User.Context.Goal = goal;
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "tpl.liquid");
-        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
-        System.IO.File.WriteAllText(outOfRoot, "{{ secret }}");
-        var p = new FilePath(outOfRoot, app.User.Context);
-        var read = await p.ReadText();
-        await Assert.That(read.Success).IsFalse();
+            "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(outOfRoot);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(outOfRoot, "secret.liquid"), "SECRET_TOKEN");
+
+        var fluid = new global::app.modules.ui.code.Fluid();
+        var action = new global::app.modules.ui.Render
+        {
+            Context = app.User.Context,
+            Template = new global::app.data.@this<string>("Template",
+                "{% include '" + outOfRoot + "/secret.liquid' %}"),
+            IsFile = new global::app.data.@this<bool>("IsFile", false)
+        };
+        var result = await fluid.Render(action);
+        // The output MUST NOT contain the secret file's content. Either the
+        // include silently no-ops to empty (Fluid's NotFoundFileInfo path) or
+        // surfaces an error; either way, no leakage.
+        await Assert.That((result.Value ?? "").ToString()!).DoesNotContain("SECRET_TOKEN");
     }
 
     [Test] public async Task FluidInclude_InRootTemplate_RendersSilently()
@@ -52,11 +76,28 @@ public class FluidIncludeDenialTests
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED");
         app.User.Channels.Register(ch);
-        var file = System.IO.Path.Combine(root, "tpl.liquid");
-        System.IO.File.WriteAllText(file, "hello {{ name }}");
-        var p = new FilePath(file, app.User.Context);
-        var read = await p.ReadText();
-        await Assert.That(read.Success).IsTrue();
+        // In-root partial: goal at /host.goal, partial at /partials/footer.liquid.
+        var partialsDir = System.IO.Path.Combine(root, "partials");
+        System.IO.Directory.CreateDirectory(partialsDir);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(partialsDir, "footer.liquid"), "Hello footer");
+
+        var goal = new Goal
+        {
+            Name = "Host",
+            Path = global::app.types.path.@this.Resolve("/host.goal", app.User.Context)
+        };
+        app.User.Context.Goal = goal;
+
+        var fluid = new global::app.modules.ui.code.Fluid();
+        var action = new global::app.modules.ui.Render
+        {
+            Context = app.User.Context,
+            Template = new global::app.data.@this<string>("Template", "{% include 'partials/footer.liquid' %}"),
+            IsFile = new global::app.data.@this<bool>("IsFile", false)
+        };
+        var result = await fluid.Render(action);
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value!).Contains("Hello footer");
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 }

@@ -57,6 +57,8 @@ public class ContentShapeVerbTests
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.ReadAsBase64();
         await Assert.That(result.Success).IsFalse();
+        // Differentiate denial from file-not-found / other IO errors.
+        await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
     }
 
     [Test] public async Task ReadAsBase64_GatesUnderReadVerb_NotWriteOrExecute()
@@ -108,5 +110,6 @@ public class ContentShapeVerbTests
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.ReadAsDataUri();
         await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
     }
 }

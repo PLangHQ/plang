@@ -1,15 +1,16 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using FilePath = global::app.types.path.file.@this;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.Llm;
 
 /// <summary>
 /// Stage 5 — Batch 9. <c>llm/code/OpenAi.cs</c> image attachment denial.
-/// Exercises the underlying <c>ReadAsDataUri</c> verb the OpenAI provider's
-/// ResolveImage now routes through.
+///
+/// Hardened post tester v2: invokes <c>OpenAi.ResolveImage</c> directly (the
+/// actual handler) so a mutation that reverted the handler to raw
+/// <c>System.IO.File.ReadAllBytes</c> would flip these tests red.
 /// </summary>
 public class OpenAiImageDenialTests
 {
@@ -38,9 +39,15 @@ public class OpenAiImageDenialTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "img.png");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 137, 80, 78, 71 });
-        var p = new FilePath(outOfRoot, app.User.Context);
-        var result = await p.ReadAsDataUri();
-        await Assert.That(result.Success).IsFalse();
+
+        // Drive the handler the way the LLM Query flow does — through
+        // ResolveImage. Denial → AuthGate fails inside path.ReadAsDataUri
+        // → ResolveImage falls through (no bytes shipped). PNG magic bytes
+        // (89 50 4E 47) base64-encode to a string starting with "iVBOR" —
+        // it MUST NOT appear in the wire content.
+        var content = global::app.modules.llm.code.OpenAi.ResolveImage(outOfRoot, app, app.User.Context);
+        var serialized = System.Text.Json.JsonSerializer.Serialize(content);
+        await Assert.That(serialized).DoesNotContain("iVBOR");
     }
 
     [Test] public async Task ImageAttachment_PathInRoot_BytesShipBase64Encoded()
@@ -48,9 +55,14 @@ public class OpenAiImageDenialTests
         var app = NewApp(out var root);
         var file = System.IO.Path.Combine(root, "in.png");
         System.IO.File.WriteAllBytes(file, new byte[] { 137, 80, 78, 71 });
-        var p = new FilePath(file, app.User.Context);
-        var result = await p.ReadAsDataUri();
-        await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Value!).Contains("base64");
+        // In-root: AuthGate fast-passes inside ReadAsDataUri; bytes ship
+        // as a data: URI in the wire payload. Proves the handler routes
+        // through the gated verb (mutating to plain System.IO would still
+        // produce the same bytes; the proof of *routing* is in the in-root
+        // pair with the out-of-root denial test above).
+        var content = global::app.modules.llm.code.OpenAi.ResolveImage(file, app, app.User.Context);
+        var serialized = System.Text.Json.JsonSerializer.Serialize(content);
+        await Assert.That(serialized).Contains("iVBOR");
+        await Assert.That(serialized).Contains("data:image/png;base64,");
     }
 }

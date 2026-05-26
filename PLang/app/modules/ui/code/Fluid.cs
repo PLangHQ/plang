@@ -334,9 +334,15 @@ public class Fluid : ITemplate
         public Stream CreateReadStream()
         {
             // ReadText routes through AuthGate(Read) — out-of-root templates
-            // surface as denials before any disk access.
+            // surface as denials before any disk access. Template MIMEs that
+            // map to byte[] (octet-stream, unmapped extensions) come back as
+            // raw bytes; UTF-8 decode them. String-valued reads pass through.
             var read = _path.ReadText().GetAwaiter().GetResult();
-            var content = read.Value?.ToString() ?? "";
+            string content;
+            if (read.Value is byte[] bytes)
+                content = System.Text.Encoding.UTF8.GetString(bytes);
+            else
+                content = read.Value?.ToString() ?? "";
             return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
         }
     }

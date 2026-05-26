@@ -8,10 +8,12 @@ namespace PLang.Tests.App.Modules.Debug;
 /// <summary>
 /// Stage 5 — Batch 9. <c>debug/this.cs</c> LLM trace writes (D11).
 ///
-/// These tests verify the .build/traces directory derivation by examining
-/// the path verb composition, since ResolveLlmFilePath is private. The
-/// indirect proof: the path-derivation verbs Combine three segments and
-/// produce an Absolute under .build/traces.
+/// Hardened post tester v2: drives <c>EmitLlmBlock</c> + <c>ResolveLlmFilePath</c>
+/// directly — the actual handler methods. A mutation that reverted
+/// <c>_currentLlmFilePath.Append(...)</c> to <c>System.IO.File.AppendAllText</c>
+/// would not flip these tests (both end up writing to disk), so we also
+/// assert the underlying path is a <see cref="global::app.types.path.@this"/>
+/// instance — the typed channel is the audit-gate.
 /// </summary>
 public class DebugTraceWriteTests
 {
@@ -27,28 +29,34 @@ public class DebugTraceWriteTests
     {
         var app = NewApp(out var root);
         var ctx = app.User.Context;
-        // Reproduce the exact derivation chain debug/this.cs uses.
-        var traceDir = global::app.types.path.@this.Resolve("/.build/traces", ctx)
-            .Combine("trace-id-xyz").Combine("llm");
-        var p = traceDir.Combine("MyGoal_step0.txt");
-        await Assert.That(p.Absolute.Replace('\\', '/'))
-            .Contains(".build/traces/trace-id-xyz/llm/MyGoal_step0.txt");
+        var resolved = app.Debug.ResolveLlmFilePath(ctx);
+        // Typed channel: ResolveLlmFilePath must return a Path object (the
+        // .Absolute reach is auth-gated). A future mutation reverting to
+        // System.IO.Path.Combine + string would break this signature.
+        await Assert.That(resolved).IsNotNull();
+        await Assert.That(resolved is global::app.types.path.@this).IsTrue();
+        // And the derivation lands under .build/traces (the architect plan).
+        await Assert.That(resolved.Absolute.Replace('\\', '/'))
+            .Contains(".build/traces/");
     }
 
     [Test] public async Task TraceWrite_GoesThroughPathVerbs_NotFileWriteAllText()
     {
         var app = NewApp(out var root);
         var ctx = app.User.Context;
-        var traceDir = global::app.types.path.@this.Resolve("/.build/traces", ctx);
-        var mk = await traceDir.Mkdir();
-        await Assert.That(mk.Success).IsTrue();
-        var f = traceDir.Combine("trace.txt");
-        var written = await f.Append("hello\n");
-        await Assert.That(written.Success).IsTrue();
-        var more = await f.Append("world\n");
-        await Assert.That(more.Success).IsTrue();
-        var read = await f.ReadText();
-        await Assert.That(read.Value as string).Contains("hello");
-        await Assert.That(read.Value as string).Contains("world");
+        // Pre-stage the trace file path the way the LLM event subscriber does.
+        app.Debug._currentLlmFilePath = app.Debug.ResolveLlmFilePath(ctx);
+        // Drive a trace emit. Append routes through AuthGate(Write); in-root
+        // fast-passes. If anyone reverts to System.IO.File.AppendAllText the
+        // PLNG002 analyzer fails the build — but we additionally verify the
+        // bytes land on disk.
+        app.Debug.EmitLlmBlock("LLM TEST", new[] { "line one", "line two" }, ctx, toFile: true);
+        // Read back via the same gated verb.
+        var read = await app.Debug._currentLlmFilePath!.ReadText();
+        await Assert.That(read.Success).IsTrue();
+        var content = read.Value as string ?? "";
+        await Assert.That(content).Contains("LLM TEST");
+        await Assert.That(content).Contains("line one");
+        await Assert.That(content).Contains("line two");
     }
 }

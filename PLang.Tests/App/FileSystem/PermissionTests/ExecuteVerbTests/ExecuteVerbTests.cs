@@ -137,5 +137,9 @@ public class ExecuteVerbTests
         var p = new FilePath(outOfRoot, app.User.Context);
         var result = await p.LoadAssemblyAsync();
         await Assert.That(result.Success).IsFalse();
+        // The fail must be a permission decision — not file-not-found or a
+        // malformed-DLL throw. Differentiate via Error.Key.
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
     }
 }
