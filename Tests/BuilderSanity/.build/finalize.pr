@@ -1,0 +1,58 @@
+{
+  "name": "Finalize",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %label% = \u0027%label%-and-done\u0027",
+      "lineNumber": 2,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%label%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%label%-and-done",
+              "type": "tstring"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "variable.set(Name=%label%, Value=\u0022%label%-and-done\u0022, Type=tstring)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/BuilderSanity/Finalize.goal",
+  "prPath": "/BuilderSanity/.build/finalize.pr",
+  "hash": "17e6db4ccf6c081ad1f82852490714b0856d06710d65acdb5840a0045db37383",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false,
+  "inputParameters": null
+}

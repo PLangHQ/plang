@@ -190,6 +190,60 @@
         "health": "plang-red",
         "notes": "Re-issued. Initially PASSed by treating 21 PLang failures as 'pre-existing, not coder-introduced.' Ingi flagged the framing error: any failing test (C# or PLang) blocks the branch regardless of blame. C# is green (3036/3036) and all v1 critical/major findings are genuinely closed with strong assertions, but 21 PLang tests fail on this branch — missing .build/*.pr artifacts plus real behavioral failures (Audit 7≠4, Mock False≠True, ConditionCompoundAnd null, ConditionSubStepsTrue NullRef, TestReportMasksSensitiveVariables ×2). Coder must resolve each failure or get explicit out-of-scope sign-off. Strict-red rule added to tester memory at /memory/feedback_strict_red_is_red.md."
       }
+    },
+    {
+      "id": "c5b8e217-9a44-4f2e-83d0-1f6e9c4d77a1",
+      "bot": "tester",
+      "timestamp_start": "2026-05-26T17:50:00Z",
+      "timestamp_end": "2026-05-26T18:35:00Z",
+      "intent": "Verify coder's v3 commits closed v2's 21 red PLang tests; apply new strict-red and validate-builder rules",
+      "before": {
+        "assumptions": "Coder commits 7ed35b550 (path canonical), 7fa6d16ad (truncated paths), ff9dee864 (condition builder teaching), 606689e62 (.pr rebuild) target the root causes of v2 failures. New rules: validate builder before trusting plang --test, and any red = FAIL regardless of blame.",
+        "risk": "If the 21 → small-N drop comes from .pr deletion or test skip rather than real fixes, would look green falsely. Validate-builder-first guards against that."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/tester/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "Tests/BuilderSanity/BuilderSanity.test.goal",
+            "Tests/BuilderSanity/AddItem.goal",
+            "Tests/BuilderSanity/MarkBig.goal",
+            "Tests/BuilderSanity/Finalize.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Added a 4-primitive builder smoke test to the repo. Covers set, foreach, if, call. Built with cache=false and ran via plang --test — PASSED. Reusable across future tester runs."
+        },
+        {
+          "paths": [
+            "PLang.Tests/",
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# 3036/3036 green; PLang 212/218 (+16 passes vs v2's 196/21). The 6 remaining failures are all *.fixture.goal files designed to fail (FailsVar asserts 42=99; SensitiveFail asserts %MyIdentity%='will-not-match'). They back test.report rendering tests; discovery picks them up despite intentional-failure role. Strict-red rule applies — FAIL until discovery excludes them or they get explicit out-of-scope sign-off."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/tester/v3/plan.md",
+            ".bot/fix-stepvartypes-incremental/tester/v3/v2_review_summary.md",
+            ".bot/fix-stepvartypes-incremental/tester/v3/verdict.json",
+            ".bot/fix-stepvartypes-incremental/tester/summary.md",
+            ".bot/fix-stepvartypes-incremental/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v3 outputs — FAIL verdict on strict-red rule."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "plang-mostly-green",
+        "notes": "C# 3036/3036; PLang 212/218 (-15 failures vs v2). Behavioral failures all closed. Remaining 6 are intentional-failure fixtures picked up by discovery. Builder validated via new Tests/BuilderSanity/ smoke test. Process gap (no coder/ folder) persists across 3 versions of work."
+      }
     }
   ]
 }

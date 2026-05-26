@@ -1,8 +1,8 @@
 {
   "tester": "tester",
   "branch": "fix-stepvartypes-incremental",
-  "timestamp": "2026-05-26T15:30:00Z",
-  "tested_version": "v2",
+  "timestamp": "2026-05-26T18:30:00Z",
+  "tested_version": "v3",
   "test_run": {
     "csharp": {
       "total": 3036,
@@ -11,11 +11,17 @@
       "skipped": 0
     },
     "plang": {
-      "total": 217,
-      "passed": 196,
-      "failed": 21,
-      "skipped": 0
+      "total": 218,
+      "passed": 212,
+      "failed": 6,
+      "skipped": 0,
+      "note": "Includes the new BuilderSanity smoke test (passes). 6 remaining failures are `*.fixture.goal` files designed to fail — backing fixtures for test.report tests. Test discovery picks them up despite their intentional-failure role."
     }
+  },
+  "builder_validation": {
+    "ran": true,
+    "command": "cd Tests && plang '--build={\"files\":[\"BuilderSanity/BuilderSanity.test.goal\", \"BuilderSanity/AddItem.goal\", \"BuilderSanity/MarkBig.goal\", \"BuilderSanity/Finalize.goal\"], \"cache\":false}'",
+    "result": "all 4 goals built successfully; BuilderSanity.test.goal then ran via `plang --test` and PASSED. Builder is functional."
   },
   "coverage": {
     "changed_files_covered": 7,
@@ -27,15 +33,15 @@
   "findings": [
     {
       "id": 1,
-      "severity": "critical",
+      "severity": "major",
       "type": "missing-coverage",
-      "test_file": "Tests/**/*.test.goal (21 failing)",
-      "code_file": "(branch-wide)",
-      "issue": "21 PLang tests fail on this branch. Mix of 'File not found: .../.build/*.pr' (stale or never-built artifacts), assertion mismatches (Audit expected 7 got 4; Mock expected False got True; ConditionCompoundAnd expected 'both-true' got null), and an exception (ConditionSubStepsTrue: condition.if NullReferenceException). Whether or not the coder introduced these, the branch ships with 21 red tests.",
-      "impact": "Branch is not shippable in this state. Some failures look infrastructural (missing .pr files), others look behavioral (real null/wrong-value bugs in condition/mock/callstack paths).",
-      "suggestion": "Coder: triage each of the 21 failures. For each, either fix it, mark it skipped with explicit reason and tracking issue, or document why it's out of scope and get explicit user sign-off. Produce a coder/v<N>/baseline-tests.md so future tester runs can distinguish regressions from accepted state."
+      "test_file": "Tests/**/_fixtures_fail/failsvar.fixture.goal, Tests/**/_fixtures_sensitive/sensitivefail.fixture.goal",
+      "code_file": "PLang/app/modules/test/discover.cs (likely)",
+      "issue": "6 `*.fixture.goal` files report as failing in `plang --test`. They are intentional-failure fixtures backing TestReportMasksSensitiveVariables / TestReportRendersFailureWithVariables. Discovery picks them up as standalone tests because `.fixture.goal` extension isn't excluded.",
+      "impact": "Suite reports 6 red tests that are 'expected' to fail. Either the convention (leading underscore folder + `.fixture` extension) should exclude them from discovery, or the fixtures should live outside Tests/. Right now they pollute the pass/fail count and force tester verdicts to FAIL on every run.",
+      "suggestion": "Coder: update test discovery to skip files matching `*.fixture.goal` OR folders prefixed with `_`. Then re-run — should be 212/212 green."
     }
   ],
   "verdict": "needs-fixes",
-  "summary": "FAIL on test-state grounds. C# suite is green (3036/3036) and every v1 critical/major finding is closed with strong tests. However, 21 PLang tests fail on this branch — failures include missing .build/*.pr artifacts (App/CallStack/inner.pr, Channels/WriteToCustomChannel/logger.pr, Modules/Loop/countitem.pr), assertion mismatches in CallStack/Audit, Mock, ConditionCompoundAnd, ConditionSubStepsTrue (NullRef), and TestReportMasksSensitiveVariables (two copies). My prior verdict reframed these as 'pre-existing, not coder-introduced' and called it PASS. That was wrong: red is red. Any failing test (C# or PLang) blocks shipping regardless of who broke it or when. Process gap (no coder/ folder, no baseline-tests.md) also persists."
+  "summary": "v3 PASS on substance — coder's commits (path canonical form, builder teaching for condition.if, .pr rebuild) closed every behavioral PLang failure from v2. C# 3036/3036 stays green. The new BuilderSanity smoke test (added to repo at Tests/BuilderSanity/) confirms the builder is functional. Strict-red rule applies: 6 `*.fixture.goal` files report as failing because test discovery includes them — these are intentional-failure fixtures, but until discovery excludes them or they get explicit out-of-scope acceptance, the verdict is FAIL. Going from 21 red to 6 red is excellent progress; the remaining 6 are a discovery-config issue, not a code bug."
 }

@@ -1,43 +1,50 @@
 # tester — fix-stepvartypes-incremental
 
-**Version:** v2 (re-issued)
-**Verdict:** FAIL
+**Version:** v3
+**Verdict:** FAIL (strict red rule)
 
 ## What this is
 
-v1 flagged 9 findings (build red + missing coverage). Coder commits 81c9dabfa and e4376de87 addressed F1–F6. v2 was initially issued as PASS, then flipped to FAIL after Ingi pointed out the framing error: I had passed despite 21 failing PLang tests, on the grounds that they were pre-existing and "no baseline to triage against." That's wrong by the strict rule — **any failing test, C# or PLang, regardless of who introduced it, is an automatic FAIL**.
+v2 (re-issued) failed on 21 red PLang tests. Coder shipped four commits addressing the root causes (path canonical form, builder teaching for condition.if, JSON serialization, .pr rebuild). v3 verifies the result and applies the new rules.
 
 ## What was done
 
-1. Built PLang.Tests → green.
-2. Ran TUnit → **3036/3036 pass, 0 failed**.
-3. Ran `plang --test` from `Tests/` → **196 pass / 21 fail / 217 total**.
-4. Read each new test plain: F2 output capture is bidirectional, F3 Timings pins Count==3, F4 cost math uses exact decimal equality across three rate buckets plus longest-prefix + multi-call accumulation, F5 CachedTokens asserted on both exit paths, F6 IsEqualTo replaces Contains. All v1 critical/major findings are genuinely closed.
-5. 21 PLang tests fail — failures include missing `.build/*.pr` artifacts (CallStack/inner.pr, Channels/WriteToCustomChannel/logger.pr, Loop/countitem.pr), assertion mismatches (CallStack/Audit 7≠4, Mock False≠True, ConditionCompoundAnd 'both-true'≠null), an exception (ConditionSubStepsTrue: condition.if NullReferenceException), and two copies of TestReportMasksSensitiveVariables. They are *not regressions from this branch's diff*, but the branch ships with them red.
+1. **Validated builder first** (new rule). Created a 4-primitive smoke test in the repo at `Tests/BuilderSanity/` (set, foreach, if, call). Built all four goals with `cache=false` — all succeeded. Smoke test then ran via `plang --test` and **PASSED**. Builder is functional, so `plang --test` results are trustworthy.
+2. **C# suite:** 3036/3036 pass, 0 failed.
+3. **PLang suite:** 212 pass / 6 fail / 218 total. From v2's 196/21 → +16 passes, −15 failures.
+4. The 6 remaining failures are all `*.fixture.goal` files designed to fail (FailsVar asserts 42=99, SensitiveFail asserts %MyIdentity%='will-not-match'). They back the test.report rendering tests. Discovery picks them up despite their intentional-failure role.
 
 ## Verdict reasoning
 
-**FAIL on test-state grounds.** C# is green and the coverage gaps from v1 are filled with strong tests. But red is red — any failing test blocks the branch. My prior PASS was a framing error: I treated "did coder introduce regressions" as my whole job and "current suite state" as someone else's. The strict rule (`/memory/feedback_strict_red_is_red.md`) now says: any failure = FAIL, no carve-outs.
+**FAIL on strict-red rule.** All behavioral failures from v2 are closed — that's excellent progress. But 6 PLang tests still show red, and the strict rule says red is red regardless of cause. The fix is either (a) update discovery to skip `*.fixture.goal` files or `_*` folders, (b) move the fixtures outside `Tests/`, or (c) get explicit out-of-scope sign-off.
 
-## Code example — what genuinely landed well (does not change verdict)
+## Code example — the BuilderSanity smoke test
 
-The headline `%var%` slot-description fix is now verified by:
+Added to the repo so future tester runs can validate the builder before trusting test results:
 
-```csharp
-await Assert.That(nameParam!.Value!.ToString()).IsEqualTo("%var%");
+```plang
+Start
+- set %total% = 0
+- set %items% = '[1, 2, 3]'
+- foreach %items%, call AddItem item=%item%
+- if %total% is greater than 5, call MarkBig
+- call Finalize
+- assert %total% equals 6
+- assert %label% equals 'big-and-done'
 ```
 
-A revert to `"%var% string"` fails this assertion. v1 had `.Contains("%var%")` which passed both. F4's cost test uses exact decimal equality on three independent rate buckets:
+Helper goals (AddItem, MarkBig, Finalize) each in their own file. Run with:
 
-```csharp
-decimal expected = (60m * 0.20m + 40m * 0.02m + 50m * 1.25m) / 1_000_000m;
-await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(expected);
+```bash
+cd Tests && plang '--build={"files":["BuilderSanity/BuilderSanity.test.goal","BuilderSanity/AddItem.goal","BuilderSanity/MarkBig.goal","BuilderSanity/Finalize.goal"],"cache":false}'
 ```
 
-Both excellent. Doesn't change the verdict — the branch still has 21 red PLang tests.
+## Process gap (still open)
+
+No `coder/` folder exists. Three coder versions worth of work without a single `coder/v<N>/plan.md`, `summary.md`, or `baseline-tests.md`. Flagging again. Not gating verdict.
 
 ## Next
 
 ```
-run.ps1 coder stepvartypes-incremental "Resolve 21 failing PLang tests on this branch — fix, skip-with-reason, or get explicit out-of-scope acceptance for each. Missing .build/*.pr files: CallStack/inner.pr, Channels/WriteToCustomChannel/logger.pr, Loop/countitem.pr — investigate whether these are stale fixtures or genuinely-missing artifacts. Real failures: CallStack/Audit (expected 7 got 4), Mock (expected False got True), ConditionCompoundAnd (expected 'both-true' got null), ConditionSubStepsTrue (condition.if NullReferenceException), TestReportMasksSensitiveVariables (×2). Also produce a coder/v<N>/baseline-tests.md so future tester runs can distinguish regressions from accepted state." -b fix-stepvartypes-incremental
+run.ps1 coder stepvartypes-incremental "Resolve 6 remaining red tests — they're *.fixture.goal files in _fixtures_*/ folders designed to fail (back the test.report rendering tests). Either update test discovery to skip *.fixture.goal or _*/ folders, or move the fixtures outside Tests/. Files: Modules/Test/Report/_fixtures_{fail,sensitive}/{failsvar,sensitivefail}.fixture.goal and TestModule/Report/_fixtures_{fail,sensitive}/* (the latter is a duplicate path, may also need cleanup)." -b fix-stepvartypes-incremental
 ```
