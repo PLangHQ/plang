@@ -1,0 +1,22 @@
+{
+  "reviewer": "docs",
+  "branch": "fix-stepvartypes-incremental",
+  "timestamp": "2026-05-26T20:30:00Z",
+  "reviewed_version": "v1",
+  "summary": "Auditor PASS branch. All architectural/module documentation already written by the coder (build_process.md rewritten for planner/compiler split; per-action notes/examples/description.md added under os/system/modules/; XML docs on new tester types Timing/Timings/File slim/Run.Output+Timings). My pass evaluated and applied the 4 proposals filed by codeanalyzer: 2 new OBP Shape Smells in CLAUDE.md + good_to_know.md (producer-raw/consumers-transform; reference+flat-copy), 2 codeanalyzer character updates (Pass 1b dereferenced to CLAUDE.md so the list stays in sync; new Pass 4.5 root-cause-vs-symptom with 14 tells). No documentation gaps remain.",
+  "stats": { "gaps_found": 0, "gaps_filled": 0, "docs_updated": 3, "docs_created": 0 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "updated", "file": "CLAUDE.md", "description": "Added OBP Shape Smell #5 (producer raw / consumers transform) and #6 (reference + flat copy) — both supported by evidence on this branch." },
+    { "id": 2, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Mirrored OBP smells #5 and #6 as items 6 and 7 in 'OBP Smell Checklist' with worked examples (File.cs slim, test/run.cs TrimStart pattern)." },
+    { "id": 3, "type": "consistency", "action": "updated", "file": "characters/codeanalyzer/character.md", "description": "Pass 1b dereferenced to CLAUDE.md (no more inline 4-item enumeration); inserted Pass 4.5 (root cause vs symptom) between Pass 4 and Pass 5." }
+  ],
+  "findings": [],
+  "claude_md_proposals": [
+    { "from_bot": "codeanalyzer", "target": "/workspace/plang/CLAUDE.md + Documentation/v0.2/good_to_know.md", "decision": "applied", "reason": "OBP Shape Smell #5 (producer-raw/consumers-transform) — three branch-local examples (.Path.TrimStart('/') in test/run.cs + duplicated transforms in report.cs), structural rule that applies across the codebase, well-scoped change." },
+    { "from_bot": "codeanalyzer", "target": "/workspace/plang/CLAUDE.md + Documentation/v0.2/good_to_know.md", "decision": "applied", "reason": "OBP Shape Smell #6 (reference + flat copy) — File.cs slim on this branch is the worked example; mechanical heuristic (3+ scalar fields reachable through a reference field); tester suite stayed green through the collapse, proving the smell is both detectable and fixable." }
+  ],
+  "character_proposals": [
+    { "from_bot": "codeanalyzer", "target": "codeanalyzer", "decision": "applied", "reason": "Pass 1b dereference — critical follow-up: with CLAUDE.md growing from 4 to 6 items, an inlined Pass 1b would silently miss the new smells. Dereferenced version preserves all Pass 1b behavior (yes/no per item, missing-type naming, call-site collapse list) — only the enumeration moves out." },
+    { "from_bot": "codeanalyzer", "target": "codeanalyzer", "decision": "applied", "reason": "Pass 4.5 root-cause-vs-symptom — 14-tell checklist sharpens existing technique without scope expansion; mechanical trigger (commit verbs fix/handle/guard against/work around); structured report shape; explicit contrast section ('what a root-cause fix looks like'). No overlap with Pass 1-5." }
+  ]
+}

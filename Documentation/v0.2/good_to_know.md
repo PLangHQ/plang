@@ -155,6 +155,18 @@ Fix: the collection becomes its own type with the lock private and `Add(...)` as
 
 **5. Helper that takes a domain object and returns a derived answer.** A free function (private, static, or external) takes `Thing` and returns some piece of its logic — `ComputeAbsolute(path)`, `CheckPermission(absolute, verb)`, `RenderName(user)`. The domain object owns its own questions; if you find yourself writing `Helper.X(thing)`, ask whether it should be `thing.X()`. Almost always yes. The helper is the missing method on the type.
 
+**6. Producer hands back raw; consumers transform identically.** Same property, same suffix/prefix/case-fold/slice repeated at three or more call sites — the discipline belongs on the owner.
+
+*Worked example (this branch):* `test/run.cs` had `step.Goal?.Path?.ToString().TrimStart('/')` paired with `test.Path.TrimStart('/')`. The leading slash comes from `.pr` deserialization — fixing it at the producer (`Goal.RelativePath` returning the trimmed form, computed once) would collapse both call sites and prevent the next consumer from forgetting the trim. The grep pattern `\.Path\.TrimStart\(` lights up across `modules/test/run.cs`, `modules/cache/wrap.cs`, etc. when this is wrong.
+
+*When the property IS the raw form on purpose:* keep both. `Goal.Path` (raw, source of truth) plus `Goal.RelativePath` (trimmed) is fine — consumers pick the one that matches intent and no transform is repeated at call sites.
+
+**7. Holds a reference AND a flat copy of properties reachable through it.** A class with `Foo Foo` and N scalar fields all reachable through `Foo` is paying double — once in memory, once in drift risk.
+
+*Worked example (this branch):* `app.tester.File` declared `Goal? Goal` *plus* `Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion`. Every one reachable through `Goal` when `Goal != null`. The flat copy was paid *for every discovered test file* — and silently staled if anyone rebuilt the Goal in place. Fix: delete the flat fields, route consumers through `file.Goal?.Path` etc. Keep one summary field (e.g. `StatusReason`) for the case where `Goal` is null (.pr missing / corrupt) — that's the legitimate carve-out, because it describes a state the reference can't.
+
+*When the class IS a value-snapshot on purpose:* a serialization DTO or a thread-safe-snapshot record holding flat copies is fine — the point of the type is to be detached from the live graph. Document the intent in the class XML doc ("snapshot of Foo at time T; not refreshed when Foo changes") so future readers don't merge the two roles.
+
 ### Worked example — Helper-soup vs. self-owning methods
 
 Smelly:

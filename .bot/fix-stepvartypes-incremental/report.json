@@ -554,6 +554,64 @@
       },
       "plan": ".bot/fix-stepvartypes-incremental/auditor/v1/plan.md",
       "timestamp_end": "2026-05-26T19:38:46.038083Z"
+    },
+    {
+      "id": "b8e240ac-a78d-4447-abd7-452c0aea013c",
+      "bot": "docs",
+      "timestamp_start": "2026-05-26T19:44:41Z",
+      "timestamp_end": "2026-05-26T19:47:02Z",
+      "intent": "Docs merge-gate pass: apply 2 CLAUDE.md proposals + 2 codeanalyzer character proposals; verify documentation completeness on a PASS branch.",
+      "before": {
+        "assumptions": "Auditor PASS. Coder + tester already wrote module teaching (notes/examples/description) and architecture doc updates (build_process.md). My remaining work is the proposal merge gate + verdict.",
+        "risk": "Mis-numbering items in CLAUDE.md vs good_to_know.md (the two lists are not strictly synchronized \u2014 good_to_know already has its own 5-item list including Helper-soup, while CLAUDE.md has 4). Must add as 5+6 in CLAUDE.md, 6+7 in good_to_know.md."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added OBP Shape Smells #5 (producer raw / consumers transform) and #6 (reference + flat copy) \u2014 both have branch-local evidence and apply across the codebase."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Mirrored the two new OBP smells as items 6 and 7 with worked examples (test/run.cs TrimStart pattern, File.cs slim)."
+        },
+        {
+          "paths": [
+            "characters/codeanalyzer/character.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Pass 1b dereferenced to CLAUDE.md as single source of truth (prevents silent drift when smells list grows). Inserted Pass 4.5 root-cause-vs-symptom 14-tell checklist between Pass 4 and Pass 5."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/docs-report.json",
+            ".bot/fix-stepvartypes-incremental/docs/v1/plan.md",
+            ".bot/fix-stepvartypes-incremental/docs/v1/verdict.json",
+            ".bot/fix-stepvartypes-incremental/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Docs session deliverables: plan, verdict (pass), per-bot summary, docs-report with proposal decisions."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "Branch is ready to merge. Auditor + codeanalyzer + tester + security all PASS; docs gate now PASS.",
+        "notes": "All 4 codeanalyzer proposals applied. No code changes from docs. No new C# diff."
+      }
     }
   ]
 }
