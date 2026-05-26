@@ -35,7 +35,7 @@ public static class @this
 
             namespace {{info.Namespace}};
 
-            partial class {{info.ClassName}} : global::app.modules.ICodeGenerated
+            partial class {{info.ClassName}} : global::app.modules.ICodeGenerated, global::app.modules.IClass
             {
 
             """);

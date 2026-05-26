@@ -93,6 +93,26 @@ public sealed class @this : IAsyncDisposable
     public channel.@this? Get(string name)
         => _channels.TryGetValue(name, out var channel) ? channel : null;
 
+    /// <summary>
+    /// Named-channel lookup with no-op fallback. Returns the registered channel
+    /// when one exists under <paramref name="name"/>; otherwise a process-wide
+    /// no-op sink that accepts writes silently. Use this when the caller wants
+    /// to write opportunistically without null-checking — e.g.
+    /// <c>IClass.Build()</c> writing a <c>builder.warning.@this</c> to
+    /// <c>"builder"</c> regardless of whether a build is currently active.
+    ///
+    /// <para>
+    /// Distinct from <see cref="Resolve"/>, which returns null on miss and
+    /// expects the caller to handle that (used by stream-write paths that
+    /// surface <c>ChannelNotFound</c>). <see cref="Channel"/> never returns
+    /// null.
+    /// </para>
+    /// </summary>
+    public channel.@this Channel(string name)
+        => _channels.TryGetValue(name, out var channel) ? channel : NoOp;
+
+    private static readonly channel.noop.@this NoOp = new("__noop__");
+
     public void Register(channel.@this channel)
     {
         channel.Channels = this;

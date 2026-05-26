@@ -507,3 +507,19 @@ short-stringify any value whose type lives under `app.errors.*`,
 prune wants a small audit of where `AssertionError.Variables` is filled and
 which types should be in the filter (~ a half-day's careful work, doesn't
 belong on this branch).
+
+## `file.save` cross-type coercion — canonical end-to-end test for type-driven materialization
+
+**Date:** 2026-05-26 (deferred from `typed-action-returns` Stage 0 discussion)
+
+The line `- save %orders%(json) to file.csv` is the cleanest single-statement probe of the whole typed-returns stack:
+
+- `%orders%.Type = "json"` via `file.read.Build()` (Stage 4 of `typed-action-returns`)
+- `file.save.Build()` infers write-target format `"csv"` from path extension
+- runtime cross-type coercion: `value.As("csv")` — caller doesn't pick the materializer via a generic, the handler passes the target format as a runtime value
+- pairwise converter registry: explicit `json → csv` converter wins; missing pair falls back to "materialize to canonical (json) then re-serialize"
+- no converter (`json → png`) — clean runtime error at save site, build succeeds
+
+**Why deferred.** Out of scope for `typed-action-returns`: test-designer didn't cover `file.save`, architect's Stage 4 ends at `file.read`/`http.*`/`llm.query` Build() impls. Folding in would mean a 6th stage with its own converter-registry design.
+
+**When to pick up.** When `file.save` (and module implementations more broadly) get a real pass. The cross-type coercion design will be load-bearing across save/serialize/transform — needs its own stage rather than getting bolted on inside foundation infra.
