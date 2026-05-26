@@ -14,7 +14,7 @@ Four interacting smells in `PLang/app/channels/serializers/serializer/plang/Data
 
 2. **STJ options are configured three places.** `serializer/plang/this.cs`, `serializer/plang/Data.cs`, and `data/this.Envelope.cs` each instantiate near-identical `JsonSerializerOptions`. `Json.cs` is the JSON engine custodian — the plang serializer should compose with it, not duplicate it.
 
-3. **The serializer doesn't always receive Data.** `ISerializer` accepts `object?`, and `Stream.WriteCore` feeds it `data.Value` rather than `data` itself (`stream/this.cs:56`). The "emit wrapper or just the value" decision belongs *inside* the serializer — different MIMEs make different choices — but only if it always sees Data first. Today the plang+data serializer is forced to reconstruct the wrapper from scratch via `Envelope` because by the time it runs, the wrapper that should carry type+signature is already gone.
+3. **The serializer must always receive Data.** That's the contract — Data in, bytes out. The MIME's identity decides what to emit (wrapper or just the value); the input shape is fixed. Today nothing enforces this: `ISerializer` accepts `object?`, and `Stream.WriteCore` feeds it `data.Value` rather than `data` itself (`stream/this.cs:56`). The plang+data serializer is then forced to reconstruct the wrapper from scratch via `Envelope` because by the time it runs, the wrapper that should carry type+signature is already gone.
 
 4. **`Compress()` double-wraps.** Current code builds `Data{archived, Data{gzip, byte[]}}`. The inner gzip Data is redundant — `archived.Value` can be a `byte[]` directly. "Data all the way down" is a property of *byte layers* (decompress reveals another serialized Data), not JSON object nesting.
 
