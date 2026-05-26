@@ -93,7 +93,7 @@ public class ModifierRegistryTests
         // Modifier modules appear in the action summary so the LLM can discover them
         // — they go through the same [Action] registration as any other handler.
         var modules = new EngineModules();
-        var described = modules.Describe();
+        var described = await modules.Describe();
 
         var names = described.Select(a => $"{a.Module}.{a.ActionName}").ToHashSet();
         await Assert.That(names).Contains("timeout.after");

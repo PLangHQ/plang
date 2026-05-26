@@ -9,7 +9,7 @@ using MatchMode = global::app.types.path.permission.Match;
 
 namespace PLang.Tests.App.FileSystem;
 
-/// Stage 5 — End-to-end Messages flow. Six scenarios from the architect's
+/// End-to-end Messages flow. Six scenarios from the architect's
 /// stage-5 doc, exercised via the Stage 4 v2 surface (Path.Operations.cs).
 /// PLang `.test.goal` versions under Tests/Permission/ are intent-only until
 /// the file action handlers (modules/file/read.cs etc.) migrate to call
@@ -120,12 +120,11 @@ public class Stage5MessagesEndToEndTests
         await Assert.That(secondRead.Type?.Value).IsNotEqualTo("ask");
     }
 
-    /// Auditor v1 F-A regression: persisted "always allow" grants must outlive
-    /// the wire-freshness window (Config.TimeoutMs, default 5 min). Without
-    /// the SkipFreshnessCheck on grant verification, this re-read after
-    /// advancing NowUtc by 10 minutes would re-prompt — the user would see
-    /// "always allow" expire after 5 minutes despite the docs claiming
-    /// permanence.
+    /// Persisted "always allow" grants must outlive the wire-freshness
+    /// window (Config.TimeoutMs, default 5 min). Without SkipFreshnessCheck
+    /// on grant verification, this re-read after advancing NowUtc by 10
+    /// minutes would re-prompt — the user would see "always allow" expire
+    /// after 5 minutes despite the docs claiming permanence.
     [Test] public async Task Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow()
     {
         var (app1, foreignFile) = Setup("a");
@@ -152,13 +151,13 @@ public class Stage5MessagesEndToEndTests
         await Assert.That(secondRead.Type?.Value).IsNotEqualTo("ask");
     }
 
-    /// Auditor v1 F-A, nonce-replay half: a persisted grant is re-verified on
-    /// every Find (SettingsStore.GetAll yields a fresh Data each call, so the
-    /// per-instance VerifiedFlag cache does not carry across reads). Without
-    /// SkipFreshnessCheck neutralising step 4, the second verification inside
-    /// one app would hit NonceReplay and re-prompt. Pairs with
-    /// Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow, which gates
-    /// only step 2 (wire-freshness).
+    /// Nonce-replay half of the persisted-grant contract: a persisted grant
+    /// is re-verified on every Find (SettingsStore.GetAll yields a fresh
+    /// Data each call, so the per-instance VerifiedFlag cache does not
+    /// carry across reads). Without SkipFreshnessCheck neutralising the
+    /// nonce-replay step, the second verification inside one app would hit
+    /// NonceReplay and re-prompt. Pairs with the WireFreshnessWindow test,
+    /// which gates only the wire-freshness step.
     [Test] public async Task Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt()
     {
         var (app1, foreignFile) = Setup("a");

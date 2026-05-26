@@ -41,7 +41,7 @@ public abstract partial class @this
     // `path` reference and never downcasts to a concrete scheme. Filesystem-only
     // options (recursive, includeSubfolders, overwrite, pattern) are honoured by
     // FilePath and documented as no-ops by non-FS schemes — the no-op lives
-    // inside the scheme, not as a branch the handler picks. (codeanalyzer v1 F1)
+    // inside the scheme, not as a branch the handler picks.
 
     // ReadText stays polymorphic (bare Data): the MIME-stamped Type carries the
     // shape (string for text, byte[] for binary, structured for json/yaml). The
@@ -56,6 +56,49 @@ public abstract partial class @this
     public abstract Task<data.@this<@this>> WriteBytes(byte[] content);
     public abstract Task<data.@this<@this>> Append(string content);
     public abstract Task<data.@this<@this>> Mkdir();
+
+    /// <summary>
+    /// Loads a .NET assembly from this path. Gated by <c>Verb { Execute }</c>
+    /// — distinct from Read (Unix r/w/x model: reading a DLL is not permission
+    /// to load it). FilePath implements; non-filesystem schemes return Fail.
+    /// </summary>
+    public virtual Task<data.@this<System.Reflection.Assembly>> LoadAssemblyAsync() =>
+        Task.FromResult(data.@this<System.Reflection.Assembly>.FromError(
+            new errors.ServiceError(
+                $"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
+
+    // Content-shape verbs: when a third-party API needs the file's content
+    // in a specific shape (base64, data URI, parsed JSON, ...), the verb
+    // lives on Path so the gate fires inside and the action handler never
+    // reaches for <see cref="Absolute"/>. Each composes <see cref="ReadBytes"/>
+    // + formatting on top — same AuthGate path as every other read.
+
+    /// <summary>
+    /// Reads the file as bytes (gated) and base64-encodes them. Use sites:
+    /// OpenAI image attachments, sealing binary payloads into JSON-only
+    /// transports. Auth is bundled (single Read prompt).
+    /// </summary>
+    public virtual async Task<data.@this<string>> ReadAsBase64()
+    {
+        var bytes = await ReadBytes();
+        if (!bytes.Success || bytes.Value == null)
+            return data.@this<string>.From(bytes);
+        return data.@this<string>.Ok(System.Convert.ToBase64String(bytes.Value));
+    }
+
+    /// <summary>
+    /// Reads the file as bytes (gated), base64-encodes them, and wraps with
+    /// <c>data:&lt;mime&gt;;base64,</c>. Use sites: embedded image tags, mail
+    /// attachments, any wire payload that wants self-contained binary.
+    /// </summary>
+    public virtual async Task<data.@this<string>> ReadAsDataUri()
+    {
+        var bytes = await ReadBytes();
+        if (!bytes.Success || bytes.Value == null)
+            return data.@this<string>.From(bytes);
+        var mime = string.IsNullOrEmpty(MimeType) ? "application/octet-stream" : MimeType;
+        return data.@this<string>.Ok($"data:{mime};base64,{System.Convert.ToBase64String(bytes.Value)}");
+    }
 
     /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
     public abstract Task<data.@this<@this>> Delete(bool recursive, bool ignoreIfNotFound);
@@ -108,7 +151,7 @@ public abstract partial class @this
     /// Answers "is this path truthy" — for a path that means "does it exist".
     /// Routed through here by <c>Data.ToBooleanAsync()</c> so a comparison like
     /// <c>if %path% exists</c> asks the path itself. FilePath probes the
-    /// filesystem; HttpPath issues an HTTP HEAD. (codeanalyzer v1 F3)
+    /// filesystem; HttpPath issues an HTTP HEAD.
     /// </summary>
     public abstract Task<bool> AsBooleanAsync();
 }

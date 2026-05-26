@@ -166,7 +166,7 @@ public sealed class OpenAi : ILlm
             var body = new Dictionary<string, object?>
             {
                 ["model"] = model,
-                ["messages"] = ToApiMessages(messages, app),
+                ["messages"] = ToApiMessages(messages, app, context),
                 ["temperature"] = action.Temperature.Value,
                 ["max_completion_tokens"] = action.MaxTokens.Value
             };
@@ -623,7 +623,7 @@ public sealed class OpenAi : ILlm
 
     // --- Message formatting ---
 
-    private static List<object> ToApiMessages(List<LlmMessage> messages, global::app.@this app)
+    private static List<object> ToApiMessages(List<LlmMessage> messages, global::app.@this app, actor.context.@this context)
     {
         var result = new List<object>();
         foreach (var msg in messages)
@@ -670,7 +670,7 @@ public sealed class OpenAi : ILlm
 
                 foreach (var image in msg.Images)
                 {
-                    var imageContent = ResolveImage(image, app);
+                    var imageContent = ResolveImage(image, app, context);
                     contentParts.Add(imageContent);
                 }
 
@@ -692,7 +692,9 @@ public sealed class OpenAi : ILlm
         return result;
     }
 
-    private static object ResolveImage(string image, global::app.@this app)
+    // internal so OpenAiImageDenialTests can invoke the handler directly
+    // (the public Query path requires a real OpenAI HTTP setup).
+    internal static object ResolveImage(string image, global::app.@this app, actor.context.@this context)
     {
         if (image.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -704,28 +706,22 @@ public sealed class OpenAi : ILlm
             };
         }
 
-        // Try file path
+        // Try file path — gated through path.ReadAsDataUri (D9a content-shape
+        // verb). AuthGate(Read) fires inside; in-root fast-passes, out-of-root
+        // surfaces as a permission prompt or denial. Sync-wait: message
+        // formatting is sync and the bytes-then-encode pipeline is cheap.
         try
         {
-            if (System.IO.File.Exists(image))
+            var imgPath = global::app.types.path.@this.Resolve(image, context);
+            var dataUri = imgPath.ReadAsDataUri().GetAwaiter().GetResult();
+            if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Value))
             {
-                var bytes = System.IO.File.ReadAllBytes(image);
-                var base64 = Convert.ToBase64String(bytes);
-                var extension = System.IO.Path.GetExtension(image).TrimStart('.').ToLowerInvariant();
-                var mimeType = extension switch
-                {
-                    "jpg" or "jpeg" => "image/jpeg",
-                    "png" => "image/png",
-                    "gif" => "image/gif",
-                    "webp" => "image/webp",
-                    _ => "image/png"
-                };
                 return new Dictionary<string, object>
                 {
                     ["type"] = "image_url",
                     ["image_url"] = new Dictionary<string, string>
                     {
-                        ["url"] = $"data:{mimeType};base64,{base64}"
+                        ["url"] = dataUri.Value
                     }
                 };
             }

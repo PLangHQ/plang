@@ -21,7 +21,7 @@ public enum EventType
     AfterAction,
     OnCacheHit,
     OnCacheMiss,
-    // Stage 8 — channel lifecycle. Bindings filter by ChannelName.
+    // Channel lifecycle. Bindings filter by ChannelName.
     BeforeWrite,
     AfterWrite,
     BeforeRead,

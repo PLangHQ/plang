@@ -110,7 +110,7 @@ public class DataAsTResolutionTests
 
         // FileSystem.path.Resolve returned a Path instance — Value should be one.
         await Assert.That(result.Value).IsNotNull();
-        await Assert.That(result.Value).IsTypeOf<global::app.types.path.@this>();
+        await Assert.That(result.Value is global::app.types.path.@this).IsTrue();
     }
 
     // TypeMapping conversion failure → Data.FromError with structured error.

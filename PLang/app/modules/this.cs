@@ -231,13 +231,19 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// Resolves the markdown root: explicit override wins, else derives from
-    /// <c>App.OsDirectory</c>. Null when neither is available.
+    /// <c>App.OsDirectory</c>. Returns null when neither is available. The
+    /// string is routed through <c>path.@this.Resolve</c> (System actor's
+    /// Context) so every downstream read goes through <c>AuthGate</c>, even
+    /// when the override points outside the app root.
     /// </summary>
-    public string? ResolveMarkdownTeachingRoot()
+    public global::app.types.path.@this? ResolveMarkdownTeachingRoot()
     {
-        if (!string.IsNullOrEmpty(MarkdownTeachingRoot)) return MarkdownTeachingRoot;
-        if (string.IsNullOrEmpty(App?.OsDirectory)) return null;
-        return System.IO.Path.Combine(App.OsDirectory!, "system", "modules");
+        if (App?.System?.Context == null) return null;
+        if (!string.IsNullOrEmpty(MarkdownTeachingRoot))
+            return global::app.types.path.@this.Resolve(MarkdownTeachingRoot!, App.System.Context);
+        // FilePath's ValidatePath redirects /system/* to <OsDirectory>/system/*
+        // when the path isn't present under the App root.
+        return global::app.types.path.@this.Resolve("/system/modules", App.System.Context);
     }
 
     /// <summary>
@@ -254,10 +260,10 @@ public sealed class @this : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         var root = ResolveMarkdownTeachingRoot();
-        var orphans = MarkdownTeaching.ScanOrphans(root,
+        var orphans = await MarkdownTeaching.ScanOrphans(root,
             moduleName => _modules.TryGetValue(moduleName, out var actions)
                 ? actions.Keys
-                : Array.Empty<string>()).ToList();
+                : Array.Empty<string>());
 
         foreach (var o in orphans)
         {
@@ -268,7 +274,7 @@ public sealed class @this : IAsyncDisposable
         return orphans;
     }
 
-    public StepActions Describe()
+    public async Task<StepActions> Describe()
     {
         var result = new StepActions();
         var nCtx = new NullabilityInfoContext();
@@ -394,7 +400,7 @@ public sealed class @this : IAsyncDisposable
                 // Per-action LLM teaching from markdown files. Falls back to
                 // C# attribute-sourced Description when the markdown file is
                 // absent — keeps the catalog populated while the migration runs.
-                var teaching = MarkdownTeaching.Load(markdownRoot, ns, actionName);
+                var teaching = await MarkdownTeaching.Load(markdownRoot, ns, actionName);
                 var mergedDescription = teaching.Description ?? actionDescription;
                 var mergedModuleDescription = teaching.ModuleDescription ?? moduleDescription;
 

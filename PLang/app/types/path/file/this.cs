@@ -1,3 +1,5 @@
+using app.Utils;
+
 namespace app.types.path.file;
 
 /// <summary>
@@ -10,9 +12,39 @@ namespace app.types.path.file;
 [PathScheme("file")]
 public sealed partial class @this : global::app.types.path.@this
 {
+    /// <summary>
+    /// Constructs a FilePath. The incoming <paramref name="absolutePath"/> is
+    /// canonicalized via <see cref="Canonicalize"/> before being stored, so
+    /// every code path that produces a FilePath (Resolve, derivation verbs,
+    /// scheme registry, implicit <c>string→path</c>) gets the canonical
+    /// invariant for free.
+    /// </summary>
     public @this(string absolutePath, actor.context.@this? context = null, object? content = null, string? source = null)
-        : base(absolutePath, context, content, source)
+        : base(Canonicalize(absolutePath), context, content, source)
     {
+    }
+
+    // Invariant: _absolutePath always names the same OS file as the same
+    // string handed to System.IO would. The permission gate's prefix-match
+    // on _absolutePath is only sound when this holds — `..` and `.` segments
+    // must be resolved before the string is stored.
+    private static string Canonicalize(string absolutePath)
+    {
+        if (string.IsNullOrEmpty(absolutePath)) return absolutePath;
+        // Relative inputs anchor to CWD inside GetFullPath, which would
+        // silently change their identity. They never reach IO without first
+        // being routed through a producer that knows the intended anchor.
+        if (!PathHelper.IsPathRooted(absolutePath)) return absolutePath;
+        // The "//x" prefix is an OS-rooted out-of-root form preserved
+        // verbatim for idempotency under repeat normalization. GetFullPath
+        // would collapse "//tmp/x" to "/tmp/x" and break that.
+        if (absolutePath.StartsWith("//")) return absolutePath;
+        // GetFullPath throws on inputs that can't be a real OS path
+        // (ArgumentException, PathTooLongException, NotSupportedException,
+        // SecurityException). Let those escape — the invariant above can't
+        // hold for a string that isn't a path, and a silent fallback would
+        // store a value whose textual form lies about what it points to.
+        return PathHelper.GetFullPath(absolutePath);
     }
 
     public override string Scheme => "file";
@@ -21,7 +53,7 @@ public sealed partial class @this : global::app.types.path.@this
     //
     // These do synchronous System.IO calls and are meaningless for non-FS
     // schemes; they live on FilePath so an HttpPath never inherits them.
-    // The cross-scheme liveness query is the async `Stat()`. (codeanalyzer v1 F2)
+    // The cross-scheme liveness query is the async `Stat()`.
 
     /// <summary>True when a file or directory exists at this path.</summary>
     [LlmBuilder] public bool Exists =>
@@ -58,18 +90,18 @@ public sealed partial class @this : global::app.types.path.@this
         {
             var goal = context.Goal;
             var runtimeDir = goal?.GetRuntimeDirectory();
-            if (!string.IsNullOrEmpty(runtimeDir))
+            if (runtimeDir != null)
             {
-                resolved = System.IO.Path.Combine(runtimeDir, rawPath);
+                resolved = PathHelper.Combine(runtimeDir.Absolute, rawPath);
             }
             else
             {
                 var goalPath = goal?.Path;
-                if (!string.IsNullOrEmpty(goalPath))
+                if (goalPath != null)
                 {
-                    var goalDir = System.IO.Path.GetDirectoryName(goalPath);
-                    if (!string.IsNullOrEmpty(goalDir))
-                        resolved = System.IO.Path.Combine(goalDir, rawPath);
+                    var goalDir = goalPath.Parent;
+                    if (goalDir != null)
+                        resolved = PathHelper.Combine(goalDir.Absolute, rawPath);
                 }
             }
         }

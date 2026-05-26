@@ -35,26 +35,29 @@ public partial class report : IContext
         RenderCoverageTables(console, testing, Context.App.Modules);
         await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, console.ToString());
 
-        // Write the file artefact. .test/ lives at the app root per Q4 decision.
+        // Write the file artefact through path verbs (gated). .test/ lives
+        // at the app root.
         var app = Context.App;
-        var outDir = System.IO.Path.Combine(app.AbsolutePath, ".test");
-        if (!System.IO.Directory.Exists(outDir)) System.IO.Directory.CreateDirectory(outDir);
-
+        var ctx = Context;
         string reportFile;
         string content;
+        global::app.types.path.@this writeTarget;
         switch (format)
         {
             case "junit":
                 content = BuildJUnit(results);
-                reportFile = System.IO.Path.Combine(outDir, "junit.xml");
-                await System.IO.File.WriteAllTextAsync(reportFile, content);
+                writeTarget = global::app.types.path.@this.Resolve("/.test/junit.xml", ctx);
                 break;
             default: // "json"
                 content = BuildJson(results, testing);
-                reportFile = System.IO.Path.Combine(outDir, "results.json");
-                await System.IO.File.WriteAllTextAsync(reportFile, content);
+                writeTarget = global::app.types.path.@this.Resolve("/.test/results.json", ctx);
                 break;
         }
+        // WriteText creates parent dirs via EnsureParentDir; AuthGate(Write)
+        // fast-passes in-root and prompts/denies otherwise.
+        var written = await writeTarget.WriteText(content);
+        if (!written.Success) return global::app.data.@this.FromError(written.Error!);
+        reportFile = writeTarget.Absolute;
 
         // Surface the artefact for observability: PLang tests inspect these on
         // %report% (the write-to target) without a filesystem round-trip, which
@@ -295,7 +298,13 @@ public partial class report : IContext
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::app.tester.Status.Fail)}\" errors=\"0\">");
-        var byPath = results.GroupBy(r => System.IO.Path.GetDirectoryName(r.File.Path) ?? "");
+        // Pure string-name math: strip the trailing segment after the last separator.
+        var byPath = results.GroupBy(r =>
+        {
+            var p = r.File.Path ?? "";
+            var sep = p.LastIndexOfAny(new[] { '/', '\\' });
+            return sep >= 0 ? p[..sep] : "";
+        });
         foreach (var group in byPath)
         {
             var suiteTests = group.ToList();

@@ -70,7 +70,7 @@ public sealed partial class @this : modules.IDataWrappable
     }
 
     [Store, Debug]
-    public string? Path { get; set; }
+    public global::app.types.path.@this? Path { get; set; }
 
     /// <summary>
     /// On-disk .pr path the goal was loaded from. Set by GoalCall.LoadFromFile.
@@ -79,41 +79,42 @@ public sealed partial class @this : modules.IDataWrappable
     /// identity, parent-perspective for goals run inside a child App).
     /// </summary>
     [JsonIgnore, LlmIgnore]
-    public string? LoadedFromPrPath { get; set; }
+    public global::app.types.path.@this? LoadedFromPrPath { get; set; }
 
     /// <summary>
-    /// Returns the absolute on-disk directory that contains this goal's source
+    /// Returns the on-disk directory that contains this goal's source
     /// .goal file in the current App's filesystem — derived from LoadedFromPrPath
     /// (a `<dir>/.build/<name>.pr`-shaped path) so it remains correct in child
     /// Apps where Path was baked from a different root. Returns null when the
     /// goal wasn't loaded from a file (in-memory goals built by tests / fixtures).
     /// </summary>
-    public string? GetRuntimeDirectory()
+    public global::app.types.path.@this? GetRuntimeDirectory()
     {
-        if (App == null || string.IsNullOrEmpty(LoadedFromPrPath)) return null;
-        string prAbs;
-        try { prAbs = global::app.types.path.file.@this.ValidatePath(LoadedFromPrPath, App); }
-        catch { return null; }
-        var prParent = System.IO.Path.GetDirectoryName(prAbs);
+        var pr = LoadedFromPrPath;
+        if (pr == null) return null;
+        var prParent = pr.Parent;
         if (prParent == null) return null;
-        if (!string.Equals(System.IO.Path.GetFileName(prParent), ".build", StringComparison.OrdinalIgnoreCase)) return null;
-        return System.IO.Path.GetDirectoryName(prParent);
+        // The .build parent's own parent is the goal folder. Validate the .build
+        // segment so naive in-memory paths don't quietly return the wrong dir.
+        if (!string.Equals(prParent.FileName, ".build", StringComparison.OrdinalIgnoreCase)) return null;
+        return prParent.Parent;
     }
 
     [Store, Debug]
-    public string? PrPath
+    public global::app.types.path.@this? PrPath
     {
         get
         {
-            if (string.IsNullOrEmpty(Path)) return null;
-            var sepIndex = Path.LastIndexOfAny(new[] { '\\', '/' });
-            var dir = sepIndex >= 0 ? Path[..(sepIndex + 1)] : "";
-            var fileName = sepIndex >= 0 ? Path[(sepIndex + 1)..] : Path;
-            var dotIndex = fileName.LastIndexOf('.');
-            var baseName = dotIndex >= 0 ? fileName[..dotIndex] : fileName;
-            return (dir + ".build" + (sepIndex >= 0 ? Path[sepIndex].ToString() : "/") + baseName.ToLowerInvariant() + ".pr").AdjustPathToOs();
+            // Empty or null Path → no PrPath. Treat "" the same as null so the
+            // old IsNullOrEmpty(Path) → null shape (pre-Stage-3) still holds.
+            if (Path == null || string.IsNullOrEmpty(Path.Absolute)) return null;
+            // Derive via the generic verbs: parent dir → .build folder → lowercase stem + .pr
+            var stem = Path.FileNameWithoutExtension.ToLowerInvariant();
+            var parent = Path.Parent;
+            if (parent == null) return null;
+            return parent.Combine(".build").Combine(stem + ".pr");
         }
-        init { } // PrPath is derived from Path; init-only so callers get compile errors instead of silent no-op
+        init { } // PrPath is derived from Path; init no-op so JSON round-trip's serialized prPath is swallowed
     }
 
     [Store, Debug]
@@ -160,20 +161,9 @@ public sealed partial class @this : modules.IDataWrappable
     /// </summary>
     [JsonIgnore]
     [LlmIgnore]
-    public string FolderPath
+    public global::app.types.path.@this? FolderPath
     {
-        get
-        {
-            if (string.IsNullOrEmpty(Path))
-                return "/";
-
-            var normalized = Path.Replace('\\', '/');
-            var lastSep = normalized.LastIndexOf('/');
-            if (lastSep <= 0)
-                return "/";
-
-            return normalized[..lastSep] + "/";
-        }
+        get => Path?.Parent;
     }
 
     [Store, LlmBuilder, Debug, Default]
@@ -372,7 +362,7 @@ public sealed partial class @this : modules.IDataWrappable
     /// All goals share the same Path. First goal is Public, rest are Private.
     /// Inverse of ToText().
     /// </summary>
-    public static @this? Parse(string text, string path)
+    public static @this? Parse(string text, global::app.types.path.@this? path)
     {
         if (string.IsNullOrWhiteSpace(text))
             return null;
@@ -524,7 +514,7 @@ public sealed partial class @this : modules.IDataWrappable
             var goalComment = pendingComment.Length > 0 ? pendingComment.ToString() : null;
             pendingComment.Clear();
 
-            var normalizedPath = path?.Replace('\\', '/').TrimStart('/') ?? "";
+            var normalizedPath = path?.ToString().Replace('\\', '/').TrimStart('/') ?? "";
             var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
                 || normalizedPath.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
             var isSystem = normalizedPath.StartsWith("system/", StringComparison.OrdinalIgnoreCase);

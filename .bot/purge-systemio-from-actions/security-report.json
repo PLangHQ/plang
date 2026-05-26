@@ -1,0 +1,125 @@
+{
+  "analyst": "security",
+  "branch": "purge-systemio-from-actions",
+  "timestamp": "2026-05-26T12:15:00Z",
+  "phase": "both",
+  "version": "v2",
+  "attack_surface": [
+    {
+      "area": "path-authgate",
+      "exposure": "Every filesystem touch from action handlers flows through `path.@this.Authorize` → AuthGate. AuthGate's auto-grant fast path is `IsInRoot()` (textual StartsWith of `_absolutePath` against the app root).",
+      "trust_boundary": "Any caller producing a `path` whose `_absolutePath` textually prefix-matches the app root.",
+      "mitigations": [
+        "AuthGate(verb) required by every IO verb on FilePath; PLNG002 at error severity prevents handlers from bypassing path.@this entirely.",
+        "v2: FilePath ctor now canonicalizes `_absolutePath` via PathHelper.GetFullPath — every code path (Resolve, derivation verbs, scheme registry, implicit string→path, JsonConverter) inherits the fix for free. `..` segments can no longer survive into `_absolutePath`."
+      ],
+      "gaps": ["None reachable. Three deliberate canonicalization skips (empty, non-rooted, `//`-prefixed) verified safe in v2 result.md."]
+    },
+    {
+      "area": "path-derivation",
+      "exposure": "Combine/WithName/InFolder/Parent verbs on FilePath build new FilePath objects.",
+      "trust_boundary": "Caller supplies child/folder/name string.",
+      "mitigations": ["Derivation produces a Path object only — no IO. All IO must go through Operations, which gate.", "v2: Each derivation verb passes the combined string through `new @this(...)` → ctor Canonicalize → GetFullPath. `..` introduced via derivation is resolved before the next AuthGate check."],
+      "gaps": ["None."]
+    },
+    {
+      "area": "execute-verb",
+      "exposure": "`path.LoadAssemblyAsync()` is the only `Assembly.LoadFrom` site (grep-verified). Gated by `Verb { Execute }`.",
+      "trust_boundary": "An actor wanting to load a DLL must have an Execute grant — Read grant does NOT cover Execute.",
+      "mitigations": ["Verb.AllowAll() includes Execute, but AllowAll is test-only. Production grants flow through `BuildRequest(actor, verb)` with the narrow requested verb."],
+      "gaps": ["None."]
+    },
+    {
+      "area": "wire-path-deserialization",
+      "exposure": "`PathJsonConverter` reads a string off the wire and resolves it via `@this.Resolve(raw, context)` → Scheme.From → file.Resolve → ValidatePath, or via the implicit `string → path` operator when no Context.",
+      "trust_boundary": "Anything inbound on a channel whose payload deserializes to a `Data<path>` field.",
+      "mitigations": [
+        "Context-bound converter routes through Resolve; stub paths (no-Context) explode at Authorize.",
+        "v2: Both pathways (Resolve, implicit operator) construct via `new file.@this(raw)` → Canonicalize. Wire `\"subdir/../../etc/passwd\"` no longer survives into `_absolutePath`."
+      ],
+      "gaps": ["None reachable today."]
+    },
+    {
+      "area": "filepath-sync-properties",
+      "exposure": "`FilePath.Exists` and `FilePath.Size` (sync `[LlmBuilder]` properties) call System.IO.File.Exists / new FileInfo(Absolute).Length without AuthGate.",
+      "trust_boundary": "Template/LLM-builder surfaces. Calling them at runtime gives existence/size for the path the caller has.",
+      "mitigations": ["Existence/truthiness via `path.AsBooleanAsync()` / `ExistsAsync()` IS gated."],
+      "gaps": ["Sync `Exists`/`Size` are info-disclosure side channels under sub-actor probing — under PLang's user-sovereign threat model these read user-authored templates only. Standing watch (no change v1→v2)."]
+    },
+    {
+      "area": "markdown-teaching",
+      "exposure": "MarkdownTeaching loader walks a `path.@this` modulesRoot via `ExistsAsync`/`List`/`ReadText` to render per-action LLM teaching files.",
+      "trust_boundary": "`Modules.MarkdownTeachingRoot` is publicly settable from C#; default derives from `App.OsDirectory`.",
+      "mitigations": [
+        "v2: All disk reach lifted to `path.@this` verb surface (987a5148e). `ResolveMarkdownTeachingRoot()` routes the string override through `path.@this.Resolve(System.Context)` — any out-of-root override hits AuthGate at the first verb call.",
+        "PLNG002 whole-file exemption for MarkdownTeaching.cs dropped."
+      ],
+      "gaps": ["None reachable today. F2 closed."]
+    },
+    {
+      "area": "pathhelper-bridge",
+      "exposure": "New `PLang/app/Utils/PathHelper.cs` is the single bridge to `System.IO.Path.*` — Combine/Join/Get*Name/GetFullPath/IsPathRooted/separator constants. PLNG002 carves out only `Path.*` here, only for this file.",
+      "trust_boundary": "Every other PLang file must route Path.* through PathHelper; new IO members added to PathHelper would still fire PLNG002's File/Directory carve-out (PathHelper.cs is not exempt for that pillar).",
+      "mitigations": [
+        "PathHelper body verified pure name math: no `File.*`, `Directory.*`, `FileInfo`, `FileStream`. `GetTempPath`/`GetTempFileName` explicitly forbidden by the class doc.",
+        "PLNG002's two-pronged carve-out (file scope + member kind) means a hostile File.* addition still fires."
+      ],
+      "gaps": ["None."]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "path-traversal",
+      "vector": "IsInRoot()'s auto-grant fast path used a textual `StartsWith` of `_absolutePath` against the app root, with no `..`-segment normalization. When `file.Resolve` combined a relative path containing `..` with a goal-anchored runtimeDir (or goalPath.Parent) inside root, the resulting absolute string textually prefix-matched root — IsInRoot returned true — AuthGate auto-granted — and `System.IO.File.*` resolved the `..` segments at the OS layer and read outside root with no actor prompt.",
+      "preconditions": "A `path` whose `_absolutePath` contained unresolved `..` segments AND textually prefix-matched `app.AbsolutePath`. Natural source: `file.Resolve` for a relative rawPath when the active Goal has a `LoadedFromPrPath` inside root.",
+      "impact": "Arbitrary file read (and write/delete/execute by symmetry) outside the actor's permission scope, without prompt or grant lookup. Confirmed via 5s mutation test in v1.",
+      "affected_files": [
+        "PLang/app/types/path/this.Authorize.cs",
+        "PLang/app/types/path/file/this.cs",
+        "PLang/app/types/path/file/this.Validate.cs"
+      ],
+      "exploit_sketch": "v1 reproduced via mutation test; v2 ported to a real regression suite: PLang.Tests/App/Types/PathTests/DotDotTraversalRegressionTests.cs.",
+      "proposed_fix": "Canonicalize at FilePath ctor (preferred shape (b) from v1 result) — fixed in 064724fda.",
+      "status": "fixed",
+      "fix_commit": "064724fda",
+      "fix_summary": "`file.@this`'s ctor canonicalizes `_absolutePath` via `PathHelper.GetFullPath` before storing. Every construction path inherits the fix. Regression test ported in PathTests/DotDotTraversalRegressionTests.cs covers ctor, Resolve+`..`, and ReadText denial. v2 mutation test (Canonicalize → return absolutePath) confirms all 3 regression tests fail without the fix; revert clean."
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "code-execution",
+      "vector": "`PLang/app/modules/MarkdownTeaching.cs` performed 8 ungated System.IO reaches under a whole-file PLNG002 exemption. Today's caller hardcodes /system/modules, but `Modules.MarkdownTeachingRoot` is publicly settable; if wired from config or wire input the loader silently enumerated and read any directory with no AuthGate.",
+      "preconditions": "Future C# change to set MarkdownTeachingRoot from untrusted input.",
+      "impact": "Latent. Whole-file exemption guaranteed the analyzer would never warn about a new System.IO addition.",
+      "affected_files": [
+        "PLang/app/modules/MarkdownTeaching.cs",
+        "PLang.Generators/Diagnostics/Plng002.cs"
+      ],
+      "exploit_sketch": "Theoretical — required future C# change.",
+      "proposed_fix": "Lift to path.@this verb surface — fixed in 987a5148e.",
+      "status": "fixed",
+      "fix_commit": "987a5148e",
+      "fix_summary": "Every disk touch routes through path verbs (`ExistsAsync`, `Combine`, `List`, `ReadText`). `ResolveMarkdownTeachingRoot` routes the string override through `path.@this.Resolve(System.Context)` so out-of-root overrides hit AuthGate at first verb. Whole-file PLNG002 exemption removed."
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "code-execution",
+      "vector": "PLNG002 whole-file exempted `PLang/app/this.cs`. An inline `#pragma warning disable PLNG002` looked like it scoped to the `OsAbsolutePath` lines, but the analyzer didn't honor source pragmas — the actual exemption was whole-file via `IsScannedFile`. The pragma's apparent scope misled readers about what was actually exempted.",
+      "preconditions": "None today. The only System.IO reach was OsAbsolutePath (pure path arithmetic).",
+      "impact": "Latent. A future engineer adding any System.IO call anywhere in app/this.cs would silently pass the gate.",
+      "affected_files": [
+        "PLang/app/this.cs",
+        "PLang.Generators/Diagnostics/Plng002.cs"
+      ],
+      "exploit_sketch": "Theoretical only.",
+      "proposed_fix": "Introduce PathHelper, drop pragma + whole-file exemption — fixed in 064724fda.",
+      "status": "fixed",
+      "fix_commit": "064724fda",
+      "fix_summary": "PathHelper introduced as the single allowed bridge to System.IO.Path.*. OsAbsolutePath now `PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, \"os\"))`. Inline `#pragma` removed. Whole-file exemption for app/this.cs removed from `IsScannedFile`. PLNG002 narrowed to two carve-outs: `Path.*` → only PathHelper.cs; `File/Directory/FileInfo/...` → only app/types/path/**."
+    }
+  ],
+  "summary": "v2 verdict: PASS. All three v1 findings closed by 064724fda + 987a5148e. F1 (HIGH path-traversal) fixed by canonicalizing `_absolutePath` at the FilePath ctor — every construction path inherits. F1 fix mutation-verified: all 3 regression tests in PathTests/DotDotTraversalRegressionTests.cs fail when Canonicalize is short-circuited. F2 (LOW, latent-Medium MarkdownTeaching ungated IO) fixed by lifting to the path verb surface and routing the publicly-settable root through `path.@this.Resolve(System.Context)`. F3 (LOW, misleading whole-file PLNG002 exemption on app/this.cs) fixed by introducing PathHelper + narrowing PLNG002 to two visible carve-outs. PathHelper contract verified pure name math — no File/Directory/FileInfo/Stream forwarders, no IO. PLNG002 has no whole-file exemptions remaining."
+}

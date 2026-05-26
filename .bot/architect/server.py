@@ -18,6 +18,7 @@ import http.server
 import json
 import re
 import subprocess
+import threading
 import urllib.parse
 from html import escape
 from pathlib import Path
@@ -25,24 +26,120 @@ from pathlib import Path
 PORT = 8081
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+# Per-request overrides set by the Handler from `?branch=` / `?dir=` query
+# params. Defaults reproduce the legacy behavior (current git branch +
+# the literal "architect" subdir), so existing callers see no change.
+_local = threading.local()
+
 
 def current_branch() -> str:
+    override = getattr(_local, "branch", None)
+    if override:
+        return override
     out = subprocess.check_output(
         ["git", "-C", str(REPO_ROOT), "branch", "--show-current"]
     )
     return out.decode().strip()
 
 
+def current_subdir() -> str:
+    return getattr(_local, "subdir", None) or "architect"
+
+
 def architect_dir() -> Path:
     branch = current_branch().replace("/", "-")
-    return REPO_ROOT / ".bot" / branch / "architect"
+    return REPO_ROOT / ".bot" / branch / current_subdir()
+
+
+def is_default_context() -> bool:
+    """True when neither branch nor subdir was overridden — used to gate
+    features (e.g. ink annotations) that only make sense in the canonical
+    `.bot/<git-branch>/architect/` context."""
+    return getattr(_local, "branch", None) is None and getattr(_local, "subdir", None) is None
+
+
+def _resolve_ref(slug: str) -> str | None:
+    """Find a git ref backing the given branch slug. Prefers `origin/<branch>`
+    (authoritative; matches what 8083 shows), falls back to local. Slugs
+    collapse slashes to dashes; the underlying refs keep slashes, so we walk
+    refs and slug-compare."""
+    try:
+        out = subprocess.check_output(
+            ["git", "-C", str(REPO_ROOT), "for-each-ref",
+             "--format=%(refname:short)",
+             "refs/remotes/origin", "refs/heads"]
+        ).decode().splitlines()
+    except Exception:
+        return None
+    local_match = None
+    for ref in out:
+        ref = ref.strip()
+        if not ref or ref == "origin/HEAD":
+            continue
+        if ref.startswith("origin/"):
+            if ref[len("origin/"):].replace("/", "-") == slug:
+                return ref  # remote wins
+        else:
+            if ref.replace("/", "-") == slug and local_match is None:
+                local_match = ref
+    return local_match
+
+
+def read_branch_file(rel: str) -> str | None:
+    """Read a file under architect_dir() / rel — disk first, git fallback.
+
+    The fallback lets us serve files for branches that aren't checked out
+    on the current working tree (e.g. live feature branches the user wants
+    to comment on from a different base branch). Returns None if neither
+    source has it."""
+    p = architect_dir() / rel
+    try:
+        return p.read_text(encoding="utf-8", errors="replace")
+    except (FileNotFoundError, OSError):
+        pass
+    branch = current_branch().replace("/", "-")
+    full = f".bot/{branch}/{current_subdir()}/{rel}"
+    ref = _resolve_ref(branch)
+    if not ref:
+        return None
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "show", f"{ref}:{full}"],
+            capture_output=True, check=False, timeout=5,
+        )
+        if proc.returncode != 0:
+            return None
+        return proc.stdout.decode("utf-8", errors="replace")
+    except Exception:
+        return None
+
+
+def list_files_from_git() -> list[str]:
+    """Enumerate *.md files under architect_dir() via `git ls-tree` against
+    the branch's ref. Used when the directory doesn't exist on disk
+    (unmerged feature branch viewed from a different checkout)."""
+    branch = current_branch().replace("/", "-")
+    ref = _resolve_ref(branch)
+    if not ref:
+        return []
+    sub = current_subdir()
+    prefix = f".bot/{branch}/{sub}/"
+    try:
+        out = subprocess.check_output(
+            ["git", "-C", str(REPO_ROOT), "ls-tree", "-r", "--name-only",
+             ref, "--", prefix]
+        ).decode().splitlines()
+    except Exception:
+        return []
+    return [p[len(prefix):] for p in out if p.endswith(".md") and p.startswith(prefix)]
 
 
 def list_files() -> list[str]:
     base = architect_dir()
-    if not base.exists():
-        return []
-    files = [str(p.relative_to(base)) for p in sorted(base.rglob("*.md"))]
+    if base.exists():
+        files = [str(p.relative_to(base)) for p in sorted(base.rglob("*.md"))]
+    else:
+        files = list_files_from_git()
     def sort_key(rel: str):
         parts = rel.split("/")
         if len(parts) == 1:
@@ -136,16 +233,12 @@ def normalize_comments(data: dict) -> dict:
 
     Legacy comments without `anchor` have it backfilled from the current line.
     """
-    base = architect_dir()
     file_cache: dict = {}
 
     def lines_for(rel: str):
         if rel not in file_cache:
-            p = base / rel
-            try:
-                file_cache[rel] = p.read_text(encoding="utf-8").splitlines()
-            except (FileNotFoundError, OSError, UnicodeDecodeError):
-                file_cache[rel] = None
+            text = read_branch_file(rel)
+            file_cache[rel] = text.splitlines() if text is not None else None
         return file_cache[rel]
 
     for f, arr in data.items():
@@ -552,6 +645,37 @@ INDEX_HTML = r"""<!doctype html>
 </div>
 
 <script>
+// Branch/dir context from the URL — forwarded to every API call so the
+// server scopes its file list, comments, etc. to the requested branch.
+// Empty when viewing the default (current git branch, architect/).
+const CTX = (() => {
+  const q = new URLSearchParams(window.location.search);
+  const branch = q.get('branch') || '';
+  const dir = q.get('dir') || '';
+  return { branch, dir };
+})();
+function ctxQs(extra) {
+  const u = new URLSearchParams();
+  if (CTX.branch) u.set('branch', CTX.branch);
+  if (CTX.dir) u.set('dir', CTX.dir);
+  if (extra) for (const [k, v] of Object.entries(extra)) u.set(k, v);
+  const s = u.toString();
+  return s ? ('?' + s) : '';
+}
+function api(path, extra) {
+  // path may already carry a `?...` suffix from the legacy code; in that
+  // case merge cleanly. Otherwise just append a fresh query string.
+  const idx = path.indexOf('?');
+  if (idx >= 0) {
+    const existing = new URLSearchParams(path.slice(idx + 1));
+    if (CTX.branch) existing.set('branch', CTX.branch);
+    if (CTX.dir) existing.set('dir', CTX.dir);
+    if (extra) for (const [k, v] of Object.entries(extra)) existing.set(k, v);
+    return path.slice(0, idx) + '?' + existing.toString();
+  }
+  return path + ctxQs(extra);
+}
+
 let currentFile = null;
 let comments = {};
 let files = [];
@@ -562,7 +686,7 @@ let modifiedSinceReview = []; // files touched after last "Send to Architect"
 let filesWithInk = [];          // files that have saved ink
 
 async function loadFiles() {
-  const r = await fetch('/api/files');
+  const r = await fetch(api('/api/files'));
   const j = await r.json();
   files = j.files;
   comments = j.comments;
@@ -629,7 +753,7 @@ async function openFile(path, opts) {
   else scroll = 0;
   currentFile = path;
   document.getElementById('filename').textContent = path;
-  const r = await fetch('/api/file?path=' + encodeURIComponent(path));
+  const r = await fetch(api('/api/file?path=' + encodeURIComponent(path)));
   const j = await r.json();
   currentRaw = j.text;
   currentBlocks = j.blocks;
@@ -823,7 +947,7 @@ function makeCommentBlock(cm) {
 }
 
 async function updateStatus(id, status) {
-  const r = await fetch('/api/comment?id=' + encodeURIComponent(id), {
+  const r = await fetch(api('/api/comment?id=' + encodeURIComponent(id)), {
     method: 'PATCH', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ status })
   });
@@ -855,7 +979,7 @@ async function submitComment(lineNo, comp, opts) {
   opts = opts || {};
   const text = comp.querySelector('textarea').value.trim();
   if (!text) return;
-  const r = await fetch('/api/comment', {
+  const r = await fetch(api('/api/comment'), {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       file: currentFile, line: lineNo, text,
@@ -870,7 +994,7 @@ async function submitComment(lineNo, comp, opts) {
 
 async function deleteComment(id) {
   if (!confirm('Delete this comment?')) return;
-  const r = await fetch('/api/comment?id=' + encodeURIComponent(id), { method:'DELETE' });
+  const r = await fetch(api('/api/comment?id=' + encodeURIComponent(id)), { method:'DELETE' });
   const j = await r.json();
   comments = j.comments;
   await openFile(currentFile);
@@ -909,7 +1033,7 @@ document.getElementById('content').addEventListener('click', (ev) => {
 
 // Send to Architect button
 document.getElementById('send-architect').onclick = async () => {
-  const r = await fetch('/api/request-review', { method: 'POST' });
+  const r = await fetch(api('/api/request-review'), { method: 'POST' });
   const j = await r.json();
   const prompt = `read my comments at ${j.commentsPath} and address them`;
   try { await navigator.clipboard.writeText(prompt); } catch (e) {}
@@ -922,7 +1046,7 @@ document.getElementById('send-architect').onclick = async () => {
 // Auto-poll for files modified since last review (architect may be working in background).
 async function refreshModifiedDots() {
   try {
-    const r = await fetch('/api/files');
+    const r = await fetch(api('/api/files'));
     const j = await r.json();
     const next = j.modifiedSinceReview || [];
     const a = next.slice().sort().join('|');
@@ -1128,7 +1252,7 @@ const Ink = (() => {
     savedDims = null;
     setDirty(false);
     try {
-      const r = await fetch('/api/ink?path=' + encodeURIComponent(file));
+      const r = await fetch(api('/api/ink?path=' + encodeURIComponent(file)));
       const j = await r.json();
       strokes = j.strokes || [];
       savedDims = j.dims || null;
@@ -1151,7 +1275,7 @@ const Ink = (() => {
     }
     savedDims = { w: canvas.width, h: canvas.height };
     const body = { file: currentFile, strokes, dims: savedDims, png };
-    const r = await fetch('/api/ink', {
+    const r = await fetch(api('/api/ink'), {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
@@ -1168,8 +1292,8 @@ const Ink = (() => {
     strokes = [];
     redraw();
     setDirty(false);
-    await fetch('/api/ink?path=' + encodeURIComponent(currentFile), { method: 'DELETE' });
-    const r = await fetch('/api/files');
+    await fetch(api('/api/ink?path=' + encodeURIComponent(currentFile)), { method: 'DELETE' });
+    const r = await fetch(api('/api/files'));
     const j = await r.json();
     filesWithInk = j.filesWithInk || [];
     renderSidebar();
@@ -1268,7 +1392,25 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def _json(self, code, obj):
         self._send(code, json.dumps(obj, ensure_ascii=False), "application/json")
 
+    def _apply_overrides(self) -> None:
+        """Parse `?branch=` and `?dir=` from the URL and stash them on the
+        thread-local so the module-level helpers (current_branch,
+        architect_dir, ...) see the override for the duration of this
+        request. Called at the start of every do_* method."""
+        try:
+            q = urllib.parse.parse_qs(
+                urllib.parse.urlparse(self.path).query, keep_blank_values=False
+            )
+            branch = (q.get("branch") or [None])[0]
+            subdir = (q.get("dir") or [None])[0]
+            _local.branch = branch.replace("/", "-") if branch else None
+            _local.subdir = subdir if subdir else None
+        except Exception:
+            _local.branch = None
+            _local.subdir = None
+
     def do_GET(self):
+        self._apply_overrides()
         u = urllib.parse.urlparse(self.path)
         if u.path in ("/", "/index.html"):
             html = INDEX_HTML.replace("{branch}", current_branch())
@@ -1298,18 +1440,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if u.path == "/api/file":
             qs = urllib.parse.parse_qs(u.query)
             rel = qs.get("path", [""])[0]
-            base = architect_dir().resolve()
-            target = (base / rel).resolve()
-            if not str(target).startswith(str(base)) or not target.exists():
+            # Path-traversal guard: rel must not escape the dir.
+            if "../" in rel or rel.startswith("/"):
+                self._json(400, {"error": "invalid path"})
+                return
+            text = read_branch_file(rel)
+            if text is None:
                 self._json(404, {"error": "not found"})
                 return
-            text = target.read_text(encoding="utf-8", errors="replace")
             blocks = render_markdown(text)
             self._json(200, {"text": text, "blocks": blocks})
             return
         self._send(404, "not found", "text/plain")
 
     def do_DELETE(self):
+        self._apply_overrides()
         u = urllib.parse.urlparse(self.path)
         if u.path == "/api/ink":
             rel = urllib.parse.parse_qs(u.query).get("path", [""])[0]
@@ -1330,6 +1475,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self._json(200, {"comments": comments})
 
     def do_PATCH(self):
+        self._apply_overrides()
         u = urllib.parse.urlparse(self.path)
         if u.path != "/api/comment":
             self._send(404, "not found", "text/plain"); return
@@ -1348,6 +1494,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self._json(200, {"comments": comments})
 
     def do_POST(self):
+        self._apply_overrides()
         u = urllib.parse.urlparse(self.path)
         if u.path == "/api/ink":
             import base64, datetime

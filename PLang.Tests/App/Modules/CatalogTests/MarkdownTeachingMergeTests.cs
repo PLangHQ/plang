@@ -3,7 +3,7 @@ using app.modules;
 namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
-/// Merge semantics (per architect plan, "Merge semantics" section):
+/// Merge semantics:
 ///   - When both module.* and &lt;action&gt;.* exist → CONCAT, module-level first,
 ///     then action-specific, separated by a blank line.
 ///   - Override semantics are explicitly rejected by the design.

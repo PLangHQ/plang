@@ -272,86 +272,71 @@ naturally as a property of whatever `@this` owns it.
 the callback work doesn't bake the `_statics` field name into anything
 load-bearing.
 
-## 2026-05-05 — runtime2-callback branch close-out (open items from coder handoff)
+## 2026-05-05 — Snapshot envelope ratification (was: runtime2-callback close-out)
 
-Coder shipped Stages 1–4 (2720/2720 C# green; 188 PLang pass / 0 fail / 4
-stale). Open decisions and gaps from `.bot/runtime2-callback/coder/handoff.md`,
-captured here so the branch can close. Each cluster is a real follow-up, not
-branch-blocking.
+> **Rewritten 2026-05-24.** The runtime2-callback work was absorbed into
+> Snapshot — `app/snapshot/` now owns Resume; the standalone Callback
+> module shrank to `modules/callback/run.cs`; `AskCallback`,
+> `RestoredFrame`, and `ErrorCallback` types are gone. Most of the
+> original close-out items were resolved by that merge. What's listed
+> below is what survived the merge, verified against source on
+> 2026-05-24.
 
-### Ratification sweep (decisions made under the line)
+### Live items — envelope cluster
 
-The following calls were made by coder mid-stage without an architect doc.
-They're shipped and tested, but no architect has read the code that landed
-them. Next architect session that touches callback should sweep these and
-either bless or carve a redesign:
+The lazy-signing + wire-format carve-outs introduced on `runtime2-callback`
+still ship as-is on `Data`/`PlangDataSerializer`. No architect has blessed
+or carved a redesign. Sweep these together in one pass:
 
-1. `output.ask` shape — sentinel `%!ask.answer%` for resume; untyped `Data`
-   `Variables` param; `AskCallback.Answer` init-only field written before
-   re-dispatch. (Stage 4 doc didn't specify the ask handler.)
-2. Lazy `Data.Signature` carve-out — auto-populates only when `_value is
-   ICallback`; everything else uses explicit `EnsureSigned()`. Done to
-   preserve existing `Signature == null` verify checks.
-3. `RawSignature` internal accessor — peek without triggering populate.
-   Pragmatic workaround for (2); revisit if (2) gets redesigned.
-4. `RestoredFrame` surrogate record vs. extending `Call.@this` with a
-   restored mode. Coder picked surrogate because `Call`'s ctor is internal
-   and lifecycle-coupled (Stopwatch, AsyncLocal, OnSet).
-5. `Errors.Push` setting `error.App = this.App` to wire the back-ref needed
-   by `Error.Callback` materialisation. Confirm this is the right injection
-   point, or move materialisation off `Error`.
-6. Sync-over-async (`.GetAwaiter().GetResult()`) in `Data.EnsureSigned` and
-   `Callback.Serialize`/`Deserialize`. Stage-3 doc explicitly endorsed it
-   for `Signature`; coder extended to Serialize/Deserialize for symmetry.
-7. `PlangDataSerializer` JSON `{type, value, signature}` envelope. Stage-3
-   left format open. Decide whether to pin a real wire format (CBOR,
-   length-prefixed, etc.) or accept JSON.
-8. `ErrorCallback.Serialize` narrow shape — only CallStack frames + Variables,
-   not full Snapshot fidelity (Errors.Trail, Providers regs, Statics bags
-   don't round-trip across the wire). Adequate for current tests; production
-   needs a richer wire pass.
-9. `os/system/builder/.build/buildgoal.pr` hand-edit — fixed `Actor:
-   %subGoal%` and `KeyName: subGoal` to null in the foreach BuildSubGoal
-   step, because `plang build` was broken on a fresh app. Decide whether
-   this is the right fix or whether the builder LLM prompt needs work.
+1. **Lazy `Data.Signature` + `RawSignature` + sync-over-async `EnsureSigned`.**
+   `app/data/this.Envelope.cs:39, 58, 66` and `app/channels/serializers/serializer/plang/Data.cs:43, 48, 87, 92`.
+   The carve-out: `Signature` is not auto-populated on read; callers must
+   call `EnsureSigned()` explicitly (which goes sync-over-async into the
+   signer), and the serializer uses `RawSignature` to peek without
+   triggering populate. Decide whether the lazy shape is right or whether
+   signing should be eager / async all the way through.
+2. **`PlangDataSerializer` JSON `{type, value, signature}` wire format.**
+   `app/channels/serializers/serializer/plang/Data.cs`. Decide whether to
+   pin a real wire format (CBOR, length-prefixed, etc.) or formally
+   accept JSON.
 
-### Stale PLang tests — need builder/verb work
+### Live item — builder
 
-Four `Tests/Callback/*/Start.test.goal` stubs are stale because the PLang
-surface they test doesn't exist yet:
+3. **`os/system/builder/.build/buildgoal.pr` hand-edit.** Coder nulled
+   `Actor: %subGoal%` and `KeyName: subGoal` on the foreach BuildSubGoal
+   step because `plang build` was broken on a fresh app. Decide whether
+   that's the right fix or whether the builder LLM prompt needs work.
+   Independent of the snapshot merge; verify still present and still
+   needed on next builder pass.
 
-10. **AskVarsOnNonAsk** — needs builder validator that rejects `vars:`
-    annotation on non-`output.ask` actions. Build-time check; lives in
-    `system/builder/`. Real builder work.
-11. **CallbackTimeoutSetting** — needs PLang verb that writes
-    `app.Callback.Signature.ExpiresInMs`. Either extend `variable.set` to
-    walk into App config, or add a `callback.timeout` action. ~30 lines
-    once approach is picked.
-12. **DurabilityRoundTrip** — needs PLang surface for writing `Data` with
-    explicit `application/plang+data` mime to a file and reading it back
-    into a different App. Needs `file.write` (or similar) to take a mime
-    hint and dispatch through the registered serializer.
-13. **TamperedSignature** — trivial once (12) lands; needs a Plang surface
-    for byte-level mutation of a serialised payload. Without (12), no
-    Plang reach into raw bytes.
+### Resolved by the snapshot merge
 
-(11) and (12)+(13) are entangled with (1) and (7) respectively — pick up
-together when the ratification sweep happens.
-
-### Other branch-level loose ends
-
-14. **HTTP wire transport for ask-user** — Stage 4 doc explicitly listed
-    this as separate work. Without it, real ask-user pause/resume across an
-    HTTP boundary doesn't exist; only the in-process resume in
-    `AskCallback.Run` works. Needs its own design pass.
-15. **Real symmetric crypto** — already tracked in the
-    `2026-05-05 — crypto.encrypt / crypto.decrypt real implementation`
-    entry above. Listed here only for cross-reference.
-16. **Builder revalidation after `buildgoal.pr` hand-edit** — per CLAUDE.md
-    "When the builder changes — revalidate. All previously passing tests
-    must be rebuilt and rerun." Coder didn't trigger a global rebuild; the
-    edit only affects fresh-app foreach behaviour, so probably fine.
-    Confirm on next builder pass.
+- ~~`AskCallback.Answer` init-only field~~ — type gone. The remaining
+  `%!ask.answer%` sentinel question is tracked under the standalone
+  `2026-05-20 — Replace !ask.answer sentinel` entry.
+- ~~`RestoredFrame` surrogate~~ — gone, no grep hits.
+- ~~`Errors.Push` setting `error.App` for `Error.Callback`~~ — `ErrorCallback`
+  type is gone (only a stale comment at `app/errors/Error.cs:41`); Snapshot
+  owns materialisation.
+- ~~`ErrorCallback.Serialize` narrow wire shape~~ — same; Snapshot's wire
+  shape supersedes. Per-channel section-filtering is tracked under the
+  standalone `2026-05-20 — Per-channel serializer for stateless suspend`
+  entry.
+- ~~Stale `Tests/Callback/*` stubs (AskVarsOnNonAsk, CallbackTimeoutSetting,
+  DurabilityRoundTrip, TamperedSignature)~~ — `Tests/Callback/` still
+  exists (`AskVarsResumeBindsValue`, `ErrorCallbackOutsideHandler`,
+  `ErrorCallbackSurface`, `InProcessResume`, `RunCallbackVerb`,
+  `StatefulAskMidGoalBindsValue`, `StatelessCrossGoalResumes`) but
+  the four named stubs are not there. Treat as resolved-by-rehoming;
+  confirm during the next test triage that nothing under
+  `Tests/Callback/` is stale post-merge, and consider relocating the
+  folder to `Tests/Snapshot/`.
+- ~~HTTP wire transport "for ask-user"~~ — re-scoped as a **Snapshot**
+  transport question; folded into the standalone
+  `2026-05-11 — End-to-end PLang tests for full-app Snapshot save+restore round-trip`
+  entry, which already pins it to the same work.
+- ~~Builder revalidation after `buildgoal.pr` hand-edit~~ — superseded by
+  builder churn since; not worth re-tracking separately.
 
 ## 2026-05-06 — mobile signed code via channels (`actions.run`)
 
@@ -558,68 +543,126 @@ Context: All 7 snapshot subsystems have C# TUnit round-trip tests. No `Tests/Sna
 
 ---
 
-## 2026-05-15 — Migrate `Dictionary<string, object?>` → `List<Data>` across codebase
+## 2026-05-15 — Typed-value pass: targeted `Dictionary` → `List<Data>` / tightening
 
-The OBP smell: `Dictionary<string, object?>` is an untyped key-value bag
-used in several places to attach structured context — `Error.Details`,
-LLM tool-call params, action defaults, builder catalog parameters, etc.
-`Data` (App.Data.@this) is the canonical typed value container we already
-use everywhere else (Name + Value + Type + Properties), and it carries
-type information that the dict shape erases.
+> **Rewritten 2026-05-24** after a real source survey (137 hits, 46 files).
+> The original framing ("migrate across codebase") was wrong: most
+> `Dictionary<string, object?>` usage is load-bearing (JSON deserialization,
+> Variables backing store, OpenAI HTTP body, settings/statics registries,
+> builder catalog type-guards). Real scope is four small clusters and a
+> shared navigator prereq.
 
-Replacing `Dictionary<string, object?>` with `List<Data>` makes:
-- Every value carry its declared type (no more `value is JsonElement ? ...`
-  guards downstream)
-- Lookup uniform with how Variables, Parameters, Defaults already work
-  (`.FirstOrDefault(d => d.Name == ...)`)
-- PLang-side `%!error.Details.KEY%` resolution use the same navigator
-  the rest of the runtime uses
+### Pre-work — navigator branch for `List<Data>` by `.Name`
 
-### First site: `Error.Details`
+`app/variables/navigators/` has no branch today that walks
+`IEnumerable<Data>` and resolves a path segment to the matching `.Name`.
+`List.cs` is `Data`-aware only to avoid double-wrapping list elements;
+nothing handles "find Data in list by name." Add this branch first
+(probably a sibling to `Dictionary.cs`, e.g. `DataList.cs`) and pin it
+with a navigator-level test. Every cluster below depends on this; no
+cluster ships PLang-side resolution without it.
 
-`PLang/App/Errors/Error.cs:28` — currently `Dictionary<string, object?>?`.
-Two construction sites (`OpenAiProvider.cs:255, 346` — JsonParseError and
-LLM error response). Migration:
+### Cluster C — `Error.Details` + `AssertionError.Variables` (ship first)
 
-```csharp
-// Before
-Details = new Dictionary<string, object?> {
-    ["RawResponse"] = rawResponse,
-    ["Model"] = model,
-}
+Smallest, lowest risk, proves the construction + navigator shape end-to-end.
 
-// After
-Details = new List<Data> {
-    new Data("RawResponse", rawResponse, "string"),
-    new Data("Model", model, "string"),
-}
-```
+- Fields: `app/errors/Error.cs:28 Details`, `app/errors/AssertionError.cs:21 Variables`.
+- Construction sites: `app/data/JsonString.cs:83`, `app/modules/llm/code/OpenAi.cs:242`, `:333`.
+- Reader: `app/errors/Error.cs:215-222` (display only; no `.Details["X"]` indexer readers).
+- PLang-side: enables `%!error.Details.KEY%` for the first time (no test
+  exists today — add one to lock the navigator).
+- `AssertionError.Variables` is a Variables-snapshot dict; converting
+  means `Variables.Snapshot()` either grows a `SnapshotAsData()` sibling
+  or the assertion site converts at capture time. Pick whichever keeps
+  `Variables` itself dict-internal (don't ripple into Variables core).
 
-Display in Error.cs needs updating: iterate `Details` as `List<Data>`,
-show Name + Value + Type. PLang resolver path `%!error.Details.KEY%`
-needs to navigate a `List<Data>` by `.Name` instead of dict key lookup.
+### Cluster A — Mock parameter capture
 
-### Sweep targets
+Semantically a parameter list; the dict shape erases types needed for
+replay matching.
 
-Use `grep -rn "Dictionary<string, object" /workspace/plang/PLang/ |
-grep -v "Tests\|\.md"` and triage each:
-- True name-keyed structured context → migrate to `List<Data>`
-- Genuine arbitrary-key map (rare — settings, registries) → keep dict
-- JSON-roundtrip-only payload (boundary with external system) → keep dict
+- `app/modules/mock/action.cs:17` `Parameters`, `:93 CaptureParameters`,
+  `:107` matchers.
+- `app/modules/mock/types.cs:15 RecordCall(parameters)`, `:27 Parameters`.
+- Tests under `Tests/Mock/` need a pass once the capture/match shape changes.
 
-Likely candidates beyond Error.Details (need verification):
-- `LlmMessage.ToolCalls[].Arguments` — currently dict, semantically a
-  parameter list
-- Action `Defaults` / `Parameters` — already `List<Data>` in some places,
-  dict in others; harmonize
-- Cache entries / settings rows — likely keep dict
+### Cluster B — Schema / Action catalog rendering
 
-### Why this is a sweep, not a one-shot
+Removes hand-built nested-dict literals in the builder catalog path.
 
-Each call site has a reader pattern (`.Details["X"]`) that mechanically
-changes; combined with PLang-side navigator code and tests, it's wide
-but shallow. Best done as one focused branch when the channel/builder
-work has settled — otherwise it'll fight with active diffs.
+- `app/modules/Schema/Spec/Action.cs:18 Params`.
+- `app/modules/Schema/Render.cs:123-137` (`BuildActionRecord` + nested
+  param dicts).
+- **Risk:** the rendered JSON is LLM-facing — the wire shape that goes
+  into builder prompts must stay byte-stable, or the builder's behavior
+  shifts. Internal model becomes `List<Data>`; the JSON serializer for
+  catalog output keeps emitting the existing object shape. Verify with
+  a builder regression run after the change.
+
+### Cluster D — HTTP / Signing Headers (separate motivation)
+
+Not a `List<Data>` migration — values are always strings. The right
+fix is type-tightening to `Dictionary<string, string>` (or
+`IReadOnlyList<KeyValuePair<string, string>>` if multi-value matters
+for HTTP). Bundled into this plan because it surfaces in the same
+grep and reads as "the Dictionary problem" from a distance.
+
+- `app/modules/signing/{sign,verify,Signature}.cs` — `Headers` fields.
+- `app/modules/http/{request,upload,download,configure,Config}.cs` —
+  `Headers` / `DefaultHeaders` fields.
+- `app/modules/http/code/Default.cs:385, 407, 412` — construction and
+  resolution sites.
+- Decide multi-value question first (HTTP allows repeated headers; if
+  PLang doesn't need that, `Dictionary<string, string>` is fine).
+
+### Explicit non-targets (verified boundary, keep as dict)
+
+- `app/data/this.cs` JSON deserialize + `WalkDict` — the dict-walker IS
+  the path-navigator's canonical engine.
+- `app/variables/this.cs` `ToDictionary()` / `Snapshot()` — Variables
+  backing store; navigator depends on it.
+- `app/modules/llm/code/OpenAi.cs` request body / tool args — OpenAI HTTP
+  wire format.
+- `app/Statics/this.cs`, `app/config/Scope.cs`, `app/snapshot/this.cs` —
+  registries with genuine arbitrary keys.
+- `app/modules/variable/set.cs:133` — PLang user setting a variable to a
+  parsed-JSON dict value; that's the value model.
+- `app/modules/builder/code/Default.cs` / `identity/code/Default.cs` —
+  type-guards walking parsed JSON/YAML results.
+- `app/modules/Schema/Render.cs:159 Fluid`, `list/group.cs:31` — transient
+  local dicts for template rendering / grouping output.
+
+### Sequencing
+
+1. **Navigator branch** (pre-work) — adds `IEnumerable<Data>`-by-Name
+   resolution, with a navigator-level test. Lands alone; nothing else
+   ships without this.
+2. **Cluster C** (Errors) — smallest, proves end-to-end, adds the first
+   PLang test for `%!error.Details.KEY%`.
+3. **Cluster A** (Mock) — same construction shape as C, low risk.
+4. **Cluster B** (Schema) — gated on byte-stable LLM-facing JSON;
+   needs a builder regression run.
+5. **Cluster D** (Headers) — independent type-tightening; ship anytime
+   after the others (or first, since it doesn't depend on the navigator).
+
+### Branching
+
+Cross-cutting cleanup, not a single module-action. Pattern: open one
+branch per cluster (e.g. `dict-to-data/errors`, `dict-to-data/mock`,
+`dict-to-data/schema`, `headers-tightening`), all rooted off main.
+The navigator pre-work either lands first on its own branch or piggybacks
+on Cluster C and is reviewed as the first stage of that branch.
+
+### Exit criteria
+
+- The four clusters above are migrated or explicitly closed as
+  not-worth-it after attempt.
+- `grep -rn "Dictionary<string, object" PLang/` returns only items in
+  the "Explicit non-targets" list above (or new ones added with a
+  comment explaining why they stay dict).
+- The navigator branch has a test covering `%foo.X%` where `foo` is a
+  `List<Data>` with a `Data { Name = "X" }`.
+- One `.test.goal` regression pins `%!error.Details.KEY%`.
 
 ## 2026-05-20 — Replace `!ask.answer` sentinel with explicit Answer parameter pattern
 

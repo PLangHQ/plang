@@ -1,6 +1,7 @@
 using System.Text;
 using app.types;
 using app.errors;
+using app.Utils;
 using Verb = global::app.types.path.permission.verb.@this;
 using ReadVerb = global::app.types.path.permission.verb.Read;
 using WriteVerb = global::app.types.path.permission.verb.Write;
@@ -17,9 +18,32 @@ namespace app.types.path.file;
 /// </summary>
 public sealed partial class @this
 {
+    /// <summary>
+    /// Loads a .NET assembly from this path. Gated by
+    /// <see cref="@this.Authorize"/> on <c>Verb { Execute }</c> — Read grants
+    /// do NOT cover Execute (Unix r/w/x model). The actor sees a separate
+    /// "execute" prompt distinct from "read", so granting read access to a
+    /// folder doesn't accidentally permit code loading from it.
+    /// </summary>
+    public override async Task<data.@this<System.Reflection.Assembly>> LoadAssemblyAsync()
+    {
+        if (await AuthGate(new Verb { Execute = new global::app.types.path.permission.verb.Execute() }) is { } early)
+            return data.@this<System.Reflection.Assembly>.From(early);
+        try
+        {
+            var asm = System.Reflection.Assembly.LoadFrom(Absolute);
+            return data.@this<System.Reflection.Assembly>.Ok(asm);
+        }
+        catch (System.Exception ex) when (ex is System.IO.FileNotFoundException or System.IO.FileLoadException or System.BadImageFormatException)
+        {
+            return data.@this<System.Reflection.Assembly>.FromError(
+                new errors.ServiceError($"Failed to load assembly: {ex.Message}", "AssemblyLoadFailed", 500));
+        }
+    }
+
     private void EnsureParentDir()
     {
-        var dir = System.IO.Path.GetDirectoryName(Absolute);
+        var dir = PathHelper.GetDirectoryName(Absolute);
         if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
             System.IO.Directory.CreateDirectory(dir);
     }
@@ -48,7 +72,7 @@ public sealed partial class @this
                 var snapshotClr = snapshotType.ClrType;
                 if (snapshotClr != null && snapshotClr != typeof(string))
                 {
-                    var (converted, _) = global::app.types.@this.TryConvertTo(snapshot, snapshotClr);
+                    var (converted, _) = global::app.types.@this.TryConvertTo(snapshot, snapshotClr, Context!);
                     if (converted != null)
                         return new data.@this(Raw, converted, snapshotType);
                 }
@@ -79,7 +103,10 @@ public sealed partial class @this
                 var clr = type.ClrType;
                 if (clr != null && clr != typeof(string))
                 {
-                    var (converted, _) = global::app.types.@this.TryConvertTo(text, clr);
+                    // Pass Context so the per-call options bag uses a Context-
+                    // bound PathJsonConverter — Path fields inside the result
+                    // (Goal.Path, GoalCall.PrPath, ...) land fully wired.
+                    var (converted, _) = global::app.types.@this.TryConvertTo(text, clr, Context!);
                     content = converted ?? text;
                 }
                 else
@@ -113,7 +140,7 @@ public sealed partial class @this
     /// <see cref="ExistsAsync"/> — the same shape as <c>HttpPath.AsBooleanAsync</c>:
     /// a denied or errored probe answers false. Keeps the existence check behind
     /// <see cref="@this.AuthGate"/> so an out-of-root probe still needs a Read
-    /// grant (in-root is free via IsInRoot). (codeanalyzer v2 N1)
+    /// grant (in-root is free via IsInRoot).
     /// </summary>
     public override async Task<bool> AsBooleanAsync()
     {
@@ -290,7 +317,7 @@ public sealed partial class @this
     private static string ResolveDestinationPath(@this source, @this destination)
     {
         if (System.IO.File.Exists(source.Absolute) && System.IO.Directory.Exists(destination.Absolute))
-            return System.IO.Path.Combine(destination.Absolute, source.FileName);
+            return PathHelper.Combine(destination.Absolute, source.FileName);
         return destination.Absolute;
     }
 
@@ -299,14 +326,14 @@ public sealed partial class @this
         System.IO.Directory.CreateDirectory(dest);
         foreach (var file in System.IO.Directory.GetFiles(src))
         {
-            var fileName = System.IO.Path.GetFileName(file);
-            System.IO.File.Copy(file, System.IO.Path.Combine(dest, fileName), overwrite);
+            var fileName = PathHelper.GetFileName(file);
+            System.IO.File.Copy(file, PathHelper.Combine(dest, fileName), overwrite);
         }
         if (!includeSubfolders) return;
         foreach (var subDir in System.IO.Directory.GetDirectories(src))
         {
-            var dirName = System.IO.Path.GetFileName(subDir);
-            CopyDirectory(subDir, System.IO.Path.Combine(dest, dirName), overwrite, includeSubfolders);
+            var dirName = PathHelper.GetFileName(subDir);
+            CopyDirectory(subDir, PathHelper.Combine(dest, dirName), overwrite, includeSubfolders);
         }
     }
 
@@ -407,7 +434,7 @@ public sealed partial class @this
             // Directory transfer ------------------------------------------------
             if (System.IO.Directory.Exists(Absolute))
             {
-                var destDir0 = System.IO.Path.GetDirectoryName(destination.Absolute);
+                var destDir0 = PathHelper.GetDirectoryName(destination.Absolute);
                 if (!string.IsNullOrEmpty(destDir0) && !System.IO.Directory.Exists(destDir0))
                     System.IO.Directory.CreateDirectory(destDir0);
 
@@ -427,7 +454,7 @@ public sealed partial class @this
 
             // File transfer -----------------------------------------------------
             var destPath = ResolveDestinationPath(this, destination);
-            var destDir = System.IO.Path.GetDirectoryName(destPath);
+            var destDir = PathHelper.GetDirectoryName(destPath);
             if (!string.IsNullOrEmpty(destDir) && !System.IO.Directory.Exists(destDir))
                 System.IO.Directory.CreateDirectory(destDir);
 

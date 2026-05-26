@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "v1 findings closed; F1/F2/F3 fixes structurally clean; 5 LOW-severity follow-ups (Parent setter cycle guard, bare catch, IsUnder string-alloc, ValidatePath probes, ScanOrphans inverted filter) — none blocking."
+}

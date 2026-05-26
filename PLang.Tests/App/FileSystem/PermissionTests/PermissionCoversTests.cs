@@ -9,7 +9,7 @@ using Write = global::app.types.path.permission.verb.Write;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 
-/// Stage 1 — Batch 2: Permission.Covers wires path match + verb cover; Match
+/// Batch 2: Permission.Covers wires path match + verb cover; Match
 /// dispatch is closed (unknown enum → false); JSON round-trip is lossless.
 public class PermissionCoversTests
 {

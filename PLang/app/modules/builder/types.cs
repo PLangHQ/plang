@@ -17,5 +17,5 @@ public partial class types : IContext
     [Code]
     public partial IBuilder Builder { get; }
 
-    public Task<data.@this> Run() => Task.FromResult(Builder.Types(this));
+    public Task<data.@this> Run() => Builder.Types(this);
 }

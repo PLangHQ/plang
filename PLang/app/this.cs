@@ -8,6 +8,7 @@ using app.modules.settings;
 using app.errors;
 using app.variables;
 using app.modules;
+using app.Utils;
 using Goal = app.goals.goal.@this;
 
 namespace app;
@@ -71,13 +72,25 @@ public sealed partial class @this : IAsyncDisposable
     public string? OsDirectory { get; set; }
 
     /// <summary>
+    /// Parent app, when this app was constructed as a child of another.
+    /// A child inherits its parent's filesystem scope: <c>path.@this.IsInRoot</c>
+    /// walks the Parent chain, so a child app rooted at a narrower
+    /// subdirectory still treats the parent's <c>AbsolutePath</c> as in-root.
+    /// Null for top-level apps.
+    /// </summary>
+    public app.@this? Parent { get; set; }
+
+    /// <summary>
     /// The computed <c>os/</c> folder next to the executable. App-level constant
     /// (not file-scheme-specific): the path base's <c>Authorize</c> and
     /// <c>FilePath.ValidatePath</c> both anchor system goals against it, so it
     /// belongs on <c>app</c> rather than on a concrete path subclass.
     /// </summary>
+    // The os/ root anchor. Pure name math against AppContext.BaseDirectory;
+    // path.Resolve can't be used because App is still constructing and has
+    // no Context yet, so this routes through PathHelper directly.
     public string OsAbsolutePath =>
-        global::System.IO.Path.GetFullPath(global::System.IO.Path.Combine(AppContext.BaseDirectory, "os"));
+        PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, "os"));
 
     /// <summary>
     /// Environment name (e.g., "production", "development").
@@ -360,9 +373,22 @@ public sealed partial class @this : IAsyncDisposable
     /// </summary>
     public async Task Load()
     {
-        var path = global::System.IO.Path.Combine(AbsolutePath, ".build", "app.pr");
-        if (!global::System.IO.File.Exists(path)) return;
-        var json = await global::System.IO.File.ReadAllTextAsync(path);
+        var prPath = global::app.types.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var exists = await prPath.ExistsAsync();
+        if (!exists.Success || exists.Value != true) return;
+        var readResult = await prPath.ReadText();
+        if (!readResult.Success) return;
+        var json = readResult.Value as string;
+        // .pr deserialized to Goal via FilePath.ReadText's MIME path — fall back
+        // to the raw text by reading directly through ReadBytes when .pr's MIME
+        // converted the JSON to a typed object. For app.pr we only need the
+        // identity fields.
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            var bytes = await prPath.ReadBytes();
+            if (!bytes.Success || bytes.Value == null) return;
+            json = global::System.Text.Encoding.UTF8.GetString(bytes.Value);
+        }
         if (string.IsNullOrWhiteSpace(json)) return;
         try
         {
@@ -389,7 +415,10 @@ public sealed partial class @this : IAsyncDisposable
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
-        Converters = { new global::app.channels.serializers.TimeSpanIso8601() }
+        Converters = {
+            new global::app.channels.serializers.TimeSpanIso8601(),
+            new global::app.types.path.JsonConverter()
+        }
     };
 
     public async Task<data.@this> Save()
@@ -399,11 +428,9 @@ public sealed partial class @this : IAsyncDisposable
         var json = JsonSerializer.Serialize(
             new { id = Id, name = Name, created = Created, updated = Updated, version = Version },
             CamelCaseIndented);
-        var path = global::System.IO.Path.Combine(AbsolutePath, ".build", "app.pr");
-        var dir = global::System.IO.Path.GetDirectoryName(path);
-        if (dir != null && !global::System.IO.Directory.Exists(dir))
-            global::System.IO.Directory.CreateDirectory(dir);
-        await global::System.IO.File.WriteAllTextAsync(path, json);
+        var prPath = global::app.types.path.@this.Resolve("/.build/app.pr", System.Context!);
+        var written = await prPath.WriteText(json);
+        if (!written.Success) return written;
         return app.data.@this.Ok(this);
     }
 
@@ -497,7 +524,7 @@ public sealed partial class @this : IAsyncDisposable
             return app.data.@this.FromError(new global::app.errors.ServiceError(
                 "No goal file specified. Use: plang <goalfile>", "NoGoalFile", 400));
 
-        var goalCall = new GoalCall { PrPath = goalFile };
+        var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(goalFile, context) };
         var goalResult = await goalCall.GetGoalAsync(this, context);
         if (!goalResult.Success) return goalResult;
 
@@ -552,8 +579,9 @@ public sealed partial class @this : IAsyncDisposable
         if (Tester.IsEnabled)
             return global::app.modules.settings.Sqlite.InMemory($"system-{Id}");
 
-        var dbDir = global::System.IO.Path.Combine(AbsolutePath, ".db");
-        var dbPath = global::System.IO.Path.Combine(dbDir, "system.sqlite");
+        // Lift to Path: AuthGate fires inside the Sqlite ctor on Write,
+        // parent dir creation via path.Mkdir.
+        var dbPath = global::app.types.path.@this.Resolve("/.db/system.sqlite", System.Context!);
         return new global::app.modules.settings.Sqlite(dbPath);
     }
 

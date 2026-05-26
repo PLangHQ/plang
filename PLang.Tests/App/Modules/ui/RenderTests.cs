@@ -662,14 +662,13 @@ public class RenderTests : IDisposable
     {
         // Create a goal in a subdirectory and a partial next to it
         WriteTemplateFile("goals/templates/footer.html", "Footer content");
+        var ctx = _app.User.Context;
         var goal = new Goal
         {
             Name = "SubGoal",
-            Path = "goals/SubGoal.goal"
+            Path = global::app.types.path.@this.Resolve("/goals/SubGoal.goal", ctx)
         };
         _app.Goals.Add(goal);
-
-        var ctx = _app.User.Context;
         ctx.Goal = goal;
         // The include should resolve relative to the goal's directory (goals/)
         var action = new Render

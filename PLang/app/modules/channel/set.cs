@@ -38,7 +38,7 @@ public partial class Set : IContext
         var actor = Actor?.Value ?? Context.Actor;
 
         var goalCall = Goal.Value;
-        if (goalCall == null || string.IsNullOrEmpty(goalCall.Name) && string.IsNullOrEmpty(goalCall.PrPath))
+        if (goalCall == null || string.IsNullOrEmpty(goalCall.Name) && goalCall.PrPath == null)
             return app.data.@this.FromError(new ServiceError("Goal is required", "ValueRequired", 400));
 
         var goalResult = await goalCall.GetGoalAsync(Context.App, Context);

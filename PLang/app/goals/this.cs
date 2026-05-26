@@ -12,8 +12,15 @@ namespace app.goals;
 /// </summary>
 public sealed class @this
 {
-    private readonly ConcurrentDictionary<string, goal.@this> _goals = new(StringComparer.OrdinalIgnoreCase);
-    private readonly ConcurrentDictionary<string, goal.@this> _byPath = new(StringComparer.OrdinalIgnoreCase);
+    // Path-keyed dicts. Path's own Equals/GetHashCode uses RootComparison
+    // (OrdinalIgnoreCase on Windows, Ordinal on Linux) — no separate
+    // StringComparer needed; the canonical-form keying lives on Path itself.
+    private readonly ConcurrentDictionary<global::app.types.path.@this, goal.@this> _goals = new();
+    private readonly ConcurrentDictionary<global::app.types.path.@this, goal.@this> _byPath = new();
+    // Separate by-name index for fuzzy `Get("Name")` — name lookups are
+    // a different question from Path equality and want OrdinalIgnoreCase
+    // semantics regardless of OS.
+    private readonly ConcurrentDictionary<string, goal.@this> _byName = new(StringComparer.OrdinalIgnoreCase);
     internal app.@this App { get; set; } = null!;
 
     /// <summary>
@@ -33,11 +40,21 @@ public sealed class @this
     public void Add(goal.@this goal)
     {
         goal.App = App;
-        if (string.IsNullOrEmpty(goal.PrPath))
+        if (goal.PrPath == null)
             throw new ArgumentException($"Goal '{goal.Name}' must have a Path set. PrPath is derived from Path and is required for keying.");
         _goals[goal.PrPath] = goal;
-        if (!string.IsNullOrEmpty(goal.Path))
+        if (goal.Path != null)
             _byPath[goal.Path] = goal;
+        // _byName is intentionally a *fuzzy* last-write-wins index:
+        // sub-goals at different paths can legitimately share a Name (e.g.
+        // setup goals in /Setup.goal AND /Setup/Setup.goal), and Get() falls
+        // back to a by-form scan over _byPath when the exact name lookup
+        // misses or returns the "wrong" same-name goal. Exact lookup via
+        // _goals (PrPath-keyed) and _byPath (Path-keyed) stay collision-free.
+        // Don't throw on name collision here — the by-form scan is the
+        // disambiguator, and throwing would break legitimate same-name use.
+        if (!string.IsNullOrEmpty(goal.Name))
+            _byName[goal.Name] = goal;
     }
 
     /// <summary>
@@ -53,38 +70,42 @@ public sealed class @this
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             name = name[..^5];
 
-        // Try by PrPath key (exact match)
-        if (_goals.TryGetValue(name, out var goal) && !goal.IsSetup)
+        if (_byName.TryGetValue(name, out var goal) && !goal.IsSetup)
             return goal;
 
-        // Try by path index
-        if (_byPath.TryGetValue(name, out goal) && !goal.IsSetup)
-            return goal;
-
-        // Search by goal Name across all values (since _goals is keyed by PrPath)
-        goal = _goals.Values.FirstOrDefault(g => !g.IsSetup
-            && g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (goal != null)
-            return goal;
-
-        // Try with different extensions/variations
-        var variations = new[]
+        // Path-form lookup — caller passed a path string (.goal or .pr).
+        // Scan _goals.Values (PrPath-keyed) and _byPath.Values (Path-keyed) by
+        // their canonical Relative form. Path-keyed dicts can't be queried by
+        // raw string, but the candidate set is small.
+        var leaf = name.TrimStart('/', '\\').Replace('\\', '/');
+        bool MatchesByForm(string canonical) =>
+            canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
+            || canonical.Equals(leaf + ".goal", StringComparison.OrdinalIgnoreCase)
+            || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase)
+            || canonical.Equals("/" + leaf + ".goal", StringComparison.OrdinalIgnoreCase);
+        foreach (var kv in _byPath)
         {
-            name + ".goal",
-            name.TrimStart('/'),
-            name.Replace('\\', '/'),
-            name.Replace('/', '\\')
-        };
-
-        foreach (var variation in variations)
+            if (kv.Value.IsSetup) continue;
+            if (MatchesByForm(kv.Key.ToString().Replace('\\', '/')))
+                return kv.Value;
+        }
+        // PrPath form (`.build/foo.pr`) used by callstack.Restore — match the
+        // _goals dict by canonical Relative.
+        foreach (var kv in _goals)
         {
-            if (_goals.TryGetValue(variation, out goal) && !goal.IsSetup)
-                return goal;
-            if (_byPath.TryGetValue(variation, out goal) && !goal.IsSetup)
-                return goal;
-            goal = _goals.Values.FirstOrDefault(g => !g.IsSetup
-                && g.Name.Equals(variation, StringComparison.OrdinalIgnoreCase));
-            if (goal != null)
+            if (kv.Value.IsSetup) continue;
+            var canonical = kv.Key.ToString().Replace('\\', '/');
+            if (canonical.Equals(leaf, StringComparison.OrdinalIgnoreCase)
+                || canonical.Equals("/" + leaf, StringComparison.OrdinalIgnoreCase))
+                return kv.Value;
+        }
+
+        // Slash-qualified — match a sub-goal of the qualified parent path.
+        if (name.Contains('/') || name.Contains('\\'))
+        {
+            var qualLeaf = name.Replace('\\', '/');
+            var leafName = qualLeaf[(qualLeaf.LastIndexOf('/') + 1)..];
+            if (_byName.TryGetValue(leafName, out goal) && !goal.IsSetup)
                 return goal;
         }
 
@@ -112,14 +133,17 @@ public sealed class @this
         if (isAbsolute)
             cleanName = cleanName.TrimStart('/', '\\');
 
-        var file = System.IO.Path.GetFileName(cleanName);
-        var nameDir = System.IO.Path.GetDirectoryName(cleanName) ?? "";
+        // Split on the last separator without reaching for System.IO.Path —
+        // this is pure name math and shouldn't pretend to be a filesystem op.
+        var lastSep = cleanName.LastIndexOfAny(new[] { '/', '\\' });
+        var file = lastSep >= 0 ? cleanName[(lastSep + 1)..] : cleanName;
+        var nameDir = lastSep >= 0 ? cleanName[..lastSep] : "";
 
         // If relative and we have a calling folder, try resolving relative to it first
         if (!isAbsolute && !string.IsNullOrEmpty(callingFolderPath))
         {
             var relativeDir = callingFolderPath.Trim('/', '\\');
-            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : System.IO.Path.Combine(relativeDir, nameDir);
+            var combinedDir = string.IsNullOrEmpty(nameDir) ? relativeDir : (relativeDir + "/" + nameDir);
 
             var loaded = await TryLoadPr(combinedDir, file, name, cancellationToken);
             if (loaded != null) return loaded;
@@ -145,43 +169,49 @@ public sealed class @this
     private async Task<goal.@this?> TryLoadPr(string dir, string file, string name, CancellationToken ct)
     {
         var prFile = file.ToLowerInvariant() + ".pr";
+        var ctx = App.System.Context!;
 
-        // 1. Try user's root directory
-        var rootPath = System.IO.Path.Combine(App.AbsolutePath, dir, ".build", prFile);
-        if (System.IO.File.Exists(rootPath))
+        // 1. Try user's root via path verbs (gated). Anchor at "/" (App root),
+        // append dir, then .build/<file>.pr. ExistsAsync fast-passes in-root.
+        var rootCandidate = global::app.types.path.@this.Resolve("/", ctx);
+        if (!string.IsNullOrEmpty(dir)) rootCandidate = rootCandidate.Combine(dir);
+        rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
+        var rootExists = await rootCandidate.ExistsAsync();
+        if (rootExists.Success && rootExists.Value == true)
         {
-            var result = await LoadFromFileAsync(App, rootPath, cancellationToken: ct);
+            var result = await LoadFromFileAsync(App, rootCandidate.Absolute, cancellationToken: ct);
             if (result.Success)
             {
                 var goal = result.Value as goal.@this;
                 if (goal is { IsSetup: true }) return null;
-                if (goal != null && !string.IsNullOrEmpty(name))
-                    _byPath[name] = goal;
+                // LoadFromFileAsync → Add() already indexed _byName[goal.Name].
+                // Writing _byName[name] again under a user-provided alias (e.g.
+                // "Foo" while goal.Name == "foo/bar") would create a stale-cache
+                // hit on future Get("Foo") after Remove(goal.Name). Skip it —
+                // the by-form scan in Get() handles alias lookups.
                 return goal;
             }
         }
 
-        // 2. Try os directory — only for paths under system/
-        if (!string.IsNullOrEmpty(App.OsDirectory))
+        // 2. /system/* fallback: path.Resolve already redirects /system/* to
+        // <OsDirectory>/system/* when not present under the App root, so a
+        // single Resolve covers both rings of the look-up.
+        var normalized = dir.Replace('\\', '/');
+        if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
+            || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
         {
-            var normalized = dir.Replace('\\', '/');
-            if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)
-                || normalized.Equals("system", StringComparison.OrdinalIgnoreCase))
+            var sysCandidate = global::app.types.path.@this.Resolve(
+                "/" + normalized + "/.build/" + prFile, ctx);
+            var sysExists = await sysCandidate.ExistsAsync();
+            if (sysExists.Success && sysExists.Value == true)
             {
-                // Strip the "system/" prefix — system tree lives at <OsDirectory>/system
-                var withinSystem = normalized.Length > 7 ? normalized[7..] : "";
-                var osPath = System.IO.Path.Combine(App.OsDirectory, "system", withinSystem, ".build", prFile);
-                if (System.IO.File.Exists(osPath))
+                var result = await LoadFromFileAsync(App, sysCandidate.Absolute, cancellationToken: ct);
+                if (result.Success)
                 {
-                    var result = await LoadFromFileAsync(App, osPath, cancellationToken: ct);
-                    if (result.Success)
-                    {
-                        var goal = result.Value as goal.@this;
-                        if (goal is { IsSetup: true }) return null;
-                        if (goal != null && !string.IsNullOrEmpty(name))
-                            _byPath[name] = goal;
-                        return goal;
-                    }
+                    var goal = result.Value as goal.@this;
+                    if (goal is { IsSetup: true }) return null;
+                    // Same reason as above: Add() did the canonical _byName write.
+                    return goal;
                 }
             }
         }
@@ -199,24 +229,15 @@ public sealed class @this
     /// </summary>
     public bool Remove(string name)
     {
-        // Try removing by key directly (PrPath)
-        if (_goals.TryRemove(name, out var goal))
-        {
-            if (!string.IsNullOrEmpty(goal.Path))
-                _byPath.TryRemove(goal.Path, out _);
-            return true;
-        }
-
-        // Find by name and remove by its PrPath key
-        var found = _goals.FirstOrDefault(kv => kv.Value.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-        if (found.Value != null && _goals.TryRemove(found.Key, out goal))
-        {
-            if (!string.IsNullOrEmpty(goal.Path))
-                _byPath.TryRemove(goal.Path, out _);
-            return true;
-        }
-
-        return false;
+        // Locate by name (path-keyed dict can't be queried by raw string).
+        var found = _byName.TryGetValue(name, out var byName)
+            ? byName
+            : _goals.Values.FirstOrDefault(g => g.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (found == null) return false;
+        if (found.PrPath != null) _goals.TryRemove(found.PrPath, out _);
+        if (found.Path != null) _byPath.TryRemove(found.Path, out _);
+        if (!string.IsNullOrEmpty(found.Name)) _byName.TryRemove(found.Name, out _);
+        return true;
     }
 
     /// <summary>
@@ -226,6 +247,7 @@ public sealed class @this
     {
         _goals.Clear();
         _byPath.Clear();
+        _byName.Clear();
     }
 
     /// <summary>
@@ -276,28 +298,31 @@ public sealed class @this
         if (string.IsNullOrEmpty(prPath))
             return null;
 
-        // Check cache first — return null for setup goals (only reachable via Setup.RunAsync)
-        if (_goals.TryGetValue(prPath, out var cached))
+        // Resolve the raw string through the scheme registry when App is wired
+        // so dict lookups key on the canonical Path. Test fixtures often skip
+        // App wiring — fall back to the implicit string→Path stub.
+        global::app.types.path.@this key = App?.System?.Context is { } ctx
+            ? global::app.types.path.@this.Resolve(prPath, ctx)
+            : prPath;
+        if (_goals.TryGetValue(key, out var cached))
             return cached.IsSetup ? null : cached;
-        if (_byPath.TryGetValue(prPath, out cached))
+        if (_byPath.TryGetValue(key, out cached))
             return cached.IsSetup ? null : cached;
 
-        // Resolve relative path against root directory
-        var absolutePath = System.IO.Path.IsPathRooted(prPath)
-            ? prPath
-            : System.IO.Path.Combine(App.AbsolutePath, prPath);
-
-        if (System.IO.File.Exists(absolutePath))
+        if (App == null) return null;
+        var resolved = global::app.types.path.@this.Resolve(prPath, App.System.Context!);
+        var exists = await resolved.ExistsAsync();
+        if (!exists.Success || exists.Value != true)
             return null;
 
-        var loadResult = await LoadFromFileAsync(App, absolutePath, cancellationToken: ct);
+        var loadResult = await LoadFromFileAsync(App, resolved.Absolute, cancellationToken: ct);
         if (!loadResult.Success)
             return null;
 
         var loaded = loadResult.Value as goal.@this;
         if (loaded is { IsSetup: true }) return null;
         if (loaded != null)
-            _byPath[prPath] = loaded;
+            _byPath[key] = loaded;
         return loaded;
     }
 
@@ -308,17 +333,22 @@ public sealed class @this
     {
         try
         {
-            // Normalize against the App root — the old IPLangFileSystem wrapper
-            // did this implicitly on every read; System.IO.File does not, so a
-            // relative prFilePath would otherwise resolve against the CWD.
-            prFilePath = global::app.types.path.file.@this.ValidatePath(prFilePath, app);
-
-            // .pr files can be an array of goals (multiple goals per .goal file) or a single goal object
-            var content = await System.IO.File.ReadAllTextAsync(prFilePath, cancellationToken);
-            var ext = System.IO.Path.GetExtension(prFilePath);
+            // Lift to Path verb. AuthGate(Read) fires inside; for in-root .pr
+            // files this is the silent fast-path. Resolve handles relative paths
+            // (anchored against the App root) and the /system/* → <OsDirectory>
+            // fallback.
+            var deserializeCtx = context ?? app.System.Context!;
+            var prPath = global::app.types.path.@this.Resolve(prFilePath, deserializeCtx);
+            var readResult = await prPath.ReadBytes();
+            if (!readResult.Success || readResult.Value == null)
+                return data.@this.FromError(readResult.Error ?? new Error($"Failed to read goal file: {prFilePath}"));
+            var content = System.Text.Encoding.UTF8.GetString(readResult.Value);
+            var ext = prPath.Extension;
 
             List<goal.@this>? goals = null;
             var trimmed = content.TrimStart();
+            // Channels.Serializers is per-Actor with a Context-bound
+            // PathJsonConverter baked in — Path fields land wired.
             if (trimmed.StartsWith('['))
             {
                 goals = app.System.Channels.Serializers.Deserialize<List<goal.@this>>(
@@ -364,18 +394,20 @@ public sealed class @this
     {
         try
         {
-            // Direct filesystem access for bootstrapping — the file.list action handler
-            // exists for use in PLang steps, but goal loading happens before step execution.
-            var files = System.IO.Directory.GetFiles(directory, pattern, SearchOption.AllDirectories);
+            // Lift to path.List — gated through AuthGate(Read). In-root walks
+            // fast-pass; out-of-root would prompt or deny.
+            var ctx = context ?? app.System.Context!;
+            var dirPath = global::app.types.path.@this.Resolve(directory, ctx);
+            var listed = await dirPath.List(pattern, recursive: true);
+            if (!listed.Success || listed.Value == null)
+                return data.@this.Ok(0);
+
             var loadedCount = 0;
-
-            foreach (var file in files)
+            foreach (var file in listed.Value)
             {
-                var result = await LoadFromFileAsync(app, file, context, cancellationToken);
-                if (result)
-                    loadedCount++;
+                var result = await LoadFromFileAsync(app, file.Absolute, context, cancellationToken);
+                if (result) loadedCount++;
             }
-
             return data.@this.Ok(loadedCount);
         }
         catch (Exception ex)

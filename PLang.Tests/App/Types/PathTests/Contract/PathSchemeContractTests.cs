@@ -8,7 +8,7 @@ using Path = global::app.types.path.@this;
 namespace PLang.Tests.App.Types.PathTests.Contract;
 
 /// <summary>
-/// Stage 7 — the generic contract base every scheme handler runs through. Verb
+/// The generic contract base every scheme handler runs through. Verb
 /// round-trips, Permission gating, and failure-shape uniformity asserted once,
 /// applied to every scheme via a one-line closed subclass.
 ///

@@ -41,7 +41,7 @@ public static class CallChainRenderer
         var bStep = b.Action?.Step;
         return string.Equals(a.Action?.Module, b.Action?.Module, StringComparison.Ordinal)
             && aStep?.Index == bStep?.Index
-            && string.Equals(aStep?.Goal?.Path, bStep?.Goal?.Path, StringComparison.Ordinal);
+            && Equals(aStep?.Goal?.Path, bStep?.Goal?.Path);
     }
 
     private static string FormatFrame(Call frame, int count)
@@ -49,7 +49,7 @@ public static class CallChainRenderer
         var step = frame.Action?.Step;
         var goal = step?.Goal;
         var name = goal?.Name ?? frame.Action?.Module ?? "?";
-        var path = goal?.Path ?? "";
+        var path = goal?.Path?.ToString() ?? "";
         var lineSuffix = step != null ? $":{step.LineNumber}" : "";
         var multiplier = count > 1 ? $" ×{count}" : "";
         return $"{name}{multiplier} - {path}{lineSuffix}";

@@ -1,6 +1,6 @@
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 2 — Channel.Stream concrete (the existing Channel refactored).
+// Channel.Stream concrete (the existing Channel refactored).
 // Architect: stage-2-stream-channel.md.
 
 public class Stage2_StreamChannelTests
@@ -99,9 +99,8 @@ public class Stage2_StreamChannelTests
     [Test]
     public async Task StreamChannel_Ask_HonoursConfiguredEncoding()
     {
-        // Auditor v1 A3 regression: AskCore was hard-coded to UTF-8 (StreamReader
-        // ctor with no encoding) and ignored the channel's Encoding property.
-        // With the fix it routes through ResolveEncoding() like ReadAllTextAsync.
+        // Regression guard: AskCore must route through ResolveEncoding() and
+        // honour the channel's Encoding property, not hard-code UTF-8.
         // Bytes 0xE9 0x0A = "é\n" in iso-8859-1; 0xE9 alone is an invalid UTF-8
         // start byte, so a UTF-8 reader would yield U+FFFD instead of 'é'.
         var bytes = new byte[] { 0xE9, 0x0A };

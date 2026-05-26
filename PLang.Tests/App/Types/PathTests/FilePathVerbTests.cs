@@ -7,7 +7,7 @@ using StatInfo = global::app.types.path.@this.StatInfo;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 2 — FilePath verb round-trips. In-root paths auto-grant Authorize.
+/// FilePath verb round-trips. In-root paths auto-grant Authorize.
 /// </summary>
 public class FilePathVerbTests
 {
@@ -58,7 +58,7 @@ public class FilePathVerbTests
     [Test] public async Task AsBooleanAsync_FalseBeforeWrite_TrueAfterWrite()
     {
         // path truthiness is "does it exist" — the dispatch target for
-        // `if %path% exists`. (codeanalyzer v1 F3)
+        // `if %path% exists`.
         var (app, root) = MakeApp();
         var p = At(app, root, "asbool.txt");
         await Assert.That(await p.AsBooleanAsync()).IsFalse();

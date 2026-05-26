@@ -1,14 +1,10 @@
 # App Tree — High-Level Runtime Shape
 
-A snapshot of the `app` object graph as it exists in `PLang/app/`. This is the
-canonical naming dictionary for the current runtime: when proposing fixes,
-explaining behavior, or wiring new features, use these real `app.X.Y` paths
-instead of inventing parallel names.
-
-For the per-surface deep dive (every method and parameter), see
-`/shared/app-tree/` mounted in bot containers — this file is the entry
-point that fits in one screen. When the two disagree, this file wins
-(it's tracked in the repo); update `/shared/app-tree/` to match.
+A snapshot of the `app` object graph as it exists in `PLang/app/`. This is
+the canonical naming dictionary for the current runtime: when proposing
+fixes, explaining behavior, or wiring new features, use these real
+`app.X.Y` paths instead of inventing parallel names. The source itself
+(`PLang/app/**/this.cs`) carries the per-method detail.
 
 ## Case convention
 
@@ -39,6 +35,7 @@ Seven engine concepts (`Cache`, `Builder`, `Callback`, `Settings`, `Modules`,
 ```
 app
 ├── Id, Name, Version, Created, Updated
+├── Parent                                  // child apps inherit parent filesystem scope (IsInRoot walks the chain)
 ├── AbsolutePath, OsDirectory
 ├── Environment, Culture
 ├── StartedAt, Uptime
@@ -150,6 +147,12 @@ The handler for each action is a record under `modules/<name>/`, paired with a
 See `Documentation/v0.2/object_pattern_formal.md` for OBP rules and
 `good_to_know.md` for the property-kind contract (`Data<T>` vs `[Code] T`).
 
+`app.Modules.Schema` (under `app/modules/Schema/`, PascalCase) is **not** a
+registered action module — it's the LLM action catalog object owned by
+Modules. Build a snapshot with `app.Modules.Schema.Build()`; the builder
+template and the trace viewer read from there. Lives next to the
+action-module folders for proximity to what it describes.
+
 ## Data — the universal result envelope
 
 Returned by every action. `app/data/this.cs` plus partials:
@@ -162,6 +165,7 @@ Data
 ├── Envelope wrapping  (this.Envelope.cs)
 ├── Navigation         (this.Navigation.cs — drives %var.path%)
 ├── Result helpers     (this.Result.cs)
+├── Snapshot           (this.Snapshot.cs — capture/restore for the snapshot system)
 └── Code-specific      (app/data/code/)
 ```
 
@@ -197,7 +201,19 @@ When `PLang/app/` changes:
 | Property renamed | Update the line; add a row to "What's NOT on `app`" if the old name was widely used |
 | New `Actor` surface | Update the "Actor surface" block (e.g. `Permission` added on the filesystem-permission branch) |
 
-This file is hand-curated, like `/shared/app-tree/`. Keep it short — one
-screen of structure is more valuable than a complete-but-unreadable dump.
-The deep tree (parameters, return types, every action signature) lives in
-`/shared/app-tree/` and the source itself.
+This file is hand-curated. Keep it short — one screen of structure is
+more valuable than a complete-but-unreadable dump. Per-method detail
+(parameters, return types, every action signature) lives in the source
+itself.
+
+To catch mechanical omissions (a new `app/modules/<name>/` folder, a new
+public property on `app.@this` or `actor.@this`, a new `app/data/this.*.cs`
+partial), run:
+
+```bash
+Documentation/v0.2/scripts/check-app-tree.sh
+```
+
+It reports drift only — it does not rewrite the doc. Narrative
+(annotations, the "What's NOT on `app`" table, the casing convention)
+stays hand-curated.

@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 1 — Channel base + Role + Config defaults.
+// Channel base + Role + Config defaults.
 // Architect: .bot/runtime2-channels/architect/stage-1-channel-base.md
 
 public class Stage1_ChannelBaseTests

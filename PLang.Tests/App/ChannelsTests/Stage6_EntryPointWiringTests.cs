@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 6 — Entry-point wiring + invariants + FreezeFoundational.
+// Entry-point wiring + invariants + FreezeFoundational.
 // Architect: stage-6-entry-point-wiring.md.
 // v3 cleanup: Channel.Role enum and EnsureRoleChannels are gone — invariant
 // lives on the registry as Channels.Verify; the names "output"/"error"/"input"

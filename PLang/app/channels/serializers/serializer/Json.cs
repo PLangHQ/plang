@@ -17,8 +17,16 @@ public sealed class Json : ISerializer
     private readonly JsonSerializerOptions _options;
     private readonly ConcurrentDictionary<View, Json> _viewCache = new();
 
-    public Json(JsonSerializerOptions? options = null)
+    public Json(JsonSerializerOptions? options = null) : this(options, null) { }
+
+    public Json(actor.context.@this? context) : this(null, context) { }
+
+    private Json(JsonSerializerOptions? options, actor.context.@this? context)
     {
+        // When `options` is supplied (ForView / WithIndentation paths), it
+        // already carries the PathJsonConverter via STJ's copy semantics —
+        // don't allocate a fresh one we'd throw away. Only the `??` branch
+        // builds default options, so the converter alloc lives inside it.
         _options = options ?? new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -31,7 +39,10 @@ public sealed class Json : ISerializer
             },
             Converters =
             {
-                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                context != null
+                    ? new global::app.types.path.JsonConverter(context)
+                    : new global::app.types.path.JsonConverter()
             }
         };
     }

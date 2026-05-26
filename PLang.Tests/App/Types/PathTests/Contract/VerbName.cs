@@ -1,7 +1,7 @@
 namespace PLang.Tests.App.Types.PathTests.Contract;
 
 /// <summary>
-/// Stage 7 — test-only enum naming the verbs a <see cref="IPathSchemeFixture"/> reports on
+/// Test-only enum naming the verbs a <see cref="IPathSchemeFixture"/> reports on
 /// via <see cref="IPathSchemeFixture.CanPerform"/>. Not a production type — the production
 /// verb model stays the <c>Read</c>/<c>Write</c>/<c>Delete</c> record shape under
 /// <c>app.types.path.permission.verb</c>. This enum exists only so the contract suite can

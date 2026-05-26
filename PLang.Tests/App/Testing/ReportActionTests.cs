@@ -5,13 +5,13 @@ using app.tester;
 namespace PLang.Tests.App.Tester;
 
 /// <summary>
-/// Batch 11 — test.report action.
+/// test.report action.
 /// Three output surfaces: console (always), file artifact (format-selected), and
-/// coverage tables (console). Output directory is .test/ at the app root (per Ingi Q4
-/// decision — users narrow focus via include/exclude, report stays predictable).
+/// coverage tables (console). Output directory is .test/ at the app root — users
+/// narrow focus via include/exclude, report stays predictable.
 /// Format selector: --test={"format":"json"|"junit"}. Default "json".
-/// File format is single-select; if users need both, they run twice (v1 decision).
-/// Failure rendering matches architect §4.6: Expected/Actual + Variables snapshot block.
+/// File format is single-select; if users need both, they run twice.
+/// Failure rendering: Expected/Actual + Variables snapshot block.
 /// </summary>
 public class ReportActionTests
 {
@@ -78,7 +78,7 @@ public class ReportActionTests
         await Assert.That(output.Contains("1 pass")).IsTrue();
     }
 
-    // .test/ output lives at the app root (Q4 decision). Discovery path was
+    // .test/ output lives at the app root. Discovery path was
     // rejected — users narrow tests via include/exclude instead.
     [Test]
     public async Task Report_OutputDirectory_IsDotTestRelativeToDiscoveryPath()
