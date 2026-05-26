@@ -158,14 +158,11 @@ public partial class run : IContext
 
         // Per-step timing — only top-level steps of the entry goal. Nested
         // sub-goal steps roll up because the caller's AfterStep doesn't
-        // fire until the sub-goal returns. test.Path is the entry-goal's
-        // source-relative path; step.Goal.Path arrives with a leading slash
-        // from .pr deserialization, so normalize both ends before compare.
+        // fire until the sub-goal returns.
         var stepStarts = new Dictionary<int, long>();
-        var entryGoalPath = test.Path.TrimStart('/');
         bool IsEntryGoalStep(global::app.goals.goal.steps.step.@this? step)
             => step != null
-            && string.Equals(step.Goal?.Path?.ToString().TrimStart('/'), entryGoalPath, StringComparison.Ordinal);
+            && string.Equals(step.Goal?.Path?.ToString(), test.Path, StringComparison.Ordinal);
 
         var beforeStepBinding = new EventBinding(
             app.events.EventType.BeforeStep,

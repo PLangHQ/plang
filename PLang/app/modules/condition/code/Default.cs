@@ -11,48 +11,33 @@ public sealed class Default : IEvaluator
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public async Task<data.@this<bool>> Evaluate(If action)
-    {
-        if (!action.Operator.Success || action.Operator.Value == null)
-            return global::app.data.@this<bool>.From(action.Operator);
-        try
-        {
-            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
-            return global::app.data.@this<bool>.Ok(result);
-        }
-        catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
-        {
-            return EvaluationError(action.Left, action.Operator.Value, action.Right, ex);
-        }
-    }
+    public Task<data.@this<bool>> Evaluate(If action) =>
+        EvaluateOperator(action.Operator, action.Left, action.Right);
 
-    public async Task<data.@this<bool>> Evaluate(Elseif action)
-    {
-        if (!action.Operator.Success || action.Operator.Value == null)
-            return global::app.data.@this<bool>.From(action.Operator);
-        try
-        {
-            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
-            return global::app.data.@this<bool>.Ok(result);
-        }
-        catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
-        {
-            return EvaluationError(action.Left, action.Operator.Value, action.Right, ex);
-        }
-    }
+    public Task<data.@this<bool>> Evaluate(Elseif action) =>
+        EvaluateOperator(action.Operator, action.Left, action.Right);
 
-    public async Task<data.@this<bool>> Evaluate(Compare action)
+    public Task<data.@this<bool>> Evaluate(Compare action) =>
+        EvaluateOperator(action.Operator, action.Left, action.Right);
+
+    /// <summary>
+    /// Shared evaluation core for If / Elseif / Compare. The three actions
+    /// only differ in their declaring type — Operator, Left, Right have
+    /// identical semantics, and the guard + try/catch is identical.
+    /// </summary>
+    private static async Task<data.@this<bool>> EvaluateOperator(
+        data.@this<Operator> operatorData, data.@this? left, data.@this? right)
     {
-        if (!action.Operator.Success || action.Operator.Value == null)
-            return global::app.data.@this<bool>.From(action.Operator);
+        if (!operatorData.Success || operatorData.Value == null)
+            return global::app.data.@this<bool>.From(operatorData);
         try
         {
-            bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
+            bool result = await operatorData.Value.Evaluate(left, right);
             return global::app.data.@this<bool>.Ok(result);
         }
         catch (Exception ex) when (ex is ArgumentException or OverflowException or InvalidCastException)
         {
-            return EvaluationError(action.Left, action.Operator.Value, action.Right, ex);
+            return EvaluationError(left, operatorData.Value, right, ex);
         }
     }
 

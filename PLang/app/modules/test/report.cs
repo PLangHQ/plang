@@ -46,7 +46,6 @@ public partial class report : IContext
 
         // Write the file artefact through path verbs (gated). .test/ lives
         // at the app root.
-        var app = Context.App;
         var ctx = Context;
         string reportFile;
         string content;
