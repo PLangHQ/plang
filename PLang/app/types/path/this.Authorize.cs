@@ -97,11 +97,19 @@ public partial class @this
     {
         var app = Context?.App;
         if (app == null) return false;
-        // os-folder check covers system-built-in goals (test, build) — use the
-        // computed os path so it holds even when App.OsDirectory was not set.
-        return IsUnder(app.AbsolutePath, RootComparison)
-            || IsUnder(app.OsDirectory, RootComparison)
-            || IsUnder(app.OsAbsolutePath, RootComparison);
+        // Walk the parent chain — a child app (e.g. per-test app from test.run)
+        // inherits its parent's filesystem scope. The top-level app's parent
+        // is null, so this terminates. The os-folder checks cover system
+        // built-in goals (test, build) regardless of where in the chain we are.
+        while (app != null)
+        {
+            if (IsUnder(app.AbsolutePath, RootComparison)
+                || IsUnder(app.OsDirectory, RootComparison)
+                || IsUnder(app.OsAbsolutePath, RootComparison))
+                return true;
+            app = app.Parent;
+        }
+        return false;
     }
 
     /// <summary>

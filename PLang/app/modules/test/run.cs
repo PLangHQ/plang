@@ -72,6 +72,7 @@ public partial class run : IContext
 
         await using var childApp = new app.@this(test.Directory);
         childApp.OsDirectory = parentApp.OsDirectory;
+        childApp.Parent = parentApp;
         childApp.Tester.IsEnabled = true;
 
         // Freeze foundational channels NOW — before any user code (channel.set,
