@@ -186,9 +186,9 @@
         }
       ],
       "after": {
-        "status": "PASS",
-        "health": "green",
-        "notes": "C# 3036/3036, PLang 196/217 (+1 from v1). All v1 critical/major findings closed. Process gap (no coder folder, no baseline-tests.md) flagged in v1 review summary but not gating v2."
+        "status": "FAIL",
+        "health": "plang-red",
+        "notes": "Re-issued. Initially PASSed by treating 21 PLang failures as 'pre-existing, not coder-introduced.' Ingi flagged the framing error: any failing test (C# or PLang) blocks the branch regardless of blame. C# is green (3036/3036) and all v1 critical/major findings are genuinely closed with strong assertions, but 21 PLang tests fail on this branch — missing .build/*.pr artifacts plus real behavioral failures (Audit 7≠4, Mock False≠True, ConditionCompoundAnd null, ConditionSubStepsTrue NullRef, TestReportMasksSensitiveVariables ×2). Coder must resolve each failure or get explicit out-of-scope sign-off. Strict-red rule added to tester memory at /memory/feedback_strict_red_is_red.md."
       }
     }
   ]

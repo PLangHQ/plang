@@ -1,4 +1,4 @@
 {
-  "status": "pass",
-  "summary": "All v1 critical/major findings closed. C# suite green (3036/3036). New tests verify intent with bidirectional assertions and exact decimal cost math; mutation-by-reasoning confirms they would catch the regressions they exist to prevent."
+  "status": "fail",
+  "summary": "C# suite 3036/3036 green and v1 findings all closed, but 21 PLang tests fail on this branch. Red is red — pre-existing status does not soften the verdict. Coder must resolve all PLang failures or get explicit out-of-scope acceptance before this branch ships."
 }

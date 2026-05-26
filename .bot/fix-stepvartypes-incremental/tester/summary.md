@@ -1,67 +1,43 @@
 # tester — fix-stepvartypes-incremental
 
-**Version:** v2
-**Verdict:** PASS
+**Version:** v2 (re-issued)
+**Verdict:** FAIL
 
 ## What this is
 
-v1 FAILed with 9 findings — the C# build was red (rename not propagated) and the new behaviors (output capture, per-step Timings, OpenAI cost math, CachedTokens, %var% slot description) had effectively no honest coverage. Coder shipped commits 81c9dabfa (F1+F6) and e4376de87 (F2–F5) addressing each finding directly.
+v1 flagged 9 findings (build red + missing coverage). Coder commits 81c9dabfa and e4376de87 addressed F1–F6. v2 was initially issued as PASS, then flipped to FAIL after Ingi pointed out the framing error: I had passed despite 21 failing PLang tests, on the grounds that they were pre-existing and "no baseline to triage against." That's wrong by the strict rule — **any failing test, C# or PLang, regardless of who introduced it, is an automatic FAIL**.
 
 ## What was done
 
-1. Pulled latest (44d17535c). Built PLang.Tests → **0 errors**, build green.
-2. Ran TUnit binary at `PLang.Tests/bin/Debug/net10.0/PLang.Tests` → **3036/3036 pass, 0 failed, 18s**.
-3. Re-ran `plang --test` from `Tests/` → **196 pass / 21 fail / 217 total**. One more pass than v1's 195 — moved in the right direction. Coder confirms the 21 failures were pre-existing (the v1 failure list also included "File not found: .../.build/*.pr" failures that look like stale artifacts, not coder regressions).
-4. Read each new test plain. Each one would catch the regression it exists to prevent:
-   - **F2** `Run_OutputCapture_OutputChannelOnly_ErrorChannelExcluded` — bidirectional (asserts output IS captured AND error is NOT). A channel-filter inversion fails it.
-   - **F3** `Run_Timings_OnlyEntryGoalTopLevelSteps_NestedRollUp` — asserts `Count == 3` against an entry of 3 steps + a 2-step sub-goal. Deleting `IsEntryGoalStep` pushes count to 5; inverting it pushes count to 2.
-   - **F4** `Query_Cost_PositiveArithmetic_PricedModel` — exact decimal equality on (60·0.20 + 40·0.02 + 50·1.25)/1M for gpt-5.4-nano. Any rate-swap fails it.
-   - **F4** `Query_Cost_LongestPrefixWins_MiniBeatsBase` — 1M·1M tokens on `gpt-5.4-mini-2026-03-17`; if longest-prefix regressed to first-match, base pricing (2.50+15.00) would not equal the asserted 5.25.
-   - **F4** `Query_Cost_AccumulatesAcrossRetryLoop` — covers the tool-call exit path with two separate calls and a non-trivial sum.
-   - **F5** `Query_ResponseProperties_Populated` extended to assert `CachedTokens == 5`; `Query_Cost_AccumulatesAcrossRetryLoop` asserts CachedTokens on the tool-call exit too.
-   - **F6** `GetActions_VariableNameParams_Marked` now uses `IsEqualTo("%var%")` and comment is updated.
-5. Process gap unchanged — no `coder/` folder, no `baseline-tests.md`. Flagged in v2 review summary but not gating.
+1. Built PLang.Tests → green.
+2. Ran TUnit → **3036/3036 pass, 0 failed**.
+3. Ran `plang --test` from `Tests/` → **196 pass / 21 fail / 217 total**.
+4. Read each new test plain: F2 output capture is bidirectional, F3 Timings pins Count==3, F4 cost math uses exact decimal equality across three rate buckets plus longest-prefix + multi-call accumulation, F5 CachedTokens asserted on both exit paths, F6 IsEqualTo replaces Contains. All v1 critical/major findings are genuinely closed.
+5. 21 PLang tests fail — failures include missing `.build/*.pr` artifacts (CallStack/inner.pr, Channels/WriteToCustomChannel/logger.pr, Loop/countitem.pr), assertion mismatches (CallStack/Audit 7≠4, Mock False≠True, ConditionCompoundAnd 'both-true'≠null), an exception (ConditionSubStepsTrue: condition.if NullReferenceException), and two copies of TestReportMasksSensitiveVariables. They are *not regressions from this branch's diff*, but the branch ships with them red.
 
-## Code example — the F4 cost-math fix
+## Verdict reasoning
 
-The prior tree only had this (which passed even on the broken build because TUnit-running was blocked):
+**FAIL on test-state grounds.** C# is green and the coverage gaps from v1 are filled with strong tests. But red is red — any failing test blocks the branch. My prior PASS was a framing error: I treated "did coder introduce regressions" as my whole job and "current suite state" as someone else's. The strict rule (`/memory/feedback_strict_red_is_red.md`) now says: any failure = FAIL, no carve-outs.
+
+## Code example — what genuinely landed well (does not change verdict)
+
+The headline `%var%` slot-description fix is now verified by:
 
 ```csharp
-[Test]
-public async Task Query_CostNull_WhenNoPricingData()
-{
-    _handler.Handler = _ => Task.FromResult(
-        LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
-    // Bug: MakeCompletionResponse defaults to the priced "gpt-5.4-nano",
-    // so this branch was never actually exercised.
-    await Assert.That(result.Properties["Cost"]?.Value).IsNull();
-}
+await Assert.That(nameParam!.Value!.ToString()).IsEqualTo("%var%");
 ```
 
-After v2:
+A revert to `"%var% string"` fails this assertion. v1 had `.Contains("%var%")` which passed both. F4's cost test uses exact decimal equality on three independent rate buckets:
 
 ```csharp
-[Test]
-public async Task Query_Cost_PositiveArithmetic_PricedModel()
-{
-    _handler.Handler = _ => Task.FromResult(
-        LlmTestHelper.JsonResponse(
-            LlmTestHelper.MakeCompletionResponse("ok",
-                promptTokens: 100, completionTokens: 50, cachedTokens: 40,
-                model: "gpt-5.4-nano")));
-    var action = LlmTestHelper.MakeQuery(Ctx);
-    var result = await action.Run();
-
-    decimal expected = (60m * 0.20m + 40m * 0.02m + 50m * 1.25m) / 1_000_000m;
-    await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(expected);
-    await Assert.That(result.Properties["CachedTokens"]?.Value).IsEqualTo(40);
-}
+decimal expected = (60m * 0.20m + 40m * 0.02m + 50m * 1.25m) / 1_000_000m;
+await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(expected);
 ```
 
-Exact decimal equality on three independent rate × bucket products. A swap of any pricing slot fails it.
+Both excellent. Doesn't change the verdict — the branch still has 21 red PLang tests.
 
 ## Next
 
 ```
-run.ps1 security stepvartypes-incremental "Review the code on branch fix-stepvartypes-incremental" -b fix-stepvartypes-incremental
+run.ps1 coder stepvartypes-incremental "Resolve 21 failing PLang tests on this branch — fix, skip-with-reason, or get explicit out-of-scope acceptance for each. Missing .build/*.pr files: CallStack/inner.pr, Channels/WriteToCustomChannel/logger.pr, Loop/countitem.pr — investigate whether these are stale fixtures or genuinely-missing artifacts. Real failures: CallStack/Audit (expected 7 got 4), Mock (expected False got True), ConditionCompoundAnd (expected 'both-true' got null), ConditionSubStepsTrue (condition.if NullReferenceException), TestReportMasksSensitiveVariables (×2). Also produce a coder/v<N>/baseline-tests.md so future tester runs can distinguish regressions from accepted state." -b fix-stepvartypes-incremental
 ```

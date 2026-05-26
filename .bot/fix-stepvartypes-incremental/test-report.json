@@ -1,7 +1,7 @@
 {
   "tester": "tester",
   "branch": "fix-stepvartypes-incremental",
-  "timestamp": "2026-05-26T15:15:00Z",
+  "timestamp": "2026-05-26T15:30:00Z",
   "tested_version": "v2",
   "test_run": {
     "csharp": {
@@ -14,8 +14,7 @@
       "total": 217,
       "passed": 196,
       "failed": 21,
-      "skipped": 0,
-      "note": "One more pass than v1 (195 → 196). Still no coder baseline-tests.md so the 21 failures can't be fully triaged, but the count moved in the right direction — coder's v2 changes introduced no new regressions."
+      "skipped": 0
     }
   },
   "coverage": {
@@ -25,7 +24,18 @@
       "PLang/app/modules/builder/BuildResponse.cs (XML comment only — no test surface)"
     ]
   },
-  "findings": [],
-  "verdict": "approved",
-  "summary": "v2 PASS. All v1 critical/major findings closed: the build is green (3036/3036 C# tests), the BeforeWrite output-capture path has a bidirectional assertion (output channel captured, error channel excluded), per-step Timings asserts Count==3 in a 3-step entry + 2-step nested sub-goal fixture, OpenAI cost math has exact-decimal positive arithmetic + longest-prefix-wins + multi-call accumulation across the tool-call exit path, CachedTokens is asserted on both success and tool-call exit paths, and the headline %var% slot-description test now uses IsEqualTo so a revert would fail it. Process gap unchanged — no coder/ folder, no baseline-tests.md — flagged but not gating."
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": "Tests/**/*.test.goal (21 failing)",
+      "code_file": "(branch-wide)",
+      "issue": "21 PLang tests fail on this branch. Mix of 'File not found: .../.build/*.pr' (stale or never-built artifacts), assertion mismatches (Audit expected 7 got 4; Mock expected False got True; ConditionCompoundAnd expected 'both-true' got null), and an exception (ConditionSubStepsTrue: condition.if NullReferenceException). Whether or not the coder introduced these, the branch ships with 21 red tests.",
+      "impact": "Branch is not shippable in this state. Some failures look infrastructural (missing .pr files), others look behavioral (real null/wrong-value bugs in condition/mock/callstack paths).",
+      "suggestion": "Coder: triage each of the 21 failures. For each, either fix it, mark it skipped with explicit reason and tracking issue, or document why it's out of scope and get explicit user sign-off. Produce a coder/v<N>/baseline-tests.md so future tester runs can distinguish regressions from accepted state."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "FAIL on test-state grounds. C# suite is green (3036/3036) and every v1 critical/major finding is closed with strong tests. However, 21 PLang tests fail on this branch — failures include missing .build/*.pr artifacts (App/CallStack/inner.pr, Channels/WriteToCustomChannel/logger.pr, Modules/Loop/countitem.pr), assertion mismatches in CallStack/Audit, Mock, ConditionCompoundAnd, ConditionSubStepsTrue (NullRef), and TestReportMasksSensitiveVariables (two copies). My prior verdict reframed these as 'pre-existing, not coder-introduced' and called it PASS. That was wrong: red is red. Any failing test (C# or PLang) blocks shipping regardless of who broke it or when. Process gap (no coder/ folder, no baseline-tests.md) also persists."
 }
