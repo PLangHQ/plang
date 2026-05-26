@@ -9,7 +9,7 @@ namespace app.modules.output;
 /// stateless Message channel. <see cref="global::app.IExitsGoal"/> makes the
 /// step loop short-circuit when an action returns <c>Data&lt;Ask&gt;</c>.
 /// </summary>
-[global::app.Attributes.PlangType("ask")]
+[global::app.Attributes.PlangType]
 public sealed class Ask : global::app.IExitsGoal { }
 
 /// <summary>

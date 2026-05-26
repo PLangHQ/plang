@@ -125,11 +125,12 @@ public sealed partial class @this
         {
             var attrs = type.GetCustomAttributes<PlangTypeAttribute>(inherit: false).ToList();
 
-            // Skip abstract (non-static) types UNLESS they declare [PlangType] — an
-            // abstract [PlangType] is the base of a scheme/family (e.g. path.@this with
-            // concrete subclasses FilePath, HttpPath). The PLang name resolves to the
-            // base; construction dispatches via a registry (Scheme.From).
-            if (type.IsAbstract && !type.IsSealed && attrs.Count == 0) continue;
+            // Skip abstract (non-static) types UNLESS they declare [PlangType] OR
+            // are an @this class — an abstract @this is the base of a scheme/family
+            // (e.g. path.@this with concrete subclasses FilePath, HttpPath). The
+            // PLang name resolves to the base; construction dispatches via a
+            // registry (Scheme.From).
+            if (type.IsAbstract && !type.IsSealed && attrs.Count == 0 && !IsThisClass(type)) continue;
             string? canonical = null;
 
             if (attrs.Count > 0)

@@ -2,7 +2,7 @@ using app.Attributes;
 
 namespace app.modules.mock.types;
 
-[PlangType("mockhandle")]
+[PlangType]
 public class MockHandle
 {
     [LlmBuilder] public string Id { get; init; } = "";

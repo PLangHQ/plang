@@ -8,7 +8,7 @@ namespace app.modules.identity;
 /// Plain domain class — wrapped in Data&lt;Identity&gt; by handlers.
 /// Persistence is owned by IIdentity.
 /// </summary>
-[PlangType("identity")]
+[PlangType]
 public sealed class Identity
 {
     public Identity() { }
