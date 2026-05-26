@@ -144,6 +144,52 @@
         "health": "build-red",
         "notes": "Property rename without dependent updates broke the C# build; codeanalyzer PASSed without compiling. Headline %var% fix has a Contains() assertion that does not differentiate old from new. No baseline-tests.md so PLang regressions cannot be triaged. Coder needs to fix build, write coverage for the four new behaviors, tighten the slot-description assertion, and produce a baseline file going forward."
       }
+    },
+    {
+      "id": "9a4f8b21-7c33-4e6a-bf0e-3d5817a92b48",
+      "bot": "tester",
+      "timestamp_start": "2026-05-26T15:00:00Z",
+      "timestamp_end": "2026-05-26T15:20:00Z",
+      "intent": "Verify coder's v2 response to tester v1 — build green + new tests catch the regressions they claim to prevent",
+      "before": {
+        "assumptions": "Coder commits 81c9dabfa and e4376de87 address F1–F6 per their commit messages. v1 failed on build-red + missing coverage; v2 success means TUnit passes + new tests are not coarse green-only.",
+        "risk": "Mutation-by-reading instead of actual source mutation — could miss a subtly-permissive assertion. Mitigation: every new test was inspected for bidirectional or exact-equality assertions, not Contains/Any/IsNotNull alone."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Testing/RunActionTests.cs",
+            "PLang.Tests/App/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/App/Modules/llm/LlmTestHelper.cs",
+            "PLang.Tests/App/Modules/builder/GetActionsTests.cs",
+            "PLang.Tests/App/Testing/EdgeCaseTests.cs",
+            "PLang.Tests/App/Testing/ReportActionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# build green; TUnit 3036/3036 pass. F2 output-capture test asserts both directions (output IS captured, error is NOT). F3 Timings test asserts Count==3 against a 3-step entry + 2-step nested sub-goal — a regression that pulled sub-goal steps in would push count to 5. F4 cost math uses exact decimal equality on three independent rate buckets (non-cached, cached, output) — any rate-swap fails it; LongestPrefix test pins 5.25 specifically so a first-match-wins regression on `gpt-5.4-mini-2026-03-17` would compute 17.50 instead. F5 CachedTokens asserted on success-exit AND tool-call-exit paths. F6 IsEqualTo replaces Contains — comment updated. PLang suite 196/217 pass (one better than v1's 195) — no new regressions."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/tester/v2/plan.md",
+            ".bot/fix-stepvartypes-incremental/tester/v2/v1_review_summary.md",
+            ".bot/fix-stepvartypes-incremental/tester/v2/verdict.json",
+            ".bot/fix-stepvartypes-incremental/tester/summary.md",
+            ".bot/fix-stepvartypes-incremental/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v2 outputs — PASS verdict."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "C# 3036/3036, PLang 196/217 (+1 from v1). All v1 critical/major findings closed. Process gap (no coder folder, no baseline-tests.md) flagged in v1 review summary but not gating v2."
+      }
     }
   ]
 }
