@@ -631,15 +631,33 @@ INDEX_HTML = r"""<!doctype html>
     margin-bottom: 24px;
   }
   .stage {
-    display: grid;
-    grid-template-columns: 140px 24px 1fr 160px;
-    align-items: center;
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     padding: 8px 12px;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 4px;
+    min-width: 0;
   }
+  .stage-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .stage-head .icon { font-size: 14px; line-height: 1; width: 14px; text-align: center; }
+  .stage-head .icon.done { color: var(--done); }
+  .stage-head .icon.fail { color: #d7ba7d; }
+  .stage-head .name { font-weight: 500; }
+  .stage-head .time { margin-left: auto; color: var(--muted); font-size: 12px; }
+  .stage-body { padding-left: 22px; min-width: 0; }
+  .stage-body details summary {
+    color: var(--muted);
+    font-size: 12px;
+    padding: 2px 0;
+  }
+  .stage-body details summary:hover { color: var(--text); }
   .muted-note { color: var(--muted); font-style: italic; padding: 8px 0 16px; }
   .missing {
     color: var(--muted);
@@ -650,10 +668,6 @@ INDEX_HTML = r"""<!doctype html>
     border: 1px dashed var(--border);
     border-radius: 4px;
   }
-  .stage .name { font-weight: 500; }
-  .stage .icon { text-align: center; font-size: 14px; }
-  .stage .icon.done { color: var(--done); }
-  .stage .icon.fail { color: #d7ba7d; }
   .opt-divider {
     color: var(--muted);
     font-size: 11px;
@@ -674,23 +688,43 @@ INDEX_HTML = r"""<!doctype html>
   }
   .status-pill.pass { background: rgba(106, 153, 85, 0.18); color: var(--done); }
   .status-pill.fail { background: rgba(215, 186, 125, 0.18); color: #d7ba7d; }
-  .stage .files { color: var(--muted); font-size: 12px; }
-  .stage .time { color: var(--muted); font-size: 12px; text-align: right; }
-  .stage details summary { cursor: pointer; color: var(--muted); }
-  .stage details summary:hover { color: var(--text); }
-  .stage .filelist { margin-top: 6px; padding-left: 12px; font-family: ui-monospace, monospace; font-size: 11px; }
-  .stage .filelist li { color: var(--muted); }
+  .stage-body .files { color: var(--muted); font-size: 12px; }
+  .stage-body .filelist {
+    margin: 4px 0 0;
+    padding-left: 12px;
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+  }
+  .stage-body .filelist li {
+    color: var(--muted);
+    display: flex;
+    gap: 12px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    min-width: 0;
+  }
+  .stage-body .filelist li .path { flex: 1; word-break: break-all; }
+  .stage-body .filelist li .ts { flex-shrink: 0; }
   h2.section { font-size: 13px; text-transform: uppercase; color: var(--muted); margin: 20px 0 8px; letter-spacing: 0.05em; }
   ul.flat { list-style: none; padding: 0; margin: 0; font-family: ui-monospace, monospace; font-size: 12px; }
-  ul.flat li { padding: 4px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-  ul.flat li .ts { color: var(--muted); }
+  ul.flat li {
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    border-radius: 2px;
+    min-width: 0;
+  }
+  ul.flat li > span:first-child { flex: 1; word-break: break-all; }
+  ul.flat li .ts { color: var(--muted); flex-shrink: 0; }
   .filter {
     padding: 8px 12px;
     border-bottom: 1px solid var(--border);
   }
-  .stage .filelist li[data-branch] { cursor: pointer; }
-  .stage .filelist li[data-branch]:hover { color: var(--text); background: var(--panel2); }
-  .stage .filelist li[data-branch].selected { color: var(--text); background: #094771; }
+  .stage-body .filelist li[data-branch] { cursor: pointer; }
+  .stage-body .filelist li[data-branch]:hover { color: var(--text); background: var(--panel2); }
+  .stage-body .filelist li[data-branch].selected { color: var(--text); background: #094771; }
   ul.flat li[data-branch] { cursor: pointer; }
   ul.flat li[data-branch]:hover { background: var(--panel2); }
   ul.flat li[data-branch].selected { background: #094771; color: var(--text); }
@@ -789,15 +823,18 @@ function renderPane(b) {
     const statusBadge = r.statusRaw
       ? `<span class="status-pill ${failed ? "fail" : "pass"}">${r.statusRaw}</span>`
       : "";
-    const fileList = r.files.length
-      ? `<details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}${statusBadge}</summary><ul class="filelist">${r.files.map(f => fileLi(b.name, `.bot/${b.name}/${role}/${f.path}`, f.path, f.mtime)).join("")}</ul></details>`
-      : `<span class="files">— ${statusBadge}</span>`;
+    const body = r.files.length
+      ? `<details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => fileLi(b.name, `.bot/${b.name}/${role}/${f.path}`, f.path, f.mtime)).join("")}</ul></details>`
+      : `<span class="files">no files</span>`;
     return `
       <div class="stage">
-        <div class="name">${role}</div>
-        <div class="${iconCls}">${iconChar}</div>
-        <div>${fileList}</div>
-        <div class="time">${fmtTime(r.mtime)}</div>
+        <div class="stage-head">
+          <span class="${iconCls}">${iconChar}</span>
+          <span class="name">${role}</span>
+          ${statusBadge}
+          <span class="time">${fmtTime(r.mtime)}</span>
+        </div>
+        <div class="stage-body">${body}</div>
       </div>
     `;
   }
@@ -821,10 +858,14 @@ function renderPane(b) {
     <div class="timeline">
       ${otherRoles.map(([name, r]) => `
         <div class="stage">
-          <div class="name">${name}</div>
-          <div class="icon done">●</div>
-          <div><details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => fileLi(b.name, `.bot/${b.name}/${name}/${f.path}`, f.path, f.mtime)).join("")}</ul></details></div>
-          <div class="time">${fmtTime(r.mtime)}</div>
+          <div class="stage-head">
+            <span class="icon done">●</span>
+            <span class="name">${name}</span>
+            <span class="time">${fmtTime(r.mtime)}</span>
+          </div>
+          <div class="stage-body">
+            <details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => fileLi(b.name, `.bot/${b.name}/${name}/${f.path}`, f.path, f.mtime)).join("")}</ul></details>
+          </div>
         </div>
       `).join("")}
     </div>
@@ -848,7 +889,7 @@ function renderPane(b) {
 }
 
 function fileLi(branch, fullPath, displayPath, mtime) {
-  return `<li data-branch="${branch}" data-path="${fullPath}">${displayPath}<span style="float:right">${fmtTime(mtime)}</span></li>`;
+  return `<li data-branch="${branch}" data-path="${fullPath}"><span class="path">${displayPath}</span><span class="ts">${fmtTime(mtime)}</span></li>`;
 }
 
 function copyBranchName(e, name) {
