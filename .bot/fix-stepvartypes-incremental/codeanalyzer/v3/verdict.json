@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "OBP-5: redundant TrimStart at test/run.cs:165,168 — both ends are canonical leading-/, the trim is cargo defensive code that becomes a silent-divergence trap on any asymmetric edit. Four LOW findings (smell-1 collection mutations, dead local, repeated guards in condition/Default.cs)." }

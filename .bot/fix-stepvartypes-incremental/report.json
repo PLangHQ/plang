@@ -295,6 +295,60 @@
         "health": "green",
         "notes": "208/208 PLang + 3036/3036 C# — fully green. v3's 6 'failures' were nested test.report console emission, not real failures. Coder structural fix at report.cs:30-45 closes the noise. Builder validated. Process gap (no coder/ folder across 4 versions of work) still flagged but not gating."
       }
+    },
+    {
+      "id": "9250aeb1-3d33-4003-b9ba-868fb0414f7f",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-26T18:17:48Z",
+      "timestamp_end": "2026-05-26T18:35:00Z",
+      "intent": "Branch-wide OBP shape-smell pass through the new 5th smell lens (producer raw, consumers transform); user explicitly asked to widen v1/v2's narrow 8-file scope to all 12 branch-unique production C# files",
+      "before": {
+        "assumptions": "v1/v2 PASSed with 8-file scope and 4-item Pass 1b checklist. After Ingi confirmed the 5th smell, suspected the narrow lens hid producer-raw / consumer-transform shapes elsewhere on the branch. Path canonicalization commit 7ed35b550 changed path.@this.Relative semantics — strong candidate for missed smell-5 cases at consumers that haven't updated their assumptions.",
+        "risk": "Discovering a finding now that should have been in v1 erodes confidence in v1 PASS; widening scope mid-branch is the right move even if it changes the verdict."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/modules/test/report.cs",
+            "PLang/app/modules/test/discover.cs",
+            "PLang/app/modules/condition/code/Default.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/modules/builder/BuildResponse.cs",
+            "PLang/app/tester/Run.cs",
+            "PLang/app/tester/File.cs",
+            "PLang/app/tester/Timing.cs",
+            "PLang/app/tester/Timings.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/types/path/this.Derivation.cs",
+            "PLang/app/types/Conversion.cs",
+            "PLang/app/formats/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Branch-wide 5-item shape-smell pass. HIGH: test/run.cs:165,168 redundant TrimStart('/') — both ends canonical leading-/ since 7ed35b550, the trim is cargo defensive code and an asymmetry trap. LOWs: dead var app at report.cs:49 (carryover), PathSeparators per-row alloc at report.cs:307 (carryover), smell-#1 on Run.UserTags + File.Tags (HashSet mutated from outside owner — discovered by widening scope to tester/File.cs which v1 didn't cover), 3x identical guard at condition/Default.cs Evaluate(If/Elseif/Compare). Pre-existing test.PrPath re-Resolve at run.cs:211 noted as weak smell-5. discover.cs cleanup IS the root-cause-fix model — same migration test/run.cs needs."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/codeanalyzer/v3/plan.md",
+            ".bot/fix-stepvartypes-incremental/codeanalyzer/v3/report.md",
+            ".bot/fix-stepvartypes-incremental/codeanalyzer/v3/verdict.json",
+            ".bot/fix-stepvartypes-incremental/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v3 outputs — NEEDS WORK / FAIL verdict."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "actionable",
+        "notes": "Reverses v1/v2 PASS. v1's narrow 8-file scope and mechanical 4-item Pass 1b missed the smell-5 cases at test/run.cs:165,168 (the same lines that triggered the user's smell-5 character-proposal). Branch-wide lens also surfaces smell-1 on Run.UserTags and File.Tags. Coder priority: (1) drop both TrimStart('/') in run.cs and the stale comment, (2) delete unused var app at report.cs:49, (3) extract EnsureOperator helper in condition/Default.cs."
+      }
     }
   ]
 }
