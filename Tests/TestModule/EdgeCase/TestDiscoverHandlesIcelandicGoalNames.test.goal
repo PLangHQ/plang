@@ -1,9 +1,9 @@
 TestDiscoverHandlesIcelandicGoalNames
 / Discovery must be encoding-safe for non-ASCII filenames and goal names.
 / The fixture directory contains a Próf.fixture.goal with goal name "Próf".
-/ Assert discover finds it and carries the Icelandic name on EntryGoalName.
+/ Assert discover finds it and carries the Icelandic name on Goal.Name.
 - test.discover tests in '_fixtures' recursive, pattern='*.fixture.goal', write to %tests%
 - list.count %tests%, write to %count%
 - assert %count% equals 1
-- list.any %tests% where EntryGoalName equals 'Próf', write to %hasProf%
+- list.any %tests% where Goal.Name equals 'Próf', write to %hasProf%
 - assert %hasProf% is true

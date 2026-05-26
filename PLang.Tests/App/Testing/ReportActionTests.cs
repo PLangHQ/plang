@@ -45,13 +45,14 @@ public class ReportActionTests
 
     private static global::app.tester.Run NewRun(string name, global::app.tester.Status status, IError? error = null, string? output = null)
     {
-        var run = new global::app.tester.Run(new global::app.tester.File
+        var goal = new Goal
         {
-            Path = $"Tests/{name}.test.goal",
-            EntryGoalName = name,
-            GoalHash = "deadbeef",
+            Name = name,
+            Path = $"/Tests/{name}.test.goal",
+            Hash = "deadbeef",
             BuilderVersion = "v1"
-        });
+        };
+        var run = new global::app.tester.Run(new global::app.tester.File { Goal = goal });
         run.Complete(status, error);
         if (output != null) run.Output = output;
         return run;

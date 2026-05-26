@@ -75,19 +75,9 @@ public class RunActionTests
         System.IO.File.WriteAllText(prFile,
             JsonSerializer.Serialize(goal, global::app.Utils.Json.CamelCaseIndented));
 
-        var fileName = System.IO.Path.GetFileName(absFile);
-        var prFileName = System.IO.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
-
         return new global::app.tester.File
         {
-            // Canonical root-relative form (leading "/") — same shape
-            // test.discover produces from goalFile.Relative.
-            Path = "/" + relativePath,
-            Directory = absDir,
-            PrPath = ".build/" + prFileName,
             Goal = goal,
-            EntryGoalName = goalName,
-            GoalHash = goal.Hash,
             Status = global::app.tester.Status.Ready
         };
     }
@@ -349,10 +339,12 @@ public class RunActionTests
             {
                 ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
             });
-            var stale = new global::app.tester.File { Path = "Stale.test.goal", Directory = _tempDir,
-                PrPath = ".build/stale.test.pr", Status = global::app.tester.Status.Stale, StatusReason = "no .pr" };
-            var skipped = new global::app.tester.File { Path = "Skip.test.goal", Directory = _tempDir,
-                PrPath = ".build/skip.test.pr", Status = global::app.tester.Status.Skipped, StatusReason = "excluded by tag" };
+            var stale = new global::app.tester.File {
+                Goal = new Goal { Name = "Stale", Path = "/Stale.test.goal" },
+                Status = global::app.tester.Status.Stale, StatusReason = "no .pr" };
+            var skipped = new global::app.tester.File {
+                Goal = new Goal { Name = "Skip", Path = "/Skip.test.goal" },
+                Status = global::app.tester.Status.Skipped, StatusReason = "excluded by tag" };
 
             var results = await RunTests(new List<global::app.tester.File> { ready, stale, skipped });
             var runs = results.ToList();
@@ -600,7 +592,8 @@ public class RunActionTests
             ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
         });
         // Corrupt the .pr so deserialization throws inside RunSingleAsync.
-        var prAbs = System.IO.Path.Combine(throwing.Directory, throwing.PrPath);
+        // .pr lives at <_tempDir>/.build/<stem>.pr (BuildFixture recipe).
+        var prAbs = System.IO.Path.Combine(_tempDir, ".build", "throw.test.pr");
         System.IO.File.WriteAllText(prAbs, "{ \"name\": INVALID_JSON");
 
         var healthy = BuildFixture("Healthy.test.goal", "H", new (string, string, List<Data>)[]
@@ -613,11 +606,11 @@ public class RunActionTests
 
         await Assert.That(runs.Count).IsEqualTo(2);
         // Throwing fixture captured as Fail — no exception propagated.
-        var failed = runs.Single(r => r.File.Path == "/Throw.test.goal");
+        var failed = runs.Single(r => r.File.Goal.Path?.ToString() == "/Throw.test.goal");
         await Assert.That(failed.Status).IsEqualTo(global::app.tester.Status.Fail);
         await Assert.That(failed.Error).IsNotNull();
         // Healthy fixture still ran — loop stayed parallel-safe.
-        var passed = runs.Single(r => r.File.Path == "/Healthy.test.goal");
+        var passed = runs.Single(r => r.File.Goal.Path?.ToString() == "/Healthy.test.goal");
         await Assert.That(passed.Status).IsEqualTo(global::app.tester.Status.Pass);
     }
 }

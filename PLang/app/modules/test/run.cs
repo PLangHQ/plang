@@ -160,9 +160,10 @@ public partial class run : IContext
         // sub-goal steps roll up because the caller's AfterStep doesn't
         // fire until the sub-goal returns.
         var stepStarts = new Dictionary<int, long>();
+        var entryGoalPath = test.Goal.Path?.ToString();
         bool IsEntryGoalStep(global::app.goals.goal.steps.step.@this? step)
             => step != null
-            && string.Equals(step.Goal?.Path?.ToString(), test.Path, StringComparison.Ordinal);
+            && string.Equals(step.Goal?.Path?.ToString(), entryGoalPath, StringComparison.Ordinal);
 
         var beforeStepBinding = new EventBinding(
             app.events.EventType.BeforeStep,
@@ -205,7 +206,10 @@ public partial class run : IContext
 
         try
         {
-            var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(test.PrPath, childApp.User.Context) };
+            // Goal.PrPath is derived from Goal.Path — already a path.@this
+            // anchored at the child App's root (same root as the parent, post
+            // path-canonicalization on this branch).
+            var goalCall = new GoalCall { PrPath = test.Goal.PrPath };
             var result = await childApp.RunGoalAsync(goalCall, childApp.User.Context, cts.Token);
             if (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
                 testRun.Complete(global::app.tester.Status.Timeout);

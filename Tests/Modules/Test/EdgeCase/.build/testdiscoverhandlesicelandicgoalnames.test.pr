@@ -8,7 +8,7 @@
       "text": "test.discover tests in \u0027_fixtures\u0027 recursive, pattern=\u0027*.fixture.goal\u0027, write to %tests%",
       "lineNumber": 5,
       "indent": 0,
-      "comment": "Discovery must be encoding-safe for non-ASCII filenames and goal names.\nThe fixture directory contains a Pr\u00F3f.fixture.goal with goal name \u0022Pr\u00F3f\u0022.\nAssert discover finds it and carries the Icelandic name on EntryGoalName.",
+      "comment": "Discovery must be encoding-safe for non-ASCII filenames and goal names.\nThe fixture directory contains a Pr\u00F3f.fixture.goal with goal name \u0022Pr\u00F3f\u0022.\nAssert discover finds it and carries the Icelandic name on Goal.Name.",
       "actions": [
         {
           "module": "test",
@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_fixtures",
-              "type": "string"
+              "type": "path"
             },
             {
               "name": "Pattern",
@@ -62,7 +62,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "test.discover(Path=\u0022_fixtures\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%, Type=object)",
+      "formal": "test.discover(Path=\u0022_fixtures\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -155,7 +155,7 @@
     },
     {
       "index": 3,
-      "text": "list.any %tests% where EntryGoalName equals \u0027Pr\u00F3f\u0027, write to %hasProf%",
+      "text": "list.any %tests% where Goal.Name equals \u0027Pr\u00F3f\u0027, write to %hasProf%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -171,7 +171,7 @@
             },
             {
               "name": "Key",
-              "value": "EntryGoalName",
+              "value": "Goal.Name",
               "type": "string"
             },
             {
@@ -214,10 +214,10 @@
         }
       ],
       "intent": null,
-      "guidance": "Check whether any discovered entry has EntryGoalName equal to the Icelandic goal name \u0022Pr\u00F3f\u0022; store boolean result in %hasProf%.",
-      "level": "high",
-      "confidence": 95,
-      "formal": "list.any(ListName=%tests%, Key=\u0022EntryGoalName\u0022, Operator=\u0022==\u0022, Value=\u0022Pr\u00F3f\u0022), variable.set(Name=%hasProf%, Value=%!data%, Type=\u0022object\u0022)",
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "list.any(ListName=%tests%, Key=\u0022Goal.Name\u0022, Operator=\u0022==\u0022, Value=\u0022Pr\u00F3f\u0022) | variable.set(Name=%hasProf%, Value=%!data%, type=\u0022bool\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -255,7 +255,7 @@
   "visibility": 1,
   "path": "/Modules/Test/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
   "prPath": "/Modules/Test/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
-  "hash": "4eb9339dcc4e580542741bb08757300a5d7caba273b5c183dfa668153e3e1efe",
+  "hash": "c2becd9451ebbc09f31563c45a837caf4114ccbdf7e5f19d58ddf3e16695d36e",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
