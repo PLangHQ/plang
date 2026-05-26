@@ -555,8 +555,10 @@ INDEX_HTML = r"""<!doctype html>
   }
   .stage .filelist li[data-branch] { cursor: pointer; }
   .stage .filelist li[data-branch]:hover { color: var(--text); background: var(--panel2); }
+  .stage .filelist li[data-branch].selected { color: var(--text); background: #094771; }
   ul.flat li[data-branch] { cursor: pointer; }
   ul.flat li[data-branch]:hover { background: var(--panel2); }
+  ul.flat li[data-branch].selected { background: #094771; color: var(--text); }
   .filter input {
     width: 100%;
     padding: 6px 8px;
@@ -709,17 +711,17 @@ function copyBranchName(e, name) {
 
 // File preview pane (right side, always visible) ---------------------
 //
-// Hovering a file row updates the preview pane with that file's
-// rendered content. Because the pane is its own column in the layout
-// (not a floating popup), the cursor can scroll inside it without ever
-// leaving the file list area — and the file rows are never overlapped.
+// Clicking a file row loads its rendered content into the right pane.
+// Hover was tried but produced no clean UX — the cursor needs to scan
+// rows without committing to a preview, and a click gives that.
 const preview = document.getElementById("preview");
-let previewTimer = null;
 let previewGen = 0;
 let activeLi = null;
 
 async function loadPreview(li) {
+  if (activeLi) activeLi.classList.remove("selected");
   activeLi = li;
+  li.classList.add("selected");
   const branch = li.dataset.branch;
   const path = li.dataset.path;
   const key = branch + "::" + path;
@@ -743,11 +745,11 @@ async function loadPreview(li) {
   preview.scrollTop = 0;
 }
 
-document.addEventListener("mouseover", e => {
+document.addEventListener("click", e => {
   const li = e.target.closest("li[data-branch][data-path]");
-  if (!li || li === activeLi) return;
-  if (previewTimer) clearTimeout(previewTimer);
-  previewTimer = setTimeout(() => loadPreview(li), 250);
+  if (!li) return;
+  e.preventDefault();  // don't toggle the surrounding <details>
+  loadPreview(li);
 });
 
 async function load() {
