@@ -105,8 +105,8 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
 
             var rootAbsolutePath = RootAbsolutePath;
             var rootWithSeparator = rootAbsolutePath;
-            if (!rootWithSeparator.EndsWith(System.IO.Path.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(System.IO.Path.AltDirectorySeparatorChar))
-                rootWithSeparator += System.IO.Path.DirectorySeparatorChar;
+            if (!rootWithSeparator.EndsWith(PathHelper.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(PathHelper.AltDirectorySeparatorChar))
+                rootWithSeparator += PathHelper.DirectorySeparatorChar;
 
             if (_absolutePath.StartsWith(rootWithSeparator, RootComparison))
                 _relative = _absolutePath[rootWithSeparator.Length..];
@@ -119,11 +119,11 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
         }
     }
 
-    [LlmBuilder] public string Extension => _extension ??= System.IO.Path.GetExtension(_absolutePath);
-    [LlmBuilder] public string FileName => _fileName ??= System.IO.Path.GetFileName(_absolutePath);
+    [LlmBuilder] public string Extension => _extension ??= PathHelper.GetExtension(_absolutePath);
+    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_absolutePath);
     [LlmBuilder] public string FileNameWithoutExtension
-        => _fileNameWithoutExtension ??= System.IO.Path.GetFileNameWithoutExtension(_absolutePath);
-    [LlmBuilder] public string Directory => _directory ??= System.IO.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
+        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_absolutePath);
+    [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(_absolutePath) ?? _absolutePath;
     [LlmBuilder] public string MimeType => Context?.App?.Formats?.Mime(Extension) ?? "application/octet-stream";
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);

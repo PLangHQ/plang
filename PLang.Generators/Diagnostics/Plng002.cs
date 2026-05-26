@@ -20,13 +20,21 @@ namespace PLang.Generators.Diagnostics;
 ///   (Path, PrPath, Source, Destination, Directory, Folder, FilePath).</item>
 /// </list>
 ///
-/// <para>Path-based filtering: only fires under <c>PLang/app/**</c>, exempts
-/// <c>PLang/app/types/path/**</c> (the verb surface owns <c>System.IO.*</c>),
-/// and exempts <c>PLang.Generators/**</c>. Stage 1 lands in warning mode;
-/// Stage 6 will flip the severity to error.</para>
+/// <para>Two narrow carve-outs, both visible at the use site:</para>
+/// <list type="bullet">
+///   <item><b><c>System.IO.Path.*</c></b> (pure name math) is allowed only
+///   from <c>PLang/app/Utils/PathHelper.cs</c> — the single forwarder type.
+///   Everywhere else routes through <c>app.Utils.PathHelper</c>.</item>
+///   <item><b><c>System.IO.File</c> / <c>Directory</c> / <c>FileInfo</c> /
+///   <c>DirectoryInfo</c> / <c>FileStream</c> / …</b> (actual IO) is allowed
+///   only under <c>PLang/app/types/path/**</c> — the verb surface that gates
+///   every disk touch through <c>AuthGate</c>.</item>
+/// </list>
 ///
-/// <para>Allowlist: <c>System.IO.Path.DirectorySeparatorChar</c> /
-/// <c>AltDirectorySeparatorChar</c> — separator constants, not IO.</para>
+/// <para>Also exempts <c>PLang.Generators/**</c> (meta, not runtime),
+/// <c>obj/</c> and <c>.g.cs</c> (generated), and
+/// <c>PLang/app/modules/MarkdownTeaching.cs</c> (separately tracked under
+/// security F2 — to be lifted to the verb surface).</para>
 /// </summary>
 public static class Plng002
 {
@@ -50,21 +58,15 @@ public static class Plng002
         "Path", "PrPath", "Source", "Destination", "Directory", "Folder", "FilePath"
     };
 
-    private static readonly HashSet<string> AllowedSystemIoPathMembers = new(System.StringComparer.Ordinal)
-    {
-        // Separator constants only — pure path-arithmetic methods stay banned
-        // per architect plan: they signal "this code is doing string-path math
-        // that probably leaks into IO". Anyone with a legitimate need uses the
-        // Path-type derivation verbs (Parent / Combine / WithName / …) instead.
-        "DirectorySeparatorChar", "AltDirectorySeparatorChar",
-        "PathSeparator", "VolumeSeparatorChar"
-    };
-
     public record struct Finding(string FilePath, int StartLine, int StartChar, int EndLine, int EndChar, string Message);
 
     /// <summary>
-    /// True for files under <c>PLang/app/**</c> that are NOT under
-    /// <c>PLang/app/types/path/**</c> and NOT generated.
+    /// True for files under <c>PLang/app/**</c> that are scanned at all. Files
+    /// returning false here are exempt from BOTH the <c>System.IO.Path.*</c>
+    /// and <c>System.IO.File/Directory/…</c> bans — used for files that have
+    /// no other recourse (PathHelper itself, the verb surface, bootstrap).
+    /// The narrower split — <c>Path.*</c>-only vs. IO-only exemption — is in
+    /// <see cref="IsPathTypeSurface"/> and <see cref="IsPathHelperFile"/>.
     /// </summary>
     public static bool IsScannedFile(string? filePath)
     {
@@ -72,25 +74,33 @@ public static class Plng002
         // Normalize separators for cross-platform substring tests.
         var p = filePath!.Replace('\\', '/');
         if (!p.Contains("/PLang/app/") && !p.Contains("/PLang.Generators/")) return false;
-        // Exempt the path-types namespace — the verb surface legitimately owns System.IO.
-        if (p.Contains("/PLang/app/types/path/")) return false;
-        // Exempt the markdown teaching loader — bootstrap-time discovery of
-        // static, repo-shipped teaching .md files. Not runtime action code; the
-        // gate would force converting a pure-sync utility to async-everywhere
-        // for no security benefit.
+        // Exempt the markdown teaching loader — separately tracked under
+        // security F2 (will be lifted to the verb surface).
         if (p.EndsWith("/PLang/app/modules/MarkdownTeaching.cs")) return false;
-        // Exempt App.OsAbsolutePath's host file — architect D7's "outside the
-        // rule" exception (this property literally *defines* the OS-folder
-        // anchor; path.Resolve can't be used because App is mid-construction).
-        // The #pragma directive used inline isn't honored by source-generator
-        // diagnostics, so the carve-out lives here in the analyzer config.
-        if (p.EndsWith("/PLang/app/this.cs")) return false;
         // Exempt generators — they're meta, not app code.
         if (p.Contains("/PLang.Generators/")) return false;
         // Exempt generated source.
         if (p.Contains("/obj/") || p.EndsWith(".g.cs")) return false;
         return true;
     }
+
+    /// <summary>
+    /// True for files under <c>PLang/app/types/path/**</c> — the gated verb
+    /// surface that legitimately owns <c>System.IO.File/Directory/FileInfo/
+    /// FileStream/...</c>. These files are NOT exempt for <c>System.IO.Path.*</c>
+    /// (pure name math); they route through <see cref="app.Utils.PathHelper"/>
+    /// like everyone else.
+    /// </summary>
+    private static bool IsPathTypeSurface(string normalizedPath)
+        => normalizedPath.Contains("/PLang/app/types/path/");
+
+    /// <summary>
+    /// True for the single <c>PathHelper.cs</c> forwarder. PathHelper IS the
+    /// allowed bridge to <c>System.IO.Path.*</c> — its body legitimately
+    /// imports those members.
+    /// </summary>
+    private static bool IsPathHelperFile(string normalizedPath)
+        => normalizedPath.EndsWith("/PLang/app/Utils/PathHelper.cs");
 
     /// <summary>
     /// Predicate for the SyntaxProvider — keeps both invocation-style and
@@ -140,15 +150,25 @@ public static class Plng002
         var ns = containingType.ContainingNamespace?.ToDisplayString();
         if (ns == null || (!ns.StartsWith("System.IO", System.StringComparison.Ordinal) && ns != "System.IO")) return null;
 
-        // Allowlist: System.IO.Path separator constants AND pure string-arithmetic
-        // methods (Path.Combine / GetDirectoryName / ...). The actual gate
-        // concern is System.IO.File/Directory/FileInfo and the rooted-path
-        // resolvers, not name math on strings.
-        if (containingType.Name == "Path" && AllowedSystemIoPathMembers.Contains(symbol.Name))
-            return null;
+        // Two narrow carve-outs (see type-level XML doc):
+        // - System.IO.Path.* (pure name math) → PathHelper.cs only.
+        // - System.IO.File/Directory/FileInfo/... (actual IO) → path-types only.
+        // Anything outside both carve-outs fires.
+        var normalized = filePath!.Replace('\\', '/');
+        var isPathMember = containingType.Name == "Path";
+        if (isPathMember)
+        {
+            if (IsPathHelperFile(normalized)) return null;
+        }
+        else
+        {
+            if (IsPathTypeSurface(normalized)) return null;
+        }
 
         var span = loc.GetLineSpan();
-        var message = $"'{containingType.Name}.{symbol.Name}' under System.IO bypasses FilePath.AuthGate";
+        var message = isPathMember
+            ? $"'Path.{symbol.Name}' must route through app.Utils.PathHelper — direct System.IO.Path use is banned outside PathHelper"
+            : $"'{containingType.Name}.{symbol.Name}' under System.IO bypasses FilePath.AuthGate";
         return new Finding(
             filePath!,
             span.StartLinePosition.Line, span.StartLinePosition.Character,

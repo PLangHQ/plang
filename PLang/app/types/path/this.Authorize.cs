@@ -1,4 +1,5 @@
 using app.types;
+using app.Utils;
 using PermissionRecord = global::app.types.path.permission.@this;
 using Verb = global::app.types.path.permission.verb.@this;
 using Read = global::app.types.path.permission.verb.Read;
@@ -112,9 +113,9 @@ public partial class @this
     private bool IsUnder(string? rootCandidate, StringComparison cmp)
     {
         if (string.IsNullOrEmpty(rootCandidate)) return false;
-        var rootWithSeparator = rootCandidate.EndsWith(System.IO.Path.DirectorySeparatorChar)
+        var rootWithSeparator = rootCandidate.EndsWith(PathHelper.DirectorySeparatorChar)
             ? rootCandidate
-            : rootCandidate + System.IO.Path.DirectorySeparatorChar;
+            : rootCandidate + PathHelper.DirectorySeparatorChar;
         return Absolute.StartsWith(rootWithSeparator, cmp)
             || string.Equals(Absolute, rootCandidate, cmp);
     }

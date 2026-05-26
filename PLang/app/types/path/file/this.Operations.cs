@@ -1,6 +1,7 @@
 using System.Text;
 using app.types;
 using app.errors;
+using app.Utils;
 using Verb = global::app.types.path.permission.verb.@this;
 using ReadVerb = global::app.types.path.permission.verb.Read;
 using WriteVerb = global::app.types.path.permission.verb.Write;
@@ -42,7 +43,7 @@ public sealed partial class @this
 
     private void EnsureParentDir()
     {
-        var dir = System.IO.Path.GetDirectoryName(Absolute);
+        var dir = PathHelper.GetDirectoryName(Absolute);
         if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
             System.IO.Directory.CreateDirectory(dir);
     }
@@ -316,7 +317,7 @@ public sealed partial class @this
     private static string ResolveDestinationPath(@this source, @this destination)
     {
         if (System.IO.File.Exists(source.Absolute) && System.IO.Directory.Exists(destination.Absolute))
-            return System.IO.Path.Combine(destination.Absolute, source.FileName);
+            return PathHelper.Combine(destination.Absolute, source.FileName);
         return destination.Absolute;
     }
 
@@ -325,14 +326,14 @@ public sealed partial class @this
         System.IO.Directory.CreateDirectory(dest);
         foreach (var file in System.IO.Directory.GetFiles(src))
         {
-            var fileName = System.IO.Path.GetFileName(file);
-            System.IO.File.Copy(file, System.IO.Path.Combine(dest, fileName), overwrite);
+            var fileName = PathHelper.GetFileName(file);
+            System.IO.File.Copy(file, PathHelper.Combine(dest, fileName), overwrite);
         }
         if (!includeSubfolders) return;
         foreach (var subDir in System.IO.Directory.GetDirectories(src))
         {
-            var dirName = System.IO.Path.GetFileName(subDir);
-            CopyDirectory(subDir, System.IO.Path.Combine(dest, dirName), overwrite, includeSubfolders);
+            var dirName = PathHelper.GetFileName(subDir);
+            CopyDirectory(subDir, PathHelper.Combine(dest, dirName), overwrite, includeSubfolders);
         }
     }
 
@@ -433,7 +434,7 @@ public sealed partial class @this
             // Directory transfer ------------------------------------------------
             if (System.IO.Directory.Exists(Absolute))
             {
-                var destDir0 = System.IO.Path.GetDirectoryName(destination.Absolute);
+                var destDir0 = PathHelper.GetDirectoryName(destination.Absolute);
                 if (!string.IsNullOrEmpty(destDir0) && !System.IO.Directory.Exists(destDir0))
                     System.IO.Directory.CreateDirectory(destDir0);
 
@@ -453,7 +454,7 @@ public sealed partial class @this
 
             // File transfer -----------------------------------------------------
             var destPath = ResolveDestinationPath(this, destination);
-            var destDir = System.IO.Path.GetDirectoryName(destPath);
+            var destDir = PathHelper.GetDirectoryName(destPath);
             if (!string.IsNullOrEmpty(destDir) && !System.IO.Directory.Exists(destDir))
                 System.IO.Directory.CreateDirectory(destDir);
 

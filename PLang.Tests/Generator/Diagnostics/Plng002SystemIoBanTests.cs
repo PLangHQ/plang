@@ -10,15 +10,14 @@ namespace PLang.Tests.Generator.Diagnostics;
 
 /// <summary>
 /// PLNG002 — bans <c>System.IO.*</c> reaches and <c>data.@this&lt;string&gt;</c>
-/// path-named properties under <c>PLang/app/**</c> (excluding
-/// <c>PLang/app/types/path/**</c> and Generators).
-///
-/// Stage 1 lands the diagnostic in <b>warning</b> mode; Stage 6 flips to
-/// <b>error</b>. The fires/silent fixtures below pin the rule independently
-/// of severity.
-///
-/// Allowlist: <c>System.IO.Path.DirectorySeparatorChar</c> /
-/// <c>AltDirectorySeparatorChar</c> (separator constants, not IO).
+/// path-named properties under <c>PLang/app/**</c>. Two narrow carve-outs:
+/// <list type="bullet">
+///   <item><c>System.IO.Path.*</c> (pure name math) is allowed only from
+///   <c>PLang/app/Utils/PathHelper.cs</c> — the single forwarder.</item>
+///   <item><c>System.IO.File/Directory/FileInfo/FileStream/...</c> (actual
+///   IO) is allowed only under <c>PLang/app/types/path/**</c> — the gated
+///   verb surface.</item>
+/// </list>
 /// </summary>
 public class Plng002SystemIoBanTests
 {
@@ -59,6 +58,7 @@ public class Plng002SystemIoBanTests
 
     private const string ModulesPath = "/workspace/plang/PLang/app/modules/foo/Test.cs";
     private const string PathTypesPath = "/workspace/plang/PLang/app/types/path/test/Test.cs";
+    private const string PathHelperPath = "/workspace/plang/PLang/app/Utils/PathHelper.cs";
 
     [Test] public async Task Fires_OnFileReadAllText_UnderModulesNamespace()
     {
@@ -113,8 +113,11 @@ public class Plng002SystemIoBanTests
         await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsTrue();
     }
 
-    [Test] public async Task DoesNotFire_OnSystemIoPathDirectorySeparatorChar()
+    [Test] public async Task Fires_OnSystemIoPathDirectorySeparatorChar_UnderModulesNamespace()
     {
+        // Post-PathHelper: separator constants must route through PathHelper
+        // too. The old AllowedSystemIoPathMembers allowlist was dropped —
+        // type-based exemption beats file-path-keyed string lists.
         var source = """
             namespace app.modules.foo {
                 public class Handler {
@@ -123,11 +126,28 @@ public class Plng002SystemIoBanTests
             }
             """;
         var diags = Run(source, ModulesPath);
-        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsFalse();
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsTrue();
     }
 
-    [Test] public async Task DoesNotFire_InsidePathTypesNamespace()
+    [Test] public async Task Fires_OnSystemIoPath_InsidePathTypesNamespace()
     {
+        // System.IO.Path.* under path-types still fires — Path.* is allowed
+        // ONLY from PathHelper, not under path-types. The path-types carve-out
+        // covers File/Directory/FileInfo/Stream, not name math.
+        var source = """
+            namespace app.types.path.test {
+                public class Impl {
+                    public string Join() => System.IO.Path.Combine("a", "b");
+                }
+            }
+            """;
+        var diags = Run(source, PathTypesPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsTrue();
+    }
+
+    [Test] public async Task DoesNotFire_OnSystemIoFile_InsidePathTypesNamespace()
+    {
+        // File.* under path-types stays exempt — the verb surface owns IO.
         var source = """
             namespace app.types.path.test {
                 public class FsImpl {
@@ -137,6 +157,39 @@ public class Plng002SystemIoBanTests
             """;
         var diags = Run(source, PathTypesPath);
         await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsFalse();
+    }
+
+    [Test] public async Task DoesNotFire_OnSystemIoPath_InsidePathHelper()
+    {
+        // PathHelper IS the bridge — its body legitimately imports
+        // System.IO.Path.*. This carve-out replaces the old whole-file
+        // exemption for app/this.cs and the AllowedSystemIoPathMembers list.
+        var source = """
+            namespace app.Utils {
+                internal static class PathHelper {
+                    public static string Combine(string a, string b) => System.IO.Path.Combine(a, b);
+                    public static char Sep => System.IO.Path.DirectorySeparatorChar;
+                }
+            }
+            """;
+        var diags = Run(source, PathHelperPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsFalse();
+    }
+
+    [Test] public async Task Fires_OnSystemIoFile_InsidePathHelper()
+    {
+        // PathHelper is name-math only. A would-be addition that reaches
+        // actual IO must fire — that's the test_designer-shaped guardrail
+        // against future "PathHelper.ReadAllText" drift.
+        var source = """
+            namespace app.Utils {
+                internal static class PathHelper {
+                    public static string Read(string p) => System.IO.File.ReadAllText(p);
+                }
+            }
+            """;
+        var diags = Run(source, PathHelperPath);
+        await Assert.That(diags.Any(d => d.Id == "PLNG002")).IsTrue();
     }
 
     [Test] public async Task DoesNotFire_OnDataOfPath_InActionHandler()
