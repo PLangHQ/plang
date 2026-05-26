@@ -157,7 +157,7 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
     // `Size` used to live here as `System.IO.File.Exists` / `FileInfo` calls —
     // wrong for an HttpPath (always-false / throws on Windows). They moved to
     // FilePath. The cross-scheme liveness query is the async `path.Stat()`;
-    // truthiness ("does it exist") is `AsBooleanAsync()`. (codeanalyzer v1 F2)
+    // truthiness ("does it exist") is `AsBooleanAsync()`.
 
     // --- Content (file content when set by provider, e.g., after file.read) ---
 
@@ -182,7 +182,7 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
     // Path equality follows RootComparison — the same case-sensitivity rule
     // Relative/IsUnder/ValidatePath use, so they can't drift apart. Hard-coding
     // OrdinalIgnoreCase here would make /srv/x and /SRV/x — distinct files on
-    // Linux — compare equal and hash-collide. (codeanalyzer v2 N2)
+    // Linux — compare equal and hash-collide.
     public override bool Equals(object? obj) => obj switch
     {
         @this other => string.Equals(_absolutePath, other._absolutePath, RootComparison),

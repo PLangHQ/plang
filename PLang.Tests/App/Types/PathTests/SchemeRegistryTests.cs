@@ -8,7 +8,7 @@ using FilePath = global::app.types.path.file.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 2 — the per-App scheme registry (<c>app.types.path.scheme.@this</c>), reachable as
+/// The per-App scheme registry (<c>app.types.path.scheme.@this</c>), reachable as
 /// <c>app.Types.Scheme</c>.
 /// </summary>
 public class SchemeRegistryTests

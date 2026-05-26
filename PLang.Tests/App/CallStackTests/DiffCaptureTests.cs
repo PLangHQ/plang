@@ -102,7 +102,7 @@ public class DiffCaptureTests
     [Test]
     public async Task Diff_DiffModeOverLargeListDoesNotOom()
     {
-        // Architect plan P8: scalar-only default should mitigate the prior OOM scenario.
+        // scalar-only default should mitigate the prior OOM scenario.
         // 100 iterations × 1MB list under Diff:true (no DeepDiff). GC delta stays low
         // because Before captures a summary string, not a clone.
         var stack = new CallStack { Flags = Flags.Default with { Diff = true } };

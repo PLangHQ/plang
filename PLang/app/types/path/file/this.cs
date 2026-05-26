@@ -53,7 +53,7 @@ public sealed partial class @this : global::app.types.path.@this
     //
     // These do synchronous System.IO calls and are meaningless for non-FS
     // schemes; they live on FilePath so an HttpPath never inherits them.
-    // The cross-scheme liveness query is the async `Stat()`. (codeanalyzer v1 F2)
+    // The cross-scheme liveness query is the async `Stat()`.
 
     /// <summary>True when a file or directory exists at this path.</summary>
     [LlmBuilder] public bool Exists =>

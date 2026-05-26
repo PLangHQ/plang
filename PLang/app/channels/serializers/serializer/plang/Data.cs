@@ -28,7 +28,7 @@ public sealed class Data : ISerializer
         WriteIndented = false,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
         // Strip [Sensitive]-marked properties from the envelope's Value object —
-        // mirrors global::app.data.@this._envelopeJsonOptions. Security v1 S-F4.
+        // mirrors global::app.data.@this._envelopeJsonOptions.
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
             Modifiers = { global::app.channels.serializers.filters.Sensitive.Strip }

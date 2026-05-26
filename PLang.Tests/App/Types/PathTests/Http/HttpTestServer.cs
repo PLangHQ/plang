@@ -71,7 +71,7 @@ public sealed class HttpTestServer : IDisposable
 
     /// <summary>
     /// Registers a path that responds with the given 3xx status and Location
-    /// header. Used by the security v1 S1 redirect tests — without manual
+    /// header. Used by the the redirect / manual-follow tests — without manual
     /// follow + re-Authorize, this would be an SSRF primitive.
     /// </summary>
     public string MapRedirect(int status, string targetUrl)
@@ -84,7 +84,7 @@ public sealed class HttpTestServer : IDisposable
     /// <summary>
     /// Pre-populates a path with the given body and returns its URL —
     /// bypasses the PLang gate that <see cref="HttpPath.WriteText"/> would
-    /// otherwise need a grant for. Used in security v1 S1 tests so the
+    /// otherwise need a grant for. Used in the redirect tests so the
     /// "attacker's secret" can be seeded without granting the test actor
     /// permission to that URL.
     /// </summary>
@@ -161,7 +161,7 @@ public sealed class HttpTestServer : IDisposable
                 return;
             }
 
-            // Redirect responses (security v1 S1 — manual-follow tests).
+            // Redirect responses (manual-follow tests).
             if (_redirects.TryGetValue(path, out var redirect))
             {
                 resp.StatusCode = redirect.Status;

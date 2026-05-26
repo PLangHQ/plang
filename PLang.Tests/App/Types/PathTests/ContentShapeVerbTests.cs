@@ -7,7 +7,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 5 — Batch 7. Content-shape verbs (D9a / C9).
+/// Batch 7. Content-shape verbs.
 /// </summary>
 public class ContentShapeVerbTests
 {

@@ -41,7 +41,7 @@ public abstract partial class @this
     // `path` reference and never downcasts to a concrete scheme. Filesystem-only
     // options (recursive, includeSubfolders, overwrite, pattern) are honoured by
     // FilePath and documented as no-ops by non-FS schemes — the no-op lives
-    // inside the scheme, not as a branch the handler picks. (codeanalyzer v1 F1)
+    // inside the scheme, not as a branch the handler picks.
 
     // ReadText stays polymorphic (bare Data): the MIME-stamped Type carries the
     // shape (string for text, byte[] for binary, structured for json/yaml). The
@@ -67,13 +67,11 @@ public abstract partial class @this
             new errors.ServiceError(
                 $"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
-    // --- Content-shape verbs (D9a) ---
-    //
-    // When a third-party API needs the file's content in a specific shape
-    // (base64, data URI, parsed JSON, ...), the verb lives on Path so the
-    // gate fires inside and the action handler never reaches for
-    // <see cref="Absolute"/>. Each composes <see cref="ReadBytes"/> +
-    // formatting on top — same AuthGate path as every other read.
+    // Content-shape verbs: when a third-party API needs the file's content
+    // in a specific shape (base64, data URI, parsed JSON, ...), the verb
+    // lives on Path so the gate fires inside and the action handler never
+    // reaches for <see cref="Absolute"/>. Each composes <see cref="ReadBytes"/>
+    // + formatting on top — same AuthGate path as every other read.
 
     /// <summary>
     /// Reads the file as bytes (gated) and base64-encodes them. Use sites:
@@ -153,7 +151,7 @@ public abstract partial class @this
     /// Answers "is this path truthy" — for a path that means "does it exist".
     /// Routed through here by <c>Data.ToBooleanAsync()</c> so a comparison like
     /// <c>if %path% exists</c> asks the path itself. FilePath probes the
-    /// filesystem; HttpPath issues an HTTP HEAD. (codeanalyzer v1 F3)
+    /// filesystem; HttpPath issues an HTTP HEAD.
     /// </summary>
     public abstract Task<bool> AsBooleanAsync();
 }

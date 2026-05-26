@@ -46,7 +46,7 @@ public partial class @this
         {
             // Schemes can append a hint — e.g. HttpPath warns when answering
             // 'a' would persist a URL with a query string verbatim to the
-            // local sqlite (security v1 S3). Base returns "".
+            // local sqlite. Base returns "".
             var hint = AuthorizationHint(verb);
             var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
             var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)";
@@ -144,7 +144,7 @@ public partial class @this
     /// Scheme-specific extra text appended to the Authorize prompt before the
     /// y/n/a choices. Base returns empty. HttpPath overrides to warn when an
     /// 'a' would persist a URL with query-string secrets verbatim to the
-    /// local sqlite (security v1 S3). Subclasses can append any other
+    /// local sqlite. Subclasses can append any other
     /// scheme-specific consent signal here.
     /// </summary>
     protected virtual string AuthorizationHint(Verb verb) => "";

@@ -3,7 +3,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
-/// Orphan-file validation (per architect plan, "Validation" section):
+/// Orphan-file validation:
 ///   - Any *.notes.md / *.examples.md / *.description.md under
 ///     os/system/modules/&lt;module&gt;/ whose stem is not `module` and does not
 ///     match a registered action → ONE warning per orphan.

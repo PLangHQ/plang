@@ -7,7 +7,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
 /// <summary>
-/// Stage 5 — Batch 10. In-root silent fast-path regression guard.
+/// Batch 10. In-root silent fast-path regression guard.
 /// </summary>
 public class InRootSilentFastPathTests
 {

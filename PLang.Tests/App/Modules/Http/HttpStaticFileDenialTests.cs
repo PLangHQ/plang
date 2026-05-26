@@ -6,9 +6,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.Http;
 
 /// <summary>
-/// Stage 5 — Batch 9. <c>http/code/Default.cs</c> upload-file gating.
-///
-/// Hardened post tester v2: now invokes
+/// <c>http/code/Default.cs</c> upload-file gating. Invokes
 /// <c>Default.CreateFileContentAsync</c> directly (the handler that builds
 /// an HTTP request body from a file path). A mutation that reverted it to
 /// <c>System.IO.File.ReadAllBytes</c> would flip the denial test red.

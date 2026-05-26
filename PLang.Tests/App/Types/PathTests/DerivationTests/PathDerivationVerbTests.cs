@@ -8,7 +8,7 @@ using Path = global::app.types.path.@this;
 namespace PLang.Tests.App.Types.PathTests.DerivationTests;
 
 /// <summary>
-/// Stage 1 — Batch 1. Path derivation verbs (D1).
+/// Path derivation verbs.
 ///
 /// Verbs added to <c>app.types.path.@this</c>: <c>Parent</c>, <c>WithName</c>,
 /// <c>WithExtension</c>, <c>Combine</c>, <c>InFolder</c>. Pure derivations —

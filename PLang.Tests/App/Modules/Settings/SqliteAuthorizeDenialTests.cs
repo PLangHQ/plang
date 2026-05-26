@@ -7,7 +7,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.Settings;
 
 /// <summary>
-/// Stage 5 — Batch 9. <c>settings/Sqlite.cs</c> — D9b take-over API.
+/// Batch 9. <c>settings/Sqlite.cs</c> — D9b take-over API.
 /// </summary>
 public class SqliteAuthorizeDenialTests
 {

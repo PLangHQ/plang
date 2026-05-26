@@ -6,7 +6,7 @@ using HttpPath = global::app.types.path.http.@this;
 namespace PLang.Tests.App.Types.PathTests.Http;
 
 /// <summary>
-/// Stage 5 — <c>HttpPath : Path</c>, the second scheme.
+/// <C>HttpPath : Path</c>, the second scheme.
 /// </summary>
 public class HttpPathTests
 {
@@ -117,7 +117,7 @@ public class HttpPathTests
     [Test] public async Task AsBooleanAsync_TrueWhenPresent_FalseWhenAbsent()
     {
         // http path truthiness is "does the resource exist" — an HTTP HEAD,
-        // the async dispatch target for `if %url% exists`. (codeanalyzer v1 F3)
+        // the async dispatch target for `if %url% exists`.
         using var server = new HttpTestServer();
         var (app, ctx) = MakeApp();
         var present = server.NewResourceUrl();

@@ -12,13 +12,14 @@ namespace app.goals;
 /// </summary>
 public sealed class @this
 {
-    // Path-keyed dicts (D4). Path's own Equals/GetHashCode uses RootComparison
+    // Path-keyed dicts. Path's own Equals/GetHashCode uses RootComparison
     // (OrdinalIgnoreCase on Windows, Ordinal on Linux) — no separate
     // StringComparer needed; the canonical-form keying lives on Path itself.
     private readonly ConcurrentDictionary<global::app.types.path.@this, goal.@this> _goals = new();
     private readonly ConcurrentDictionary<global::app.types.path.@this, goal.@this> _byPath = new();
-    // Separate by-name index for fuzzy `Get("Name")` — name lookups are not a
-    // Path-equality question (Ingi C1 / architect D4).
+    // Separate by-name index for fuzzy `Get("Name")` — name lookups are
+    // a different question from Path equality and want OrdinalIgnoreCase
+    // semantics regardless of OS.
     private readonly ConcurrentDictionary<string, goal.@this> _byName = new(StringComparer.OrdinalIgnoreCase);
     internal app.@this App { get; set; } = null!;
 
@@ -50,8 +51,8 @@ public sealed class @this
         // back to a by-form scan over _byPath when the exact name lookup
         // misses or returns the "wrong" same-name goal. Exact lookup via
         // _goals (PrPath-keyed) and _byPath (Path-keyed) stay collision-free.
-        // (codeanalyzer v1 N4 considered: a throw here would break legitimate
-        // same-name-different-path use; the by-form scan is the disambiguator.)
+        // Don't throw on name collision here — the by-form scan is the
+        // disambiguator, and throwing would break legitimate same-name use.
         if (!string.IsNullOrEmpty(goal.Name))
             _byName[goal.Name] = goal;
     }
@@ -69,8 +70,6 @@ public sealed class @this
         if (name.EndsWith(".goal", StringComparison.OrdinalIgnoreCase))
             name = name[..^5];
 
-        // By-name fuzzy lookup uses the dedicated _byName index — name matching
-        // is not a Path-equality question (architect D4 / Ingi C1).
         if (_byName.TryGetValue(name, out var goal) && !goal.IsSetup)
             return goal;
 
@@ -189,7 +188,7 @@ public sealed class @this
                 // Writing _byName[name] again under a user-provided alias (e.g.
                 // "Foo" while goal.Name == "foo/bar") would create a stale-cache
                 // hit on future Get("Foo") after Remove(goal.Name). Skip it —
-                // the by-form scan in Get() handles alias lookups. (codeanalyzer v1 N5.)
+                // the by-form scan in Get() handles alias lookups.
                 return goal;
             }
         }

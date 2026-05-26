@@ -4,9 +4,8 @@ using System.Reflection;
 namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
-/// Opportunistic [Provider] → [Code] rename (architect plan, "Opportunistic
-/// rename" section). Mechanical; tested as a regression guard so the old name
-/// can't slip back in via copy-paste from older branches.
+/// Guards the [Provider] → [Code] rename so the old attribute name can't
+/// slip back in via copy-paste from older branches.
 ///
 /// Two anchors:
 ///   1. The attribute type lives at the documented [Code] name and not

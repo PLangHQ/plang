@@ -10,7 +10,7 @@ public interface IAssert : ICode
     data.@this<bool> Equals(Equals action);
     data.@this<bool> NotEquals(NotEquals action);
     // IsTrue/IsFalse are async — an asserted value may be IBooleanResolvable
-    // (a path), whose truthiness is resolved with I/O. (codeanalyzer v1 F3)
+    // (a path), whose truthiness is resolved with I/O.
     Task<data.@this<bool>> IsTrue(IsTrue action);
     Task<data.@this<bool>> IsFalse(IsFalse action);
     data.@this<bool> IsNull(IsNull action);

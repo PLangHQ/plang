@@ -140,7 +140,7 @@ public sealed partial class @this
     /// <see cref="ExistsAsync"/> — the same shape as <c>HttpPath.AsBooleanAsync</c>:
     /// a denied or errored probe answers false. Keeps the existence check behind
     /// <see cref="@this.AuthGate"/> so an out-of-root probe still needs a Read
-    /// grant (in-root is free via IsInRoot). (codeanalyzer v2 N1)
+    /// grant (in-root is free via IsInRoot).
     /// </summary>
     public override async Task<bool> AsBooleanAsync()
     {

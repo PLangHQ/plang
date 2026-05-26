@@ -9,7 +9,7 @@ using Delete = global::app.types.path.permission.verb.Delete;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests;
 
-/// Stage 1 — Batch 1: Verb sub-records (Read/Write/Delete) default-true options
+/// Batch 1: Verb sub-records (Read/Write/Delete) default-true options
 /// and their Covers logic, plus Verb.@this composition over the three.
 public class VerbCoversTests
 {

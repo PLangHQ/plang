@@ -29,7 +29,7 @@ public sealed class Sqlite : IStore
     /// </summary>
     public Sqlite(global::app.types.path.@this dbPath)
     {
-        // D9b: take-over API. Authorize before passing .Absolute. Sync-wait
+        // Take-over API: authorize before passing .Absolute. Sync-wait
         // — Sqlite ctor is sync and the gate is the bootstrap path.
         var verb = new global::app.types.path.permission.verb.@this
         {

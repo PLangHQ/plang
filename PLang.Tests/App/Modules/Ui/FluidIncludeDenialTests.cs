@@ -6,10 +6,9 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.Ui;
 
 /// <summary>
-/// Stage 5 — Batch 9. Fluid include-denial tests.
-///
-/// Hardened post tester v2: drives <see cref="global::app.modules.ui.code.Fluid.Render"/>
-/// with a real <c>{% include %}</c> template. The handler instantiates
+/// Fluid include-denial tests. Drives
+/// <see cref="global::app.modules.ui.code.Fluid.Render"/> with a real
+/// <c>{% include %}</c> template. The handler instantiates
 /// <c>PlangFileProvider</c>+<c>PlangFileInfo</c>, which route reads through
 /// <c>path.ReadText</c>. A mutation that reverted to <c>System.IO.File.ReadAllText</c>
 /// in <c>PlangFileInfo.CreateReadStream</c> would flip the denial test red.

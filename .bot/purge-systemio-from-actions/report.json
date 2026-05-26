@@ -478,14 +478,55 @@
           "category": "doc",
           "confidence": "high",
           "context": "coder/v1 proposal to add 'Default impl:' lines under abstract-type entries in app-tree.md \u2192 DEFERRED. The target file's shape (one-screen summary with fenced trees, no per-type sections) doesn't fit the proposed change. Right home is /shared/app-tree/ deep tree. Recorded in docs-report.json."
+        },
+        {
+          "paths": [
+            "PLang/app/goals/this.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/types/path/this.Operations.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/http/this.cs",
+            "PLang/app/types/path/http/this.Derivation.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs",
+            "PLang/app/modules/test/report.cs",
+            "PLang/app/modules/settings/Sqlite.cs",
+            "PLang/app/modules/assert/code/Default.cs",
+            "PLang/app/channels/serializers/serializer/plang/Data.cs",
+            "PLang/app/data/this.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Comment-rot sweep across production C# (per Ingi mid-session). Stripped review-iteration / D-number / Q-number / architect-plan markers from comments. Substance preserved; provenance dropped. Builds clean (0 errors)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/**/*.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Same sweep across PLang.Tests/. ~50 test files updated, mostly stripping 'Stage N \u2014 Batch M.' summary prefixes. Some orphan strips required manual cleanup (broken sentences caught by re-grep + spot fix)."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md",
+            ".bot/purge-systemio-from-actions/docs-report.json",
+            ".bot/purge-systemio-from-actions/docs/summary.md",
+            ".bot/purge-systemio-from-actions/docs/v1/result.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Removed four /shared/app-tree/ references from app-tree.md (Ingi confirmed mid-session that the shared tree is no longer maintained \u2014 in-repo app-tree.md is now canonical). Updated coder/v1 CLAUDE.md proposal decision from 'deferred' to 'rejected' since the proposal's stated right home (/shared/app-tree/) no longer exists as a maintained doc."
         }
       ],
       "after": {
         "status": "PASS",
         "health": "Branch is doc-complete. Drift checker reports clean (31 modules, 37 app props, 7 actor props, 5 data partials).",
-        "notes": "Ready to merge into runtime2. One claude-md proposal deferred (form mismatch with target file); no character proposals on this branch."
+        "notes": "Ready to merge into runtime2. One claude-md proposal deferred (form mismatch with target file); no character proposals on this branch. Mid-session add-ons: comment-rot sweep across production + tests (substance preserved, provenance dropped); /shared/app-tree/ references removed (no longer maintained \u2014 Ingi confirmation)."
       },
-      "timestamp_end": "2026-05-26T13:51:21Z",
+      "timestamp_end": "2026-05-26T14:08:45Z",
       "plan": ".bot/purge-systemio-from-actions/docs/v1/plan.md"
     }
   ]

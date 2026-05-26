@@ -6,11 +6,10 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.Llm;
 
 /// <summary>
-/// Stage 5 — Batch 9. <c>llm/code/OpenAi.cs</c> image attachment denial.
-///
-/// Hardened post tester v2: invokes <c>OpenAi.ResolveImage</c> directly (the
-/// actual handler) so a mutation that reverted the handler to raw
-/// <c>System.IO.File.ReadAllBytes</c> would flip these tests red.
+/// <c>llm/code/OpenAi.cs</c> image attachment denial. Invokes
+/// <c>OpenAi.ResolveImage</c> directly so a mutation that reverted the
+/// handler to raw <c>System.IO.File.ReadAllBytes</c> would flip these
+/// tests red.
 /// </summary>
 public class OpenAiImageDenialTests
 {

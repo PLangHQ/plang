@@ -133,7 +133,7 @@ public class GetActionsTests
         }
     }
 
-    // --- Actions filter (tester v7 N2) ----------------------------------------
+    // --- Actions filter ----------------------------------------
     //
     // The Actions param restricts the returned catalog to a named set of
     // module.action entries. Null/empty → full catalog. The Compile step uses

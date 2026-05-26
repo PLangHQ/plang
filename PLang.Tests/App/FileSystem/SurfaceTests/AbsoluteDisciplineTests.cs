@@ -9,7 +9,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
 /// <summary>
-/// Stage 5 — Batch 8. <c>.Absolute</c> discipline (D13).
+/// <c>.Absolute</c> discipline.
 /// </summary>
 public class AbsoluteDisciplineTests
 {

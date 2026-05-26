@@ -5,14 +5,14 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.builder;
 
 /// <summary>
-/// Tester v7 N3 — regression guard for the inverted-File.Exists fix.
+/// Regression guard for the inverted-File.Exists fix.
 ///
 /// <c>Builder.RunAsync</c> bootstraps the build. The branch under guard:
 /// <code>if (!File.Exists(appPrPath) &amp;&amp; !_app.Create) { … }</code>
-/// flipped to its current form in coder v6 — the previous version fired the
-/// branch when <c>app.pr</c> DID exist, forcing every build of an existing
-/// app to need <c>--app={"create":true}</c>. Flipping the <c>!</c> back would
-/// silently bring the original bug back; nothing else in the suite covers
+/// A previous version had the <c>!</c> inverted and fired the branch when
+/// <c>app.pr</c> DID exist, forcing every build of an existing app to need
+/// <c>--app={"create":true}</c>. Flipping the <c>!</c> back would silently
+/// bring the original bug back; nothing else in the suite covers
 /// <c>Builder.RunAsync</c>'s bootstrap.
 ///
 /// dotnet (and TUnit) redirect stdin, so <c>Console.IsInputRedirected</c> is

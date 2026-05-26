@@ -7,7 +7,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Goals.PathTypingTests;
 
 /// <summary>
-/// Stage 3 — Batch 4. Goal/GoalCall typing flip (D3, C7/C11).
+/// Batch 4. Goal/GoalCall typing flip.
 /// </summary>
 public class GoalPathTypingTests
 {

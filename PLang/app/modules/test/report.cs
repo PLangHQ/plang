@@ -34,8 +34,8 @@ public partial class report : IContext
         RenderCoverageTables(console, testing, Context.App.Modules);
         await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, console.ToString());
 
-        // Write the file artefact through path verbs (gated). .test/ lives at
-        // the app root per Q4 decision.
+        // Write the file artefact through path verbs (gated). .test/ lives
+        // at the app root.
         var app = Context.App;
         var ctx = Context;
         string reportFile;

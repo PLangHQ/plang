@@ -11,7 +11,7 @@ using ReadVerb = global::app.types.path.permission.verb.Read;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 6 — <c>Path.Absolute</c> canonical form. One test per HttpPath rule.
+/// <C>Path.Absolute</c> canonical form. One test per HttpPath rule.
 /// </summary>
 public class AbsoluteCanonicalFormTests
 {

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace PLang.Tests.App.Types.PathTests.Contract;
 
 /// <summary>
-/// Stage 7 — the fixture contract every scheme provides so it can be run through
+/// The fixture contract every scheme provides so it can be run through
 /// <see cref="PathSchemeContractTests{TFixture}"/>. Implementing this interface plus a
 /// one-line <c>: PathSchemeContractTests&lt;MyFixture&gt;</c> subclass is the entire cost
 /// of putting a new scheme (S3, Git, ...) under the full verb + permission contract suite.

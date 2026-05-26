@@ -1,7 +1,7 @@
 namespace app.types.path.http;
 
 /// <summary>
-/// HttpPath-scheme derivation verbs (D1). URL semantics via <see cref="Uri"/>
+/// HttpPath-scheme derivation verbs. URL semantics via <see cref="Uri"/>
 /// — path separators are always <c>/</c>, scheme stays <c>http</c>/<c>https</c>.
 /// Pure transformation: no requests, no AuthGate.
 /// </summary>

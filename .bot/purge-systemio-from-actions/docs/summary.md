@@ -32,9 +32,13 @@ with migration status + one-liner under engine conventions in
    This is the drift checker that surfaced findings #3 above.
 
 **Triage:** one CLAUDE.md proposal from coder/v1 (add "Default impl:"
-lines under abstract-type entries in `app-tree.md`) **deferred** — the
+lines under abstract-type entries in `app-tree.md`) **rejected** — the
 target file's shape doesn't have per-type sections to attach those
-lines to. Re-raise for `/shared/app-tree/` (the deep tree) instead.
+lines to. The deep-dive doc at `/shared/app-tree/` that could have
+hosted this is no longer maintained; the in-repo `app-tree.md` is now
+the canonical app tree. Intent is fine; XML doc on the abstract class
+is the right home for "what's the default impl when nothing else
+dispatches" if it's worth saying.
 
 **Code example:** the stale-line fix illustrates the pattern of what
 the docs gate catches.
@@ -53,6 +57,19 @@ After:
 
 A reviewer that doesn't re-read the one-liner after stage 6 lands
 ships docs that contradict the build. The pass catches it.
+
+**Comment-rot sweep** (added mid-session per Ingi): scrubbed
+review-iteration / architect-plan / D-number / Q-number markers from
+comments across ~60 C# files (production + tests). The technical
+substance under each label was preserved; what got dropped was the
+provenance ("this came from review N") that becomes gibberish six
+months out. Builds clean. Detail in `v1/result.md`.
+
+**`/shared/app-tree/` references removed.** Ingi confirmed the team
+stopped maintaining `/shared/app-tree/`; the in-repo `app-tree.md` is
+now the canonical app tree. Updated the doc and downgraded the coder-v1
+proposal decision from "deferred" to "rejected" — the proposal's
+stated "right home" no longer exists as a maintained doc.
 
 **Verdict:** PASS. Branch ready for `runtime2` merge.
 

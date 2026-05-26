@@ -6,10 +6,10 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.Debug;
 
 /// <summary>
-/// Stage 5 — Batch 9. <c>debug/this.cs</c> LLM trace writes (D11).
+/// <c>debug/this.cs</c> LLM trace writes.
 ///
-/// Hardened post tester v2: drives <c>EmitLlmBlock</c> + <c>ResolveLlmFilePath</c>
-/// directly — the actual handler methods. A mutation that reverted
+/// Drives <c>EmitLlmBlock</c> + <c>ResolveLlmFilePath</c> directly —
+/// the actual handler methods. A mutation that reverted
 /// <c>_currentLlmFilePath.Append(...)</c> to <c>System.IO.File.AppendAllText</c>
 /// would not flip these tests (both end up writing to disk), so we also
 /// assert the underlying path is a <see cref="global::app.types.path.@this"/>
@@ -35,7 +35,7 @@ public class DebugTraceWriteTests
         // System.IO.Path.Combine + string would break this signature.
         await Assert.That(resolved).IsNotNull();
         await Assert.That(resolved is global::app.types.path.@this).IsTrue();
-        // And the derivation lands under .build/traces (the architect plan).
+        // And the derivation lands under .build/traces.
         await Assert.That(resolved.Absolute.Replace('\\', '/'))
             .Contains(".build/traces/");
     }

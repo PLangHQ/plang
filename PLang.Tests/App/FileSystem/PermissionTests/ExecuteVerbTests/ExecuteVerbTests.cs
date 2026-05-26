@@ -11,7 +11,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.FileSystem.PermissionTests.ExecuteVerbTests;
 
 /// <summary>
-/// Stage 5 — Batch 6. <c>Execute</c> verb (D8/C5) + <c>path.LoadAssemblyAsync</c>.
+/// Batch 6. <c>Execute</c> verb + <c>path.LoadAssemblyAsync</c>.
 /// </summary>
 public class ExecuteVerbTests
 {

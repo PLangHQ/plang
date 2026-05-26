@@ -3,7 +3,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules;
 
 /// <summary>
-/// Tester v7 N4 — guard <c>app.goals.goal.steps.step.actions.action.@this.ReturnTypeName</c>.
+/// Guards <c>app.goals.goal.steps.step.actions.action.@this.ReturnTypeName</c>.
 ///
 /// The catalog row a built action carries surfaces the PLang name of T from
 /// <c>Run()</c>'s declared return type. Compile.llm uses this to pick the

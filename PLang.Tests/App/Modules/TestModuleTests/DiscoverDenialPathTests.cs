@@ -6,7 +6,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.TestModuleTests;
 
 /// <summary>
-/// Stage 5 — Batch 9. <c>test/discover.cs</c> denial-path tests.
+/// Batch 9. <c>test/discover.cs</c> denial-path tests.
 /// </summary>
 public class DiscoverDenialPathTests
 {
@@ -59,8 +59,8 @@ public class DiscoverDenialPathTests
         };
         var result = await action.Run();
         // Either denial → Fail, or the resolved path lands under root → empty.
-        // BOTH branches assert — fixes the "zero assertions on denial" gap
-        // tester v2 flagged.
+        // BOTH branches assert so a "zero assertions on denial" regression
+        // can't slip through.
         if (result.Success)
         {
             var files = result.Value as System.Collections.Generic.List<global::app.tester.File>;

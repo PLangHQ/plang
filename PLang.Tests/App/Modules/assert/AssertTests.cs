@@ -190,14 +190,13 @@ public class AssertTests
         await Assert.That(result.Success).IsTrue();
     }
 
-    // --- IsTrue/IsFalse over a path (codeanalyzer v2 N3) ---
+    // --- IsTrue/IsFalse over a path ---
     //
     // ResolveTruthy must route an IBooleanResolvable value (a path) through
-    // Data.ToBooleanAsync — not fall to IsTruthy, whose `return true` catch-all
-    // for any non-null object is the precise F3 always-true bug class.
-    // Revert N3 (delete the IBooleanResolvable branch in ResolveTruthy) and
-    // both Missing_Fails / Existing_Passes go red — the deletion test that
-    // proves the fix matters.
+    // Data.ToBooleanAsync — not fall to IsTruthy, whose `return true`
+    // catch-all for any non-null object is the always-true bug class.
+    // Deleting the IBooleanResolvable branch in ResolveTruthy flips both
+    // Missing_Fails / Existing_Passes red — they're the regression guard.
 
     private static (global::app.@this app, string root) MakeAppRoot(string tag)
     {

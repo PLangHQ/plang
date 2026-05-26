@@ -40,8 +40,8 @@
     {
       "from_bot": "coder/v1",
       "target": "Documentation/v0.2/app-tree.md",
-      "decision": "deferred",
-      "reason": "Proposal is to add 'Default impl:' lines under every abstract-type entry in app-tree.md. The proposed shape assumes per-type sections with 'Location:' / 'Role:' lines, but app-tree.md is a one-screen summary built around fenced trees + a 'What's NOT on app' table — there are no per-abstract-type sections to attach the new lines to. The intent (collapse the abstract-base → default-impl tracing hop) is good; the right home is the deep-dive doc at /shared/app-tree/, where per-type entries already exist. Filed under explicit-user-request footer so not dismissed — defer until either app-tree.md grows per-type sections or the proposal is re-targeted at the deep tree."
+      "decision": "rejected",
+      "reason": "Proposal is to add 'Default impl:' lines under every abstract-type entry in app-tree.md. The proposed shape assumes per-type sections with 'Location:' / 'Role:' lines, but app-tree.md is a one-screen summary built around fenced trees + a 'What's NOT on app' table — there are no per-abstract-type sections to attach the new lines to. The deep-dive doc at /shared/app-tree/ that previously could have hosted this is no longer maintained (Ingi confirmed this branch: the in-repo app-tree.md is now the canonical app tree). The intent (collapse the abstract-base → default-impl tracing hop) is still valid, but the proper home for that would be XML doc on the abstract class itself or a focused tracing-doc section — not the one-screen runtime-shape summary. Filed under explicit-user-request footer so the reasoning is recorded; rejecting the form, not the intent."
     }
   ],
   "character_proposals": []

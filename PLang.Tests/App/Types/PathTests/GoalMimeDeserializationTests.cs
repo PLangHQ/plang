@@ -6,7 +6,7 @@ using FilePath = global::app.types.path.file.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 2 — Batch 3. <c>.goal</c> MIME behaviour.
+/// Batch 3. <c>.goal</c> MIME behaviour.
 ///
 /// <c>.goal</c> stays <c>text/plain</c> — generic file.read of a .goal returns
 /// raw source text (the existing convention; PLang scripts grep through the
