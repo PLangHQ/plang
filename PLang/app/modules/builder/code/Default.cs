@@ -534,7 +534,7 @@ public class Default : IBuilder
     /// "json"). A returned typeName stamps onto the terminal variable.set's "Type"
     /// parameter; Fail aborts validation; bare Ok contributes nothing.
     /// </summary>
-    private static async Task<List<string>> RunBuildPass(Actions actions, global::app.modules.@this modules,
+    internal static async Task<List<string>> RunBuildPass(Actions actions, global::app.modules.@this modules,
         actor.context.@this context)
     {
         var errors = new List<string>();

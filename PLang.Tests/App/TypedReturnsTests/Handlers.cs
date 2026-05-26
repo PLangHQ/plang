@@ -1,0 +1,57 @@
+// Stage 0 test handlers for typed-action-returns.
+// Live in app.modules.typedreturns.* so the source generator picks them up and
+// generates SetAction/ExecuteAsync exactly as production handlers get. Not
+// auto-registered (Modules.Discover walks PLang.dll only); tests register via
+// app.Modules.RegisterType before calling validate.
+
+namespace app.modules.typedreturns;
+
+/// <summary>A no-Build handler — the IClass default impl applies (Data.Ok()).</summary>
+[global::app.modules.Action("noopbuild")]
+public partial class NoopBuild : global::app.modules.IContext
+{
+    public partial global::app.data.@this<string>? Tag { get; init; }
+    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+}
+
+/// <summary>Build() returns Ok("foo") — exercises the terminal-type stamping path.</summary>
+[global::app.modules.Action("buildreturnstype")]
+public partial class BuildReturnsType : global::app.modules.IContext
+{
+    public partial global::app.data.@this<string>? Tag { get; init; }
+    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Build() => Task.FromResult(global::app.data.@this.Ok("foo"));
+}
+
+/// <summary>Build() returns Fail — exercises the abort-validation path.</summary>
+[global::app.modules.Action("buildfails")]
+public partial class BuildFails : global::app.modules.IContext
+{
+    public partial global::app.data.@this<string>? Tag { get; init; }
+    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Build() => Task.FromResult(
+        global::app.data.@this.FromError(new global::app.errors.ActionError("forced build failure", "BuildFail", 400)));
+}
+
+/// <summary>Build() returns bare Ok() — exercises the "no value, no stamp" path.</summary>
+[global::app.modules.Action("buildbareok")]
+public partial class BuildBareOk : global::app.modules.IContext
+{
+    public partial global::app.data.@this<string>? Tag { get; init; }
+    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Build() => Task.FromResult(global::app.data.@this.Ok());
+}
+
+/// <summary>Records the order Build() is invoked across an action sequence.</summary>
+[global::app.modules.Action("buildordered")]
+public partial class BuildOrdered : global::app.modules.IContext
+{
+    public static readonly List<string> InvocationLog = new();
+    public partial global::app.data.@this<string>? Marker { get; init; }
+    public Task<global::app.data.@this> Run() => Task.FromResult(global::app.data.@this.Ok());
+    public Task<global::app.data.@this> Build()
+    {
+        InvocationLog.Add(Marker?.Value ?? "?");
+        return Task.FromResult(global::app.data.@this.Ok());
+    }
+}
