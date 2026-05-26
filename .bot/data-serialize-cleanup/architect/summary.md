@@ -6,6 +6,8 @@ The wire shape is flat: `{name, type, value, signature}`. Nesting through byte-d
 
 The work is settled enough to hand to test-designer; the design conversation with Ingi covered the round-trip semantics, the role of `name` as the addressability coordinate that survives transport, and the position of signing in the call sequence.
 
+**Follow-up identified: structural normalization (option 3).** A later design conversation explored how PLang would support non-reflection formats (protobuf, MsgPack, CBOR). The answer is to tighten Data.Value's contract — primitive | byte[] | Data | List<> — and add a `Normalize()` step that walks any C# object into this uniform tree once, at the boundary. Format encoders become trivial walkers (no per-format reflection). The wire shape stays compact: bare primitives ride in the parent's value slot when the parent's `type` covers them ("list&lt;int&gt;" makes `[1,2,3]` bare); Data wrappers appear only when a name or signature needs a home. This is intentionally NOT in this branch — it's a contract change for Data and deserves its own branch (`data-normalize`) on top of this cleanup. Created as a placeholder with a starter plan.
+
 Stage status:
 | Stage | File | Status |
 |-------|------|--------|
