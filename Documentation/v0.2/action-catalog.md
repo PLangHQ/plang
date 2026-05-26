@@ -253,7 +253,7 @@ Whenever you change markdown or attributes, rebuild a sample goal and verify the
 
 ## Don't
 
-- Don't rebuild `system/builder/BuildGoal.goal` as a way to test catalog changes. The catalog renders on *any* build (it's a step inside `BuildGoalCore`). Rebuilding the builder risks LLM drift on its own `.pr` — the builder building the builder is the most fragile build in the system.
+- Don't rebuild `system/builder/BuildGoal/Start.goal` as a way to test catalog changes. The catalog renders on *any* build (the per-action notes/examples render in `BuildStep/Start.goal` for the planner's picked action set). Rebuilding the builder risks LLM drift on its own `.pr` — the builder building the builder is the most fragile build in the system.
 - Don't add a Description that restates the signature. If your description starts with the action's name verb-for-verb, rewrite it.
 - Don't put a rule that constrains one action into `Compile.llm`. The cross-cutting system prompt keeps only the kernel — modifier vs peer classification, the formal-mirroring rule, type conventions, the `%!data%`-never-as-fallback rule. Per-action rules go in `<action>.notes.md`.
 - Don't repeat a family rule across every `<action>.notes.md` in a module. Put it once in `module.notes.md` — the renderer concats module-first automatically.

@@ -37,9 +37,9 @@ plang build '--build={"files":"myfile.goal","cache":false}'
 ## How It Works
 
 1. `Build.goal` (system builder) is the entry point
-2. For each `.goal` file, `BuildGoal.goal` sends the goal text + action summary to the LLM
-3. The LLM returns `{module, action, parameters}` mappings for each step
-4. The result is validated, merged, and saved as a `.pr` file
+2. For each `.goal` file, `BuildGoal/Start.goal` runs the planner (`Plan.llm`, one LLM call per goal) to decide each step's action set
+3. For each step, `BuildStep/Start.goal` runs the compiler (`Compile.llm` + `CompileUser.llm`) with the planner's picked actions and emits the structured `{module, action, parameters}` mapping
+4. The result is validated, merged, and saved as a `.pr` file (one file per goal in v0.2)
 
 ## Cache
 
