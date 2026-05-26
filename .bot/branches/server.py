@@ -506,7 +506,6 @@ INDEX_HTML = r"""<!doctype html>
     font-size: 12px;
     line-height: 1.5;
     display: none;
-    pointer-events: none;  /* don't steal hover from cursor */
   }
   #filePopup .header {
     color: var(--muted);
@@ -706,24 +705,36 @@ function copyBranchName(e, name) {
 }
 
 // Hover-preview popup ------------------------------------------------
+//
+// Behavior: hovering a file row opens the popup; the popup is sticky
+// (cursor can move onto it to scroll/read). The popup is pinned to the
+// row's right edge on open and does NOT follow the cursor. It hides
+// after a short grace period once the cursor leaves both the row and
+// the popup, so moving row→popup keeps it open.
 const popup = document.createElement("div");
 popup.id = "filePopup";
 document.body.appendChild(popup);
-let hoverTimer = null;
+let hoverTimer = null;   // delay before opening
+let hideTimer = null;    // grace period before closing
 let hoverGen = 0;
+let activeLi = null;
 
-function positionPopup(e) {
+function positionPopupForRow(li) {
+  const r = li.getBoundingClientRect();
   const margin = 12;
-  const w = popup.offsetWidth, h = popup.offsetHeight;
-  let x = e.clientX + margin;
-  let y = e.clientY + margin;
-  if (x + w > window.innerWidth - margin) x = e.clientX - w - margin;
-  if (y + h > window.innerHeight - margin) y = Math.max(margin, window.innerHeight - h - margin);
+  const w = 720;
+  // Prefer to the right; if it overflows, place to the left of the row.
+  let x = r.right + margin;
+  if (x + w > window.innerWidth - margin) x = Math.max(margin, r.left - w - margin);
+  let y = r.top;
+  const maxH = window.innerHeight * 0.7;
+  if (y + maxH > window.innerHeight - margin) y = Math.max(margin, window.innerHeight - maxH - margin);
   popup.style.left = x + "px";
   popup.style.top = y + "px";
 }
 
-async function showPopup(li, e) {
+async function showPopup(li) {
+  activeLi = li;
   const branch = li.dataset.branch;
   const path = li.dataset.path;
   const key = branch + "::" + path;
@@ -732,7 +743,7 @@ async function showPopup(li, e) {
   if (!payload) {
     popup.innerHTML = `<div class="header"><span>${path}</span><span>loading...</span></div>`;
     popup.style.display = "block";
-    positionPopup(e);
+    positionPopupForRow(li);
     try {
       const r = await fetch(`/api/file?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(path)}`);
       payload = await r.json();
@@ -740,36 +751,47 @@ async function showPopup(li, e) {
     } catch (err) {
       payload = { ok: false, error: String(err) };
     }
-    if (gen !== hoverGen) return;  // user moved on while loading
+    if (gen !== hoverGen) return;
   }
   const body = payload.ok
     ? payload.html + (payload.truncated ? '<div class="trunc">(preview truncated)</div>' : "")
     : `<em>${payload.error || "failed to load"}</em>`;
   popup.innerHTML = `<div class="header"><span>${path}</span><span>${payload.kind || ""}</span></div>${body}`;
   popup.style.display = "block";
-  positionPopup(e);
+  positionPopupForRow(li);
 }
 
-function hidePopup() {
-  hoverGen++;
-  popup.style.display = "none";
+function scheduleHide() {
+  if (hideTimer) clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    hoverGen++;
+    popup.style.display = "none";
+    activeLi = null;
+  }, 150);
+}
+
+function cancelHide() {
+  if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
 }
 
 document.addEventListener("mouseover", e => {
   const li = e.target.closest("li[data-branch][data-path]");
   if (!li) return;
+  cancelHide();
+  if (li === activeLi) return;
   if (hoverTimer) clearTimeout(hoverTimer);
-  hoverTimer = setTimeout(() => showPopup(li, e), 180);
+  hoverTimer = setTimeout(() => showPopup(li), 180);
 });
 document.addEventListener("mouseout", e => {
   const li = e.target.closest("li[data-branch][data-path]");
   if (!li) return;
   if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-  hidePopup();
+  // Don't hide if the cursor moved onto the popup itself.
+  if (e.relatedTarget && popup.contains(e.relatedTarget)) return;
+  scheduleHide();
 });
-document.addEventListener("mousemove", e => {
-  if (popup.style.display === "block") positionPopup(e);
-});
+popup.addEventListener("mouseenter", cancelHide);
+popup.addEventListener("mouseleave", scheduleHide);
 
 async function load() {
   const res = await fetch("/api/branches");
