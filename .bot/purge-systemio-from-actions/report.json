@@ -272,6 +272,71 @@
         "health": "green minus 2",
         "notes": "F1 closes a real HIGH-severity vuln correctly; 2 PLang tests regress because they were riding the un-canonicalized prefix-match. Fix is test-side (path or runtime-dir anchor), not a F1 rollback. PLNG002 enforcement is airtight \u2014 no suppression anywhere outside the analyzer itself."
       }
+    },
+    {
+      "id": "8e804cc5-9ac6-4b5e-bf5e-4b456622af6b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-26T13:08:07+00:00",
+      "timestamp_end": "2026-05-26T13:20:00+00:00",
+      "intent": "Review coder's delta since codeanalyzer v1 (security F1/F2 fixes, auditor F1 follow-up, PathHelper, MarkdownTeaching path-verb lift, App.Parent + parent-chain IsInRoot).",
+      "before": {
+        "assumptions": "v1 was PASS. Auditor flagged a 206→204 PLang test regression from F1; coder's last commit (bfb34bca4) adds App.Parent + parent-chain walk to fix it. Expectation: structural shape is right, edge-case knobs may be loose.",
+        "risk": "PathHelper carve-out logic in PLNG002 must remain the only exemption; any whole-file pragma or NoWarn regresses the v1 PLNG002-airtight claim."
+      },
+      "plan": ".bot/purge-systemio-from-actions/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/codeanalyzer/v1/report.md",
+            ".bot/purge-systemio-from-actions/auditor/v1/result.md",
+            ".bot/purge-systemio-from-actions/security/v2/verdict.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read prior bot reports to scope what I do NOT need to re-check; v1 cleanups (N1/N4/N5) already auditor-confirmed closed."
+        },
+        {
+          "paths": [
+            "PLang/app/Utils/PathHelper.cs",
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/file/this.Derivation.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/file/this.Validate.cs",
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/this.cs",
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/builder/code/IBuilder.cs",
+            "PLang/app/modules/builder/types.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang.Generators/Diagnostics/Plng002.cs",
+            "PLang/app/channels/serializers/serializer/Json.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "5-pass review on the v1→HEAD delta (~470/-300 LOC under PLang/ + PLang.Generators/). Verified v1 N1 closed (Json.cs alloc inside ??); PathHelper is a pure forwarder; PLNG002 carve-outs are exact-match per-finding; Canonicalize correctly skips relative and // prefixes; IsInRoot parent-chain walk earns its place (deletion-test would re-break the auditor's 2 tests); MarkdownTeaching path-verb lift is clean."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/codeanalyzer/v2/plan.md",
+            ".bot/purge-systemio-from-actions/codeanalyzer/v2/report.md",
+            ".bot/purge-systemio-from-actions/codeanalyzer/v2/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan + report + verdict for v2. 5 LOW findings: N1 App.Parent settable cycle guard, N2 Canonicalize bare catch, N3 IsUnder per-call string concat, N4 ValidatePath ungated File.Exists probes, N5 ScanOrphans inverted list-then-filter."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "PASS (NEEDS WORK — low only). All v1 findings closed; F1/F2/F3 structurally clean; PLNG002 carve-outs remain auditor-airtight. 5 LOW follow-ups are tighten-the-screw, not loose-the-screw."
+      }
     }
   ]
 }
