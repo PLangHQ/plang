@@ -52,7 +52,7 @@ public class ReportActionTests
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };
-        var run = new global::app.tester.Run(new global::app.tester.File { Goal = goal });
+        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = goal });
         run.Complete(status, error);
         if (output != null) run.Output = output;
         return run;

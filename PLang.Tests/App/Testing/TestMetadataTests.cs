@@ -50,7 +50,7 @@ public class TestMetadataTests
             Hash = goalHash,
             BuilderVersion = builderVersion
         };
-        var run = new global::app.tester.Run(new global::app.tester.File { Goal = goal });
+        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = goal });
         run.Complete(global::app.tester.Status.Pass);
         return run;
     }

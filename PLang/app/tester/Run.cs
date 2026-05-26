@@ -4,7 +4,7 @@ using app.errors;
 namespace app.tester;
 
 /// <summary>
-/// Execution record for a single test. Created per Ready File by test.run.
+/// Execution record for a single test. Created per Ready Test by test.run.
 /// Lives on the per-test child App's Testing.CurrentTest during execution,
 /// then added to the parent's Testing.Results when the test completes.
 /// </summary>
@@ -12,8 +12,10 @@ public sealed class Run
 {
     private readonly Stopwatch _stopwatch;
 
-    /// <summary>The discovered File this run is executing.</summary>
-    public File File { get; }
+    /// <summary>The discovered Test this run is executing. Property name kept as
+    /// File for now — Stage 1 (typed-action-returns) renamed only the type; a
+    /// follow-up may rename the property to Test for full consistency.</summary>
+    public Test.@this File { get; }
 
     /// <summary>Current lifecycle status. Transitions on Complete().</summary>
     public Status Status { get; private set; }
@@ -37,7 +39,7 @@ public sealed class Run
     /// <summary>Tags added during the run via test.tag. Distinct from File.Tags (which is discovery-time).</summary>
     public HashSet<string> UserTags { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public Run(File file)
+    public Run(Test.@this file)
     {
         File = file;
         Status = file.Status == Status.Ready ? Status.Ready : file.Status;

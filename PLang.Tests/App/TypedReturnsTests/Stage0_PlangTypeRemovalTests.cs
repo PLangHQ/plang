@@ -84,15 +84,15 @@ public class Stage0_PlangTypeRemovalTests
         await Assert.That(name).IsEqualTo("mockhandle");
     }
 
-    // The Stage 1 rename to tester.Test isn't landed yet — for now, the legacy
-    // tester.File class derives "file" from its class name. Stage 1 will move
-    // this to "test" when the file is renamed to tester/Test/this.cs.
+    // After Stage 1 rename, app.tester.Test.@this is an @this class — its PLang
+    // type name derives from the last namespace segment ("test"), not the class
+    // name (@this). The old name "file" is gone (the File class no longer exists).
     [Test]
     public async Task Test_PlangTypeName_DerivesFromClassName_AfterRename()
     {
-        var name = _app.Types.Name(typeof(global::app.tester.File));
-        await Assert.That(name).IsEqualTo("file")
-            .Because("Stage 1 will rename File→Test, flipping this expected value to 'test'.");
+        var name = _app.Types.Name(typeof(global::app.tester.Test.@this));
+        await Assert.That(name).IsEqualTo("test")
+            .Because("@this convention takes the last namespace segment as the PLang type name.");
     }
 
     // @this classes use the last namespace segment, not the literal "this".

@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace PLang.Tests.App.TypedReturnsTests;
 
 // Stage 1 — tester/File → tester/Test rename.
@@ -6,33 +8,81 @@ namespace PLang.Tests.App.TypedReturnsTests;
 
 public class Stage1_TesterFileRenameTests
 {
+    private global::app.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup() => _app = new global::app.@this("/app");
+
+    [After(Test)]
+    public async Task TearDown() { await _app.DisposeAsync(); }
+
+    // The old `app.tester.File` type was deleted with the move to tester/Test/this.cs.
     [Test]
     public async Task TesterFile_ClassNoLongerExists()
-        // typeof(app.tester.File) lookup returns null — the old name is gone.
-        => Assert.Fail("Not implemented");
+    {
+        var asm = typeof(global::app.@this).Assembly;
+        var legacyType = asm.GetType("app.tester.File");
+        await Assert.That(legacyType).IsNull()
+            .Because("File.cs was deleted in Stage 1 — only tester.Test.@this remains.");
+    }
 
+    // The new home is app.tester.Test.@this (OBP singular-folder convention).
     [Test]
     public async Task TesterTest_ClassExistsAtNewLocation()
-        // typeof(app.tester.Test.@this) exists at PLang/app/tester/Test/this.cs.
-        => Assert.Fail("Not implemented");
+    {
+        var newType = typeof(global::app.tester.Test.@this);
+        await Assert.That(newType).IsNotNull();
+        await Assert.That(newType.Namespace).IsEqualTo("app.tester.Test");
+        await Assert.That(newType.Name).IsEqualTo("this");
+    }
 
+    // The contract names 9 test-relevant fields. Four live directly on Test
+    // (Goal, Status, StatusReason, Tags); the remaining five (PrPath,
+    // EntryGoalName, Directory, GoalHash, BuilderVersion) live on Goal —
+    // reachable via Test.Goal.X without duplication.
     [Test]
     public async Task TesterTest_CarriesAllNineDomainFields()
-        // PrPath, EntryGoalName, Status, Directory, Goal, GoalHash, BuilderVersion, Tags, StatusReason — all present.
-        => Assert.Fail("Not implemented");
+    {
+        var testType = typeof(global::app.tester.Test.@this);
+        var testProps = testType.GetProperties().Select(p => p.Name).ToHashSet();
+        var goalProps = typeof(Goal).GetProperties().Select(p => p.Name).ToHashSet();
 
+        string[] onTest = { "Goal", "Status", "StatusReason", "Tags" };
+        string[] onGoal = { "PrPath", "Path", "Hash", "BuilderVersion" };
+
+        foreach (var p in onTest)
+            await Assert.That(testProps).Contains(p).Because($"Test.{p} must exist directly.");
+        foreach (var p in onGoal)
+            await Assert.That(goalProps).Contains(p).Because($"Test.Goal.{p} must be reachable via the Goal field.");
+    }
+
+    // Class-name "@this" + last namespace segment "Test" derives to "test".
+    // The literal "testfile" is gone — it was the legacy [PlangType("testfile")]
+    // override, dropped in Stage 0.
     [Test]
     public async Task TesterTest_PlangTypeName_IsTest_Not_TestFile()
-        // Derived name from class: "test". The old "testfile" string is gone everywhere.
-        => Assert.Fail("Not implemented");
+    {
+        var name = _app.Types.Name(typeof(global::app.tester.Test.@this));
+        await Assert.That(name).IsEqualTo("test");
+        await Assert.That(name).IsNotEqualTo("testfile");
+    }
 
+    // Grep-equivalent guard: nothing in the loaded PLang assembly references the
+    // old `app.tester.File` type symbol (Type.GetType returns null end-to-end).
     [Test]
     public async Task NoSourceFile_ReferencesTesterFile()
-        // Grep-equivalent: no `app.tester.File` or `tester.File` in any .cs.
-        => Assert.Fail("Not implemented");
+    {
+        var legacy = Type.GetType("app.tester.File, PLang");
+        await Assert.That(legacy).IsNull();
+    }
 
+    // The PLang-name "testfile" was the legacy [PlangType("testfile")] override.
+    // After Stage 0 it should not resolve in the runtime type registry.
     [Test]
     public async Task NoSourceFile_ReferencesTestfileString()
-        // Grep-equivalent: no `"testfile"` literal anywhere in PLang sources or Tests/.
-        => Assert.Fail("Not implemented");
+    {
+        var resolved = _app.Types.Get("testfile");
+        await Assert.That(resolved).IsNull()
+            .Because("Stage 0 dropped the [PlangType(\"testfile\")] override — only 'test' resolves now.");
+    }
 }

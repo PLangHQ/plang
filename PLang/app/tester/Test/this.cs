@@ -1,14 +1,14 @@
 using Goal = app.goals.goal.@this;
 
-namespace app.tester;
+namespace app.tester.Test;
 
 /// <summary>
 /// Discovery record for a <c>*.test.goal</c> file. Populated by test.discover.
-/// Consumed by test.run, which turns each Ready File into a Run.
+/// Consumed by test.run, which turns each Ready Test into a Run.
 /// Identity (path, name, hash, builder version, folder) lives on
 /// <see cref="Goal"/>; this record owns the discovery-only state.
 /// </summary>
-public sealed class File
+public sealed class @this
 {
     /// <summary>The discovered goal. Always populated — built from the .pr
     /// when available, otherwise parsed from the .goal source itself.</summary>
