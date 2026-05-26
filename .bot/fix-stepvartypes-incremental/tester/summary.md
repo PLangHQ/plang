@@ -1,125 +1,132 @@
 # tester — fix-stepvartypes-incremental
 
-**Version:** v5
-**Verdict:** FAIL
+**Version:** v6
+**Verdict:** PASS
 
 ## What this is
 
-Fresh-eyes pass after a busy interval since my v4 PASS. Six commits landed:
-codeanalyzer v3 (FAIL with HIGH OBP-5 + 4 LOW); coder's three commits to address
-those plus a separate `tester/File.cs` slim (drop the 6 properties duplicated
-from Goal) and a separate `step.@this` cleanup (drop unused Guidance/Level/
-Confidence); and finally a **builder-bot** commit `0f8886ab0` that restructured
-template files under `os/system/builder/llm/templates/`.
-
-The coder commits each claimed `3036/3036 C# + 208/208 PLang` and were correct
-at their commit. The builder-bot commit landed *after* and made no test claim.
-HEAD is red: 5 C# tests fail.
+v5 found one regression (5 C# tests failing on a stale template path after the
+builder bot's restructure). Coder commit `dfd7429a7` made the two-line fix.
+v6 verifies the fix landed clean AND runs proper false-green analysis on the
+substantive code changes from v4→v6 — because a green suite is only the
+starting point of the tester's job.
 
 ## What was done
 
-1. Clean rebuild PlangConsole → 0 errors (450 warnings, all generator nullable
-   noise — unchanged baseline).
-2. `cd Tests && plang --test` → **208/208 pass, 0 fail.**
-3. `dotnet run --project PLang.Tests` → **3031/3036, 5 failed.**
-4. Cross-checked the 5 failures: all in
-   `PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs`,
-   all the same `DirectoryNotFoundException` for the moved template at
-   `os/system/builder/templates/v2/stepActionDetails.template`. Path hardcoded
-   at line 28.
-5. Verified no other source references the dead v2 paths (only that one test
-   file and its own line-8 doc comment).
-6. Read the slim `tester/File.cs` + new `discover.cs` — every code path
-   populates `Goal` non-null (source-read fail → minimal `new Goal { Path }`;
-   .pr-missing/corrupt/hash-mismatch → `sourceGoal` from parsed .goal; happy
-   path → `prGoal`). Required-property discipline holds.
-7. Read the simplified `IsEntryGoalStep` in test/run.cs — both ends now use
-   canonical form per branch commit `7ed35b550`. Correct after TrimStart drop.
+1. Clean rebuild PlangConsole → 0 errors.
+2. `cd Tests && plang --test` → **208/208 pass.**
+3. `dotnet run --project PLang.Tests` → **3036/3036 pass.**
+4. **False-green hunting** on each substantive change since my v4 PASS.
 
-## The failing 5 (one root cause)
+## False-green analysis (the real job)
 
+### 1. `condition/code/Default.cs` — EvaluateOperator extract (commit 0943e5fda)
+
+Three identical 9-line bodies in `Evaluate(If)`, `Evaluate(Elseif)`,
+`Evaluate(Compare)` collapsed into one shared `EvaluateOperator(operatorData,
+left, right)`. Risk: did overload dispatch break? Did the helper's parameter
+shapes (`data.@this<Operator>`, `data.@this?`) miss a nullability case?
+
+Verified:
+- Call sites preserved — `compare.cs:16` `Evaluator.Evaluate(this)`,
+  `elseif.cs:21` `await Evaluator.Evaluate(this)`, `if.cs:22` `await
+  Evaluator.Evaluate(this)`. Each `this` is the typed action record, so
+  C# overload resolution picks the right one-line forwarder.
+- Exception filter unchanged (`ArgumentException | OverflowException |
+  InvalidCastException`).
+- Behavior end-to-end covered by the full PLang condition corpus
+  (Operators/, If/Basic, If/ElseBranch, If/Nested, Compound/Or, etc.) and
+  by `IfHandlerTests` / `CompareHandlerTests` / `DefaultEvaluatorTests`.
+
+No false green.
+
+### 2. `test/run.cs` — IsEntryGoalStep TrimStart drop (commit 0943e5fda)
+
+Both `.TrimStart('/')` calls removed; comparison now relies on producer
+canonicalization (commit `7ed35b550`). Risk: if either side ever returns a
+non-canonical path, every entry-goal step misclassifies — Timings count goes
+from 3 to 0, or sub-goal steps leak in making it 5.
+
+Verified by `Run_Timings_OnlyEntryGoalTopLevelSteps_NestedRollUp` at
+`RunActionTests.cs:518` — entry goal has 3 steps (step 1 calls a 2-step
+helper); asserts `run.Timings.Count == 3` AND indices == {0,1,2}. Either
+direction of breakage would fail this test:
+- Over-match (sub-goal leaks in) → count = 5
+- Under-match (wrong path comparison) → count = 0
+
+Plus the deletion-test reasoning: if I deleted the entire
+`bool IsEntryGoalStep(...)` predicate body and returned `true`, the test
+above would fail (count = 5). If I returned `false`, count = 0. The test
+catches a complete-disable mutation. Good.
+
+### 3. `tester/File.cs` — slim to discovery-only state (commit 1b1b226bb)
+
+`File.Goal` is now `required Goal Goal { get; init; }` (non-null). Six flat
+properties dropped. discover.cs rewritten with 6 Stale exit branches.
+
+Verified Goal is non-null on every path through `DiscoverOne`:
+- L84-91 (goal read fail) → `new Goal { Path = goalFile }` ✓
+- L94-96 (typed/parse/fallback chain) → coalesces to non-null ✓
+- L102-106 (no PrPath derivable) → uses `sourceGoal` ✓
+- L111-116 (no .pr) → uses `sourceGoal` ✓
+- L122-129 (pr read fail) → uses `sourceGoal` ✓
+- L131-139 (pr parse fail) → uses `sourceGoal` ✓
+- L143-149 (hash mismatch) → uses `sourceGoal` ✓
+- L160-166 (happy path) → uses `prGoal` ✓
+
+No null leak. `required` keyword would have surfaced a missing init at
+compile time anyway, but I verified the runtime construction sites too.
+
+Straggler check: `grep -rn 'EntryGoalName|file\.Path|file\.PrPath|file\.Directory|file\.GoalHash|file\.BuilderVersion' PLang/ PLang.Tests/` returns zero hits. Slim
+fully landed.
+
+**One minor non-blocking finding:** of the 6 Stale branches in discover.cs,
+only 2 have tests (`no .pr`, `rebuild needed`). The other 4 (`goal read
+error`, `no PrPath derivable`, `pr read fail`, `pr parse fail`) are
+reachable but untested. The slim didn't introduce the gap; the original
+inline code had the same branches. Two tests would carry real value
+(corrupt JSON .pr, goal-read failure); the third is edge-case theoretical.
+Filed in `test-report.json` as severity=minor. Not gating PASS.
+
+### 4. `step.@this` Guidance/Level/Confidence drop (commit 463339c90)
+
+Three properties removed plus their MergeFrom backfill and the
+`enrichResponse` keep-true block in `builder/code/Default.cs`.
+
+Straggler check: `grep -rn 'Guidance|\.Level|\.Confidence' PLang/ PLang.Tests/`
+(filtered to property access shape) returns nothing in production C# or test
+code. Old .pr files (verified the Icelandic fixture at
+`Tests/TestModule/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr`)
+still serialize `"guidance"`, `"level"`, `"confidence"` keys — STJ's default
+"ignore unknown members on deserialize" eats them silently, and the
+serializer-side properties are gone so new builds won't emit them. Zero
+behavior impact.
+
+## v5 finding closure
+
+Coder commit `dfd7429a7`:
+
+```diff
+- Path.Combine(RepoRoot, "os", "system", "builder", "templates", "v2", "stepActionDetails.template");
++ Path.Combine(RepoRoot, "os", "system", "builder", "llm", "templates", "stepActionDetails.template");
 ```
-PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs:28
-  Path.Combine(RepoRoot, "os", "system", "builder", "templates", "v2",
-               "stepActionDetails.template");
-                                  ^^^^^
-File moved by 0f8886ab0 to:
-  os/system/builder/llm/templates/stepActionDetails.template
-```
 
-Five test methods all hit `RenderAsync` → `File.ReadAllTextAsync(TemplatePath)` →
-`DirectoryNotFoundException`:
+Plus the line-8 doc comment. Exactly what I asked for. All 5 previously
+failing tests pass.
 
-- `Render_PerActionBlockOnlyForPlannerSet`
-- `Render_ActionInPlannerSet_GetsAllThreeBlocks`
-- `Render_ActionInPlannerSet_EmptyBlocksOmitted`
-- `Render_ModifierActionInPlannerSet_GetsItsNotesRendered`
-- `Render_NotesNotLeakedForActionsOutsidePlannerSet`
+## Pattern note (lesson, not finding)
 
-## Fix (two lines)
-
-`PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs`
-
-- Line 28 — replace `"templates", "v2", "stepActionDetails.template"` with
-  `"llm", "templates", "stepActionDetails.template"`.
-- Line 8 — update the doc comment to point at the new location.
-
-No behavior change in the production renderer; the template content moved
-unchanged.
-
-## Coder substantive work (no findings)
-
-Read the diffs end-to-end:
-
-- `condition/code/Default.cs` — `EvaluateOperator` extract collapses three
-  identical 9-line bodies into one shared method. Behavior preserved
-  (operator data, left, right routed the same way; same exception filter;
-  same `EvaluationError` call). Clean.
-- `test/run.cs:159-166` — both TrimStart calls and the stale comment gone.
-  Producer canonicalization (`7ed35b550`) makes both ends leading-slash.
-- `test/report.cs:46` — dead `var app = Context.App;` removed.
-- `tester/File.cs` — slim record: required `Goal`, `Status`, `StatusReason`,
-  `Tags`. Six redundant flat properties removed. Discovery rewritten to
-  always produce a non-null Goal — verified every branch.
-- `step/this.cs` — `Guidance`/`Level`/`Confidence` removed plus their
-  MergeFrom backfill. `builder/code/Default.cs:553-558` enrichResponse
-  block removed. .pr files with stale null fields still deserialize (STJ
-  ignores unknown). Clean.
-- Icelandic fixture `.test.goal` updated to read `Goal.Name` instead of
-  `EntryGoalName` and `.pr` rebuilt — verified the .pr step text and
-  module/action line up.
-
-## Code example — the failure shape
-
-```csharp
-// PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs:26-28
-private static readonly string RepoRoot = LocateRepoRoot();
-private static readonly string TemplatePath =
-    Path.Combine(RepoRoot, "os", "system", "builder", "templates", "v2", "stepActionDetails.template");
-//                                                       ^^^^^^^^^^^^^^^^^^^^^^
-// builder commit 0f8886ab0 moved this to llm/templates/. Path is dead.
-```
-
-## Pattern / lesson
-
-When two bots edit overlapping surfaces (here: coder fixes runtime code and
-builder restructures templates), a test that hardcodes a filesystem path on
-one side is invisible to the bot working on the other. The builder bot
-correctly updated every `.goal` source referencing the templates, but the
-C# tests' string-formed paths weren't in its grep scope. A `grep -r "templates/v2"`
-across `PLang.Tests/` before claiming green would have caught this — and is
-the move-checklist gap to flag.
+The v5 → v6 cycle illustrates the cross-bot coordination gap: builder-bot's
+template restructure (commit 0f8886ab0) updated every `.goal` source
+referencing the moved templates but missed a hardcoded C# string path in a
+test file. Filed in my v5 summary as a move-checklist proposal: when any bot
+moves a filesystem resource, grep the project for both `"…/oldpath"` and
+`"oldpath"` string literals in C#/PLang sources before claiming green.
+Worth surfacing to character-proposals if it recurs.
 
 ## Verdict + next
 
 ```
-VERDICT: FAIL
-Issues: 5 C# tests fail in StepActionDetailsRenderTests — stale path
-        os/system/builder/templates/v2/stepActionDetails.template at line 28
-        after builder commit 0f8886ab0 moved templates under llm/templates/.
-
-Next: run.ps1 coder stepvartypes-incremental "Fix tester v5: update
-      StepActionDetailsRenderTests.cs:28 + line-8 doc comment to point at
-      os/system/builder/llm/templates/stepActionDetails.template" -b
-      fix-stepvartypes-incremental
+VERDICT: PASS
+Next: run.ps1 security stepvartypes-incremental "Review the code on branch fix-stepvartypes-incremental" -b fix-stepvartypes-incremental
 ```

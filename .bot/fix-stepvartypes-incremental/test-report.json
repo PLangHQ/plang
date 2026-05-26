@@ -1,10 +1,10 @@
 {
   "tester": "tester",
   "branch": "fix-stepvartypes-incremental",
-  "timestamp": "2026-05-26T19:30:00Z",
-  "tested_version": "v5",
+  "timestamp": "2026-05-26T19:45:00Z",
+  "tested_version": "v6",
   "test_run": {
-    "csharp": { "total": 3036, "passed": 3031, "failed": 5, "skipped": 0 },
+    "csharp": { "total": 3036, "passed": 3036, "failed": 0, "skipped": 0 },
     "plang": { "total": 208, "passed": 208, "failed": 0, "skipped": 0 }
   },
   "coverage": {
@@ -15,15 +15,15 @@
   "findings": [
     {
       "id": 1,
-      "severity": "critical",
-      "type": "regression",
-      "test_file": "PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs",
-      "code_file": "os/system/builder/templates/v2/stepActionDetails.template (moved -> os/system/builder/llm/templates/stepActionDetails.template)",
-      "issue": "Five tests (Render_PerActionBlockOnlyForPlannerSet, Render_ActionInPlannerSet_GetsAllThreeBlocks, Render_ActionInPlannerSet_EmptyBlocksOmitted, Render_ModifierActionInPlannerSet_GetsItsNotesRendered, Render_NotesNotLeakedForActionsOutsidePlannerSet) throw DirectoryNotFoundException at TemplatePath line 28. Builder bot commit 0f8886ab0 renamed templates/v2/* under llm/templates/ and updated .goal references, but missed this C# test that hardcoded the old path with Path.Combine. The doc comment at line 8 also references the dead path.",
-      "impact": "Coder commits 0943e5fda, 1b1b226bb, 463339c90 each ran C# suite and claimed 3036/3036 green. The builder bot's commit 0f8886ab0 landed later and made no test-run claim. Net: HEAD ships red — the prior coder-attested greens were correct at that commit but stale by the time builder restructured.",
-      "suggestion": "Edit StepActionDetailsRenderTests.cs:28 to Path.Combine(RepoRoot, \"os\", \"system\", \"builder\", \"llm\", \"templates\", \"stepActionDetails.template\"); and update the line-8 doc comment to match. Single-line repair, no behavior change."
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Testing/DiscoverActionTests.cs",
+      "code_file": "PLang/app/modules/test/discover.cs",
+      "issue": "Slim discover.cs has 6 Stale branches (goal read error L86, no PrPath derivable L103, no .pr L114, pr-read-fail L127, pr-parse-fail L137, rebuild needed L147). Only 2 are covered: no .pr (Discover_NoPrFile_MarksStaleWithReasonNoPr) and rebuild needed (Discover_GoalAndPrHashMismatch_MarksStaleRebuildNeeded). The other 4 branches are reachable but untested. The slim restructure didn't introduce the gap — the original discover.cs had the same branches inline — but the new shape makes each Stale exit a single 4-line block, so adding a test per branch is now mechanical.",
+      "impact": "Low. A subtle bug in the 'pr corrupt' or 'goal read error' branch (wrong StatusReason text, swapped Status enum) would not be caught. None of the production paths read StatusReason for branching — it's display-only — so the blast radius is human-readable diagnostic accuracy, not behavior.",
+      "suggestion": "Add 3 short tests: corrupt-JSON .pr (writes 'not json' to the .pr path), goal-read-failure (impractical on Linux without permission games — skip), and goal-with-no-PrPath-derivable (edge case — likely unreachable in practice, can be left untested with a comment). The first two carry value; the third is theoretical."
     }
   ],
-  "verdict": "needs-fixes",
-  "summary": "PLang 208/208 (clean). C# 3031/3036 — all 5 failures are in StepActionDetailsRenderTests, all the same DirectoryNotFoundException for os/system/builder/templates/v2/stepActionDetails.template. The builder bot's template-restructure commit 0f8886ab0 missed this hardcoded path. Substantive code changes from coder (drop TrimStart, slim tester/File, drop unused Step props, extract EvaluateOperator helper) are clean — slim File.cs's required Goal discipline holds across every discover.cs branch and the simplified IsEntryGoalStep comparison is correct now that path canonicalization is enforced upstream. The Icelandic Discover fixture .test.goal was updated to use Goal.Name and rebuilt; .pr verifies. Two-line fix is sufficient to ship: update test path and doc comment."
+  "verdict": "approved",
+  "summary": "PLang 208/208 + C# 3036/3036 — all green after coder commit dfd7429a7 closed v5's template-path regression. False-green analysis ran on each substantive change since v4: (1) condition/code/Default.cs EvaluateOperator extract — overload resolution preserved (compare.cs:16, elseif.cs:21, if.cs:22 each call Evaluate(this) which routes to the correct one-line forwarder); behavior covered indirectly by .test.goal corpus and DefaultEvaluatorTests. (2) test/run.cs IsEntryGoalStep simplification — Run_Timings_OnlyEntryGoalTopLevelSteps_NestedRollUp would catch entry-vs-sub-goal misclassification (asserts exactly 3 entry-goal indices vs 5-if-sub-leaks-in). (3) tester/File.cs slim — verified discover.cs populates Goal non-null on every branch (fallback `new Goal { Path = goalFile }` on goal-read failure, sourceGoal otherwise, prGoal on happy path). All consumers (test/run.cs, test/report.cs, RunActionTests scaffolding) reach through file.Goal.* — no stragglers found. (4) step.@this Guidance/Level/Confidence drop — no references in PLang/ or PLang.Tests/; existing .pr files with stale null keys deserialize fine via STJ default (verified Icelandic fixture .pr — keys still present but ignored). One non-blocking minor finding: 4 of 6 discover Stale branches lack tests."
 }

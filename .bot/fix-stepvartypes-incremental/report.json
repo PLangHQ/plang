@@ -397,6 +397,66 @@
         "health": "C# 3031/3036 (5 fail, all StepActionDetailsRenderTests/template-path); PLang 208/208 clean",
         "notes": "Single-cause regression \u2014 builder bot's template-restructure commit 0f8886ab0 moved os/system/builder/templates/v2/stepActionDetails.template to llm/templates/ but missed a hardcoded path at StepActionDetailsRenderTests.cs:28. Two-line fix. Coder's substantive changes (drop TrimStart, slim tester/File, drop unused Step props, extract EvaluateOperator) are clean."
       }
+    },
+    {
+      "id": "4fdd243e-39a5-4591-ae7a-5bedc455fee6",
+      "bot": "tester",
+      "timestamp_start": "2026-05-26T19:20:22.218425+00:00",
+      "timestamp_end": "2026-05-26T19:26:04.173688+00:00",
+      "intent": "v6: validate coder fix for v5 finding (template path) and analyze",
+      "before": {
+        "assumptions": "Coder commit dfd7429a7 fixed the line 28 + line 8 path in StepActionDetailsRenderTests.cs to llm/templates/. Expect 3036/3036 + 208/208.",
+        "risk": "Trivial fix, but I still need to run both suites and verify; also analyze test quality per character role."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/tester/v6/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/tester/v6/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v6 plan: verify dfd7429a7 + false-green analyze"
+        },
+        {
+          "paths": [
+            "PLang/app/modules/condition/code/Default.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/tester/File.cs",
+            "PLang/app/modules/test/discover.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "False-green analysis on substantive v4->v6 changes: EvaluateOperator extract overload dispatch preserved; IsEntryGoalStep covered by Run_Timings_OnlyEntryGoalTopLevelSteps_NestedRollUp; File.cs slim Goal non-null on every discover branch; Step prop drop no stragglers."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Testing/DiscoverActionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Minor finding: 4 of 6 Stale branches in discover untested (goal read error, no PrPath derivable, pr read fail, pr parse fail). Pre-existing, non-blocking."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/tester/v6/verdict.json",
+            ".bot/fix-stepvartypes-incremental/test-report.json",
+            ".bot/fix-stepvartypes-incremental/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "PASS verdict + minor finding + analysis writeup"
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "PLang 208/208 + C# 3036/3036",
+        "notes": "v5 finding closed by dfd7429a7. False-green analysis run on each substantive change since v4. No false greens caught. One minor non-blocking finding."
+      }
     }
   ]
 }
