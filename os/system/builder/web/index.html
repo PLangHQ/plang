@@ -986,7 +986,7 @@
   <div id="filter-panel">
     <input type="text" id="filter-input" placeholder="Search goals (e.g. Channels/Events/Add)" autocomplete="off">
     <div class="filter-toggles">
-      <button type="button" id="filter-errors" class="filter-toggle" title="Show only goals with errors or build failures">errors</button>
+      <button type="button" id="filter-errors" class="filter-toggle" title="Show only goals with build errors, build failures, or runtime test failures">errors</button>
       <button type="button" id="filter-warnings" class="filter-toggle" title="Show only goals with warnings">warnings</button>
     </div>
   </div>
@@ -1495,23 +1495,23 @@ function findFile(fileKey) {
 // which reads as duplicate noise. The file-row badge is enough; parents show
 // LLM-level err/warn rollups only.
 function dirStats(node) {
-  let files = 0, errors = 0, warnings = 0;
+  let files = 0, errors = 0, warnings = 0, testFailed = 0;
   function visit(n) {
     files += n.files.length;
     for (const f of n.files) {
       const c = fileIssueCounts(f);
-      errors += c.errors; warnings += c.warnings;
+      errors += c.errors; warnings += c.warnings; testFailed += c.testFailed;
     }
     for (const d of n.dirs) visit(d);
   }
   visit(node);
-  return { files, errors, warnings, failed: 0 };
+  return { files, errors, warnings, failed: 0, testFailed };
 }
 
 // ---------- Sidebar ----------
 
 function fileIssueCounts(file) {
-  let errors = 0, warnings = 0, failed = 0;
+  let errors = 0, warnings = 0, failed = 0, testFailed = 0;
   for (const g of file.goals) {
     const latest = g.traces[0];
     if (!latest) continue;
@@ -1519,13 +1519,19 @@ function fileIssueCounts(file) {
     warnings += latest.warningCount || 0;
     if (latest.buildError) failed += 1;
   }
-  return { errors, warnings, failed };
+  // Runtime test failures (from /api/test-results) — separate from build-time
+  // errors so the "errors" filter surfaces tests that built fine but failed
+  // at runtime. Counts Fail and Timeout; Stale/Skipped/Ready are not failures.
+  const tr = lookupTestResult(file);
+  if (tr && (tr.status === 'Fail' || tr.status === 'Timeout')) testFailed = 1;
+  return { errors, warnings, failed, testFailed };
 }
 
 function issueBadges(counts) {
   let html = '';
   if (counts.failed > 0) html += `<span class="badge badge-err">${counts.failed > 1 ? counts.failed + ' ' : ''}failed</span>`;
   if (counts.errors > 0) html += `<span class="badge badge-err">${counts.errors} err</span>`;
+  if (counts.testFailed > 0) html += `<span class="badge badge-err" title="Test failed at runtime">test fail</span>`;
   if (counts.warnings > 0) html += `<span class="badge badge-warn">${counts.warnings} warn</span>`;
   return html;
 }
@@ -1589,7 +1595,7 @@ function renderTree() {
   const matchesIssue = issueFilter
     ? (f) => {
         const c = fileIssueCounts(f);
-        if (issueFilter === 'errors') return (c.errors + c.failed) > 0;
+        if (issueFilter === 'errors') return (c.errors + c.failed + c.testFailed) > 0;
         if (issueFilter === 'warnings') return c.warnings > 0;
         return true;
       }
