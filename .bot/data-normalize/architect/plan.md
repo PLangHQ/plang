@@ -1,5 +1,15 @@
 # Data Structural Normalization
 
+## Why
+
+The trigger from the design conversation: "if Data is opaque, how does a non-reflection format like protobuf encode it?" JSON gets a free pass because STJ has reflection — hand it any C# object, it walks the type metadata. Protobuf doesn't. MsgPack doesn't. CBOR doesn't. Any format that needs schema or registered types breaks the current model.
+
+The deeper reason to make this change: PLang is a language for building things, not a JSON-encoding ceremony. As long as `Data.Value` is `object?`, PLang's transport story is tied to whatever format can reflect — which is JSON. Users who want efficiency (protobuf), schema validation (Avro), small wire size (MsgPack/CBOR), or strict typing don't have a path. Structural normalization decouples PLang's data model from any single format's encoding rules. Once the tree is uniform, every format is a trivial walker, and PLang stops dictating wire format at the language level.
+
+This is also the cleaner OBP shape. Today Data's representation is "discovered" via reflection at every format library's discretion. After this change, Data owns its representation; format libraries are encoders, not introspectors. Reflection — the OBP-violation of "knowing without asking" — fires exactly once in Data.Normalize, never in format code.
+
+*Ingi's deeper motivation — whether the trigger is a specific deployment scenario (protobuf for performance, MsgPack for IoT, etc.), a language-design aspiration, or something else — would tighten this further. The above is what surfaced in the design conversation; if there's a concrete user story or constraint behind it, it goes here.*
+
 ## What this is
 
 PLang's Data carries any `object?` as its Value today. JSON (via STJ reflection) can encode anything, which makes the current setup "free" for JSON channels. But the moment a non-reflection format enters the picture (protobuf, MsgPack, CBOR, Avro), arbitrary `object?` becomes the wall — those formats can't introspect random C# types.
