@@ -23,9 +23,10 @@ public sealed class Json : ISerializer
 
     private Json(JsonSerializerOptions? options, actor.context.@this? context)
     {
-        var pathConverter = context != null
-            ? new global::app.types.path.JsonConverter(context)
-            : new global::app.types.path.JsonConverter();
+        // When `options` is supplied (ForView / WithIndentation paths), it
+        // already carries the PathJsonConverter via STJ's copy semantics —
+        // don't allocate a fresh one we'd throw away. Only the `??` branch
+        // builds default options, so the converter alloc lives inside it.
         _options = options ?? new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -39,7 +40,9 @@ public sealed class Json : ISerializer
             Converters =
             {
                 new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
-                pathConverter
+                context != null
+                    ? new global::app.types.path.JsonConverter(context)
+                    : new global::app.types.path.JsonConverter()
             }
         };
     }

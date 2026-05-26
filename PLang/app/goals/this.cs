@@ -44,6 +44,14 @@ public sealed class @this
         _goals[goal.PrPath] = goal;
         if (goal.Path != null)
             _byPath[goal.Path] = goal;
+        // _byName is intentionally a *fuzzy* last-write-wins index:
+        // sub-goals at different paths can legitimately share a Name (e.g.
+        // setup goals in /Setup.goal AND /Setup/Setup.goal), and Get() falls
+        // back to a by-form scan over _byPath when the exact name lookup
+        // misses or returns the "wrong" same-name goal. Exact lookup via
+        // _goals (PrPath-keyed) and _byPath (Path-keyed) stay collision-free.
+        // (codeanalyzer v1 N4 considered: a throw here would break legitimate
+        // same-name-different-path use; the by-form scan is the disambiguator.)
         if (!string.IsNullOrEmpty(goal.Name))
             _byName[goal.Name] = goal;
     }
@@ -177,8 +185,11 @@ public sealed class @this
             {
                 var goal = result.Value as goal.@this;
                 if (goal is { IsSetup: true }) return null;
-                if (goal != null && !string.IsNullOrEmpty(name))
-                    _byName[name] = goal;
+                // LoadFromFileAsync → Add() already indexed _byName[goal.Name].
+                // Writing _byName[name] again under a user-provided alias (e.g.
+                // "Foo" while goal.Name == "foo/bar") would create a stale-cache
+                // hit on future Get("Foo") after Remove(goal.Name). Skip it —
+                // the by-form scan in Get() handles alias lookups. (codeanalyzer v1 N5.)
                 return goal;
             }
         }
@@ -200,8 +211,7 @@ public sealed class @this
                 {
                     var goal = result.Value as goal.@this;
                     if (goal is { IsSetup: true }) return null;
-                    if (goal != null && !string.IsNullOrEmpty(name))
-                        _byName[name] = goal;
+                    // Same reason as above: Add() did the canonical _byName write.
                     return goal;
                 }
             }
