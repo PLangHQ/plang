@@ -109,6 +109,13 @@ var p = path.@this.Resolve("../../SECRET-OUTSIDE.txt", ctx);
 var result = await p.ReadText();  // No prompt. File outside root is read.
 ```
 
+## Follow-up proposals (non-blocking)
+
+- **F2** — Migrate `PLang/app/modules/MarkdownTeaching.cs` to `path.@this` verbs (`List`, `ReadText`). Closes the only whole-file PLNG002 exemption that hides real ungated IO. Architect's bootstrap-timing rationale doesn't hold — `Describe()` runs after App is up.
+- **F3 / PathHelper** — Introduce `app.Utils.PathHelper` as a typed forwarder for pure path-string-math (`Combine`/`GetDirectoryName`/`GetFullPath`/`GetFileName`/`ChangeExtension`/`Join` + separator constants). Strictly **no IO**. Replaces the analyzer's invisible `AllowedSystemIoPathMembers` string-name allowlist with a type-name allowlist. Retires the whole-file `app/this.cs` exemption. Full proposal: `v1/pathhelper-proposal.md`.
+
+Both interlock cleanly with the F1 fix: F1's canonicalization site (`file.@this` ctor) calls `PathHelper.GetFullPath`. Recommend coder lands F1 first, folds PathHelper in as a clean-up before merge.
+
 ## Next
 
 ```
