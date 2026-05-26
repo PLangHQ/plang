@@ -62,7 +62,7 @@
       "guidance": "Use test.discover to scan the _fixtures directory recursively for *.fixture.goal files, then store the resulting descriptors list into %tests%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_fixtures\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) , variable.set(Name=%tests%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -98,7 +98,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -115,7 +115,7 @@
       "guidance": "Count how many discovered test descriptors are in %tests% and store the count in %count%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "list.count(ListName=%tests%) , variable.set(Name=%count%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -133,7 +133,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -149,7 +149,7 @@
       "guidance": "Assert that the discovered count equals 1.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%count%)",
       "source": null,
       "waitForExecution": true
     },
@@ -182,7 +182,7 @@
             {
               "name": "Value",
               "value": "Pr\u00F3f",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -200,7 +200,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -217,7 +217,7 @@
       "guidance": "Check whether any discovered entry has EntryGoalName equal to the Icelandic goal name \u0022Pr\u00F3f\u0022; store boolean result in %hasProf%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "list.any(ListName=%tests%, Key=\u0022EntryGoalName\u0022, Operator=\u0022==\u0022, Value=\u0022Pr\u00F3f\u0022) , variable.set(Name=%hasProf%, Value=%!data%, type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -235,12 +235,7 @@
             {
               "name": "Value",
               "value": "%hasProf%",
-              "type": "bool"
-            },
-            {
-              "name": "Message",
-              "value": "Assert that %hasProf% is true.",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -251,17 +246,17 @@
       "guidance": "Assert that %hasProf% is true, ensuring the Icelandic goal name was preserved in discovery results.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasProf%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
-  "prPath": "/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
+  "path": "/TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
+  "prPath": "/TestModule/EdgeCase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
   "hash": "4eb9339dcc4e580542741bb08757300a5d7caba273b5c183dfa668153e3e1efe",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

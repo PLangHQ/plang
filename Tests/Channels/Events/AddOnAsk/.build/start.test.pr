@@ -11,42 +11,34 @@
       "comment": "events.add OnAsk binding on the input channel \u2014 verifies registration succeeds.\nDriving an actual Ask through stdin is out of scope for an automated test;\nthis confirms the binding installs and the EventType \u002B ChannelName plumb\nthrough the catalog.",
       "actions": [
         {
-          "module": "event",
-          "action": "on",
+          "module": "output",
+          "action": "ask",
           "parameters": [
             {
-              "name": "Type",
-              "value": "OnAsk",
-              "type": "eventtype"
-            },
-            {
-              "name": "GoalToCall",
-              "value": {
-                "name": "CaptchaGoal",
-                "parallel": false,
-                "parameters": null,
-                "prPath": null
-              },
-              "type": "goal.call"
-            },
-            {
-              "name": "ChannelName",
+              "name": "Question",
               "value": "input",
               "type": "string"
             }
           ],
-          "defaults": [
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "name": "isregex",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "priority",
-              "value": 0,
-              "type": "int"
+              "name": "GoalName",
+              "value": {
+                "name": "CaptchaGoal",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Events/AddOnAsk/.build/captchagoal.pr"
+              },
+              "type": "goal.call"
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -78,7 +70,7 @@
       "guidance": "Register a lifecycle event handler for OnAsk, scoped to the input channel, that calls CaptchaGoal. Capture the returned binding id into %bindingId% for later verification.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "output.ask(Question=\u0022input\u0022, Variables=%!data%) , goal.call(GoalName={name:\u0022CaptchaGoal\u0022}) , variable.set(Name=%bindingId%, Value=%!data%, Type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -97,11 +89,6 @@
               "name": "Value",
               "value": "%bindingId%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %bindingId% to be set after event binding registration",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -112,17 +99,17 @@
       "guidance": "Post-condition assertion that the binding id was produced (not null).",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%bindingId%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Events/AddOnAsk/Start.test.goal",
-  "prPath": "/Events/AddOnAsk/.build/start.test.pr",
+  "path": "/Channels/Events/AddOnAsk/Start.test.goal",
+  "prPath": "/Channels/Events/AddOnAsk/.build/start.test.pr",
   "hash": "34bb54f6b3f14f28e63962630f2b6a8e026dd2aac44b925e53ed3d774ed62207",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

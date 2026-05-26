@@ -19,8 +19,8 @@
               "value": {
                 "name": "ChainOuter",
                 "parallel": false,
-                "parameters": null,
-                "prPath": null
+                "parameters": [],
+                "prPath": "/Tests/App/CallStack/.build/chainouter.pr"
               },
               "type": "goal.call"
             }
@@ -48,21 +48,13 @@
                           "value": true,
                           "type": "bool"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": [
-                {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
+              "defaults": null,
               "modifiers": []
             }
           ]
@@ -72,7 +64,7 @@
       "guidance": "call ChainOuter with on error handling; the known mapping indicates the recovery action is variable.set %caught% = true. This step is expected to trigger the error and be caught by the on-error handler.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022ChainOuter\u0022}) | error.handle(Actions=[variable.set(Name=%caught%, Value=true)])",
       "source": null,
       "waitForExecution": true
     },
@@ -90,12 +82,7 @@
             {
               "name": "Value",
               "value": "%caught%",
-              "type": "bool"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %caught% to be true after error",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -106,7 +93,7 @@
       "guidance": "Post-condition assertion that %caught% is true after the error was caught.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%caught%)",
       "source": null,
       "waitForExecution": true
     },
@@ -125,11 +112,6 @@
               "name": "Value",
               "value": "%!callStack.Audit%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %!callStack.Audit% to be not null",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -140,7 +122,7 @@
       "guidance": "Post-condition assertion that the audit call stack object (%!callStack.Audit%) is not null.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%!callStack.Audit%)",
       "source": null,
       "waitForExecution": true
     },
@@ -180,7 +162,7 @@
       "guidance": "Assign %auditCount% from the audit frame count: %!callStack.Audit.Count%.",
       "level": "high",
       "confidence": 88,
-      "formal": null,
+      "formal": "variable.set(Name=%auditCount%, Value=%!callStack.Audit.Count%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -204,11 +186,6 @@
               "name": "B",
               "value": 0,
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Expected auditCount to be greater than 0",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -219,17 +196,17 @@
       "guidance": "Post-condition assertion that auditCount is greater than 0 (at least one frame present).",
       "level": "high",
       "confidence": 93,
-      "formal": null,
+      "formal": "assert.greaterThan(A=%auditCount%, B=0)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/CrossFileChain.test.goal",
-  "prPath": "/Tests/App/CallStack/.build/crossfilechain.test.pr",
+  "path": "/App/CallStack/CrossFileChain.test.goal",
+  "prPath": "/App/CallStack/.build/crossfilechain.test.pr",
   "hash": "881491d1660f3d7487e036ea8e50e48135cf1fd01d6d54cd2704709376de89e0",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "output",
+              "value": "%output%",
               "type": "string"
             },
             {
@@ -24,8 +24,8 @@
               "value": {
                 "name": "OutputGoal",
                 "parallel": false,
-                "parameters": [],
-                "prPath": null
+                "parameters": null,
+                "prPath": "/Set/ContextActor/.build/outputgoal.pr"
               },
               "type": "goal.call"
             }
@@ -38,7 +38,7 @@
       "guidance": "Rebind the named output channel to a goal call (OutputGoal). No explicit actor is provided, so the engine uses the current Context.Actor by default.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "channel.set(Name=%output%, Goal={name:\u0022OutputGoal\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -56,12 +56,7 @@
             {
               "name": "Data",
               "value": "hi",
-              "type": "string"
-            },
-            {
-              "name": "channel",
-              "value": "output",
-              "type": "this"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -72,7 +67,7 @@
       "guidance": "Write literal \u0027hi\u0027 to the output channel. Because output was rebound to OutputGoal, this should trigger the user output path.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "output.write(Data=\u0022hi\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -90,12 +85,7 @@
             {
               "name": "Value",
               "value": "%userOutputCalled%",
-              "type": "bool"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %userOutputCalled% to be true after writing to output",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -106,17 +96,17 @@
       "guidance": "Post-condition assertion that %userOutputCalled% is true after the write.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%userOutputCalled%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Set/ContextActor/Start.test.goal",
-  "prPath": "/Set/ContextActor/.build/start.test.pr",
+  "path": "/Channels/Set/ContextActor/Start.test.goal",
+  "prPath": "/Channels/Set/ContextActor/.build/start.test.pr",
   "hash": "b53ca86ff19b3ab0034ec738013bce59d8ed17a3fc0a27310417968cf4119d61",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

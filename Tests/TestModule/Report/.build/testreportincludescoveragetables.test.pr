@@ -62,7 +62,7 @@
       "guidance": "Discover fixture goals under _fixtures_pass matching *.fixture.goal recursively, then store the resulting list in %tests%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_fixtures_pass\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -115,7 +115,7 @@
       "guidance": "Run the discovered tests in %tests%, store the aggregated results in %results%.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "test.run(Tests=%tests%) | variable.set(Name=%results%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -134,11 +134,6 @@
               "name": "Results",
               "value": "%results%",
               "type": "results"
-            },
-            {
-              "name": "Format",
-              "value": "json",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -173,7 +168,7 @@
       "guidance": "Generate a test report from %results% in default json format, store the report object in %report%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "test.report(Results=%results%) | variable.set(Name=%report%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -189,12 +184,12 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%report.content%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "branchCoverage",
               "type": "object"
             }
@@ -207,7 +202,7 @@
       "guidance": "Assert the report content contains the branchCoverage block to ensure the BuildJson branch actually ran.",
       "level": "high",
       "confidence": 85,
-      "formal": null,
+      "formal": "assert.contains(Container=%report.content%, Value=\u0022branchCoverage\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -225,7 +220,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -241,7 +236,7 @@
       "guidance": "Assert summaryPass equals 1.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%report.summaryPass%)",
       "source": null,
       "waitForExecution": true
     },
@@ -294,7 +289,7 @@
       "guidance": "Check whether the report file exists at %report.reportPath%, store the boolean result in %exists%.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "file.exists(Path=%report.reportPath%) | variable.set(Name=%exists%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -323,17 +318,17 @@
       "guidance": "Assert the %exists% flag is true.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%exists%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportIncludesCoverageTables.test.goal",
-  "prPath": "/Report/.build/testreportincludescoveragetables.test.pr",
+  "path": "/TestModule/Report/TestReportIncludesCoverageTables.test.goal",
+  "prPath": "/TestModule/Report/.build/testreportincludescoveragetables.test.pr",
   "hash": "87128b082985dc6a0b01437b05b745a604d4d5c9a6ccba0268851162c7792b4e",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

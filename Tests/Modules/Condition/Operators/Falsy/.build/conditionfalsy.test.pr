@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%flag%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -25,7 +25,13 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%flag%, Value=false)",
       "source": null,
       "waitForExecution": true
     },
@@ -62,14 +68,15 @@
               "name": "Right",
               "value": true,
               "type": "bool"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         },
         {
@@ -81,7 +88,7 @@
               "value": {
                 "name": "HandleTrue",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": "/.build/handletrue.pr"
               },
               "type": "goal.call"
@@ -92,29 +99,8 @@
         },
         {
           "module": "condition",
-          "action": "if",
-          "parameters": [
-            {
-              "name": "Left",
-              "value": "%flag%",
-              "type": "object"
-            },
-            {
-              "name": "Operator",
-              "value": "==",
-              "type": "operator"
-            },
-            {
-              "name": "Right",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Negate",
-              "value": true,
-              "type": "bool"
-            }
-          ],
+          "action": "else",
+          "parameters": [],
           "defaults": null,
           "modifiers": []
         },
@@ -127,7 +113,7 @@
               "value": {
                 "name": "HandleFalse",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": "/.build/handlefalse.pr"
               },
               "type": "goal.call"
@@ -141,7 +127,7 @@
       "guidance": "if %flag%, call HandleTrue, else call HandleFalse compiles to two condition.if checks: first for flag == true (then-branch), and a second condition.if for the else-branch (negated). Each branch calls the corresponding goal.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "condition.if(Left=%flag%, Operator=\u0022==\u0022, Right=true) , condition.else() , goal.call(GoalName={name:\u0022HandleTrue\u0022}) , goal.call(GoalName={name:\u0022HandleFalse\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -169,7 +155,7 @@
             {
               "name": "Message",
               "value": "GoalIfFalse should have been called",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -180,17 +166,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022false-branch\u0022, Actual=%result%, Message=\u0022GoalIfFalse should have been called\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionFalsy.test.goal",
-  "prPath": "/.build/conditionfalsy.test.pr",
+  "path": "/Modules/Condition/Operators/Falsy/ConditionFalsy.test.goal",
+  "prPath": "/Modules/Condition/Operators/Falsy/.build/conditionfalsy.test.pr",
   "hash": "dc5a504602162b53b08ccae42a594e1cb8bcac00e9b7b91321f6229bf1868c4e",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

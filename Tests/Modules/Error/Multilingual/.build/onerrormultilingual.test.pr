@@ -17,14 +17,12 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Modules/Error/Multilingual/.build/throwerror.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
@@ -43,21 +41,15 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "CatchEnglish"
+                            "name": "CatchEnglish",
+                            "parameters": []
                           },
                           "type": "goal.call"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
-                },
-                {
-                  "name": "Order",
-                  "value": "GoalFirst",
-                  "type": "string"
                 }
               ],
               "defaults": null,
@@ -70,7 +62,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022ThrowError\u0022}) | error.handle(Actions=[goal.call(GoalName={name:\u0022CatchEnglish\u0022})])",
       "source": null,
       "waitForExecution": true
     },
@@ -88,60 +80,28 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Modules/Error/Multilingual/.build/throwerror.pr"
               },
               "type": "goal.call"
             },
             {
               "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
+              "value": "system",
+              "type": "actor"
             }
           ],
           "defaults": null,
-          "modifiers": [
-            {
-              "module": "error",
-              "action": "handle",
-              "parameters": [
-                {
-                  "name": "Actions",
-                  "value": [
-                    {
-                      "module": "goal",
-                      "action": "call",
-                      "parameters": [
-                        {
-                          "name": "GoalName",
-                          "value": {
-                            "Name": "CatchIcelandic"
-                          },
-                          "type": "goal.call"
-                        }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
-                    }
-                  ],
-                  "type": "list\u003Caction\u003E"
-                },
-                {
-                  "name": "Order",
-                  "value": "GoalFirst",
-                  "type": "string"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ]
+          "modifiers": []
         }
       ],
       "intent": null,
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022ThrowError\u0022, parameters:[]}, Actor=\u0022system\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -159,60 +119,23 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parallel": false,
+                "parameters": null,
+                "prPath": "/Modules/Error/Multilingual/.build/throwerror.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
-          "modifiers": [
-            {
-              "module": "error",
-              "action": "handle",
-              "parameters": [
-                {
-                  "name": "Actions",
-                  "value": [
-                    {
-                      "module": "goal",
-                      "action": "call",
-                      "parameters": [
-                        {
-                          "name": "GoalName",
-                          "value": {
-                            "Name": "CatchJapanese"
-                          },
-                          "type": "goal.call"
-                        }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
-                    }
-                  ],
-                  "type": "list\u003Caction\u003E"
-                },
-                {
-                  "name": "Order",
-                  "value": "GoalFirst",
-                  "type": "string"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ]
+          "modifiers": []
         }
       ],
       "intent": null,
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022ThrowError\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -230,60 +153,41 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Modules/Error/Multilingual/.build/throwerror.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
-          "modifiers": [
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
+          "parameters": [
             {
-              "module": "error",
-              "action": "handle",
-              "parameters": [
-                {
-                  "name": "Actions",
-                  "value": [
-                    {
-                      "module": "goal",
-                      "action": "call",
-                      "parameters": [
-                        {
-                          "name": "GoalName",
-                          "value": {
-                            "Name": "CatchArabic"
-                          },
-                          "type": "goal.call"
-                        }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
-                    }
-                  ],
-                  "type": "list\u003Caction\u003E"
-                },
-                {
-                  "name": "Order",
-                  "value": "GoalFirst",
-                  "type": "string"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
+              "name": "GoalName",
+              "value": {
+                "name": "CatchArabic",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Modules/Error/Multilingual/.build/catcharabic.pr"
+              },
+              "type": "goal.call"
             }
-          ]
+          ],
+          "defaults": null,
+          "modifiers": []
         }
       ],
       "intent": null,
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022ThrowError\u0022, parameters:[]}, Actor=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -301,60 +205,29 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "message",
+                    "value": "\uC624\uB958 \uBC1C\uC0DD \uC2DC CatchKorean \uD638\uCD9C",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/Modules/Error/Multilingual/.build/throwerror.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
-          "modifiers": [
-            {
-              "module": "error",
-              "action": "handle",
-              "parameters": [
-                {
-                  "name": "Actions",
-                  "value": [
-                    {
-                      "module": "goal",
-                      "action": "call",
-                      "parameters": [
-                        {
-                          "name": "GoalName",
-                          "value": {
-                            "Name": "CatchKorean"
-                          },
-                          "type": "goal.call"
-                        }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
-                    }
-                  ],
-                  "type": "list\u003Caction\u003E"
-                },
-                {
-                  "name": "Order",
-                  "value": "GoalFirst",
-                  "type": "string"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ]
+          "modifiers": []
         }
       ],
       "intent": null,
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022ThrowError\u0022, parameters:[{name:\u0022message\u0022, value:\u0022\uC624\uB958 \uBC1C\uC0DD \uC2DC CatchKorean \uD638\uCD9C\u0022, type:\u0022string\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -372,60 +245,34 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowError"
+                "name": "ThrowError",
+                "parallel": false,
+                "parameters": [
+                  {
+                    "name": "kwa",
+                    "value": "hitilafu",
+                    "type": "string"
+                  },
+                  {
+                    "name": "piga",
+                    "value": "CatchSwahili",
+                    "type": "string"
+                  }
+                ],
+                "prPath": "/Modules/Error/Multilingual/.build/throwerror.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
-          "modifiers": [
-            {
-              "module": "error",
-              "action": "handle",
-              "parameters": [
-                {
-                  "name": "Actions",
-                  "value": [
-                    {
-                      "module": "goal",
-                      "action": "call",
-                      "parameters": [
-                        {
-                          "name": "GoalName",
-                          "value": {
-                            "Name": "CatchSwahili"
-                          },
-                          "type": "goal.call"
-                        }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
-                    }
-                  ],
-                  "type": "list\u003Caction\u003E"
-                },
-                {
-                  "name": "Order",
-                  "value": "GoalFirst",
-                  "type": "string"
-                }
-              ],
-              "defaults": null,
-              "modifiers": []
-            }
-          ]
+          "modifiers": []
         }
       ],
       "intent": null,
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022ThrowError\u0022, parameters:[{name:\u0022kwa\u0022, value:\u0022hitilafu\u0022, type:\u0022string\u0022},{name:\u0022piga\u0022, value:\u0022CatchSwahili\u0022, type:\u0022string\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -459,7 +306,7 @@
       "guidance": "Post-condition assertion that %caughtEnglish% equals true. Use assert.equals with Expected=true and Actual=%caughtEnglish%.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=true, Actual=%caughtEnglish%)",
       "source": null,
       "waitForExecution": true
     },
@@ -477,7 +324,7 @@
             {
               "name": "Expected",
               "value": true,
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -493,7 +340,7 @@
       "guidance": "Post-condition assertion that %caughtIcelandic% equals true.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=true, Actual=%caughtIcelandic%)",
       "source": null,
       "waitForExecution": true
     },
@@ -527,7 +374,7 @@
       "guidance": "Post-condition assertion that %caughtJapanese% equals true.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=true, Actual=%caughtJapanese%)",
       "source": null,
       "waitForExecution": true
     },
@@ -561,7 +408,7 @@
       "guidance": "Post-condition assertion that %caughtArabic% equals true.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=true, Actual=%caughtArabic%)",
       "source": null,
       "waitForExecution": true
     },
@@ -595,7 +442,7 @@
       "guidance": "Post-condition assertion that %caughtKorean% equals true.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=true, Actual=%caughtKorean%)",
       "source": null,
       "waitForExecution": true
     },
@@ -629,7 +476,7 @@
       "guidance": "Post-condition assertion that %caughtSwahili% equals true.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=true, Actual=%caughtSwahili%)",
       "source": null,
       "waitForExecution": true
     }
@@ -639,7 +486,7 @@
   "path": "/Modules/Error/Multilingual/OnErrorMultilingual.test.goal",
   "prPath": "/Modules/Error/Multilingual/.build/onerrormultilingual.test.pr",
   "hash": "48d8307d0169dee45cba2008e65a433ffb654403b5852a5c70533bb382d7d543",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

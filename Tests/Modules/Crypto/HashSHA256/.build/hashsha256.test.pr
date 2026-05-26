@@ -17,15 +17,26 @@
             {
               "name": "Name",
               "value": "%data%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "hello world",
               "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +44,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%data%, Value=\u0022hello world\u0022, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -69,15 +80,21 @@
             {
               "name": "Name",
               "value": "%hash%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "byte[]"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -85,7 +102,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "crypto.hash(Data=%data%, Algorithm=\u0022sha256\u0022) | variable.set(Name=%hash%, Value=%!data%, type=\u0022byte[]\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -98,15 +115,10 @@
       "actions": [
         {
           "module": "assert",
-          "action": "notEquals",
+          "action": "isNotNull",
           "parameters": [
             {
-              "name": "Expected",
-              "value": "",
-              "type": "string"
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "value": "%hash%",
               "type": "object"
             },
@@ -124,7 +136,7 @@
       "guidance": "Post-condition: ensure %hash% is not empty. Map to assert.notEquals against empty string. Use tstring for the message per spec.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%hash%, Message=\u0022sha256 hash should produce non-empty result\u0022)",
       "source": null,
       "waitForExecution": true
     }
@@ -134,7 +146,7 @@
   "path": "/HashSHA256.test.goal",
   "prPath": "/.build/hashsha256.test.pr",
   "hash": "e83eb8a0c38286de08c91dcc6f3dfc3f86bfa97079e4fcec5880969447188917",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

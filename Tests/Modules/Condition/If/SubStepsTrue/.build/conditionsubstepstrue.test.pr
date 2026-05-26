@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%flag%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -25,7 +25,13 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%flag%, Value=true)",
       "source": null,
       "waitForExecution": true
     },
@@ -51,15 +57,26 @@
             {
               "name": "Name",
               "value": "%innerRan%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": false,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -67,7 +84,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%innerRan%, Value=false, Type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -89,16 +106,17 @@
             },
             {
               "name": "Operator",
-              "value": "==",
-              "type": "string"
-            },
+              "value": "istrue",
+              "type": "operator"
+            }
+          ],
+          "defaults": [
             {
-              "name": "Right",
-              "value": true,
+              "name": "negate",
+              "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         }
       ],
@@ -106,7 +124,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "condition.if(Left=%flag%, Operator=\u0022istrue\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -124,15 +142,26 @@
             {
               "name": "Name",
               "value": "%innerRan%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -140,7 +169,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%innerRan%, Value=true, Type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -158,7 +187,7 @@
             {
               "name": "Name",
               "value": "%innerValue%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -166,7 +195,13 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -174,7 +209,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%innerValue%, Value=\u0022executed\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -208,7 +243,7 @@
       "guidance": "Post-condition assertion that %innerRan% is true. This must compile to assert.isTrue with the provided tstring message.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%innerRan%, Message=\u0022indented steps should execute when condition is true\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -230,7 +265,7 @@
             },
             {
               "name": "Actual",
-              "value": "%innerValue%",
+              "value": "%innervalue%",
               "type": "object"
             },
             {
@@ -247,17 +282,17 @@
       "guidance": "Post-condition assertion that %innerValue% equals \u0022executed\u0022 with the provided tstring message.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=%!data%, Actual=%innervalue%, Message=\u0022indented set should have run\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionSubStepsTrue.test.goal",
-  "prPath": "/.build/conditionsubstepstrue.test.pr",
+  "path": "/Modules/Condition/If/SubStepsTrue/ConditionSubStepsTrue.test.goal",
+  "prPath": "/Modules/Condition/If/SubStepsTrue/.build/conditionsubstepstrue.test.pr",
   "hash": "eea24c21cb5c72743bd936eef55669c6a34a956ccc23930f100498a728220900",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

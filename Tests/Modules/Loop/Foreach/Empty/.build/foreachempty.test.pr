@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%items%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -25,7 +25,13 @@
               "type": "list"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%items%, Value=[], Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -51,7 +57,7 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -59,7 +65,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -67,7 +79,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%count%, Value=0)",
       "source": null,
       "waitForExecution": true
     },
@@ -86,11 +98,6 @@
               "name": "Collection",
               "value": "%items%",
               "type": "object"
-            },
-            {
-              "name": "ItemName",
-              "value": "item",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -104,13 +111,15 @@
               "name": "GoalName",
               "value": {
                 "name": "ProcessItem",
+                "parallel": false,
                 "parameters": [
                   {
                     "name": "item",
                     "value": "%item%",
                     "type": "string"
                   }
-                ]
+                ],
+                "prPath": "/Foreach/Empty/.build/processitem.pr"
               },
               "type": "goal.call"
             }
@@ -123,7 +132,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "loop.foreach(Collection=%items%) , goal.call(GoalName={name:\u0022ProcessItem\u0022, parameters:[{name:\u0022item\u0022, value:\u0022%item%\u0022, type:\u0022string\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -141,7 +150,7 @@
             {
               "name": "Expected",
               "value": 0,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -157,17 +166,17 @@
       "guidance": "Post-condition assertion that %count% is still 0 after iterating an empty list. Use assert.equals with Expected=0 and Actual=%count%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "assert.equals(Expected=0, Actual=%count%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Foreach/Empty/ForeachEmpty.test.goal",
-  "prPath": "/Foreach/Empty/.build/foreachempty.test.pr",
+  "path": "/Modules/Loop/Foreach/Empty/ForeachEmpty.test.goal",
+  "prPath": "/Modules/Loop/Foreach/Empty/.build/foreachempty.test.pr",
   "hash": "d6a256ddd85de9e00b39467590ee6a4b7798440e444abb7629b43524512f08f9",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

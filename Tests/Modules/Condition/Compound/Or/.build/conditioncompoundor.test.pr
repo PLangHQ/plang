@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%a%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -25,7 +25,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%a%, Value=99)",
       "source": null,
       "waitForExecution": true
     },
@@ -51,7 +57,7 @@
             {
               "name": "Name",
               "value": "%b%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -59,7 +65,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -67,7 +79,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%b%, Value=2, Type=string?)",
       "source": null,
       "waitForExecution": true
     },
@@ -89,21 +101,51 @@
             },
             {
               "name": "Operator",
-              "value": "or",
+              "value": "==",
               "type": "operator"
             },
             {
               "name": "Right",
-              "value": "%b%",
+              "value": 1,
               "type": "object"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%b%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": 2,
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -115,7 +157,7 @@
               "value": {
                 "name": "DoThing",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": "/.build/dothing.pr"
               },
               "type": "goal.call"
@@ -129,7 +171,7 @@
       "guidance": "Evaluate compound OR condition (%a% == 1 OR %b% == 2). If true, call goal DoThing. The @known mapping indicates the builder expects a single condition.if with Operator \u0027or\u0027 and Right bound to %b%.",
       "level": "high",
       "confidence": 55,
-      "formal": null,
+      "formal": "condition.if(Left=%a%, Operator=\u0022==\u0022, Right=1) , condition.if(Left=%b%, Operator=\u0022==\u0022, Right=2) , goal.call(GoalName={name:\u0022DoThing\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -152,6 +194,11 @@
             {
               "name": "Actual",
               "value": "%result%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "OR condition should pass when at least one side true",
               "type": "string"
             }
           ],
@@ -163,17 +210,17 @@
       "guidance": "Post-condition assertion that %result% equals the expected string.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022or-true\u0022, Actual=%result%, Message=\u0022OR condition should pass when at least one side true\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionCompoundOr.test.goal",
-  "prPath": "/.build/conditioncompoundor.test.pr",
+  "path": "/Modules/Condition/Compound/Or/ConditionCompoundOr.test.goal",
+  "prPath": "/Modules/Condition/Compound/Or/.build/conditioncompoundor.test.pr",
   "hash": "6c6289984cfa2e19a7b7e38b91b7484f35053cc39a507882b9ee29cd5163698c",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

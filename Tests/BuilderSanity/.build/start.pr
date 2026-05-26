@@ -134,8 +134,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "name": "HandleError",
-                            "parameters": []
+                            "name": "HandleError"
                           },
                           "type": "goal.call"
                         }
@@ -179,7 +178,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "file.read(Path=\u0022data.txt\u0022, ResolveVariables=false) | error.handle(Actions=[goal.call(GoalName={name:\u0022HandleError\u0022, parameters:[]})])",
+      "formal": "file.read(Path=\u0022data.txt\u0022, ResolveVariables=false) | error.handle(Actions=[goal.call(GoalName={name:\u0022HandleError\u0022})])",
       "source": null,
       "waitForExecution": true
     },
@@ -201,17 +200,16 @@
             },
             {
               "name": "Operator",
-              "value": "isnotempty",
+              "value": "isempty",
               "type": "operator"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "negate",
-              "value": false,
+              "name": "Negate",
+              "value": true,
               "type": "bool"
             }
           ],
+          "defaults": null,
           "modifiers": []
         },
         {
@@ -223,7 +221,7 @@
               "value": {
                 "name": "DoWork",
                 "parallel": false,
-                "parameters": null,
+                "parameters": [],
                 "prPath": "/BuilderSanity/.build/start.pr"
               },
               "type": "goal.call"
@@ -237,7 +235,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "condition.if(Left=%content%, Operator=\u0022isnotempty\u0022), goal.call(GoalName={name:\u0022DoWork\u0022})",
+      "formal": "condition.if(Left=%content%, Operator=\u0022isempty\u0022, Negate=true) , goal.call(GoalName={name:\u0022DoWork\u0022})",
       "source": null,
       "waitForExecution": true
     }
@@ -309,7 +307,7 @@
                 {
                   "name": "Data",
                   "value": "failed",
-                  "type": "object"
+                  "type": "string"
                 }
               ],
               "defaults": null,
@@ -320,7 +318,7 @@
           "guidance": null,
           "level": null,
           "confidence": null,
-          "formal": "output.write(Data=\u0027failed\u0027)",
+          "formal": "output.write(Data=\u0022failed\u0022)",
           "source": null,
           "waitForExecution": true
         }
@@ -356,7 +354,7 @@
                 {
                   "name": "Data",
                   "value": "working",
-                  "type": "object"
+                  "type": "string"
                 }
               ],
               "defaults": null,

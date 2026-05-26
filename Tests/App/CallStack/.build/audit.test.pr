@@ -27,7 +27,7 @@
                 "c",
                 "d"
               ],
-              "type": "object"
+              "type": "list\u00601"
             }
           ],
           "defaults": [
@@ -44,7 +44,7 @@
       "guidance": "Initialize %items% as a list of strings so foreach can iterate over it.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "variable.set(Name=%items%, Value=[\u0022a\u0022, \u0022b\u0022, \u0022c\u0022, \u0022d\u0022], Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -63,11 +63,6 @@
               "name": "Collection",
               "value": "%items%",
               "type": "object"
-            },
-            {
-              "name": "ItemName",
-              "value": "item",
-              "type": "variable"
             }
           ],
           "defaults": null,
@@ -89,7 +84,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/.build/throwitem.pr"
+                "prPath": "/Tests/App/CallStack/.build/throwitem.pr"
               },
               "type": "goal.call"
             }
@@ -115,23 +110,15 @@
                         {
                           "name": "Value",
                           "value": true,
-                          "type": "object"
+                          "type": "bool"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": [
-                {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
+              "defaults": null,
               "modifiers": []
             }
           ]
@@ -141,7 +128,7 @@
       "guidance": "foreach over %items% and call ThrowItem for each item. The step text includes \u0027on error set %finalCaught% = true\u0027, so compile as loop.foreach \u002B goal.call, then wrap the goal.call with error.handle that runs a variable.set recovery action.",
       "level": "high",
       "confidence": 78,
-      "formal": null,
+      "formal": "loop.foreach(Collection=%items%), goal.call(GoalName={name:\u0022ThrowItem\u0022, parameters:[{name:\u0022item\u0022, value:\u0022%item%\u0022, type:\u0022string\u0022}]}) | error.handle(Actions=[variable.set(Name=%finalCaught%, Value=true, Type=bool)])",
       "source": null,
       "waitForExecution": true
     },
@@ -160,11 +147,6 @@
               "name": "Value",
               "value": "%finalCaught%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "finalCaught should be true",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -175,7 +157,7 @@
       "guidance": "Post-condition assertion that %finalCaught% is true.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%finalCaught%)",
       "source": null,
       "waitForExecution": true
     },
@@ -215,7 +197,7 @@
       "guidance": "Read the run-wide callStack.Audit.Count into %auditCount% using variable.set. The step text assigns %auditCount% from %!callStack.Audit.Count%.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "variable.set(Name=%auditCount%, Value=%!callStack.Audit.Count%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -239,11 +221,6 @@
               "name": "Actual",
               "value": "%auditCount%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "auditCount should be 7",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -254,17 +231,17 @@
       "guidance": "Assert that %auditCount% equals 7.",
       "level": "medium",
       "confidence": 55,
-      "formal": null,
+      "formal": "assert.equals(Expected=7, Actual=%auditCount%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Audit.test.goal",
-  "prPath": "/.build/audit.test.pr",
+  "path": "/App/CallStack/Audit.test.goal",
+  "prPath": "/App/CallStack/.build/audit.test.pr",
   "hash": "b86fe0caceb42ea129433e07c5486b832fe2483258bcce4e6278185d74b9075c",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

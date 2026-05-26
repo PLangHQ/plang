@@ -18,15 +18,14 @@
               "name": "Message",
               "value": "boom",
               "type": "string"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "statuscode",
+              "name": "StatusCode",
               "value": 500,
               "type": "int"
             }
           ],
+          "defaults": null,
           "modifiers": [
             {
               "module": "error",
@@ -49,21 +48,13 @@
                           "value": true,
                           "type": "bool"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": [
-                {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
+              "defaults": null,
               "modifiers": []
             }
           ]
@@ -73,7 +64,7 @@
       "guidance": "Throw an error with message \u0022boom\u0022. The step includes an inline on-error recovery that sets %recovered% = true; this recovery should suppress the error within the scope.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "error.throw(Message=\u0022boom\u0022, StatusCode=500) | error.handle(Actions=[variable.set(Name=%recovered%, Value=true, Type=string)])",
       "source": null,
       "waitForExecution": true
     },
@@ -91,7 +82,7 @@
             {
               "name": "Value",
               "value": "%recovered%",
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -107,7 +98,7 @@
       "guidance": "Post-condition assertion that %recovered% is true after the recovery body ran. This is an assert.* step, not a conditional branch.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%recovered%, Message=\u0022recovery body should have run\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -141,17 +132,17 @@
       "guidance": "Post-condition assertion that the scoped error variable %!error% is null after the error.handle recovery scope closes.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "assert.isNull(Value=%!error%, Message=\u0022error scope closed \u2014 %!error% restores to null\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/HandledFlagSetWhenRecoverySucceeds.test.goal",
-  "prPath": "/Tests/App/CallStack/.build/handledflagsetwhenrecoverysucceeds.test.pr",
+  "path": "/App/CallStack/HandledFlagSetWhenRecoverySucceeds.test.goal",
+  "prPath": "/App/CallStack/.build/handledflagsetwhenrecoverysucceeds.test.pr",
   "hash": "e78fb965f60f34531480328321881bf331aeb01b657fa2242e950235e1bbd532",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

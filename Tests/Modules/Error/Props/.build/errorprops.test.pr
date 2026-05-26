@@ -17,7 +17,10 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "ThrowCustomError"
+                "name": "ThrowCustomError",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/.build/throwcustomerror.pr"
               },
               "type": "goal.call"
             }
@@ -38,13 +41,12 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "InspectError"
+                            "name": "InspectError",
+                            "parameters": []
                           },
                           "type": "goal.call"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
@@ -60,7 +62,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022ThrowCustomError\u0022}) | error.handle(Actions=[goal.call(GoalName={name:\u0022InspectError\u0022})])",
       "source": null,
       "waitForExecution": true
     },
@@ -84,6 +86,11 @@
               "name": "Actual",
               "value": "%errorMessage%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "bad thing",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -94,7 +101,7 @@
       "guidance": "Post-condition assertion that %errorMessage% equals the literal string \u0022bad thing\u0022.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022bad thing\u0022, Actual=%errorMessage%, Message=\u0022bad thing\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -118,6 +125,11 @@
               "name": "Actual",
               "value": "%errorKey%",
               "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "CustomKey",
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -128,7 +140,7 @@
       "guidance": "Post-condition assertion that %errorKey% equals the literal string \u0022CustomKey\u0022.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022CustomKey\u0022, Actual=%errorKey%, Message=\u0022CustomKey\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -162,17 +174,17 @@
       "guidance": "Post-condition assertion that %errorStatusCode% equals 422.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=422, Actual=%errorStatusCode%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ErrorProps.test.goal",
-  "prPath": "/.build/errorprops.test.pr",
+  "path": "/Modules/Error/Props/ErrorProps.test.goal",
+  "prPath": "/Modules/Error/Props/.build/errorprops.test.pr",
   "hash": "24caa6948f23774e4754f2c176f0c61f3b842b279bc512ccff461edfb54c66ee",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
