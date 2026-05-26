@@ -132,6 +132,9 @@ public sealed class Data : ISerializer
     {
         [JsonPropertyOrder(1)] public string Type { get; set; } = "";
         [JsonPropertyOrder(2)] public object? Value { get; set; }
-        [JsonPropertyOrder(3)] public app.modules.signing.Signature? Signature { get; set; }
+        // Wire envelope DTO; setter required for STJ deserialization. The trust
+        // gate is VerifyAsync run on the populated Data, not the setter on this
+        // transport shape.
+        [JsonPropertyOrder(3)] public app.modules.signing.Signature? Signature { get; set; } // nosemgrep: plang-verified-must-have-private-setter
     }
 }
