@@ -28,8 +28,8 @@ PIPELINE = [
     "coder",
     "tester",
     "test-designer",
-    "auditor",
     "security",
+    "auditor",
     "docs",
 ]
 # Roles we still recognize (don't bucket into "Other subdirs") but that
@@ -579,7 +579,7 @@ INDEX_HTML = r"""<!doctype html>
 <div id="pane"><div class="empty">Select a branch on the left.</div></div>
 
 <script>
-const PIPELINE = ["architect","codeanalyzer","builder","coder","tester","test-designer","auditor","security","docs"];
+const PIPELINE = ["architect","codeanalyzer","builder","coder","tester","test-designer","security","auditor","docs"];
 const EXTRA_ROLES = ["handoff","learnings","scaffolder"];
 let BRANCHES = [];
 let SELECTED = null;
