@@ -21,21 +21,25 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BOT = REPO_ROOT / ".bot"
 
 # Canonical pipeline order. Anything else gets bucketed as "other" at the end.
+# Canonical pipeline — these are expected to run on every branch. Order
+# matters: dots in nav and rows in the right pane follow this order.
 PIPELINE = [
     "architect",
-    "codeanalyzer",
-    "builder",
-    "coder",
-    "tester",
     "test-designer",
+    "coder",
+    "codeanalyzer",
+    "tester",
     "security",
     "auditor",
-    "docs",
 ]
+# Optional roles — recognized but not always run. Rendered right-aligned
+# in the nav and below a separator in the pane, and never counted as
+# "missing" in the "Not yet run:" list.
+OPTIONAL = ["builder", "docs"]
 # Roles we still recognize (don't bucket into "Other subdirs") but that
-# aren't part of the canonical flow — won't appear in "Not yet run:".
+# aren't part of either flow.
 EXTRA_ROLES = {"handoff", "learnings", "scaffolder"}
-KNOWN_ROLES = set(PIPELINE) | EXTRA_ROLES
+KNOWN_ROLES = set(PIPELINE) | set(OPTIONAL) | EXTRA_ROLES
 
 # Tool dirs in .bot/ that are NOT branches.
 NON_BRANCH = {"architect", "branches"}
@@ -51,7 +55,7 @@ def current_branch() -> str:
         return ""
 
 
-_CACHE: dict = {"at": 0.0, "active": set(), "times": {}, "refs": {}}
+_CACHE: dict = {"at": 0.0, "active": set(), "times": {}, "refs": {}, "verdicts": {}}
 _CACHE_TTL = 300  # 5 minutes
 
 
@@ -113,10 +117,90 @@ def refresh_cache() -> None:
             if ct > times.get(line, 0.0):
                 times[line] = ct
 
+    verdicts = read_verdicts(times, active, refs)
+
     _CACHE["at"] = time.time()
     _CACHE["active"] = active
     _CACHE["times"] = times
     _CACHE["refs"] = refs
+    _CACHE["verdicts"] = verdicts
+
+
+def read_verdicts(times: dict[str, float], active: set[str],
+                  refs: dict[str, str]) -> dict[tuple[str, str], str]:
+    """Find the highest-version verdict.json per (slug, role) and read its
+    `status` field. Uses `git cat-file --batch` so all reads happen in one
+    process — much faster than spawning git per file. Status is normalized
+    to lowercase. Unknown status / parse failures are skipped (callers treat
+    "no verdict" the same as "ran without verdict": green dot)."""
+    import re
+    latest: dict[tuple[str, str], tuple[int, str]] = {}
+    pat = re.compile(r"^\.bot/([^/]+)/([^/]+)/v(\d+)/verdict\.json$")
+    for path in times:
+        m = pat.match(path)
+        if not m:
+            continue
+        slug, role, v = m.group(1), m.group(2), int(m.group(3))
+        if slug not in active:
+            continue
+        cur = latest.get((slug, role))
+        if cur is None or v > cur[0]:
+            latest[(slug, role)] = (v, path)
+
+    if not latest:
+        return {}
+
+    # Build queries for cat-file --batch. Skip entries without a known ref.
+    queries: list[tuple[tuple[str, str], str]] = []
+    for (slug, role), (_, path) in latest.items():
+        ref = refs.get(slug)
+        if not ref:
+            continue
+        queries.append(((slug, role), f"{ref}:{path}"))
+
+    if not queries:
+        return {}
+
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "cat-file", "--batch"],
+            input="\n".join(q for _, q in queries).encode() + b"\n",
+            capture_output=True, check=False, timeout=30,
+        )
+    except Exception:
+        return {}
+
+    # Output format per query: "<sha> blob <size>\n<size bytes>\n" or
+    # "<query> missing\n". Walk byte stream and pair with queries in order.
+    out = proc.stdout
+    pos = 0
+    results: dict[tuple[str, str], str] = {}
+    for key, _ in queries:
+        # Read one header line.
+        nl = out.find(b"\n", pos)
+        if nl < 0:
+            break
+        header = out[pos:nl].decode("utf-8", errors="replace")
+        pos = nl + 1
+        parts = header.split()
+        if len(parts) >= 2 and parts[1] == "missing":
+            continue
+        if len(parts) < 3:
+            continue
+        try:
+            size = int(parts[2])
+        except ValueError:
+            continue
+        blob = out[pos:pos + size]
+        pos += size + 1  # +1 for trailing newline
+        try:
+            data = json.loads(blob.decode("utf-8"))
+            status = str(data.get("status", "")).strip().lower()
+            if status:
+                results[key] = status
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            continue
+    return results
 
 
 def _ensure_cache() -> None:
@@ -137,6 +221,11 @@ def git_commit_times() -> dict[str, float]:
 def slug_refs() -> dict[str, str]:
     _ensure_cache()
     return _CACHE["refs"]
+
+
+def verdicts() -> dict[tuple[str, str], str]:
+    _ensure_cache()
+    return _CACHE["verdicts"]
 
 
 _FILE_LIMIT = 200 * 1024  # 200 KB cap for the hover preview
@@ -306,6 +395,7 @@ def scan_branches() -> list[dict]:
     active = active_branches()
     cur = current_branch()
     times = git_commit_times()
+    verds = verdicts()
 
     grouped: dict[str, list[tuple[str, float]]] = {}
     for path, ct in times.items():
@@ -338,6 +428,14 @@ def scan_branches() -> list[dict]:
         for bucket in (roles, other):
             for entry in bucket.values():
                 entry["files"].sort(key=lambda f: f["path"])
+        # Attach verdict status (if any) per role. "pass" → ok,
+        # anything else → "fail" for color purposes. No verdict → null
+        # (frontend treats as ok since the role ran but didn't claim a status).
+        for role_name, entry in roles.items():
+            status = verds.get((slug, role_name))
+            if status:
+                entry["status"] = "pass" if status == "pass" else "fail"
+                entry["statusRaw"] = status
         root_files.sort(key=lambda f: f["name"])
         last = max((ct for _, ct in files), default=0.0)
         branches.append({
@@ -407,12 +505,14 @@ INDEX_HTML = r"""<!doctype html>
   .branch.current { border-left: 3px solid var(--current); padding-left: 11px; }
   .branch .name { font-weight: 500; word-break: break-all; }
   .branch .meta { color: var(--muted); font-size: 11px; margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .branch .roles { margin-top: 4px; display: flex; gap: 2px; flex-wrap: wrap; }
+  .branch .roles { margin-top: 4px; display: flex; gap: 2px; }
+  .branch .roles .spacer { flex: 1; min-width: 8px; }
   .role-dot {
     width: 10px; height: 10px; border-radius: 2px;
     background: var(--pending);
   }
   .role-dot.done { background: var(--done); }
+  .role-dot.fail { background: #d7ba7d; }  /* yellow — ran but verdict failed */
   #pane {
     flex: 1;
     padding: 20px 28px;
@@ -539,6 +639,27 @@ INDEX_HTML = r"""<!doctype html>
   .stage .name { font-weight: 500; }
   .stage .icon { text-align: center; font-size: 14px; }
   .stage .icon.done { color: var(--done); }
+  .stage .icon.fail { color: #d7ba7d; }
+  .opt-divider {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 6px 0 2px;
+    border-top: 1px dashed var(--border);
+    margin-top: 4px;
+  }
+  .status-pill {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: 8px;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .status-pill.pass { background: rgba(106, 153, 85, 0.18); color: var(--done); }
+  .status-pill.fail { background: rgba(215, 186, 125, 0.18); color: #d7ba7d; }
   .stage .files { color: var(--muted); font-size: 12px; }
   .stage .time { color: var(--muted); font-size: 12px; text-align: right; }
   .stage details summary { cursor: pointer; color: var(--muted); }
@@ -583,7 +704,8 @@ INDEX_HTML = r"""<!doctype html>
 <div id="preview"><div class="placeholder">Hover a file to preview.</div></div>
 
 <script>
-const PIPELINE = ["architect","codeanalyzer","builder","coder","tester","test-designer","security","auditor","docs"];
+const PIPELINE = ["architect","test-designer","coder","codeanalyzer","tester","security","auditor"];
+const OPTIONAL = ["builder","docs"];
 const EXTRA_ROLES = ["handoff","learnings","scaffolder"];
 let BRANCHES = [];
 let SELECTED = null;
@@ -612,14 +734,22 @@ function renderNav(filter) {
   const visible = BRANCHES.filter(b => !f || b.name.toLowerCase().includes(f));
   document.getElementById("count").textContent = visible.length + " / " + BRANCHES.length;
   list.innerHTML = "";
+  function dot(role, r) {
+    if (!r) return `<div class="role-dot" title="${role}: not yet run"></div>`;
+    const failed = r.status === "fail";
+    const cls = "role-dot " + (failed ? "fail" : "done");
+    const tip = role + (r.statusRaw ? ": " + r.statusRaw : ": ran");
+    return `<div class="${cls}" title="${tip}"></div>`;
+  }
   for (const b of visible) {
     const div = document.createElement("div");
     div.className = "branch" + (b.isCurrent ? " current" : "") + (SELECTED === b.name ? " active" : "");
-    const dots = PIPELINE.map(r => `<div class="role-dot${b.roles[r] ? " done" : ""}" title="${r}"></div>`).join("");
+    const main = PIPELINE.map(r => dot(r, b.roles[r])).join("");
+    const opt = OPTIONAL.map(r => dot(r, b.roles[r])).join("");
     div.innerHTML = `
       <div class="name">${b.name}</div>
       <div class="meta"><span>${fmtTime(b.lastActivity)}</span></div>
-      <div class="roles">${dots}</div>
+      <div class="roles">${main}<div class="spacer"></div>${opt}</div>
     `;
     div.onclick = () => { SELECTED = b.name; renderNav(filter); renderPane(b); };
     list.appendChild(div);
@@ -632,28 +762,39 @@ function renderPane(b) {
   if (b.isCurrent) pills.push('<span class="pill current">current branch</span>');
   pills.push(`<span class="pill">last activity ${fmtTime(b.lastActivity)}</span>`);
 
-  // Show only stages that actually ran. The dot grid in the left nav
-  // already conveys which stages are missing; rendering 12 empty rows
-  // here just buries the few that have content.
-  const populatedStages = PIPELINE.filter(role => b.roles[role]);
-  const missingStages = PIPELINE.filter(role => !b.roles[role]);
-  const stages = populatedStages.map(role => {
+  // Show only stages that actually ran. Mandatory stages are listed in
+  // PIPELINE order; optional ones (builder, docs) are listed below a
+  // visual separator and never counted as "missing".
+  function stageRow(role) {
     const r = b.roles[role];
-    const filesCount = r.files.length;
+    if (!r) return "";
+    const failed = r.status === "fail";
+    const iconCls = failed ? "icon fail" : "icon done";
+    const iconChar = failed ? "▲" : "●";
+    const statusBadge = r.statusRaw
+      ? `<span class="status-pill ${failed ? "fail" : "pass"}">${r.statusRaw}</span>`
+      : "";
     const fileList = r.files.length
-      ? `<details><summary>${filesCount} file${filesCount === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => fileLi(b.name, `.bot/${b.name}/${role}/${f.path}`, f.path, f.mtime)).join("")}</ul></details>`
-      : `<span class="files">—</span>`;
+      ? `<details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}${statusBadge}</summary><ul class="filelist">${r.files.map(f => fileLi(b.name, `.bot/${b.name}/${role}/${f.path}`, f.path, f.mtime)).join("")}</ul></details>`
+      : `<span class="files">— ${statusBadge}</span>`;
     return `
       <div class="stage">
         <div class="name">${role}</div>
-        <div class="icon done">●</div>
+        <div class="${iconCls}">${iconChar}</div>
         <div>${fileList}</div>
         <div class="time">${fmtTime(r.mtime)}</div>
       </div>
     `;
-  }).join("");
-  const pipelineBlock = populatedStages.length
-    ? `<h2 class="section">Pipeline</h2><div class="timeline">${stages}</div>`
+  }
+  const mainPopulated = PIPELINE.filter(role => b.roles[role]);
+  const optPopulated = OPTIONAL.filter(role => b.roles[role]);
+  const mainStages = mainPopulated.map(stageRow).join("");
+  const optStages = optPopulated.map(stageRow).join("");
+  const missingStages = PIPELINE.filter(role => !b.roles[role]);
+  const pipelineBlock = (mainPopulated.length || optPopulated.length)
+    ? `<h2 class="section">Pipeline</h2><div class="timeline">${mainStages}${
+        optStages ? `<div class="opt-divider">optional</div>${optStages}` : ""
+      }</div>`
     : `<h2 class="section">Pipeline</h2><div class="muted-note">No pipeline runs yet.</div>`;
   const missingBlock = missingStages.length
     ? `<div class="missing">Not yet run: ${missingStages.join(", ")}</div>`
