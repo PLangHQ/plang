@@ -71,15 +71,14 @@ public partial class discover : IContext
     private async Task<global::app.tester.File> DiscoverOne(FilePath goalFile, global::app.@this app,
         HashSet<string> include, HashSet<string> exclude)
     {
-        var relGoalPath = NormalizeRelative(goalFile.Relative);
+        var relGoalPath = goalFile.Relative;
         var directory = goalFile.Parent?.Absolute ?? app.AbsolutePath;
 
         // PrPath sibling: <dir>/.build/<stem>.pr — derived via the generic verbs.
         var stem = goalFile.FileNameWithoutExtension.ToLowerInvariant();
         var prFile = goalFile.Parent?.Combine(".build").Combine(stem + ".pr") as FilePath
                      ?? (FilePath)goalFile.Combine(".build").Combine(stem + ".pr");
-        // PrPath as PLang program sees it (relative to the test's own directory).
-        var relPrPath = ".build/" + stem + ".pr";
+        var relPrPath = prFile.Relative;
 
         var stub = new global::app.tester.File
         {
@@ -248,9 +247,6 @@ public partial class discover : IContext
         if (string.IsNullOrEmpty(name) || name.Contains('%')) return null;
         return name;
     }
-
-    private static string NormalizeRelative(string path) =>
-        path.Replace('\\', '/');
 
     private void SeedBranchChains(Goal goal, app.tester.Coverage coverage, HashSet<string> visited, int depth = 0)
     {

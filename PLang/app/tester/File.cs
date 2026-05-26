@@ -10,10 +10,10 @@ namespace app.tester;
 [PlangType("testfile")]
 public sealed class File
 {
-    /// <summary>Relative path of the .test.goal file from the app root.</summary>
+    /// <summary>Root-relative path of the .test.goal file (leading "/" anchors at the app root). Same shape as <see cref="Goal.Path"/>.</summary>
     [LlmBuilder] public string Path { get; init; } = "";
 
-    /// <summary>Relative path of the matching .pr file.</summary>
+    /// <summary>Root-relative path of the matching .pr file (leading "/" anchors at the app root). Same shape as <see cref="Path"/>.</summary>
     [LlmBuilder] public string PrPath { get; init; } = "";
 
     /// <summary>Name of the entry goal to run (typically the first goal in the .pr).</summary>
