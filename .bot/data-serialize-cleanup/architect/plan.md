@@ -1,5 +1,15 @@
 # Data Serialization Cleanup
 
+## Why
+
+The immediate trigger was a code-review session on `PLang/app/channels/serializers/serializer/plang/Data.cs`: the `Envelope` class duplicates Data's shape just to bypass `[JsonIgnore]`; `JsonSerializer` is hard-coded inside what should be a registered, composable serializer; `if (value == null) return "null"` is dead boilerplate; the `Serialize(object? value, Type? type = null)` signature lies about what the method actually serializes (always Data in practice). The word "envelope" leaks an inverted mental model — Data IS the wire shape, not something wrapped *in* an envelope.
+
+Pulling the thread surfaced the same smells in adjacent files: `data/this.Envelope.cs` instantiates a parallel `JsonSerializerOptions` block; `Stream.WriteCore` strips the Data wrapper before serializing; `Compress()` double-wraps `Data{archived, Data{gzip, bytes}}` when the inner gzip Data is redundant. Multiple files reinforce each other's workarounds — each on its own looks reasonable, together they encode a misconception of where Data sits in the stack.
+
+The bigger reason to fix this now, before the next thing lands: PLang's serialization is the central boundary. Every developer ships data across it. The current shape is fragile (multiple parallel JsonSerializerOptions can drift), doesn't extend cleanly (the `Envelope` workaround would have to be re-invented for any new MIME), and structurally confuses Data's role. Cleaning it up before more serializers or channel types are added prevents the smells from multiplying. It also clears the way for the structural-normalization follow-up (`data-normalize` branch) — none of that work makes sense on top of the current tangle.
+
+*Ingi's deeper motivation, if there's more to it than the code-review trigger — a specific deployment, a downstream consumer breaking on this, an upcoming feature that needs the clean foundation — would go here. The above is what surfaced in conversation.*
+
 ## What this is
 
 PLang's serialization path between a Variable and the wire is tangled across four files and three concepts. This branch un-tangles it by recognizing one thing: **Data is the universal currency. Everything that crosses a channel boundary IS Data. The wire shape is Data's own shape — flat — and any nesting lives in the byte stream, not the JSON document.**
