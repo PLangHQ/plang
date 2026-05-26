@@ -244,6 +244,57 @@
         "health": "plang-mostly-green",
         "notes": "C# 3036/3036; PLang 212/218 (-15 failures vs v2). Behavioral failures all closed. Remaining 6 are intentional-failure fixtures picked up by discovery. Builder validated via new Tests/BuilderSanity/ smoke test. Process gap (no coder/ folder) persists across 3 versions of work."
       }
+    },
+    {
+      "id": "f4d182a9-5e3c-4711-b0fa-7c4e8d92136b",
+      "bot": "tester",
+      "timestamp_start": "2026-05-26T18:55:00Z",
+      "timestamp_end": "2026-05-26T19:05:00Z",
+      "intent": "Verify coder commit 9af7fd8b2 resolved v3's 6 phantom failures (nested test.report console emission)",
+      "before": {
+        "assumptions": "Coder claims v3's 6 [Fail] lines were nested test.report rendering, not real top-level failures. If true, the suite was already green; v4 should show 0 fails and 0 FAIL: headers.",
+        "risk": "Counting [Fail] lines is unreliable when nested test.report leaks into stdout — pattern goes into tester memory."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/tester/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/modules/test/report.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Coder's fix: gate RenderConsole/RenderCoverageTables on `testing.CurrentTest == null` so nested test.report doesn't emit status lines to stdout. Parent test still consumes results via Data.Properties."
+        },
+        {
+          "paths": [
+            "PLang.Tests/",
+            "Tests/"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang: 208/208 pass, 0 FAIL: headers, 0 [Fail] lines. C#: 3036/3036 pass, 0 failed. BuilderSanity smoke test (committed in v3) still passes — builder validated end-to-end."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/tester/v4/plan.md",
+            ".bot/fix-stepvartypes-incremental/tester/v4/v3_review_summary.md",
+            ".bot/fix-stepvartypes-incremental/tester/v4/verdict.json",
+            ".bot/fix-stepvartypes-incremental/tester/summary.md",
+            ".bot/fix-stepvartypes-incremental/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v4 outputs — PASS verdict. Also saved /memory/feedback_grep_fail_lines_unreliable.md to capture the counting-error lesson."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green",
+        "notes": "208/208 PLang + 3036/3036 C# — fully green. v3's 6 'failures' were nested test.report console emission, not real failures. Coder structural fix at report.cs:30-45 closes the noise. Builder validated. Process gap (no coder/ folder across 4 versions of work) still flagged but not gating."
+      }
     }
   ]
 }
