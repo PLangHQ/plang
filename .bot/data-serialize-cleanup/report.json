@@ -1,0 +1,64 @@
+{
+  "branch": "data-serialize-cleanup",
+  "sessions": [
+    {
+      "id": "fc88121d-d408-4521-8b80-a76f945ea054",
+      "bot": "architect",
+      "timestamp_start": "2026-05-26T16:22:59Z",
+      "timestamp_end": "2026-05-26T16:27:20Z",
+      "intent": "Design Data's variable→wire→variable round trip: flat shape, signing at channel, merge the two plang serializers, drop Envelope.",
+      "before": {
+        "assumptions": "Two plang serializers (application/plang and application/plang+data) duplicate STJ setup. The plang+data serializer builds a parallel Envelope class to bypass [JsonIgnore] on Signature. Stream.WriteCore strips the Data wrapper before handing to the serializer. Compress double-wraps (gzip Data inside archived Data). ISerializer accepts object?, but PLang only ever ships Data.",
+        "risk": "Touches the channel write path and four serializer implementations atomically. Any caller that relied on the polymorphic object? input or on the data.Value strip will break — but per Ingi's assertion, those callers don't exist in PLang's actual flow because Data is the universal currency."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md",
+            ".bot/data-serialize-cleanup/architect/plan/wire-shape.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Spine + wire-shape reference. Spine carries the design narrative and stage index; wire-shape carries concrete JSON examples for plain / compressed / encrypted / nested-value cases."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-1-iserializer-data.md",
+            ".bot/data-serialize-cleanup/architect/stage-2-plang-merge.md",
+            ".bot/data-serialize-cleanup/architect/stage-3-flat-compress.md",
+            ".bot/data-serialize-cleanup/architect/stage-4-vocabulary-sweep.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Four stage files. 1 tightens ISerializer to Data + unstrips Stream.WriteCore. 2 merges the plang serializers, drops Envelope, moves EnsureSigned to Channel. 3 flattens Compress. 4 vocabulary sweep — drop 'envelope' word."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Chronological summary log; initial entry."
+        },
+        {
+          "paths": [
+            "/home/claude/.claude/projects/-workspace-plang/memory/design_principles.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 'Data Is Opaque to Its Consumers' principle under Core Philosophy. Captures the insight from this session: every layer in the pipeline handles Data as an opaque unit, only the encoder at the leaf walks properties."
+        }
+      ],
+      "after": {
+        "status": "Initial design plan complete. Four stages carved, wire-shape reference written, summary logged. Ready for test-designer to produce test-strategy.md and test-coverage.md, or for coder to begin Stage 1.",
+        "health": "Design is settled. Conversation with Ingi covered the round-trip semantics, name as addressability coordinate, signing position, and the flat wire shape. No open architectural questions.",
+        "notes": "Out of scope and explicitly parked: algorithm tagging on archived/encryption (the +variant pattern), protobuf encoder, Encrypt path flattening (waits for crypto service), inspection-path serialization (data.ToString for debug)."
+      }
+    }
+  ]
+}
