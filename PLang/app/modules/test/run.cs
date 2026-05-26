@@ -160,7 +160,7 @@ public partial class run : IContext
         var entryGoalPath = test.Path.TrimStart('/');
         bool IsEntryGoalStep(global::app.goals.goal.steps.step.@this? step)
             => step != null
-            && string.Equals(step.Goal?.Path?.TrimStart('/'), entryGoalPath, StringComparison.Ordinal);
+            && string.Equals(step.Goal?.Path?.ToString().TrimStart('/'), entryGoalPath, StringComparison.Ordinal);
 
         var beforeStepBinding = new EventBinding(
             app.events.EventType.BeforeStep,
