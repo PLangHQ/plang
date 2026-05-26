@@ -520,13 +520,26 @@ INDEX_HTML = r"""<!doctype html>
     overflow-y: auto;
     min-width: 0;  /* let the flex layout shrink this */
   }
+  /* Vertical resizer between #pane and #preview. Mousedown to drag. */
+  #resizer {
+    width: 5px;
+    background: var(--border);
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background 0.1s;
+  }
+  #resizer:hover, #resizer.active { background: var(--accent); }
+  body.resizing { cursor: col-resize; user-select: none; }
+  body.resizing iframe, body.resizing #pane, body.resizing #preview {
+    pointer-events: none;  /* don't let the dragged-over content steal events */
+  }
   /* Always-on preview pane on the right; updates as files are hovered.
      No floating popup means no overlap with the file list — the cursor
      can scan the file rows without losing its target. */
   #preview {
     width: 560px;
-    min-width: 560px;
-    border-left: 1px solid var(--border);
+    min-width: 240px;
+    flex-shrink: 0;
     background: var(--panel);
     overflow-y: auto;
     padding: 14px 18px;
@@ -702,7 +715,8 @@ INDEX_HTML = r"""<!doctype html>
   <div id="branchList"></div>
 </div>
 <div id="pane"><div class="empty">Select a branch on the left.</div></div>
-<div id="preview"><div class="placeholder">Hover a file to preview.</div></div>
+<div id="resizer"></div>
+<div id="preview"><div class="placeholder">Click a file to preview.</div></div>
 
 <script>
 const PIPELINE = ["architect","test-designer","coder","codeanalyzer","tester","security","auditor","docs"];
@@ -901,6 +915,40 @@ async function load() {
 }
 
 document.getElementById("filter").addEventListener("input", e => renderNav(e.target.value));
+
+// Preview pane resizer ------------------------------------------------
+(function initResizer() {
+  const previewEl = document.getElementById("preview");
+  const resizer = document.getElementById("resizer");
+  const MIN = 240, MAX_FRACTION = 0.8;
+
+  const saved = parseInt(localStorage.getItem("previewWidth"), 10);
+  if (saved && saved >= MIN) previewEl.style.width = saved + "px";
+
+  let dragging = false;
+  resizer.addEventListener("mousedown", e => {
+    dragging = true;
+    resizer.classList.add("active");
+    document.body.classList.add("resizing");
+    e.preventDefault();
+  });
+  document.addEventListener("mousemove", e => {
+    if (!dragging) return;
+    // Width = distance from cursor to viewport right edge.
+    const max = Math.floor(window.innerWidth * MAX_FRACTION);
+    const w = Math.min(max, Math.max(MIN, window.innerWidth - e.clientX));
+    previewEl.style.width = w + "px";
+  });
+  document.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    resizer.classList.remove("active");
+    document.body.classList.remove("resizing");
+    const w = parseInt(previewEl.style.width, 10);
+    if (w) localStorage.setItem("previewWidth", String(w));
+  });
+})();
+
 load();
 </script>
 </body>
