@@ -14,7 +14,7 @@ public sealed class Operator
 {
     // Evaluators are async: a Data value may be IBooleanResolvable (a path,
     // whose truthiness is "does it exist" — I/O for the http scheme). Pure-sync
-    // comparisons wrap their result in Task.FromResult. (codeanalyzer v1 F3)
+    // comparisons wrap their result in Task.FromResult.
     private static readonly Dictionary<string, Func<data.@this?, data.@this?, Task<bool>>> Registry =
         new(StringComparer.OrdinalIgnoreCase)
         {

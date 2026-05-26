@@ -3,7 +3,7 @@ using app.channels.serializers;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 1 — TimeSpan ISO 8601 JsonConverter (PT30S, PT5M, PT1H30M).
+// TimeSpan ISO 8601 JsonConverter (PT30S, PT5M, PT1H30M).
 // Architect plan.md L264: "ISO 8601 duration string" via XmlConvert.ToTimeSpan.
 
 public class Stage1_TimeSpanJsonConverterTests

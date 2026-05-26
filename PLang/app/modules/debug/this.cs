@@ -77,7 +77,7 @@ public sealed class @this
     /// LLM calls are sync so a single field suffices — no queue needed.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    private string? _currentLlmFilePath;
+    internal global::app.types.path.@this? _currentLlmFilePath;
 
     /// <summary>
     /// Per-process counter for disambiguating LLM call retries. Increments on every
@@ -336,7 +336,7 @@ public sealed class @this
                 var stepIdx = call.Action.Step?.Index ?? -1;
                 var name = goal?.Name ?? call.Action.Module;
                 var stepInfo = stepIdx >= 0 ? $" (step {stepIdx + 1})" : "";
-                var pathInfo = !string.IsNullOrEmpty(goal?.Path) ? $" in {goal.Path}" : "";
+                var pathInfo = goal?.Path != null ? $" in {goal.Path}" : "";
                 sb.AppendLine($"    at {name}.{call.Action.ActionName}{stepInfo}{pathInfo}");
             }
         }
@@ -387,7 +387,9 @@ public sealed class @this
     /// the maxLength truncation and stderr — the whole point of file mode is to
     /// capture the full untruncated content for callers that exceed the terminal limit.
     /// </summary>
-    private void EmitLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context, bool toFile)
+    // internal for DebugTraceWriteTests to drive the trace-write path
+    // (driving the full event lifecycle requires a real LLM call).
+    internal void EmitLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context, bool toFile)
     {
         if (toFile && _currentLlmFilePath != null)
         {
@@ -398,13 +400,14 @@ public sealed class @this
             sb.AppendLine($"=== END {title} ===");
             try
             {
-                System.IO.File.AppendAllText(_currentLlmFilePath, sb.ToString());
+                // Append routes through AuthGate(Write). Sync-wait — trace
+                // emission is inside sync event handlers.
+                var written = _currentLlmFilePath.Append(sb.ToString()).GetAwaiter().GetResult();
+                if (!written.Success)
+                    _ = Write($"[debug] LLM file write failed: {written.Error?.Message} (path={_currentLlmFilePath}){Environment.NewLine}");
             }
-            catch (System.IO.IOException ex)
+            catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
-                // Surface the failure so users know their --debug llm.output=file isn't producing
-                // files. EmitLlmBlock is invoked from sync OnBeforeRequest/OnAfterResponse
-                // event lambdas — fire-and-forget through the debug channel.
                 _ = Write($"[debug] LLM file write failed: {ex.Message} (path={_currentLlmFilePath}){Environment.NewLine}");
             }
             return;
@@ -424,14 +427,12 @@ public sealed class @this
     /// - <c>_llmCallCounter</c> appended when the same (goal, step) fires more than once
     ///   in this process (LlmFixer retries reuse the same key).
     /// </summary>
-    private string ResolveLlmFilePath(actor.context.@this context)
+    internal global::app.types.path.@this ResolveLlmFilePath(actor.context.@this context)
     {
         _llmCallCounter++;
 
         var traceId = context.Trace.Id;
 
-        // Pull goal/step from PLang variables — these reflect what the *builder script*
-        // is building, not the C# runtime's currently-executing goal/step.
         var goalData = context.Variables.Get("goal");
         var goalName = "unknown";
         if (goalData != null && goalData.Value != null)
@@ -454,28 +455,36 @@ public sealed class @this
         }
 
         var safeGoal = SanitizeFilenamePart(goalName);
-        var dir = System.IO.Path.Combine(_engine.AbsolutePath, ".build", "traces", traceId, "llm");
-        System.IO.Directory.CreateDirectory(dir);
+        // Derive directory via path verbs. Mkdir routes through AuthGate(Write);
+        // .build/ is in-root so it fast-passes.
+        var traceDir = global::app.types.path.@this.Resolve("/.build/traces", context)
+            .Combine(traceId).Combine("llm");
+        traceDir.Mkdir().GetAwaiter().GetResult();
 
         // First call to a given (goal, step) gets a clean name; subsequent retries get _N.
-        var basePath = System.IO.Path.Combine(dir, $"{safeGoal}_{stepKey}.txt");
-        if (!System.IO.File.Exists(basePath)) return basePath;
+        var basePath = traceDir.Combine($"{safeGoal}_{stepKey}.txt");
+        if (basePath.ExistsAsync().GetAwaiter().GetResult() is { Success: true, Value: false }) return basePath;
 
         for (int n = 2; n < 100; n++)
         {
-            var path = System.IO.Path.Combine(dir, $"{safeGoal}_{stepKey}_{n}.txt");
-            if (!System.IO.File.Exists(path)) return path;
+            var candidate = traceDir.Combine($"{safeGoal}_{stepKey}_{n}.txt");
+            if (candidate.ExistsAsync().GetAwaiter().GetResult() is { Success: true, Value: false }) return candidate;
         }
         // Fallback if 100 retries somehow aren't enough — counter guarantees uniqueness.
-        return System.IO.Path.Combine(dir, $"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");
+        return traceDir.Combine($"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");
     }
+
+    // Conservative invalid-filename character set covering both Unix and
+    // Windows — keeps the sanitizer free of System.IO.Path reaches per the
+    // PLNG002 ban.
+    private static readonly char[] _invalidFileNameChars =
+        ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '\0'];
 
     private string SanitizeFilenamePart(string s)
     {
-        var invalid = System.IO.Path.GetInvalidFileNameChars();
         var sb = new StringBuilder(s.Length);
         foreach (var c in s)
-            sb.Append(Array.IndexOf(invalid, c) >= 0 ? '_' : c);
+            sb.Append(Array.IndexOf(_invalidFileNameChars, c) >= 0 || char.IsControl(c) ? '_' : c);
         return sb.ToString();
     }
 

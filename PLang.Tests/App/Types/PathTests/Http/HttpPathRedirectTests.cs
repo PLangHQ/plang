@@ -10,16 +10,16 @@ using PLang.Tests.App.Types.PathTests.Contract;
 namespace PLang.Tests.App.Types.PathTests.Http;
 
 /// <summary>
-/// Security v1 S1 + partial S2. <c>HttpPath</c> handles 3xx manually now:
-/// each hop builds a fresh <see cref="HttpPath"/>, runs it through
-/// <see cref="@this.AuthGate"/> (own consent prompt for the new URL), and
-/// signs with the destination's URL. These tests pin:
-///   – a 302 to an unauthorized host is gated, not auto-followed (S1 core);
+/// <c>HttpPath</c> handles 3xx manually: each hop builds a fresh
+/// <see cref="HttpPath"/>, runs it through <see cref="@this.AuthGate"/>
+/// (own consent prompt for the new URL), and signs with the destination's
+/// URL. These tests pin:
+///   – a 302 to an unauthorized host is gated, not auto-followed;
 ///   – a 302 to an authorized host is followed and returns that host's body;
 ///   – a redirect to an unsupported scheme is rejected;
 ///   – the hop cap fires on a redirect loop;
 ///   – the X-Signature on the redirect hop is fresh for the destination URL
-///     (not the original signed-for-origin one) — S2 partial.
+///     (not the original signed-for-origin one).
 /// </summary>
 public class HttpPathRedirectTests
 {
@@ -171,7 +171,7 @@ public class HttpPathRedirectTests
         // The second non-write request is the GET that followed the redirect.
         // Find the captured GET on the target's path and decode its X-Signature
         // envelope — the signed `url` claim must match the destination, not the
-        // origin. (security v1 S2 partial: the original signature never reaches
+        // origin. (the original signature never reaches
         // a host the user didn't directly consent to.)
         var targetPath = new System.Uri(target).AbsolutePath;
         var targetGet = server.Requests

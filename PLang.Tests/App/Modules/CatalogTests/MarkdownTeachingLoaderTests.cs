@@ -55,10 +55,10 @@ public class MarkdownTeachingLoaderTests
     private void Stage(string fileName, string body)
         => File.WriteAllText(Path.Combine(_mdRoot, FixtureModule, fileName), body);
 
-    private global::app.goals.goal.steps.step.actions.action.@this Find(string action)
+    private async Task<global::app.goals.goal.steps.step.actions.action.@this> Find(string action)
     {
-        var row = _app.Modules.Describe()
-            .FirstOrDefault(a => a.Module == FixtureModule && a.ActionName == action);
+        var catalog = await _app.Modules.Describe();
+        var row = catalog.FirstOrDefault(a => a.Module == FixtureModule && a.ActionName == action);
         if (row == null)
             throw new InvalidOperationException($"catalog missing {FixtureModule}.{action}");
         return row;
@@ -68,7 +68,7 @@ public class MarkdownTeachingLoaderTests
     public async Task Describe_ActionNotesMarkdownPresent_PopulatesActionNotes()
     {
         Stage($"{FixtureAction1}.notes.md", "Action-only note.");
-        var row = Find(FixtureAction1);
+        var row = await Find(FixtureAction1);
         await Assert.That(row.Notes).IsEqualTo("Action-only note.");
         await Assert.That(row.ModuleNotes).IsNull();
     }
@@ -79,8 +79,8 @@ public class MarkdownTeachingLoaderTests
         Stage("module.notes.md", "Module-wide rule.");
         _app.Modules.RegisterType(FixtureModule, FixtureActionB, typeof(FixtureAction2));
 
-        var a = Find(FixtureAction1);
-        var b = Find(FixtureActionB);
+        var a = await Find(FixtureAction1);
+        var b = await Find(FixtureActionB);
         await Assert.That(a.ModuleNotes).IsEqualTo("Module-wide rule.");
         await Assert.That(b.ModuleNotes).IsEqualTo("Module-wide rule.");
         await Assert.That(a.Notes).IsNull();
@@ -93,7 +93,7 @@ public class MarkdownTeachingLoaderTests
         Stage("module.notes.md", "Module rule.");
         Stage($"{FixtureAction1}.notes.md", "Action rule.");
 
-        var row = Find(FixtureAction1);
+        var row = await Find(FixtureAction1);
         // Layers stay split — renderer concats, loader does not.
         await Assert.That(row.ModuleNotes).IsEqualTo("Module rule.");
         await Assert.That(row.Notes).IsEqualTo("Action rule.");
@@ -105,7 +105,7 @@ public class MarkdownTeachingLoaderTests
         Stage("module.description.md", "Fixturemod handles fake things.");
         Stage($"{FixtureAction1}.description.md", "Sets a fixture value.");
 
-        var row = Find(FixtureAction1);
+        var row = await Find(FixtureAction1);
         await Assert.That(row.Description).IsEqualTo("Sets a fixture value.");
         await Assert.That(row.ModuleDescription).IsEqualTo("Fixturemod handles fake things.");
     }
@@ -115,7 +115,7 @@ public class MarkdownTeachingLoaderTests
     {
         Stage($"{FixtureAction1}.examples.md",
             "First example paragraph.\n\nSecond example paragraph.");
-        var row = Find(FixtureAction1);
+        var row = await Find(FixtureAction1);
         await Assert.That(row.ExamplesMd.Count).IsEqualTo(2);
         await Assert.That(row.ExamplesMd[0]).IsEqualTo("First example paragraph.");
         await Assert.That(row.ExamplesMd[1]).IsEqualTo("Second example paragraph.");
@@ -124,7 +124,7 @@ public class MarkdownTeachingLoaderTests
     [Test]
     public async Task Describe_NoMarkdownFilesAtAll_LeavesAllTeachingFieldsNullOrEmpty()
     {
-        var row = Find(FixtureAction1);
+        var row = await Find(FixtureAction1);
         await Assert.That(row.Notes).IsNull();
         await Assert.That(row.ModuleNotes).IsNull();
         // Description / ModuleDescription remain null when no [Description] attribute and no markdown.

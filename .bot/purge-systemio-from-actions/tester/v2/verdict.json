@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "Round 2: all four major findings (Http/Fluid/OpenAi/DebugTrace handler-layer false greens) genuinely fixed — tests now invoke the actual handlers and assert content-based outcomes. AppLoad zero-assertion fixed (Id/Name invariants + Save round-trip). Discover both-branches asserted. Suite stays green (C# 3025/3025, PLang 206/206, zero PLNG002). Coverage on previously-cold spots jumped substantially: Fluid 42.6→73.4%, Debug 35.2→50.9%. Coder also caught and fixed an unrelated PlangFileInfo byte[]→string bug while hardening F2. Minor naming-only findings (F8/F10/F11) remain but are documentation-quality."
+}

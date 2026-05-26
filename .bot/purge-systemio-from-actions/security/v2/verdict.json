@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "All v1 findings closed; F1 fix mutation-verified; PLNG002 narrowed to two visible carve-outs with no whole-file exemptions remaining."
+}

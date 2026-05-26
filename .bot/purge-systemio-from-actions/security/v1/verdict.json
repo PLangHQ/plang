@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "F1 HIGH: IsInRoot uses textual StartsWith on un-canonicalized _absolutePath — relative path with .. segments resolved against goal-anchored runtimeDir inside root auto-grants AuthGate, then OS resolves to a file outside root. Confirmed by mutation test." }

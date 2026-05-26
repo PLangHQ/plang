@@ -11,7 +11,7 @@ using MatchMode = global::app.types.path.permission.Match;
 
 namespace PLang.Tests.App.FileSystem.PermissionTests.StorageTests;
 
-/// Stage 3 — Batch 7: `Actor.@this.Permission` unifies in-memory ("y") and
+/// Batch 7: `Actor.@this.Permission` unifies in-memory ("y") and
 /// persisted ("a") grants behind one Find/Add/Revoke surface.
 public class ActorPermissionStorageTests
 {

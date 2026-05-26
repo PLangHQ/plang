@@ -10,7 +10,7 @@ public class Stage5_ChannelActionsBuilderCatalogTests
     public async Task BuilderCatalog_IncludesChannelSetAndRemove_WithParameters()
     {
         var app = new global::app.@this("/tmp/s5cat");
-        var actions = app.Modules.Describe();
+        var actions = await app.Modules.Describe();
 
         var set = actions.FirstOrDefault(a => a.Module == "channel" && a.ActionName == "set");
         var remove = actions.FirstOrDefault(a => a.Module == "channel" && a.ActionName == "remove");

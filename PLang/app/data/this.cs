@@ -706,7 +706,7 @@ public partial class @this
     /// reflection surfaces that as <see cref="System.Reflection.TargetInvocationException"/>.
     /// Rather than let it escape <c>As&lt;T&gt;</c>, the inner exception is shaped
     /// into a failed <c>Data&lt;T&gt;</c> so the conversion failure flows as a typed
-    /// error the handler can surface. (codeanalyzer v1 F4)
+    /// error the handler can surface.
     /// </summary>
     private static (object? value, @this<T>? error) InvokeResolve<T>(
         System.Reflection.MethodInfo resolveMethod, string raw, actor.context.@this ctx)
@@ -889,7 +889,7 @@ public partial class @this
     /// The canonical resolvable is <c>path</c>: <c>path.AsBooleanAsync()</c> means
     /// "does this resource exist", which the http scheme answers with I/O — hence
     /// the async signature, and hence the condition pipeline is async.
-    /// (codeanalyzer v1 F3)
+    /// 
     /// </summary>
     public virtual async System.Threading.Tasks.Task<bool> ToBooleanAsync()
     {

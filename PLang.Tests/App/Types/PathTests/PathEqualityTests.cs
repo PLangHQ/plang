@@ -5,12 +5,11 @@ using TUnit.Assertions.Extensions;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 8 / codeanalyzer v2 N2 — <c>path.Equals</c> and <c>path.GetHashCode</c>
-/// honour <see cref="@this.RootComparison"/> (Ordinal on Linux,
-/// OrdinalIgnoreCase on Windows). The whole reason N2 was filed: hard-coded
-/// <c>OrdinalIgnoreCase</c> made <c>/srv/x</c> and <c>/SRV/x</c> — distinct
-/// files on Linux — compare equal and hash-collide. Revert N2 and these
-/// tests go red on Linux.
+/// <c>path.Equals</c> and <c>path.GetHashCode</c> honour
+/// <see cref="@this.RootComparison"/> (Ordinal on Linux, OrdinalIgnoreCase
+/// on Windows). A hard-coded <c>OrdinalIgnoreCase</c> would make
+/// <c>/srv/x</c> and <c>/SRV/x</c> — distinct files on Linux — compare
+/// equal and hash-collide; these tests go red on Linux if that regresses.
 /// </summary>
 public class PathEqualityTests
 {
@@ -45,8 +44,8 @@ public class PathEqualityTests
 
     [Test] public async Task FilePath_CaseVariant_HonoursRootComparison()
     {
-        // The point N2 was filed for: case sensitivity must follow the OS's
-        // filesystem rule, not a hard-coded OrdinalIgnoreCase.
+        // Case sensitivity must follow the OS's filesystem rule, not a
+        // hard-coded OrdinalIgnoreCase.
         var (app, root) = MakeApp("case");
         var lower = Make(app, System.IO.Path.Combine(root, "casefile.txt"));
         var upper = Make(app, System.IO.Path.Combine(root, "CASEFILE.TXT"));

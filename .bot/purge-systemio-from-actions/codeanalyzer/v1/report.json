@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "branch": "purge-systemio-from-actions",
+  "diff_base": "9fb2cca44^",
+  "scope": { "files": 103, "insertions": 4485, "deletions": 669 },
+  "verdict": "PASS",
+  "severity_breakdown": { "high": 0, "medium": 0, "low": 5 },
+  "findings": [
+    { "id": "N1", "file": "PLang/app/channels/serializers/serializer/Json.cs", "lines": "26-28", "pass": "5", "severity": "low", "title": "pathConverter allocated but unused when options provided" },
+    { "id": "N2", "file": "PLang/app/types/Conversion.cs", "lines": "51-64,142", "pass": "2", "severity": "low", "title": "ContextualReadOptions allocates per call; cache opportunity" },
+    { "id": "N3", "file": "PLang/app/types/path/this.cs", "lines": "204-205", "pass": "4", "severity": "low", "title": "implicit string→path operator builds file-scheme stub; latent footgun" },
+    { "id": "N4", "file": "PLang/app/goals/this.cs", "lines": "39-49", "pass": "4", "severity": "low", "title": "AppGoals.Add silent last-write-wins on _byName collision" },
+    { "id": "N5", "file": "PLang/app/goals/this.cs", "lines": "181,204", "pass": "4", "severity": "low", "title": "TryLoadPr writes user-name aliases into _byName alongside canonical Name; stale-cache risk on Remove" }
+  ],
+  "clean_assertions": [
+    "System.IO purge real — zero PLNG002 diagnostics on clean build",
+    "D13 discipline (.Absolute + Authorize check) holds across all audited handlers",
+    "Execute permission verb deployed on Assembly load sites",
+    "AppGoals dual-index Add/Remove/Clear stays consistent",
+    "Stub-path-on-null-context is documented contract, not bug",
+    "PLNG002 alias resolution handled by Roslyn symbol layer",
+    "CallChainRenderer Path-equivalence uses correct filesystem-identity semantics"
+  ]
+}

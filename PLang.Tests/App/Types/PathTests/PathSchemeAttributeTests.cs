@@ -8,7 +8,7 @@ using FilePath = global::app.types.path.file.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 4 — the <c>[PathScheme]</c> marker attribute.
+/// The <c>[PathScheme]</c> marker attribute.
 /// </summary>
 public class PathSchemeAttributeTests
 {

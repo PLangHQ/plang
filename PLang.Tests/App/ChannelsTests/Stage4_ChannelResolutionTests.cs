@@ -2,7 +2,7 @@ using app.channels;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 4 — Channel slot resolution + IChannel marker + Write.Run.
+// Channel slot resolution + IChannel marker + Write.Run.
 // Architect: stage-4-write-channel-slot.md.
 
 public class Stage4_ChannelResolutionTests

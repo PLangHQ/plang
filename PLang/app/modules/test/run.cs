@@ -72,6 +72,7 @@ public partial class run : IContext
 
         await using var childApp = new app.@this(test.Directory);
         childApp.OsDirectory = parentApp.OsDirectory;
+        childApp.Parent = parentApp;
         childApp.Tester.IsEnabled = true;
 
         // Freeze foundational channels NOW — before any user code (channel.set,
@@ -100,7 +101,7 @@ public partial class run : IContext
                         // Site key carries the goal's source file so sites from
                         // different files don't collide on shared names like "Start".
                         var goal = action.Step?.Goal;
-                        var goalId = goal?.Path ?? goal?.Name ?? "?";
+                        var goalId = goal?.Path?.ToString() ?? goal?.Name ?? "?";
                         var stepIndex = action.Step?.Index.ToString() ?? "?";
                         var site = $"{goalId}:{stepIndex}";
                         childApp.Tester.Coverage.RecordBranch(site, result.Properties.Get<int>("branchIndex"));
@@ -137,7 +138,7 @@ public partial class run : IContext
 
         try
         {
-            var goalCall = new GoalCall { PrPath = test.PrPath };
+            var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(test.PrPath, childApp.User.Context) };
             var result = await childApp.RunGoalAsync(goalCall, childApp.User.Context, cts.Token);
             if (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
                 testRun.Complete(global::app.tester.Status.Timeout);

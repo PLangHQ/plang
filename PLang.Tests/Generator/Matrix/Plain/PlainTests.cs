@@ -117,7 +117,7 @@ public class PathPlainTests
             parameters: new[] { ("file", (object?)"data/x.txt") });
         var typed = result.Data as global::app.data.@this<global::app.types.path.@this>;
         await Assert.That(typed!.Value).IsNotNull();
-        await Assert.That(typed.Value).IsTypeOf<global::app.types.path.@this>();
+        await Assert.That(typed.Value is global::app.types.path.@this).IsTrue();
     }
 
     [Test]

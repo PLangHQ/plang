@@ -10,8 +10,8 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Goals;
 
 /// <summary>
-/// Tester v7 N1 — guard the four-tier slash-qualified resolution in
-/// <see cref="app.goals.goal.GoalCall.GetGoalAsync"/> that coder v6 introduced.
+/// Guards the four-tier slash-qualified resolution in
+/// <see cref="app.goals.goal.GoalCall.GetGoalAsync"/>.
 ///
 /// Slash-qualified Names (Folder/Leaf) resolve as
 /// <c>{folder}/.build/{leaf}.pr</c> — NOT <c>.build/{folder/leaf}.pr</c>.
@@ -73,7 +73,7 @@ public class GoalCallResolutionTests
         return action;
     }
 
-    // --- N1.1 — slash name resolved via the caller-ancestor walk -------------
+    // --- slash name resolved via the caller-ancestor walk -------------
 
     [Test]
     public async Task SlashName_Resolved_ByCallerAncestorWalk()
@@ -92,7 +92,7 @@ public class GoalCallResolutionTests
         await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Start");
     }
 
-    // --- N1.2 — slash name resolved via root-relative (no matching ancestor) -
+    // --- slash name resolved via root-relative (no matching ancestor) -
 
     [Test]
     public async Task SlashName_Resolved_ByRootRelative_WhenNoAncestorMatches()
@@ -111,7 +111,7 @@ public class GoalCallResolutionTests
         await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Start");
     }
 
-    // --- N1.3 — bare name unchanged from prior behaviour (regression guard) --
+    // --- bare name unchanged from prior behaviour (regression guard) --
 
     [Test]
     public async Task BareName_Resolved_AgainstCallersOwnBuildFolder()
@@ -128,7 +128,7 @@ public class GoalCallResolutionTests
         await Assert.That(((PLangGoal)result.Value!).Name).IsEqualTo("Other");
     }
 
-    // --- N1.4 — LoadFromFile leaf-matches a slash-qualified Name -------------
+    // --- LoadFromFile leaf-matches a slash-qualified Name -------------
 
     [Test]
     public async Task LoadFromFile_SlashName_LeafMatchesAgainstUnqualifiedGoalName()
@@ -137,7 +137,7 @@ public class GoalCallResolutionTests
         // directly. The saved goal's own Name is just "Start"; the GoalCall's
         // Name is "BuildGoal/Start" (folder-qualified). Leaf-match resolves
         // "BuildGoal/Start" → "Start" so the goal returns instead of failing
-        // with GoalNotFound. (This is the LoadFromFile side of coder v6's fix.)
+        // with GoalNotFound — the LoadFromFile side of leaf-matching.
         WritePr("system/builder/BuildGoal/.build/start.pr", "Start");
         var caller = CallerAt("/anywhere/Other");
 

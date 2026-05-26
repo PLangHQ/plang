@@ -18,7 +18,7 @@ public partial class Copy : IContext
     public async Task<data.@this<path>> Run()
     {
         // Failed scheme resolution (e.g. unregistered s3://) surfaces the typed
-        // SchemeNotRegistered error instead of an NRE on .Value. (codeanalyzer v1 F4)
+        // SchemeNotRegistered error instead of an NRE on .Value.
         if (!Source.Success) return data.@this<path>.From(Source);
         if (!Destination.Success) return data.@this<path>.From(Destination);
         return await Source.Value!.CopyTo(Destination.Value!, Overwrite.Value, IncludeSubfolders.Value);

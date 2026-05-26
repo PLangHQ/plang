@@ -3,7 +3,7 @@ using app.events.lifecycle.bindings.binding;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 8 — Channel events: types, firing, recursion guard.
+// Channel events: types, firing, recursion guard.
 // Architect: stage-8-channel-events.md and v1/plan/channel-events.md.
 
 public class Stage8_ChannelEventsTests

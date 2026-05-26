@@ -13,7 +13,7 @@ namespace app.modules.builder.code;
 public interface IBuilder : ICode
 {
     Task<data.@this> Actions(GetActions action);
-    data.@this Types(types action);
+    Task<data.@this> Types(types action);
     Task<data.@this> Goals(goals action);
     Task<data.@this> GoalsSave(goalsSave action);
     Task<data.@this> Validate(validate action);

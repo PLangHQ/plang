@@ -3,13 +3,12 @@ using app;
 namespace PLang.Tests.Generator;
 
 /// <summary>
-/// Auditor v2 finding #1 regression pin. The pre-v7 RawScalarValidations contract
-/// guaranteed that a missing-or-null variable-name slot produced a ServiceError with
-/// a specific Key. v7's [VariableName] removal silently let null Variables flow into
-/// handler bodies, where the implicit Variable→string operator NRE'd and bubbled
-/// up as a generic "StepError". The fix re-introduces that guarantee at the
-/// generator level by emitting a MissingRequiredParameter ServiceError when a
-/// Data&lt;T : IRawNameResolvable&gt; slot resolves to a null Value.
+/// A missing-or-null variable-name slot must produce a ServiceError with a
+/// specific Key, not let a null Variable flow into the handler body where
+/// the implicit Variable→string operator would NRE and bubble up as a
+/// generic "StepError". The generator emits a MissingRequiredParameter
+/// ServiceError when a Data&lt;T : IRawNameResolvable&gt; slot resolves to
+/// null Value; this test pins the contract one row per handler.
 ///
 /// One row per handler whose contract this pins. Foreach (loop) is intentionally
 /// excluded — its ItemName/KeyName slots are nullable Data&lt;Variable&gt; and the

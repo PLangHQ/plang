@@ -34,11 +34,11 @@ namespace app.types.path.http;
 /// </remarks>
 [PathScheme("http")]
 [PathScheme("https")]
-public sealed class @this : global::app.types.path.@this
+public sealed partial class @this : global::app.types.path.@this
 {
     /// <summary>Process-shared HTTP client — see the class remarks.</summary>
     /// <remarks>
-    /// <c>AllowAutoRedirect = false</c> by design (security v1 S1). Letting
+    /// <c>AllowAutoRedirect = false</c> by design. Letting
     /// the client follow 3xx silently lets a consented host trade us into
     /// reading something else — IMDS at <c>169.254.169.254</c>, loopback
     /// services, private-IP ranges — with the user only ever consenting to
@@ -46,7 +46,7 @@ public sealed class @this : global::app.types.path.@this
     /// each hop builds a fresh <see cref="@this"/>, calls <see cref="@this.AuthGate"/>
     /// on it (separate consent prompt for the new host), and signs the new
     /// destination's URL fresh — the prior hop's <c>X-Signature</c> never
-    /// reaches a different origin (security v1 S2 partial).
+    /// reaches a different origin.
     /// </remarks>
     private static readonly HttpClient _client = new(new SocketsHttpHandler
     {
@@ -105,7 +105,7 @@ public sealed class @this : global::app.types.path.@this
     /// full Absolute — query string included — into the local permission
     /// store; this hint lands in the consent prompt so a user who would
     /// strip <c>?token=…</c> before sharing the URL elsewhere gets the same
-    /// signal here. Suppressed when there is no query string. (security v1 S3)
+    /// signal here. Suppressed when there is no query string.
     /// </summary>
     protected override string AuthorizationHint(global::app.types.path.permission.verb.@this verb)
     {
@@ -212,7 +212,6 @@ public sealed class @this : global::app.types.path.@this
     /// <paramref name="recursive"/> are filesystem-only — no-ops here. Returns a
     /// Fail, but routes through <see cref="@this.AuthGate"/> first so the verb
     /// surface is consistent with every other HttpPath verb.
-    /// (codeanalyzer v1 F1, F8)
     /// </summary>
     public override async Task<data.@this<List<global::app.types.path.@this>>> List(string pattern, bool recursive)
     {
@@ -224,7 +223,7 @@ public sealed class @this : global::app.types.path.@this
     /// <summary>
     /// Truthiness of an http path is "does the resource exist" — an HTTP HEAD.
     /// Reuses <see cref="ExistsAsync"/>; a denied or errored probe answers false.
-    /// (codeanalyzer v1 F3)
+    /// 
     /// </summary>
     public override async Task<bool> AsBooleanAsync()
     {
@@ -288,7 +287,7 @@ public sealed class @this : global::app.types.path.@this
 
     /// <summary>
     /// HTTP has no mkdir — Fail, routed through <see cref="@this.AuthGate"/>
-    /// first for verb-surface consistency. (codeanalyzer v1 F8)
+    /// first for verb-surface consistency.
     /// </summary>
     public override async Task<data.@this<global::app.types.path.@this>> Mkdir()
     {
@@ -300,7 +299,7 @@ public sealed class @this : global::app.types.path.@this
     /// <summary>
     /// Write the value to the resource: a byte payload POSTs as bytes,
     /// everything else POSTs as text. Authorization happens inside
-    /// WriteBytes/WriteText. (codeanalyzer v1 F1)
+    /// WriteBytes/WriteText.
     /// </summary>
     public override async Task<data.@this<global::app.types.path.@this>> Save(data.@this? value)
     {
@@ -313,7 +312,7 @@ public sealed class @this : global::app.types.path.@this
 
     /// <summary>
     /// HTTP DELETE. <paramref name="recursive"/> / <paramref name="ignoreIfNotFound"/>
-    /// are filesystem-only — no-ops here; the server decides. (codeanalyzer v1 F1)
+    /// are filesystem-only — no-ops here; the server decides.
     /// </summary>
     public override async Task<data.@this<global::app.types.path.@this>> Delete(bool recursive, bool ignoreIfNotFound)
     {
@@ -375,7 +374,7 @@ public sealed class @this : global::app.types.path.@this
     /// <see cref="@this.AuthGate"/> (the user sees and consents to the new
     /// URL), and sending the next request from that path. Method/body
     /// preservation mirrors RFC 7231: 303 → GET (no body); 301/302/307/308 →
-    /// keep method and body. (security v1 S1)
+    /// keep method and body.
     /// </summary>
     private async Task<data.@this> FollowRedirect(HttpResponseMessage resp, HttpMethod method, HttpContent? content,
         bool readBody, Verb verb, bool asBytes, int hopsLeft)

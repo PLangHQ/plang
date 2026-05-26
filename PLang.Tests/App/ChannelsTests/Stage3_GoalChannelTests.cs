@@ -3,7 +3,7 @@ using EngineGoal = global::app.goals.goal.@this;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 3 — Channel.Goal concrete + recursion rule + foundational set capture.
+// Channel.Goal concrete + recursion rule + foundational set capture.
 // Architect: stage-3-goal-channel.md.
 
 public class Stage3_GoalChannelTests

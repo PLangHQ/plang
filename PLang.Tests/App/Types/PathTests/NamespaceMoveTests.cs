@@ -6,7 +6,7 @@ using System.Linq;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 1 — namespace move: <c>app.filesystem/</c> → <c>app.types/path/</c>, and the
+/// Namespace move: <c>app.filesystem/</c> → <c>app.types/path/</c>, and the
 /// path class converts to the <c>@this</c> convention.
 ///
 /// Survey assertions over the loaded App assembly, string-based reflection only.

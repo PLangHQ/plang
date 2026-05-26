@@ -6,7 +6,7 @@ using System.Threading;
 namespace PLang.Tests.App.Types.PathTests.Contract;
 
 /// <summary>
-/// Stage 7 — cross-scheme transfer. Proves the base-class default
+/// Cross-scheme transfer. Proves the base-class default
 /// CopyTo/MoveTo (ReadBytes → WriteBytes; CopyTo + Delete) work across schemes.
 /// </summary>
 public class CrossSchemeTests

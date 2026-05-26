@@ -53,16 +53,28 @@ public sealed class @this
             if (await TryCover(grantData, request)) return grantData;
         }
 
-        // 2) Persisted grants (client-side actor filter).
-        var stored = await _actor.App.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>(PermissionTable);
-        if (stored.Success && stored.Value is { } list)
+        // 2) Persisted grants (client-side actor filter). Tolerant of
+        // SettingsStore creation failure — test fixtures with unwriteable App
+        // roots ("/dst" et al.) shouldn't crash here when only in-memory
+        // grants were ever used.
+        try
         {
-            foreach (var grantData in list)
+            var stored = await _actor.App.SettingsStore.GetAll<global::app.data.@this<PermissionRecord>>(PermissionTable);
+            if (stored.Success && stored.Value is { } list)
             {
-                if (grantData.Value is null) continue;
-                if (!string.Equals(grantData.Value.Actor, _actor.Name, StringComparison.Ordinal)) continue;
-                if (await TryCover(grantData, request)) return grantData;
+                foreach (var grantData in list)
+                {
+                    if (grantData.Value is null) continue;
+                    if (!string.Equals(grantData.Value.Actor, _actor.Name, StringComparison.Ordinal)) continue;
+                    if (await TryCover(grantData, request)) return grantData;
+                }
             }
+        }
+        catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            // SettingsStore unavailable (unwriteable root, etc.) — only
+            // in-memory grants searchable. Caller will fall through to the
+            // prompt path.
         }
 
         return null;

@@ -3,7 +3,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
-/// Orphan-file validation (per architect plan, "Validation" section):
+/// Orphan-file validation:
 ///   - Any *.notes.md / *.examples.md / *.description.md under
 ///     os/system/modules/&lt;module&gt;/ whose stem is not `module` and does not
 ///     match a registered action → ONE warning per orphan.
@@ -75,7 +75,7 @@ public class MarkdownTeachingOrphanTests
         await Assert.That(output).Contains("unknownaction.notes.md");
 
         // Catalog still assembles — the registered fixture action is still there.
-        var catalog = _app.Modules.Describe();
+        var catalog = await _app.Modules.Describe();
         await Assert.That(catalog.Any(a => a.Module == "fixturemod" && a.ActionName == "setvalue")).IsTrue();
     }
 

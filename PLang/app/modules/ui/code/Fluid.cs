@@ -41,14 +41,11 @@ public class Fluid : ITemplate
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative;
-            try
-            {
-                templateContent = System.IO.File.ReadAllText(pathData.Absolute);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                return app.data.@this<string>.FromError(new ServiceError(ex.Message, "IOError", 500));
-            }
+            var readResult = await pathData.ReadText();
+            if (!readResult.Success)
+                return app.data.@this<string>.FromError(readResult.Error
+                    ?? new ServiceError("Template read failed", "IOError", 500));
+            templateContent = readResult.Value?.ToString() ?? "";
         }
 
         // Parse
@@ -80,7 +77,7 @@ public class Fluid : ITemplate
 
         // Configure file provider for {% include %} / {% render %} tags
         var basePath = GetTemplateBaseDir(action);
-        options.FileProvider = new PlangFileProvider(action.Context.App, basePath);
+        options.FileProvider = new PlangFileProvider(action.Context.App, basePath, action.Context);
 
         var fluidContext = new TemplateContext(options);
 
@@ -193,17 +190,16 @@ public class Fluid : ITemplate
     /// Gets the base directory for template file resolution (includes).
     /// Resolves from the calling goal's directory, or app root as fallback.
     /// </summary>
-    private static string GetTemplateBaseDir(Render action)
+    private static global::app.types.path.@this GetTemplateBaseDir(Render action)
     {
-        var app = action.Context.App;
-        var goalPath = action.Context.Goal?.Path;
-        if (!string.IsNullOrEmpty(goalPath))
+        var ctx = action.Context;
+        var goalPath = ctx.Goal?.Path;
+        if (goalPath != null)
         {
-            var goalDir = System.IO.Path.GetDirectoryName(goalPath);
-            if (!string.IsNullOrEmpty(goalDir))
-                return global::app.types.path.file.@this.ValidatePath(goalDir, app);
+            var goalDir = goalPath.Parent;
+            if (goalDir != null) return goalDir;
         }
-        return app.AbsolutePath;
+        return global::app.types.path.@this.Resolve("/", ctx);
     }
 
     /// <summary>
@@ -255,12 +251,14 @@ public class Fluid : ITemplate
     private sealed class PlangFileProvider : IFileProvider
     {
         private readonly global::app.@this _app;
-        private readonly string _basePath;
+        private readonly global::app.types.path.@this _basePath;
+        private readonly global::app.actor.context.@this _context;
 
-        public PlangFileProvider(global::app.@this app, string basePath)
+        public PlangFileProvider(global::app.@this app, global::app.types.path.@this basePath, global::app.actor.context.@this context)
         {
             _app = app;
             _basePath = basePath;
+            _context = context;
         }
 
         public IFileInfo GetFileInfo(string subpath)
@@ -270,24 +268,26 @@ public class Fluid : ITemplate
             foreach (var candidate in candidates)
             {
                 if (string.IsNullOrEmpty(candidate)) continue;
-                var fullPath = TryResolvePath(candidate);
-                if (fullPath != null && System.IO.File.Exists(fullPath))
-                    return new PlangFileInfo(fullPath, candidate);
+                var resolved = TryResolvePath(candidate);
+                if (resolved == null) continue;
+                // ExistsAsync routes through AuthGate(Read). Out-of-root template
+                // includes (`{% include '../../etc/passwd' %}`) surface as
+                // permission prompts or denials — not silent file reads.
+                var exists = resolved.ExistsAsync().GetAwaiter().GetResult();
+                if (exists.Success && exists.Value == true)
+                    return new PlangFileInfo(resolved, candidate);
             }
             return new NotFoundFileInfo(subpath);
         }
 
-        private string? TryResolvePath(string candidate)
+        private global::app.types.path.@this? TryResolvePath(string candidate)
         {
             try
             {
-                return global::app.types.path.file.@this.ValidatePath(System.IO.Path.Combine(_basePath, candidate), _app);
+                return _basePath.Combine(candidate);
             }
             catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
             {
-                // Path validation failed (sandbox violation, invalid path, etc.)
-                // Return null → GetFileInfo returns NotFoundFileInfo → Fluid reports "file not found"
-                System.Diagnostics.Debug.WriteLine($"Template include path validation failed for '{candidate}': {ex.Message}");
                 return null;
             }
         }
@@ -309,24 +309,40 @@ public class Fluid : ITemplate
 
     private sealed class PlangFileInfo : IFileInfo
     {
-        private readonly string _fullPath;
+        private readonly global::app.types.path.@this _path;
 
-        public PlangFileInfo(string fullPath, string name)
+        public PlangFileInfo(global::app.types.path.@this path, string name)
         {
-            _fullPath = fullPath;
+            _path = path;
             Name = name;
         }
 
         public bool Exists => true;
-        public long Length => new System.IO.FileInfo(_fullPath).Length;
-        public string? PhysicalPath => _fullPath;
+        public long Length
+        {
+            get
+            {
+                var stat = _path.Stat().GetAwaiter().GetResult();
+                return stat.Success && stat.Value?.Length is long n ? n : 0;
+            }
+        }
+        public string? PhysicalPath => _path.Absolute;
         public string Name { get; }
         public DateTimeOffset LastModified => DateTimeOffset.UtcNow;
         public bool IsDirectory => false;
 
         public Stream CreateReadStream()
         {
-            var content = System.IO.File.ReadAllText(_fullPath);
+            // ReadText routes through AuthGate(Read) — out-of-root templates
+            // surface as denials before any disk access. Template MIMEs that
+            // map to byte[] (octet-stream, unmapped extensions) come back as
+            // raw bytes; UTF-8 decode them. String-valued reads pass through.
+            var read = _path.ReadText().GetAwaiter().GetResult();
+            string content;
+            if (read.Value is byte[] bytes)
+                content = System.Text.Encoding.UTF8.GetString(bytes);
+            else
+                content = read.Value?.ToString() ?? "";
             return new MemoryStream(System.Text.Encoding.UTF8.GetBytes(content));
         }
     }

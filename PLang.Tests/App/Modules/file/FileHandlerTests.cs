@@ -76,7 +76,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_UnregisteredSchemePath_SurfacesTypedError_NotNre()
     {
-        // codeanalyzer v1 F4 — a path whose scheme conversion failed (e.g. the
+        // a path whose scheme conversion failed (e.g. the
         // unregistered s3:// scheme) is a non-Success data.@this<path>. The
         // handler must surface that typed SchemeNotRegistered error, not NRE
         // on Path.Value.

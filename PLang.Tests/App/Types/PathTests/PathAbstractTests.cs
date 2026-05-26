@@ -8,14 +8,14 @@ using FilePath = global::app.types.path.file.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 2 — shape tests: the path base is abstract; FilePath is the concrete
+/// Shape tests: the path base is abstract; FilePath is the concrete
 /// file-scheme subclass; verb surface declared abstract on base; CopyTo/MoveTo
 /// virtual (cross-scheme default).
 /// </summary>
 public class PathAbstractTests
 {
     // The abstract verb surface. Delete/List/Save carry the option-bearing
-    // signatures lifted onto the base (codeanalyzer v1 F1); the parameterless
+    // signatures lifted onto the base; the parameterless
     // Delete()/List() are non-abstract convenience and are not listed here.
     private static readonly (string Name, System.Type[] Params)[] AbstractVerbs =
     {

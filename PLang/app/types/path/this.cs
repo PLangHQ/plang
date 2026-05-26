@@ -98,10 +98,15 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
         {
             if (_relative != null) return _relative;
 
+            // No Context (test fixtures, JSON deserialize without scope) — no root
+            // anchor, so the portable form is just Raw or absolute as-is.
+            if (Context?.App == null)
+                return _relative = !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath;
+
             var rootAbsolutePath = RootAbsolutePath;
             var rootWithSeparator = rootAbsolutePath;
-            if (!rootWithSeparator.EndsWith(System.IO.Path.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(System.IO.Path.AltDirectorySeparatorChar))
-                rootWithSeparator += System.IO.Path.DirectorySeparatorChar;
+            if (!rootWithSeparator.EndsWith(PathHelper.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(PathHelper.AltDirectorySeparatorChar))
+                rootWithSeparator += PathHelper.DirectorySeparatorChar;
 
             if (_absolutePath.StartsWith(rootWithSeparator, RootComparison))
                 _relative = _absolutePath[rootWithSeparator.Length..];
@@ -114,11 +119,11 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
         }
     }
 
-    [LlmBuilder] public string Extension => _extension ??= System.IO.Path.GetExtension(_absolutePath);
-    [LlmBuilder] public string FileName => _fileName ??= System.IO.Path.GetFileName(_absolutePath);
+    [LlmBuilder] public string Extension => _extension ??= PathHelper.GetExtension(_absolutePath);
+    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_absolutePath);
     [LlmBuilder] public string FileNameWithoutExtension
-        => _fileNameWithoutExtension ??= System.IO.Path.GetFileNameWithoutExtension(_absolutePath);
-    [LlmBuilder] public string Directory => _directory ??= System.IO.Path.GetDirectoryName(_absolutePath) ?? _absolutePath;
+        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_absolutePath);
+    [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(_absolutePath) ?? _absolutePath;
     [LlmBuilder] public string MimeType => Context?.App?.Formats?.Mime(Extension) ?? "application/octet-stream";
 
     [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
@@ -126,16 +131,22 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
 
     /// <summary>
     /// Converts this path to a GoalCall. Derives PrPath from the .goal file path.
+    /// Excluded from default JSON serialization — it builds a new GoalCall (which
+    /// holds a Path which has a GoalCall ...) and would cycle infinitely when a
+    /// caller serializes a Goal without the PathJsonConverter registered.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public GoalCall GoalCall
     {
         get
         {
-            var rel = Relative.Replace('\\', '/');
-            var dir = System.IO.Path.GetDirectoryName(rel)?.Replace('\\', '/') ?? "";
-            var baseName = System.IO.Path.GetFileNameWithoutExtension(rel);
-            var prDir = string.IsNullOrEmpty(dir) ? ".build" : $"{dir}/.build";
-            var prPath = $"/{prDir}/{baseName.ToLowerInvariant()}.pr";
+            // Derive the .pr sibling path via the generic derivation verbs.
+            // .goal-file → parent/.build/<lowercase-stem>.pr.
+            var stem = FileNameWithoutExtension.ToLowerInvariant();
+            var parent = Parent;
+            var prPath = parent != null
+                ? parent.Combine(".build").Combine(stem + ".pr")
+                : this.Combine(".build").Combine(stem + ".pr");
             return new GoalCall { Name = "", PrPath = prPath };
         }
     }
@@ -146,7 +157,7 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
     // `Size` used to live here as `System.IO.File.Exists` / `FileInfo` calls —
     // wrong for an HttpPath (always-false / throws on Windows). They moved to
     // FilePath. The cross-scheme liveness query is the async `path.Stat()`;
-    // truthiness ("does it exist") is `AsBooleanAsync()`. (codeanalyzer v1 F2)
+    // truthiness ("does it exist") is `AsBooleanAsync()`.
 
     // --- Content (file content when set by provider, e.g., after file.read) ---
 
@@ -158,12 +169,20 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
 
     // --- Display ---
 
-    public override string ToString() => Content?.ToString() ?? Relative;
+    public override string ToString()
+    {
+        if (Content?.ToString() is { } c) return c;
+        // No Context means Relative would throw — fall back to the raw or
+        // absolute form so dictionary-keying / interpolation of stub Paths
+        // (test fixtures, JSON deserialize without scope) still works.
+        if (Context == null) return !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath;
+        try { return Relative; } catch { return !string.IsNullOrEmpty(Raw) ? Raw : _absolutePath; }
+    }
 
     // Path equality follows RootComparison — the same case-sensitivity rule
     // Relative/IsUnder/ValidatePath use, so they can't drift apart. Hard-coding
     // OrdinalIgnoreCase here would make /srv/x and /SRV/x — distinct files on
-    // Linux — compare equal and hash-collide. (codeanalyzer v2 N2)
+    // Linux — compare equal and hash-collide.
     public override bool Equals(object? obj) => obj switch
     {
         @this other => string.Equals(_absolutePath, other._absolutePath, RootComparison),
@@ -173,4 +192,26 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
 
     public override int GetHashCode() =>
         StringComparer.FromComparison(RootComparison).GetHashCode(_absolutePath);
+
+    /// <summary>
+    /// Convenience: <c>"some/file.goal"</c> automatically lifts to a file-scheme
+    /// Path with Context=null. Use sites are test fixtures, in-memory Goals
+    /// built from string literals, and JSON deserialize paths that don't have
+    /// a Context available. Production code with a Context in scope should go
+    /// through <see cref="Resolve(string, actor.context.@this)"/> instead so the
+    /// scheme registry picks the right subclass and Context wires immediately.
+    /// </summary>
+    public static implicit operator @this(string raw)
+        => new file.@this(raw) { Raw = raw };
+
+    /// <summary>
+    /// A Path implicitly stringifies to its <see cref="ToString"/> representation.
+    /// Lets <c>Assert.That(path).IsEqualTo("/some/path")</c> compile as a
+    /// string-vs-string check (with the right value surfaced in failure messages),
+    /// and rescues string interpolation across third-party libs that don't call
+    /// ToString themselves. Returns null for null Path so null-aware assertions
+    /// (e.g. <c>IsNull()</c>) don't get fooled by the implicit conversion into
+    /// reading an empty string as "found a value".
+    /// </summary>
+    public static implicit operator string?(@this? p) => p?.ToString();
 }

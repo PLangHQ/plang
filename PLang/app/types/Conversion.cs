@@ -28,9 +28,40 @@ public sealed partial class @this
     internal static readonly JsonSerializerOptions _caseInsensitiveRead = new()
     {
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(allowIntegerValues: true), new app.data.EmptyStringToNullEnumConverterFactory(), new global::app.channels.serializers.TimeSpanIso8601() },
+        Converters = {
+            new JsonStringEnumConverter(allowIntegerValues: true),
+            new app.data.EmptyStringToNullEnumConverterFactory(),
+            new global::app.channels.serializers.TimeSpanIso8601(),
+            // Context-less PathJsonConverter — produces stub Paths. Callers
+            // with a Context in scope use ContextualReadOptions instead so
+            // deserialized Paths are wired immediately.
+            new global::app.types.path.JsonConverter(),
+        },
         NumberHandling = JsonNumberHandling.AllowReadingFromString
     };
+
+    /// <summary>
+    /// Builds a one-shot JsonSerializerOptions equivalent to
+    /// <see cref="_caseInsensitiveRead"/> but with a Context-bound
+    /// <see cref="app.types.path.JsonConverter"/> in place of the stub one.
+    /// Used when <see cref="TryConvertTo"/> receives a non-null context so
+    /// every <see cref="app.types.path.@this"/> field in the deserialized
+    /// graph lands fully Context-wired.
+    /// </summary>
+    private static JsonSerializerOptions ContextualReadOptions(actor.context.@this context)
+    {
+        return new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = {
+                new JsonStringEnumConverter(allowIntegerValues: true),
+                new app.data.EmptyStringToNullEnumConverterFactory(),
+                new global::app.channels.serializers.TimeSpanIso8601(),
+                new global::app.types.path.JsonConverter(context),
+            },
+            NumberHandling = JsonNumberHandling.AllowReadingFromString
+        };
+    }
 
     /// <summary>Internal accessor for the test facade — see <see cref="_caseInsensitiveRead"/>.</summary>
     internal static JsonSerializerOptions CaseInsensitiveRead => _caseInsensitiveRead;
@@ -105,9 +136,13 @@ public sealed partial class @this
         // (e.g., file.read of .pr returns JSON string → Goal)
         if (value is string jsonStr && !targetType.IsPrimitive && targetType != typeof(string))
         {
+            // Context-bound options when the caller passed one — deserialised
+            // Paths get path.Resolve(raw, ctx) treatment so they land Context-
+            // wired. Falls back to the static stub-Path options otherwise.
+            var readOpts = context != null ? ContextualReadOptions(context) : _caseInsensitiveRead;
             try
             {
-                var jsonResult = JsonSerializer.Deserialize(jsonStr, targetType, _caseInsensitiveRead);
+                var jsonResult = JsonSerializer.Deserialize(jsonStr, targetType, readOpts);
                 if (jsonResult != null) return (jsonResult, null);
             }
             catch (System.Exception ex) when (ex is JsonException || ex is NotSupportedException || ex is ArgumentException)
@@ -118,7 +153,7 @@ public sealed partial class @this
                     try
                     {
                         var listType = typeof(List<>).MakeGenericType(targetType);
-                        var listResult = JsonSerializer.Deserialize(jsonStr, listType, _caseInsensitiveRead)
+                        var listResult = JsonSerializer.Deserialize(jsonStr, listType, readOpts)
                             as System.Collections.IList;
                         if (listResult != null && listResult.Count > 0)
                             return (listResult[0], null);
@@ -338,7 +373,10 @@ public sealed partial class @this
                         "ClrTypeNameInGoalSlot", 500)
                         { FixSuggestion = "Build pipeline leaked a typed object's ToString() into a goal-name slot " +
                             "(likely a Fluid template rendering an object via ToString() instead of navigating to .Name)." });
-                var prPath = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
+                var prPathStr = dict.TryGetValue("prPath", out var pr) ? pr?.ToString() : null;
+                var prPath = (prPathStr != null && context != null)
+                    ? global::app.types.path.@this.Resolve(prPathStr, context)
+                    : null;
                 List<data.@this>? parameters = null;
                 if (dict.TryGetValue("parameters", out var p) && p is IList<object?> pList)
                 {

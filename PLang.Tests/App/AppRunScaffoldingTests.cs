@@ -5,10 +5,10 @@ using app.modules.matrix.modifier;
 
 namespace PLang.Tests.App;
 
-// Contract tests for App.Run(action, context) — the scaffolding wrapper introduced in v4 Phase 3.
-// v4 contract: App.Run owns callstack push/pop, save/restore Context.Step/Goal/Event,
-//   try/catch/finally with ServiceError translation, frame.SnapshotVariables in finally.
-// Generated handler ExecuteAsync is now thin — no scaffolding inside it.
+// Contract tests for App.Run(action, context). App.Run owns callstack push/pop,
+// save/restore Context.Step/Goal/Event, try/catch/finally with ServiceError
+// translation, and frame.SnapshotVariables in finally. The generated handler
+// ExecuteAsync is thin — no scaffolding inside it.
 
 public class AppRunScaffoldingTests
 {
