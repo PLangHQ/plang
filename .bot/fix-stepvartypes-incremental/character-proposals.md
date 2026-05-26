@@ -48,3 +48,36 @@ Run this checklist on any diff that's labeled as a *fix* (commit verbs: "fix", "
 ```
 
 If a fix passes every other pass but trips this one, the verdict is **NEEDS WORK** even when nothing is line-wrong. A symptom patch held in place becomes load-bearing and the real bug gets harder to fix later.
+
+---
+
+## Character Proposal: codeanalyzer
+**From:** codeanalyzer
+**Section:** Pass 1b (Shape smells) — replace inline enumeration with a CLAUDE.md pointer
+**Reason:** Filed alongside a CLAUDE.md proposal to add a 5th OBP Shape Smell. Pass 1b currently *enumerates* the 4 smells as explicit yes/no questions — so if CLAUDE.md grows to 5, my character still says 4 and I'd silently miss the new one. The character should defer to CLAUDE.md instead of copying it. Ingi caught the drift class in chat. Surveyed the other reviewer characters (security, tester, auditor, test-designer) — none of them inline the list, so this fix is codeanalyzer-only. Filed on explicit user request — reviewer-bot exception path.
+
+**Proposed change:** in `characters/codeanalyzer/character.md`, replace the current Pass 1b block (lines 22–29) with the dereferenced version below. The dereferenced text keeps every behavior the inlined version specified (yes/no per item, named missing type, call-site collapse list, "clean 1a doesn't imply clean 1b" sentence) — only the enumeration moves out.
+
+Replace:
+
+```markdown
+**1b. Shape smells** — run the four-item checklist from project `CLAUDE.md` "OBP Shape Smells" against every file in scope, with explicit yes/no per item:
+
+1. Public `List<T>` / `Dictionary<K,V>` / `HashSet<T>` with `Add` / `Remove` / locking / eviction in a different file?
+2. `lock (other.X)` from outside `other`'s class?
+3. Two collections of the same logical thing across types (similar names, same element type, same role)?
+4. Allocate / mutate / clean-up split across three files for one collection?
+
+For each "yes," cite all participating files and lines, name the missing type that would absorb the discipline, and list the call sites that would collapse. A clean Pass 1a does NOT imply a clean Pass 1b — line-correct code can still be shape-wrong.
+```
+
+With:
+
+```markdown
+**1b. Shape smells** — open project `CLAUDE.md` `## OBP Shape Smells` and run *every* item in the numbered list against every file in scope, with explicit yes/no per item. CLAUDE.md is the single source of truth; do not work from memory and do not assume the count — the list grows. Re-read it at the start of each Pass 1b.
+
+For each "yes," cite all participating files and lines, name the missing type that would absorb the discipline, and list the call sites that would collapse. A clean Pass 1a does NOT imply a clean Pass 1b — line-correct code can still be shape-wrong.
+```
+
+**Why "re-read it" is explicit:** without that sentence, future-me sees `CLAUDE.md ## OBP Shape Smells` once early in the session, caches the count, and misses items added later in the same session (rare but real — Ingi sometimes adds a smell mid-review). The cost of one extra Read at Pass 1b start is trivial; the cost of missing a shape smell is a wrong PASS.
+
