@@ -279,11 +279,19 @@ INDEX_HTML = r"""<!doctype html>
     border: 1px solid var(--border);
     border-radius: 4px;
   }
-  .stage.empty { opacity: 0.45; }
+  .muted-note { color: var(--muted); font-style: italic; padding: 8px 0 16px; }
+  .missing {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: var(--panel);
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+  }
   .stage .name { font-weight: 500; }
   .stage .icon { text-align: center; font-size: 14px; }
   .stage .icon.done { color: var(--done); }
-  .stage .icon.empty { color: var(--pending); }
   .stage .files { color: var(--muted); font-size: 12px; }
   .stage .time { color: var(--muted); font-size: 12px; text-align: right; }
   .stage details summary { cursor: pointer; color: var(--muted); }
@@ -368,22 +376,32 @@ function renderPane(b) {
   if (b.isCurrent) pills.push('<span class="pill current">current branch</span>');
   pills.push(`<span class="pill">last activity ${fmtTime(b.lastActivity)}</span>`);
 
-  const stages = PIPELINE.map(role => {
+  // Show only stages that actually ran. The dot grid in the left nav
+  // already conveys which stages are missing; rendering 12 empty rows
+  // here just buries the few that have content.
+  const populatedStages = PIPELINE.filter(role => b.roles[role]);
+  const missingStages = PIPELINE.filter(role => !b.roles[role]);
+  const stages = populatedStages.map(role => {
     const r = b.roles[role];
-    const has = !!r;
-    const filesCount = has ? r.files.length : 0;
-    const fileList = has && r.files.length
+    const filesCount = r.files.length;
+    const fileList = r.files.length
       ? `<details><summary>${filesCount} file${filesCount === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => `<li>${f.path} <span style="float:right">${fmtTime(f.mtime)}</span></li>`).join("")}</ul></details>`
       : `<span class="files">—</span>`;
     return `
-      <div class="stage${has ? "" : " empty"}">
+      <div class="stage">
         <div class="name">${role}</div>
-        <div class="icon ${has ? "done" : "empty"}">${has ? "●" : "○"}</div>
+        <div class="icon done">●</div>
         <div>${fileList}</div>
-        <div class="time">${has ? fmtTime(r.mtime) : ""}</div>
+        <div class="time">${fmtTime(r.mtime)}</div>
       </div>
     `;
   }).join("");
+  const pipelineBlock = populatedStages.length
+    ? `<h2 class="section">Pipeline</h2><div class="timeline">${stages}</div>`
+    : `<h2 class="section">Pipeline</h2><div class="muted-note">No pipeline runs yet.</div>`;
+  const missingBlock = missingStages.length
+    ? `<div class="missing">Not yet run: ${missingStages.join(", ")}</div>`
+    : "";
 
   const otherRoles = Object.entries(b.other || {});
   const otherSection = otherRoles.length ? `
@@ -410,8 +428,8 @@ function renderPane(b) {
   pane.innerHTML = `
     <h1>${b.name}</h1>
     <div class="subtitle">${pills.join("")}</div>
-    <h2 class="section">Pipeline</h2>
-    <div class="timeline">${stages}</div>
+    ${pipelineBlock}
+    ${missingBlock}
     ${otherSection}
     ${rootSection}
   `;
