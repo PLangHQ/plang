@@ -31,11 +31,11 @@ PIPELINE = [
     "auditor",
     "security",
     "docs",
-    "handoff",
-    "learnings",
-    "scaffolder",
 ]
-KNOWN_ROLES = set(PIPELINE)
+# Roles we still recognize (don't bucket into "Other subdirs") but that
+# aren't part of the canonical flow — won't appear in "Not yet run:".
+EXTRA_ROLES = {"handoff", "learnings", "scaffolder"}
+KNOWN_ROLES = set(PIPELINE) | EXTRA_ROLES
 
 # Tool dirs in .bot/ that are NOT branches.
 NON_BRANCH = {"architect", "branches"}
@@ -51,7 +51,7 @@ def current_branch() -> str:
         return ""
 
 
-_CACHE: dict = {"at": 0.0, "active": set(), "times": {}}
+_CACHE: dict = {"at": 0.0, "active": set(), "times": {}, "refs": {}}
 _CACHE_TTL = 300  # 5 minutes
 
 
@@ -74,16 +74,24 @@ def refresh_cache() -> None:
     except Exception:
         pass  # offline is fine; we keep stale data
 
-    # Active set: remote heads (authoritative) ∪ local heads (in-progress work).
+    # Active set + slug→ref map. The map is needed because file content is
+    # fetched via `git show <ref>:<path>` — we need to know which ref backs
+    # each `.bot/<slug>/` directory. Remote refs win over local since the
+    # remote is authoritative (bots push there).
     active: set[str] = set()
+    refs: dict[str, str] = {}
     for line in _git("for-each-ref", "--format=%(refname:short)",
                      "refs/heads", "refs/remotes/origin").splitlines():
         ref = line.strip()
         if not ref or ref == "origin/HEAD":
             continue
         if ref.startswith("origin/"):
-            ref = ref[len("origin/"):]
-        active.add(ref.replace("/", "-"))
+            slug = ref[len("origin/"):].replace("/", "-")
+            refs[slug] = ref  # remote overrides local
+        else:
+            slug = ref.replace("/", "-")
+            refs.setdefault(slug, ref)
+        active.add(slug)
 
     # Commit-time dict. `--diff-merges=first-parent` is critical: without it
     # merge commits that *introduce* files (e.g. "merge origin/runtime2 into
@@ -108,6 +116,7 @@ def refresh_cache() -> None:
     _CACHE["at"] = time.time()
     _CACHE["active"] = active
     _CACHE["times"] = times
+    _CACHE["refs"] = refs
 
 
 def _ensure_cache() -> None:
@@ -123,6 +132,168 @@ def active_branches() -> set[str]:
 def git_commit_times() -> dict[str, float]:
     _ensure_cache()
     return _CACHE["times"]
+
+
+def slug_refs() -> dict[str, str]:
+    _ensure_cache()
+    return _CACHE["refs"]
+
+
+_FILE_LIMIT = 200 * 1024  # 200 KB cap for the hover preview
+
+
+def get_file_payload(slug: str, path: str) -> dict:
+    """Read a file from the branch's ref via `git show`. Returns
+    {ok, html, kind, truncated, error}."""
+    if slug not in active_branches():
+        return {"ok": False, "error": "unknown branch"}
+    if not path.startswith(f".bot/{slug}/"):
+        return {"ok": False, "error": "path outside branch"}
+    ref = slug_refs().get(slug)
+    if not ref:
+        return {"ok": False, "error": "no ref for branch"}
+    proc = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "show", f"{ref}:{path}"],
+        capture_output=True, check=False, timeout=10,
+    )
+    if proc.returncode != 0:
+        return {"ok": False, "error": "git show failed"}
+    raw = proc.stdout
+    truncated = len(raw) > _FILE_LIMIT
+    if truncated:
+        raw = raw[:_FILE_LIMIT]
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return {"ok": True, "kind": "binary", "html": "<em>binary file</em>",
+                "truncated": truncated}
+    lower = path.lower()
+    if lower.endswith(".json"):
+        return {"ok": True, "kind": "json", "html": render_json(text),
+                "truncated": truncated}
+    if lower.endswith(".md") or lower.endswith(".markdown"):
+        return {"ok": True, "kind": "md", "html": render_markdown(text),
+                "truncated": truncated}
+    return {"ok": True, "kind": "text",
+            "html": f'<pre class="raw">{html_escape(text)}</pre>',
+            "truncated": truncated}
+
+
+def html_escape(s: str) -> str:
+    return (s.replace("&", "&amp;").replace("<", "&lt;")
+             .replace(">", "&gt;"))
+
+
+def render_json(text: str) -> str:
+    try:
+        obj = json.loads(text)
+        pretty = json.dumps(obj, indent=2, ensure_ascii=False)
+    except json.JSONDecodeError:
+        pretty = text  # show as-is if invalid
+    return f'<pre class="json">{html_escape(pretty)}</pre>'
+
+
+_MD_INLINE_PATTERNS = [
+    # Code spans first so their contents don't get parsed as bold/italic.
+    (__import__("re").compile(r"`([^`\n]+)`"),
+     lambda m: f"<code>{html_escape(m.group(1))}</code>"),
+    (__import__("re").compile(r"\*\*([^*\n]+)\*\*"),
+     lambda m: f"<strong>{html_escape(m.group(1))}</strong>"),
+    (__import__("re").compile(r"(?<![\*\w])\*([^*\n]+)\*(?!\*)"),
+     lambda m: f"<em>{html_escape(m.group(1))}</em>"),
+    (__import__("re").compile(r"\[([^\]]+)\]\(([^)\s]+)\)"),
+     lambda m: f'<a href="{html_escape(m.group(2))}">{html_escape(m.group(1))}</a>'),
+]
+
+
+def render_inline(s: str) -> str:
+    """Tiny inline renderer: code spans, bold, italic, links. Everything
+    else is treated as plain text (escaped)."""
+    import re
+    tokens: list[tuple[str, str]] = []  # (kind, content) — kind=raw|html
+    tokens.append(("raw", s))
+    for pat, repl in _MD_INLINE_PATTERNS:
+        new: list[tuple[str, str]] = []
+        for kind, content in tokens:
+            if kind == "html":
+                new.append((kind, content))
+                continue
+            last = 0
+            for m in pat.finditer(content):
+                if m.start() > last:
+                    new.append(("raw", content[last:m.start()]))
+                new.append(("html", repl(m)))
+                last = m.end()
+            if last < len(content):
+                new.append(("raw", content[last:]))
+        tokens = new
+    return "".join(html_escape(c) if k == "raw" else c for k, c in tokens)
+
+
+def render_markdown(text: str) -> str:
+    """Minimal block-level markdown renderer for hover previews.
+    Handles: headings, fenced code, lists, blockquotes, hr, paragraphs."""
+    import re
+    lines = text.splitlines()
+    out: list[str] = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        ln = lines[i]
+        if not ln.strip():
+            i += 1
+            continue
+        # Fenced code
+        if ln.lstrip().startswith("```"):
+            i += 1
+            code: list[str] = []
+            while i < n and not lines[i].lstrip().startswith("```"):
+                code.append(lines[i])
+                i += 1
+            if i < n:
+                i += 1
+            out.append(f'<pre class="code">{html_escape(chr(10).join(code))}</pre>')
+            continue
+        # Heading
+        m = re.match(r"^(#{1,6})\s+(.*)$", ln)
+        if m:
+            level = len(m.group(1))
+            out.append(f"<h{level}>{render_inline(m.group(2))}</h{level}>")
+            i += 1
+            continue
+        # Horizontal rule
+        if re.match(r"^\s*([-*_])\1{2,}\s*$", ln):
+            out.append("<hr>")
+            i += 1
+            continue
+        # List (consecutive items)
+        if re.match(r"^\s*([-*+]|\d+\.)\s+", ln):
+            ordered = bool(re.match(r"^\s*\d+\.\s+", ln))
+            items: list[str] = []
+            while i < n and re.match(r"^\s*([-*+]|\d+\.)\s+", lines[i]):
+                item = re.sub(r"^\s*([-*+]|\d+\.)\s+", "", lines[i])
+                items.append(f"<li>{render_inline(item)}</li>")
+                i += 1
+            tag = "ol" if ordered else "ul"
+            out.append(f"<{tag}>{''.join(items)}</{tag}>")
+            continue
+        # Blockquote
+        if ln.lstrip().startswith(">"):
+            quoted: list[str] = []
+            while i < n and lines[i].lstrip().startswith(">"):
+                quoted.append(re.sub(r"^\s*>\s?", "", lines[i]))
+                i += 1
+            out.append(f"<blockquote>{render_inline(' '.join(quoted))}</blockquote>")
+            continue
+        # Paragraph (collect until blank line)
+        para: list[str] = [ln]
+        i += 1
+        while i < n and lines[i].strip() and not re.match(
+                r"^(#{1,6}\s|```|\s*([-*+]|\d+\.)\s|>)", lines[i]):
+            para.append(lines[i])
+            i += 1
+        out.append(f"<p>{render_inline(' '.join(para))}</p>")
+    return "\n".join(out)
 
 
 def scan_branches() -> list[dict]:
@@ -256,7 +427,21 @@ INDEX_HTML = r"""<!doctype html>
     font-size: 20px;
     margin: 0 0 4px;
     word-break: break-all;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
   }
+  #pane .copy-btn {
+    background: var(--panel2);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font: 11px ui-monospace, monospace;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+  #pane .copy-btn:hover { color: var(--text); }
+  #pane .copy-btn.copied { color: var(--done); border-color: var(--done); }
   #pane .subtitle { color: var(--muted); margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap; }
   #pane .subtitle .pill {
     padding: 1px 8px; border-radius: 10px; background: var(--panel2);
@@ -306,6 +491,71 @@ INDEX_HTML = r"""<!doctype html>
     padding: 8px 12px;
     border-bottom: 1px solid var(--border);
   }
+  /* Hover preview popup */
+  #filePopup {
+    position: fixed;
+    z-index: 100;
+    width: 720px;
+    max-height: 70vh;
+    overflow: auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    padding: 14px 18px;
+    font-size: 12px;
+    line-height: 1.5;
+    display: none;
+    pointer-events: none;  /* don't steal hover from cursor */
+  }
+  #filePopup .header {
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+  }
+  #filePopup pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, monospace;
+  }
+  #filePopup pre.json { color: #ce9178; }
+  #filePopup pre.code { background: var(--bg); padding: 8px; border-radius: 3px; }
+  #filePopup h1, #filePopup h2, #filePopup h3,
+  #filePopup h4, #filePopup h5, #filePopup h6 {
+    margin: 12px 0 6px; line-height: 1.25;
+  }
+  #filePopup h1 { font-size: 16px; }
+  #filePopup h2 { font-size: 14px; }
+  #filePopup h3 { font-size: 13px; }
+  #filePopup p { margin: 6px 0; }
+  #filePopup ul, #filePopup ol { margin: 6px 0; padding-left: 22px; }
+  #filePopup li { margin: 2px 0; }
+  #filePopup code {
+    background: var(--bg); padding: 1px 4px; border-radius: 2px;
+    font-family: ui-monospace, monospace; font-size: 11px;
+  }
+  #filePopup blockquote {
+    border-left: 3px solid var(--border);
+    padding-left: 10px;
+    color: var(--muted);
+    margin: 6px 0;
+  }
+  #filePopup .trunc {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: var(--bg);
+    border-radius: 3px;
+    color: var(--warn);
+  }
+  .stage .filelist li[data-branch] { cursor: help; }
+  .stage .filelist li[data-branch]:hover { color: var(--text); }
+  ul.flat li[data-branch] { cursor: help; }
   .filter input {
     width: 100%;
     padding: 6px 8px;
@@ -329,9 +579,11 @@ INDEX_HTML = r"""<!doctype html>
 <div id="pane"><div class="empty">Select a branch on the left.</div></div>
 
 <script>
-const PIPELINE = ["architect","codeanalyzer","builder","coder","tester","test-designer","auditor","security","docs","handoff","learnings","scaffolder"];
+const PIPELINE = ["architect","codeanalyzer","builder","coder","tester","test-designer","auditor","security","docs"];
+const EXTRA_ROLES = ["handoff","learnings","scaffolder"];
 let BRANCHES = [];
 let SELECTED = null;
+const FILE_CACHE = new Map();  // "branch::path" -> rendered payload
 
 function fmtTime(epoch) {
   if (!epoch) return "";
@@ -385,7 +637,7 @@ function renderPane(b) {
     const r = b.roles[role];
     const filesCount = r.files.length;
     const fileList = r.files.length
-      ? `<details><summary>${filesCount} file${filesCount === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => `<li>${f.path} <span style="float:right">${fmtTime(f.mtime)}</span></li>`).join("")}</ul></details>`
+      ? `<details><summary>${filesCount} file${filesCount === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => fileLi(b.name, `.bot/${b.name}/${role}/${f.path}`, f.path, f.mtime)).join("")}</ul></details>`
       : `<span class="files">—</span>`;
     return `
       <div class="stage">
@@ -411,7 +663,7 @@ function renderPane(b) {
         <div class="stage">
           <div class="name">${name}</div>
           <div class="icon done">●</div>
-          <div><details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => `<li>${f.path} <span style="float:right">${fmtTime(f.mtime)}</span></li>`).join("")}</ul></details></div>
+          <div><details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => fileLi(b.name, `.bot/${b.name}/${name}/${f.path}`, f.path, f.mtime)).join("")}</ul></details></div>
           <div class="time">${fmtTime(r.mtime)}</div>
         </div>
       `).join("")}
@@ -421,12 +673,12 @@ function renderPane(b) {
   const rootSection = (b.rootFiles || []).length ? `
     <h2 class="section">Root files</h2>
     <ul class="flat">
-      ${b.rootFiles.map(f => `<li><span>${f.name}</span><span class="ts">${fmtTimeAbs(f.mtime)}</span></li>`).join("")}
+      ${b.rootFiles.map(f => `<li data-branch="${b.name}" data-path=".bot/${b.name}/${f.name}"><span>${f.name}</span><span class="ts">${fmtTimeAbs(f.mtime)}</span></li>`).join("")}
     </ul>
   ` : "";
 
   pane.innerHTML = `
-    <h1>${b.name}</h1>
+    <h1>${b.name}<button class="copy-btn" onclick="copyBranchName(event, '${b.name}')" title="Copy branch name">copy</button></h1>
     <div class="subtitle">${pills.join("")}</div>
     ${pipelineBlock}
     ${missingBlock}
@@ -434,6 +686,90 @@ function renderPane(b) {
     ${rootSection}
   `;
 }
+
+function fileLi(branch, fullPath, displayPath, mtime) {
+  return `<li data-branch="${branch}" data-path="${fullPath}">${displayPath}<span style="float:right">${fmtTime(mtime)}</span></li>`;
+}
+
+function copyBranchName(e, name) {
+  e.stopPropagation();
+  navigator.clipboard.writeText(name).then(() => {
+    const btn = e.target;
+    const orig = btn.textContent;
+    btn.textContent = "copied";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.classList.remove("copied");
+    }, 1200);
+  });
+}
+
+// Hover-preview popup ------------------------------------------------
+const popup = document.createElement("div");
+popup.id = "filePopup";
+document.body.appendChild(popup);
+let hoverTimer = null;
+let hoverGen = 0;
+
+function positionPopup(e) {
+  const margin = 12;
+  const w = popup.offsetWidth, h = popup.offsetHeight;
+  let x = e.clientX + margin;
+  let y = e.clientY + margin;
+  if (x + w > window.innerWidth - margin) x = e.clientX - w - margin;
+  if (y + h > window.innerHeight - margin) y = Math.max(margin, window.innerHeight - h - margin);
+  popup.style.left = x + "px";
+  popup.style.top = y + "px";
+}
+
+async function showPopup(li, e) {
+  const branch = li.dataset.branch;
+  const path = li.dataset.path;
+  const key = branch + "::" + path;
+  const gen = ++hoverGen;
+  let payload = FILE_CACHE.get(key);
+  if (!payload) {
+    popup.innerHTML = `<div class="header"><span>${path}</span><span>loading...</span></div>`;
+    popup.style.display = "block";
+    positionPopup(e);
+    try {
+      const r = await fetch(`/api/file?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(path)}`);
+      payload = await r.json();
+      FILE_CACHE.set(key, payload);
+    } catch (err) {
+      payload = { ok: false, error: String(err) };
+    }
+    if (gen !== hoverGen) return;  // user moved on while loading
+  }
+  const body = payload.ok
+    ? payload.html + (payload.truncated ? '<div class="trunc">(preview truncated)</div>' : "")
+    : `<em>${payload.error || "failed to load"}</em>`;
+  popup.innerHTML = `<div class="header"><span>${path}</span><span>${payload.kind || ""}</span></div>${body}`;
+  popup.style.display = "block";
+  positionPopup(e);
+}
+
+function hidePopup() {
+  hoverGen++;
+  popup.style.display = "none";
+}
+
+document.addEventListener("mouseover", e => {
+  const li = e.target.closest("li[data-branch][data-path]");
+  if (!li) return;
+  if (hoverTimer) clearTimeout(hoverTimer);
+  hoverTimer = setTimeout(() => showPopup(li, e), 180);
+});
+document.addEventListener("mouseout", e => {
+  const li = e.target.closest("li[data-branch][data-path]");
+  if (!li) return;
+  if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+  hidePopup();
+});
+document.addEventListener("mousemove", e => {
+  if (popup.style.display === "block") positionPopup(e);
+});
 
 async function load() {
   const res = await fetch("/api/branches");
@@ -460,6 +796,15 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if self.path == "/api/branches":
             data = json.dumps(scan_branches()).encode("utf-8")
             self._send(200, "application/json", data)
+            return
+        if self.path.startswith("/api/file?"):
+            import urllib.parse
+            qs = urllib.parse.parse_qs(self.path.split("?", 1)[1])
+            slug = (qs.get("branch") or [""])[0]
+            path = (qs.get("path") or [""])[0]
+            payload = get_file_payload(slug, path)
+            self._send(200, "application/json",
+                       json.dumps(payload).encode("utf-8"))
             return
         self._send(404, "text/plain", b"not found")
 
