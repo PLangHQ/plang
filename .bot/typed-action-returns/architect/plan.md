@@ -2,7 +2,7 @@
 
 **From:** architect
 **Branch:** `typed-action-returns` (off `runtime2`); sibling work on `test-report-typed-object` (also off `runtime2`)
-**Inputs:** `.bot/typed-action-returns/builder/architect-handoff.md`, `.bot/test-report-typed-object/brief.md`
+**Inputs:** `.bot/typed-action-returns/builder/architect-handoff.md`, `.bot/typed-action-returns/architect/test-report-brief.md` (preserved here after the `test-report-typed-object` branch was retired)
 **Status:** v3.3 — warnings channel mechanics nailed down
 
 ## What v3.3 changed (from v3.2)
