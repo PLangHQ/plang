@@ -417,6 +417,68 @@ INDEX_HTML = r"""<!doctype html>
     flex: 1;
     padding: 20px 28px;
     overflow-y: auto;
+    min-width: 0;  /* let the flex layout shrink this */
+  }
+  /* Always-on preview pane on the right; updates as files are hovered.
+     No floating popup means no overlap with the file list — the cursor
+     can scan the file rows without losing its target. */
+  #preview {
+    width: 560px;
+    min-width: 560px;
+    border-left: 1px solid var(--border);
+    background: var(--panel);
+    overflow-y: auto;
+    padding: 14px 18px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  #preview .header {
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    word-break: break-all;
+    gap: 8px;
+  }
+  #preview .placeholder { color: var(--muted); font-style: italic; }
+  #preview pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, monospace;
+  }
+  #preview pre.json { color: #ce9178; }
+  #preview pre.code { background: var(--bg); padding: 8px; border-radius: 3px; }
+  #preview h1, #preview h2, #preview h3,
+  #preview h4, #preview h5, #preview h6 {
+    margin: 12px 0 6px; line-height: 1.25;
+  }
+  #preview h1 { font-size: 16px; }
+  #preview h2 { font-size: 14px; }
+  #preview h3 { font-size: 13px; }
+  #preview p { margin: 6px 0; }
+  #preview ul, #preview ol { margin: 6px 0; padding-left: 22px; }
+  #preview li { margin: 2px 0; }
+  #preview code {
+    background: var(--bg); padding: 1px 4px; border-radius: 2px;
+    font-family: ui-monospace, monospace; font-size: 11px;
+  }
+  #preview blockquote {
+    border-left: 3px solid var(--border);
+    padding-left: 10px;
+    color: var(--muted);
+    margin: 6px 0;
+  }
+  #preview .trunc {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background: var(--bg);
+    border-radius: 3px;
+    color: var(--warn);
   }
   #pane .empty {
     color: var(--muted);
@@ -491,73 +553,10 @@ INDEX_HTML = r"""<!doctype html>
     padding: 8px 12px;
     border-bottom: 1px solid var(--border);
   }
-  /* Hover preview popup */
-  #filePopup {
-    position: fixed;
-    z-index: 100;
-    top: 12px;
-    right: 12px;
-    width: 560px;
-    max-height: calc(100vh - 24px);
-    overflow: hidden;  /* click-through means no scroll anyway */
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    padding: 14px 18px;
-    font-size: 12px;
-    line-height: 1.5;
-    display: none;
-    pointer-events: none;  /* let the cursor land on rows underneath */
-  }
-  #filePopup .header {
-    color: var(--muted);
-    font-family: ui-monospace, monospace;
-    font-size: 11px;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-  }
-  #filePopup pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-family: ui-monospace, monospace;
-  }
-  #filePopup pre.json { color: #ce9178; }
-  #filePopup pre.code { background: var(--bg); padding: 8px; border-radius: 3px; }
-  #filePopup h1, #filePopup h2, #filePopup h3,
-  #filePopup h4, #filePopup h5, #filePopup h6 {
-    margin: 12px 0 6px; line-height: 1.25;
-  }
-  #filePopup h1 { font-size: 16px; }
-  #filePopup h2 { font-size: 14px; }
-  #filePopup h3 { font-size: 13px; }
-  #filePopup p { margin: 6px 0; }
-  #filePopup ul, #filePopup ol { margin: 6px 0; padding-left: 22px; }
-  #filePopup li { margin: 2px 0; }
-  #filePopup code {
-    background: var(--bg); padding: 1px 4px; border-radius: 2px;
-    font-family: ui-monospace, monospace; font-size: 11px;
-  }
-  #filePopup blockquote {
-    border-left: 3px solid var(--border);
-    padding-left: 10px;
-    color: var(--muted);
-    margin: 6px 0;
-  }
-  #filePopup .trunc {
-    margin-top: 8px;
-    padding: 6px 8px;
-    background: var(--bg);
-    border-radius: 3px;
-    color: var(--warn);
-  }
-  .stage .filelist li[data-branch] { cursor: help; }
-  .stage .filelist li[data-branch]:hover { color: var(--text); }
-  ul.flat li[data-branch] { cursor: help; }
+  .stage .filelist li[data-branch] { cursor: pointer; }
+  .stage .filelist li[data-branch]:hover { color: var(--text); background: var(--panel2); }
+  ul.flat li[data-branch] { cursor: pointer; }
+  ul.flat li[data-branch]:hover { background: var(--panel2); }
   .filter input {
     width: 100%;
     padding: 6px 8px;
@@ -579,6 +578,7 @@ INDEX_HTML = r"""<!doctype html>
   <div id="branchList"></div>
 </div>
 <div id="pane"><div class="empty">Select a branch on the left.</div></div>
+<div id="preview"><div class="placeholder">Hover a file to preview.</div></div>
 
 <script>
 const PIPELINE = ["architect","codeanalyzer","builder","coder","tester","test-designer","security","auditor","docs"];
@@ -707,30 +707,26 @@ function copyBranchName(e, name) {
   });
 }
 
-// Hover-preview popup ------------------------------------------------
+// File preview pane (right side, always visible) ---------------------
 //
-// Behavior: hovering a file row opens the popup at a fixed top-right
-// position. The popup is click-through (`pointer-events: none`), so the
-// cursor can move freely over rows underneath — moving to the next file
-// just swaps the popup content. A 400ms delay avoids flashing the popup
-// during quick passes across the list.
-const popup = document.createElement("div");
-popup.id = "filePopup";
-document.body.appendChild(popup);
-let hoverTimer = null;
-let hoverGen = 0;
+// Hovering a file row updates the preview pane with that file's
+// rendered content. Because the pane is its own column in the layout
+// (not a floating popup), the cursor can scroll inside it without ever
+// leaving the file list area — and the file rows are never overlapped.
+const preview = document.getElementById("preview");
+let previewTimer = null;
+let previewGen = 0;
 let activeLi = null;
 
-async function showPopup(li) {
+async function loadPreview(li) {
   activeLi = li;
   const branch = li.dataset.branch;
   const path = li.dataset.path;
   const key = branch + "::" + path;
-  const gen = ++hoverGen;
+  const gen = ++previewGen;
   let payload = FILE_CACHE.get(key);
   if (!payload) {
-    popup.innerHTML = `<div class="header"><span>${path}</span><span>loading...</span></div>`;
-    popup.style.display = "block";
+    preview.innerHTML = `<div class="header"><span>${path}</span><span>loading...</span></div>`;
     try {
       const r = await fetch(`/api/file?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(path)}`);
       payload = await r.json();
@@ -738,39 +734,20 @@ async function showPopup(li) {
     } catch (err) {
       payload = { ok: false, error: String(err) };
     }
-    if (gen !== hoverGen) return;
+    if (gen !== previewGen) return;
   }
   const body = payload.ok
     ? payload.html + (payload.truncated ? '<div class="trunc">(preview truncated)</div>' : "")
     : `<em>${payload.error || "failed to load"}</em>`;
-  popup.innerHTML = `<div class="header"><span>${path}</span><span>${payload.kind || ""}</span></div>${body}`;
-  popup.style.display = "block";
-}
-
-function hidePopup() {
-  hoverGen++;
-  activeLi = null;
-  popup.style.display = "none";
+  preview.innerHTML = `<div class="header"><span>${path}</span><span>${payload.kind || ""}</span></div>${body}`;
+  preview.scrollTop = 0;
 }
 
 document.addEventListener("mouseover", e => {
   const li = e.target.closest("li[data-branch][data-path]");
-  if (!li) return;
-  if (li === activeLi) return;
-  if (hoverTimer) clearTimeout(hoverTimer);
-  hoverTimer = setTimeout(() => showPopup(li), 400);
-});
-document.addEventListener("mouseout", e => {
-  const li = e.target.closest("li[data-branch][data-path]");
-  if (!li) return;
-  // Cancel any pending open. If a different row's mouseover fires next,
-  // it will schedule a new open; otherwise hide.
-  if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-  // Hide only if the cursor moved off all file rows (not row-to-row).
-  const next = e.relatedTarget && e.relatedTarget.closest
-    ? e.relatedTarget.closest("li[data-branch][data-path]")
-    : null;
-  if (!next) hidePopup();
+  if (!li || li === activeLi) return;
+  if (previewTimer) clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => loadPreview(li), 250);
 });
 
 async function load() {
