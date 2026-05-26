@@ -56,7 +56,7 @@ def current_branch() -> str:
         return ""
 
 
-_CACHE: dict = {"at": 0.0, "active": set(), "times": {}, "refs": {}, "verdicts": {}}
+_CACHE: dict = {"at": 0.0, "active": set(), "times": {}, "refs": {}, "verdicts": {}, "headTimes": {}}
 _CACHE_TTL = 300  # 5 minutes
 
 
@@ -79,23 +79,36 @@ def refresh_cache() -> None:
     except Exception:
         pass  # offline is fine; we keep stale data
 
-    # Active set + slug→ref map. The map is needed because file content is
-    # fetched via `git show <ref>:<path>` — we need to know which ref backs
-    # each `.bot/<slug>/` directory. Remote refs win over local since the
-    # remote is authoritative (bots push there).
+    # Active set + slug→ref map + per-branch HEAD commit time. Asking for
+    # %(committerdate:unix) in the same for-each-ref call gives us the
+    # branch's latest commit time, which is the right "last activity"
+    # signal — a merge into runtime2 updates runtime2's HEAD even when no
+    # file under `.bot/runtime2/` is touched. Remote refs win over local
+    # since the remote is authoritative (bots push there).
     active: set[str] = set()
     refs: dict[str, str] = {}
-    for line in _git("for-each-ref", "--format=%(refname:short)",
+    head_times: dict[str, float] = {}
+    for line in _git("for-each-ref",
+                     "--format=%(refname:short)|%(committerdate:unix)",
                      "refs/heads", "refs/remotes/origin").splitlines():
-        ref = line.strip()
+        if "|" not in line:
+            continue
+        ref, ts = line.split("|", 1)
+        ref = ref.strip()
         if not ref or ref == "origin/HEAD":
             continue
+        try:
+            t = float(ts.strip())
+        except ValueError:
+            t = 0.0
         if ref.startswith("origin/"):
             slug = ref[len("origin/"):].replace("/", "-")
             refs[slug] = ref  # remote overrides local
+            head_times[slug] = max(t, head_times.get(slug, 0.0))
         else:
             slug = ref.replace("/", "-")
             refs.setdefault(slug, ref)
+            head_times[slug] = max(t, head_times.get(slug, 0.0))
         active.add(slug)
 
     # Commit-time dict. `--diff-merges=first-parent` is critical: without it
@@ -125,6 +138,7 @@ def refresh_cache() -> None:
     _CACHE["times"] = times
     _CACHE["refs"] = refs
     _CACHE["verdicts"] = verdicts
+    _CACHE["headTimes"] = head_times
 
 
 def read_verdicts(times: dict[str, float], active: set[str],
@@ -227,6 +241,11 @@ def slug_refs() -> dict[str, str]:
 def verdicts() -> dict[tuple[str, str], str]:
     _ensure_cache()
     return _CACHE["verdicts"]
+
+
+def head_times() -> dict[str, float]:
+    _ensure_cache()
+    return _CACHE["headTimes"]
 
 
 _FILE_LIMIT = 200 * 1024  # 200 KB cap for the hover preview
@@ -397,6 +416,7 @@ def scan_branches() -> list[dict]:
     cur = current_branch()
     times = git_commit_times()
     verds = verdicts()
+    heads = head_times()
 
     grouped: dict[str, list[tuple[str, float]]] = {}
     for path, ct in times.items():
@@ -438,7 +458,10 @@ def scan_branches() -> list[dict]:
                 entry["status"] = "pass" if status == "pass" else "fail"
                 entry["statusRaw"] = status
         root_files.sort(key=lambda f: f["name"])
-        last = max((ct for _, ct in files), default=0.0)
+        # Branch lastActivity = HEAD commit time (a merge into runtime2
+        # bumps runtime2's HEAD even when no `.bot/runtime2/` file is
+        # touched). Fall back to max file ct if HEAD time is missing.
+        last = heads.get(slug) or max((ct for _, ct in files), default=0.0)
         branches.append({
             "name": slug,
             "lastActivity": last,
