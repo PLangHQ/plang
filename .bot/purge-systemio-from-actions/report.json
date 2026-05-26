@@ -134,6 +134,66 @@
         "health": "yellow",
         "notes": "F1 HIGH path-traversal in AuthGate's IsInRoot auto-grant. Bypass pre-existed the branch but is now the single chokepoint hole — branch's whole premise depends on it. Fix is structural (canonicalize _absolutePath at FilePath construction or in file.Resolve). All other surface clean: Execute verb, PathJsonConverter, derivation verbs, PLNG002 enforcement all check out."
       }
+    },
+    {
+      "id": "f8e2a3c7-9b41-4d6e-a052-7e9c8b1d4f30",
+      "bot": "security",
+      "timestamp_start": "2026-05-26T12:00:00Z",
+      "timestamp_end": "2026-05-26T12:20:00Z",
+      "intent": "Re-review after coder's response to v1: verify F1 (HIGH), F2 (LOW latent-Medium), F3 (LOW) are genuinely closed and no new attack surface introduced by the PathHelper bridge and PLNG002 narrowing.",
+      "before": {
+        "assumptions": "Coder shipped 064724fda (F1 + F3) and 987a5148e (F2). F1 should be closed by canonicalizing at the FilePath ctor — preferred fix shape from v1. PathHelper is the new System.IO.Path bridge.",
+        "risk": "Canonicalization at the ctor only matters if every construction site routes through it; need to verify Resolve, JsonConverter, derivation verbs, implicit operator, direct ctor. PathHelper introduces a new attack surface if its body accidentally adds IO."
+      },
+      "plan": ".bot/purge-systemio-from-actions/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/file/this.Validate.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/Utils/PathHelper.cs",
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/this.cs",
+            "PLang.Generators/Diagnostics/Plng002.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "End-to-end trace of F1/F2/F3 fixes. Verified Canonicalize covers every FilePath entry point; the three deliberate skips (empty, non-rooted, //-prefix) reasoned safe. MarkdownTeaching lifted to path verbs and ResolveMarkdownTeachingRoot routes overrides through Resolve. PLNG002 narrowed to two carve-outs (PathHelper.cs for Path.*, app/types/path/** for File/Directory) with no whole-file exemptions."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/DotDotTraversalRegressionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "v1 mutation reproducer ported to a permanent regression suite. Mutated Canonicalize to return absolutePath, rebuilt, ran the suite — all 3 F1 tests failed (Ctor canonicalize, Resolve+dotdot leaves root, ReadText denial). Reverted clean."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/security-report.json",
+            ".bot/purge-systemio-from-actions/security/v2/plan.md",
+            ".bot/purge-systemio-from-actions/security/v2/v1_review_summary.md",
+            ".bot/purge-systemio-from-actions/security/v2/result.md",
+            ".bot/purge-systemio-from-actions/security/v2/verdict.json",
+            ".bot/purge-systemio-from-actions/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 session output. security-report.json updated with status:fixed + fix_commit per finding."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "All v1 findings closed. F1 mutation-verified. No new findings. Next bot: auditor.",
+        "next_bot": "auditor"
+      }
     }
   ]
 }

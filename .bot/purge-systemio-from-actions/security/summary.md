@@ -2,124 +2,87 @@
 
 ## Version
 
-v1.
+v2. PASS verdict.
 
 ## What this is
 
-The branch's stated goal IS a security hardening: purge `System.IO` from
-action handlers, force every disk touch through a typed `path.@this`
-surface that calls `AuthGate(verb)`. My job was to verify the hardening
-is real and look for new attack surface introduced by the typing flip.
+Re-review after coder's response to v1. The branch's stated security
+goal is to make `path.@this` verbs (gated by `AuthGate`) the single
+chokepoint for filesystem access from action handlers. v1 verified the
+chokepoint was in place but FAILED on F1 — the chokepoint had a hole
+exactly the size of `..`. v2 re-verifies after the fix.
 
 ## What was done
 
-Blue + red audit, four passes:
+Coder shipped two commits addressing all three v1 findings:
 
-1. **Gate surface.** Read `path.@this.Authorize`, `IsInRoot`,
-   `AuthGate`, the new Derivation/Operations partials, the new
-   `permission.verb.Execute`, and the new `PathJsonConverter`.
-2. **Single-site verification.** Grep across `PLang/` confirmed
-   `System.Reflection.Assembly.LoadFrom` has exactly one call site —
-   inside `FilePath.LoadAssemblyAsync`, after `AuthGate(Execute)`.
-   `Execute` is genuinely distinct from `Read` in the `Covers` chain.
-3. **Wire-deserialization audit.** `PathJsonConverter.Read` routes
-   through `@this.Resolve(raw, context)` when Context is wired; falls
-   back to no-Context stub paths that explode at Authorize otherwise.
-4. **Red team / mutation test.** Constructed and ran a mutation test
-   inside `PLang.Tests` to verify a suspected path-traversal bypass.
-   Confirmed reproducible in ~5s. Mutation file deleted; production
-   source untouched.
+- **064724fda** — F1 + F3. FilePath ctor canonicalizes `_absolutePath`
+  via `PathHelper.GetFullPath`; new `PathHelper.cs` is the single
+  allowed bridge to `System.IO.Path.*`; PLNG002 narrowed to two
+  carve-outs (`Path.*` → PathHelper.cs only; File/Directory/... →
+  app/types/path/** only); no whole-file exemptions remaining.
+- **987a5148e** — F2. MarkdownTeaching's 8 ungated System.IO reaches
+  lifted to the `path.@this` verb surface; `MarkdownTeachingRoot`
+  override routed through `path.@this.Resolve(System.Context)`.
+
+### v2 verification
+
+1. **Read both diffs** end-to-end.
+2. **F1 coverage trace** — every FilePath construction site (Resolve,
+   JsonConverter, implicit operator, derivation verbs, direct ctor)
+   now inherits canonicalization. The three deliberate skips (empty,
+   non-rooted, `//`-prefixed) reasoned safe in `v2/result.md`.
+3. **F1 mutation test** — temporarily neutered `Canonicalize` to
+   `return absolutePath`; all 3 regression tests in
+   `PathTests/DotDotTraversalRegressionTests.cs` failed:
+   - `FilePath_Ctor_Canonicalizes_RemovesDotDot`
+   - `FilePath_Resolve_RelativeWithDotDot_FromGoalRuntimeDir_LeavesRoot`
+   - `ReadText_RelativeDotDot_OutOfRoot_DeniedByAuthGate`
+
+   Reverted; `git status` clean.
+4. **F2 trace** — every disk touch in MarkdownTeaching.cs is a `path`
+   verb. ResolveMarkdownTeachingRoot routes the string override
+   through Resolve. PLNG002 carve-out for MarkdownTeaching dropped.
+5. **PathHelper contract** — body is pure name math only.
+   GetTempPath/GetTempFileName explicitly forbidden by class doc.
+6. **PLNG002** — only two carve-outs remain, both visible at the use
+   site. No whole-file exemptions.
 
 ## Verdict
 
-**FAIL** — one HIGH severity finding (F1) in the gate the branch was
-built to enforce.
+**PASS** — F1, F2, F3 all closed. F1 mutation-verified. No new
+findings. Recommend merging.
 
-### F1 (HIGH) — IsInRoot prefix-match allows `..` traversal past AuthGate
+Files written:
+- `.bot/purge-systemio-from-actions/security/v2/plan.md`
+- `.bot/purge-systemio-from-actions/security/v2/v1_review_summary.md`
+- `.bot/purge-systemio-from-actions/security/v2/result.md`
+- `.bot/purge-systemio-from-actions/security/v2/verdict.json`
+- `.bot/purge-systemio-from-actions/security-report.json` (updated)
 
-`IsInRoot()` uses textual `StartsWith` of an un-canonicalized
-`_absolutePath` against the app root. A relative path with `..` resolved
-against a goal-anchored `runtimeDir` inside root via `Path.Combine`
-produces a string that *textually* prefix-matches root but *OS-resolves*
-outside it. AuthGate auto-grants on IsInRoot=true; `System.IO.File.*`
-resolves the `..` segments and reads outside root with no prompt and no
-permission lookup.
-
-Reproduced via mutation test:
-
-```
-Literal Absolute: <root>/subdir/../../SECRET-OUTSIDE.txt
-Starts with fixturesDir? True
-Success: True
-Value: if-you-can-read-me-the-gate-was-bypassed-<uuid>
-```
-
-The bypass pre-existed (same flaw lived in the deleted
-`PLangFileSystem.ValidatePath`), but it was masked while handlers
-bypassed AuthGate entirely. Now that AuthGate is the single chokepoint,
-the chokepoint's hole is the only thing that matters.
-
-Files: `PLang/app/types/path/this.Authorize.cs`,
-`PLang/app/types/path/file/this.Validate.cs`,
-`PLang/app/types/path/file/this.cs`.
-
-**Fix (preferred):** canonicalize `_absolutePath` at FilePath
-construction via `Path.GetFullPath` — in `file.@this`'s ctor or in
-`file.Resolve` after the `Path.Combine`. Derivation verbs (Combine,
-WithName, InFolder, Parent) inherit the fix for free. Add a regression
-test matching the mutation shape.
-
-Fix (surgical, smaller): canonicalize inside
-`path.@this.IsUnder` once before the `StartsWith` check.
-
-See `security-report.json` and `v1/result.md` for the full finding,
-exploit walkthrough, and proposed-fix sketch.
-
-## What's clean (verified)
-
-- `Assembly.LoadFrom` is single-sited and gated by `Verb { Execute }`,
-  which is genuinely distinct from `Verb { Read }`. The `Covers` chain
-  treats each sub-verb independently. `Verb.AllowAll()` does include
-  Execute, but `AllowAll` is referenced only from tests; production
-  grants flow through `BuildRequest(actor, verb)` with the narrow
-  verb. Clean factoring.
-- `PathJsonConverter` Context-bound routes through `Resolve` → scheme
-  registry. Stub paths from no-Context construction explode at
-  Authorize.
-- Codeanalyzer's verified-clean items hold up under security re-read:
-  D13 `.Absolute` + Authorize discipline observed at every reach site;
-  System.IO purge real outside the documented exempts; PLNG002 at
-  error severity locks the door at the syntactic layer.
-
-## Code example (the bypass shape)
+## Code example (the fix shape)
 
 ```csharp
-// Goal whose .pr lives under root.
-var goal = new global::app.goals.goal.@this
+// PLang/app/types/path/file/this.cs:25-47
+public @this(string absolutePath, ...) : base(Canonicalize(absolutePath), ...) { }
+
+private static string Canonicalize(string absolutePath)
 {
-    Name = "Probe",
-    Path = "/subdir/probe.goal",
-    LoadedFromPrPath = path.@this.Resolve("<root>/subdir/.build/probe.fake", ctx),
-};
-ctx.Goal = goal;
-
-// .. segments climb past root in the OS resolver, but the literal
-// _absolutePath string still starts with root → IsInRoot true → auto-grant.
-var p = path.@this.Resolve("../../SECRET-OUTSIDE.txt", ctx);
-var result = await p.ReadText();  // No prompt. File outside root is read.
+    if (string.IsNullOrEmpty(absolutePath)) return absolutePath;
+    if (!PathHelper.IsPathRooted(absolutePath)) return absolutePath;
+    if (absolutePath.StartsWith("//")) return absolutePath;
+    try { return PathHelper.GetFullPath(absolutePath); }
+    catch { return absolutePath; }
+}
 ```
 
-## Follow-up proposals (non-blocking)
+Mutating this to `return absolutePath` unconditionally is what made
+the F1 attack reproduce — and is what the regression suite now
+catches. Single site, every construction path covered.
 
-- **F2** — Migrate `PLang/app/modules/MarkdownTeaching.cs` to `path.@this` verbs (`List`, `ReadText`). Closes the only whole-file PLNG002 exemption that hides real ungated IO. Architect's bootstrap-timing rationale doesn't hold — `Describe()` runs after App is up.
-- **F3 / PathHelper** — Introduce `app.Utils.PathHelper` as a typed forwarder for pure path-string-math (`Combine`/`GetDirectoryName`/`GetFullPath`/`GetFileName`/`ChangeExtension`/`Join` + separator constants). Strictly **no IO**. Replaces the analyzer's invisible `AllowedSystemIoPathMembers` string-name allowlist with a type-name allowlist. Retires the whole-file `app/this.cs` exemption. Full proposal: `v1/pathhelper-proposal.md`.
+## Next bot
 
-Both interlock cleanly with the F1 fix: F1's canonicalization site (`file.@this` ctor) calls `PathHelper.GetFullPath`. Recommend coder lands F1 first, folds PathHelper in as a clean-up before merge.
-
-## Next
-
+`auditor` — confirm merge-readiness across reviewer bots:
 ```
-VERDICT: FAIL
-Issues: F1 HIGH — IsInRoot prefix-match allows .. traversal past AuthGate.
-Next: run.ps1 coder purge-systemio-from-actions "Fix the following issues found by security: canonicalize Path._absolutePath at construction (file.@this ctor or file.Resolve) so IsInRoot()'s textual StartsWith can't be bypassed with .. segments. Add a regression test matching the mutation shape in security-report.json F1." -b purge-systemio-from-actions
+run.ps1 auditor path-class "Review the code on branch purge-systemio-from-actions" -b purge-systemio-from-actions
 ```
