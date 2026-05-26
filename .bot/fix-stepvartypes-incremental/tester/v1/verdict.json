@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "C# build is RED — Run.CapturedOutput→Output rename broke ReportActionTests.cs:56 and EdgeCaseTests.cs:129; no tests for new output capture, per-step Timings, or OpenAI cost math; slot-description fix has a Contains() test that passes both old and new strings."
+}

@@ -17,15 +17,21 @@
             {
               "name": "Name",
               "value": "%x%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": 7,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%x%, Value=7)",
       "source": null,
       "waitForExecution": true
     },
@@ -56,25 +62,21 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 10,
-              "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -84,12 +86,17 @@
             {
               "name": "Name",
               "value": "%a%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": 1,
-              "type": "int"
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -113,25 +120,21 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 5,
-              "type": "int"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
+              "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -141,12 +144,17 @@
             {
               "name": "Name",
               "value": "%b%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": 2,
-              "type": "int"
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -159,31 +167,23 @@
           "modifiers": []
         },
         {
-          "module": "condition",
-          "action": "else",
-          "parameters": [
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
           "module": "variable",
           "action": "set",
           "parameters": [
             {
               "name": "Name",
               "value": "%c%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": 3,
-              "type": "int"
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -200,7 +200,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "condition.if(Left=%x%, Operator=\u0022\u003E\u0022, Right=10) , condition.elseif(Left=%x%, Operator=\u0022\u003E\u0022, Right=5) , variable.set(Name=%c%, Value=3, Type=\u0022int\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -218,17 +218,12 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%!data.branchIndex%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -239,7 +234,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%!data.branchIndex%)",
       "source": null,
       "waitForExecution": true
     },
@@ -257,17 +252,12 @@
             {
               "name": "Expected",
               "value": 2,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%b%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -278,17 +268,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=2, Actual=%b%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal",
-  "prPath": "/Condition/.build/testconditionelseifmatchesrecordsbranchindex1.test.pr",
+  "path": "/TestModule/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal",
+  "prPath": "/TestModule/Condition/.build/testconditionelseifmatchesrecordsbranchindex1.test.pr",
   "hash": "dc7de0ae60cc4ea4f885ddbd16ac637d56b81c6bfd8a3484356109f7890f65eb",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

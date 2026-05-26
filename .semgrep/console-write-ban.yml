@@ -1,0 +1,29 @@
+rules:
+  - id: plang-no-console-write
+    languages: [csharp]
+    severity: WARNING
+    message: |
+      Console.* writes bypass PLang's channel system, which exists so I/O can
+      be redirected (tests, web UI, CI capture). Route through:
+        - diagnostics → await context.App.Debug.Write(...)
+        - user-facing → await CurrentActor.Channels.WriteTextAsync(Output, ...)
+      Permitted exceptions: PlangConsole/Program.cs (process boundary last
+      resort), Console.IsInputRedirected/IsOutputRedirected (queries, not writes).
+      Full rule: Documentation/v0.2/good_to_know.md "Console.* Is Banned".
+    pattern-either:
+      - pattern: Console.WriteLine(...)
+      - pattern: Console.Write(...)
+      - pattern: Console.Error.WriteLine(...)
+      - pattern: Console.Error.Write(...)
+      - pattern: System.Console.WriteLine(...)
+      - pattern: System.Console.Write(...)
+    paths:
+      exclude:
+        - "**/PlangConsole/Program.cs"
+        - "**/*Tests/**"
+        - "**/PLang.Generators/**"
+        - "**/bin/**"
+        - "**/obj/**"
+        - "**/.bot/**"
+        - "**/.build/**"
+        - "**/os/**"

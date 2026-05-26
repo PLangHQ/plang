@@ -125,8 +125,8 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.tester.Run(new global::app.tester.File { Path = "Tests/X.test.goal", EntryGoalName = "X" });
-        run.CapturedOutput = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
+        var run = new global::app.tester.Run(new global::app.tester.File { Goal = new Goal { Name = "X", Path = "/Tests/X.test.goal" } });
+        run.Output = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
         run.Complete(global::app.tester.Status.Fail, new global::app.errors.AssertionError(1, 2));
         _app.Tester.Results.Add(run);
 
@@ -156,7 +156,7 @@ public class EdgeCaseTests
                 ["nested"] = outer
             }
         };
-        var run = new global::app.tester.Run(new global::app.tester.File { Path = "Tests/Nested.test.goal", EntryGoalName = "N" });
+        var run = new global::app.tester.Run(new global::app.tester.File { Goal = new Goal { Name = "N", Path = "/Tests/Nested.test.goal" } });
         run.Complete(global::app.tester.Status.Fail, err);
         _app.Tester.Results.Add(run);
 

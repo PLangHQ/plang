@@ -550,13 +550,6 @@ public class Default : IBuilder
             if (step.Index < 0 || step.Index >= goal.Steps.Count) continue;
             var prior = goal.Steps[step.Index];
 
-            // LLM metadata backfill — for keep:true the LLM omits these to save
-            // tokens; pull them off the prior so the trace viewer doesn't show
-            // every cached step as 0% / level=null / no guidance.
-            if (step.Guidance == null) step.Guidance = prior.Guidance;
-            if (step.Level == null) step.Level = prior.Level;
-            if (step.Confidence == null) step.Confidence = prior.Confidence;
-
             if (step.Keep)
             {
                 // Copy the prior's actions onto the response step so the

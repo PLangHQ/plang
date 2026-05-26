@@ -25,7 +25,7 @@
                 "name": "Logger",
                 "parallel": false,
                 "parameters": [],
-                "prPath": null
+                "prPath": "/Channels/WriteToCustomChannel/.build/logger.pr"
               },
               "type": "goal.call"
             }
@@ -38,7 +38,7 @@
       "guidance": "The step \u0027set channel \u0022logger\u0022 call Logger\u0027 registers/upserts a named channel backed by a goal call to Logger.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "channel.set(Name=\u0022logger\u0022, Goal={name:\u0022Logger\u0022, parameters:[]})",
       "source": null,
       "waitForExecution": true
     },
@@ -56,7 +56,7 @@
             {
               "name": "Data",
               "value": "hi",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "channel",
@@ -72,7 +72,7 @@
       "guidance": "The step \u0027write \u0022hi\u0022 to logger\u0027 writes the produced literal to the named channel logger.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "output.write(Data=\u0022hi\u0022, channel=\u0022logger\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -90,7 +90,7 @@
             {
               "name": "Value",
               "value": "%loggerCalled%",
-              "type": "bool"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -101,17 +101,17 @@
       "guidance": "The step \u0027assert %loggerCalled% is true\u0027 is a post-condition invariant check on the boolean variable loggerCalled.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%loggerCalled%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/WriteToCustomChannel/Start.test.goal",
-  "prPath": "/WriteToCustomChannel/.build/start.test.pr",
+  "path": "/Channels/WriteToCustomChannel/Start.test.goal",
+  "prPath": "/Channels/WriteToCustomChannel/.build/start.test.pr",
   "hash": "3b8700e3787ae2d9e651b314a122fce84c5392712645333119dc7caa204b1f4d",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

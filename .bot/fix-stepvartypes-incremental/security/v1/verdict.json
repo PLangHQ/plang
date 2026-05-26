@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Path canonicalization fence intact; results.json gains Output field but inherits existing standing-Medium track on Variables snapshot leakage; no new critical/high open findings." }

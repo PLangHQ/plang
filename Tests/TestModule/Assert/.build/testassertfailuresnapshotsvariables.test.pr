@@ -40,7 +40,7 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -48,7 +48,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -56,7 +62,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_fixtures\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) , variable.set(Name=%tests%, Value=%!data%, Type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -74,7 +80,7 @@
             {
               "name": "ListName",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -87,15 +93,21 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -103,7 +115,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "list.count(ListName=%tests%) , variable.set(Name=%count%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -121,7 +133,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -137,7 +149,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%count%)",
       "source": null,
       "waitForExecution": true
     },
@@ -155,7 +167,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             }
           ],
           "defaults": null,
@@ -168,12 +180,12 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "json"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -190,7 +202,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.run(Tests=%tests%, Parallel=%!data%?, Timeout=%!data%?) , variable.set(Name=%results%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -208,7 +220,7 @@
             {
               "name": "ListName",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Key",
@@ -218,12 +230,12 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
               "value": "Fail",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -236,7 +248,7 @@
             {
               "name": "Name",
               "value": "%hasFail%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -258,7 +270,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "list.any(ListName=%results%, Key=\u0022Status\u0022, Operator=\u0022==\u0022, Value=\u0022Fail\u0022), variable.set(Name=%hasFail%, Value=%!data%, type=\u0022bool\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -277,11 +289,6 @@
               "name": "Value",
               "value": "%hasFail%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -292,7 +299,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasFail%)",
       "source": null,
       "waitForExecution": true
     },
@@ -310,7 +317,7 @@
             {
               "name": "ListName",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Key",
@@ -320,12 +327,12 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Value",
               "value": 42,
-              "type": "int"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -338,7 +345,7 @@
             {
               "name": "Name",
               "value": "%hasSnapshot%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -360,7 +367,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "list.any(ListName=%results%, Key=\u0022Error.Variables.foo\u0022, Operator=\u0022==\u0022, Value=42) , variable.set(Name=%hasSnapshot%, Value=%!data%, type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -377,13 +384,8 @@
           "parameters": [
             {
               "name": "Value",
-              "value": "%hasSnapshot%",
+              "value": "%hassnapshot%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -394,17 +396,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hassnapshot%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Assert/TestAssertFailureSnapshotsVariables.test.goal",
-  "prPath": "/Assert/.build/testassertfailuresnapshotsvariables.test.pr",
+  "path": "/TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal",
+  "prPath": "/TestModule/Assert/.build/testassertfailuresnapshotsvariables.test.pr",
   "hash": "3582cc34c81065674a9645a1d8de2904b59298fbe57628ffd5e288c5c1b12116",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

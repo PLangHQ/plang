@@ -36,7 +36,7 @@ public class GoalPathTypingTests
         };
         await Assert.That(goal.PrPath).IsNotNull();
         var rel = goal.PrPath!.Relative.Replace('\\', '/');
-        await Assert.That(rel).IsEqualTo("Cache/.build/start.pr");
+        await Assert.That(rel).IsEqualTo("/Cache/.build/start.pr");
     }
 
     [Test] public async Task GoalPrPath_InitSetter_IsNoOp_SwallowsJsonValue()
@@ -53,7 +53,7 @@ public class GoalPathTypingTests
         };
         var rel = goal.PrPath!.Relative.Replace('\\', '/');
         // Init was a no-op — derived from Path, not the explicitly-passed PrPath.
-        await Assert.That(rel).IsEqualTo(".build/start.pr");
+        await Assert.That(rel).IsEqualTo("/.build/start.pr");
     }
 
     [Test] public async Task GoalGetRuntimeDirectory_DerivesFromLoadedFromPrPath()

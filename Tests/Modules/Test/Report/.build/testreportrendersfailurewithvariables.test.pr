@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_fixtures_fail",
-              "type": "path"
+              "type": "string"
             },
             {
               "name": "Pattern",
@@ -40,15 +40,26 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
               "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "object",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -56,7 +67,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_fixtures_fail\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%, Type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -87,7 +98,7 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -95,7 +106,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -103,7 +120,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.run(Tests=%tests%) , variable.set(Name=%results%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -121,7 +138,7 @@
             {
               "name": "Results",
               "value": "%results%",
-              "type": "results?"
+              "type": "results"
             }
           ],
           "defaults": null,
@@ -134,7 +151,7 @@
             {
               "name": "Name",
               "value": "%report%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -142,7 +159,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -150,7 +173,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.report(Results=%results%) | variable.set(Name=%report%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -168,7 +191,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -184,7 +207,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%report.summaryFail%)",
       "source": null,
       "waitForExecution": true
     },
@@ -202,7 +225,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -218,17 +241,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%report.variableSnapshotCount%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestReportRendersFailureWithVariables.test.goal",
-  "prPath": "/.build/testreportrendersfailurewithvariables.test.pr",
+  "path": "/Modules/Test/Report/TestReportRendersFailureWithVariables.test.goal",
+  "prPath": "/Modules/Test/Report/.build/testreportrendersfailurewithvariables.test.pr",
   "hash": "48239745160930279840396bf6ddb529a74a9e8b353384c264638664ffdf1ab0",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

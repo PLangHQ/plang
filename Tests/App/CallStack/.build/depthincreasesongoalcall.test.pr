@@ -39,7 +39,7 @@
       "guidance": "Set %outerDepth% from the current call-stack depth expression so it can be compared after the nested goal.call.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "variable.set(Name=%outerDepth%, Value=%!callStack.Current.Depth%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -59,8 +59,8 @@
               "value": {
                 "name": "Inner",
                 "parallel": false,
-                "parameters": [],
-                "prPath": null
+                "parameters": null,
+                "prPath": "/App/CallStack/.build/inner.pr"
               },
               "type": "goal.call"
             }
@@ -73,7 +73,7 @@
       "guidance": "Call the goal Inner (non-parallel) to allow it to stash its own depth into %innerDepth% for the subsequent assertion.",
       "level": "high",
       "confidence": 78,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022Inner\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -97,11 +97,6 @@
               "name": "B",
               "value": "%outerDepth%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "innerDepth should be greater than outerDepth",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -112,17 +107,17 @@
       "guidance": "Post-condition assertion that %innerDepth% is greater than %outerDepth%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.greaterThan(A=%innerDepth%, B=%outerDepth%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/DepthIncreasesOnGoalCall.test.goal",
-  "prPath": "/Tests/App/CallStack/.build/depthincreasesongoalcall.test.pr",
+  "path": "/App/CallStack/DepthIncreasesOnGoalCall.test.goal",
+  "prPath": "/App/CallStack/.build/depthincreasesongoalcall.test.pr",
   "hash": "c0ab43a03e6b9192772a3ef2b95a1290023d502d3fb1ea003758d229d116abaf",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

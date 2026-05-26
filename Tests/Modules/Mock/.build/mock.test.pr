@@ -22,7 +22,7 @@
             {
               "name": "ReturnValue",
               "value": "mocked content",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -35,7 +35,7 @@
             {
               "name": "Name",
               "value": "%mockRead%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -43,7 +43,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -51,7 +57,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "mock.intercept(ActionPattern=\u0022file.read\u0022, ReturnValue=\u0022mocked content\u0022) | variable.set(Name=%mockRead%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -69,7 +75,7 @@
             {
               "name": "Expected",
               "value": 0,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -79,7 +85,7 @@
             {
               "name": "Message",
               "value": "mock should start with 0 calls",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -90,7 +96,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=0, Actual=%mockRead.callCount%, Message=\u0022mock should start with 0 calls\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -107,18 +113,13 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "file.read",
-              "type": "string"
-            },
-            {
-              "name": "Actual",
               "value": "%mockRead.actionPattern%",
               "type": "object"
             },
             {
-              "name": "Message",
-              "value": "Assert the intercepted action pattern stored on the mock handle equals \u0022file.read\u0022.",
-              "type": "string"
+              "name": "Actual",
+              "value": "file.read",
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -129,7 +130,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=%mockRead.actionPattern%, Actual=\u0022file.read\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -147,17 +148,12 @@
             {
               "name": "Expected",
               "value": false,
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Actual",
               "value": "%mockRead.isSpy%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Assert the mock is not a spy initially.",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -168,7 +164,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=false, Actual=%mockRead.isSpy%)",
       "source": null,
       "waitForExecution": true
     },
@@ -199,7 +195,7 @@
             {
               "name": "Name",
               "value": "%spyWrite%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -221,7 +217,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "mock.intercept(ActionPattern=\u0022output.write\u0022, ReturnValue=%!data%, GoalToCall=%!data%) , variable.set(Name=%spyWrite%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -238,18 +234,13 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Actual",
               "value": "%spyWrite.isSpy%",
               "type": "object"
             },
             {
-              "name": "Message",
-              "value": "Assert the output.write mock is a spy.",
-              "type": "string"
+              "name": "Actual",
+              "value": true,
+              "type": "bool"
             }
           ],
           "defaults": null,
@@ -260,7 +251,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=%spyWrite.isSpy%, Actual=true)",
       "source": null,
       "waitForExecution": true
     },
@@ -297,7 +288,7 @@
             {
               "name": "Name",
               "value": "%mockResult%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -319,7 +310,7 @@
       "guidance": "Exercise the mocked file.read by reading test_output.txt; mock intercept should return mocked content and assign it to %mockResult%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "file.read(Path=\u0022test_output.txt\u0022) , variable.set(Name=%mockResult%, Value=%!data%, type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -337,7 +328,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -347,7 +338,7 @@
             {
               "name": "Message",
               "value": "callCount should increment after mock intercept",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -358,7 +349,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%mockRead.callCount%, Message=\u0022callCount should increment after mock intercept\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -392,7 +383,7 @@
       "guidance": "Verify the file.read mock handle was called exactly once.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "mock.verify(Mock=%mockRead%, ExpectedCount=1)",
       "source": null,
       "waitForExecution": true
     },
@@ -421,7 +412,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "mock.reset(Mock=%mockRead%)",
       "source": null,
       "waitForExecution": true
     },
@@ -439,7 +430,7 @@
             {
               "name": "Expected",
               "value": 0,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -449,7 +440,7 @@
             {
               "name": "Message",
               "value": "reset should clear callCount",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -460,7 +451,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=0, Actual=%mockRead.callCount%, Message=\u0022reset should clear callCount\u0022)",
       "source": null,
       "waitForExecution": true
     }
@@ -470,7 +461,7 @@
   "path": "/Modules/Mock/Mock.test.goal",
   "prPath": "/Modules/Mock/.build/mock.test.pr",
   "hash": "f1cf4d4b7f07539b7158e8373bae9c4eb7a2e4f483e6c13cc31ab3407db8c7f3",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -17,15 +17,21 @@
             {
               "name": "Name",
               "value": "%x%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": 10,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%x%, Value=10, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -51,15 +57,21 @@
             {
               "name": "Name",
               "value": "%y%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": 3,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -67,7 +79,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%y%, Value=3, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -85,7 +97,7 @@
             {
               "name": "Name",
               "value": "%innerRan%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -93,7 +105,13 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -101,7 +119,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%innerRan%, Value=\u0022no\u0022, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -119,7 +137,7 @@
             {
               "name": "Name",
               "value": "%outerAfterRan%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -127,7 +145,13 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -135,7 +159,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%outerAfterRan%, Value=\u0022no\u0022, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -158,15 +182,21 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 5,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -174,7 +204,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "condition.if(Left=%x%, Operator=\u0022\u003E\u0022, Right=5)",
       "source": null,
       "waitForExecution": true
     },
@@ -197,15 +227,21 @@
             {
               "name": "Operator",
               "value": "\u003E",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": 100,
-              "type": "int"
+              "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -213,7 +249,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "condition.if(Left=%y%, Operator=\u0022\u003E\u0022, Right=100)",
       "source": null,
       "waitForExecution": true
     },
@@ -231,12 +267,17 @@
             {
               "name": "Name",
               "value": "%innerRan%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "yes",
-              "type": "object"
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -253,7 +294,7 @@
       "guidance": "Set %innerRan% = \u0022yes\u0022. This step is the body of the inner condition; since %y% = 3, the inner condition (%y% \u003E 100) is false, so this step should be skipped at runtime. Still, it compiles to a variable.set.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "variable.set(Name=%innerRan%, Value=\u0022yes\u0022, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -271,12 +312,17 @@
             {
               "name": "Name",
               "value": "%outerAfterRan%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "yes",
-              "type": "object"
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -293,7 +339,7 @@
       "guidance": "Set %outerAfterRan% = \u0022yes\u0022. This is the step after the inner-if within the outer-if block; since the outer condition (%x% \u003E 5) is true, this should execute.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "variable.set(Name=%outerAfterRan%, Value=\u0022yes\u0022, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -321,7 +367,7 @@
             {
               "name": "Message",
               "value": "inner block should be skipped (y not \u003E 100)",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -332,7 +378,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022no\u0022, Actual=%innerRan%, Message=\u0022inner block should be skipped (y not \u003E 100)\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -360,7 +406,7 @@
             {
               "name": "Message",
               "value": "outer block step after inner-if should execute",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -371,17 +417,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022yes\u0022, Actual=%outerAfterRan%, Message=\u0022outer block step after inner-if should execute\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionNested.test.goal",
-  "prPath": "/.build/conditionnested.test.pr",
+  "path": "/Modules/Condition/If/Nested/ConditionNested.test.goal",
+  "prPath": "/Modules/Condition/If/Nested/.build/conditionnested.test.pr",
   "hash": "fa1b29070a16b3c7970d353c4240aa79f32eb16faa7ed137f08e0c200504cbb0",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

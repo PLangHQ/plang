@@ -108,8 +108,9 @@ The debug output tells you exactly:
 - Whether variables resolved correctly
 
 **Fix the root cause, not the symptom.** If the LLM consistently misinterprets something:
-- Fix the builder prompt (`system/builder/llm/BuildGoal.llm`) — add rules, examples, or constraints
-- Fix the validator (`system/builder/.build/validatebuildresponse.pr`) — add checks that force the LLM to correct itself
+- Fix the per-action teaching first: `os/system/modules/<m>/<action>.{notes,examples,description}.md`. These are rendered into the compile user prompt only when the action is in the planner's set, so the fix lands precisely where the LLM is going wrong.
+- Cross-cutting rules (applies to every action) go in `system/builder/llm/Compile.llm` (compiler system prompt) or `Plan.llm` (planner). Keep these lean — heavy per-action density belongs in the per-action notes.
+- Fix the validator (`system/builder/BuildStep/Validate.goal` and the C# `builder.validate` action) — add checks that force the LLM to correct itself via the FixValidation retry path.
 - Never work around it by changing the PLang code being built — real users will write similar code
 
 **After every build, read the .pr file and verify:**

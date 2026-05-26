@@ -19,37 +19,7 @@
               "value": [
                 "http"
               ],
-              "type": "list"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "test",
-          "action": "tag",
-          "parameters": [
-            {
-              "name": "Tags",
-              "value": [
-                "http"
-              ],
-              "type": "list"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "test",
-          "action": "tag",
-          "parameters": [
-            {
-              "name": "Tags",
-              "value": [
-                "http"
-              ],
-              "type": "list"
+              "type": "list\u00601"
             }
           ],
           "defaults": null,
@@ -60,7 +30,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.tag(Tags=[\u0022http\u0022])",
       "source": null,
       "waitForExecution": true
     },
@@ -81,7 +51,7 @@
                 "fast",
                 "slow"
               ],
-              "type": "list\u003Cstring\u003E"
+              "type": "list\u00601"
             }
           ],
           "defaults": null,
@@ -94,7 +64,7 @@
             {
               "name": "Name",
               "value": "%tags%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -116,7 +86,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.tag(Tags=[\u0022fast\u0022,\u0022slow\u0022]) , variable.set(Name=%tags%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -134,7 +104,7 @@
             {
               "name": "ListName",
               "value": "%tags%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -147,15 +117,21 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -163,7 +139,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "list.count(ListName=%tags%) , variable.set(Name=%count%, Value=%!data%, type=int)",
       "source": null,
       "waitForExecution": true
     },
@@ -181,7 +157,7 @@
             {
               "name": "Expected",
               "value": 3,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -197,7 +173,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=%count%, Actual=3)",
       "source": null,
       "waitForExecution": true
     },
@@ -215,12 +191,12 @@
             {
               "name": "ListName",
               "value": "%tags%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "http",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -233,15 +209,21 @@
             {
               "name": "Name",
               "value": "%hasHttp%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -249,7 +231,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "list.contains(ListName=%tags%, Value=\u0022http\u0022), variable.set(Name=%hasHttp%, Value=%!data%, Type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -278,7 +260,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasHttp%)",
       "source": null,
       "waitForExecution": true
     },
@@ -296,12 +278,12 @@
             {
               "name": "ListName",
               "value": "%tags%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "fast",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -314,15 +296,21 @@
             {
               "name": "Name",
               "value": "%hasFast%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -330,7 +318,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "list.contains(ListName=%tags%, Value=\u0022fast\u0022), variable.set(Name=%hasFast%, Value=%!data%, Type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -359,7 +347,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasFast%)",
       "source": null,
       "waitForExecution": true
     },
@@ -377,12 +365,12 @@
             {
               "name": "ListName",
               "value": "%tags%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "slow",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -395,15 +383,21 @@
             {
               "name": "Name",
               "value": "%hasSlow%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -411,7 +405,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "list.contains(ListName=%tags%, Value=\u0022slow\u0022), variable.set(Name=%hasSlow%, Value=%!data%, Type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -440,17 +434,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasSlow%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestTagAccumulatesUserTagsOnRun.test.goal",
-  "prPath": "/.build/testtagaccumulatesusertagsonrun.test.pr",
+  "path": "/Modules/Test/Tag/TestTagAccumulatesUserTagsOnRun.test.goal",
+  "prPath": "/Modules/Test/Tag/.build/testtagaccumulatesusertagsonrun.test.pr",
   "hash": "8c1946d4479b68d6874fc61ef7d2cefbfb715158b2da482fc531cdd1ec4bb1fe",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

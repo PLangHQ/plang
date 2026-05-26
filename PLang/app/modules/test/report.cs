@@ -1,6 +1,7 @@
 using System.Security;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using app.errors;
 using app.tester;
@@ -29,14 +30,22 @@ public partial class report : IContext
         var testing = Context.App!.Tester;
         var format = Format?.Value ?? testing.Format;
 
-        var console = new StringBuilder();
-        RenderConsole(console, results, testing);
-        RenderCoverageTables(console, testing, Context.App.Modules);
-        await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, console.ToString());
+        // Suppress the console summary when we're nested inside another test
+        // (CurrentTest is set by test.run when it spins up the per-test child
+        // App). The parent test consumes results via the returned Data
+        // Properties (content, summaryPass, summaryFail, etc.); printing the
+        // nested run's status lines to stdout would otherwise pollute the
+        // outer `plang --test` output and look like top-level test failures.
+        if (testing.CurrentTest == null)
+        {
+            var console = new StringBuilder();
+            RenderConsole(console, results, testing);
+            RenderCoverageTables(console, testing, Context.App.Modules);
+            await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, console.ToString());
+        }
 
         // Write the file artefact through path verbs (gated). .test/ lives
         // at the app root.
-        var app = Context.App;
         var ctx = Context;
         string reportFile;
         string content;
@@ -95,11 +104,11 @@ public partial class report : IContext
         foreach (var run in results)
         {
             var currentBuilderVersion = ResolveBuilderVersion(testing);
-            var drift = !string.IsNullOrEmpty(run.File.BuilderVersion)
+            var drift = !string.IsNullOrEmpty(run.File.Goal.BuilderVersion)
                 && !string.IsNullOrEmpty(currentBuilderVersion)
-                && !string.Equals(run.File.BuilderVersion, currentBuilderVersion, StringComparison.Ordinal);
+                && !string.Equals(run.File.Goal.BuilderVersion, currentBuilderVersion, StringComparison.Ordinal);
 
-            sb.AppendLine($"  [{run.Status}] {run.File.Path} ({run.Duration.TotalMilliseconds:F0}ms)"
+            sb.AppendLine($"  [{run.Status}] {run.File.Goal.Path} ({run.Duration.TotalMilliseconds:F0}ms)"
                 + (drift ? " [builder drift]" : ""));
 
             if (run.Status == global::app.tester.Status.Fail && run.Error != null)
@@ -109,7 +118,7 @@ public partial class report : IContext
 
     private static void RenderFailure(StringBuilder sb, global::app.tester.Run run)
     {
-        sb.AppendLine("    FAIL: " + run.File.Path);
+        sb.AppendLine("    FAIL: " + run.File.Goal.Path);
         if (run.Error is AssertionError assert)
         {
             sb.AppendLine($"      Expected: {FormatValue(assert.Expected)}");
@@ -125,10 +134,10 @@ public partial class report : IContext
         {
             sb.AppendLine($"      Error: {run.Error?.Message}");
         }
-        if (!string.IsNullOrEmpty(run.CapturedOutput))
+        if (!string.IsNullOrEmpty(run.Output))
         {
             sb.AppendLine("      Output:");
-            foreach (var line in StripAnsi(run.CapturedOutput).Split('\n'))
+            foreach (var line in StripAnsi(run.Output).Split('\n'))
                 sb.AppendLine("        " + line);
         }
     }
@@ -246,17 +255,19 @@ public partial class report : IContext
         {
             runs.Add(new
             {
-                path = run.File.Path,
-                entryGoal = run.File.EntryGoalName,
+                path = run.File.Goal.Path?.ToString(),
+                entryGoal = run.File.Goal.Name,
                 status = run.Status.ToString(),
                 durationMs = run.Duration.TotalMilliseconds,
-                goalHash = run.File.GoalHash,
-                builderVersion = run.File.BuilderVersion,
+                goalHash = run.File.Goal.Hash,
+                builderVersion = run.File.Goal.BuilderVersion,
                 tags = run.File.Tags.Concat(run.UserTags).Distinct().ToList(),
                 error = run.Error?.Message,
                 expected = (run.Error as AssertionError)?.Expected,
                 actual = (run.Error as AssertionError)?.Actual,
-                variables = (run.Error as AssertionError)?.Variables
+                variables = (run.Error as AssertionError)?.Variables,
+                output = run.Output ?? "",
+                timings = run.Timings.Select(t => new { stepIndex = t.StepIndex, ms = t.Ms }).ToList()
             });
         }
         // Structured coverage block — no emoji; downstream tooling renders as it likes.
@@ -277,21 +288,26 @@ public partial class report : IContext
             runs,
             branchCoverage
         };
-        return JsonSerializer.Serialize(envelope, global::app.Diagnostics.Format.Options);
+        return JsonSerializer.Serialize(envelope, ReportOptions);
     }
+
+    // Local options clone with IgnoreCycles. Needed because AssertionError.Variables
+    // can carry runtime objects whose graph reaches back into App.CallStack
+    // (Error → CallFrames → Caller → Chain → …). Default options abort on cycle and
+    // the whole results.json fails to write. Clone (not mutate the shared Format.Options)
+    // — other callers of Format.Options should not silently lose cycle detection.
+    // Follow-up: prune Error/CallFrame instances out of the Variables snapshot at
+    // capture time (see Documentation/v0.2/todos.md "Variables snapshot cycle prune").
+    private static readonly JsonSerializerOptions ReportOptions
+        = new(global::app.Diagnostics.Format.Options) { ReferenceHandler = ReferenceHandler.IgnoreCycles };
 
     private static string BuildJUnit(app.tester.Results results)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine($"<testsuites tests=\"{results.Count}\" failures=\"{results.Count(r => r.Status == global::app.tester.Status.Fail)}\" errors=\"0\">");
-        // Pure string-name math: strip the trailing segment after the last separator.
-        var byPath = results.GroupBy(r =>
-        {
-            var p = r.File.Path ?? "";
-            var sep = p.LastIndexOfAny(new[] { '/', '\\' });
-            return sep >= 0 ? p[..sep] : "";
-        });
+        // Group by the goal's parent folder (path verb, no string surgery).
+        var byPath = results.GroupBy(r => r.File.Goal.Path?.Parent?.ToString() ?? "");
         foreach (var group in byPath)
         {
             var suiteTests = group.ToList();
@@ -300,7 +316,7 @@ public partial class report : IContext
             sb.AppendLine($"  <testsuite name=\"{SecurityElement.Escape(group.Key)}\" tests=\"{suiteTests.Count}\" failures=\"{failures}\" time=\"{timeSec:F3}\">");
             foreach (var run in suiteTests)
             {
-                var name = SecurityElement.Escape(run.File.Path) ?? "";
+                var name = SecurityElement.Escape(run.File.Goal.Path?.ToString() ?? "") ?? "";
                 sb.Append($"    <testcase name=\"{name}\" time=\"{run.Duration.TotalSeconds:F3}\"");
                 if (run.Status == global::app.tester.Status.Pass) sb.AppendLine(" />");
                 else

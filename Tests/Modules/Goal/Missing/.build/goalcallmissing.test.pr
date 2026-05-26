@@ -17,14 +17,12 @@
             {
               "name": "GoalName",
               "value": {
-                "name": "NonExistentGoal"
+                "name": "NonExistentGoal",
+                "parallel": false,
+                "parameters": [],
+                "prPath": null
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this",
-              "type": "actor(user|service|system)"
             }
           ],
           "defaults": null,
@@ -43,21 +41,15 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "HandleMissing"
+                            "name": "HandleMissing",
+                            "parameters": []
                           },
                           "type": "goal.call"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
-                },
-                {
-                  "name": "IgnoreError",
-                  "value": false,
-                  "type": "bool"
                 }
               ],
               "defaults": null,
@@ -70,7 +62,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022NonExistentGoal\u0022}) | error.handle(Actions=[goal.call(GoalName={name:\u0022HandleMissing\u0022})])",
       "source": null,
       "waitForExecution": true
     },
@@ -87,12 +79,12 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": true,
-              "type": "bool"
+              "value": "%missingCaught%",
+              "type": "object"
             },
             {
               "name": "Actual",
-              "value": "%missingCaught%",
+              "value": true,
               "type": "object"
             }
           ],
@@ -104,17 +96,17 @@
       "guidance": "Post-condition assertion that %missingCaught% equals true. This should fail the step if the value differs.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=%missingCaught%, Actual=true)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/GoalCallMissing.test.goal",
-  "prPath": "/.build/goalcallmissing.test.pr",
+  "path": "/Modules/Goal/Missing/GoalCallMissing.test.goal",
+  "prPath": "/Modules/Goal/Missing/.build/goalcallmissing.test.pr",
   "hash": "42ff00589e01e37c2a08137308ad6fc27dc45b3a0b3cd118fb5496c7fc4978f7",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

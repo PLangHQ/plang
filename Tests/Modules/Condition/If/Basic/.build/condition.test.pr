@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%flag%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -25,7 +25,13 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%flag%, Value=true)",
       "source": null,
       "waitForExecution": true
     },
@@ -51,30 +57,26 @@
             {
               "name": "Left",
               "value": "%flag%",
-              "type": "bool"
+              "type": "object"
             },
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": true,
               "type": "bool"
-            },
-            {
-              "name": "Negate",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -84,18 +86,12 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "SetTrue",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/settrue.pr"
+                "name": "SetTrue",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Modules/Condition/If/Basic/.build/settrue.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -106,7 +102,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "condition.if(Left=%flag%, Operator=\u0022==\u0022, Right=true), goal.call(GoalName={name:\u0022SetTrue\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -119,22 +115,17 @@
       "actions": [
         {
           "module": "assert",
-          "action": "equals",
+          "action": "isTrue",
           "parameters": [
             {
-              "name": "Expected",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "value": "%wasTrue%",
               "type": "object"
             },
             {
               "name": "Message",
               "value": "if-true branch should execute",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -145,7 +136,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%wasTrue%, Message=\u0022if-true branch should execute\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -163,15 +154,26 @@
             {
               "name": "Name",
               "value": "%noFlag%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": false,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -179,7 +181,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%noFlag%, Value=false, Type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -202,59 +204,43 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "operator(==|!=|\u003E|\u003C|\u003E=|\u003C=|contains|startswith|endswith|in|isempty|and|or)"
+              "type": "operator"
             },
             {
               "name": "Right",
-              "value": "true",
-              "type": "string"
-            },
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
             {
-              "name": "Negate",
+              "name": "negate",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
             }
           ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
-            {
-              "name": "GoalName",
-              "value": {
-                "Name": "SetWrong",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/setwrong.pr"
-              },
-              "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
-            }
-          ],
-          "defaults": null,
           "modifiers": []
         },
         {
           "module": "condition",
           "action": "else",
+          "parameters": [],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "goal",
+          "action": "call",
           "parameters": [
             {
-              "name": "Step",
-              "value": "this",
-              "type": "string"
+              "name": "GoalName",
+              "value": {
+                "name": "SetWrong",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Modules/Condition/If/Basic/.build/setwrong.pr"
+              },
+              "type": "goal.call"
             }
           ],
           "defaults": null,
@@ -267,18 +253,12 @@
             {
               "name": "GoalName",
               "value": {
-                "Name": "SetFalse",
-                "Description": null,
-                "Parallel": false,
-                "Parameters": null,
-                "PrPath": "/.build/setfalse.pr"
+                "name": "SetFalse",
+                "parallel": false,
+                "parameters": [],
+                "prPath": "/Modules/Condition/If/Basic/.build/setfalse.pr"
               },
               "type": "goal.call"
-            },
-            {
-              "name": "Actor",
-              "value": "this?(user|service|system)",
-              "type": "actor"
             }
           ],
           "defaults": null,
@@ -289,7 +269,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "condition.if(Left=%noFlag%, Operator=\u0022==\u0022, Right=true) , condition.else(), goal.call(GoalName={name:\u0022SetWrong\u0022}) , goal.call(GoalName={name:\u0022SetFalse\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -302,22 +282,17 @@
       "actions": [
         {
           "module": "assert",
-          "action": "equals",
+          "action": "isTrue",
           "parameters": [
             {
-              "name": "Expected",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "value": "%wasFalse%",
               "type": "object"
             },
             {
               "name": "Message",
               "value": "else branch should execute",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -328,17 +303,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%wasFalse%, Message=\u0022else branch should execute\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Condition.test.goal",
-  "prPath": "/.build/condition.test.pr",
+  "path": "/Modules/Condition/If/Basic/Condition.test.goal",
+  "prPath": "/Modules/Condition/If/Basic/.build/condition.test.pr",
   "hash": "afeace710baab1e7e08bdde31918fa94ca3f912ba6b7e051437914824fdf6640",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

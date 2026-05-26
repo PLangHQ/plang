@@ -321,9 +321,13 @@ public sealed class @this : IAsyncDisposable
                     var hasVar = IsVariableNameSlot(prop.PropertyType);
                     var defaultAttr = prop.GetCustomAttribute<modules.DefaultAttribute>();
 
-                    // Variable slots advertise as "%var% string" so the LLM emits
-                    // a variable name (with or without %), not the literal type token.
-                    var desc = hasVar ? "%var% string" : typeName;
+                    // Variable slots advertise as "%var%" — the marker alone tells the LLM
+                    // this parameter takes a variable reference. Don't append a type token:
+                    // `Variable` only constrains the slot to *name* a variable; what the
+                    // variable resolves to at runtime is unconstrained (list, dict, bool,
+                    // object — anything). A trailing "string" was a lie that produced
+                    // spurious ambiguousMapping warnings when scope held a non-string.
+                    var desc = hasVar ? "%var%" : typeName;
                     if (defaultAttr != null)
                         desc += $" = {FormatDefault(defaultAttr.Value)}";
 

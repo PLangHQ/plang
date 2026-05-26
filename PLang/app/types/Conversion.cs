@@ -413,8 +413,13 @@ public sealed partial class @this
             string json = "";
             try
             {
-                json = JsonSerializer.Serialize(value);
-                var result = JsonSerializer.Deserialize(json, targetType, _caseInsensitiveRead);
+                // Serialize with the same converter set as the read side so a
+                // path.@this nested in the dict goes through PathJsonConverter
+                // (string form) instead of being reflected into a full object
+                // graph that the read side then can't deserialize.
+                var writeOpts = context != null ? ContextualReadOptions(context) : _caseInsensitiveRead;
+                json = JsonSerializer.Serialize(value, writeOpts);
+                var result = JsonSerializer.Deserialize(json, targetType, writeOpts);
                 return (result, null);
             }
             catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))

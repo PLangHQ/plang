@@ -18,30 +18,19 @@
               "name": "Message",
               "value": "boom",
               "type": "string"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "statuscode",
+              "name": "StatusCode",
               "value": 500,
               "type": "int"
             }
           ],
+          "defaults": null,
           "modifiers": [
             {
               "module": "error",
               "action": "handle",
               "parameters": [
-                {
-                  "name": "RetryCount",
-                  "value": 1,
-                  "type": "int"
-                },
-                {
-                  "name": "Order",
-                  "value": "RetryFirst",
-                  "type": "errororder"
-                },
                 {
                   "name": "Actions",
                   "value": [
@@ -59,21 +48,23 @@
                           "value": "from-recovery",
                           "type": "string"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
-                  "type": "list\u00601"
-                }
-              ],
-              "defaults": [
+                  "type": "list\u003Caction\u003E"
+                },
                 {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
+                  "name": "Order",
+                  "value": "RetryFirst",
+                  "type": "errororder"
+                },
+                {
+                  "name": "RetryCount",
+                  "value": 1,
+                  "type": "int"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             }
           ]
@@ -83,7 +74,7 @@
       "guidance": "Throw the initial error. The step text says to handle it with RetryFirst order, retry 1, and set %content% to the recovery value after retries are exhausted. In engine terms: error.throw first, then error.handle with RetryCount=1, Order=RetryFirst, and a recovery Actions chain that sets %content%.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "error.throw(Message=\u0022boom\u0022, StatusCode=500) | error.handle(Actions=[variable.set(Name=%content%, Value=\u0022from-recovery\u0022, AsDefault=false)], Order=RetryFirst, RetryCount=1)",
       "source": null,
       "waitForExecution": true
     },
@@ -100,12 +91,12 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": "from-recovery",
-              "type": "string"
+              "value": "%content%",
+              "type": "object"
             },
             {
               "name": "Actual",
-              "value": "%content%",
+              "value": "from-recovery",
               "type": "object"
             },
             {
@@ -122,7 +113,7 @@
       "guidance": "Post-condition: verify %content% equals the recovery value. Use assert.equals with Expected as the literal and Actual as %content%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=%content%, Actual=\u0022from-recovery\u0022, Message=\u0022recovery\u0027s variable.set must have executed after retry exhausted\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -156,17 +147,17 @@
       "guidance": "Post-condition: verify %!error% is null. Use assert.isNull on %!error%.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "assert.isNull(Value=%!error%, Message=\u0022Handled flag must be set in the RetryFirst path too \u2014 symmetric with GoalFirst\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Errors/RetryFirstReturnsRecoveryValue.test.goal",
-  "prPath": "/Tests/Errors/.build/retryfirstreturnsrecoveryvalue.test.pr",
+  "path": "/Errors/RetryFirstReturnsRecoveryValue.test.goal",
+  "prPath": "/Errors/.build/retryfirstreturnsrecoveryvalue.test.pr",
   "hash": "7260ef959a0fb41cb218859eaf7a9b990aea5340755bb931e1a40386218a8970",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

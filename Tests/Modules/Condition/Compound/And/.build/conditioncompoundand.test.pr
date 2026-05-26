@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%a%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -39,7 +39,7 @@
       "guidance": "Initialize %a% to 5 using variable.set.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "variable.set(Name=%a%, Value=5)",
       "source": null,
       "waitForExecution": true
     },
@@ -57,12 +57,17 @@
             {
               "name": "Name",
               "value": "%b%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": 3,
               "type": "int"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -79,7 +84,7 @@
       "guidance": "Initialize %b% to 3 using variable.set.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "variable.set(Name=%b%, Value=3, Type=int)",
       "source": null,
       "waitForExecution": true
     },
@@ -92,12 +97,106 @@
       "actions": [
         {
           "module": "condition",
+          "action": "compare",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%a%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003E",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": 1,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%andL%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "compare",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%b%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "\u003C",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": 10,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%andR%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "condition",
           "action": "if",
           "parameters": [
             {
               "name": "Left",
-              "value": "%a% \u003E 1",
-              "type": "bool"
+              "value": "%andL%",
+              "type": "object"
             },
             {
               "name": "Operator",
@@ -106,8 +205,8 @@
             },
             {
               "name": "Right",
-              "value": "%b% \u003C 10",
-              "type": "bool"
+              "value": "%andR%",
+              "type": "object"
             }
           ],
           "defaults": [
@@ -128,8 +227,8 @@
               "value": {
                 "name": "DoThing",
                 "parallel": false,
-                "parameters": null,
-                "prPath": "/.build/dothing.pr"
+                "parameters": [],
+                "prPath": "/Modules/Condition/Compound/And/.build/dothing.pr"
               },
               "type": "goal.call"
             }
@@ -142,7 +241,7 @@
       "guidance": "Evaluate compound AND condition: %a% \u003E 1 and %b% \u003C 10. If true, call DoThing. The AND is represented as a single condition.if with operator \u0027and\u0027 and the two boolean sub-expressions as Left/Right.",
       "level": "medium",
       "confidence": 62,
-      "formal": null,
+      "formal": "condition.compare(Left=%a%, Operator=\u0022\u003E\u0022, Right=1) , variable.set(Name=%andL%, Value=%!data%, Type=string) , condition.compare(Left=%b%, Operator=\u0022\u003C\u0022, Right=10) , variable.set(Name=%andR%, Value=%!data%, Type=string) , condition.if(Left=%andL%, Operator=\u0022and\u0022, Right=%andR%) , goal.call(GoalName={name:\u0022DoThing\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -181,17 +280,17 @@
       "guidance": "Post-condition invariant: %result% must equal the string \u0022both-true\u0022. Use assert.equals.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022both-true\u0022, Actual=%result%, Message=\u0022AND condition should pass when both sides true\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionCompoundAnd.test.goal",
-  "prPath": "/.build/conditioncompoundand.test.pr",
+  "path": "/Modules/Condition/Compound/And/ConditionCompoundAnd.test.goal",
+  "prPath": "/Modules/Condition/Compound/And/.build/conditioncompoundand.test.pr",
   "hash": "1b2c7e71ed1ee4211f422eeead71eb38e7c7849066e50b810718f63ada6ea335",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

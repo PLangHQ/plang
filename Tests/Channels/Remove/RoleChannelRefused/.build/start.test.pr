@@ -43,21 +43,13 @@
                           "value": true,
                           "type": "bool"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": [
-                {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
+              "defaults": null,
               "modifiers": []
             }
           ]
@@ -67,7 +59,7 @@
       "guidance": "Try to remove the standard channel named \u0022output\u0022. The engine refuses this; use on-error handling to set %removalRefused% = true.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "channel.remove(Name=\u0022output\u0022, Actor=%system%) | error.handle(Actions=[variable.set(Name=%removalRefused%, Value=true, Type=bool)])",
       "source": null,
       "waitForExecution": true
     },
@@ -85,7 +77,7 @@
             {
               "name": "Value",
               "value": "%removalRefused%",
-              "type": "bool"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -96,7 +88,7 @@
       "guidance": "Post-condition assertion that the removal was refused (flag must be true).",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%removalRefused%)",
       "source": null,
       "waitForExecution": true
     },
@@ -114,12 +106,7 @@
             {
               "name": "Data",
               "value": "still here",
-              "type": "string"
-            },
-            {
-              "name": "channel",
-              "value": "output",
-              "type": "this"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -130,17 +117,17 @@
       "guidance": "Write literal \u0027still here\u0027 to the actor\u0027s output channel. The step text explicitly targets output, so use output.write with channel=\u0027output\u0027.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "output.write(Data=\u0022still here\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Remove/RoleChannelRefused/Start.test.goal",
-  "prPath": "/Remove/RoleChannelRefused/.build/start.test.pr",
+  "path": "/Channels/Remove/RoleChannelRefused/Start.test.goal",
+  "prPath": "/Channels/Remove/RoleChannelRefused/.build/start.test.pr",
   "hash": "fff88bfa9f6f69ae8c5f33131c69eeb1592c782d2873e924e7a3189917675755",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

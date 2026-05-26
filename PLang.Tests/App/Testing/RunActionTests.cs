@@ -75,17 +75,9 @@ public class RunActionTests
         System.IO.File.WriteAllText(prFile,
             JsonSerializer.Serialize(goal, global::app.Utils.Json.CamelCaseIndented));
 
-        var fileName = System.IO.Path.GetFileName(absFile);
-        var prFileName = System.IO.Path.ChangeExtension(fileName, ".pr").ToLowerInvariant();
-
         return new global::app.tester.File
         {
-            Path = relativePath,
-            Directory = absDir,
-            PrPath = ".build/" + prFileName,
             Goal = goal,
-            EntryGoalName = goalName,
-            GoalHash = goal.Hash,
             Status = global::app.tester.Status.Ready
         };
     }
@@ -347,10 +339,12 @@ public class RunActionTests
             {
                 ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
             });
-            var stale = new global::app.tester.File { Path = "Stale.test.goal", Directory = _tempDir,
-                PrPath = ".build/stale.test.pr", Status = global::app.tester.Status.Stale, StatusReason = "no .pr" };
-            var skipped = new global::app.tester.File { Path = "Skip.test.goal", Directory = _tempDir,
-                PrPath = ".build/skip.test.pr", Status = global::app.tester.Status.Skipped, StatusReason = "excluded by tag" };
+            var stale = new global::app.tester.File {
+                Goal = new Goal { Name = "Stale", Path = "/Stale.test.goal" },
+                Status = global::app.tester.Status.Stale, StatusReason = "no .pr" };
+            var skipped = new global::app.tester.File {
+                Goal = new Goal { Name = "Skip", Path = "/Skip.test.goal" },
+                Status = global::app.tester.Status.Skipped, StatusReason = "excluded by tag" };
 
             var results = await RunTests(new List<global::app.tester.File> { ready, stale, skipped });
             var runs = results.ToList();
@@ -441,8 +435,8 @@ public class RunActionTests
         await Assert.That(run.Status).IsEqualTo(global::app.tester.Status.Pass);
 
         // Site key format: "<goalPath>:<stepIndex>" — matches run.cs:91-95.
-        // Path.ToString() returns the Relative form (root-stripped, no leading "/").
-        var site = "Cond.test.goal:0";
+        // Path.ToString() returns the Relative form (canonical: leading "/").
+        var site = "/Cond.test.goal:0";
 
         // BranchLabels populated via the production subscriber reading
         // result.Properties["branchLabel"] and calling RecordBranchLabel.
@@ -459,6 +453,126 @@ public class RunActionTests
 
         // Indices map gets the simple-path 0 (condition was true).
         await Assert.That(_app.Tester.Coverage.Branches[site].Contains(0)).IsTrue();
+    }
+
+    // BeforeWrite output capture: writes routed to the "output" channel land on
+    // Run.Output (filtered by channel name in run.cs:149). Writes to "error" do not.
+    // The filter must hold both directions — an inversion would either leak Error
+    // payloads into Output or drop Output writes entirely.
+    [Test]
+    public async Task Run_OutputCapture_OutputChannelOnly_ErrorChannelExcluded()
+    {
+        // Two foundational channels need to exist on the child App's User actor
+        // before the fixture runs (otherwise output.write fails with ChannelNotFound).
+        // Register them at ChildAppCreated time, against MemoryStreams we don't read —
+        // we only assert through Run.Output, which is fed by the production
+        // BeforeWrite subscriber in test/run.cs, not by reading these streams.
+        var outStream = new System.IO.MemoryStream();
+        var errStream = new System.IO.MemoryStream();
+        void Probe(global::app.@this childApp)
+        {
+            if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
+            childApp.User.Channels.Register(new StreamChannel(
+                EngineChannels.Output, outStream,
+                ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+            childApp.User.Channels.Register(new StreamChannel(
+                EngineChannels.Error, errStream,
+                ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        }
+        global::app.modules.test.run.ChildAppCreated += Probe;
+        try
+        {
+            var test = BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
+            {
+                // No `channel` param → defaults to "output".
+                ("output", "write", new List<Data> { new("Data", "hello-output") }),
+                // Explicit channel routing to "error".
+                ("output", "write", new List<Data>
+                {
+                    new("Data", "hello-error"),
+                    new("channel", "error")
+                })
+            });
+
+            var results = await RunTests(new List<global::app.tester.File> { test });
+            var run = results.Single();
+
+            await Assert.That(run.Status).IsEqualTo(global::app.tester.Status.Pass);
+            await Assert.That(run.Output).IsNotNull();
+            await Assert.That(run.Output!).Contains("hello-output");
+            // The error-channel write must NOT leak into Run.Output.
+            await Assert.That(run.Output!).DoesNotContain("hello-error");
+        }
+        finally
+        {
+            global::app.modules.test.run.ChildAppCreated -= Probe;
+        }
+    }
+
+    // Per-step Timings: only the entry goal's top-level steps. Nested sub-goal
+    // steps roll up into their calling step (AfterStep on the caller doesn't
+    // fire until the call returns). An entry goal with 3 steps — step 1 calls a
+    // 2-step sub-goal — must produce exactly 3 Timing rows, not 5, with
+    // StepIndex matching the entry-goal steps.
+    [Test]
+    public async Task Run_Timings_OnlyEntryGoalTopLevelSteps_NestedRollUp()
+    {
+        // Helper sub-goal: 2 steps. Written as a sibling .pr next to the entry's
+        // .build directory so goal.call's name-based resolver (slot 3 in
+        // GoalCall.GetGoalAsync — `{callerDir}/.build/{name}.pr`) finds it.
+        var helperGoal = new Goal
+        {
+            Name = "Helper",
+            Path = "/Helper.goal",
+            Steps = new GoalSteps
+            {
+                new Step { Index = 0, Text = "h0", Actions = new StepActions
+                {
+                    new PrAction { Module = "variable", ActionName = "set",
+                        Parameters = new List<Data> { new("Name", "h0"), new("Value", 0) } }
+                }},
+                new Step { Index = 1, Text = "h1", Actions = new StepActions
+                {
+                    new PrAction { Module = "variable", ActionName = "set",
+                        Parameters = new List<Data> { new("Name", "h1"), new("Value", 1) } }
+                }}
+            }
+        };
+        _ = helperGoal.Hash;
+
+        var helperPrAbs = System.IO.Path.Combine(_tempDir, ".build", "helper.pr");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(helperPrAbs)!);
+        System.IO.File.WriteAllText(helperPrAbs,
+            System.Text.Json.JsonSerializer.Serialize(helperGoal,
+                global::app.Utils.Json.CamelCaseIndented));
+
+        // Entry goal: 3 top-level steps. Step 1 calls Helper (which has its own
+        // 2 steps). Timings should record exactly steps 0, 1, 2 of the entry.
+        var entry = BuildFixture("Tim.test.goal", "Tim", new (string, string, List<Data>)[]
+        {
+            ("variable", "set", new List<Data> { new("Name", "a"), new("Value", 1) }),
+            ("goal", "call", new List<Data>
+            {
+                new("GoalName", new GoalCall { Name = "Helper" }, global::app.data.type.FromName("goal.call"))
+            }),
+            ("variable", "set", new List<Data> { new("Name", "b"), new("Value", 2) })
+        });
+
+        var results = await RunTests(new List<global::app.tester.File> { entry });
+        var run = results.Single();
+
+        await Assert.That(run.Status).IsEqualTo(global::app.tester.Status.Pass);
+        // Exactly 3 timings — entry-goal-only, sub-goal's 2 steps rolled up.
+        await Assert.That(run.Timings.Count).IsEqualTo(3);
+        var indices = run.Timings.Select(t => t.StepIndex).OrderBy(i => i).ToList();
+        await Assert.That(indices[0]).IsEqualTo(0);
+        await Assert.That(indices[1]).IsEqualTo(1);
+        await Assert.That(indices[2]).IsEqualTo(2);
+        // Each step recorded a real wall-clock duration; Ms is non-negative
+        // (the goal.call step at index 1 bundles the sub-goal time so it's
+        // typically the largest, but we don't pin the magnitude).
+        foreach (var t in run.Timings)
+            await Assert.That(t.Ms >= 0.0).IsTrue();
     }
 
     // Covers RunSingleAsync's outer catch — a handler that throws an unexpected
@@ -478,7 +592,8 @@ public class RunActionTests
             ("variable", "set", new List<Data> { new("Name", "x"), new("Value", 1) })
         });
         // Corrupt the .pr so deserialization throws inside RunSingleAsync.
-        var prAbs = System.IO.Path.Combine(throwing.Directory, throwing.PrPath);
+        // .pr lives at <_tempDir>/.build/<stem>.pr (BuildFixture recipe).
+        var prAbs = System.IO.Path.Combine(_tempDir, ".build", "throw.test.pr");
         System.IO.File.WriteAllText(prAbs, "{ \"name\": INVALID_JSON");
 
         var healthy = BuildFixture("Healthy.test.goal", "H", new (string, string, List<Data>)[]
@@ -491,11 +606,11 @@ public class RunActionTests
 
         await Assert.That(runs.Count).IsEqualTo(2);
         // Throwing fixture captured as Fail — no exception propagated.
-        var failed = runs.Single(r => r.File.Path == "Throw.test.goal");
+        var failed = runs.Single(r => r.File.Goal.Path?.ToString() == "/Throw.test.goal");
         await Assert.That(failed.Status).IsEqualTo(global::app.tester.Status.Fail);
         await Assert.That(failed.Error).IsNotNull();
         // Healthy fixture still ran — loop stayed parallel-safe.
-        var passed = runs.Single(r => r.File.Path == "Healthy.test.goal");
+        var passed = runs.Single(r => r.File.Goal.Path?.ToString() == "/Healthy.test.goal");
         await Assert.That(passed.Status).IsEqualTo(global::app.tester.Status.Pass);
     }
 }

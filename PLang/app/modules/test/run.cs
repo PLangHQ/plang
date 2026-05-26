@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Text;
 using app.errors;
 using app.tester;
 using app.variables;
@@ -70,7 +72,12 @@ public partial class run : IContext
             return;
         }
 
-        await using var childApp = new app.@this(test.Directory);
+        // Child App roots at the PARENT'S root — same convention the .pr
+        // files were built under. Root-relative paths (Goal.Path, GoalCall
+        // PrPath, test.File.Path / PrPath — all "/Modules/..." shaped) then
+        // resolve correctly. Rooting at test.Directory would deepen the
+        // anchor and double-prefix every stored root-relative path.
+        await using var childApp = new app.@this(parentApp.AbsolutePath);
         childApp.OsDirectory = parentApp.OsDirectory;
         childApp.Parent = parentApp;
         childApp.Tester.IsEnabled = true;
@@ -125,6 +132,67 @@ public partial class run : IContext
             stopOnError: false);
         childApp.User.Context.Events.Register(coverageBinding);
 
+        // Output capture — every write on the User actor's "output" channel
+        // appends to testRun.Output. BeforeWrite (not AfterWrite) — AfterWrite
+        // fires with the *result* of WriteCore (typically value-less Ok), while
+        // BeforeWrite fires with the *input* envelope carrying the actual
+        // payload. Filtered by channel name so writes to "error" / "debug"
+        // don't get captured.
+        var outputBuf = new StringBuilder();
+        var outputBinding = new EventBinding(
+            app.events.EventType.BeforeWrite,
+            (ctx, _, written) =>
+            {
+                // Append newline per write — the stream-channel's text serializer
+                // adds one on flush, so this matches "what stdout sees". A
+                // payload that already ends in \n just gets a blank line, which
+                // is still readable in the UI.
+                if (written?.Value != null)
+                    outputBuf.Append(written.Value).Append('\n');
+                return Task.FromResult(app.data.@this.Ok());
+            },
+            channelName: app.channels.@this.Output,
+            priority: int.MaxValue,
+            stopOnError: false);
+        childApp.User.Context.Events.Register(outputBinding);
+
+        // Per-step timing — only top-level steps of the entry goal. Nested
+        // sub-goal steps roll up because the caller's AfterStep doesn't
+        // fire until the sub-goal returns.
+        var stepStarts = new Dictionary<int, long>();
+        var entryGoalPath = test.Goal.Path?.ToString();
+        bool IsEntryGoalStep(global::app.goals.goal.steps.step.@this? step)
+            => step != null
+            && string.Equals(step.Goal?.Path?.ToString(), entryGoalPath, StringComparison.Ordinal);
+
+        var beforeStepBinding = new EventBinding(
+            app.events.EventType.BeforeStep,
+            (ctx, _, _) =>
+            {
+                var step = ctx.Step;
+                if (IsEntryGoalStep(step))
+                    stepStarts[step!.Index] = Stopwatch.GetTimestamp();
+                return Task.FromResult(app.data.@this.Ok());
+            },
+            priority: int.MaxValue,
+            stopOnError: false);
+        var afterStepBinding = new EventBinding(
+            app.events.EventType.AfterStep,
+            (ctx, _, _) =>
+            {
+                var step = ctx.Step;
+                if (IsEntryGoalStep(step) && stepStarts.Remove(step!.Index, out var start))
+                {
+                    var ms = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
+                    testRun.Timings.Add(step.Index, ms);
+                }
+                return Task.FromResult(app.data.@this.Ok());
+            },
+            priority: int.MaxValue,
+            stopOnError: false);
+        childApp.User.Context.Events.Register(beforeStepBinding);
+        childApp.User.Context.Events.Register(afterStepBinding);
+
         // Test-only hook — see ChildAppCreated declaration above.
         ChildAppCreated?.Invoke(childApp);
 
@@ -138,7 +206,10 @@ public partial class run : IContext
 
         try
         {
-            var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(test.PrPath, childApp.User.Context) };
+            // Goal.PrPath is derived from Goal.Path — already a path.@this
+            // anchored at the child App's root (same root as the parent, post
+            // path-canonicalization on this branch).
+            var goalCall = new GoalCall { PrPath = test.Goal.PrPath };
             var result = await childApp.RunGoalAsync(goalCall, childApp.User.Context, cts.Token);
             if (cts.IsCancellationRequested && !Context.CancellationToken.IsCancellationRequested)
                 testRun.Complete(global::app.tester.Status.Timeout);
@@ -157,6 +228,7 @@ public partial class run : IContext
         finally
         {
             childApp.User.Context.PopCancellation();
+            testRun.Output = outputBuf.Length > 0 ? outputBuf.ToString() : null;
         }
 
         parentApp.Tester.Coverage.Merge(childApp.Tester.Coverage);

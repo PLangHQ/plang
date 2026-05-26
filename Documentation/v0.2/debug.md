@@ -151,7 +151,7 @@ plang build '--build={"files":"myfile.goal","cache":false}' \
 Output:
 ```
 === WATCH [trace] CHANGED ===
-  Goal: BuildGoalCore[8] set %trace% = {"id": "%traceId%"...
+  Goal: BuildGoal/Start[8] set %trace% = {"id": "%traceId%"...
   Raw: null → Dictionary`2
   Resolved: null → Dictionary`2
   at this.FireOnChange:109

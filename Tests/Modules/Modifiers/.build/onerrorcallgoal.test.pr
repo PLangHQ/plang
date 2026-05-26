@@ -19,8 +19,8 @@
               "value": {
                 "name": "FailWithDetails",
                 "parallel": false,
-                "parameters": null,
-                "prPath": null
+                "parameters": [],
+                "prPath": "/Modules/Modifiers/.build/onerrorcallgoal.test.pr"
               },
               "type": "goal.call"
             }
@@ -41,25 +41,18 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "Name": "CaptureError"
+                            "name": "CaptureError",
+                            "parameters": []
                           },
                           "type": "goal.call"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": [
-                {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
+              "defaults": null,
               "modifiers": []
             }
           ]
@@ -69,7 +62,7 @@
       "guidance": "call FailWithDetails, then on error call CaptureError via error.handle recovery chain. The @known mapping indicates the prior .pr is authoritative; emit keep:true only.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022FailWithDetails\u0022}) | error.handle(Actions=[goal.call(GoalName={name:\u0022CaptureError\u0022})])",
       "source": null,
       "waitForExecution": true
     },
@@ -93,11 +86,6 @@
               "name": "Actual",
               "value": "%capturedMessage%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -108,7 +96,7 @@
       "guidance": "Assert that the captured message equals the expected string \u0027specific failure\u0027.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022specific failure\u0022, Actual=%capturedMessage%)",
       "source": null,
       "waitForExecution": true
     }
@@ -133,7 +121,7 @@
                 {
                   "name": "Message",
                   "value": "specific failure",
-                  "type": "tstring"
+                  "type": "string"
                 },
                 {
                   "name": "StatusCode",
@@ -154,7 +142,7 @@
           "guidance": null,
           "level": null,
           "confidence": null,
-          "formal": null,
+          "formal": "error.throw(Message=\u0022specific failure\u0022, StatusCode=422, Key=\u0022TestKey\u0022)",
           "source": null,
           "waitForExecution": true
         }
@@ -190,20 +178,21 @@
                 {
                   "name": "Name",
                   "value": "%capturedMessage%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
                   "value": "%!error.Message%",
                   "type": "object"
-                },
-                {
-                  "name": "Type",
-                  "value": null,
-                  "type": "string?"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ],
@@ -211,7 +200,7 @@
           "guidance": null,
           "level": null,
           "confidence": null,
-          "formal": null,
+          "formal": "variable.set(Name=%capturedMessage%, Value=%!error.Message%, Type=object)",
           "source": null,
           "waitForExecution": true
         }
@@ -233,7 +222,7 @@
   "path": "/Modules/Modifiers/OnErrorCallGoal.test.goal",
   "prPath": "/Modules/Modifiers/.build/onerrorcallgoal.test.pr",
   "hash": "854dd6d3bbba46634f5b170e4c7480fcc20f76e5f7fcc2c122089308448ea03e",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

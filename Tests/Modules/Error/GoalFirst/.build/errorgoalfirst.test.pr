@@ -88,7 +88,7 @@
                 "name": "AlwaysFails",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/alwaysfails.pr"
+                "prPath": "/Modules/Error/GoalFirst/.build/alwaysfails.pr"
               },
               "type": "goal.call"
             },
@@ -193,8 +193,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ErrorGoalFirst.test.goal",
-  "prPath": "/.build/errorgoalfirst.test.pr",
+  "path": "/Modules/Error/GoalFirst/ErrorGoalFirst.test.goal",
+  "prPath": "/Modules/Error/GoalFirst/.build/errorgoalfirst.test.pr",
   "hash": "e7fff35aa8b251b0726e792f79f6f003fbed9f55b66ef9d316cfb0b40b541245",
   "builderVersion": "0.2.2",
   "isSetup": false,

@@ -62,7 +62,7 @@
       "guidance": "Discover fixture files under _fail matching *.fixture.goal recursively, then store the resulting list in %tests%.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_fail\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -98,7 +98,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -115,7 +115,7 @@
       "guidance": "Count discovered tests in %tests% and store the count in %count%.",
       "level": "high",
       "confidence": 97,
-      "formal": null,
+      "formal": "list.count(ListName=%tests%) , variable.set(Name=%count%, Value=%!data%, type=int)",
       "source": null,
       "waitForExecution": true
     },
@@ -133,7 +133,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -149,7 +149,7 @@
       "guidance": "Assert the number of discovered tests equals 1 (expected fixture count).",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "assert.equals(Expected=%count%, Actual=1)",
       "source": null,
       "waitForExecution": true
     },
@@ -202,7 +202,7 @@
       "guidance": "Run the discovered tests in %tests% and store the aggregated results in %results%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "test.run(Tests=%tests%) | variable.set(Name=%results%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -235,7 +235,7 @@
             {
               "name": "Value",
               "value": "Fail",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -253,7 +253,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -270,7 +270,7 @@
       "guidance": "Check whether any test result has Status == \u0027Fail\u0027 and store the boolean in %hasFail%.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "list.any(ListName=%results%, Key=\u0022Status\u0022, Operator=\u0022==\u0022, Value=\u0022Fail\u0022) , variable.set(Name=%hasFail%, Value=%!data%, type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -299,17 +299,17 @@
       "guidance": "Assert that at least one test result failed.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasFail%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Run/TestRunReportsAssertionFailure.test.goal",
-  "prPath": "/Run/.build/testrunreportsassertionfailure.test.pr",
+  "path": "/TestModule/Run/TestRunReportsAssertionFailure.test.goal",
+  "prPath": "/TestModule/Run/.build/testrunreportsassertionfailure.test.pr",
   "hash": "5d80694d511162c5034997665a75b5101994906e80d0362ef0137d6c7fc753cd",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

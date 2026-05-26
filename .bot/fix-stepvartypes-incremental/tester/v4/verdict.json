@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "C# 3036/3036 and PLang 208/208 both green. Coder commit 9af7fd8b2 resolved v3's 6 red-line count by suppressing nested test.report console emission — those were never real top-level failures. Strict-red rule satisfied: zero actual failures."
+}

@@ -71,71 +71,82 @@ public partial class discover : IContext
     private async Task<global::app.tester.File> DiscoverOne(FilePath goalFile, global::app.@this app,
         HashSet<string> include, HashSet<string> exclude)
     {
-        var relGoalPath = NormalizeRelative(goalFile.Relative);
-        var directory = goalFile.Parent?.Absolute ?? app.AbsolutePath;
-
-        // PrPath sibling: <dir>/.build/<stem>.pr — derived via the generic verbs.
-        var stem = goalFile.FileNameWithoutExtension.ToLowerInvariant();
-        var prFile = goalFile.Parent?.Combine(".build").Combine(stem + ".pr") as FilePath
-                     ?? (FilePath)goalFile.Combine(".build").Combine(stem + ".pr");
-        // PrPath as PLang program sees it (relative to the test's own directory).
-        var relPrPath = ".build/" + stem + ".pr";
-
-        var stub = new global::app.tester.File
+        // Read the .goal source first — even when the .pr is missing or
+        // corrupt, the source goal is enough to identify the file.
+        // ReadText returns a typed Goal when the file MIME is application/
+        // plang-goal, or a string fallback that we explicitly parse.
+        var goalRead = await goalFile.ReadText();
+        if (!goalRead.Success)
         {
-            Path = relGoalPath,
-            Directory = directory,
-            PrPath = relPrPath
-        };
+            // Build a minimal goal from just the file's path so File.Goal
+            // is never null. Status=Stale with the read error as reason.
+            return new global::app.tester.File
+            {
+                Goal = new Goal { Path = goalFile },
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "goal read error: " + (goalRead.Error?.Message ?? "")
+            };
+        }
+        var sourceGoal = goalRead.Value as Goal
+            ?? Goal.Parse(goalRead.Value as string ?? "", goalFile)
+            ?? new Goal { Path = goalFile };
+
+        // PrPath is derived on the goal from its Path. The corresponding
+        // build artefact may or may not exist.
+        var prFile = sourceGoal.PrPath as FilePath;
+
+        if (prFile == null)
+        {
+            return new global::app.tester.File
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "no PrPath derivable from goal source"
+            };
+        }
 
         var prExists = await prFile.ExistsAsync();
         if (!prExists.Success || prExists.Value != true)
         {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = "no .pr";
-            return stub;
+            return new global::app.tester.File
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "no .pr"
+            };
         }
 
         // Read the .pr through the gated verb. MIME maps .pr → Goal via
         // ReadText's TryConvertTo branch.
-        Goal? prGoal;
         var prRead = await prFile.ReadText();
         if (!prRead.Success)
         {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = prRead.Error?.Message ?? "pr corrupt";
-            return stub;
+            return new global::app.tester.File
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = prRead.Error?.Message ?? "pr corrupt"
+            };
         }
-        prGoal = prRead.Value as Goal;
+        var prGoal = prRead.Value as Goal;
         if (prGoal == null)
         {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = "pr corrupt";
-            return stub;
+            return new global::app.tester.File
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "pr corrupt"
+            };
         }
 
-        // .goal source read — same gated verb. .goal MIME maps to Goal via Parse.
-        Goal? currentGoal;
-        var goalRead = await goalFile.ReadText();
-        if (!goalRead.Success)
+        if (!string.Equals(sourceGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
         {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = "goal read error: " + (goalRead.Error?.Message ?? "");
-            return stub;
-        }
-        currentGoal = goalRead.Value as Goal;
-        if (currentGoal == null)
-        {
-            // ReadText fell back to plain string — parse explicitly.
-            var goalText = goalRead.Value as string ?? "";
-            currentGoal = Goal.Parse(goalText, goalFile);
-        }
-
-        if (currentGoal == null || !string.Equals(currentGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
-        {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = "rebuild needed";
-            return stub;
+            return new global::app.tester.File
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "rebuild needed"
+            };
         }
 
         // Tags: user-declared (test.tag actions) + auto (handler [RequiresCapability]).
@@ -150,13 +161,7 @@ public partial class discover : IContext
 
         var file = new global::app.tester.File
         {
-            Path = relGoalPath,
-            Directory = directory,
-            PrPath = relPrPath,
             Goal = prGoal,
-            EntryGoalName = prGoal.Name,
-            GoalHash = prGoal.Hash,
-            BuilderVersion = prGoal.BuilderVersion
         };
         foreach (var tag in tags) file.Tags.Add(tag);
 
@@ -248,9 +253,6 @@ public partial class discover : IContext
         if (string.IsNullOrEmpty(name) || name.Contains('%')) return null;
         return name;
     }
-
-    private static string NormalizeRelative(string path) =>
-        path.Replace('\\', '/');
 
     private void SeedBranchChains(Goal goal, app.tester.Coverage coverage, HashSet<string> visited, int depth = 0)
     {
