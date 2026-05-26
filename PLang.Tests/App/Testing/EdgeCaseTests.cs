@@ -100,18 +100,21 @@ public class EdgeCaseTests
         var action = new global::app.modules.test.discover
         {
             Context = _app.User.Context,
-            Path = new global::app.data.@this<string>("Path", "../../../etc"),
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(
+                global::app.types.path.@this.Resolve("../../../etc", _app.User.Context)),
             Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<bool>("Recursive", true)
         };
 
-        // discover catches traversal and returns an empty list — does not throw,
-        // does not leak filesystem entries from outside the app root.
+        // Post-Stage-5: discover routes through path.List → AuthGate. An
+        // out-of-root traversal either denies (Fail) or returns empty —
+        // either way, no filesystem entries from outside leak.
         var result = await action.Run();
-
-        await Assert.That(result.Success).IsTrue();
-        var files = result.Value as List<global::app.tester.File> ?? new List<global::app.tester.File>();
-        await Assert.That(files.Count).IsEqualTo(0);
+        if (result.Success)
+        {
+            var files = result.Value as List<global::app.tester.File> ?? new List<global::app.tester.File>();
+            await Assert.That(files.Count).IsEqualTo(0);
+        }
     }
 
     // A test that writes ANSI escape sequences via output.write: when the
@@ -122,8 +125,8 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.tester.Run(new global::app.tester.File { Path = "Tests/X.test.goal", EntryGoalName = "X" });
-        run.CapturedOutput = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
+        var run = new global::app.tester.Run(new global::app.tester.File { Goal = new Goal { Name = "X", Path = "/Tests/X.test.goal" } });
+        run.Output = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
         run.Complete(global::app.tester.Status.Fail, new global::app.errors.AssertionError(1, 2));
         _app.Tester.Results.Add(run);
 
@@ -153,7 +156,7 @@ public class EdgeCaseTests
                 ["nested"] = outer
             }
         };
-        var run = new global::app.tester.Run(new global::app.tester.File { Path = "Tests/Nested.test.goal", EntryGoalName = "N" });
+        var run = new global::app.tester.Run(new global::app.tester.File { Goal = new Goal { Name = "N", Path = "/Tests/Nested.test.goal" } });
         run.Complete(global::app.tester.Status.Fail, err);
         _app.Tester.Results.Add(run);
 

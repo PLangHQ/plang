@@ -24,8 +24,15 @@ public sealed class Run
     /// <summary>Error captured when a test fails or errors. Carries AssertionError.Variables on assertion failures.</summary>
     public IError? Error { get; private set; }
 
-    /// <summary>Output produced via output.write during the test. Rendered on failure when verbose is off.</summary>
-    public string? CapturedOutput { get; set; }
+    /// <summary>Text the test produced via the output channel during execution. Rendered on failure when verbose is off.</summary>
+    public string? Output { get; set; }
+
+    /// <summary>
+    /// Per-step wall-clock for the entry goal's top-level steps, in source
+    /// order. Nested sub-goal steps roll up into the calling step naturally
+    /// (AfterStep on the caller doesn't fire until the call returns).
+    /// </summary>
+    public Timings Timings { get; } = new();
 
     /// <summary>Tags added during the run via test.tag. Distinct from File.Tags (which is discovery-time).</summary>
     public HashSet<string> UserTags { get; } = new(StringComparer.OrdinalIgnoreCase);

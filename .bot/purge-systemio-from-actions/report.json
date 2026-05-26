@@ -1,0 +1,533 @@
+{
+  "branch": "purge-systemio-from-actions",
+  "sessions": [
+    {
+      "id": "128f1b8d-c042-4cba-b941-c143cc965c6c",
+      "bot": "test-designer",
+      "timestamp_start": "2026-05-25T16:30:36+00:00",
+      "timestamp_end": "2026-05-25T16:55:00+00:00",
+      "intent": "Design test contract for purging System.IO from PLang \u2014 derivation verbs, .goal MIME, Goal/Path typing flip, AppGoals migration, action-handler denial paths, PLNG002 analyzer, and the .Absolute discipline rule.",
+      "before": {
+        "assumptions": "Architect plan v(final) approved by Ingi; 13 design decisions settled. Stage 1 is greenfield (no derivation verbs yet). Existing FileSystem/Surface/Permission tests give the canned-channel + root-setup pattern I'll reuse.",
+        "risk": "Tests must define behaviour for code that doesn't yet compile (handlers still hold string Path). Signatures only \u2014 Assert.Fail bodies until coder implements."
+      },
+      "plan": ".bot/purge-systemio-from-actions/test-designer/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/DerivationTests/PathDerivationVerbTests.cs",
+            "PLang.Tests/Generator/Diagnostics/Plng002SystemIoBanTests.cs",
+            "PLang.Tests/App/Types/PathTests/GoalMimeDeserializationTests.cs",
+            "PLang.Tests/App/Goals/PathTypingTests/GoalPathTypingTests.cs",
+            "PLang.Tests/App/Goals/AppGoalsMigrationTests/AppGoalsThroughPathVerbsTests.cs",
+            "PLang.Tests/App/FileSystem/PermissionTests/ExecuteVerbTests/ExecuteVerbTests.cs",
+            "PLang.Tests/App/Types/PathTests/ContentShapeVerbTests.cs",
+            "PLang.Tests/App/FileSystem/SurfaceTests/AbsoluteDisciplineTests.cs",
+            "PLang.Tests/App/Modules/Test/DiscoverDenialPathTests.cs",
+            "PLang.Tests/App/Modules/Http/HttpStaticFileDenialTests.cs",
+            "PLang.Tests/App/Modules/Ui/FluidIncludeDenialTests.cs",
+            "PLang.Tests/App/Modules/Settings/SqliteAuthorizeDenialTests.cs",
+            "PLang.Tests/App/Modules/Llm/OpenAiImageDenialTests.cs",
+            "PLang.Tests/App/Modules/Debug/DebugTraceWriteTests.cs",
+            "PLang.Tests/App/FileSystem/SurfaceTests/InRootSilentFastPathTests.cs",
+            "PLang.Tests/App/Types/PathTests/RootComparisonKeyingTests.cs"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "C# TUnit test signatures (Assert.Fail bodies) covering 11 batches mapped 1:1 onto the architect's stages 1\u20136. Reuses CannedChannel/StatelessChannel patterns from FileSystemPermissionFlowTests for actor + permission-prompt setup."
+        },
+        {
+          "paths": [
+            "Tests/Permission/DiscoverOutsideRoot/Start.test.goal",
+            "Tests/Permission/DiscoverDotDotTraversal/Start.test.goal",
+            "Tests/Permission/HttpStaticFileTraversal/Start.test.goal",
+            "Tests/Permission/FluidIncludeOutsideRoot/Start.test.goal",
+            "Tests/Permission/SqliteOutsideRoot/Start.test.goal",
+            "Tests/Permission/OpenAiImageOutsideRoot/Start.test.goal",
+            "Tests/Permission/ModuleAddDllOutsideRoot/Start.test.goal",
+            "Tests/Permission/InRootStaticServeNoPrompt/Start.test.goal"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "PLang .test.goal scaffolds (throw 'not implemented') for ring-2 handler denial paths. Follows the repo convention <Scenario>/Start.test.goal used by existing Tests/Permission/Authorize/ tests."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/test-designer/v1/plan.md",
+            ".bot/purge-systemio-from-actions/test-designer/v1/verdict.json",
+            ".bot/purge-systemio-from-actions/test-designer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session output."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/test-designer/v1/plan.md"
+          ],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "One deliberate divergence from architect: pulled D13 (.Absolute discipline) out of Stage 7 (docs) and gave it its own test batch with a mutation-test placeholder. The rule is only real if a test catches a missing Authorize."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "~80 C# test signatures + 8 PLang .test.goal scaffolds written across 11 batches. All bodies are Assert.Fail/throw \u2014 coder bot picks up next, stage order 1\u21927 from architect's plan."
+      }
+    },
+    {
+      "id": "0aabf8c1-7e4d-4a8e-9c64-1c11d2c7e1b0",
+      "bot": "security",
+      "timestamp_start": "2026-05-26T10:11:43Z",
+      "timestamp_end": "2026-05-26T10:24:30Z",
+      "intent": "Red/blue audit of the System.IO purge: verify AuthGate is the only filesystem gate, look for new bypasses introduced by derivation verbs, the path JsonConverter, Execute verb, and Path-typed Goal serialization.",
+      "before": {
+        "assumptions": "Architect's hardening is structural \u2014 the only way it goes wrong is (a) a new verb that skips AuthGate, (b) a wire path that smuggles a typed path bypassing scheme/Resolve, (c) an Execute-gated load site that still reaches under the gate, or (d) the implicit string\u2192path operator firing in an attack-reachable place.",
+        "risk": "False sense of security \u2014 PLNG002 says 'no System.IO' at the syntactic layer, but only AuthGate enforces it semantically. A new verb that builds a FilePath from a string and calls private internal IO is the highest-leverage bypass."
+      },
+      "plan": ".bot/purge-systemio-from-actions/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/types/path/file/this.Validate.cs",
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/this.JsonConverter.cs",
+            "PLang/app/types/path/permission/verb/this.cs",
+            "PLang/app/types/path/permission/verb/Execute.cs",
+            "PLang/app/types/path/scheme/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Blue-team audit of the gate surface and new verbs. Verified Assembly.LoadFrom is single-sited and Execute-gated; PathJsonConverter Context-bound routes through Resolve."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Security_IsInRootBypassMutation.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation test created, run, and deleted. Verified F1 reproduces in ~5s: relative path with .. + LoadedFromPrPath inside root \u2192 IsInRoot auto-grant \u2192 read of file outside root with no prompt. Production source unchanged; no commit of the mutation."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/security-report.json",
+            ".bot/purge-systemio-from-actions/security/v1/plan.md",
+            ".bot/purge-systemio-from-actions/security/v1/result.md",
+            ".bot/purge-systemio-from-actions/security/v1/verdict.json",
+            ".bot/purge-systemio-from-actions/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session output."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "yellow",
+        "notes": "F1 HIGH path-traversal in AuthGate's IsInRoot auto-grant. Bypass pre-existed the branch but is now the single chokepoint hole \u2014 branch's whole premise depends on it. Fix is structural (canonicalize _absolutePath at FilePath construction or in file.Resolve). All other surface clean: Execute verb, PathJsonConverter, derivation verbs, PLNG002 enforcement all check out."
+      }
+    },
+    {
+      "id": "f8e2a3c7-9b41-4d6e-a052-7e9c8b1d4f30",
+      "bot": "security",
+      "timestamp_start": "2026-05-26T12:00:00Z",
+      "timestamp_end": "2026-05-26T12:20:00Z",
+      "intent": "Re-review after coder's response to v1: verify F1 (HIGH), F2 (LOW latent-Medium), F3 (LOW) are genuinely closed and no new attack surface introduced by the PathHelper bridge and PLNG002 narrowing.",
+      "before": {
+        "assumptions": "Coder shipped 064724fda (F1 + F3) and 987a5148e (F2). F1 should be closed by canonicalizing at the FilePath ctor \u2014 preferred fix shape from v1. PathHelper is the new System.IO.Path bridge.",
+        "risk": "Canonicalization at the ctor only matters if every construction site routes through it; need to verify Resolve, JsonConverter, derivation verbs, implicit operator, direct ctor. PathHelper introduces a new attack surface if its body accidentally adds IO."
+      },
+      "plan": ".bot/purge-systemio-from-actions/security/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/file/this.Validate.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/Utils/PathHelper.cs",
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/this.cs",
+            "PLang.Generators/Diagnostics/Plng002.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "End-to-end trace of F1/F2/F3 fixes. Verified Canonicalize covers every FilePath entry point; the three deliberate skips (empty, non-rooted, //-prefix) reasoned safe. MarkdownTeaching lifted to path verbs and ResolveMarkdownTeachingRoot routes overrides through Resolve. PLNG002 narrowed to two carve-outs (PathHelper.cs for Path.*, app/types/path/** for File/Directory) with no whole-file exemptions."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Types/PathTests/DotDotTraversalRegressionTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "v1 mutation reproducer ported to a permanent regression suite. Mutated Canonicalize to return absolutePath, rebuilt, ran the suite \u2014 all 3 F1 tests failed (Ctor canonicalize, Resolve+dotdot leaves root, ReadText denial). Reverted clean."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/security-report.json",
+            ".bot/purge-systemio-from-actions/security/v2/plan.md",
+            ".bot/purge-systemio-from-actions/security/v2/v1_review_summary.md",
+            ".bot/purge-systemio-from-actions/security/v2/result.md",
+            ".bot/purge-systemio-from-actions/security/v2/verdict.json",
+            ".bot/purge-systemio-from-actions/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 session output. security-report.json updated with status:fixed + fix_commit per finding."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "All v1 findings closed. F1 mutation-verified. No new findings. Next bot: auditor.",
+        "next_bot": "auditor"
+      }
+    },
+    {
+      "id": "349af7fa-abf4-4e67-9f46-565a2d8d9874",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-26T12:18:00Z",
+      "timestamp_end": "2026-05-26T12:55:00Z",
+      "intent": "Second-opinion auditor pass: verify cross-file contracts, the green-bar tester claimed, and that PLNG002 has no suppression smuggled outside the analyzer.",
+      "before": {
+        "assumptions": "Three reviewers (codeanalyzer/tester/security) all said PASS at v2. Their slices were good \u2014 the gap is the seams between them.",
+        "risk": "Stale-binary trap on a branch this size; tester reported full green-bar from a build the runner inherited, not a clean rebuild."
+      },
+      "plan": ".bot/purge-systemio-from-actions/auditor/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/codeanalyzer/v1/report.md",
+            ".bot/purge-systemio-from-actions/test-report.json",
+            ".bot/purge-systemio-from-actions/security/v2/result.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read prior bot reports to scope what I do NOT need to re-check."
+        },
+        {
+          "paths": [
+            "PLang/app/goals/this.cs",
+            "PLang/app/channels/serializers/serializer/Json.cs",
+            "PLang.Generators/Diagnostics/Plng002.cs",
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Confirmed codeanalyzer N1/N4/N5 closed; PLNG002 carve-outs tight (IsPathHelperFile + IsPathTypeSurface only, no whole-file exemption); F1 canonicalization centralized in file.@this ctor; F3 OsAbsolutePath routes through PathHelper without pragma."
+        },
+        {
+          "paths": [
+            "Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+            "Tests/Builder/CompileLlmNotes/assert-equals-no-message.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + full-suite plang --test = 204/206. Bisect to commit 064724fda (F1 canonicalization). Runtime2 baseline = 206/206. Pre-F1 commit on branch = 206/206. Tester v2 round-2 report claims 206/206 \u2014 does not reproduce."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/auditor/v1/plan.md",
+            ".bot/purge-systemio-from-actions/auditor/v1/result.md",
+            ".bot/purge-systemio-from-actions/auditor/v1/verdict.json",
+            ".bot/purge-systemio-from-actions/auditor-report.json",
+            ".bot/purge-systemio-from-actions/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Auditor session output: plan, result, verdict (FAIL), structured finding, summary."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Diagnostics/Plng002.cs"
+          ],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Per Ingi explicit ask: PLNG002 has exactly 2 file-scope exemptions, both inside Plng002.cs (IsPathHelperFile + IsPathTypeSurface). Zero pragma/SuppressMessage/NoWarn/editorconfig suppressions elsewhere in the tree."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "green minus 2",
+        "notes": "F1 closes a real HIGH-severity vuln correctly; 2 PLang tests regress because they were riding the un-canonicalized prefix-match. Fix is test-side (path or runtime-dir anchor), not a F1 rollback. PLNG002 enforcement is airtight \u2014 no suppression anywhere outside the analyzer itself."
+      }
+    },
+    {
+      "id": "8e804cc5-9ac6-4b5e-bf5e-4b456622af6b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-26T13:08:07+00:00",
+      "timestamp_end": "2026-05-26T13:20:00+00:00",
+      "intent": "Review coder's delta since codeanalyzer v1 (security F1/F2 fixes, auditor F1 follow-up, PathHelper, MarkdownTeaching path-verb lift, App.Parent + parent-chain IsInRoot).",
+      "before": {
+        "assumptions": "v1 was PASS. Auditor flagged a 206\u2192204 PLang test regression from F1; coder's last commit (bfb34bca4) adds App.Parent + parent-chain walk to fix it. Expectation: structural shape is right, edge-case knobs may be loose.",
+        "risk": "PathHelper carve-out logic in PLNG002 must remain the only exemption; any whole-file pragma or NoWarn regresses the v1 PLNG002-airtight claim."
+      },
+      "plan": ".bot/purge-systemio-from-actions/codeanalyzer/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/codeanalyzer/v1/report.md",
+            ".bot/purge-systemio-from-actions/auditor/v1/result.md",
+            ".bot/purge-systemio-from-actions/security/v2/verdict.json"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read prior bot reports to scope what I do NOT need to re-check; v1 cleanups (N1/N4/N5) already auditor-confirmed closed."
+        },
+        {
+          "paths": [
+            "PLang/app/Utils/PathHelper.cs",
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/file/this.Derivation.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/file/this.Validate.cs",
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/this.cs",
+            "PLang/app/modules/MarkdownTeaching.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/builder/code/IBuilder.cs",
+            "PLang/app/modules/builder/types.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang.Generators/Diagnostics/Plng002.cs",
+            "PLang/app/channels/serializers/serializer/Json.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "5-pass review on the v1\u2192HEAD delta (~470/-300 LOC under PLang/ + PLang.Generators/). Verified v1 N1 closed (Json.cs alloc inside ??); PathHelper is a pure forwarder; PLNG002 carve-outs are exact-match per-finding; Canonicalize correctly skips relative and // prefixes; IsInRoot parent-chain walk earns its place (deletion-test would re-break the auditor's 2 tests); MarkdownTeaching path-verb lift is clean."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/codeanalyzer/v2/plan.md",
+            ".bot/purge-systemio-from-actions/codeanalyzer/v2/report.md",
+            ".bot/purge-systemio-from-actions/codeanalyzer/v2/verdict.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan + report + verdict for v2. 5 LOW findings: N1 App.Parent settable cycle guard, N2 Canonicalize bare catch, N3 IsUnder per-call string concat, N4 ValidatePath ungated File.Exists probes, N5 ScanOrphans inverted list-then-filter."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "PASS (NEEDS WORK \u2014 low only). All v1 findings closed; F1/F2/F3 structurally clean; PLNG002 carve-outs remain auditor-airtight. 5 LOW follow-ups are tighten-the-screw, not loose-the-screw."
+      }
+    },
+    {
+      "id": "e4fcf9e6-4300-4ddf-bc9e-e00cc080f331",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-26T13:15:00Z",
+      "timestamp_end": "2026-05-26T13:35:00Z",
+      "intent": "v2 review: verify v1 F1 regression closed by coder bfb34bca4 (App.Parent chain in IsInRoot); audit the new attack surface; confirm PLNG002 carve-out count unchanged.",
+      "before": {
+        "assumptions": "Coder claims F1 regression is closed via App.Parent. Codeanalyzer v2 passed with 5 LOW findings; N1+N2 already addressed. The Parent walk widens IsInRoot \u2014 needs scrutiny for whether it reopens security F1.",
+        "risk": "A public-settable Parent could be a back-door for scope elevation if action handlers can reach sibling app refs. Cycle DoS already capped."
+      },
+      "plan": ".bot/purge-systemio-from-actions/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/codeanalyzer/v2/report.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Codeanalyzer v2 found N1 (Parent cycle) and N2 (bare catch); both addressed by coder in ecdd0de4f. Coder went stronger on N2 (removed try/catch entirely instead of filtering)."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/this.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/types/path/file/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "App.Parent chain walks canonicalized Absolute \u2014 F1 protection intact. Cycle cap 16 honest. No action-handler reach to attacker-controlled app refs in-process. The N2 follow-up removed the try/catch entirely."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Diagnostics/Plng002.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PLNG002 still has exactly 2 carve-outs (IsPathHelperFile, IsPathTypeSurface); zero suppressions anywhere else in the tree. Re-confirmed per Ingi explicit ask."
+        },
+        {
+          "paths": [
+            "Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+            "Tests/Builder/CompileLlmNotes/assert-equals-no-message.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + full-suite plang --test = 206/206 (matches runtime2 baseline). v1 F1 regression closed. C# 3031/3031."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/auditor/v2/plan.md",
+            ".bot/purge-systemio-from-actions/auditor/v2/result.md",
+            ".bot/purge-systemio-from-actions/auditor/v2/verdict.json",
+            ".bot/purge-systemio-from-actions/auditor/v2/v1_review_summary.md",
+            ".bot/purge-systemio-from-actions/auditor/summary.md",
+            ".bot/purge-systemio-from-actions/auditor-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 auditor output: PASS verdict."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "Branch ready for docs. v1 F1 closed; no new findings. PLNG002 carve-outs unchanged (exactly 2, both inside Plng002.cs). C# 3031/3031, PLang 206/206 on clean rebuild."
+      }
+    },
+    {
+      "id": "7d4a74ee-7fdf-400b-b565-d373118153b4",
+      "bot": "docs",
+      "timestamp_start": "2026-05-26T13:45:40Z",
+      "intent": "Final docs gate for purge-systemio-from-actions: fill XML/architecture/CHANGELOG gaps, triage claude-md + character proposals, run app-tree drift check, pass verdict if clean.",
+      "before": {
+        "assumptions": "Auditor v2 PASS with no findings; suite green (C# 3031/3031, PLang 206/206); branch ready for docs gate. Coder stage 7 already wrote some user-facing docs (System.IO ban + migration status) \u2014 my pass verifies completeness and fills the rest.",
+        "risk": "Largest risk: docs miss a public surface added during the System.IO purge (new PathHelper / path verbs / Plng002 analyzer) and the merge ships an undocumented public API. Secondary risk: a CLAUDE.md proposal that doesn't generalize gets applied anyway."
+      },
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Coder stage 7 wrote the PLNG002 one-liner before stage 6 flipped severity to Error. Fixed the stale parenthetical to match landed state."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/this.JsonConverter.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added one-line XML doc to the two public ctors distinguishing stub (no Context) vs Context-wired forms. Class summary had the full story but call sites were bare."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added App.Parent (new this branch), added Snapshot data partial (pre-existing omission), added paragraph explaining app.Modules.Schema is the LLM catalog object, not a registered action module. Maintenance note pointing at the new checker was carried from runtime2."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/scripts/check-app-tree.sh"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Carried from runtime2 (where it was built one chat earlier). Added Schema to the module-folder skip list. Reports drift between PLang/app/ and Documentation/v0.2/app-tree.md (modules, app.@this props, actor.@this props, Data partials). Exit 1 on drift."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/docs/v1/plan.md",
+            ".bot/purge-systemio-from-actions/docs/v1/result.md",
+            ".bot/purge-systemio-from-actions/docs/v1/verdict.json",
+            ".bot/purge-systemio-from-actions/docs-report.json",
+            ".bot/purge-systemio-from-actions/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard docs-bot output for v1. verdict.json: PASS."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/claude-md-proposals.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "coder/v1 proposal to add 'Default impl:' lines under abstract-type entries in app-tree.md \u2192 DEFERRED. The target file's shape (one-screen summary with fenced trees, no per-type sections) doesn't fit the proposed change. Right home is /shared/app-tree/ deep tree. Recorded in docs-report.json."
+        },
+        {
+          "paths": [
+            "PLang/app/goals/this.cs",
+            "PLang/app/types/path/this.cs",
+            "PLang/app/types/path/this.Operations.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/http/this.cs",
+            "PLang/app/types/path/http/this.Derivation.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs",
+            "PLang/app/modules/test/report.cs",
+            "PLang/app/modules/settings/Sqlite.cs",
+            "PLang/app/modules/assert/code/Default.cs",
+            "PLang/app/channels/serializers/serializer/plang/Data.cs",
+            "PLang/app/data/this.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Comment-rot sweep across production C# (per Ingi mid-session). Stripped review-iteration / D-number / Q-number / architect-plan markers from comments. Substance preserved; provenance dropped. Builds clean (0 errors)."
+        },
+        {
+          "paths": [
+            "PLang.Tests/**/*.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Same sweep across PLang.Tests/. ~50 test files updated, mostly stripping 'Stage N \u2014 Batch M.' summary prefixes. Some orphan strips required manual cleanup (broken sentences caught by re-grep + spot fix)."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md",
+            ".bot/purge-systemio-from-actions/docs-report.json",
+            ".bot/purge-systemio-from-actions/docs/summary.md",
+            ".bot/purge-systemio-from-actions/docs/v1/result.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Removed four /shared/app-tree/ references from app-tree.md (Ingi confirmed mid-session that the shared tree is no longer maintained \u2014 in-repo app-tree.md is now canonical). Updated coder/v1 CLAUDE.md proposal decision from 'deferred' to 'rejected' since the proposal's stated right home (/shared/app-tree/) no longer exists as a maintained doc."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Branch is doc-complete. Drift checker reports clean (31 modules, 37 app props, 7 actor props, 5 data partials).",
+        "notes": "Ready to merge into runtime2. One claude-md proposal deferred (form mismatch with target file); no character proposals on this branch. Mid-session add-ons: comment-rot sweep across production + tests (substance preserved, provenance dropped); /shared/app-tree/ references removed (no longer maintained \u2014 Ingi confirmation)."
+      },
+      "timestamp_end": "2026-05-26T14:08:45Z",
+      "plan": ".bot/purge-systemio-from-actions/docs/v1/plan.md"
+    }
+  ]
+}

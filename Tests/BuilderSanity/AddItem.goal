@@ -1,0 +1,2 @@
+AddItem
+- set %total% = %total% + %item%

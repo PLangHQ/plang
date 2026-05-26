@@ -47,7 +47,7 @@
   "goals": [],
   "visibility": 1,
   "path": "/Tests/App/CallStack/CaptureCause.goal",
-  "prPath": "/Tests/App/CallStack/.build/capturecause.pr",
+  "prPath": "/App/CallStack/.build/capturecause.pr",
   "hash": "cd0bbab863d6e8cea73a407c98a2cca30b7ede4fcf0b4f2ff728d4608215f352",
   "builderVersion": "0.2.2",
   "isSetup": false,

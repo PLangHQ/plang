@@ -19,9 +19,9 @@ public class Default : IBuilder
 
     // --- Actions ---
 
-    public Task<data.@this> Actions(GetActions action)
+    public async Task<data.@this> Actions(GetActions action)
     {
-        var catalog = action.Context.App.Modules.Describe();
+        var catalog = await action.Context.App.Modules.Describe();
 
         // Optional filter: restrict the catalog to the named module.action
         // entries. The Compile step passes the planner's action set so the
@@ -34,15 +34,15 @@ public class Default : IBuilder
             foreach (var a in catalog)
                 if (wanted.Contains($"{a.Module}.{a.ActionName}"))
                     subset.Add(a);
-            return Task.FromResult(data.@this.Ok(subset));
+            return data.@this.Ok(subset);
         }
 
-        return Task.FromResult(data.@this.Ok(catalog));
+        return data.@this.Ok(catalog);
     }
 
     // --- Types ---
 
-    public data.@this Types(types action)
+    public async Task<data.@this> Types(types action)
     {
 
         // The catalog is a structured object now — Build assembles primitives and
@@ -70,7 +70,7 @@ public class Default : IBuilder
             // from the return-type name. The Parameter.Value strings already
             // carry PLang type names (e.g. "path", "actor?", "%var% string"), so
             // tokenize on word boundaries and intersect with the type catalog.
-            foreach (var a in modules.Describe())
+            foreach (var a in await modules.Describe())
             {
                 if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
                 foreach (var p in a.Parameters ?? new())
@@ -129,7 +129,8 @@ public class Default : IBuilder
 
         var app = action.Context.App;
         var context = action.Context;
-        var searchPath = string.IsNullOrWhiteSpace(action.Path.Value) ? "." : action.Path.Value!;
+        var searchPathValue = action.Path.Value?.ToString();
+        var searchPath = string.IsNullOrWhiteSpace(searchPathValue) ? "." : searchPathValue!;
 
         // builder.goals.Path is project-root-relative ("the directory the user is
         // building"), not goal-relative. The runtime auto-seeds %path% to the
@@ -147,8 +148,9 @@ public class Default : IBuilder
         else if (searchPath.StartsWith('/') || searchPath.StartsWith('\\'))
             rootRelative = searchPath;  // PLang-rooted, ValidatePath will anchor
         else
-            rootRelative = global::System.IO.Path.GetFullPath(
-                global::System.IO.Path.Combine(rootDir, searchPath));
+            // Lift to path verbs — Resolve handles normalization, no
+            // System.IO.Path arithmetic needed.
+            rootRelative = global::app.types.path.@this.Resolve(searchPath, context).Absolute;
 
         var listAction = new file.List
         {
@@ -227,11 +229,7 @@ public class Default : IBuilder
             var text = readResult.Value?.ToString();
             if (string.IsNullOrWhiteSpace(text)) continue;
 
-            var relativePath = file.Relative ?? file.Raw;
-            if (!relativePath.StartsWith('/') && !relativePath.StartsWith('\\'))
-                relativePath = "/" + relativePath;
-
-            var goal = Goal.Parse(text, relativePath);
+            var goal = Goal.Parse(text, file);
             if (goal == null) continue;
 
             var mergeErrors = await MergePrData(goal, app, context);
@@ -266,7 +264,7 @@ public class Default : IBuilder
         }
 
         var prPath = goal.PrPath;
-        if (string.IsNullOrEmpty(prPath))
+        if (prPath == null)
             return data.@this.FromError(new errors.ActionError("Goal has no Path set, cannot derive PrPath", "NoPrPath", 400));
 
         // Group modifier actions onto their preceding executable action — recursive so
@@ -287,7 +285,7 @@ public class Default : IBuilder
         var saveAction = new file.Save
         {
             Context = context,
-            Path = data.@this<path>.Ok(path.Resolve(prPath, context)),
+            Path = data.@this<path>.Ok(prPath),
             Value = new data.@this("", json)
         };
         var saveResult = await app.RunAction(saveAction, context);
@@ -551,13 +549,6 @@ public class Default : IBuilder
         {
             if (step.Index < 0 || step.Index >= goal.Steps.Count) continue;
             var prior = goal.Steps[step.Index];
-
-            // LLM metadata backfill — for keep:true the LLM omits these to save
-            // tokens; pull them off the prior so the trace viewer doesn't show
-            // every cached step as 0% / level=null / no guidance.
-            if (step.Guidance == null) step.Guidance = prior.Guidance;
-            if (step.Level == null) step.Level = prior.Level;
-            if (step.Confidence == null) step.Confidence = prior.Confidence;
 
             if (step.Keep)
             {
@@ -904,12 +895,12 @@ public class Default : IBuilder
     {
         var errors = new List<Info>();
         var prPath = goal.PrPath;
-        if (string.IsNullOrEmpty(prPath)) return errors;
+        if (prPath == null) return errors;
 
         var readAction = new file.Read
         {
             Context = context,
-            Path = data.@this<path>.Ok(path.Resolve(prPath, context))
+            Path = data.@this<path>.Ok(prPath)
         };
         var readResult = await app.RunAction(readAction, context);
         if (!readResult.Success) return errors;
@@ -977,7 +968,7 @@ public class Default : IBuilder
             // downstream checks (or runtime) will surface a NotFound for it.
             goalCall.Action ??= action;
             var resolved = await goalCall.GetGoalAsync(app, context);
-            if (resolved.Success && resolved.Value is Goal g && !string.IsNullOrEmpty(g.PrPath))
+            if (resolved.Success && resolved.Value is Goal g && g.PrPath != null)
             {
                 // Pre-resolve the .pr path. A slash-qualified Name keeps its
                 // folder prefix in the saved .pr — LoadFromFile leaf-matches it

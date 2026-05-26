@@ -3,7 +3,7 @@ using AppService = global::app.Services.Service.@this;
 
 namespace PLang.Tests.App.ChannelsTests;
 
-// Stage 7 — Flat App.Services collection + Service type + Actor cleanup.
+// Flat App.Services collection + Service type + Actor cleanup.
 
 public class Stage7_AppServicesTests
 {

@@ -10,13 +10,15 @@ public sealed partial class @this
 		if (context?.App == null)
 			return FormatForLlmFallback();
 
-		var templatePath = System.IO.Path.Combine(
-			context.App.AbsolutePath, "system", "builder", "templates", "goalFormatForLlm.template");
-
-		if (!System.IO.File.Exists(templatePath))
+		var templatePath = global::app.types.path.@this.Resolve(
+			"/system/builder/templates/goalFormatForLlm.template", context);
+		var exists = await templatePath.ExistsAsync();
+		if (!exists.Success || exists.Value != true)
 			return FormatForLlmFallback();
 
-		var templateText = await System.IO.File.ReadAllTextAsync(templatePath);
+		var read = await templatePath.ReadText();
+		if (!read.Success) return FormatForLlmFallback();
+		var templateText = read.Value?.ToString() ?? "";
 		var scribanTemplate = Template.Parse(templateText);
 		if (scribanTemplate.HasErrors)
 			return FormatForLlmFallback();

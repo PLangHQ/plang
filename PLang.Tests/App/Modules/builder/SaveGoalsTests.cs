@@ -45,7 +45,7 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Start",
-            Path = "/Start.goal",
+            Path = global::app.types.path.@this.Resolve("/Start.goal", _app.User.Context),
             Steps = new GoalSteps { step }
         };
 
@@ -58,7 +58,7 @@ public class SaveGoalsTests
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
         var json = System.IO.File.ReadAllText(prPath);
         var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.types.path.JsonConverter(_app.User.Context) } });
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Start");
         await Assert.That(saved.Steps.Count).IsEqualTo(1);
@@ -70,7 +70,7 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = "/Test.goal",
+            Path = global::app.types.path.@this.Resolve("/Test.goal", _app.User.Context),
             Description = null
         };
 
@@ -95,7 +95,7 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Public",
-            Path = "/Multi.goal",
+            Path = global::app.types.path.@this.Resolve("/Multi.goal", _app.User.Context),
             Goals = new List<Goal>
             {
                 new Goal { Name = "Private" }
@@ -110,7 +110,7 @@ public class SaveGoalsTests
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
         var json = System.IO.File.ReadAllText(prPath);
         var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.types.path.JsonConverter(_app.User.Context) } });
 
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Public");

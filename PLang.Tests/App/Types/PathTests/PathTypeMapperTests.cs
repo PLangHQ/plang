@@ -8,7 +8,7 @@ using Conversion = global::app.types.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 2 — PLang <c>path</c> type-mapper dispatches through the scheme registry.
+/// PLang <c>path</c> type-mapper dispatches through the scheme registry.
 /// </summary>
 public class PathTypeMapperTests
 {

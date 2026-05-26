@@ -23,6 +23,11 @@
               "name": "Value",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -39,17 +44,17 @@
       "guidance": "variable.set to mark that the captcha flow was invoked.",
       "level": "high",
       "confidence": 99,
-      "formal": null,
+      "formal": "variable.set(Name=%captchaCalled%, Value=true, Type=bool)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Events/AddOnAsk/CaptchaGoal.goal",
-  "prPath": "/Events/AddOnAsk/.build/captchagoal.pr",
+  "path": "/Channels/Events/AddOnAsk/CaptchaGoal.goal",
+  "prPath": "/Channels/Events/AddOnAsk/.build/captchagoal.pr",
   "hash": "e92a6e2fb534b7bc5d3810830d4766a58c8679d5c6c214b197d8da93fbdaee4c",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

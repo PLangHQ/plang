@@ -5,7 +5,7 @@ namespace PLang.Tests.Builder.CompilePromptTests;
 
 /// <summary>
 /// Renderer behavior for the per-action teaching markdown.
-/// Template lives at <c>os/system/builder/templates/v2/stepActionDetails.template</c>.
+/// Template lives at <c>os/system/builder/llm/templates/stepActionDetails.template</c>.
 ///
 /// Architect-spec'd rules (plan.md "Renderer" section):
 ///   - Per-action block is rendered ONLY for actions in the planner's set
@@ -25,7 +25,7 @@ public class StepActionDetailsRenderTests
 {
     private static readonly string RepoRoot = LocateRepoRoot();
     private static readonly string TemplatePath =
-        Path.Combine(RepoRoot, "os", "system", "builder", "templates", "v2", "stepActionDetails.template");
+        Path.Combine(RepoRoot, "os", "system", "builder", "llm", "templates", "stepActionDetails.template");
     private static readonly string CompileLlmPath =
         Path.Combine(RepoRoot, "os", "system", "builder", "llm", "Compile.llm");
 

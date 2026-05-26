@@ -40,7 +40,7 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -62,7 +62,7 @@
       "guidance": "Discover fixture test files under _fixtures recursively matching *.fixture.goal, then store the resulting list in %tests%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_fixtures\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -80,7 +80,7 @@
             {
               "name": "ListName",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -93,12 +93,12 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -115,7 +115,7 @@
       "guidance": "Count discovered tests in %tests% and store the count in %count%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "list.count(ListName=%tests%), variable.set(Name=%count%, Value=%!data%, type=int)",
       "source": null,
       "waitForExecution": true
     },
@@ -133,7 +133,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -149,7 +149,7 @@
       "guidance": "Assert the discovered test count equals 1.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%count%)",
       "source": null,
       "waitForExecution": true
     },
@@ -180,12 +180,12 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "json"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -202,7 +202,7 @@
       "guidance": "Run the discovered tests in %tests% and store the aggregated results in %results%.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "test.run(Tests=%tests%, Parallel=%!data%, Timeout=%!data%) | variable.set(Name=%results%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -220,7 +220,7 @@
             {
               "name": "ListName",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Key",
@@ -235,7 +235,7 @@
             {
               "name": "Value",
               "value": "Fail",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -248,7 +248,7 @@
             {
               "name": "Name",
               "value": "%hasFail%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -270,7 +270,7 @@
       "guidance": "Check whether any test result has Status == \u0027Fail\u0027 and store boolean in %hasFail%.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "list.any(ListName=%results%, Key=\u0022Status\u0022, Operator=\u0022==\u0022, Value=\u0022Fail\u0022) , variable.set(Name=%hasFail%, Value=%!data%, type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -299,7 +299,7 @@
       "guidance": "Assert that %hasFail% is true.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasFail%)",
       "source": null,
       "waitForExecution": true
     },
@@ -317,7 +317,7 @@
             {
               "name": "ListName",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Key",
@@ -332,7 +332,7 @@
             {
               "name": "Value",
               "value": 42,
-              "type": "int"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -345,7 +345,7 @@
             {
               "name": "Name",
               "value": "%hasSnapshot%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -367,7 +367,7 @@
       "guidance": "Check whether any test result contains Error.Variables.foo == 42 and store boolean in %hasSnapshot%.",
       "level": "high",
       "confidence": 85,
-      "formal": null,
+      "formal": "list.any(ListName=%results%, Key=\u0022Error.Variables.foo\u0022, Operator=\u0022==\u0022, Value=42) | variable.set(Name=%hasSnapshot%, Value=%!data%, Type=\u0022bool\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -396,17 +396,17 @@
       "guidance": "Assert that %hasSnapshot% is true, confirming the Variables snapshot survived end-to-end.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasSnapshot%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestAssertFailureSnapshotsVariables.test.goal",
-  "prPath": "/.build/testassertfailuresnapshotsvariables.test.pr",
+  "path": "/Modules/Test/Assert/TestAssertFailureSnapshotsVariables.test.goal",
+  "prPath": "/Modules/Test/Assert/.build/testassertfailuresnapshotsvariables.test.pr",
   "hash": "3582cc34c81065674a9645a1d8de2904b59298fbe57628ffd5e288c5c1b12116",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

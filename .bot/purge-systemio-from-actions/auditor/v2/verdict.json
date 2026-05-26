@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "v1 F1 regression closed via App.Parent chain in IsInRoot; clean rebuild 206/206 PLang + 3031/3031 C#; PLNG002 carve-outs unchanged (exactly 2, both inside Plng002.cs)."
+}

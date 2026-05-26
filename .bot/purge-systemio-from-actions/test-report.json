@@ -1,0 +1,44 @@
+{
+  "tester": "tester",
+  "branch": "purge-systemio-from-actions",
+  "timestamp": "2026-05-26T00:50:00Z",
+  "tested_version": "v2",
+  "round": 2,
+  "test_run": {
+    "csharp": { "total": 3025, "passed": 3025, "failed": 0, "skipped": 0 },
+    "plang":  { "total": 206,  "passed": 206,  "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "overall_line_rate": 0.7702,
+    "overall_branch_rate": 0.3972,
+    "improved_changed_files": {
+      "PLang/app/modules/ui/code/Fluid.cs":   { "round1_line": 0.426, "round2_line": 0.734 },
+      "PLang/app/modules/debug/this.cs":      { "round1_line": 0.352, "round2_line": 0.509 },
+      "PLang/app/modules/llm/code/OpenAi.cs": { "round1_line": 0.880, "round2_line": 0.886 },
+      "PLang/app/modules/http/code/Default.cs":{ "round1_line": 0.943, "round2_line": 0.850 }
+    }
+  },
+  "round1_findings_status": {
+    "F1_http_false_green":   "fixed — invokes CreateFileContentAsync, asserts IOException out-of-root, byte round-trip in-root",
+    "F2_fluid_false_green":  "fixed — drives Fluid.Render with {% include %}, asserts content in/out behaviour; bonus PlangFileInfo byte[]→string bug fixed",
+    "F3_openai_false_green": "fixed — invokes ResolveImage, asserts wire payload contains/lacks PNG-base64 magic 'iVBOR'",
+    "F4_debug_false_green":  "fixed — drives ResolveLlmFilePath + EmitLlmBlock; asserts return is path.@this (type-channel invariant); content round-trip",
+    "F5_apploaad_no_assert": "fixed — Id/Name unchanged + subsequent Save succeeds",
+    "F6_weak_success_false": "superseded by F1-F4 fixes (content-based assertions are stronger than Error.Key checks)",
+    "F7_discover_dotdot":    "fixed — both branches assert; denial branch checks Error != null and Error.Key != NullReferenceException (loose but not vacuous)",
+    "F8_plang_denial_goals": "accepted — documentation-quality gap, not behaviour gap",
+    "F9_cold_coverage":      "substantially improved (Fluid +30.8pp, Debug +15.7pp)",
+    "F10_absolutediscipline_naming": "accepted — naming-only issue",
+    "F11_appgoals_naming":   "accepted — naming-only issue"
+  },
+  "process_violations": [
+    {
+      "issue": "baseline-tests.md still absent from coder/v2/",
+      "impact": "Tester cannot mechanically diff regressions on a noisier branch; not blocking here.",
+      "suggestion": "Coder writes baseline-tests.md at the start of each iteration."
+    }
+  ],
+  "findings": [],
+  "verdict": "approved",
+  "summary": "Round 2 PASS. All 4 major handler-layer false greens, the zero-assertion AppLoad test, and the vacuous Discover dotdot test are genuinely fixed. Suite stays green (C# 3025/3025, PLang 206/206, zero PLNG002). Coverage on previously-cold handler files jumped: Fluid 42.6→73.4%, Debug 35.2→50.9%. Coder also discovered + fixed an unrelated PlangFileInfo byte[]→string bug while hardening Fluid tests — a positive externality of the test-quality push. Production migration is sound and the test layer now honestly verifies it."
+}

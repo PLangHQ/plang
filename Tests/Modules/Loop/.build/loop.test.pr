@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%items%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -26,10 +26,21 @@
                 "banana",
                 "cherry"
               ],
-              "type": "list"
+              "type": "list\u00601"
+            },
+            {
+              "name": "Type",
+              "value": "list\u003Cstring\u003E",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -37,7 +48,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%items%, Value=[\u0022apple\u0022, \u0022banana\u0022, \u0022cherry\u0022], Type=list\u003Cstring\u003E)",
       "source": null,
       "waitForExecution": true
     },
@@ -55,7 +66,7 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -77,7 +88,7 @@
       "guidance": "Set %count% to 0 using variable.set with int type.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "variable.set(Name=%count%, Value=0, Type=int)",
       "source": null,
       "waitForExecution": true
     },
@@ -96,11 +107,6 @@
               "name": "Collection",
               "value": "%items%",
               "type": "object"
-            },
-            {
-              "name": "ItemName",
-              "value": "item",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -114,13 +120,15 @@
               "name": "GoalName",
               "value": {
                 "name": "CountItem",
+                "parallel": false,
                 "parameters": [
                   {
                     "name": "item",
                     "value": "%item%",
                     "type": "string"
                   }
-                ]
+                ],
+                "prPath": "/Modules/Loop/.build/countitem.pr"
               },
               "type": "goal.call"
             }
@@ -133,7 +141,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "loop.foreach(Collection=%items%) , goal.call(GoalName={name:\u0022CountItem\u0022, parameters:[{name:\u0022item\u0022, value:%item%, type:\u0022string\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -151,7 +159,7 @@
             {
               "name": "Expected",
               "value": 3,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -172,7 +180,7 @@
       "guidance": "Post-condition assertion that %count% equals 3 with a descriptive message. Map to assert.equals with Expected=3, Actual=%count%, Message as tstring.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=3, Actual=%count%, Message=\u0022foreach should iterate 3 times\u0022)",
       "source": null,
       "waitForExecution": true
     }
@@ -182,7 +190,7 @@
   "path": "/Modules/Loop/Loop.test.goal",
   "prPath": "/Modules/Loop/.build/loop.test.pr",
   "hash": "35f7fcc5b47fdb1e00c1f822dca60c16144d944fb172c65ec24bc411662875f3",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -29,7 +29,7 @@ public sealed class GoalCall : modules.IEvent
     public List<data.@this>? Parameters { get; set; }
     /// <summary>Pre-resolved .pr file path. Null when the goal name contains %variables%.</summary>
     [Store]
-    public string? PrPath { get; set; }
+    public global::app.types.path.@this? PrPath { get; set; }
 
     /// <summary>The action this GoalCall originated from. Set during parameter resolution.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
@@ -43,8 +43,8 @@ public sealed class GoalCall : modules.IEvent
     public async Task<data.@this> GetGoalAsync(app.@this app, actor.context.@this context)
     {
         // PrPath is authoritative — load from file, no name-based search
-        if (!string.IsNullOrEmpty(PrPath))
-            return await LoadFromFile(PrPath, app, context);
+        if (PrPath != null)
+            return await LoadFromFile(PrPath.ToString(), app, context);
 
         // 1. Check via the action's step's goal chain (action → step → goal → walk up)
         var currentGoal = Action?.Step?.Goal;
@@ -67,8 +67,12 @@ public sealed class GoalCall : modules.IEvent
         // 3. Derive the .pr path from Name and file.read.
         var name = Name.Replace('\\', '/');
 
-        // Caller's folder — the anchor for relative resolution.
-        var callerDir = Action?.Step?.Goal?.Path;
+        // Caller's folder — the anchor for relative resolution. Compute as a
+        // string here because the rest of this method does free-form name math
+        // (slash-qualified names, .build prefix, ancestor walks) that's clearer
+        // on strings than via Path verbs. Each candidate goes through
+        // path.Resolve inside LoadFromFile.
+        string? callerDir = Action?.Step?.Goal?.Path?.ToString();
         if (callerDir != null)
         {
             var cut = callerDir.LastIndexOf('/');
@@ -144,9 +148,10 @@ public sealed class GoalCall : modules.IEvent
         // so file.read with a relative path resolves against the goal's actual
         // on-disk directory (works in child Apps where Path was set under a
         // different root and would otherwise mis-resolve).
-        goal.LoadedFromPrPath = prPath;
+        var prPathResolved = global::app.types.path.@this.Resolve(prPath, context);
+        goal.LoadedFromPrPath = prPathResolved;
         foreach (var subGoal in goal.Goals)
-            subGoal.LoadedFromPrPath = prPath;
+            subGoal.LoadedFromPrPath = prPathResolved;
 
         // Match by name — the loaded goal or one of its sub-goals. A slash-
         // qualified Name (BuildGoal/Start) carries a folder prefix that the

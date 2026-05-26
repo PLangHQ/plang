@@ -17,15 +17,26 @@
             {
               "name": "Name",
               "value": "%flag%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": false,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +44,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%flag%, Value=false, Type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -60,16 +71,17 @@
             },
             {
               "name": "Right",
-              "value": true,
-              "type": "bool"
-            },
-            {
-              "name": "Negate",
-              "value": true,
+              "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -82,7 +94,7 @@
                 "name": "WhenFalse",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/whenfalse.pr"
+                "prPath": "/Modules/Condition/Operators/Not/.build/whenfalse.pr"
               },
               "type": "goal.call"
             }
@@ -95,7 +107,7 @@
       "guidance": "Compile \u0060if not %flag%, call WhenFalse\u0060 as a condition.if comparing %flag% to true with Negate=true, then call goal WhenFalse when the condition matches.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "condition.if(Left=%flag%, Operator=\u0022==\u0022, Right=false) , goal.call(GoalName={name:\u0022WhenFalse\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -123,7 +135,7 @@
             {
               "name": "Message",
               "value": "NOT should negate falsy to truthy",
-              "type": "tstring"
+              "type": "string"
             }
           ],
           "defaults": null,
@@ -134,17 +146,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022negated\u0022, Actual=%result%, Message=\u0022NOT should negate falsy to truthy\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionNot.test.goal",
-  "prPath": "/.build/conditionnot.test.pr",
+  "path": "/Modules/Condition/Operators/Not/ConditionNot.test.goal",
+  "prPath": "/Modules/Condition/Operators/Not/.build/conditionnot.test.pr",
   "hash": "a7710ec1237c989fb1f6596ef87bf1e0552553ce70930fc5fa07832bf42e060a",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

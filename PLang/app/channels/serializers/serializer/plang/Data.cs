@@ -28,7 +28,7 @@ public sealed class Data : ISerializer
         WriteIndented = false,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
         // Strip [Sensitive]-marked properties from the envelope's Value object —
-        // mirrors global::app.data.@this._envelopeJsonOptions. Security v1 S-F4.
+        // mirrors global::app.data.@this._envelopeJsonOptions.
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
             Modifiers = { global::app.channels.serializers.filters.Sensitive.Strip }
@@ -132,6 +132,9 @@ public sealed class Data : ISerializer
     {
         [JsonPropertyOrder(1)] public string Type { get; set; } = "";
         [JsonPropertyOrder(2)] public object? Value { get; set; }
-        [JsonPropertyOrder(3)] public app.modules.signing.Signature? Signature { get; set; }
+        // Wire envelope DTO; setter required for STJ deserialization. The trust
+        // gate is VerifyAsync run on the populated Data, not the setter on this
+        // transport shape.
+        [JsonPropertyOrder(3)] public app.modules.signing.Signature? Signature { get; set; } // nosemgrep: plang-verified-must-have-private-setter
     }
 }

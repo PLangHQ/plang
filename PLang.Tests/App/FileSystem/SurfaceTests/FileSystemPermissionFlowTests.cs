@@ -9,7 +9,7 @@ using Delete = global::app.types.path.permission.verb.Delete;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
-/// Stage 4 — Batch 8: parametrized coverage across the v2 single-path FS
+/// Batch 8: parametrized coverage across the v2 single-path FS
 /// methods. Each method is exercised under three scenarios:
 ///   1. In-root path → Ok, no Ask issued.
 ///   2. Out-of-root + stateful channel → blocking prompt → grant stored → succeeds.

@@ -47,7 +47,7 @@ public class FileHandlerTests : IDisposable
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Absolute).IsEqualTo(TempPath("test.txt"));
-        await Assert.That(f.Relative).IsEqualTo("test.txt");
+        await Assert.That(f.Relative).IsEqualTo("/test.txt");
     }
 
     [Test]
@@ -76,7 +76,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_UnregisteredSchemePath_SurfacesTypedError_NotNre()
     {
-        // codeanalyzer v1 F4 — a path whose scheme conversion failed (e.g. the
+        // a path whose scheme conversion failed (e.g. the
         // unregistered s3:// scheme) is a non-Success data.@this<path>. The
         // handler must surface that typed SchemeNotRegistered error, not NRE
         // on Path.Value.
@@ -187,7 +187,7 @@ public class FileHandlerTests : IDisposable
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
-        await Assert.That(f.Relative).IsEqualTo("dst.txt");
+        await Assert.That(f.Relative).IsEqualTo("/dst.txt");
     }
 
     [Test]
@@ -227,7 +227,7 @@ public class FileHandlerTests : IDisposable
         var f = result.Value as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Source).IsNotNull();
-        await Assert.That(f.Relative).IsEqualTo("move_dst.txt");
+        await Assert.That(f.Relative).IsEqualTo("/move_dst.txt");
     }
 
     [Test]

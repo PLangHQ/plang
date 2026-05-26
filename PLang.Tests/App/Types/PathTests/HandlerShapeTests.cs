@@ -7,7 +7,7 @@ using System.Reflection;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Stage 3 — handler one-liners and the death of IFile / DefaultFileProvider /
+/// Handler one-liners and the death of IFile / DefaultFileProvider /
 /// the [Code]-partial provider injection on file handlers.
 /// </summary>
 public class HandlerShapeTests
@@ -141,7 +141,7 @@ public class HandlerShapeTests
 
     [Test] public async Task FilePath_AsBooleanAsync_OutOfRoot_DeniedPermission_AnswersFalse()
     {
-        // codeanalyzer v2 N1: FilePath.AsBooleanAsync must stay behind AuthGate.
+        // FilePath.AsBooleanAsync must stay behind AuthGate.
         // An out-of-root file that genuinely exists answers `false` when the Read
         // grant is denied — existence is gated, not a free filesystem oracle.
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-" + System.Guid.NewGuid().ToString("N"));

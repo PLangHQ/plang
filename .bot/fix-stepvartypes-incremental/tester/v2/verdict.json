@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "C# suite 3036/3036 green and v1 findings all closed, but 21 PLang tests fail on this branch. Red is red — pre-existing status does not soften the verdict. Coder must resolve all PLang failures or get explicit out-of-scope acceptance before this branch ships."
+}

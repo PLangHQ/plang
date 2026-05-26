@@ -139,7 +139,7 @@ public class Default : IAssert
     /// through <see cref="data.@this.ToBooleanAsync"/> so the resolvable-dispatch
     /// rule has a single home; everything else falls through to the sync rules.
     /// `assert %path% is true` is thus correct via the same path the condition
-    /// pipeline uses. (codeanalyzer v1 F3 / v2 N3)
+    /// pipeline uses.
     /// </summary>
     private static async Task<bool> ResolveTruthy(data.@this? data)
     {

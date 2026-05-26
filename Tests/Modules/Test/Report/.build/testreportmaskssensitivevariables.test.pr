@@ -40,7 +40,7 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -48,7 +48,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -56,7 +62,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_fixtures_sensitive\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -74,7 +80,7 @@
             {
               "name": "Tests",
               "value": "%tests%",
-              "type": "list"
+              "type": "list\u003Ctestfile\u003E"
             }
           ],
           "defaults": null,
@@ -87,7 +93,7 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -95,7 +101,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -103,7 +115,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.run(Tests=%tests%) | variable.set(Name=%results%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -121,7 +133,7 @@
             {
               "name": "Results",
               "value": "%results%",
-              "type": "object"
+              "type": "results"
             }
           ],
           "defaults": null,
@@ -134,7 +146,7 @@
             {
               "name": "Name",
               "value": "%report%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -142,7 +154,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -150,7 +168,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "test.report(Results=%results%, Format=%!data%) , variable.set(Name=%report%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -168,7 +186,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -184,7 +202,7 @@
       "guidance": "Post-condition assertion that the report\u0027s summaryFail count equals 1. Uses assert.equals with Expected=1 and Actual=%report.summaryFail%.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%report.summaryFail%)",
       "source": null,
       "waitForExecution": true
     },
@@ -200,13 +218,13 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
-              "value": "privateKey",
-              "type": "string"
-            },
-            {
               "name": "Container",
               "value": "%report.content%",
+              "type": "object"
+            },
+            {
+              "name": "Value",
+              "value": "privateKey",
               "type": "object"
             }
           ],
@@ -218,7 +236,7 @@
       "guidance": "Post-condition assertion that the report content includes the sensitive key name \u0027privateKey\u0027 (name preserved even though value is masked).",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.contains(Container=%report.content%, Value=\u0022privateKey\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -234,13 +252,13 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
-              "value": "******",
-              "type": "string"
-            },
-            {
               "name": "Container",
               "value": "%report.content%",
+              "type": "object"
+            },
+            {
+              "name": "Value",
+              "value": "******",
               "type": "object"
             }
           ],
@@ -252,7 +270,7 @@
       "guidance": "Post-condition assertion that the report content includes the redacted value \u0027******\u0027 to ensure masking is applied in test.report output.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.contains(Container=%report.content%, Value=\u0022******\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -268,13 +286,13 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
-              "value": "publicKey",
-              "type": "string"
-            },
-            {
               "name": "Container",
               "value": "%report.content%",
+              "type": "object"
+            },
+            {
+              "name": "Value",
+              "value": "publicKey",
               "type": "object"
             }
           ],
@@ -286,17 +304,17 @@
       "guidance": "Post-condition assertion that the report content includes the non-sensitive key name \u0027publicKey\u0027 and its value is not masked away.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.contains(Container=%report.content%, Value=\u0022publicKey\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestReportMasksSensitiveVariables.test.goal",
-  "prPath": "/.build/testreportmaskssensitivevariables.test.pr",
+  "path": "/Modules/Test/Report/TestReportMasksSensitiveVariables.test.goal",
+  "prPath": "/Modules/Test/Report/.build/testreportmaskssensitivevariables.test.pr",
   "hash": "98bb738f1744ae140dc4797544b72723f8c3c4f6ab90d007b050758552c9b244",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

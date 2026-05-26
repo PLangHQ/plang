@@ -139,7 +139,8 @@ public class DiscoverActionTests
         var action = new global::app.modules.test.discover
         {
             Context = _app.User.Context,
-            Path = new global::app.data.@this<string>("Path", path),
+            Path = global::app.data.@this<global::app.types.path.@this>.Ok(
+                global::app.types.path.@this.Resolve(path, _app.User.Context)),
             Pattern = new global::app.data.@this<string>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<bool>("Recursive", recursive)
         };
@@ -159,9 +160,9 @@ public class DiscoverActionTests
         var files = await Discover();
 
         await Assert.That(files.Count).IsEqualTo(3);
-        await Assert.That(files.Any(f => f.Path.EndsWith("Foo.test.goal"))).IsTrue();
-        await Assert.That(files.Any(f => f.Path.EndsWith("Bar.test.goal"))).IsTrue();
-        await Assert.That(files.Any(f => f.Path.EndsWith("Baz.test.goal"))).IsTrue();
+        await Assert.That(files.Any(f => f.Goal.Path!.ToString().EndsWith("Foo.test.goal"))).IsTrue();
+        await Assert.That(files.Any(f => f.Goal.Path!.ToString().EndsWith("Bar.test.goal"))).IsTrue();
+        await Assert.That(files.Any(f => f.Goal.Path!.ToString().EndsWith("Baz.test.goal"))).IsTrue();
     }
 
     // A .goal with no matching .pr in .build/ → global::app.tester.Status.Stale with reason "no .pr".

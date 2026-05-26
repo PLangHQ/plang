@@ -3,7 +3,7 @@ using app.events.lifecycle.bindings.binding;
 
 namespace PLang.Tests.App.ChannelsTests.Integration;
 
-// End-to-end integration cuts. From architect plan/test-strategy.md.
+// End-to-end integration cuts. md.
 
 public class IntegrationCutsTests
 {

@@ -52,6 +52,23 @@ public class ProvidersSnapshotTests
 
         var snap = src.Snapshot();
         var dst = new global::app.@this("/dst");
+        // Pre-grant Execute on the snapshotted DLL source for the System actor —
+        // restore reloads the DLL via path.LoadAssemblyAsync, which gates on
+        // Execute. The original App's actor had already passed that gate; the
+        // snapshot doesn't (yet) carry actor permissions, so replay it here.
+        var dllSrc = typeof(CustomGrep).Assembly.Location;
+        var grantPath = dllSrc.StartsWith("/") ? "/" + dllSrc : dllSrc;
+        var resolved = global::app.types.path.@this.Resolve(grantPath, dst.User.Context!);
+        var verb = new global::app.types.path.permission.verb.@this
+        {
+            Read = new global::app.types.path.permission.verb.Read(),
+            Execute = new global::app.types.path.permission.verb.Execute()
+        };
+        var permission = new global::app.types.path.permission.@this(
+            Actor: dst.User.Name, Path: resolved.Absolute, Verb: verb,
+            Match: global::app.types.path.permission.Match.Exact);
+        await dst.User.Permission.Add(
+            new global::app.data.@this<global::app.types.path.permission.@this>("", permission) { Context = dst.User.Context });
         dst.Restore(snap, dst.User.Context);
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();

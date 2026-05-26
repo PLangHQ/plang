@@ -1,0 +1,146 @@
+{
+  "plan.md": [
+    {
+      "id": "14d68220b6",
+      "line": 68,
+      "text": "I think Path should contain Equals method and handle this by it self (obp)",
+      "anchor": "**Equality / dictionary keys.** Path equality is on `Absolute` (`this.cs:167\u2013172`), which depends on Context for resolution. Dictionary keys should be the `Relative` string (perimeter form) rather than the `Path` itself \u2014 `AppGoals._goals` keyed on `goal.PrPath.Relative` matches existing behaviour (today it's already keyed on the relative-shaped derived string).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:24:43",
+      "drifted": true
+    },
+    {
+      "id": "01681ac9c3",
+      "line": 84,
+      "text": "I think InFolder is fine, it allows us to use that with any folder, not just build. But I dont really understand what you are trying to accomplish with InFolder(InBuildFolder), WithExtension. Are you saying that is will crawl a path an find all files with .pr extension?",
+      "anchor": "**Open question for Ingi:** Are these the right shapes? Specifically, is `InBuildFolder()` a verb worth having, or should `PrPath` derivation live as `Goal.PrPath { get; }` doing `Path.WithName(...).InFolder(\".build\").WithExtension(\".pr\")` from the user's perspective? I lean toward `InBuildFolder()` because the rule (lowercase basename, `.build` sibling, `.pr` extension) is PLang-specific and reusable.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:29:02",
+      "drifted": true
+    },
+    {
+      "id": "ba891e52a2",
+      "line": 93,
+      "text": "we already have the .pr version of this, can we just replicate it for the .goal version?",
+      "anchor": "I lean toward (b) \u2014 keeps the converter pure; the FilePath does the post-conversion wiring (it's already the place that does back-reference fixup for `.pr` deserialization).",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:29:40",
+      "drifted": true
+    },
+    {
+      "id": "a2873a2274",
+      "line": 110,
+      "text": "fine. I want to remove _goals sometime later in the future, as we should use cache module when we read a goal, if you see that make sense now, then maybe do that now, but I feel there are other things that stop it at this moment",
+      "anchor": "`_goals: ConcurrentDictionary<string, Goal>` and `_byPath: ConcurrentDictionary<string, Goal>` (`goals/this.cs:15\u201316`) stay string-keyed. Keys are `goal.PrPath.Relative` / `goal.Path.Relative`. The string is the lookup *key*, not a load-bearing path: it's the relative form that's portable across roots, used identically to today. Calling `_goals[goal.PrPath]` becomes `_goals[goal.PrPath!.Relative]`.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:31:51",
+      "drifted": true
+    },
+    {
+      "id": "78404fa065",
+      "line": 128,
+      "text": "yes, I think we might need Execute verb,  just like linux has it.",
+      "anchor": "**Open question for Ingi:** Do you want a separate `Read` verb (`Permission.Verb.Execute`?) for assembly loading, or does it reuse `Read`? Today `Read` means \"read bytes.\" Loading executable code from a path probably warrants a distinct verb so the prompt can say \"Allow X to load code from Y\" instead of \"Allow X to read Y.\" Punt or land?",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:33:00",
+      "drifted": true
+    },
+    {
+      "id": "4f1e232a5b",
+      "line": 132,
+      "text": "I am not sure that Path actually check the permission on new instance, it's only when it want to do something, so if I do \"- set datasource = \"c:\\temp\\my.sqlite\"\", where c:\\temp is outside of my root, then I do just path.Absolute, I will get the Absolute path and the sqlite driver will open the db, maybe we need to do some path.Permission.Validate() before giving it to sqlite drive?",
+      "anchor": "The sqlite driver takes a string DB path. The handler lifts to `Path`, gates with a `Stat()` probe (or `Mkdir()` for the directory), then passes `.Absolute` to sqlite. The `.Absolute` reach is OK *only* after the path has gated \u2014 that's the \"third-party API needs string\" exception.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:35:13",
+      "drifted": true
+    },
+    {
+      "id": "f348e7ae50",
+      "line": 162,
+      "text": "for something like openai.cs which requires base64, there should be Path.ReadAsBase64(), that method would then read the file (which does the auth check) and converts the bytes to base64",
+      "anchor": "No new API needed; `Authorize` is already public. Apply to: `settings/Sqlite.cs`, `llm/code/OpenAi.cs` (image attachments \u2014 could also use `path.ReadBytes()` and skip `.Absolute`), and any future third-party-API-wants-a-string site. DLL loading goes through the dedicated `Execute` verb (D8) so doesn't need this.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:51:25",
+      "drifted": false
+    },
+    {
+      "id": "65162a86f8",
+      "line": 178,
+      "text": "what does footgun mean?",
+      "anchor": "> **`path.Absolute` is a footgun.** Any reach for `.Absolute` outside `app.types.path.**` means a third-party API (sqlite, image library, `Assembly.LoadFrom`) is about to touch the filesystem with no gate. The handler MUST `await path.Authorize(verb)` first and check `auth.Success` before reading `.Absolute`. The same applies to `.OsAbsolutePath` when used as a destination string. The verb surface (`ReadText`, `WriteText`, `List`, `Stat`, `ReadBytes`, \u2026) does this automatically \u2014 reach for verbs first; only fall through to `.Absolute` + manual `Authorize` when a third-party API genuinely demands a string path.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:51:49",
+      "drifted": false
+    },
+    {
+      "id": "458980cde4",
+      "line": 225,
+      "text": "I am a bit lost here, when are we json converting something in goal.path?",
+      "anchor": "- **JSON converter for Path**: deserializing `Goal.Path` requires producing a `Path` from a string with no Context in scope. The deferred-Context pattern (Raw set, Context wired later) needs care \u2014 accessing `Relative` before Context is wired throws (`this.cs:50`). Either (a) the JSON converter sets `_absolutePath` and `Raw` only, and Context-wiring happens in the back-reference pass that already exists for `Goal.App`; or (b) we add a `Path.WithoutContext(string raw)` constructor explicitly for the JSON load path.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:37:08",
+      "drifted": true
+    },
+    {
+      "id": "628cf4f30d",
+      "line": 228,
+      "text": "why cant it be init still? we should never really overwrite the PrPath, this is constructed by the file name",
+      "anchor": "- **The `Goal.PrPath` `init { }` no-op setter** (`goal/this.cs:116`) is a vestige of the read-only derived shape. When PrPath becomes a real Path with a derived getter, the init-setter goes too \u2014 but any external `Goal { PrPath = ... }` initializer will silently no-op today and silent-no-op tomorrow. If anyone relied on that, they're already broken; no regression.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:39:08",
+      "drifted": true
+    },
+    {
+      "id": "930a3a7055",
+      "line": 265,
+      "text": "isn't it just a jsonconverter, so when we deserialize json to an object, and that object has a property with path type, it knows how to iniitalize it? I think we need some PlangConverter for the json deserializer for all the types we have.",
+      "anchor": "- **JSON converter for Path** (Ingi C7 \u2014 clarifying when this matters): only after Stage 3 makes `Goal.Path: path?`. The conversion fires every time a `.pr` is read from disk \u2014 `.pr` files are JSON containing a `path` field (and `prPath`, `loadedFromPrPath`, `goalCall.PrPath`), and the System.Text.Json deserializer needs to turn each string into a `Path`. The converter has no Context in scope at deserialize time. Two shapes work: (a) the converter sets `_absolutePath` and `Raw` only, leaving Context null, and the existing post-deserialize back-reference pass that sets `goal.App`/`step.Goal` extends to also wire `Path.Context` on every Path property in the tree; or (b) add `Path.WithoutContext(string raw)` explicitly for the JSON load path. (a) is the lower-friction choice \u2014 same lifecycle slot as the back-references.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:54:45",
+      "drifted": false
+    },
+    {
+      "id": "82001e1de2",
+      "line": 318,
+      "text": "why keep Goal.Path as string, I dont understand? dont like this PathTyped, it's obp violation",
+      "anchor": "1. **Stage 3 risk** \u2014 comfortable doing Goal-typing as one atomic commit, or want a parallel-properties bridge (`Goal.Path` stays string, `Goal.PathTyped` lands alongside, consumers migrate gradually)? My read: atomic. Bridge doubles the work and the bug surface.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:55:32",
+      "drifted": false
+    },
+    {
+      "id": "d0d7239acb",
+      "line": 319,
+      "text": "one branch, we never use PR",
+      "anchor": "2. **Scope of this branch** \u2014 all 7 stages, or split into multiple branches? Brief implies one big branch; I think Stages 1\u20134 are one PR, Stage 5 is per-handler PRs (smaller blast radius per merge), Stage 6+7 wrap up.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-25T15:55:49"
+    }
+  ]
+}

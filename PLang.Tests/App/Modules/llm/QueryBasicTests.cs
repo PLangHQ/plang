@@ -150,7 +150,8 @@ public class QueryBasicTests
     {
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(
-                LlmTestHelper.MakeCompletionResponse("result text", promptTokens: 15, completionTokens: 25)));
+                LlmTestHelper.MakeCompletionResponse("result text",
+                    promptTokens: 15, completionTokens: 25, cachedTokens: 5)));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
@@ -162,19 +163,139 @@ public class QueryBasicTests
         await Assert.That(result.Properties["CompletionTokens"]?.Value).IsEqualTo(25);
         await Assert.That(result.Properties["TotalTokens"]?.Value).IsEqualTo(40);
         await Assert.That(result.Properties["Cached"]?.Value).IsEqualTo(false);
+        // CachedTokens reaches Properties — wire-up check on the success-exit path.
+        await Assert.That(result.Properties["CachedTokens"]?.Value).IsEqualTo(5);
     }
 
+    // Pricing table covers gpt-5.4-{nano,mini,(base)}. A model not on that list
+    // produces null Cost — the once-per-Run debug warning fires (covered separately
+    // if/when a Debug-channel capture fixture lands).
     [Test]
     public async Task Query_CostNull_WhenNoPricingData()
     {
         _handler.Handler = _ => Task.FromResult(
-            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
+            LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("ok", model: "claude-99-future")));
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "system", Content = "You are helpful" },
+                new LlmMessage { Role = "user", Content = "Hello" }
+            },
+            Model = new global::app.data.@this<string>("Model", "claude-99-future")
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Properties["Cost"]?.Value).IsNull();
+    }
+
+    // Cost math: prompt_tokens=100, cached_tokens=40, completion_tokens=50 against
+    // gpt-5.4-nano (input 0.20, cached 0.02, output 1.25 — USD per 1M tokens).
+    // Non-cached input bucket = prompt − cached = 60.
+    // Cost = (60·0.20 + 40·0.02 + 50·1.25) / 1_000_000.
+    // Equality-check (not approx) — the math is pure decimal arithmetic.
+    [Test]
+    public async Task Query_Cost_PositiveArithmetic_PricedModel()
+    {
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("ok",
+                    promptTokens: 100, completionTokens: 50, cachedTokens: 40,
+                    model: "gpt-5.4-nano")));
 
         var action = LlmTestHelper.MakeQuery(Ctx);
         var result = await action.Run();
 
         await Assert.That(result.Success).IsTrue();
-        await Assert.That(result.Properties["Cost"]?.Value).IsNull();
+        decimal expected = (60m * 0.20m + 40m * 0.02m + 50m * 1.25m) / 1_000_000m;
+        await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(expected);
+        // CachedTokens surfaces on Properties too (F5).
+        await Assert.That(result.Properties["CachedTokens"]?.Value).IsEqualTo(40);
+    }
+
+    // Longest-prefix-wins. Both "gpt-5.4" and "gpt-5.4-mini" are pricing prefixes;
+    // for model "gpt-5.4-mini-2026-03-17" the longer match must take precedence.
+    // mini row: input 0.75, cached 0.075, output 4.50.
+    // Cost = 1_000_000·0.75 + 1_000_000·4.50, divided by 1_000_000 = 5.25.
+    [Test]
+    public async Task Query_Cost_LongestPrefixWins_MiniBeatsBase()
+    {
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("ok",
+                    promptTokens: 1_000_000, completionTokens: 1_000_000,
+                    model: "gpt-5.4-mini-2026-03-17")));
+
+        // Pricing lookup uses the action's Model; set it to the dated variant.
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "system", Content = "You are helpful" },
+                new LlmMessage { Role = "user", Content = "Hello" }
+            },
+            Model = new global::app.data.@this<string>("Model", "gpt-5.4-mini-2026-03-17")
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        // 1e6·0.75/1e6 + 1e6·4.50/1e6 = 5.25 exact.
+        await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(5.25m);
+    }
+
+    // Cost accumulates across the tool-call retry loop. First response asks for a
+    // tool; the second is the final answer. Each call carries its own usage —
+    // totalCost is the sum. (Same exit path also surfaces CachedTokens; F5.)
+    [Test]
+    public async Task Query_Cost_AccumulatesAcrossRetryLoop()
+    {
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+            {
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(("call_1", "Echo", "{}"))));
+            }
+            return Task.FromResult(LlmTestHelper.JsonResponse(
+                LlmTestHelper.MakeCompletionResponse("done",
+                    promptTokens: 200, completionTokens: 30, cachedTokens: 50,
+                    model: "gpt-5.4-nano")));
+        };
+
+        var action = new query
+        {
+            Context = Ctx,
+            Messages = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Content = "go" }
+            },
+            Tools = new List<GoalCall>
+            {
+                new GoalCall { Name = "Echo" }
+            }
+        };
+        var result = await action.Run();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(_handler.CallCount).IsEqualTo(2);
+
+        // Call 1 (tool-call response, default usage: 10 prompt, 5 completion, 0 cached):
+        //   10·0.20 + 0·0.02 + 5·1.25 = 8.25
+        // Call 2 (final, 200 prompt / 30 comp / 50 cached):
+        //   150·0.20 + 50·0.02 + 30·1.25 = 68.5
+        // Total = 76.75 / 1_000_000
+        decimal call1 = (10m * 0.20m + 0m * 0.02m + 5m * 1.25m) / 1_000_000m;
+        decimal call2 = (150m * 0.20m + 50m * 0.02m + 30m * 1.25m) / 1_000_000m;
+        await Assert.That((decimal?)result.Properties["Cost"]?.Value).IsEqualTo(call1 + call2);
+        // CachedTokens on the tool-call exit path (F5).
+        await Assert.That(result.Properties["CachedTokens"]?.Value).IsEqualTo(50);
     }
 
     #endregion

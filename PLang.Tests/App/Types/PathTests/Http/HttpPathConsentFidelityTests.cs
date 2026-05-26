@@ -6,13 +6,13 @@ using PLang.Tests.App.Types.PathTests.Contract;
 namespace PLang.Tests.App.Types.PathTests.Http;
 
 /// <summary>
-/// Security v2 S4 — the consent contract must be airtight: the URL the user
-/// sees in the AuthGate prompt must equal the URL we fetch and the URL we
-/// persist as the grant key. v1 had two divergences:
-///   – S4.a IDN homograph: <c>_uri.Host</c> returned Unicode, so
-///     <c>аpple.com</c> (Cyrillic 'а') rendered as the trusted brand;
-///   – S4.b embedded userinfo: <c>https://user:pwd@victim/</c> rendered as
-///     <c>https://victim/</c> while the wire still carried userinfo,
+/// The consent contract must be airtight: the URL the user sees in the
+/// AuthGate prompt must equal the URL we fetch and the URL we persist as
+/// the grant key. Two divergences to guard against:
+///   – IDN homograph: <c>_uri.Host</c> returning Unicode lets
+///     <c>аpple.com</c> (Cyrillic 'а') render as the trusted brand;
+///   – embedded userinfo: <c>https://user:pwd@victim/</c> rendering as
+///     <c>https://victim/</c> while the wire still carries userinfo,
 ///     making a single grant cover any userinfo-bearing variant.
 /// </summary>
 public class HttpPathConsentFidelityTests

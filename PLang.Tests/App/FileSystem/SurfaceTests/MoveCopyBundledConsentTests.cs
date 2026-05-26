@@ -8,7 +8,7 @@ using Write = global::app.types.path.permission.verb.Write;
 
 namespace PLang.Tests.App.FileSystem.SurfaceTests;
 
-/// Stage 4 — Batch 9: Move/Copy ask each Path its respective verb. Both Ok
+/// Batch 9: Move/Copy ask each Path its respective verb. Both Ok
 /// → operation proceeds. Either returns Data<Ask> → bundled `Ask` with one
 /// question string covering both paths. On bundled "a", both grants land.
 public class MoveCopyBundledConsentTests

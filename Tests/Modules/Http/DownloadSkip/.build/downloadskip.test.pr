@@ -33,7 +33,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "file.save(Path=\u0022skip-test.txt\u0022, Value=\u0022existing content\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -45,6 +45,55 @@
       "comment": null,
       "actions": [
         {
+          "module": "file",
+          "action": "exists",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "skip-test.txt",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%__conditionReturn__.Exists%",
+              "type": "bool"
+            },
+            {
+              "name": "Operator",
+              "value": "==",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "else",
+          "parameters": [],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
           "module": "http",
           "action": "download",
           "parameters": [
@@ -54,19 +103,33 @@
               "type": "string"
             },
             {
-              "name": "SaveTo",
-              "value": "skip-test.txt",
-              "type": "string"
-            },
-            {
-              "name": "IfExists",
-              "value": "Skip",
-              "type": "fileexists"
-            },
-            {
               "name": "Unsigned",
               "value": true,
               "type": "bool"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "timeoutinsec",
+              "value": 30,
+              "type": "int"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "file",
+          "action": "save",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "skip-test.txt",
+              "type": "path"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -77,7 +140,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "http.download(Url=\u0022https://httpbin.org/bytes/100\u0022, Unsigned=true) , file.exists(Path=\u0022skip-test.txt\u0022), condition.if(Left=%__conditionReturn__.Exists%, Operator=\u0022==\u0022, Right=true), condition.else(), http.download(Url=\u0022https://httpbin.org/bytes/100\u0022, Unsigned=true), file.save(Path=\u0022skip-test.txt\u0022, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -113,7 +176,7 @@
             {
               "name": "Name",
               "value": "%content%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -121,7 +184,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -129,7 +198,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "file.read(Path=\u0022skip-test.txt\u0022, ResolveVariables=false), variable.set(Name=%content%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -152,11 +221,35 @@
             {
               "name": "Operator",
               "value": "==",
-              "type": "string"
+              "type": "operator"
             },
             {
               "name": "Right",
               "value": "existing content",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "negate",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "existing content",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%content%",
               "type": "object"
             }
           ],
@@ -168,7 +261,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "condition.if(Left=%content%, Operator=\u0022==\u0022, Right=\u0022existing content\u0022), assert.equals(Expected=\u0022existing content\u0022, Actual=%content%)",
       "source": null,
       "waitForExecution": true
     },
@@ -186,12 +279,7 @@
             {
               "name": "Data",
               "value": "File was not re-downloaded (skip worked)",
-              "type": "tstring"
-            },
-            {
-              "name": "Channels",
-              "value": "this",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -202,7 +290,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "output.write(Data=\u0027File was not re-downloaded (skip worked)\u0027)",
       "source": null,
       "waitForExecution": true
     },
@@ -221,19 +309,20 @@
               "name": "Path",
               "value": "skip-test.txt",
               "type": "path"
-            },
+            }
+          ],
+          "defaults": [
             {
-              "name": "IgnoreIfNotFound",
+              "name": "ignoreifnotfound",
               "value": false,
               "type": "bool"
             },
             {
-              "name": "Recursive",
+              "name": "recursive",
               "value": false,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         }
       ],
@@ -241,17 +330,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "file.delete(Path=\u0022skip-test.txt\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/DownloadSkip.test.goal",
-  "prPath": "/.build/downloadskip.test.pr",
+  "path": "/Modules/Http/DownloadSkip/DownloadSkip.test.goal",
+  "prPath": "/Modules/Http/DownloadSkip/.build/downloadskip.test.pr",
   "hash": "2d89ef5b3ef512867d5fc30a7d644804f499d4a3accbfa8de1e9c5c187211799",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

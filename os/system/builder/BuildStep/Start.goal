@@ -15,10 +15,11 @@ Compile
 - builder.validateStepActions step=%step%, actions=%planStep.actions%, write to %planStep.actions%
 - builder.actions actions=%planStep.actions%, write to %actions%
 - builder.types actions=%planStep.actions%, write to %typeInfo%
-/ %varTypes% is computed once per goal in BuildGoal/Start; index by this step.
+/ Per-step so the snapshot reflects the Actions just written by prior BuildSteps.
+- goal.getTypes Goal=%goal%, write to %varTypes%
 - set %stepVarTypes% = %varTypes[step.Index]%
-- render template "/system/builder/templates/v2/stepForLlm.template", write to %stepForLlm%
-- render template "/system/builder/templates/v2/stepActionDetails.template", write to %actionDetails%
+- render template "/system/builder/llm/templates/stepForLlm.template", write to %stepForLlm%
+- render template "/system/builder/llm/templates/stepActionDetails.template", write to %actionDetails%
 - render template "/system/builder/llm/Compile.llm", write to %buildStepPrompt%
 - render template "/system/builder/llm/CompileUser.llm", write to %buildStepUserMsg%
 - set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"%buildStepUserMsg%"}], type=json
@@ -28,7 +29,8 @@ Compile
 / then retry the whole QueryAndVerify. RetryCount is the runtime's job, no counter.
 - call QueryAndVerify, on error key "missing-actions" call RefineActions, then retry 2 times
 
-- add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, system: %buildStepPrompt%, user: %buildStepUserMsg%, response: %compileResult%} to %trace.stepPasses%
+/ system prompt is stashed once at goal level (%trace.compileSystem%) — do not duplicate it here.
+- add {goal: %goal.Name%, index: %step.Index%, stepText: %step.Text%, actions: %planStep.actions%, user: %buildStepUserMsg%, response: %compileResult%, usage: {model: %compileResult.Model%, promptTokens: %compileResult.PromptTokens%, cachedTokens: %compileResult.CachedTokens%, completionTokens: %compileResult.CompletionTokens%, totalTokens: %compileResult.TotalTokens%, cost: %compileResult.Cost%, cached: %compileResult.Cached%}} to %trace.stepPasses%
 
 - set %goal.Steps[step.Index].Actions% = %compileResult.actions%
 - set %goal.Steps[step.Index].Formal% = %compileResult.formal%

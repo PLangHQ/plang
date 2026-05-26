@@ -1,4 +1,5 @@
 using app.types;
+using app.Utils;
 using PermissionRecord = global::app.types.path.permission.@this;
 using Verb = global::app.types.path.permission.verb.@this;
 using Read = global::app.types.path.permission.verb.Read;
@@ -45,7 +46,7 @@ public partial class @this
         {
             // Schemes can append a hint — e.g. HttpPath warns when answering
             // 'a' would persist a URL with a query string verbatim to the
-            // local sqlite (security v1 S3). Base returns "".
+            // local sqlite. Base returns "".
             var hint = AuthorizationHint(verb);
             var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
             var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)";
@@ -92,15 +93,26 @@ public partial class @this
         Verb:  verb,
         Match: MatchMode.Exact);
 
+    // A child app inherits its parent's filesystem scope: paths under the
+    // parent's root/os-folder are still in-root from a child's perspective.
+    // The os-folder checks cover system-built-in goals (test, build) at any
+    // depth. The MaxDepth cap turns an accidental Parent cycle into a quiet
+    // false (out-of-root) instead of an infinite loop on the Authorize hot
+    // path; 16 is well above any legitimate child-app nesting.
     protected bool IsInRoot()
     {
         var app = Context?.App;
         if (app == null) return false;
-        // os-folder check covers system-built-in goals (test, build) — use the
-        // computed os path so it holds even when App.OsDirectory was not set.
-        return IsUnder(app.AbsolutePath, RootComparison)
-            || IsUnder(app.OsDirectory, RootComparison)
-            || IsUnder(app.OsAbsolutePath, RootComparison);
+        const int MaxDepth = 16;
+        for (int depth = 0; app != null && depth < MaxDepth; depth++)
+        {
+            if (IsUnder(app.AbsolutePath, RootComparison)
+                || IsUnder(app.OsDirectory, RootComparison)
+                || IsUnder(app.OsAbsolutePath, RootComparison))
+                return true;
+            app = app.Parent;
+        }
+        return false;
     }
 
     /// <summary>
@@ -112,9 +124,9 @@ public partial class @this
     private bool IsUnder(string? rootCandidate, StringComparison cmp)
     {
         if (string.IsNullOrEmpty(rootCandidate)) return false;
-        var rootWithSeparator = rootCandidate.EndsWith(System.IO.Path.DirectorySeparatorChar)
+        var rootWithSeparator = rootCandidate.EndsWith(PathHelper.DirectorySeparatorChar)
             ? rootCandidate
-            : rootCandidate + System.IO.Path.DirectorySeparatorChar;
+            : rootCandidate + PathHelper.DirectorySeparatorChar;
         return Absolute.StartsWith(rootWithSeparator, cmp)
             || string.Equals(Absolute, rootCandidate, cmp);
     }
@@ -124,6 +136,7 @@ public partial class @this
         if (verb.Read    != null) return "read";
         if (verb.Write   != null) return "write";
         if (verb.Delete  != null) return "delete";
+        if (verb.Execute != null) return "execute";
         return "access";
     }
 
@@ -131,7 +144,7 @@ public partial class @this
     /// Scheme-specific extra text appended to the Authorize prompt before the
     /// y/n/a choices. Base returns empty. HttpPath overrides to warn when an
     /// 'a' would persist a URL with query-string secrets verbatim to the
-    /// local sqlite (security v1 S3). Subclasses can append any other
+    /// local sqlite. Subclasses can append any other
     /// scheme-specific consent signal here.
     /// </summary>
     protected virtual string AuthorizationHint(Verb verb) => "";

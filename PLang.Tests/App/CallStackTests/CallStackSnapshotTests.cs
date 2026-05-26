@@ -40,8 +40,8 @@ public class CallStackSnapshotTests
         var frames = section.Read<List<Snapshot>>("frames")!;
         await Assert.That(frames.Count).IsEqualTo(2);
         // Outer first → bottom (inner) last.
-        await Assert.That(frames[0].Read<string>("goalPrPath")).IsEqualTo(g1.PrPath);
-        await Assert.That(frames[1].Read<string>("goalPrPath")).IsEqualTo(g2.PrPath);
+        await Assert.That(frames[0].Read<string>("goalPrPath")).IsEqualTo(g1.PrPath?.ToString());
+        await Assert.That(frames[1].Read<string>("goalPrPath")).IsEqualTo(g2.PrPath?.ToString());
     }
 
     [Test]
@@ -62,7 +62,7 @@ public class CallStackSnapshotTests
             stack.Capture(section);
             var frames = section.Read<List<Snapshot>>("frames")!;
             await Assert.That(frames.Count).IsEqualTo(1);
-            await Assert.That(frames[0].Read<string>("goalPrPath")).IsEqualTo(g1.PrPath);
+            await Assert.That(frames[0].Read<string>("goalPrPath")).IsEqualTo(g1.PrPath?.ToString());
         }
     }
 
@@ -88,11 +88,11 @@ public class CallStackSnapshotTests
 
             var chain = dst.CallStack.RestoredChain!;
             await Assert.That(chain.Count).IsEqualTo(2);
-            await Assert.That(chain[0].Goal.PrPath).IsEqualTo(g1.PrPath);
-            await Assert.That(chain[^1].Goal.PrPath).IsEqualTo(g2.PrPath);
+            await Assert.That(chain[0].Goal.PrPath).IsEqualTo(g1.PrPath?.ToString());
+            await Assert.That(chain[^1].Goal.PrPath).IsEqualTo(g2.PrPath?.ToString());
 
             await Assert.That(dst.CallStack.BottomFrame).IsNotNull();
-            await Assert.That(dst.CallStack.BottomFrame!.Goal.PrPath).IsEqualTo(g2.PrPath);
+            await Assert.That(dst.CallStack.BottomFrame!.Goal.PrPath).IsEqualTo(g2.PrPath?.ToString());
         }
     }
 

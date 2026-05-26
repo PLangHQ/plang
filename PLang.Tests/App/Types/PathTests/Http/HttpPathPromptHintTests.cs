@@ -5,11 +5,11 @@ using Ctx = global::app.actor.context.@this;
 namespace PLang.Tests.App.Types.PathTests.Http;
 
 /// <summary>
-/// Security v1 S3 — the AuthGate prompt now warns when the URL it is about
-/// to persist carries a query string. Without the hint a user who would
-/// strip <c>?token=…</c> before pasting the URL into an issue tracker has
-/// no signal that 'a' will save it verbatim to the local permission store.
-/// These tests capture the rendered prompt and pin the wording.
+/// The AuthGate prompt warns when the URL it is about to persist carries
+/// a query string. Without the hint, a user who would strip <c>?token=…</c>
+/// before pasting the URL into an issue tracker has no signal that 'a'
+/// will save it verbatim to the local permission store. These tests
+/// capture the rendered prompt and pin the wording.
 /// </summary>
 public class HttpPathPromptHintTests
 {

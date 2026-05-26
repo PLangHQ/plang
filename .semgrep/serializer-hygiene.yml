@@ -1,0 +1,28 @@
+rules:
+  - id: plang-serializer-default-options
+    languages: [csharp]
+    severity: INFO
+    message: |
+      JsonSerializer.Serialize/Deserialize called with no options object —
+      means no PathJsonConverter, no [Sensitive] redactor, no IgnoreCycles.
+      Likely correct for purely-internal shapes; risky if the value graph
+      can reach a path.@this, a [Sensitive] property, or a cycle (e.g.
+      Variables snapshot → Error → CallFrame → Caller → …).
+      Prefer: pass an options object built from Format.Options or
+      Conversion.ContextualReadOptions(context).
+      Documented incident: test/report.cs Variables snapshot cycle (this
+      branch — fixed via ReportOptions { IgnoreCycles }).
+    pattern-either:
+      - pattern: JsonSerializer.Serialize($X)
+      - pattern: System.Text.Json.JsonSerializer.Serialize($X)
+      - pattern: JsonSerializer.Deserialize($X)
+      - pattern: System.Text.Json.JsonSerializer.Deserialize($X)
+    paths:
+      exclude:
+        - "**/*Tests/**"
+        - "**/PLang.Generators/**"
+        - "**/bin/**"
+        - "**/obj/**"
+        - "**/.bot/**"
+        - "**/.build/**"
+        - "**/os/**"

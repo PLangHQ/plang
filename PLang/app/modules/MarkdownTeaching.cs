@@ -1,17 +1,18 @@
-using System.IO;
-
 namespace app.modules;
 
 /// <summary>
 /// Loads per-action LLM teaching from markdown files under
 /// <c>os/system/modules/&lt;module&gt;/{module,&lt;action&gt;}.{notes,examples,description}.md</c>.
-/// Architect plan: <c>.bot/compile-llm-notes-per-action/architect/plan.md</c>.
 ///
-/// Layers (module-level + action-level) are kept split — renderer concats at render
+/// <para>Layers (module-level + action-level) are kept split — renderer concats at render
 /// time. <c>module</c> is a reserved stem; no action may be literally named "module".
 /// Empty / missing files yield null fields (or empty paragraph list). Orphan files
 /// (stem is not <c>module</c> and not a registered action) are surfaced via
-/// <see cref="ScanOrphans"/>; the loader itself never throws.
+/// <see cref="ScanOrphans"/>; the loader itself never throws.</para>
+///
+/// <para>All disk reads route through the <c>path.@this</c> verb surface so an
+/// attacker-controlled <c>MarkdownTeachingRoot</c> can't side-channel reads past
+/// <c>AuthGate</c>.</para>
 /// </summary>
 public static class MarkdownTeaching
 {
@@ -29,18 +30,19 @@ public static class MarkdownTeaching
     /// Read teaching for one action. Returns empty/null fields when the module
     /// folder or the individual files are missing.
     /// </summary>
-    public static Loaded Load(string? modulesRoot, string moduleName, string actionName)
+    public static async Task<Loaded> Load(path? modulesRoot, string moduleName, string actionName)
     {
-        if (string.IsNullOrEmpty(modulesRoot)) return Empty;
-        var folder = Path.Combine(modulesRoot, moduleName);
-        if (!Directory.Exists(folder)) return Empty;
+        if (modulesRoot == null) return Empty;
+        var folder = modulesRoot.Combine(moduleName);
+        var folderExists = await folder.ExistsAsync();
+        if (!folderExists.Success || folderExists.Value != true) return Empty;
 
-        var notes          = ReadOrNull(Path.Combine(folder, $"{actionName}.notes.md"));
-        var examples       = ReadParagraphs(Path.Combine(folder, $"{actionName}.examples.md"));
-        var description    = ReadOrNull(Path.Combine(folder, $"{actionName}.description.md"));
-        var modNotes       = ReadOrNull(Path.Combine(folder, $"{ModuleStem}.notes.md"));
-        var modExamples    = ReadParagraphs(Path.Combine(folder, $"{ModuleStem}.examples.md"));
-        var modDescription = ReadOrNull(Path.Combine(folder, $"{ModuleStem}.description.md"));
+        var notes          = await ReadOrNull(folder.Combine($"{actionName}.notes.md"));
+        var examples       = await ReadParagraphs(folder.Combine($"{actionName}.examples.md"));
+        var description    = await ReadOrNull(folder.Combine($"{actionName}.description.md"));
+        var modNotes       = await ReadOrNull(folder.Combine($"{ModuleStem}.notes.md"));
+        var modExamples    = await ReadParagraphs(folder.Combine($"{ModuleStem}.examples.md"));
+        var modDescription = await ReadOrNull(folder.Combine($"{ModuleStem}.description.md"));
 
         return new Loaded(notes, modNotes, description, modDescription, examples, modExamples);
     }
@@ -65,29 +67,48 @@ public static class MarkdownTeaching
     /// markdown files whose stem is not <c>module</c> and not in the per-module
     /// registered action set. One <see cref="Orphan"/> per file — no dedup.
     /// </summary>
-    public static IEnumerable<Orphan> ScanOrphans(
-        string? modulesRoot,
+    public static async Task<IReadOnlyList<Orphan>> ScanOrphans(
+        path? modulesRoot,
         Func<string, IEnumerable<string>> registeredActions)
     {
-        if (string.IsNullOrEmpty(modulesRoot)) yield break;
-        if (!Directory.Exists(modulesRoot)) yield break;
+        var orphans = new List<Orphan>();
+        if (modulesRoot == null) return orphans;
 
-        foreach (var moduleDir in Directory.EnumerateDirectories(modulesRoot))
+        var rootExists = await modulesRoot.ExistsAsync();
+        if (!rootExists.Success || rootExists.Value != true) return orphans;
+
+        // Recursive list of every file under modulesRoot. Keep only files whose
+        // direct parent (the module folder) sits one level below modulesRoot —
+        // the original loader's non-recursive per-module scan.
+        var listResult = await modulesRoot.List("*", recursive: true);
+        if (!listResult.Success || listResult.Value == null) return orphans;
+
+        var rootAbs = modulesRoot.Absolute;
+        var actionsByModule = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in listResult.Value)
         {
-            var moduleName = Path.GetFileName(moduleDir);
-            var actions = new HashSet<string>(
-                registeredActions(moduleName) ?? Array.Empty<string>(),
-                StringComparer.OrdinalIgnoreCase);
+            var moduleDir = file.Parent;
+            if (moduleDir == null) continue;
+            var grand = moduleDir.Parent;
+            if (grand == null) continue;
+            if (!string.Equals(grand.Absolute, rootAbs, global::app.types.path.@this.RootComparison)) continue;
 
-            foreach (var file in Directory.EnumerateFiles(moduleDir))
+            var fileName = file.FileName;
+            if (!IsTeachingFile(fileName, out var stem)) continue;
+            if (string.Equals(stem, ModuleStem, StringComparison.OrdinalIgnoreCase)) continue;
+
+            var moduleName = moduleDir.FileName;
+            if (!actionsByModule.TryGetValue(moduleName, out var actions))
             {
-                var name = Path.GetFileName(file);
-                if (!IsTeachingFile(name, out var stem)) continue;
-                if (string.Equals(stem, ModuleStem, StringComparison.OrdinalIgnoreCase)) continue;
-                if (actions.Contains(stem)) continue;
-                yield return new Orphan(moduleName, stem, file);
+                actions = new HashSet<string>(
+                    registeredActions(moduleName) ?? Array.Empty<string>(),
+                    StringComparer.OrdinalIgnoreCase);
+                actionsByModule[moduleName] = actions;
             }
+            if (actions.Contains(stem)) continue;
+            orphans.Add(new Orphan(moduleName, stem, file.Absolute));
         }
+        return orphans;
     }
 
     public sealed record Orphan(string Module, string Stem, string Path);
@@ -108,10 +129,11 @@ public static class MarkdownTeaching
 
     private static readonly string[] Suffixes = { ".notes.md", ".examples.md", ".description.md" };
 
-    private static string? ReadOrNull(string path)
+    private static async Task<string?> ReadOrNull(path file)
     {
-        if (!File.Exists(path)) return null;
-        var text = File.ReadAllText(path);
+        var result = await file.ReadText();
+        if (!result.Success) return null;
+        var text = result.Value?.ToString();
         return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
     }
 
@@ -119,14 +141,15 @@ public static class MarkdownTeaching
     /// Read a file as a list of paragraphs (split on one-or-more blank lines).
     /// Empty/missing → empty list. Each paragraph is trimmed.
     /// </summary>
-    private static List<string> ReadParagraphs(string path)
+    private static async Task<List<string>> ReadParagraphs(path file)
     {
         var result = new List<string>();
-        if (!File.Exists(path)) return result;
-        var text = File.ReadAllText(path);
+        var read = await file.ReadText();
+        if (!read.Success) return result;
+        var text = read.Value?.ToString();
         if (string.IsNullOrWhiteSpace(text)) return result;
         // Split on blank line (\n\n, with possible \r and surrounding whitespace).
-        var parts = System.Text.RegularExpressions.Regex.Split(text, @"\r?\n\s*\r?\n");
+        var parts = System.Text.RegularExpressions.Regex.Split(text!, @"\r?\n\s*\r?\n");
         foreach (var p in parts)
         {
             var trimmed = p.Trim();

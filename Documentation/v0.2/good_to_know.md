@@ -155,6 +155,18 @@ Fix: the collection becomes its own type with the lock private and `Add(...)` as
 
 **5. Helper that takes a domain object and returns a derived answer.** A free function (private, static, or external) takes `Thing` and returns some piece of its logic — `ComputeAbsolute(path)`, `CheckPermission(absolute, verb)`, `RenderName(user)`. The domain object owns its own questions; if you find yourself writing `Helper.X(thing)`, ask whether it should be `thing.X()`. Almost always yes. The helper is the missing method on the type.
 
+**6. Producer hands back raw; consumers transform identically.** Same property, same suffix/prefix/case-fold/slice repeated at three or more call sites — the discipline belongs on the owner.
+
+*Worked example (this branch):* `test/run.cs` had `step.Goal?.Path?.ToString().TrimStart('/')` paired with `test.Path.TrimStart('/')`. The leading slash comes from `.pr` deserialization — fixing it at the producer (`Goal.RelativePath` returning the trimmed form, computed once) would collapse both call sites and prevent the next consumer from forgetting the trim. The grep pattern `\.Path\.TrimStart\(` lights up across `modules/test/run.cs`, `modules/cache/wrap.cs`, etc. when this is wrong.
+
+*When the property IS the raw form on purpose:* keep both. `Goal.Path` (raw, source of truth) plus `Goal.RelativePath` (trimmed) is fine — consumers pick the one that matches intent and no transform is repeated at call sites.
+
+**7. Holds a reference AND a flat copy of properties reachable through it.** A class with `Foo Foo` and N scalar fields all reachable through `Foo` is paying double — once in memory, once in drift risk.
+
+*Worked example (this branch):* `app.tester.File` declared `Goal? Goal` *plus* `Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion`. Every one reachable through `Goal` when `Goal != null`. The flat copy was paid *for every discovered test file* — and silently staled if anyone rebuilt the Goal in place. Fix: delete the flat fields, route consumers through `file.Goal?.Path` etc. Keep one summary field (e.g. `StatusReason`) for the case where `Goal` is null (.pr missing / corrupt) — that's the legitimate carve-out, because it describes a state the reference can't.
+
+*When the class IS a value-snapshot on purpose:* a serialization DTO or a thread-safe-snapshot record holding flat copies is fine — the point of the type is to be detached from the live graph. Document the intent in the class XML doc ("snapshot of Foo at time T; not refreshed when Foo changes") so future readers don't merge the two roles.
+
 ### Worked example — Helper-soup vs. self-owning methods
 
 Smelly:
@@ -1062,6 +1074,93 @@ The dispatch path is: callbacks read `RestoredFrame` to identify the resume `Pos
 `PLang/app/errors/this.cs` solves this by setting `error.App = this.App` inside `Push`. Errors plumb through code that doesn't know about App; the back-ref means recovery callbacks can materialise without re-threading App through the throw site. If you reorganise error handling, preserve this assignment — `Error.Callback` reads `App` via this property and silently returning `null` would mask the recovery path.
 
 ---
+
+## System.IO Is Banned in Production C# (use `path.@this`)
+
+Action handlers and engine code under `PLang/app/**` must NOT call
+`System.IO.*` directly. The only allowed filesystem surface is the
+`app.types.path.@this` verb set (`ReadText`, `ReadBytes`, `WriteText`,
+`WriteBytes`, `Append`, `Mkdir`, `Delete`, `List`, `Stat`, `MoveTo`,
+`CopyTo`, `ExistsAsync`, `AsBooleanAsync`). Every one of those methods
+passes through `FilePath.AuthGate(verb)` before touching the disk.
+
+A handler reaching for `System.IO.File`, `System.IO.Directory`,
+`System.IO.FileInfo`, or `System.IO.Path.*` (Combine/GetDirectoryName/
+GetFullPath/...) is reaching **under** the auth gate. That means an
+out-of-root path the actor never consented to gets read / written
+silently. It's the filesystem analogue of the `Console.*` ban below.
+
+**The rule.** A filesystem path in interior C# is `app.types.path.@this`
+(the lowercase `path` alias). `string` only appears at the perimeter:
+CLI args, JSON-on-disk shape (the wire format), scheme-resolved DLL
+loads, and the App root anchors (`App.AbsolutePath`, `App.OsDirectory`,
+`App.OsAbsolutePath` — they define the root, so they can't be lifted).
+Crossing the perimeter into memory means calling
+`path.Resolve(rawString, context)`.
+
+**Build-time gate (PLNG002).** The PLang source generator emits a
+`PLNG002` diagnostic — **at error severity** — on every `System.IO.*`
+member-access reach that touches the disk, plus every `Data<string>`
+action-handler property named `Path` / `PrPath` / `Source` /
+`Destination` / `Directory` / `Folder` / `FilePath` under `PLang/app/**`.
+A clean build is the bar — the codebase has zero PLNG002 warnings as of
+the `purge-systemio-from-actions` branch landing.
+
+Allowlist (pure name math, separator constants — none touch the
+filesystem): `System.IO.Path.DirectorySeparatorChar` /
+`AltDirectorySeparatorChar` / `PathSeparator` / `VolumeSeparatorChar`,
+plus `Path.Combine` / `GetDirectoryName` / `GetFileName` /
+`GetFileNameWithoutExtension` / `GetExtension` / `GetRelativePath` /
+`ChangeExtension` / `GetInvalidFileNameChars` / `GetInvalidPathChars` /
+`HasExtension` / `IsPathRooted` / `IsPathFullyQualified` /
+`GetFullPath` / `Join` / `TrimEndingDirectorySeparator` / `GetPathRoot` /
+`EndsInDirectorySeparator`. These are string transformations, not IO.
+
+Exempt files / namespaces: `app.types.path.**` (the verb surface
+legitimately uses `System.IO` post-AuthGate); the `PLang.Generators`
+project; and `app.modules.MarkdownTeaching` (bootstrap-time discovery of
+static repo-shipped teaching .md files — converting its sync utility
+shape to async-everywhere buys no security and lots of churn).
+
+**`.Absolute` discipline (D13).** `path.Absolute` is an easy-to-misuse
+escape hatch. Any reach for `.Absolute` outside `app.types.path.**`
+means a third-party API (sqlite, image library, `Assembly.LoadFrom`) is
+about to touch the filesystem with no gate. Handlers MUST `await
+path.Authorize(verb)` first and check `auth.Success` before reading
+`.Absolute`. The verb surface (`ReadText`, `WriteText`, `List`, `Stat`,
+`ReadBytes`, ...) does this automatically — reach for verbs first;
+only fall through to `.Absolute` + manual `Authorize` when a
+third-party API genuinely takes over the file (D9b — sqlite is the
+canonical case).
+
+**Migration status (purge-systemio-from-actions branch — landed).**
+
+- Stage 1 — derivation verbs (`Parent`/`WithName`/`WithExtension`/
+  `Combine`/`InFolder`) + PLNG002 analyzer.
+- Stage 2 — `.goal` MIME → Goal deserialization (FilePath.ReadText
+  parses `.goal` via Goal.Parse, stamps Path back-reference).
+- Stage 3 — Goal.Path / PrPath / LoadedFromPrPath / GoalCall.PrPath
+  flip to path?. JSON converter takes Context in its constructor;
+  per-Actor `channels.serializers` instances bake a Context-bound
+  converter into their options. `Conversion.TryConvertTo(value, type,
+  context)` builds a one-shot Context-bound options bag per call so
+  deserialised Path fields land Context-wired immediately.
+- Stage 4 — AppGoals path-keyed dicts (separate `_byName` index for
+  fuzzy lookups); App.Load/Save through path verbs.
+- Stage 5 — full ring-2 handler sweep. `test/discover` (the brief's
+  headline), `test/report`, `settings/Sqlite` (D9b take-over), `llm/OpenAi`
+  (D9a content-shape: `path.ReadAsDataUri`), `module/add` + `code/load` +
+  `code/Snapshot` (D8: new `Execute` verb + `path.LoadAssemblyAsync`),
+  `ui/Fluid` + `http/Default` file providers, `debug` trace writes
+  (`path.Append` + derivation chain), `modules.this.MarkdownTeachingRoot`,
+  `goals.LoadFromFileAsync` / `LoadFromDirectoryAsync` / `TryLoadPr` /
+  `GetByPrPathAsync`, `goals.goal.Methods.FormatForLlm`,
+  `modules.builder.RunAsync` (app.pr existence probe),
+  `modules.builder.goals` / `modules.builder.load` (action Path slots).
+  New permission verb `Execute` distinct from Read (Unix r/w/x model).
+- Stage 6 — PLNG002 flipped to `DiagnosticSeverity.Error`. PLang and
+  PlangConsole build clean with zero PLNG002 warnings. The gate now
+  fails compilation on regression.
 
 ## Console.* Is Banned in Production C#
 

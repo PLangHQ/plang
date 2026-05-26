@@ -18,7 +18,7 @@ public sealed partial class @this
     {
         var step = Action.Step;
         var goal = step?.Goal;
-        s.Write("goalPrPath",  goal?.PrPath ?? "");
+        s.Write("goalPrPath",  goal?.PrPath?.ToString() ?? "");
         s.Write("goalHash",    goal?.Hash   ?? "");
         s.Write("stepIndex",   step?.Index  ?? -1);
         s.Write("actionIndex", step?.Actions != null

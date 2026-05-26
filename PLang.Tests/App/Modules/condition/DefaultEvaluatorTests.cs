@@ -143,7 +143,7 @@ public class DefaultEvaluatorTests
     [Test] public async Task Truthy_String_IsInitialized() => await Assert.That(IsTrue(await EvalIf("hello", "==", true))).IsTrue();
     [Test] public async Task Truthy_Null_NotInitialized() => await Assert.That(IsFalse(await EvalIf(null, "==", true))).IsTrue();
 
-    // --- `if %path% exists` — path answers its own truthiness (codeanalyzer v1 F3) ---
+    // --- `if %path% exists` — path answers its own truthiness ---
     //
     // Before the fix, file.exists returned the path object and `if X exists`
     // compared a non-null object `== true` → always true. Now the path is
@@ -151,7 +151,7 @@ public class DefaultEvaluatorTests
     // condition reflects actual existence.
 
     // The paths carry a Context whose app root contains them — in-root, so
-    // AsBooleanAsync's AuthGate (codeanalyzer v2 N1) auto-grants. A context-less
+    // AsBooleanAsync's AuthGate auto-grants. A context-less
     // path can't be gated and isn't a shape production produces.
     [Test] public async Task IfExists_PathToExistingFile_IsTrue()
     {

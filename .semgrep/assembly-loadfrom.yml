@@ -1,0 +1,28 @@
+rules:
+  - id: plang-assembly-loadfrom-whitelist
+    languages: [csharp]
+    severity: WARNING
+    message: |
+      Assembly.LoadFrom executes arbitrary CLR code from disk — no signature
+      check. Accepted-risk callers are Module.add and provider.load only
+      (.pr files are the trust boundary). Any new caller is a finding.
+      If you have a legitimate use, document it in good_to_know.md and add
+      the file to this rule's exclude list.
+    pattern-either:
+      - pattern: Assembly.LoadFrom(...)
+      - pattern: System.Reflection.Assembly.LoadFrom(...)
+      - pattern: AssemblyLoadContext.Default.LoadFromAssemblyPath(...)
+      - pattern: $CTX.LoadFromAssemblyPath(...)
+    paths:
+      exclude:
+        - "**/*Tests/**"
+        - "**/PLang.Generators/**"
+        - "**/bin/**"
+        - "**/obj/**"
+        - "**/.bot/**"
+        - "**/.build/**"
+        - "**/os/**"
+        # Accepted-risk canonical site — FilePath.LoadAssemblyAsync, gated by
+        # AuthGate(Execute). module.add / provider.load route through this.
+        # See memory/MEMORY.md "Small Rules".
+        - "**/types/path/file/this.Operations.cs"

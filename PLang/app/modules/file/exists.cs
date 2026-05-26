@@ -11,7 +11,7 @@ namespace app.modules.file;
 /// the filesystem (file scheme) or issues an HTTP HEAD (http scheme).
 ///
 /// The action does no I/O of its own: the path stays live, so re-testing it
-/// reflects the current state. (codeanalyzer v1 F3)
+/// reflects the current state.
 /// </summary>
 [Action("exists")]
 public partial class Exists : IContext
@@ -20,7 +20,7 @@ public partial class Exists : IContext
 
     // Returns Path directly — a failed scheme resolution (unregistered s3://)
     // is itself a non-Success Data, so the typed SchemeNotRegistered error
-    // propagates instead of an NRE. (codeanalyzer v1 F4)
+    // propagates instead of an NRE.
     //
     // Run returns Task<Data<path>> — method-signature-as-truth so the catalog
     // surfaces `→ returns path` and the compile LLM picks the right Type for

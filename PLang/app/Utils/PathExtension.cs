@@ -12,9 +12,9 @@ namespace app.Utils
 		{
 			if (string.IsNullOrEmpty(path)) return path;
 			
-			if (System.IO.Path.DirectorySeparatorChar == '\\')
+			if (PathHelper.DirectorySeparatorChar == '\\')
 			{
-				path = path.Replace('/', System.IO.Path.DirectorySeparatorChar);
+				path = path.Replace('/', PathHelper.DirectorySeparatorChar);
 				if (path.StartsWith("\\\\"))
 				{
 					path = "\\\\" + path.Substring(2).Replace("\\\\", "\\");
@@ -27,7 +27,7 @@ namespace app.Utils
 			}
 			else
 			{
-				path = path.Replace('\\', System.IO.Path.DirectorySeparatorChar);
+				path = path.Replace('\\', PathHelper.DirectorySeparatorChar);
 				if (path.StartsWith("//"))
 				{
 					path = "//" + path.Substring(2).Replace("//", "/");

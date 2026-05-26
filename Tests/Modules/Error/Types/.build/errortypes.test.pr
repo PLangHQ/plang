@@ -20,7 +20,7 @@
                 "name": "ThrowUserError",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/throwusererror.pr"
+                "prPath": "/Modules/Error/Types/.build/throwusererror.pr"
               },
               "type": "goal.call"
             }
@@ -222,8 +222,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ErrorTypes.test.goal",
-  "prPath": "/.build/errortypes.test.pr",
+  "path": "/Modules/Error/Types/ErrorTypes.test.goal",
+  "prPath": "/Modules/Error/Types/.build/errortypes.test.pr",
   "hash": "795a83975d59d5634a207d8f3ff7e47d24f549850fe91a0107e5f4123e5a6510",
   "builderVersion": "0.2.2",
   "isSetup": false,

@@ -82,20 +82,23 @@ public class LlmTypeTests
     [Test]
     public async Task GoalCall_ExistingProperties_UnchangedAfterNewFields()
     {
+        await using var app = new global::app.@this("/test");
+        var ctx = app.User.Context;
         var gc = new GoalCall
         {
             Name = "MyGoal",
             Parallel = true,
             Parameters = new List<Data> { new Data("param1", "value1") },
-            PrPath = "/test/.build/mygoal.pr"
+            PrPath = global::app.types.path.@this.Resolve("/test/.build/mygoal.pr", ctx)
         };
 
-        var json = JsonSerializer.Serialize(gc);
-        var deserialized = JsonSerializer.Deserialize<GoalCall>(json)!;
+        var opts = new JsonSerializerOptions { Converters = { new global::app.types.path.JsonConverter(ctx) } };
+        var json = JsonSerializer.Serialize(gc, opts);
+        var deserialized = JsonSerializer.Deserialize<GoalCall>(json, opts)!;
 
         await Assert.That(deserialized.Name).IsEqualTo("MyGoal");
         await Assert.That(deserialized.Parallel).IsTrue();
-        await Assert.That(deserialized.PrPath).IsEqualTo("/test/.build/mygoal.pr");
+        await Assert.That(deserialized.PrPath?.ToString().Replace('\\', '/')).Contains(".build/mygoal.pr");
         await Assert.That(deserialized.Parameters).IsNotNull();
         await Assert.That(deserialized.Parameters!.Count).IsEqualTo(1);
     }

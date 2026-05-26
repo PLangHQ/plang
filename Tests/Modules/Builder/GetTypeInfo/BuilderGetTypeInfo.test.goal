@@ -1,4 +1,5 @@
 Start
-/ Test that builder.getTypeInfo returns PLang type names and complex type schemas
-- get type info, write to %typeInfo%
-- assert %typeInfo% is not empty, "getTypeInfo should return type mapping data"
+/ Test that builder.types returns PLang type names and complex type schemas.
+/ Named explicitly to avoid planner picking goal.getTypes (variable-types-per-step).
+- builder.types, write to %typeInfo%
+- assert %typeInfo% is not empty, "builder.types should return type mapping data"

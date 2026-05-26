@@ -20,19 +20,19 @@
                 {
                   "role": "system",
                   "content": "You analyze sentiment. Respond in JSON only.",
-                  "images": [],
+                  "images": null,
                   "toolCallId": null,
                   "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "Analyze: I love sunny days",
-                  "images": [],
+                  "images": null,
                   "toolCallId": null,
                   "toolCalls": null
                 }
               ],
-              "type": "list\u003Cllmmessage\u003E"
+              "type": "list\u00601"
             },
             {
               "name": "Schema",
@@ -40,7 +40,7 @@
                 "sentiment": "string",
                 "score": "number"
               },
-              "type": "list\u003Ckeyvaluepair\u003E"
+              "type": "dictionary\u00602"
             }
           ],
           "defaults": [
@@ -84,7 +84,7 @@
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -106,7 +106,7 @@
       "guidance": "llm.query with Messages built from system\u002Buser. The step text says \u0027scheme\u0027 with sentiment:string and score:number; map this to Schema as a JSON-shaped object. Then store the parsed response into %result% via variable.set.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "llm.query(Messages=[{role:\u0022system\u0022,content:\u0022You analyze sentiment. Respond in JSON only.\u0022},{role:\u0022user\u0022,content:\u0022Analyze: I love sunny days\u0022}], Schema={sentiment:string, score:number}) , variable.set(Name=%result%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -125,11 +125,6 @@
               "name": "Value",
               "value": "%result%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -140,7 +135,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%result%)",
       "source": null,
       "waitForExecution": true
     },
@@ -159,11 +154,6 @@
               "name": "Value",
               "value": "%result.sentiment%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string?"
             }
           ],
           "defaults": null,
@@ -174,7 +164,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%result.sentiment%)",
       "source": null,
       "waitForExecution": true
     }
@@ -184,7 +174,7 @@
   "path": "/Llm/LlmSchema.test.goal",
   "prPath": "/Llm/.build/llmschema.test.pr",
   "hash": "57b6e9dc25ee4a37ebd54ad85cf6fb41fd0ae25e07784ca813a0088d059a06c4",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

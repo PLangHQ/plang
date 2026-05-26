@@ -89,7 +89,7 @@
                 "name": "WhenGreater",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whengreater.pr"
+                "prPath": "/Modules/Condition/Compound/Mixed/.build/whengreater.pr"
               },
               "type": "goal.call"
             }
@@ -226,7 +226,7 @@
                 "name": "WhenLess",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whenless.pr"
+                "prPath": "/Modules/Condition/Compound/Mixed/.build/whenless.pr"
               },
               "type": "goal.call"
             }
@@ -363,7 +363,7 @@
                 "name": "WhenEqual",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whenequal.pr"
+                "prPath": "/Modules/Condition/Compound/Mixed/.build/whenequal.pr"
               },
               "type": "goal.call"
             }
@@ -500,7 +500,7 @@
                 "name": "WhenNotEqual",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whennotequal.pr"
+                "prPath": "/Modules/Condition/Compound/Mixed/.build/whennotequal.pr"
               },
               "type": "goal.call"
             }
@@ -637,7 +637,7 @@
                 "name": "WhenContains",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whencontains.pr"
+                "prPath": "/Modules/Condition/Compound/Mixed/.build/whencontains.pr"
               },
               "type": "goal.call"
             }
@@ -774,7 +774,7 @@
                 "name": "WhenGreater",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whengreater.pr"
+                "prPath": "/Modules/Condition/Compound/Mixed/.build/whengreater.pr"
               },
               "type": "goal.call"
             }
@@ -799,7 +799,7 @@
                 "name": "WhenFalse",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whenfalse.pr"
+                "prPath": "/Modules/Condition/Compound/Mixed/.build/whenfalse.pr"
               },
               "type": "goal.call"
             }
@@ -853,8 +853,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionCompound.test.goal",
-  "prPath": "/.build/conditioncompound.test.pr",
+  "path": "/Modules/Condition/Compound/Mixed/ConditionCompound.test.goal",
+  "prPath": "/Modules/Condition/Compound/Mixed/.build/conditioncompound.test.pr",
   "hash": "9b189b9e28d5b45c9a83ddf05681b7b878ce40779e9bde3e606bf33dccdd647e",
   "builderVersion": "0.2.2",
   "isSetup": false,

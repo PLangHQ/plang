@@ -26,6 +26,9 @@ public static class Format
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
+        // Path serializes as its Relative string; without this the default
+        // serializer walks Path.GoalCall.PrPath.GoalCall... cycle.
+        Converters = { new global::app.types.path.JsonConverter() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
             Modifiers = { app.channels.serializers.filters.Sensitive.Mask }

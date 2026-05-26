@@ -32,8 +32,8 @@ public sealed partial class @this
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentException("path cannot be empty", nameof(path));
 
-        var rootAbsolutePath = System.IO.Path.GetFullPath(app.AbsolutePath).AdjustPathToOs()
-            .TrimEnd(System.IO.Path.DirectorySeparatorChar);
+        var rootAbsolutePath = PathHelper.GetFullPath(app.AbsolutePath).AdjustPathToOs()
+            .TrimEnd(PathHelper.DirectorySeparatorChar);
         var osAbsolutePath = app.OsAbsolutePath;
 
         if (IsOsRooted(path))
@@ -45,15 +45,15 @@ public sealed partial class @this
         {
             if (!path.StartsWith(rootAbsolutePath) && !path.StartsWith(osAbsolutePath))
             {
-                var resolved = System.IO.Path.GetFullPath(System.IO.Path.Join(rootAbsolutePath, path));
+                var resolved = PathHelper.GetFullPath(PathHelper.Join(rootAbsolutePath, path));
 
                 // /system/ paths fall back to <os>/system/ when absent under the root.
-                var sysPrefix = System.IO.Path.DirectorySeparatorChar + "system" + System.IO.Path.DirectorySeparatorChar;
+                var sysPrefix = PathHelper.DirectorySeparatorChar + "system" + PathHelper.DirectorySeparatorChar;
                 if (path.AdjustPathToOs().StartsWith(sysPrefix, StringComparison.OrdinalIgnoreCase)
                     && !System.IO.File.Exists(resolved) && !System.IO.Directory.Exists(resolved))
                 {
                     var afterPrefix = path.AdjustPathToOs().Substring(sysPrefix.Length);
-                    var osResolved = System.IO.Path.GetFullPath(System.IO.Path.Join(osAbsolutePath, "system", afterPrefix));
+                    var osResolved = PathHelper.GetFullPath(PathHelper.Join(osAbsolutePath, "system", afterPrefix));
                     if (System.IO.File.Exists(osResolved) || System.IO.Directory.Exists(osResolved))
                         resolved = osResolved;
                 }
@@ -62,7 +62,7 @@ public sealed partial class @this
         }
         else
         {
-            path = System.IO.Path.GetFullPath(System.IO.Path.Join(rootAbsolutePath, path));
+            path = PathHelper.GetFullPath(PathHelper.Join(rootAbsolutePath, path));
         }
 
         // Out-of-rootAbsolutePath paths are returned as-is — Authorize is the gate, not this method.
@@ -70,12 +70,12 @@ public sealed partial class @this
             return path;
 
         // <root>/system/ → <os>/system/ fallback for non-existent paths.
-        var rootSystemDir = rootAbsolutePath + System.IO.Path.DirectorySeparatorChar + "system" + System.IO.Path.DirectorySeparatorChar;
+        var rootSystemDir = rootAbsolutePath + PathHelper.DirectorySeparatorChar + "system" + PathHelper.DirectorySeparatorChar;
         if (path.StartsWith(rootSystemDir, StringComparison.OrdinalIgnoreCase)
             && !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
         {
             var afterSystem = path.Substring(rootSystemDir.Length);
-            var osFallback = System.IO.Path.GetFullPath(System.IO.Path.Join(osAbsolutePath, "system", afterSystem));
+            var osFallback = PathHelper.GetFullPath(PathHelper.Join(osAbsolutePath, "system", afterSystem));
             if (System.IO.File.Exists(osFallback) || System.IO.Directory.Exists(osFallback))
                 path = osFallback;
         }
@@ -96,6 +96,6 @@ public sealed partial class @this
     {
         if (string.IsNullOrWhiteSpace(path))
             throw new ArgumentException("path cannot be empty", nameof(path));
-        return path.AdjustPathToOs().StartsWith(System.IO.Path.DirectorySeparatorChar);
+        return path.AdjustPathToOs().StartsWith(PathHelper.DirectorySeparatorChar);
     }
 }

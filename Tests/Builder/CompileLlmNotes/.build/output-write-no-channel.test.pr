@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "copy file \u0027../../Simple/.build/start.pr\u0027 to \u0027start-out.txt\u0027, overwrite",
+      "text": "copy file \u0027../../Simple/.build/start.test.pr\u0027 to \u0027start-out.txt\u0027, overwrite",
       "lineNumber": 21,
       "indent": 0,
       "comment": "Drift case 1 \u2014 the load-bearing reason this branch exists.\n\nStep text \u0060- write out %message%\u0060 (from Tests/Simple/Start.goal:5) carries no\nchannel clause. With per-action notes (os/system/modules/output/write.notes.md)\ncarrying the channel routing rule only when output.write is in the planner\u0027s\nset, the LLM should emit:\nparameters: { Data: %message% }   (no channel key)\n\nPre-fix shape this test forbids:\nany \u0027channel\u0027 parameter on output.write when step text had no channel clause\n\nRead .pr requires copying to a .txt first because \u0027.pr\u0027 MIME deserializes to a\nGoal object, defeating substring assertions. Copy \u2192 read as text \u2192 assert.\nThe companion C# test PLang.Tests/Builder/CompilePromptTests/DriftCaseArtifactTests.cs\ndoes the structural check on the parsed Goal \u2014 both layers guard the same fact.\n\nArchitect\u0027s 3-fresh-cache verification rule runs externally:\nrm -rf Tests/Simple/.build\nPlangConsole/bin/Debug/net10.0/plang build /Tests/Simple   # then plang --test (x3)",
@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Source",
-              "value": "../../Simple/.build/start.pr",
+              "value": "../../Simple/.build/start.test.pr",
               "type": "path"
             },
             {
@@ -43,7 +43,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "file.copy(Source=\u0022../../Simple/.build/start.pr\u0022, Destination=\u0022start-out.txt\u0022, Overwrite=true, IncludeSubfolders=true)",
+      "formal": "file.copy(Source=\u0022../../Simple/.build/start.test.pr\u0022, Destination=\u0022start-out.txt\u0022, Overwrite=true, IncludeSubfolders=true)",
       "source": null,
       "waitForExecution": true
     },
@@ -102,7 +102,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "file.read(Path=\u0022start-out.txt\u0022) , variable.set(Name=%pr%, Value=%!data%, type=object)",
+      "formal": "file.read(Path=\u0022start-out.txt\u0022) , variable.set(Name=%pr%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -118,12 +118,12 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%pr%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "\u0022text\u0022: \u0022write out ",
               "type": "object"
             }
@@ -136,7 +136,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "assert.contains(Container=\u0022\\\u0022text\\\u0022: \\\u0022write out \u0022, Value=%pr%)",
+      "formal": "assert.contains(Container=%pr%, Value=\u0022\\\u0022text\\\u0022: \\\u0022write out \u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -152,12 +152,12 @@
           "action": "notContains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%pr%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "\u0022name\u0022: \u0022channel\u0022",
               "type": "object"
             }
@@ -170,16 +170,16 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "assert.notContains(Value=%pr%, Container=\u0022\\\u0022name\\\u0022: \\\u0022channel\\\u0022\u0022, Message omitted)",
+      "formal": "assert.notContains(Container=%pr%, Value=\u0022\\\u0022name\\\u0022: \\\u0022channel\\\u0022\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
-  "prPath": "/Tests/Builder/CompileLlmNotes/.build/output-write-no-channel.test.pr",
-  "hash": "e2efeb47d6289c1889868b44119db6a954808aaa736e484dccf68218d4d08624",
+  "path": "/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+  "prPath": "/Builder/CompileLlmNotes/.build/output-write-no-channel.test.pr",
+  "hash": "7b1286103199c431b79a30b1ecae88a1a131753755741ffc2cf828676c6b5f00",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

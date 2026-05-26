@@ -11,11 +11,20 @@ public sealed class @this
     private readonly Dictionary<string, ISerializer> _byExtension = new(StringComparer.OrdinalIgnoreCase);
     private ISerializer _default;
 
-    public @this()
+    public @this() : this(null) { }
+
+    /// <summary>
+    /// Construct with an actor Context — the bundled plang serializer carries
+    /// a Context-bound PathJsonConverter so deserialized Goal/GoalCall objects
+    /// land with Path fields fully wired. Per-Actor instances pass their
+    /// Context here; the default ctor stays for tests and contexts where no
+    /// Actor is in scope (Paths fall back to stubs).
+    /// </summary>
+    public @this(actor.context.@this? context)
     {
-        var json = new global::app.channels.serializers.serializer.Json();
+        var json = new global::app.channels.serializers.serializer.Json(context);
         var text = new global::app.channels.serializers.serializer.Text(jsonFallback: json);
-        var plang = new global::app.channels.serializers.serializer.plang.@this();
+        var plang = new global::app.channels.serializers.serializer.plang.@this(context);
         var plangData = new global::app.channels.serializers.serializer.plang.Data();
 
         Register(json);

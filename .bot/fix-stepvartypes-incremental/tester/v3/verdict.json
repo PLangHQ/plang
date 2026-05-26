@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "C# 3036/3036 green; PLang 212/218 (massive improvement from v2's 196/21). The 6 remaining failures are all `*.fixture.goal` files designed to fail — but strict-red rule says red is red, so FAIL stands until discovery excludes them or they get explicit out-of-scope acceptance. Builder smoke test added at Tests/BuilderSanity/ for future runs."
+}

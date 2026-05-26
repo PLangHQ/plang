@@ -35,6 +35,26 @@ public sealed class OpenAi : ILlm
     private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
+    // USD per 1M tokens. Longest matching prefix wins; missing model → null cost.
+    // Prices as of 2026-05 — bump when OpenAI publishes a change.
+    private static readonly (string prefix, decimal input, decimal cached, decimal output)[] Pricing = new[]
+    {
+        ("gpt-5.4-nano", 0.20m, 0.02m,   1.25m),
+        ("gpt-5.4-mini", 0.75m, 0.075m,  4.50m),
+        ("gpt-5.4",      2.50m, 0.25m,  15.00m),
+    };
+
+    private static (decimal input, decimal cached, decimal output)? PriceFor(string? model)
+    {
+        if (string.IsNullOrEmpty(model)) return null;
+        (string prefix, decimal input, decimal cached, decimal output)? best = null;
+        foreach (var row in Pricing)
+            if (model.StartsWith(row.prefix, StringComparison.OrdinalIgnoreCase)
+                && (best is null || row.prefix.Length > best.Value.prefix.Length))
+                best = row;
+        return best is null ? null : (best.Value.input, best.Value.cached, best.Value.output);
+    }
+
     public async Task<data.@this<object>> Query(query action)
     {
         var app = action.Context.App;
@@ -136,7 +156,9 @@ public sealed class OpenAi : ILlm
         string? lastContent = null;
         int totalPromptTokens = 0;
         int totalCompletionTokens = 0;
-        double? totalCost = null;
+        int totalCachedTokens = 0;
+        decimal? totalCost = null;
+        bool unknownModelLogged = false;
 
         while (true)
         {
@@ -144,7 +166,7 @@ public sealed class OpenAi : ILlm
             var body = new Dictionary<string, object?>
             {
                 ["model"] = model,
-                ["messages"] = ToApiMessages(messages, app),
+                ["messages"] = ToApiMessages(messages, app, context),
                 ["temperature"] = action.Temperature.Value,
                 ["max_completion_tokens"] = action.MaxTokens.Value
             };
@@ -200,8 +222,34 @@ public sealed class OpenAi : ILlm
             var usage = responseJson.Value.TryGetProperty("usage", out var usageProp) ? usageProp : (JsonElement?)null;
             if (usage != null)
             {
-                totalPromptTokens += usage.Value.TryGetProperty("prompt_tokens", out var pt) ? pt.GetInt32() : 0;
-                totalCompletionTokens += usage.Value.TryGetProperty("completion_tokens", out var ct) ? ct.GetInt32() : 0;
+                int callPrompt     = usage.Value.TryGetProperty("prompt_tokens",     out var pt) ? pt.GetInt32() : 0;
+                int callCompletion = usage.Value.TryGetProperty("completion_tokens", out var ct) ? ct.GetInt32() : 0;
+                int callCached     = 0;
+                if (usage.Value.TryGetProperty("prompt_tokens_details", out var ptd)
+                 && ptd.TryGetProperty("cached_tokens", out var ctok)
+                 && ctok.ValueKind == JsonValueKind.Number)
+                    callCached = ctok.GetInt32();
+
+                totalPromptTokens     += callPrompt;
+                totalCompletionTokens += callCompletion;
+                totalCachedTokens     += callCached;
+
+                // Cost: prompt_tokens includes the cached portion, so bill cached
+                // separately and subtract it from the non-cached input bucket.
+                var price = PriceFor(model);
+                if (price is { } p)
+                {
+                    int nonCachedInput = Math.Max(0, callPrompt - callCached);
+                    totalCost = (totalCost ?? 0m)
+                        + (decimal)nonCachedInput   * p.input  / 1_000_000m
+                        + (decimal)callCached       * p.cached / 1_000_000m
+                        + (decimal)callCompletion   * p.output / 1_000_000m;
+                }
+                else if (!unknownModelLogged)
+                {
+                    unknownModelLogged = true;
+                    await context.App.Debug.Write($"llm.query: no pricing entry for model {model}, cost not computed");
+                }
             }
 
             // Get first choice
@@ -403,6 +451,7 @@ public sealed class OpenAi : ILlm
                     ["PromptTokens"] = totalPromptTokens,
                     ["CompletionTokens"] = totalCompletionTokens,
                     ["TotalTokens"] = totalPromptTokens + totalCompletionTokens,
+                    ["CachedTokens"] = totalCachedTokens,
                     ["Cost"] = totalCost,
                     ["ToolCallCount"] = toolCallCount,
                     ["ValidationRetries"] = validationRetries,
@@ -422,6 +471,7 @@ public sealed class OpenAi : ILlm
             SetProp(result, "PromptTokens", totalPromptTokens);
             SetProp(result, "CompletionTokens", totalCompletionTokens);
             SetProp(result, "TotalTokens", totalPromptTokens + totalCompletionTokens);
+            SetProp(result, "CachedTokens", totalCachedTokens);
             SetProp(result, "Cost", totalCost);
             SetProp(result, "ToolCallCount", toolCallCount);
             SetProp(result, "ValidationRetries", validationRetries);
@@ -438,6 +488,8 @@ public sealed class OpenAi : ILlm
         SetProp(exitResult, "PromptTokens", totalPromptTokens);
         SetProp(exitResult, "CompletionTokens", totalCompletionTokens);
         SetProp(exitResult, "TotalTokens", totalPromptTokens + totalCompletionTokens);
+        SetProp(exitResult, "CachedTokens", totalCachedTokens);
+        SetProp(exitResult, "Cost", totalCost);
         SetProp(exitResult, "Truncated", true);
         return global::app.data.@this<object>.From(exitResult);
     }
@@ -571,7 +623,7 @@ public sealed class OpenAi : ILlm
 
     // --- Message formatting ---
 
-    private static List<object> ToApiMessages(List<LlmMessage> messages, global::app.@this app)
+    private static List<object> ToApiMessages(List<LlmMessage> messages, global::app.@this app, actor.context.@this context)
     {
         var result = new List<object>();
         foreach (var msg in messages)
@@ -618,7 +670,7 @@ public sealed class OpenAi : ILlm
 
                 foreach (var image in msg.Images)
                 {
-                    var imageContent = ResolveImage(image, app);
+                    var imageContent = ResolveImage(image, app, context);
                     contentParts.Add(imageContent);
                 }
 
@@ -640,7 +692,9 @@ public sealed class OpenAi : ILlm
         return result;
     }
 
-    private static object ResolveImage(string image, global::app.@this app)
+    // internal so OpenAiImageDenialTests can invoke the handler directly
+    // (the public Query path requires a real OpenAI HTTP setup).
+    internal static object ResolveImage(string image, global::app.@this app, actor.context.@this context)
     {
         if (image.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
             || image.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
@@ -652,28 +706,22 @@ public sealed class OpenAi : ILlm
             };
         }
 
-        // Try file path
+        // Try file path — gated through path.ReadAsDataUri (D9a content-shape
+        // verb). AuthGate(Read) fires inside; in-root fast-passes, out-of-root
+        // surfaces as a permission prompt or denial. Sync-wait: message
+        // formatting is sync and the bytes-then-encode pipeline is cheap.
         try
         {
-            if (System.IO.File.Exists(image))
+            var imgPath = global::app.types.path.@this.Resolve(image, context);
+            var dataUri = imgPath.ReadAsDataUri().GetAwaiter().GetResult();
+            if (dataUri.Success && !string.IsNullOrEmpty(dataUri.Value))
             {
-                var bytes = System.IO.File.ReadAllBytes(image);
-                var base64 = Convert.ToBase64String(bytes);
-                var extension = System.IO.Path.GetExtension(image).TrimStart('.').ToLowerInvariant();
-                var mimeType = extension switch
-                {
-                    "jpg" or "jpeg" => "image/jpeg",
-                    "png" => "image/png",
-                    "gif" => "image/gif",
-                    "webp" => "image/webp",
-                    _ => "image/png"
-                };
                 return new Dictionary<string, object>
                 {
                     ["type"] = "image_url",
                     ["image_url"] = new Dictionary<string, string>
                     {
-                        ["url"] = $"data:{mimeType};base64,{base64}"
+                        ["url"] = dataUri.Value
                     }
                 };
             }
