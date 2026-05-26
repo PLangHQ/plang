@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "C# 5/3036 failed in StepActionDetailsRenderTests — hardcoded path os/system/builder/templates/v2/stepActionDetails.template was orphaned by builder bot's restructure commit 0f8886ab0. PLang 208/208 green." }

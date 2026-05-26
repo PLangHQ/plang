@@ -8,8 +8,8 @@
       "timestamp_end": "2026-05-26T13:58:00Z",
       "intent": "Five-pass simplicity/OBP review of the C# diff on fix-stepvartypes-incremental vs runtime2",
       "before": {
-        "assumptions": "Branch name suggests an incremental stepvartypes fix, but the diff is broader (builder web UI, cost tracking, test report cycle, per-step timings, var-slot description). C# diff is narrow: OpenAi.cs cost math, Run.cs entity (rename CapturedOutput→Output, add Timings), test/run.cs (event-binding capture), modules/this.cs (drop trailing 'string' from %var% slot desc), BuildResponse.cs (comment), new Timing/Timings types.",
-        "risk": "Long event-binding wiring in test/run.cs RunSingleAsync (~190 lines); hard-coded LLM pricing table; pre-existing System.IO in report.cs (out of scope for this branch — flagged on prior branch)."
+        "assumptions": "Branch name suggests an incremental stepvartypes fix, but the diff is broader (builder web UI, cost tracking, test report cycle, per-step timings, var-slot description). C# diff is narrow: OpenAi.cs cost math, Run.cs entity (rename CapturedOutput\u2192Output, add Timings), test/run.cs (event-binding capture), modules/this.cs (drop trailing 'string' from %var% slot desc), BuildResponse.cs (comment), new Timing/Timings types.",
+        "risk": "Long event-binding wiring in test/run.cs RunSingleAsync (~190 lines); hard-coded LLM pricing table; pre-existing System.IO in report.cs (out of scope for this branch \u2014 flagged on prior branch)."
       },
       "plan": ".bot/fix-stepvartypes-incremental/codeanalyzer/v1/plan.md",
       "actions": [
@@ -39,13 +39,13 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Codeanalyzer v1 outputs — PASS verdict."
+          "context": "Codeanalyzer v1 outputs \u2014 PASS verdict."
         }
       ],
       "after": {
         "status": "PASS",
         "health": "clean",
-        "notes": "8-file C# diff is clean. One pre-existing System.IO debt in test/report.cs noted at top of report (not introduced on this branch — predates merge base). Low-priority readability suggestion to extract four event-binding blocks in test/run.cs RunSingleAsync if a fifth gets added later — not requested now."
+        "notes": "8-file C# diff is clean. One pre-existing System.IO debt in test/report.cs noted at top of report (not introduced on this branch \u2014 predates merge base). Low-priority readability suggestion to extract four event-binding blocks in test/run.cs RunSingleAsync if a fifth gets added later \u2014 not requested now."
       }
     },
     {
@@ -53,9 +53,9 @@
       "bot": "codeanalyzer",
       "timestamp_start": "2026-05-26T14:19:20Z",
       "timestamp_end": "2026-05-26T14:25:00Z",
-      "intent": "Post-merge re-validation of v1 PASS — branch was caught up with runtime2 (purge-systemio-from-actions merged in) plus a coder one-line fix",
+      "intent": "Post-merge re-validation of v1 PASS \u2014 branch was caught up with runtime2 (purge-systemio-from-actions merged in) plus a coder one-line fix",
       "before": {
-        "assumptions": "v1 PASSed pre-merge. Merge brought in 65 C# files / 1525+ lines from purge-systemio-from-actions (already PASS-verdicted on its source branch) — not re-litigating that content. Re-validating the 8 v1-reviewed files against post-merge state and the coder's .ToString() fix at test/run.cs:163.",
+        "assumptions": "v1 PASSed pre-merge. Merge brought in 65 C# files / 1525+ lines from purge-systemio-from-actions (already PASS-verdicted on its source branch) \u2014 not re-litigating that content. Re-validating the 8 v1-reviewed files against post-merge state and the coder's .ToString() fix at test/run.cs:163.",
         "risk": "Merge may have left dead code or mis-adapted patterns in the previously-reviewed files; coder fix may not be idiomatic."
       },
       "plan": ".bot/fix-stepvartypes-incremental/codeanalyzer/v2/plan.md",
@@ -86,7 +86,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Codeanalyzer v2 outputs — PASS verdict with one LOW finding."
+          "context": "Codeanalyzer v2 outputs \u2014 PASS verdict with one LOW finding."
         }
       ],
       "after": {
@@ -103,7 +103,7 @@
       "intent": "Test-quality validation of the 8 branch-unique C# files; check whether tests verify intent or admit false greens",
       "before": {
         "assumptions": "Codeanalyzer v1/v2 both PASSed (code is OBP-clean). My job is whether the tests honestly verify the new behavior. Branch has no coder/ folder so no baseline-tests.md is available.",
-        "risk": "Property rename CapturedOutput→Output may have stale callers in tests; new event-binding paths and OpenAI cost math are easy to test cheaply but easy to leave uncovered."
+        "risk": "Property rename CapturedOutput\u2192Output may have stale callers in tests; new event-binding paths and OpenAI cost math are easy to test cheaply but easy to leave uncovered."
       },
       "plan": ".bot/fix-stepvartypes-incremental/tester/v1/plan.md",
       "actions": [
@@ -124,7 +124,7 @@
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "Clean-rebuilt PlangConsole (OK); dotnet build PLang.Tests fails with CS1061 at ReportActionTests.cs:56 and EdgeCaseTests.cs:129 — coder did not propagate CapturedOutput→Output rename. C# suite unrunnable. PLang suite: 195 pass / 22 fail / 217 total via Tests/ + PlangConsole binary. No coder baseline to triage failures against. Found 9 issues: 1 build-break, 4 missing-coverage (output capture, Timings, cost math positive case, ResolveImage success), 1 weak-assertion (Contains vs IsEqualTo on the headline %var% fix), 3 minor/missing."
+          "context": "Clean-rebuilt PlangConsole (OK); dotnet build PLang.Tests fails with CS1061 at ReportActionTests.cs:56 and EdgeCaseTests.cs:129 \u2014 coder did not propagate CapturedOutput\u2192Output rename. C# suite unrunnable. PLang suite: 195 pass / 22 fail / 217 total via Tests/ + PlangConsole binary. No coder baseline to triage failures against. Found 9 issues: 1 build-break, 4 missing-coverage (output capture, Timings, cost math positive case, ResolveImage success), 1 weak-assertion (Contains vs IsEqualTo on the headline %var% fix), 3 minor/missing."
         },
         {
           "paths": [
@@ -136,7 +136,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Tester v1 outputs — FAIL verdict."
+          "context": "Tester v1 outputs \u2014 FAIL verdict."
         }
       ],
       "after": {
@@ -150,10 +150,10 @@
       "bot": "tester",
       "timestamp_start": "2026-05-26T15:00:00Z",
       "timestamp_end": "2026-05-26T15:20:00Z",
-      "intent": "Verify coder's v2 response to tester v1 — build green + new tests catch the regressions they claim to prevent",
+      "intent": "Verify coder's v2 response to tester v1 \u2014 build green + new tests catch the regressions they claim to prevent",
       "before": {
-        "assumptions": "Coder commits 81c9dabfa and e4376de87 address F1–F6 per their commit messages. v1 failed on build-red + missing coverage; v2 success means TUnit passes + new tests are not coarse green-only.",
-        "risk": "Mutation-by-reading instead of actual source mutation — could miss a subtly-permissive assertion. Mitigation: every new test was inspected for bidirectional or exact-equality assertions, not Contains/Any/IsNotNull alone."
+        "assumptions": "Coder commits 81c9dabfa and e4376de87 address F1\u2013F6 per their commit messages. v1 failed on build-red + missing coverage; v2 success means TUnit passes + new tests are not coarse green-only.",
+        "risk": "Mutation-by-reading instead of actual source mutation \u2014 could miss a subtly-permissive assertion. Mitigation: every new test was inspected for bidirectional or exact-equality assertions, not Contains/Any/IsNotNull alone."
       },
       "plan": ".bot/fix-stepvartypes-incremental/tester/v2/plan.md",
       "actions": [
@@ -169,7 +169,7 @@
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "C# build green; TUnit 3036/3036 pass. F2 output-capture test asserts both directions (output IS captured, error is NOT). F3 Timings test asserts Count==3 against a 3-step entry + 2-step nested sub-goal — a regression that pulled sub-goal steps in would push count to 5. F4 cost math uses exact decimal equality on three independent rate buckets (non-cached, cached, output) — any rate-swap fails it; LongestPrefix test pins 5.25 specifically so a first-match-wins regression on `gpt-5.4-mini-2026-03-17` would compute 17.50 instead. F5 CachedTokens asserted on success-exit AND tool-call-exit paths. F6 IsEqualTo replaces Contains — comment updated. PLang suite 196/217 pass (one better than v1's 195) — no new regressions."
+          "context": "C# build green; TUnit 3036/3036 pass. F2 output-capture test asserts both directions (output IS captured, error is NOT). F3 Timings test asserts Count==3 against a 3-step entry + 2-step nested sub-goal \u2014 a regression that pulled sub-goal steps in would push count to 5. F4 cost math uses exact decimal equality on three independent rate buckets (non-cached, cached, output) \u2014 any rate-swap fails it; LongestPrefix test pins 5.25 specifically so a first-match-wins regression on `gpt-5.4-mini-2026-03-17` would compute 17.50 instead. F5 CachedTokens asserted on success-exit AND tool-call-exit paths. F6 IsEqualTo replaces Contains \u2014 comment updated. PLang suite 196/217 pass (one better than v1's 195) \u2014 no new regressions."
         },
         {
           "paths": [
@@ -182,13 +182,13 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Tester v2 outputs — PASS verdict."
+          "context": "Tester v2 outputs \u2014 PASS verdict."
         }
       ],
       "after": {
         "status": "FAIL",
         "health": "plang-red",
-        "notes": "Re-issued. Initially PASSed by treating 21 PLang failures as 'pre-existing, not coder-introduced.' Ingi flagged the framing error: any failing test (C# or PLang) blocks the branch regardless of blame. C# is green (3036/3036) and all v1 critical/major findings are genuinely closed with strong assertions, but 21 PLang tests fail on this branch — missing .build/*.pr artifacts plus real behavioral failures (Audit 7≠4, Mock False≠True, ConditionCompoundAnd null, ConditionSubStepsTrue NullRef, TestReportMasksSensitiveVariables ×2). Coder must resolve each failure or get explicit out-of-scope sign-off. Strict-red rule added to tester memory at /memory/feedback_strict_red_is_red.md."
+        "notes": "Re-issued. Initially PASSed by treating 21 PLang failures as 'pre-existing, not coder-introduced.' Ingi flagged the framing error: any failing test (C# or PLang) blocks the branch regardless of blame. C# is green (3036/3036) and all v1 critical/major findings are genuinely closed with strong assertions, but 21 PLang tests fail on this branch \u2014 missing .build/*.pr artifacts plus real behavioral failures (Audit 7\u22604, Mock False\u2260True, ConditionCompoundAnd null, ConditionSubStepsTrue NullRef, TestReportMasksSensitiveVariables \u00d72). Coder must resolve each failure or get explicit out-of-scope sign-off. Strict-red rule added to tester memory at /memory/feedback_strict_red_is_red.md."
       }
     },
     {
@@ -199,7 +199,7 @@
       "intent": "Verify coder's v3 commits closed v2's 21 red PLang tests; apply new strict-red and validate-builder rules",
       "before": {
         "assumptions": "Coder commits 7ed35b550 (path canonical), 7fa6d16ad (truncated paths), ff9dee864 (condition builder teaching), 606689e62 (.pr rebuild) target the root causes of v2 failures. New rules: validate builder before trusting plang --test, and any red = FAIL regardless of blame.",
-        "risk": "If the 21 → small-N drop comes from .pr deletion or test skip rather than real fixes, would look green falsely. Validate-builder-first guards against that."
+        "risk": "If the 21 \u2192 small-N drop comes from .pr deletion or test skip rather than real fixes, would look green falsely. Validate-builder-first guards against that."
       },
       "plan": ".bot/fix-stepvartypes-incremental/tester/v3/plan.md",
       "actions": [
@@ -213,7 +213,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Added a 4-primitive builder smoke test to the repo. Covers set, foreach, if, call. Built with cache=false and ran via plang --test — PASSED. Reusable across future tester runs."
+          "context": "Added a 4-primitive builder smoke test to the repo. Covers set, foreach, if, call. Built with cache=false and ran via plang --test \u2014 PASSED. Reusable across future tester runs."
         },
         {
           "paths": [
@@ -223,7 +223,7 @@
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "C# 3036/3036 green; PLang 212/218 (+16 passes vs v2's 196/21). The 6 remaining failures are all *.fixture.goal files designed to fail (FailsVar asserts 42=99; SensitiveFail asserts %MyIdentity%='will-not-match'). They back test.report rendering tests; discovery picks them up despite intentional-failure role. Strict-red rule applies — FAIL until discovery excludes them or they get explicit out-of-scope sign-off."
+          "context": "C# 3036/3036 green; PLang 212/218 (+16 passes vs v2's 196/21). The 6 remaining failures are all *.fixture.goal files designed to fail (FailsVar asserts 42=99; SensitiveFail asserts %MyIdentity%='will-not-match'). They back test.report rendering tests; discovery picks them up despite intentional-failure role. Strict-red rule applies \u2014 FAIL until discovery excludes them or they get explicit out-of-scope sign-off."
         },
         {
           "paths": [
@@ -236,7 +236,7 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Tester v3 outputs — FAIL verdict on strict-red rule."
+          "context": "Tester v3 outputs \u2014 FAIL verdict on strict-red rule."
         }
       ],
       "after": {
@@ -253,7 +253,7 @@
       "intent": "Verify coder commit 9af7fd8b2 resolved v3's 6 phantom failures (nested test.report console emission)",
       "before": {
         "assumptions": "Coder claims v3's 6 [Fail] lines were nested test.report rendering, not real top-level failures. If true, the suite was already green; v4 should show 0 fails and 0 FAIL: headers.",
-        "risk": "Counting [Fail] lines is unreliable when nested test.report leaks into stdout — pattern goes into tester memory."
+        "risk": "Counting [Fail] lines is unreliable when nested test.report leaks into stdout \u2014 pattern goes into tester memory."
       },
       "plan": ".bot/fix-stepvartypes-incremental/tester/v4/plan.md",
       "actions": [
@@ -274,7 +274,7 @@
           "type": "review",
           "category": "test",
           "confidence": "high",
-          "context": "PLang: 208/208 pass, 0 FAIL: headers, 0 [Fail] lines. C#: 3036/3036 pass, 0 failed. BuilderSanity smoke test (committed in v3) still passes — builder validated end-to-end."
+          "context": "PLang: 208/208 pass, 0 FAIL: headers, 0 [Fail] lines. C#: 3036/3036 pass, 0 failed. BuilderSanity smoke test (committed in v3) still passes \u2014 builder validated end-to-end."
         },
         {
           "paths": [
@@ -287,13 +287,13 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Tester v4 outputs — PASS verdict. Also saved /memory/feedback_grep_fail_lines_unreliable.md to capture the counting-error lesson."
+          "context": "Tester v4 outputs \u2014 PASS verdict. Also saved /memory/feedback_grep_fail_lines_unreliable.md to capture the counting-error lesson."
         }
       ],
       "after": {
         "status": "PASS",
         "health": "green",
-        "notes": "208/208 PLang + 3036/3036 C# — fully green. v3's 6 'failures' were nested test.report console emission, not real failures. Coder structural fix at report.cs:30-45 closes the noise. Builder validated. Process gap (no coder/ folder across 4 versions of work) still flagged but not gating."
+        "notes": "208/208 PLang + 3036/3036 C# \u2014 fully green. v3's 6 'failures' were nested test.report console emission, not real failures. Coder structural fix at report.cs:30-45 closes the noise. Builder validated. Process gap (no coder/ folder across 4 versions of work) still flagged but not gating."
       }
     },
     {
@@ -303,7 +303,7 @@
       "timestamp_end": "2026-05-26T18:35:00Z",
       "intent": "Branch-wide OBP shape-smell pass through the new 5th smell lens (producer raw, consumers transform); user explicitly asked to widen v1/v2's narrow 8-file scope to all 12 branch-unique production C# files",
       "before": {
-        "assumptions": "v1/v2 PASSed with 8-file scope and 4-item Pass 1b checklist. After Ingi confirmed the 5th smell, suspected the narrow lens hid producer-raw / consumer-transform shapes elsewhere on the branch. Path canonicalization commit 7ed35b550 changed path.@this.Relative semantics — strong candidate for missed smell-5 cases at consumers that haven't updated their assumptions.",
+        "assumptions": "v1/v2 PASSed with 8-file scope and 4-item Pass 1b checklist. After Ingi confirmed the 5th smell, suspected the narrow lens hid producer-raw / consumer-transform shapes elsewhere on the branch. Path canonicalization commit 7ed35b550 changed path.@this.Relative semantics \u2014 strong candidate for missed smell-5 cases at consumers that haven't updated their assumptions.",
         "risk": "Discovering a finding now that should have been in v1 erodes confidence in v1 PASS; widening scope mid-branch is the right move even if it changes the verdict."
       },
       "plan": ".bot/fix-stepvartypes-incremental/codeanalyzer/v3/plan.md",
@@ -329,7 +329,7 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Branch-wide 5-item shape-smell pass. HIGH: test/run.cs:165,168 redundant TrimStart('/') — both ends canonical leading-/ since 7ed35b550, the trim is cargo defensive code and an asymmetry trap. LOWs: dead var app at report.cs:49 (carryover), PathSeparators per-row alloc at report.cs:307 (carryover), smell-#1 on Run.UserTags + File.Tags (HashSet mutated from outside owner — discovered by widening scope to tester/File.cs which v1 didn't cover), 3x identical guard at condition/Default.cs Evaluate(If/Elseif/Compare). Pre-existing test.PrPath re-Resolve at run.cs:211 noted as weak smell-5. discover.cs cleanup IS the root-cause-fix model — same migration test/run.cs needs."
+          "context": "Branch-wide 5-item shape-smell pass. HIGH: test/run.cs:165,168 redundant TrimStart('/') \u2014 both ends canonical leading-/ since 7ed35b550, the trim is cargo defensive code and an asymmetry trap. LOWs: dead var app at report.cs:49 (carryover), PathSeparators per-row alloc at report.cs:307 (carryover), smell-#1 on Run.UserTags + File.Tags (HashSet mutated from outside owner \u2014 discovered by widening scope to tester/File.cs which v1 didn't cover), 3x identical guard at condition/Default.cs Evaluate(If/Elseif/Compare). Pre-existing test.PrPath re-Resolve at run.cs:211 noted as weak smell-5. discover.cs cleanup IS the root-cause-fix model \u2014 same migration test/run.cs needs."
         },
         {
           "paths": [
@@ -341,13 +341,61 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "v3 outputs — NEEDS WORK / FAIL verdict."
+          "context": "v3 outputs \u2014 NEEDS WORK / FAIL verdict."
         }
       ],
       "after": {
         "status": "FAIL",
         "health": "actionable",
         "notes": "Reverses v1/v2 PASS. v1's narrow 8-file scope and mechanical 4-item Pass 1b missed the smell-5 cases at test/run.cs:165,168 (the same lines that triggered the user's smell-5 character-proposal). Branch-wide lens also surfaces smell-1 on Run.UserTags and File.Tags. Coder priority: (1) drop both TrimStart('/') in run.cs and the stale comment, (2) delete unused var app at report.cs:49, (3) extract EnsureOperator helper in condition/Default.cs."
+      }
+    },
+    {
+      "id": "b41db1b9-1d13-42f1-976c-9eb6e5a21375",
+      "bot": "tester",
+      "timestamp_start": "2026-05-26T19:12:22.110954+00:00",
+      "timestamp_end": "2026-05-26T19:16:28.172856+00:00",
+      "intent": "Fresh-eyes v5: validate coder's post-v4 changes (codeanalyzer-v3 fixes, tester/File slim, step prop drop, builder template restructure)",
+      "before": {
+        "assumptions": "Coder made 4 commits since my v4 PASS: address codeanalyzer v3 (TrimStart drop, guard extract, dead var), slim tester/File (OBP-6), drop unused step props (Guidance/Level/Confidence), restructure builder templates. Coder claims 208/208 PLang + 3036/3036 C#.",
+        "risk": "Slimming File.cs touches identity flow through discover\u2192run\u2192report. Removing fields can break consumers and serialized state. Template restructure could break builder if anything still references v2/ paths."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/tester/v5/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/tester/v5/plan.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v5 plan"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Test reads RepoRoot/os/system/builder/templates/v2/stepActionDetails.template at line 28; this path was moved by commit 0f8886ab0 to os/system/builder/llm/templates/stepActionDetails.template \u2014 5 test methods all throw DirectoryNotFoundException."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/tester/v5/verdict.json",
+            ".bot/fix-stepvartypes-incremental/test-report.json",
+            ".bot/fix-stepvartypes-incremental/tester/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "FAIL verdict: 5 C# tests in StepActionDetailsRenderTests broken by builder commit 0f8886ab0 (moved template). PLang 208/208, C# 3031/3036."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "C# 3031/3036 (5 fail, all StepActionDetailsRenderTests/template-path); PLang 208/208 clean",
+        "notes": "Single-cause regression \u2014 builder bot's template-restructure commit 0f8886ab0 moved os/system/builder/templates/v2/stepActionDetails.template to llm/templates/ but missed a hardcoded path at StepActionDetailsRenderTests.cs:28. Two-line fix. Coder's substantive changes (drop TrimStart, slim tester/File, drop unused Step props, extract EvaluateOperator) are clean."
       }
     }
   ]

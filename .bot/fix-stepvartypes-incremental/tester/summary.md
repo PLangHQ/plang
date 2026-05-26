@@ -1,49 +1,125 @@
 # tester — fix-stepvartypes-incremental
 
-**Version:** v4
-**Verdict:** PASS
+**Version:** v5
+**Verdict:** FAIL
 
 ## What this is
 
-v3 FAILed because I counted 6 `[Fail]` lines in `plang --test` stdout. Coder pointed out (commit 9af7fd8b2) those weren't real top-level failures — they were the nested `test.report`'s own console rendering of intentional-failure fixtures (the ones consumed by TestReportRendersFailureWithVariables and TestReportMasksSensitiveVariables). The fix suppresses `RenderConsole` / `RenderCoverageTables` when `testing.CurrentTest != null`. Re-running confirms 208/208 PLang + 3036/3036 C# — all green.
+Fresh-eyes pass after a busy interval since my v4 PASS. Six commits landed:
+codeanalyzer v3 (FAIL with HIGH OBP-5 + 4 LOW); coder's three commits to address
+those plus a separate `tester/File.cs` slim (drop the 6 properties duplicated
+from Goal) and a separate `step.@this` cleanup (drop unused Guidance/Level/
+Confidence); and finally a **builder-bot** commit `0f8886ab0` that restructured
+template files under `os/system/builder/llm/templates/`.
+
+The coder commits each claimed `3036/3036 C# + 208/208 PLang` and were correct
+at their commit. The builder-bot commit landed *after* and made no test claim.
+HEAD is red: 5 C# tests fail.
 
 ## What was done
 
-1. Pulled (commit 9af7fd8b2).
-2. Clean-rebuilt PlangConsole → 0 errors.
-3. Ran `plang --test` from `Tests/`: **passes=208, fails=0, `FAIL:` headers=0, `[Fail]` lines=0**. Includes BuilderSanity smoke test passing.
-4. Built and ran C# suite via TUnit binary: **3036/3036 pass, 0 failed**.
-5. Saved the counting lesson to memory at `/memory/feedback_grep_fail_lines_unreliable.md`.
+1. Clean rebuild PlangConsole → 0 errors (450 warnings, all generator nullable
+   noise — unchanged baseline).
+2. `cd Tests && plang --test` → **208/208 pass, 0 fail.**
+3. `dotnet run --project PLang.Tests` → **3031/3036, 5 failed.**
+4. Cross-checked the 5 failures: all in
+   `PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs`,
+   all the same `DirectoryNotFoundException` for the moved template at
+   `os/system/builder/templates/v2/stepActionDetails.template`. Path hardcoded
+   at line 28.
+5. Verified no other source references the dead v2 paths (only that one test
+   file and its own line-8 doc comment).
+6. Read the slim `tester/File.cs` + new `discover.cs` — every code path
+   populates `Goal` non-null (source-read fail → minimal `new Goal { Path }`;
+   .pr-missing/corrupt/hash-mismatch → `sourceGoal` from parsed .goal; happy
+   path → `prGoal`). Required-property discipline holds.
+7. Read the simplified `IsEntryGoalStep` in test/run.cs — both ends now use
+   canonical form per branch commit `7ed35b550`. Correct after TrimStart drop.
 
-## Code example — the coder's fix
+## The failing 5 (one root cause)
+
+```
+PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs:28
+  Path.Combine(RepoRoot, "os", "system", "builder", "templates", "v2",
+               "stepActionDetails.template");
+                                  ^^^^^
+File moved by 0f8886ab0 to:
+  os/system/builder/llm/templates/stepActionDetails.template
+```
+
+Five test methods all hit `RenderAsync` → `File.ReadAllTextAsync(TemplatePath)` →
+`DirectoryNotFoundException`:
+
+- `Render_PerActionBlockOnlyForPlannerSet`
+- `Render_ActionInPlannerSet_GetsAllThreeBlocks`
+- `Render_ActionInPlannerSet_EmptyBlocksOmitted`
+- `Render_ModifierActionInPlannerSet_GetsItsNotesRendered`
+- `Render_NotesNotLeakedForActionsOutsidePlannerSet`
+
+## Fix (two lines)
+
+`PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs`
+
+- Line 28 — replace `"templates", "v2", "stepActionDetails.template"` with
+  `"llm", "templates", "stepActionDetails.template"`.
+- Line 8 — update the doc comment to point at the new location.
+
+No behavior change in the production renderer; the template content moved
+unchanged.
+
+## Coder substantive work (no findings)
+
+Read the diffs end-to-end:
+
+- `condition/code/Default.cs` — `EvaluateOperator` extract collapses three
+  identical 9-line bodies into one shared method. Behavior preserved
+  (operator data, left, right routed the same way; same exception filter;
+  same `EvaluationError` call). Clean.
+- `test/run.cs:159-166` — both TrimStart calls and the stale comment gone.
+  Producer canonicalization (`7ed35b550`) makes both ends leading-slash.
+- `test/report.cs:46` — dead `var app = Context.App;` removed.
+- `tester/File.cs` — slim record: required `Goal`, `Status`, `StatusReason`,
+  `Tags`. Six redundant flat properties removed. Discovery rewritten to
+  always produce a non-null Goal — verified every branch.
+- `step/this.cs` — `Guidance`/`Level`/`Confidence` removed plus their
+  MergeFrom backfill. `builder/code/Default.cs:553-558` enrichResponse
+  block removed. .pr files with stale null fields still deserialize (STJ
+  ignores unknown). Clean.
+- Icelandic fixture `.test.goal` updated to read `Goal.Name` instead of
+  `EntryGoalName` and `.pr` rebuilt — verified the .pr step text and
+  module/action line up.
+
+## Code example — the failure shape
 
 ```csharp
-// PLang/app/modules/test/report.cs
-if (testing.CurrentTest == null)
-{
-    var console = new StringBuilder();
-    RenderConsole(console, results, testing);
-    RenderCoverageTables(console, testing, Context.App.Modules);
-    await Context.App.CurrentActor.Channels.WriteTextAsync(
-        global::app.channels.@this.Output, console.ToString());
-}
+// PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs:26-28
+private static readonly string RepoRoot = LocateRepoRoot();
+private static readonly string TemplatePath =
+    Path.Combine(RepoRoot, "os", "system", "builder", "templates", "v2", "stepActionDetails.template");
+//                                                       ^^^^^^^^^^^^^^^^^^^^^^
+// builder commit 0f8886ab0 moved this to llm/templates/. Path is dead.
 ```
 
-The parent test consumes results via the returned `Data.Properties` (content, summaryPass, summaryFail). The nested console emission was redundant AND polluted the outer `plang --test` stdout — a clean structural fix.
+## Pattern / lesson
 
-## Lessons saved (tester memory)
+When two bots edit overlapping surfaces (here: coder fixes runtime code and
+builder restructures templates), a test that hardcodes a filesystem path on
+one side is invisible to the bot working on the other. The builder bot
+correctly updated every `.goal` source referencing the templates, but the
+C# tests' string-formed paths weren't in its grep scope. A `grep -r "templates/v2"`
+across `PLang.Tests/` before claiming green would have caught this — and is
+the move-checklist gap to flag.
 
-- `feedback_strict_red_is_red.md` — any test failure = FAIL, no carve-outs.
-- `feedback_validate_builder_before_plang_tests.md` — build a 4-primitive smoke (set, foreach, if, call) with cache=false before trusting `plang --test`.
-- `feedback_grep_fail_lines_unreliable.md` — don't `grep -c [Fail]`; nested test.report bleeds [Fail] lines for fixtures it consumes.
-- `plang_string_concat.md` — string concat is interpolation (`'%var%-suffix'`), not `+`.
-
-## Process gap (still open, not gating)
-
-No `coder/` folder on this branch. Four coder commit pushes, zero `coder/v<N>/plan.md` or `summary.md` or `baseline-tests.md`. Worth flagging to docs/architecture, not for me to gate.
-
-## Next
+## Verdict + next
 
 ```
-run.ps1 security stepvartypes-incremental "Review the code on branch fix-stepvartypes-incremental" -b fix-stepvartypes-incremental
+VERDICT: FAIL
+Issues: 5 C# tests fail in StepActionDetailsRenderTests — stale path
+        os/system/builder/templates/v2/stepActionDetails.template at line 28
+        after builder commit 0f8886ab0 moved templates under llm/templates/.
+
+Next: run.ps1 coder stepvartypes-incremental "Fix tester v5: update
+      StepActionDetailsRenderTests.cs:28 + line-8 doc comment to point at
+      os/system/builder/llm/templates/stepActionDetails.template" -b
+      fix-stepvartypes-incremental
 ```

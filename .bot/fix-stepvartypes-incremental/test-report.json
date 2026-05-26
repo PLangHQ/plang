@@ -1,35 +1,29 @@
 {
   "tester": "tester",
   "branch": "fix-stepvartypes-incremental",
-  "timestamp": "2026-05-26T19:00:00Z",
-  "tested_version": "v4",
+  "timestamp": "2026-05-26T19:30:00Z",
+  "tested_version": "v5",
   "test_run": {
-    "csharp": {
-      "total": 3036,
-      "passed": 3036,
-      "failed": 0,
-      "skipped": 0
-    },
-    "plang": {
-      "total": 208,
-      "passed": 208,
-      "failed": 0,
-      "skipped": 0
-    }
-  },
-  "builder_validation": {
-    "ran": true,
-    "command": "cd Tests && plang '--build={\"files\":[\"BuilderSanity/BuilderSanity.test.goal\",\"BuilderSanity/AddItem.goal\",\"BuilderSanity/MarkBig.goal\",\"BuilderSanity/Finalize.goal\"],\"cache\":false}' (committed in v3)",
-    "result": "BuilderSanity.test.goal passes in this v4 run via `plang --test` — builder validated end-to-end."
+    "csharp": { "total": 3036, "passed": 3031, "failed": 5, "skipped": 0 },
+    "plang": { "total": 208, "passed": 208, "failed": 0, "skipped": 0 }
   },
   "coverage": {
-    "changed_files_covered": 7,
-    "changed_files_total": 8,
-    "uncovered_files": [
-      "PLang/app/modules/builder/BuildResponse.cs (XML comment only — no test surface)"
-    ]
+    "changed_files_covered": 0,
+    "changed_files_total": 0,
+    "uncovered_files": []
   },
-  "findings": [],
-  "verdict": "approved",
-  "summary": "v4 PASS. C# 3036/3036 and PLang 208/208 both green; zero `FAIL: ` headers, zero `[Fail]` lines. Coder commit 9af7fd8b2 (suppress nested test.report console output) resolved the v3 false-positive — my [Fail]-line grep was counting test.report's own rendering of intentional-failure fixtures it consumes as data, not actual top-level test failures. Lesson saved to tester memory."
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "regression",
+      "test_file": "PLang.Tests/Builder/CompilePromptTests/StepActionDetailsRenderTests.cs",
+      "code_file": "os/system/builder/templates/v2/stepActionDetails.template (moved -> os/system/builder/llm/templates/stepActionDetails.template)",
+      "issue": "Five tests (Render_PerActionBlockOnlyForPlannerSet, Render_ActionInPlannerSet_GetsAllThreeBlocks, Render_ActionInPlannerSet_EmptyBlocksOmitted, Render_ModifierActionInPlannerSet_GetsItsNotesRendered, Render_NotesNotLeakedForActionsOutsidePlannerSet) throw DirectoryNotFoundException at TemplatePath line 28. Builder bot commit 0f8886ab0 renamed templates/v2/* under llm/templates/ and updated .goal references, but missed this C# test that hardcoded the old path with Path.Combine. The doc comment at line 8 also references the dead path.",
+      "impact": "Coder commits 0943e5fda, 1b1b226bb, 463339c90 each ran C# suite and claimed 3036/3036 green. The builder bot's commit 0f8886ab0 landed later and made no test-run claim. Net: HEAD ships red — the prior coder-attested greens were correct at that commit but stale by the time builder restructured.",
+      "suggestion": "Edit StepActionDetailsRenderTests.cs:28 to Path.Combine(RepoRoot, \"os\", \"system\", \"builder\", \"llm\", \"templates\", \"stepActionDetails.template\"); and update the line-8 doc comment to match. Single-line repair, no behavior change."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "PLang 208/208 (clean). C# 3031/3036 — all 5 failures are in StepActionDetailsRenderTests, all the same DirectoryNotFoundException for os/system/builder/templates/v2/stepActionDetails.template. The builder bot's template-restructure commit 0f8886ab0 missed this hardcoded path. Substantive code changes from coder (drop TrimStart, slim tester/File, drop unused Step props, extract EvaluateOperator helper) are clean — slim File.cs's required Goal discipline holds across every discover.cs branch and the simplified IsEntryGoalStep comparison is correct now that path canonicalization is enforced upstream. The Icelandic Discover fixture .test.goal was updated to use Goal.Name and rebuilt; .pr verifies. Two-line fix is sufficient to ship: update test path and doc comment."
 }
