@@ -1,0 +1,129 @@
+{
+  "tester": "tester",
+  "branch": "fix-stepvartypes-incremental",
+  "timestamp": "2026-05-26T14:22:22Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": {
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "build": "RED — 2 compile errors in PLang.Tests"
+    },
+    "plang": {
+      "total": 217,
+      "passed": 195,
+      "failed": 22,
+      "skipped": 0,
+      "note": "No coder baseline-tests.md exists on this branch — cannot distinguish regressions from pre-existing failures. Many failures are 'File not found: .../.build/*.pr' suggesting stale/missing build artifacts (likely pre-existing). One masking test (TestReportMasksSensitiveVariables) fails consistently in both TestModule/Report and Modules/Test/Report copies."
+    }
+  },
+  "coverage": {
+    "changed_files_covered": 1,
+    "changed_files_total": 8,
+    "uncovered_files": [
+      "PLang/app/modules/llm/code/OpenAi.cs (pricing/cached/cost math — only Cost==null is tested)",
+      "PLang/app/modules/test/run.cs (output-capture event binding + per-step Timings — zero tests)",
+      "PLang/app/tester/Run.cs (Output property rename — tests still reference old name `CapturedOutput`, build broken)",
+      "PLang/app/tester/Timing.cs (no test)",
+      "PLang/app/tester/Timings.cs (no test)",
+      "PLang/app/modules/this.cs (%var% slot description — covered by a Contains() assertion that passes both old and new strings)",
+      "PLang/app/modules/builder/BuildResponse.cs (XML comment only — no test impact)"
+    ]
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Testing/ReportActionTests.cs, PLang.Tests/App/Testing/EdgeCaseTests.cs",
+      "code_file": "PLang/app/tester/Run.cs",
+      "issue": "Coder renamed Run.CapturedOutput → Run.Output but did NOT update callers in tests. PLang.Tests build is RED: CS1061 at ReportActionTests.cs:56 and EdgeCaseTests.cs:129. The entire C# test suite cannot run.",
+      "impact": "Whole C# test suite is unrunnable on this branch. Codeanalyzer v1/v2 PASS verdicts were issued without a green build. Coder shipped a refactor without compiling the dependents.",
+      "suggestion": "Replace `run.CapturedOutput = ...` with `run.Output = ...` at ReportActionTests.cs:56 and EdgeCaseTests.cs:129. Rebuild PLang.Tests, re-run the suite."
+    },
+    {
+      "id": 2,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "PLang/app/modules/test/run.cs:130-148",
+      "issue": "New BeforeWrite event binding captures channel-output bytes into testRun.Output. Zero tests exist for this path. The codeanalyzer flagged the choice of BeforeWrite vs AfterWrite as deliberate, the channel-name filter as intentional, and the newline-append as a behavioral choice — none of which are verified.",
+      "impact": "If output capture silently breaks (e.g., AfterWrite fires before BeforeWrite, channel-name filter inverts, payload gets serialized differently), Run.Output stays empty and 'failure verbose-off rendering' degrades silently. No test would notice.",
+      "suggestion": "Add a RunActionTests scenario that writes to `EngineChannels.Output` (and to `EngineChannels.Error`) inside a fixture goal and asserts that testRun.Output contains exactly the Output payload and not the Error payload."
+    },
+    {
+      "id": 3,
+      "severity": "critical",
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "PLang/app/modules/test/run.cs:154-188, PLang/app/tester/Timings.cs, PLang/app/tester/Timing.cs",
+      "issue": "Per-step timings record only entry-goal top-level steps via `IsEntryGoalStep(step)` which compares `step.Goal?.Path?.ToString().TrimStart('/')` against `test.Path.TrimStart('/')`. Zero tests verify (a) timings are recorded for top-level steps, (b) nested sub-goal steps are NOT individually recorded, (c) the TrimStart('/') normalization survives a leading-slash mismatch. A subtle bug like reversing IsEntryGoalStep would still produce Timings.Count > 0, which is what coarse 'is it populated' tests would look for.",
+      "impact": "If the path comparison subtly breaks (e.g., a Path renderer change), Timings becomes either always empty or polluted with sub-goal steps — neither is detected. The webui resolves step text by index, so a wrong index range would render as nonsense step rows.",
+      "suggestion": "Add a test with two goals — entry calls sub-goal — and assert: Timings.Count == entry-goal-step-count (not deeper), each Timing.StepIndex matches a real entry step, each Ms > 0. Add a deletion-test stub: comment out the BeforeStep registration and confirm a test fails."
+    },
+    {
+      "id": 4,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Modules/llm/QueryBasicTests.cs",
+      "code_file": "PLang/app/modules/llm/code/OpenAi.cs:38-56,225-251",
+      "issue": "Only `Query_CostNull_WhenNoPricingData` exists. There is no positive test asserting cost is computed correctly. The cost math has three independent factors — non-cached input × input-price, cached × cached-price, completion × output-price, divided by 1_000_000m. Any one of those could be swapped/inverted and the only test (Cost == null) would still pass.",
+      "impact": "Bug class: swap cached and non-cached pricing → cost off by ~10×. Swap input and output pricing → cost off by ~6×. Forget to subtract cached from prompt → cached portion double-billed. None of these would fail any current test.",
+      "suggestion": "Add cases that mock the API response with explicit `prompt_tokens=100, cached_tokens=40, completion_tokens=50` for `gpt-5.4-nano` and assert Cost == 60·0.20/1e6 + 40·0.02/1e6 + 50·1.25/1e6 = exact decimal value. Plus a multi-call accumulation case (two responses → cost sums). Plus a longest-prefix case asserting `gpt-5.4-mini-2026-03-17` picks the `mini` row, not `gpt-5.4`."
+    },
+    {
+      "id": 5,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "PLang/app/modules/llm/code/OpenAi.cs:451,470,491",
+      "issue": "New `CachedTokens` property is set on three different result paths (success exit, schema-retry exit, tool-call exit). No test verifies the value reaches Properties[\"CachedTokens\"], nor that it accumulates across multi-call sequences.",
+      "impact": "If CachedTokens stops being wired in one of the three exit paths, the UI cost panel silently shows zero cached tokens for tool-call flows but correct numbers for plain completions.",
+      "suggestion": "Add an assertion in the existing `Query_ResponseProperties_Populated` test for `result.Properties[\"CachedTokens\"]`. Add a separate tool-call scenario asserting the same."
+    },
+    {
+      "id": 6,
+      "severity": "major",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/Modules/builder/GetActionsTests.cs:65-79",
+      "code_file": "PLang/app/modules/this.cs:321-330",
+      "issue": "The branch changed the variable-slot description from `\"%var% string\"` to `\"%var%\"` (dropping the lying trailing type token). The test asserts `nameParam.Value.ToString().Contains(\"%var%\")` — which passes both before and after. Comment on line 72 still says `(renders as `%var% string`)` — the comment lies about the current behavior. A deletion test: revert the change to `\"%var% string\"` and this test still passes.",
+      "impact": "False green on the headline change of this branch. If a future refactor accidentally re-adds a type token (the exact regression this fix exists to prevent), the test won't catch it.",
+      "suggestion": "Change assertion to `.IsEqualTo(\"%var%\")` (no trailing). Update the comment to reflect the new contract. If the slot also gets `= default` suffix, assert the prefix is `\"%var%\"` with `IsEqualTo` plus an optional `\" = ...\"` suffix — but never `Contains`."
+    },
+    {
+      "id": 7,
+      "severity": "major",
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "PLang/app/modules/llm/code/OpenAi.cs:706-727 (ResolveImage)",
+      "issue": "ResolveImage was refactored from System.IO.File.ReadAllBytes to `path.@this.Resolve(image, context).ReadAsDataUri().GetAwaiter().GetResult()`. The visibility changed from `private static` to `internal static` with the explicit comment `internal so OpenAiImageDenialTests can invoke the handler directly`. OpenAiImageDenialTests exists in the diff but only covers the denial path; no test covers the success path (an in-root image gets correctly base64-encoded with mime).",
+      "impact": "An in-root image that should resolve could silently return the empty/error branch — the message-formatting loop appends nothing for that image and the request is missing the image part. The LLM would respond as if no image was given. No test catches this.",
+      "suggestion": "Add OpenAiImageResolutionTests with an in-root file and assert the returned dictionary has `[\"image_url\"][\"url\"]` starting with `\"data:image/\"` and decoding back to the original bytes."
+    },
+    {
+      "id": 8,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "PLang/app/modules/llm/code/OpenAi.cs:248-251 (unknownModelLogged)",
+      "issue": "The `unknownModelLogged` once-per-Run guard is uncovered. If it inverts (logs every call), a test run with an unknown model would spew thousands of debug lines — only the debug channel knows.",
+      "impact": "Low — debug-channel only. But the `bool unknownModelLogged = false;` declaration is dead-looking without a behavior assertion.",
+      "suggestion": "Capture `Debug.Write` calls in an LlmTestHelper-style fake, drive a 3-message conversation against an unknown model, assert exactly one debug entry."
+    },
+    {
+      "id": 9,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "(none)",
+      "code_file": "PLang/app/modules/test/run.cs:76 (`childApp.Parent = parentApp`)",
+      "issue": "New parent wiring added; no test verifies Parent is set or that this enables some downstream behavior. Likely intended for the channel/event capture to find the parent's settings, but the dependency is implicit.",
+      "impact": "If Parent is never read, this is dead code. If it IS read (e.g., for channel inheritance), an inversion would break test isolation silently.",
+      "suggestion": "Either add an assertion in a RunActionTests scenario that Parent is set, or document why it's needed."
+    }
+  ],
+  "verdict": "needs-fixes",
+  "summary": "FAIL. The branch's headline rename (Run.CapturedOutput → Run.Output) was shipped without updating two existing test callers, leaving the C# test suite unable to compile (CS1061 at ReportActionTests.cs:56 and EdgeCaseTests.cs:129). Codeanalyzer v1/v2 PASSed without a green build — a process gap. Beyond the broken build, the most novel behaviors on this branch — output capture via BeforeWrite event binding, per-step Stopwatch timings, OpenAI cost math, and the %var% slot description fix — have effectively zero meaningful coverage. The one slot-description test in GetActionsTests uses `.Contains(\"%var%\")` which passes both old and new strings, so a revert would not be detected. PLang suite shows 195/217 pass but there is no coder baseline-tests.md to separate regressions from pre-existing failures. Coder must fix the build, add the missing coverage, and the process gap (no coder folder, no baseline) should be flagged separately."
+}

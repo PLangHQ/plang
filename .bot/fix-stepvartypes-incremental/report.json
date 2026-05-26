@@ -94,6 +94,56 @@
         "health": "clean",
         "notes": "Post-merge state is clean. One LOW: dead local at report.cs:40 (merge cleanup leftover, trivial delete). Optional micro: hoist new[] { '/', '\\' } at report.cs:302 to a static readonly field. Not gating on either."
       }
+    },
+    {
+      "id": "7e2a3c40-1f8b-4d9e-9c5a-2b6e4f8a1c33",
+      "bot": "tester",
+      "timestamp_start": "2026-05-26T14:22:22Z",
+      "timestamp_end": "2026-05-26T14:35:00Z",
+      "intent": "Test-quality validation of the 8 branch-unique C# files; check whether tests verify intent or admit false greens",
+      "before": {
+        "assumptions": "Codeanalyzer v1/v2 both PASSed (code is OBP-clean). My job is whether the tests honestly verify the new behavior. Branch has no coder/ folder so no baseline-tests.md is available.",
+        "risk": "Property rename CapturedOutput→Output may have stale callers in tests; new event-binding paths and OpenAI cost math are easy to test cheaply but easy to leave uncovered."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/tester/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang.Tests/App/Testing/ReportActionTests.cs",
+            "PLang.Tests/App/Testing/EdgeCaseTests.cs",
+            "PLang.Tests/App/Modules/llm/QueryBasicTests.cs",
+            "PLang.Tests/App/Modules/builder/GetActionsTests.cs",
+            "PLang.Tests/App/Testing/RunActionTests.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/modules/this.cs",
+            "PLang/app/tester/Run.cs",
+            "PLang/app/tester/Timing.cs",
+            "PLang/app/tester/Timings.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean-rebuilt PlangConsole (OK); dotnet build PLang.Tests fails with CS1061 at ReportActionTests.cs:56 and EdgeCaseTests.cs:129 — coder did not propagate CapturedOutput→Output rename. C# suite unrunnable. PLang suite: 195 pass / 22 fail / 217 total via Tests/ + PlangConsole binary. No coder baseline to triage failures against. Found 9 issues: 1 build-break, 4 missing-coverage (output capture, Timings, cost math positive case, ResolveImage success), 1 weak-assertion (Contains vs IsEqualTo on the headline %var% fix), 3 minor/missing."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/tester/v1/plan.md",
+            ".bot/fix-stepvartypes-incremental/tester/v1/verdict.json",
+            ".bot/fix-stepvartypes-incremental/tester/summary.md",
+            ".bot/fix-stepvartypes-incremental/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Tester v1 outputs — FAIL verdict."
+        }
+      ],
+      "after": {
+        "status": "FAIL",
+        "health": "build-red",
+        "notes": "Property rename without dependent updates broke the C# build; codeanalyzer PASSed without compiling. Headline %var% fix has a Contains() assertion that does not differentiate old from new. No baseline-tests.md so PLang regressions cannot be triaged. Coder needs to fix build, write coverage for the four new behaviors, tighten the slot-description assertion, and produce a baseline file going forward."
+      }
     }
   ]
 }
