@@ -4,7 +4,6 @@
 These steps are part of the same logical flow. Understanding the full context helps build accurate parameters.
 
 {% for gs in groupSteps %}{% if gs.index != stepResult.index %}- [{{ gs.index }}] {{ goal.Steps[gs.index].Text }}
-  guidance: {{ gs.guidance }}
   {% if gs.actions.size > 0 %}actions: [{% for a in gs.actions %}{{ a.module }}.{{ a.action }}{% unless forloop.last %}, {% endunless %}{% endfor %}]{% endif %}
   {% if gs.validationError %}⚠️ validation failed: {{ gs.validationError }}{% endif %}
 {% endif %}{% endfor %}
