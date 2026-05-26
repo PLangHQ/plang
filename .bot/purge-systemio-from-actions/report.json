@@ -410,6 +410,83 @@
         "health": "green",
         "notes": "Branch ready for docs. v1 F1 closed; no new findings. PLNG002 carve-outs unchanged (exactly 2, both inside Plng002.cs). C# 3031/3031, PLang 206/206 on clean rebuild."
       }
+    },
+    {
+      "id": "7d4a74ee-7fdf-400b-b565-d373118153b4",
+      "bot": "docs",
+      "timestamp_start": "2026-05-26T13:45:40Z",
+      "intent": "Final docs gate for purge-systemio-from-actions: fill XML/architecture/CHANGELOG gaps, triage claude-md + character proposals, run app-tree drift check, pass verdict if clean.",
+      "before": {
+        "assumptions": "Auditor v2 PASS with no findings; suite green (C# 3031/3031, PLang 206/206); branch ready for docs gate. Coder stage 7 already wrote some user-facing docs (System.IO ban + migration status) \u2014 my pass verifies completeness and fills the rest.",
+        "risk": "Largest risk: docs miss a public surface added during the System.IO purge (new PathHelper / path verbs / Plng002 analyzer) and the merge ships an undocumented public API. Secondary risk: a CLAUDE.md proposal that doesn't generalize gets applied anyway."
+      },
+      "actions": [
+        {
+          "paths": [
+            "CLAUDE.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Coder stage 7 wrote the PLNG002 one-liner before stage 6 flipped severity to Error. Fixed the stale parenthetical to match landed state."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/this.JsonConverter.cs"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added one-line XML doc to the two public ctors distinguishing stub (no Context) vs Context-wired forms. Class summary had the full story but call sites were bare."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/app-tree.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added App.Parent (new this branch), added Snapshot data partial (pre-existing omission), added paragraph explaining app.Modules.Schema is the LLM catalog object, not a registered action module. Maintenance note pointing at the new checker was carried from runtime2."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/scripts/check-app-tree.sh"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Carried from runtime2 (where it was built one chat earlier). Added Schema to the module-folder skip list. Reports drift between PLang/app/ and Documentation/v0.2/app-tree.md (modules, app.@this props, actor.@this props, Data partials). Exit 1 on drift."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/docs/v1/plan.md",
+            ".bot/purge-systemio-from-actions/docs/v1/result.md",
+            ".bot/purge-systemio-from-actions/docs/v1/verdict.json",
+            ".bot/purge-systemio-from-actions/docs-report.json",
+            ".bot/purge-systemio-from-actions/docs/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard docs-bot output for v1. verdict.json: PASS."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/claude-md-proposals.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "coder/v1 proposal to add 'Default impl:' lines under abstract-type entries in app-tree.md \u2192 DEFERRED. The target file's shape (one-screen summary with fenced trees, no per-type sections) doesn't fit the proposed change. Right home is /shared/app-tree/ deep tree. Recorded in docs-report.json."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "Branch is doc-complete. Drift checker reports clean (31 modules, 37 app props, 7 actor props, 5 data partials).",
+        "notes": "Ready to merge into runtime2. One claude-md proposal deferred (form mismatch with target file); no character proposals on this branch."
+      },
+      "timestamp_end": "2026-05-26T13:51:21Z",
+      "plan": ".bot/purge-systemio-from-actions/docs/v1/plan.md"
     }
   ]
 }

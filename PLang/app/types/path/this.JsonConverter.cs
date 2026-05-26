@@ -25,7 +25,10 @@ public sealed class JsonConverter : JsonConverter<@this>
 {
     private readonly actor.context.@this? _context;
 
+    /// <summary>Stub form — read produces a bare file-scheme Path with no Context. Used by the global Conversion fallback and any caller that hasn't wired an Actor.</summary>
     public JsonConverter() { _context = null; }
+
+    /// <summary>Context-wired form — read routes through <see cref="@this.Resolve(string, actor.context.@this)"/>, landing scheme-correct Paths with the Actor's Context already bound.</summary>
     public JsonConverter(actor.context.@this context) { _context = context; }
 
     public override @this? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)

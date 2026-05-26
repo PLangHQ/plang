@@ -1,0 +1,48 @@
+{
+  "reviewer": "docs",
+  "branch": "purge-systemio-from-actions",
+  "timestamp": "2026-05-26T14:00:00Z",
+  "reviewed_version": "v2",
+  "summary": "Branch is doc-complete. Coder stage 7 already shipped the full good_to_know.md System.IO ban section and the CLAUDE.md one-liner — my pass fixed one stale phrase in that one-liner (PLNG002 is now Error, not Warning), added ctor XML docs to the new PathJsonConverter, and resolved three real omissions in Documentation/v0.2/app-tree.md surfaced by the new drift checker (App.Parent, the Snapshot data partial, and the Schema modules-infrastructure footnote). One CLAUDE.md proposal from coder/v1 — 'Default impl:' lines under abstract types in app-tree.md — deferred because the target file's shape doesn't have per-type entries to attach those lines to; re-raise for the deep tree at /shared/app-tree/. PASS.",
+  "stats": { "gaps_found": 4, "gaps_filled": 4, "docs_updated": 4, "docs_created": 3 },
+  "changes": [
+    {
+      "id": 1,
+      "type": "xml-doc",
+      "action": "updated",
+      "file": "CLAUDE.md",
+      "description": "Replaced stale PLNG002 status ('currently warning; flipping to error once...') with 'at Error severity — zero PLNG002 warnings as of the purge-systemio-from-actions merge'. Coder stage 7 wrote the line before stage 6 landed."
+    },
+    {
+      "id": 2,
+      "type": "xml-doc",
+      "action": "created",
+      "file": "PLang/app/types/path/this.JsonConverter.cs",
+      "description": "Added one-line summaries to both public ctors distinguishing the stub form (no Context) from the Context-wired form. Class-level summary had the full story but the call sites were bare."
+    },
+    {
+      "id": 3,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/app-tree.md",
+      "description": "Added App.Parent to the top-level tree (new on this branch, used by IsInRoot chain walk). Added this.Snapshot.cs to the Data partial list (pre-existing omission). Added paragraph explaining app.Modules.Schema is the LLM action catalog object owned by Modules, not a registered action module — its PascalCase under modules/ is intentional."
+    },
+    {
+      "id": 4,
+      "type": "architecture-doc",
+      "action": "updated",
+      "file": "Documentation/v0.2/scripts/check-app-tree.sh",
+      "description": "Added 'Schema' to the module-folder skip list with a comment explaining why (infrastructure under modules/, not a vocabulary action). Carried over from runtime2 with the doc maintenance note."
+    }
+  ],
+  "findings": [],
+  "claude_md_proposals": [
+    {
+      "from_bot": "coder/v1",
+      "target": "Documentation/v0.2/app-tree.md",
+      "decision": "deferred",
+      "reason": "Proposal is to add 'Default impl:' lines under every abstract-type entry in app-tree.md. The proposed shape assumes per-type sections with 'Location:' / 'Role:' lines, but app-tree.md is a one-screen summary built around fenced trees + a 'What's NOT on app' table — there are no per-abstract-type sections to attach the new lines to. The intent (collapse the abstract-base → default-impl tracing hop) is good; the right home is the deep-dive doc at /shared/app-tree/, where per-type entries already exist. Filed under explicit-user-request footer so not dismissed — defer until either app-tree.md grows per-type sections or the proposal is re-targeted at the deep tree."
+    }
+  ],
+  "character_proposals": []
+}
