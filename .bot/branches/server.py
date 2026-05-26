@@ -495,9 +495,11 @@ INDEX_HTML = r"""<!doctype html>
   #filePopup {
     position: fixed;
     z-index: 100;
-    width: 720px;
-    max-height: 70vh;
-    overflow: auto;
+    top: 12px;
+    right: 12px;
+    width: 560px;
+    max-height: calc(100vh - 24px);
+    overflow: hidden;  /* click-through means no scroll anyway */
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -506,6 +508,7 @@ INDEX_HTML = r"""<!doctype html>
     font-size: 12px;
     line-height: 1.5;
     display: none;
+    pointer-events: none;  /* let the cursor land on rows underneath */
   }
   #filePopup .header {
     color: var(--muted);
@@ -706,32 +709,17 @@ function copyBranchName(e, name) {
 
 // Hover-preview popup ------------------------------------------------
 //
-// Behavior: hovering a file row opens the popup; the popup is sticky
-// (cursor can move onto it to scroll/read). The popup is pinned to the
-// row's right edge on open and does NOT follow the cursor. It hides
-// after a short grace period once the cursor leaves both the row and
-// the popup, so moving row→popup keeps it open.
+// Behavior: hovering a file row opens the popup at a fixed top-right
+// position. The popup is click-through (`pointer-events: none`), so the
+// cursor can move freely over rows underneath — moving to the next file
+// just swaps the popup content. A 400ms delay avoids flashing the popup
+// during quick passes across the list.
 const popup = document.createElement("div");
 popup.id = "filePopup";
 document.body.appendChild(popup);
-let hoverTimer = null;   // delay before opening
-let hideTimer = null;    // grace period before closing
+let hoverTimer = null;
 let hoverGen = 0;
 let activeLi = null;
-
-function positionPopupForRow(li) {
-  const r = li.getBoundingClientRect();
-  const margin = 12;
-  const w = 720;
-  // Prefer to the right; if it overflows, place to the left of the row.
-  let x = r.right + margin;
-  if (x + w > window.innerWidth - margin) x = Math.max(margin, r.left - w - margin);
-  let y = r.top;
-  const maxH = window.innerHeight * 0.7;
-  if (y + maxH > window.innerHeight - margin) y = Math.max(margin, window.innerHeight - maxH - margin);
-  popup.style.left = x + "px";
-  popup.style.top = y + "px";
-}
 
 async function showPopup(li) {
   activeLi = li;
@@ -743,7 +731,6 @@ async function showPopup(li) {
   if (!payload) {
     popup.innerHTML = `<div class="header"><span>${path}</span><span>loading...</span></div>`;
     popup.style.display = "block";
-    positionPopupForRow(li);
     try {
       const r = await fetch(`/api/file?branch=${encodeURIComponent(branch)}&path=${encodeURIComponent(path)}`);
       payload = await r.json();
@@ -758,40 +745,33 @@ async function showPopup(li) {
     : `<em>${payload.error || "failed to load"}</em>`;
   popup.innerHTML = `<div class="header"><span>${path}</span><span>${payload.kind || ""}</span></div>${body}`;
   popup.style.display = "block";
-  positionPopupForRow(li);
 }
 
-function scheduleHide() {
-  if (hideTimer) clearTimeout(hideTimer);
-  hideTimer = setTimeout(() => {
-    hoverGen++;
-    popup.style.display = "none";
-    activeLi = null;
-  }, 150);
-}
-
-function cancelHide() {
-  if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+function hidePopup() {
+  hoverGen++;
+  activeLi = null;
+  popup.style.display = "none";
 }
 
 document.addEventListener("mouseover", e => {
   const li = e.target.closest("li[data-branch][data-path]");
   if (!li) return;
-  cancelHide();
   if (li === activeLi) return;
   if (hoverTimer) clearTimeout(hoverTimer);
-  hoverTimer = setTimeout(() => showPopup(li), 180);
+  hoverTimer = setTimeout(() => showPopup(li), 400);
 });
 document.addEventListener("mouseout", e => {
   const li = e.target.closest("li[data-branch][data-path]");
   if (!li) return;
+  // Cancel any pending open. If a different row's mouseover fires next,
+  // it will schedule a new open; otherwise hide.
   if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
-  // Don't hide if the cursor moved onto the popup itself.
-  if (e.relatedTarget && popup.contains(e.relatedTarget)) return;
-  scheduleHide();
+  // Hide only if the cursor moved off all file rows (not row-to-row).
+  const next = e.relatedTarget && e.relatedTarget.closest
+    ? e.relatedTarget.closest("li[data-branch][data-path]")
+    : null;
+  if (!next) hidePopup();
 });
-popup.addEventListener("mouseenter", cancelHide);
-popup.addEventListener("mouseleave", scheduleHide);
 
 async function load() {
   const res = await fetch("/api/branches");
