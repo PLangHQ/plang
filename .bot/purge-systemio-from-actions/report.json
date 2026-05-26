@@ -280,7 +280,7 @@
       "timestamp_end": "2026-05-26T13:20:00+00:00",
       "intent": "Review coder's delta since codeanalyzer v1 (security F1/F2 fixes, auditor F1 follow-up, PathHelper, MarkdownTeaching path-verb lift, App.Parent + parent-chain IsInRoot).",
       "before": {
-        "assumptions": "v1 was PASS. Auditor flagged a 206→204 PLang test regression from F1; coder's last commit (bfb34bca4) adds App.Parent + parent-chain walk to fix it. Expectation: structural shape is right, edge-case knobs may be loose.",
+        "assumptions": "v1 was PASS. Auditor flagged a 206\u2192204 PLang test regression from F1; coder's last commit (bfb34bca4) adds App.Parent + parent-chain walk to fix it. Expectation: structural shape is right, edge-case knobs may be loose.",
         "risk": "PathHelper carve-out logic in PLNG002 must remain the only exemption; any whole-file pragma or NoWarn regresses the v1 PLNG002-airtight claim."
       },
       "plan": ".bot/purge-systemio-from-actions/codeanalyzer/v2/plan.md",
@@ -318,7 +318,7 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "5-pass review on the v1→HEAD delta (~470/-300 LOC under PLang/ + PLang.Generators/). Verified v1 N1 closed (Json.cs alloc inside ??); PathHelper is a pure forwarder; PLNG002 carve-outs are exact-match per-finding; Canonicalize correctly skips relative and // prefixes; IsInRoot parent-chain walk earns its place (deletion-test would re-break the auditor's 2 tests); MarkdownTeaching path-verb lift is clean."
+          "context": "5-pass review on the v1\u2192HEAD delta (~470/-300 LOC under PLang/ + PLang.Generators/). Verified v1 N1 closed (Json.cs alloc inside ??); PathHelper is a pure forwarder; PLNG002 carve-outs are exact-match per-finding; Canonicalize correctly skips relative and // prefixes; IsInRoot parent-chain walk earns its place (deletion-test would re-break the auditor's 2 tests); MarkdownTeaching path-verb lift is clean."
         },
         {
           "paths": [
@@ -335,7 +335,80 @@
       "after": {
         "status": "pass",
         "health": "green",
-        "notes": "PASS (NEEDS WORK — low only). All v1 findings closed; F1/F2/F3 structurally clean; PLNG002 carve-outs remain auditor-airtight. 5 LOW follow-ups are tighten-the-screw, not loose-the-screw."
+        "notes": "PASS (NEEDS WORK \u2014 low only). All v1 findings closed; F1/F2/F3 structurally clean; PLNG002 carve-outs remain auditor-airtight. 5 LOW follow-ups are tighten-the-screw, not loose-the-screw."
+      }
+    },
+    {
+      "id": "e4fcf9e6-4300-4ddf-bc9e-e00cc080f331",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-26T13:15:00Z",
+      "timestamp_end": "2026-05-26T13:35:00Z",
+      "intent": "v2 review: verify v1 F1 regression closed by coder bfb34bca4 (App.Parent chain in IsInRoot); audit the new attack surface; confirm PLNG002 carve-out count unchanged.",
+      "before": {
+        "assumptions": "Coder claims F1 regression is closed via App.Parent. Codeanalyzer v2 passed with 5 LOW findings; N1+N2 already addressed. The Parent walk widens IsInRoot \u2014 needs scrutiny for whether it reopens security F1.",
+        "risk": "A public-settable Parent could be a back-door for scope elevation if action handlers can reach sibling app refs. Cycle DoS already capped."
+      },
+      "plan": ".bot/purge-systemio-from-actions/auditor/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/codeanalyzer/v2/report.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Codeanalyzer v2 found N1 (Parent cycle) and N2 (bare catch); both addressed by coder in ecdd0de4f. Coder went stronger on N2 (removed try/catch entirely instead of filtering)."
+        },
+        {
+          "paths": [
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/this.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/types/path/file/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "App.Parent chain walks canonicalized Absolute \u2014 F1 protection intact. Cycle cap 16 honest. No action-handler reach to attacker-controlled app refs in-process. The N2 follow-up removed the try/catch entirely."
+        },
+        {
+          "paths": [
+            "PLang.Generators/Diagnostics/Plng002.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "PLNG002 still has exactly 2 carve-outs (IsPathHelperFile, IsPathTypeSurface); zero suppressions anywhere else in the tree. Re-confirmed per Ingi explicit ask."
+        },
+        {
+          "paths": [
+            "Tests/Builder/CompileLlmNotes/output-write-no-channel.test.goal",
+            "Tests/Builder/CompileLlmNotes/assert-equals-no-message.test.goal"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Clean rebuild + full-suite plang --test = 206/206 (matches runtime2 baseline). v1 F1 regression closed. C# 3031/3031."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/auditor/v2/plan.md",
+            ".bot/purge-systemio-from-actions/auditor/v2/result.md",
+            ".bot/purge-systemio-from-actions/auditor/v2/verdict.json",
+            ".bot/purge-systemio-from-actions/auditor/v2/v1_review_summary.md",
+            ".bot/purge-systemio-from-actions/auditor/summary.md",
+            ".bot/purge-systemio-from-actions/auditor-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "v2 auditor output: PASS verdict."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "Branch ready for docs. v1 F1 closed; no new findings. PLNG002 carve-outs unchanged (exactly 2, both inside Plng002.cs). C# 3031/3031, PLang 206/206 on clean rebuild."
       }
     }
   ]
