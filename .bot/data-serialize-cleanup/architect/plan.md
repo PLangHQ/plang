@@ -14,7 +14,7 @@ Four interacting smells in `PLang/app/channels/serializers/serializer/plang/Data
 
 2. **STJ options are configured three places.** `serializer/plang/this.cs`, `serializer/plang/Data.cs`, and `data/this.Envelope.cs` each instantiate near-identical `JsonSerializerOptions`. `Json.cs` is the JSON engine custodian — the plang serializer should compose with it, not duplicate it.
 
-3. **`Stream.WriteCore` strips the Data wrapper before serializing.** `stream/this.cs:56` passes `data.Value` rather than `data` itself. By the time the serializer is invoked, the wrapper that should carry type+signature is already gone — which is *why* the plang+data serializer reconstructs it via `Envelope`.
+3. **The serializer doesn't always receive Data.** `ISerializer` accepts `object?`, and `Stream.WriteCore` feeds it `data.Value` rather than `data` itself (`stream/this.cs:56`). The "emit wrapper or just the value" decision belongs *inside* the serializer — different MIMEs make different choices — but only if it always sees Data first. Today the plang+data serializer is forced to reconstruct the wrapper from scratch via `Envelope` because by the time it runs, the wrapper that should carry type+signature is already gone.
 
 4. **`Compress()` double-wraps.** Current code builds `Data{archived, Data{gzip, byte[]}}`. The inner gzip Data is redundant — `archived.Value` can be a `byte[]` directly. "Data all the way down" is a property of *byte layers* (decompress reveals another serialized Data), not JSON object nesting.
 
@@ -52,7 +52,7 @@ Concrete JSON examples (plain, compressed, encrypted, nested-value) live in [pla
 
 **Name stays on the wire.** It's the addressability coordinate that survives transport. The HTTP example: sender names a Data "user", receiver writes the response to `%response%`, and `%response.user%` works because the structure remembered itself. Without name, that breaks.
 
-**Signing lives at the channel.** Channel.WriteCore calls `data.EnsureSigned()` before invoking the serializer. The serializer never signs — it just emits whatever Signature is set. This makes "only outermost signs" automatic by construction: channels sign because their writes are externally visible; in-pipeline transforms (Compress, Encrypt) don't sign because their output stays in-process and gets buried inside another Data.
+**Signing lives at the channel.** `Channel.WriteCore` calls `data.EnsureSigned()` before invoking the serializer. The serializer never signs — it just emits whatever Signature is set. Why not sign in the serializer? Because `Compress` also serializes Data (to in-memory bytes that will be buried inside an archived wrapper). If the serializer signed, those buried bytes would carry a signature *and* the channel would sign the archived wrapper on its way out — two signatures for one logical payload. Moving the signing decision out of the serializer makes "only outermost signs" automatic by construction: channels sign because their writes are externally visible; in-pipeline transforms (Compress, Encrypt) don't sign because their output stays in-process and gets buried inside another Data. The serializer is unconscious of inner/outer — that's not its concern.
 
 **Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. (See [design_principles.md → Data Is Opaque to Its Consumers](../../../memory/design_principles.md).)
 

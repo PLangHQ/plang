@@ -1,0 +1,26 @@
+{
+  "plan.md": [
+    {
+      "id": "684d335e21",
+      "line": 17,
+      "text": "I feel like this is wrong, the serializer should just get Data and know what do to with it. Stream is not the leaf. and why shouldn´t serializer create the signature? is that wrong?",
+      "anchor": "3. **`Stream.WriteCore` strips the Data wrapper before serializing.** `stream/this.cs:56` passes `data.Value` rather than `data` itself. By the time the serializer is invoked, the wrapper that should carry type+signature is already gone — which is *why* the plang+data serializer reconstructs it via `Envelope`.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-26T16:55:07",
+      "drifted": true
+    },
+    {
+      "id": "18fdfeda61",
+      "line": 17,
+      "text": "Agreed on the framing — Stream isn't the leaf, the serializer is. Rewrote item 3 to center the serializer: its contract is Data-in / bytes-out, and Stream.WriteCore feeding it data.Value is a *consequence* of the contract not being enforced (object? polymorphism). The fact-pattern stays, but the framing now reads bug-as-serializer-contract-violation, not bug-as-stream-strip.\n\nOn signing — the load-bearing reason is the Compress scenario. Compress serializes Data to bytes to bury them inside the archived wrapper. If the serializer signed, those buried bytes would carry a signature, and then the channel would sign the archived wrapper on its way out — two signatures for one logical payload. With signing at the channel and the serializer signing-agnostic, the rule \"only outermost signs\" becomes automatic by construction: channels sign because writes are externally visible; transforms don't because their bytes get buried. The serializer is unconscious of inner/outer. Expanded the \"Signing lives at the channel\" section to spell this counterfactual out.",
+      "anchor": "3. **The serializer doesn't always receive Data.** `ISerializer` accepts `object?`, and `Stream.WriteCore` feeds it `data.Value` rather than `data` itself (`stream/this.cs:56`). The \"emit wrapper or just the value\" decision belongs *inside* the serializer — different MIMEs make different choices — but only if it always sees Data first. Today the plang+data serializer is forced to reconstruct the wrapper from scratch via `Envelope` because by the time it runs, the wrapper that should carry type+signature is already gone.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "684d335e21",
+      "ts": "2026-05-26T16:56:56",
+      "drifted": false
+    }
+  ]
+}
