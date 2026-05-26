@@ -11,34 +11,42 @@
       "comment": "events.add OnAsk binding on the input channel \u2014 verifies registration succeeds.\nDriving an actual Ask through stdin is out of scope for an automated test;\nthis confirms the binding installs and the EventType \u002B ChannelName plumb\nthrough the catalog.",
       "actions": [
         {
-          "module": "output",
-          "action": "ask",
+          "module": "event",
+          "action": "on",
           "parameters": [
             {
-              "name": "Question",
+              "name": "Type",
+              "value": "OnAsk",
+              "type": "eventtype"
+            },
+            {
+              "name": "ChannelName",
               "value": "input",
               "type": "string"
-            }
-          ],
-          "defaults": null,
-          "modifiers": []
-        },
-        {
-          "module": "goal",
-          "action": "call",
-          "parameters": [
+            },
             {
-              "name": "GoalName",
+              "name": "GoalToCall",
               "value": {
                 "name": "CaptchaGoal",
                 "parallel": false,
-                "parameters": [],
+                "parameters": null,
                 "prPath": "/Channels/Events/AddOnAsk/.build/captchagoal.pr"
               },
               "type": "goal.call"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "isregex",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "priority",
+              "value": 0,
+              "type": "int"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -70,7 +78,7 @@
       "guidance": "Register a lifecycle event handler for OnAsk, scoped to the input channel, that calls CaptchaGoal. Capture the returned binding id into %bindingId% for later verification.",
       "level": "high",
       "confidence": 92,
-      "formal": "output.ask(Question=\u0022input\u0022, Variables=%!data%) , goal.call(GoalName={name:\u0022CaptchaGoal\u0022}) , variable.set(Name=%bindingId%, Value=%!data%, Type=\u0022object\u0022)",
+      "formal": "event.on(Type=OnAsk, GoalToCall={name:\u0022CaptchaGoal\u0022}), output.ask(Question=%!data%, Variables=%!data%) | variable.set(Name=%bindingId%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },

@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -25,7 +25,13 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%result%, Value=\u0022both-true\u0022)",
       "source": null,
       "waitForExecution": true
     }
@@ -43,7 +49,7 @@
   "path": "/Modules/Condition/Compound/And/DoThing.goal",
   "prPath": "/Modules/Condition/Compound/And/.build/dothing.pr",
   "hash": "c9ef2a4feef41411dca98e9dfc8891e7c57d1b2cd95a3e7d46290e11d80adbac",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -22,7 +22,7 @@
             {
               "name": "Value",
               "value": 5,
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -39,7 +39,7 @@
       "guidance": "Initialize %a% to 5 using variable.set.",
       "level": "high",
       "confidence": 98,
-      "formal": "variable.set(Name=%a%, Value=5, Type=object)",
+      "formal": "variable.set(Name=%a%, Value=5)",
       "source": null,
       "waitForExecution": true
     },
@@ -63,6 +63,11 @@
               "name": "Value",
               "value": 3,
               "type": "int"
+            },
+            {
+              "name": "Type",
+              "value": "int",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -79,7 +84,7 @@
       "guidance": "Initialize %b% to 3 using variable.set.",
       "level": "high",
       "confidence": 98,
-      "formal": "variable.set(Name=%b%, Value=3)",
+      "formal": "variable.set(Name=%b%, Value=3, Type=int)",
       "source": null,
       "waitForExecution": true
     },
@@ -92,7 +97,7 @@
       "actions": [
         {
           "module": "condition",
-          "action": "if",
+          "action": "compare",
           "parameters": [
             {
               "name": "Left",
@@ -110,9 +115,27 @@
               "type": "object"
             }
           ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%andL%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
           "defaults": [
             {
-              "name": "negate",
+              "name": "asdefault",
               "value": false,
               "type": "bool"
             }
@@ -121,7 +144,7 @@
         },
         {
           "module": "condition",
-          "action": "if",
+          "action": "compare",
           "parameters": [
             {
               "name": "Left",
@@ -136,6 +159,53 @@
             {
               "name": "Right",
               "value": 10,
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%andR%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        },
+        {
+          "module": "condition",
+          "action": "if",
+          "parameters": [
+            {
+              "name": "Left",
+              "value": "%andL%",
+              "type": "object"
+            },
+            {
+              "name": "Operator",
+              "value": "and",
+              "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": "%andR%",
               "type": "object"
             }
           ],
@@ -171,7 +241,7 @@
       "guidance": "Evaluate compound AND condition: %a% \u003E 1 and %b% \u003C 10. If true, call DoThing. The AND is represented as a single condition.if with operator \u0027and\u0027 and the two boolean sub-expressions as Left/Right.",
       "level": "medium",
       "confidence": 62,
-      "formal": "condition.if(Left=%a%, Operator=\u0022\u003E\u0022, Right=1) , condition.if(Left=%b%, Operator=\u0022\u003C\u0022, Right=10) , goal.call(GoalName={name:\u0022DoThing\u0022})",
+      "formal": "condition.compare(Left=%a%, Operator=\u0022\u003E\u0022, Right=1) , variable.set(Name=%andL%, Value=%!data%, Type=string) , condition.compare(Left=%b%, Operator=\u0022\u003C\u0022, Right=10) , variable.set(Name=%andR%, Value=%!data%, Type=string) , condition.if(Left=%andL%, Operator=\u0022and\u0022, Right=%andR%) , goal.call(GoalName={name:\u0022DoThing\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -189,7 +259,7 @@
             {
               "name": "Expected",
               "value": "both-true",
-              "type": "object"
+              "type": "string"
             },
             {
               "name": "Actual",

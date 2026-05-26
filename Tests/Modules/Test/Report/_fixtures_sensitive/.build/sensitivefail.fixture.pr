@@ -40,7 +40,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/_fixtures_sensitive/sensitivefail.fixture.goal",
+  "path": "/Modules/Test/Report/_fixtures_sensitive/sensitivefail.fixture.goal",
   "prPath": "/Modules/Test/Report/_fixtures_sensitive/.build/sensitivefail.fixture.pr",
   "hash": "486a2f266226d16f78281757d2d40fed559a23edf1ac4bdf3a1783581b78d4da",
   "builderVersion": "0.2.2",

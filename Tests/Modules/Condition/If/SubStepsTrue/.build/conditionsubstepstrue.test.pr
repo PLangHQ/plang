@@ -23,6 +23,11 @@
               "name": "Value",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -39,7 +44,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "variable.set(Name=%flag%, Value=true)",
+      "formal": "variable.set(Name=%flag%, Value=true, Type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -106,8 +111,13 @@
             },
             {
               "name": "Operator",
-              "value": "istrue",
+              "value": "==",
               "type": "operator"
+            },
+            {
+              "name": "Right",
+              "value": true,
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -124,7 +134,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "condition.if(Left=%flag%, Operator=\u0022istrue\u0022)",
+      "formal": "condition.if(Left=%flag%, Operator=\u0022==\u0022, Right=true)",
       "source": null,
       "waitForExecution": true
     },
@@ -148,11 +158,6 @@
               "name": "Value",
               "value": true,
               "type": "bool"
-            },
-            {
-              "name": "Type",
-              "value": "bool",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -265,7 +270,7 @@
             },
             {
               "name": "Actual",
-              "value": "%innervalue%",
+              "value": "%innerValue%",
               "type": "object"
             },
             {
@@ -282,7 +287,7 @@
       "guidance": "Post-condition assertion that %innerValue% equals \u0022executed\u0022 with the provided tstring message.",
       "level": "high",
       "confidence": 98,
-      "formal": "assert.equals(Expected=%!data%, Actual=%innervalue%, Message=\u0022indented set should have run\u0022)",
+      "formal": "assert.equals(Expected=%innervalue%, Actual=%innerValue%, Message=\u0022indented set should have run\u0022)",
       "source": null,
       "waitForExecution": true
     }

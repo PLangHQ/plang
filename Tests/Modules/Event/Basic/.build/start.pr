@@ -198,7 +198,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Modules/Event/Basic/Start.goal",
+  "path": "/Modules/Event/Basic/Start.goal",
   "prPath": "/Modules/Event/Basic/.build/start.pr",
   "hash": "3e69fbb0209fb1d32ebe764ba0ae2076f6017153ff2241ceaa16b3677511ce2a",
   "builderVersion": null,

@@ -183,11 +183,6 @@
               "name": "ActionPattern",
               "value": "output.write",
               "type": "string"
-            },
-            {
-              "name": "ReturnValue",
-              "value": "%mockread%",
-              "type": "object"
             }
           ],
           "defaults": null,
@@ -222,7 +217,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "mock.intercept(ActionPattern=\u0022output.write\u0022, ReturnValue=%mockread%, GoalToCall=%!data%) , variable.set(Name=%spyWrite%, Value=%!data%)",
+      "formal": "mock.intercept(ActionPattern=\u0022output.write\u0022, ReturnValue=%!data%, GoalToCall=%!data%) , variable.set(Name=%spyWrite%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },

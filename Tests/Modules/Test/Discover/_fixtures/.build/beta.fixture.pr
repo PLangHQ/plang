@@ -40,7 +40,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/_fixtures/beta.fixture.goal",
+  "path": "/Modules/Test/Discover/_fixtures/beta.fixture.goal",
   "prPath": "/Modules/Test/Discover/_fixtures/.build/beta.fixture.pr",
   "hash": "eda44719d8c725111b667927fb6dac179c57d69c52448292f1dfad6932344b89",
   "builderVersion": "0.2.2",

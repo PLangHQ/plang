@@ -40,7 +40,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/ChainOuter.goal",
+  "path": "/App/CallStack/ChainOuter.goal",
   "prPath": "/App/CallStack/.build/chainouter.pr",
   "hash": "e2d902780b5063767fdd6798f725e6cc8ec2694ea525aa8ba95050f8bd7bcb5e",
   "builderVersion": "0.2.2",

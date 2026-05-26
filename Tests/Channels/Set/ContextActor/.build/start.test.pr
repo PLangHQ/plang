@@ -16,7 +16,7 @@
           "parameters": [
             {
               "name": "Name",
-              "value": "%output%",
+              "value": "output",
               "type": "string"
             },
             {
@@ -38,7 +38,7 @@
       "guidance": "Rebind the named output channel to a goal call (OutputGoal). No explicit actor is provided, so the engine uses the current Context.Actor by default.",
       "level": "high",
       "confidence": 95,
-      "formal": "channel.set(Name=%output%, Goal={name:\u0022OutputGoal\u0022})",
+      "formal": "channel.set(Name=\u0022output\u0022, Goal={name:\u0022OutputGoal\u0022})",
       "source": null,
       "waitForExecution": true
     },
@@ -56,7 +56,7 @@
             {
               "name": "Data",
               "value": "hi",
-              "type": "object"
+              "type": "string"
             }
           ],
           "defaults": null,

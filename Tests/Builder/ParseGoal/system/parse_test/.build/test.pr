@@ -5,7 +5,7 @@
   "steps": [],
   "goals": [],
   "visibility": 1,
-  "path": "/system/parse_test/Test.goal",
+  "path": "/Builder/ParseGoal/system/parse_test/Test.goal",
   "prPath": "/Builder/ParseGoal/system/parse_test/.build/test.pr",
   "hash": null,
   "builderVersion": null,

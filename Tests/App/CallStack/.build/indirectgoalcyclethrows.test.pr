@@ -113,7 +113,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/IndirectGoalCycleThrows.test.goal",
+  "path": "/App/CallStack/IndirectGoalCycleThrows.test.goal",
   "prPath": "/App/CallStack/.build/indirectgoalcyclethrows.test.pr",
   "hash": "16c8dd583605e9e064c4f836322254389fd0c27c4f01b342624243dc8b2c75cd",
   "builderVersion": "0.2.2",

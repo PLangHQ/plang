@@ -46,7 +46,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Events/AddBeforeWrite/AuditLog.goal",
+  "path": "/Channels/Events/AddBeforeWrite/AuditLog.goal",
   "prPath": "/Channels/Events/AddBeforeWrite/.build/auditlog.pr",
   "hash": "f0bba0e40e12ff9a39f72b0d72a5d06b8bad7b34df908a3414d806994cb2ba80",
   "builderVersion": "0.2.2",

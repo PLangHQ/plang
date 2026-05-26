@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_fixtures_sensitive",
-              "type": "string"
+              "type": "path"
             },
             {
               "name": "Pattern",
@@ -46,11 +46,6 @@
               "name": "Value",
               "value": "%!data%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -67,7 +62,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "test.discover(Path=\u0022_fixtures_sensitive\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%, Type=\u0022object\u0022)",
+      "formal": "test.discover(Path=\u0022_fixtures_sensitive\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -120,7 +115,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "test.run(Tests=%tests%) | variable.set(Name=%results%, Value=%!data%)",
+      "formal": "test.run(Tests=%tests%) | variable.set(Name=%results%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -173,7 +168,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "test.report(Results=%results%) | variable.set(Name=%report%, Value=%!data%)",
+      "formal": "test.report(Results=%results%, Format=%!data%) , variable.set(Name=%report%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -224,7 +219,7 @@
           "parameters": [
             {
               "name": "Container",
-              "value": "%report%",
+              "value": "%report.content%",
               "type": "object"
             },
             {
@@ -241,7 +236,7 @@
       "guidance": "Post-condition assertion that the report content includes the sensitive key name \u0027privateKey\u0027 (name preserved even though value is masked).",
       "level": "high",
       "confidence": 98,
-      "formal": "assert.contains(Container=%report%, Value=\u0022privateKey\u0022)",
+      "formal": "assert.contains(Container=%report.content%, Value=\u0022privateKey\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -292,7 +287,7 @@
           "parameters": [
             {
               "name": "Container",
-              "value": "%report%",
+              "value": "%report.content%",
               "type": "object"
             },
             {
@@ -309,7 +304,7 @@
       "guidance": "Post-condition assertion that the report content includes the non-sensitive key name \u0027publicKey\u0027 and its value is not masked away.",
       "level": "high",
       "confidence": 98,
-      "formal": "assert.contains(Container=%report%, Value=\u0022publicKey\u0022)",
+      "formal": "assert.contains(Container=%report.content%, Value=\u0022publicKey\u0022)",
       "source": null,
       "waitForExecution": true
     }

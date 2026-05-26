@@ -17,15 +17,26 @@
             {
               "name": "Name",
               "value": "%caughtJapanese%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +44,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%caughtJapanese%, Value=true, Type=bool)",
       "source": null,
       "waitForExecution": true
     }
@@ -43,7 +54,7 @@
   "path": "/Modules/Error/Multilingual/CatchJapanese.goal",
   "prPath": "/Modules/Error/Multilingual/.build/catchjapanese.pr",
   "hash": "60c802606c976f152d5f57bca81d0e5a510c3c76a762e5b2835c240434bcdc3c",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

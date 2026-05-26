@@ -244,7 +244,7 @@
       ],
       "goals": [],
       "visibility": 0,
-      "path": "/RunCallbackVerb/Start.test.goal",
+      "path": "/Callback/RunCallbackVerb/Start.test.goal",
       "prPath": "/Callback/RunCallbackVerb/.build/start.test.pr",
       "hash": "bbaae2cf99a4f8789ca18e016dd4c225f89f409e4dcd90f1503c421c0935ad99",
       "builderVersion": null,
@@ -256,7 +256,7 @@
     }
   ],
   "visibility": 1,
-  "path": "/RunCallbackVerb/Start.test.goal",
+  "path": "/Callback/RunCallbackVerb/Start.test.goal",
   "prPath": "/Callback/RunCallbackVerb/.build/start.test.pr",
   "hash": "646546a1c3b481e93e4c100b235b0396ff3264517b3058fac2442985533a04d1",
   "builderVersion": "0.2.2",

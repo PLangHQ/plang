@@ -17,15 +17,26 @@
             {
               "name": "Name",
               "value": "%caughtEnglish%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": true,
               "type": "bool"
+            },
+            {
+              "name": "Type",
+              "value": "bool",
+              "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +44,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%caughtEnglish%, Value=true, Type=bool)",
       "source": null,
       "waitForExecution": true
     }
@@ -43,7 +54,7 @@
   "path": "/Modules/Error/Multilingual/CatchEnglish.goal",
   "prPath": "/Modules/Error/Multilingual/.build/catchenglish.pr",
   "hash": "c11b8da5be85fd1d87b8d4c084a19289aaded54eee8dfb3fe09760ef963b462c",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

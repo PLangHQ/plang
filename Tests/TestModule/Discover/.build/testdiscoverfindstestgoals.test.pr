@@ -150,7 +150,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Discover/TestDiscoverFindsTestGoals.test.goal",
+  "path": "/TestModule/Discover/TestDiscoverFindsTestGoals.test.goal",
   "prPath": "/TestModule/Discover/.build/testdiscoverfindstestgoals.test.pr",
   "hash": "36adcc0116140de0e0f2970372e46d643dfc3d7b93bd971c3815396a3a736fdb",
   "builderVersion": "0.2.2",

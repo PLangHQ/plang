@@ -181,7 +181,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Add/WithConfig/Start.test.goal",
+  "path": "/Channels/Add/WithConfig/Start.test.goal",
   "prPath": "/Channels/Add/WithConfig/.build/start.test.pr",
   "hash": "e4a965e6e0d358ce0d19869398a51b423ccd31f6cf97906dcd0c48f7247792cb",
   "builderVersion": "0.2.2",

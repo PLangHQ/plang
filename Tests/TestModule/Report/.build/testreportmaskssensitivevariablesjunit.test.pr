@@ -399,7 +399,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
+  "path": "/TestModule/Report/TestReportMasksSensitiveVariablesJunit.test.goal",
   "prPath": "/TestModule/Report/.build/testreportmaskssensitivevariablesjunit.test.pr",
   "hash": "26f282c2eed41a2eceeb5b3d05ba1bbbe8a9648aee1425cb7ad316f828bc8f7b",
   "builderVersion": "0.2.2",

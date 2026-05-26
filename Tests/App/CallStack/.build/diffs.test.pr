@@ -120,7 +120,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/Diffs.test.goal",
+  "path": "/App/CallStack/Diffs.test.goal",
   "prPath": "/App/CallStack/.build/diffs.test.pr",
   "hash": "322d597c74db7940bee1177ff308401e9a58c2319636af4ef3c43c94354a7224",
   "builderVersion": "0.2.2",

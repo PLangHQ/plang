@@ -40,7 +40,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Discover/_stale/ready.fixture.goal",
+  "path": "/TestModule/Discover/_stale/ready.fixture.goal",
   "prPath": "/TestModule/Discover/_stale/.build/ready.fixture.pr",
   "hash": "e99c6d969613ed83fba17b84f0abaf758f0667da106ae98d5767fba0f8127b2c",
   "builderVersion": "0.2.2",

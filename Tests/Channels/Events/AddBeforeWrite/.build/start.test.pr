@@ -202,7 +202,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Events/AddBeforeWrite/Start.test.goal",
+  "path": "/Channels/Events/AddBeforeWrite/Start.test.goal",
   "prPath": "/Channels/Events/AddBeforeWrite/.build/start.test.pr",
   "hash": "f926e9e9faae24747d78a2e01acc1f8da4bfd0e58aa0d9884b510a1636463734",
   "builderVersion": "0.2.2",

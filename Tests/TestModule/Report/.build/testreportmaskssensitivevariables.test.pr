@@ -17,7 +17,7 @@
             {
               "name": "Path",
               "value": "_fixtures_sensitive",
-              "type": "string"
+              "type": "path"
             },
             {
               "name": "Pattern",
@@ -62,7 +62,7 @@
       "guidance": "Discover fixture goal files under _fixtures_sensitive matching *.fixture.goal recursively, then store the resulting list in %tests%.",
       "level": "high",
       "confidence": 98,
-      "formal": "test.discover(Path=\u0022_fixtures_sensitive\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%, Type=object)",
+      "formal": "test.discover(Path=\u0022_fixtures_sensitive\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -115,7 +115,7 @@
       "guidance": "Run the discovered tests in %tests% and store the aggregated results in %results%.",
       "level": "high",
       "confidence": 98,
-      "formal": "test.run(Tests=%tests%) | variable.set(Name=%results%, Value=%!data%)",
+      "formal": "test.run(Tests=%tests%) | variable.set(Name=%results%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -168,7 +168,7 @@
       "guidance": "Generate a test report from %results% and store the report artifact/content in %report%.",
       "level": "medium",
       "confidence": 70,
-      "formal": "test.report(Results=%results%) | variable.set(Name=%report%, Value=%!data%)",
+      "formal": "test.report(Results=%results%, Format=%!data%) , variable.set(Name=%report%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -219,7 +219,7 @@
           "parameters": [
             {
               "name": "Container",
-              "value": "%report%",
+              "value": "%report.content%",
               "type": "object"
             },
             {
@@ -236,7 +236,7 @@
       "guidance": "Assert the report content includes the sensitive key name \u0027privateKey\u0027 (name preserved).",
       "level": "high",
       "confidence": 98,
-      "formal": "assert.contains(Container=%report%, Value=\u0022privateKey\u0022)",
+      "formal": "assert.contains(Container=%report.content%, Value=\u0022privateKey\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -287,7 +287,7 @@
           "parameters": [
             {
               "name": "Container",
-              "value": "%report%",
+              "value": "%report.content%",
               "type": "object"
             },
             {
@@ -304,7 +304,7 @@
       "guidance": "Assert the report content includes the non-sensitive key name \u0027publicKey\u0027 (non-sensitive values still serialize).",
       "level": "high",
       "confidence": 98,
-      "formal": "assert.contains(Container=%report%, Value=\u0022publicKey\u0022)",
+      "formal": "assert.contains(Container=%report.content%, Value=\u0022publicKey\u0022)",
       "source": null,
       "waitForExecution": true
     }

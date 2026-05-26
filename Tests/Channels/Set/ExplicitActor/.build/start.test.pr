@@ -108,7 +108,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Set/ExplicitActor/Start.test.goal",
+  "path": "/Channels/Set/ExplicitActor/Start.test.goal",
   "prPath": "/Channels/Set/ExplicitActor/.build/start.test.pr",
   "hash": "431aeb62b1a6d9665f74929d7ec115eae5eb4699e308797d403d7b1cf670ac0e",
   "builderVersion": "0.2.2",

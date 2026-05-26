@@ -35,7 +35,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/SlowGoal.goal",
+  "path": "/App/CallStack/SlowGoal.goal",
   "prPath": "/App/CallStack/.build/slowgoal.pr",
   "hash": "d615f3c894309eb7a35f06780621c90e4b5934a53af23c20b175d4b3efdfc8d5",
   "builderVersion": "0.2.2",

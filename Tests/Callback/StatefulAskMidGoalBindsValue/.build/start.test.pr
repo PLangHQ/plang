@@ -138,7 +138,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/StatefulAskMidGoalBindsValue/Start.test.goal",
+  "path": "/Callback/StatefulAskMidGoalBindsValue/Start.test.goal",
   "prPath": "/Callback/StatefulAskMidGoalBindsValue/.build/start.test.pr",
   "hash": "291cb099c7d44d9245bb838be9b198c80169817e9d368c3a7dc5f2f9c52186dd",
   "builderVersion": "0.2.2",

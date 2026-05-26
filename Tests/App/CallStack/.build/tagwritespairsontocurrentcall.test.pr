@@ -106,7 +106,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/TagWritesPairsOntoCurrentCall.test.goal",
+  "path": "/App/CallStack/TagWritesPairsOntoCurrentCall.test.goal",
   "prPath": "/App/CallStack/.build/tagwritespairsontocurrentcall.test.pr",
   "hash": "02314ce27b0f1eb7b96df3669fa71c6d36eef852fd3bf4efc3297ad5b9fc4e6d",
   "builderVersion": "0.2.2",

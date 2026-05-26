@@ -119,7 +119,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/Foreach/Empty/.build/processitem.pr"
+                "prPath": "/Modules/Loop/Foreach/Empty/.build/processitem.pr"
               },
               "type": "goal.call"
             }

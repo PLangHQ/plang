@@ -112,7 +112,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/OuterErrorVarVisibleAfterInnerHandlerCloses.test.goal",
+  "path": "/App/CallStack/OuterErrorVarVisibleAfterInnerHandlerCloses.test.goal",
   "prPath": "/App/CallStack/.build/outererrorvarvisibleafterinnerhandlercloses.test.pr",
   "hash": "17934f333fb2178f92b8071fd048cf862042974deb2337a8d18e182b78cb8be0",
   "builderVersion": "0.2.2",

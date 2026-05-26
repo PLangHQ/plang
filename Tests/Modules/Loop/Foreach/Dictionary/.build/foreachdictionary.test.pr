@@ -173,7 +173,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/Foreach/Dictionary/.build/processentry.pr"
+                "prPath": "/Modules/Loop/Foreach/Dictionary/.build/processentry.pr"
               },
               "type": "goal.call"
             }

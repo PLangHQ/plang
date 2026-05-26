@@ -40,7 +40,7 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/App/CallStack/CycleB.goal",
+  "path": "/App/CallStack/CycleB.goal",
   "prPath": "/App/CallStack/.build/cycleb.pr",
   "hash": "d3cc2a6e8bd7b299bda4ff52d6ab8e8cd0e412f32bbad7c6088dfe4f8351857e",
   "builderVersion": "0.2.2",
