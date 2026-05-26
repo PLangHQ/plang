@@ -29,11 +29,28 @@ internal static class LlmTestHelper
 
     /// <summary>
     /// Creates a standard OpenAI chat completion response.
+    /// `cachedTokens` > 0 emits a `prompt_tokens_details.cached_tokens` field so
+    /// cost-math tests can exercise the cached-vs-non-cached billing split.
     /// </summary>
     internal static string MakeCompletionResponse(string content,
         int promptTokens = 10, int completionTokens = 20,
-        string model = "gpt-5.4-nano")
+        string model = "gpt-5.4-nano", int cachedTokens = 0)
     {
+        object usage = cachedTokens > 0
+            ? new
+            {
+                prompt_tokens = promptTokens,
+                completion_tokens = completionTokens,
+                total_tokens = promptTokens + completionTokens,
+                prompt_tokens_details = new { cached_tokens = cachedTokens }
+            }
+            : (object)new
+            {
+                prompt_tokens = promptTokens,
+                completion_tokens = completionTokens,
+                total_tokens = promptTokens + completionTokens
+            };
+
         return JsonSerializer.Serialize(new
         {
             id = "chatcmpl-test",
@@ -48,12 +65,7 @@ internal static class LlmTestHelper
                     finish_reason = "stop"
                 }
             },
-            usage = new
-            {
-                prompt_tokens = promptTokens,
-                completion_tokens = completionTokens,
-                total_tokens = promptTokens + completionTokens
-            }
+            usage
         });
     }
 
