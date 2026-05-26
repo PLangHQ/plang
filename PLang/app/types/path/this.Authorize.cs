@@ -101,7 +101,12 @@ public partial class @this
         // inherits its parent's filesystem scope. The top-level app's parent
         // is null, so this terminates. The os-folder checks cover system
         // built-in goals (test, build) regardless of where in the chain we are.
-        while (app != null)
+        //
+        // Depth cap guards against a future caller setting up a cycle
+        // (a.Parent = b; b.Parent = a) — without it, IsInRoot would loop
+        // forever on every Authorize. (codeanalyzer v2 N1)
+        const int MaxDepth = 16;
+        for (int depth = 0; app != null && depth < MaxDepth; depth++)
         {
             if (IsUnder(app.AbsolutePath, RootComparison)
                 || IsUnder(app.OsDirectory, RootComparison)

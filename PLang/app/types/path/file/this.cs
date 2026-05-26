@@ -42,8 +42,17 @@ public sealed partial class @this : global::app.types.path.@this
         // Those paths are out-of-root and gated by Authorize regardless, so
         // the F1 attack doesn't apply.
         if (absolutePath.StartsWith("//")) return absolutePath;
+        // Filter the catch to GetFullPath's actual failure modes — bare catch
+        // would swallow OOM / StackOverflow / unexpected runtime issues and
+        // hand AuthGate the un-canonical string silently. Anything outside
+        // this list should fail loud. (codeanalyzer v2 N2)
         try { return PathHelper.GetFullPath(absolutePath); }
-        catch { return absolutePath; }
+        catch (System.Exception ex) when (
+            ex is System.ArgumentException
+               or System.IO.PathTooLongException
+               or System.NotSupportedException
+               or System.Security.SecurityException)
+        { return absolutePath; }
     }
 
     public override string Scheme => "file";
