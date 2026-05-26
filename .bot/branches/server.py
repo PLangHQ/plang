@@ -13,6 +13,7 @@ when, and what files they wrote.
 import http.server
 import json
 import subprocess
+import time
 from pathlib import Path
 
 PORT = 8083
@@ -50,108 +51,128 @@ def current_branch() -> str:
         return ""
 
 
-def git_branches() -> set[str]:
-    """Set of branch names known to git (local + remote, slashes -> dashes)."""
+_CACHE: dict = {"at": 0.0, "active": set(), "times": {}}
+_CACHE_TTL = 300  # 5 minutes
+
+
+def _git(*args: str, timeout: int = 30) -> str:
+    return subprocess.run(
+        ["git", "-C", str(REPO_ROOT), *args],
+        capture_output=True, text=True, check=False, timeout=timeout,
+    ).stdout
+
+
+def refresh_cache() -> None:
+    """Fetch remote refs, rebuild active-branch set, rebuild commit-time dict.
+
+    Single refresh path so the two views can never disagree. `git fetch`
+    populates `refs/remotes/origin/*` for branches we never checked out
+    locally — without this, `git log --all` can't see commits unique to
+    those branches, and they'd appear empty in the overview."""
     try:
-        out = subprocess.check_output(
-            ["git", "-C", str(REPO_ROOT), "for-each-ref",
-             "--format=%(refname:short)", "refs/heads", "refs/remotes"]
-        ).decode().splitlines()
+        _git("fetch", "--quiet", "origin", timeout=30)
     except Exception:
-        return set()
-    names = set()
-    for ref in out:
-        ref = ref.strip()
-        if not ref:
+        pass  # offline is fine; we keep stale data
+
+    # Active set: remote heads (authoritative) ∪ local heads (in-progress work).
+    active: set[str] = set()
+    for line in _git("for-each-ref", "--format=%(refname:short)",
+                     "refs/heads", "refs/remotes/origin").splitlines():
+        ref = line.strip()
+        if not ref or ref == "origin/HEAD":
             continue
         if ref.startswith("origin/"):
             ref = ref[len("origin/"):]
-        names.add(ref.replace("/", "-"))
-    return names
+        active.add(ref.replace("/", "-"))
 
-
-def is_branch_dir(p: Path) -> bool:
-    """A branch dir has at least one subdir whose name is a known role."""
-    if not p.is_dir() or p.name in NON_BRANCH:
-        return False
-    for child in p.iterdir():
-        if child.is_dir() and child.name in KNOWN_ROLES:
-            return True
-    return False
-
-
-def dir_mtime_recursive(p: Path) -> float:
-    """Max mtime over all files in p, recursively. 0 if empty."""
-    mt = 0.0
-    try:
-        if p.is_file():
-            return p.stat().st_mtime
-        for child in p.rglob("*"):
+    # Commit-time dict. `--diff-merges=first-parent` is critical: without it
+    # merge commits that *introduce* files (e.g. "merge origin/runtime2 into
+    # branchX") are silent under `--name-only`, so merge-introduced files
+    # would be invisible to the scan.
+    out = _git("log", "--all", "--diff-merges=first-parent",
+               "--format=|%ct", "--name-only", "--", ".bot/")
+    times: dict[str, float] = {}
+    ct = 0.0
+    for line in out.splitlines():
+        if not line:
+            continue
+        if line.startswith("|"):
             try:
-                if child.is_file():
-                    t = child.stat().st_mtime
-                    if t > mt:
-                        mt = t
-            except OSError:
-                pass
-    except OSError:
-        pass
-    return mt
+                ct = float(line[1:])
+            except ValueError:
+                ct = 0.0
+        else:
+            if ct > times.get(line, 0.0):
+                times[line] = ct
+
+    _CACHE["at"] = time.time()
+    _CACHE["active"] = active
+    _CACHE["times"] = times
 
 
-def role_summary(role_dir: Path) -> dict:
-    files = []
-    for f in sorted(role_dir.rglob("*")):
-        if f.is_file():
-            try:
-                files.append({
-                    "path": str(f.relative_to(role_dir)),
-                    "mtime": f.stat().st_mtime,
-                    "size": f.stat().st_size,
-                })
-            except OSError:
-                pass
-    return {
-        "mtime": dir_mtime_recursive(role_dir),
-        "files": files,
-    }
+def _ensure_cache() -> None:
+    if time.time() - _CACHE["at"] >= _CACHE_TTL or not _CACHE["times"]:
+        refresh_cache()
+
+
+def active_branches() -> set[str]:
+    _ensure_cache()
+    return _CACHE["active"]
+
+
+def git_commit_times() -> dict[str, float]:
+    _ensure_cache()
+    return _CACHE["times"]
 
 
 def scan_branches() -> list[dict]:
-    if not BOT.exists():
-        return []
-    live = git_branches()
+    """Build the overview from git history, filtered to active branches.
+
+    Filesystem is NOT scanned — a feature branch's `.bot/<slug>/` only exists
+    in the working tree when that branch is checked out, so a fs-only view
+    silently misses every other branch. The git log dict, by contrast, sees
+    files committed on any ref."""
+    active = active_branches()
     cur = current_branch()
-    branches = []
-    for p in BOT.iterdir():
-        if not is_branch_dir(p):
+    times = git_commit_times()
+
+    grouped: dict[str, list[tuple[str, float]]] = {}
+    for path, ct in times.items():
+        parts = path.split("/")
+        if len(parts) < 3 or parts[0] != ".bot":
             continue
-        roles = {}
-        other = {}
-        for sub in p.iterdir():
-            if not sub.is_dir():
-                continue
-            entry = role_summary(sub)
-            if sub.name in KNOWN_ROLES:
-                roles[sub.name] = entry
+        slug = parts[1]
+        if slug in NON_BRANCH or slug not in active:
+            continue
+        grouped.setdefault(slug, []).append((path, ct))
+
+    branches = []
+    for slug, files in grouped.items():
+        roles: dict[str, dict] = {}
+        other: dict[str, dict] = {}
+        root_files: list[dict] = []
+        for path, ct in files:
+            parts = path.split("/")
+            # parts: .bot / slug / (role | filename) / ...
+            if len(parts) == 3:
+                root_files.append({"name": parts[2], "mtime": ct})
             else:
-                other[sub.name] = entry
-        root_files = []
-        for f in sorted(p.iterdir()):
-            if f.is_file():
-                try:
-                    root_files.append({
-                        "name": f.name,
-                        "mtime": f.stat().st_mtime,
-                        "size": f.stat().st_size,
-                    })
-                except OSError:
-                    pass
+                role = parts[2]
+                rel = "/".join(parts[3:])
+                bucket = roles if role in KNOWN_ROLES else other
+                entry = bucket.setdefault(role, {"mtime": 0.0, "files": []})
+                entry["files"].append({"path": rel, "mtime": ct})
+                if ct > entry["mtime"]:
+                    entry["mtime"] = ct
+        for bucket in (roles, other):
+            for entry in bucket.values():
+                entry["files"].sort(key=lambda f: f["path"])
+        root_files.sort(key=lambda f: f["name"])
+        last = max((ct for _, ct in files), default=0.0)
         branches.append({
-            "name": p.name,
-            "lastActivity": dir_mtime_recursive(p),
-            "inGit": p.name in live,
-            "isCurrent": p.name == cur,
+            "name": slug,
+            "lastActivity": last,
+            "isCurrent": slug == cur,
             "roles": roles,
             "other": other,
             "rootFiles": root_files,
@@ -215,7 +236,6 @@ INDEX_HTML = r"""<!doctype html>
   .branch.current { border-left: 3px solid var(--current); padding-left: 11px; }
   .branch .name { font-weight: 500; word-break: break-all; }
   .branch .meta { color: var(--muted); font-size: 11px; margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .branch .meta .gitstate.archived { color: var(--warn); }
   .branch .roles { margin-top: 4px; display: flex; gap: 2px; flex-wrap: wrap; }
   .role-dot {
     width: 10px; height: 10px; border-radius: 2px;
@@ -243,7 +263,6 @@ INDEX_HTML = r"""<!doctype html>
     border: 1px solid var(--border);
   }
   #pane .subtitle .pill.current { color: var(--current); border-color: var(--current); }
-  #pane .subtitle .pill.archived { color: var(--warn); border-color: var(--warn); }
   .timeline {
     display: flex;
     flex-direction: column;
@@ -323,12 +342,6 @@ function fmtTimeAbs(epoch) {
   return new Date(epoch * 1000).toISOString().replace("T", " ").slice(0, 16);
 }
 
-function fmtSize(b) {
-  if (b < 1024) return b + "B";
-  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + "K";
-  return (b / 1024 / 1024).toFixed(1) + "M";
-}
-
 function renderNav(filter) {
   const list = document.getElementById("branchList");
   const f = (filter || "").toLowerCase();
@@ -338,11 +351,10 @@ function renderNav(filter) {
   for (const b of visible) {
     const div = document.createElement("div");
     div.className = "branch" + (b.isCurrent ? " current" : "") + (SELECTED === b.name ? " active" : "");
-    const gitState = b.inGit ? "" : '<span class="gitstate archived">archived</span>';
     const dots = PIPELINE.map(r => `<div class="role-dot${b.roles[r] ? " done" : ""}" title="${r}"></div>`).join("");
     div.innerHTML = `
       <div class="name">${b.name}</div>
-      <div class="meta"><span>${fmtTime(b.lastActivity)}</span>${gitState}</div>
+      <div class="meta"><span>${fmtTime(b.lastActivity)}</span></div>
       <div class="roles">${dots}</div>
     `;
     div.onclick = () => { SELECTED = b.name; renderNav(filter); renderPane(b); };
@@ -354,7 +366,6 @@ function renderPane(b) {
   const pane = document.getElementById("pane");
   const pills = [];
   if (b.isCurrent) pills.push('<span class="pill current">current branch</span>');
-  pills.push(`<span class="pill">${b.inGit ? "in git" : "archived"}</span>`);
   pills.push(`<span class="pill">last activity ${fmtTime(b.lastActivity)}</span>`);
 
   const stages = PIPELINE.map(role => {
@@ -362,7 +373,7 @@ function renderPane(b) {
     const has = !!r;
     const filesCount = has ? r.files.length : 0;
     const fileList = has && r.files.length
-      ? `<details><summary>${filesCount} file${filesCount === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => `<li>${f.path} <span style="float:right">${fmtSize(f.size)} · ${fmtTime(f.mtime)}</span></li>`).join("")}</ul></details>`
+      ? `<details><summary>${filesCount} file${filesCount === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => `<li>${f.path} <span style="float:right">${fmtTime(f.mtime)}</span></li>`).join("")}</ul></details>`
       : `<span class="files">—</span>`;
     return `
       <div class="stage${has ? "" : " empty"}">
@@ -382,7 +393,7 @@ function renderPane(b) {
         <div class="stage">
           <div class="name">${name}</div>
           <div class="icon done">●</div>
-          <div><details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => `<li>${f.path} <span style="float:right">${fmtSize(f.size)} · ${fmtTime(f.mtime)}</span></li>`).join("")}</ul></details></div>
+          <div><details><summary>${r.files.length} file${r.files.length === 1 ? "" : "s"}</summary><ul class="filelist">${r.files.map(f => `<li>${f.path} <span style="float:right">${fmtTime(f.mtime)}</span></li>`).join("")}</ul></details></div>
           <div class="time">${fmtTime(r.mtime)}</div>
         </div>
       `).join("")}
@@ -392,7 +403,7 @@ function renderPane(b) {
   const rootSection = (b.rootFiles || []).length ? `
     <h2 class="section">Root files</h2>
     <ul class="flat">
-      ${b.rootFiles.map(f => `<li><span>${f.name}</span><span class="ts">${fmtSize(f.size)} · ${fmtTimeAbs(f.mtime)}</span></li>`).join("")}
+      ${b.rootFiles.map(f => `<li><span>${f.name}</span><span class="ts">${fmtTimeAbs(f.mtime)}</span></li>`).join("")}
     </ul>
   ` : "";
 
