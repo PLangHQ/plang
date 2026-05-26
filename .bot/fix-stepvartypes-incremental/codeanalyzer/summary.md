@@ -10,7 +10,9 @@ v1/v2 ran a narrow lens on 8 files and PASSed. Ingi confirmed a new 5th OBP shap
 
 Five-pass review, branch-wide, with **explicit Pass 1b against the proposed 5-item OBP smell list** (the 5th item is in `.bot/<branch>/claude-md-proposals.md`, not yet merged into `CLAUDE.md` — but the user just confirmed it's the rule).
 
-**Verdict: NEEDS WORK** — one HIGH finding + four LOW findings.
+**Verdict: NEEDS WORK** — one HIGH (OBP-5), one MEDIUM (proposed OBP-6), four LOW.
+
+After the initial v3 draft Ingi flagged a 6th smell category I'd missed in v1/v2/v3: `tester/File.cs` holds a `Goal? Goal` reference *and* flat mirrors of 6 Goal-reachable properties (`Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion`, `Directory`). Costs more memory than the 8-byte reference and the two views can silently drift. Filed as proposed OBP smell #6 in `.bot/<branch>/claude-md-proposals.md`. Importantly: collapsing `File.cs` closes the OBP-5 finding for free, because `test/run.cs:165,168` would then read `file.Goal?.Path` (a typed `path.@this`) instead of `file.Path` (a `string`) — and `path.@this`-typed equality doesn't need a TrimStart.
 
 ### HIGH finding (the one v1/v2 missed)
 

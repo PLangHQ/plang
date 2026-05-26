@@ -49,6 +49,38 @@ var goalCall = new GoalCall { PrPath = global::app.types.path.@this.Resolve(test
 
 ---
 
+## Proposed OBP Smell #6 — `tester/File.cs` holds Goal + flat mirror of Goal's properties
+
+Surfaced after the v3 report was first drafted, on explicit user feedback. Filed as a 6th-smell proposal in `.bot/<branch>/claude-md-proposals.md`; flagged here against this branch's `File.cs`.
+
+```csharp
+// PLang/app/tester/File.cs
+public sealed class File
+{
+    [LlmBuilder] public string Path { get; init; } = "";                  // = Goal.Path?.ToString()
+    [LlmBuilder] public string PrPath { get; init; } = "";                // = Goal.LoadedFromPrPath?.ToString()
+    [LlmBuilder] public string EntryGoalName { get; init; } = "";         // = Goal.Name
+    [LlmBuilder] public Status Status { get; set; } = Status.Ready;       // legitimate — File's own lifecycle
+    public string Directory { get; init; } = "";                          // = Goal.Path?.Parent
+    public Goal? Goal { get; init; }                                      // the reference
+    public string? GoalHash { get; init; }                                // = Goal.Hash (or similar)
+    public string? BuilderVersion { get; init; }                          // = Goal.BuilderVersion (or similar)
+    public HashSet<string> Tags { get; } = new(...);                      // flagged separately under smell #1
+    public string? StatusReason { get; set; }                             // legitimate — describes the !Ready state
+}
+```
+
+- **Smell:** proposed #6 (reference + flat mirror). Six of the public properties are reachable through `Goal` when `Goal != null`; only `Status`, `Tags`, and `StatusReason` describe state that `Goal` can't carry (i.e. discovery-time lifecycle).
+- **Severity:** **MEDIUM**. Multiple call sites already read both views (`file.Path` in `report.cs`, `file.Goal?.Path` in some code paths) — drift is theoretical today but the class is *designed* to allow it. Fix at construction is easy now; expensive once consumers proliferate.
+- **Construction-time pay:** every `new File { Path = ..., PrPath = ..., Goal = ... }` in `discover.cs` populates both — the flat fields and the reference. Forgetting one (e.g. updating `Goal` later via `init` mutation impossible, but updating a property *of* Goal after File is constructed) makes them drift silently.
+- **Memory cost:** 5 strings + 1 nullable string + Directory string ≈ 5 × ~30 bytes (header + small string) > 1 × 8-byte reference. Per discovered test file. Adds up at scale.
+- **Why v1/v2/v3 missed it the first pass:** Pass 1b runs 4 items mechanically. "Holds reference AND flat copy" isn't one of them. Same structural gap as smell #5 — the rule has to exist before the bot applies it.
+- **Root-level fix:**
+  1. Delete `Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion`, `Directory` from `File`.
+  2. Add `Goal { get; init; }` as **non-nullable** when `Status == Ready` (which it is by construction in `discover.cs:DiscoverOne` for the Ready path).
+  3. For the Stale/Skipped path where `Goal` may be null, keep `StatusReason` as the carve-out. Consumers reading `file.Path` etc. switch to `file.Goal?.Path?.ToString()` — and the OBP-5 fix at `test/run.cs:165,168` happens *for free* because the leading-slash question now points at `path.@this`, the single owner.
+- **Cross-cutting benefit:** closing this finding folds the smell-5 cargo trims into the same migration. One bigger PR, two findings closed.
+
 ## OBP Smell #1 — public mutable collection with discipline outside the owner
 
 ### `app.tester.Run.UserTags`
@@ -166,11 +198,11 @@ These earned a clean read with the wider lens:
 | `PLang/app/modules/test/run.cs` | NEEDS WORK | OBP-5 redundant TrimStart at lines 165, 168; OBP-5 weak variant at line 211 (`PrPath` re-resolve) |
 | `PLang/app/modules/test/report.cs` | NEEDS WORK (LOW) | Dead `var app`, PathSeparators per-row alloc (carryover from v2) |
 | `PLang/app/tester/Run.cs` | NEEDS WORK (LOW) | OBP-1: `UserTags` mutated from `tag.cs` |
-| `PLang/app/tester/File.cs` | NEEDS WORK (LOW) | OBP-1: `Tags` mutated from `discover.cs`. Path/PrPath should arguably be `path.@this` (smell-5 root) |
+| `PLang/app/tester/File.cs` | NEEDS WORK (MEDIUM) | **Proposed OBP-6: holds Goal reference AND flat mirror (Path, PrPath, EntryGoalName, GoalHash, BuilderVersion, Directory).** Plus OBP-1: `Tags` mutated from `discover.cs`. |
 | `PLang/app/modules/condition/code/Default.cs` | NEEDS WORK (LOW) | Repeated guard across 3 sibling methods — extract `EnsureOperator` helper |
 | All others | CLEAN | — |
 
-**Overall verdict: NEEDS WORK** — one HIGH finding (redundant TrimStart that becomes a silent-divergence trap on any future asymmetric edit), four LOW findings.
+**Overall verdict: NEEDS WORK** — one HIGH (OBP-5 cargo trims at `test/run.cs:165,168`), one MEDIUM (proposed OBP-6: `File.cs` holds `Goal` reference + flat mirror), four LOW.
 
 The pattern I missed in v1/v2: I ran the OBP shape-smell checklist as a 4-item mechanical pass over the diff. The new 5th item (producer raw, consumers transform) catches exactly what `test/run.cs:165,168` is doing, and the broader-branch lens catches the `UserTags`/`Tags` smell-#1 cases too.
 
@@ -178,10 +210,12 @@ The pattern I missed in v1/v2: I ran the OBP shape-smell checklist as a 4-item m
 
 For coder, in priority order:
 
-1. **`PLang/app/modules/test/run.cs:165` and `:168`** — drop both `.TrimStart('/')` calls; compare canonical forms directly. Delete the stale comment at lines 161-164. If a test breaks, the failure is in `discover.cs` not enforcing canonical form on `File.Path` — fix there, not at the consumer.
+1. **`PLang/app/tester/File.cs` — collapse the flat mirror.** Delete `Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion`, `Directory`. Route the 4 consumers in `report.cs` (`run.File.Path`, line 112/122/259/325) and the 2 in `run.cs` (`test.Path`, `test.PrPath` at 165/211) through `file.Goal?.Path`, etc. This closes the proposed OBP-6 AND folds the OBP-5 fix at `run.cs:165,168` into the same migration (the canonical-leading-/ question now points at `path.@this`, the one owner — no more TrimStart at the consumer because the consumer is reading the path-typed value directly).
 
 2. **`PLang/app/modules/test/report.cs:49`** — delete unused `var app = Context.App;`.
 
 3. **`PLang/app/modules/condition/code/Default.cs:16, 31, 46`** — extract `private static data.@this<bool>? GuardOperator(data.@this<Operator> op)` returning the From-Operator value when invalid, null otherwise; replace 3 inline guards.
 
-4. **Optional / next-touch:** `Run.UserTags` and `File.Tags` → private collection + `Add*` method. `File.Path` / `File.PrPath` → `path.@this`. `report.cs:307` → hoist `PathSeparators`.
+4. **Optional / next-touch:** `Run.UserTags` and `File.Tags` → private collection + `Add*` method. `report.cs:307` → hoist `PathSeparators`.
+
+**If step 1 is deferred** (it's the biggest change), step 1' is the smaller fallback: drop both `.TrimStart('/')` calls at `run.cs:165, 168` and the stale comment at lines 161-164. The trims are doing nothing today; deleting them removes the asymmetry trap without restructuring `File.cs`. But this leaves the OBP-6 root unfixed.
