@@ -31,11 +31,12 @@ PIPELINE = [
     "tester",
     "security",
     "auditor",
+    "docs",
 ]
 # Optional roles — recognized but not always run. Rendered right-aligned
 # in the nav and below a separator in the pane, and never counted as
 # "missing" in the "Not yet run:" list.
-OPTIONAL = ["builder", "docs"]
+OPTIONAL = ["builder"]
 # Roles we still recognize (don't bucket into "Other subdirs") but that
 # aren't part of either flow.
 EXTRA_ROLES = {"handoff", "learnings", "scaffolder"}
@@ -704,8 +705,8 @@ INDEX_HTML = r"""<!doctype html>
 <div id="preview"><div class="placeholder">Hover a file to preview.</div></div>
 
 <script>
-const PIPELINE = ["architect","test-designer","coder","codeanalyzer","tester","security","auditor"];
-const OPTIONAL = ["builder","docs"];
+const PIPELINE = ["architect","test-designer","coder","codeanalyzer","tester","security","auditor","docs"];
+const OPTIONAL = ["builder"];
 const EXTRA_ROLES = ["handoff","learnings","scaffolder"];
 let BRANCHES = [];
 let SELECTED = null;
