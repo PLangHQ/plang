@@ -21,4 +21,14 @@ public interface IClass
 {
     System.Threading.Tasks.Task<data.@this> Build()
         => System.Threading.Tasks.Task.FromResult(data.@this.Ok());
+
+    /// <summary>
+    /// Prepares the handler for Build() invocation: stamps the action/context so the
+    /// generated lazy property getters can resolve. Source-generator emits the body
+    /// on each handler partial; the interface declares it so callers (builder.validate)
+    /// can invoke through IClass without reflection.
+    /// </summary>
+    void SetAction(
+        global::app.goals.goal.steps.step.actions.action.@this action,
+        global::app.actor.context.@this context);
 }
