@@ -43,7 +43,7 @@ public class ReportActionTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    private static global::app.tester.Run NewRun(string name, global::app.tester.Status status, IError? error = null, string? capturedOutput = null)
+    private static global::app.tester.Run NewRun(string name, global::app.tester.Status status, IError? error = null, string? output = null)
     {
         var run = new global::app.tester.Run(new global::app.tester.File
         {
@@ -53,7 +53,7 @@ public class ReportActionTests
             BuilderVersion = "v1"
         });
         run.Complete(status, error);
-        if (capturedOutput != null) run.CapturedOutput = capturedOutput;
+        if (output != null) run.Output = output;
         return run;
     }
 
