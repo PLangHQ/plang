@@ -5,7 +5,7 @@ Plan
 
 - builder.actions, write to %actions%
 - render template "/system/actions/v2/summary.planner.md", write to %actionSummary%
-- render template "/system/builder/templates/v2/goalFormatForLlm.v2.template", write to %goalForLlm%
+- render template "/system/builder/llm/templates/goalFormat.template", write to %goalForLlm%
 - render template "/system/builder/llm/Plan.llm", write to %planPrompt%
 - set %messages% = [{"Role":"system", "Content":"%planPrompt%"}, {"Role":"user", "Content":"%goalForLlm%"}], type=json
 

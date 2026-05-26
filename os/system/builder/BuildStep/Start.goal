@@ -18,8 +18,8 @@ Compile
 / Per-step so the snapshot reflects the Actions just written by prior BuildSteps.
 - goal.getTypes Goal=%goal%, write to %varTypes%
 - set %stepVarTypes% = %varTypes[step.Index]%
-- render template "/system/builder/templates/v2/stepForLlm.template", write to %stepForLlm%
-- render template "/system/builder/templates/v2/stepActionDetails.template", write to %actionDetails%
+- render template "/system/builder/llm/templates/stepForLlm.template", write to %stepForLlm%
+- render template "/system/builder/llm/templates/stepActionDetails.template", write to %actionDetails%
 - render template "/system/builder/llm/Compile.llm", write to %buildStepPrompt%
 - render template "/system/builder/llm/CompileUser.llm", write to %buildStepUserMsg%
 - set %messages% = [{"Role":"system", "Content":"%buildStepPrompt%"}, {"Role":"user", "Content":"%buildStepUserMsg%"}], type=json
