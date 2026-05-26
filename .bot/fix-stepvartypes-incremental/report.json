@@ -457,6 +457,54 @@
         "health": "PLang 208/208 + C# 3036/3036",
         "notes": "v5 finding closed by dfd7429a7. False-green analysis run on each substantive change since v4. No false greens caught. One minor non-blocking finding."
       }
+    },
+    {
+      "id": "a2a55ba6-0d02-437b-98ca-8b226fcbea83",
+      "bot": "security",
+      "timestamp_start": "2026-05-26T19:25:00Z",
+      "timestamp_end": "2026-05-26T19:35:00Z",
+      "intent": "First security review on fix-stepvartypes-incremental \u2014 confirm path AuthGate fence, audit results.json artefact growth, review event-binding capture.",
+      "before": {
+        "assumptions": "Branch merged purge-systemio-from-actions (path AuthGate canonicalization fix in place). Net diff vs runtime2 is 17 C# files / +330/-177, mostly tester + path display form + OpenAi cost. Standing-Medium on Variables.Snapshot() leakage in results.json still open.",
+        "risk": "Path display-form change could touch _absolutePath canonicalization (it does not). New Output field in results.json adds a second leakage vector to the same artefact. Event-binding capture uses non-locked StringBuilder/Dictionary \u2014 relies on PLang sequential execution."
+      },
+      "plan": ".bot/fix-stepvartypes-incremental/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/this.cs",
+            "PLang/app/types/path/this.Derivation.cs",
+            "PLang/app/types/Conversion.cs",
+            "PLang/app/modules/test/report.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/tester/Run.cs",
+            "PLang/app/tester/Timing.cs",
+            "PLang/app/tester/Timings.cs",
+            "PLang/app/modules/llm/code/OpenAi.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Path display-form change does not touch _absolutePath canonicalization \u2014 AuthGate fence intact. Conversion converters pure. Output capture broadens existing standing-Medium on results.json leakage but is not a new finding. Event-binding concurrency is informational (sequential execution model)."
+        },
+        {
+          "paths": [
+            ".bot/fix-stepvartypes-incremental/security/v1/plan.md",
+            ".bot/fix-stepvartypes-incremental/security/v1/result.md",
+            ".bot/fix-stepvartypes-incremental/security/v1/verdict.json",
+            ".bot/fix-stepvartypes-incremental/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security v1 outputs \u2014 PASS verdict."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "clean",
+        "notes": "No critical/high open findings on this branch. Two advisory notes: (1) results.json Output field broadens standing-Medium Variables.Snapshot() leakage track; (2) outputBuf/stepStarts concurrency is informational pending any future parallel-execution model."
+      }
     }
   ]
 }
