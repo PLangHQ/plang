@@ -13,6 +13,8 @@ public sealed class Default : IEvaluator
 
     public async Task<data.@this<bool>> Evaluate(If action)
     {
+        if (!action.Operator.Success || action.Operator.Value == null)
+            return global::app.data.@this<bool>.From(action.Operator);
         try
         {
             bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
@@ -26,6 +28,8 @@ public sealed class Default : IEvaluator
 
     public async Task<data.@this<bool>> Evaluate(Elseif action)
     {
+        if (!action.Operator.Success || action.Operator.Value == null)
+            return global::app.data.@this<bool>.From(action.Operator);
         try
         {
             bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);
@@ -39,6 +43,8 @@ public sealed class Default : IEvaluator
 
     public async Task<data.@this<bool>> Evaluate(Compare action)
     {
+        if (!action.Operator.Success || action.Operator.Value == null)
+            return global::app.data.@this<bool>.From(action.Operator);
         try
         {
             bool result = await action.Operator.Value.Evaluate(action.Left, action.Right);

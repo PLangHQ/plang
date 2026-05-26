@@ -54,10 +54,40 @@ formal: `condition.if(Left=%!build.summary%, Operator="==", Right=true)` — no 
 
 The action AFTER an `if X, ...` clause is a separate peer entry in the top-level `actions` array — the condition decides whether subsequent actions run, but it doesn't wrap them as modifiers. Putting `goal.call` (or any non-modifier) into `condition.if`'s `modifiers` array trips "goal.call is not a modifier" at runtime.
 
-## Compound conditions
+## Compound conditions — `condition.compare` + single `condition.if` with `and`/`or`
 
-Compound conditions split into multiple `condition.if` instances. `if %a% > 1 and %b% < 10, call DoThing` → TWO `condition.if` actions plus the `goal.call`. The planner's set lists `condition.if` once; the compiler expands. Flag the expansion in `warnings`:
+Multiple top-level `condition.if` instances in the same step do NOT compound — the runtime treats them as an **if/elseif/else chain** (first match wins, others skipped). To express `if A and B, call X` you must:
+
+1. Evaluate each sub-expression with `condition.compare`
+2. Capture each `%!data%` into a named variable via `variable.set`
+3. A single `condition.if` with `Operator="and"` (or `"or"`) referencing those variables
+4. The body action
+
+`if %a% > 1 and %b% < 10, call DoThing`:
 
 ```json
-{"warnings": [{"key": "expanded-condition", "message": "condition.if expanded to two actions for compound condition"}]}
+[
+  {"module":"condition","action":"compare","parameters":[
+    {"name":"Left","value":"%a%","type":"object"},
+    {"name":"Operator","value":">","type":"operator"},
+    {"name":"Right","value":1,"type":"object"}]},
+  {"module":"variable","action":"set","parameters":[
+    {"name":"Name","value":"%andL%","type":"string"},
+    {"name":"Value","value":"%!data%","type":"object"}]},
+  {"module":"condition","action":"compare","parameters":[
+    {"name":"Left","value":"%b%","type":"object"},
+    {"name":"Operator","value":"<","type":"operator"},
+    {"name":"Right","value":10,"type":"object"}]},
+  {"module":"variable","action":"set","parameters":[
+    {"name":"Name","value":"%andR%","type":"string"},
+    {"name":"Value","value":"%!data%","type":"object"}]},
+  {"module":"condition","action":"if","parameters":[
+    {"name":"Left","value":"%andL%","type":"object"},
+    {"name":"Operator","value":"and","type":"operator"},
+    {"name":"Right","value":"%andR%","type":"object"}]},
+  {"module":"goal","action":"call","parameters":[
+    {"name":"GoalName","value":{"name":"DoThing"},"type":"goal.call"}]}
+]
 ```
+
+The `and` / `or` operators are truthy checks on Left and Right — both must be pre-computed booleans, not raw inline expressions. Use `or` analogously. Three or more operands chain: stage each into `%v1%`, `%v2%`, ..., then nest two-operand `and`/`or` `condition.if`s with intermediate variables.

@@ -1,1 +1,1 @@
-Register a goal callback to fire at a lifecycle event (BeforeGoal, AfterStep, BeforeAction, etc.)
+Register a goal callback to fire at a lifecycle or channel event. Step phrasings starting with "on", "before", or "after" (e.g. "on ask on input channel call X", "before step call X", "after write call X") map here, NOT to output.ask, channel.set, or environment.run. Event types include BeforeGoal, AfterGoal, BeforeStep, AfterStep, BeforeAction, AfterAction, BeforeWrite, AfterWrite, BeforeRead, AfterRead, and OnAsk.
