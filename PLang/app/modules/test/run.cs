@@ -34,7 +34,7 @@ public partial class run : IContext
     public partial data.@this<int>? Parallel { get; init; }
     public partial data.@this<int>? Timeout { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<global::app.tester.Results>> Run()
     {
         var tests = Tests.Value ?? new List<global::app.tester.Test.@this>();
         var parentApp = Context.App!;
@@ -43,7 +43,7 @@ public partial class run : IContext
         var timeout = TimeSpan.FromSeconds(timeoutSeconds);
 
         if (tests.Count == 0)
-            return app.data.@this.Ok(parentApp.Tester.Results);
+            return data.@this<global::app.tester.Results>.Ok(parentApp.Tester.Results);
 
         if (parallel < 1) parallel = 1;
 
@@ -56,7 +56,7 @@ public partial class run : IContext
         });
 
         await Task.WhenAll(tasks);
-        return app.data.@this.Ok(parentApp.Tester.Results);
+        return data.@this<global::app.tester.Results>.Ok(parentApp.Tester.Results);
     }
 
     private async Task RunSingleAsync(global::app.tester.Test.@this test, TimeSpan timeout, app.@this parentApp)

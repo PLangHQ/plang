@@ -40,17 +40,17 @@ public partial class discover : IContext
     [Default(true)]
     public partial data.@this<bool> Recursive { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<List<global::app.tester.Test.@this>>> Run()
     {
         var app = Context.App!;
-        global::app.data.@this empty = global::app.data.@this.Ok(new List<global::app.tester.Test.@this>());
+        var empty = data.@this<List<global::app.tester.Test.@this>>.Ok(new List<global::app.tester.Test.@this>());
 
         var root = Path.Value;
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
         var listed = await root.List(Pattern.Value!, Recursive.Value);
-        if (!listed.Success) return global::app.data.@this.FromError(listed.Error!);
+        if (!listed.Success) return data.@this<List<global::app.tester.Test.@this>>.FromError(listed.Error!);
         if (listed.Value == null) return empty;
 
         var include = Context.App.Tester.Include;
@@ -64,7 +64,7 @@ public partial class discover : IContext
             if (match is not FilePath fileMatch) continue;
             files.Add(await DiscoverOne(fileMatch, app, include, exclude));
         }
-        return global::app.data.@this.Ok(files);
+        return data.@this<List<global::app.tester.Test.@this>>.Ok(files);
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>
