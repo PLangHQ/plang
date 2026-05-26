@@ -967,7 +967,7 @@ async function loadPreview(li) {
   const isMd = payload.kind === "md";
   const url = isMd ? architectUrl(branch, path) : null;
   const openBtn = url
-    ? `<a class="open-btn" href="${url}" target="_blank" rel="noopener" title="Open in architect viewer (8081) to add comments">open ↗</a>`
+    ? `<a class="open-btn" href="${url}" target="viewer" rel="noopener" title="Open in architect viewer (8081) to add comments — ctrl+click for a new tab">open ↗</a>`
     : "";
   preview.innerHTML = `<div class="header"><span>${path}</span><span class="hdr-right">${openBtn}<span>${payload.kind || ""}</span></span></div>${body}`;
   preview.scrollTop = 0;
