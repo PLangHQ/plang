@@ -77,6 +77,63 @@
         "health": "green",
         "notes": "~80 C# test signatures + 8 PLang .test.goal scaffolds written across 11 batches. All bodies are Assert.Fail/throw — coder bot picks up next, stage order 1→7 from architect's plan."
       }
+    },
+    {
+      "id": "0aabf8c1-7e4d-4a8e-9c64-1c11d2c7e1b0",
+      "bot": "security",
+      "timestamp_start": "2026-05-26T10:11:43Z",
+      "timestamp_end": "2026-05-26T10:24:30Z",
+      "intent": "Red/blue audit of the System.IO purge: verify AuthGate is the only filesystem gate, look for new bypasses introduced by derivation verbs, the path JsonConverter, Execute verb, and Path-typed Goal serialization.",
+      "before": {
+        "assumptions": "Architect's hardening is structural — the only way it goes wrong is (a) a new verb that skips AuthGate, (b) a wire path that smuggles a typed path bypassing scheme/Resolve, (c) an Execute-gated load site that still reaches under the gate, or (d) the implicit string→path operator firing in an attack-reachable place.",
+        "risk": "False sense of security — PLNG002 says 'no System.IO' at the syntactic layer, but only AuthGate enforces it semantically. A new verb that builds a FilePath from a string and calls private internal IO is the highest-leverage bypass."
+      },
+      "plan": ".bot/purge-systemio-from-actions/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/types/path/file/this.Validate.cs",
+            "PLang/app/types/path/file/this.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/types/path/this.JsonConverter.cs",
+            "PLang/app/types/path/permission/verb/this.cs",
+            "PLang/app/types/path/permission/verb/Execute.cs",
+            "PLang/app/types/path/scheme/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Blue-team audit of the gate surface and new verbs. Verified Assembly.LoadFrom is single-sited and Execute-gated; PathJsonConverter Context-bound routes through Resolve."
+        },
+        {
+          "paths": [
+            "PLang.Tests/Security_IsInRootBypassMutation.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mutation test created, run, and deleted. Verified F1 reproduces in ~5s: relative path with .. + LoadedFromPrPath inside root → IsInRoot auto-grant → read of file outside root with no prompt. Production source unchanged; no commit of the mutation."
+        },
+        {
+          "paths": [
+            ".bot/purge-systemio-from-actions/security-report.json",
+            ".bot/purge-systemio-from-actions/security/v1/plan.md",
+            ".bot/purge-systemio-from-actions/security/v1/result.md",
+            ".bot/purge-systemio-from-actions/security/v1/verdict.json",
+            ".bot/purge-systemio-from-actions/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Session output."
+        }
+      ],
+      "after": {
+        "status": "fail",
+        "health": "yellow",
+        "notes": "F1 HIGH path-traversal in AuthGate's IsInRoot auto-grant. Bypass pre-existed the branch but is now the single chokepoint hole — branch's whole premise depends on it. Fix is structural (canonicalize _absolutePath at FilePath construction or in file.Resolve). All other surface clean: Execute verb, PathJsonConverter, derivation verbs, PLNG002 enforcement all check out."
+      }
     }
   ]
 }

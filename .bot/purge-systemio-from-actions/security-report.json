@@ -1,0 +1,62 @@
+{
+  "analyst": "security",
+  "branch": "purge-systemio-from-actions",
+  "timestamp": "2026-05-26T10:25:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "path-authgate",
+      "exposure": "Every filesystem touch from action handlers now flows through `path.@this.Authorize` → AuthGate. AuthGate's auto-grant fast path is `IsInRoot()` (textual StartsWith of `_absolutePath` against the app root).",
+      "trust_boundary": "Any caller producing a `path` whose `_absolutePath` textually prefix-matches the app root — including paths whose actual filesystem target lies outside root via `..` segments left in the string.",
+      "mitigations": ["AuthGate(verb) is required by every IO verb on FilePath; PLNG002 at error severity prevents handlers from bypassing path.@this entirely."],
+      "gaps": ["IsInRoot does not canonicalize `..` segments before the prefix check; ValidatePath skips `Path.GetFullPath` normalization when the input lexically prefix-matches rootAbsolutePath."]
+    },
+    {
+      "area": "path-derivation",
+      "exposure": "New Combine/WithName/InFolder/Parent verbs on FilePath build new FilePath objects via `System.IO.Path.Combine` without re-normalization.",
+      "trust_boundary": "Caller supplies the child/folder/name string. Path.Combine with an absolute child overrides parent (well-known); Path.Combine with `..` does not normalize.",
+      "mitigations": ["Derivation produces a Path object only — no IO. All IO must go through Operations, which gate."],
+      "gaps": ["Same root-cause as IsInRoot: derived paths carry literal `..` segments; if the resulting `_absolutePath` happens to textually prefix-match root, AuthGate auto-grants. Not a finding on its own — same chain as F1."]
+    },
+    {
+      "area": "execute-verb",
+      "exposure": "`path.LoadAssemblyAsync()` is the only `Assembly.LoadFrom` site in the codebase (verified by grep). Gated by `Verb { Execute }`, distinct from Read.",
+      "trust_boundary": "An actor wanting to load a DLL must have an Execute grant — Read grant does NOT cover Execute.",
+      "mitigations": ["Verb.AllowAll() includes Execute, but AllowAll is test-only. Production grants flow through `BuildRequest(actor, verb)` with the narrow requested verb."],
+      "gaps": ["None. Cleanly factored."]
+    },
+    {
+      "area": "wire-path-deserialization",
+      "exposure": "`PathJsonConverter` reads a string off the wire and resolves it via `@this.Resolve(raw, context)` → `Scheme.From` → `file.Resolve` → ValidatePath. Used by per-Actor Json/Plang channel serializers when Context is wired; used by the global Conversion fallback (no Context) which produces stub paths that explode on Authorize.",
+      "trust_boundary": "Anything inbound on a channel whose payload deserializes to a `Data<path>` field — including a malicious .pr arriving over the wire, a channel-driven action invocation with a path parameter, etc.",
+      "mitigations": ["Context-bound converter routes through Resolve; stub paths (no-Context) explode at Authorize."],
+      "gaps": ["The same `..`-segment-survives-IsInRoot bypass (F1) is reachable here too — a wire path `\"subdir/../../etc/passwd\"` deserialized in a goal-Context-bound JsonConverter triggers file.Resolve's goal-relative branch and lands as an Absolute that textually prefix-matches root."]
+    },
+    {
+      "area": "filepath-sync-properties",
+      "exposure": "`FilePath.Exists` and `FilePath.Size` (the synchronous `[LlmBuilder]`-tagged properties on file/this.cs:27,31) call `System.IO.File.Exists` / `new FileInfo(...).Length` directly without AuthGate.",
+      "trust_boundary": "These are template/LLM-builder surfaces. Calling them at runtime gives existence/size leaks for any path the caller has the object for.",
+      "mitigations": ["Existence probing via `path.AsBooleanAsync()` / `ExistsAsync()` IS gated; the async path is what the truthiness pipeline uses."],
+      "gaps": ["Sync `Exists`/`Size` are info-disclosure side channels under non-user threat models (sub-actor probing) — but under PLang's user-sovereign model, an LLM-builder template that reads `%path.Exists%` is user-authored. Not flagging unless reachable from untrusted input — and no use sites in production handlers reach them. Standing watch."]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "high",
+      "category": "path-traversal",
+      "vector": "IsInRoot()'s auto-grant fast path uses a textual `StartsWith` of `_absolutePath` against the app root, with no `..`-segment normalization. When `file.Resolve` combines a relative path containing `..` with a goal-anchored runtimeDir (or goalPath.Parent) that lives inside root, the resulting absolute string textually prefix-matches root — IsInRoot returns true — AuthGate auto-grants — and `System.IO.File.ReadAllBytesAsync` resolves the `..` segments at the OS layer and reads outside root with no actor prompt and no grant lookup.",
+      "preconditions": "A `path` whose `_absolutePath` contains unresolved `..` segments AND textually prefix-matches `app.AbsolutePath`. The natural production source is `file.Resolve` for a relative rawPath when the active Goal has a `LoadedFromPrPath` inside root (which is every goal loaded from a .pr in normal operation). Reachable from: (a) PLang code reading `%input%` where input comes from external wire, (b) wire-deserialized `Data<path>` fields, (c) handler parameters with relative-path raw values.",
+      "impact": "Arbitrary file read (and write/delete/execute, by symmetry — every verb auto-grants on IsInRoot=true) outside the actor's permission scope, without any prompt or grant lookup. Breaks the soundness of the entire path-permission model: sub-actor scoping is silently bypassed; promised security boundary that this whole branch was built to enforce is paper. Reproduces in ~5s as a single PLang.Tests file (mutation test attached below).",
+      "affected_files": [
+        "PLang/app/types/path/this.Authorize.cs",
+        "PLang/app/types/path/file/this.cs",
+        "PLang/app/types/path/file/this.Validate.cs"
+      ],
+      "exploit_sketch": "Reproduced via PLang.Tests mutation test (run + revert). Test stages a SECRET-OUTSIDE.txt one directory above the engine's rootAbsolutePath, sets up a Goal with `LoadedFromPrPath = <root>/subdir/.build/probe.fake`, sets ctx.Goal, then calls `path.@this.Resolve(\"../../SECRET-OUTSIDE.txt\", ctx).ReadText()`. Test output:\n```\nLiteral Absolute: /workspace/plang/PLang.Tests/bin/Debug/net10.0/subdir/../../SECRET-OUTSIDE.txt\nStarts with fixturesDir? True\nSuccess: True\nValue: if-you-can-read-me-the-gate-was-bypassed-<uuid>\n```\nNo prompt fired; the marker file was read in full.",
+      "proposed_fix": "Canonicalize before the IsInRoot prefix check OR canonicalize at FilePath construction. Two acceptable shapes:\n  (a) In `app.types.path.@this.IsUnder` (the helper used by `IsInRoot`), call `System.IO.Path.GetFullPath(Absolute)` once and `StartsWith` against the canonical form. This is the minimal surgical fix.\n  (b) Canonicalize in `file.Resolve` after the goal-relative `Path.Combine` and before constructing the FilePath: wrap the result in `Path.GetFullPath(resolved)` unconditionally. This also fixes the `Equals/GetHashCode/Relative` family that all use `_absolutePath` directly — they currently compare paths-with-dotdot byte-wise to paths-without-dotdot as distinct keys, which is its own subtle bug (collision/non-collision on the same physical file).\n\nFix (b) is preferred — it makes `_absolutePath` mean what its name says (an absolute, canonical OS path). Add a regression test of the mutation shape (LoadedFromPrPath under root + `..` rawPath + assert prompt or denial). The N3 footgun from codeanalyzer (implicit `string→path` operator) becomes meaningfully safer too: the stub-path constructor on the bare ctor would also canonicalize.\n\nALSO check `Path.Combine`-based FilePath derivation verbs (Combine, WithName, InFolder, Parent in `file/this.Derivation.cs`) — they each `new @this(combinedString, Context)` without normalization. The base ctor should canonicalize so derivation can't smuggle `..` segments back in either.",
+      "status": "open"
+    }
+  ],
+  "summary": "The branch's stated goal — handlers must not bypass AuthGate — is achieved cleanly. PLNG002 at error severity locks the door at the syntactic layer; the typed path surface routes every disk touch through AuthGate. But the gate itself has a soundness flaw: `IsInRoot` uses textual `StartsWith` of an un-canonicalized `_absolutePath` against the app root, and `ValidatePath` skips `Path.GetFullPath` normalization when the input already lexically prefix-matches root. Result: a relative path containing `..` resolved against a goal-anchored directory inside root produces an `Absolute` that textually starts with root, auto-grants AuthGate, then OS-resolves outside root. Confirmed via mutation test — file outside root read in 5 seconds with no prompt. This bypass pre-existed the branch (the same flaw would have lived in `PLangFileSystem.ValidatePath` before), but it was *masked* while action handlers were bypassing AuthGate entirely. Now that the gate is the single chokepoint, the chokepoint's hole becomes the only thing that matters. Verdict: FAIL — the branch built the gate they promised, but the gate has a hole exactly the size of `..`."
+}
