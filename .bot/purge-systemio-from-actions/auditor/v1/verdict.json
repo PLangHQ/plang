@@ -1,0 +1,4 @@
+{
+  "status": "fail",
+  "summary": "PLang --test regresses 206→204 on full-suite clean rebuild after F1 canonicalization; tester's 206/206 claim does not reproduce."
+}
