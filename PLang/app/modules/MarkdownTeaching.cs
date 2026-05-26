@@ -3,7 +3,6 @@ namespace app.modules;
 /// <summary>
 /// Loads per-action LLM teaching from markdown files under
 /// <c>os/system/modules/&lt;module&gt;/{module,&lt;action&gt;}.{notes,examples,description}.md</c>.
-/// Architect plan: <c>.bot/compile-llm-notes-per-action/architect/plan.md</c>.
 ///
 /// <para>Layers (module-level + action-level) are kept split — renderer concats at render
 /// time. <c>module</c> is a reserved stem; no action may be literally named "module".
@@ -11,10 +10,9 @@ namespace app.modules;
 /// (stem is not <c>module</c> and not a registered action) are surfaced via
 /// <see cref="ScanOrphans"/>; the loader itself never throws.</para>
 ///
-/// <para>Security F2 (post-fix): all disk reads route through the
-/// <c>path.@this</c> verb surface, so an attacker-controlled
-/// <c>MarkdownTeachingRoot</c> can no longer enumerate or read files outside
-/// the actor's permission scope — <c>AuthGate</c> is the chokepoint.</para>
+/// <para>All disk reads route through the <c>path.@this</c> verb surface so an
+/// attacker-controlled <c>MarkdownTeachingRoot</c> can't side-channel reads past
+/// <c>AuthGate</c>.</para>
 /// </summary>
 public static class MarkdownTeaching
 {

@@ -44,10 +44,7 @@ internal static class PathHelper
 
     /// <summary>
     /// Resolves <c>..</c> and <c>.</c> segments to a canonical absolute path.
-    /// Pure string operation — does not stat or read the filesystem. Used by
-    /// <c>file.@this</c>'s ctor to make <c>_absolutePath</c> mean what its
-    /// name says (security F1: <c>IsInRoot</c>'s textual prefix-match was
-    /// bypassable with un-resolved <c>..</c> segments).
+    /// Pure string operation — does not stat or read the filesystem.
     /// </summary>
     public static string GetFullPath(string path) => System.IO.Path.GetFullPath(path);
     public static string GetFullPath(string path, string basePath) => System.IO.Path.GetFullPath(path, basePath);

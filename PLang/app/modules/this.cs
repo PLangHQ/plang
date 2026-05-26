@@ -231,10 +231,10 @@ public sealed class @this : IAsyncDisposable
 
     /// <summary>
     /// Resolves the markdown root: explicit override wins, else derives from
-    /// <c>App.OsDirectory</c>. Returns null when neither is available.
-    /// Routes the string through <c>path.@this.Resolve</c> (System actor's
-    /// Context) so downstream disk reads in <see cref="MarkdownTeaching"/>
-    /// are gated by <c>AuthGate</c> — security F2 fix.
+    /// <c>App.OsDirectory</c>. Returns null when neither is available. The
+    /// string is routed through <c>path.@this.Resolve</c> (System actor's
+    /// Context) so every downstream read goes through <c>AuthGate</c>, even
+    /// when the override points outside the app root.
     /// </summary>
     public global::app.types.path.@this? ResolveMarkdownTeachingRoot()
     {

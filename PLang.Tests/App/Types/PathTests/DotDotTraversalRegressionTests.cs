@@ -7,20 +7,14 @@ using Path = global::app.types.path.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// Security v1 F1 regression — <c>IsInRoot()</c>'s textual prefix-match used
-/// to be bypassable with <c>..</c> segments. The attack: a relative
-/// <c>rawPath</c> resolved by <c>file.Resolve</c> against a goal-anchored
-/// <c>runtimeDir</c> inside root produces a string that <i>lexically</i>
-/// starts with root but <i>OS-resolves</i> outside it. AuthGate auto-grants
-/// on <c>IsInRoot=true</c>; <c>System.IO.File.*</c> then resolves the
-/// <c>..</c> segments and reads outside root with no prompt and no
-/// permission lookup.
-///
-/// <para>Fix: <c>file.@this</c>'s ctor canonicalizes <c>_absolutePath</c>
-/// via <see cref="global::app.Utils.PathHelper.GetFullPath(string)"/>, so
-/// <c>..</c> segments are resolved before being stored. <c>IsInRoot</c>'s
-/// prefix-match then sees the truthful absolute form and correctly returns
-/// false for out-of-root targets — AuthGate prompts/denies.</para>
+/// Pins <c>IsInRoot()</c>'s prefix-match against <c>..</c>-traversal
+/// bypass. The attack shape: a relative <c>rawPath</c> resolved by
+/// <c>file.Resolve</c> against a goal-anchored <c>runtimeDir</c> inside
+/// root produces a string that <i>lexically</i> starts with root but
+/// <i>OS-resolves</i> outside it. The FilePath ctor canonicalizes
+/// <c>_absolutePath</c>, so <c>IsInRoot</c> sees the truthful absolute
+/// form and correctly returns false for out-of-root targets — AuthGate
+/// prompts or denies instead of silently auto-granting.
 /// </summary>
 public class DotDotTraversalRegressionTests
 {
@@ -89,10 +83,10 @@ public class DotDotTraversalRegressionTests
     public async Task ReadText_RelativeDotDot_OutOfRoot_DeniedByAuthGate()
     {
         var (app, ctx, root) = MakeApp();
-        // Stage SECRET-OUTSIDE.txt one directory above engine root. If
-        // AuthGate were bypassed (pre-fix), ReadText would return its content.
+        // Stage a secret one directory above engine root. If AuthGate were
+        // bypassed, ReadText would return its content.
         var parent = System.IO.Directory.GetParent(root)!.FullName;
-        var secretPath = System.IO.Path.Combine(parent, "F1-SECRET-" + System.Guid.NewGuid().ToString("N")[..8] + ".txt");
+        var secretPath = System.IO.Path.Combine(parent, "traversal-canary-" + System.Guid.NewGuid().ToString("N")[..8] + ".txt");
         var secretContent = "if-you-can-read-me-the-gate-was-bypassed-" + System.Guid.NewGuid().ToString("N");
         System.IO.File.WriteAllText(secretPath, secretContent);
         try

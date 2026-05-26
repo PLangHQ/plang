@@ -3,12 +3,11 @@ using app.Utils;
 namespace app.types.path.file;
 
 /// <summary>
-/// FilePath-scheme derivation verbs (D1). Pure path-string math via
+/// FilePath-scheme derivation verbs. Pure path-string math via
 /// <see cref="PathHelper"/> — none of these touch the filesystem. The
-/// canonicalization done by the <see cref="@this"/> ctor (security F1
-/// fix) means any <c>..</c> segments in the derived results are resolved
-/// before <c>_absolutePath</c> is stored, so <c>IsInRoot</c>/<c>Equals</c>
-/// can't be fooled.
+/// FilePath ctor canonicalizes <c>_absolutePath</c>, so any <c>..</c>
+/// segments these verbs introduce via <c>PathHelper.Combine</c> are
+/// resolved before the derived path is stored.
 /// </summary>
 public sealed partial class @this
 {

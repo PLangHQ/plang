@@ -72,13 +72,11 @@ public sealed partial class @this : IAsyncDisposable
     public string? OsDirectory { get; set; }
 
     /// <summary>
-    /// Parent app when this is a child app (e.g. per-test app spun up by
-    /// <c>test.run</c>). Used by <c>path.@this.IsInRoot</c> to inherit the
-    /// parent's filesystem scope — a child app rooted at a narrower
-    /// subdirectory still treats the parent's <c>AbsolutePath</c> as in-root,
-    /// so a test reading a sibling-fixture file under the parent's cwd
-    /// auto-grants instead of escalating to an AuthGate prompt. Null for the
-    /// top-level app constructed by <c>PlangConsole/Program.cs</c>.
+    /// Parent app, when this app was constructed as a child of another.
+    /// A child inherits its parent's filesystem scope: <c>path.@this.IsInRoot</c>
+    /// walks the Parent chain, so a child app rooted at a narrower
+    /// subdirectory still treats the parent's <c>AbsolutePath</c> as in-root.
+    /// Null for top-level apps.
     /// </summary>
     public app.@this? Parent { get; set; }
 
@@ -88,10 +86,9 @@ public sealed partial class @this : IAsyncDisposable
     /// <c>FilePath.ValidatePath</c> both anchor system goals against it, so it
     /// belongs on <c>app</c> rather than on a concrete path subclass.
     /// </summary>
-    // The os/ root anchor. Pure name math against AppContext.BaseDirectory —
-    // routed through PathHelper (the single bridge to System.IO.Path), so no
-    // PLNG002 carve-out is needed here. path.Resolve isn't usable yet because
-    // App is mid-construction (no Context).
+    // The os/ root anchor. Pure name math against AppContext.BaseDirectory;
+    // path.Resolve can't be used because App is still constructing and has
+    // no Context yet, so this routes through PathHelper directly.
     public string OsAbsolutePath =>
         PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, "os"));
 

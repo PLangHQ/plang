@@ -14,45 +14,37 @@ public sealed partial class @this : global::app.types.path.@this
 {
     /// <summary>
     /// Constructs a FilePath. The incoming <paramref name="absolutePath"/> is
-    /// canonicalized with <see cref="PathHelper.GetFullPath(string)"/> so
-    /// <c>..</c>/<c>.</c> segments are resolved before being stored — this is
-    /// the security F1 fix: <c>IsInRoot</c>'s textual prefix-match was
-    /// bypassable with an un-canonicalized path. Canonicalizing here means
-    /// every code path (Resolve, the derivation verbs, the scheme registry,
-    /// the implicit <c>string→path</c> operator) inherits the fix for free.
-    /// Pure string operation — no filesystem access.
+    /// canonicalized via <see cref="Canonicalize"/> before being stored, so
+    /// every code path that produces a FilePath (Resolve, derivation verbs,
+    /// scheme registry, implicit <c>string→path</c>) gets the canonical
+    /// invariant for free.
     /// </summary>
     public @this(string absolutePath, actor.context.@this? context = null, object? content = null, string? source = null)
         : base(Canonicalize(absolutePath), context, content, source)
     {
     }
 
+    // Invariant: _absolutePath always names the same OS file as the same
+    // string handed to System.IO would. The permission gate's prefix-match
+    // on _absolutePath is only sound when this holds — `..` and `.` segments
+    // must be resolved before the string is stored.
     private static string Canonicalize(string absolutePath)
     {
         if (string.IsNullOrEmpty(absolutePath)) return absolutePath;
-        // Only canonicalize rooted inputs. Relative strings reach the ctor
-        // only via the implicit string→path operator (test fixtures, in-memory
-        // goals built from literals) — anchoring those to CWD would change
-        // their identity unrelated to the F1 fix. The F1 attack requires a
-        // rooted input (file.Resolve's Path.Combine of rooted runtimeDir +
-        // relative ".." produces a rooted string with .. surviving).
+        // Relative inputs anchor to CWD inside GetFullPath, which would
+        // silently change their identity. They never reach IO without first
+        // being routed through a producer that knows the intended anchor.
         if (!PathHelper.IsPathRooted(absolutePath)) return absolutePath;
-        // Preserve the OS-rooted "//x" prefix that ValidatePath keeps intact
-        // for idempotency — GetFullPath would collapse "//tmp/x" to "/tmp/x".
-        // Those paths are out-of-root and gated by Authorize regardless, so
-        // the F1 attack doesn't apply.
+        // The "//x" prefix is an OS-rooted out-of-root form preserved
+        // verbatim for idempotency under repeat normalization. GetFullPath
+        // would collapse "//tmp/x" to "/tmp/x" and break that.
         if (absolutePath.StartsWith("//")) return absolutePath;
-        // Filter the catch to GetFullPath's actual failure modes — bare catch
-        // would swallow OOM / StackOverflow / unexpected runtime issues and
-        // hand AuthGate the un-canonical string silently. Anything outside
-        // this list should fail loud. (codeanalyzer v2 N2)
-        try { return PathHelper.GetFullPath(absolutePath); }
-        catch (System.Exception ex) when (
-            ex is System.ArgumentException
-               or System.IO.PathTooLongException
-               or System.NotSupportedException
-               or System.Security.SecurityException)
-        { return absolutePath; }
+        // GetFullPath throws on inputs that can't be a real OS path
+        // (ArgumentException, PathTooLongException, NotSupportedException,
+        // SecurityException). Let those escape — the invariant above can't
+        // hold for a string that isn't a path, and a silent fallback would
+        // store a value whose textual form lies about what it points to.
+        return PathHelper.GetFullPath(absolutePath);
     }
 
     public override string Scheme => "file";

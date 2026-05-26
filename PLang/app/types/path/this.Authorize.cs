@@ -93,18 +93,16 @@ public partial class @this
         Verb:  verb,
         Match: MatchMode.Exact);
 
+    // A child app inherits its parent's filesystem scope: paths under the
+    // parent's root/os-folder are still in-root from a child's perspective.
+    // The os-folder checks cover system-built-in goals (test, build) at any
+    // depth. The MaxDepth cap turns an accidental Parent cycle into a quiet
+    // false (out-of-root) instead of an infinite loop on the Authorize hot
+    // path; 16 is well above any legitimate child-app nesting.
     protected bool IsInRoot()
     {
         var app = Context?.App;
         if (app == null) return false;
-        // Walk the parent chain — a child app (e.g. per-test app from test.run)
-        // inherits its parent's filesystem scope. The top-level app's parent
-        // is null, so this terminates. The os-folder checks cover system
-        // built-in goals (test, build) regardless of where in the chain we are.
-        //
-        // Depth cap guards against a future caller setting up a cycle
-        // (a.Parent = b; b.Parent = a) — without it, IsInRoot would loop
-        // forever on every Authorize. (codeanalyzer v2 N1)
         const int MaxDepth = 16;
         for (int depth = 0; app != null && depth < MaxDepth; depth++)
         {

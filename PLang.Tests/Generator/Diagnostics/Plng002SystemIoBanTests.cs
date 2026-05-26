@@ -115,9 +115,9 @@ public class Plng002SystemIoBanTests
 
     [Test] public async Task Fires_OnSystemIoPathDirectorySeparatorChar_UnderModulesNamespace()
     {
-        // Post-PathHelper: separator constants must route through PathHelper
-        // too. The old AllowedSystemIoPathMembers allowlist was dropped —
-        // type-based exemption beats file-path-keyed string lists.
+        // Separator constants are not allowlisted at the symbol level — like
+        // any other System.IO.Path.* member, they must route through
+        // PathHelper. Type-based exemption, not symbol-name allowlist.
         var source = """
             namespace app.modules.foo {
                 public class Handler {
@@ -161,9 +161,8 @@ public class Plng002SystemIoBanTests
 
     [Test] public async Task DoesNotFire_OnSystemIoPath_InsidePathHelper()
     {
-        // PathHelper IS the bridge — its body legitimately imports
-        // System.IO.Path.*. This carve-out replaces the old whole-file
-        // exemption for app/this.cs and the AllowedSystemIoPathMembers list.
+        // PathHelper is the single allowed bridge to System.IO.Path.*; its
+        // own body necessarily imports those members.
         var source = """
             namespace app.Utils {
                 internal static class PathHelper {
@@ -178,9 +177,8 @@ public class Plng002SystemIoBanTests
 
     [Test] public async Task Fires_OnSystemIoFile_InsidePathHelper()
     {
-        // PathHelper is name-math only. A would-be addition that reaches
-        // actual IO must fire — that's the test_designer-shaped guardrail
-        // against future "PathHelper.ReadAllText" drift.
+        // PathHelper is name-math only. An addition that reaches actual IO
+        // must fire — guards against future "PathHelper.ReadAllText" drift.
         var source = """
             namespace app.Utils {
                 internal static class PathHelper {
