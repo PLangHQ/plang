@@ -30,10 +30,19 @@ public partial class report : IContext
         var testing = Context.App!.Tester;
         var format = Format?.Value ?? testing.Format;
 
-        var console = new StringBuilder();
-        RenderConsole(console, results, testing);
-        RenderCoverageTables(console, testing, Context.App.Modules);
-        await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, console.ToString());
+        // Suppress the console summary when we're nested inside another test
+        // (CurrentTest is set by test.run when it spins up the per-test child
+        // App). The parent test consumes results via the returned Data
+        // Properties (content, summaryPass, summaryFail, etc.); printing the
+        // nested run's status lines to stdout would otherwise pollute the
+        // outer `plang --test` output and look like top-level test failures.
+        if (testing.CurrentTest == null)
+        {
+            var console = new StringBuilder();
+            RenderConsole(console, results, testing);
+            RenderCoverageTables(console, testing, Context.App.Modules);
+            await Context.App.CurrentActor.Channels.WriteTextAsync(global::app.channels.@this.Output, console.ToString());
+        }
 
         // Write the file artefact through path verbs (gated). .test/ lives
         // at the app root.
