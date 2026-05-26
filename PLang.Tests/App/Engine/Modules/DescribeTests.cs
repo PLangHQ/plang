@@ -11,7 +11,7 @@ public class DescribeTests
         var modules = new AppModules();
         modules.RegisterType("testmod", "getpath", typeof(FakeGetPath));
 
-        var actions = modules.Describe();
+        var actions = await modules.Describe();
         var action = actions.First(a => a.Module == "testmod" && a.ActionName == "getpath");
 
         await Assert.That(action.ReturnType).IsNotNull();
@@ -32,7 +32,7 @@ public class DescribeTests
         var modules = new AppModules();
         modules.RegisterType("testmod", "basic", typeof(FakeBasicAction));
 
-        var actions = modules.Describe();
+        var actions = await modules.Describe();
         var action = actions.First(a => a.Module == "testmod" && a.ActionName == "basic");
 
         await Assert.That(action.ReturnType).IsNull();
@@ -44,7 +44,7 @@ public class DescribeTests
         var modules = new AppModules();
         modules.RegisterType("testmod", "datapath", typeof(FakeDataPathAction));
 
-        var actions = modules.Describe();
+        var actions = await modules.Describe();
         var action = actions.First(a => a.Module == "testmod" && a.ActionName == "datapath");
 
         var pathParam = action.Parameters!.FirstOrDefault(d => d.Name == "Path");

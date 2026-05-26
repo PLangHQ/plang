@@ -45,9 +45,9 @@ public class ModulesDescribeReturnTypeTests
         catch { /* best effort */ }
     }
 
-    private global::app.goals.goal.steps.step.actions.action.@this Find(string module, string action)
+    private async Task<global::app.goals.goal.steps.step.actions.action.@this> Find(string module, string action)
     {
-        var catalog = _app.Modules.Describe();
+        var catalog = await _app.Modules.Describe();
         var row = catalog.FirstOrDefault(a => a.Module == module && a.ActionName == action);
         if (row == null)
             throw new InvalidOperationException($"catalog missing {module}.{action} — fixture stale");
@@ -61,7 +61,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task ReturnTypeName_BareData_IsData()
     {
         // variable.set returns bare Task<Data>.
-        var row = Find("variable", "set");
+        var row = await Find("variable", "set");
         await Assert.That(row.ReturnTypeName).IsEqualTo("data");
     }
 
@@ -71,7 +71,7 @@ public class ModulesDescribeReturnTypeTests
     {
         // file.exists.Run() returns Task<Data<path>> — the path is the value;
         // condition.compare returns Data<bool>. Use compare to pin "bool".
-        var row = Find("condition", "compare");
+        var row = await Find("condition", "compare");
         await Assert.That(row.ReturnTypeName).IsEqualTo("bool");
     }
 
@@ -80,7 +80,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task ReturnTypeName_DataOfPath_IsPath()
     {
         // file.save → Task<Data<path>>.
-        var row = Find("file", "save");
+        var row = await Find("file", "save");
         await Assert.That(row.ReturnTypeName).IsEqualTo("path");
     }
 
@@ -89,7 +89,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task ReturnTypeName_DataOfListOfPath_IsListOfPath()
     {
         // file.list → Task<Data<List<path>>>.
-        var row = Find("file", "list");
+        var row = await Find("file", "list");
         await Assert.That(row.ReturnTypeName).IsEqualTo("list<path>");
     }
 
@@ -98,7 +98,7 @@ public class ModulesDescribeReturnTypeTests
     [Test]
     public async Task ReturnTypeName_DataOfIdentity_IsIdentity()
     {
-        var row = Find("identity", "get");
+        var row = await Find("identity", "get");
         await Assert.That(row.ReturnTypeName).IsEqualTo("identity");
     }
 
@@ -106,7 +106,7 @@ public class ModulesDescribeReturnTypeTests
     [Test]
     public async Task ReturnTypeName_DataOfListOfIdentity_IsListOfIdentity()
     {
-        var row = Find("identity", "list");
+        var row = await Find("identity", "list");
         await Assert.That(row.ReturnTypeName).IsEqualTo("list<identity>");
     }
 
@@ -116,7 +116,7 @@ public class ModulesDescribeReturnTypeTests
     [Test]
     public async Task ReturnTypeName_AllCatalogRows_HaveAValue()
     {
-        var catalog = _app.Modules.Describe();
+        var catalog = await _app.Modules.Describe();
         var missing = catalog.Where(a => string.IsNullOrEmpty(a.ReturnTypeName))
                              .Select(a => $"{a.Module}.{a.ActionName}")
                              .ToList();

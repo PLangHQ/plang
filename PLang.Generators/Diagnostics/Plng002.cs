@@ -32,9 +32,9 @@ namespace PLang.Generators.Diagnostics;
 /// </list>
 ///
 /// <para>Also exempts <c>PLang.Generators/**</c> (meta, not runtime),
-/// <c>obj/</c> and <c>.g.cs</c> (generated), and
-/// <c>PLang/app/modules/MarkdownTeaching.cs</c> (separately tracked under
-/// security F2 — to be lifted to the verb surface).</para>
+/// <c>obj/</c> and <c>.g.cs</c> (generated). No other file-path exemptions
+/// remain — every runtime <c>System.IO.*</c> reach lives in one of the two
+/// carve-out sites above.</para>
 /// </summary>
 public static class Plng002
 {
@@ -74,9 +74,6 @@ public static class Plng002
         // Normalize separators for cross-platform substring tests.
         var p = filePath!.Replace('\\', '/');
         if (!p.Contains("/PLang/app/") && !p.Contains("/PLang.Generators/")) return false;
-        // Exempt the markdown teaching loader — separately tracked under
-        // security F2 (will be lifted to the verb surface).
-        if (p.EndsWith("/PLang/app/modules/MarkdownTeaching.cs")) return false;
         // Exempt generators — they're meta, not app code.
         if (p.Contains("/PLang.Generators/")) return false;
         // Exempt generated source.

@@ -19,9 +19,9 @@ public class Default : IBuilder
 
     // --- Actions ---
 
-    public Task<data.@this> Actions(GetActions action)
+    public async Task<data.@this> Actions(GetActions action)
     {
-        var catalog = action.Context.App.Modules.Describe();
+        var catalog = await action.Context.App.Modules.Describe();
 
         // Optional filter: restrict the catalog to the named module.action
         // entries. The Compile step passes the planner's action set so the
@@ -34,15 +34,15 @@ public class Default : IBuilder
             foreach (var a in catalog)
                 if (wanted.Contains($"{a.Module}.{a.ActionName}"))
                     subset.Add(a);
-            return Task.FromResult(data.@this.Ok(subset));
+            return data.@this.Ok(subset);
         }
 
-        return Task.FromResult(data.@this.Ok(catalog));
+        return data.@this.Ok(catalog);
     }
 
     // --- Types ---
 
-    public data.@this Types(types action)
+    public async Task<data.@this> Types(types action)
     {
 
         // The catalog is a structured object now — Build assembles primitives and
@@ -70,7 +70,7 @@ public class Default : IBuilder
             // from the return-type name. The Parameter.Value strings already
             // carry PLang type names (e.g. "path", "actor?", "%var% string"), so
             // tokenize on word boundaries and intersect with the type catalog.
-            foreach (var a in modules.Describe())
+            foreach (var a in await modules.Describe())
             {
                 if (!wantedActions.Contains($"{a.Module}.{a.ActionName}")) continue;
                 foreach (var p in a.Parameters ?? new())
