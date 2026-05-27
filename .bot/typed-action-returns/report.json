@@ -220,6 +220,58 @@
         "health": "green \u2014 no blocker; PLang.Tests 3123/3123 + plang --test 208/208 per coder handoff; all findings are polish/follow-up.",
         "notes": "11 findings: 4 readability, 3 simplification, 2 behavioral, 1 leaf-Data, 1 polish carried from v1. Most actionable: HTTP leaf helpers (F3, F4)."
       }
+    },
+    {
+      "id": "d7aae825-3b2c-4cf5-9189-655cf3f7932b",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-05-27T13:00:00Z",
+      "timestamp_end": "2026-05-27T13:49:44Z",
+      "intent": "Re-review v2 follow-up commits on typed-action-returns",
+      "before": {
+        "assumptions": "Coder addressed F1-F7, F9-F11 across 4 commits (117b754f3..HEAD); F8 closed won't-fix by architect. PLang.Tests + plang --test green per coder handoff.",
+        "risk": "Spill-over property rename (Mock.ActionPattern -> Pattern), precedence swap in getTypes.cs, new registered-types gate in file/read.cs each carry small behavioral risk worth re-pass."
+      },
+      "plan": ".bot/typed-action-returns/codeanalyzer/v3/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/mock/Mock/this.cs",
+            "PLang/app/modules/builder/code/Default.cs",
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/goal/getTypes.cs",
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/modules/mock/intercept.cs",
+            "PLang/app/modules/mock/verify.cs",
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/modules/test/discover.cs",
+            "PLang/app/modules/test/report.cs",
+            "PLang/app/modules/test/run.cs",
+            "PLang/app/tester/Run.cs",
+            "PLang/app/types/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Five-pass + leaf-Data + Data<T> footgun on the 13-file v2-followup diff. All 10 actionable findings closed; 2 info-level observations recorded (N1 stale %__data__% comments, N2 mild warning-gate side effect)."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/codeanalyzer/v3/plan.md",
+            ".bot/typed-action-returns/codeanalyzer/v3/report.md",
+            ".bot/typed-action-returns/codeanalyzer/v3/verdict.json",
+            ".bot/typed-action-returns/codeanalyzer/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard codeanalyzer artifacts; summary overwritten to cover v3."
+        }
+      ],
+      "after": {
+        "status": "PASS",
+        "health": "green - branch is in shape to merge; build clean, test posture green per handoff.",
+        "notes": "All v2 findings closed. N1 (3 stale %__data__% comments in goal/getTypes.cs) and N2 (registered-types gate also silences missing-file warning for unregistered exts) recorded as info-level only."
+      }
     }
   ]
 }
