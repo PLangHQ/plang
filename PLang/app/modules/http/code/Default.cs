@@ -694,36 +694,36 @@ public sealed class Default : IHttp
     {
         var props = data.Properties;
 
-        props.Add(new data.@this("Url", request.RequestUri?.ToString()));
-        props.Add(new data.@this("Method", request.Method.Method));
+        props["Url"] = request.RequestUri?.ToString();
+        props["Method"] = request.Method.Method;
 
-        var reqHeaders = new Dictionary<string, string>();
+        var reqHeaders = new Dictionary<string, object?>();
         foreach (var h in request.Headers)
             reqHeaders[h.Key] = string.Join(", ", h.Value);
-        props.Add(new data.@this("RequestHeaders", reqHeaders));
+        props["RequestHeaders"] = reqHeaders;
 
         if (request.Content != null)
         {
-            props.Add(new data.@this("ContentType", request.Content.Headers.ContentType?.ToString()));
-            props.Add(new data.@this("ContentLength", request.Content.Headers.ContentLength));
+            props["ContentType"] = request.Content.Headers.ContentType?.ToString();
+            props["ContentLength"] = request.Content.Headers.ContentLength;
         }
 
-        props.Add(new data.@this("StatusCode", (int)response.StatusCode));
-        props.Add(new data.@this("Status", response.ReasonPhrase));
-        props.Add(new data.@this("IsSuccess", response.IsSuccessStatusCode));
+        props["StatusCode"] = (int)response.StatusCode;
+        props["Status"] = response.ReasonPhrase;
+        props["IsSuccess"] = response.IsSuccessStatusCode;
 
-        var respHeaders = new Dictionary<string, string>();
+        var respHeaders = new Dictionary<string, object?>();
         foreach (var h in response.Headers)
             respHeaders[h.Key] = string.Join(", ", h.Value);
-        props.Add(new data.@this("Headers", respHeaders));
+        props["Headers"] = respHeaders;
 
-        var contentHeaders = new Dictionary<string, string>();
+        var contentHeaders = new Dictionary<string, object?>();
         foreach (var h in response.Content.Headers)
             contentHeaders[h.Key] = string.Join(", ", h.Value);
-        props.Add(new data.@this("ContentHeaders", contentHeaders));
+        props["ContentHeaders"] = contentHeaders;
 
         if (response.Content.Headers.ContentType?.CharSet != null)
-            props.Add(new data.@this("Charset", response.Content.Headers.ContentType.CharSet));
+            props["Charset"] = response.Content.Headers.ContentType.CharSet;
     }
 
     // --- Streaming ---

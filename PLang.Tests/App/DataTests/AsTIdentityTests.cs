@@ -48,7 +48,7 @@ public class AsTIdentityTests
         source.Properties.Set("meta", "abc");
         var result = source.As<int>();
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
-        await Assert.That(result.Properties["meta"]!.Value).IsEqualTo("abc");
+        await Assert.That(result.Properties["meta"]).IsEqualTo("abc");
     }
 
     // Rule 2 — variance fast path. Data<List<int>>.As<IEnumerable>() produces
@@ -80,7 +80,7 @@ public class AsTIdentityTests
         var wrapped = source.As<System.Collections.IEnumerable>();
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
-        await Assert.That(wrapped.Properties["annot"]!.Value).IsEqualTo("via-source");
+        await Assert.That(wrapped.Properties["annot"]).IsEqualTo("via-source");
     }
 
     // Variance fast path aliases all three event lists. Subscribing on either
@@ -126,7 +126,7 @@ public class AsTIdentityTests
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That(wrapped.Value).IsEqualTo("42");
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
-        await Assert.That(wrapped.Properties["note"]!.Value).IsEqualTo("hello");
+        await Assert.That(wrapped.Properties["note"]).IsEqualTo("hello");
     }
 
     // Conversion failure path. As<T>() on a value that can't convert to T

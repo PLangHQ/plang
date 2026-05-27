@@ -101,7 +101,7 @@ public partial class Set : IContext, IBuildValidatable
     {
         if (source.Properties.Count == 0 || ReferenceEquals(source, target)) return;
         foreach (var p in source.Properties)
-            target.Properties.Set(p.Name, p.Value, p.Type);
+            target.Properties[p.Key] = p.Value;
     }
 
     /// <summary>

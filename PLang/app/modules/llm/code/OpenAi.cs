@@ -984,7 +984,7 @@ public sealed class OpenAi : ILlm
 
     private static void SetProp(data.@this data, string name, object? value)
     {
-        data.Properties[name] = new data.@this(name, value);
+        data.Properties[name] = value;
     }
 
     private static List<LlmMessage> CloneMessages(List<LlmMessage> messages)

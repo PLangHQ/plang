@@ -1003,15 +1003,15 @@ public class DataTests
         content.Context = context;
         var wrapped = new Data("", content, Type.FromName("text"));
         wrapped.Context = context;
-        wrapped.Properties.Add(new Data("metadata", "some value"));
+        wrapped.Properties["metadata"] = "some value";
 
         var compressed = wrapped.Compress();
         compressed.Context = context;
         var decompressed = compressed.Decompress();
 
         await Assert.That(decompressed.Success).IsTrue();
-        // Properties are [JsonIgnore] — not preserved through compression cycle
-        await Assert.That(decompressed.Properties.Count).IsEqualTo(0);
+        // Stage 4: Properties now ride on the wire — they round-trip.
+        await Assert.That(decompressed.Properties["metadata"]).IsEqualTo("some value");
     }
 
     // --- v5: Depth limit tests ---

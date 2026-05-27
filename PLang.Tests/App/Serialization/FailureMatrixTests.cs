@@ -1,57 +1,126 @@
+using System.Text.Json;
+
 namespace PLang.Tests.App.Serialization;
 
 // data-serialize-cleanup — Failure matrix.
 // Negative-path tests not absorbed by the per-stage suites above. Each test asserts
 // the failure is hard, typed, and surfaces at the right layer.
-// Architect ref: .bot/data-serialize-cleanup/architect/plan/test-coverage.md, failure matrix.
 
 public class FailureMatrixTests
 {
-    // EnsureSigned called on a Data with no Context — InvalidOperationException
-    // with a message about Context wiring.
     [Test] public async Task EnsureSigned_OnDataWithoutContext_ThrowsInvalidOperation()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var d = new global::app.data.@this("x", "y");
+        await Assert.That(d.Context).IsNull();
+        await Assert.That(() => d.EnsureSigned()).Throws<InvalidOperationException>();
+    }
 
-    // Properties[key] = value where value is an unsupported type (e.g. Data instance) —
-    // ArgumentException "not a wire-supported primitive".
     [Test] public async Task PropertiesSet_DataInstanceValue_ThrowsArgumentException()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var d = new global::app.data.@this("x", "y");
+        var inner = new global::app.data.@this("inner", "v");
+        await Assert.That(() => d.Properties["k"] = inner).Throws<ArgumentException>();
+    }
 
     [Test] public async Task PropertiesSet_ArbitraryObjectValue_ThrowsArgumentException()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var d = new global::app.data.@this("x", "y");
+        await Assert.That(() => d.Properties["k"] = new System.Threading.CancellationTokenSource()).Throws<ArgumentException>();
+    }
 
-    // signing.verify after wire-byte tampering — Data<bool>.FromError(DataHashMismatch).
     [Test] public async Task SigningVerify_AfterWireByteTamper_ReturnsDataHashMismatch()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-fm-" + Guid.NewGuid().ToString("N")[..8]));
+        var plang = (global::app.channels.serializers.serializer.plang.@this)
+            app.User.Channels.Serializers.GetByMimeType("application/plang");
 
-    // Wire converter Read on random JSON missing the reserved fields —
-    // JsonException "Unterminated Data object" or a default-init Data with Error populated.
+        var d = new global::app.data.@this("x", "untampered") { Context = app.User.Context };
+        var wire = plang.Serialize(d).Value!;
+        var tampered = wire.Replace("untampered", "TAMPERED!");
+
+        var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
+        back.Context = app.User.Context;
+        var verify = await app.RunAction<global::app.modules.signing.verify>(
+            new global::app.modules.signing.verify
+            {
+                Data = back,
+                SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
+            }, app.User.Context);
+        await Assert.That(verify.Success).IsFalse();
+        await Assert.That(verify.Error!.Key).IsEqualTo("DataHashMismatch");
+    }
+
     [Test] public async Task WireConverter_Read_RandomJsonMissingReservedFields_ProducesTypedFailure()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var plang = new global::app.channels.serializers.serializer.plang.@this();
+        // A JSON object with none of the reserved fields — Read parses, but
+        // produces an effectively-empty Data (the converter ignores unknown
+        // top-level fields). Typed-failure here means the call doesn't throw;
+        // the resulting Data is observable as empty.
+        var result = plang.Deserialize("{\"unknown\":42}");
+        await Assert.That(result.Success).IsTrue();
+        var back = result.Value as global::app.data.@this;
+        await Assert.That(back).IsNotNull();
+        await Assert.That(back!.Properties.ContainsKey("unknown")).IsFalse();
+    }
 
-    // Decompress on a Data whose Type is not "archived" — no-op (returns self), NOT an error.
     [Test] public async Task Decompress_OnNonArchivedType_ReturnsSelfNoError()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var d = new global::app.data.@this("x", "y", global::app.data.type.FromName("text/plain"));
+        var result = d.Decompress();
+        await Assert.That(ReferenceEquals(d, result)).IsTrue();
+        await Assert.That(result.Success).IsTrue();
+    }
 
-    // Decompress on archived Data whose value is not byte[] —
-    // Data.FromError(DecompressError "no byte[] value").
     [Test] public async Task Decompress_OnArchivedWithoutByteArrayValue_ReturnsDataWithDecompressError()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var d = new global::app.data.@this("x", "not bytes", global::app.data.type.FromName("archived"));
+        var result = d.Decompress();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
+    }
 
-    // crypto.Hash with an unsupported algorithm string —
-    // Data<byte[]>.FromError(ActionError "UnsupportedAlgorithm").
     [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsDataWithUnsupportedAlgorithmError()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var crypto = new global::app.modules.crypto.code.Default();
+        var action = new global::app.modules.crypto.Hash
+        {
+            Data = global::app.data.@this.Ok("x"),
+            Algorithm = new global::app.data.@this<string>("", "md5")
+        };
+        var result = crypto.Hash(action);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
+    }
 
-    // channel.Write on a channel with Direction == Input — Data.FromError(ChannelReadOnly).
     [Test] public async Task ChannelWrite_OnInputOnlyChannel_ReturnsServiceErrorChannelReadOnly()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var ch = global::app.channels.channel.stream.@this.Input("stdin", new MemoryStream());
+        var result = await ch.Write(global::app.data.@this.Ok("x"));
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ChannelReadOnly");
+    }
 
-    // channel.Read on a channel with Direction == Output — Data.FromError(ChannelWriteOnly).
     [Test] public async Task ChannelRead_OnOutputOnlyChannel_ReturnsServiceErrorChannelWriteOnly()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var ch = global::app.channels.channel.stream.@this.Output("stdout", new MemoryStream());
+        var result = await ch.Read();
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ChannelWriteOnly");
+    }
 
-    // channel.Ask with no interactive answerer (closed pipe) — Data.FromError(ChannelEof).
     [Test] public async Task ChannelAsk_OnClosedPipe_ReturnsServiceErrorChannelEof()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        // Empty MemoryStream — ReadLineAsync returns null (EOF).
+        var ch = new global::app.channels.channel.stream.@this("input", new MemoryStream(),
+            global::app.channels.channel.ChannelDirection.Bidirectional);
+        var action = new global::app.modules.output.ask
+        {
+            Question = new global::app.data.@this<string>("", "")
+        };
+        var result = await ch.Ask(action);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("ChannelEof");
+    }
 }

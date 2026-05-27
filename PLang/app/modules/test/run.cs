@@ -120,7 +120,7 @@ public partial class run : IContext
                         }
                         if (result.Properties.Contains("branchChain"))
                         {
-                            var chain = result.Properties["branchChain"]?.Value as List<string>;
+                            var chain = result.Properties["branchChain"] as List<string>;
                             if (chain != null)
                                 childApp.Tester.Coverage.RecordBranchChain(site, chain);
                         }

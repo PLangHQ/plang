@@ -137,11 +137,10 @@ public sealed class @this
 
         // Signature check (cached per-Data via Properties).
         if (grantData.RawSignature == null) return true; // in-memory unsigned grant
-        var cached = grantData.Properties[VerifiedFlag];
-        if (cached?.Value is bool b) return b;
+        if (grantData.Properties[VerifiedFlag] is bool b) return b;
 
         var verified = await VerifySignature(grantData);
-        grantData.Properties[VerifiedFlag] = new global::app.data.@this(VerifiedFlag, verified);
+        grantData.Properties[VerifiedFlag] = verified;
         return verified;
     }
 

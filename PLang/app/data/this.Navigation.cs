@@ -244,7 +244,7 @@ public partial class @this
         if (val is @this dataVal)
         {
             var dataProp = dataVal.Properties[key];
-            if (dataProp != null) return dataProp;
+            if (dataProp != null) return new @this(key, dataProp, parent: this);
             var dataChild = dataVal.GetChildValue(key);
             if (dataChild.IsInitialized) return dataChild;
         }
@@ -258,7 +258,7 @@ public partial class @this
 
         // Check Data.Properties (extensible key-value pairs on the Data)
         var prop = Properties[key];
-        if (prop != null) return prop;
+        if (prop != null) return new @this(key, prop, parent: this);
 
         // Lazy type conversion — if value is a string with a typed Data, convert on first navigation
         if (val is string && _type != null)
@@ -303,6 +303,14 @@ public partial class @this
     /// </summary>
     private @this GetInfrastructureValue(string key)
     {
+        // Stage 4: Properties win first — `%x!cost%` reads Properties["cost"].
+        // Reflection-discovered Data infrastructure (Name, Type, Error, Success,
+        // subclass properties like Llm) stays available via the same operator
+        // when the key isn't a Property — keeps `%result!Llm%` working while
+        // the Properties scope becomes the primary `!` namespace.
+        if (Properties.ContainsKey(key))
+            return new @this(key, Properties[key], parent: this);
+
         var prop = typeof(@this).GetProperty(key,
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
         if (prop != null)

@@ -71,6 +71,7 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         object? value = null;
         type? typeRef = null;
         app.modules.signing.Signature? signature = null;
+        Properties? properties = null;
 
         while (reader.Read())
         {
@@ -78,6 +79,7 @@ public sealed class WireJsonConverter : JsonConverter<@this>
             {
                 var data = new @this(name, value, typeRef);
                 if (signature != null) data.Signature = signature;
+                if (properties != null) data.Properties = properties;
                 return data;
             }
             if (reader.TokenType != JsonTokenType.PropertyName)
@@ -119,6 +121,9 @@ public sealed class WireJsonConverter : JsonConverter<@this>
                 case "signature":
                     signature = JsonSerializer.Deserialize<app.modules.signing.Signature>(ref reader, options);
                     break;
+                case "properties":
+                    properties = ReadPropertiesObject(ref reader);
+                    break;
                 default:
                     reader.Skip();
                     break;
@@ -126,6 +131,61 @@ public sealed class WireJsonConverter : JsonConverter<@this>
         }
 
         throw new JsonException("Unterminated app.data.@this wire shape");
+    }
+
+    private static Properties ReadPropertiesObject(ref Utf8JsonReader reader)
+    {
+        var props = new Properties();
+        if (reader.TokenType == JsonTokenType.Null) return props;
+        if (reader.TokenType != JsonTokenType.StartObject)
+            throw new JsonException("properties field must be a JSON object");
+
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject) return props;
+            if (reader.TokenType != JsonTokenType.PropertyName)
+                throw new JsonException("Expected property name inside properties object");
+            var key = reader.GetString()!;
+            reader.Read();
+            object? value = ReadPropertyPrimitive(ref reader);
+            props[key] = value;
+        }
+        throw new JsonException("Unterminated properties object");
+    }
+
+    private static object? ReadPropertyPrimitive(ref Utf8JsonReader reader)
+    {
+        switch (reader.TokenType)
+        {
+            case JsonTokenType.Null: return null;
+            case JsonTokenType.String: return reader.GetString();
+            case JsonTokenType.True: return true;
+            case JsonTokenType.False: return false;
+            case JsonTokenType.Number:
+                if (reader.TryGetInt64(out var l)) return l;
+                if (reader.TryGetDecimal(out var dec)) return dec;
+                return reader.GetDouble();
+            case JsonTokenType.StartArray:
+            {
+                var list = new List<object?>();
+                while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+                    list.Add(ReadPropertyPrimitive(ref reader));
+                return list;
+            }
+            case JsonTokenType.StartObject:
+            {
+                var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                while (reader.Read() && reader.TokenType != JsonTokenType.EndObject)
+                {
+                    var key = reader.GetString()!;
+                    reader.Read();
+                    dict[key] = ReadPropertyPrimitive(ref reader);
+                }
+                return dict;
+            }
+            default:
+                throw new JsonException($"Unexpected token in property value: {reader.TokenType}");
+        }
     }
 
     // A JSON object with both "name" and "value" keys is the canonical Data
@@ -181,6 +241,23 @@ public sealed class WireJsonConverter : JsonConverter<@this>
 
         writer.WritePropertyName("value");
         JsonSerializer.Serialize(writer, data.Value, options);
+
+        // properties — nested object, omitted when empty to keep the wire compact.
+        // Sign-if-missing walks Value-graph Datas only, never Properties; the
+        // outer Data's signature covers the canonicalized wire (including this
+        // nested object), so tampering with any Property still invalidates the
+        // outer signature, but no per-Property attestations are conjured.
+        if (data.Properties.Count > 0)
+        {
+            writer.WritePropertyName("properties");
+            writer.WriteStartObject();
+            foreach (var kvp in data.Properties)
+            {
+                writer.WritePropertyName(kvp.Key);
+                JsonSerializer.Serialize(writer, kvp.Value, options);
+            }
+            writer.WriteEndObject();
+        }
 
         if (!isHashOuter && data.RawSignature != null)
         {

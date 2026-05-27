@@ -1,33 +1,86 @@
+using System.Text.Json;
+
 namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
 // data-serialize-cleanup — Integration Cut 4: Properties wire shape + navigation.
-//
-// Setup: memory channel, Mime = "application/plang", actor context wired.
-// Capture: d = Data.Ok("Hello!", name: "response");
-//          d.Properties["cost"] = 100; d.Properties["model"] = "claude-opus-4-7";
-//          await channel.WriteAsync(d); then ReadAsync.
-//
-// Proves end-to-end:
-//   - Properties round-trip through the nested wire shape
-//   - Property keys are unconstrained (no reserved-key throw)
-//   - canonicalization binds Properties
-//   - `!` navigation reaches the correct store (sibling .goal test asserts %response!cost%)
 
 public class Cut4_PropertiesWireTests
 {
-    // Five reserved top-level fields including a nested `properties` object.
+    private static global::app.@this NewApp() => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        "plang-cut4-" + Guid.NewGuid().ToString("N")[..8]));
+
+    private static async Task<(string wire, global::app.data.@this back, global::app.@this app)> WriteAndRead()
+    {
+        var app = NewApp();
+        var plang = (global::app.channels.serializers.serializer.plang.@this)
+            app.User.Channels.Serializers.GetByMimeType("application/plang");
+        var d = new global::app.data.@this("response", "Hello!") { Context = app.User.Context };
+        d.Properties["cost"] = 100;
+        d.Properties["model"] = "claude-opus-4-7";
+        var wire = plang.Serialize(d).Value!;
+        var back = (global::app.data.@this)plang.Deserialize(wire).Value!;
+        return (wire, back, app);
+    }
+
     [Test] public async Task Cut4_WireJson_HasFiveTopLevelFields_IncludingNestedProperties()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var (wire, _, app) = await WriteAndRead();
+        await using (app)
+        {
+            using var doc = JsonDocument.Parse(wire);
+            var fields = new HashSet<string>();
+            foreach (var p in doc.RootElement.EnumerateObject()) fields.Add(p.Name);
+            await Assert.That(fields.Contains("name")).IsTrue();
+            await Assert.That(fields.Contains("type")).IsTrue();
+            await Assert.That(fields.Contains("value")).IsTrue();
+            await Assert.That(fields.Contains("properties")).IsTrue();
+            await Assert.That(fields.Contains("signature")).IsTrue();
+        }
+    }
 
-    // properties is nested: { "cost": 100, "model": "claude-opus-4-7" }. No top-level cost/model.
     [Test] public async Task Cut4_PropertiesObject_IsNested_NotFlattenedToRoot()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var (wire, _, app) = await WriteAndRead();
+        await using (app)
+        {
+            using var doc = JsonDocument.Parse(wire);
+            var props = doc.RootElement.GetProperty("properties");
+            await Assert.That(props.ValueKind).IsEqualTo(JsonValueKind.Object);
+            await Assert.That(props.GetProperty("cost").GetInt64()).IsEqualTo(100L);
+            await Assert.That(props.GetProperty("model").GetString()).IsEqualTo("claude-opus-4-7");
+            // Not at root.
+            await Assert.That(doc.RootElement.TryGetProperty("cost", out _)).IsFalse();
+        }
+    }
 
-    // read.Properties["cost"] == 100L (JSON int promotion); ["model"] == string verbatim.
     [Test] public async Task Cut4_ReadBack_PropertiesValuesPreserved_IntPromotedToLong()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var (_, back, app) = await WriteAndRead();
+        await using (app)
+        {
+            await Assert.That(back.Properties["cost"]).IsEqualTo(100L);
+            await Assert.That(back.Properties["model"]).IsEqualTo("claude-opus-4-7");
+        }
+    }
 
-    // Mutating properties.cost in the wire JSON (re-encode without re-signing) fails verify.
     [Test] public async Task Cut4_TamperingPropertyValue_FailsOuterSignatureVerify()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var (wire, _, app) = await WriteAndRead();
+        await using (app)
+        {
+            var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
+            await Assert.That(tampered).IsNotEqualTo(wire);
+            var plang = (global::app.channels.serializers.serializer.plang.@this)
+                app.User.Channels.Serializers.GetByMimeType("application/plang");
+            var back = (global::app.data.@this)plang.Deserialize(tampered).Value!;
+            back.Context = app.User.Context;
+            var verify = await app.RunAction<global::app.modules.signing.verify>(
+                new global::app.modules.signing.verify
+                {
+                    Data = back,
+                    SkipFreshnessCheck = new global::app.data.@this<bool>("", true)
+                }, app.User.Context);
+            await Assert.That(verify.Success).IsFalse();
+        }
+    }
 }
