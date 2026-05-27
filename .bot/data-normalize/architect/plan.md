@@ -1,5 +1,7 @@
 # Data Structural Normalization
 
+> **Note for downstream bots (coder, test-designer):** Every code snippet, type signature, method name, file path, and test case shown in this plan and its stage / topic files is a **suggestion** that captures architect intent — not a contract. You own your code and tests. Reshape, rename, restructure, or replace anything below as the real constraints of implementation demand. Push back if the design itself looks wrong; the architect would rather hear it than have you contort the code.
+
 ## Why
 
 The trigger from the design conversation: "if Data is opaque, how does a non-reflection format like protobuf encode it?" JSON gets a free pass because STJ has reflection — hand it any C# object, it walks the type metadata. Protobuf doesn't. MsgPack doesn't. CBOR doesn't. Any format that needs schema or registered types breaks the current model.
@@ -155,22 +157,37 @@ For `As<List<int>>()`: walk `List<int>` value (already primitives), return direc
 
 The reflection happens once per type in As&lt;T&gt;'s property-lookup cache, mirroring how Normalize works on the way out.
 
-## Cross-cutting decisions still to settle
+## Cross-cutting decisions (settled)
 
-- **Eager vs lazy normalize.** Eager: normalize at construction-time, so `data.Value` always has the narrowed contract. Lazy: normalize at serialize-time only, `data.Value` keeps `object?` in memory. Lazy is less invasive but means in-memory inspection of `data.Value` has two possible shapes. Recommendation: **lazy first** — keeps the migration tractable.
-- **Cycle detection.** The Normalize walker needs to track visited objects to avoid infinite loops on circular references. STJ has this already; ours needs to. Bounded depth check + visited-set.
-- **Custom serialization.** Types that want to control their wire shape implement `IDataNormalizable` (or similar): `object? ToWireValue()`. DateTime → ISO string; decimal → string; user-defined oddities → user's choice. Without the interface, default reflection.
-- **`[WireIgnore]` / `[WireInclude]` attributes.** Mirror today's `[JsonIgnore]` / `[Out]`. Probably reuse `[Out]` discipline if the semantics align.
+- **Normalize is always lazy.** Runs at serialize-time only. `data.Value` keeps `object?` in memory; the narrowed contract applies to the *wire* tree, not the in-memory tree. Less invasive (existing `data.Value as SomeType` call sites keep working), and we don't pay normalization cost for values that are never serialized.
+- **Cycle detection — bounded.** Normalize tracks visited objects (visited-set) and enforces a max-depth cap. Hitting either is a hard error at serialize-time, not silent truncation. STJ has the equivalent; ours needs to match.
+- **Wire-inclusion uses `View.Out`.** No new `[WireIgnore]` / `[WireInclude]` attributes. The wire serializer runs in `View.Out` mode — properties tagged `[Out]` are serialized; `[Sensitive]` excludes. Both attributes already exist in `PLang/app/View.cs` and govern the existing JSON-out path. The wire path inherits the same discipline.
+- **`[Masked]` — new attribute for observable-but-redacted properties.** Tag a property `[Out, Masked]` and its name travels on the wire but its value is replaced with `"****"`. Canonical use: `setting.value` — receivers see that `DATABASE_URL` is configured (useful for diagnostics) but never see the secret. Distinct from `[Sensitive]` (which excludes entirely). Honored in both Out and Debug views — debug never unmasks. Joins the `View.cs` attribute cluster in Stage 1.
+- **Debug mode bypasses the `[Out]` filter.** When the serializer runs in debug mode, every property goes on the wire — no per-property `[Debug]` tag needed. The only filters that persist in debug: `[Sensitive]` (always excluded) and `[Masked]` (value still `"****"`). The existing `View.Debug` enum + `[Debug]` attribute in `PLang/app/View.cs` stay for the LLM-builder and other views; the wire serializer just doesn't consult them.
+- **No custom-serialization escape hatch.** Every type serializes as its reflected (`[Out]`-filtered) property bag — no `IDataNormalizable` interface, no opt-out of reflection. Types like `path` whose properties are derived from a canonical form still ride on the wire as the full filtered bag (`{ Scheme, Relative }` for path). The receiver re-derives everything via per-type `As<T>` (e.g. `path.Resolve(Relative, context)`). No type in the inventory genuinely needs to collapse to a non-object wire form.
+- **`RawSignature` is deleted.** Legacy from when `Signature.get` had a lazy-populate side effect (stage 2a.7 removed that). The four callers (signing.verify Ed25519, actor/permission, plang serializer × 2) migrate to `Signature` directly. Folded into Stage 1 since we're touching Data anyway.
+
+The full per-type `[Out]` proposal is in [`plan/wire-out-attributes.md`](plan/wire-out-attributes.md) — 13 in-scope domain types with property-level decisions and rationale.
 
 ## Stages
 
-To be carved when this branch starts in earnest. Rough outline:
+Each stage carved as `stage-N-<slug>.md` at the architect root. Linear dependency chain — each builds on the previous.
 
-1. **Value contract narrowed + Normalize implemented.** Add the method on Data; wire it into the serializer entry point. Migration plan for `data.Value as SomeType` call sites.
-2. **`IWriter` protocol + JsonWriter implementation.** First format adapter; should produce byte-identical output to the current STJ path so all existing tests pass.
-3. **As&lt;T&gt; rewritten as tree-walker.** Replaces the STJ-deserialize path. Property-lookup cache.
-4. **Cycle detection, custom serialization extension, `[WireIgnore]` discipline.** The polish.
-5. **Second format proof — protobuf adapter (or MsgPack).** Demonstrates the architecture works for non-reflection encoding. Probably stays behind a feature flag until tested.
+| Stage | File | Status | Goal |
+|-------|------|--------|------|
+| 1 | [stage-1-out-discipline.md](stage-1-out-discipline.md) | pending | Apply `[Out]` per the wire-out-attributes inventory. Delete `RawSignature`. Surface-only prep — no Normalize yet. |
+| 2 | [stage-2-normalize-jsonwriter.md](stage-2-normalize-jsonwriter.md) | pending | Add `Data.Normalize()` (lazy, bounded). Introduce `IWriter` protocol. Ship `JsonWriter` as the first concrete adapter. Replace path's existing JsonConverter. |
+| 3 | [stage-3-as-tree-walker.md](stage-3-as-tree-walker.md) | pending | Rewrite `As<T>` to walk the normalized tree instead of delegating to STJ reflection. Property-lookup cache. Per-type round-trip via `path.Resolve`-style hooks. |
+| 4 | [stage-4-second-format.md](stage-4-second-format.md) | pending | Prove the architecture isn't JSON-coupled — ship a second `IWriter` (protobuf or MsgPack). Feature-flagged. This is the load-bearing stage that validates the whole design. |
+
+Stages 1–3 are the floor. Stage 4 is the proof — if it lands cleanly, the data-normalize bet paid off.
+
+## Test handoff
+
+Test material for test-designer lives in `plan/`:
+
+- [`plan/test-strategy.md`](plan/test-strategy.md) — narrative: scope, layer mapping (C# / goal / integration), integration cuts.
+- [`plan/test-coverage.md`](plan/test-coverage.md) — heavy reference: coverage matrix, failure matrix, new surfaces inventory.
 
 ## Out of scope
 
