@@ -1,50 +1,164 @@
+using System.Reflection;
+using app.modules;
+using app.modules.builder.code;
+
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 4 — (type) hint Compile rule, multi-segment GetByExtension, precedence.
-// Architect: .bot/typed-action-returns/architect/stages.md (Stage 4, items 4-6)
-// Plan: .bot/typed-action-returns/architect/plan.md (A.5)
+// Contract: user-supplied (type) hints win over Build() inference, and the
+// serializer registry walks multi-segment extensions (.junit.xml) before
+// falling back to single-segment.
 
 public class Stage4_TypeHintPrecedenceTests
 {
+    private global::app.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup()
+    {
+        _app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-stage4hint-" + System.Guid.NewGuid().ToString("N")[..8]));
+    }
+
+    [After(Test)]
+    public async Task TearDown() { await _app.DisposeAsync(); }
+
+    private static PrAction Make(string module, string action, params (string name, object? value)[] parameters)
+        => new PrAction
+        {
+            Module = module,
+            ActionName = action,
+            Parameters = parameters.Select(p => new Data(p.name, p.value)).ToList()
+        };
+
+    private static StepActions ActionsOf(params PrAction[] actions)
+    {
+        var s = new StepActions();
+        foreach (var a in actions) s.Add(a);
+        return s;
+    }
+
     [Test]
     public async Task SerializersGetByExtension_SingleSegment_Resolves()
-        // Existing behaviour: GetByExtension(".json") resolves the JsonSerializer.
-        => Assert.Fail("Not implemented");
+    {
+        var json = _app.User.Channels.Serializers.GetByExtension(".json");
+        await Assert.That(json).IsNotNull();
+    }
+
+    private sealed class StubSerializer : global::app.channels.serializers.serializer.ISerializer
+    {
+        public string ContentType { get; init; } = "";
+        public string FileExtension { get; init; } = "";
+        public Task SerializeAsync(System.IO.Stream s, object? v, System.Type? t = null, System.Threading.CancellationToken ct = default) => Task.CompletedTask;
+        public Task<object?> DeserializeAsync(System.IO.Stream s, System.Type t, System.Threading.CancellationToken ct = default) => Task.FromResult<object?>(null);
+        public Task<T?> DeserializeAsync<T>(System.IO.Stream s, System.Threading.CancellationToken ct = default) => Task.FromResult(default(T));
+        public string Serialize(object? v, System.Type? t = null) => "";
+        public object? Deserialize(string d, System.Type t) => null;
+        public T? Deserialize<T>(string d) => default;
+    }
 
     [Test]
     public async Task SerializersGetByExtension_MultiSegment_Resolves()
-        // New behaviour: GetByExtension(".junit.xml") walks multi-segment extension; resolves a registered serializer keyed on ".junit.xml".
-        => Assert.Fail("Not implemented");
+    {
+        var stub = new StubSerializer { FileExtension = ".junit.xml", ContentType = "application/junit+xml" };
+        _app.User.Channels.Serializers.Register(stub);
+
+        var resolved = _app.User.Channels.Serializers.GetByExtension(".junit.xml");
+        await Assert.That(resolved).IsEqualTo((global::app.channels.serializers.serializer.ISerializer)stub);
+    }
 
     [Test]
     public async Task SerializersGetByExtension_MultiSegment_FallsBackToSingleSegment()
-        // If no ".junit.xml" registration exists but ".xml" does, walk falls back to single-segment.
-        => Assert.Fail("Not implemented");
+    {
+        // Register only the single-segment ".xml" — a multi-segment lookup that
+        // doesn't have its own registration must walk down to the trailing
+        // segment and resolve there.
+        var xml = new StubSerializer { FileExtension = ".xml", ContentType = "application/xml" };
+        _app.User.Channels.Serializers.Register(xml);
+
+        var resolved = _app.User.Channels.Serializers.GetByExtension(".unknown.xml");
+        await Assert.That(resolved).IsEqualTo((global::app.channels.serializers.serializer.ISerializer)xml);
+    }
 
     [Test]
     public async Task CompileLlm_Kernel_ContainsTypeHintRule()
-        // The Compile.llm cross-cutting kernel teaching includes the rule documented in Stage 4 item 4 (variable refs followed by (type)).
-        => Assert.Fail("Not implemented");
+    {
+        var path = System.IO.Path.Combine(_app.AbsolutePath, "..", "..", "..", "..", "..", "os", "system", "builder", "llm", "Compile.llm");
+        // Walk up from the test temp dir to the repo root.
+        var asmDir = System.IO.Path.GetDirectoryName(typeof(global::app.@this).Assembly.Location)!;
+        var repo = asmDir;
+        while (repo != null && !System.IO.Directory.Exists(System.IO.Path.Combine(repo, "os")))
+            repo = System.IO.Directory.GetParent(repo)?.FullName;
+        await Assert.That(repo).IsNotNull();
+        var compileLlm = System.IO.File.ReadAllText(System.IO.Path.Combine(repo!, "os", "system", "builder", "llm", "Compile.llm"));
+        await Assert.That(compileLlm).Contains("(type)")
+            .Because("Cross-cutting kernel must teach the (type) hint rule.");
+        await Assert.That(compileLlm).Contains("write to %answer%(json)")
+            .Because("Worked example anchors the rule.");
+    }
+
+    private static async Task<List<string>> RunBuildPass(StepActions actions, global::app.@this app)
+        => await Default.RunBuildPass(actions, app.Modules, app.User.Context);
 
     [Test]
     public async Task BuilderValidate_UserHintWinsOverBuildInference()
-        // Compile emits Type="json" on terminal variable.set; file.read.Build() would return "csv".
-        // Validate keeps "json"; does not overwrite with Build()'s inference.
-        => Assert.Fail("Not implemented");
+    {
+        // file.read.Build() would infer "csv"; the LLM emitted Type="json" — keep json.
+        var setAction = Make("variable", "set",
+            ("Name", "x"), ("Value", "%!data%"), ("Type", "json"));
+        var actions = ActionsOf(Make("file", "read", ("Path", "foo.csv")), setAction);
+
+        var errors = await RunBuildPass(actions, _app);
+        await Assert.That(errors).IsEmpty();
+
+        var typeParam = setAction.Parameters.First(p =>
+            string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
+        await Assert.That(typeParam.Value).IsEqualTo("json");
+    }
 
     [Test]
     public async Task BuilderValidate_BuildInferenceWinsOverDefaultObject()
-        // Compile emits no explicit type (slot defaults to "object"); Build() returns "csv" → terminal variable.set Type becomes "csv".
-        => Assert.Fail("Not implemented");
+    {
+        // No Type parameter on variable.set → Build()'s "csv" stamps in.
+        var setAction = Make("variable", "set", ("Name", "x"), ("Value", "%!data%"));
+        var actions = ActionsOf(Make("file", "read", ("Path", "foo.csv")), setAction);
+
+        var errors = await RunBuildPass(actions, _app);
+        await Assert.That(errors).IsEmpty();
+
+        var typeParam = setAction.Parameters.FirstOrDefault(p =>
+            string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
+        await Assert.That(typeParam).IsNotNull();
+        await Assert.That(typeParam!.Value).IsEqualTo("csv");
+    }
 
     [Test]
     public async Task BuilderValidate_DistinguishesExplicitObject_FromDefaultObject()
-        // If the developer explicitly hints (object), validate does NOT overwrite even though Build() would infer.
-        // (Edge case: a step LLM-emitting type="object" must be distinguishable from "no hint given".)
-        => Assert.Fail("Not implemented");
+    {
+        // Developer explicitly hinted (object) → variable.set has Type="object"
+        // already. Build()'s "csv" must NOT overwrite — the explicit hint wins.
+        var setAction = Make("variable", "set",
+            ("Name", "x"), ("Value", "%!data%"), ("Type", "object"));
+        var actions = ActionsOf(Make("file", "read", ("Path", "foo.csv")), setAction);
+
+        var errors = await RunBuildPass(actions, _app);
+        await Assert.That(errors).IsEmpty();
+
+        var typeParam = setAction.Parameters.First(p =>
+            string.Equals(p.Name, "Type", System.StringComparison.OrdinalIgnoreCase));
+        await Assert.That(typeParam.Value).IsEqualTo("object");
+    }
 
     [Test]
     public async Task OutputAsk_Build_ReturnsBareOk_DefersToHint()
-        // output.ask.Build() returns Data.Ok() always; the (type) hint on the write target is the only source of typing.
-        => Assert.Fail("Not implemented");
+    {
+        var action = Make("output", "ask", ("Question", "?"));
+        var (handler, _) = _app.Modules.GetCodeGenerated(action);
+        var classified = (IClass)handler!;
+        classified.SetAction(action, _app.User.Context);
+        var result = await classified.Build();
+
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNull()
+            .Because("output.ask defers Type to the (type) hint on the write target.");
+    }
 }

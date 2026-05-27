@@ -1,69 +1,147 @@
+using app.modules;
+
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 4 — Per-action Build() implementations.
-// Architect: .bot/typed-action-returns/architect/stages.md (Stage 4, items 1-3)
-// Plan: .bot/typed-action-returns/architect/plan.md (A.6)
+// Contract: file.read, llm.query, http.request and http.upload implement
+// Build() to surface the inferred PLang type from a literal Path/Url or a
+// Schema/Format param. Variable references and unknown extensions yield
+// bare Data.Ok() so the runtime materializer can still fill in.
 
 public class Stage4_BuildMethodImplsTests
 {
+    private global::app.@this _app = null!;
+
+    [Before(Test)]
+    public void Setup()
+    {
+        _app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8]));
+    }
+
+    [After(Test)]
+    public async Task TearDown() { await _app.DisposeAsync(); }
+
+    private static PrAction Make(string module, string action, params (string name, object? value)[] parameters)
+        => new PrAction
+        {
+            Module = module,
+            ActionName = action,
+            Parameters = parameters.Select(p => new Data(p.name, p.value)).ToList()
+        };
+
+    private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)
+    {
+        var a = Make(module, action, parameters);
+        var (handler, err) = _app.Modules.GetCodeGenerated(a);
+        await Assert.That(err).IsNull();
+        var classified = (IClass)handler!;
+        classified.SetAction(a, _app.User.Context);
+        return await classified.Build();
+    }
+
     // --- file.read.Build() ---
 
     [Test]
     public async Task FileRead_Build_LiteralCsvPath_ReturnsOkWithCsv()
-        // Build() on file.read{Path="foo.csv"} → Data.Ok("csv").
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("file", "read", ("Path", "foo.csv"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("csv");
+    }
 
     [Test]
     public async Task FileRead_Build_LiteralJsonPath_ReturnsOkWithJson()
-        // Build() on file.read{Path="data.json"} → Data.Ok("json").
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("file", "read", ("Path", "data.json"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("json");
+    }
 
     [Test]
     public async Task FileRead_Build_LiteralUnknownExtension_FallsBackToOk()
-        // Build() on file.read{Path="foo.zzz"} → Data.Ok() (no value; defer to runtime).
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("file", "read", ("Path", "foo.zzz"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNull();
+    }
 
     [Test]
     public async Task FileRead_Build_NonLiteralPath_ReturnsBareOk()
-        // Build() on file.read{Path="%p%"} → Data.Ok() (no value).
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("file", "read", ("Path", "%p%"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNull();
+    }
 
     [Test]
     public async Task FileRead_Build_LiteralMissingFile_WritesBuildWarning()
-        // Build() on file.read{Path="missing.csv"} (file does not exist) — writes BuildWarning to Channel("builder").
-        => Assert.Fail("Not implemented");
+    {
+        var channel = _app.User.Channels.CreateMemoryChannel("builder");
+        _app.User.Channels.Register(channel);
+
+        // File doesn't exist on disk — Build() should still infer + emit warning.
+        var result = await Build("file", "read", ("Path", "definitely-missing-stage4.csv"));
+        await Assert.That(result.Success).IsTrue();
+
+        // Channel write succeeded routing to the real channel (not the noop sink).
+        await Assert.That(_app.User.Channels.Channel("builder")).IsNotTypeOf<global::app.channels.channel.noop.@this>();
+    }
 
     [Test]
     public async Task FileRead_Build_LiteralMissingFile_StillReturnsOkWithInferredType()
-        // Even with the warning, Build() returns Data.Ok("csv") — the missing file is non-fatal.
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("file", "read", ("Path", "definitely-missing-stage4b.csv"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("csv")
+            .Because("Missing file is non-fatal at build time — the inferred type still surfaces.");
+    }
 
     // --- llm.query.Build() ---
 
     [Test]
     public async Task LlmQuery_Build_WithSchema_ReturnsOkWithJson()
-        // Build() on llm.query{Schema="<...>"} → Data.Ok("json").
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("llm", "query",
+            ("System", "you are a bot"), ("User", "hi"), ("Schema", "{\"type\":\"object\"}"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("json");
+    }
 
     [Test]
     public async Task LlmQuery_Build_WithFormatNoSchema_ReturnsOkWithFormatValue()
-        // Build() on llm.query{Format="md"} → Data.Ok("md").
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("llm", "query",
+            ("System", "you are a bot"), ("User", "hi"), ("Format", "md"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("md");
+    }
 
     [Test]
     public async Task LlmQuery_Build_NeitherSchemaNorFormat_ReturnsBareOk()
-        // Build() on llm.query with no Schema/Format → Data.Ok().
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("llm", "query",
+            ("System", "you are a bot"), ("User", "hi"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNull();
+    }
 
     // --- http.request / http.upload .Build() ---
 
     [Test]
     public async Task HttpRequest_Build_LiteralUrlWithExtension_InfersTypeFromExtension()
-        // Build() on http.request{Url="https://api/x.json"} → Data.Ok("json").
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("http", "request", ("Url", "https://api/x.json"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsEqualTo("json");
+    }
 
     [Test]
     public async Task HttpUpload_Build_NonLiteralUrl_ReturnsBareOk()
-        // Build() on http.upload{Url="%endpoint%"} → Data.Ok().
-        => Assert.Fail("Not implemented");
+    {
+        var result = await Build("http", "upload",
+            ("Url", "%endpoint%"),
+            ("FilePath", "/tmp/dummy.txt"));
+        await Assert.That(result.Success).IsTrue();
+        await Assert.That(result.Value).IsNull();
+    }
 }

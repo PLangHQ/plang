@@ -57,4 +57,6 @@ public partial class upload : IContext
         var result = await Http.UploadAsync(this);
         return data.@this<global::app.http.Response.@this>.From(result);
     }
+
+    public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, __app, "Url");
 }

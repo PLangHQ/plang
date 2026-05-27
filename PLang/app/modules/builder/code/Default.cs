@@ -568,12 +568,14 @@ public class Default : IBuilder
             if (!string.Equals(a.Module, "variable", StringComparison.OrdinalIgnoreCase)) continue;
             if (!string.Equals(a.ActionName, "set", StringComparison.OrdinalIgnoreCase)) continue;
 
+            // User hint precedence: any explicit Type parameter the LLM emitted
+            // (including the literal "object") is treated as the developer's
+            // (type) hint and wins over Build()'s inference. Build only stamps
+            // when no Type parameter is present at all.
             var existing = a.Parameters.FirstOrDefault(p =>
                 string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
-            if (existing != null)
-                existing.Value = typeName;
-            else
-                a.Parameters.Add(new data.@this("Type", typeName) { Type = new data.type("string") });
+            if (existing != null) return;
+            a.Parameters.Add(new data.@this("Type", typeName) { Type = new data.type("string") });
             return;
         }
     }

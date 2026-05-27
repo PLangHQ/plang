@@ -78,14 +78,24 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Gets a serializer by file extension.
+    /// Gets a serializer by file extension. Walks multi-segment extensions
+    /// from most-specific to least-specific so a registration for ".junit.xml"
+    /// is preferred over a generic ".xml" registration, and absence of the
+    /// multi-segment registration falls back to the trailing segment.
     /// </summary>
     public ISerializer? GetByExtension(string extension)
     {
-        if (!extension.StartsWith('.'))
-            extension = "." + extension;
+        if (string.IsNullOrEmpty(extension)) return null;
+        if (!extension.StartsWith('.')) extension = "." + extension;
 
-        return _byExtension.TryGetValue(extension, out var serializer) ? serializer : null;
+        var probe = extension;
+        while (true)
+        {
+            if (_byExtension.TryGetValue(probe, out var serializer)) return serializer;
+            var nextDot = probe.IndexOf('.', 1);
+            if (nextDot < 0) return null;
+            probe = probe[nextDot..];
+        }
     }
 
     /// <summary>

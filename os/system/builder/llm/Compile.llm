@@ -136,6 +136,24 @@ Same shape applies to `if X, call Y` — the action AFTER the comma is a PEER of
 
 Rule of thumb: when the planner's set contains `condition.if` AND `goal.call` (or any non-modifier), they are SEPARATE peer entries in the top-level `actions` array. The condition decides whether subsequent actions run, but it doesn't wrap them as modifiers.
 
+### `(type)` hint on a write target
+
+When a variable reference or string literal is followed by `(type)` in a write-target position (e.g. `write to %answer%(json)`, `set %x%(csv)`), use that `type` as the `Type` parameter on the step's terminal `variable.set`. PLang's parser does not interpret `(type)` — it is prose the LLM reads here.
+
+Example (`output.ask "format?", write to %fmt%(json)`):
+```json
+{"actions": [
+  {"module":"output","action":"ask","parameters":[{"name":"Question","value":"format?","type":"string"}],"modifiers":[]},
+  {"module":"variable","action":"set","parameters":[
+    {"name":"Name","value":"%fmt%","type":"string"},
+    {"name":"Value","value":"%!data%","type":"object"},
+    {"name":"Type","value":"json","type":"string"}
+  ]}
+]}
+```
+
+Unknown type names pass through unchanged; the runtime materializer surfaces a clear error on first access if the type is unsupported.
+
 ### `write to %var%` is ALWAYS a separate peer `variable.set`
 
 This is a hard, no-exceptions rule. When a step ends with `write to %X%`, `…, write to %X%`, or any similar "capture the result" clause, emit it as a peer `variable.set` action AFTER the main action — never as a modifier on the main action.

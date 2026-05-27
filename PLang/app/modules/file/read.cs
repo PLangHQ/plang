@@ -34,4 +34,43 @@ public partial class Read : IContext
         }
         return read;
     }
+
+    /// <summary>
+    /// Compile-time hint: infer the terminal variable.set's Type from a literal
+    /// Path. "foo.csv" → "csv", "data.json" → "json". Variable references and
+    /// unknown extensions yield bare Ok() (runtime fills in via MIME dispatch).
+    /// A literal path that doesn't exist on disk surfaces a BuildWarning on
+    /// Channel("builder") but still returns the inferred type — missing files
+    /// are non-fatal at build time.
+    /// </summary>
+    public async Task<data.@this> Build()
+    {
+        // Peek the raw .pr value first — Path.Value would trigger resolution on
+        // a "%var%" reference that has no binding yet at build time.
+        var raw = __action?.Parameters?.FirstOrDefault(p =>
+            string.Equals(p.Name, "Path", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
+        if (string.IsNullOrEmpty(raw) || raw.Contains('%')) return data.@this.Ok();
+
+        var p = Path.Value;
+        if (p == null || string.IsNullOrEmpty(p.Extension)) return data.@this.Ok();
+        if (p.MimeType == "application/octet-stream") return data.@this.Ok();
+
+        var typeName = p.Extension.ToLowerInvariant();
+
+        // Best-effort missing-file warning. Channel("builder") falls back to a
+        // no-op sink when no build is active, so this is safe outside builds.
+        try
+        {
+            var exists = await p.ExistsAsync();
+            if (exists.Success && exists.Value == false)
+            {
+                var warning = new global::app.modules.builder.warning.@this(
+                    this, $"file.read: literal path '{raw}' does not exist on disk");
+                await Context.Actor.Channels.Channel("builder").WriteAsync(data.@this.Ok(warning));
+            }
+        }
+        catch (System.Exception) { /* best-effort warning — never block Build() */ }
+
+        return data.@this.Ok(typeName);
+    }
 }
