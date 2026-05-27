@@ -23,13 +23,16 @@ What's *not* done — and what this stage now covers — is the input side.
 ## What's left
 
 **Scope:**
-- `PLang/app/channels/serializers/serializer/this.cs` — drop `object? value` + `Type? type = null` from the interface; both become a single `Data data` parameter.
+- `PLang/app/channels/serializers/serializer/this.cs` — drop `object? value` + `Type? type = null` from the interface; both become a single `Data data` parameter. Also rename `ContentType` → `Type` and `FileExtension` → `Extension` (OBP: the owner is `serializer`, the qualifier suffixes are redundant).
 - `PLang/app/channels/serializers/serializer/Json.cs` — `application/json` implementation.
 - `PLang/app/channels/serializers/serializer/Text.cs` — `text/plain` implementation.
 - `PLang/app/channels/serializers/serializer/plang/this.cs` — `application/plang` implementation (interim — Stage 2 will merge it with plang/Data.cs).
 - `PLang/app/channels/serializers/serializer/plang/Data.cs` — `application/plang+data` implementation (interim — Stage 2 will delete).
-- `PLang/app/channels/channel/stream/this.cs:53-59` — stop passing `data.Value`, pass `data`.
-- `SerializeOptions` definition wherever it lives — its `Data` field becomes typed `Data`, not `object?`.
+- `PLang/app/channels/serializers/this.cs` — the registry. `_byContentType` → `_byType`, `GetByContentType` → `GetByType`, `ContentTypes` enumerable → `Types`, `SerializeOptions.ContentType` → `Type`, same for `DeserializeOptions` / `ResolveOptions`. `SerializeOptions.Data` becomes typed `Data` (not `object?`).
+- `PLang/app/channels/this.cs:193` and other call sites populating `options.ContentType` rename accordingly.
+- `PLang/app/channels/channel/this.cs:96-110` — rename the abstract hooks: `WriteCore` → `Write`, `ReadCore` → `Read`, `AskCore` → `Ask`. The public orchestrators `WriteAsync` / `ReadAsync` / `AskAsync` keep their names — they wrap the abstract hook with `Before*` / `After*` event firing.
+- All channel subclasses (`channel/stream/this.cs`, `channel/goal/this.cs`, `channel/message/this.cs`, `channel/noop/this.cs`, `channel/events/this.cs`, `channel/session/this.cs`) — update the `override` declarations to match the renamed abstract hooks.
+- `PLang/app/channels/channel/stream/this.cs:53-59` — in the renamed `Write`, stop passing `data.Value`, pass `data`.
 
 **Out of scope:**
 - Merging the two plang serializers (Stage 2).
@@ -43,8 +46,8 @@ What's *not* done — and what this stage now covers — is the input side.
 
 ```csharp
 public interface ISerializer {
-    string ContentType { get; }
-    string FileExtension { get; }
+    string Type { get; }       // MIME type — e.g. "application/plang", "application/json"
+    string Extension { get; }  // file extension — e.g. ".plang", ".json"
     Task<Data> SerializeAsync(Stream stream, Data data, CancellationToken ct = default);
     Task<Data> DeserializeAsync(Stream stream, CancellationToken ct = default);
     Task<Data<T>> DeserializeAsync<T>(Stream stream, CancellationToken ct = default);
@@ -53,6 +56,8 @@ public interface ISerializer {
     Data<T> Deserialize<T>(string s);
 }
 ```
+
+OBP naming rationale: a property called `serializer.ContentType` restates context — the owner is `serializer`, of course it's the content type for *something*; the qualifier carries no information. Same for `FileExtension`. PLang already has a `Type` concept on Data (`data.Type` = PLang type-name like "user"/"object"); on a serializer, `Type` reads unambiguously as the MIME type. The two `Type` properties are namespaced by their owner. Same logic applies to the channel side: `WriteCore` / `ReadCore` / `AskCore` lose their `Core` suffix and become `Write` / `Read` / `Ask` — the public orchestrators keep their `Async` suffix to mark them as the entry point with events.
 
 Changes from today's interface (input-side only — return shapes are kept as-merged):
 
@@ -67,13 +72,13 @@ Each serializer's body shrinks:
 - **plang/this.cs** — emits the full Data shape via `app.data.Json` converter + Transport filter (unchanged from today, just stops accepting non-Data input). Stage 2 will merge this with plang/Data.cs and add `EnsureSigned`.
 - **plang/Data.cs** — still has its `Envelope` class for now (Stage 2 deletes it). Stops accepting non-Data input. Stage 1 doesn't try to clean this up — that's Stage 2's job.
 
-`Stream.WriteCore` changes from:
+`Stream.Write` (renamed from `WriteCore`) changes from:
 
 ```csharp
 await Channels!.Serializers.SerializeAsync(new SerializeOptions {
     Stream = Stream,
     Data = data.Value,        // strips the wrapper — wrong
-    ContentType = Mime,
+    Type = Mime,
     CancellationToken = ct
 });
 ```
@@ -84,12 +89,12 @@ to:
 await Channels!.Serializers.SerializeAsync(new SerializeOptions {
     Stream = Stream,
     Data = data,              // full Data, the serializer decides what to emit
-    ContentType = Mime,
+    Type = Mime,
     CancellationToken = ct
 });
 ```
 
-`SerializeOptions.Data` typed as `Data`.
+`SerializeOptions.Data` typed as `Data`. `SerializeOptions.ContentType` renamed to `Type` in the same pass.
 
 **Dependencies:** None. (`typed-action-returns` was a prerequisite for the return-side work and is already merged in.)
 

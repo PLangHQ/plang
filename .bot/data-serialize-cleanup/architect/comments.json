@@ -31,7 +31,7 @@
       "status": "resolved",
       "parent_id": "18fdfeda61",
       "ts": "2026-05-27T16:43:46",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "870bac762a",
@@ -42,7 +42,7 @@
       "status": "resolved",
       "parent_id": "6babf93895",
       "ts": "2026-05-27T16:52:29",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "ce1c268af7",
@@ -53,7 +53,7 @@
       "status": "resolved",
       "parent_id": "870bac762a",
       "ts": "2026-05-27T17:01:58",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "658bd147c6",
@@ -64,7 +64,7 @@
       "status": "resolved",
       "parent_id": "ce1c268af7",
       "ts": "2026-05-27T17:07:07",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "fe544e7d7d",
@@ -75,7 +75,7 @@
       "status": "resolved",
       "parent_id": "658bd147c6",
       "ts": "2026-05-27T17:09:48",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "1a97b66987",
@@ -86,7 +86,7 @@
       "status": "resolved",
       "parent_id": "fe544e7d7d",
       "ts": "2026-05-27T17:16:48",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "410058e2ce",
@@ -97,7 +97,7 @@
       "status": "resolved",
       "parent_id": "1a97b66987",
       "ts": "2026-05-27T17:21:34",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "fec36c1e0d",
@@ -108,7 +108,7 @@
       "status": "resolved",
       "parent_id": "410058e2ce",
       "ts": "2026-05-27T20:07:23",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "21c1db1c1e",
@@ -167,7 +167,7 @@
     },
     {
       "id": "068dfdb0dd",
-      "line": 67,
+      "line": 77,
       "text": "You're right — that link points into my memory directory, which isn't in the repo so you can't see it. Removed the link and inlined the principle in one extra sentence (\"A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.\") which is the load-bearing bit anyway.",
       "anchor": "**Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.",
       "author": "architect",
@@ -187,7 +187,7 @@
       "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-27T16:55:02",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "db4b171f6c",
@@ -198,7 +198,7 @@
       "status": "resolved",
       "parent_id": "e62a3bbfad",
       "ts": "2026-05-27T17:07:25",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "9c7d17b357",
@@ -209,7 +209,7 @@
       "status": "resolved",
       "parent_id": "db4b171f6c",
       "ts": "2026-05-27T17:13:46",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "43bf05ea63",
@@ -220,7 +220,7 @@
       "status": "resolved",
       "parent_id": "9c7d17b357",
       "ts": "2026-05-27T17:17:05",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "060c6467d4",
@@ -231,7 +231,7 @@
       "status": "resolved",
       "parent_id": "43bf05ea63",
       "ts": "2026-05-27T20:05:57",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "c09572dd8b",
@@ -242,7 +242,7 @@
       "status": "resolved",
       "parent_id": "060c6467d4",
       "ts": "2026-05-27T20:07:45",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "97484126fa",
@@ -253,7 +253,7 @@
       "status": "resolved",
       "parent_id": "c09572dd8b",
       "ts": "2026-05-27T20:14:21",
-      "drifted": false
+      "drifted": true
     },
     {
       "id": "66b524fc8c",
@@ -298,6 +298,97 @@
       "parent_id": "edec2adec3",
       "ts": "2026-05-27T17:17:11",
       "drifted": false
+    }
+  ],
+  "stage-1-iserializer-data.md": [
+    {
+      "id": "9dbdacfab4",
+      "line": 44,
+      "text": "It's just Extension, not FileExtension, remember obp, read over if there other places. ContentType should maybe just be Type. I know ContentType is pretty standard, but we are living in plang world, we deal with type.",
+      "anchor": "```csharp",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T20:31:11",
+      "drifted": true
+    },
+    {
+      "id": "7cbb032664",
+      "line": 44,
+      "text": "Right — OBP applies. Renamed in the interface signature and added the rename to scope. The surface is broader than I first thought; folded all of it into Stage 1 since the compiler-guided rename and the input-tightening both touch the same surface:\n\n- ISerializer: ContentType → Type, FileExtension → Extension\n- All 4 concrete serializers (Json, Text, plang/this, plang/Data): property renames\n- Serializers registry (PLang/app/channels/serializers/this.cs): _byContentType → _byType, GetByContentType → GetByType, ContentTypes → Types, SerializeOptions.ContentType → Type, same for DeserializeOptions / ResolveOptions\n- channels/this.cs:193 and other options-populating call sites\n\nAdded a one-paragraph rationale in the deliverables: the owner is `serializer`, so the `Content` and `File` qualifiers carry no information. PLang already has `data.Type` (PLang data type-name); `serializer.Type` reads unambiguously as MIME because of the different owner. The two `Type` properties are namespaced by their context. Same OBP rule that kills the redundant `Core` suffix in the next comment.",
+      "anchor": "",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "9dbdacfab4",
+      "ts": "2026-05-27T20:48:40",
+      "drifted": false
+    },
+    {
+      "id": "68931ce9b7",
+      "line": 70,
+      "text": "Maybe change WriteCore to Write, whats the point of Core?",
+      "anchor": "`Stream.WriteCore` changes from:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T20:32:04",
+      "drifted": true
+    },
+    {
+      "id": "3fb195c57e",
+      "line": 70,
+      "text": "Right — `Core` is a redundant suffix that just means \"don't call directly, this is the override hook.\" That's a discipline communicated by access modifier and convention, not by name decoration.\n\nLooked at channel/this.cs to confirm the structure: abstract `WriteCore` / `ReadCore` / `AskCore` are the override hooks; public virtual `WriteAsync` / `ReadAsync` / `AskAsync` are the orchestrators that fire BeforeWrite / AfterWrite events and route through the abstract hook. Renamed:\n\n- WriteCore → Write\n- ReadCore → Read\n- AskCore → Ask\n\nPublic orchestrators keep their Async suffix to mark them as the entry point with events. A reader scanning the class sees `WriteAsync` (the entry) and `Write` (the override hook); the suffix asymmetry tells you which is which.\n\nScope ripple: every channel subclass overrides one of the *Core methods — channel/stream/this.cs, channel/goal/this.cs, channel/message/this.cs, channel/noop/this.cs, channel/events/this.cs, channel/session/this.cs. The compiler will flag each one. Folded that into Stage 1's scope since Stage 1 already touches channel/stream/this.cs for the data-flow change (passing `data` instead of `data.Value`); doing the rename in the same edit means coder lands the OBP cleanup in one pass.\n\nAlso added a paragraph in the deliverables tying both renames together — Extension/Type and Write/Read/Ask are the same OBP move: drop redundant suffixes when the owner already names the context.",
+      "anchor": "- **Json** — emits `data.Value` as JSON (external clients want the value, not the wrapper). Deserialize parses JSON, wraps in `Data.Ok(parsed)`. No `if (value == null)` branch; Data at the boundary is never null.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "68931ce9b7",
+      "ts": "2026-05-27T20:48:53",
+      "drifted": false
+    }
+  ],
+  "stage-4-properties-on-wire.md": [
+    {
+      "id": "2acb268b1c",
+      "line": 113,
+      "text": "I believe we have !key navigation, like we have with .Value, but I guess coder will figure it out",
+      "anchor": "Variable expression parser learns `!`:",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": null,
+      "ts": "2026-05-27T20:40:53",
+      "drifted": false
+    },
+    {
+      "id": "fb19ff8d2a",
+      "line": 113,
+      "text": "Confirmed — %x!key% follows the same pattern as the existing dereference operators on Data (e.g. the in-code `data.Value` reach is consistent with %x.field% navigation). The parser change is a single-token addition; coder will sort the lexer details (positional disambiguation from the boolean-negation prefix `%!flag%` is the only sharp edge, and it's positionally distinct because `!` after a variable name is unambiguous from `!` at the start of an expression). Leaving the description as-is in the stage doc.",
+      "anchor": "Variable expression parser learns `!`:",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "2acb268b1c",
+      "ts": "2026-05-27T20:49:01",
+      "drifted": false
+    },
+    {
+      "id": "84ee96ddba",
+      "line": 132,
+      "text": "I am wondering if it's wrong decision to flatten the properties into the object, and in stead have properties, so {name:\"user\", type\"object\", value:\"...\", properties : {..}}, what do you say, it is big before we approve this plan",
+      "anchor": "1. The LLM-response ergonomics. `{ name, type, value: \"...\", cost: 100, signature }` reads as a single object with cost as a sibling of value. The nested form `{ name, type, value: \"...\", properties: { cost: 100 }, signature }` adds a level of indirection that callers have to navigate. PLang's variable language gets the cleaner shape.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-27T20:42:39",
+      "drifted": false
+    },
+    {
+      "id": "c4271ced3f",
+      "line": 132,
+      "text": "This is worth slowing down on. Let me play the movie for both shapes and see if I still believe flat is right.\n\n**The two shapes, side by side**\n\nFlat:\n```\n{ \"name\": \"response\", \"type\": \"string\", \"value\": \"Hello!\",\n  \"cost\": 100, \"model\": \"claude\",\n  \"signature\": {...} }\n```\n\nNested:\n```\n{ \"name\": \"response\", \"type\": \"string\", \"value\": \"Hello!\",\n  \"properties\": { \"cost\": 100, \"model\": \"claude\" },\n  \"signature\": {...} }\n```\n\nThe PLang-side surface is identical for both: `%response%` renders Value, `%response!cost%` reads Properties. The wire converter handles either shape; the C# Data API doesn't change. So the question is purely *what does the JSON look like*.\n\n**Three lenses**\n\n1. *Forward-compatibility for new reserved fields.* PLang is going to evolve — we might add `traceId` as a top-level field in two months. With flat, any Property whose key happens to be `traceId` would either conflict (reserved-key check throws at insertion) or silently shadow (parser bug). With nested, no conflict — Properties live in their own scope; PLang adds reserved fields freely. **Nested wins.**\n\n2. *Forward-compatibility for unknown receivers.* Charlie's older PLang doesn't know what `cost` means. With flat (and the rule \"anything-not-reserved goes into Properties\"), Charlie carries it as a Property — round-trip preserves it. With nested, Charlie also carries it as a Property (it's in the `properties` bag) — same round-trip. Both shapes are equally forgiving here. **Tie.**\n\n3. *Self-documenting wire shape.* A reader looking at the JSON for the first time. Flat: \"name, type, value… what's cost? Is that part of the schema or extra data?\" Nested: \"name, type, value, signature, properties — five fields, clear separation between content and metadata.\" **Nested wins on clarity.**\n\n4. *Per-Property metadata in the future.* You called out public/private Properties as future work; structured-Property values too. With nested, there's a natural place to put per-Property annotations (`properties: { cost: { value: 100, visibility: \"public\" } }` or similar shapes). With flat, every annotation needs a side-band scheme — `cost__visibility: \"public\"` or another reserved-key. **Nested wins on future flexibility.**\n\n5. *Ergonomics of the LLM-response case.* I'd argued flat reads more naturally (\"cost as a sibling of value\"). Reconsidering: that's mostly aesthetic. PLang users access `%response!cost%`, not `wire.cost`. Even when debugging a wire payload, `properties: { cost: 100 }` is plenty readable. **Flat's edge here is small.**\n\n**Where I land**\n\nI'd previously argued for flat. I'm changing my position: **nested is the better call.** The forward-compat-for-reserved-fields concern is real (PLang isn't done evolving), the self-documenting wire is genuinely cleaner, and the future-per-Property-metadata story is much easier with a scope to land in. The LLM-response ergonomic case isn't strong enough to outweigh those three.\n\n**One implication worth calling out**\n\nThe \"anything-not-reserved becomes a Property\" rule was a flat-shape convenience. With nested, the rule changes to: top-level keys outside the five (`name`, `type`, `value`, `signature`, `properties`) get *ignored* on read, not captured. That trades round-trip-of-unknown-fields for stricter wire validation. The trade-off is fine because Properties is the explicit *expected* metadata channel; unknown reserved fields are genuinely \"future PLang spoke a new language at me,\" and silently dropping them is no worse than capturing them somewhere I won't introspect.\n\n**What changes if you confirm**\n\n- Stage 4 deliverables: wire converter emits `properties: { … }` nested instead of flattening at top level.\n- Reserved keys grow from 4 to 5: `name`, `type`, `value`, `signature`, `properties` cannot be used as Property keys.\n- The receiver-side rule becomes \"five reserved fields parsed; anything else top-level is unknown and ignored.\"\n- wire-shape.md's LLM-response example shows the nested shape.\n- plan.md's Properties cross-cutting decision updates to match.\n- Stage 4's design rationale flips to argue for nested instead of flat.\n\nHolding the edits until you call it. This one's structural enough that I want explicit confirmation before churning the stage doc.",
+      "anchor": "1. The LLM-response ergonomics. `{ name, type, value: \"...\", cost: 100, signature }` reads as a single object with cost as a sibling of value. The nested form `{ name, type, value: \"...\", properties: { cost: 100 }, signature }` adds a level of indirection that callers have to navigate. PLang's variable language gets the cleaner shape.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "84ee96ddba",
+      "ts": "2026-05-27T20:49:32"
     }
   ]
 }
