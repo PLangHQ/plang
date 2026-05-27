@@ -1,38 +1,76 @@
+using System.Reflection;
+using Response = global::app.http.Response.@this;
+
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 3 — HTTP Response record + typed http.request/upload returns.
-// Architect: .bot/typed-action-returns/architect/stages.md (Stage 3)
-// Plan: .bot/typed-action-returns/architect/plan.md (A.3)
+// Contract: http.request and http.upload return Data<Response> where Response
+// is a sealed record carrying (Status:int, Headers, Body:object?, Duration).
+// http.download is untouched (it saves to disk).
 
 public class Stage3_HttpResponseTests
 {
+    private static System.Type RunReturnType<THandler>()
+        => typeof(THandler).GetMethod("Run", BindingFlags.Public | BindingFlags.Instance, System.Type.EmptyTypes)!.ReturnType;
+
     [Test]
     public async Task HttpResponse_RecordExistsAt_AppHttpResponseThis()
-        // typeof(app.http.Response.@this) exists at PLang/app/http/Response/this.cs.
-        => Assert.Fail("Not implemented");
+    {
+        var t = typeof(Response);
+        await Assert.That(t.Namespace).IsEqualTo("app.http.Response");
+        await Assert.That(t.Name).IsEqualTo("this");
+    }
 
     [Test]
     public async Task HttpResponse_CarriesAllFourFields()
-        // Properties: Status:int, Headers:Dictionary<string,string>, Body:object?, Duration:TimeSpan.
-        => Assert.Fail("Not implemented");
+    {
+        var props = typeof(Response).GetProperties().Select(p => p.Name).ToHashSet();
+        await Assert.That(props).Contains("Status");
+        await Assert.That(props).Contains("Headers");
+        await Assert.That(props).Contains("Body");
+        await Assert.That(props).Contains("Duration");
+
+        var statusProp = typeof(Response).GetProperty("Status")!;
+        await Assert.That(statusProp.PropertyType).IsEqualTo(typeof(int));
+        var durationProp = typeof(Response).GetProperty("Duration")!;
+        await Assert.That(durationProp.PropertyType).IsEqualTo(typeof(System.TimeSpan));
+    }
 
     [Test]
     public async Task HttpResponse_IsSealedRecord()
-        // typeof(Response).IsSealed && record-equality semantics hold.
-        => Assert.Fail("Not implemented");
+    {
+        var t = typeof(Response);
+        await Assert.That(t.IsSealed).IsTrue();
+        // Records emit a synthesized <Clone>$ method; presence confirms record semantics.
+        var clone = t.GetMethod("<Clone>$", BindingFlags.Public | BindingFlags.Instance);
+        await Assert.That(clone).IsNotNull().Because("Response must be a record (compiler-emitted clone present).");
+
+        var headers = new Dictionary<string, string> { ["X"] = "y" };
+        var a = new Response(200, headers, "body", System.TimeSpan.FromSeconds(1));
+        var b = new Response(200, headers, "body", System.TimeSpan.FromSeconds(1));
+        await Assert.That(a).IsEqualTo(b).Because("Record equality on identical field values.");
+    }
 
     [Test]
     public async Task HttpRequest_Run_ReturnsTaskDataOfResponse()
-        // app.modules.http.RequestHandler.Run returns Task<Data<Response>>.
-        => Assert.Fail("Not implemented");
+    {
+        var ret = RunReturnType<global::app.modules.http.request>();
+        var expected = typeof(Task<global::app.data.@this<Response>>);
+        await Assert.That(ret).IsEqualTo(expected);
+    }
 
     [Test]
     public async Task HttpUpload_Run_ReturnsTaskDataOfResponse()
-        // app.modules.http.UploadHandler.Run returns Task<Data<Response>>.
-        => Assert.Fail("Not implemented");
+    {
+        var ret = RunReturnType<global::app.modules.http.upload>();
+        var expected = typeof(Task<global::app.data.@this<Response>>);
+        await Assert.That(ret).IsEqualTo(expected);
+    }
 
     [Test]
     public async Task HttpDownload_Run_SignatureUnchanged()
-        // http.download still saves to file; its return signature is whatever it was pre-stage (no shape change here).
-        => Assert.Fail("Not implemented");
+    {
+        var ret = RunReturnType<global::app.modules.http.download>();
+        // http.download writes to disk; no body wrapping → bare Task<Data>.
+        await Assert.That(ret).IsEqualTo(typeof(Task<Data>));
+    }
 }

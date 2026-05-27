@@ -57,5 +57,9 @@ public partial class request : IContext
     [Code]
     public partial IHttp Http { get; }
 
-    public async Task<data.@this> Run() => await Http.SendAsync(this);
+    public async Task<data.@this<global::app.http.Response.@this>> Run()
+    {
+        var result = await Http.SendAsync(this);
+        return data.@this<global::app.http.Response.@this>.From(result);
+    }
 }

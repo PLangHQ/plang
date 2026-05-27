@@ -63,6 +63,7 @@ public sealed class Default : IHttp
 
     public Task<data.@this> SendAsync(request action) => ExecuteHttpAsync(async () =>
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
@@ -130,7 +131,7 @@ public sealed class Default : IHttp
 
         using (response)
         {
-            return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize);
+            return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize, sw.Elapsed);
         }
     });
 
@@ -180,6 +181,7 @@ public sealed class Default : IHttp
 
     public Task<data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
@@ -216,7 +218,7 @@ public sealed class Default : IHttp
         using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, config, cts.Token);
 
         var maxResponseSize = config.Resolve("MaxResponseSize", DefaultMaxResponseSize);
-        return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize);
+        return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize, sw.Elapsed);
     });
 
     public data.@this Configure(configure action)
@@ -486,7 +488,8 @@ public sealed class Default : IHttp
         bool unsigned,
         AppType app,
         actor.context.@this context,
-        long maxResponseSize = DefaultMaxResponseSize)
+        long maxResponseSize = DefaultMaxResponseSize,
+        System.TimeSpan duration = default)
     {
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
         var statusCode = (int)response.StatusCode;
@@ -504,7 +507,8 @@ public sealed class Default : IHttp
             return errorData;
         }
 
-        // application/plang response
+        // application/plang response — keeps the historic shape (deserialized
+        // Data envelope flows through); no Response wrapping here.
         if (contentType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
         {
             if (unsigned)
@@ -519,47 +523,40 @@ public sealed class Default : IHttp
             return await ParsePlangResponseAsync(response, request, app, context, maxResponseSize);
         }
 
-        // JSON response
+        // Content-Type dispatch on the body.
+        object? body;
         if (contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
         {
             var json = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            object? parsed;
-            try
-            {
-                parsed = JsonSerializer.Deserialize<object>(json, _caseInsensitiveRead);
-            }
-            catch (JsonException)
-            {
-                parsed = json;
-            }
-            var result = global::app.data.@this.Ok(parsed);
-            BuildProperties(result, request, response);
-            return result;
+            try { body = JsonSerializer.Deserialize<object>(json, _caseInsensitiveRead); }
+            catch (JsonException) { body = json; }
         }
-
-        // XML response
-        if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
+        else if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
         {
-            var xml = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = global::app.data.@this.Ok(xml, data.type.FromMime("application/xml"));
-            BuildProperties(result, request, response);
-            return result;
+            body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
         }
-
-        // Text response
-        if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
+        else if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
         {
-            var text = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = global::app.data.@this.Ok(text);
-            BuildProperties(result, request, response);
-            return result;
+            body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
+        }
+        else
+        {
+            body = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
         }
 
-        // Binary response
-        var bytes = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
-        var binaryResult = global::app.data.@this.Ok(bytes);
-        BuildProperties(binaryResult, request, response);
-        return binaryResult;
+        var respHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var h in response.Headers)
+            respHeaders[h.Key] = string.Join(", ", h.Value);
+        foreach (var h in response.Content.Headers)
+            respHeaders[h.Key] = string.Join(", ", h.Value);
+
+        var typed = new global::app.http.Response.@this(statusCode, respHeaders, body, duration);
+        var result = data.@this<global::app.http.Response.@this>.Ok(typed);
+        // Legacy Property bag — pre-Stage-3 PLang code reads %resp.StatusCode%,
+        // %resp.Url%, %resp.RequestHeaders% etc. via Properties navigation.
+        // Keep it populated so existing test goals don't break.
+        BuildProperties(result, request, response);
+        return result;
     }
 
     /// <summary>
