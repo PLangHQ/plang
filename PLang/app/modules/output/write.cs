@@ -14,12 +14,12 @@ public partial class Write : IContext, IChannel
 
     public async Task<data.@this> Run()
     {
-        var envelope = Data ?? app.data.@this.Ok();
-        if (envelope.Value is string str && str.Contains('%'))
+        var outer = Data ?? app.data.@this.Ok();
+        if (outer.Value is string str && str.Contains('%'))
         {
             var resolved = Context.Variables.Resolve(str, skipInfrastructure: true);
-            envelope = app.data.@this.Ok(resolved);
+            outer = app.data.@this.Ok(resolved);
         }
-        return await Channel.WriteAsync(envelope);
+        return await Channel.WriteAsync(outer);
     }
 }

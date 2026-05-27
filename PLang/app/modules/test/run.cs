@@ -135,7 +135,7 @@ public partial class run : IContext
         // Output capture — every write on the User actor's "output" channel
         // appends to testRun.Output. BeforeWrite (not AfterWrite) — AfterWrite
         // fires with the *result* of WriteCore (typically value-less Ok), while
-        // BeforeWrite fires with the *input* envelope carrying the actual
+        // BeforeWrite fires with the *input* Data carrying the actual
         // payload. Filtered by channel name so writes to "error" / "debug"
         // don't get captured.
         var outputBuf = new StringBuilder();

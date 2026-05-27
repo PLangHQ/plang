@@ -17,7 +17,7 @@ public sealed class Identity
     /// <summary>Identity name (e.g., "default", "work").</summary>
     [LlmBuilder] public string Name { get; set; } = "Identity";
 
-    /// <summary>Base64-encoded Ed25519 public key. Used as the identity in signed envelopes.</summary>
+    /// <summary>Base64-encoded Ed25519 public key. Used as the identity in signed Datas.</summary>
     [LlmBuilder] public string PublicKey { get; set; } = "";
 
     /// <summary>Base64-encoded Ed25519 private key. Marked [Sensitive] — excluded from output serialization.</summary>

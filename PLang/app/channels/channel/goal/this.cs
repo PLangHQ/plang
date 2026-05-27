@@ -4,7 +4,7 @@ namespace app.channels.channel.goal;
 
 /// <summary>
 /// Concrete goal-backed channel. WriteAsync invokes the wrapped goal with the Data
-/// envelope as input (available as <c>%!data%</c> inside the goal). Returns the
+/// Data as input (available as <c>%!data%</c> inside the goal). Returns the
 /// goal's result Data.
 ///
 /// Recursion rule: the channel captures a reference to the registering actor, and

@@ -90,7 +90,7 @@ public abstract class @this : IAsyncDisposable, IDisposable
     public virtual bool CanWrite => IsOpen && Direction != ChannelDirection.Input;
 
     /// <summary>
-    /// Abstract write — concrete subtypes implement. Receives the full Data envelope (Rule 7,
+    /// Abstract write — concrete subtypes implement. Receives the full Data (Rule 7,
     /// relay don't repackage); the channel's serializer decides how to render.
     /// </summary>
     public abstract Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default);

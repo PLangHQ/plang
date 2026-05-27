@@ -486,7 +486,7 @@ public sealed class Default : IHttp
         }
 
         // application/plang response — keeps the historic shape (deserialized
-        // Data envelope flows through); no Response wrapping here.
+        // Data flows through); no Response wrapping here.
         if (contentType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
         {
             if (unsigned)

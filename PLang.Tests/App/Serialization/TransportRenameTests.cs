@@ -3,28 +3,42 @@ namespace PLang.Tests.App.Serialization;
 // data-serialize-cleanup — Stage 5
 // Vocabulary sweep: "envelope" leaves the codebase. PLang/app/data/this.Envelope.cs is
 // renamed to this.Transport.cs; the Signature docstring no longer reads "data envelope".
-//
-// Pruned from the architect's matrix:
-//  - row 5.2 (git grep returns no matches) — that's a build/CI grep, not a TUnit test
-//  - row 5.4 (local variables in Wrap/Compress renamed) — same; the existing TUnit
-//    suite plus the cuts will fail naturally if anything regresses behaviour
-//  - rows 5.5 / 5.6 (projects build clean, existing tests pass) — those are
-//    pipeline-level invariants, not unit tests
-//
-// Kept: 5.1 (file moved) and 5.3 (docstring rewrite).
 
 public class TransportRenameTests
 {
-    // 5.1 — PLang/app/data/this.Transport.cs exists at the expected path.
+    private static string RepoRoot()
+    {
+        var asmDir = System.IO.Path.GetDirectoryName(typeof(global::app.@this).Assembly.Location)!;
+        var dir = asmDir;
+        while (dir != null && !System.IO.Directory.Exists(System.IO.Path.Combine(dir, "PLang")))
+            dir = System.IO.Path.GetDirectoryName(dir);
+        return dir ?? throw new InvalidOperationException("Repo root not found");
+    }
+
     [Test] public async Task DataTransportFile_ExistsAtExpectedPath()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var path = System.IO.Path.Combine(RepoRoot(), "PLang", "app", "data", "this.Transport.cs");
+        await Assert.That(System.IO.File.Exists(path)).IsTrue();
+    }
 
-    // 5.1b — The old this.Envelope.cs file is gone.
     [Test] public async Task DataEnvelopeFile_NoLongerExistsAtOldPath()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var path = System.IO.Path.Combine(RepoRoot(), "PLang", "app", "data", "this.Envelope.cs");
+        await Assert.That(System.IO.File.Exists(path)).IsFalse();
+    }
 
-    // 5.3 — Signature docstring no longer says "data envelope"; reads "cryptographic
-    //        signature attached to a Data".
     [Test] public async Task SignatureType_XmlDoc_NoLongerMentionsEnvelope()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        // Read the type's XML doc from the source file — Roslyn doesn't bind <summary>
+        // text at runtime, so the cheapest test is a substring check on the source.
+        var path = System.IO.Path.Combine(RepoRoot(), "PLang", "app", "modules", "signing", "Signature.cs");
+        var content = await System.IO.File.ReadAllTextAsync(path);
+        // Locate the class-level summary block (the first <summary> in the file).
+        var summaryStart = content.IndexOf("/// <summary>", StringComparison.Ordinal);
+        var summaryEnd = content.IndexOf("/// </summary>", summaryStart, StringComparison.Ordinal);
+        await Assert.That(summaryStart >= 0 && summaryEnd > summaryStart).IsTrue();
+        var summary = content.Substring(summaryStart, summaryEnd - summaryStart);
+        await Assert.That(summary.Contains("envelope", StringComparison.OrdinalIgnoreCase)).IsFalse();
+        await Assert.That(summary).Contains("Cryptographic signature attached to a Data");
+    }
 }

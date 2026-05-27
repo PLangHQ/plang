@@ -4,7 +4,7 @@ namespace app.data;
 
 /// <summary>
 /// Per-Data metadata key/value bag. Wire shape: a single nested
-/// <c>"properties": { ... }</c> object on the canonical four-field envelope.
+/// <c>"properties": { ... }</c> object on the canonical four-field wire shape.
 ///
 /// <para>
 /// Values must be wire-supported primitives: <c>string</c>, <c>bool</c>,

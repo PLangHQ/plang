@@ -162,7 +162,7 @@ public sealed class @this
             var result = await _actor.Context.App.RunAction(action, _actor.Context);
             return result.Success;
         }
-        // Filter rule: signing failures (bad key, tampered envelope) surface as
+        // Filter rule: signing failures (bad key, tampered Data) surface as
         // `result.Success == false` and don't throw. Anything that does throw
         // here is a contract break — surface via debug, return false (deny).
         catch (Exception ex) when (ex is not (NullReferenceException

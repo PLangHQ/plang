@@ -12,7 +12,7 @@ namespace app.modules.callback;
 [Action("run", Cacheable = false)]
 public partial class run : IContext
 {
-    /// <summary>The callback envelope to run. Must carry a Snapshot.</summary>
+    /// <summary>The callback Data to run. Must carry a Snapshot.</summary>
     [IsNotNull]
     public partial data.@this Callback { get; init; }
 

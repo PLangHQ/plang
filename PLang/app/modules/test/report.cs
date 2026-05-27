@@ -281,14 +281,14 @@ public partial class report : IContext
             branchCoverage[site] = new { declared, observed };
         }
 
-        var envelope = new
+        var outer = new
         {
             summary = results.Summary().ToDictionary(kv => kv.Key.ToString(), kv => kv.Value),
             builderVersion = ResolveBuilderVersion(testing),
             runs,
             branchCoverage
         };
-        return JsonSerializer.Serialize(envelope, ReportOptions);
+        return JsonSerializer.Serialize(outer, ReportOptions);
     }
 
     // Local options clone with IgnoreCycles. Needed because AssertionError.Variables

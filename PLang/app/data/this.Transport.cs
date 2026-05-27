@@ -9,8 +9,8 @@ using app.errors;
 namespace app.data;
 
 /// <summary>
-/// Data — envelope/transport concern.
-/// Signature and Verified properties for wire integrity.
+/// Data — transport-pipeline concern.
+/// Signature property for wire integrity.
 /// Pipeline methods: Wrap, Compress, Encrypt (outbound) and Decrypt, Decompress, Unwrap (inbound).
 /// </summary>
 public partial class @this
@@ -29,10 +29,10 @@ public partial class @this
     private app.modules.signing.Signature? _signature;
 
     /// <summary>
-    /// Cryptographic signature envelope. After stage 2a.7, ICallback is gone —
-    /// no auto-populate on read. Callers seal explicitly via <see cref="EnsureSigned"/>
-    /// when needed (e.g. wire serializer). Verify-style "if (Signature == null)"
-    /// checks fail-closed.
+    /// Cryptographic signature attached to this Data. After stage 2a.7,
+    /// ICallback is gone — no auto-populate on read. Callers seal explicitly
+    /// via <see cref="EnsureSigned"/> when needed (e.g. wire serializer).
+    /// Verify-style "if (Signature == null)" checks fail-closed.
     /// </summary>
     [JsonIgnore]
     [In]
@@ -53,9 +53,10 @@ public partial class @this
 
     /// <summary>
     /// Explicitly populates <see cref="Signature"/> via the configured signing pipeline if
-    /// not already set. No-op when a signature is already present. Called by serializers
-    /// that need to seal a non-callback Data for wire transport (e.g. global::app.channels.serializers.serializer.plang.Data).
-    /// Throws <see cref="InvalidOperationException"/> when this Data has no Context.
+    /// not already set. No-op when a signature is already present. Called by the wire
+    /// converter's sign-if-missing walk and by callers that need to seal a Data before
+    /// it crosses a wire boundary. Throws <see cref="InvalidOperationException"/> when
+    /// this Data has no Context.
     /// </summary>
     public void EnsureSigned()
     {
@@ -78,7 +79,7 @@ public partial class @this
     // --- Outbound pipeline: Wrap → Compress → Encrypt ---
 
     /// <summary>
-    /// Wraps content in a category envelope. Outer type = Kind (e.g. "image", "text"),
+    /// Wraps content in a category outer. Outer type = Kind (e.g. "image", "text"),
     /// inner = this Data. Requires context for Kind resolution via App.Types.
     /// Returns self if no context, no type, or Kind is unknown.
     /// </summary>
@@ -91,9 +92,9 @@ public partial class @this
         if (kind == null)
             return this;
 
-        var envelope = new @this("", this, type.FromName(kind));
-        envelope.Context = _context;
-        return envelope;
+        var outer = new @this("", this, type.FromName(kind));
+        outer.Context = _context;
+        return outer;
     }
 
     /// <summary>
@@ -126,23 +127,23 @@ public partial class @this
     }
 
     /// <summary>
-    /// Encrypts and wraps in an encrypted envelope. Requires a crypto service on App
-    /// (not yet implemented). Returns self until crypto is available.
+    /// Encrypts and wraps the result as an encrypted outer. Requires a crypto
+    /// service on App (not yet implemented). Returns self until crypto is available.
     /// Intended pattern: serialize to bytes, encrypt, wrap as
-    /// Data { type = "encrypted", value = Data { type = algorithm, value = encryptedBytes, Properties = [...] } }
+    /// Data { type = "encrypted", value = byte[] (cipher-of-serialized-Data) }.
     /// </summary>
     public @this Encrypt()
     {
         // Encryption requires a crypto service on App (not yet implemented).
         // When available: navigate through _context.App to the crypto handler,
-        // serialize this Data to bytes, encrypt, wrap in encrypted envelope.
+        // serialize this Data to bytes, encrypt, wrap in the encrypted outer.
         return this;
     }
 
     // --- Inbound pipeline: Decrypt → Decompress → Unwrap ---
 
     /// <summary>
-    /// Decrypts an encrypted envelope. If type is not "encrypted", returns self (no-op).
+    /// Decrypts an encrypted outer. If type is not "encrypted", returns self (no-op).
     /// Requires a crypto service on App (not yet implemented). Returns self until crypto is available.
     /// Intended pattern: read inner Data for algorithm + properties, decrypt bytes, deserialize result.
     /// </summary>
@@ -158,7 +159,7 @@ public partial class @this
     }
 
     /// <summary>
-    /// Decompresses an archived envelope. If type is not "archived", returns self (no-op).
+    /// Decompresses an archived outer. If type is not "archived", returns self (no-op).
     /// archived.Value is a byte[] (single-wrap shape, post-Stage-3) — gunzip and
     /// deserialise through the registered application/plang serializer to recover
     /// the original Data with its inner signature intact.
@@ -188,7 +189,7 @@ public partial class @this
 
             var result = deser.Value as @this;
             if (result == null)
-                return FromError(new ServiceError("Decompressed payload did not parse to a Data envelope", "DecompressError", 500));
+                return FromError(new ServiceError("Decompressed payload did not parse to a Data document", "DecompressError", 500));
 
             result.Context = _context;
             return result;
@@ -208,7 +209,7 @@ public partial class @this
     }
 
     /// <summary>
-    /// Strips the category envelope, returning the inner Data.
+    /// Strips the category outer, returning the inner Data.
     /// If Value is a Data, returns it. Otherwise returns self (already flat).
     /// </summary>
     public @this Unwrap()
