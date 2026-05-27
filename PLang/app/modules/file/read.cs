@@ -69,7 +69,7 @@ public partial class Read : IContext
                 await Context.Actor.Channels.Channel("builder").WriteAsync(data.@this.Ok(warning));
             }
         }
-        catch (System.Exception) { /* best-effort warning — never block Build() */ }
+        catch (System.Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best-effort warning — never block Build() */ }
 
         return data.@this.Ok(typeName);
     }

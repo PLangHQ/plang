@@ -22,7 +22,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task MockIntercept_Run_ReturnsTaskDataOfMock()
     {
-        var ret = RunReturnType<global::app.modules.mock.MockAction>();
+        var ret = RunReturnType<global::app.modules.mock.intercept>();
         var expected = typeof(Task<global::app.data.@this<global::app.mock.Mock.@this>>);
         await Assert.That(ret).IsEqualTo(expected);
     }

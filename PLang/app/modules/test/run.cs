@@ -74,7 +74,7 @@ public partial class run : IContext
 
         // Child App roots at the PARENT'S root — same convention the .pr
         // files were built under. Root-relative paths (Goal.Path, GoalCall
-        // PrPath, test.File.Path / PrPath — all "/Modules/..." shaped) then
+        // PrPath, test.Goal.Path / PrPath — all "/Modules/..." shaped) then
         // resolve correctly. Rooting at test.Directory would deepen the
         // anchor and double-prefix every stored root-relative path.
         await using var childApp = new app.@this(parentApp.AbsolutePath);

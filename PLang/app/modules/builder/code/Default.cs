@@ -540,7 +540,7 @@ public class Default : IBuilder
         var errors = new List<string>();
         foreach (var a in actions)
         {
-            var (handler, err) = modules.GetCodeGenerated(a);
+            var (handler, _) = modules.GetCodeGenerated(a);
             if (handler is not modules.IClass classified) continue;
             classified.SetAction(a, context);
             var buildResult = await classified.Build();

@@ -7,7 +7,7 @@ using EventBinding = app.events.lifecycle.bindings.binding.@this;
 namespace app.modules.mock;
 
 [Action("intercept", Cacheable = false)]
-public partial class MockAction : IContext
+public partial class intercept : IContext
 {
     public partial data.@this<string> ActionPattern { get; init; }
     public partial data.@this? ReturnValue { get; init; }

@@ -21,7 +21,7 @@ public class MockTests
     public async Task Action_SimpleReturn_CreatesHandle()
     {
         var (context, _, _) = CreateContext();
-        var action = new MockAction
+        var action = new intercept
         {
             Context = context,
             ActionPattern = "file.read",
@@ -42,7 +42,7 @@ public class MockTests
     public async Task Action_Spy_CreatesSpyHandle()
     {
         var (context, _, _) = CreateContext();
-        var action = new MockAction
+        var action = new intercept
         {
             Context = context,
             ActionPattern = "output.write"
@@ -59,7 +59,7 @@ public class MockTests
     public async Task Action_RegistersBeforeActionEvent()
     {
         var (context, _, _) = CreateContext();
-        var action = new MockAction
+        var action = new intercept
         {
             Context = context,
             ActionPattern = "file.read",
@@ -76,7 +76,7 @@ public class MockTests
     public async Task Action_EventBindingId_IsPopulated()
     {
         var (context, _, _) = CreateContext();
-        var action = new MockAction
+        var action = new intercept
         {
             Context = context,
             ActionPattern = "file.read",
@@ -170,7 +170,7 @@ public class MockTests
         var (context, _, _) = CreateContext();
 
         // Register a mock
-        var mockAction = new MockAction
+        var mockAction = new intercept
         {
             Context = context,
             ActionPattern = "file.read",
@@ -197,14 +197,14 @@ public class MockTests
         var (context, _, _) = CreateContext();
 
         // Register two mocks
-        var mock1 = new MockAction
+        var mock1 = new intercept
         {
             Context = context,
             ActionPattern = "file.read",
             ReturnValue = new global::app.data.@this("", "mocked1")        };
         await mock1.Run();
 
-        var mock2 = new MockAction
+        var mock2 = new intercept
         {
             Context = context,
             ActionPattern = "output.write",
@@ -248,35 +248,35 @@ public class MockTests
     [Test]
     public async Task ToRegex_PlainString_ExactMatch()
     {
-        var regex = MockAction.ToRegex("config.json");
+        var regex = intercept.ToRegex("config.json");
         await Assert.That(regex).IsEqualTo(@"^config\.json$");
     }
 
     [Test]
     public async Task ToRegex_WildcardStar_BecomesRegexDotStar()
     {
-        var regex = MockAction.ToRegex("https://example.org/api/*");
+        var regex = intercept.ToRegex("https://example.org/api/*");
         await Assert.That(regex).IsEqualTo(@"^https://example\.org/api/.*$");
     }
 
     [Test]
     public async Task ToRegex_LeadingStar_BecomesRegexDotStar()
     {
-        var regex = MockAction.ToRegex("*.example.org");
+        var regex = intercept.ToRegex("*.example.org");
         await Assert.That(regex).IsEqualTo(@"^.*\.example\.org$");
     }
 
     [Test]
     public async Task ToRegex_MultipleStar_AllConverted()
     {
-        var regex = MockAction.ToRegex("*keyword*");
+        var regex = intercept.ToRegex("*keyword*");
         await Assert.That(regex).IsEqualTo(@"^.*keyword.*$");
     }
 
     [Test]
     public async Task ToRegex_RegexPattern_UsedAsIs()
     {
-        var regex = MockAction.ToRegex(@"\d+\.json");
+        var regex = intercept.ToRegex(@"\d+\.json");
         await Assert.That(regex).IsEqualTo(@"^\d+\.json$");
     }
 
@@ -285,48 +285,48 @@ public class MockTests
     [Test]
     public async Task MatchValue_ExactString_Matches()
     {
-        await Assert.That(MockAction.MatchValue("config.json", "config.json")).IsTrue();
+        await Assert.That(intercept.MatchValue("config.json", "config.json")).IsTrue();
     }
 
     [Test]
     public async Task MatchValue_ExactString_NoMatch()
     {
-        await Assert.That(MockAction.MatchValue("config.json", "data.json")).IsFalse();
+        await Assert.That(intercept.MatchValue("config.json", "data.json")).IsFalse();
     }
 
     [Test]
     public async Task MatchValue_Wildcard_Matches()
     {
-        await Assert.That(MockAction.MatchValue("https://example.org/api/*", "https://example.org/api/users")).IsTrue();
+        await Assert.That(intercept.MatchValue("https://example.org/api/*", "https://example.org/api/users")).IsTrue();
     }
 
     [Test]
     public async Task MatchValue_Wildcard_NoMatch()
     {
-        await Assert.That(MockAction.MatchValue("https://example.org/api/*", "https://other.org/api/users")).IsFalse();
+        await Assert.That(intercept.MatchValue("https://example.org/api/*", "https://other.org/api/users")).IsFalse();
     }
 
     [Test]
     public async Task MatchValue_CaseInsensitive()
     {
-        await Assert.That(MockAction.MatchValue("Config.JSON", "config.json")).IsTrue();
+        await Assert.That(intercept.MatchValue("Config.JSON", "config.json")).IsTrue();
     }
 
     [Test]
     public async Task MatchValue_NullBoth_Matches()
     {
-        await Assert.That(MockAction.MatchValue(null, null)).IsTrue();
+        await Assert.That(intercept.MatchValue(null, null)).IsTrue();
     }
 
     [Test]
     public async Task MatchValue_NullPattern_NoMatch()
     {
-        await Assert.That(MockAction.MatchValue(null, "value")).IsFalse();
+        await Assert.That(intercept.MatchValue(null, "value")).IsFalse();
     }
 
     [Test]
     public async Task MatchValue_ContainsWildcard_Matches()
     {
-        await Assert.That(MockAction.MatchValue("*keyword*", "this has keyword inside")).IsTrue();
+        await Assert.That(intercept.MatchValue("*keyword*", "this has keyword inside")).IsTrue();
     }
 }

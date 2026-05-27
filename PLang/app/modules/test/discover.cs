@@ -78,7 +78,7 @@ public partial class discover : IContext
         var goalRead = await goalFile.ReadText();
         if (!goalRead.Success)
         {
-            // Build a minimal goal from just the file's path so File.Goal
+            // Build a minimal goal from just the file's path so Test.Goal
             // is never null. Status=Stale with the read error as reason.
             return new global::app.tester.Test.@this
             {
