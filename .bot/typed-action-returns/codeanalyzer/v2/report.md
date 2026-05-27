@@ -204,10 +204,18 @@ wanted Type=object." If a future LLM bug starts emitting `Type="object"` on ever
 variable.set, Build() inference silently stops firing across the board, and the
 only signal is downstream behavioral drift.
 
-**Fix:** none today. Worth a `validateResponse` (or Compile-llm) assertion that
-when the LLM emits `Type` on a `variable.set` whose source step has no explicit
-`(type)` hint in the user text, the LLM is wrong and should re-prompt. Out of
-scope for this branch; documenting as a known hazard.
+**Resolution — closed, won't fix (Ingi 2026-05-27):** the suggested detector
+("LLM emitted Type but source has no `(type)` hint, re-prompt") cannot be
+written. Developer type-hints are natural-language and take any form:
+`(json)`, `as int`, `make it integer`, `treat as a number`, or even
+inferred from question text like "give me json". The LLM's job IS that
+translation; a surface-pattern detector would either under-detect (miss
+"as int") or over-detect (flag legitimate translations) and would defeat
+the trust model.
+
+The drift hazard is real but the catch-point is at user-facing behavior
+(snapshot tests showing `(object)` instead of `(csv)`/`(json)`/etc), not
+at compile-time validation. Don't reopen.
 
 ---
 
