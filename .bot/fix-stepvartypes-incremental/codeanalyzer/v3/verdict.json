@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "OBP-5 cargo TrimStart at test/run.cs:165,168 + proposed OBP-6 (tester/File.cs holds Goal reference AND flat mirror of 6 Goal-reachable properties) — root fix collapses both into one migration. Plus 4 LOW (smell-1 collection mutations, dead local at report.cs:49, repeated guards in condition/Default.cs)." }

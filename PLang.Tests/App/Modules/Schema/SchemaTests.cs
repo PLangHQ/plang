@@ -1,6 +1,6 @@
 using System.Linq;
 using System.Text.Json;
-using app.modules.Schema;
+using app.builder.Types;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.Schema;

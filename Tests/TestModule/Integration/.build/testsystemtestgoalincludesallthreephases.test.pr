@@ -35,7 +35,7 @@
             {
               "name": "Name",
               "value": "%goalText%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -43,7 +43,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -51,7 +57,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "file.read(Path=\u0022/system/test.goal\u0022, ResolveVariables=false) , variable.set(Name=%goalText%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -63,23 +69,41 @@
       "comment": null,
       "actions": [
         {
+          "module": "test",
+          "action": "discover",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": ".",
+              "type": "string"
+            },
+            {
+              "name": "Pattern",
+              "value": "*.test.goal",
+              "type": "string"
+            },
+            {
+              "name": "Recursive",
+              "value": true,
+              "type": "bool"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
           "module": "assert",
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%goalText%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "test.discover",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -90,7 +114,7 @@
       "guidance": "Post-condition assertion that the previously read %goalText% includes the substring \u0027test.discover\u0027.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022.\u0022, Pattern=\u0022*.test.goal\u0022, Recursive=true), assert.contains(Container=%goalText%, Value=\u0022test.discover\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -106,19 +130,14 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%goalText%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "test.run",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -129,7 +148,7 @@
       "guidance": "Post-condition assertion that the previously read %goalText% includes the substring \u0027test.run\u0027.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.contains(Container=%goalText%, Value=\u0022test.run\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -145,19 +164,14 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%goalText%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "test.report",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -168,17 +182,17 @@
       "guidance": "Post-condition assertion that the previously read %goalText% includes the substring \u0027test.report\u0027.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.contains(Container=%goalText%, Value=\u0022test.report\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Integration/TestSystemTestGoalIncludesAllThreePhases.test.goal",
-  "prPath": "/Integration/.build/testsystemtestgoalincludesallthreephases.test.pr",
+  "path": "/TestModule/Integration/TestSystemTestGoalIncludesAllThreePhases.test.goal",
+  "prPath": "/TestModule/Integration/.build/testsystemtestgoalincludesallthreephases.test.pr",
   "hash": "82a745b237dd3a8828685ba2701af4a77b9d89e85f6dc797633ddb97243024da",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

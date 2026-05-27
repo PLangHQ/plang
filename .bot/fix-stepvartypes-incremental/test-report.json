@@ -1,0 +1,29 @@
+{
+  "tester": "tester",
+  "branch": "fix-stepvartypes-incremental",
+  "timestamp": "2026-05-26T19:45:00Z",
+  "tested_version": "v6",
+  "test_run": {
+    "csharp": { "total": 3036, "passed": 3036, "failed": 0, "skipped": 0 },
+    "plang": { "total": 208, "passed": 208, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": 0,
+    "changed_files_total": 0,
+    "uncovered_files": []
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Testing/DiscoverActionTests.cs",
+      "code_file": "PLang/app/modules/test/discover.cs",
+      "issue": "Slim discover.cs has 6 Stale branches (goal read error L86, no PrPath derivable L103, no .pr L114, pr-read-fail L127, pr-parse-fail L137, rebuild needed L147). Only 2 are covered: no .pr (Discover_NoPrFile_MarksStaleWithReasonNoPr) and rebuild needed (Discover_GoalAndPrHashMismatch_MarksStaleRebuildNeeded). The other 4 branches are reachable but untested. The slim restructure didn't introduce the gap — the original discover.cs had the same branches inline — but the new shape makes each Stale exit a single 4-line block, so adding a test per branch is now mechanical.",
+      "impact": "Low. A subtle bug in the 'pr corrupt' or 'goal read error' branch (wrong StatusReason text, swapped Status enum) would not be caught. None of the production paths read StatusReason for branching — it's display-only — so the blast radius is human-readable diagnostic accuracy, not behavior.",
+      "suggestion": "Add 3 short tests: corrupt-JSON .pr (writes 'not json' to the .pr path), goal-read-failure (impractical on Linux without permission games — skip), and goal-with-no-PrPath-derivable (edge case — likely unreachable in practice, can be left untested with a comment). The first two carry value; the third is theoretical."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "PLang 208/208 + C# 3036/3036 — all green after coder commit dfd7429a7 closed v5's template-path regression. False-green analysis ran on each substantive change since v4: (1) condition/code/Default.cs EvaluateOperator extract — overload resolution preserved (compare.cs:16, elseif.cs:21, if.cs:22 each call Evaluate(this) which routes to the correct one-line forwarder); behavior covered indirectly by .test.goal corpus and DefaultEvaluatorTests. (2) test/run.cs IsEntryGoalStep simplification — Run_Timings_OnlyEntryGoalTopLevelSteps_NestedRollUp would catch entry-vs-sub-goal misclassification (asserts exactly 3 entry-goal indices vs 5-if-sub-leaks-in). (3) tester/File.cs slim — verified discover.cs populates Goal non-null on every branch (fallback `new Goal { Path = goalFile }` on goal-read failure, sourceGoal otherwise, prGoal on happy path). All consumers (test/run.cs, test/report.cs, RunActionTests scaffolding) reach through file.Goal.* — no stragglers found. (4) step.@this Guidance/Level/Confidence drop — no references in PLang/ or PLang.Tests/; existing .pr files with stale null keys deserialize fine via STJ default (verified Icelandic fixture .pr — keys still present but ignored). One non-blocking minor finding: 4 of 6 discover Stale branches lack tests."
+}

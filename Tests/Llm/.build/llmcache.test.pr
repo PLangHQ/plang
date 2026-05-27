@@ -20,15 +20,19 @@
                 {
                   "role": "system",
                   "content": "You are a helpful assistant",
-                  "images": []
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "What is the capital of Iceland?",
-                  "images": []
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
                 }
               ],
-              "type": "list\u003Cllmmessage\u003E"
+              "type": "list\u00601"
             },
             {
               "name": "Cache",
@@ -36,8 +40,54 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "defaults": [
+            {
+              "name": "continuepreviousconversation",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "cache",
+              "action": "wrap",
+              "parameters": [
+                {
+                  "name": "DurationMs",
+                  "value": 0,
+                  "type": "long"
+                }
+              ],
+              "defaults": [
+                {
+                  "name": "sliding",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "modifiers": []
+            }
+          ]
         },
         {
           "module": "variable",
@@ -46,7 +96,7 @@
             {
               "name": "Name",
               "value": "%first%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -54,7 +104,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -62,7 +118,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "llm.query(Messages=[{Role:\u0022system\u0022,Content:\u0022You are a helpful assistant\u0022},{Role:\u0022user\u0022,Content:\u0022What is the capital of Iceland?\u0022}], Cache=true) | cache.wrap(DurationMs=0) , variable.set(Name=%first%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -83,15 +139,19 @@
                 {
                   "role": "system",
                   "content": "You are a helpful assistant",
-                  "images": []
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "What is the capital of Iceland?",
-                  "images": []
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
                 }
               ],
-              "type": "list\u003Cllmmessage\u003E"
+              "type": "list\u00601"
             },
             {
               "name": "Cache",
@@ -99,8 +159,53 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "defaults": [
+            {
+              "name": "continuepreviousconversation",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            }
+          ],
+          "modifiers": [
+            {
+              "module": "cache",
+              "action": "wrap",
+              "parameters": [
+                {
+                  "name": "DurationMs",
+                  "value": 0,
+                  "type": "long"
+                },
+                {
+                  "name": "Sliding",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
+              "defaults": null,
+              "modifiers": []
+            }
+          ]
         },
         {
           "module": "variable",
@@ -109,7 +214,7 @@
             {
               "name": "Name",
               "value": "%second%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -117,7 +222,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -125,7 +236,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "llm.query(Messages=[{Role:\u0022system\u0022,Content:\u0022You are a helpful assistant\u0022},{Role:\u0022user\u0022,Content:\u0022What is the capital of Iceland?\u0022}], Cache=true) | cache.wrap(DurationMs=0, Sliding=false) , variable.set(Name=%second%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -143,7 +254,7 @@
             {
               "name": "Value",
               "value": "%first%",
-              "type": "object?"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -154,7 +265,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%first%)",
       "source": null,
       "waitForExecution": true
     },
@@ -172,7 +283,7 @@
             {
               "name": "Value",
               "value": "%second%",
-              "type": "object?"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -183,7 +294,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%second%)",
       "source": null,
       "waitForExecution": true
     }
@@ -193,7 +304,7 @@
   "path": "/Llm/LlmCache.test.goal",
   "prPath": "/Llm/.build/llmcache.test.pr",
   "hash": "c6cd977022448f7eee0b74dd55759c005e87f335a40599b886bb96a81cc7bc4b",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

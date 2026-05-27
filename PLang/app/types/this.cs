@@ -58,6 +58,16 @@ public sealed partial class @this
         ["object"] = typeof(object),
         ["dynamic"] = typeof(object),
         ["json"] = typeof(JsonNode),
+        // Text-shaped file extensions — registered as string aliases so
+        // file.read.Build()'s extension-derived Type stamp ("csv", "txt", ...)
+        // doesn't surface "Unknown type" at runtime. Annotation stays specific
+        // (goal.getTypes still reports "csv"); only the runtime conversion
+        // target degrades to string.
+        ["csv"] = typeof(string),
+        ["txt"] = typeof(string),
+        ["xml"] = typeof(string),
+        ["yaml"] = typeof(string),
+        ["yml"] = typeof(string),
         ["int?"] = typeof(int?),
         ["long?"] = typeof(long?),
         ["double?"] = typeof(double?),
@@ -381,21 +391,24 @@ public sealed partial class @this
     /// </summary>
     public static bool IsScalarPlangType(System.Type type)
     {
-        var hasPlangType = type
+        // A type is catalog-visible when it's named via [PlangType] override OR is
+        // an @this class (last-namespace-segment convention).
+        var hasPlangName = type
             .GetCustomAttributes(typeof(PlangTypeAttribute), inherit: false)
             .Length > 0;
-        if (!hasPlangType) return false;
+        var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
+        if (!hasPlangName && !isThisClass) return false;
 
-        if (type.GetMethod("Resolve",
-                BindingFlags.Public | BindingFlags.Static) != null)
+        // Resolve(input, ctx) factory → catalog derives the wire shape from the
+        // first parameter. Marks the type as scalar without further checks.
+        if (type.GetMethod("Resolve", BindingFlags.Public | BindingFlags.Static) != null)
             return true;
 
-        if (type.GetCustomAttributes(typeof(PlangTypeAttribute), inherit: false)
-            .Cast<PlangTypeAttribute>()
-            .Any(a => a.Shape != null))
+        // Static Shape property → caller asserts the wire form explicitly.
+        if (ReadStaticString(type, "Shape") != null)
             return true;
 
-        // Final fallback: a [PlangType] type with no [LlmBuilder] properties is, by
+        // Final fallback: a catalog-named type with no [LlmBuilder] properties is, by
         // convention, a wrapped primitive (TString). The catalog renders it as a string.
         foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
@@ -453,9 +466,9 @@ public sealed partial class @this
     ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
-    public List<app.modules.Schema.Entry> BuildTypeEntries(app.modules.@this? modules)
+    public List<app.builder.Types.Entry> BuildTypeEntries(app.modules.@this? modules)
     {
-        var entries = new List<app.modules.Schema.Entry>();
+        var entries = new List<app.builder.Types.Entry>();
         var seen = new HashSet<System.Type>();
         var queue = new Queue<System.Type>();
 
@@ -497,19 +510,27 @@ public sealed partial class @this
 
             var typeName = GetTypeName(type);
 
-            var plangAttr = type.GetCustomAttributes<PlangTypeAttribute>()
-                .FirstOrDefault(a => a.Shape != null || a.Description != null || a.Example != null);
+            // Catalog metadata sourced from static-property convention on the type:
+            //   public static string Example => "...";
+            //   public static string Description => "...";
+            //   public static string Shape => "string";
+            // Missing properties → null. Replaces the former [PlangType(Example=, ...)]
+            // parameters; the attribute now only carries Name overrides for divergent
+            // cases (goal.call, catalog).
+            string? staticExample = ReadStaticString(type, "Example");
+            string? staticDescription = ReadStaticString(type, "Description");
+            string? staticShape = ReadStaticString(type, "Shape");
 
             var values = GetValidValues(type);
             if (values != null)
             {
-                entries.Add(new app.modules.Schema.Entry
+                entries.Add(new app.builder.Types.Entry
                 {
                     Name = typeName,
-                    Kind = app.modules.Schema.EntryKind.Enum,
+                    Kind = app.builder.Types.EntryKind.Enum,
                     Values = values,
-                    Description = plangAttr?.Description,
-                    Example = plangAttr?.Example,
+                    Description = staticDescription,
+                    Example = staticExample,
                     ClrType = type,
                 });
                 continue;
@@ -530,14 +551,14 @@ public sealed partial class @this
                 }
             }
 
-            var llmProps = new List<app.modules.Schema.Field>();
+            var llmProps = new List<app.builder.Types.Field>();
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!prop.CanRead || prop.Name == "EqualityContract") continue;
                 if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
                 if (Attribute.IsDefined(prop, typeof(JsonIgnoreAttribute))) continue;
 
-                llmProps.Add(new app.modules.Schema.Field
+                llmProps.Add(new app.builder.Types.Field
                 {
                     Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
                     TypeName = GetTypeName(prop.PropertyType),
@@ -545,22 +566,27 @@ public sealed partial class @this
                 Enqueue(UnwrapType(prop.PropertyType));
             }
 
-            var hasPlangType = type.GetCustomAttributes<PlangTypeAttribute>().Any();
+            // Scalar discriminant: either has a Resolve(input, ctx) factory (so the
+            // wire shape is derivable), declares a static Shape property, or is
+            // catalog-named but has no LLM-builder properties (a domain wrapper around
+            // a primitive). Records have llmProps; scalars don't.
+            var hasPlangName = type.GetCustomAttributes<PlangTypeAttribute>().Any();
+            var isThisClass = string.Equals(type.Name, "this", System.StringComparison.Ordinal);
             bool isScalar = constructorSignature != null
-                || plangAttr?.Shape != null
-                || (hasPlangType && llmProps.Count == 0);
+                || staticShape != null
+                || ((hasPlangName || isThisClass) && llmProps.Count == 0);
 
             if (isScalar)
             {
-                entries.Add(new app.modules.Schema.Entry
+                entries.Add(new app.builder.Types.Entry
                 {
                     Name = typeName,
-                    Kind = app.modules.Schema.EntryKind.Scalar,
-                    Shape = derivedShape ?? plangAttr?.Shape ?? "string",
+                    Kind = app.builder.Types.EntryKind.Scalar,
+                    Shape = derivedShape ?? staticShape ?? "string",
                     ConstructorSignature = constructorSignature,
                     Properties = llmProps.Count > 0 ? llmProps : null,
-                    Description = plangAttr?.Description,
-                    Example = plangAttr?.Example,
+                    Description = staticDescription,
+                    Example = staticExample,
                     ClrType = type,
                 });
                 continue;
@@ -568,13 +594,13 @@ public sealed partial class @this
 
             if (llmProps.Count > 0)
             {
-                entries.Add(new app.modules.Schema.Entry
+                entries.Add(new app.builder.Types.Entry
                 {
                     Name = typeName,
-                    Kind = app.modules.Schema.EntryKind.Record,
+                    Kind = app.builder.Types.EntryKind.Record,
                     Fields = llmProps,
-                    Description = plangAttr?.Description,
-                    Example = plangAttr?.Example,
+                    Description = staticDescription,
+                    Example = staticExample,
                     ClrType = type,
                 });
             }
@@ -583,9 +609,42 @@ public sealed partial class @this
         return entries;
     }
 
-    /// <summary>Returns the catalog's record/enum entries, keyed by name.</summary>
-    public Dictionary<string, app.modules.Schema.Entry> ComplexSchemas() =>
-        BuildTypeEntries(null).ToDictionary(e => e.Name, e => e);
+    /// <summary>
+    /// Returns the catalog's record/enum entries, keyed by name. When two distinct
+    /// CLR types resolve to the same PLang name (e.g. two <c>@this</c> classes
+    /// sharing a last-namespace-segment), the first one wins — the registry's
+    /// <c>ResolveName</c> follows the same first-wins rule so consumers stay
+    /// consistent across the catalog and the type lookup.
+    /// </summary>
+    public Dictionary<string, app.builder.Types.Entry> ComplexSchemas()
+    {
+        var dict = new Dictionary<string, app.builder.Types.Entry>();
+        foreach (var entry in BuildTypeEntries(null))
+            dict.TryAdd(entry.Name, entry);
+        return dict;
+    }
+
+    /// <summary>
+    /// Reads a public-static string property by name from <paramref name="type"/>.
+    /// Used to source catalog metadata (Example, Description, Shape) from a
+    /// convention rather than from a per-parameter attribute — see
+    /// <see cref="BuildTypeEntries"/>. Returns null when the property is absent,
+    /// non-string, or throws.
+    /// </summary>
+    private static string? ReadStaticString(System.Type type, string propertyName)
+    {
+        var prop = type.GetProperty(propertyName,
+            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+        if (prop == null || prop.PropertyType != typeof(string)) return null;
+        try
+        {
+            return prop.GetValue(null) as string;
+        }
+        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+        {
+            return null;
+        }
+    }
 
     /// <summary>
     /// Unwraps generic wrappers (List&lt;T&gt;, Nullable&lt;T&gt;) to get the inner type.

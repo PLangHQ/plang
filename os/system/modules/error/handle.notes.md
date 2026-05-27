@@ -2,6 +2,19 @@
 
 When the step text says `<main>, on error <recovery>` (or `on error call X`), the recovery action goes INSIDE `error.handle.Actions` as a list of action records.
 
+**Multilingual:** the "on error" clause may be written in any natural language. Recognize them all as error.handle and produce the same .pr structure. Examples:
+
+- English: `on error call X`, `if it fails call X`, `catch error call X`
+- Icelandic: `a villu kalla i X`, `ef villa kemur upp kalla X`
+- Japanese: `エラー時に X を呼ぶ`, `エラーが発生したら X を呼び出す`
+- Arabic: `عند الخطأ اتصل بـ X`
+- Korean: `오류 발생 시 X 호출`, `오류가 나면 X 호출`
+- Swahili: `kwa hitilafu piga X`, `ikishindwa piga X`
+- Spanish: `en caso de error llamar a X`
+- German: `bei Fehler X aufrufen`
+
+ANY trailing clause after the main verb that references an error-handling action MUST produce the error.handle modifier on the main action with that goal in Actions. Drop nothing.
+
 Three failure modes to avoid:
 
 1. **Don't duplicate** — if `variable.set` is the recovery, it appears ONCE inside `Actions`. Never also as a top-level peer. A duplicate peer would run the recovery unconditionally on every step execution, defeating the whole "on error" intent.

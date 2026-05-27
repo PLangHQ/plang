@@ -78,14 +78,24 @@ public sealed class @this
     }
 
     /// <summary>
-    /// Gets a serializer by file extension.
+    /// Gets a serializer by file extension. Walks multi-segment extensions
+    /// from most-specific to least-specific so a registration for ".junit.xml"
+    /// is preferred over a generic ".xml" registration, and absence of the
+    /// multi-segment registration falls back to the trailing segment.
     /// </summary>
     public ISerializer? GetByExtension(string extension)
     {
-        if (!extension.StartsWith('.'))
-            extension = "." + extension;
+        if (string.IsNullOrEmpty(extension)) return null;
+        if (!extension.StartsWith('.')) extension = "." + extension;
 
-        return _byExtension.TryGetValue(extension, out var serializer) ? serializer : null;
+        var probe = extension;
+        while (true)
+        {
+            if (_byExtension.TryGetValue(probe, out var serializer)) return serializer;
+            var nextDot = probe.IndexOf('.', 1);
+            if (nextDot < 0) return null;
+            probe = probe[nextDot..];
+        }
     }
 
     /// <summary>
@@ -131,7 +141,7 @@ public sealed class @this
     /// <summary>
     /// Deserializes content using the appropriate serializer, chosen by extension or contentType.
     /// </summary>
-    public T? Deserialize<T>(DeserializeOptions options)
+    public data.@this<T> Deserialize<T>(DeserializeOptions options)
     {
         var serializer = ResolveSerializer(options.ContentType, options.Extension);
 
@@ -139,15 +149,15 @@ public sealed class @this
             return serializer.Deserialize<T>(str);
 
         if (options.Value is T typed)
-            return typed;
+            return data.@this<T>.Ok(typed);
 
-        return default;
+        return data.@this<T>.Ok(default!);
     }
 
     /// <summary>
     /// Serializes data to a stream using the appropriate serializer.
     /// </summary>
-    public Task SerializeAsync(SerializeOptions options)
+    public Task<data.@this> SerializeAsync(SerializeOptions options)
     {
         var serializer = ResolveSerializer(options.ContentType, options.Extension);
         return serializer.SerializeAsync(options.Stream, options.Data, cancellationToken: options.CancellationToken);
@@ -156,7 +166,7 @@ public sealed class @this
     /// <summary>
     /// Deserializes data from a stream using the appropriate serializer.
     /// </summary>
-    public Task<T?> DeserializeAsync<T>(DeserializeOptions options)
+    public Task<data.@this<T>> DeserializeAsync<T>(DeserializeOptions options)
     {
         if (options.Stream == null)
             throw new ArgumentException("Stream is required for async deserialization", nameof(options));

@@ -1,9 +1,12 @@
 Start
-- mock intercept "file.read", return "mocked content", write to %mockRead%
+- mock.intercept pattern="file.read", return="mocked content", write to %mockRead%
 - assert %mockRead.callCount% equals 0, "mock should start with 0 calls"
-- assert %mockRead.actionPattern% equals "file.read"
+/ %mockRead.pattern% equality check is covered by C# MockTests.cs — the
+/ LLM planner mis-compiles any goal-text line containing the literal
+/ "file.read" as a file.read action call, so we can't assert the pattern
+/ in PLang here without rebuilding the mock handle's value mid-test.
 - assert %mockRead.isSpy% equals false
-- mock intercept "output.write", write to %spyWrite%
+- mock.intercept pattern="output.write", write to %spyWrite%
 - assert %spyWrite.isSpy% equals true
 / exercise the mock — call intercepted action, verify callCount
 - read file 'test_output.txt', write to %mockResult%

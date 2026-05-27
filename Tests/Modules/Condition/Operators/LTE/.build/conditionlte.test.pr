@@ -82,7 +82,7 @@
                 "name": "WhenLTE",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/whenlte.pr"
+                "prPath": "/Modules/Condition/Operators/LTE/.build/whenlte.pr"
               },
               "type": "goal.call"
             },
@@ -146,8 +146,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionLTE.test.goal",
-  "prPath": "/.build/conditionlte.test.pr",
+  "path": "/Modules/Condition/Operators/LTE/ConditionLTE.test.goal",
+  "prPath": "/Modules/Condition/Operators/LTE/.build/conditionlte.test.pr",
   "hash": "1b6398a4e6e7df9232d3cc7d2161d3ee6f274993dda7cfb44143e32f547f9879",
   "builderVersion": "0.2.2",
   "isSetup": false,

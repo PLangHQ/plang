@@ -1,6 +1,6 @@
 using app.variables;
-using ExampleSpec = app.modules.Schema.Spec.Example;
-using ActionSpec = app.modules.Schema.Spec.Action;
+using ExampleSpec = app.builder.Types.Spec.Example;
+using ActionSpec = app.builder.Types.Spec.Action;
 
 namespace app.modules.math;
 

@@ -1,0 +1,9 @@
+TestBuildMethodSetsTerminalVariableSetType
+/ User-visible contract for Stage 0 — Build() flows through to the .pr.
+/ file.read.Build() on literal 'data.csv' returns "csv"; the terminal
+/ variable.set in the generated .pr must carry Type="csv". Verified by
+/ calling goal.getTypes on the parsed Goal — downstream step's snapshot
+/ sees %x%(csv), which only happens if the Type stamp reached the .pr.
+- builder.goals from 'stage0_fixture/', write to %goals%
+- goal.getTypes %goals[0]%, write to %snapshot%
+- assert %snapshot[1].x% equals 'csv', "downstream snapshot must show %x%(csv) from file.read.Build()"

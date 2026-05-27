@@ -63,6 +63,7 @@ public sealed class Default : IHttp
 
     public Task<data.@this> SendAsync(request action) => ExecuteHttpAsync(async () =>
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
@@ -130,7 +131,7 @@ public sealed class Default : IHttp
 
         using (response)
         {
-            return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize);
+            return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize, sw.Elapsed);
         }
     });
 
@@ -180,6 +181,7 @@ public sealed class Default : IHttp
 
     public Task<data.@this> UploadAsync(upload action) => ExecuteHttpAsync(async () =>
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var app = action.Context.App;
         var config = app.Config.For<Config>(action.Context);
 
@@ -193,7 +195,9 @@ public sealed class Default : IHttp
 
         var headers = MergeHeaders(action.Headers?.Value, config);
 
-        var httpContent = await ResolveUploadContentAsync(action, app, encoding);
+        var contentResult = await ResolveUploadContentAsync(action, app, encoding);
+        if (!contentResult.Success) return contentResult;
+        var httpContent = contentResult.Value!;
 
         var httpMethod = ToSystemMethod(action.Method.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
@@ -216,7 +220,7 @@ public sealed class Default : IHttp
         using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, config, cts.Token);
 
         var maxResponseSize = config.Resolve("MaxResponseSize", DefaultMaxResponseSize);
-        return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize);
+        return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize, sw.Elapsed);
     });
 
     public data.@this Configure(configure action)
@@ -240,12 +244,10 @@ public sealed class Default : IHttp
             return await operation();
         }
         catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException
-            or IOException or UnauthorizedAccessException or FormatException
-            or InvalidOperationException)
+            or IOException or UnauthorizedAccessException or FormatException)
         {
             var (key, statusCode) = ex switch
             {
-                InvalidOperationException => ("ResponseTooLarge", 413),
                 TaskCanceledException => ("Timeout", 408),
                 HttpRequestException hre => ("HttpError", (int)(hre.StatusCode ?? 0)),
                 IOException or UnauthorizedAccessException => ("IOError", 500),
@@ -262,10 +264,11 @@ public sealed class Default : IHttp
     private const long MaxErrorBodySize = 4 * 1024; // 4KB for error messages
 
     /// <summary>
-    /// Reads HTTP content as string with a byte size limit.
-    /// Protects against OOM from unbounded response bodies.
+    /// Reads HTTP content as byte array with a size cap and slow-loris guard.
+    /// Returns Data so the size/throughput failures carry their own keys instead
+    /// of being laundered through the outer catch.
     /// </summary>
-    private static async Task<string> ReadLimitedStringAsync(
+    private static async Task<data.@this<byte[]>> ReadLimitedBytesAsync(
         HttpContent content, long maxBytes, CancellationToken ct = default)
     {
         using var stream = await content.ReadAsStreamAsync(ct);
@@ -280,61 +283,38 @@ public sealed class Default : IHttp
         {
             totalRead += bytesRead;
             if (totalRead > maxBytes)
-                throw new InvalidOperationException(
-                    $"Response body exceeds maximum size of {FormatBytes(maxBytes)}");
+                return data.@this<byte[]>.FromError(new ServiceError(
+                    $"Response body exceeds maximum size of {FormatBytes(maxBytes)}",
+                    "ResponseTooLarge", 413));
             limited.Write(buffer, 0, bytesRead);
 
-            // Slow-loris protection: abort if throughput drops below 1KB/sec for 30s
             throughputBytes += bytesRead;
             var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
             if (elapsed >= 30)
             {
                 if (throughputBytes / elapsed < 1024)
-                    throw new InvalidOperationException("Response too slow — possible slow-loris attack");
+                    return data.@this<byte[]>.FromError(new ServiceError(
+                        "Response too slow — possible slow-loris attack",
+                        "SlowResponse", 408));
                 throughputStart = DateTimeOffset.UtcNow;
                 throughputBytes = 0;
             }
         }
 
-        limited.Position = 0;
-        using var reader = new StreamReader(limited, Encoding.UTF8);
-        return await reader.ReadToEndAsync(ct);
+        return data.@this<byte[]>.Ok(limited.ToArray());
     }
 
     /// <summary>
-    /// Reads HTTP content as byte array with a size limit.
+    /// Reads HTTP content as UTF-8 string with a byte size limit. Thin wrapper
+    /// over <see cref="ReadLimitedBytesAsync"/> — size-cap / slow-loris logic
+    /// lives in one place.
     /// </summary>
-    private static async Task<byte[]> ReadLimitedBytesAsync(
+    private static async Task<data.@this<string>> ReadLimitedStringAsync(
         HttpContent content, long maxBytes, CancellationToken ct = default)
     {
-        using var stream = await content.ReadAsStreamAsync(ct);
-        using var limited = new MemoryStream();
-        var buffer = new byte[8192];
-        long totalRead = 0;
-        int bytesRead;
-        var throughputStart = DateTimeOffset.UtcNow;
-        long throughputBytes = 0;
-
-        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
-        {
-            totalRead += bytesRead;
-            if (totalRead > maxBytes)
-                throw new InvalidOperationException(
-                    $"Response body exceeds maximum size of {FormatBytes(maxBytes)}");
-            limited.Write(buffer, 0, bytesRead);
-
-            throughputBytes += bytesRead;
-            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
-            if (elapsed >= 30)
-            {
-                if (throughputBytes / elapsed < 1024)
-                    throw new InvalidOperationException("Response too slow — possible slow-loris attack");
-                throughputStart = DateTimeOffset.UtcNow;
-                throughputBytes = 0;
-            }
-        }
-
-        return limited.ToArray();
+        var bytes = await ReadLimitedBytesAsync(content, maxBytes, ct);
+        if (!bytes.Success) return data.@this<string>.FromError(bytes.Error!);
+        return data.@this<string>.Ok(Encoding.UTF8.GetString(bytes.Value!));
     }
 
     // --- Internal HTTP transport ---
@@ -486,7 +466,8 @@ public sealed class Default : IHttp
         bool unsigned,
         AppType app,
         actor.context.@this context,
-        long maxResponseSize = DefaultMaxResponseSize)
+        long maxResponseSize = DefaultMaxResponseSize,
+        System.TimeSpan duration = default)
     {
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
         var statusCode = (int)response.StatusCode;
@@ -504,7 +485,8 @@ public sealed class Default : IHttp
             return errorData;
         }
 
-        // application/plang response
+        // application/plang response — keeps the historic shape (deserialized
+        // Data envelope flows through); no Response wrapping here.
         if (contentType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
         {
             if (unsigned)
@@ -519,52 +501,73 @@ public sealed class Default : IHttp
             return await ParsePlangResponseAsync(response, request, app, context, maxResponseSize);
         }
 
-        // JSON response
-        if (contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
+        // Content-Type body dispatch flows through the serializer registry:
+        //   - registered serializer (application/json, application/plang, ...) → parsed object
+        //   - text-shaped content with no specific serializer (text/*, xml, csv) → utf-8 string
+        //   - everything else (image/*, application/octet-stream, missing CT) → byte[]
+        // A registered serializer that fails (server claimed JSON but sent garbage)
+        // falls back to the text-shaped representation rather than failing the request.
+        var bytesRead = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
+        if (!bytesRead.Success)
         {
-            var json = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            object? parsed;
-            try
-            {
-                parsed = JsonSerializer.Deserialize<object>(json, _caseInsensitiveRead);
-            }
-            catch (JsonException)
-            {
-                parsed = json;
-            }
-            var result = global::app.data.@this.Ok(parsed);
-            BuildProperties(result, request, response);
-            return result;
+            BuildProperties(bytesRead, request, response);
+            return bytesRead;
+        }
+        var bytes = bytesRead.Value!;
+        object? body;
+        var serializer = context.Actor.Channels.Serializers.GetByContentType(contentType);
+        if (serializer != null)
+        {
+            using var stream = new MemoryStream(bytes);
+            var deser = await serializer.DeserializeAsync(stream, typeof(object));
+            body = deser.Success ? deser.Value : TextFallback(bytes, contentType);
+        }
+        else
+        {
+            body = TextFallback(bytes, contentType);
         }
 
-        // XML response
-        if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
-        {
-            var xml = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = global::app.data.@this.Ok(xml, data.type.FromMime("application/xml"));
-            BuildProperties(result, request, response);
-            return result;
-        }
+        var respHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var h in response.Headers)
+            respHeaders[h.Key] = string.Join(", ", h.Value);
+        foreach (var h in response.Content.Headers)
+            respHeaders[h.Key] = string.Join(", ", h.Value);
 
-        // Text response
-        if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
-        {
-            var text = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            var result = global::app.data.@this.Ok(text);
-            BuildProperties(result, request, response);
-            return result;
-        }
+        var typed = new global::app.http.Response.@this(statusCode, respHeaders, body, duration);
+        var result = data.@this<global::app.http.Response.@this>.Ok(typed);
+        // Legacy Property bag — pre-Stage-3 PLang code reads %resp.StatusCode%,
+        // %resp.Url%, %resp.RequestHeaders% etc. via Properties navigation.
+        // Keep it populated so existing test goals don't break.
+        BuildProperties(result, request, response);
+        return result;
+    }
 
-        // Binary response
-        var bytes = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
-        var binaryResult = global::app.data.@this.Ok(bytes);
-        BuildProperties(binaryResult, request, response);
-        return binaryResult;
+    /// <summary>
+    /// Falls back from byte[] to utf-8 string when the content type is "text-shaped"
+    /// (text/*, xml, json, csv) — server promised structured content but either
+    /// no serializer is registered for the exact subtype or the registered one
+    /// failed to parse. Image/binary/octet-stream stay as byte[].
+    /// </summary>
+    private static object TextFallback(byte[] bytes, string contentType)
+    {
+        if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase)
+            || contentType.Contains("xml", StringComparison.OrdinalIgnoreCase)
+            || contentType.Contains("json", StringComparison.OrdinalIgnoreCase)
+            || contentType.Contains("csv", StringComparison.OrdinalIgnoreCase))
+            return Encoding.UTF8.GetString(bytes);
+        return bytes;
     }
 
     /// <summary>
     /// Parses application/plang response: deserialize as data.@this (with Signature via [In]),
     /// verify signature, set %!ServiceIdentity%.
+    ///
+    /// **Why not Serializers.GetByContentType?** application/plang is the engine's
+    /// own transport — `_transportInOptions` carries the [In] signature-inflow
+    /// shape that the generic JSON serializer doesn't know about. Routing
+    /// through the registry would lose Signature parsing; this raw
+    /// `JsonSerializer.Deserialize&lt;data.@this&gt;` is intentional. Same rationale
+    /// applies to <c>StreamPlangAsync</c>'s per-line NDJSON deserialize.
     /// </summary>
     private async Task<data.@this> ParsePlangResponseAsync(
         HttpResponseMessage response,
@@ -573,7 +576,13 @@ public sealed class Default : IHttp
         actor.context.@this context,
         long maxResponseSize = DefaultMaxResponseSize)
     {
-        var body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
+        var bodyRead = await ReadLimitedStringAsync(response.Content, maxResponseSize);
+        if (!bodyRead.Success)
+        {
+            BuildProperties(bodyRead, request, response);
+            return bodyRead;
+        }
+        var body = bodyRead.Value!;
 
         data.@this? data;
         try
@@ -665,8 +674,13 @@ public sealed class Default : IHttp
         HttpResponseMessage response, HttpRequestMessage request, CancellationToken ct = default)
     {
         var errorBody = "";
-        try { errorBody = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct); }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — body too large or read failed, proceed with empty */ }
+        try
+        {
+            var read = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, ct);
+            // Best effort: ignore size-cap / slow-loris failures here, proceed with empty body.
+            if (read.Success) errorBody = read.Value!;
+        }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException)) { /* best effort — read failed (network/IO), proceed with empty */ }
         var err = global::app.data.@this.FromError(new ServiceError(
             $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
             "HttpError", (int)response.StatusCode));
@@ -996,7 +1010,7 @@ public sealed class Default : IHttp
 
     // --- Upload content resolution ---
 
-    private static async Task<HttpContent> ResolveUploadContentAsync(
+    private static async Task<data.@this<HttpContent>> ResolveUploadContentAsync(
         upload action, global::app.@this app, string encoding)
     {
         var content = action.Content.Value;
@@ -1006,12 +1020,12 @@ public sealed class Default : IHttp
             return contentAs switch
             {
                 ContentAs.File => await CreateFileContentAsync(app, ctx, content!.ToString()!),
-                ContentAs.Base64 => CreateBase64Content(content!.ToString()!),
+                ContentAs.Base64 => data.@this<HttpContent>.Ok(CreateBase64Content(content!.ToString()!)),
                 ContentAs.Form => await CreateFormContentAsync(app, ctx, content!),
-                ContentAs.Text => new StringContent(
+                ContentAs.Text => data.@this<HttpContent>.Ok(new StringContent(
                     content is string s ? s : JsonSerializer.Serialize(content),
-                    Encoding.GetEncoding(encoding)),
-                _ => new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding))
+                    Encoding.GetEncoding(encoding))),
+                _ => data.@this<HttpContent>.Ok(new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)))
             };
         }
 
@@ -1033,29 +1047,30 @@ public sealed class Default : IHttp
             if (exists.Success && exists.Value == true)
                 return await CreateFileContentAsync(app, ctx, str);
 
-            return new StringContent(str, Encoding.GetEncoding(encoding));
+            return data.@this<HttpContent>.Ok(new StringContent(str, Encoding.GetEncoding(encoding)));
         }
 
-        return new StringContent(
+        return data.@this<HttpContent>.Ok(new StringContent(
             JsonSerializer.Serialize(content),
             Encoding.GetEncoding(encoding),
-            "application/json");
+            "application/json"));
     }
 
     // internal so HttpStaticFileDenialTests can invoke the handler's read
     // path directly (driving the full upload action requires a real HTTP
     // endpoint).
-    internal static async Task<HttpContent> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
+    internal static async Task<data.@this<HttpContent>> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
     {
         // Gated read via path verb. AuthGate(Read) fires inside ReadBytes;
         // out-of-root paths the actor hasn't granted bubble up as Fail.
         var resolved = global::app.types.path.@this.Resolve(path, context);
         var read = await resolved.ReadBytes();
         if (!read.Success || read.Value == null)
-            throw new System.IO.IOException(read.Error?.Message ?? $"Could not read file: {path}");
+            return data.@this<HttpContent>.FromError(read.Error
+                ?? new ServiceError($"Could not read file: {path}", "FileReadError", 500));
         var content = new ByteArrayContent(read.Value);
         content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        return content;
+        return data.@this<HttpContent>.Ok(content);
     }
 
     private static HttpContent CreateBase64Content(string base64)
@@ -1066,7 +1081,7 @@ public sealed class Default : IHttp
         return content;
     }
 
-    private static async Task<HttpContent> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
+    private static async Task<data.@this<HttpContent>> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
     {
         var form = new MultipartFormDataContent();
         Dictionary<string, object> fields;
@@ -1093,7 +1108,8 @@ public sealed class Default : IHttp
                 var fp = global::app.types.path.@this.Resolve(value[1..], context);
                 var read = await fp.ReadBytes();
                 if (!read.Success || read.Value == null)
-                    throw new System.IO.IOException(read.Error?.Message ?? $"Could not read form file: {value[1..]}");
+                    return data.@this<HttpContent>.FromError(read.Error
+                        ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));
                 var fileContent = new ByteArrayContent(read.Value);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                 form.Add(fileContent, kvp.Key, fp.FileName);
@@ -1104,7 +1120,7 @@ public sealed class Default : IHttp
             }
         }
 
-        return form;
+        return data.@this<HttpContent>.Ok(form);
     }
 
     // --- Static utilities ---

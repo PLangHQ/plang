@@ -78,7 +78,7 @@ The step's trailing clause compiles directly into the callback's `Actions([list<
 4. Sweep the remaining callbacks.
 5. Rebuild every user `.pr` that uses any of the touched params.
 6. Delete `error.handle.Goal` deprecated alias.
-7. Update `BuildGoal.llm` examples.
+7. Update the relevant per-action notes (`os/system/modules/<m>/<action>.notes.md` / `.examples.md`) for the touched callback shapes.
 8. Update `Documentation/v0.2/action-catalog.md` with the "callbacks are action chains" section.
 
 Leaving `goal.call.GoalName` and the `[goal.call]` type in place is deliberate. Revisit only if the sweep reveals a different shape is cleaner.
@@ -243,7 +243,7 @@ Not fixed — captured as a developer-ergonomics improvement.
 
 ## 2026-04-21 — Builder bug: LLM emits dotted module paths, builder should auto-resolve
 
-Observed during Wave 4 per-folder rebuild of `Tests/` on `runtime2-green-plang-tests`. Even after adding explicit prompt rules ("Module names never contain dots") to `system/builder/llm/BuildGoal.llm`, the LLM still periodically produces actions like:
+Observed during Wave 4 per-folder rebuild of `Tests/` on `runtime2-green-plang-tests`. Even after adding explicit prompt rules ("Module names never contain dots") to the builder system prompt (at the time this was `system/builder/llm/BuildGoal.llm`; the equivalent today is `system/builder/llm/Compile.llm`), the LLM still periodically produces actions like:
 
 - `condition.assert.equals` — should be two actions: `condition.if` (or similar) + `assert.equals`
 - `condition.event.on` — should be `event.on` alone
@@ -475,3 +475,51 @@ cascades were deliberately left for later. The current convention is bare
 
 Reference: branch path-polymorphism, commits `0ba3c041a` (convention flip),
 `84644d91e` (IPath), `2aa0e18c7` (IIdentity + IStore.Exists/Tables).
+
+---
+
+## 2026-05-25 — Prune Error/CallFrame from AssertionError.Variables snapshot
+
+**Source:** branch `fix-stepvartypes-incremental`, commit (forthcoming),
+follow-up to the IgnoreCycles fix in `PLang/app/modules/test/report.cs`.
+
+**Problem:** when a test fails, `AssertionError.Variables` captures the
+runtime variable map. At least one variable transitively references the
+`App.CallStack` tree (Error → CallFrames → Caller → Chain → …), which
+cycles. `test.report` JSON serialization aborts → no `results.json` is
+written for the whole run.
+
+**Stopgap (shipped):** `BuildJson` uses a local `JsonSerializerOptions`
+clone with `ReferenceHandler.IgnoreCycles`. Unblocks the file, but the
+JSON contains half-truncated nested call-chain objects under each variable.
+
+**Long-term fix:** prune at the *capture* site, not the serializer.
+The Variables snapshot is meant to record user-space variable values at the
+moment of assertion failure. An `IError` / `CallFrame` / `Call` instance
+showing up there is leakage from infrastructure into a user-facing record.
+When `AssertionError` records `Variables`, filter the map: drop or
+short-stringify any value whose type lives under `app.errors.*`,
+`app.callstack.*`, or anywhere that owns a reference back into
+`App.CallStack`. Once that lands, the local `IgnoreCycles` workaround in
+`report.cs` can come out — defaults catch real bugs again.
+
+**Why deferred:** stopgap unblocks the webui dependency this branch; the
+prune wants a small audit of where `AssertionError.Variables` is filled and
+which types should be in the filter (~ a half-day's careful work, doesn't
+belong on this branch).
+
+## `file.save` cross-type coercion — canonical end-to-end test for type-driven materialization
+
+**Date:** 2026-05-26 (deferred from `typed-action-returns` Stage 0 discussion)
+
+The line `- save %orders%(json) to file.csv` is the cleanest single-statement probe of the whole typed-returns stack:
+
+- `%orders%.Type = "json"` via `file.read.Build()` (Stage 4 of `typed-action-returns`)
+- `file.save.Build()` infers write-target format `"csv"` from path extension
+- runtime cross-type coercion: `value.As("csv")` — caller doesn't pick the materializer via a generic, the handler passes the target format as a runtime value
+- pairwise converter registry: explicit `json → csv` converter wins; missing pair falls back to "materialize to canonical (json) then re-serialize"
+- no converter (`json → png`) — clean runtime error at save site, build succeeds
+
+**Why deferred.** Out of scope for `typed-action-returns`: test-designer didn't cover `file.save`, architect's Stage 4 ends at `file.read`/`http.*`/`llm.query` Build() impls. Folding in would mean a 6th stage with its own converter-registry design.
+
+**When to pick up.** When `file.save` (and module implementations more broadly) get a real pass. The cross-type coercion design will be load-bearing across save/serialize/transform — needs its own stage rather than getting bolted on inside foundation infra.

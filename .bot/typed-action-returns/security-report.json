@@ -1,0 +1,96 @@
+{
+  "analyst": "security",
+  "branch": "typed-action-returns",
+  "timestamp": "2026-05-27T00:00:00Z",
+  "phase": "both",
+  "attack_surface": [
+    {
+      "area": "stream-and-plang-serializers",
+      "exposure": "All Json/Text/Plang/PlangData serializer methods now return Data<T> with typed errors instead of throwing",
+      "trust_boundary": "wire ingress through channels; settings sqlite store; application/plang transport",
+      "mitigations": [
+        "Catch list narrowed but covers JsonException/NotSupportedException/IOException — STJ's primary failure modes",
+        "application/plang transport preserves Signature inflow via _transportInOptions (explicit comment added)",
+        "Envelope deserialization still defers trust to downstream VerifyAsync"
+      ],
+      "gaps": [
+        "OperationCanceledException and EndOfStreamException from serializer not in filter; bubble past Channel.ReadAsT (see F3)"
+      ]
+    },
+    {
+      "area": "http-response-handling",
+      "exposure": "ReadLimitedBytesAsync collapsed from two copies into one; new Response record dispatches body shape by Content-Type",
+      "trust_boundary": "external HTTP server response body",
+      "mitigations": [
+        "MaxResponseSize cap (100MB default), typed ResponseTooLarge 413",
+        "Slow-loris guard: 1KB/s minimum over 30s window, typed SlowResponse 408",
+        "Error-body cap at 4KB",
+        "TextFallback only stringifies bytes the body was already capped on"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "build-time-hook",
+      "exposure": "New IClass.Build() invoked at validate; runs handler code over .pr params with __action/__app stamped via SetAction",
+      "trust_boundary": "developer-authored .goal/.pr at build time",
+      "mitigations": [
+        "file.read.Build() ExistsAsync() probe wraps in catch-all (silent best-effort)",
+        "Path resolution honours AuthGate canonicalization",
+        "AuthGate denials swallowed by the catch — no info disclosure",
+        "Build() Ok() default impl means handlers opt in"
+      ],
+      "gaps": []
+    },
+    {
+      "area": "named-channel-fallback",
+      "exposure": "Channels.Channel(name) returns process-wide __noop__ sink when channel missing (silent drop)",
+      "trust_boundary": "in-process advisory writes",
+      "mitigations": [
+        "Distinct from Resolve(name) which returns null and requires explicit handling",
+        "Today's only callers are advisory build-time writes whose silent-drop is intentional"
+      ],
+      "gaps": [
+        "If audit/security channels are introduced and a caller uses the convenience accessor, missing channel would swallow events (see F1)"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": 1,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Channels.Channel(name) is silent-drop by design — process-wide __noop__ sink returned on miss. If an audit/security/trace channel is ever added and a caller writes through the convenience accessor instead of Resolve+null-handling, missing the channel registration would silently swallow events.",
+      "preconditions": "A future channel with security semantics + a caller using Channels.Channel(name) instead of Resolve",
+      "impact": "Lost audit trail / silent failure of a security-relevant write path",
+      "affected_files": ["PLang/app/channels/this.cs", "PLang/app/channels/channel/noop/this.cs"],
+      "exploit_sketch": "n/a today — no audit channel exists. Latent design risk.",
+      "proposed_fix": "Strengthen xmldoc on Channels.Channel(name): \"do not use for channels whose absence is a security signal — use Resolve and handle null.\" When the next security-channel ships, route writers through Resolve.",
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "severity": "low",
+      "category": "code-execution",
+      "vector": "New Data.As(string typeName) resolves an arbitrary PLang type name through the registry and coerces. If a future caller threads externally-sourced typeName, downstream code assuming a shape could see a wrong CLR type.",
+      "preconditions": "Caller passes attacker-influenced typeName without allowlist validation",
+      "impact": "Runtime type confusion at the call site (no current path; informational)",
+      "affected_files": ["PLang/app/data/this.cs"],
+      "exploit_sketch": "n/a — no current caller passes untrusted typeName. Currently used only with build-time inferred destination extension.",
+      "proposed_fix": "Strengthen xmldoc on Data.As(string): \"Caller MUST own typeName; never thread an externally-sourced string through here without validating against a closed allowlist.\" Consider an internal allowlist param if a wire-facing caller ever needs this.",
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "severity": "low",
+      "category": "info-disclosure",
+      "vector": "Channels.ReadAsT<T> removed its outer catch-all in favour of forwarding the serializer's Data<T> directly. Serializers catch JsonException/NotSupportedException/IOException, but OperationCanceledException and EndOfStreamException now bubble up as raw exceptions instead of typed ReadError.",
+      "preconditions": "Cancellation token fires during channel read, or stream truncates without raising IOException",
+      "impact": "Layered containment lost; raw exception escapes ReadAsT into the action runner (which has its own catch). User-facing error stays typed via the source-gen ExecuteAsync wrapper. Net regression is one of defense-in-depth, not bypass.",
+      "affected_files": ["PLang/app/channels/this.cs"],
+      "exploit_sketch": "Cancel a long-running channel read; observe stack-trace path differs from prior typed-error path.",
+      "proposed_fix": "Restore the outer try/catch in ReadAsT (cheap defense-in-depth) OR add OperationCanceledException to each serializer's filter.",
+      "status": "open"
+    }
+  ],
+  "summary": "Wide structural typed-return diff with no new critical/high. HTTP size-cap consolidation closes a prior audit-list duplicate-impl concern (net security improvement). AuthGate canonicalization (purge-systemio v2) holds intact. Three low/info opens, none merge-blocking."
+}

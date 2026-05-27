@@ -89,18 +89,6 @@ public sealed partial class @this : modules.IDataWrappable
     [Store, LlmBuilder, Debug, Default]
     public string? Intent { get; init; }
 
-    /// <summary>LLM's natural-language explanation of this step. Set by the builder.</summary>
-    [Store, Debug, Default]
-    public string? Guidance { get; set; }
-
-    /// <summary>LLM confidence level: "high" | "medium" | "low". Set by the builder.</summary>
-    [Store, Debug, Default]
-    public string? Level { get; set; }
-
-    /// <summary>LLM confidence percent (0-100). Set by the builder.</summary>
-    [Store, Debug, Default]
-    public int? Confidence { get; set; }
-
     /// <summary>LLM's formalized rendering of this step (action.module Param=value | …). Stored for traces.</summary>
     [Store, Debug, Default]
     public string? Formal { get; set; }
@@ -249,12 +237,6 @@ public sealed partial class @this : modules.IDataWrappable
             Warnings.Clear();
             Warnings.AddRange(from.Warnings);
         }
-
-        // LLM metadata — only overwrite when the incoming step has a value,
-        // so keep:true cases (where the LLM omits these) preserve prior values.
-        if (from.Guidance != null) Guidance = from.Guidance;
-        if (from.Level != null) Level = from.Level;
-        if (from.Confidence != null) Confidence = from.Confidence;
     }
 
     public override string ToString() => $"[{Index}] {Text}";

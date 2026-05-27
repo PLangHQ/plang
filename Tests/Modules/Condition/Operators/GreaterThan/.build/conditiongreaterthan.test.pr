@@ -83,7 +83,7 @@
                 "name": "WhenGreater",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/whengreater.pr"
+                "prPath": "/Modules/Condition/Operators/GreaterThan/.build/whengreater.pr"
               },
               "type": "goal.call"
             }
@@ -142,8 +142,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionGreaterThan.test.goal",
-  "prPath": "/.build/conditiongreaterthan.test.pr",
+  "path": "/Modules/Condition/Operators/GreaterThan/ConditionGreaterThan.test.goal",
+  "prPath": "/Modules/Condition/Operators/GreaterThan/.build/conditiongreaterthan.test.pr",
   "hash": "df77bfacc5403b8a9d116844f19337ab0324690151f0dc72e84a3196e7406ea3",
   "builderVersion": "0.2.2",
   "isSetup": false,

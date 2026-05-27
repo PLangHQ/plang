@@ -11,8 +11,12 @@ public abstract partial class @this
 {
     /// <summary>
     /// The containing directory. <c>/Cache/Start.goal</c> → <c>/Cache</c>. Root
-    /// returns itself (no further parent) — never throws, never null.
+    /// returns itself (no further parent) — never throws, never null. Excluded
+    /// from default JSON serialization: at root <c>Parent === this</c>, and
+    /// callers that serialize a Path via reflection (no PathJsonConverter
+    /// registered for the field) would recurse to STJ's max-depth limit.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public abstract @this Parent { get; }
 
     /// <summary>

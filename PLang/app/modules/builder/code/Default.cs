@@ -112,7 +112,7 @@ public class Default : IBuilder
             }
 
             var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
-            schema = new global::app.modules.Schema.@this(modules)
+            schema = new global::app.builder.Types.@this(modules)
             {
                 PrimitiveNames = schema.PrimitiveNames,
                 Types = filteredTypes,
@@ -514,7 +514,70 @@ public class Default : IBuilder
                 "BuildValidation", 400));
         }
 
+        // Per-action Build() pass — each handler may stamp a type on the step's
+        // terminal variable.set. See IClass.Build for the contract.
+        var buildErrors = await RunBuildPass(actions, modules, context);
+        if (buildErrors.Count > 0)
+        {
+            return data.@this.FromError(new errors.ActionError(
+                string.Join("; ", buildErrors),
+                "BuildValidation", 400));
+        }
+
         return data.@this.Ok(true);
+    }
+
+    /// <summary>
+    /// Walks each action's IClass.Build() — Build is the compile-time hook that lets
+    /// a handler infer a Type for the step's terminal variable.set from its own
+    /// parameters (file.read on a literal .csv → "csv", llm.query with a schema →
+    /// "json"). A returned typeName stamps onto the terminal variable.set's "Type"
+    /// parameter; Fail aborts validation; bare Ok contributes nothing.
+    /// </summary>
+    internal static async Task<List<string>> RunBuildPass(Actions actions, global::app.modules.@this modules,
+        actor.context.@this context)
+    {
+        var errors = new List<string>();
+        foreach (var a in actions)
+        {
+            var (handler, _) = modules.GetCodeGenerated(a);
+            if (handler is not modules.IClass classified) continue;
+            classified.SetAction(a, context);
+            var buildResult = await classified.Build();
+            if (!buildResult.Success)
+            {
+                errors.Add($"{a.Module}.{a.ActionName}: {buildResult.Error?.Message ?? "Build() failed"}");
+                break;
+            }
+            if (buildResult.Value is string typeName && !string.IsNullOrEmpty(typeName))
+                StampOnTerminalVariableSet(actions, typeName);
+        }
+        return errors;
+    }
+
+    /// <summary>
+    /// Walks the step's actions backwards for the trailing variable.set and
+    /// stamps the inferred typeName on its "Type" parameter (replace-or-insert).
+    /// Last-write wins when multiple Build()s in the same step produce types.
+    /// </summary>
+    private static void StampOnTerminalVariableSet(Actions actions, string typeName)
+    {
+        for (int i = actions.Count - 1; i >= 0; i--)
+        {
+            var a = actions[i];
+            if (!string.Equals(a.Module, "variable", StringComparison.OrdinalIgnoreCase)) continue;
+            if (!string.Equals(a.ActionName, "set", StringComparison.OrdinalIgnoreCase)) continue;
+
+            // User hint precedence: any explicit Type parameter the LLM emitted
+            // (including the literal "object") is treated as the developer's
+            // (type) hint and wins over Build()'s inference. Build only stamps
+            // when no Type parameter is present at all.
+            var existing = a.Parameters.FirstOrDefault(p =>
+                string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
+            if (existing != null) return;
+            a.Parameters.Add(new data.@this("Type", typeName) { Type = new data.type("string") });
+            return;
+        }
     }
 
     // --- Merge ---
@@ -549,13 +612,6 @@ public class Default : IBuilder
         {
             if (step.Index < 0 || step.Index >= goal.Steps.Count) continue;
             var prior = goal.Steps[step.Index];
-
-            // LLM metadata backfill — for keep:true the LLM omits these to save
-            // tokens; pull them off the prior so the trace viewer doesn't show
-            // every cached step as 0% / level=null / no guidance.
-            if (step.Guidance == null) step.Guidance = prior.Guidance;
-            if (step.Level == null) step.Level = prior.Level;
-            if (step.Confidence == null) step.Confidence = prior.Confidence;
 
             if (step.Keep)
             {

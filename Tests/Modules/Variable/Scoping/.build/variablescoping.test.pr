@@ -262,7 +262,7 @@
                     "type": "string"
                   }
                 ],
-                "prPath": "/.build/captureitem.pr"
+                "prPath": "/Modules/Variable/Scoping/.build/captureitem.pr"
               },
               "type": "goal.call"
             }
@@ -458,8 +458,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/VariableScoping.test.goal",
-  "prPath": "/.build/variablescoping.test.pr",
+  "path": "/Modules/Variable/Scoping/VariableScoping.test.goal",
+  "prPath": "/Modules/Variable/Scoping/.build/variablescoping.test.pr",
   "hash": "b828e1a8f9b5487f543899544d036fa9ffb85ebe6d9b52c79aee415cd7a47ebf",
   "builderVersion": "0.2.2",
   "isSetup": false,

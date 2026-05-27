@@ -37,12 +37,16 @@ REPO_ROOT = os.path.abspath(os.path.join(VIEWER_DIR, '..', '..', '..', '..'))
 PLANG_ROOT = STATIC_ROOT  # back-compat alias
 
 # Display caps.
-# - MAX_PATHS_TOTAL: at most this many distinct (bucket, goalName) groups
-#   show up in the sidebar — i.e. 20 goal-paths max.
+# - MAX_PATHS_TOTAL: keep the (bucket, goalName) groups whose newest trace is
+#   among the most recent. Was 20 — too small for the sidebar search box,
+#   which can only filter what's already returned. Raised to a large value
+#   that effectively removes the cap for typical test corpuses (~200 goals)
+#   while still bounding the worst case. The Recent panel still slices its
+#   own newest 20 from this larger pool.
 # - MAX_TRACES_PER_GOAL: within each group, at most this many recent traces
 #   (= different build runs that produced a trace for this goal). Stops a hot
-#   iteration cycle on one goal from burying everything else.
-MAX_PATHS_TOTAL = 20
+#   iteration cycle on one goal from burying everything else in tabs.
+MAX_PATHS_TOTAL = 2000
 MAX_TRACES_PER_GOAL = 3
 
 # Summary cache: path → (mtime, summary_dict). Parsing every trace (some 40KB+)
@@ -185,6 +189,22 @@ def _summarize_trace(full_path: str) -> dict | None:
     # builder pipeline — older v3 traces nest the response directly.
     errors_count = 0
     warnings_count = 0
+    # Token + cost aggregates: planner usage + every stepPass usage, summed.
+    # Cost may be null (unknown model); skip those entries to avoid 0 + None.
+    prompt_tokens = 0
+    cached_tokens = 0
+    completion_tokens = 0
+    total_tokens = 0
+    cost_sum = 0.0
+    cost_seen = False
+    plan_usage = (data.get('plan') or {}).get('usage') if isinstance(data.get('plan'), dict) else None
+    if isinstance(plan_usage, dict):
+        prompt_tokens     += int(plan_usage.get('promptTokens') or 0)
+        cached_tokens     += int(plan_usage.get('cachedTokens') or 0)
+        completion_tokens += int(plan_usage.get('completionTokens') or 0)
+        total_tokens      += int(plan_usage.get('totalTokens') or 0)
+        if plan_usage.get('cost') is not None:
+            cost_sum += float(plan_usage['cost']); cost_seen = True
     step_passes = data.get('stepPasses')
     if isinstance(step_passes, list):
         for sp in step_passes:
@@ -193,6 +213,14 @@ def _summarize_trace(full_path: str) -> dict | None:
             resp = payload.get('response') if isinstance(payload.get('response'), dict) else {}
             errors_count += len(resp.get('errors') or [])
             warnings_count += len(resp.get('warnings') or [])
+            usage = payload.get('usage') if isinstance(payload.get('usage'), dict) else None
+            if usage:
+                prompt_tokens     += int(usage.get('promptTokens') or 0)
+                cached_tokens     += int(usage.get('cachedTokens') or 0)
+                completion_tokens += int(usage.get('completionTokens') or 0)
+                total_tokens      += int(usage.get('totalTokens') or 0)
+                if usage.get('cost') is not None:
+                    cost_sum += float(usage['cost']); cost_seen = True
     legacy_resp = (data.get('pass1') or {}).get('response') or {}
     if isinstance(legacy_resp, dict):
         errors_count += len(legacy_resp.get('errors') or [])
@@ -206,6 +234,13 @@ def _summarize_trace(full_path: str) -> dict | None:
         'errors': errors_count,
         'warnings': warnings_count,
         'buildError': bool(data.get('buildError')),
+        'usage': {
+            'promptTokens': prompt_tokens,
+            'cachedTokens': cached_tokens,
+            'completionTokens': completion_tokens,
+            'totalTokens': total_tokens,
+            'cost': cost_sum if cost_seen else None,
+        },
     }
 
 
@@ -273,10 +308,31 @@ def _list_all_traces(with_summary: bool = True):
 
     # Global cap on distinct goal-paths: keep the MAX_PATHS_TOTAL groups whose
     # newest trace is most recent. Goals that haven't been touched in a while
-    # drop off the sidebar even if older traces still exist on disk.
-    groups = sorted(by_goal.values(),
-                    key=lambda entries: entries[0]['traceId'],
-                    reverse=True)[:MAX_PATHS_TOTAL]
+    # drop off the sidebar even if older traces still exist on disk — EXCEPT
+    # when the group's newest trace carries warnings, errors, or a buildError:
+    # those are always surfaced so the webui's errors/warnings filter has the
+    # full set to filter over, regardless of recency. Summary lookup is cached
+    # by fullPath+mtime so the extra parse per excluded group amortizes to ~0.
+    all_sorted = sorted(by_goal.values(),
+                        key=lambda entries: entries[0]['traceId'],
+                        reverse=True)
+    def _head_has_issue(entries):
+        head = entries[0] if entries else None
+        if not head: return False
+        cached = _SUMMARY_CACHE.get(head['fullPath'])
+        if cached is not None and cached[0] == head['mtime']:
+            s = cached[1]
+        else:
+            s = _summarize_trace(head['fullPath'])
+            _SUMMARY_CACHE[head['fullPath']] = (head['mtime'], s)
+        if s is None: return False
+        return bool(s.get('errors', 0) or s.get('warnings', 0) or s.get('buildError'))
+    top_recent = all_sorted[:MAX_PATHS_TOTAL]
+    # Append any group with issues that didn't make the top cut.
+    for g in all_sorted[MAX_PATHS_TOTAL:]:
+        if _head_has_issue(g):
+            top_recent.append(g)
+    groups = top_recent
 
     # Per-goal cap inside each surviving group, then flatten newest-first.
     capped = []
@@ -335,8 +391,39 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_trace_list()
         elif self.path.startswith('/api/traces/'):
             self.send_trace_file(self.path[len('/api/traces/'):])
+        elif self.path == '/api/test-results':
+            self.send_test_results()
         else:
             super().do_GET()
+
+    def send_test_results(self):
+        """Scan every `*/.test/results.json` under PLANG_ROOT and return a dict
+        keyed by bucket (the directory under PLANG_ROOT that contains `.test/`).
+        Client looks up `byBucket[file.bucket]` and finds the run whose `path`
+        matches `file.path`. Tiny files (~50KB for 200 tests); no caching yet."""
+        out = {}
+        # Walk REPO_ROOT (repo top), not PLANG_ROOT (os/) — Tests/.test/ lives
+        # at the repo top alongside os/, so the os/-rooted walk misses it.
+        for dirpath, dirnames, filenames in os.walk(REPO_ROOT):
+            dirnames[:] = [d for d in dirnames if d not in ('.git', 'node_modules', 'bin', 'obj', '.build')]
+            if os.path.basename(dirpath) != '.test':
+                continue
+            results_file = os.path.join(dirpath, 'results.json')
+            if not os.path.isfile(results_file):
+                continue
+            bucket_root = os.path.dirname(dirpath)
+            bucket = os.path.relpath(bucket_root, REPO_ROOT).replace(os.sep, '/')
+            if bucket == '.':
+                bucket = ''
+            try:
+                with open(results_file, 'r', encoding='utf-8') as f:
+                    out[bucket] = {
+                        'mtime': os.path.getmtime(results_file),
+                        'data': json.load(f),
+                    }
+            except Exception as e:
+                out[bucket] = {'mtime': 0, 'error': str(e)}
+        self.send_json(out)
 
     def send_trace_list(self):
         traces = _list_all_traces(with_summary=True)
@@ -354,6 +441,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 'errors': t.get('errors', 0),
                 'warnings': t.get('warnings', 0),
                 'buildError': t.get('buildError', False),
+                'usage': t.get('usage') or {},
             }
             for t in traces
         ])

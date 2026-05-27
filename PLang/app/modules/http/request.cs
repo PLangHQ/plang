@@ -57,5 +57,17 @@ public partial class request : IContext
     [Code]
     public partial IHttp Http { get; }
 
-    public async Task<data.@this> Run() => await Http.SendAsync(this);
+    public async Task<data.@this<global::app.http.Response.@this>> Run()
+    {
+        var result = await Http.SendAsync(this);
+        return data.@this<global::app.http.Response.@this>.From(result);
+    }
+
+    /// <summary>
+    /// Compile-time hint: if Url is a literal with a recognized extension
+    /// (e.g. "https://api/x.json"), surface that type so the trailing
+    /// variable.set can stamp Response.Body's expected shape. Variable
+    /// references and unknown extensions defer to runtime Content-Type dispatch.
+    /// </summary>
+    public Task<data.@this> Build() => HttpBuildHelpers.InferTypeFromUrl(__action, __app, "Url");
 }

@@ -83,7 +83,7 @@
                 "name": "WhenGTE",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/whengte.pr"
+                "prPath": "/Modules/Condition/Operators/GTE/.build/whengte.pr"
               },
               "type": "goal.call"
             }
@@ -142,8 +142,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionGTE.test.goal",
-  "prPath": "/.build/conditiongte.test.pr",
+  "path": "/Modules/Condition/Operators/GTE/ConditionGTE.test.goal",
+  "prPath": "/Modules/Condition/Operators/GTE/.build/conditiongte.test.pr",
   "hash": "234f3042235ab436cebb469be11e44b3dd2ee4f16b68113748704c09f29c7810",
   "builderVersion": "0.2.2",
   "isSetup": false,

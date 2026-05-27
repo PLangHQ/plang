@@ -13,10 +13,12 @@ public abstract class @this : Channel
 {
     public override Task<data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
     {
-        // Type is "ask" (resolves to typeof(Ask) via PlangType registration) so
-        // Type.ClrType.Exit() == true. Value is the question text — single-layer
-        // wire shape per the stage 2a design.
-        var d = new data.@this("", action.Question?.Value ?? string.Empty, new data.type("ask"))
+        // Suspend Ask: Value is an Ask with no Answer bound, so IExitsGoal.ShouldExit()
+        // returns true and the step loop short-circuits. Snapshot carries enough
+        // state for the channel to resume the goal once the user replies. Type="ask"
+        // also satisfies the Type-side Exit check.
+        var ask = new modules.output.Ask();
+        var d = new data.@this<modules.output.Ask>("", ask, new data.type("ask"))
         {
             Context = action.Context,
             Snapshot = action.Snapshot(),

@@ -54,7 +54,7 @@
                 "name": "TrackAfterStep",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/trackafterstep.pr"
+                "prPath": "/Modules/Event/AfterStep/.build/trackafterstep.pr"
               },
               "type": "goal.call"
             }
@@ -176,8 +176,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/EventAfterStep.test.goal",
-  "prPath": "/.build/eventafterstep.test.pr",
+  "path": "/Modules/Event/AfterStep/EventAfterStep.test.goal",
+  "prPath": "/Modules/Event/AfterStep/.build/eventafterstep.test.pr",
   "hash": "3539e45c2d574207fd135c411c007376e343d558d9548e18408da02f8fa1dc3b",
   "builderVersion": "0.2.2",
   "isSetup": false,

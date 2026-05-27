@@ -1,0 +1,16 @@
+TestRunnerPipelineStillWorksAfterTesterFileRename
+/ Smoke: test.discover → test.run still works end-to-end after the
+/ tester/File → tester/Test rename. Asserts (a) discovery returns the
+/ fixture, (b) test.run executes it and reports it as passing, AND
+/ (c) downstream annotation for test.discover's write-target is
+/ list<test> (the rename's user-visible signature change), not
+/ list<file>.
+- test.discover tests in 'stage1_fixture/' recursive, pattern='*.test.goal', write to %tests%
+- list.count %tests%, write to %discoveredCount%
+- assert %discoveredCount% equals 1, "should discover one fixture .test.goal"
+- test.run %tests%, write to %results%
+- list.count %results%, write to %ranCount%
+- assert %ranCount% equals 1, "test.run should produce one result"
+- builder.goals from 'stage1_self/', write to %selfGoal%
+- goal.getTypes %selfGoal[0]%, write to %varTypes%
+- assert %varTypes[1].tests% equals 'list<test>', "downstream snapshot of test.discover should annotate as list<test>"

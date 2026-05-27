@@ -1,0 +1,9 @@
+TestUserTypeHintWinsOverBuildInference
+/ Even though file.read.Build() infers "csv" from the literal '.csv'
+/ extension, the user (type) hint "json" on the variable.set wins.
+/ Downstream snapshot reads %x%(json) — Build() never stamps when an
+/ explicit Type slot already exists (StampOnTerminalVariableSet:577).
+- builder.goals from 'probes/hint/', write to %goals%
+- goal.getTypes %goals[0]%, write to %snapshot%
+- set %annot% = %snapshot[1].x%
+- assert.equals expected='json', actual=%annot%

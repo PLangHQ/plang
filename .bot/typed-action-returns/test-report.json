@@ -1,0 +1,19 @@
+{
+  "tester": "tester",
+  "branch": "typed-action-returns",
+  "timestamp": "2026-05-27T15:50:00Z",
+  "tested_version": "v2",
+  "test_run": {
+    "csharp": { "total": 3136, "passed": 3136, "failed": 0, "skipped": 0 },
+    "plang": { "total": 221, "passed": 221, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": null,
+    "changed_files_total": null,
+    "uncovered_files": [],
+    "note": "Coverage skipped — focus this round was mutation-validating coder v1 false-green fixes. Both critical fixes pass mutation, the 3 minor-coverage tests assert behavior (Error.Key, raw body, missing-path in channel)."
+  },
+  "findings": [],
+  "verdict": "approved",
+  "summary": "Coder v1 follow-up (commit 6965c89e4) cleanly addresses both critical false-greens flagged in tester v1. (1) FileRead_Build_LiteralMissingFile_WritesBuildWarning now creates a MemoryChannel via Channels.CreateMemoryChannel('builder'), drains the stream, and asserts the missing-path string is in the written text. Mutation-tested: commented out the warning write in file/read.cs:76 — test failed with 'Expected to contain definitely-missing-stage4.csv ... but found \"\"'. Reverted clean. (2) RuntimeDoubleWrapTests invokes list.first/get/last + math.add and asserts result.Value is not itself a Data; a 5th sweep test pins the full 18-handler Data<object> set via reflection so a new Data<object> handler forces the author to add a runtime test or narrow T. Mutation-tested: replaced Ok(first.Value) with Ok(first) in list/first.cs — test caught it with the exact 'footgun fired' message. Reverted clean. The 3 minor-coverage fixes also land honestly: JsonStreamSerializer's 4 malformed-input tests assert Error.Key='JsonDeserializeError'; TextStreamSerializer's ThrowingStream forces real IOException and asserts Error.Key; http BodyDispatch_BrokenJsonContentType_FallsBackToString asserts the body is the literal malformed string. Suites green: 3136/3136 C# (+12 new) + 221/221 PLang. No new findings."
+}

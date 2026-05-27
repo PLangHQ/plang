@@ -182,7 +182,7 @@
                 "name": "MixedThrow",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/mixedthrow.pr"
+                "prPath": "/Modules/Error/Mixed/.build/mixedthrow.pr"
               },
               "type": "goal.call"
             },
@@ -404,8 +404,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ErrorMixed.test.goal",
-  "prPath": "/.build/errormixed.test.pr",
+  "path": "/Modules/Error/Mixed/ErrorMixed.test.goal",
+  "prPath": "/Modules/Error/Mixed/.build/errormixed.test.pr",
   "hash": "404b2ab9c62aee50f67d3994779bbabd80df12a865ea0d74496c9b522caf622c",
   "builderVersion": "0.2.2",
   "isSetup": false,

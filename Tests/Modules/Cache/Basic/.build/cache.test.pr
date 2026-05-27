@@ -54,7 +54,7 @@
                 "name": "ReadCached",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/readcached.pr"
+                "prPath": "/Modules/Cache/Basic/.build/readcached.pr"
               },
               "type": "goal.call"
             }
@@ -156,7 +156,7 @@
                 "name": "ReadCached",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/readcached.pr"
+                "prPath": "/Modules/Cache/Basic/.build/readcached.pr"
               },
               "type": "goal.call"
             }
@@ -254,8 +254,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Cache.test.goal",
-  "prPath": "/.build/cache.test.pr",
+  "path": "/Modules/Cache/Basic/Cache.test.goal",
+  "prPath": "/Modules/Cache/Basic/.build/cache.test.pr",
   "hash": "7fabc2e1527462b1fec7568c496fe745b6de786b0d5eab208a8ffa3d7ab22f16",
   "builderVersion": "0.2.2",
   "isSetup": false,

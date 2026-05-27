@@ -69,13 +69,14 @@ public class GetActionsTests
         var result = await _app.RunAction(action, _app.User.Context);
         var actions = (StepActions)result.Value!;
 
-        // variable.set has a Name property with Data<Variable> (renders as `%var% string`)
+        // variable.set has a Name property with Data<Variable> — renders as exactly "%var%"
+        // (no trailing type token; the marker alone tells the LLM this slot names a variable).
         var varSet = actions.FirstOrDefault(a => a.Module == "variable" && a.ActionName == "set");
         await Assert.That(varSet).IsNotNull();
         var nameParam = varSet!.Parameters.FirstOrDefault(p =>
             p.Name.Equals("Name", StringComparison.OrdinalIgnoreCase));
         await Assert.That(nameParam).IsNotNull();
-        await Assert.That(nameParam!.Value!.ToString()).Contains("%var%");
+        await Assert.That(nameParam!.Value!.ToString()).IsEqualTo("%var%");
     }
 
     [Test]

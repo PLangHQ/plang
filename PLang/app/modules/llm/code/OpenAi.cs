@@ -35,6 +35,26 @@ public sealed class OpenAi : ILlm
     private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
+    // USD per 1M tokens. Longest matching prefix wins; missing model → null cost.
+    // Prices as of 2026-05 — bump when OpenAI publishes a change.
+    private static readonly (string prefix, decimal input, decimal cached, decimal output)[] Pricing = new[]
+    {
+        ("gpt-5.4-nano", 0.20m, 0.02m,   1.25m),
+        ("gpt-5.4-mini", 0.75m, 0.075m,  4.50m),
+        ("gpt-5.4",      2.50m, 0.25m,  15.00m),
+    };
+
+    private static (decimal input, decimal cached, decimal output)? PriceFor(string? model)
+    {
+        if (string.IsNullOrEmpty(model)) return null;
+        (string prefix, decimal input, decimal cached, decimal output)? best = null;
+        foreach (var row in Pricing)
+            if (model.StartsWith(row.prefix, StringComparison.OrdinalIgnoreCase)
+                && (best is null || row.prefix.Length > best.Value.prefix.Length))
+                best = row;
+        return best is null ? null : (best.Value.input, best.Value.cached, best.Value.output);
+    }
+
     public async Task<data.@this<object>> Query(query action)
     {
         var app = action.Context.App;
@@ -136,7 +156,9 @@ public sealed class OpenAi : ILlm
         string? lastContent = null;
         int totalPromptTokens = 0;
         int totalCompletionTokens = 0;
-        double? totalCost = null;
+        int totalCachedTokens = 0;
+        decimal? totalCost = null;
+        bool unknownModelLogged = false;
 
         while (true)
         {
@@ -188,7 +210,11 @@ public sealed class OpenAi : ILlm
                 return global::app.data.@this<object>.From(httpResult);
 
             // --- Parse response ---
-            var (responseJson, parseEx) = ParseApiResponse(httpResult.Value);
+            // http.request now wraps the wire body in Data<Response> where
+            // Response.Body carries the deserialized JSON object — unwrap that
+            // before handing it to ParseApiResponse.
+            var responseBody = (httpResult.Value as global::app.http.Response.@this)?.Body ?? httpResult.Value;
+            var (responseJson, parseEx) = ParseApiResponse(responseBody);
             if (responseJson == null)
             {
                 if (parseEx != null)
@@ -200,8 +226,34 @@ public sealed class OpenAi : ILlm
             var usage = responseJson.Value.TryGetProperty("usage", out var usageProp) ? usageProp : (JsonElement?)null;
             if (usage != null)
             {
-                totalPromptTokens += usage.Value.TryGetProperty("prompt_tokens", out var pt) ? pt.GetInt32() : 0;
-                totalCompletionTokens += usage.Value.TryGetProperty("completion_tokens", out var ct) ? ct.GetInt32() : 0;
+                int callPrompt     = usage.Value.TryGetProperty("prompt_tokens",     out var pt) ? pt.GetInt32() : 0;
+                int callCompletion = usage.Value.TryGetProperty("completion_tokens", out var ct) ? ct.GetInt32() : 0;
+                int callCached     = 0;
+                if (usage.Value.TryGetProperty("prompt_tokens_details", out var ptd)
+                 && ptd.TryGetProperty("cached_tokens", out var ctok)
+                 && ctok.ValueKind == JsonValueKind.Number)
+                    callCached = ctok.GetInt32();
+
+                totalPromptTokens     += callPrompt;
+                totalCompletionTokens += callCompletion;
+                totalCachedTokens     += callCached;
+
+                // Cost: prompt_tokens includes the cached portion, so bill cached
+                // separately and subtract it from the non-cached input bucket.
+                var price = PriceFor(model);
+                if (price is { } p)
+                {
+                    int nonCachedInput = Math.Max(0, callPrompt - callCached);
+                    totalCost = (totalCost ?? 0m)
+                        + (decimal)nonCachedInput   * p.input  / 1_000_000m
+                        + (decimal)callCached       * p.cached / 1_000_000m
+                        + (decimal)callCompletion   * p.output / 1_000_000m;
+                }
+                else if (!unknownModelLogged)
+                {
+                    unknownModelLogged = true;
+                    await context.App.Debug.Write($"llm.query: no pricing entry for model {model}, cost not computed");
+                }
             }
 
             // Get first choice
@@ -403,6 +455,7 @@ public sealed class OpenAi : ILlm
                     ["PromptTokens"] = totalPromptTokens,
                     ["CompletionTokens"] = totalCompletionTokens,
                     ["TotalTokens"] = totalPromptTokens + totalCompletionTokens,
+                    ["CachedTokens"] = totalCachedTokens,
                     ["Cost"] = totalCost,
                     ["ToolCallCount"] = toolCallCount,
                     ["ValidationRetries"] = validationRetries,
@@ -422,6 +475,7 @@ public sealed class OpenAi : ILlm
             SetProp(result, "PromptTokens", totalPromptTokens);
             SetProp(result, "CompletionTokens", totalCompletionTokens);
             SetProp(result, "TotalTokens", totalPromptTokens + totalCompletionTokens);
+            SetProp(result, "CachedTokens", totalCachedTokens);
             SetProp(result, "Cost", totalCost);
             SetProp(result, "ToolCallCount", toolCallCount);
             SetProp(result, "ValidationRetries", validationRetries);
@@ -438,6 +492,8 @@ public sealed class OpenAi : ILlm
         SetProp(exitResult, "PromptTokens", totalPromptTokens);
         SetProp(exitResult, "CompletionTokens", totalCompletionTokens);
         SetProp(exitResult, "TotalTokens", totalPromptTokens + totalCompletionTokens);
+        SetProp(exitResult, "CachedTokens", totalCachedTokens);
+        SetProp(exitResult, "Cost", totalCost);
         SetProp(exitResult, "Truncated", true);
         return global::app.data.@this<object>.From(exitResult);
     }

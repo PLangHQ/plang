@@ -176,48 +176,47 @@ Build.goal
   5. SaveApp — saves app.pr
 ```
 
-### BuildGoal (single LLM pass per goal)
+### BuildGoal (one planner pass per goal, then per-step compile)
 
 ```
-BuildGoal.goal
-  1. Get available actions (module registry)
-  2. Get type info (valid PLang types)
-  3. Render goal as template for LLM context
-  4. Send to LLM with BuildGoal.llm prompt
-     - LLM sees all steps, returns {module, action, parameters} per step
-     - Also returns confidence level: high/medium/low
-  5. foreach step result → call ApplyStep
-  6. Set goal.BuilderVersion = "0.2"
-  7. SaveGoal — serialize to .pr file
+BuildGoal/Start.goal
+  1. Call Plan (one LLM pass per goal — the planner)
+  2. foreach plan.steps → call BuildStep/Start
+  3. foreach sub-goals → call BuildSubGoal (recurses)
+  4. Save trace, builder.goalsSave Goal=%goal%
 ```
 
-### ApplyStep (validate + merge)
+### Plan (planner — one pass per goal)
 
 ```
-ApplyStep.goal
-  1. ValidateActions — check module/action exists, resolve goal.call paths, normalize types
-  2. MergeStep — merge LLM result onto the parsed step
-  3. If confidence != high → call BuildStep (detail pass)
+BuildGoal/Plan.goal
+  1. Render summary.planner.md template → %actionSummary%
+  2. Render goalFormatForLlm.v2.template → %goalForLlm%
+  3. Render Plan.llm template → planner system prompt
+  4. llm.query with the planner prompt
+     - Schema: {description, steps: [{index, actions: [string]}]}
+     - LLM returns the set of "module.action" tokens involved per step (unordered)
 ```
 
-### BuildStep (detail pass, only for medium/low confidence)
+### BuildStep (compiler — one pass per step)
 
 ```
-BuildStep.goal
-  1. Render step with full action details (property definitions, types)
-  2. Send to LLM with BuildStep.llm prompt
-  3. Validate result
-  4. Update step actions
+BuildStep/Start.goal
+  1. builder.validateStepActions — drop hallucinated entries, append literal mentions
+  2. builder.actions — load full schemas for the planner's picked actions
+  3. builder.types — primitive types + referenced catalog types
+  4. goal.getTypes — variable types in scope at this step (incremental)
+  5. Render Compile.llm (system) + CompileUser.llm (user) templates
+  6. llm.query — compiler decides chain order, modifier nesting, parameter values
+  7. builder.validate the compiled actions; FixValidation retries on failure
 ```
 
-### Two-Pass Design
+### Planner / compiler split
 
-The builder uses two LLM passes:
+The builder uses two LLM calls per goal-build, with very different roles:
 
-1. **BuildGoal** (broad pass) — sees all steps in a goal at once. Maps each to module/action with parameters. Fast, but may not have full detail for complex steps.
-2. **BuildStep** (detail pass) — only runs for steps where BuildGoal was uncertain (medium/low confidence). Gets full action property definitions. Slower but precise.
-
-Most steps are fully built in pass 1. Pass 2 is the fallback.
+1. **Planner** (`Plan.llm`) — runs ONCE per goal. Sees all steps; for each step returns the **set of actions** the step uses (unordered `module.action` tokens). Cheap and broad.
+2. **Compiler** (`Compile.llm` + `CompileUser.llm`) — runs ONCE per step. Sees only that step's text plus the planner's action set, and emits the structured `actions[]` array (chain order, modifier nesting, parameter values). The per-action Notes/Examples that constrain compile shape live in `os/system/modules/<m>/<action>.{notes,examples,description}.md` and are rendered only for the planner's picked actions, keeping the system prompt stable for provider-side cache.
 
 ### GoalsSave
 
@@ -245,11 +244,14 @@ At runtime, the engine loads .pr files on demand:
 |------|---------|
 | `system/Build.goal` | Build entry point |
 | `system/builder/Build.goal` | Main build orchestration |
-| `system/builder/BuildGoal.goal` | Per-goal LLM build |
-| `system/builder/BuildStep.goal` | Detail pass for uncertain steps |
-| `system/builder/ApplyStep.goal` | Validate + merge step results |
-| `system/builder/llm/BuildGoal.llm` | LLM prompt for the broad pass |
-| `system/builder/llm/BuildStep.llm` | LLM prompt for the detail pass |
+| `system/builder/BuildGoal/Start.goal` | Per-goal pipeline: planner + per-step compile + sub-goal recursion |
+| `system/builder/BuildGoal/Plan.goal` | Planner — one LLM call per goal |
+| `system/builder/BuildStep/Start.goal` | Compiler — one LLM call per step |
+| `system/builder/BuildStep/Validate.goal` | Post-compile validation; FixValidation retry |
+| `system/builder/llm/Plan.llm` | Planner system prompt |
+| `system/builder/llm/Compile.llm` | Compiler system prompt (stable across steps for prompt cache) |
+| `system/builder/llm/CompileUser.llm` | Compiler user-message template (per-step action detail + step text) |
+| `os/system/modules/<m>/<action>.{notes,examples,description}.md` | Per-action LLM teaching, rendered only when the action is in the planner's set |
 | `PLang/app/goals/goal/this.cs` | Goal entity, Parse(), PrPath derivation |
 | `PLang/app/goals/this.cs` | Goal collection, loading, caching |
 | `PLang/app/modules/builder/code/Default.cs` | Builder actions (goals, save, validate, merge) |

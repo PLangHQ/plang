@@ -18,7 +18,7 @@ TestOutputWriteHasNoSpuriousChannel
 / Architect's 3-fresh-cache verification rule runs externally:
 /   rm -rf Tests/Simple/.build
 /   PlangConsole/bin/Debug/net10.0/plang build /Tests/Simple   # then plang --test (x3)
-- copy file '../../Simple/.build/start.pr' to 'start-out.txt', overwrite
+- copy file '../../Simple/.build/start.test.pr' to 'start-out.txt', overwrite
 - read file 'start-out.txt', write to %pr%
 - assert %pr% contains '"text": "write out '
 - assert %pr% does not contain '"name": "channel"'

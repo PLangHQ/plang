@@ -1,0 +1,12 @@
+Start
+/ Builder smoke test — exercises the four primitives that cover ~90% of the
+/ builder's hard surface: set variable, condition.if, loop.foreach, goal.call.
+/ Run via `plang '--build={"files":["BuilderSanity/BuilderSanity.test.goal","BuilderSanity/AddItem.goal","BuilderSanity/MarkBig.goal","BuilderSanity/Finalize.goal"],"cache":false}'`
+/ from the Tests/ directory before trusting `plang --test` results.
+- set %total% = 0
+- set %items% = '[1, 2, 3]'
+- foreach %items%, call AddItem item=%item%
+- if %total% is greater than 5, call MarkBig
+- call Finalize
+- assert %total% equals 6
+- assert %label% equals 'big-and-done'

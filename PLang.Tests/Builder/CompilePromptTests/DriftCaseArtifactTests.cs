@@ -26,7 +26,7 @@ public class DriftCaseArtifactTests
 {
     private static readonly string RepoRoot = LocateRepoRoot();
     private static readonly string StartPrPath =
-        Path.Combine(RepoRoot, "Tests", "Simple", ".build", "start.pr");
+        Path.Combine(RepoRoot, "Tests", "Simple", ".build", "start.test.pr");
 
     private static string LocateRepoRoot()
     {

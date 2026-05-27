@@ -43,17 +43,18 @@ public class ReportActionTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    private static global::app.tester.Run NewRun(string name, global::app.tester.Status status, IError? error = null, string? capturedOutput = null)
+    private static global::app.tester.Run NewRun(string name, global::app.tester.Status status, IError? error = null, string? output = null)
     {
-        var run = new global::app.tester.Run(new global::app.tester.File
+        var goal = new Goal
         {
-            Path = $"Tests/{name}.test.goal",
-            EntryGoalName = name,
-            GoalHash = "deadbeef",
+            Name = name,
+            Path = $"/Tests/{name}.test.goal",
+            Hash = "deadbeef",
             BuilderVersion = "v1"
-        });
+        };
+        var run = new global::app.tester.Run(new global::app.tester.Test.@this { Goal = goal });
         run.Complete(status, error);
-        if (capturedOutput != null) run.CapturedOutput = capturedOutput;
+        if (output != null) run.Output = output;
         return run;
     }
 
@@ -228,7 +229,7 @@ public class ReportActionTests
     {
         _app.Tester.Format = "junit";
         var run = NewRun("Filtered", global::app.tester.Status.Skipped);
-        run.File.StatusReason = "excluded by tag";
+        run.Test.StatusReason = "excluded by tag";
         _app.Tester.Results.Add(run);
 
         await Report();
@@ -248,7 +249,7 @@ public class ReportActionTests
     {
         _app.Tester.Format = "junit";
         var run = NewRun("StaleTest", global::app.tester.Status.Stale);
-        run.File.StatusReason = "goal hash changed since build";
+        run.Test.StatusReason = "goal hash changed since build";
         _app.Tester.Results.Add(run);
 
         await Report();

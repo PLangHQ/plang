@@ -208,7 +208,7 @@ public class UploadActionTests
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(result.Value).IsNotNull();
-        var json = System.Text.Json.JsonSerializer.Serialize(result.Value);
+        var json = System.Text.Json.JsonSerializer.Serialize(result.Value!.Body);
         await Assert.That(json).Contains("42");
         await Assert.That(result.Properties["StatusCode"]!.Value).IsEqualTo(200);
     }

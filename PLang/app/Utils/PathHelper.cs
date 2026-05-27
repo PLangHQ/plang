@@ -35,7 +35,17 @@ internal static class PathHelper
     public static string? GetDirectoryName(string path) => System.IO.Path.GetDirectoryName(path);
     public static string GetFileName(string path) => System.IO.Path.GetFileName(path);
     public static string GetFileNameWithoutExtension(string path) => System.IO.Path.GetFileNameWithoutExtension(path);
-    public static string GetExtension(string path) => System.IO.Path.GetExtension(path);
+    /// <summary>
+    /// File extension without the leading dot ("csv", "json") — empty string
+    /// when the path has no extension. Diverges from System.IO.Path.GetExtension
+    /// (which returns ".csv") because every caller trimmed the dot anyway and
+    /// Formats.Mime normalises it back on if needed.
+    /// </summary>
+    public static string GetExtension(string path)
+    {
+        var raw = System.IO.Path.GetExtension(path);
+        return string.IsNullOrEmpty(raw) ? string.Empty : raw.TrimStart('.');
+    }
     public static string ChangeExtension(string path, string? extension) => System.IO.Path.ChangeExtension(path, extension);
 
     // Pure predicates — name math, no IO.

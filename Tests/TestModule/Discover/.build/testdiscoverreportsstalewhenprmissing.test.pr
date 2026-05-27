@@ -62,7 +62,7 @@
       "guidance": "Use test.discover to walk the _stale directory recursively and match *.fixture.goal files, storing the resulting descriptors list into %tests%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_stale\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) , variable.set(Name=%tests%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -98,7 +98,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -115,7 +115,7 @@
       "guidance": "Count the number of discovered fixtures in %tests% and store it in %count%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "list.count(ListName=%tests%) , variable.set(Name=%count%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -133,7 +133,7 @@
             {
               "name": "Expected",
               "value": 2,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -149,7 +149,7 @@
       "guidance": "Assert that the discovered fixture count equals 2.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=2, Actual=%count%)",
       "source": null,
       "waitForExecution": true
     },
@@ -200,7 +200,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -217,7 +217,7 @@
       "guidance": "Check whether any discovered fixture descriptor has StatusReason equal to \u0022no .pr\u0022; store the boolean result in %hasMissingPr%.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "list.any(ListName=%tests%, Key=\u0022StatusReason\u0022, Operator=\u0022==\u0022, Value=\u0022no .pr\u0022) , variable.set(Name=%hasMissingPr%, Value=%!data%, type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -236,11 +236,6 @@
               "name": "Value",
               "value": "%hasMissingPr%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": null,
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -251,17 +246,17 @@
       "guidance": "Assert that %hasMissingPr% is true, meaning at least one fixture reported StatusReason \u0022no .pr\u0022.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasMissingPr%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal",
-  "prPath": "/Discover/.build/testdiscoverreportsstalewhenprmissing.test.pr",
+  "path": "/TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal",
+  "prPath": "/TestModule/Discover/.build/testdiscoverreportsstalewhenprmissing.test.pr",
   "hash": "76a013f30b15b8349391e068290c7cae81021945dc0d84cbc51c1a364b0e6ebf",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

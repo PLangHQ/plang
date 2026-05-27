@@ -88,7 +88,7 @@
                 "name": "HandlerA",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/handlera.pr"
+                "prPath": "/Modules/Event/Multiple/.build/handlera.pr"
               },
               "type": "goal.call"
             },
@@ -127,7 +127,7 @@
                 "name": "HandlerB",
                 "parallel": false,
                 "parameters": null,
-                "prPath": "/.build/handlerb.pr"
+                "prPath": "/Modules/Event/Multiple/.build/handlerb.pr"
               },
               "type": "goal.call"
             },
@@ -249,8 +249,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/EventMultiple.test.goal",
-  "prPath": "/.build/eventmultiple.test.pr",
+  "path": "/Modules/Event/Multiple/EventMultiple.test.goal",
+  "prPath": "/Modules/Event/Multiple/.build/eventmultiple.test.pr",
   "hash": "f3a3f71fd38fe36b01abc8f0cea55fd758d7d86630f1325642df123175142de9",
   "builderVersion": "0.2.2",
   "isSetup": false,

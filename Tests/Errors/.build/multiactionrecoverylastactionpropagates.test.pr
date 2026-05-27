@@ -18,15 +18,14 @@
               "name": "Message",
               "value": "boom",
               "type": "string"
-            }
-          ],
-          "defaults": [
+            },
             {
-              "name": "statuscode",
+              "name": "StatusCode",
               "value": 500,
               "type": "int"
             }
           ],
+          "defaults": null,
           "modifiers": [
             {
               "module": "error",
@@ -49,9 +48,7 @@
                           "value": "early",
                           "type": "string"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     },
                     {
                       "module": "variable",
@@ -67,9 +64,7 @@
                           "value": "middle",
                           "type": "string"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     },
                     {
                       "module": "variable",
@@ -85,21 +80,13 @@
                           "value": "final",
                           "type": "string"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
-                  "type": "list\u00601"
+                  "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": [
-                {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
+              "defaults": null,
               "modifiers": []
             }
           ]
@@ -109,7 +96,7 @@
       "guidance": "Throw an error to trigger the step\u0027s on-error recovery chain. Then run the recovery actions in order: set %first%=\u0027early\u0027, set %second%=\u0027middle\u0027, set %content%=\u0027final\u0027. This step should complete successfully after recovery, so the thrown error must be suppressed.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "error.throw(Message=\u0022boom\u0022, StatusCode=500) | error.handle(Actions=[variable.set(Name=%first%, Value=\u0022early\u0022, Type=string), variable.set(Name=%second%, Value=\u0022middle\u0022, Type=string), variable.set(Name=%content%, Value=\u0022final\u0022, Type=string)])",
       "source": null,
       "waitForExecution": true
     },
@@ -132,7 +119,7 @@
             {
               "name": "Actual",
               "value": "%first%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -148,7 +135,7 @@
       "guidance": "Post-condition assertion that %first% was set by the first recovery action.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022early\u0022, Actual=%first%, Message=\u0022first action in the recovery chain must have executed\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -171,7 +158,7 @@
             {
               "name": "Actual",
               "value": "%second%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -187,7 +174,7 @@
       "guidance": "Post-condition assertion that %second% was set by the middle recovery action.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022middle\u0022, Actual=%second%, Message=\u0022middle action in the recovery chain must have executed\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -210,7 +197,7 @@
             {
               "name": "Actual",
               "value": "%content%",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "Message",
@@ -226,7 +213,7 @@
       "guidance": "Post-condition assertion that %content% equals the terminal recovery action\u0027s value.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022final\u0022, Actual=%content%, Message=\u0022the chain\u0027s terminal action\u0027s value is what propagates\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -260,17 +247,17 @@
       "guidance": "Post-condition assertion that the special error variable is null, meaning the recovery chain suppressed the error.",
       "level": "high",
       "confidence": 85,
-      "formal": null,
+      "formal": "assert.isNull(Value=%!error%, Message=\u0022chain success suppresses the error\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Tests/Errors/MultiActionRecoveryLastActionPropagates.test.goal",
-  "prPath": "/Tests/Errors/.build/multiactionrecoverylastactionpropagates.test.pr",
+  "path": "/Errors/MultiActionRecoveryLastActionPropagates.test.goal",
+  "prPath": "/Errors/.build/multiactionrecoverylastactionpropagates.test.pr",
   "hash": "b0f9a3ce1fa29e7049611ed474775a9fd26d1b4e358429f49f95cb1134d994df",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

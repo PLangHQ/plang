@@ -1,0 +1,10 @@
+  Validation failed (retry 1/1): File not found: .build/validator.pr
+  Validation failed (no retries left): File not found: .build/validator.pr
+Allow User to execute //nonexistent/ghost-provider.dll? (y/n/a)
+
+Test run summary: Passed! - /workspace/plang/PLang.Tests/bin/Debug/net10.0/PLang.Tests.dll (net10.0|x64)
+  total: 3136
+  failed: 0
+  succeeded: 3136
+  skipped: 0
+  duration: 16s 216ms

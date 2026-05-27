@@ -57,6 +57,61 @@
     padding: 8px;
   }
 
+  #filter-panel {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.10);
+    flex-shrink: 0;
+  }
+  #filter-input {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: inherit;
+    outline: none;
+  }
+  #filter-input:focus {
+    border-color: var(--accent);
+  }
+  #filter-input::placeholder {
+    color: var(--text-dim);
+  }
+  .filter-toggles {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .filter-toggle {
+    flex: 1;
+    padding: 4px 8px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    text-transform: lowercase;
+  }
+  .filter-toggle:hover {
+    color: var(--text);
+    border-color: var(--text-dim);
+  }
+  #filter-errors.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  #filter-warnings.active {
+    background: var(--orange);
+    color: #fff;
+    border-color: var(--orange);
+  }
+
   /* Recent traces panel — so you can see at a glance which build was most
      recent and jump straight into it without hunting through the tree. */
   #recent-panel {
@@ -167,6 +222,91 @@
   }
   .tree-children { display: none; }
   .tree-children.open { display: block; }
+
+  /* Test-run status glyph in the sidebar tree, left of the file name. */
+  .test-glyph {
+    display: inline-block;
+    width: 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dim);
+  }
+  .test-glyph.test-pass    { color: var(--green); }
+  .test-glyph.test-fail    { color: var(--accent); }
+  .test-glyph.test-timeout { color: var(--orange); }
+  .test-glyph.test-stale   { color: var(--yellow); }
+  .test-glyph.test-skip    { color: var(--text-dim); }
+  .test-glyph.test-ready   { color: var(--blue); }
+
+  /* File-header test-result panel — collapsed pass summary, expanded fail detail. */
+  .test-result-panel {
+    margin: 8px 0;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-left: 3px solid var(--text-dim);
+    border-radius: 3px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .test-result-panel.test-pass    { border-left-color: var(--green); }
+  .test-result-panel.test-fail    { border-left-color: var(--accent); background: rgba(233,69,96,0.08); }
+  .test-result-panel.test-timeout { border-left-color: var(--orange); background: rgba(232,112,64,0.08); }
+  .test-result-panel.test-stale   { border-left-color: var(--yellow); }
+  .test-result-panel .tr-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-weight: 600;
+  }
+  .test-result-panel .tr-status { font-size: 13px; }
+  .test-result-panel .tr-meta   { color: var(--text-dim); font-weight: normal; }
+  .test-result-panel .tr-error  { margin-top: 8px; color: var(--text); }
+  .test-result-panel .tr-pair {
+    margin-top: 4px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .test-result-panel .tr-pair-label { color: var(--text-dim); margin-right: 6px; }
+  .test-result-panel .tr-vars {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .test-result-panel .tr-vars pre {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    background: rgba(0,0,0,0.2);
+    padding: 6px 8px;
+    border-radius: 3px;
+    overflow-x: auto;
+    margin-top: 4px;
+  }
+  .test-result-panel .tr-output {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .test-result-panel .tr-output summary {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 11px;
+    user-select: none;
+  }
+  .test-result-panel .tr-output summary:hover { color: var(--text); }
+  .test-result-panel .tr-output pre {
+    margin-top: 6px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 11px;
+    background: rgba(0,0,0,0.2);
+    padding: 6px 8px;
+    border-radius: 3px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
 
   #controls {
     padding: 12px 16px;
@@ -497,6 +637,26 @@
   .step-row.open { border-left-color: var(--accent); background: rgba(91,155,213,0.03); }
   .step-row.has-error { border-left-color: var(--accent); background: rgba(233,69,96,0.04); }
   .step-row.has-warning { border-left-color: var(--orange); background: rgba(232,112,64,0.04); }
+  /* Small dim chip showing token + cost. Sits above confidence in the .meta cluster. */
+  .usage-chip {
+    font-size: 10px;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+  /* Runtime per-step duration from the last test run — sits between usage and conf. */
+  .timing-chip {
+    font-size: 10px;
+    color: var(--green);
+    background: rgba(78,204,163,0.06);
+    border: 1px solid rgba(78,204,163,0.25);
+    border-radius: 3px;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
   .step-note {
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
     font-size: 11px;
@@ -534,6 +694,14 @@
     grid-template-columns: 28px 1fr auto;
     gap: 10px;
     align-items: start;
+  }
+  /* Trailing right-aligned chip cluster: usage + confidence. Single grid cell
+     so the grid stays at 3 columns; empty cluster collapses cleanly. */
+  .step-line .meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
   }
   .step-line .idx {
     color: var(--text-dim);
@@ -815,6 +983,13 @@
     <div class="recent-title">Recent builds</div>
     <div id="recent-list"></div>
   </div>
+  <div id="filter-panel">
+    <input type="text" id="filter-input" placeholder="Search goals (e.g. Channels/Events/Add)" autocomplete="off">
+    <div class="filter-toggles">
+      <button type="button" id="filter-errors" class="filter-toggle" title="Show only goals with build errors, build failures, or runtime test failures">errors</button>
+      <button type="button" id="filter-warnings" class="filter-toggle" title="Show only goals with warnings">warnings</button>
+    </div>
+  </div>
   <div id="goal-list"></div>
   <div id="controls">
     <input type="checkbox" id="auto-refresh" checked>
@@ -843,6 +1018,27 @@ const activeTraceByGoal = new Map();
 
 // Sidebar expansion (bucket only — file is a leaf now).
 const expandedBuckets = new Set();
+
+// Case-insensitive substring filter applied to the goal tree. Empty = show all.
+// Matched against file.bucket + file.path so users can search by either folder
+// (e.g. "Channels/Events") or filename (e.g. "AddBeforeWrite").
+let filterQuery = '';
+
+// Issue filter: null = no filter, 'errors' = only files with errors or build
+// failures, 'warnings' = only files with warnings. Combines AND with filterQuery.
+let issueFilter = null;
+
+// Per-bucket test results from /api/test-results — bucket → Map(path → run).
+// Each run carries {status, durationMs, error, expected, actual, variables, ...}.
+// Updated on every poll alongside /api/traces.
+const testResults = new Map();
+function lookupTestResult(file) {
+  const byPath = testResults.get(file.bucket);
+  if (!byPath) return null;
+  // results.json stores paths without leading slash; file.path has one.
+  const stripped = (file.path || '').replace(/^\/+/, '');
+  return byPath.get(stripped) || null;
+}
 
 // Per-step disclosure depth: 0 = text+formal only, 1 = +json.
 // Key is traceId + "::" + stepIdx. The goal-level LLM Request block is shared
@@ -902,6 +1098,23 @@ function setMeta(text, live) {
 
 async function poll() {
   try {
+    // Test results first — small file, cheap; the sidebar's badges and the
+    // file header's test-result panel both need this. Failures here don't
+    // block the traces fetch.
+    try {
+      const trR = await fetch('/api/test-results', { cache: 'no-store' });
+      if (trR.ok) {
+        const tr = await trR.json();
+        testResults.clear();
+        for (const [bucket, b] of Object.entries(tr)) {
+          if (!b || !b.data || !Array.isArray(b.data.runs)) continue;
+          const byPath = new Map();
+          for (const run of b.data.runs) byPath.set(run.path, run);
+          testResults.set(bucket, byPath);
+        }
+      }
+    } catch (_) { /* tolerate missing results.json */ }
+
     const apiR = await fetch('/api/traces', { cache: 'no-store' }).catch(() => null);
     if (!apiR?.ok) { setMeta('no data', false); return; }
     const items = await apiR.json();
@@ -948,8 +1161,33 @@ function summaryToEntry(item) {
     errorCount: item.errors || 0,
     warningCount: item.warnings || 0,
     buildError: item.buildError || null,
+    usage: item.usage || {},
     _isSummary: true,
   };
+}
+
+// Compact token + cost formatter. Tokens humanized (1.2k, 3.4M); cost in USD
+// with adaptive precision (< 1¢ → 5 decimals, < $1 → 4, otherwise 2).
+function formatTokens(n) {
+  n = n || 0;
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
+  if (n >= 10_000)    return (n / 1_000).toFixed(1) + 'k';
+  if (n >= 1_000)     return (n / 1_000).toFixed(2) + 'k';
+  return String(n);
+}
+function formatCost(c) {
+  if (c == null) return '—';
+  if (c < 0.01)  return '$' + c.toFixed(5);
+  if (c < 1)     return '$' + c.toFixed(4);
+  return '$' + c.toFixed(2);
+}
+// Compose a one-line usage label: "5.5k tokens (4.9k cached) · $0.0004"
+// Hides cached if 0; hides cost if null. Empty string if no tokens at all.
+function formatUsage(u) {
+  if (!u || !u.totalTokens) return '';
+  const cached = u.cachedTokens > 0 ? ` (${formatTokens(u.cachedTokens)} cached)` : '';
+  const cost = u.cost != null ? ` · ${formatCost(u.cost)}` : '';
+  return `${formatTokens(u.totalTokens)} tokens${cached}${cost}`;
 }
 
 // list.add stores Data wrappers like {name, value, type}. Sub-goal passes live
@@ -980,7 +1218,7 @@ function gp(obj, ...names) {
 //     subGoals: [...], durationMs, buildError }
 // Source-step text comes from goal.Steps; compile-time errors/warnings come
 // from stepPasses[i].value.response.
-function passToGoalSection(passOrTrace, isParent) {
+function passToGoalSection(passOrTrace, isParent, compileSystemFallback) {
   const p = unwrapDataWrapper(passOrTrace) || {};
   const goalObj = (p.goal && typeof p.goal === 'object') ? p.goal : null;
   const goalName = goalObj ? (gp(goalObj, 'Name', 'name') || '?') : (typeof p.goal === 'string' ? p.goal : '?');
@@ -1040,11 +1278,13 @@ function passToGoalSection(passOrTrace, isParent) {
         // level) so renderStepRow can show them inline next to the step.
         errors: Array.isArray(resp.errors) ? resp.errors : [],
         warnings: Array.isArray(resp.warnings) ? resp.warnings : [],
-        // Per-step LLM prompts (v3): captured into trace.stepPasses[i].
-        // The system prompt is shared across steps in a goal but we attach it
-        // per-step so the UI can show it inline without cross-referencing.
-        system: compiled.system || '',
+        // Per-step LLM prompts (v3): user is captured per stepPass; system is
+        // stashed once per trace at trace.compileSystem (it's the same
+        // Compile.llm render for every step). Fall back to per-step `compiled.system`
+        // for older traces that pre-dated the dedup.
+        system: compiled.system || compileSystemFallback || '',
         user: compiled.user || '',
+        usage: compiled.usage || {},
         raw: { source: src, compiled },
       };
     });
@@ -1073,6 +1313,7 @@ function passToGoalSection(passOrTrace, isParent) {
   const buildGoal = {
     system: (plan && plan.system) || p.system || '',
     user: (plan && plan.user) || p.user || '',
+    usage: (plan && plan.usage) || {},
     response: plan
       ? { description: plan.description, steps: plan.steps }
       : (unwrapDataWrapper(p.response) || {}),
@@ -1099,14 +1340,19 @@ function traceToEntry(trace) {
   const rootName = goalObj ? (gp(goalObj, 'Name', 'name') || '?') : (trace.goal || '?');
   const rootPath = goalObj ? (gp(goalObj, 'Path', 'path') || '') : (trace.path || '');
 
+  // Compile system prompt is stashed once at trace level (dedup) — pass it
+  // down so each step's accordion can fall back to it when the per-step
+  // `system` field is absent.
+  const compileSystem = trace.compileSystem || '';
+
   let parentSection;
   if (trace.pass1) {
     // Legacy: wrap pass1 with the legacy goal string/object.
     const parentPass = { ...unwrapDataWrapper(trace.pass1), goal: goalObj || trace.goal };
-    parentSection = passToGoalSection(parentPass, /*isParent*/ true);
+    parentSection = passToGoalSection(parentPass, /*isParent*/ true, compileSystem);
   } else if (goalObj || Array.isArray(trace.stepPasses)) {
     // v3: the trace itself is the parent pass.
-    parentSection = passToGoalSection(trace, /*isParent*/ true);
+    parentSection = passToGoalSection(trace, /*isParent*/ true, compileSystem);
   } else {
     parentSection = null;
   }
@@ -1120,7 +1366,7 @@ function traceToEntry(trace) {
     ? trace.subGoals.map(sg => {
         const sgUnwrapped = unwrapDataWrapper(sg) || {};
         const enriched = { ...sgUnwrapped, stepPasses: trace.stepPasses };
-        return passToGoalSection(enriched, /*isParent*/ false);
+        return passToGoalSection(enriched, /*isParent*/ false, compileSystem);
       })
     : [];
 
@@ -1249,23 +1495,23 @@ function findFile(fileKey) {
 // which reads as duplicate noise. The file-row badge is enough; parents show
 // LLM-level err/warn rollups only.
 function dirStats(node) {
-  let files = 0, errors = 0, warnings = 0;
+  let files = 0, errors = 0, warnings = 0, testFailed = 0;
   function visit(n) {
     files += n.files.length;
     for (const f of n.files) {
       const c = fileIssueCounts(f);
-      errors += c.errors; warnings += c.warnings;
+      errors += c.errors; warnings += c.warnings; testFailed += c.testFailed;
     }
     for (const d of n.dirs) visit(d);
   }
   visit(node);
-  return { files, errors, warnings, failed: 0 };
+  return { files, errors, warnings, failed: 0, testFailed };
 }
 
 // ---------- Sidebar ----------
 
 function fileIssueCounts(file) {
-  let errors = 0, warnings = 0, failed = 0;
+  let errors = 0, warnings = 0, failed = 0, testFailed = 0;
   for (const g of file.goals) {
     const latest = g.traces[0];
     if (!latest) continue;
@@ -1273,13 +1519,19 @@ function fileIssueCounts(file) {
     warnings += latest.warningCount || 0;
     if (latest.buildError) failed += 1;
   }
-  return { errors, warnings, failed };
+  // Runtime test failures (from /api/test-results) — separate from build-time
+  // errors so the "errors" filter surfaces tests that built fine but failed
+  // at runtime. Counts Fail and Timeout; Stale/Skipped/Ready are not failures.
+  const tr = lookupTestResult(file);
+  if (tr && (tr.status === 'Fail' || tr.status === 'Timeout')) testFailed = 1;
+  return { errors, warnings, failed, testFailed };
 }
 
 function issueBadges(counts) {
   let html = '';
   if (counts.failed > 0) html += `<span class="badge badge-err">${counts.failed > 1 ? counts.failed + ' ' : ''}failed</span>`;
   if (counts.errors > 0) html += `<span class="badge badge-err">${counts.errors} err</span>`;
+  if (counts.testFailed > 0) html += `<span class="badge badge-err" title="Test failed at runtime">test fail</span>`;
   if (counts.warnings > 0) html += `<span class="badge badge-warn">${counts.warnings} warn</span>`;
   return html;
 }
@@ -1318,23 +1570,58 @@ async function jumpToTraceEntry(e) {
   if (file) await selectFile(file);
 }
 
+// Returns a filtered tree (same shape as bucketTree) containing only the dirs
+// and files that pass the predicate `filePred`, or null if nothing matches.
+// A dir matches when any descendant matches.
+function filterTree(node, filePred) {
+  const filteredDirs = [];
+  for (const d of node.dirs) {
+    const f = filterTree(d, filePred);
+    if (f) filteredDirs.push(f);
+  }
+  const filteredFiles = node.files.filter(filePred);
+  if (filteredDirs.length === 0 && filteredFiles.length === 0) return null;
+  return { label: node.label, fullPath: node.fullPath, dirs: filteredDirs, files: filteredFiles };
+}
+
 function renderTree() {
   const list = document.getElementById('goal-list');
   list.innerHTML = '';
-  // Root directories render at depth 0. Each dir recurses with depth+1 for
-  // progressive indentation; files inside a dir share that dir's depth + 1.
-  for (const dir of bucketTree.dirs) {
-    list.appendChild(renderDirNode(dir, 0));
+  const q = filterQuery.trim().toLowerCase();
+  // Compose: text query AND issue filter. Both default to "pass through".
+  const matchesQuery = q
+    ? (f) => ((f.bucket || '') + (f.path || '')).toLowerCase().includes(q)
+    : null;
+  const matchesIssue = issueFilter
+    ? (f) => {
+        const c = fileIssueCounts(f);
+        if (issueFilter === 'errors') return (c.errors + c.failed + c.testFailed) > 0;
+        if (issueFilter === 'warnings') return c.warnings > 0;
+        return true;
+      }
+    : null;
+  const filterActive = !!(matchesQuery || matchesIssue);
+  const filePred = (f) =>
+    (!matchesQuery || matchesQuery(f)) && (!matchesIssue || matchesIssue(f));
+  const tree = filterActive ? (filterTree(bucketTree, filePred) || { dirs: [], files: [] }) : bucketTree;
+  const forceOpen = filterActive;
+  if (filterActive && tree.dirs.length === 0 && tree.files.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding: 10px; font-size: 11px; color: var(--text-dim);';
+    empty.textContent = 'No goals match.';
+    list.appendChild(empty);
+    return;
   }
-  // Files that live directly at the root (rare — happens when a bucket label
-  // is empty). Still render so we don't silently drop them.
-  for (const file of bucketTree.files) {
+  for (const dir of tree.dirs) {
+    list.appendChild(renderDirNode(dir, 0, forceOpen));
+  }
+  for (const file of tree.files) {
     list.appendChild(renderFileNode(file, 0));
   }
 }
 
-function renderDirNode(dir, depth) {
-  const open = expandedBuckets.has(dir.fullPath);
+function renderDirNode(dir, depth, forceOpen) {
+  const open = forceOpen || expandedBuckets.has(dir.fullPath);
   const wrap = document.createElement('div');
   wrap.className = 'tree-bucket';
 
@@ -1357,7 +1644,7 @@ function renderDirNode(dir, depth) {
 
   const children = document.createElement('div');
   children.className = 'tree-children' + (open ? ' open' : '');
-  for (const sub of dir.dirs) children.appendChild(renderDirNode(sub, depth + 1));
+  for (const sub of dir.dirs) children.appendChild(renderDirNode(sub, depth + 1, forceOpen));
   for (const file of dir.files) children.appendChild(renderFileNode(file, depth + 1));
   wrap.appendChild(children);
   return wrap;
@@ -1368,7 +1655,9 @@ function renderFileNode(file, depth) {
   row.className = 'tree-row tree-file-row' + (file.key === selectedFileKey ? ' active' : '');
   row.style.paddingLeft = (10 + depth * 14) + 'px';
   const counts = fileIssueCounts(file);
+  const tr = lookupTestResult(file);
   row.innerHTML = `
+    ${testStatusGlyph(tr)}
     <span class="tree-label">${esc(file.label)}</span>
     <span class="badge badge-steps">${file.goals.length}</span>
     ${issueBadges(counts)}
@@ -1378,6 +1667,22 @@ function renderFileNode(file, depth) {
     selectFile(file);
   };
   return row;
+}
+
+// Compact unicode glyph for a test run's status — sits left of the file name.
+// Empty string when there's no test result (non-test files or never-run).
+function testStatusGlyph(run) {
+  if (!run) return '';
+  const m = {
+    Pass:    { ch: '✔', cls: 'test-pass',    title: 'Pass' },          // ✔
+    Fail:    { ch: '✖', cls: 'test-fail',    title: 'Fail' },          // ✖
+    Timeout: { ch: '⧖', cls: 'test-timeout', title: 'Timeout' },        // ⧖
+    Stale:   { ch: '○', cls: 'test-stale',   title: 'Stale (.pr mismatch)' }, // ○
+    Skipped: { ch: '—', cls: 'test-skip',    title: 'Skipped (tag filter)' }, // —
+    Ready:   { ch: '▷', cls: 'test-ready',   title: 'Ready (not run)' },// ▷
+  }[run.status] || { ch: '?', cls: '', title: run.status || '?' };
+  const dur = (typeof run.durationMs === 'number') ? ` (${formatDuration(run.durationMs)})` : '';
+  return `<span class="test-glyph ${m.cls}" title="${esc(m.title + dur)}">${m.ch}</span>`;
 }
 
 // ---------- File view (main panel) ----------
@@ -1432,6 +1737,71 @@ async function renderFile(file) {
   }
 }
 
+// Sum usage across each goal's currently-active trace tab (or fall back to
+// the latest trace when no tab has been clicked yet). Returns the shape
+// formatUsage() expects, with cost: null when no trace had a known model.
+function computeActiveFileUsage(file) {
+  let totalTokens = 0, totalCached = 0, totalCost = 0, costSeen = false;
+  for (const g of file.goals) {
+    const activeId = activeTraceByGoal.get(file.key + '::' + g.name);
+    const trace = (activeId && g.traces.find(t => t.traceId === activeId)) || g.traces[0];
+    const u = trace && trace.usage;
+    if (!u) continue;
+    totalTokens += u.totalTokens || 0;
+    totalCached += u.cachedTokens || 0;
+    if (u.cost != null) { totalCost += u.cost; costSeen = true; }
+  }
+  return { totalTokens, cachedTokens: totalCached, cost: costSeen ? totalCost : null };
+}
+
+function renderTestResultPanel(file) {
+  const run = lookupTestResult(file);
+  if (!run) return '';
+  const status = run.status || 'Ready';
+  const cls = {
+    Pass:    'test-pass',
+    Fail:    'test-fail',
+    Timeout: 'test-timeout',
+    Stale:   'test-stale',
+    Skipped: 'test-skip',
+    Ready:   'test-ready',
+  }[status] || '';
+  const dur = (typeof run.durationMs === 'number') ? formatDuration(run.durationMs) : '';
+  const tags = (run.tags && run.tags.length) ? ` · tags: ${run.tags.map(esc).join(', ')}` : '';
+
+  // Expected / Actual / Variables only when present (failures, typically).
+  const fmtVal = (v) => (v == null ? '<em>null</em>' : esc(typeof v === 'string' ? v : JSON.stringify(v, null, 2)));
+  const hasPair = run.expected !== undefined && run.expected !== null
+                  || run.actual !== undefined && run.actual !== null;
+  const pairs = hasPair ? `
+    <div class="tr-pair"><span class="tr-pair-label">expected:</span>${fmtVal(run.expected)}</div>
+    <div class="tr-pair"><span class="tr-pair-label">actual:  </span>${fmtVal(run.actual)}</div>
+  ` : '';
+  const errorLine = run.error ? `<div class="tr-error">${esc(run.error)}</div>` : '';
+  const vars = (run.variables && typeof run.variables === 'object' && Object.keys(run.variables).length)
+    ? `<div class="tr-vars"><div class="tr-pair-label">variables at failure:</div><pre>${esc(JSON.stringify(run.variables, null, 2))}</pre></div>`
+    : '';
+
+  // Captured output (test's stdout via output.write). Collapsed by default —
+  // <details> gives a free click-to-expand without state plumbing.
+  const output = (typeof run.output === 'string' && run.output.length)
+    ? `<details class="tr-output"><summary>output (${run.output.length} chars)</summary><pre>${esc(run.output)}</pre></details>`
+    : '';
+
+  return `
+    <div class="test-result-panel ${cls}">
+      <div class="tr-header">
+        <span class="tr-status">${esc(status)}</span>
+        <span class="tr-meta">${esc(dur)}${tags}</span>
+      </div>
+      ${errorLine}
+      ${pairs}
+      ${vars}
+      ${output}
+    </div>
+  `;
+}
+
 function renderFileHeader(file, entry) {
   // When the active trace is loaded we use its goals (parent + subGoals); that
   // way the stat chips count sub-goals and include confidence breakdown. Before
@@ -1453,6 +1823,13 @@ function renderFileHeader(file, entry) {
   const privCount = entryGoals
     ? entryGoals.filter(g => g.visibility === 'private').length
     : fileGoals.filter(g => g.visibility === 'private').length;
+
+  // Token + cost across the file's CURRENTLY ACTIVE trace per goal (not the
+  // latest — switching trace tabs must update this number). Summary entries
+  // from the sidebar already carry usage (server-aggregated planner +
+  // stepPasses), so we don't need the full trace loaded.
+  const activeUsage = computeActiveFileUsage(file);
+  const fileUsageLabel = formatUsage(activeUsage);
 
   let totalSteps = 0, totalErr = 0, totalWarn = 0, lowCount = 0, medCount = 0;
   if (entryGoals) {
@@ -1498,6 +1875,7 @@ function renderFileHeader(file, entry) {
       <div class="subtitle">
         <span>${esc(file.bucket)}</span>
         <span>last built ${esc(formatTs(latestTs))}</span>
+        ${fileUsageLabel ? `<span title="planner + per-step compile, summed across goals (active trace per tab)">${fileUsageLabel}</span>` : ''}
       </div>
       <div class="file-stats">
         ${goalsChip}
@@ -1509,6 +1887,7 @@ function renderFileHeader(file, entry) {
         ${totalErr > 0 ? `<span class="stat-chip err"><strong>${totalErr}</strong> error${totalErr === 1 ? '' : 's'}</span>` : ''}
         ${totalWarn > 0 ? `<span class="stat-chip warn"><strong>${totalWarn}</strong> warning${totalWarn === 1 ? '' : 's'}</span>` : ''}
       </div>
+      ${renderTestResultPanel(file)}
     </div>
   `;
 }
@@ -1567,6 +1946,13 @@ function activateTab(fileKey, goalName, traceId) {
   const file = findFile(fileKey);
   const goal = file?.goals.find(g => g.name === goalName);
   if (goal) renderGoalSection(file, goal);
+  // Re-render the file header so the cost in the subtitle reflects the
+  // newly-active trace's usage (computeActiveFileUsage reads activeTraceByGoal).
+  const slot = file ? document.getElementById('file-header-slot') : null;
+  if (slot) {
+    const cachedEntry = file.goals[0] && traceCache.get(activeTraceByGoal.get(file.key + '::' + file.goals[0].name));
+    slot.innerHTML = renderFileHeader(file, cachedEntry || null);
+  }
 }
 
 function renderTraceBody(entry) {
@@ -1626,6 +2012,21 @@ function toggleFormal(subKey) {
   repaintCurrentFile();
 }
 
+// Holds raw prompt/markdown source so the copy buttons can grab it without
+// dumping multi-KB content into HTML attributes (escape minefield). Tokens
+// are generated per render; the map grows over a session but each entry is
+// just a string ref so the footprint is bounded by trace count.
+const copyBuf = new Map();
+let copyBufSeq = 0;
+function stashCopy(text) {
+  const token = 'cb' + (++copyBufSeq);
+  copyBuf.set(token, text == null ? '' : String(text));
+  return token;
+}
+function copyStashed(btn, token) {
+  copyPath(btn, copyBuf.get(token) || '');
+}
+
 function copyPath(btn, path) {
   // navigator.clipboard needs https or localhost; fall back to a textarea hack
   // for broader compatibility (older Safari on iOS, some WebViews).
@@ -1658,7 +2059,8 @@ function renderGoalLlmBlockForSection(goalSection, subKey) {
   if (!bg || (!bg.system && !bg.user && !bg.response)) return '';
   const open = goalLlmOpen.has(subKey);
   const respSize = bg.response ? sizeLabel(bg.response) : '0B';
-  const meta = `${sizeLabel(bg.system || '')} system · ${sizeLabel(bg.user || '')} user · ${respSize} response`;
+  const usagePart = formatUsage(bg.usage);
+  const meta = `${sizeLabel(bg.system || '')} system · ${sizeLabel(bg.user || '')} user · ${respSize} response${usagePart ? ' · ' + usagePart : ''}`;
   return `
     <div class="goal-llm">
       <div class="goal-llm-header ${open ? 'open' : ''}"
@@ -1667,7 +2069,7 @@ function renderGoalLlmBlockForSection(goalSection, subKey) {
         <span class="goal-llm-label">LLM Request</span>
         <span class="goal-llm-meta">${esc(meta)}</span>
       </div>
-      ${open ? `<div class="goal-llm-body">${renderPromptBlocks(bg.system, bg.user, bg.response)}</div>` : ''}
+      ${open ? `<div class="goal-llm-body">${renderPromptBlocks(bg.system, bg.user, bg.response, {system: 'Plan.llm'})}</div>` : ''}
     </div>
   `;
 }
@@ -1715,6 +2117,30 @@ function renderStepRow(entry, goalSection, step, subKey) {
     ...stepWarnings.map(w => `<div class="step-note warn"><span class="step-note-tag">warning</span> <span class="step-note-key">${esc(w.key || '')}</span> ${esc(w.message || '')}</div>`),
   ].join('');
 
+  const usageLabel = formatUsage(step.usage);
+  const usageChip = usageLabel
+    ? `<span class="usage-chip" title="prompt ${step.usage.promptTokens||0} · cached ${step.usage.cachedTokens||0} · completion ${step.usage.completionTokens||0} · model ${step.usage.model||'?'}">${usageLabel}</span>`
+    : '';
+
+  // Test-run step timing: only meaningful on the parent goal (sub-goal step
+  // durations roll up into the parent's call). Look up the file from the
+  // active selection — entry/goalSection don't carry it directly.
+  const timingChip = (goalSection.isParent && selectedFileKey)
+    ? (() => {
+        const file = findFile(selectedFileKey);
+        const tr = file ? lookupTestResult(file) : null;
+        const timings = (tr && Array.isArray(tr.timings)) ? tr.timings : null;
+        if (!timings) return '';
+        // A chained step (e.g. file.read + variable.set) emits multiple entries
+        // for the same stepIndex; sum them.
+        let total = 0, count = 0;
+        for (const t of timings) if (t.stepIndex === step.index) { total += t.ms || 0; count++; }
+        if (count === 0) return '';
+        const label = total < 1 ? `${total.toFixed(2)}ms` : total < 10 ? `${total.toFixed(1)}ms` : `${Math.round(total)}ms`;
+        return `<span class="timing-chip" title="runtime: sum of ${count} action${count===1?'':'s'} from last test run">${label}</span>`;
+      })()
+    : '';
+
   let html = `
     <div class="step-row ${depth > 0 ? 'open' : ''} ${hasError ? 'has-error' : ''} ${hasWarning && !hasError ? 'has-warning' : ''}">
       <div class="step-line">
@@ -1724,17 +2150,29 @@ function renderStepRow(entry, goalSection, step, subKey) {
           ${hideFormal ? '' : `<div class="${formalCls}" ${formalClick ? `onclick="${formalClick}"` : ''}>${formalHtml}</div>`}
           ${noteRows}
         </div>
-        <span class="conf ${confCls}">${conf}%</span>
+        <div class="meta">
+          ${usageChip}
+          ${timingChip}
+          <span class="conf ${confCls}">${conf}%</span>
+        </div>
       </div>
   `;
 
   if (depth >= 1) {
     const open = stepSections.get(stepKey) || new Set();
     const source = step.raw && step.raw.source ? step.raw.source : null;
-    const compiled = step.raw && step.raw.compiled ? step.raw.compiled : null;
+    // Strip system/user/usage from the compiled view — they have their own
+    // accordion sections above; duplicating multi-KB prompt content here just
+    // makes the JSON unscannable when what you want is the .pr-shaped output
+    // (formal + actions + errors + warnings).
+    const compiledRaw = step.raw && step.raw.compiled ? step.raw.compiled : null;
+    const compiled = compiledRaw ? (() => {
+      const { system, user, usage, ...rest } = compiledRaw;
+      return rest;
+    })() : null;
     html += `<div class="sublayer">`;
-    html += renderAccordionSection(stepKey, 'system', step.system, open.has('system'), 'md');
-    html += renderAccordionSection(stepKey, 'user',   step.user,   open.has('user'),   'md');
+    html += renderAccordionSection(stepKey, 'system', step.system, open.has('system'), 'md', 'Compile.llm');
+    html += renderAccordionSection(stepKey, 'user',   step.user,   open.has('user'),   'md', 'CompileUser.llm');
     html += renderAccordionSection(stepKey, 'source', source,      open.has('source'), 'json');
     html += renderAccordionSection(stepKey, 'compiled', compiled,  open.has('compiled'), 'json');
     html += `</div>`;
@@ -1758,9 +2196,18 @@ function renderSublayer(stepKey, label, meta, open, body, nextDepth) {
 // Per-step accordion: 4 named sections (system/user/source/compiled), each
 // independently open/closed. value is the section's content (string for md,
 // any for json); mode is 'md' or 'json'.
-function renderAccordionSection(stepKey, name, value, open, mode) {
+function renderAccordionSection(stepKey, name, value, open, mode, sourceFile) {
   const hasContent = value != null && (typeof value !== 'string' || value.length > 0);
   const meta = hasContent ? sizeLabel(value) : '(empty)';
+  const label = sourceFile ? `${name} (${sourceFile})` : name;
+  // Raw text for the copy button: prompt text for md sections, pretty JSON for json sections.
+  const copyText = hasContent
+    ? (mode === 'md' ? String(value) : JSON.stringify(value, null, 2))
+    : null;
+  const copyToken = copyText != null ? stashCopy(copyText) : null;
+  const copyBtn = copyToken
+    ? `<button class="copy-btn" onclick="event.stopPropagation(); copyStashed(this, '${copyToken}')" title="Copy ${esc(label)} content">copy</button>`
+    : '';
   let body = '';
   if (open && hasContent) {
     if (mode === 'md') {
@@ -1772,8 +2219,9 @@ function renderAccordionSection(stepKey, name, value, open, mode) {
   return `
     <div class="sublayer-row ${open ? 'open' : ''}" onclick="toggleStepSection('${stepKey}', '${name}')">
       <span class="tree-caret ${open ? 'open' : ''}">&#9656;</span>
-      <span>${esc(name)}</span>
+      <span>${esc(label)}</span>
       <span class="sub-meta">${esc(meta)}</span>
+      ${copyBtn}
     </div>
     ${body}
   `;
@@ -1915,22 +2363,31 @@ function renderBuildFailure(be) {
 
 // ---------- Prompt/Response blocks ----------
 
-function renderPromptBlocks(system, user, response) {
+function renderPromptBlocks(system, user, response, sources) {
+  sources = sources || {};
+  // Stop the copy click from also toggling the block — buttons sit on the
+  // same header row as the open/close click target.
+  const copyBtn = (text, label) => {
+    const t = stashCopy(typeof text === 'string' ? text : JSON.stringify(text, null, 2));
+    return `<button class="copy-btn" onclick="event.stopPropagation(); copyStashed(this, '${t}')" title="Copy ${esc(label)}">copy</button>`;
+  };
   let html = '';
   if (system) {
     const md = typeof system === 'string' ? mdToHtml(system) : `<pre>${esc(JSON.stringify(system, null, 2))}</pre>`;
+    const label = sources.system ? `System Prompt (${esc(sources.system)})` : 'System Prompt';
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
-        <span>System Prompt</span><span>${sizeLabel(system)}</span>
+        <span>${label}</span><span>${sizeLabel(system)} ${copyBtn(system, label)}</span>
       </div>
       <div class="block-content md-body">${md}</div>
     </div>`;
   }
   if (user) {
     const md = typeof user === 'string' ? mdToHtml(user) : `<pre>${esc(JSON.stringify(user, null, 2))}</pre>`;
+    const label = sources.user ? `User Prompt (${esc(sources.user)})` : 'User Prompt';
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
-        <span>User Prompt</span><span>${sizeLabel(user)}</span>
+        <span>${label}</span><span>${sizeLabel(user)} ${copyBtn(user, label)}</span>
       </div>
       <div class="block-content md-body open">${md}</div>
     </div>`;
@@ -1938,7 +2395,7 @@ function renderPromptBlocks(system, user, response) {
   if (response) {
     html += `<div class="block">
       <div class="block-label" onclick="toggleEl(this.nextElementSibling)">
-        <span>LLM Response</span><span>${sizeLabel(response)}</span>
+        <span>LLM Response</span><span>${sizeLabel(response)} ${copyBtn(response, 'LLM Response')}</span>
       </div>
       <div class="block-content open"><pre>${esc(typeof response === 'string' ? response : JSON.stringify(response, null, 2))}</pre></div>
     </div>`;
@@ -1966,6 +2423,20 @@ function closeDrawer() {
 }
 
 // ---------- Polling ----------
+
+document.getElementById('filter-input').addEventListener('input', (ev) => {
+  filterQuery = ev.target.value;
+  renderTree();
+});
+
+function toggleIssueFilter(kind) {
+  issueFilter = (issueFilter === kind) ? null : kind;
+  document.getElementById('filter-errors').classList.toggle('active', issueFilter === 'errors');
+  document.getElementById('filter-warnings').classList.toggle('active', issueFilter === 'warnings');
+  renderTree();
+}
+document.getElementById('filter-errors').addEventListener('click', () => toggleIssueFilter('errors'));
+document.getElementById('filter-warnings').addEventListener('click', () => toggleIssueFilter('warnings'));
 
 poll();
 setInterval(() => {

@@ -17,7 +17,7 @@ namespace app.modules.test;
 /// test.tag actions) and auto-tags (via [RequiresCapability] on the action
 /// handlers referenced in the .pr, recursing through static goal.call chains),
 /// then applies the Testing.Include/Exclude tag filters. Returns a
-/// List&lt;global::app.tester.File&gt; that test.run consumes.
+/// List&lt;global::app.tester.Test.@this&gt; that test.run consumes.
 ///
 /// <para>The pre-AuthGate scan that this handler used to do —
 /// <c>StartsWith(rootPrefix)</c> hand-rolled containment + raw
@@ -40,23 +40,23 @@ public partial class discover : IContext
     [Default(true)]
     public partial data.@this<bool> Recursive { get; init; }
 
-    public async Task<data.@this> Run()
+    public async Task<data.@this<List<global::app.tester.Test.@this>>> Run()
     {
         var app = Context.App!;
-        global::app.data.@this empty = global::app.data.@this.Ok(new List<global::app.tester.File>());
+        var empty = data.@this<List<global::app.tester.Test.@this>>.Ok(new List<global::app.tester.Test.@this>());
 
         var root = Path.Value;
         if (root == null) return empty;
 
         // List routes through AuthGate(Read). Out-of-root: prompt or denial.
         var listed = await root.List(Pattern.Value!, Recursive.Value);
-        if (!listed.Success) return global::app.data.@this.FromError(listed.Error!);
+        if (!listed.Success) return data.@this<List<global::app.tester.Test.@this>>.FromError(listed.Error!);
         if (listed.Value == null) return empty;
 
         var include = Context.App.Tester.Include;
         var exclude = Context.App.Tester.Exclude;
 
-        var files = new List<global::app.tester.File>();
+        var files = new List<global::app.tester.Test.@this>();
         foreach (var match in listed.Value)
         {
             // .test.goal files only resolve under the file scheme; foreign schemes
@@ -64,78 +64,89 @@ public partial class discover : IContext
             if (match is not FilePath fileMatch) continue;
             files.Add(await DiscoverOne(fileMatch, app, include, exclude));
         }
-        return global::app.data.@this.Ok(files);
+        return data.@this<List<global::app.tester.Test.@this>>.Ok(files);
     }
 
     /// <summary>Discovers metadata for a single .test.goal file (FilePath form).</summary>
-    private async Task<global::app.tester.File> DiscoverOne(FilePath goalFile, global::app.@this app,
+    private async Task<global::app.tester.Test.@this> DiscoverOne(FilePath goalFile, global::app.@this app,
         HashSet<string> include, HashSet<string> exclude)
     {
-        var relGoalPath = NormalizeRelative(goalFile.Relative);
-        var directory = goalFile.Parent?.Absolute ?? app.AbsolutePath;
-
-        // PrPath sibling: <dir>/.build/<stem>.pr — derived via the generic verbs.
-        var stem = goalFile.FileNameWithoutExtension.ToLowerInvariant();
-        var prFile = goalFile.Parent?.Combine(".build").Combine(stem + ".pr") as FilePath
-                     ?? (FilePath)goalFile.Combine(".build").Combine(stem + ".pr");
-        // PrPath as PLang program sees it (relative to the test's own directory).
-        var relPrPath = ".build/" + stem + ".pr";
-
-        var stub = new global::app.tester.File
+        // Read the .goal source first — even when the .pr is missing or
+        // corrupt, the source goal is enough to identify the file.
+        // ReadText returns a typed Goal when the file MIME is application/
+        // plang-goal, or a string fallback that we explicitly parse.
+        var goalRead = await goalFile.ReadText();
+        if (!goalRead.Success)
         {
-            Path = relGoalPath,
-            Directory = directory,
-            PrPath = relPrPath
-        };
+            // Build a minimal goal from just the file's path so Test.Goal
+            // is never null. Status=Stale with the read error as reason.
+            return new global::app.tester.Test.@this
+            {
+                Goal = new Goal { Path = goalFile },
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "goal read error: " + (goalRead.Error?.Message ?? "")
+            };
+        }
+        var sourceGoal = goalRead.Value as Goal
+            ?? Goal.Parse(goalRead.Value as string ?? "", goalFile)
+            ?? new Goal { Path = goalFile };
+
+        // PrPath is derived on the goal from its Path. The corresponding
+        // build artefact may or may not exist.
+        var prFile = sourceGoal.PrPath as FilePath;
+
+        if (prFile == null)
+        {
+            return new global::app.tester.Test.@this
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "no PrPath derivable from goal source"
+            };
+        }
 
         var prExists = await prFile.ExistsAsync();
         if (!prExists.Success || prExists.Value != true)
         {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = "no .pr";
-            return stub;
+            return new global::app.tester.Test.@this
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "no .pr"
+            };
         }
 
         // Read the .pr through the gated verb. MIME maps .pr → Goal via
         // ReadText's TryConvertTo branch.
-        Goal? prGoal;
         var prRead = await prFile.ReadText();
         if (!prRead.Success)
         {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = prRead.Error?.Message ?? "pr corrupt";
-            return stub;
+            return new global::app.tester.Test.@this
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = prRead.Error?.Message ?? "pr corrupt"
+            };
         }
-        prGoal = prRead.Value as Goal;
+        var prGoal = prRead.Value as Goal;
         if (prGoal == null)
         {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = "pr corrupt";
-            return stub;
+            return new global::app.tester.Test.@this
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "pr corrupt"
+            };
         }
 
-        // .goal source read — same gated verb. .goal MIME maps to Goal via Parse.
-        Goal? currentGoal;
-        var goalRead = await goalFile.ReadText();
-        if (!goalRead.Success)
+        if (!string.Equals(sourceGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
         {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = "goal read error: " + (goalRead.Error?.Message ?? "");
-            return stub;
-        }
-        currentGoal = goalRead.Value as Goal;
-        if (currentGoal == null)
-        {
-            // ReadText fell back to plain string — parse explicitly.
-            var goalText = goalRead.Value as string ?? "";
-            currentGoal = Goal.Parse(goalText, goalFile);
-        }
-
-        if (currentGoal == null || !string.Equals(currentGoal.Hash, prGoal.Hash, StringComparison.OrdinalIgnoreCase))
-        {
-            stub.Status = global::app.tester.Status.Stale;
-            stub.StatusReason = "rebuild needed";
-            return stub;
+            return new global::app.tester.Test.@this
+            {
+                Goal = sourceGoal,
+                Status = global::app.tester.Status.Stale,
+                StatusReason = "rebuild needed"
+            };
         }
 
         // Tags: user-declared (test.tag actions) + auto (handler [RequiresCapability]).
@@ -148,15 +159,9 @@ public partial class discover : IContext
         var chainVisited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         SeedBranchChains(prGoal, Context.App!.Tester.Coverage, chainVisited);
 
-        var file = new global::app.tester.File
+        var file = new global::app.tester.Test.@this
         {
-            Path = relGoalPath,
-            Directory = directory,
-            PrPath = relPrPath,
             Goal = prGoal,
-            EntryGoalName = prGoal.Name,
-            GoalHash = prGoal.Hash,
-            BuilderVersion = prGoal.BuilderVersion
         };
         foreach (var tag in tags) file.Tags.Add(tag);
 
@@ -248,9 +253,6 @@ public partial class discover : IContext
         if (string.IsNullOrEmpty(name) || name.Contains('%')) return null;
         return name;
     }
-
-    private static string NormalizeRelative(string path) =>
-        path.Replace('\\', '/');
 
     private void SeedBranchChains(Goal goal, app.tester.Coverage coverage, HashSet<string> visited, int depth = 0)
     {
