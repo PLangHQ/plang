@@ -1,0 +1,1 @@
+{ "status": "fail", "summary": "Major cross-file contract gap: HttpBuildHelpers.InferTypeFromUrl missing the registered-types gate that file.read.Build() carries — literal URLs ending in .pdf/.html/.png/.docx pass MIME but produce a runtime 'Unknown type X' failure in variable.set. Fix is ~3 lines + 1 test." }

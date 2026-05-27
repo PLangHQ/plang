@@ -483,6 +483,85 @@
         "health": "clean \u2014 3 new low/info opens, none merge-blocking; standing fixes intact",
         "notes": "HTTP size-cap consolidation net improvement (closes prior duplicate-impl concern). AuthGate canonicalization (purge-systemio v2) holds. Next bot: auditor."
       }
+    },
+    {
+      "id": "c8533fe1-a35f-4ed4-91bf-8669a3aaf733",
+      "bot": "auditor",
+      "timestamp_start": "2026-05-27T15:27:01.101606Z",
+      "intent": "Cross-cutting audit of typed-action-returns after 3 PASS verdicts (codeanalyzer v3, tester v2, security v1).",
+      "before": {
+        "assumptions": "Three reviewers approved; focus on gaps between them \u2014 Ask.ToString() contract change ripple, Build() swallow-all exception handler, Channel(builder) silent-drop, deferred Run.File property rename.",
+        "risk": "Wide refactor (944 files); cross-file contract drift most likely between Ask consumers, Data<T> double-wrap sites, and the new Build() validate-time pass."
+      },
+      "actions": [
+        {
+          "paths": [
+            ".bot/typed-action-returns/codeanalyzer/v3/",
+            ".bot/typed-action-returns/tester/v2/",
+            ".bot/typed-action-returns/security/v1/",
+            ".bot/typed-action-returns/coder/handoff.md"
+          ],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Read all three reviewer summaries + verdicts + coder handoff to map what was covered."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/http/HttpBuildHelpers.cs",
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/variable/set.cs",
+            "PLang/app/types/this.cs",
+            "PLang/app/modules/builder/code/Default.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Traced Build() inference path file.read vs HttpBuildHelpers; confirmed registered-types gate is present in file.read but missing in HttpBuildHelpers, and variable.set Fails on unregistered Type at runtime."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/types/path/this.Authorize.cs",
+            "PLang/app/types/path/file/this.Operations.cs",
+            "PLang/app/data/ShouldExit.cs",
+            "PLang/app/IExitsGoal.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified Ask.ToString migration is complete at both named consumers and ShouldExit value-side opt-out wires through."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Confirmed http Build() coverage only exercises registered .json \u2014 unregistered-extension regression invisible to suite."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/auditor/v1/plan.md",
+            ".bot/typed-action-returns/auditor/v1/result.md",
+            ".bot/typed-action-returns/auditor/v1/verdict.json",
+            ".bot/typed-action-returns/auditor-report.json",
+            ".bot/typed-action-returns/auditor/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Wrote auditor artifacts: plan, result with reproducer, verdict (fail), structured report, and summary."
+        }
+      ],
+      "plan": ".bot/typed-action-returns/auditor/v1/plan.md",
+      "after": {
+        "status": "fail",
+        "health": "one major cross-file finding (F1)",
+        "notes": "HttpBuildHelpers missing registered-types gate; file.read has it. Fix is mechanical (~3 lines + 1 test). Other seams (Ask.ToString, ShouldExit, Build() safety, Channel(builder)) clean."
+      },
+      "timestamp_end": "2026-05-27T15:31:14.869054Z"
     }
   ]
 }

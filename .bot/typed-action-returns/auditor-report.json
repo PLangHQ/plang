@@ -1,0 +1,25 @@
+{
+  "reviewer": "auditor",
+  "branch": "typed-action-returns",
+  "timestamp": "2026-05-27T00:00:00Z",
+  "reviewed_version": "v1",
+  "summary": "Three reviewers approved. One major cross-file contract gap missed: HttpBuildHelpers stamps a Type onto the terminal variable.set for literal URLs whose extension is MIME-known but not PLang-registered (.pdf, .html, .png, .docx, ...). Runtime variable.set then rejects with 'Unknown type X'. file.read.Build() carries the registered-types gate; the sibling http path missed it. Codeanalyzer v3 even noted file.read's gate (N2) but didn't compare to the http handler. Other seams (Ask.ToString migration, ShouldExit value-side opt-out, Build() pass safety, Channel(builder) discipline) check out.",
+  "previous_reviews_assessed": {
+    "codeanalyzer": "partial — thorough file-level work, but file.read.Build()'s registered-types gate was noted as N2 without comparing to the sibling HttpBuildHelpers",
+    "tester": "partial — mutation discipline is strong, suites genuinely green; missed the unregistered-extension case for http.request Build()",
+    "security": "agree — F1/F2/F3 (low/info) stand; the cross-file gap is outside the security threat model"
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "major",
+      "category": "cross-file",
+      "file": "PLang/app/modules/http/HttpBuildHelpers.cs",
+      "line": 32,
+      "issue": "InferTypeFromUrl filters by Formats.Mime but does not check Types.Get — extensions with MIME entries that aren't registered as PLang types (.pdf, .html, .png, .docx, .xlsx, ...) get stamped as the variable.set Type at validate time. Runtime variable.set then fails with 'Unknown type X' (variable/set.cs:64-68).",
+      "missed_by": "codeanalyzer",
+      "impact": "Regression: any goal of the form `http.request, url=\"<literal-url-with-binary-or-html-extension>\", write to %x%` builds clean but fails at runtime. Pre-branch this worked (no Build() stamp ⇒ no Type ⇒ Response.Body stored as-is). Affects http.request and http.upload; http.download unaffected.",
+      "suggestion": "Mirror file/read.cs:60-65: after computing typeName, return Ok() if app.Types.Get(typeName) == null. Add a parameterised test alongside HttpRequest_Build_LiteralUrlWithExtension_InfersTypeFromExtension covering .pdf / .html. Mutation guard: removing the gate must flip the new test red."
+    }
+  ]
+}
