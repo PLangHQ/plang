@@ -2,6 +2,7 @@ using System.Text;
 using app.types;
 using app.errors;
 using app.Utils;
+using app.data;
 using Verb = global::app.types.path.permission.verb.@this;
 using ReadVerb = global::app.types.path.permission.verb.Read;
 using WriteVerb = global::app.types.path.permission.verb.Write;
@@ -378,10 +379,11 @@ public sealed partial class @this
             };
             var askResult = await Context!.App.RunAction(askAction, Context);
 
-            if (askResult.Type?.ClrType.Exit() == true) return data.@this<global::app.types.path.@this>.From(askResult);
+            if (askResult.ShouldExit()) return data.@this<global::app.types.path.@this>.From(askResult);
             if (!askResult.Success) return data.@this<global::app.types.path.@this>.From(askResult);
 
-            var answer = askResult.Value?.ToString()?.Trim();
+            var ask = askResult.Value as global::app.modules.output.Ask;
+            var answer = ask?.Answer?.Trim();
             switch (answer)
             {
                 case "a":
