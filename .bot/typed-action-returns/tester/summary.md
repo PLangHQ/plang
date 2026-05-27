@@ -18,15 +18,23 @@ The coder shipped typed `Run()` returns across the action surface (Stages 0–4)
 
 ## Verdict
 
-**PASS.** Test report at `.bot/typed-action-returns/test-report.json`. 4 minor + 1 info findings; none blocking.
+**FAIL.** Suites are all green (3124/3124 C# + 221/221 PLang) but two confirmed false-greens block the verdict. Per the strict rule: a test that claims to verify X but provably doesn't = red. Test report at `.bot/typed-action-returns/test-report.json`.
 
-### Key findings (full detail in test-report.json)
+### Confirmed false-greens (blocking)
 
-1. (minor) `FileRead_Build_LiteralMissingFile_WritesBuildWarning` only verifies the builder channel is non-noop — it never reads what was written. A regression that emits no warning at all would still pass.
-2. (minor) **Serializer Data refactor error paths are entirely unverified.** Every `Deserialize_*` test in `JsonStreamSerializerTests` / `TextStreamSerializerTests` uses `.Value!` on happy-path input. The try/catch over `JsonException` / `NotSupportedException` / `IOException` that the refactor explicitly added is not exercised by a single test.
-3. (minor) **http TextFallback parse-failure path uncovered.** No test sends `Content-Type: application/json` with malformed body to confirm the fallback kicks in — yet that's the headline new behavior of `ParseResponseAsync` post-refactor.
-4. (minor) `CompileLlm_Kernel_ContainsTypeHintRule` is a string-presence check; behavior-level coverage already exists in `BuilderValidate_UserHintWinsOverBuildInference`, making this one redundant rather than wrong.
-5. (info) **Process miss:** coder did not write `.bot/typed-action-returns/coder/v1/baseline-tests.md`. With a fully-green pre-state this didn't bite, but the workflow expects it.
+1. **(critical) `FileRead_Build_LiteralMissingFile_WritesBuildWarning`** asserts `Channels.Channel("builder")` is not the noop sink. The channel is registered in Setup() unconditionally, so the assertion is trivially true regardless of what Build() did. The test name claims warning-emission coverage; it provides none.
+
+2. **(critical) The advertised Data<object> double-wrap coverage doesn't exist.** The coder's handoff calls this the branch's headline footgun ("every typed handler in this branch was checked"). The supposed test layer:
+   - Stage 2 plang `Test*DownstreamVariableAnnotatesAs*.test.goal` use `goal.getTypes`, which reflects on `Run()` signatures — never invokes a handler.
+   - `Stage2_MechanicalTypings.DataValueFromTypedRun_NotDoubleWrapped` checks `T` at the static type level.
+   Neither catches the actual footgun, which is a *runtime* owned-construction bug: T declared as `object`, runtime `.Value` is itself a `Data<X>`. Would ship green.
+
+### Other findings (non-blocking, follow-up)
+
+3. (minor) Serializer Data refactor error paths are entirely unverified — every `Deserialize_*` test uses `.Value!` on happy-path input.
+4. (minor) http `TextFallback` parse-failure path uncovered.
+5. (minor) `CompileLlm_Kernel_ContainsTypeHintRule` is a redundant string-presence check.
+6. (info) Coder skipped `baseline-tests.md`.
 
 ## Code example (the strongest test pattern in this branch)
 

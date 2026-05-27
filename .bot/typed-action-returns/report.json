@@ -48,9 +48,9 @@
         }
       ],
       "after": {
-        "status": "pass",
-        "health": "green",
-        "notes": "Full suite green after clean rebuild. 4 minor + 1 info finding, none blocking. Branch is good to hand to security review."
+        "status": "fail",
+        "health": "green-but-lying",
+        "notes": "Full suite green (3124+221) but two confirmed false-greens flip verdict to FAIL per the false-green-as-red rule: (1) FileRead BuildWarning test asserts a tautology (channel registered in Setup); (2) Data<object> double-wrap supposedly covered by static reflection that never invokes a handler. Next: coder fixes both tests."
       },
       "timestamp_end": "2026-05-27T14:08:00Z"
     },

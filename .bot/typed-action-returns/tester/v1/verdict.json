@@ -1,1 +1,1 @@
-{ "status": "pass", "summary": "3124/3124 C# + 221/221 PLang green; Stages 0-4 + Serializers/http refactor tests are honest; 4 minor + 1 info findings, none blocking." }
+{ "status": "fail", "summary": "Suites all green (3124+221), but 2 confirmed false-greens: FileRead BuildWarning channel-only check, and Stage 2 plang *AnnotatesAs* goals using static reflection where runtime double-wrap footgun is the real risk." }

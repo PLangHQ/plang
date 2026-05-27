@@ -16,13 +16,23 @@
   "findings": [
     {
       "id": 1,
-      "severity": "minor",
-      "type": "weak-assertion",
+      "severity": "critical",
+      "type": "false-green",
       "test_file": "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs",
       "code_file": "PLang/app/modules/file/read.cs",
-      "issue": "FileRead_Build_LiteralMissingFile_WritesBuildWarning only asserts the 'builder' channel is not the noop sink. It never reads what was written, so a regression where Build() forgets to emit the warning (or emits an empty/wrong-payload warning) still passes.",
-      "impact": "Silent loss of build-time diagnostics when a literal file path doesn't exist. Users wouldn't get the heads-up they're configured to receive.",
-      "suggestion": "Use Channels.CreateMemoryChannel('builder') (already done in setup) and after the Build() call drain the channel; assert at least one BuildWarning was written AND its message references the missing path."
+      "issue": "FileRead_Build_LiteralMissingFile_WritesBuildWarning only asserts the 'builder' channel is not the noop sink. The channel is registered in Setup() unconditionally, so the assertion is trivially true regardless of what Build() did — the warning could never be written and the test still passes.",
+      "impact": "Silent loss of build-time diagnostics when a literal file path doesn't exist. The test name claims warning-emission coverage but provides none.",
+      "suggestion": "Use Channels.CreateMemoryChannel('builder'), after Build() drain the channel, and assert at least one BuildWarning was written AND its message references the missing path."
+    },
+    {
+      "id": 6,
+      "severity": "critical",
+      "type": "false-green",
+      "test_file": "Tests/TestModule/TypedReturns/Stage2/Test*DownstreamVariableAnnotatesAs*.test.goal (4 files) + PLang.Tests/App/TypedReturnsTests/Stage2_MechanicalTypings_Part1Tests.cs:DataValueFromTypedRun_NotDoubleWrapped",
+      "code_file": "PLang/app/modules/output/ask.cs (and every typed Run() handler shipped on this branch)",
+      "issue": "Coder's handoff names the Data<object> implicit-operator double-wrap as the branch's headline footgun ('Every typed handler in this branch was checked'). The supposed test coverage is (a) plang Stage 2 goals using goal.getTypes which reflects on the Run() signature only — never invokes the handler, so a runtime Data<object>{ Value = Data<Ask>{...} } double-wrap is invisible; and (b) one C# reflection check that T is not a Data subtype, which is also static and won't catch a runtime owned-construction bug where T is declared object but the runtime value is a Data.",
+      "impact": "The exact footgun the coder warned about can land in a future handler and ship green. There is no test that actually invokes a typed handler and asserts data.Value is not itself a Data.",
+      "suggestion": "Add a C# test per typed handler (or a generic test that walks every IClass with a Data<T> Run()) that invokes Run() with valid setup and asserts !(typeof(Data).IsAssignableFrom(result.Value?.GetType()))."
     },
     {
       "id": 2,
@@ -65,6 +75,6 @@
       "suggestion": "Flag for next coder pass: record pre-work test state to baseline-tests.md as step 1 of v<N>/."
     }
   ],
-  "verdict": "approved",
-  "summary": "Full suites green: 3124/3124 C# + 221/221 PLang (incl. all 13 TypedReturns goals). Stage 0-4 contracts, the Serializers Data refactor, http Content-Type dispatch, and the Ask shape change are exercised through honest, behavior-anchored tests (PrAction-driven Build() pass, StubHandler-driven http body parsing, reflection-driven Run() signature contracts). Findings are all minor or informational: a weak-assertion on the BuildWarning channel write, two missing-coverage gaps on error-paths added by the refactor (serializer Data.Fail wrapping, http TextFallback on parse failure), one redundant LLM-text presence check, and a coder process miss (no baseline-tests.md). None blocks the branch."
+  "verdict": "needs-fixes",
+  "summary": "Suites all green: 3124/3124 C# + 221/221 PLang. BUT verdict FAILS on two confirmed false-greens: (1) FileRead_Build_LiteralMissingFile_WritesBuildWarning asserts the builder channel is not noop — trivially true from Setup() — never reads what (if anything) Build() wrote. (2) The advertised Data<object> double-wrap coverage is entirely static (plang goal.getTypes reflects on Run() signatures; C# DataValueFromTypedRun_NotDoubleWrapped checks T at type level). Neither invokes a handler, so a runtime owned-construction double-wrap — the coder's stated headline footgun — would ship green. Plus 3 lower-severity findings (serializer Data.Fail paths unverified; http TextFallback parse-failure uncovered; CompileLlm string-presence redundant) and 1 info (no baseline-tests.md). Branch behavior is correct as shipped; the test contract is not."
 }
