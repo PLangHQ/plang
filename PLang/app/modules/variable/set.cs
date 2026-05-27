@@ -110,6 +110,11 @@ public partial class Set : IContext, IBuildValidatable
                 converted = c;
             }
             var typedData = ConstructDataOfT(Name.Value, targetType, converted, Context);
+            // Pin the user-named Type onto the Data so downstream `%x!Type%`
+            // / `%x.Type%` consumers see the explicit value rather than the
+            // runtime-inferred name (e.g. user wrote `type=text/plain`; the
+            // CLR runtime type is `string` — we keep the MIME on the wire).
+            typedData.Type = global::app.data.type.FromName(Type.Value);
             CopyProperties(Value, typedData);
             return Task.FromResult(Context.Variables.Set(typedData));
         }
@@ -119,6 +124,13 @@ public partial class Set : IContext, IBuildValidatable
         // if-chain; cold types fall through to reflection.
         var raw = Value.Value;
         data.@this minted = MintTyped(Name.Value, raw, Context);
+        // The source Data may carry an explicit Type that's narrower than the runtime
+        // type of its Value (e.g. `data.Compress()` returns a Data<byte[]> tagged
+        // type=archived; MintTyped would otherwise produce Data<byte[]> with no
+        // type label, losing the transport marker). Preserve the source's Type
+        // when it has one — Properties already get copied below for the same
+        // "carry source metadata across the binding-mint" reason.
+        if (Value.Type != null) minted.Type = Value.Type;
         CopyProperties(Value, minted);
         return Task.FromResult(Context.Variables.Set(minted));
     }

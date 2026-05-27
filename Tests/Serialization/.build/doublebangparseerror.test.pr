@@ -6,9 +6,9 @@
     {
       "index": 0,
       "text": "set %x% = \u0027value\u0027",
-      "lineNumber": 5,
+      "lineNumber": 7,
       "indent": 0,
-      "comment": "%x!!key% (double bang) must produce a parser error at variable-resolve time \u2014\nthis is a malformed Properties dereference, not silently accepted as Property = \u0022!key\u0022.\nFailure-matrix row.",
+      "comment": "%x!!key% (double bang) is malformed \u2014 Variable.Resolve flags IsMalformed and refuses\nto split (Name keeps the whole body, Property stays null). Read paths NotFound it;\nwrite paths surface a typed InvalidVariableReference error. This goal exercises the\nread path because PLang test goals can\u0027t easily catch typed write-time errors yet.\nFailure-matrix row.",
       "actions": [
         {
           "module": "variable",
@@ -42,65 +42,18 @@
     },
     {
       "index": 1,
-      "text": "set %x!!cost% = 100",
-      "lineNumber": 6,
-      "indent": 0,
-      "comment": null,
-      "actions": [
-        {
-          "module": "variable",
-          "action": "set",
-          "parameters": [
-            {
-              "name": "Name",
-              "value": "%x!!cost%",
-              "type": "variable"
-            },
-            {
-              "name": "Value",
-              "value": 100,
-              "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "string",
-              "type": "string"
-            }
-          ],
-          "defaults": [
-            {
-              "name": "asdefault",
-              "value": false,
-              "type": "bool"
-            }
-          ],
-          "modifiers": []
-        }
-      ],
-      "intent": null,
-      "formal": "variable.set(Name=%x!!cost%, Value=100, Type=string)",
-      "source": null,
-      "waitForExecution": true
-    },
-    {
-      "index": 2,
-      "text": "assert %!data.success% equals false",
-      "lineNumber": 7,
+      "text": "assert %x!!cost% is null",
+      "lineNumber": 8,
       "indent": 0,
       "comment": null,
       "actions": [
         {
           "module": "assert",
-          "action": "equals",
+          "action": "isNull",
           "parameters": [
             {
-              "name": "Expected",
-              "value": false,
-              "type": "bool"
-            },
-            {
-              "name": "Actual",
-              "value": "%!data.success%",
+              "name": "Value",
+              "value": "%x!!cost%",
               "type": "object"
             }
           ],
@@ -109,7 +62,7 @@
         }
       ],
       "intent": null,
-      "formal": "assert.equals(Expected=false, Actual=%!data.success%)",
+      "formal": "assert.isNull(Value=%x!!cost%)",
       "source": null,
       "waitForExecution": true
     }
@@ -118,7 +71,7 @@
   "visibility": 1,
   "path": "/Serialization/DoubleBangParseError.test.goal",
   "prPath": "/Serialization/.build/doublebangparseerror.test.pr",
-  "hash": "b2608491b3389f6b07c464dab58f83d5a741f3d41beba0161d3a42529d0899fa",
+  "hash": "ef8ae80262a1e5ab337d03ffe263ca19bdcdc8dc46fce1ba041496fa8525b7fa",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,

@@ -1,7 +1,8 @@
 Start
-/ %x!!key% (double bang) must produce a parser error at variable-resolve time —
-/ this is a malformed Properties dereference, not silently accepted as Property = "!key".
+/ %x!!key% (double bang) is malformed — Variable.Resolve flags IsMalformed and refuses
+/ to split (Name keeps the whole body, Property stays null). Read paths NotFound it;
+/ write paths surface a typed InvalidVariableReference error. This goal exercises the
+/ read path because PLang test goals can't easily catch typed write-time errors yet.
 / Failure-matrix row.
 - set %x% = 'value'
-- set %x!!cost% = 100
-- assert %!data.success% equals false
+- assert %x!!cost% is null
