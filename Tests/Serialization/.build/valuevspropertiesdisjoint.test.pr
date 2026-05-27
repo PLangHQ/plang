@@ -1,0 +1,166 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %response% = \u0027{\u0022text\u0022:\u0022value-side\u0022}\u0027, type=json",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "%response.text% (Value-side) and %response!text% (Properties-side) must resolve to\ndifferent stores when both are populated. The two namespaces are disjoint.\nCoverage row 4.11.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "text": "value-side"
+              },
+              "type": "dictionary\u00602"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%response%, Value={\u0022text\u0022:\u0022value-side\u0022}, Type=json)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %response!text% = \u0027properties-side\u0027",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%response!text%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "properties-side",
+              "type": "string"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%response!text%, Value=\u0022properties-side\u0022, Type=json)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %response.text% equals \u0027value-side\u0027",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "value-side",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%response.text%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022value-side\u0022, Actual=%response.text%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %response!text% equals \u0027properties-side\u0027",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "properties-side",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%response!text%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022properties-side\u0022, Actual=%response!text%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/ValueVsPropertiesDisjoint.test.goal",
+  "prPath": "/Serialization/.build/valuevspropertiesdisjoint.test.pr",
+  "hash": "106d23d02a1a116ef3abd9dc6d8940b628569afa4c32f69a841723ab60a7e2d5",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

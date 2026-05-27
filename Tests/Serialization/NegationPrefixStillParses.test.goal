@@ -1,4 +1,6 @@
 Start
 / %!flag% (boolean negation prefix, no identifier between % and !) must still parse
 / as negation, distinct from the %x!key% Properties-dereference shape. Coverage row 4.13.
-- throw "not implemented"
+- set %flag% = false
+- if %!flag% is true, write 'negated-true'
+- assert %!data.branchIndex% equals 0

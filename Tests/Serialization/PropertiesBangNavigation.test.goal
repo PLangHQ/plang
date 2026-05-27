@@ -1,4 +1,6 @@
 Start
 / %response!cost% must resolve to Properties["cost"] — the bang operator reaches into
 / the Properties scope, not into Value. Coverage row 4.10.
-- throw "not implemented"
+- set %response% = 'hello'
+- set %response!cost% = 100
+- assert %response!cost% equals 100

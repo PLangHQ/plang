@@ -1,5 +1,7 @@
 Start
-/ %x!!key% (double bang) must produce a parser error at goal-compile time —
-/ this is a malformed Properties dereference, not silently accepted as something else.
+/ %x!!key% (double bang) must produce a parser error at variable-resolve time —
+/ this is a malformed Properties dereference, not silently accepted as Property = "!key".
 / Failure-matrix row.
-- throw "not implemented"
+- set %x% = 'value'
+- set %x!!cost% = 100
+- assert %!data.success% equals false

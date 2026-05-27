@@ -243,8 +243,6 @@ public partial class @this
         // navigate into the VALUE first — it's the real object
         if (val is @this dataVal)
         {
-            var dataProp = dataVal.Properties[key];
-            if (dataProp != null) return new @this(key, dataProp, parent: this);
             var dataChild = dataVal.GetChildValue(key);
             if (dataChild.IsInitialized) return dataChild;
         }
@@ -256,10 +254,6 @@ public partial class @this
         if (ownProp != null && ownProp.DeclaringType != typeof(@this))
             return new @this(key, ownProp.GetValue(this), parent: this);
 
-        // Check Data.Properties (extensible key-value pairs on the Data)
-        var prop = Properties[key];
-        if (prop != null) return new @this(key, prop, parent: this);
-
         // Lazy type conversion — if value is a string with a typed Data, convert on first navigation
         if (val is string && _type != null)
         {
@@ -268,6 +262,10 @@ public partial class @this
         }
 
         // Navigate the Value object via registered navigator (dict, list, CLR reflection, etc.)
+        // Value wins over Properties on the dot path — Stage 4 made `!` the Properties operator,
+        // dot stays on the Value graph. Properties[key] is kept as a fallback below so existing
+        // call sites that read e.g. `%!data.branchIndex%` (Properties metadata via dot) still
+        // resolve when Value has no matching child.
         if (val != null)
         {
             var navigator = _context?.App?.Navigators?.Get(val.GetType());
@@ -281,6 +279,12 @@ public partial class @this
             var fallbackResult = global::app.variables.navigators.ValueNavigators.Navigate(this, key);
             if (fallbackResult.IsInitialized) return fallbackResult;
         }
+
+        // Properties fallback — only reached when Value-graph navigation produced
+        // no initialized child. Lets the legacy `%!data.branchIndex%` shape keep
+        // working while the canonical Properties access path stays `!`.
+        var prop = Properties[key];
+        if (prop != null) return new @this(key, prop, parent: this);
 
         // Fallback: whitelisted Data base properties (Success, Error, Name)
         // These are checked last so %user.name% navigates to the Value's "name"

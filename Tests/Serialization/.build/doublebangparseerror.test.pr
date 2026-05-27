@@ -1,0 +1,128 @@
+{
+  "name": "Start",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "set %x% = \u0027value\u0027",
+      "lineNumber": 5,
+      "indent": 0,
+      "comment": "%x!!key% (double bang) must produce a parser error at variable-resolve time \u2014\nthis is a malformed Properties dereference, not silently accepted as Property = \u0022!key\u0022.\nFailure-matrix row.",
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "value",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%x%, Value=\u0022value\u0022)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %x!!cost% = 100",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%x!!cost%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": 100,
+              "type": "object"
+            },
+            {
+              "name": "Type",
+              "value": "string",
+              "type": "string"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%x!!cost%, Value=100, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!data.success% equals false",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "Actual",
+              "value": "%!data.success%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=false, Actual=%!data.success%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/Serialization/DoubleBangParseError.test.goal",
+  "prPath": "/Serialization/.build/doublebangparseerror.test.pr",
+  "hash": "b2608491b3389f6b07c464dab58f83d5a741f3d41beba0161d3a42529d0899fa",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

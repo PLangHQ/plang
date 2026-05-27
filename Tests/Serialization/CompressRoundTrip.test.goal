@@ -1,4 +1,8 @@
 Start
-/ Compress + decompress through PLang must round-trip a multi-field user record losslessly.
+/ Compress + decompress through PLang must round-trip the wrapped value losslessly.
 / Verifies coverage row 3.9 — the developer-facing surface for Stage 3's flat Compress.
-- throw "not implemented"
+- set %original% = 'The quick brown fox jumps over the lazy dog.', type=text/plain
+- compress %original%, write to %archived%
+- assert %archived!Type% equals 'archived'
+- decompress %archived%, write to %restored%
+- assert %restored% equals 'The quick brown fox jumps over the lazy dog.'

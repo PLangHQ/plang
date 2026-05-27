@@ -2,4 +2,7 @@ Start
 / %response.text% (Value-side) and %response!text% (Properties-side) must resolve to
 / different stores when both are populated. The two namespaces are disjoint.
 / Coverage row 4.11.
-- throw "not implemented"
+- set %response% = '{"text":"value-side"}', type=json
+- set %response!text% = 'properties-side'
+- assert %response.text% equals 'value-side'
+- assert %response!text% equals 'properties-side'

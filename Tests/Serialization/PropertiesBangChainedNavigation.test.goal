@@ -1,4 +1,7 @@
 Start
 / %response!cost.input% must dereference Properties["cost"] and then dot-navigate into
 / the resulting dict. Chained navigation: bang first, then dot. Coverage row 4.12.
-- throw "not implemented"
+- set %response% = 'hello'
+- set %costDict% = '{"input":50, "output":75}', type=json
+- set %response!cost% = %costDict%
+- assert %response!cost.input% equals 50
