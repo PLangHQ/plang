@@ -344,6 +344,57 @@ public class JsonStreamSerializerTests
             await serializer.SerializeAsync(stream, new { Name = "test" }, cancellationToken: cts.Token));
     }
 
+    // Error-path coverage for the ISerializer-returns-Data refactor: every
+    // catch arm must surface a Data.Fail with a non-empty Error.Key so callers
+    // distinguish parse failures from successful nulls.
+
+    [Test]
+    public async Task DeserializeAsync_MalformedJson_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Json();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{not valid json"));
+
+        var result = await serializer.DeserializeAsync(stream, typeof(TestClass));
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
+    }
+
+    [Test]
+    public async Task DeserializeAsync_Generic_MalformedJson_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Json();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{broken"));
+
+        var result = await serializer.DeserializeAsync<TestClass>(stream);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
+    }
+
+    [Test]
+    public async Task Deserialize_String_MalformedJson_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Json();
+
+        var result = serializer.Deserialize("{not valid", typeof(TestClass));
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
+    }
+
+    [Test]
+    public async Task DeserializeGeneric_String_MalformedJson_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Json();
+
+        var result = serializer.Deserialize<TestClass>("{not valid");
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
+    }
+
     private class TestClass
     {
         public string? Name { get; set; }

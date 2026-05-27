@@ -355,4 +355,51 @@ public class TextStreamSerializerTests
         var bytes = stream.ToArray();
         await Assert.That(Encoding.ASCII.GetString(bytes)).IsEqualTo("test" + Environment.NewLine);
     }
+
+    [Test]
+    public async Task DeserializeAsync_StreamThrowsIOException_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Text();
+        using var stream = new ThrowingStream(canRead: true);
+
+        var result = await serializer.DeserializeAsync(stream, typeof(string));
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("TextDeserializeError");
+    }
+
+    [Test]
+    public async Task SerializeAsync_StreamThrowsIOException_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Text();
+        using var stream = new ThrowingStream(canRead: false);
+
+        // Simple-type path: Text writes bytes directly and the write throws.
+        var result = await serializer.SerializeAsync(stream, "value");
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("TextSerializeError");
+    }
+
+    // Stream that always raises IOException on read/write — exercises the
+    // serializer's catch-IOException → Data.Fail conversion.
+    private sealed class ThrowingStream : Stream
+    {
+        private readonly bool _canRead;
+        public ThrowingStream(bool canRead) { _canRead = canRead; }
+        public override bool CanRead => _canRead;
+        public override bool CanSeek => false;
+        public override bool CanWrite => !_canRead;
+        public override long Length => 1;
+        public override long Position { get => 0; set { } }
+        public override void Flush() { }
+        public override int Read(byte[] buffer, int offset, int count) => throw new IOException("boom");
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken token) => throw new IOException("boom");
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken token = default) => throw new IOException("boom");
+        public override void Write(byte[] buffer, int offset, int count) => throw new IOException("boom");
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken token) => throw new IOException("boom");
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken token = default) => throw new IOException("boom");
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+    }
 }

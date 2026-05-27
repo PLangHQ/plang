@@ -76,15 +76,17 @@ public class Stage4_BuildMethodImplsTests
     [Test]
     public async Task FileRead_Build_LiteralMissingFile_WritesBuildWarning()
     {
-        var channel = _app.User.Channels.CreateMemoryChannel("builder");
-        _app.User.Channels.Register(channel);
+        var channel = (global::app.channels.channel.stream.@this)
+            _app.User.Channels.CreateMemoryChannel("builder");
 
-        // File doesn't exist on disk — Build() should still infer + emit warning.
-        var result = await Build("file", "read", ("Path", "definitely-missing-stage4.csv"));
+        const string missing = "definitely-missing-stage4.csv";
+        var result = await Build("file", "read", ("Path", missing));
         await Assert.That(result.Success).IsTrue();
 
-        // Channel write succeeded routing to the real channel (not the noop sink).
-        await Assert.That(_app.User.Channels.Channel("builder")).IsNotTypeOf<global::app.channels.channel.noop.@this>();
+        channel.Stream.Position = 0;
+        var written = await channel.ReadAllTextAsync();
+        await Assert.That(written).Contains(missing)
+            .Because("Build() must write a missing-file warning whose message names the offending path.");
     }
 
     [Test]
