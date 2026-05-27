@@ -83,7 +83,7 @@
       "text": "You're right to push on this — I conflated two scenarios. Let me split them.\n\n**Scenario A — compressed (your example):** Alice signs D1. Compress(D1) → D2 { type=archived, value=byte[] }. D2 hits the channel, gets signed: hash over D2.Value = hash over byte[]. The byte[] *is* a literal byte stream — crypto/Default.cs:19 takes `value is byte[] raw ? raw : ...` and the raw branch hashes the bytes directly. The bytes contain D1's full serialized form (including Signature if the serializer that produced the bytes emits it). So D2's signature DOES bind D1's signature transitively through the bytes. Chain is cryptographically tight here, exactly as you described. My earlier flag was wrong for this case.\n\nThere is one catch in the *current* code that doesn't survive Stage 3: today's Compress uses `_envelopeJsonOptions` (this.Envelope.cs:23-33) which does NOT include the Transport.ForOutbound modifier. That modifier is what re-includes Signature ([Out]-marked) over the [JsonIgnore]. So today's compressed bytes do NOT contain D1's signature — it gets stripped at the JsonIgnore boundary. Bob decompresses and gets D1 *without* Alice's signature. That's a bug in today's Compress, not a property of the design.\n\nStage 3 (the cleanup) fixes this automatically: Compress routes through `Serializers.Get(\"application/plang\")`, which uses Transport.ForOutbound, which preserves Signature in the bytes. After Stage 3 the chain works as you intended: sign-then-compress preserves the inner signature in the wire, decompress restores it intact, outer signature binds the whole package.\n\n**Scenario B — structured nested (no bytes):** D3 = Data { value: D1 } where D1 is a structured Data instance, not bytes. JsonSerializer.Serialize(D3.Value) hits crypto/Default.cs:20 — the fallback branch that calls `JsonSerializer.Serialize(value)` with *no options*. Default options respect [JsonIgnore] on Signature → D1's signature is omitted from the hash. The outer signature does not bind the inner signature for this nesting shape.\n\nThe fix for B is to make crypto/Default.cs use the same Transport.ForOutbound options that the wire serializer uses, so signing-canonicalization and wire-canonicalization are identical. That's a small change — probably belongs in this branch as part of Stage 2 (since the merged plang serializer is where Transport.ForOutbound becomes the canonical option set).\n\nSo: chain IS tight for compressed/encrypted (byte[]-leaf payloads). Chain isn't tight today for structured-nested Data. Fixing it means canonicalizing the same way the wire writes — one rule, one set of options. Will fold that into Stage 2 when you greenlight stage edits.",
       "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "fe544e7d7d",
       "ts": "2026-05-27T17:16:48",
       "drifted": false
@@ -94,7 +94,7 @@
       "text": "just need to fix the json options for the compress, lets do it so we dont forget.\n\nbut on your Scenario A, Alice doesn't need to sign D1 specifially, the compression library does that because it gets in Data, this data needs to be turned into bytes to compress at that time it's signed, then it is compressed, then the compressed object goes on wire and gets signed. if modules arent including Signature on the Data, it should(like this comprees action)",
       "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "1a97b66987",
       "ts": "2026-05-27T17:21:34",
       "drifted": false
@@ -105,7 +105,7 @@
       "text": "You're right — Alice doesn't sign explicitly. I framed it wrong by saying \"Alice signs D1\" as a separate step. The actual mechanism is: D1 enters Compress unsigned. Compress's serializer-walk (the converter) hits D1 with no signature → calls EnsureSigned → D1 is now signed *during the byte conversion*. Bytes emerge containing a signed D1. Then Compress wraps in D2; D2 hits the channel; channel's serializer-walk signs D2 the same way. No \"Alice consciously signs\" anywhere — it's all the same converter rule (sign-if-missing while walking).\n\nThat's actually a cleaner mental model than the one I wrote. The developer never calls sign explicitly for the transit-attestation case. The sign action stays available for cases where they want to seal a Data deliberately (e.g., before storing it, before handing it to a non-PLang consumer), but the channel/transform path is automatic.\n\nOn the json-options fix you flagged: Stage 3 already routes Compress through `Serializers.Get(\"application/plang\")`, which is the merged serializer that uses Transport.ForOutbound. So the fix lands implicitly when Stage 3 lands — `_envelopeJsonOptions` and the direct `JsonSerializer.SerializeToUtf8Bytes` call both go away in the same edit. No separate one-line tweak needed; the structural change to route through the registered serializer is the fix.\n\nThe Stage 3 plan currently *says* this (\"the registered serializer is what makes Compress preserve the inner shape correctly\") but doesn't explicitly call out \"and this is why today's compressed bytes don't carry signatures.\" I'll spell that out in the Stage 3 design narrative when stage edits open — make the bug-being-fixed visible, not implicit.\n\nIs that enough to not-forget, or did you want me to do something more direct (like make the C# edit now)? Architect normally doesn't touch source — coder does — but if you want this carved out as a quick standalone commit before the rest of the cleanup, I can do it.",
       "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "410058e2ce",
       "ts": "2026-05-27T20:07:23",
       "drifted": false
@@ -184,7 +184,7 @@
       "text": "I think we need also to include Properties in this, but maybe in a problemtic way :) lets say I have llm request, the default value is just the content that the llm is generating, this allows for nice code\n\n```plang\n- llm %system%, %user%, write to %output%\n- write out %output% / this is llm text response\n```\n\nbut I want to be able to see the cost, so in the c# code we add those to the properties of the data that is return, I was thinking of flattening the object, I would add property cost: 100\n\n\n\n{\nname:\"response\"\ntype:\"string\",\nvalue:\"llm response\",\ncost: 100\n}\n\nthis is if we flatten, it should not affect the object it self because if the object is complex like user in the example below, that is all in the value : { complex object }\n\nany thing that is not value, type, signature is a Property on the Data, but if the Data is some Data<SomeClass> and that class contains Cost then it would use that property that is strict instead of filling the Properties property on Data class. What do you think?",
       "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": null,
       "ts": "2026-05-27T16:55:02",
       "drifted": false
@@ -195,7 +195,7 @@
       "text": "I like this and want to walk it through to make sure I have it right.\n\nThe two-track rule you're proposing:\n\n1. Data<T> path (strict): T's properties live structurally inside Value. Cost becomes value.cost. Wire shape is { name, type=\"llmresponse\", value: { text: \"...\", cost: 100 }, signature }.\n\n2. Data + Properties path (untyped): Properties dictionary flattens to top-level fields next to name/type/value/signature. Wire is { name, type=\"string\", value=\"llm text\", cost: 100, signature }.\n\nThe ergonomics goal: in PLang you write `%response%` and get the LLM text directly (Value renders), and `%response.cost%` navigates to the cost field. With path 2, %response.cost% reads Properties[\"cost\"]; with path 1, %response.cost% reads Value.Cost. The dev-facing surface is uniform; the underlying storage differs.\n\nThat works and is a real ergonomic win. Three things I want to think through before we commit:\n\n(a) Reserved-key collision. \"name\", \"type\", \"value\", \"signature\" are top-level reserved on the wire. Properties can't have keys with those names — needs to be a rule (compile-time check on attribute-decorated Property fields, runtime guard on dictionary inserts). Easy to enforce.\n\n(b) Round-trip ambiguity at the boundary. When Charlie receives JSON { name, type, value, cost, signature, foo: \"x\" }, how does the deserializer decide that `cost` and `foo` are Properties vs. unknown wire fields? The rule \"anything not in {name,type,value,signature} is Properties\" makes the parser forgiving — receivers can carry arbitrary extra metadata without choking. That's probably good; it also means PLang's wire shape is forward-compatible to new top-level fields naturally.\n\n(c) [Out] semantics shift. Today Properties is [JsonIgnore]. The proposal makes Properties flatten via [Out] (or similar). What's the discipline for which Property entries cross the wire? All by default, with an opt-out marker? Only [Out]-marked entries? The today-rule is \"none\"; you're proposing \"all unless filtered\" or \"opt-in via [Out]\" — needs to be one or the other.\n\nHolding the plan edits per your other message. If you confirm (a)/(b)/(c) — reserved-key rule, all-extra-fields-are-Properties on receive, and which opt-in/opt-out for [Out] — I'll update plan.md (Cross-cutting decisions: Properties flatten to wire) and wire-shape.md (add a llm-response example showing the flat-cost shape).",
       "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "e62a3bbfad",
       "ts": "2026-05-27T17:07:25",
       "drifted": false
@@ -206,7 +206,7 @@
       "text": "since it's from the Properties object on data, you would access it with %response!cost%, this is to prevent such things when object %user.kind% and %user!kind%, two different things, user.kind is property on the user object/json and user!kind is value store in Properties on data. name, type, value and signature would have to be reserved",
       "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "db4b171f6c",
       "ts": "2026-05-27T17:13:46",
       "drifted": false
@@ -217,7 +217,7 @@
       "text": "That's clean. The `.` vs `!` split resolves my (a) and (b) at once:\n\n- `%user.kind%` → Value-object navigation. The `.` reads structurally into Value's JSON shape. If T has a Kind property, dot finds it; for untyped Data, dot reads value[\"kind\"] from the anonymous object.\n- `%user!kind%` → Properties navigation. The `!` reads from the Properties dictionary on the Data wrapper. Decoupled from whatever's in Value.\n\nNo collision possible between the two namespaces — even if Value has a \"kind\" field AND Properties has a \"kind\" entry, they're addressable separately. The user makes the choice explicit at every access.\n\nReserved-key rule (\"name\", \"type\", \"value\", \"signature\") settles your point (a): Properties cannot use those names. Compile-time check via an analyzer or a static initializer guard on Property assignment.\n\nMy point (b) also dissolves: receiver-side, the deserializer reads the four reserved fields into name/type/value/signature, and *everything else* on the top-level JSON object goes into Properties verbatim. Receiver doesn't have to know in advance what extra fields exist. Forward compatibility for free.\n\nThat leaves my point (c) — the [Out] discipline for Properties. Three plausible rules:\n\n1. **All Properties cross the wire by default.** Add `[OutIgnore]` (or similar) to opt individual entries out. Matches the [Out] re-include pattern we use for Signature.\n2. **Only [Out]-marked Property entries cross.** Opt-in. Safer (no accidental leakage) but more verbose for the LLM-cost case where every Property is meant to ride.\n3. **All cross, but Sensitive-marked entries strip.** Reuses the Sensitive filter that already exists for Value.\n\nI'd lean toward (1) — symmetric with how Signature works (default-emit, marked-ignored is the exception). The Sensitive strip from (3) gets layered on top regardless. But (2) would be defensible if you're worried about a Property accidentally carrying a secret that no one tagged.\n\nWhich one? Once you pick, I'll fold the whole picture (`!` syntax + reserved-key rule + all-extras-into-Properties on receive + the chosen [Out] rule) into plan.md as a new Cross-cutting decision, and add a wire-shape.md example with the LLM-response shape showing flat cost.",
       "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "9c7d17b357",
       "ts": "2026-05-27T17:17:05",
       "drifted": false
@@ -228,7 +228,7 @@
       "text": "yes, we need to have public properties and then private, on that is serialized one that is not, just dont know how we can solve that\n\nfor the llm example, it would be public because we want to display that info\nbut for db, there the property is e.g. the sql statement exectuted, parameters and such for good for debug info.\n\nbut now that I think about it, I will tackle it when I do that, for now all Properties should be serailized. so lets go with that. I dont believe we can have any special [out] on each property, the Properties the type of Properties : list<data>, so that would mean when we serialize each property is signed (because we decided that all Data would be signed, hmmm... \n\nso as you can see, I havent thought this through",
       "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "43bf05ea63",
       "ts": "2026-05-27T20:05:57",
       "drifted": false
@@ -239,9 +239,21 @@
       "text": "You caught the load-bearing tension. Let me take a position rather than just say \"let's discuss.\"\n\n**Properties should NOT be `List<Data>`.** Should be `Dictionary<string, object?>` — primitives + simple JSON shapes (string, int, bool, dict, list-of-primitives). No nested Data instances inside Properties.\n\nReason: Properties are *metadata about the Data*, not domain content. Cost, debug info, SQL trace, timing — they describe the carrier, they aren't part of the payload's signed body. If Properties entries were Data-instances and got swept up in the sign-if-missing walk, you'd get:\n\n- Per-Property signature bloat. An LLM response with cost + tokens + latency would carry four signatures (outer + three Property-Datas). The wire shape becomes obviously wrong.\n- Conceptual confusion. The outer Data's signature already attests \"these are the Properties associated with this response.\" Re-signing each Property entry as its own Data attests... the same thing, but in a way that doesn't compose with the outer attestation.\n- Verify ambiguity. If a Property's Data signature fails verification, what does that mean — the response is corrupt, or just the metadata is? The outer signature is the only thing that should arbitrate trust over the whole package.\n\nThe rule that drops the tension: **the sign-if-missing converter only walks Value-graph Datas, not Properties-bag entries.** Properties live structurally outside the signed body; the outer signature covers the *flattened wire shape* of the Properties (which is just primitive key-value pairs), so tampering is still detected, but no nested signatures get conjured.\n\nThis also means the C# shape change is concrete: `Properties` becomes `Dictionary<string, object?>` (or a typed wrapper around it). Not `List<Data>`. The wire shape stays clean — top-level primitives next to name/type/value/signature.\n\nFor your public/private concern (display LLM cost, hide SQL params on the wire): I'd punt that to a follow-up. The Sensitive filter we already have on Value could be lifted to Properties — `[Sensitive]` on a known Property key strips it. But the broader \"public Properties vs private Properties\" is a real design conversation worth its own branch. For this branch: all Properties cross the wire, primitives only, no per-Property signing.\n\nThat narrows the surface enough to commit:\n- Properties: Dictionary<string, object?>, primitives only\n- All Properties flatten to top-level wire fields\n- `%x!key%` access syntax (Properties), `%x.field%` (Value)\n- Reserved keys: name/type/value/signature\n- Sign-if-missing walk skips Properties; outer signature covers the flat key-value shape via JSON canonicalization\n- Out of scope: public/private split, sensitive-Property stripping, structured (Data-typed) Property values — follow-up branches\n\nIf that lands as the rule, the wire shape, the access syntax, and the signing model all line up. Want me to lock this in?",
       "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "060c6467d4",
-      "ts": "2026-05-27T20:07:45"
+      "ts": "2026-05-27T20:07:45",
+      "drifted": false
+    },
+    {
+      "id": "97484126fa",
+      "line": 7,
+      "text": "yes, I suppose you are correct about this, Properties should be dict, I like your rule, it lands. I think we are locked",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "c09572dd8b",
+      "ts": "2026-05-27T20:14:21",
+      "drifted": false
     },
     {
       "id": "66b524fc8c",

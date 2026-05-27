@@ -1,3 +1,24 @@
+## 2026-05-27 — Design pivots from review session: sign-in-converter, Properties-on-wire
+
+Review pass with Ingi produced three substantive design pivots and one new stage. Plan, Stage 2, Stage 3, wire-shape, and the stages table all rewritten to reflect.
+
+**Pivot 1 — Signing.** Dropped the earlier "channel signs outermost" model in favor of *sign-if-missing during the wire converter's walk*. The unit of attestation becomes the Data node, not the wire boundary. Three properties fall out for free: forwarding preserves provenance (Bob's outer + Alice's inner survive a re-wrap), Compress signs automatically during byte-conversion (no separate explicit step), List<Data> elements each carry their own attestation. The "two signatures for one payload" concern I'd previously raised dissolved when I realized `EnsureSigned` is no-op-if-signed — there's no double-signing, just sign-once-per-Data.
+
+**Pivot 2 — Canonicalization.** The earlier plan left a real gap: `crypto/Default.cs:20` hashes with default STJ options, which respect `[JsonIgnore]` on Signature. That means today's outer signature canonicalization strips the inner Datas' signatures from the hash, even though they get emitted on the wire (via Transport.ForOutbound). Result: wire-shape and hash-shape diverged. Stage 2 now includes the fix — canonicalize through the same Transport.ForOutbound-configured options the wire serializer uses, so hashed-bytes ≡ wire-bytes. After this, the outer signature transitively binds every inner signature.
+
+**Pivot 3 — Properties flatten to the wire.** New design direction. Today `Properties : IList<Data>` is `[JsonIgnore]` and doesn't cross the wire. The new design changes both the C# shape (`Dictionary<string, object?>` of primitives) and the wire emission (each entry becomes a top-level sibling of `name`/`type`/`value`/`signature`). Two access operators: `%x.field%` reads Value, `%x!key%` reads Properties — disjoint namespaces, no collision possible. Reserved-key check forbids Properties from using the four reserved names. The sign-if-missing walk skips Properties (they're primitives, not Data — nothing to recurse into). New Stage 4 carries this work; vocabulary sweep slides to Stage 5.
+
+The settled scope and the trade-offs sit in `plan.md`'s Cross-cutting decisions. Stage 2 absorbs the canonicalization fix because it shares the merged plang serializer's options. Stage 3's "no signing inside Compress" framing was wrong — rewritten to acknowledge that Compress's byte-conversion implicitly signs via the converter, and that this also fixes today's bug where `_envelopeJsonOptions` strips Signature from compressed bytes.
+
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [ISerializer input tightened to Data](stage-1-iserializer-data.md) | partial — return half landed, input half remains |
+| 2 | [Merge plang serializers + sign-in-converter + canonicalization fix](stage-2-plang-merge.md) | pending |
+| 3 | [Flatten Compress/Decompress](stage-3-flat-compress.md) | pending |
+| 4 | [Properties flatten to the wire](stage-4-properties-on-wire.md) | pending |
+| 5 | [Vocabulary sweep](stage-5-vocabulary-sweep.md) | pending |
+
 ## 2026-05-27 — Merged runtime2; Stage 1 narrows to input-tightening only
 
 Merged `origin/runtime2` into `data-serialize-cleanup` cleanly (no conflicts). The `typed-action-returns` work that landed in runtime2 includes commit `5b1b894c4 coder: Serializers/ISerializer return Data instead of bare T?` — that commit shipped the *return* half of Stage 1: every `ISerializer` method now returns `Data` / `Data<T>`, parse and serialize errors travel through `Data.Error` instead of throwing, and all known call sites already read `.Success` / `.Value` / `.Error`. The wrapping `try/catch` over `JsonException`/`NotSupportedException`/`IOException` is in place on Json, Text, plang/this.cs and plang/Data.cs.

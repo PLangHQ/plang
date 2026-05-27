@@ -97,6 +97,89 @@
         "health": "green",
         "notes": "Coder/test-designer pickup should read stage-1-iserializer-data.md fresh \u2014 the done-list at the top prevents re-doing the merged work."
       }
+    },
+    {
+      "id": "1346488c-bfa4-4069-964c-c1b46811b716",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T17:30:00Z",
+      "timestamp_end": "2026-05-27T17:30:00Z",
+      "intent": "Lock in design pivots from review: sign-in-converter, canonicalization fix, Properties-on-wire (new Stage 4); rewrite plan + stages + wire-shape accordingly",
+      "before": {
+        "assumptions": "Plan said signing happens at the channel (outermost only); Properties were [JsonIgnore]; the type field in wire-shape used variable-name instead of schema-name; Stage 2 deliverable was \"channel signs before WriteCore\".",
+        "risk": "The pivot to sign-in-converter touches Stage 2 and Stage 3 narratives at once. Properties-on-wire adds a real architectural stage (C# shape change + wire emission + variable-syntax change). Risk is leaving the stages inconsistent if any one of them keeps the old framing."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote the Signing decision section (sign-if-missing during converter walk, three properties: forwarding, compress, list-of-Data). Added Properties cross-cutting decision (Dictionary<string,object?> primitives, flat top-level wire, %x.field% vs %x!key%, reserved keys, sign-walk-skips). Updated stages table to 5 stages. Updated test-surface bullets to match new behaviour."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-2-plang-merge.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Substantial rewrite. Dropped \"channel signs before WriteCore\" deliverable; replaced with sign-in-converter (wire converter calls EnsureSigned during walk). Added crypto/Default.cs canonicalization fix (hash through wire-direction options). Updated code example, design narrative, risks, and coder verification list."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-3-flat-compress.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Replaced the \"no signing inside Compress\" section (which was wrong) with the new framing: Compress routes through the registered serializer; the converter signs D1 during the byte-conversion automatically; this also fixes today's bug where _envelopeJsonOptions strips Signature from compressed bytes. Updated Properties round-trip note (will survive after Stage 4). Added sign-then-compress verification."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-4-properties-on-wire.md",
+            ".bot/data-serialize-cleanup/architect/stage-5-vocabulary-sweep.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New Stage 4: Properties flatten to the wire. Scope, deliverables (Properties.cs C# rewrite, wire converter Write/Read, %!key% syntax, reserved-key enforcement), design rationale, risks, coder verification. Stage 5 is the renamed vocabulary sweep (was Stage 4)."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-4-vocabulary-sweep.md"
+          ],
+          "type": "rename",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Renamed to stage-5-vocabulary-sweep.md to make room for Stage 4 = Properties on wire. Vocabulary sweep is unchanged otherwise."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan/wire-shape.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Fixed plain-Data example to show type:\"object\" for untyped (vs type:\"user\" for Data<User> in sibling example). Added LLM-response example showing Properties flattened to top-level (cost, model). Updated compressed-Data narrative to show inner Data carries its own signature (sign-during-byte-conversion). Updated nested-Data section to show inner Datas each have signatures, with canonicalization binding the chain. Updated \"What's NOT on the wire\" and round-trip invariants."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added new top entry recording the three pivots (signing, canonicalization, Properties) and the new Stage 4. Stage status table updated to 5 stages."
+        }
+      ],
+      "after": {
+        "status": "Plan + 5 stages + wire-shape now consistent with all design decisions from the review session. Stage 1 is partial-complete (return half merged); Stages 2-5 are pending.",
+        "health": "green",
+        "notes": "Ready for coder pickup. Stage 2 carries the biggest surface (merge plang serializers + sign-in-converter + canonicalization). Stage 4 (Properties) is independent enough that it could run in parallel with Stage 3 once Stage 2 lands."
+      }
     }
   ]
 }

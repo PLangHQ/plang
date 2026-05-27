@@ -14,7 +14,7 @@ The bigger reason to fix this now, before the next thing lands: PLang's serializ
 
 PLang's serialization path between a Variable and the wire is tangled across four files and three concepts. This branch un-tangles it by recognizing one thing: **Data is the universal currency. Everything that crosses a channel boundary IS Data. The wire shape is Data's own shape — flat — and any nesting lives in the byte stream, not the JSON document.**
 
-Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.
+Once that's accepted, four follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing happens implicitly during the serializer's converter walk (sign-if-missing — per Data, not per wire crossing), and Properties flatten onto the wire as top-level fields next to `name`/`type`/`value`/`signature`.
 
 ## The problem today
 
@@ -62,11 +62,34 @@ Concrete JSON examples (plain, compressed, encrypted, nested-value) live in [pla
 
 **Name stays on the wire.** It's the addressability coordinate that survives transport. The HTTP example: sender names a Data "user", receiver writes the response to `%response%`, and `%response.user%` works because the structure remembered itself. Without name, that breaks.
 
-**Signing lives at the channel.** `Channel.WriteCore` calls `data.EnsureSigned()` before invoking the serializer. The serializer never signs — it just emits whatever Signature is set. Why not sign in the serializer? Because `Compress` also serializes Data (to in-memory bytes that will be buried inside an archived wrapper). If the serializer signed, those buried bytes would carry a signature *and* the channel would sign the archived wrapper on its way out — two signatures for one logical payload. Moving the signing decision out of the serializer makes "only outermost signs" automatic by construction: channels sign because their writes are externally visible; in-pipeline transforms (Compress, Encrypt) don't sign because their output stays in-process and gets buried inside another Data. The serializer is unconscious of inner/outer — that's not its concern.
+**Signing happens during the serializer walk — sign-if-missing, per Data, not per wire crossing.** The `app.data` JSON converter is the single signing point. Each Data the converter visits during serialization: if `Signature` is null, call `EnsureSigned` before emitting; if it's already populated, leave it alone. `EnsureSigned` is idempotent — a no-op when a signature exists. The channel doesn't sign explicitly; the converter does it during the walk that the channel's write triggers.
+
+Why this and not "outermost only at the channel": the unit of attestation is the *Data node*, not the *wire boundary*. Three behaviours fall out for free:
+
+- **Forwarding preserves provenance.** Alice's Data D1 (unsigned) goes through her channel; the converter signs D1 with Alice. Bob receives D1 (signed by Alice), wraps it as `D3 { value: D1 }`, writes to his channel; the converter sees D3 unsigned → signs with Bob, sees D1 signed → leaves it. Charlie sees D3 signed by Bob, opens it, sees D1 still signed by Alice. No explicit "preserve the inner signature" choreography; it's built in.
+- **Compress is automatic.** `Compress(D1)` serializes D1 to bytes through the same converter; the converter signs D1 during the walk; the bytes encode a signed D1. `Compress` wraps in `D2 { type=archived, value=byte[] }`; D2 hits the channel; converter signs D2. Two signatures, two different attestations: D1 signs the user data; D2 signs the compressed package. Both rest on the same `EnsureSigned` rule fired at different walk depths.
+- **List of Data — each element signs independently.** When the converter walks a `List<Data>` inside a Value, each list element is its own Data and gets sign-if-missing. The unit-of-attestation rule is uniform regardless of how the Data sits in the tree.
+
+Canonicalization rule: signing must hash the same bytes the wire writes. Today `modules/crypto/code/Default.cs:20` calls `JsonSerializer.Serialize(value)` with no options — default STJ respects `[JsonIgnore]` on `Signature` and strips it. The fix is to canonicalize through the same `Transport.ForOutbound` options the wire-direction serializer uses, so hashed-shape and wire-shape are identical. This also closes the gap where today's outer signature doesn't bind inner-Datas'-signatures (because the inner `Signature` field gets `[JsonIgnore]`-stripped from the hash, but emitted on the wire). After the canonicalization fix, the outer signature transitively binds every inner signature exposed on the wire.
+
+Sign-if-missing walks **Value-graph Datas only**, never Properties. Properties are metadata about the Data, not part of the signed body — a Data with cost/timing/debug Properties shouldn't grow per-Property signatures. The outer Data's signature covers the canonicalized wire shape (which includes the flat Property key-values), so tampering with a Property still invalidates the outer signature, but no nested attestations are conjured.
 
 **Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.
 
 **ISerializer takes Data, returns Data.** The return half landed in `typed-action-returns` (every method now returns `Data` / `Data<T>`, errors travel as `Data.Error` instead of throwing). The input half is what this branch closes: `object? value` and `Type? type = null` become a single `Data data` parameter. Tightening eliminates the null branch (`if (value == null) return "null"`), the `Type? type` parameter (Data carries its own type), and the "what if it's not Data" fallthrough.
+
+**Properties flatten onto the wire as top-level fields.** Today `Properties` is `IList<Data>` (see `PLang/app/data/Properties.cs`) and is `[JsonIgnore]` — it never crosses the wire. The new design changes both:
+
+- C# shape: `Properties` becomes `Dictionary<string, object?>` with primitives only (string, int, bool, DateTime, byte[], `Dictionary<string,object?>`, `List<object?>` of primitives). No Data instances inside Properties.
+- Wire shape: every Property entry emits as a top-level JSON field next to `name`/`type`/`value`/`signature`. An LLM response is `{ name: "response", type: "string", value: "...", cost: 100, signature: {...} }` — `cost` is a Property, not part of `value`.
+- Receiver-side rule: on deserialize, the four reserved top-level fields (`name`, `type`, `value`, `signature`) bind to their Data slots; *every other* top-level field lands in `Properties` verbatim. Receivers handle forward-incompatible wire fields by carrying them as Properties — no version pinning needed on the schema.
+- Access syntax: `%x.field%` reads `value`'s structural shape (object property, dict key); `%x!key%` reads `Properties[key]`. The two namespaces are disjoint: `%user.kind%` and `%user!kind%` can coexist with different values.
+- Reserved keys: a Property cannot use the name `name`, `type`, `value`, or `signature`. Enforced at insertion time (analyzer or runtime guard).
+- Sign discipline: the sign-if-missing converter walks Value-graph Datas only and does not visit Properties. The outer Data's signature covers the flat Property key-values via canonicalization — tampering still fails verification, but Properties don't grow nested signatures.
+
+The typed path (`Data<T>` where `T` declares a property like `Cost`) keeps its structural shape — `Cost` lives inside `T`, serializes inside `value`. Properties is the *untyped* metadata channel; `Data<T>`'s named properties are the *typed* path. Either gets navigated via the same `%x.field%`/`%x!key%` discipline, just routed to different storage.
+
+Out of scope for this branch (worth a follow-up): public/private split on Properties (debug-only entries that shouldn't cross the wire), `[Sensitive]` on individual Property keys, structured (Data-typed) Property values. For this branch: all Properties cross, primitives only.
 
 **`+` variants for encoding/algorithm differentiation.** `application/plang` defaults to JSON; `application/plang+protobuf` is the future binary variant. Same pattern for transport types: `archived+gzip`, `encryption+aes-256-gcm`. Today only the defaults exist; the variant slot is reserved, not used.
 
@@ -95,19 +118,22 @@ The serializer is unaware of any of this. It serializes Data; what's *inside* Da
 | Stage | File | Status |
 |-------|------|--------|
 | 1 | [ISerializer input tightened to Data](stage-1-iserializer-data.md) | partial — return half landed via `typed-action-returns`, input half remains |
-| 2 | [Merge application/plang serializers + drop Envelope + signing moves](stage-2-plang-merge.md) | pending |
+| 2 | [Merge application/plang serializers + sign-in-converter + canonicalization fix](stage-2-plang-merge.md) | pending |
 | 3 | [Flatten Compress/Decompress](stage-3-flat-compress.md) | pending |
-| 4 | [Vocabulary sweep — drop "envelope" + rename this.Envelope.cs](stage-4-vocabulary-sweep.md) | pending |
+| 4 | [Properties flatten to the wire](stage-4-properties-on-wire.md) | pending |
+| 5 | [Vocabulary sweep — drop "envelope" + rename this.Envelope.cs](stage-5-vocabulary-sweep.md) | pending |
 
-Stages 1 and 2 are tightly coupled — the input-tightening in Stage 1 forces all four serializer implementations to update at once, and Stage 2's merge sits naturally on top. They could be one PR or two depending on review appetite; the design is one decision. Stage 3 follows once the serializer is reliable. Stage 4 can land any time after Stage 2.
+Stages 1 and 2 are tightly coupled — the input-tightening in Stage 1 forces all four serializer implementations to update at once, and Stage 2's merge (plus the sign-in-converter rewire and the crypto canonicalization fix) sits naturally on top. They could be one PR or two depending on review appetite; the design is one decision. Stage 3 follows once the serializer is reliable. Stage 4 (Properties) is independent of Stage 3 but shares Stage 2's converter rework, so it should land after Stage 2. Stage 5 can land any time after Stage 2.
 
 ## Test surface
 
 Test strategy and coverage live in [plan/test-strategy.md](plan/test-strategy.md) and [plan/test-coverage.md](plan/test-coverage.md) — to be written after stages are reviewed and settled.
 
 Key behaviours to pin:
-- A `Data.Ok("hello")` round-trips through `application/plang` losslessly (name, type, value, signature all preserved).
-- A compressed Data round-trips: outer wrapper signed; inner bytes are themselves a serialized Data with the original name preserved.
-- Inner Datas in a nested value field carry no signature on the wire; outer carries exactly one.
-- ISerializer cannot be invoked with a non-Data input — boundary throws a structured error.
-- `%response.user%` navigation works after deserialization (name preserved across the round trip).
+- A `Data.Ok("hello")` round-trips through `application/plang` losslessly (name, type, value, signature, properties all preserved).
+- A compressed Data round-trips: outer wrapper signed; inner bytes decode to a serialized Data with its own signature (sign-then-compress chain preserved).
+- Inner Datas in a nested value field each carry their own signature on the wire (sign-if-missing rule applied during the converter walk).
+- Signing canonicalization matches wire-serialization shape — modifying an inner signature in the JSON invalidates the outer signature.
+- Properties on the wire are top-level fields next to name/type/value/signature; receiver puts unknown top-level fields into Properties verbatim.
+- `%response.user%` navigates into Value; `%response!cost%` navigates into Properties; the two are disjoint.
+- ISerializer cannot be invoked with a non-Data input — the type system forbids it after Stage 1.
