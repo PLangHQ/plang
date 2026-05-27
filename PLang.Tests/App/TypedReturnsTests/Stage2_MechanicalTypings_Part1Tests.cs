@@ -34,10 +34,16 @@ public class Stage2_MechanicalTypings_Part1Tests
         await Assert.That(ret).IsEqualTo(expected);
     }
 
+    // goal.getTypes returns per-step variable→type snapshots. PLang's call site
+    // indexes the list directly (%varTypes[step.Index].Foo%) so the shape stays
+    // as List<Dictionary<string, string>> rather than wrapping each step in a
+    // dedicated TypeInfo record.
     [Test]
     public async Task GoalGetTypes_Run_ReturnsTaskDataOfStronglyTypedRecord()
     {
-        Assert.Fail("Pending: goal.getTypes return shape not yet typed (TypeInfo record absent).");
+        var ret = RunReturnType<global::app.modules.goal.getTypes>();
+        var expected = typeof(Task<global::app.data.@this<List<Dictionary<string, string>>>>);
+        await Assert.That(ret).IsEqualTo(expected);
     }
 
     // output.ask returns Task<Data<Ask>>. Suspend path returns an Ask with
