@@ -2,19 +2,8 @@ using System.Reflection;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 2 — Mechanical typings, part 1: test.*, goal.getTypes, output.ask, channel.set.
-// Architect: .bot/typed-action-returns/architect/stages.md (Stage 2)
-// Plan: .bot/typed-action-returns/architect/plan.md (A.1)
-//
-// Status snapshot at this commit:
-//   ✅ test.discover    → Task<Data<List<Test.@this>>>
-//   ✅ test.run         → Task<Data<Results>>
-//   ✅ channel.set      → Task<Data> (already bare, satisfies the void-like contract)
-//   ⏳ goal.getTypes    → still polymorphic; new TypeInfo record not yet authored
-//   ⏳ output.ask       → blocked by IExitsGoal forwarding pattern (Ask sentinel
-//      cannot flow through Task<Data<string>> via implicit From; coder note in
-//      architect plan needs Ingi's call on whether to split IExitsGoal handling
-//      out of output.ask or downgrade the contract to bare Task<Data>).
+// Reflection contract for action-handler Run() return types and the catalog
+// strings Modules.Describe() emits for the trailing variable.set's type slot.
 
 public class Stage2_MechanicalTypings_Part1Tests
 {
@@ -48,15 +37,12 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task GoalGetTypes_Run_ReturnsTaskDataOfStronglyTypedRecord()
     {
-        // Pending — goal.getTypes still returns bare Task<Data>; the TypeInfo
-        // record (or equivalent) hasn't been authored yet.
-        Assert.Fail("Pending: TypeInfo record not yet created; see file header.");
+        Assert.Fail("Pending: goal.getTypes return shape not yet typed (TypeInfo record absent).");
     }
 
-    // Ingi's call (2026-05-27): output.ask returns Task<Data<Ask>>, not <string>.
-    // Ask was extended with Answer; IExitsGoal gained virtual ShouldExit() so the
-    // resume path (Answer != null) flows through, suspend path (Answer == null)
-    // short-circuits as before.
+    // output.ask returns Task<Data<Ask>>. Suspend path returns an Ask with
+    // Answer=null (ShouldExit() true); resume path returns Ask with Answer
+    // bound (ShouldExit() false) so the step loop continues.
     [Test]
     public async Task OutputAsk_Run_ReturnsTaskDataOfAsk()
     {
@@ -91,8 +77,8 @@ public class Stage2_MechanicalTypings_Part1Tests
         await Assert.That(row!.ReturnTypeName).IsEqualTo("results");
     }
 
-    // Catalog renders the architect's expected "string" as "ask" — the runtime
-    // return type IS Ask, with .Answer carrying the user's string reply.
+    // Catalog renders output.ask's return as "ask" — the runtime return type
+    // is Data<Ask>, with the user's string reply riding on Ask.Answer.
     [Test]
     public async Task ModulesDescribe_OutputAsk_AdvertisesAskReturnType()
     {
@@ -112,12 +98,10 @@ public class Stage2_MechanicalTypings_Part1Tests
             .Because("Bare Task<Data> renders as 'data' — the Compile.llm template treats that as the polymorphic-default sentinel.");
     }
 
-    // Footgun guard: typed handlers must not return Data<Data<T>>. The Run()
-    // signature is the contract — Task<Data<List<Test>>> means the runtime
-    // instance is Data<List<Test>>, with .Value being the raw collection. A
-    // double-wrap would mean Data<List<Test>> containing another Data — caught
-    // at the type level by asserting the static return type matches Data<T>
-    // where T is the collection itself, not another Data.
+    // Footgun guard: a typed handler's T inside Data<T> must not itself be a
+    // Data subtype — the implicit Data<T>(T value) operator silently wraps
+    // when T = object and the source is already a Data, producing
+    // Data<object>{ Value = Data<bool>{...} }. Asserting at the type level.
     [Test]
     public async Task DataValueFromTypedRun_NotDoubleWrapped()
     {

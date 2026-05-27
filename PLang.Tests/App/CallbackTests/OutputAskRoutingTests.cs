@@ -5,10 +5,10 @@ using app.modules.output;
 
 namespace PLang.Tests.App.CallbackTests;
 
-/// Stage 2a — Batch 5 (C# half): `output.ask` is ~10 lines — consume the
-/// resume sentinel if present, otherwise delegate to `Channel.Ask`. Stream
-/// channel blocks and returns the line; Message channel builds `Data<Ask>`
-/// with Snapshot attached.
+/// output.ask routing: consume the resume sentinel under !ask.answer if
+/// present, otherwise delegate to the input channel's Ask. Stream channels
+/// block and return the typed line; Message channels return a Data<Ask>
+/// with Snapshot attached so the engine can short-circuit and resume.
 public class OutputAskRoutingTests
 {
     private static global::app.@this NewApp() =>
@@ -62,9 +62,8 @@ public class OutputAskRoutingTests
         var ch = new global::app.channels.channel.stream.@this("i", ms,
             global::app.channels.channel.ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
-        // Empty question to skip WriteCore (the existing Stage 2 stream tests
-        // do the same — exercises Ask's read-line path without needing a
-        // registered Channels collection for the serializer).
+        // Empty question to skip WriteCore — exercises Ask's read-line path
+        // without needing a registered Channels collection for the serializer.
         var action = new ask { Context = app.User.Context, Question = new global::app.data.@this<string>("", "") };
         var result = await ch.AskCore(action);
         await Assert.That(result.Success).IsTrue();
@@ -77,10 +76,9 @@ public class OutputAskRoutingTests
         await Assert.That(true).IsTrue();
     }
 
-    // Post-Ingi-Data<Ask>-typing (2026-05-27): the suspend wire shape carries a
-    // bare Ask sentinel (Answer==null) — the question text rides on the Snapshot
-    // and on the action.Question parameter, not on the Data Value. The Ask's
-    // IExitsGoal.ShouldExit() returns true while Answer is null.
+    // The suspend wire shape is a bare Ask (Answer==null) — the question text
+    // rides on the Snapshot and the action.Question parameter, not on Value.
+    // The Ask's IExitsGoal.ShouldExit() returns true while Answer is null.
     [Test] public async Task MessageChannelAsk_ReturnsDataAsk_WithSuspendShape()
     {
         var app = NewApp();

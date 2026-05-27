@@ -1,8 +1,8 @@
-// Stage 0 test handlers for typed-action-returns.
-// Live in app.modules.typedreturns.* so the source generator picks them up and
-// generates SetAction/ExecuteAsync exactly as production handlers get. Not
-// auto-registered (Modules.Discover walks PLang.dll only); tests register via
-// app.Modules.RegisterType before calling validate.
+// Test action handlers used by the typed-return tests. Live in
+// app.modules.typedreturns.* so the source generator picks them up and
+// generates SetAction/ExecuteAsync the same way production handlers get.
+// Not auto-discovered (Modules.Discover walks PLang.dll only); tests
+// register via app.Modules.RegisterType before invoking validate.
 
 namespace app.modules.typedreturns;
 

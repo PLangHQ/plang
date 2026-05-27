@@ -112,7 +112,7 @@ public class Default : IBuilder
             }
 
             var filteredTypes = schema.Types.Where(t => refs.Contains(t.Name)).ToList();
-            schema = new global::app.modules.Schema.@this(modules)
+            schema = new global::app.builder.Types.@this(modules)
             {
                 PrimitiveNames = schema.PrimitiveNames,
                 Types = filteredTypes,
@@ -556,10 +556,9 @@ public class Default : IBuilder
     }
 
     /// <summary>
-    /// Walks the step's actions backwards for the trailing variable.set and stamps
-    /// the inferred typeName on its "Type" parameter (replace-or-insert). Stage 4
-    /// adds precedence — a user-supplied (type) hint already on the variable.set
-    /// must win over Build()'s inference. For now, last-write wins.
+    /// Walks the step's actions backwards for the trailing variable.set and
+    /// stamps the inferred typeName on its "Type" parameter (replace-or-insert).
+    /// Last-write wins when multiple Build()s in the same step produce types.
     /// </summary>
     private static void StampOnTerminalVariableSet(Actions actions, string typeName)
     {

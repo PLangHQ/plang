@@ -4,18 +4,16 @@ namespace app.modules.output;
 
 /// <summary>
 /// Payload for an in-flight or resolved ask. The Snapshot rides as
-/// <c>Data.Snapshot</c>. Stage 2a.4 wires this in via
-/// <see cref="app.channels.channel.@this.Ask"/> on the stateless Message
-/// channel.
+/// <c>Data.Snapshot</c>; the stateless Message channel populates it for
+/// resume.
 ///
 /// <para>Two states ride the same record:</para>
 /// <list type="bullet">
-///   <item><b>Suspend</b> — <see cref="Answer"/> is null. <see cref="IExitsGoal.ShouldExit"/>
+///   <item><b>Suspend</b> — <see cref="Answer"/> is null. <see cref="ShouldExit"/>
 ///         returns true, so the step loop short-circuits.</item>
 ///   <item><b>Resolved</b> — <see cref="Answer"/> carries the user's response.
 ///         <see cref="ShouldExit"/> returns false; the step loop continues and the
-///         trailing variable.set binds the Ask. Callers read <c>%name.Answer%</c>
-///         (or whatever variable name the step writes to).</item>
+///         trailing variable.set binds the Ask. Callers read <c>%name.Answer%</c>.</item>
 /// </list>
 /// </summary>
 [global::app.Attributes.PlangType]

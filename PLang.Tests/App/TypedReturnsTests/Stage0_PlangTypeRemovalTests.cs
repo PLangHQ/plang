@@ -3,13 +3,11 @@ using app.Attributes;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 0 — [PlangType] kept as slim Name-only override (Ingi's call during
-// implementation diverged from the architect's "remove entirely" plan). These
-// tests guard the slim shape: attribute survives, but only the divergent-name
-// sites carry the Named form. Most types derive their PLang name from class
-// name or @this namespace segment.
-// Architect (original intent): .bot/typed-action-returns/architect/stages.md Stage 0 item 1
-// Coder handoff (the kept-slim decision): .bot/typed-action-returns/coder/handoff.md §1-3
+// Contract: [PlangType] is a slim Name-only override. Most types derive their
+// PLang name from class name (or last namespace segment for @this classes).
+// The attribute exists only to override that derivation when the desired
+// PLang name can't be encoded in the class name (e.g. dots, fully divergent
+// names).
 
 public class Stage0_PlangTypeRemovalTests
 {
@@ -21,9 +19,9 @@ public class Stage0_PlangTypeRemovalTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    // The attribute survives — Ingi's call (handoff §1-3) — but with a single
-    // Name parameter only. Shape/Example/Description parameters were dropped;
-    // that metadata is now a static-property convention on the type itself.
+    // The attribute exposes only the Name slot. Shape/Example/Description
+    // metadata moved to a static-property convention on the type itself
+    // (public static string Example => "...").
     [Test]
     public async Task PlangTypeAttribute_OnlyOverridesDivergentNames()
     {
@@ -42,8 +40,8 @@ public class Stage0_PlangTypeRemovalTests
             .Because("Shape/Example/Description moved to static-property convention.");
     }
 
-    // Every Named usage must encode a name that the class-name derivation could
-    // NOT produce. Two sites today: GoalCall→"goal.call" (dot), Schema.@this→"catalog".
+    // Every Named usage must encode a name the class-name derivation cannot
+    // produce. One legitimate site: GoalCall→"goal.call" (dotted name).
     [Test]
     public async Task PlangType_NoTypeUsesNamedFormForDerivableName()
     {
@@ -84,9 +82,8 @@ public class Stage0_PlangTypeRemovalTests
         await Assert.That(name).IsEqualTo("mockhandle");
     }
 
-    // After Stage 1 rename, app.tester.Test.@this is an @this class — its PLang
-    // type name derives from the last namespace segment ("test"), not the class
-    // name (@this). The old name "file" is gone (the File class no longer exists).
+    // app.tester.Test.@this is an @this class — its PLang type name derives
+    // from the last namespace segment ("test"), not the class name ("@this").
     [Test]
     public async Task Test_PlangTypeName_DerivesFromClassName_AfterRename()
     {
@@ -96,14 +93,13 @@ public class Stage0_PlangTypeRemovalTests
     }
 
     // @this classes use the last namespace segment, not the literal "this".
-    // Schema.@this uses an explicit override ("catalog") because the segment
-    // "Schema" diverges from the desired PLang name.
+    // app.builder.Types.@this → "types" by derivation alone (no override).
     [Test]
     public async Task PlangTypeDerivation_OBPSingleNameFolders_UseFolderNameNotThisLiteral()
     {
-        var name = _app.Types.Name(typeof(global::app.modules.Schema.@this));
+        var name = _app.Types.Name(typeof(global::app.builder.Types.@this));
         await Assert.That(name).IsNotEqualTo("this");
-        await Assert.That(name).IsEqualTo("catalog")
-            .Because("Schema.@this carries [PlangType(\"catalog\")] — the @this segment 'Schema' would not derive to 'catalog'.");
+        await Assert.That(name).IsEqualTo("types")
+            .Because("The @this segment 'Types' derives cleanly to 'types' — no [PlangType] override needed.");
     }
 }

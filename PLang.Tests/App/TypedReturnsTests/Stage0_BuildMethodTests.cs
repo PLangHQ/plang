@@ -5,9 +5,10 @@ using app.modules.typedreturns;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 0 — IClass.Build() interface + builder.validate plumbing.
-// Architect: .bot/typed-action-returns/architect/stages.md (Stage 0, items 2-3)
-// Plan: .bot/typed-action-returns/architect/plan.md (A.6)
+// Contract: IClass exposes a Build() method that the validate pass invokes
+// per action. A handler's Build() can return Data.Ok(typeName) to stamp the
+// type on the step's terminal variable.set, Data.Fail to abort validation,
+// or bare Data.Ok() to contribute nothing.
 
 public class Stage0_BuildMethodTests
 {

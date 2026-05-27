@@ -2,9 +2,10 @@ using System.Reflection;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 1 — tester/File → tester/Test rename.
-// Architect: .bot/typed-action-returns/architect/stages.md (Stage 1)
-// Plan: .bot/typed-action-returns/architect/plan.md (A.7)
+// Contract: the test-domain entity lives at app.tester.Test.@this (OBP
+// singular-folder layout). Its PLang catalog name derives to "test" via the
+// @this last-namespace-segment convention; the legacy app.tester.File type
+// is gone, as is the "testfile" PLang name.
 
 public class Stage1_TesterFileRenameTests
 {
@@ -23,7 +24,7 @@ public class Stage1_TesterFileRenameTests
         var asm = typeof(global::app.@this).Assembly;
         var legacyType = asm.GetType("app.tester.File");
         await Assert.That(legacyType).IsNull()
-            .Because("File.cs was deleted in Stage 1 — only tester.Test.@this remains.");
+            .Because("Only tester.Test.@this exists; the legacy File class is gone.");
     }
 
     // The new home is app.tester.Test.@this (OBP singular-folder convention).
@@ -57,8 +58,7 @@ public class Stage1_TesterFileRenameTests
     }
 
     // Class-name "@this" + last namespace segment "Test" derives to "test".
-    // The literal "testfile" is gone — it was the legacy [PlangType("testfile")]
-    // override, dropped in Stage 0.
+    // The literal "testfile" is gone — no [PlangType] override produces it.
     [Test]
     public async Task TesterTest_PlangTypeName_IsTest_Not_TestFile()
     {
@@ -76,13 +76,12 @@ public class Stage1_TesterFileRenameTests
         await Assert.That(legacy).IsNull();
     }
 
-    // The PLang-name "testfile" was the legacy [PlangType("testfile")] override.
-    // After Stage 0 it should not resolve in the runtime type registry.
+    // The PLang-name "testfile" must not resolve in the runtime type registry.
     [Test]
     public async Task NoSourceFile_ReferencesTestfileString()
     {
         var resolved = _app.Types.Get("testfile");
         await Assert.That(resolved).IsNull()
-            .Because("Stage 0 dropped the [PlangType(\"testfile\")] override — only 'test' resolves now.");
+            .Because("No [PlangType(\"testfile\")] override exists — only 'test' resolves.");
     }
 }

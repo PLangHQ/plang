@@ -12,9 +12,7 @@ public sealed class Run
 {
     private readonly Stopwatch _stopwatch;
 
-    /// <summary>The discovered Test this run is executing. Property name kept as
-    /// File for now — Stage 1 (typed-action-returns) renamed only the type; a
-    /// follow-up may rename the property to Test for full consistency.</summary>
+    /// <summary>The discovered Test this run is executing.</summary>
     public Test.@this File { get; }
 
     /// <summary>Current lifecycle status. Transitions on Complete().</summary>

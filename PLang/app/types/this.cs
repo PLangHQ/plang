@@ -456,9 +456,9 @@ public sealed partial class @this
     ///   - Record                → TypeEntry with Fields built from [LlmBuilder] props.
     ///   - Opaque (no markers)   → not surfaced.
     /// </summary>
-    public List<app.modules.Schema.Entry> BuildTypeEntries(app.modules.@this? modules)
+    public List<app.builder.Types.Entry> BuildTypeEntries(app.modules.@this? modules)
     {
-        var entries = new List<app.modules.Schema.Entry>();
+        var entries = new List<app.builder.Types.Entry>();
         var seen = new HashSet<System.Type>();
         var queue = new Queue<System.Type>();
 
@@ -514,10 +514,10 @@ public sealed partial class @this
             var values = GetValidValues(type);
             if (values != null)
             {
-                entries.Add(new app.modules.Schema.Entry
+                entries.Add(new app.builder.Types.Entry
                 {
                     Name = typeName,
-                    Kind = app.modules.Schema.EntryKind.Enum,
+                    Kind = app.builder.Types.EntryKind.Enum,
                     Values = values,
                     Description = staticDescription,
                     Example = staticExample,
@@ -541,14 +541,14 @@ public sealed partial class @this
                 }
             }
 
-            var llmProps = new List<app.modules.Schema.Field>();
+            var llmProps = new List<app.builder.Types.Field>();
             foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
                 if (!prop.CanRead || prop.Name == "EqualityContract") continue;
                 if (!Attribute.IsDefined(prop, typeof(LlmBuilderAttribute))) continue;
                 if (Attribute.IsDefined(prop, typeof(JsonIgnoreAttribute))) continue;
 
-                llmProps.Add(new app.modules.Schema.Field
+                llmProps.Add(new app.builder.Types.Field
                 {
                     Name = char.ToLower(prop.Name[0]) + prop.Name[1..],
                     TypeName = GetTypeName(prop.PropertyType),
@@ -568,10 +568,10 @@ public sealed partial class @this
 
             if (isScalar)
             {
-                entries.Add(new app.modules.Schema.Entry
+                entries.Add(new app.builder.Types.Entry
                 {
                     Name = typeName,
-                    Kind = app.modules.Schema.EntryKind.Scalar,
+                    Kind = app.builder.Types.EntryKind.Scalar,
                     Shape = derivedShape ?? staticShape ?? "string",
                     ConstructorSignature = constructorSignature,
                     Properties = llmProps.Count > 0 ? llmProps : null,
@@ -584,10 +584,10 @@ public sealed partial class @this
 
             if (llmProps.Count > 0)
             {
-                entries.Add(new app.modules.Schema.Entry
+                entries.Add(new app.builder.Types.Entry
                 {
                     Name = typeName,
-                    Kind = app.modules.Schema.EntryKind.Record,
+                    Kind = app.builder.Types.EntryKind.Record,
                     Fields = llmProps,
                     Description = staticDescription,
                     Example = staticExample,
@@ -606,9 +606,9 @@ public sealed partial class @this
     /// <c>ResolveName</c> follows the same first-wins rule so consumers stay
     /// consistent across the catalog and the type lookup.
     /// </summary>
-    public Dictionary<string, app.modules.Schema.Entry> ComplexSchemas()
+    public Dictionary<string, app.builder.Types.Entry> ComplexSchemas()
     {
-        var dict = new Dictionary<string, app.modules.Schema.Entry>();
+        var dict = new Dictionary<string, app.builder.Types.Entry>();
         foreach (var entry in BuildTypeEntries(null))
             dict.TryAdd(entry.Name, entry);
         return dict;

@@ -1,4 +1,4 @@
-namespace app.modules.Schema.Spec;
+namespace app.builder.Types.Spec;
 
 /// <summary>
 /// One action node inside an <see cref="Example"/>. Composes recursively:

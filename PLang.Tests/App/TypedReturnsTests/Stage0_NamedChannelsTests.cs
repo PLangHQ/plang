@@ -3,13 +3,15 @@ using NoopChannel = global::app.channels.channel.noop.@this;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 0 — Named channels with no-op fallback + BuildWarning payload.
-// Architect: .bot/typed-action-returns/architect/stages.md (Stage 0, items 4-5)
-// Handoff §5: builder-channel REGISTRATION is PLang-side (system/builder/Build.goal).
-// C# only provides Channel(name) + noop fallback + the BuildWarning record. The
-// lifecycle tests (Builder_BuildStart_… / Builder_BuildEnd_…) assert the C#
-// primitive — registering and removing a channel changes what Channel(name)
-// returns. End-to-end build-driven assertions belong in PLang .test.goal land.
+// Contract: Channel(name) returns a registered channel by name; on miss it
+// returns a no-op sink so callers can write opportunistically without null-
+// checking. BuildWarning is the payload written to the "builder" channel
+// during a build pass.
+//
+// Channel REGISTRATION for "builder" is owned PLang-side
+// (system/builder/Build.goal). C# only provides Channel(name) lookup, the
+// no-op fallback, and the BuildWarning record. The lifecycle tests here
+// assert the C# primitive only.
 
 public class Stage0_NamedChannelsTests
 {

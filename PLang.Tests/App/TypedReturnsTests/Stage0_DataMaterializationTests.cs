@@ -2,9 +2,9 @@ using System.Reflection;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
-// Stage 0 — Data materialization owned by .Type (A.4).
-// Architect: .bot/typed-action-returns/architect/stages.md (Stage 0, item 6)
-// Plan: .bot/typed-action-returns/architect/plan.md (A.4)
+// Contract: Data materialization is owned by Data itself via .Type. Public
+// surface is Data.As(string typeName) (cross-type coercion) and implicit
+// conversion on property access; Data.As<T> stays internal.
 
 public class Stage0_DataMaterializationTests
 {

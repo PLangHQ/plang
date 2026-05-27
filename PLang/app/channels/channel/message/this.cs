@@ -13,11 +13,10 @@ public abstract class @this : Channel
 {
     public override Task<data.@this> AskCore(modules.output.ask action, CancellationToken ct = default)
     {
-        // Suspend Ask: Value is an Ask instance with no Answer bound — IExitsGoal.
-        // ShouldExit() returns true (Answer==null), so the step loop short-circuits
-        // and the Snapshot carries enough state for the channel to resume the goal
-        // once the user replies. Type="ask" also still satisfies the Type-side
-        // Exit check, which keeps the legacy Type-only flow paths working.
+        // Suspend Ask: Value is an Ask with no Answer bound, so IExitsGoal.ShouldExit()
+        // returns true and the step loop short-circuits. Snapshot carries enough
+        // state for the channel to resume the goal once the user replies. Type="ask"
+        // also satisfies the Type-side Exit check.
         var ask = new modules.output.Ask();
         var d = new data.@this<modules.output.Ask>("", ask, new data.type("ask"))
         {

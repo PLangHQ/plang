@@ -1,4 +1,4 @@
-namespace app.modules.Schema;
+namespace app.builder.Types;
 
 /// <summary>
 /// A type in the PLang catalog. Discriminated by <see cref="Kind"/>:
