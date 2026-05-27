@@ -614,6 +614,74 @@
         "notes": "Coder v2 fix matches suggestion exactly; new regression test mutation-validated; Stage4 12/12 green."
       },
       "timestamp_end": "2026-05-27T15:40:09.797467Z"
+    },
+    {
+      "id": "bb0b5b12-b8ef-4edd-bfaa-918949f8d7fe",
+      "bot": "docs",
+      "timestamp_start": "2026-05-27T15:41:56Z",
+      "timestamp_end": "2026-05-27T15:47:50Z",
+      "intent": "Documentation completeness gate for typed-action-returns after auditor v2 PASS",
+      "before": {
+        "assumptions": "Auditor v2 PASS (commit 7f635bd9b). Tester v2 PASS 3136 C# + 221 PLang. Security PASS. No claude-md/character proposals on this branch. Major surface: IClass.Build()/SetAction(), Channel(name) lookup, BuildWarning record, typed Data<T> Run() returns across http/test/output/builder/mock/goal, Ask.Answer + IExitsGoal, new http Response record, Schema\u2192builder.Types and MockHandle\u2192Mock.@this renames, Serializers/ISerializer now return Data, multi-segment GetByExtension, (type) hint syntax in Compile.llm.",
+        "risk": "Large surface (207 files). Many public records/properties added. Most user-visible: Ask shape change (Answer + ToString), Response record body dispatch, (type) hint syntax. Architecture doc updates needed in good_to_know.md and a new typed-returns chapter."
+      },
+      "actions": [
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md",
+            "Documentation/v0.2/architecture.md",
+            "os/system/modules/mock/intercept.description.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Chased 3 stale rename refs (MockHandle, app.tester.File, Schema.@this) and renamed/sharpened the mock action description after mock.action -> mock.intercept rename."
+        },
+        {
+          "paths": [
+            "Documentation/v0.2/good_to_know.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Added 4 new sections covering build-time side of typed-action-returns: Build()-time type stamping (IClass.Build, (type) hints, BuildWarning channel-write), Serializers/ISerializer returns Data (closed throw list), multi-segment GetByExtension, IExitsGoal.ShouldExit value-side opt-out pattern."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/docs/v1/plan.md",
+            ".bot/typed-action-returns/docs/v1/result.md",
+            ".bot/typed-action-returns/docs/v1/verdict.json",
+            ".bot/typed-action-returns/docs/summary.md",
+            ".bot/typed-action-returns/docs-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Standard docs bot output: plan, result with CHANGELOG-shaped surface inventory, verdict pass, summary, and structured docs-report."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/IClass.cs",
+            "PLang/app/IExitsGoal.cs",
+            "PLang/app/http/Response/this.cs",
+            "PLang/app/tester/Test/this.cs",
+            "PLang/app/mock/Mock/this.cs",
+            "PLang/app/modules/builder/warning/this.cs",
+            "PLang/app/modules/output/ask.cs",
+            "PLang/app/channels/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "XML doc coverage audit on every new public type. All verified well-documented by coder; no flag-back required."
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "All 8 doc gaps filled (4 stale-ref updates + 4 new architecture sections). XML docs already clean on new public surface. No proposal files present on this branch. Ready to merge."
+      },
+      "plan": ".bot/typed-action-returns/docs/v1/plan.md"
     }
   ]
 }

@@ -96,17 +96,19 @@ The mock module (`mock.intercept`, `mock.verify`, `mock.reset`) provides test is
 
 ### How It Works
 `mock.intercept` registers a `BeforeAction` event binding for the specified action pattern. The binding's handler:
-1. Captures call parameters into a `MockHandle.Calls` list
+1. Captures call parameters into a `Mock.@this.Calls` list
 2. If `ReturnValue` is set: sets `context.EventOverride` to skip the real action
 3. If `GoalToCall` is set: runs the goal (which can use `event.skipAction`)
 4. If neither: spy mode — tracks calls but lets the real action run
 
-### MockHandle
-The returned `MockHandle` object has properties accessible via PLang variable resolution:
-- `%mock.callCount%` — number of times the mock was called
-- `%mock.calls[0].parameters.path%` — first call's path parameter
-- `%mock.actionPattern%` — the action pattern being mocked
-- `%mock.isSpy%` — true if no ReturnValue or GoalToCall was set
+### `Mock.@this` (the returned handle)
+`mock.intercept` returns `Data<app.mock.Mock.@this>`. The handle's properties are reachable via PLang variable resolution:
+- `%mock.CallCount%` — number of times the mock was called
+- `%mock.Calls[0].Parameters.path%` — first call's path parameter
+- `%mock.Pattern%` — the action pattern being mocked
+- `%mock.IsSpy%` — true if no ReturnValue or GoalToCall was set
+
+(Previously named `MockHandle`; renamed to `app.mock.Mock.@this` on the `typed-action-returns` branch. The PLang catalog name still derives to `"mock"` via the @this convention — no PLang-side rename.)
 
 ### Builder Naming Gotcha
 The handler is named `intercept` (not `action`) because the LLM builder confuses `mock.action` with `mock.mock` — it treats "mock" as both module and action name. Using `mock.intercept` avoids this ambiguity.
@@ -163,7 +165,7 @@ Fix: the collection becomes its own type with the lock private and `Add(...)` as
 
 **7. Holds a reference AND a flat copy of properties reachable through it.** A class with `Foo Foo` and N scalar fields all reachable through `Foo` is paying double — once in memory, once in drift risk.
 
-*Worked example (this branch):* `app.tester.File` declared `Goal? Goal` *plus* `Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion`. Every one reachable through `Goal` when `Goal != null`. The flat copy was paid *for every discovered test file* — and silently staled if anyone rebuilt the Goal in place. Fix: delete the flat fields, route consumers through `file.Goal?.Path` etc. Keep one summary field (e.g. `StatusReason`) for the case where `Goal` is null (.pr missing / corrupt) — that's the legitimate carve-out, because it describes a state the reference can't.
+*Worked example (`tester-cleanup` branch):* `app.tester.File` (since renamed to `app.tester.Test.@this`) declared `Goal? Goal` *plus* `Path`, `PrPath`, `EntryGoalName`, `GoalHash`, `BuilderVersion`. Every one reachable through `Goal` when `Goal != null`. The flat copy was paid *for every discovered test file* — and silently staled if anyone rebuilt the Goal in place. Fix: delete the flat fields, route consumers through `file.Goal?.Path` etc. Keep one summary field (e.g. `StatusReason`) for the case where `Goal` is null (.pr missing / corrupt) — that's the legitimate carve-out, because it describes a state the reference can't.
 
 *When the class IS a value-snapshot on purpose:* a serialization DTO or a thread-safe-snapshot record holding flat copies is fine — the point of the type is to be detached from the live graph. Document the intent in the class XML doc ("snapshot of Foo at time T; not refreshed when Foo changes") so future readers don't merge the two roles.
 
@@ -1233,3 +1235,84 @@ Action **shape** (what parameters exist, what types, what defaults, is-it-a-modi
 Renamed attribute: **`[Provider]` → `[Code]`** across the source generator, the attribute definition, every call site, and the PLNG001 diagnostic text. Mechanical, no behaviour change.
 
 Full guide: [`action-catalog.md`](action-catalog.md). Loader source: `PLang/app/modules/MarkdownTeaching.cs`. Architect plan: `.bot/compile-llm-notes-per-action/architect/plan.md`.
+
+## Build()-time type stamping — `IClass.Build()`, `(type)` hints, and `BuildWarning`
+
+The companion to *Action `Run()` returns are typed* (above) is the **build-time** side: how the type that rides on a step's terminal `variable.set` gets there in the first place.
+
+Three sources, layered by precedence (highest wins):
+
+1. **User `(type)` hint** — `write to %x%(json)` in the PLang source. The kernel rule lives in `os/system/builder/llm/Compile.llm` and tells the LLM to stamp `Type="json"` on the terminal `variable.set`. Any explicit `Type` on the variable.set (including literal `"object"`) is treated as a user hint and wins.
+2. **`IClass.Build()` inference** — the optional compile-time hook on every action handler. Default impl returns `Data.Ok()` (no stamp). A handler that knows enough to infer overrides:
+   - `file.read.Build()` — literal `Path` → infer from `path.Extension` via `Formats.Mime`.
+   - `llm.query.Build()` — `Schema` set → `Ok("json")`; `Format` set → `Ok(Format)`.
+   - `http.request.Build()` / `http.upload.Build()` — literal URL with a recognised extension → infer (query/fragment stripped first, registered-types gated).
+3. **LLM-emitted `Type`** — what the planner wrote into the step's terminal `variable.set` based on the action's typed `Run()` return (see the *typed Run()* section).
+
+The validate pass (`builder.code.Default.Validate`) iterates every step, calls `IClass.SetAction(action, context)` to prime the handler's lazy property getters, invokes `Build()`, and:
+
+- `Data.Ok(typeName)` → stamps `typeName` onto the terminal `variable.set`'s `Type` parameter (only if the user didn't already set one — precedence #1 above wins).
+- `Data.Ok()` (no value) → no terminal change; LLM-emitted Type stays.
+- `Data.Fail(err)` → validate aggregates and fails the build.
+
+`SetAction` is **source-generator-emitted** on each handler partial — it mirrors `ExecuteAsync`'s setup minus the runtime-only steps. Callers (validate) invoke through the `IClass` surface without reflection.
+
+### `BuildWarning` — out-of-band advisory writes
+
+In-band errors stay on `Data` (caller short-circuits, must be in the return path). **Advisory** warnings — "I inferred a type but the literal file you named doesn't exist" — travel through a channel-write instead of bending `Data`'s shape:
+
+```csharp
+var ch = Context.App.Channels.Channel("builder");
+await ch.WriteAsync(new app.modules.builder.warning.@this(this, $"missing literal file: {path}"));
+return data.@this.Ok(inferredType);
+```
+
+`Channels.Channel(name)` returns a registered channel or a **no-op fallback** (`channel.noop.@this`) — so the handler writes opportunistically without null-checking. (Distinct from `Channels.Resolve(name)`, which returns null on miss and surfaces `ChannelNotFound`.) `Build()` runs in two contexts: under the builder (channel registered, warning surfaces in trace + `--strict`) and outside it (channel absent, the no-op swallows the write).
+
+The warning record `app/modules/builder/warning/this.cs` carries `(IClass Action, string Message)` — the writing handler puts `this` in `Action` so the consumer has source attribution without channel-side caller-tagging magic.
+
+Full implementation: `PLang/app/modules/builder/code/Default.cs` (the validate-pass + `StampOnTerminalVariableSet` helper).
+
+## `Serializers/ISerializer` returns `Data` — no throws
+
+Every `ISerializer` method (`Deserialize<T>`, `DeserializeAsync<T>`, `SerializeAsync`, …) returns `Data` / `Data<T>` rather than throwing. Impls (Json, Text, plang, plang+data) wrap each method body in try/catch over a **closed list**:
+
+- `System.Text.Json.JsonException`
+- `System.NotSupportedException`
+- `System.IO.IOException`
+
+…and convert the exception into `Data.FromError`. Anything else (OOM, cancellation) still propagates — by design. If a new serializer impl needs an additional "expected" exception caught, add it to the closed list and surface it as `Data.FromError`; don't introduce a bare `catch (Exception)` that swallows real bugs.
+
+Call sites read `.Success` and `.Value` / `.Error` instead of try/catch around the call. The registry methods pass `Data` through (`Registry.Deserialize<T>` returns `Data<T>`, `Registry.DeserializeAsync<T>` returns `Task<Data<T>>`, `Registry.SerializeAsync` returns `Task<Data>`).
+
+### http body dispatch through the registry
+
+`http.request` / `http.upload` return `Task<Data<app.http.Response.@this>>`. The `Response` record is `(int Status, Dictionary<string,string> Headers, object? Body, TimeSpan Duration)`; `Body` is dispatched by Content-Type via `Serializers.GetByContentType` + a `TextFallback` for text-shaped misses (`text/*`, `application/xml`, `application/json`, `text/csv`). Binary content-types and missing Content-Type fall back to `byte[]`.
+
+Legacy properties (`%response.StatusCode%`, `%response.Body%` as raw string) remain reachable via `Response.BuildProperties` so existing PLang code keeps working alongside the new `%response.Status%` / typed `%response.Body%`.
+
+## Multi-segment serializer extension matching
+
+`Serializers.GetByExtension` walks **multi-segment** extensions before falling back to the trailing segment. `report.junit.xml` first probes `junit.xml`; if no serializer is registered there, it falls back to `xml`. This lets a future `JunitSerializer` register against the multi-segment stem without colliding with the generic XML serializer.
+
+`path.Extension` (`PathHelper.GetExtension`) returns the extension **without** the leading dot — `"csv"` not `".csv"`. Callers that need the dot prefix it themselves; `Formats.Mime` normalises it back on when needed.
+
+## `IExitsGoal.ShouldExit()` — Value-side opt-out for resolved sentinels
+
+`IExitsGoal` is the marker the engine queries via `result.ShouldExit()` to decide "stop here, capture a Snapshot, return through the channel". `ShouldExit()` is **virtual with default `true`** — the marker alone is enough for a type that always means "suspend".
+
+A type that rides both states on one record (suspending **and** resolved) overrides:
+
+```csharp
+public sealed class Ask : IExitsGoal
+{
+    public string? Answer { get; init; }
+    public bool ShouldExit() => Answer == null; // resolved Ask flows through
+}
+```
+
+`output.ask` returns `Data<Ask>`. On the suspend path `Answer == null` → `ShouldExit()` returns true, the step loop short-circuits, the Snapshot rides as `Data.Snapshot`. On the resume path the channel has pre-bound the answer, `Answer != null` → `ShouldExit()` returns false, the step loop continues and the trailing `variable.set` binds the Ask. Callers read `%name.Answer%` for the structured form; `Ask.ToString() => Answer ?? ""` covers `%name% equals "Alice"` string-context comparisons.
+
+The carve-out: `Data` with only `Type` set (no Value) still triggers the **Type-side** exit check. The Value-side `ShouldExit()` only fires when a Value is present.
+
+Pattern to copy when adding another resolved-sentinel type: implement `IExitsGoal`, expose a nullable "answer-like" field, override `ShouldExit()` to return false when that field is bound. Don't reach for a separate "ResolvedAsk" subclass — one record, two states, the override carries the semantics.

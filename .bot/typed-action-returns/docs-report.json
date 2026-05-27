@@ -1,0 +1,21 @@
+{
+  "reviewer": "docs",
+  "branch": "typed-action-returns",
+  "timestamp": "2026-05-27T15:55:00Z",
+  "reviewed_version": "v1",
+  "summary": "Final docs gate on typed-action-returns. Coder handoff and XML doc coverage on every new public type (IClass.Build/SetAction, BuildWarning, http.Response, Test.@this, Mock.@this, Ask + IExitsGoal, Channel(name)) was already clean — no flag-back to coder. Filled five architectural gaps: (1) Build()-time type stamping flow including (type) hints, IClass.Build() default behaviour, validate-pass precedence, and BuildWarning channel-write pattern; (2) Serializers/ISerializer returns Data with closed exception list; (3) multi-segment GetByExtension; (4) IExitsGoal.ShouldExit() Value-side opt-out pattern; (5) http body dispatch through Serializers.GetByContentType + TextFallback. Updated three stale rename references (MockHandle, app.tester.File, app.modules.Schema.@this). Renamed orphan os/system/modules/mock/action.description.md to intercept.description.md and sharpened body. No claude-md-proposals or character-proposals files on this branch — zero proposals to evaluate. PLang test corpus is green (221/221 per tester v2) so no example gaps to flag. Verdict PASS.",
+  "stats": { "gaps_found": 8, "gaps_filled": 8, "docs_updated": 4, "docs_created": 0 },
+  "changes": [
+    { "id": 1, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Added section: Build()-time type stamping — IClass.Build(), (type) hints, and BuildWarning. Covers the compile-time hook, validate-pass precedence (user (type) > Build() > LLM Type), source-generator-emitted SetAction priming seam, and the BuildWarning channel-write pattern using Channels.Channel(name) no-op fallback." },
+    { "id": 2, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Added section: Serializers/ISerializer returns Data — no throws. Closed exception list (JsonException/NotSupportedException/IOException) called out; http body dispatch through Serializers.GetByContentType + TextFallback documented." },
+    { "id": 3, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Added section: Multi-segment serializer extension matching. Documents .junit.xml → .xml fallback and the path.Extension-without-leading-dot convention." },
+    { "id": 4, "type": "architecture-doc", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Added section: IExitsGoal.ShouldExit() — Value-side opt-out for resolved sentinels. Documents the Ask precedent so future resolved-sentinel types don't reinvent the override pattern." },
+    { "id": 5, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "Mock Module Architecture section: MockHandle (5 refs) updated to Mock.@this with rename callout. PLang property names corrected to actual handle shape (CallCount, Calls, Pattern, IsSpy)." },
+    { "id": 6, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/good_to_know.md", "description": "OBP Smell #7 worked example: app.tester.File annotated as renamed-to app.tester.Test.@this with original branch attribution." },
+    { "id": 7, "type": "consistency", "action": "updated", "file": "Documentation/v0.2/architecture.md", "description": "Line 221: app.modules.Schema.@this.Build() updated to app.modules.builder.Types.@this.Build()." },
+    { "id": 8, "type": "consistency", "action": "updated", "file": "os/system/modules/mock/intercept.description.md", "description": "Renamed os/system/modules/mock/action.description.md → intercept.description.md (action renamed mock.action → mock.intercept on this branch; orphan would have surfaced via MarkdownTeaching.ScanOrphans). Sharpened body to mention the Mock handle and the verify/reset companions." }
+  ],
+  "findings": [],
+  "claude_md_proposals": [],
+  "character_proposals": []
+}
