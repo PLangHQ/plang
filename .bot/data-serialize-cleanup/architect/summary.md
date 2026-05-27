@@ -1,3 +1,33 @@
+## 2026-05-27 — Stage 1 OBP renames; Properties shape pivot to nested
+
+Two rounds of follow-up review on the previous pivots.
+
+**Stage 1 OBP renames.** Ingi flagged `ContentType` and `FileExtension` as redundant qualifier suffixes — the owner is `serializer`, so the qualifiers carry no information. Same diagnosis for `WriteCore`/`ReadCore`/`AskCore` on the channel base — `Core` just means "don't call this directly," which is access-modifier discipline, not name decoration. Folded both renames into Stage 1 since it already touches the same surface:
+
+- `ISerializer.ContentType` → `Type`, `FileExtension` → `Extension` (across interface + 4 concrete serializers + Serializers registry + SerializeOptions / DeserializeOptions / ResolveOptions + call sites).
+- `channel.WriteCore` → `Write`, `ReadCore` → `Read`, `AskCore` → `Ask` (across base + 6 channel subclasses). Public orchestrators `WriteAsync` / `ReadAsync` / `AskAsync` keep their suffix to mark them as the entry-with-events.
+
+The two `Type` properties (`serializer.Type` for MIME, `data.Type` for PLang type-name) are namespaced by their owner — no ambiguity from context.
+
+**Properties shape pivot: flat → nested.** The Stage 4 wire shape was originally flat — Properties entries emitted as top-level fields next to `name`/`type`/`value`/`signature`. Ingi pushed back on this as the load-bearing question before approving Stage 4. Walked through both shapes against four lenses (forward-compat for new reserved fields, self-documenting wire, future per-Property metadata, LLM-response ergonomics) and changed my position from flat to nested. Three of four favored nested; the LLM-response ergonomic case wasn't strong enough to outweigh them.
+
+Ingi confirmed nested, with a sharpening: **no reserved-key rule needed.** The reason for reserved keys was the flat-shape collision risk (Property key clashing with a top-level reserved field). With Properties living inside their own `properties: { ... }` object, the keys are unconstrained — `"value"`, `"signature"`, anything is fine, because they live at `properties.{key}`, not at the root. Simpler validation surface, less code.
+
+Updated:
+- `plan.md` — Properties cross-cutting decision rewritten for nested shape; reserved-key rule removed; receiver-side rule changed to "unknown top-level fields ignored" (default STJ behaviour). The "follow-on simplifications" line in "What this is" updated to say Properties get a scope.
+- `stage-4-properties-on-wire.md` — full rewrite. Title flips ("flatten to the wire" → "get a wire scope"). C# Properties type drops the reserved-key guard. Wire converter emits a nested `properties` object (omitted when empty). Read converter parses the five reserved fields and ignores unknown top-level keys. Design narrative re-argues for nested with the four-lens analysis.
+- `stage-1-iserializer-data.md` — Extension/Type and Write/Read/Ask renames folded into scope and deliverables.
+- `plan/wire-shape.md` — LLM-response example shows nested `properties` object. "What's NOT on the wire" updated for the five-field contract. Round-trip invariants updated.
+
+Stage status:
+| Stage | File | Status |
+|-------|------|--------|
+| 1 | [ISerializer input tightened to Data + OBP renames](stage-1-iserializer-data.md) | partial — return half landed, input half + renames remain |
+| 2 | [Merge plang serializers + sign-in-converter + canonicalization fix](stage-2-plang-merge.md) | pending |
+| 3 | [Flatten Compress/Decompress](stage-3-flat-compress.md) | pending |
+| 4 | [Properties get a wire scope](stage-4-properties-on-wire.md) | pending |
+| 5 | [Vocabulary sweep](stage-5-vocabulary-sweep.md) | pending |
+
 ## 2026-05-27 — Design pivots from review session: sign-in-converter, Properties-on-wire
 
 Review pass with Ingi produced three substantive design pivots and one new stage. Plan, Stage 2, Stage 3, wire-shape, and the stages table all rewritten to reflect.

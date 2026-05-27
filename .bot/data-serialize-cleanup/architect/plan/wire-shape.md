@@ -1,6 +1,6 @@
 # Wire Shape Reference
 
-Concrete JSON examples of what Data looks like serialized through `application/plang`. Each Data on the wire is flat: four reserved fields (`name`, `type`, `value`, `signature`) plus any `Properties` entries as top-level siblings. Nesting through byte-decoding layers, never JSON object nesting.
+Concrete JSON examples of what Data looks like serialized through `application/plang`. Each Data on the wire has five reserved top-level fields: `name`, `type`, `value`, `properties`, `signature`. The `properties` field is a nested object holding the Data's Properties dictionary; it's omitted from the wire when empty. Nesting through byte-decoding layers, never JSON-object nesting *of Datas*.
 
 ## Plain Data — untyped `%user%`
 
@@ -51,24 +51,26 @@ Wire shapes are identical for the receiver — the only difference is what `type
 
 ## Data with Properties — LLM response
 
-When a Data carries Properties (metadata about the Data: cost, debug info, traces), each Property entry flattens to a top-level wire field next to the reserved ones. An LLM response with primary content as `Value` and cost as a Property:
+When a Data carries Properties (metadata about the Data: cost, debug info, traces), the Property entries live in a nested `properties` object on the wire. An LLM response with primary content as `Value` and cost/model as Properties:
 
 ```json
 {
   "name": "response",
   "type": "string",
   "value": "Hello, how can I help you today?",
-  "cost": 100,
-  "model": "claude-opus-4-7",
+  "properties": {
+    "cost": 100,
+    "model": "claude-opus-4-7"
+  },
   "signature": { ... }
 }
 ```
 
-Receiver: `%response%` resolves to the LLM text (Value renders as the primary content). `%response!cost%` reads `Properties["cost"]`. `%response!model%` reads `Properties["model"]`. The Property keys `name`, `type`, `value`, `signature` are reserved and cannot be used.
+Receiver: `%response%` resolves to the LLM text (Value renders as the primary content). `%response!cost%` reads `Properties["cost"]`. `%response!model%` reads `Properties["model"]`. Property keys are unconstrained — `"value"`, `"signature"`, anything — because they live inside the `properties` object, not at the root.
 
-Forward-compatibility: receivers that don't know about a future top-level field (e.g., PLang later adds `traceId`) carry it as a Property automatically — no breaking change.
+Wire shape stays minimal: when a Data has no Properties, the `properties` field is omitted entirely (same discipline as Signature being omitted when null). Receivers see four-or-five fields depending on whether metadata is attached.
 
-Signing covers Properties: tampering with `cost` in the JSON invalidates the outer `signature`. Properties are bound by the outer signature; they don't grow their own signatures (Properties are primitives, not Data).
+Signing covers Properties: tampering with anything inside `properties` invalidates the outer `signature` (canonicalization includes the nested object). Properties are bound by the outer signature; they don't grow their own signatures (Properties are primitives, not Data).
 
 ## Compressed Data — `compress %user%`
 
@@ -156,7 +158,7 @@ List<Data> in `value` behaves the same: each list element is a Data, each gets s
 - `Context` — `[JsonIgnore]`. Resolved at deserialize time from the receiving actor.
 - `Parent`, `Path`, `IsInitialized`, `IsVariable`, `Created`, `Updated`, `OnChange`, `OnCreate`, `OnDelete` — all `[JsonIgnore]`. None of these are part of the wire contract.
 
-The wire contract for `application/plang` is: four reserved top-level fields (`name`, `type`, `value`, `signature`) plus any number of Property entries as additional top-level siblings. Reserved-key check forbids Properties from using the four reserved names. Anything else on the Data class is a runtime concern.
+The wire contract for `application/plang` is five reserved top-level fields: `name`, `type`, `value`, `properties`, `signature`. Property keys are unconstrained (they live inside `properties`, so no collision with reserved roots). Unknown top-level fields on read are silently ignored (default STJ behaviour). Anything else on the Data class is a runtime concern.
 
 (Pre-cleanup `Properties` was `[JsonIgnore]` and did not cross the wire. Stage 4 changes both the C# shape and the wire emission — see [main plan's Properties section](../plan.md).)
 
@@ -168,7 +170,7 @@ A Data sent through `application/plang` round-trips losslessly on:
 - `type` preserved (PLang type name string)
 - `value` preserved (primitive, nested Data, or byte[] depending on the type)
 - `signature` populated on every Data the wire converter walked; verifiable iff the wire bytes are unchanged
-- `Properties` preserved — every entry rides as a top-level wire field; receiver places unknown top-level fields into Properties verbatim
+- `Properties` preserved — entries round-trip inside the nested `properties` object; the field is omitted when Properties is empty
 
 The other contracts:
 

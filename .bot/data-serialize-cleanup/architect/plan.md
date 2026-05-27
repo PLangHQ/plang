@@ -14,7 +14,7 @@ The bigger reason to fix this now, before the next thing lands: PLang's serializ
 
 PLang's serialization path between a Variable and the wire is tangled across four files and three concepts. This branch un-tangles it by recognizing one thing: **Data is the universal currency. Everything that crosses a channel boundary IS Data. The wire shape is Data's own shape — flat — and any nesting lives in the byte stream, not the JSON document.**
 
-Once that's accepted, four follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing happens implicitly during the serializer's converter walk (sign-if-missing — per Data, not per wire crossing), and Properties flatten onto the wire as top-level fields next to `name`/`type`/`value`/`signature`.
+Once that's accepted, four follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing happens implicitly during the serializer's converter walk (sign-if-missing — per Data, not per wire crossing), and Properties get their own scope on the wire as a nested `properties` object next to `name`/`type`/`value`/`signature`.
 
 ## The problem today
 
@@ -78,14 +78,14 @@ Sign-if-missing walks **Value-graph Datas only**, never Properties. Properties a
 
 **ISerializer takes Data, returns Data.** The return half landed in `typed-action-returns` (every method now returns `Data` / `Data<T>`, errors travel as `Data.Error` instead of throwing). The input half is what this branch closes: `object? value` and `Type? type = null` become a single `Data data` parameter. Tightening eliminates the null branch (`if (value == null) return "null"`), the `Type? type` parameter (Data carries its own type), and the "what if it's not Data" fallthrough.
 
-**Properties flatten onto the wire as top-level fields.** Today `Properties` is `IList<Data>` (see `PLang/app/data/Properties.cs`) and is `[JsonIgnore]` — it never crosses the wire. The new design changes both:
+**Properties get their own scope on the wire.** Today `Properties` is `IList<Data>` (see `PLang/app/data/Properties.cs`) and is `[JsonIgnore]` — it never crosses the wire. The new design changes both:
 
 - C# shape: `Properties` becomes `Dictionary<string, object?>` with primitives only (string, int, bool, DateTime, byte[], `Dictionary<string,object?>`, `List<object?>` of primitives). No Data instances inside Properties.
-- Wire shape: every Property entry emits as a top-level JSON field next to `name`/`type`/`value`/`signature`. An LLM response is `{ name: "response", type: "string", value: "...", cost: 100, signature: {...} }` — `cost` is a Property, not part of `value`.
-- Receiver-side rule: on deserialize, the four reserved top-level fields (`name`, `type`, `value`, `signature`) bind to their Data slots; *every other* top-level field lands in `Properties` verbatim. Receivers handle forward-incompatible wire fields by carrying them as Properties — no version pinning needed on the schema.
+- Wire shape: Properties emit as a single nested `properties` object — a fifth top-level field next to `name`/`type`/`value`/`signature`. An LLM response is `{ name: "response", type: "string", value: "...", properties: { cost: 100, model: "claude" }, signature: {...} }`.
+- Property keys are unconstrained: any string can be a Property key. Because Properties live in their own object, there's no collision risk with the reserved top-level fields. A Property named `"value"` or `"signature"` is fine — it lives at `properties.value`, not at the root.
+- Receiver-side rule: on deserialize, the five reserved top-level fields (`name`, `type`, `value`, `properties`, `signature`) bind to their Data slots; any other top-level field is silently ignored (default STJ behaviour). The `properties` object is parsed verbatim into the Properties dictionary.
 - Access syntax: `%x.field%` reads `value`'s structural shape (object property, dict key); `%x!key%` reads `Properties[key]`. The two namespaces are disjoint: `%user.kind%` and `%user!kind%` can coexist with different values.
-- Reserved keys: a Property cannot use the name `name`, `type`, `value`, or `signature`. Enforced at insertion time (analyzer or runtime guard).
-- Sign discipline: the sign-if-missing converter walks Value-graph Datas only and does not visit Properties. The outer Data's signature covers the flat Property key-values via canonicalization — tampering still fails verification, but Properties don't grow nested signatures.
+- Sign discipline: the sign-if-missing converter walks Value-graph Datas only and does not visit Properties. The outer Data's signature covers the `properties` object via canonicalization — tampering with any Property fails verification, but Properties don't grow nested signatures.
 
 The typed path (`Data<T>` where `T` declares a property like `Cost`) keeps its structural shape — `Cost` lives inside `T`, serializes inside `value`. Properties is the *untyped* metadata channel; `Data<T>`'s named properties are the *typed* path. Either gets navigated via the same `%x.field%`/`%x!key%` discipline, just routed to different storage.
 
@@ -134,6 +134,6 @@ Key behaviours to pin:
 - A compressed Data round-trips: outer wrapper signed; inner bytes decode to a serialized Data with its own signature (sign-then-compress chain preserved).
 - Inner Datas in a nested value field each carry their own signature on the wire (sign-if-missing rule applied during the converter walk).
 - Signing canonicalization matches wire-serialization shape — modifying an inner signature in the JSON invalidates the outer signature.
-- Properties on the wire are top-level fields next to name/type/value/signature; receiver puts unknown top-level fields into Properties verbatim.
+- Properties on the wire live inside a nested `properties` object; the C# Dictionary round-trips through it unchanged.
 - `%response.user%` navigates into Value; `%response!cost%` navigates into Properties; the two are disjoint.
 - ISerializer cannot be invoked with a non-Data input — the type system forbids it after Stage 1.

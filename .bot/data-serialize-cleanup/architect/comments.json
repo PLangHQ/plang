@@ -364,7 +364,7 @@
       "text": "Confirmed — %x!key% follows the same pattern as the existing dereference operators on Data (e.g. the in-code `data.Value` reach is consistent with %x.field% navigation). The parser change is a single-token addition; coder will sort the lexer details (positional disambiguation from the boolean-negation prefix `%!flag%` is the only sharp edge, and it's positionally distinct because `!` after a variable name is unambiguous from `!` at the start of an expression). Leaving the description as-is in the stage doc.",
       "anchor": "Variable expression parser learns `!`:",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "2acb268b1c",
       "ts": "2026-05-27T20:49:01",
       "drifted": false
@@ -386,9 +386,21 @@
       "text": "This is worth slowing down on. Let me play the movie for both shapes and see if I still believe flat is right.\n\n**The two shapes, side by side**\n\nFlat:\n```\n{ \"name\": \"response\", \"type\": \"string\", \"value\": \"Hello!\",\n  \"cost\": 100, \"model\": \"claude\",\n  \"signature\": {...} }\n```\n\nNested:\n```\n{ \"name\": \"response\", \"type\": \"string\", \"value\": \"Hello!\",\n  \"properties\": { \"cost\": 100, \"model\": \"claude\" },\n  \"signature\": {...} }\n```\n\nThe PLang-side surface is identical for both: `%response%` renders Value, `%response!cost%` reads Properties. The wire converter handles either shape; the C# Data API doesn't change. So the question is purely *what does the JSON look like*.\n\n**Three lenses**\n\n1. *Forward-compatibility for new reserved fields.* PLang is going to evolve — we might add `traceId` as a top-level field in two months. With flat, any Property whose key happens to be `traceId` would either conflict (reserved-key check throws at insertion) or silently shadow (parser bug). With nested, no conflict — Properties live in their own scope; PLang adds reserved fields freely. **Nested wins.**\n\n2. *Forward-compatibility for unknown receivers.* Charlie's older PLang doesn't know what `cost` means. With flat (and the rule \"anything-not-reserved goes into Properties\"), Charlie carries it as a Property — round-trip preserves it. With nested, Charlie also carries it as a Property (it's in the `properties` bag) — same round-trip. Both shapes are equally forgiving here. **Tie.**\n\n3. *Self-documenting wire shape.* A reader looking at the JSON for the first time. Flat: \"name, type, value… what's cost? Is that part of the schema or extra data?\" Nested: \"name, type, value, signature, properties — five fields, clear separation between content and metadata.\" **Nested wins on clarity.**\n\n4. *Per-Property metadata in the future.* You called out public/private Properties as future work; structured-Property values too. With nested, there's a natural place to put per-Property annotations (`properties: { cost: { value: 100, visibility: \"public\" } }` or similar shapes). With flat, every annotation needs a side-band scheme — `cost__visibility: \"public\"` or another reserved-key. **Nested wins on future flexibility.**\n\n5. *Ergonomics of the LLM-response case.* I'd argued flat reads more naturally (\"cost as a sibling of value\"). Reconsidering: that's mostly aesthetic. PLang users access `%response!cost%`, not `wire.cost`. Even when debugging a wire payload, `properties: { cost: 100 }` is plenty readable. **Flat's edge here is small.**\n\n**Where I land**\n\nI'd previously argued for flat. I'm changing my position: **nested is the better call.** The forward-compat-for-reserved-fields concern is real (PLang isn't done evolving), the self-documenting wire is genuinely cleaner, and the future-per-Property-metadata story is much easier with a scope to land in. The LLM-response ergonomic case isn't strong enough to outweigh those three.\n\n**One implication worth calling out**\n\nThe \"anything-not-reserved becomes a Property\" rule was a flat-shape convenience. With nested, the rule changes to: top-level keys outside the five (`name`, `type`, `value`, `signature`, `properties`) get *ignored* on read, not captured. That trades round-trip-of-unknown-fields for stricter wire validation. The trade-off is fine because Properties is the explicit *expected* metadata channel; unknown reserved fields are genuinely \"future PLang spoke a new language at me,\" and silently dropping them is no worse than capturing them somewhere I won't introspect.\n\n**What changes if you confirm**\n\n- Stage 4 deliverables: wire converter emits `properties: { … }` nested instead of flattening at top level.\n- Reserved keys grow from 4 to 5: `name`, `type`, `value`, `signature`, `properties` cannot be used as Property keys.\n- The receiver-side rule becomes \"five reserved fields parsed; anything else top-level is unknown and ignored.\"\n- wire-shape.md's LLM-response example shows the nested shape.\n- plan.md's Properties cross-cutting decision updates to match.\n- Stage 4's design rationale flips to argue for nested instead of flat.\n\nHolding the edits until you call it. This one's structural enough that I want explicit confirmation before churning the stage doc.",
       "anchor": "1. The LLM-response ergonomics. `{ name, type, value: \"...\", cost: 100, signature }` reads as a single object with cost as a sibling of value. The nested form `{ name, type, value: \"...\", properties: { cost: 100 }, signature }` adds a level of indirection that callers have to navigate. PLang's variable language gets the cleaner shape.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "84ee96ddba",
-      "ts": "2026-05-27T20:49:32"
+      "ts": "2026-05-27T20:49:32",
+      "drifted": false
+    },
+    {
+      "id": "470ce8dc6e",
+      "line": 132,
+      "text": "ok, lets do this. just one thing, actually, now we dont need any reserved keys, because reason for the reserved keys was because properties was flatten to the root object, no longer so it can have any key it wants",
+      "anchor": "1. The LLM-response ergonomics. `{ name, type, value: \"...\", cost: 100, signature }` reads as a single object with cost as a sibling of value. The nested form `{ name, type, value: \"...\", properties: { cost: 100 }, signature }` adds a level of indirection that callers have to navigate. PLang's variable language gets the cleaner shape.",
+      "author": "user",
+      "status": "resolved",
+      "parent_id": "c4271ced3f",
+      "ts": "2026-05-27T20:52:41",
+      "drifted": false
     }
   ]
 }

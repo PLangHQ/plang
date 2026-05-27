@@ -180,6 +180,61 @@
         "health": "green",
         "notes": "Ready for coder pickup. Stage 2 carries the biggest surface (merge plang serializers + sign-in-converter + canonicalization). Stage 4 (Properties) is independent enough that it could run in parallel with Stage 3 once Stage 2 lands."
       }
+    },
+    {
+      "id": "977a5531-a317-460e-9520-70d4663a435c",
+      "bot": "architect",
+      "timestamp_start": "2026-05-27T21:00:00Z",
+      "timestamp_end": "2026-05-27T21:00:00Z",
+      "intent": "Properties shape pivot from flat to nested; drop reserved-key rule. Apply edits across plan, Stage 4, and wire-shape.",
+      "before": {
+        "assumptions": "Stage 4 emitted Properties as top-level wire fields (flat) and enforced reserved-key validation. Plan Properties section + wire-shape examples + Stage 4 deliverables all reflected the flat shape.",
+        "risk": "Three files describe the same Property shape from different angles. If any one of them keeps the flat shape, the docs drift."
+      },
+      "plan": ".bot/data-serialize-cleanup/architect/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Rewrote Properties cross-cutting decision for nested shape. Dropped reserved-key rule. Updated receiver-side rule to \"unknown top-level fields ignored\". Updated test-surface bullet for Properties round-trip."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/stage-4-properties-on-wire.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Full rewrite. Title \"flatten to the wire\" \u2192 \"get a wire scope\". Properties C# type drops reserved-key guard. Wire converter Write emits nested properties object (omitted when empty); Read parses 5 reserved fields and silently skips unknown top-level. Design re-argues for nested via four-lens analysis. Coder-verification checks updated to assert nested shape, no reserved-key throw, omit-when-empty, etc."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/plan/wire-shape.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "LLM-response example now shows nested properties object. \"What is NOT on the wire\" updated for five-field contract + unconstrained Property keys + ignore-unknown rule. Round-trip invariants updated."
+        },
+        {
+          "paths": [
+            ".bot/data-serialize-cleanup/architect/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "New top entry recording the Stage 1 OBP renames and the Properties flat-to-nested pivot. Stage status table updated."
+        }
+      ],
+      "after": {
+        "status": "Plan, Stage 4, wire-shape, and summary now all describe the nested-properties shape consistently. Ready for coder pickup.",
+        "health": "green",
+        "notes": "No reserved-key validation in the Properties C# type \u2014 keys are unconstrained because they live in their own object on the wire."
+      }
     }
   ]
 }
