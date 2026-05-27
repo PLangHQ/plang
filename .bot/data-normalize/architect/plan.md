@@ -175,12 +175,11 @@ Each stage carved as `stage-N-<slug>.md` at the architect root. Linear dependenc
 
 | Stage | File | Status | Goal |
 |-------|------|--------|------|
-| 1 | [stage-1-out-discipline.md](stage-1-out-discipline.md) | pending | Apply `[Out]` per the wire-out-attributes inventory. Delete `RawSignature`. Surface-only prep — no Normalize yet. |
-| 2 | [stage-2-normalize-jsonwriter.md](stage-2-normalize-jsonwriter.md) | pending | Add `Data.Normalize()` (lazy, bounded). Introduce `IWriter` protocol. Ship `JsonWriter` as the first concrete adapter. Replace path's existing JsonConverter. |
+| 1 | [stage-1-out-discipline.md](stage-1-out-discipline.md) | pending | Apply `[Out]` per the wire-out-attributes inventory. Add `[Masked]`. Delete `RawSignature`. Surface-only prep — no Normalize yet. |
+| 2 | [stage-2-normalize-jsonwriter.md](stage-2-normalize-jsonwriter.md) | pending | Add `Data.Normalize()` (lazy, bounded). Introduce `IWriter` protocol. Ship `JsonWriter` as the first concrete adapter. Replace path's existing JsonConverter. Wire the debug-mode bypass. |
 | 3 | [stage-3-as-tree-walker.md](stage-3-as-tree-walker.md) | pending | Rewrite `As<T>` to walk the normalized tree instead of delegating to STJ reflection. Property-lookup cache. Per-type round-trip via `path.Resolve`-style hooks. |
-| 4 | [stage-4-second-format.md](stage-4-second-format.md) | pending | Prove the architecture isn't JSON-coupled — ship a second `IWriter` (protobuf or MsgPack). Feature-flagged. This is the load-bearing stage that validates the whole design. |
 
-Stages 1–3 are the floor. Stage 4 is the proof — if it lands cleanly, the data-normalize bet paid off.
+**Second-format proof (protobuf / MsgPack) is deferred.** The `IWriter` abstraction is designed so a non-reflection format slots in without touching Normalize or any domain type — but actually shipping a second format isn't part of this branch. The proof comes when there's a concrete demand; for now the architecture is shaped to accept it.
 
 ## Test handoff
 

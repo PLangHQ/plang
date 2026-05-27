@@ -13,7 +13,7 @@
 **Dependencies:** Stage 2 (`Normalize` + `IWriter` + `JsonWriter` exist; path on the wire is now `{ Scheme, Relative }`).
 
 **Out of scope:**
-- A second format adapter (Stage 4).
+- A second non-reflection format adapter (deferred — `IWriter` accepts one in shape, but no protobuf/MsgPack on this branch).
 - `Normalize` itself (Stage 2 — this stage is the *reverse* direction).
 - Any new domain type (`As<T>` works for the existing inventory in `plan/wire-out-attributes.md`).
 

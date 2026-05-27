@@ -62,7 +62,7 @@ One row per behavior. Read top-to-bottom; each row maps to one test (or one row 
 | Round-trip: Data<path> → JsonWriter → bytes → reader → As<path> reconstructs same canonical path | integration | green (Cut 1) |
 | Round-trip: Data<Identity> → JsonWriter → bytes → reader → As<Identity> reconstructs Name + PublicKey, PrivateKey is null | integration | green (Cut 1) |
 | Goal-level: a .goal that writes a path, serializes, reads it back, uses the path — works end-to-end with the new shape | goal | green |
-| Goal-level: signing a Data, serializing, deserializing on receive side, verifying — works after RawSignature removal | goal | green (Cut 4) |
+| Goal-level: signing a Data, serializing, deserializing on receive side, verifying — works after RawSignature removal | goal | green (Cut 3) |
 
 ### Stage 3 — As<T> tree-walker
 
@@ -82,25 +82,16 @@ One row per behavior. Read top-to-bottom; each row maps to one test (or one row 
 | Round-trip: every type in wire-out-attributes.md → JsonWriter → reader → As<T> reconstructs semantically equal Data | integration | green (Cut 1) |
 | Path's JsonConverter.Read either delegates to As<path> or is deleted (no other inbound JSON path for path) | C# | green |
 
-### Stage 4 — Second format + debug bypass
+### Stage 2 — Debug-mode bypass (rows that live under Stage 2 because that's where the View toggle lands)
 
 | Behavior | Layer | Sense |
 |----------|-------|-------|
-| <Format>Writer.Null emits the format's null token | C# | green |
-| <Format>Writer primitive emits match format spec | C# | green |
-| <Format>Writer round-trip on Data<primitive> works | C# | green |
-| <Format>Writer round-trip on Data<path> reconstructs same path | C# | green |
-| <Format>Writer round-trip on Data<Identity> includes Name+PublicKey, excludes PrivateKey | C# | green |
-| <Format>Reader reconstructs the same normalized tree shape that Normalize produces | C# | green |
-| Cross-format: same domain value through JsonWriter and <Format>Writer round-trip to semantically equal Data | integration | green (Cut 2) |
-| Channel/content-type registration: selecting the new MIME routes to the new writer | C# | green |
-| Feature flag off: existing channels keep using JSON | C# | green |
-| Feature flag on: channel uses the new format | C# | green |
-| Debug-mode serializes every public property except `[Sensitive]` and the `settings` type | C# | green (Cut 3) |
-| Debug-mode of a Data<Identity> includes IsDefault, IsArchived, Created (which are not `[Out]`) | C# | green (Cut 3) |
-| Debug-mode of a Data<Identity> still excludes PrivateKey (`[Sensitive]` always honored) | C# | green (Cut 3) |
-| Debug-mode of a Data<setting> still masks value (Masked always honored, even in debug) | C# | green (Cut 3) |
-| Debug-mode round-trip via As<T>: works for green-path values (or documented one-way if coder chose) | C# | green |
+| `View.Out` payload contains only `[Out]`-tagged properties | C# | green (Cut 2) |
+| `View.Debug` payload contains every public property except `[Sensitive]` and except where overridden by `[Masked]` | C# | green (Cut 2) |
+| Debug-mode of a Data<Identity> includes IsDefault, IsArchived, Created (which are not `[Out]`) | C# | green (Cut 2) |
+| Debug-mode of a Data<Identity> still excludes PrivateKey (`[Sensitive]` always honored) | C# | green (Cut 2) |
+| Debug-mode of a Data<setting> still masks value (`[Masked]` always honored, even in debug) | C# | green (Cut 2) |
+| Debug-mode round-trip via As<T>: works for green-path values (or coder documents that debug-mode is one-way) | C# | green |
 
 ## 2. Failure matrix
 
@@ -128,8 +119,7 @@ Inventory of what's NEW. Path + signature where useful. Test-designer writes tes
 
 - **`IWriter`** — `PLang/app/channels/serializers/IWriter.cs` (path is a suggestion). Methods per stage-2 design: Null, Bool, Int, Long, Double, String, DateTime, Decimal, Bytes, BeginArray(count), EndArray, BeginRecord(Data), EndRecord. Coder owns the exact signature shape.
 - **`JsonWriter : IWriter`** — `PLang/app/channels/serializers/json/JsonWriter.cs` (suggestion). Wraps `Utf8JsonWriter`.
-- **`<Format>Writer : IWriter`** — Stage 4 deliverable. Library and exact location are coder's call.
-- **`<Format>Reader`** — Stage 4 deliverable. Counterpart to <Format>Writer.
+- *(A second non-reflection `IWriter` — protobuf / MsgPack — is **deferred**. The IWriter shape is designed to accept one, but no second format ships on this branch.)*
 
 ### New attributes (`PLang/app/View.cs`)
 
@@ -149,8 +139,7 @@ Inventory of what's NEW. Path + signature where useful. Test-designer writes tes
 
 ### New registrations
 
-- A new MIME type registration for the Stage 4 format (e.g. `application/x-protobuf` or `application/msgpack`).
-- A feature flag (config key or env var) selecting active wire format per channel.
+- *(None on this branch — deferred with the second-format proof.)*
 
 ### Existing surfaces this branch touches by reference
 

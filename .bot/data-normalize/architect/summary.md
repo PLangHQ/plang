@@ -14,16 +14,17 @@ Worked through the 13 in-scope `Data<T>` payload types and tagged every public p
 
 The IDataNormalizable escape-hatch question that was open across two rounds — answered itself once `[Out]` discipline landed: every domain type reduces to a clean property bag, no type needs to collapse to a non-object wire form. Path round-trips via `path.Resolve(Relative, ctx)` from the As<T> hook.
 
-Stages carved as 4 files at the architect root, linear dependency chain:
+Stages carved as 3 files at the architect root, linear dependency chain:
 
 | Stage | File | Status |
 |-------|------|--------|
 | 1 | [stage-1-out-discipline.md](stage-1-out-discipline.md) | pending |
 | 2 | [stage-2-normalize-jsonwriter.md](stage-2-normalize-jsonwriter.md) | pending |
 | 3 | [stage-3-as-tree-walker.md](stage-3-as-tree-walker.md) | pending |
-| 4 | [stage-4-second-format.md](stage-4-second-format.md) | pending |
 
-Test material for test-designer in [`plan/test-strategy.md`](plan/test-strategy.md) (narrative, 4 integration cuts) and [`plan/test-coverage.md`](plan/test-coverage.md) (per-stage behavior matrix, failure matrix, new-surfaces inventory).
+The second-format proof (protobuf / MsgPack) is **deferred**. The `IWriter` abstraction is shaped to accept one without changes to Normalize or any domain type, but the actual proof comes when there's concrete demand. (Originally drafted as Stage 4 with a feature-flag rollout — Ingi pushed back: "thats not how we would do it" — and skipping the second format here keeps the branch focused on the design landing cleanly. Standing rule saved to memory: don't propose feature-flag rollouts.)
+
+Test material for test-designer in [`plan/test-strategy.md`](plan/test-strategy.md) (narrative, 3 integration cuts: JSON round-trip, debug-mode bypass, sign→wire→verify) and [`plan/test-coverage.md`](plan/test-coverage.md) (per-stage behavior matrix, failure matrix, new-surfaces inventory).
 
 **Ownership callout in every handoff doc.** Per Ingi's "each bot owns his code so they are responsible" — every stage and test file opens with a labelled note to the downstream bot that snippets / signatures / file paths shown are suggestions, not contracts. Standing rule saved to memory.
 

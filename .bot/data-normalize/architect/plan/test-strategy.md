@@ -6,10 +6,11 @@
 
 The integration cuts below are the contract for end-to-end behavior; per-topic and negative-path tests sit beneath them in [`test-coverage.md`](test-coverage.md).
 
-This branch reshapes how `Data` is encoded on the wire — every test here lives downstream of that reshape. Two things have to be true at the end:
+This branch reshapes how `Data` is encoded on the wire — every test here lives downstream of that reshape. One thing has to be true at the end:
 
-1. **The new pipeline works.** `Data.Normalize()` → `IWriter` → bytes → reader → `As<T>` round-trips correctly for every domain type in [`wire-out-attributes.md`](wire-out-attributes.md).
-2. **The architecture isn't JSON-coupled.** A second format (Stage 4) drops in and round-trips the same domain values without touching Normalize or any domain type. This is what proves the design wasn't just JSON wearing a new hat.
+**The new pipeline works.** `Data.Normalize()` → `IWriter` → bytes → reader → `As<T>` round-trips correctly for every domain type in [`wire-out-attributes.md`](wire-out-attributes.md), with `[Out]` filtering in production mode and debug-mode bypass that still honors `[Sensitive]` + `[Masked]`.
+
+A second non-reflection format (protobuf / MsgPack) is *not* shipped on this branch — the `IWriter` abstraction is shaped to accept one without changes to Normalize or any domain type, but actually proving that with a concrete second format is deferred. No cross-format tests here.
 
 ## Test layer mapping
 
@@ -35,53 +36,38 @@ The matrix in `test-coverage.md` assigns each individual behavior to a layer.
 
 ## Integration cuts
 
-Four named cuts. Each is the contract for one end-to-end behavior; per-`@this` and negative tests live beneath them in the matrix.
+Three named cuts. Each is the contract for one end-to-end behavior; per-`@this` and negative tests live beneath them in the matrix.
 
 ### Cut 1: JSON round-trip parity
 
-**Setup:** Build a representative `Data` value (a Data<path>, a Data<Identity>, a Data<List<Data>>, a Data with `[Sensitive]` properties). Pre-normalization shape, in memory.
+**Setup:** Build a representative `Data` value (a Data<path>, a Data<Identity>, a Data<List<Data>>, a Data with `[Sensitive]` properties, a Data<setting>). Pre-normalization shape, in memory.
 
-**Capture:** Serialize via the wire serializer using `JsonWriter` (Stage 2's first format). Capture the bytes.
+**Capture:** Serialize via the wire serializer using `JsonWriter` (Stage 2's first and only format on this branch). Capture the bytes.
 
 **Resume:** Read those bytes back through the deserializer. Reconstruct via `As<T>` (Stage 3).
 
 **Must prove:**
 - Reconstructed Data is semantically equal to the original (for the properties marked `[Out]` — derived/local properties may differ).
 - `[Sensitive]` properties are absent from the bytes.
-- `settings` types, if any appeared, are absent from the bytes.
+- `[Masked]` properties' names appear on the wire but values are `"****"`.
 - path round-trips through the new property-bag shape, not the old single-string shape.
 - Signature, if present, verifies after the round trip.
 
-### Cut 2: Cross-format round-trip parity
+### Cut 2: Debug-mode bypass
 
-**Setup:** Same domain values as Cut 1.
-
-**Capture:** Serialize via JsonWriter. Then serialize the same values via the Stage 4 writer (protobuf or MsgPack). Two byte payloads, two formats.
-
-**Resume:** Deserialize each. Reconstruct via `As<T>`.
-
-**Must prove:**
-- Both formats reconstruct semantically equal `Data` values.
-- Reconstructed Data from format A equals reconstructed Data from format B.
-- The architecture didn't leak — no per-format code path in Normalize, no per-format hook in any domain type that wasn't there before this branch.
-
-This is the proof cut. If this passes, the branch's hypothesis holds. If it fails, something needs to go back to the architect.
-
-### Cut 3: Debug-mode bypass
-
-**Setup:** Same domain values, but pick types with rich properties that span all categories: Out, Skip-derived, Skip-local, Skip-sensitive, Skip-cycle. The `path` type covers most.
+**Setup:** Domain values that span all property categories: Out, Skip-derived, Skip-local, Sensitive, Masked. The `path` and `Identity` types together cover most categories.
 
 **Capture:** Serialize once in `View.Out` mode, once in `View.Debug` mode.
 
 **Resume:** Compare the byte payloads / the parsed property maps.
 
 **Must prove:**
-- Debug-mode payload contains every public property *except* `[Sensitive]` and `settings`.
+- Debug-mode payload contains every public property *except* `[Sensitive]` (and `[Masked]` values, which still appear as `"****"`).
 - Out-mode payload contains only `[Out]`-tagged properties.
-- Debug-mode never exposes `[Sensitive]` properties even though the filter is otherwise off.
-- Settings type is fully absent from both modes' output.
+- `[Sensitive]` is never exposed even in debug.
+- `[Masked]` values are never unmasked, even in debug.
 
-### Cut 4: Sign → wire → verify
+### Cut 3: Sign → wire → verify
 
 **Setup:** A `Data` instance with a signed envelope (the Stage 1 RawSignature → Signature migration is the surface here).
 
