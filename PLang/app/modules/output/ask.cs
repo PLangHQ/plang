@@ -25,6 +25,13 @@ public sealed class Ask : global::app.IExitsGoal
 
     /// <inheritdoc/>
     public bool ShouldExit() => Answer == null;
+
+    /// <summary>
+    /// Renders the bound answer for PLang string contexts — `write to %name%`
+    /// followed by `%name% equals "Alice"` compares text against the answer
+    /// without needing `%name.Answer%`. Returns empty string for a pending Ask.
+    /// </summary>
+    public override string ToString() => Answer ?? string.Empty;
 }
 
 /// <summary>
