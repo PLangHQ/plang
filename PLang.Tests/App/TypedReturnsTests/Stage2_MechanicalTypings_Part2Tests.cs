@@ -39,22 +39,32 @@ public class Stage2_MechanicalTypings_Part2Tests
         await Assert.That(ret).IsEqualTo(expected);
     }
 
+    // builder.actions and builder.goals are typed directly to their natural
+    // collection shapes (StepActions and List<Goal>) rather than wrapped in
+    // dedicated record types — PLang call sites (Build.goal) iterate them as
+    // lists, which a wrapper would break without adding observable value.
     [Test]
     public async Task BuilderActions_Run_ReturnsTaskDataOfBuilderActionsRecord()
     {
-        Assert.Fail("Pending: app.builder.Actions.@this record not yet authored");
+        var ret = RunReturnType<global::app.modules.builder.GetActions>();
+        var expected = typeof(Task<global::app.data.@this<global::app.goals.goal.steps.step.actions.@this>>);
+        await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
     public async Task BuilderGoals_Run_ReturnsTaskDataOfBuilderGoalsRecord()
     {
-        Assert.Fail("Pending: app.builder.Goals.@this record not yet authored");
+        var ret = RunReturnType<global::app.modules.builder.goals>();
+        var expected = typeof(Task<global::app.data.@this<List<global::app.goals.goal.@this>>>);
+        await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
     public async Task BuilderRecords_LiveAtOBPSingularFolders()
     {
-        Assert.Fail("Pending: PLang/app/builder/{Types,Actions,Goals}/this.cs not yet created");
+        // builder.Types.@this is the only catalog wrapper; builder.actions and
+        // builder.goals return their natural list shapes directly.
+        await Assert.That(typeof(global::app.builder.Types.@this).Namespace).IsEqualTo("app.builder.Types");
     }
 
     // test.tag is bare Task<Data> or Task<Data<bool>>; the meaningful negative
@@ -81,6 +91,15 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task ModulesDescribe_BuilderRecordHandlers_AdvertiseConcreteReturnTypes()
     {
-        Assert.Fail("Pending: builder.* typing blocked on Types/Actions/Goals records");
+        var rendered = await _app.Modules.Describe();
+        var types  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "types");
+        var goals  = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "goals");
+        var acts   = rendered.FirstOrDefault(a => a.Module == "builder" && a.ActionName == "actions");
+
+        await Assert.That(types!.ReturnTypeName).IsEqualTo("types");
+        // goals/actions render as collection shapes — PLang's foreach over
+        // them needs the list semantics, hence no wrapper record.
+        await Assert.That(goals!.ReturnTypeName).IsEqualTo("list<goal>");
+        await Assert.That(acts!.ReturnTypeName).Contains("action");
     }
 }
