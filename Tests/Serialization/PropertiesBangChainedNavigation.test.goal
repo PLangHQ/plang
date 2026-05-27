@@ -1,0 +1,4 @@
+Start
+/ %response!cost.input% must dereference Properties["cost"] and then dot-navigate into
+/ the resulting dict. Chained navigation: bang first, then dot. Coverage row 4.12.
+- throw "not implemented"

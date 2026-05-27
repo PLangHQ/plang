@@ -1,0 +1,4 @@
+Start
+/ Compress + decompress through PLang must round-trip a multi-field user record losslessly.
+/ Verifies coverage row 3.9 — the developer-facing surface for Stage 3's flat Compress.
+- throw "not implemented"

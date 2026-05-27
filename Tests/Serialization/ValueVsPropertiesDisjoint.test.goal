@@ -1,0 +1,5 @@
+Start
+/ %response.text% (Value-side) and %response!text% (Properties-side) must resolve to
+/ different stores when both are populated. The two namespaces are disjoint.
+/ Coverage row 4.11.
+- throw "not implemented"

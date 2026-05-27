@@ -1,0 +1,4 @@
+Start
+/ %response% (no operator) must render the Value, not the whole Data. Properties must
+/ NOT bleed into the variable's primary render. Coverage row 4.14.
+- throw "not implemented"

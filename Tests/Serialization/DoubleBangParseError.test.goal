@@ -1,0 +1,5 @@
+Start
+/ %x!!key% (double bang) must produce a parser error at goal-compile time —
+/ this is a malformed Properties dereference, not silently accepted as something else.
+/ Failure-matrix row.
+- throw "not implemented"
