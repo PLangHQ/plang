@@ -39,7 +39,7 @@
       "text": "You're right and I want to walk back the previous reply. Let me play the movie again.\n\nThe key piece I missed: EnsureSigned() is *no-op if a Signature is already present*. So 'serializer signs every Data it sees' actually means 'sign only what isn't signed yet.' That's a very different rule from 'sign always.'\n\nReplay with serializer-driven signing:\n- Alice creates D1, signs it. D1 carries Alice's signature.\n- Alice compresses D1 → D2 { type=archived, value=bytes-of-D1 }. The bytes contain D1 with Alice's signature still attached.\n- Alice's channel write: serializer walks D2. D2 unsigned → sign with Alice. D1 inside the bytes was already signed → unchanged. D2 goes out with one wire signature (Alice on archived envelope); bytes carry D1's signature (Alice on inner).\n- Bob receives D2, decompresses to D1. D1 has Alice's signature. Bob can verify provenance.\n- Bob forwards D1 to Charlie by wrapping in his own D3 { value: D1 }. Serializer walks D3: D3 unsigned → sign with Bob. D1 already signed → unchanged.\n- Charlie sees D3 signed by Bob; opens it; sees D1 signed by Alice. Provenance chain preserved without Bob needing to know anything about D1's origin.\n\nThat's a genuinely better property than my previous 'two signatures for one payload' framing. The two signatures aren't redundant — they're attestations of different things: D2/D3 attest transit ('this channel/this actor passed this along'), D1 attests authorship ('Alice made this'). Forwarding preserves the chain naturally.\n\nThe 'cost' I worried about (extra signature on every nested Data) is small: signing is cheap, and EnsureSigned-is-no-op means it only happens once per Data over its lifetime. The Compress-internal case I was protecting against — bytes inside an archived wrapper getting signed twice — doesn't actually happen, because EnsureSigned sees the existing signature on the inner and skips.\n\nWhere this lands the design:\n- Signing-trigger moves *into the serializer* (specifically, into the app.data.Json converter that walks Data) — not into the channel. Every Data node the converter visits: if Signature is null, call EnsureSigned. The channel doesn't need to do anything special.\n- The 'only outermost signs' rule I previously argued for is dropped. The new rule is 'sign-once-per-Data, idempotent, performed at wire crossing.' Multiple Datas in a tree each get signed independently, which is the property you want for forwarding.\n- Stage 2's deliverable changes: no 'Channel.WriteAsync calls data.EnsureSigned() before WriteCore' — instead, the merged plang serializer (or its inner converter) does it. Lighter change to channel/this.cs.\n- Stage 3's Compress: now goes through the registered serializer (already in the Stage 3 deliverable) — that path will naturally sign the inner Data if it isn't already signed. The 'no signing inside Compress' note in Stage 3 becomes wrong; I'll rewrite it as 'Compress uses the registered serializer, which signs through its normal walk.'\n\nOne thing I want to double-check before updating the stages: when EnsureSigned signs a Data whose Value contains a List<Data>, does the signature canonicalize over the inner Datas' current state (including their Signatures), or only over their values? If the latter, the chain still works but the outer signature doesn't bind the inner signatures — they could be tampered with independently. If the former, the outer signs over inner-including-signature, which is the strict chain. I haven't read the signing module deeply enough yet to know — let me check before writing the stage changes. Worth a separate conversation if the current code signs only over Value and not Signature.\n\nLeaving this open. If you agree with the direction, I'll update plan.md's 'Signing lives at the channel' section, Stage 2's signing-move deliverable, and Stage 3's Compress section in one pass.",
       "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "6babf93895",
       "ts": "2026-05-27T16:52:29",
       "drifted": false
@@ -50,7 +50,7 @@
       "text": "if it contains List<Data> each item in that list should be signed.",
       "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "870bac762a",
       "ts": "2026-05-27T17:01:58",
       "drifted": false
@@ -64,6 +64,28 @@
       "status": "open",
       "parent_id": "ce1c268af7",
       "ts": "2026-05-27T17:07:07",
+      "drifted": false
+    },
+    {
+      "id": "fe544e7d7d",
+      "line": 17,
+      "text": "\"because the hash never covered the inner signature in the first place.\" wait. so I have data(user.fistname, etc.) and sign it, then it compresses it, then the signature should be made of the data(user.firstname, etc) bytes, right?",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "user",
+      "status": "open",
+      "parent_id": "658bd147c6",
+      "ts": "2026-05-27T17:09:48",
+      "drifted": false
+    },
+    {
+      "id": "1a97b66987",
+      "line": 17,
+      "text": "You're right to push on this — I conflated two scenarios. Let me split them.\n\n**Scenario A — compressed (your example):** Alice signs D1. Compress(D1) → D2 { type=archived, value=byte[] }. D2 hits the channel, gets signed: hash over D2.Value = hash over byte[]. The byte[] *is* a literal byte stream — crypto/Default.cs:19 takes `value is byte[] raw ? raw : ...` and the raw branch hashes the bytes directly. The bytes contain D1's full serialized form (including Signature if the serializer that produced the bytes emits it). So D2's signature DOES bind D1's signature transitively through the bytes. Chain is cryptographically tight here, exactly as you described. My earlier flag was wrong for this case.\n\nThere is one catch in the *current* code that doesn't survive Stage 3: today's Compress uses `_envelopeJsonOptions` (this.Envelope.cs:23-33) which does NOT include the Transport.ForOutbound modifier. That modifier is what re-includes Signature ([Out]-marked) over the [JsonIgnore]. So today's compressed bytes do NOT contain D1's signature — it gets stripped at the JsonIgnore boundary. Bob decompresses and gets D1 *without* Alice's signature. That's a bug in today's Compress, not a property of the design.\n\nStage 3 (the cleanup) fixes this automatically: Compress routes through `Serializers.Get(\"application/plang\")`, which uses Transport.ForOutbound, which preserves Signature in the bytes. After Stage 3 the chain works as you intended: sign-then-compress preserves the inner signature in the wire, decompress restores it intact, outer signature binds the whole package.\n\n**Scenario B — structured nested (no bytes):** D3 = Data { value: D1 } where D1 is a structured Data instance, not bytes. JsonSerializer.Serialize(D3.Value) hits crypto/Default.cs:20 — the fallback branch that calls `JsonSerializer.Serialize(value)` with *no options*. Default options respect [JsonIgnore] on Signature → D1's signature is omitted from the hash. The outer signature does not bind the inner signature for this nesting shape.\n\nThe fix for B is to make crypto/Default.cs use the same Transport.ForOutbound options that the wire serializer uses, so signing-canonicalization and wire-canonicalization are identical. That's a small change — probably belongs in this branch as part of Stage 2 (since the merged plang serializer is where Transport.ForOutbound becomes the canonical option set).\n\nSo: chain IS tight for compressed/encrypted (byte[]-leaf payloads). Chain isn't tight today for structured-nested Data. Fixing it means canonicalizing the same way the wire writes — one rule, one set of options. Will fold that into Stage 2 when you greenlight stage edits.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "fe544e7d7d",
+      "ts": "2026-05-27T17:16:48",
       "drifted": false
     },
     {
@@ -157,6 +179,28 @@
       "drifted": false
     },
     {
+      "id": "9c7d17b357",
+      "line": 7,
+      "text": "since it's from the Properties object on data, you would access it with %response!cost%, this is to prevent such things when object %user.kind% and %user!kind%, two different things, user.kind is property on the user object/json and user!kind is value store in Properties on data. name, type, value and signature would have to be reserved",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "user",
+      "status": "open",
+      "parent_id": "db4b171f6c",
+      "ts": "2026-05-27T17:13:46",
+      "drifted": false
+    },
+    {
+      "id": "43bf05ea63",
+      "line": 7,
+      "text": "That's clean. The `.` vs `!` split resolves my (a) and (b) at once:\n\n- `%user.kind%` → Value-object navigation. The `.` reads structurally into Value's JSON shape. If T has a Kind property, dot finds it; for untyped Data, dot reads value[\"kind\"] from the anonymous object.\n- `%user!kind%` → Properties navigation. The `!` reads from the Properties dictionary on the Data wrapper. Decoupled from whatever's in Value.\n\nNo collision possible between the two namespaces — even if Value has a \"kind\" field AND Properties has a \"kind\" entry, they're addressable separately. The user makes the choice explicit at every access.\n\nReserved-key rule (\"name\", \"type\", \"value\", \"signature\") settles your point (a): Properties cannot use those names. Compile-time check via an analyzer or a static initializer guard on Property assignment.\n\nMy point (b) also dissolves: receiver-side, the deserializer reads the four reserved fields into name/type/value/signature, and *everything else* on the top-level JSON object goes into Properties verbatim. Receiver doesn't have to know in advance what extra fields exist. Forward compatibility for free.\n\nThat leaves my point (c) — the [Out] discipline for Properties. Three plausible rules:\n\n1. **All Properties cross the wire by default.** Add `[OutIgnore]` (or similar) to opt individual entries out. Matches the [Out] re-include pattern we use for Signature.\n2. **Only [Out]-marked Property entries cross.** Opt-in. Safer (no accidental leakage) but more verbose for the LLM-cost case where every Property is meant to ride.\n3. **All cross, but Sensitive-marked entries strip.** Reuses the Sensitive filter that already exists for Value.\n\nI'd lean toward (1) — symmetric with how Signature works (default-emit, marked-ignored is the exception). The Sensitive strip from (3) gets layered on top regardless. But (2) would be defensible if you're worried about a Property accidentally carrying a secret that no one tagged.\n\nWhich one? Once you pick, I'll fold the whole picture (`!` syntax + reserved-key rule + all-extras-into-Properties on receive + the chosen [Out] rule) into plan.md as a new Cross-cutting decision, and add a wire-shape.md example with the LLM-response shape showing flat cost.",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "9c7d17b357",
+      "ts": "2026-05-27T17:17:05",
+      "drifted": false
+    },
+    {
       "id": "66b524fc8c",
       "line": 9,
       "text": "I think the type would just be \"json\" or \"object\" not \"user\", the type only comes from the strictly typed Data<T>,",
@@ -175,7 +219,29 @@
       "author": "architect",
       "status": "open",
       "parent_id": "66b524fc8c",
-      "ts": "2026-05-27T17:07:37"
+      "ts": "2026-05-27T17:07:37",
+      "drifted": false
+    },
+    {
+      "id": "edec2adec3",
+      "line": 9,
+      "text": "looks good",
+      "anchor": "```json",
+      "author": "user",
+      "status": "open",
+      "parent_id": "87bc4cfe1a",
+      "ts": "2026-05-27T17:14:42",
+      "drifted": false
+    },
+    {
+      "id": "9ab1549664",
+      "line": 9,
+      "text": "Approved — when you give the overall greenlight for plan/wire-shape edits, I'll bundle the type-field fix together with the Properties decision (whichever [Out] rule you pick) and the signing-canonicalization fix, so wire-shape.md doesn't get touched twice.",
+      "anchor": "```json",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "edec2adec3",
+      "ts": "2026-05-27T17:17:11"
     }
   ]
 }
