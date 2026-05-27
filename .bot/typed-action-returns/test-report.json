@@ -1,0 +1,70 @@
+{
+  "tester": "tester",
+  "branch": "typed-action-returns",
+  "timestamp": "2026-05-27T14:05:00Z",
+  "tested_version": "v1",
+  "test_run": {
+    "csharp": { "total": 3124, "passed": 3124, "failed": 0, "skipped": 0 },
+    "plang": { "total": 221, "passed": 221, "failed": 0, "skipped": 0 }
+  },
+  "coverage": {
+    "changed_files_covered": null,
+    "changed_files_total": null,
+    "uncovered_files": [],
+    "note": "Coverage analysis skipped — clean rebuild after coverage previously deleted bin/obj; suite-level pass is the headline signal here."
+  },
+  "findings": [
+    {
+      "id": 1,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs",
+      "code_file": "PLang/app/modules/file/read.cs",
+      "issue": "FileRead_Build_LiteralMissingFile_WritesBuildWarning only asserts the 'builder' channel is not the noop sink. It never reads what was written, so a regression where Build() forgets to emit the warning (or emits an empty/wrong-payload warning) still passes.",
+      "impact": "Silent loss of build-time diagnostics when a literal file path doesn't exist. Users wouldn't get the heads-up they're configured to receive.",
+      "suggestion": "Use Channels.CreateMemoryChannel('builder') (already done in setup) and after the Build() call drain the channel; assert at least one BuildWarning was written AND its message references the missing path."
+    },
+    {
+      "id": 2,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/Serialization/JsonStreamSerializerTests.cs",
+      "code_file": "PLang/app/channels/serializers/serializer/Json.cs",
+      "issue": "The Serializers Data refactor added try/catch over JsonException/NotSupportedException/IOException in every ISerializer impl, returning Data.FromError. Zero tests exercise that path — every Deserialize* test uses '.Value!' on happy-path input. Same gap in TextStreamSerializerTests.cs.",
+      "impact": "If a catch was dropped or the rethrow/return was inverted (return throw vs return Data.FromError), the regression is invisible. Callers downstream check Success and would silently swallow data.",
+      "suggestion": "Add one bad-input test per serializer: e.g. Deserialize_MalformedJson_ReturnsDataFail asserting result.Success == false and result.Error.Key is non-null. Mirror for TextStreamSerializer (large/IOException) and the plang variants."
+    },
+    {
+      "id": 3,
+      "severity": "minor",
+      "type": "missing-coverage",
+      "test_file": "PLang.Tests/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs",
+      "code_file": "PLang/app/modules/http/code/Default.cs:518-523",
+      "issue": "ParseResponseAsync uses `body = deser.Success ? deser.Value : TextFallback(...)` for registered serializers — the parse-failure → text-fallback path is the headline behavior of the Content-Type dispatch refactor, but no test sends 'Content-Type: application/json' with malformed body to confirm the fallback kicks in.",
+      "impact": "If a future change made `deser.Success` always true (e.g., catch swallowed inside the serializer and returned Data.Ok(default)), the fallback would never fire and the user would silently get null bodies instead of the raw text.",
+      "suggestion": "Add BodyDispatch_BrokenJsonContentType_FallsBackToString — Content-Type application/json, body '{not json', assert resp.Body is string with the raw bytes."
+    },
+    {
+      "id": 4,
+      "severity": "minor",
+      "type": "weak-assertion",
+      "test_file": "PLang.Tests/App/TypedReturnsTests/Stage4_TypeHintPrecedenceTests.cs",
+      "code_file": "os/system/builder/llm/Compile.llm",
+      "issue": "CompileLlm_Kernel_ContainsTypeHintRule asserts the strings '(type)' and 'write to %answer%(json)' appear in Compile.llm. Presence check only — a future edit that moves the rule into a deprecated section, comments it out, or paraphrases it stays green.",
+      "impact": "Low. The downstream test BuilderValidate_UserHintWinsOverBuildInference exercises the actual behavior in C#, so kernel-text drift would surface there if it broke the LLM round-trip. The presence check is essentially documentation.",
+      "suggestion": "Optional. If the kernel template grows further, consider a higher-fidelity check (e.g., the rule lives under a specific anchor heading) or drop this test as redundant once the behavior-level test is solid."
+    },
+    {
+      "id": 5,
+      "severity": "info",
+      "type": "process",
+      "test_file": null,
+      "code_file": null,
+      "issue": "Coder did not write `.bot/typed-action-returns/coder/v1/baseline-tests.md`. The tester workflow uses that file to separate pre-existing failures from coder-introduced regressions.",
+      "impact": "No way to retroactively prove a test was already red before this branch started. Mitigated this session by the suite being 100% green — no diff to interpret.",
+      "suggestion": "Flag for next coder pass: record pre-work test state to baseline-tests.md as step 1 of v<N>/."
+    }
+  ],
+  "verdict": "approved",
+  "summary": "Full suites green: 3124/3124 C# + 221/221 PLang (incl. all 13 TypedReturns goals). Stage 0-4 contracts, the Serializers Data refactor, http Content-Type dispatch, and the Ask shape change are exercised through honest, behavior-anchored tests (PrAction-driven Build() pass, StubHandler-driven http body parsing, reflection-driven Run() signature contracts). Findings are all minor or informational: a weak-assertion on the BuildWarning channel write, two missing-coverage gaps on error-paths added by the refactor (serializer Data.Fail wrapping, http TextFallback on parse failure), one redundant LLM-text presence check, and a coder process miss (no baseline-tests.md). None blocks the branch."
+}
