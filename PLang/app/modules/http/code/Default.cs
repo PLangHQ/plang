@@ -523,25 +523,24 @@ public sealed class Default : IHttp
             return await ParsePlangResponseAsync(response, request, app, context, maxResponseSize);
         }
 
-        // Content-Type dispatch on the body.
+        // Content-Type body dispatch flows through the serializer registry:
+        //   - registered serializer (application/json, application/plang, ...) → parsed object
+        //   - text-shaped content with no specific serializer (text/*, xml, csv) → utf-8 string
+        //   - everything else (image/*, application/octet-stream, missing CT) → byte[]
+        // A registered serializer that fails (server claimed JSON but sent garbage)
+        // falls back to the text-shaped representation rather than failing the request.
+        var bytes = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
         object? body;
-        if (contentType.Contains("json", StringComparison.OrdinalIgnoreCase))
+        var serializer = context.Actor.Channels.Serializers.GetByContentType(contentType);
+        if (serializer != null)
         {
-            var json = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-            try { body = JsonSerializer.Deserialize<object>(json, _caseInsensitiveRead); }
-            catch (JsonException) { body = json; }
-        }
-        else if (contentType.Contains("xml", StringComparison.OrdinalIgnoreCase))
-        {
-            body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
-        }
-        else if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
-        {
-            body = await ReadLimitedStringAsync(response.Content, maxResponseSize);
+            using var stream = new MemoryStream(bytes);
+            var deser = await serializer.DeserializeAsync(stream, typeof(object));
+            body = deser.Success ? deser.Value : TextFallback(bytes, contentType);
         }
         else
         {
-            body = await ReadLimitedBytesAsync(response.Content, maxResponseSize);
+            body = TextFallback(bytes, contentType);
         }
 
         var respHeaders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -557,6 +556,22 @@ public sealed class Default : IHttp
         // Keep it populated so existing test goals don't break.
         BuildProperties(result, request, response);
         return result;
+    }
+
+    /// <summary>
+    /// Falls back from byte[] to utf-8 string when the content type is "text-shaped"
+    /// (text/*, xml, json, csv) — server promised structured content but either
+    /// no serializer is registered for the exact subtype or the registered one
+    /// failed to parse. Image/binary/octet-stream stay as byte[].
+    /// </summary>
+    private static object TextFallback(byte[] bytes, string contentType)
+    {
+        if (contentType.StartsWith("text/", StringComparison.OrdinalIgnoreCase)
+            || contentType.Contains("xml", StringComparison.OrdinalIgnoreCase)
+            || contentType.Contains("json", StringComparison.OrdinalIgnoreCase)
+            || contentType.Contains("csv", StringComparison.OrdinalIgnoreCase))
+            return Encoding.UTF8.GetString(bytes);
+        return bytes;
     }
 
     /// <summary>
