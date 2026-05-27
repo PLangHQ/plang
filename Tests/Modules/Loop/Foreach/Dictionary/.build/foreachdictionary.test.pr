@@ -17,15 +17,25 @@
             {
               "name": "Name",
               "value": "%json%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
-              "value": "{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}",
-              "type": "string"
+              "value": {
+                "name": "Alice",
+                "age": "30",
+                "city": "Reykjavik"
+              },
+              "type": "dictionary\u00602"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +43,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%json%, Value=\u0027{\u0022name\u0022: \u0022Alice\u0022, \u0022age\u0022: \u002230\u0022, \u0022city\u0022: \u0022Reykjavik\u0022}\u0027)",
       "source": null,
       "waitForExecution": true
     },
@@ -51,7 +61,7 @@
             {
               "name": "Name",
               "value": "%dict%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -60,7 +70,7 @@
             },
             {
               "name": "Type",
-              "value": "json",
+              "value": "object",
               "type": "string"
             }
           ],
@@ -78,7 +88,7 @@
       "guidance": "Convert %json% from json into an object dictionary by setting %dict% with Type=json. The step text says \u0027convert ... from json, write to %dict%\u0027. This is represented as variable.set with Value=%!data% from the conversion; however the engine has no explicit \u0027convert\u0027 action. The @known mapping indicates the intended behavior: variable.set %dict% to %json% as json-typed object. Use the known mapping.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "variable.set(Name=%dict%, Value=%json%, Type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -96,7 +106,7 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -104,7 +114,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -112,7 +128,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%count%, Value=0)",
       "source": null,
       "waitForExecution": true
     },
@@ -131,16 +147,6 @@
               "name": "Collection",
               "value": "%dict%",
               "type": "object"
-            },
-            {
-              "name": "ItemName",
-              "value": "entry",
-              "type": "string"
-            },
-            {
-              "name": "KeyName",
-              "value": "key",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -154,6 +160,7 @@
               "name": "GoalName",
               "value": {
                 "name": "ProcessEntry",
+                "parallel": false,
                 "parameters": [
                   {
                     "name": "item",
@@ -165,7 +172,8 @@
                     "value": "%key%",
                     "type": "string"
                   }
-                ]
+                ],
+                "prPath": "/Modules/Loop/Foreach/Dictionary/.build/processentry.pr"
               },
               "type": "goal.call"
             }
@@ -178,7 +186,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "loop.foreach(Collection=%dict%), goal.call(GoalName={name:\u0022ProcessEntry\u0022, parameters:[{name:\u0022item\u0022, value:%entry%, type:\u0022string\u0022}, {name:\u0022key\u0022, value:%key%, type:\u0022string\u0022}]})",
       "source": null,
       "waitForExecution": true
     },
@@ -196,7 +204,7 @@
             {
               "name": "Expected",
               "value": 3,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -212,17 +220,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.equals(Expected=3, Actual=%count%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Foreach/Dictionary/ForeachDictionary.test.goal",
-  "prPath": "/Foreach/Dictionary/.build/foreachdictionary.test.pr",
+  "path": "/Modules/Loop/Foreach/Dictionary/ForeachDictionary.test.goal",
+  "prPath": "/Modules/Loop/Foreach/Dictionary/.build/foreachdictionary.test.pr",
   "hash": "cf123b6ee6e7081ddcc9f9a8ec17c9365cd2456f385ee106b354554c1e3ae863",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

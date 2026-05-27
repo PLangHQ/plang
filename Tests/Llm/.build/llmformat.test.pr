@@ -20,19 +20,19 @@
                 {
                   "role": "system",
                   "content": "Reply in JSON format only",
-                  "images": [],
+                  "images": null,
                   "toolCallId": null,
                   "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "Return a JSON object with key \u0022color\u0022 set to \u0022blue\u0022",
-                  "images": [],
+                  "images": null,
                   "toolCallId": null,
                   "toolCalls": null
                 }
               ],
-              "type": "list\u003Cllmmessage\u003E"
+              "type": "list\u00601"
             },
             {
               "name": "Format",
@@ -81,7 +81,7 @@
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -103,7 +103,7 @@
       "guidance": "llm.query with explicit JSON format; write the LLM response to %result% via variable.set.",
       "level": "high",
       "confidence": 92,
-      "formal": null,
+      "formal": "llm.query(Messages=[{role:\u0022system\u0022,content:\u0022Reply in JSON format only\u0022},{role:\u0022user\u0022,content:\u0022Return a JSON object with key \\\u0022color\\\u0022 set to \\\u0022blue\\\u0022\u0022}], Format=\u0022json\u0022) , variable.set(Name=%result%, Value=%!data%, type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -122,11 +122,6 @@
               "name": "Value",
               "value": "%result%",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "Expected %result% to be not null",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -137,7 +132,7 @@
       "guidance": "Post-condition check: assert that %result% is not null. This is an unconditional invariant after step 0 produced %result%.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%result%)",
       "source": null,
       "waitForExecution": true
     }
@@ -147,7 +142,7 @@
   "path": "/Llm/LlmFormat.test.goal",
   "prPath": "/Llm/.build/llmformat.test.pr",
   "hash": "a572581de9026488973df4f3364f5d6ea4b68fd7482a223ed3b438130aad6304",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -1,0 +1,154 @@
+{
+  "name": "TestBuildMethodSetsTerminalVariableSetType",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "builder.goals from \u0027stage0_fixture/\u0027, write to %goals%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": "User-visible contract for Stage 0 \u2014 Build() flows through to the .pr.\nfile.read.Build() on literal \u0027data.csv\u0027 returns \u0022csv\u0022; the terminal\nvariable.set in the generated .pr must carry Type=\u0022csv\u0022. Verified by\ncalling goal.getTypes on the parsed Goal \u2014 downstream step\u0027s snapshot\nsees %x%(csv), which only happens if the Type stamp reached the .pr.",
+      "actions": [
+        {
+          "module": "builder",
+          "action": "goals",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "stage0_fixture/",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goals%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "list"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "builder.goals(Path=\u0027stage0_fixture/\u0027, ...) | variable.set(Name=%goals%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "goal.getTypes %goals[0]%, write to %snapshot%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "getTypes",
+          "parameters": [
+            {
+              "name": "Goal",
+              "value": "%goals[0]%",
+              "type": "goal"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%snapshot%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "list"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "goal.getTypes(Goal=%goals[0]%), variable.set(Name=%snapshot%, Value=%!data%, type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %snapshot[1].x% equals \u0027csv\u0027, \u0022downstream snapshot must show %x%(csv) from file.read.Build()\u0022",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "csv",
+              "type": "object"
+            },
+            {
+              "name": "Actual",
+              "value": "%snapshot[1].x%",
+              "type": "object"
+            },
+            {
+              "name": "Message",
+              "value": "downstream snapshot must show %x%(csv) from file.read.Build()",
+              "type": "string"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022csv\u0022, Actual=%snapshot[1].x%, Message=\u0022downstream snapshot must show %x%(csv) from file.read.Build()\u0022)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage0/TestBuildMethodSetsTerminalVariableSetType.test.goal",
+  "prPath": "/TestModule/TypedReturns/Stage0/.build/testbuildmethodsetsterminalvariablesettype.test.pr",
+  "hash": "cd85a52f2ef410097250aa29949043d9bd1a5ab1e9eccc1dcd3634694defa2c6",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

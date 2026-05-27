@@ -35,7 +35,7 @@
             {
               "name": "Name",
               "value": "%goalText%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -43,7 +43,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -51,7 +57,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "file.read(Path=\u0022/system/test.goal\u0022, ResolveVariables=false) , variable.set(Name=%goalText%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -67,19 +73,14 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%goalText%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "test.discover",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -90,7 +91,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.contains(Container=%goalText%, Value=\u0022test.discover\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -106,19 +107,14 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%goalText%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "test.run",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -129,7 +125,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.contains(Container=%goalText%, Value=\u0022test.run\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -145,19 +141,14 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
+              "name": "Container",
               "value": "%goalText%",
               "type": "object"
             },
             {
-              "name": "Container",
+              "name": "Value",
               "value": "test.report",
               "type": "object"
-            },
-            {
-              "name": "Message",
-              "value": "",
-              "type": "string"
             }
           ],
           "defaults": null,
@@ -168,17 +159,17 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.contains(Container=%goalText%, Value=\u0022test.report\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestSystemTestGoalIncludesAllThreePhases.test.goal",
-  "prPath": "/.build/testsystemtestgoalincludesallthreephases.test.pr",
+  "path": "/Modules/Test/Integration/TestSystemTestGoalIncludesAllThreePhases.test.goal",
+  "prPath": "/Modules/Test/Integration/.build/testsystemtestgoalincludesallthreephases.test.pr",
   "hash": "82a745b237dd3a8828685ba2701af4a77b9d89e85f6dc797633ddb97243024da",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

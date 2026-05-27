@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -26,7 +26,7 @@
                 20,
                 30
               ],
-              "type": "list"
+              "type": "list\u00601"
             }
           ],
           "defaults": [
@@ -43,7 +43,7 @@
       "guidance": "Initialize %myList% with a list literal using variable.set.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "variable.set(Name=%myList%, Value=[10, 20, 30], Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -61,7 +61,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -82,7 +82,7 @@
       "guidance": "Append 40 to %myList% using list.add with AtIndex=-1 (append).",
       "level": "high",
       "confidence": 97,
-      "formal": null,
+      "formal": "list.add(ListName=%myList%, Value=40, AtIndex=-1)",
       "source": null,
       "waitForExecution": true
     },
@@ -100,7 +100,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -113,12 +113,12 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -135,7 +135,7 @@
       "guidance": "Count items in %myList% and store in %count%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.count(ListName=%myList%) , variable.set(Name=%count%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -174,7 +174,7 @@
       "guidance": "Assert %count% equals 4 with a descriptive message.",
       "level": "high",
       "confidence": 99,
-      "formal": null,
+      "formal": "assert.equals(Expected=4, Actual=%count%, Message=\u0022list should have 4 items after add\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -192,7 +192,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -205,7 +205,7 @@
             {
               "name": "Name",
               "value": "%first%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -227,7 +227,7 @@
       "guidance": "Get first item from %myList% and store in %first%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.first(ListName=%myList%), variable.set(Name=%first%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -261,7 +261,7 @@
       "guidance": "Assert %first% equals 10.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=10, Actual=%first%)",
       "source": null,
       "waitForExecution": true
     },
@@ -279,7 +279,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -292,7 +292,7 @@
             {
               "name": "Name",
               "value": "%last%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -314,7 +314,7 @@
       "guidance": "Get last item from %myList% and store in %last%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.last(ListName=%myList%), variable.set(Name=%last%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -348,7 +348,7 @@
       "guidance": "Assert %last% equals 40.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=40, Actual=%last%)",
       "source": null,
       "waitForExecution": true
     },
@@ -366,7 +366,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -384,12 +384,12 @@
             {
               "name": "Name",
               "value": "%has20%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -406,7 +406,7 @@
       "guidance": "Check whether %myList% contains 20 and store boolean in %has20%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.contains(ListName=%myList%, Value=20), variable.set(Name=%has20%, Value=%!data%, type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -440,7 +440,7 @@
       "guidance": "Assert %has20% is true with a message.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%has20%, Message=\u0022list should contain 20\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -458,7 +458,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Separator",
@@ -476,12 +476,12 @@
             {
               "name": "Name",
               "value": "%joined%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "string"
             }
           ],
           "defaults": [
@@ -498,7 +498,7 @@
       "guidance": "Join %myList% into a string with separator \u0022, \u0022 and store in %joined%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "list.join(ListName=%myList%, Separator=\u0022, \u0022) , variable.set(Name=%joined%, Value=%!data%, type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -514,19 +514,14 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
-              "value": "%joined%",
-              "type": "object?"
-            },
-            {
               "name": "Container",
-              "value": "10",
-              "type": "object?"
+              "value": "%joined%",
+              "type": "object"
             },
             {
-              "name": "Message",
-              "value": "Assert %joined% contains \u002210\u0022",
-              "type": "string"
+              "name": "Value",
+              "value": "10",
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -537,7 +532,7 @@
       "guidance": "Assert %joined% contains \u002210\u0022.",
       "level": "medium",
       "confidence": 70,
-      "formal": null,
+      "formal": "assert.contains(Container=%joined%, Value=\u002210\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -553,19 +548,14 @@
           "action": "contains",
           "parameters": [
             {
-              "name": "Value",
-              "value": "%joined%",
-              "type": "object?"
-            },
-            {
               "name": "Container",
-              "value": "40",
-              "type": "object?"
+              "value": "%joined%",
+              "type": "object"
             },
             {
-              "name": "Message",
-              "value": "Assert %joined% contains \u002240\u0022.",
-              "type": "string"
+              "name": "Value",
+              "value": "40",
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -576,7 +566,7 @@
       "guidance": "Assert joined string contains substring \u002240\u0022.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "assert.contains(Container=%joined%, Value=\u002240\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -617,12 +607,12 @@
             {
               "name": "Name",
               "value": "%parts%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "list"
             }
           ],
           "defaults": [
@@ -639,7 +629,7 @@
       "guidance": "Split \u0022a-b-c\u0022 by \u0022-\u0022 into %parts% (keeping empty entries disabled).",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.split(Value=\u0022a-b-c\u0022, Separator=\u0022-\u0022, RemoveEmpty=false), variable.set(Name=%parts%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -657,7 +647,7 @@
             {
               "name": "ListName",
               "value": "%parts%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -670,7 +660,7 @@
             {
               "name": "Name",
               "value": "%partsCount%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -692,7 +682,7 @@
       "guidance": "Count items in %parts% and store in %partsCount%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.count(ListName=%parts%), variable.set(Name=%partsCount%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -726,7 +716,7 @@
       "guidance": "Assert %partsCount% equals 3.",
       "level": "high",
       "confidence": 99,
-      "formal": null,
+      "formal": "assert.equals(Expected=3, Actual=%partsCount%)",
       "source": null,
       "waitForExecution": true
     },
@@ -744,7 +734,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Index",
@@ -762,7 +752,7 @@
             {
               "name": "Name",
               "value": "%second%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -784,7 +774,7 @@
       "guidance": "Get item at index 1 from %myList% and store in %second%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.get(ListName=%myList%, Index=1), variable.set(Name=%second%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -818,7 +808,7 @@
       "guidance": "Assert %second% equals 20.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=20, Actual=%second%)",
       "source": null,
       "waitForExecution": true
     },
@@ -836,7 +826,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -857,7 +847,7 @@
       "guidance": "Remove value 20 from %myList% (AtIndex=-1 means remove by value).",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "list.remove(ListName=%myList%, Value=20, AtIndex=-1)",
       "source": null,
       "waitForExecution": true
     },
@@ -875,7 +865,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -893,12 +883,12 @@
             {
               "name": "Name",
               "value": "%still20%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -915,7 +905,7 @@
       "guidance": "Check whether %myList% still contains 20 and store in %still20%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.contains(ListName=%myList%, Value=20), variable.set(Name=%still20%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -944,7 +934,7 @@
       "guidance": "Assert %still20% is false.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.isFalse(Value=%still20%)",
       "source": null,
       "waitForExecution": true
     },
@@ -962,7 +952,7 @@
             {
               "name": "ListName",
               "value": "%myList%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -980,12 +970,12 @@
             {
               "name": "Name",
               "value": "%idx%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -1002,7 +992,7 @@
       "guidance": "Find index of 30 in %myList% and store in %idx%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.indexof(ListName=%myList%, Value=30), variable.set(Name=%idx%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -1041,7 +1031,7 @@
       "guidance": "Assert %idx% is greater than -1 (item found).",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.greaterThan(A=%idx%, B=-1, Message=\u0022indexOf should find the item\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -1059,7 +1049,7 @@
             {
               "name": "Name",
               "value": "%unsorted%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -1068,7 +1058,12 @@
                 1,
                 2
               ],
-              "type": "object"
+              "type": "list\u00601"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -1085,7 +1080,7 @@
       "guidance": "Initialize %unsorted% with [3,1,2].",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "variable.set(Name=%unsorted%, Value=[3, 1, 2], Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -1103,7 +1098,7 @@
             {
               "name": "ListName",
               "value": "%unsorted%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Descending",
@@ -1119,7 +1114,7 @@
       "guidance": "Sort %unsorted% ascending (Descending=false).",
       "level": "high",
       "confidence": 97,
-      "formal": null,
+      "formal": "list.sort(ListName=%unsorted%, Descending=false)",
       "source": null,
       "waitForExecution": true
     },
@@ -1137,7 +1132,7 @@
             {
               "name": "ListName",
               "value": "%unsorted%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -1150,7 +1145,7 @@
             {
               "name": "Name",
               "value": "%sortFirst%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -1172,7 +1167,7 @@
       "guidance": "Get first item from sorted %unsorted% and store in %sortFirst%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.first(ListName=%unsorted%), variable.set(Name=%sortFirst%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -1206,7 +1201,7 @@
       "guidance": "Assert %sortFirst% equals 1.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%sortFirst%)",
       "source": null,
       "waitForExecution": true
     },
@@ -1224,7 +1219,7 @@
             {
               "name": "ListName",
               "value": "%unsorted%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -1235,7 +1230,7 @@
       "guidance": "Reverse %unsorted% in place.",
       "level": "high",
       "confidence": 97,
-      "formal": null,
+      "formal": "list.reverse(ListName=%unsorted%)",
       "source": null,
       "waitForExecution": true
     },
@@ -1253,7 +1248,7 @@
             {
               "name": "ListName",
               "value": "%unsorted%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -1266,7 +1261,7 @@
             {
               "name": "Name",
               "value": "%revFirst%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -1288,7 +1283,7 @@
       "guidance": "Get first item from reversed %unsorted% and store in %revFirst%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.first(ListName=%unsorted%), variable.set(Name=%revFirst%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -1322,7 +1317,7 @@
       "guidance": "Assert %revFirst% equals 3.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=3, Actual=%revFirst%)",
       "source": null,
       "waitForExecution": true
     },
@@ -1340,7 +1335,7 @@
             {
               "name": "Name",
               "value": "%dupes%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -1352,7 +1347,12 @@
                 3,
                 3
               ],
-              "type": "object"
+              "type": "list\u00601"
+            },
+            {
+              "name": "Type",
+              "value": "json",
+              "type": "string"
             }
           ],
           "defaults": [
@@ -1369,7 +1369,7 @@
       "guidance": "Initialize %dupes% with [1,2,2,3,3,3].",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "variable.set(Name=%dupes%, Value=[1, 2, 2, 3, 3, 3], Type=json)",
       "source": null,
       "waitForExecution": true
     },
@@ -1387,7 +1387,7 @@
             {
               "name": "ListName",
               "value": "%dupes%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -1400,12 +1400,12 @@
             {
               "name": "Name",
               "value": "%uniq%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "list"
             }
           ],
           "defaults": [
@@ -1422,7 +1422,7 @@
       "guidance": "Compute unique items from %dupes% and store in %uniq%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.unique(ListName=%dupes%), variable.set(Name=%uniq%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -1440,7 +1440,7 @@
             {
               "name": "ListName",
               "value": "%uniq%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -1453,12 +1453,12 @@
             {
               "name": "Name",
               "value": "%uniqCount%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -1475,7 +1475,7 @@
       "guidance": "Count unique items in %uniq% and store in %uniqCount%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "list.count(ListName=%uniq%), variable.set(Name=%uniqCount%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -1509,7 +1509,7 @@
       "guidance": "Assert %uniqCount% equals 3.",
       "level": "high",
       "confidence": 99,
-      "formal": null,
+      "formal": "assert.equals(Expected=3, Actual=%uniqCount%)",
       "source": null,
       "waitForExecution": true
     }
@@ -1519,7 +1519,7 @@
   "path": "/Modules/List/ListOps.test.goal",
   "prPath": "/Modules/List/.build/listops.test.pr",
   "hash": "0a2b147ff098cb5191b32dd87445311e6626f78f3349a3dab5c2cada908e879a",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

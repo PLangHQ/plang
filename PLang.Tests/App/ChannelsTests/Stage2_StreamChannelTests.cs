@@ -73,7 +73,10 @@ public class Stage2_StreamChannelTests
         app.User.Channels.Register(ch);
         var result = await ch.WriteCore(Data.Ok("x"));
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("WriteError");
+        // Serializer-layer errors travel directly through Data.Error without
+        // wrapping — the underlying ThrowingStream IOException surfaces as
+        // TextSerializeError from the Text serializer, not a generic WriteError.
+        await Assert.That(result.Error!.Key).IsEqualTo("TextSerializeError");
     }
 
     [Test]

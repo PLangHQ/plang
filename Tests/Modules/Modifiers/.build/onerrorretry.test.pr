@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%counter%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -25,7 +25,13 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -33,7 +39,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%counter%, Value=0)",
       "source": null,
       "waitForExecution": true
     },
@@ -53,8 +59,8 @@
               "value": {
                 "name": "IncrementAndFail",
                 "parallel": false,
-                "parameters": null,
-                "prPath": null
+                "parameters": [],
+                "prPath": "/Modules/Modifiers/.build/onerrorretry.test.pr"
               },
               "type": "goal.call"
             }
@@ -86,7 +92,7 @@
       "guidance": "Call IncrementAndFail. The step text says \u0027on error retry 3 times\u0027 and \u0027on error ignore\u0027 with a known mapping. The known mapping indicates the error.handle modifier should be applied to the goal.call, with RetryCount=3 and IgnoreError=true.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "goal.call(GoalName={name:\u0022IncrementAndFail\u0022}) | error.handle(Actions=[...], RetryCount=3, IgnoreError=true)",
       "source": null,
       "waitForExecution": true
     },
@@ -104,7 +110,7 @@
             {
               "name": "Expected",
               "value": 4,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -120,7 +126,7 @@
       "guidance": "Post-condition: after 3 retries plus the original attempt, counter should equal 4. Use assert.equals with Expected=4 and Actual=%counter%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.equals(Expected=4, Actual=%counter%)",
       "source": null,
       "waitForExecution": true
     }
@@ -150,7 +156,7 @@
                 {
                   "name": "B",
                   "value": 1,
-                  "type": "int"
+                  "type": "object"
                 }
               ],
               "defaults": null,
@@ -163,7 +169,7 @@
                 {
                   "name": "Name",
                   "value": "%counter%",
-                  "type": "string"
+                  "type": "variable"
                 },
                 {
                   "name": "Value",
@@ -171,7 +177,13 @@
                   "type": "object"
                 }
               ],
-              "defaults": null,
+              "defaults": [
+                {
+                  "name": "asdefault",
+                  "value": false,
+                  "type": "bool"
+                }
+              ],
               "modifiers": []
             }
           ],
@@ -179,7 +191,7 @@
           "guidance": null,
           "level": null,
           "confidence": null,
-          "formal": null,
+          "formal": "math.add(A=%counter%, B=1) | variable.set(Name=%counter%, Value=%!data%)",
           "source": null,
           "waitForExecution": true
         },
@@ -198,15 +210,14 @@
                   "name": "Message",
                   "value": "intentional failure",
                   "type": "string"
-                }
-              ],
-              "defaults": [
+                },
                 {
-                  "name": "statuscode",
+                  "name": "StatusCode",
                   "value": 500,
                   "type": "int"
                 }
               ],
+              "defaults": null,
               "modifiers": []
             }
           ],
@@ -214,7 +225,7 @@
           "guidance": "throw error \u0027intentional failure\u0027 maps directly to error.throw with Message set to the literal string.",
           "level": "high",
           "confidence": 98,
-          "formal": null,
+          "formal": "error.throw(Message=\u0022intentional failure\u0022, StatusCode=500)",
           "source": null,
           "waitForExecution": true
         }
@@ -236,7 +247,7 @@
   "path": "/Modules/Modifiers/OnErrorRetry.test.goal",
   "prPath": "/Modules/Modifiers/.build/onerrorretry.test.pr",
   "hash": "5c59aecc444d0dbbe20e33c352c18988325a42cf33da38dca73a28d20a62bdca",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

@@ -87,7 +87,7 @@
                 "name": "WhenBig",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/whenbig.pr"
+                "prPath": "/Modules/Condition/If/ElseBranch/.build/whenbig.pr"
               },
               "type": "goal.call"
             },
@@ -123,7 +123,7 @@
                 "name": "WhenSmall",
                 "parallel": false,
                 "parameters": [],
-                "prPath": "/.build/whensmall.pr"
+                "prPath": "/Modules/Condition/If/ElseBranch/.build/whensmall.pr"
               },
               "type": "goal.call"
             },
@@ -187,8 +187,8 @@
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/ConditionElseBranch.test.goal",
-  "prPath": "/.build/conditionelsebranch.test.pr",
+  "path": "/Modules/Condition/If/ElseBranch/ConditionElseBranch.test.goal",
+  "prPath": "/Modules/Condition/If/ElseBranch/.build/conditionelsebranch.test.pr",
   "hash": "1e47a3ea8ece27ced425e78c62abeb15ec688a4e4e4b3cef98ab293a43b3efa7",
   "builderVersion": "0.2.2",
   "isSetup": false,

@@ -8,12 +8,12 @@ Start
 - call Plan, on error call HandleBuildFailure
 - set %trace.plan% = %plan%
 
-/ Forward-walk the goal once to infer variable types per step. Result is a list
-/ of dicts indexed by step position; BuildStep/Start reads %varTypes[step.Index]%
-/ to render an "Available variables" section in the compile user prompt.
-- goal.getTypes Goal=%goal%, write to %varTypes%
+/ The compile system prompt is static across every step in every goal — render
+/ it once at goal level so the trace doesn't duplicate ~14KB per step.
+- render template "/system/builder/llm/Compile.llm", write to %compileSystemPrompt%
+- set %trace.compileSystem% = %compileSystemPrompt%
 
-- foreach %plan.steps%, call BuildStep/Start planStep=%item%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
 
 - set %parentGoal% = %goal%
 - foreach %parentGoal.Goals%, call BuildSubGoal subGoal=%item%
@@ -34,7 +34,7 @@ BuildSubGoal
 - set %goal% = %subGoal%
 - write out "  Building sub-goal: %goal.Name%"
 - call Plan, on error call HandleBuildFailure
-- foreach %plan.steps%, call BuildStep/Start planStep=%item%
+- foreach %plan.steps%, call BuildStep/Start planStep=%item%, on error call HandleBuildFailure
 - add {goal: %goal%, plan: %plan%} to %trace.subGoals%
 
 

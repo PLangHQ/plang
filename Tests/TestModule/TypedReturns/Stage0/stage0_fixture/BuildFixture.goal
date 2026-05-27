@@ -1,0 +1,3 @@
+BuildFixture
+- read file 'data.csv', write to %x%
+- write out %x%

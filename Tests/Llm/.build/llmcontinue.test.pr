@@ -20,23 +20,53 @@
                 {
                   "role": "system",
                   "content": "You are a helpful assistant",
-                  "images": []
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "My favorite color is blue. Remember that.",
-                  "images": []
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
                 }
               ],
-              "type": "list\u003Cllmmessage\u003E"
+              "type": "list\u00601"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "continuepreviousconversation",
+              "value": false,
+              "type": "bool"
             },
             {
-              "name": "ContinuePreviousConversation",
-              "value": false,
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "cache",
+              "value": true,
               "type": "bool"
             }
           ],
-          "defaults": null,
           "modifiers": []
         },
         {
@@ -46,7 +76,7 @@
             {
               "name": "Name",
               "value": "%first%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -54,7 +84,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -62,7 +98,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "llm.query(Messages=[{role:\u0022system\u0022, content:\u0022You are a helpful assistant\u0022},{role:\u0022user\u0022, content:\u0022My favorite color is blue. Remember that.\u0022}]) | variable.set(Name=%first%, Value=%!data%, type=\u0022object\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -83,15 +119,19 @@
                 {
                   "role": "system",
                   "content": "You are a helpful assistant",
-                  "images": []
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "What is my favorite color?",
-                  "images": []
+                  "images": null,
+                  "toolCallId": null,
+                  "toolCalls": null
                 }
               ],
-              "type": "list\u003Cllmmessage\u003E"
+              "type": "list\u00601"
             },
             {
               "name": "ContinuePreviousConversation",
@@ -99,7 +139,33 @@
               "type": "bool"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -109,7 +175,7 @@
             {
               "name": "Name",
               "value": "%second%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -117,7 +183,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -125,7 +197,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "llm.query(Messages=[{role:\u0022system\u0022,content:\u0022You are a helpful assistant\u0022},{role:\u0022user\u0022,content:\u0022What is my favorite color?\u0022}], ContinuePreviousConversation=true) | variable.set(Name=%second%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -154,7 +226,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%first%)",
       "source": null,
       "waitForExecution": true
     },
@@ -183,7 +255,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%second%)",
       "source": null,
       "waitForExecution": true
     }
@@ -193,7 +265,7 @@
   "path": "/Llm/LlmContinue.test.goal",
   "prPath": "/Llm/.build/llmcontinue.test.pr",
   "hash": "37b7d06e17c11310edbcf0336bb934cc32b507e0f2f8677603fa4f1f3dbf0202",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

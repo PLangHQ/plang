@@ -40,13 +40,12 @@ The builder's `.pr` files stamp paths like `/system/builder/.build/buildgoal.pr`
 Pass the explicit ordered list via `--build={"files":[...]}` whenever you rebuild the builder. The order is the call chain, entry first, leaves last:
 
 1. `Build.goal` — builder entry
-2. `BuildGoal.goal` — per-goal driver (one LLM Plan call per goal, then delegates each step to BuildStep)
-3. `BuildGoal/Start.goal` — orchestrator (owns `BuildSubGoal`, `HandleBuildFailure`)
-4. `BuildGoal/Plan.goal` — single LLM call that returns the action sets per step (owns `QueryAndValidatePlan`)
-5. `BuildGoal/Validate.goal` — structural validation after step compile
-6. `BuildGoal/LlmFixer.goal` — re-prompt on validation failure
-7. `BuildStep/Start.goal` — per-step compile (owns `Compile`, `QueryAndVerify`, `RefineActions`, `FixValidation`, `HandleStepFailure`, `EmitSummary`)
-8. `BuildStep/Validate.goal` — per-step action validation (owns `ValidateAction`)
+2. `BuildGoal/Start.goal` — per-goal orchestrator (owns `BuildSubGoal`, `HandleBuildFailure`)
+3. `BuildGoal/Plan.goal` — single LLM call that returns the action sets per step (owns `QueryAndValidatePlan`)
+4. `BuildGoal/Validate.goal` — structural validation after step compile
+5. `BuildGoal/LlmFixer.goal` — re-prompt on validation failure
+6. `BuildStep/Start.goal` — per-step compile (owns `Compile`, `QueryAndVerify`, `RefineActions`, `FixValidation`, `HandleStepFailure`, `EmitSummary`)
+7. `BuildStep/Validate.goal` — per-step action validation (owns `ValidateAction`)
 
 **Why:** during the rebuild the running app uses the *previous* in-memory build pipeline. If `BuildGoal`'s `.pr` is rewritten before its dependencies are stable, subsequent goal builds may pick up a partially-updated pipeline and produce inconsistent output. The list order is honoured by `DefaultBuilderProvider.LoadFiles` (`PLang/app/modules/builder/code/Default.cs`) — files in the `files` filter are queued in the order they appear.
 
@@ -87,8 +86,8 @@ Should report `Saved Start` with no LLM re-call (`Kept prior mapping for step N`
 
 These are deterministic LLM mistakes the current prompts emit on self-rebuild. Per the cardinal rule, **do not hand-strip them from the `.pr`**. The fix is in the prompt or the validator. List exists so the next person touching builder prompts knows what to target.
 
-- **`Actor=%goal%` / `Actor=%action%` on `goal.call`** — appears on every `foreach X, call Y, item=%var%` step. The LLM mis-binds `%var%` as the `Actor` parameter of `goal.call` instead of recognising it as the foreach `ItemName`. Fix candidate: tighten `BuildGoal.llm` / `BuildStep.llm` examples on the foreach+call pattern, or have the validator reject `goal.call` with `Actor` set and force a retry.
-- **`goal.call.Name='goal.call'`** — the LLM occasionally drops the action type name as the `Name` of a `goal.call`'s GoalCall value. The validator's type-name guard already catches it and `BuildStepFixer` retries (see retry-wrap on `BuildStep.goal` step 5) — usually self-heals on the second pass.
+- **`Actor=%goal%` / `Actor=%action%` on `goal.call`** — appears on every `foreach X, call Y, item=%var%` step. The LLM mis-binds `%var%` as the `Actor` parameter of `goal.call` instead of recognising it as the foreach `ItemName`. Fix candidate: tighten the foreach+call examples in `os/system/modules/loop/foreach.examples.md` and `os/system/modules/goal/call.notes.md`, or have the validator reject `goal.call` with `Actor` set and force a retry.
+- **`goal.call.Name='goal.call'`** — the LLM occasionally drops the action type name as the `Name` of a `goal.call`'s GoalCall value. The validator's type-name guard catches it and the `FixValidation` retry path in `BuildStep/Start.goal` (the `builder.validate ..., on error call FixValidation` step) re-prompts — usually self-heals on the second pass.
 
 When you fix the prompt so one of these stops happening, delete the corresponding line.
 
@@ -118,7 +117,7 @@ Shared root cause: the **formal language** (the syntax the LLM thinks in before 
 
 ### Render `action.Modifiers` in `goalFormatForLlm` template
 
-`system/builder/templates/v2/goalFormatForLlm.template:4` now iterates `a.Modifiers` after `a.Parameters` with `|` separator and the same `Name([type] value)` param syntax as actions. Dead `step.Cache` and `step.OnError` branches removed (those fields don't exist on Step — modifiers live on `Action.Modifiers` per `goals-steps.md:105`).
+`system/builder/templates/goalFormatForLlm.template:4` now iterates `a.Modifiers` after `a.Parameters` with `|` separator and the same `Name([type] value)` param syntax as actions. Dead `step.Cache` and `step.OnError` branches removed (those fields don't exist on Step — modifiers live on `Action.Modifiers` per `goals-steps.md:105`).
 
 Helps the **@known re-render path only**: once a step is built correctly once, the LLM sees it on rebuild and reuses it. First-build problems unchanged.
 

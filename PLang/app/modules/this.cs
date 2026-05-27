@@ -22,14 +22,14 @@ public sealed class @this : IAsyncDisposable
     /// <summary>
     /// "What every action looks like, for the LLM." Describes the registered
     /// actions' types, parameter schemas, and authored Examples. Built on
-    /// demand via <c>app.modules.Schema.Build()</c>; <see cref="Schema.@this.Render"/>
+    /// demand via <c>app.builder.Types.Build()</c>; <see cref="global::app.builder.Types.@this.Render"/>
     /// works on the host instance directly without a Build call.
     /// </summary>
-    public Schema.@this Schema { get; }
+    public global::app.builder.Types.@this Schema { get; }
 
     public @this()
     {
-        Schema = new Schema.@this(this);
+        Schema = new global::app.builder.Types.@this(this);
         Discover(typeof(@this).Assembly, "app.modules");
     }
 
@@ -321,9 +321,13 @@ public sealed class @this : IAsyncDisposable
                     var hasVar = IsVariableNameSlot(prop.PropertyType);
                     var defaultAttr = prop.GetCustomAttribute<modules.DefaultAttribute>();
 
-                    // Variable slots advertise as "%var% string" so the LLM emits
-                    // a variable name (with or without %), not the literal type token.
-                    var desc = hasVar ? "%var% string" : typeName;
+                    // Variable slots advertise as "%var%" — the marker alone tells the LLM
+                    // this parameter takes a variable reference. Don't append a type token:
+                    // `Variable` only constrains the slot to *name* a variable; what the
+                    // variable resolves to at runtime is unconstrained (list, dict, bool,
+                    // object — anything). A trailing "string" was a lie that produced
+                    // spurious ambiguousMapping warnings when scope held a non-string.
+                    var desc = hasVar ? "%var%" : typeName;
                     if (defaultAttr != null)
                         desc += $" = {FormatDefault(defaultAttr.Value)}";
 
@@ -352,10 +356,10 @@ public sealed class @this : IAsyncDisposable
                     BindingFlags.Public | BindingFlags.Static, binder: null,
                     types: System.Type.EmptyTypes, modifiers: null);
                 if (examplesForLlm != null
-                    && typeof(app.modules.Schema.Spec.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
+                    && typeof(app.builder.Types.Spec.Example[]).IsAssignableFrom(examplesForLlm.ReturnType))
                 {
-                    var specs = (app.modules.Schema.Spec.Example[]?)examplesForLlm.Invoke(null, null)
-                        ?? System.Array.Empty<app.modules.Schema.Spec.Example>();
+                    var specs = (app.builder.Types.Spec.Example[]?)examplesForLlm.Invoke(null, null)
+                        ?? System.Array.Empty<app.builder.Types.Spec.Example>();
                     examples = specs
                         .Select(s => new data.@this(s.UserIntent, Schema.Render(s)))
                         .ToList();

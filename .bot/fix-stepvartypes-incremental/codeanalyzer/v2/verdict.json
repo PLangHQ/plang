@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Post-merge re-validation: v1 PASS holds; pre-existing System.IO debt in report.cs is CLOSED by merge; one LOW dead-local finding at report.cs:40." }

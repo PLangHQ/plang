@@ -1,0 +1,1 @@
+Intercept actions matching a pattern and replace their result with a fixed value or goal call. Returns a `Mock` handle whose `Calls` list captures every intercepted invocation; use `mock.verify` to assert call shape and `mock.reset` to tear down the binding.

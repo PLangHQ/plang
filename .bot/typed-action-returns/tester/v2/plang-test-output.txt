@@ -1,0 +1,470 @@
+builder.validate: Failed to deserialize List`1 to this: The JSON value could not be converted to app.goals.goal.steps.step.actions.action.this. Path: $[0] | LineNumber: 0 | BytePositionInLine: 3.
+mock handle: 1
+result: System.Collections.Generic.Dictionary`2[System.String,System.Object]
+{"value":"hello plang"}
+ok
+hello
+hello
+test output message
+user message
+system message
+still here
+u-msg
+hello world
+Before goal fired
+After goal fired
+TestGoal executed
+Before goal fired
+After goal fired
+Received chunk: ProcessChunk
+- write out 'Received chunk: %!data%'
+Received chunk: ProcessChunk
+- write out 'Received chunk: %!data%'
+Received chunk: ProcessChunk
+- write out 'Received chunk: %!data%'
+Streaming complete
+Request with default headers returned data
+Status code is 200
+Upload returned response
+Status code is 200
+ok
+hello
+hello
+Unsigned request returned data
+POST request returned data
+Status code is 200
+Signed request returned data
+GET request returned data
+Status code is 200
+Test summary: 221 total, 221 pass, 0 fail, 0 timeout, 0 stale, 0 skipped
+  [Pass] /Builder/ValidateActionsOnly.test.goal (85ms)
+  [Pass] /BuilderSanity/BuilderSanity.test.goal (169ms)
+  [Pass] /Builder/MockLlmSmoke.test.goal (18ms)
+  [Pass] /Simple/Start.test.goal (23ms)
+  [Pass] /Errors/MultiActionRecoveryLastActionPropagates.test.goal (23ms)
+  [Pass] /Errors/RetryFirstReturnsRecoveryValue.test.goal (28ms)
+  [Pass] /Errors/GoalFirstReturnsRecoveryValue.test.goal (13ms)
+  [Pass] /App/CallStack/IndirectGoalCycleThrows.test.goal (26ms)
+  [Pass] /App/CallStack/HandledFlagSetWhenRecoverySucceeds.test.goal (10ms)
+  [Pass] /App/CallStack/Audit.test.goal (61ms)
+  [Pass] /App/CallStack/TimeoutProducesCancellation.test.goal (125ms)
+  [Pass] /App/CallStack/Diffs.test.goal (5ms)
+  [Pass] /App/CallStack/CrossFileChain.test.goal (32ms)
+  [Pass] /App/CallStack/TagBareLabelWritesTrue.test.goal (13ms)
+  [Pass] /App/CallStack/TagWritesPairsOntoCurrentCall.test.goal (8ms)
+  [Pass] /App/CallStack/OuterErrorVarVisibleAfterInnerHandlerCloses.test.goal (87ms)
+  [Pass] /App/CallStack/DepthIncreasesOnGoalCall.test.goal (11ms)
+  [Pass] /App/CallStack/DepthRestoresAfterCall.test.goal (8ms)
+  [Pass] /App/CallStack/InnerErrorVarShadowsOuter.test.goal (43ms)
+  [Pass] /App/CallStack/HandledFlagFalseWhenRecoveryFails.test.goal (20ms)
+  [Pass] /App/CallStack/DirectGoalCycleThrows.test.goal (374ms)
+  [Pass] /App/CallStack/ErrorVarIsNullOutsideHandler.test.goal (4ms)
+  [Pass] /App/StepResult/StepResult.test.goal (5ms)
+  [Pass] /App/DeepNavigation/DeepNavigation.test.goal (13ms)
+  [Pass] /App/StartupParams/StartupParams.test.goal (11ms)
+  [Pass] /App/ReturnMapping/ReturnMapping.test.goal (11ms)
+  [Pass] /App/Retry/Retry.test.goal (32ms)
+  [Pass] /Builder/CompileLlmNotes/output-write-no-channel.test.goal (29ms)
+  [Pass] /Builder/CompileLlmNotes/assert-equals-no-message.test.goal (23ms)
+  [Pass] /Channels/WriteToCustomChannel/Start.test.goal (50ms)
+  [Pass] /Channels/WriteToUnknownChannel/Start.test.goal (28ms)
+  [Pass] /TestModule/Integration/TestSystemTestGoalDoesNotUseForeach.test.goal (39ms)
+  [Pass] /TestModule/Integration/TestSystemTestGoalReportsTimeout.test.goal (9ms)
+  [Pass] /TestModule/Integration/TestSystemTestGoalRespectsTagFilter.test.goal (8ms)
+  [Pass] /TestModule/Integration/TestSystemTestGoalIncludesAllThreePhases.test.goal (70ms)
+  [Pass] /App/RecursionDepth/RecursionDepthLimit.test.goal (376ms)
+  [Pass] /TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal (5ms)
+  [Pass] /TestModule/Tag/TestTagAccumulatesUserTagsOnRun.test.goal (19ms)
+  [Pass] /TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal (13ms)
+  [Pass] /TestModule/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal (10ms)
+  [Pass] /TestModule/Run/TestRunReportsAssertionFailure.test.goal (30ms)
+  [Pass] /Llm/LlmCache.test.goal (1221ms)
+  [Pass] /TestModule/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal (48ms)
+  [Pass] /TestModule/Assert/TestAssertFailureSnapshotsVariables.test.goal (23ms)
+  [Pass] /TestModule/Report/TestReportWritesJunitXml.test.goal (38ms)
+  [Pass] /TestModule/Report/TestReportMasksSensitiveVariablesJunit.test.goal (53ms)
+  [Pass] /TestModule/Report/TestReportIncludesCoverageTables.test.goal (44ms)
+  [Pass] /TestModule/Report/TestReportRendersFailureWithVariables.test.goal (44ms)
+  [Pass] /TestModule/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal (18ms)
+  [Pass] /Llm/LlmSchema.test.goal (1407ms)
+  [Pass] /TestModule/Report/TestReportMasksSensitiveVariables.test.goal (39ms)
+  [Pass] /TestModule/Discover/TestDiscoverFindsTestGoals.test.goal (31ms)
+  [Pass] /TestModule/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal (14ms)
+  [Pass] /Identity/Create/IdentityCreate.test.goal (40ms)
+  [Pass] /Identity/ArchiveNonDefault/IdentityArchiveNonDefault.test.goal (41ms)
+  [Pass] /Identity/DotNavigation/IdentityDotNavigation.test.goal (24ms)
+  [Pass] /Identity/SwitchDefault/IdentitySwitchDefault.test.goal (30ms)
+  [Pass] /Llm/LlmFormat.test.goal (1505ms)
+  [Pass] /Permission/GrantAStoresPersisted/Start.test.goal (112ms)
+  [Pass] /Identity/Export/IdentityExport.test.goal (29ms)
+  [Pass] /Identity/GetByName/IdentityGetByName.test.goal (27ms)
+  [Pass] /Modules/List/ListOps2.test.goal (40ms)
+  [Pass] /Modules/List/ListOps.test.goal (75ms)
+  [Pass] /Llm/LlmContinue.test.goal (1660ms)
+  [Pass] /Modules/Llm/LlmSchema.test.goal (520ms)
+  [Pass] /TestModule/Run/TestRunEnforcesTimeout.test.goal (1026ms)
+  [Pass] /Modules/Output/Output.test.goal (3ms)
+  [Pass] /Modules/Llm/LlmQuery.test.goal (595ms)
+  [Pass] /Modules/File/File.test.goal (23ms)
+  [Pass] /Modules/Loop/Loop.test.goal (33ms)
+  [Pass] /Modules/Modifiers/PerActionErrorScope.test.goal (11ms)
+  [Pass] /Modules/Modifiers/CacheOnFileRead.test.goal (9ms)
+  [Pass] /Modules/Modifiers/OnErrorRetry.test.goal (19ms)
+  [Pass] /Modules/Modifiers/OnErrorCallGoal.test.goal (14ms)
+  [Pass] /Modules/Modifiers/MultipleModifiersCompose.test.goal (9ms)
+  [Pass] /Modules/Assert/AssertComplete.test.goal (5ms)
+  [Pass] /Modules/Modifiers/TimeoutOnSlowAction.test.goal (107ms)
+  [Pass] /Modules/Assert/Assert.test.goal (8ms)
+  [Pass] /Modules/Math/Math2.test.goal (13ms)
+  [Pass] /Modules/Llm/LlmCache.test.goal (800ms)
+  [Pass] /Callback/ErrorCallbackOutsideHandler/Start.test.goal (5ms)
+  [Pass] /Callback/AskVarsResumeBindsValue/Start.test.goal (7ms)
+  [Pass] /Modules/Mock/Mock.test.goal (23ms)
+  [Pass] /Modules/Math/Math.test.goal (36ms)
+  [Pass] /Callback/StatelessCrossGoalResumes/Start.test.goal (16ms)
+  [Pass] /Callback/InProcessResume/Start.test.goal (22ms)
+  [Pass] /Callback/RunCallbackVerb/Start.test.goal (24ms)
+  [Pass] /Callback/StatefulAskMidGoalBindsValue/Start.test.goal (5ms)
+  [Pass] /App/Actors/Switch/ActorSwitch.test.goal (11ms)
+  [Pass] /Callback/ErrorCallbackSurface/Start.test.goal (16ms)
+  [Pass] /App/Actors/Context/ActorContext.test.goal (4ms)
+  [Pass] /Channels/Remove/RoleChannelRefused/Start.test.goal (17ms)
+  [Pass] /Channels/Remove/Custom/Start.test.goal (22ms)
+  [Pass] /App/Actors/Datasource/ActorDatasource.test.goal (25ms)
+  [Pass] /Channels/Set/ExplicitActor/Start.test.goal (21ms)
+  [Pass] /Channels/Set/ReplaceOutputWithGoal/Start.test.goal (22ms)
+  [Pass] /Channels/Set/ContextActor/Start.test.goal (22ms)
+  [Pass] /Channels/Add/Basic/Start.test.goal (17ms)
+  [Pass] /Channels/Events/AddOnAsk/Start.test.goal (20ms)
+  [Pass] /Channels/Events/AddBeforeWrite/Start.test.goal (30ms)
+  [Pass] /TestModule/TypedReturns/Stage3/TestHttpRequestJsonBodyAccessibleAsDeepProperty.test.goal (7ms)
+  [Pass] /Channels/Add/WithConfig/Start.test.goal (21ms)
+  [Pass] /TestModule/TypedReturns/Stage2/TestOutputAskDownstreamVariableAnnotatesAsAsk.test.goal (13ms)
+  [Pass] /TestModule/TypedReturns/Stage2/TestMockInterceptDownstreamVariableAnnotatesAsMock.test.goal (29ms)
+  [Pass] /TestModule/TypedReturns/Stage2/TestRunDownstreamVariableAnnotatesAsResults.test.goal (24ms)
+  [Pass] /TestModule/TypedReturns/Stage4/TestUserTypeHintWinsOverBuildInference.test.goal (16ms)
+  [Pass] /TestModule/TypedReturns/Stage2/TestDiscoverDownstreamVariableAnnotatesAsListOfTest.test.goal (16ms)
+  [Pass] /TestModule/TypedReturns/Stage4/TestFileReadCsvLiteralAnnotatesDownstreamAsCsv.test.goal (12ms)
+  [Pass] /TestModule/TypedReturns/Stage4/TestFileReadMissingLiteralEmitsBuildWarning.test.goal (15ms)
+  [Pass] /TestModule/TypedReturns/Stage4/TestOutputAskWithJsonHintMaterializesOnFirstAccess.test.goal (15ms)
+  [Pass] /TestModule/TypedReturns/Stage4/TestLlmQueryWithSchemaAnnotatesDownstreamAsJson.test.goal (16ms)
+  [Pass] /TestModule/TypedReturns/Stage0/TestBuildMethodSetsTerminalVariableSetType.test.goal (14ms)
+  [Pass] /Permission/Authorize/StatefulAuthorizeGrantsAndContinues/Start.test.goal (30ms)
+  [Pass] /TestModule/TypedReturns/Stage1/TestRunnerPipelineStillWorksAfterTesterFileRename.test.goal (61ms)
+  [Pass] /Modules/Error/Props/ErrorProps.test.goal (26ms)
+  [Pass] /Modules/Error/Multilingual/OnErrorMultilingual.test.goal (103ms)
+  [Pass] /Modules/Error/Handling/ErrorHandling.test.goal (8ms)
+  [Pass] /Modules/Llm/LlmFormat.test.goal (1219ms)
+  [Pass] /Modules/Error/Nested/ErrorNested.test.goal (121ms)
+  [Pass] /Modules/Error/Mixed/ErrorMixed.test.goal (237ms)
+  [Pass] /Modules/Llm/LlmProperties.test.goal (815ms)
+  [Pass] /Modules/Variable/Basic/Variables.test.goal (8ms)
+  [Pass] /Modules/Error/Ordering/ErrorOrdering.test.goal (230ms)
+  [Pass] /Modules/Error/InHandler/ErrorInHandler.test.goal (147ms)
+  [Pass] /Modules/Variable/Ops/VariableOps.test.goal (24ms)
+  [Pass] /Modules/Variable/Indexing/VariableIndexing.test.goal (17ms)
+  [Pass] /Modules/Error/GoalFirst/ErrorGoalFirst.test.goal (94ms)
+  [Pass] /Modules/Variable/Scoping/VariableScoping.test.goal (46ms)
+  [Pass] /Modules/Signing/ContractMismatch/SigningContractMismatch.test.goal (51ms)
+  [Pass] /Modules/Signing/CorruptedSignature/SigningCorruptedSignature.test.goal (31ms)
+  [Pass] /Modules/Signing/HeaderMismatch/SigningHeaderMismatch.test.goal (45ms)
+  [Pass] /Modules/Signing/VerifyUnsigned/SigningVerifyUnsigned.test.goal (18ms)
+  [Pass] /Modules/Event/AfterStep/EventAfterStep.test.goal (18ms)
+  [Pass] /Modules/Signing/Expired/SigningExpired.test.goal (102ms)
+  [Pass] /Modules/Event/AfterAction/EventAfterAction.test.goal (20ms)
+  [Pass] /Modules/Error/Chain/ErrorChain.test.goal (189ms)
+  [Pass] /Modules/Goal/Missing/GoalCallMissing.test.goal (26ms)
+  [Pass] /Modules/Goal/Dynamic/GoalCallDynamic.test.goal (21ms)
+  [Pass] /Modules/Event/Basic/Events.test.goal (48ms)
+  [Pass] /Modules/Goal/Return/GoalCallReturn.test.goal (19ms)
+  [Pass] /Modules/Builder/ParseGoal/BuilderParseGoal.test.goal (23ms)
+  [Pass] /Modules/Identity/Create/IdentityCreate.test.goal (19ms)
+  [Pass] /Modules/Identity/ArchiveNonDefault/IdentityArchiveNonDefault.test.goal (24ms)
+  [Pass] /Modules/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal (44ms)
+  [Pass] /Modules/Identity/Export/IdentityExport.test.goal (23ms)
+  [Pass] /Modules/Identity/DotNavigation/IdentityDotNavigation.test.goal (40ms)
+  [Pass] /Modules/Identity/SwitchDefault/IdentitySwitchDefault.test.goal (38ms)
+  [Pass] /Modules/Identity/Rename/IdentityRename.test.goal (46ms)
+  [Pass] /Modules/Identity/AutoCreate/IdentityAutoCreate.test.goal (20ms)
+  [Pass] /Modules/Identity/GetByName/IdentityGetByName.test.goal (27ms)
+  [Pass] /Modules/Cache/Key/CacheKey.test.goal (26ms)
+  [Pass] /Modules/Cache/Basic/Cache.test.goal (38ms)
+  [Pass] /Modules/Builder/GetActions/BuilderGetActions.test.goal (168ms)
+  [Pass] /Llm/LlmProperties.test.goal (3240ms)
+  [Pass] /Modules/Http/StreamCallback/StreamCallback.test.goal (524ms)
+  [Pass] /Modules/Http/ConfigHeaders/ConfigHeaders.test.goal (511ms)
+  [Pass] /Modules/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal (585ms)
+  [Pass] /Modules/Http/UploadFile/UploadFile.test.goal (510ms)
+  [Pass] /Modules/Test/Integration/TestSystemTestGoalDoesNotUseForeach.test.goal (6ms)
+  [Pass] /Modules/Test/Integration/TestSystemTestGoalReportsTimeout.test.goal (5ms)
+  [Pass] /Modules/Http/DownloadSkip/DownloadSkip.test.goal (652ms)
+  [Pass] /Modules/Test/Integration/TestSystemTestGoalRespectsTagFilter.test.goal (6ms)
+  [Pass] /Modules/Test/Integration/TestSystemTestGoalIncludesAllThreePhases.test.goal (11ms)
+  [Pass] /Modules/Test/Tag/TestTagAccumulatesUserTagsOnRun.test.goal (11ms)
+  [Pass] /Modules/Test/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal (7ms)
+  [Pass] /Modules/Test/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal (6ms)
+  [Pass] /Modules/Test/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal (10ms)
+  [Pass] /Modules/Test/Run/TestRunReportsAssertionFailure.test.goal (19ms)
+  [Pass] /Modules/Test/Run/TestRunIsolatesMemoryStackBetweenTests.test.goal (29ms)
+  [Pass] /Modules/Test/Assert/TestAssertFailureSnapshotsVariables.test.goal (22ms)
+  [Pass] /Modules/Test/Report/TestReportMasksSensitiveVariablesJunit.test.goal (31ms)
+  [Pass] /Modules/Test/Report/TestReportWritesJunitXml.test.goal (46ms)
+  [Pass] /Modules/Test/Report/TestReportIncludesCoverageTables.test.goal (22ms)
+  [Pass] /Modules/Http/UnsignedRequest/UnsignedRequest.test.goal (884ms)
+  [Pass] /Modules/Test/Report/TestReportRendersFailureWithVariables.test.goal (25ms)
+  [Pass] /Modules/Test/Report/TestReportMasksSensitiveVariables.test.goal (29ms)
+  [Pass] /Modules/Test/Discover/TestDiscoverReportsStaleWhenPrMissing.test.goal (18ms)
+  [Pass] /Modules/Test/EdgeCase/TestDiscoverHandlesIcelandicGoalNames.test.goal (18ms)
+  [Pass] /Modules/Test/Discover/TestDiscoverFindsTestGoals.test.goal (27ms)
+  [Pass] /Modules/Crypto/HashDefault/HashDefault.test.goal (7ms)
+  [Pass] /Modules/Crypto/HashObject/HashObject.test.goal (6ms)
+  [Pass] /Modules/Crypto/HashSHA256/HashSHA256.test.goal (6ms)
+  [Pass] /Modules/Crypto/ProviderSwap/ProviderSwap.test.goal (15ms)
+  [Pass] /Modules/Crypto/VerifyWrongHash/VerifyWrongHash.test.goal (9ms)
+  [Pass] /Modules/Settings/SetMaxGzipSize/Start.test.goal (19ms)
+  [Pass] /Modules/Settings/SettingsCrud/Start.test.goal (18ms)
+  [Pass] /Modules/Http/PostRequest/PostRequest.test.goal (474ms)
+  [Pass] /Modules/Llm/LlmContinue.test.goal (2564ms)
+  [Pass] /TestModule/TypedReturns/Stage1/stage1_fixture/Sample.test.goal (4ms)
+  [Pass] /Modules/Variable/ContextVars/System/SystemVariables.test.goal (6ms)
+  [Pass] /Modules/Variable/ContextVars/Advanced/ContextVars2.test.goal (4ms)
+  [Pass] /Modules/Loop/Foreach/Dictionary/ForeachDictionary.test.goal (23ms)
+  [Pass] /Modules/Loop/Foreach/Empty/ForeachEmpty.test.goal (10ms)
+  [Pass] /Modules/Condition/Operators/Falsy/ConditionFalsy.test.goal (12ms)
+  [Pass] /Modules/Ui/RenderInline/RenderInline.test.goal (159ms)
+  [Pass] /Modules/Ui/RenderFile/RenderFile.test.goal (93ms)
+  [Pass] /Modules/Ui/RenderInclude/RenderInclude.test.goal (162ms)
+  [Pass] /Modules/Condition/Operators/NotEquals/ConditionNotEquals.test.goal (20ms)
+  [Pass] /Modules/Condition/Operators/LTE/ConditionLTE.test.goal (21ms)
+  [Pass] /Modules/Condition/Operators/Contains/ConditionContains.test.goal (22ms)
+  [Pass] /Modules/Condition/Operators/Equals/ConditionEquals.test.goal (11ms)
+  [Pass] /Modules/Condition/Operators/EndsWith/ConditionEndsWith.test.goal (15ms)
+  [Pass] /Modules/Condition/Operators/GreaterThan/ConditionGreaterThan.test.goal (9ms)
+  [Pass] /Modules/Condition/Operators/Truthy/ConditionTruthy.test.goal (9ms)
+  [Pass] /Modules/Condition/Operators/GTE/ConditionGTE.test.goal (11ms)
+  [Pass] /Modules/Condition/Operators/Not/ConditionNot.test.goal (16ms)
+  [Pass] /Modules/Condition/Files/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal (8ms)
+  [Pass] /Modules/Condition/Operators/StartsWith/ConditionStartsWith.test.goal (13ms)
+  [Pass] /Modules/Condition/Operators/LessThan/ConditionLessThan.test.goal (18ms)
+  [Pass] /Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal (17ms)
+  [Pass] /Modules/Condition/If/SubStepsFalse/ConditionSubStepsFalse.test.goal (6ms)
+  [Pass] /Modules/Condition/Compound/Or/ConditionCompoundOr.test.goal (13ms)
+  [Pass] /Modules/Condition/Compound/And/ConditionCompoundAnd.test.goal (19ms)
+  [Pass] /Modules/Condition/If/Nested/ConditionNested.test.goal (6ms)
+  [Pass] /Modules/Condition/If/ElseBranch/ConditionElseBranch.test.goal (8ms)
+  [Pass] /Modules/Condition/If/SubStepsTrue/ConditionSubStepsTrue.test.goal (6ms)
+  [Pass] /Modules/Condition/If/Basic/Condition.test.goal (27ms)
+  [Pass] /Modules/Http/SignedRequest/SignedRequest.test.goal (810ms)
+  [Pass] /Modules/Test/Run/TestRunEnforcesTimeout.test.goal (1021ms)
+  [Pass] /Modules/Http/GetRequest/GetRequest.test.goal (1326ms)
+  [Pass] /Llm/LlmQuery.test.goal (10729ms)
+
+Module.action coverage:
+  [x] assert.contains
+  [x] assert.equals
+  [x] assert.greaterThan
+  [x] assert.isFalse
+  [x] assert.isNotNull
+  [x] assert.isNull
+  [x] assert.isTrue
+  [x] assert.lessThan
+  [x] assert.notContains
+  [x] assert.notEquals
+  [x] builder.actions
+  [ ] builder.appSave
+  [ ] builder.enrichResponse
+  [x] builder.goals
+  [ ] builder.goalsSave
+  [ ] builder.load
+  [ ] builder.merge
+  [ ] builder.promoteGroups
+  [x] builder.types
+  [x] builder.validate
+  [ ] builder.validateResponse
+  [ ] builder.validateStepActions
+  [x] cache.wrap
+  [x] callback.run
+  [x] channel.remove
+  [x] channel.set
+  [ ] code.list
+  [ ] code.load
+  [ ] code.remove
+  [ ] code.setDefault
+  [x] condition.compare
+  [ ] condition.else
+  [x] condition.elseif
+  [x] condition.if
+  [ ] crypto.decrypt
+  [ ] crypto.encrypt
+  [x] crypto.hash
+  [x] crypto.verify
+  [x] debug.tag
+  [ ] environment.run
+  [x] error.handle
+  [x] error.throw
+  [x] event.on
+  [ ] event.remove
+  [ ] event.skipAction
+  [x] file.copy
+  [x] file.delete
+  [x] file.exists
+  [x] file.list
+  [x] file.move
+  [x] file.read
+  [x] file.save
+  [x] goal.call
+  [x] goal.getTypes
+  [x] goal.return
+  [x] http.configure
+  [x] http.download
+  [x] http.request
+  [x] http.upload
+  [x] identity.archive
+  [x] identity.create
+  [x] identity.export
+  [x] identity.get
+  [ ] identity.list
+  [x] identity.rename
+  [x] identity.setDefault
+  [ ] identity.unarchive
+  [x] list.add
+  [x] list.any
+  [x] list.contains
+  [x] list.count
+  [x] list.first
+  [x] list.flatten
+  [x] list.get
+  [ ] list.group
+  [x] list.indexof
+  [x] list.join
+  [x] list.last
+  [x] list.range
+  [x] list.remove
+  [x] list.reverse
+  [x] list.set
+  [x] list.sort
+  [x] list.split
+  [x] list.unique
+  [x] llm.query
+  [x] loop.foreach
+  [x] math.abs
+  [x] math.add
+  [x] math.ceiling
+  [x] math.divide
+  [x] math.floor
+  [x] math.max
+  [x] math.min
+  [x] math.modulo
+  [x] math.multiply
+  [x] math.power
+  [x] math.random
+  [x] math.round
+  [x] math.sqrt
+  [x] math.subtract
+  [x] mock.intercept
+  [x] mock.reset
+  [x] mock.verify
+  [ ] module.add
+  [ ] module.remove
+  [x] output.ask
+  [x] output.write
+  [x] settings.get
+  [x] settings.remove
+  [x] settings.set
+  [x] signing.sign
+  [x] signing.verify
+  [x] test.discover
+  [x] test.report
+  [x] test.run
+  [x] test.tag
+  [x] timeout.after
+  [ ] timer.end
+  [x] timer.sleep
+  [ ] timer.start
+  [x] ui.render
+  [x] variable.clear
+  [x] variable.exists
+  [x] variable.get
+  [x] variable.remove
+  [x] variable.set
+  total: 102/127
+
+Branch coverage (condition.if):
+  /BuilderSanity/BuilderSanity.test.goal:3: {✅ if}
+  /Modules/Condition/Compound/And/ConditionCompoundAnd.test.goal:2: {✅ if}
+  /Modules/Condition/Compound/Or/ConditionCompoundOr.test.goal:2: {❌ if, ❌ if}
+  /Modules/Condition/Files/FileExistsSubSteps/ConditionFileExistsSubSteps.test.goal:2: {✅ if}
+  /Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal:0: {❌ if, ✅ else}
+  /Modules/Condition/If/Basic/Condition.test.goal:1: {✅ if}
+  /Modules/Condition/If/Basic/Condition.test.goal:4: {❌ if, ✅ else}
+  /Modules/Condition/If/ElseBranch/ConditionElseBranch.test.goal:1: {❌ if, ✅ else}
+  /Modules/Condition/If/Nested/ConditionNested.test.goal:4: {✅ true, ❌ false}
+  /Modules/Condition/If/Nested/ConditionNested.test.goal:5: {❌ true, ✅ false}
+  /Modules/Condition/If/SubStepsFalse/ConditionSubStepsFalse.test.goal:2: {❌ true, ✅ false}
+  /Modules/Condition/If/SubStepsTrue/ConditionSubStepsTrue.test.goal:2: {✅ true, ❌ false}
+  /Modules/Condition/Operators/Contains/ConditionContains.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/EndsWith/ConditionEndsWith.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/Equals/ConditionEquals.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/Falsy/ConditionFalsy.test.goal:1: {❌ if, ✅ else}
+  /Modules/Condition/Operators/GTE/ConditionGTE.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/GreaterThan/ConditionGreaterThan.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/LTE/ConditionLTE.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/LTE/WhenLTE.goal:0: {✅ if}
+  /Modules/Condition/Operators/LessThan/ConditionLessThan.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/LessThan/WhenLess.goal:0: {✅ if}
+  /Modules/Condition/Operators/Not/ConditionNot.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/NotEquals/ConditionNotEquals.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/StartsWith/ConditionStartsWith.test.goal:1: {✅ if}
+  /Modules/Condition/Operators/Truthy/ConditionTruthy.test.goal:1: {✅ if}
+  /Modules/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal:2: {❌ true, ✅ false}
+  /Modules/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal:4: {✅ true, ❌ false}
+  /Modules/Http/ConfigHeaders/ConfigHeaders.test.goal:2: {✅ true, ❌ false}
+  /Modules/Http/DownloadSkip/DownloadSkip.test.goal:1: {❌ if, ✅ else}
+  /Modules/Http/DownloadSkip/DownloadSkip.test.goal:3: {❌ if}
+  /Modules/Http/GetRequest/GetRequest.test.goal:1: {✅ true, ❌ false}
+  /Modules/Http/GetRequest/GetRequest.test.goal:3: {✅ true, ❌ false}
+  /Modules/Http/PostRequest/PostRequest.test.goal:2: {✅ true, ❌ false}
+  /Modules/Http/PostRequest/PostRequest.test.goal:4: {✅ true, ❌ false}
+  /Modules/Http/SignedRequest/SignedRequest.test.goal:1: {✅ true, ❌ false}
+  /Modules/Http/UnsignedRequest/UnsignedRequest.test.goal:1: {✅ true, ❌ false}
+  /Modules/Http/UploadFile/UploadFile.test.goal:2: {✅ true, ❌ false}
+  /Modules/Http/UploadFile/UploadFile.test.goal:4: {✅ true, ❌ false}
+  /Modules/Test/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal:1: {❌ if, ✅ elseif[1], ❌ else}
+  /Modules/Test/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal:1: {❌ if, ❌ elseif[1], ✅ else}
+  /Modules/Test/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal:1: {✅ if}
+  /Permission/Authorize/StatefulAuthorizeGrantsAndContinues/VerbBasedAnswerer.goal:1: {✅ if}
+  /Permission/Authorize/StatefulAuthorizeGrantsAndContinues/VerbBasedAnswerer.goal:3: {✅ if}
+  /TestModule/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal:1: {❌ if, ✅ elseif[1]}
+  /TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal:1: {❌ if, ❌ elseif[1], ✅ else}
+  /TestModule/Condition/TestConditionIfRecordsBranchIndexTrueBranch.test.goal:1: {✅ if}
+
+  Sites: 47 total (21 complete, 25 partial, 1 unreached)
+  Branches: 45/75 covered (60%)
+
+  Untested branches:
+    /Modules/Condition/Compound/Or/ConditionCompoundOr.test.goal:2  if, if
+    /Modules/Condition/Files/FileNotExists/ConditionFileNotExists.test.goal:0  if
+    /Modules/Condition/If/Basic/Condition.test.goal:4  if
+    /Modules/Condition/If/ElseBranch/ConditionElseBranch.test.goal:1  if
+    /Modules/Condition/If/Nested/ConditionNested.test.goal:4  false
+    /Modules/Condition/If/Nested/ConditionNested.test.goal:5  true
+    /Modules/Condition/If/SubStepsFalse/ConditionSubStepsFalse.test.goal:2  true
+    /Modules/Condition/If/SubStepsTrue/ConditionSubStepsTrue.test.goal:2  false
+    /Modules/Condition/Operators/Falsy/ConditionFalsy.test.goal:1  if
+    /Modules/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal:2  true
+    /Modules/Http/ConfigBaseUrl/ConfigBaseUrl.test.goal:4  false
+    /Modules/Http/ConfigHeaders/ConfigHeaders.test.goal:2  false
+    /Modules/Http/DownloadSkip/DownloadSkip.test.goal:1  if
+    /Modules/Http/DownloadSkip/DownloadSkip.test.goal:3  if
+    /Modules/Http/GetRequest/GetRequest.test.goal:1  false
+    /Modules/Http/GetRequest/GetRequest.test.goal:3  false
+    /Modules/Http/PostRequest/PostRequest.test.goal:2  false
+    /Modules/Http/PostRequest/PostRequest.test.goal:4  false
+    /Modules/Http/SignedRequest/SignedRequest.test.goal:1  false
+    /Modules/Http/UnsignedRequest/UnsignedRequest.test.goal:1  false
+    /Modules/Http/UploadFile/UploadFile.test.goal:2  false
+    /Modules/Http/UploadFile/UploadFile.test.goal:4  false
+    /Modules/Test/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal:1  if, else
+    /Modules/Test/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal:1  if, elseif[1]
+    /TestModule/Condition/TestConditionElseIfMatchesRecordsBranchIndex1.test.goal:1  if
+    /TestModule/Condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal:1  if, elseif[1]

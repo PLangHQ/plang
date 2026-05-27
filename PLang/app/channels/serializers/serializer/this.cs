@@ -2,7 +2,10 @@ namespace app.channels.serializers.serializer;
 
 /// <summary>
 /// Interface for serializing and deserializing objects in App.
-/// Primary API is stream-based for efficiency.
+/// Every method returns Data so parse/serialize failures surface as
+/// Data.Error (Success=false) instead of throwing — callers stay on the
+/// universal result-handling path and the legitimate-null case stays
+/// distinguishable from the failure case.
 /// </summary>
 public interface ISerializer
 {
@@ -17,32 +20,37 @@ public interface ISerializer
     string FileExtension { get; }
 
     /// <summary>
-    /// Serializes an object to a stream.
+    /// Serializes an object to a stream. Ok on success; Fail with the
+    /// originating exception on serializer error.
     /// </summary>
-    Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default);
+    Task<data.@this> SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deserializes an object from a stream.
+    /// Deserializes from a stream. Data.Value carries the deserialized object;
+    /// Data.Fail carries the parse error.
     /// </summary>
-    Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default);
+    Task<data.@this> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deserializes an object from a stream.
+    /// Generic stream deserialize. Data<T>.Value carries the typed result;
+    /// Data<T>.FromError on parse failure.
     /// </summary>
-    Task<T?> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default);
+    Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Serializes an object to a string (convenience method).
+    /// Synchronous serialize-to-string convenience. Data.Value carries the
+    /// rendered text; Data.Fail on serializer error.
     /// </summary>
-    string Serialize(object? value, Type? type = null);
+    data.@this<string> Serialize(object? value, Type? type = null);
 
     /// <summary>
-    /// Deserializes an object from a string (convenience method).
+    /// Synchronous string deserialize. Data.Value carries the deserialized
+    /// object; Data.Fail on parse error.
     /// </summary>
-    object? Deserialize(string data, Type type);
+    data.@this Deserialize(string data, Type type);
 
     /// <summary>
-    /// Deserializes an object from a string (convenience method).
+    /// Generic string deserialize. Data<T>.Value carries the typed result.
     /// </summary>
-    T? Deserialize<T>(string data);
+    data.@this<T> Deserialize<T>(string data);
 }

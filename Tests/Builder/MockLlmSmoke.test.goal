@@ -1,6 +1,6 @@
 TestMockLlmSmoke
 / Smoke test: can mock.intercept replace an llm.query call with a canned value?
-- mock.intercept "llm.query", returnValue={"hello": "from mock"}, write to %mockHandle%
+- mock.intercept "llm.query", return={"hello": "from mock"}, write to %mockHandle%
 - llm.query system="ignored", user="ignored", write to %result%
 - write out "mock handle: %mockHandle.CallCount%"
 - write out "result: %result%"

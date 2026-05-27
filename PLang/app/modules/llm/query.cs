@@ -105,4 +105,24 @@ public partial class query : IContext, IBuildValidatable
     // object, tool-call envelope). The provider declares Data<object>; the
     // action forwards cleanly.
     public async Task<data.@this> Run() => await Llm.Query(this);
+
+    /// <summary>
+    /// Compile-time hint: Schema set ⇒ "json" (the LLM is asked to fit a
+    /// structured response). Format set without Schema ⇒ Format.Value. Neither
+    /// ⇒ bare Ok() (defer to runtime / explicit user hint).
+    /// </summary>
+    public Task<data.@this> Build()
+    {
+        var schema = __action?.Parameters?.FirstOrDefault(p =>
+            string.Equals(p.Name, "Schema", System.StringComparison.OrdinalIgnoreCase))?.Value;
+        if (schema != null && !(schema is string s && (string.IsNullOrEmpty(s) || s.Contains('%'))))
+            return Task.FromResult(data.@this.Ok("json"));
+
+        var format = __action?.Parameters?.FirstOrDefault(p =>
+            string.Equals(p.Name, "Format", System.StringComparison.OrdinalIgnoreCase))?.Value as string;
+        if (!string.IsNullOrEmpty(format) && !format.Contains('%'))
+            return Task.FromResult(data.@this.Ok(format));
+
+        return Task.FromResult(data.@this.Ok());
+    }
 }

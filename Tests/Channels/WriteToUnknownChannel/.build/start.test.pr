@@ -17,7 +17,7 @@
             {
               "name": "Data",
               "value": "hi",
-              "type": "string"
+              "type": "object"
             },
             {
               "name": "channel",
@@ -31,11 +31,6 @@
               "module": "error",
               "action": "handle",
               "parameters": [
-                {
-                  "name": "Key",
-                  "value": "ChannelNotFound",
-                  "type": "string"
-                },
                 {
                   "name": "Actions",
                   "value": [
@@ -53,21 +48,13 @@
                           "value": true,
                           "type": "bool"
                         }
-                      ],
-                      "defaults": null,
-                      "modifiers": []
+                      ]
                     }
                   ],
                   "type": "list\u003Caction\u003E"
                 }
               ],
-              "defaults": [
-                {
-                  "name": "ignoreerror",
-                  "value": false,
-                  "type": "bool"
-                }
-              ],
+              "defaults": null,
               "modifiers": []
             }
           ]
@@ -77,7 +64,7 @@
       "guidance": "Write \u0027hi\u0027 to channel \u0027dbg\u0027. Since the channel is unregistered, wrap the write with error.handle keyed to ChannelNotFound and set %unknownChannelError% = true in the recovery actions.",
       "level": "high",
       "confidence": 90,
-      "formal": null,
+      "formal": "output.write(Data=\u0022hi\u0022, channel=\u0022dbg\u0022) | error.handle(Actions=[variable.set(Name=%unknownChannelError%, Value=true, Type=bool)])",
       "source": null,
       "waitForExecution": true
     },
@@ -95,7 +82,7 @@
             {
               "name": "Value",
               "value": "%unknownChannelError%",
-              "type": "bool"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -106,17 +93,17 @@
       "guidance": "Post-condition check: assert that %unknownChannelError% is true after the on-error recovery.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%unknownChannelError%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/WriteToUnknownChannel/Start.test.goal",
-  "prPath": "/WriteToUnknownChannel/.build/start.test.pr",
+  "path": "/Channels/WriteToUnknownChannel/Start.test.goal",
+  "prPath": "/Channels/WriteToUnknownChannel/.build/start.test.pr",
   "hash": "4d483a6b3378c420ecb605b39187ee33c620ae51f1066c7d989a2f32a8675331",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

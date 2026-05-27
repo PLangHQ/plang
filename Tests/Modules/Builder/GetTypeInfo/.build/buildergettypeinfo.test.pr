@@ -5,10 +5,10 @@
   "steps": [
     {
       "index": 0,
-      "text": "get type info, write to %typeInfo%",
-      "lineNumber": 3,
+      "text": "builder.types, write to %typeInfo%",
+      "lineNumber": 4,
       "indent": 0,
-      "comment": "Test that builder.getTypeInfo returns PLang type names and complex type schemas",
+      "comment": "Test that builder.types returns PLang type names and complex type schemas.\nNamed explicitly to avoid planner picking goal.getTypes (variable-types-per-step).",
       "actions": [
         {
           "module": "builder",
@@ -24,7 +24,7 @@
             {
               "name": "Name",
               "value": "%typeInfo%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -43,17 +43,17 @@
         }
       ],
       "intent": null,
-      "guidance": "Use builder.getTypeInfo to retrieve the registered PLang type names and complex type schemas, then store the result in %typeInfo%.",
-      "level": "high",
-      "confidence": 92,
-      "formal": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "builder.types(Actions=%!data%), variable.set(Name=%typeInfo%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 1,
-      "text": "assert %typeInfo% is not empty, \u0022getTypeInfo should return type mapping data\u0022",
-      "lineNumber": 4,
+      "text": "assert %typeInfo% is not empty, \u0022builder.types should return type mapping data\u0022",
+      "lineNumber": 5,
       "indent": 0,
       "comment": null,
       "actions": [
@@ -68,7 +68,7 @@
             },
             {
               "name": "Message",
-              "value": "getTypeInfo should return type mapping data",
+              "value": "builder.types should return type mapping data",
               "type": "string"
             }
           ],
@@ -77,20 +77,20 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that %typeInfo% is not null/empty. This should fail the step if the mapping data is missing.",
-      "level": "high",
-      "confidence": 85,
-      "formal": null,
+      "guidance": null,
+      "level": null,
+      "confidence": null,
+      "formal": "assert.isNotNull(Value=%typeInfo%, Message=\u0022builder.types should return type mapping data\u0022)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/BuilderGetTypeInfo.test.goal",
-  "prPath": "/.build/buildergettypeinfo.test.pr",
-  "hash": "a77d1e5bda9da96cdb0552988db174a880b44a971dde6f8a784826ac06f79b56",
-  "builderVersion": "0.2.2",
+  "path": "/Modules/Builder/GetTypeInfo/BuilderGetTypeInfo.test.goal",
+  "prPath": "/Modules/Builder/GetTypeInfo/.build/buildergettypeinfo.test.pr",
+  "hash": "e281e80e0e4724ae18ab43e6710633c57ef9938f403561ca6bedb1de92c9c10a",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

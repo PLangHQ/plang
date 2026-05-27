@@ -40,7 +40,7 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -62,7 +62,7 @@
       "guidance": "Discover fixture goal files under _fixtures_fail recursively matching *.fixture.goal, then store the discovered test files list into %tests%.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_fixtures_fail\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) , variable.set(Name=%tests%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -93,7 +93,7 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -115,7 +115,7 @@
       "guidance": "Run the discovered tests in %tests% and store the aggregated results into %results%.",
       "level": "high",
       "confidence": 97,
-      "formal": null,
+      "formal": "test.run(Tests=%tests%, Parallel=%!data%, Timeout=%!data%) | variable.set(Name=%results%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -146,7 +146,7 @@
             {
               "name": "Name",
               "value": "%report%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -168,7 +168,7 @@
       "guidance": "Render the test report from %results% and store the report object into %report%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "test.report(Results=%results%) | variable.set(Name=%report%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -186,7 +186,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -202,7 +202,7 @@
       "guidance": "Assert the report\u0027s summaryFail equals 1.",
       "level": "high",
       "confidence": 99,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%report.summaryFail%)",
       "source": null,
       "waitForExecution": true
     },
@@ -219,12 +219,12 @@
           "parameters": [
             {
               "name": "Expected",
-              "value": 1,
-              "type": "int"
+              "value": "%report.variableSnapshotCount%",
+              "type": "object"
             },
             {
               "name": "Actual",
-              "value": "%report.variableSnapshotCount%",
+              "value": 1,
               "type": "object"
             }
           ],
@@ -236,17 +236,17 @@
       "guidance": "Assert the report\u0027s variableSnapshotCount equals 1 (regression check for Variables map rendering).",
       "level": "high",
       "confidence": 99,
-      "formal": null,
+      "formal": "assert.equals(Expected=%report.variableSnapshotCount%, Actual=1)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/Report/TestReportRendersFailureWithVariables.test.goal",
-  "prPath": "/Report/.build/testreportrendersfailurewithvariables.test.pr",
+  "path": "/TestModule/Report/TestReportRendersFailureWithVariables.test.goal",
+  "prPath": "/TestModule/Report/.build/testreportrendersfailurewithvariables.test.pr",
   "hash": "48239745160930279840396bf6ddb529a74a9e8b353384c264638664ffdf1ab0",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

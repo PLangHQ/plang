@@ -1,0 +1,34 @@
+namespace app.channels.channel.noop;
+
+/// <summary>
+/// /dev/null channel — the fallback returned by <see cref="app.channels.@this.Channel"/>
+/// when no channel is registered under the requested name. Writes complete
+/// successfully and drop the payload; reads return NotFound; asks are no-ops.
+///
+/// <para>
+/// Exists so call sites (build-time warnings, runtime advisory writes) don't
+/// need to null-check the channel lookup. A standalone-callable
+/// <c>IClass.Build()</c> that writes a warning outside an active build still
+/// finds a sink — it just goes nowhere, no observers fire.
+/// </para>
+/// </summary>
+public sealed class @this : global::app.channels.channel.@this
+{
+    public @this(string name)
+    {
+        Name = name;
+        Direction = ChannelDirection.Bidirectional;
+    }
+
+    public override System.Threading.Tasks.Task<global::app.data.@this> WriteCore(
+        global::app.data.@this data, System.Threading.CancellationToken ct = default)
+        => System.Threading.Tasks.Task.FromResult(global::app.data.@this.Ok());
+
+    public override System.Threading.Tasks.Task<global::app.data.@this> ReadCore(
+        System.Threading.CancellationToken ct = default)
+        => System.Threading.Tasks.Task.FromResult(global::app.data.@this.NotFound());
+
+    public override System.Threading.Tasks.Task<global::app.data.@this> AskCore(
+        global::app.modules.output.ask action, System.Threading.CancellationToken ct = default)
+        => System.Threading.Tasks.Task.FromResult(global::app.data.@this.Ok());
+}

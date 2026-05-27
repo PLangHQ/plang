@@ -1,0 +1,29 @@
+rules:
+  - id: plang-verified-must-have-private-setter
+    languages: [generic]
+    paths:
+      include:
+        - "*.cs"
+      exclude:
+        - "**/*Tests/**"
+        - "**/bin/**"
+        - "**/obj/**"
+        - "**/.bot/**"
+        - "**/.build/**"
+        - "**/os/**"
+    severity: ERROR
+    message: |
+      A property named `Verified` or `Signature` MUST be `{ get; private set; }`
+      (or no setter at all) and ONLY be flipped by the cryptographic
+      verification pipeline. A public setter on a property whose name promises
+      trust is a critical attack surface — anyone holding a reference can mark
+      arbitrary data as trusted.
+      Reference: character file "PLang Threat Model" + memory/discipline.md.
+    # Semgrep's C# parser can't accept standalone property declarations as
+    # patterns, so this is a textual rule. Matches:
+    #   public ... Verified { get; set; }
+    #   public ... Signature { ... set; ... }
+    # without the word `private` (or `protected`/`internal`) between { and set;
+    patterns:
+      - pattern-regex: '\bpublic\s+[^=;{]+\b(Verified|Signature)\s*\{[^}]*\bset\s*;'
+      - pattern-not-regex: '\b(private|protected|internal)\s+set\b'

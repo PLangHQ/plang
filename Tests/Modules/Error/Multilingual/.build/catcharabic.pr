@@ -17,7 +17,7 @@
             {
               "name": "Name",
               "value": "%caughtArabic%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -30,7 +30,13 @@
               "type": "string"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -38,7 +44,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "variable.set(Name=%caughtArabic%, Value=true, Type=bool)",
       "source": null,
       "waitForExecution": true
     }
@@ -48,7 +54,7 @@
   "path": "/Modules/Error/Multilingual/CatchArabic.goal",
   "prPath": "/Modules/Error/Multilingual/.build/catcharabic.pr",
   "hash": "64dc901c857473f38e7ff10967d149b8f277a68d993a14db776d641cbd649e86",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

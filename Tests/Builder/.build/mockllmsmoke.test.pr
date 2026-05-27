@@ -5,7 +5,7 @@
   "steps": [
     {
       "index": 0,
-      "text": "mock.intercept \u0022llm.query\u0022, returnValue={\u0022hello\u0022: \u0022from mock\u0022}, write to %mockHandle%",
+      "text": "mock.intercept \u0022llm.query\u0022, return={\u0022hello\u0022: \u0022from mock\u0022}, write to %mockHandle%",
       "lineNumber": 3,
       "indent": 0,
       "comment": "Smoke test: can mock.intercept replace an llm.query call with a canned value?",
@@ -15,16 +15,16 @@
           "action": "intercept",
           "parameters": [
             {
-              "name": "ActionPattern",
+              "name": "Pattern",
               "value": "llm.query",
               "type": "string"
             },
             {
-              "name": "ReturnValue",
+              "name": "Return",
               "value": {
                 "hello": "from mock"
               },
-              "type": "json"
+              "type": "dictionary\u00602"
             }
           ],
           "defaults": null,
@@ -37,12 +37,12 @@
             {
               "name": "Name",
               "value": "%mockHandle%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "json"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -56,10 +56,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "mock.intercept(Pattern=\u0022llm.query\u0022, Return={\u0022hello\u0022:\u0022from mock\u0022}) | variable.set(Name=%mockHandle%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -79,34 +76,25 @@
               "value": [
                 {
                   "role": "system",
-                  "content": "ignored"
+                  "content": "ignored",
+                  "images": [],
+                  "toolCallId": null,
+                  "toolCalls": null
                 },
                 {
                   "role": "user",
-                  "content": "ignored"
+                  "content": "ignored",
+                  "images": [],
+                  "toolCallId": null,
+                  "toolCalls": null
                 }
               ],
-              "type": "list\u003Cllmmessage\u003E"
+              "type": "list\u00601"
             },
             {
               "name": "ContinuePreviousConversation",
               "value": false,
               "type": "bool"
-            },
-            {
-              "name": "Temperature",
-              "value": 0,
-              "type": "double"
-            },
-            {
-              "name": "MaxTokens",
-              "value": 16000,
-              "type": "int"
-            },
-            {
-              "name": "MaxToolCalls",
-              "value": 10,
-              "type": "int"
             },
             {
               "name": "Cache",
@@ -115,6 +103,21 @@
             }
           ],
           "defaults": [
+            {
+              "name": "temperature",
+              "value": 0,
+              "type": "double"
+            },
+            {
+              "name": "maxtokens",
+              "value": 16000,
+              "type": "int"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
             {
               "name": "maxvalidationretries",
               "value": 0,
@@ -130,7 +133,7 @@
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -149,10 +152,7 @@
         }
       ],
       "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
+      "formal": "llm.query(Messages=[llmmessage], ContinuePreviousConversation=false, Cache=true) | variable.set(Name=%result%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -170,7 +170,7 @@
             {
               "name": "Data",
               "value": "mock handle: %mockHandle.CallCount%",
-              "type": "string"
+              "type": "tstring"
             }
           ],
           "defaults": null,
@@ -178,10 +178,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the mock handle call count to output. The step text directs the produced value to output.write.",
-      "level": "high",
-      "confidence": 95,
-      "formal": null,
+      "formal": "output.write(Data=\u0022mock handle: %mockHandle.CallCount%\u0022, channel omitted)",
       "source": null,
       "waitForExecution": true
     },
@@ -198,8 +195,8 @@
           "parameters": [
             {
               "name": "Data",
-              "value": "%result%",
-              "type": "object"
+              "value": "result: %result%",
+              "type": "tstring"
             }
           ],
           "defaults": null,
@@ -207,10 +204,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Write the mocked llm result object to output. The step text directs %result% to output.write.",
-      "level": "high",
-      "confidence": 95,
-      "formal": null,
+      "formal": "output.write(Data=\u0022result: %result%\u0022(tstring))",
       "source": null,
       "waitForExecution": true
     },
@@ -241,10 +235,7 @@
         }
       ],
       "intent": null,
-      "guidance": "Post-condition assertion that the mocked result contains the expected hello value.",
-      "level": "high",
-      "confidence": 90,
-      "formal": null,
+      "formal": "assert.equals(Expected=\u0022from mock\u0022, Actual=%result.hello%)",
       "source": null,
       "waitForExecution": true
     }
@@ -253,8 +244,8 @@
   "visibility": 1,
   "path": "/Builder/MockLlmSmoke.test.goal",
   "prPath": "/Builder/.build/mockllmsmoke.test.pr",
-  "hash": "997ecdb08f6a74211d64a55694c9fe24f618fa348b39e20122fd82a4e85446b2",
-  "builderVersion": "0.2.2",
+  "hash": "67312fffea2b0240c00c8f544db3d2c5e59bff7eabfc44604b46155c4cbf3f82",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

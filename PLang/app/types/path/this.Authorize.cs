@@ -1,5 +1,6 @@
 using app.types;
 using app.Utils;
+using app.data;
 using PermissionRecord = global::app.types.path.permission.@this;
 using Verb = global::app.types.path.permission.verb.@this;
 using Read = global::app.types.path.permission.verb.Read;
@@ -57,11 +58,16 @@ public partial class @this
             };
             var askResult = await Context!.App.RunAction(askAction, Context);
 
-            // Stateless suspend: Type.Exit() bubbles up unchanged.
-            if (askResult.Type?.ClrType.Exit() == true) return askResult;
+            // Stateless suspend bubbles up unchanged. ShouldExit honors the
+            // Value-side opt-out so a resolved Data<Ask> (Answer bound) flows
+            // through; a pending Ask (Answer null) or a Type-only Exit Data
+            // short-circuits as before.
+            if (askResult.ShouldExit()) return askResult;
             if (!askResult.Success) return askResult;
 
-            var answer = askResult.Value?.ToString()?.Trim();
+            // output.ask returns Data<Ask>; the user's reply rides on Ask.Answer.
+            var ask = askResult.Value as modules.output.Ask;
+            var answer = ask?.Answer?.Trim();
             switch (answer)
             {
                 case "a": return await SignAndStore(actor, verb, persist: true);

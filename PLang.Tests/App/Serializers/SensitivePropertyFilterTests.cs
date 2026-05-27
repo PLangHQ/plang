@@ -60,7 +60,7 @@ public class SensitivePropertyFilterTests
         };
 
         var serializer = new global::app.channels.serializers.serializer.Json();
-        var json = serializer.Serialize(identity);
+        var json = serializer.Serialize(identity).Value!;
 
         await Assert.That(json).Contains("pubkey123");
         await Assert.That(json).DoesNotContain("secret456");
@@ -92,7 +92,7 @@ public class SensitivePropertyFilterTests
         var obj = new { Name = "test", Value = 42 };
 
         var serializer = new global::app.channels.serializers.serializer.Json();
-        var json = serializer.Serialize(obj);
+        var json = serializer.Serialize(obj).Value!;
 
         await Assert.That(json).Contains("test");
         await Assert.That(json).Contains("42");
@@ -112,7 +112,7 @@ public class SensitivePropertyFilterTests
         // ForView should also strip [Sensitive] in addition to view filtering
         var serializer = new global::app.channels.serializers.serializer.Json();
         var storeSerializer = serializer.ForView(View.Store);
-        var storeJson = storeSerializer.Serialize(identity);
+        var storeJson = storeSerializer.Serialize(identity).Value!;
 
         // Identity doesn't use view attributes, so Store view serializes all non-sensitive
         await Assert.That(storeJson).DoesNotContain("secret456");
@@ -204,7 +204,7 @@ public class SensitivePropertyFilterTests
         var identity = result.Value as Identity;
 
         var serializer = new global::app.channels.serializers.serializer.Json();
-        var json = serializer.Serialize(identity);
+        var json = serializer.Serialize(identity).Value!;
 
         // Deserialize back to check values — raw Contains() fails when base64 '+' is escaped to '\u002B'
         var deserialized = JsonSerializer.Deserialize<JsonElement>(json);

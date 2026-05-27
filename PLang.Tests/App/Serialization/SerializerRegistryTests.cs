@@ -266,19 +266,20 @@ public class SerializerRegistryTests
         public string ContentType => "custom/type";
         public string FileExtension => ".custom";
 
-        public Task SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
-            => Task.CompletedTask;
+        public Task<Data> SerializeAsync(Stream stream, object? value, Type? type = null, CancellationToken cancellationToken = default)
+            => Task.FromResult(Data.Ok());
 
-        public Task<object?> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
-            => Task.FromResult<object?>(null);
+        public Task<Data> DeserializeAsync(Stream stream, Type type, CancellationToken cancellationToken = default)
+            => Task.FromResult(Data.Ok());
 
-        public Task<T?> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
-            => Task.FromResult<T?>(default);
+        public Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+            => Task.FromResult(global::app.data.@this<T>.Ok(default!));
 
-        public string Serialize(object? value, Type? type = null) => value?.ToString() ?? "";
+        public global::app.data.@this<string> Serialize(object? value, Type? type = null)
+            => global::app.data.@this<string>.Ok(value?.ToString() ?? "");
 
-        public object? Deserialize(string data, Type type) => null;
+        public Data Deserialize(string data, Type type) => Data.Ok();
 
-        public T? Deserialize<T>(string data) => default;
+        public global::app.data.@this<T> Deserialize<T>(string data) => global::app.data.@this<T>.Ok(default!);
     }
 }

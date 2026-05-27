@@ -241,6 +241,8 @@ public sealed class @this
         [".yml"] = "text/yaml",
         [".ini"] = "text/plain",
         [".llm"] = "text/plain",
+        [".template"] = "text/plain",
+        [".liquid"] = "text/plain",
 
         // plang
         // .goal is plain source text. The path-typed FilePath.ReadText still

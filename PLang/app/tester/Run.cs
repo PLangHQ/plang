@@ -4,7 +4,7 @@ using app.errors;
 namespace app.tester;
 
 /// <summary>
-/// Execution record for a single test. Created per Ready File by test.run.
+/// Execution record for a single test. Created per Ready Test by test.run.
 /// Lives on the per-test child App's Testing.CurrentTest during execution,
 /// then added to the parent's Testing.Results when the test completes.
 /// </summary>
@@ -12,8 +12,8 @@ public sealed class Run
 {
     private readonly Stopwatch _stopwatch;
 
-    /// <summary>The discovered File this run is executing.</summary>
-    public File File { get; }
+    /// <summary>The discovered Test this run is executing.</summary>
+    public Test.@this Test { get; }
 
     /// <summary>Current lifecycle status. Transitions on Complete().</summary>
     public Status Status { get; private set; }
@@ -24,16 +24,23 @@ public sealed class Run
     /// <summary>Error captured when a test fails or errors. Carries AssertionError.Variables on assertion failures.</summary>
     public IError? Error { get; private set; }
 
-    /// <summary>Output produced via output.write during the test. Rendered on failure when verbose is off.</summary>
-    public string? CapturedOutput { get; set; }
+    /// <summary>Text the test produced via the output channel during execution. Rendered on failure when verbose is off.</summary>
+    public string? Output { get; set; }
 
-    /// <summary>Tags added during the run via test.tag. Distinct from File.Tags (which is discovery-time).</summary>
+    /// <summary>
+    /// Per-step wall-clock for the entry goal's top-level steps, in source
+    /// order. Nested sub-goal steps roll up into the calling step naturally
+    /// (AfterStep on the caller doesn't fire until the call returns).
+    /// </summary>
+    public Timings Timings { get; } = new();
+
+    /// <summary>Tags added during the run via test.tag. Distinct from Test.Tags (which is discovery-time).</summary>
     public HashSet<string> UserTags { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    public Run(File file)
+    public Run(Test.@this test)
     {
-        File = file;
-        Status = file.Status == Status.Ready ? Status.Ready : file.Status;
+        Test = test;
+        Status = test.Status == Status.Ready ? Status.Ready : test.Status;
         _stopwatch = Stopwatch.StartNew();
     }
 

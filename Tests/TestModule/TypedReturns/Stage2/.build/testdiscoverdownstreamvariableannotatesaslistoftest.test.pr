@@ -1,0 +1,186 @@
+{
+  "name": "TestDiscoverDownstreamVariableAnnotatesAsListOfTest",
+  "description": null,
+  "comment": null,
+  "steps": [
+    {
+      "index": 0,
+      "text": "builder.goals from \u0027probes/discover/\u0027, write to %goals%",
+      "lineNumber": 6,
+      "indent": 0,
+      "comment": "Builds a goal calling test.discover, then a downstream step. The trace\u0027s\n\u0022Variables in scope\u0022 snapshot for the downstream step must show\n%tests%(list\u003Ctest\u003E), not (object). Verified via goal.getTypes \u2014 its\noutput is the same per-step snapshot the compile LLM sees.",
+      "actions": [
+        {
+          "module": "builder",
+          "action": "goals",
+          "parameters": [
+            {
+              "name": "Path",
+              "value": "probes/discover/",
+              "type": "path"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%goals%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "list"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "builder.goals(Path=\u0027probes/discover/\u0027) | variable.set(Name=%goals%, Value=%!data%)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "goal.getTypes %goals[0]%, write to %snapshot%",
+      "lineNumber": 7,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "goal",
+          "action": "getTypes",
+          "parameters": [
+            {
+              "name": "Goal",
+              "value": "%goals[0]%",
+              "type": "goal"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        },
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%snapshot%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%!data%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "goal.getTypes(Goal=%goals[0]%), variable.set(Name=%snapshot%, Value=%!data%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %annot% = %snapshot[1].tests%",
+      "lineNumber": 8,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%annot%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": "%snapshot[1].tests%",
+              "type": "object"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "variable.set(Name=%annot%, Value=%snapshot[1].tests%, Type=object)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals expected=\u0027list\u003Ctest\u003E\u0027, actual=%annot%",
+      "lineNumber": 9,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "assert",
+          "action": "equals",
+          "parameters": [
+            {
+              "name": "Expected",
+              "value": "list\u003Ctest\u003E",
+              "type": "string"
+            },
+            {
+              "name": "Actual",
+              "value": "%annot%",
+              "type": "object"
+            }
+          ],
+          "defaults": null,
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "formal": "assert.equals(Expected=\u0022list\u003Ctest\u003E\u0022, Actual=%annot%)",
+      "source": null,
+      "waitForExecution": true
+    }
+  ],
+  "goals": [],
+  "visibility": 1,
+  "path": "/TestModule/TypedReturns/Stage2/TestDiscoverDownstreamVariableAnnotatesAsListOfTest.test.goal",
+  "prPath": "/TestModule/TypedReturns/Stage2/.build/testdiscoverdownstreamvariableannotatesaslistoftest.test.pr",
+  "hash": "11184112e94f70a4b6f39b54f7066bfc89b0d41ac594916f4d48a843dec727fb",
+  "builderVersion": null,
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true,
+  "inputParameters": null
+}

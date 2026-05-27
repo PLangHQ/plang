@@ -20,15 +20,19 @@
                 {
                   "role": "system",
                   "content": "You are a helpful assistant",
-                  "images": []
+                  "images": [],
+                  "toolCallId": null,
+                  "toolCalls": null
                 },
                 {
                   "role": "user",
                   "content": "Say hello",
-                  "images": []
+                  "images": [],
+                  "toolCallId": null,
+                  "toolCalls": null
                 }
               ],
-              "type": "list\u003Cllmmessage\u003E"
+              "type": "list\u00601"
             },
             {
               "name": "Temperature",
@@ -41,7 +45,28 @@
               "type": "int"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "continuepreviousconversation",
+              "value": false,
+              "type": "bool"
+            },
+            {
+              "name": "maxtoolcalls",
+              "value": 10,
+              "type": "int"
+            },
+            {
+              "name": "maxvalidationretries",
+              "value": 0,
+              "type": "int"
+            },
+            {
+              "name": "cache",
+              "value": true,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         },
         {
@@ -51,7 +76,7 @@
             {
               "name": "Name",
               "value": "%result%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -59,7 +84,13 @@
               "type": "object"
             }
           ],
-          "defaults": null,
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
           "modifiers": []
         }
       ],
@@ -67,7 +98,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": null,
+      "formal": "llm.query(Messages=[llmmessage], Temperature=0.5, MaxTokens=50) , variable.set(Name=%result%, Value=%!data%, type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -96,7 +127,7 @@
       "guidance": "Post-condition check: assert that %result% is not null. This is an unconditional invariant after step 0 produced %result%.",
       "level": "high",
       "confidence": 96,
-      "formal": null,
+      "formal": "assert.isNotNull(Value=%result%)",
       "source": null,
       "waitForExecution": true
     }
@@ -106,7 +137,7 @@
   "path": "/Llm/LlmProperties.test.goal",
   "prPath": "/Llm/.build/llmproperties.test.pr",
   "hash": "140e13322004adb05add061a579030e7ac8b0670b68cea3a8299456dd857c237",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

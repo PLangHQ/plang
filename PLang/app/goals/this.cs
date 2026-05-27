@@ -351,15 +351,20 @@ public sealed class @this
             // PathJsonConverter baked in — Path fields land wired.
             if (trimmed.StartsWith('['))
             {
-                goals = app.System.Channels.Serializers.Deserialize<List<goal.@this>>(
+                var listResult = app.System.Channels.Serializers.Deserialize<List<goal.@this>>(
                     new DeserializeOptions { Value = content, Extension = ext });
+                if (!listResult.Success)
+                    return data.@this.FromError(listResult.Error!);
+                goals = listResult.Value;
             }
             else
             {
-                var single = app.System.Channels.Serializers.Deserialize<goal.@this>(
+                var singleResult = app.System.Channels.Serializers.Deserialize<goal.@this>(
                     new DeserializeOptions { Value = content, Extension = ext });
-                if (single != null)
-                    goals = new List<goal.@this> { single };
+                if (!singleResult.Success)
+                    return data.@this.FromError(singleResult.Error!);
+                if (singleResult.Value != null)
+                    goals = new List<goal.@this> { singleResult.Value };
             }
 
             if (goals == null || goals.Count == 0)

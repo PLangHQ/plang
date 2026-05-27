@@ -29,7 +29,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "data"
+              "type": "object"
             }
           ],
           "defaults": [
@@ -46,7 +46,7 @@
       "guidance": "Load the registered action catalog via builder.actions and store it in %actions%.",
       "level": "high",
       "confidence": 95,
-      "formal": "builder.actions(Actions=%!data%) , variable.set(Name=%actions%, Value=%!data%, type=data)",
+      "formal": "builder.actions(Actions=%!data%), variable.set(Name=%actions%, Value=%!data%, Type=object)",
       "source": null,
       "waitForExecution": true
     },
@@ -82,7 +82,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "string"
             }
           ],
           "defaults": [
@@ -99,13 +99,13 @@
       "guidance": "Render the summary template from the given template path and store rendered markdown in %actionSummary%.",
       "level": "medium",
       "confidence": 70,
-      "formal": "ui.render(Template=\u0022/system/actions/v2/summary.planner.md\u0022) , variable.set(Name=%actionSummary%, Value=%!data%, Type=string)",
+      "formal": "ui.render(Template=\u0022/system/actions/v2/summary.planner.md\u0022) | variable.set(Name=%actionSummary%, Value=%!data%, type=\u0022string\u0022)",
       "source": null,
       "waitForExecution": true
     },
     {
       "index": 2,
-      "text": "render template \u0022/system/builder/templates/v2/goalFormatForLlm.v2.template\u0022, write to %goalForLlm%",
+      "text": "render template \u0022/system/builder/llm/templates/goalFormat.template\u0022, write to %goalForLlm%",
       "lineNumber": 8,
       "indent": 0,
       "comment": null,
@@ -116,7 +116,7 @@
           "parameters": [
             {
               "name": "Template",
-              "value": "/system/builder/templates/v2/goalFormatForLlm.v2.template",
+              "value": "/system/builder/llm/templates/goalFormat.template",
               "type": "string"
             }
           ],
@@ -135,7 +135,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "string"
             }
           ],
           "defaults": [
@@ -152,7 +152,7 @@
       "guidance": "Render the goal-format template and store it in %goalForLlm%.",
       "level": "medium",
       "confidence": 70,
-      "formal": "ui.render(Template=\u0022/system/builder/templates/v2/goalFormatForLlm.v2.template\u0022) , variable.set(Name=%goalForLlm%, Value=%!data%, Type=string)",
+      "formal": "ui.render(Template=\u0022/system/builder/llm/templates/goalFormat.template\u0022) | variable.set(Name=%goalForLlm%, Value=%!data%, type=\u0022string\u0022)",
       "source": null,
       "waitForExecution": true
     },
@@ -188,7 +188,7 @@
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "string"
             }
           ],
           "defaults": [
@@ -205,7 +205,7 @@
       "guidance": "Render the Plan LLM prompt template and store it in %planPrompt%.",
       "level": "medium",
       "confidence": 70,
-      "formal": "ui.render(Template=\u0022/system/builder/llm/Plan.llm\u0022) | variable.set(Name=%planPrompt%, Value=%!data%)",
+      "formal": "ui.render(Template=\u0022/system/builder/llm/Plan.llm\u0022) | variable.set(Name=%planPrompt%, Value=%!data%, type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -279,7 +279,7 @@
               "value": {
                 "name": "QueryAndValidatePlan",
                 "parallel": false,
-                "parameters": [],
+                "parameters": null,
                 "prPath": "/system/builder/BuildGoal/.build/plan.pr"
               },
               "type": "goal.call"
@@ -301,8 +301,7 @@
                         {
                           "name": "GoalName",
                           "value": {
-                            "name": "LlmFixer",
-                            "parameters": []
+                            "name": "LlmFixer"
                           },
                           "type": "goal.call"
                         }
@@ -351,11 +350,6 @@
               "name": "Value",
               "value": "%planPrompt%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -372,7 +366,7 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "variable.set(Name=%plan.system%, Value=%planPrompt%, Type=object)",
+      "formal": "variable.set(Name=%plan.system%, Value=%planPrompt%, Type=string)",
       "source": null,
       "waitForExecution": true
     },
@@ -396,11 +390,6 @@
               "name": "Value",
               "value": "%goalForLlm%",
               "type": "object"
-            },
-            {
-              "name": "Type",
-              "value": "object",
-              "type": "string"
             }
           ],
           "defaults": [
@@ -417,7 +406,55 @@
       "guidance": null,
       "level": null,
       "confidence": null,
-      "formal": "variable.set(Name=%plan.user%, Value=%goalForLlm%, Type=object)",
+      "formal": "variable.set(Name=%plan.user%, Value=%goalForLlm%, Type=string)",
+      "source": null,
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "set %plan.usage% = {model: %plan.Model%, promptTokens: %plan.PromptTokens%, cachedTokens: %plan.CachedTokens%, completionTokens: %plan.CompletionTokens%, totalTokens: %plan.TotalTokens%, cost: %plan.Cost%, cached: %plan.Cached%}",
+      "lineNumber": 22,
+      "indent": 0,
+      "comment": null,
+      "actions": [
+        {
+          "module": "variable",
+          "action": "set",
+          "parameters": [
+            {
+              "name": "Name",
+              "value": "%plan.usage%",
+              "type": "variable"
+            },
+            {
+              "name": "Value",
+              "value": {
+                "model": "%plan.Model%",
+                "promptTokens": "%plan.PromptTokens%",
+                "cachedTokens": "%plan.CachedTokens%",
+                "completionTokens": "%plan.CompletionTokens%",
+                "totalTokens": "%plan.TotalTokens%",
+                "cost": "%plan.Cost%",
+                "cached": "%plan.Cached%"
+              },
+              "type": "dictionary\u00602"
+            }
+          ],
+          "defaults": [
+            {
+              "name": "asdefault",
+              "value": false,
+              "type": "bool"
+            }
+          ],
+          "modifiers": []
+        }
+      ],
+      "intent": null,
+      "guidance": "Stamp the usage block onto %plan% so it carries into the trace alongside system/user prompts.",
+      "level": "high",
+      "confidence": 90,
+      "formal": "variable.set(Name=%plan.usage%, Value={model:%plan.Model%, promptTokens:%plan.PromptTokens%, cachedTokens:%plan.CachedTokens%, completionTokens:%plan.CompletionTokens%, totalTokens:%plan.TotalTokens%, cost:%plan.Cost%, cached:%plan.Cached%}, Type=json)",
       "source": null,
       "waitForExecution": true
     }
@@ -431,7 +468,7 @@
         {
           "index": 0,
           "text": "llm.query Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string]}]}, cache=%!build.cache%, write to %plan%",
-          "lineNumber": 25,
+          "lineNumber": 26,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -458,11 +495,6 @@
                     ]
                   },
                   "type": "dictionary\u00602"
-                },
-                {
-                  "name": "Cache",
-                  "value": "%!build.cache%",
-                  "type": "bool"
                 }
               ],
               "defaults": [
@@ -490,6 +522,11 @@
                   "name": "maxvalidationretries",
                   "value": 0,
                   "type": "int"
+                },
+                {
+                  "name": "cache",
+                  "value": true,
+                  "type": "bool"
                 }
               ],
               "modifiers": [
@@ -542,14 +579,14 @@
           "guidance": null,
           "level": null,
           "confidence": null,
-          "formal": "llm.query(Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string]}]}, Cache=%!build.cache%) | cache.wrap(DurationMs=%!build.cache%, Sliding=false) | variable.set(Name=%plan%, Value=%!data%, Type=object)",
+          "formal": "llm.query(Messages=%messages%, Schema={description: string, steps: [{index: int, actions: [string]}]}) | cache.wrap(DurationMs=%!build.cache%, Sliding=false) , variable.set(Name=%plan%, Value=%!data%, type=object)",
           "source": null,
           "waitForExecution": true
         },
         {
           "index": 1,
           "text": "call Validate",
-          "lineNumber": 26,
+          "lineNumber": 27,
           "indent": 0,
           "comment": null,
           "actions": [
@@ -562,8 +599,8 @@
                   "value": {
                     "name": "Validate",
                     "parallel": false,
-                    "parameters": [],
-                    "prPath": "/system/builder/BuildGoal/.build/validate.pr"
+                    "parameters": null,
+                    "prPath": "/workspace/plang/PlangConsole/bin/Debug/net10.0/os/system/builder/BuildGoal/.build/validate.pr"
                   },
                   "type": "goal.call"
                 }
@@ -589,7 +626,7 @@
       "builderVersion": null,
       "isSetup": false,
       "isEvent": false,
-      "isSystem": true,
+      "isSystem": false,
       "isTest": false,
       "inputParameters": null
     }
@@ -597,11 +634,11 @@
   "visibility": 1,
   "path": "/system/builder/BuildGoal/Plan.goal",
   "prPath": "/system/builder/BuildGoal/.build/plan.pr",
-  "hash": "7243a9a09747c554510180e481196cafbe20bd18e6af449fbff3e2c62710d603",
+  "hash": "d0a0114f61ac57a74a4b39b5b16ff50f862f0ef873ab6cadcff6492457d14024",
   "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
-  "isSystem": true,
+  "isSystem": false,
   "isTest": false,
   "inputParameters": null
 }

@@ -40,7 +40,7 @@
             {
               "name": "Name",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -62,7 +62,7 @@
       "guidance": "Discover fixture goals under _timeout recursively matching *.fixture.goal, then store the resulting list into %tests%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "test.discover(Path=\u0022_timeout\u0022, Pattern=\u0022*.fixture.goal\u0022, Recursive=true) | variable.set(Name=%tests%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -80,7 +80,7 @@
             {
               "name": "ListName",
               "value": "%tests%",
-              "type": "string"
+              "type": "variable"
             }
           ],
           "defaults": null,
@@ -93,12 +93,12 @@
             {
               "name": "Name",
               "value": "%count%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "int"
             }
           ],
           "defaults": [
@@ -115,7 +115,7 @@
       "guidance": "Count discovered tests in %tests% and store the count into %count%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "list.count(ListName=%tests%) , variable.set(Name=%count%, Value=%!data%, Type=int)",
       "source": null,
       "waitForExecution": true
     },
@@ -133,7 +133,7 @@
             {
               "name": "Expected",
               "value": 1,
-              "type": "int"
+              "type": "object"
             },
             {
               "name": "Actual",
@@ -149,7 +149,7 @@
       "guidance": "Assert the discovered count equals 1.",
       "level": "high",
       "confidence": 98,
-      "formal": null,
+      "formal": "assert.equals(Expected=1, Actual=%count%)",
       "source": null,
       "waitForExecution": true
     },
@@ -170,11 +170,6 @@
               "type": "list\u003Ctestfile\u003E"
             },
             {
-              "name": "Parallel",
-              "value": 0,
-              "type": "int"
-            },
-            {
               "name": "Timeout",
               "value": 1,
               "type": "int"
@@ -190,7 +185,7 @@
             {
               "name": "Name",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
@@ -212,7 +207,7 @@
       "guidance": "Run the discovered tests with timeout=1 and store the results list into %results%.",
       "level": "medium",
       "confidence": 70,
-      "formal": null,
+      "formal": "test.run(Tests=%tests%, Timeout=1) | variable.set(Name=%results%, Value=%!data%)",
       "source": null,
       "waitForExecution": true
     },
@@ -230,7 +225,7 @@
             {
               "name": "ListName",
               "value": "%results%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Key",
@@ -245,7 +240,7 @@
             {
               "name": "Value",
               "value": "Timeout",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -258,12 +253,12 @@
             {
               "name": "Name",
               "value": "%hasTimeout%",
-              "type": "string"
+              "type": "variable"
             },
             {
               "name": "Value",
               "value": "%!data%",
-              "type": "object"
+              "type": "bool"
             }
           ],
           "defaults": [
@@ -280,7 +275,7 @@
       "guidance": "Check whether any test result has Status == \u0027Timeout\u0027 and store boolean into %hasTimeout%.",
       "level": "high",
       "confidence": 95,
-      "formal": null,
+      "formal": "list.any(ListName=%results%, Key=\u0022Status\u0022, Operator=\u0022==\u0022, Value=\u0022Timeout\u0022), variable.set(Name=%hasTimeout%, Value=%!data%, Type=bool)",
       "source": null,
       "waitForExecution": true
     },
@@ -298,12 +293,7 @@
             {
               "name": "Value",
               "value": "%hasTimeout%",
-              "type": "object?"
-            },
-            {
-              "name": "Message",
-              "value": "",
-              "type": "string"
+              "type": "object"
             }
           ],
           "defaults": null,
@@ -314,17 +304,17 @@
       "guidance": "Post-condition assertion that %hasTimeout% is true; fails the step if not.",
       "level": "medium",
       "confidence": 55,
-      "formal": null,
+      "formal": "assert.isTrue(Value=%hasTimeout%)",
       "source": null,
       "waitForExecution": true
     }
   ],
   "goals": [],
   "visibility": 1,
-  "path": "/TestRunEnforcesTimeout.test.goal",
-  "prPath": "/.build/testrunenforcestimeout.test.pr",
+  "path": "/Modules/Test/Run/TestRunEnforcesTimeout.test.goal",
+  "prPath": "/Modules/Test/Run/.build/testrunenforcestimeout.test.pr",
   "hash": "81ad25af43e071c5d7705ec329d54652a0e0bd6dcb4cacc615ada7477b68527b",
-  "builderVersion": "0.2.2",
+  "builderVersion": null,
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

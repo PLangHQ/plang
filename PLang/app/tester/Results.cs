@@ -8,7 +8,7 @@ namespace app.tester;
 /// Run-wide collection of Run entries. Per-test Apps add their Run here
 /// concurrently during parallel execution — thread-safety is required.
 /// </summary>
-[PlangType("results")]
+[PlangType]
 public sealed class Results : IEnumerable<Run>
 {
     private readonly ConcurrentQueue<Run> _items = new();

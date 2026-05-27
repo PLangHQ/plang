@@ -26,7 +26,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var json = serializer.Serialize("hello");
+        var json = serializer.Serialize("hello").Value!;
 
         await Assert.That(json).IsEqualTo("\"hello\"");
     }
@@ -36,7 +36,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var json = serializer.Serialize(42);
+        var json = serializer.Serialize(42).Value!;
 
         await Assert.That(json).IsEqualTo("42");
     }
@@ -46,8 +46,8 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var jsonTrue = serializer.Serialize(true);
-        var jsonFalse = serializer.Serialize(false);
+        var jsonTrue = serializer.Serialize(true).Value!;
+        var jsonFalse = serializer.Serialize(false).Value!;
 
         await Assert.That(jsonTrue).IsEqualTo("true");
         await Assert.That(jsonFalse).IsEqualTo("false");
@@ -58,7 +58,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var json = serializer.Serialize(null);
+        var json = serializer.Serialize(null).Value!;
 
         await Assert.That(json).IsEqualTo("null");
     }
@@ -69,7 +69,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var obj = new { FirstName = "John", LastName = "Doe" };
 
-        var json = serializer.Serialize(obj);
+        var json = serializer.Serialize(obj).Value!;
 
         await Assert.That(json).Contains("firstName");
         await Assert.That(json).Contains("lastName");
@@ -81,7 +81,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var obj = new TestClass { Name = "John", Value = null };
 
-        var json = serializer.Serialize(obj);
+        var json = serializer.Serialize(obj).Value!;
 
         await Assert.That(json).DoesNotContain("value");
     }
@@ -92,7 +92,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var arr = new[] { 1, 2, 3 };
 
-        var json = serializer.Serialize(arr);
+        var json = serializer.Serialize(arr).Value!;
 
         await Assert.That(json).IsEqualTo("[1,2,3]");
     }
@@ -103,7 +103,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var dict = new Dictionary<string, int> { { "a", 1 }, { "b", 2 } };
 
-        var json = serializer.Serialize(dict);
+        var json = serializer.Serialize(dict).Value!;
 
         await Assert.That(json).Contains("\"a\":1");
         await Assert.That(json).Contains("\"b\":2");
@@ -114,7 +114,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var result = serializer.Deserialize<string>("\"hello\"");
+        var result = serializer.Deserialize<string>("\"hello\"").Value!;
 
         await Assert.That(result).IsEqualTo("hello");
     }
@@ -124,7 +124,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var result = serializer.Deserialize<int>("42");
+        var result = serializer.Deserialize<int>("42").Value!;
 
         await Assert.That(result).IsEqualTo(42);
     }
@@ -134,8 +134,8 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var resultTrue = serializer.Deserialize<bool>("true");
-        var resultFalse = serializer.Deserialize<bool>("false");
+        var resultTrue = serializer.Deserialize<bool>("true").Value!;
+        var resultFalse = serializer.Deserialize<bool>("false").Value!;
 
         await Assert.That(resultTrue).IsTrue();
         await Assert.That(resultFalse).IsFalse();
@@ -146,7 +146,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var result = serializer.Deserialize<string>("null");
+        var result = serializer.Deserialize<string>("null").Value!;
 
         await Assert.That(result).IsNull();
     }
@@ -156,7 +156,7 @@ public class JsonStreamSerializerTests
     {
         var serializer = new global::app.channels.serializers.serializer.Json();
 
-        var result = serializer.Deserialize<string>("");
+        var result = serializer.Deserialize<string>("").Value!;
 
         await Assert.That(result).IsNull();
     }
@@ -167,7 +167,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var json = "{\"name\":\"John\",\"value\":42}";
 
-        var result = serializer.Deserialize<TestClass>(json);
+        var result = serializer.Deserialize<TestClass>(json).Value!;
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Name).IsEqualTo("John");
@@ -180,7 +180,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var json = "{\"NAME\":\"John\"}";
 
-        var result = serializer.Deserialize<TestClass>(json);
+        var result = serializer.Deserialize<TestClass>(json).Value!;
 
         await Assert.That(result!.Name).IsEqualTo("John");
     }
@@ -191,7 +191,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var json = "{\"name\":\"John\"}";
 
-        var result = serializer.Deserialize(json, typeof(TestClass));
+        var result = serializer.Deserialize(json, typeof(TestClass)).Value!;
 
         await Assert.That(result).IsTypeOf<TestClass>();
         await Assert.That(((TestClass)result!).Name).IsEqualTo("John");
@@ -231,7 +231,7 @@ public class JsonStreamSerializerTests
         var json = "{\"name\":\"John\",\"value\":42}";
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
-        var result = await serializer.DeserializeAsync<TestClass>(stream);
+        var result = (await serializer.DeserializeAsync<TestClass>(stream)).Value!;
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result!.Name).IsEqualTo("John");
@@ -244,7 +244,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         using var stream = new MemoryStream();
 
-        var result = await serializer.DeserializeAsync<TestClass>(stream);
+        var result = (await serializer.DeserializeAsync<TestClass>(stream)).Value!;
 
         await Assert.That(result).IsNull();
     }
@@ -256,7 +256,7 @@ public class JsonStreamSerializerTests
         var json = "{\"name\":\"John\"}";
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
-        var result = await serializer.DeserializeAsync(stream, typeof(TestClass));
+        var result = (await serializer.DeserializeAsync(stream, typeof(TestClass))).Value!;
 
         await Assert.That(result).IsTypeOf<TestClass>();
     }
@@ -267,8 +267,8 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var original = new TestClass { Name = "John", Value = 42 };
 
-        var json = serializer.Serialize(original);
-        var result = serializer.Deserialize<TestClass>(json);
+        var json = serializer.Serialize(original).Value!;
+        var result = serializer.Deserialize<TestClass>(json).Value!;
 
         await Assert.That(result!.Name).IsEqualTo(original.Name);
         await Assert.That(result.Value).IsEqualTo(original.Value);
@@ -283,7 +283,7 @@ public class JsonStreamSerializerTests
 
         await serializer.SerializeAsync(stream, original);
         stream.Position = 0;
-        var result = await serializer.DeserializeAsync<TestClass>(stream);
+        var result = (await serializer.DeserializeAsync<TestClass>(stream)).Value!;
 
         await Assert.That(result!.Name).IsEqualTo(original.Name);
         await Assert.That(result.Value).IsEqualTo(original.Value);
@@ -305,7 +305,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json().WithIndentation();
         var obj = new { Name = "test" };
 
-        var json = serializer.Serialize(obj);
+        var json = serializer.Serialize(obj).Value!;
 
         await Assert.That(json).Contains("\n");
     }
@@ -316,7 +316,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         var obj = new { Status = LocalStatus.Active };
 
-        var json = serializer.Serialize(obj);
+        var json = serializer.Serialize(obj).Value!;
 
         await Assert.That(json).Contains("active");
     }
@@ -327,7 +327,7 @@ public class JsonStreamSerializerTests
         var serializer = new global::app.channels.serializers.serializer.Json();
         object value = 42;
 
-        var json = serializer.Serialize(value, typeof(int));
+        var json = serializer.Serialize(value, typeof(int)).Value!;
 
         await Assert.That(json).IsEqualTo("42");
     }
@@ -342,6 +342,57 @@ public class JsonStreamSerializerTests
 
         await Assert.ThrowsAsync<OperationCanceledException>(async () =>
             await serializer.SerializeAsync(stream, new { Name = "test" }, cancellationToken: cts.Token));
+    }
+
+    // Error-path coverage for the ISerializer-returns-Data refactor: every
+    // catch arm must surface a Data.Fail with a non-empty Error.Key so callers
+    // distinguish parse failures from successful nulls.
+
+    [Test]
+    public async Task DeserializeAsync_MalformedJson_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Json();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{not valid json"));
+
+        var result = await serializer.DeserializeAsync(stream, typeof(TestClass));
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error).IsNotNull();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
+    }
+
+    [Test]
+    public async Task DeserializeAsync_Generic_MalformedJson_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Json();
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{broken"));
+
+        var result = await serializer.DeserializeAsync<TestClass>(stream);
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
+    }
+
+    [Test]
+    public async Task Deserialize_String_MalformedJson_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Json();
+
+        var result = serializer.Deserialize("{not valid", typeof(TestClass));
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
+    }
+
+    [Test]
+    public async Task DeserializeGeneric_String_MalformedJson_ReturnsDataFail()
+    {
+        var serializer = new global::app.channels.serializers.serializer.Json();
+
+        var result = serializer.Deserialize<TestClass>("{not valid");
+
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("JsonDeserializeError");
     }
 
     private class TestClass

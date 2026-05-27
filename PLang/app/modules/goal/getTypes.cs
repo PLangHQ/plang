@@ -15,7 +15,7 @@ namespace app.modules.goal;
 /// SAME step that introduces them — the step's body needs to reference them.
 ///
 /// Type sources, in priority order:
-///   1. `variable.set Name=%x%, Value=%__data__%` → previous producing action's return type
+///   1. `variable.set Name=%x%, Value=%!data%` → previous producing action's return type
 ///      (reflected from its handler's Run() method).
 ///   2. `variable.set Name=%x%, Value=&lt;literal&gt;` → the Value parameter's `type` field on the .pr.
 ///   3. `loop.foreach Collection=%xs%, ItemName=%y%` → element type of %xs%
@@ -33,7 +33,7 @@ public partial class getTypes : IContext
 {
     public partial data.@this<global::app.goals.goal.@this> Goal { get; init; }
 
-    public Task<data.@this> Run()
+    public Task<data.@this<List<Dictionary<string, string>>>> Run()
     {
         var goal = Goal.Value!;
         var modules = Context.App!.Modules;
@@ -42,8 +42,8 @@ public partial class getTypes : IContext
         var working = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // Tracks the return type of the most recent producing action in the current step's
-        // action chain — needed so `variable.set Value=%__data__%` can take the prior
-        // action's type. Reset at the start of every step (no cross-step %__data__%).
+        // action chain — needed so `variable.set Value=%!data%` can take the prior
+        // action's type. Reset at the start of every step (no cross-step %!data%).
         string? chainReturnType = null;
 
         for (int i = 0; i < goal.Steps.Count; i++)
@@ -60,7 +60,7 @@ public partial class getTypes : IContext
 
         // List indexed by step position — `%variablesByStep[stepResult.index]%` works
         // out of the box without dict-key coercion.
-        return Task.FromResult(global::app.data.@this.Ok(perStep));
+        return Task.FromResult(data.@this<List<Dictionary<string, string>>>.Ok(perStep));
     }
 
     private static void ProcessAction(
@@ -79,14 +79,15 @@ public partial class getTypes : IContext
             if (nameParam?.Value is string rawName && !string.IsNullOrEmpty(rawName))
             {
                 string type;
-                if (valueParam?.Value is string sval && string.Equals(sval, "%__data__%", StringComparison.OrdinalIgnoreCase))
+                if (typeParam?.Value is string explicitType && !string.IsNullOrEmpty(explicitType))
+                {
+                    // Type slot wins — covers both Build()'s stamp (file.read.Build()
+                    // → "csv") and the user (type) hint (set %x% = {...}, type=json).
+                    type = explicitType;
+                }
+                else if (valueParam?.Value is string sval && string.Equals(sval, "%!data%", StringComparison.OrdinalIgnoreCase))
                 {
                     type = chainReturnType ?? "object";
-                }
-                else if (typeParam?.Value is string explicitType && !string.IsNullOrEmpty(explicitType))
-                {
-                    // The optional Type=json override (set %x% = {...}, type=json).
-                    type = explicitType;
                 }
                 else
                 {
@@ -94,7 +95,7 @@ public partial class getTypes : IContext
                 }
                 working[Normalise(rawName)] = type;
             }
-            chainReturnType = null;  // variable.set consumed %__data__%
+            chainReturnType = null;  // variable.set consumed %!data%
             return;
         }
 
@@ -124,7 +125,7 @@ public partial class getTypes : IContext
         }
 
         // Generic action — record its return type so a following variable.set picking up
-        // %__data__% sees it. Reflection on the handler's Run() method handles the
+        // %!data% sees it. Reflection on the handler's Run() method handles the
         // common case (`Task<Data<T>>` → T). For actions returning bare Task<Data> the
         // chain type stays "object" — that's the lower bound, not a regression.
         chainReturnType = DetermineReturnType(action, modules);

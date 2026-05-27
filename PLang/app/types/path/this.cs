@@ -1,5 +1,4 @@
 using app.Utils;
-using app.Attributes;
 
 namespace app.types.path;
 
@@ -8,10 +7,11 @@ namespace app.types.path;
 /// NOT a Data subclass — wrapped in Data&lt;Path&gt; by handlers.
 /// Implements IContext for runtime graph access (FileSystem, etc.).
 /// </summary>
-[PlangType("path",
-    Example = "/some/file.json")]
 public abstract partial class @this : modules.IContext, global::app.data.IBooleanResolvable
 {
+    /// <summary>Catalog example — read via reflection by the schema builder.</summary>
+    public static string Example => "/some/file.json";
+
     /// <summary>
     /// Scheme name for this path (e.g. "file", "http", "https"). Subclasses
     /// implement. Used by Permission canonical-form and diagnostic surfaces.
@@ -108,10 +108,15 @@ public abstract partial class @this : modules.IContext, global::app.data.IBoolea
             if (!rootWithSeparator.EndsWith(PathHelper.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(PathHelper.AltDirectorySeparatorChar))
                 rootWithSeparator += PathHelper.DirectorySeparatorChar;
 
+            // Canonical PLang root-relative form: leading "/" anchors at the
+            // app root, "/" as separator regardless of OS (matches Goal.Path
+            // / GoalCall.PrPath stored in .pr files). Out-of-root paths
+            // return their Absolute form unchanged — those aren't "relative
+            // to root" in any meaningful sense.
             if (_absolutePath.StartsWith(rootWithSeparator, RootComparison))
-                _relative = _absolutePath[rootWithSeparator.Length..];
+                _relative = "/" + _absolutePath[rootWithSeparator.Length..].Replace('\\', '/');
             else if (string.Equals(_absolutePath, rootAbsolutePath, RootComparison))
-                _relative = ".";
+                _relative = "/";
             else
                 _relative = _absolutePath;
 

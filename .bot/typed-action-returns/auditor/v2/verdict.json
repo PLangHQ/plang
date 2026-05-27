@@ -1,0 +1,1 @@
+{ "status": "pass", "summary": "Coder v2 closes auditor F1 cleanly. Fix mirrors file/read.cs gate exactly; new regression test mutation-validated (removing the gate flips it red with 'Expected to be null but found pdf'). Stage4 suite 12/12 green." }

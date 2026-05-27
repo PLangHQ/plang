@@ -1,0 +1,23 @@
+rules:
+  - id: plang-lock-on-public-collection
+    languages: [csharp]
+    severity: WARNING
+    message: |
+      OBP Shape Smell #2: cross-file lock target. Taking lock(other.X) means
+      the type that owns the data isn't the type that owns the discipline.
+      If the surface is List/Dictionary/HashSet, that collection should
+      become its own @this type with private _lock and Add/Snapshot methods.
+      Standing finding: Call.Diffs (lock on public List).
+      Full rule: CLAUDE.md "OBP Shape Smells", item #2.
+    pattern-either:
+      - pattern: lock ($X.$Y) { ... }
+      - pattern: lock ($X.$Y.$Z) { ... }
+    paths:
+      exclude:
+        - "**/*Tests/**"
+        - "**/PLang.Generators/**"
+        - "**/bin/**"
+        - "**/obj/**"
+        - "**/.bot/**"
+        - "**/.build/**"
+        - "**/os/**"

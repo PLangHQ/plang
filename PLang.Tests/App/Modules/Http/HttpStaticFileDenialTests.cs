@@ -40,14 +40,19 @@ public class HttpStaticFileDenialTests
         System.IO.File.WriteAllText(outOfRoot, "secret");
 
         // Drive the http upload handler's file-content build path. AuthGate
-        // denies; the helper throws IOException with the denial message.
-        bool threw = false;
+        // denies; either the helper returns a failed Data carrying the
+        // denial, or the underlying path.ReadBytes throws IOException
+        // (file.this.ReadBytes doesn't wrap IO exceptions — see
+        // types/path/file/this.Operations.cs:130). Either way: the upload
+        // does not see the bytes.
+        bool denied = false;
         try
         {
-            await global::app.modules.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
+            var result = await global::app.modules.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
+            denied = !result.Success;
         }
-        catch (System.IO.IOException) { threw = true; }
-        await Assert.That(threw).IsTrue();
+        catch (System.IO.IOException) { denied = true; }
+        await Assert.That(denied).IsTrue();
     }
 
     [Test] public async Task StaticFile_RequestForInRootFile_ServedSilently()
@@ -57,9 +62,9 @@ public class HttpStaticFileDenialTests
         app.User.Channels.Register(ch);
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");
-        var content = await global::app.modules.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
-        await Assert.That(content).IsNotNull();
-        var bytes = await content.ReadAsByteArrayAsync();
+        var result = await global::app.modules.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
+        await Assert.That(result.Success).IsTrue();
+        var bytes = await result.Value!.ReadAsByteArrayAsync();
         await Assert.That(System.Text.Encoding.UTF8.GetString(bytes)).IsEqualTo("hello");
     }
 }
