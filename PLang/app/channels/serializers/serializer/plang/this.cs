@@ -5,51 +5,79 @@ using System.Text.Json.Serialization.Metadata;
 namespace app.channels.serializers.serializer.plang;
 
 /// <summary>
-/// Serializes the full Data envelope for PLang-to-PLang transport.
-/// MIME: application/plang. Includes name, value, type, properties, and signature.
-/// External formats (application/json, text/plain) serialize just the value —
-/// this serializer preserves the complete Data structure for inter-app communication.
+/// The canonical PLang-to-PLang transport serializer (<c>application/plang</c>).
+///
+/// <para>
+/// Composes its STJ options from a fresh base (camelCase + null-skip), then adds
+/// the path converter (Context-bound when available), the
+/// <see cref="global::app.data.WireJsonConverter"/> (sign-if-missing during the
+/// walk + canonical four-field shape), and
+/// <see cref="global::app.channels.serializers.filters.Transport.ForOutbound"/>
+/// (re-includes [Out] properties like Signature).
+/// </para>
+///
+/// <para>
+/// Notably the merged options do NOT chain
+/// <see cref="global::app.channels.serializers.filters.Sensitive.Strip"/> in —
+/// PLang's own settings/sqlite store rides on this serializer to persist
+/// Identity (whose PrivateKey is marked [Sensitive]). Sensitive-stripping is
+/// the responsibility of channels that publish externally (HTTP responses,
+/// external JSON), and lives on the base <see cref="global::app.channels.serializers.serializer.Json"/>
+/// rather than the inter-actor transport serializer.
+/// </para>
+///
+/// <para>
+/// Read does NOT auto-verify — verification is the consumer's explicit step
+/// (<c>signing.verify</c> action, or a channel event handler bound to
+/// <c>BeforeRead</c>/<c>AfterRead</c>). The reconstructed Data has its signature
+/// populated-but-unverified.
+/// </para>
 /// </summary>
 public sealed class @this : ISerializer
 {
     public string Type => "application/plang";
     public string Extension => ".plang";
 
-    private readonly JsonSerializerOptions _serializeOptions;
-    private readonly JsonSerializerOptions _deserializeOptions;
+    private readonly JsonSerializerOptions _outbound;
+    private readonly JsonSerializerOptions _inbound;
 
     public @this() : this(null) { }
 
-    /// <summary>
-    /// Construct with an actor Context — the bundled PathJsonConverter will
-    /// route through <c>path.Resolve(raw, context)</c> on read, so deserialized
-    /// Goal/GoalCall/... carry Path-typed fields fully Context-wired. Per-Actor
-    /// instances pass their Context here.
-    /// </summary>
     public @this(actor.context.@this? context)
     {
         var pathConverter = context != null
             ? new global::app.types.path.JsonConverter(context)
             : new global::app.types.path.JsonConverter();
-        _serializeOptions = new JsonSerializerOptions
+
+        _outbound = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.data.Json(), pathConverter },
+            Converters =
+            {
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                new global::app.data.WireJsonConverter(),
+                pathConverter,
+            },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { global::app.channels.serializers.filters.Transport.ForOutbound }
             }
         };
 
-        _deserializeOptions = new JsonSerializerOptions
+        _inbound = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = true,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase), new global::app.data.Json(), pathConverter },
+            Converters =
+            {
+                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                new global::app.data.WireJsonConverter(),
+                pathConverter,
+            },
             TypeInfoResolver = new DefaultJsonTypeInfoResolver
             {
                 Modifiers = { global::app.channels.serializers.filters.Transport.ForInbound }
@@ -57,11 +85,17 @@ public sealed class @this : ISerializer
         };
     }
 
-    public async Task<data.@this> SerializeAsync(Stream stream, data.@this data, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Raw outbound options — exposed for canonicalization (crypto.Hash) so the
+    /// signed bytes match the wire bytes.
+    /// </summary>
+    internal JsonSerializerOptions OutboundOptions => _outbound;
+
+    public async Task<global::app.data.@this> SerializeAsync(Stream stream, global::app.data.@this data, CancellationToken cancellationToken = default)
     {
         try
         {
-            await JsonSerializer.SerializeAsync(stream, data, data.GetType(), _serializeOptions, cancellationToken);
+            await JsonSerializer.SerializeAsync(stream, data, _outbound, cancellationToken);
             return global::app.data.@this.Ok();
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
@@ -71,12 +105,12 @@ public sealed class @this : ISerializer
         }
     }
 
-    public async Task<data.@this> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<global::app.data.@this> DeserializeAsync(Stream stream, CancellationToken cancellationToken = default)
     {
         try
         {
             if (stream.Length == 0) return global::app.data.@this.Ok();
-            var v = await JsonSerializer.DeserializeAsync<global::app.data.@this>(stream, _deserializeOptions, cancellationToken);
+            var v = await JsonSerializer.DeserializeAsync<global::app.data.@this>(stream, _inbound, cancellationToken);
             return global::app.data.@this.Ok(v);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
@@ -86,12 +120,12 @@ public sealed class @this : ISerializer
         }
     }
 
-    public async Task<data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<global::app.data.@this<T>> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
     {
         try
         {
             if (stream.Length == 0) return global::app.data.@this<T>.Ok(default!);
-            var v = await JsonSerializer.DeserializeAsync<T>(stream, _deserializeOptions, cancellationToken);
+            var v = await JsonSerializer.DeserializeAsync<T>(stream, _inbound, cancellationToken);
             return global::app.data.@this<T>.Ok(v!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException or IOException)
@@ -101,11 +135,11 @@ public sealed class @this : ISerializer
         }
     }
 
-    public data.@this<string> Serialize(data.@this data)
+    public global::app.data.@this<string> Serialize(global::app.data.@this data)
     {
         try
         {
-            return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(data, data.GetType(), _serializeOptions));
+            return global::app.data.@this<string>.Ok(JsonSerializer.Serialize(data, _outbound));
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
@@ -114,12 +148,12 @@ public sealed class @this : ISerializer
         }
     }
 
-    public data.@this Deserialize(string s)
+    public global::app.data.@this Deserialize(string s)
     {
         try
         {
             if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this.Ok();
-            return global::app.data.@this.Ok(JsonSerializer.Deserialize<global::app.data.@this>(s, _deserializeOptions));
+            return global::app.data.@this.Ok(JsonSerializer.Deserialize<global::app.data.@this>(s, _inbound));
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {
@@ -128,12 +162,12 @@ public sealed class @this : ISerializer
         }
     }
 
-    public data.@this<T> Deserialize<T>(string s)
+    public global::app.data.@this<T> Deserialize<T>(string s)
     {
         try
         {
             if (string.IsNullOrEmpty(s) || s == "null") return global::app.data.@this<T>.Ok(default!);
-            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _deserializeOptions)!);
+            return global::app.data.@this<T>.Ok(JsonSerializer.Deserialize<T>(s, _inbound)!);
         }
         catch (Exception ex) when (ex is JsonException or NotSupportedException)
         {

@@ -3,39 +3,69 @@ namespace PLang.Tests.App.Serialization;
 // data-serialize-cleanup — Stage 2
 // Merged plang serializer — application/plang+data is gone, application/plang is the
 // single registered serializer; Envelope class is deleted; per-MIME serializers still work.
-// Coverage matrix rows 1.12, 1.13, 2.1, 2.2, 2.3.
 
 public class MergedPlangSerializerTests
 {
-    // 2.1 — application/plang+data MIME is no longer registered.
     [Test] public async Task Serializers_GetByType_ApplicationPlangData_ReturnsNull()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var reg = new global::app.channels.serializers.@this();
+        await Assert.That(reg.GetByType("application/plang+data")).IsNull();
+    }
 
-    // Companion: the .pdata file extension binding is gone.
     [Test] public async Task Serializers_PdataExtension_DoesNotResolve()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var reg = new global::app.channels.serializers.@this();
+        await Assert.That(reg.GetByExtension(".pdata")).IsNull();
+    }
 
-    // 2.2 — application/plang registers a single merged serializer; .plang still resolves.
     [Test] public async Task Serializers_GetByType_ApplicationPlang_ReturnsMergedSerializer()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var reg = new global::app.channels.serializers.@this();
+        var s = reg.GetByType("application/plang");
+        await Assert.That(s).IsNotNull();
+        await Assert.That(s).IsTypeOf<global::app.channels.serializers.serializer.plang.@this>();
+    }
 
     [Test] public async Task Serializers_PlangExtension_ResolvesMergedSerializer()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var reg = new global::app.channels.serializers.@this();
+        var s = reg.GetByExtension(".plang");
+        await Assert.That(s).IsNotNull();
+        await Assert.That(s).IsTypeOf<global::app.channels.serializers.serializer.plang.@this>();
+    }
 
-    // 2.3 — Envelope class and FromEnvelope factory are deleted (file no longer exists).
     [Test] public async Task PlangSerializer_EnvelopeType_NoLongerExistsInAssembly()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var asm = typeof(global::app.channels.serializers.serializer.plang.@this).Assembly;
+        var envelope = asm.GetType("app.channels.serializers.serializer.plang.Data+Envelope");
+        await Assert.That(envelope).IsNull();
+        var legacyOuter = asm.GetType("app.channels.serializers.serializer.plang.Data");
+        await Assert.That(legacyOuter).IsNull();
+    }
 
     [Test] public async Task PlangSerializer_FromEnvelopeFactory_NoLongerExistsOnSerializer()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var t = typeof(global::app.channels.serializers.serializer.plang.@this);
+        var method = t.GetMethod("FromEnvelope",
+            System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+        await Assert.That(method).IsNull();
+    }
 
-    // 1.12 — text/plain round-trip of Data.Ok("hello") is still "hello" post-tightening:
-    //        the per-MIME strip-or-keep decision still rides inside the serializer.
     [Test] public async Task TextPlain_RoundTrip_DataOkHello_YieldsHelloLiteral()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var text = new global::app.channels.serializers.serializer.Text();
+        using var ms = new MemoryStream();
+        await text.SerializeAsync(ms, global::app.data.@this.Ok("hello"));
+        var wire = System.Text.Encoding.UTF8.GetString(ms.ToArray()).TrimEnd();
+        await Assert.That(wire).IsEqualTo("hello");
+    }
 
-    // 1.13 — application/json round-trip of Data.Ok("hello") strips the wrapper on the wire
-    //        (the external JSON consumer sees just "hello", not the Data shell).
     [Test] public async Task ApplicationJson_RoundTrip_DataOkHello_StripsWrapperOnWire()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var json = new global::app.channels.serializers.serializer.Json();
+        using var ms = new MemoryStream();
+        await json.SerializeAsync(ms, global::app.data.@this.Ok("hello"));
+        var wire = System.Text.Encoding.UTF8.GetString(ms.ToArray()).TrimEnd();
+        await Assert.That(wire).IsEqualTo("\"hello\"");
+    }
 }

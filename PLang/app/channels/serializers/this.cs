@@ -25,12 +25,10 @@ public sealed class @this
         var json = new global::app.channels.serializers.serializer.Json(context);
         var text = new global::app.channels.serializers.serializer.Text(jsonFallback: json);
         var plang = new global::app.channels.serializers.serializer.plang.@this(context);
-        var plangData = new global::app.channels.serializers.serializer.plang.Data();
 
         Register(json);
         Register(text);
         Register(plang);
-        Register(plangData);
 
         // Register alternative MIME types
         _byType["text/json"] = json;

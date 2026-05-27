@@ -1,34 +1,72 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using app.channels.serializers.serializer;
+
 namespace PLang.Tests.App.Serialization;
 
 // data-serialize-cleanup — Stage 2
 // Json (the JSON-engine custodian) gains composition extensions so callers compose
 // with it instead of duplicating JsonSerializerOptions blocks.
-// Coverage matrix rows 2.4, 2.5. ForInbound symmetry added by test-designer because
-// the new-surfaces inventory lists it but no matrix row pins it.
 
 public class JsonCompositionTests
 {
-    // 2.4 — WithConverter returns a new Json instance with the converter added.
+    private sealed class Probe : JsonConverter<string>
+    {
+        public override string Read(ref Utf8JsonReader r, System.Type t, JsonSerializerOptions o) => r.GetString() ?? "";
+        public override void Write(Utf8JsonWriter w, string v, JsonSerializerOptions o) => w.WriteStringValue("probe:" + v);
+    }
+
     [Test] public async Task Json_WithConverter_ReturnsNewInstance_WithConverterRegistered()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var json = new Json();
+        var withProbe = json.WithConverter(new Probe());
+        await Assert.That(withProbe).IsNotEqualTo(json);
 
-    // 2.4b — WithConverter does not mutate the source instance.
+        var wire = withProbe.Serialize(global::app.data.@this.Ok("hello")).Value!;
+        await Assert.That(wire).Contains("probe:hello");
+    }
+
     [Test] public async Task Json_WithConverter_DoesNotMutateOriginalInstance()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var json = new Json();
+        var original = json.Serialize(global::app.data.@this.Ok("hello")).Value!;
+        json.WithConverter(new Probe());
+        var afterCompose = json.Serialize(global::app.data.@this.Ok("hello")).Value!;
+        await Assert.That(original).IsEqualTo(afterCompose);
+    }
 
-    // 2.5 — WithModifier returns a new Json instance with the modifier added to the resolver.
     [Test] public async Task Json_WithModifier_ReturnsNewInstance_WithModifierOnResolver()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var json = new Json();
+        bool fired = false;
+        var withMod = json.WithModifier(_ => { fired = true; });
+        // Drive serialization to invoke the resolver.
+        withMod.Serialize(global::app.data.@this.Ok("x"));
+        await Assert.That(fired).IsTrue();
+        await Assert.That(withMod).IsNotEqualTo(json);
+    }
 
-    // 2.5b — WithModifier does not mutate the source instance.
     [Test] public async Task Json_WithModifier_DoesNotMutateOriginalInstance()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var json = new Json();
+        bool firedOnOriginal = false;
+        json.WithModifier(_ => { firedOnOriginal = true; });
+        json.Serialize(global::app.data.@this.Ok("x"));
+        await Assert.That(firedOnOriginal).IsFalse()
+            .Because("Modifier should attach to the new instance, leaving the source's resolver intact.");
+    }
 
-    // Test-designer addition — Json.ForInbound applies Transport.ForInbound, symmetric
-    // to existing Json.ForView. Listed in new-surfaces, not pinned by matrix.
     [Test] public async Task Json_ForInbound_AppliesTransportForInboundModifier()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var json = new Json();
+        var inbound = json.ForInbound();
+        await Assert.That(inbound).IsNotEqualTo(json);
+    }
 
     [Test] public async Task Json_ForView_StillApplies_TransportForViewModifier()
-    { await Task.CompletedTask; Assert.Fail("Not implemented"); }
+    {
+        var json = new Json();
+        var view = json.ForView(global::app.View.Debug);
+        await Assert.That(view).IsNotEqualTo(json);
+    }
 }

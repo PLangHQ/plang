@@ -173,4 +173,47 @@ public sealed class Json : ISerializer
         };
         return new Json(newOptions);
     }
+
+    /// <summary>
+    /// Returns a new <see cref="Json"/> whose options carry the given converter.
+    /// The original instance is not mutated — STJ's options copy ctor clones
+    /// converters and other config.
+    /// </summary>
+    public Json WithConverter(JsonConverter converter)
+    {
+        var newOptions = new JsonSerializerOptions(_options);
+        newOptions.Converters.Add(converter);
+        return new Json(newOptions);
+    }
+
+    /// <summary>
+    /// Returns a new <see cref="Json"/> whose <see cref="JsonSerializerOptions.TypeInfoResolver"/>
+    /// chains the given modifier onto the existing resolver. The original instance
+    /// is not mutated.
+    /// </summary>
+    public Json WithModifier(Action<JsonTypeInfo> modifier)
+    {
+        var newOptions = new JsonSerializerOptions(_options);
+        var existing = newOptions.TypeInfoResolver as DefaultJsonTypeInfoResolver
+                       ?? new DefaultJsonTypeInfoResolver();
+        var resolver = new DefaultJsonTypeInfoResolver();
+        foreach (var m in existing.Modifiers) resolver.Modifiers.Add(m);
+        resolver.Modifiers.Add(modifier);
+        newOptions.TypeInfoResolver = resolver;
+        return new Json(newOptions);
+    }
+
+    /// <summary>
+    /// Returns a new <see cref="Json"/> with the <see cref="global::app.channels.serializers.filters.Transport.ForInbound"/>
+    /// modifier composed onto its resolver. Counterpart of the merged plang
+    /// serializer's outbound chain.
+    /// </summary>
+    public Json ForInbound() => WithModifier(global::app.channels.serializers.filters.Transport.ForInbound);
+
+    /// <summary>
+    /// Internal accessor for the raw STJ options. Used by canonicalization
+    /// code that needs to serialize through the same options the wire writer
+    /// uses (so hashed-bytes ≡ wire-bytes).
+    /// </summary>
+    internal JsonSerializerOptions RawOptions => _options;
 }
