@@ -7,8 +7,8 @@
       "timestamp_start": "2026-05-27T13:51:34Z",
       "intent": "Validate test quality and run full suites for typed-action-returns branch (Stages 0-4 + Serializers Data refactor + http body dispatch)",
       "before": {
-        "assumptions": "Coder reports 3123/3123 C# + 208/0/12 PLang. codeanalyzer v3 PASS. No baseline-tests.md from coder (process violation — to note).",
-        "risk": "Branch made wide-ranging signature changes (Data<T> typings across ~10 actions, Serializers Data refactor, Ask shape change, http.Response). False-greens likely in stage tests if they only check signature shape, not behavior. PLang 12 'stale' placeholders need verification — could be real missing coverage."
+        "assumptions": "Coder reports 3123/3123 C# + 208/0/12 PLang. codeanalyzer v3 PASS. No baseline-tests.md from coder (process violation \u2014 to note).",
+        "risk": "Branch made wide-ranging signature changes (Data<T> typings across ~10 actions, Serializers Data refactor, Ask shape change, http.Response). False-greens likely in stage tests if they only check signature shape, not behavior. PLang 12 'stale' placeholders need verification \u2014 could be real missing coverage."
       },
       "plan": ".bot/typed-action-returns/tester/v1/plan.md",
       "actions": [
@@ -20,7 +20,7 @@
           "type": "create",
           "category": "test",
           "confidence": "high",
-          "context": "Captured full-suite runs after clean rebuild — C# 3124/3124 + PLang 221/221 PASS. PLang stale-binary trap navigated via rm bin/obj + rebuild PlangConsole + rebuild PLang.Tests."
+          "context": "Captured full-suite runs after clean rebuild \u2014 C# 3124/3124 + PLang 221/221 PASS. PLang stale-binary trap navigated via rm bin/obj + rebuild PlangConsole + rebuild PLang.Tests."
         },
         {
           "paths": [
@@ -324,6 +324,70 @@
         "status": "PASS",
         "health": "green - branch is in shape to merge; build clean, test posture green per handoff.",
         "notes": "All v2 findings closed. N1 (3 stale %__data__% comments in goal/getTypes.cs) and N2 (registered-types gate also silences missing-file warning for unregistered exts) recorded as info-level only."
+      }
+    },
+    {
+      "id": "tester-v2-fba31043",
+      "bot": "tester",
+      "timestamp_start": "2026-05-27T15:30:00Z",
+      "intent": "Verify coder v1 follow-up addresses tester v1 false-greens (FileRead memory-channel drain, Data<object> runtime double-wrap sweep) + 3 minor coverage gaps",
+      "before": {
+        "assumptions": "Coder commit 6965c89e4 claims to fix tester v1 finding #1 (FileRead memory channel) and #6 (RuntimeDoubleWrapTests) plus #2/#3 (serializer Data.Fail + http TextFallback). Need to (a) re-run full suites, (b) mutation-test the new false-green fixes, (c) confirm new minor-coverage tests actually assert behavior, not just success.",
+        "risk": "Tester v1 names the implicit-operator footgun as the headline risk; the new sweep test needs to actually catch a real double-wrap. Mutation-testing required."
+      },
+      "plan": ".bot/typed-action-returns/tester/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            ".bot/typed-action-returns/tester/v2/csharp-test-output.txt",
+            ".bot/typed-action-returns/tester/v2/plang-test-output.txt"
+          ],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Full-suite runs after clean rebuild. C# 3136/3136 (+12 new from coder v2 commit), PLang 221/221. Both green."
+        },
+        {
+          "paths": [
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/list/first.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Mutation-tested coder v1 fixes. (1) commented out Channels.Channel(\"builder\").WriteAsync(...) in file/read.cs:76 \u2014 FileRead test went red as expected, reverted. (2) replaced Ok(first.Value) with Ok(first) in list/first.cs:15 to force implicit-operator double-wrap \u2014 RuntimeDoubleWrap ListFirst test caught it with the exact footgun message, reverted. Source clean post-mutation."
+        },
+        {
+          "paths": [
+            "PLang.Tests/App/Serialization/JsonStreamSerializerTests.cs",
+            "PLang.Tests/App/Serialization/TextStreamSerializerTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs",
+            "PLang.Tests/App/TypedReturnsTests/RuntimeDoubleWrapTests.cs"
+          ],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Audited new tests for honest assertions. JsonStreamSerializer asserts Error.Key=JsonDeserializeError; TextStreamSerializer uses ThrowingStream for real IOException + asserts Error.Key; http BodyDispatch test asserts literal malformed string body (not just non-null). RuntimeDoubleWrap tripwire pins 18 Data<object> handlers via reflection \u2014 any new one forces an invocation test or narrowed T."
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/tester/v2/plan.md",
+            ".bot/typed-action-returns/tester/v2/v1_review_summary.md",
+            ".bot/typed-action-returns/tester/v2/verdict.json",
+            ".bot/typed-action-returns/tester/summary.md",
+            ".bot/typed-action-returns/test-report.json"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Final reports. Verdict: PASS. No new findings."
+        }
+      ],
+      "timestamp_end": "2026-05-27T15:55:00Z",
+      "after": {
+        "status": "pass",
+        "health": "green",
+        "notes": "Both tester v1 critical false-greens (FileRead BuildWarning + Data<object> runtime double-wrap) cleanly fixed and mutation-tested. Minor-coverage tests assert behavior, not just success. Suites: 3136/3136 C# + 221/221 PLang. No new findings."
       }
     }
   ]

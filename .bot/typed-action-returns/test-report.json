@@ -1,80 +1,19 @@
 {
   "tester": "tester",
   "branch": "typed-action-returns",
-  "timestamp": "2026-05-27T14:05:00Z",
-  "tested_version": "v1",
+  "timestamp": "2026-05-27T15:50:00Z",
+  "tested_version": "v2",
   "test_run": {
-    "csharp": { "total": 3124, "passed": 3124, "failed": 0, "skipped": 0 },
+    "csharp": { "total": 3136, "passed": 3136, "failed": 0, "skipped": 0 },
     "plang": { "total": 221, "passed": 221, "failed": 0, "skipped": 0 }
   },
   "coverage": {
     "changed_files_covered": null,
     "changed_files_total": null,
     "uncovered_files": [],
-    "note": "Coverage analysis skipped — clean rebuild after coverage previously deleted bin/obj; suite-level pass is the headline signal here."
+    "note": "Coverage skipped — focus this round was mutation-validating coder v1 false-green fixes. Both critical fixes pass mutation, the 3 minor-coverage tests assert behavior (Error.Key, raw body, missing-path in channel)."
   },
-  "findings": [
-    {
-      "id": 1,
-      "severity": "critical",
-      "type": "false-green",
-      "test_file": "PLang.Tests/App/TypedReturnsTests/Stage4_BuildMethodImplsTests.cs",
-      "code_file": "PLang/app/modules/file/read.cs",
-      "issue": "FileRead_Build_LiteralMissingFile_WritesBuildWarning only asserts the 'builder' channel is not the noop sink. The channel is registered in Setup() unconditionally, so the assertion is trivially true regardless of what Build() did — the warning could never be written and the test still passes.",
-      "impact": "Silent loss of build-time diagnostics when a literal file path doesn't exist. The test name claims warning-emission coverage but provides none.",
-      "suggestion": "Use Channels.CreateMemoryChannel('builder'), after Build() drain the channel, and assert at least one BuildWarning was written AND its message references the missing path."
-    },
-    {
-      "id": 6,
-      "severity": "critical",
-      "type": "false-green",
-      "test_file": "Tests/TestModule/TypedReturns/Stage2/Test*DownstreamVariableAnnotatesAs*.test.goal (4 files) + PLang.Tests/App/TypedReturnsTests/Stage2_MechanicalTypings_Part1Tests.cs:DataValueFromTypedRun_NotDoubleWrapped",
-      "code_file": "PLang/app/modules/output/ask.cs (and every typed Run() handler shipped on this branch)",
-      "issue": "Coder's handoff names the Data<object> implicit-operator double-wrap as the branch's headline footgun ('Every typed handler in this branch was checked'). The supposed test coverage is (a) plang Stage 2 goals using goal.getTypes which reflects on the Run() signature only — never invokes the handler, so a runtime Data<object>{ Value = Data<Ask>{...} } double-wrap is invisible; and (b) one C# reflection check that T is not a Data subtype, which is also static and won't catch a runtime owned-construction bug where T is declared object but the runtime value is a Data.",
-      "impact": "The exact footgun the coder warned about can land in a future handler and ship green. There is no test that actually invokes a typed handler and asserts data.Value is not itself a Data.",
-      "suggestion": "Add a C# test per typed handler (or a generic test that walks every IClass with a Data<T> Run()) that invokes Run() with valid setup and asserts !(typeof(Data).IsAssignableFrom(result.Value?.GetType()))."
-    },
-    {
-      "id": 2,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/Serialization/JsonStreamSerializerTests.cs",
-      "code_file": "PLang/app/channels/serializers/serializer/Json.cs",
-      "issue": "The Serializers Data refactor added try/catch over JsonException/NotSupportedException/IOException in every ISerializer impl, returning Data.FromError. Zero tests exercise that path — every Deserialize* test uses '.Value!' on happy-path input. Same gap in TextStreamSerializerTests.cs.",
-      "impact": "If a catch was dropped or the rethrow/return was inverted (return throw vs return Data.FromError), the regression is invisible. Callers downstream check Success and would silently swallow data.",
-      "suggestion": "Add one bad-input test per serializer: e.g. Deserialize_MalformedJson_ReturnsDataFail asserting result.Success == false and result.Error.Key is non-null. Mirror for TextStreamSerializer (large/IOException) and the plang variants."
-    },
-    {
-      "id": 3,
-      "severity": "minor",
-      "type": "missing-coverage",
-      "test_file": "PLang.Tests/App/TypedReturnsTests/Stage3_HttpContentTypeDispatchTests.cs",
-      "code_file": "PLang/app/modules/http/code/Default.cs:518-523",
-      "issue": "ParseResponseAsync uses `body = deser.Success ? deser.Value : TextFallback(...)` for registered serializers — the parse-failure → text-fallback path is the headline behavior of the Content-Type dispatch refactor, but no test sends 'Content-Type: application/json' with malformed body to confirm the fallback kicks in.",
-      "impact": "If a future change made `deser.Success` always true (e.g., catch swallowed inside the serializer and returned Data.Ok(default)), the fallback would never fire and the user would silently get null bodies instead of the raw text.",
-      "suggestion": "Add BodyDispatch_BrokenJsonContentType_FallsBackToString — Content-Type application/json, body '{not json', assert resp.Body is string with the raw bytes."
-    },
-    {
-      "id": 4,
-      "severity": "minor",
-      "type": "weak-assertion",
-      "test_file": "PLang.Tests/App/TypedReturnsTests/Stage4_TypeHintPrecedenceTests.cs",
-      "code_file": "os/system/builder/llm/Compile.llm",
-      "issue": "CompileLlm_Kernel_ContainsTypeHintRule asserts the strings '(type)' and 'write to %answer%(json)' appear in Compile.llm. Presence check only — a future edit that moves the rule into a deprecated section, comments it out, or paraphrases it stays green.",
-      "impact": "Low. The downstream test BuilderValidate_UserHintWinsOverBuildInference exercises the actual behavior in C#, so kernel-text drift would surface there if it broke the LLM round-trip. The presence check is essentially documentation.",
-      "suggestion": "Optional. If the kernel template grows further, consider a higher-fidelity check (e.g., the rule lives under a specific anchor heading) or drop this test as redundant once the behavior-level test is solid."
-    },
-    {
-      "id": 5,
-      "severity": "info",
-      "type": "process",
-      "test_file": null,
-      "code_file": null,
-      "issue": "Coder did not write `.bot/typed-action-returns/coder/v1/baseline-tests.md`. The tester workflow uses that file to separate pre-existing failures from coder-introduced regressions.",
-      "impact": "No way to retroactively prove a test was already red before this branch started. Mitigated this session by the suite being 100% green — no diff to interpret.",
-      "suggestion": "Flag for next coder pass: record pre-work test state to baseline-tests.md as step 1 of v<N>/."
-    }
-  ],
-  "verdict": "needs-fixes",
-  "summary": "Suites all green: 3124/3124 C# + 221/221 PLang. BUT verdict FAILS on two confirmed false-greens: (1) FileRead_Build_LiteralMissingFile_WritesBuildWarning asserts the builder channel is not noop — trivially true from Setup() — never reads what (if anything) Build() wrote. (2) The advertised Data<object> double-wrap coverage is entirely static (plang goal.getTypes reflects on Run() signatures; C# DataValueFromTypedRun_NotDoubleWrapped checks T at type level). Neither invokes a handler, so a runtime owned-construction double-wrap — the coder's stated headline footgun — would ship green. Plus 3 lower-severity findings (serializer Data.Fail paths unverified; http TextFallback parse-failure uncovered; CompileLlm string-presence redundant) and 1 info (no baseline-tests.md). Branch behavior is correct as shipped; the test contract is not."
+  "findings": [],
+  "verdict": "approved",
+  "summary": "Coder v1 follow-up (commit 6965c89e4) cleanly addresses both critical false-greens flagged in tester v1. (1) FileRead_Build_LiteralMissingFile_WritesBuildWarning now creates a MemoryChannel via Channels.CreateMemoryChannel('builder'), drains the stream, and asserts the missing-path string is in the written text. Mutation-tested: commented out the warning write in file/read.cs:76 — test failed with 'Expected to contain definitely-missing-stage4.csv ... but found \"\"'. Reverted clean. (2) RuntimeDoubleWrapTests invokes list.first/get/last + math.add and asserts result.Value is not itself a Data; a 5th sweep test pins the full 18-handler Data<object> set via reflection so a new Data<object> handler forces the author to add a runtime test or narrow T. Mutation-tested: replaced Ok(first.Value) with Ok(first) in list/first.cs — test caught it with the exact 'footgun fired' message. Reverted clean. The 3 minor-coverage fixes also land honestly: JsonStreamSerializer's 4 malformed-input tests assert Error.Key='JsonDeserializeError'; TextStreamSerializer's ThrowingStream forces real IOException and asserts Error.Key; http BodyDispatch_BrokenJsonContentType_FallsBackToString asserts the body is the literal malformed string. Suites green: 3136/3136 C# (+12 new) + 221/221 PLang. No new findings."
 }

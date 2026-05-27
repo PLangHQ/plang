@@ -1,57 +1,50 @@
 # Tester — typed-action-returns
 
 ## Version
-v1 — first tester pass on this branch.
+v2 — mutation-validating coder v1 follow-up to tester v1 critical false-greens.
 
 ## What this is
 
-The coder shipped typed `Run()` returns across the action surface (Stages 0–4) plus two bonus refactors (every `ISerializer` method returns `Data`; `http` body dispatch flows through `Serializers.GetByContentType` with a `TextFallback` for parse failures). Goal of this pass: confirm the full suite is green and that the tests actually verify the new contracts rather than rubber-stamp them.
+Tester v1 (commit `a8f7390c1`) shipped a FAIL verdict on two confirmed false-greens despite all 3124 C# + 221 PLang tests being green:
+
+1. `FileRead_Build_LiteralMissingFile_WritesBuildWarning` only asserted the builder channel was not noop (trivially true from Setup).
+2. The advertised "Data<object> double-wrap" coverage was entirely static — `goal.getTypes` reflection on Stage 2 plang goals and a single C# type-level check. Neither would have caught the coder's stated headline footgun (runtime `Data<object>{ Value = Data<X>{...} }`).
+
+Plus 3 minor-coverage gaps (serializer error paths, http TextFallback parse-failure).
+
+The coder responded with commit `6965c89e4`. This version verifies — including mutation testing — that the new tests are honest.
 
 ## What was done
 
-- Clean rebuild (per CLAUDE.md "Stale-binary trap").
-- Full C# suite (`PLang.Tests` TUnit binary): **3124/3124 PASS**.
-- Full PLang suite (`Tests` via fresh `plang --test`): **221/221 PASS**, 0 fail, 0 stale. (Coder's handoff mentioned 12 "stale placeholders"; all 12 + 1 were implemented in commit `2553dd7f2`.)
-- Audited the 13 `Tests/TestModule/TypedReturns/` `.test.goal` files + their `.pr.json`. No text-vs-action drift; all step `text` semantically matches `actions[0].module.action`. The Stage 2 goals exercise `goal.getTypes`, which now reflects on `Run()` signatures — so they're effectively static metadata checks (correct for the stage's contract).
-- Audited the C# Stage 0–4 test files (`PLang.Tests/App/TypedReturnsTests/`). Stage 4 Build() inference tests are particularly strong: they exercise `RunBuildPass` end-to-end with real `PrAction`s and assert against the stamped `Type=` parameter on the terminal `variable.set`. Three precedence cases covered (user hint wins, build wins when no hint, explicit `Type="object"` preserved).
-- Spot-checked the Serializers Data refactor and http TextFallback paths for error-path coverage. Found two missing-coverage gaps (see findings #2, #3 in `test-report.json`).
+- **Re-ran full suites after clean rebuild.** C# 3136/3136 (+12 new), PLang 221/221. Both green.
+- **Mutation-tested both critical fixes.** Commented out the missing-file warning emission in `file/read.cs:76` → `FileRead_Build_LiteralMissingFile_WritesBuildWarning` failed with "Expected to contain definitely-missing-stage4.csv ... but found \"\"". Replaced `Ok(first.Value)` with `Ok(first)` in `list/first.cs:15` to force the implicit-operator double-wrap → `ListFirst_OnPopulatedList_ValueIsRawNotData` failed with the exact "footgun fired" message. Both reverted; source clean.
+- **Audited the 3 minor-coverage fixes.** JsonStreamSerializer asserts `Error.Key="JsonDeserializeError"` (not just Success=false). TextStreamSerializer uses a private `ThrowingStream` that raises real IOException, asserts `Error.Key="TextDeserializeError"`/`"TextSerializeError"`. http BodyDispatch test asserts body is the literal malformed string, proving TextFallback fires. All honest.
+- **Inspected the `EveryDataObjectRunHandler_IsKnownToThisTest` tripwire.** Reflection sweep enumerates all `Task<Data<object>>` Run() handlers and `IsEquivalentTo`s a frozen list of 18. Any new `Data<object>` handler breaks the test; the failure message tells the author to either narrow T or add a runtime invocation test. Good shape.
 
 ## Verdict
 
-**FAIL.** Suites are all green (3124/3124 C# + 221/221 PLang) but two confirmed false-greens block the verdict. Per the strict rule: a test that claims to verify X but provably doesn't = red. Test report at `.bot/typed-action-returns/test-report.json`.
+**PASS.** Suites green (3136/3136 C# + 221/221 PLang); both tester v1 critical false-greens fixed and mutation-tested; all 3 minor-coverage tests assert behavior, not just success. No new findings.
 
-### Confirmed false-greens (blocking)
+Test report at `.bot/typed-action-returns/test-report.json`.
 
-1. **(critical) `FileRead_Build_LiteralMissingFile_WritesBuildWarning`** asserts `Channels.Channel("builder")` is not the noop sink. The channel is registered in Setup() unconditionally, so the assertion is trivially true regardless of what Build() did. The test name claims warning-emission coverage; it provides none.
+## For v2 after review — what the reviewer (tester v1) flagged + what changed
 
-2. **(critical) The advertised Data<object> double-wrap coverage doesn't exist.** The coder's handoff calls this the branch's headline footgun ("every typed handler in this branch was checked"). The supposed test layer:
-   - Stage 2 plang `Test*DownstreamVariableAnnotatesAs*.test.goal` use `goal.getTypes`, which reflects on `Run()` signatures — never invokes a handler.
-   - `Stage2_MechanicalTypings.DataValueFromTypedRun_NotDoubleWrapped` checks `T` at the static type level.
-   Neither catches the actual footgun, which is a *runtime* owned-construction bug: T declared as `object`, runtime `.Value` is itself a `Data<X>`. Would ship green.
-
-### Other findings (non-blocking, follow-up)
-
-3. (minor) Serializer Data refactor error paths are entirely unverified — every `Deserialize_*` test uses `.Value!` on happy-path input.
-4. (minor) http `TextFallback` parse-failure path uncovered.
-5. (minor) `CompileLlm_Kernel_ContainsTypeHintRule` is a redundant string-presence check.
-6. (info) Coder skipped `baseline-tests.md`.
-
-## Code example (the strongest test pattern in this branch)
-
-`Stage4_TypeHintPrecedenceTests.BuilderValidate_DistinguishesExplicitObject_FromDefaultObject` — the kind of test the rest of the branch should aspire to:
+Reviewer flagged two critical false-greens and three minor-coverage gaps. Before/after for the headline fix:
 
 ```csharp
-// Explicit Type="object" already set on the variable.set → Build()'s "csv"
-// must NOT overwrite. Catches the subtle "explicit object got promoted by
-// the inference layer" bug that earlier draft Build() versions hit.
-var setAction = Make("variable", "set",
-    ("Name", "x"), ("Value", "%!data%"), ("Type", "object"));
-var actions = ActionsOf(Make("file", "read", ("Path", "foo.csv")), setAction);
-await RunBuildPass(actions, _app);
+// Before (false green — Channels.Register makes this trivially true):
+_app.User.Channels.Register(_app.User.Channels.CreateMemoryChannel("builder"));
+await Build("file", "read", ("Path", "definitely-missing-stage4.csv"));
+await Assert.That(_app.User.Channels.Channel("builder")).IsNotTypeOf<noop.@this>();
 
-var typeParam = setAction.Parameters.First(p =>
-    string.Equals(p.Name, "Type", StringComparison.OrdinalIgnoreCase));
-await Assert.That(typeParam.Value).IsEqualTo("object");
+// After (mutation-tested honest — reads what Build() actually wrote):
+var channel = (stream.@this)_app.User.Channels.CreateMemoryChannel("builder");
+const string missing = "definitely-missing-stage4.csv";
+await Build("file", "read", ("Path", missing));
+channel.Stream.Position = 0;
+var written = await channel.ReadAllTextAsync();
+await Assert.That(written).Contains(missing)
+    .Because("Build() must write a missing-file warning whose message names the offending path.");
 ```
 
-End-to-end through `RunBuildPass`, asserts on the actual mutated parameter rather than a return code. If the precedence rule were reversed, this catches it. The pattern is repeatable for the missing-coverage gaps in findings #2 and #3.
+Commenting out the `WriteAsync` call in `file/read.cs:76` now flips this red. The original version stayed green.
