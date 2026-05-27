@@ -17,7 +17,7 @@
       "text": "Agreed on the framing — Stream isn't the leaf, the serializer is. Rewrote item 3 to center the serializer: its contract is Data-in / bytes-out, and Stream.WriteCore feeding it data.Value is a *consequence* of the contract not being enforced (object? polymorphism). The fact-pattern stays, but the framing now reads bug-as-serializer-contract-violation, not bug-as-stream-strip.\n\nOn signing — the load-bearing reason is the Compress scenario. Compress serializes Data to bytes to bury them inside the archived wrapper. If the serializer signed, those buried bytes would carry a signature, and then the channel would sign the archived wrapper on its way out — two signatures for one logical payload. With signing at the channel and the serializer signing-agnostic, the rule \"only outermost signs\" becomes automatic by construction: channels sign because writes are externally visible; transforms don't because their bytes get buried. The serializer is unconscious of inner/outer. Expanded the \"Signing lives at the channel\" section to spell this counterfactual out.",
       "anchor": "3. **The serializer doesn't always receive Data.** `ISerializer` accepts `object?`, and `Stream.WriteCore` feeds it `data.Value` rather than `data` itself (`stream/this.cs:56`). The \"emit wrapper or just the value\" decision belongs *inside* the serializer — different MIMEs make different choices — but only if it always sees Data first. Today the plang+data serializer is forced to reconstruct the wrapper from scratch via `Envelope` because by the time it runs, the wrapper that should carry type+signature is already gone.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "684d335e21",
       "ts": "2026-05-26T16:56:56",
       "drifted": true
@@ -28,7 +28,7 @@
       "text": "so if we have it in the serializer, each data object would be serialized if we had data inside data? if that is the case, then why not? lets say I get zip object, it´s signed, I unzip it and I see the 'real' Data, that is also signed, just wondering if we get some benefit of it. I could forward that Data to someone else and we still would have signature from the original creator, lets discuss",
       "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
       "author": "user",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "18fdfeda61",
       "ts": "2026-05-27T16:43:46",
       "drifted": false
@@ -41,7 +41,30 @@
       "author": "architect",
       "status": "open",
       "parent_id": "6babf93895",
-      "ts": "2026-05-27T16:52:29"
+      "ts": "2026-05-27T16:52:29",
+      "drifted": false
+    },
+    {
+      "id": "ce1c268af7",
+      "line": 17,
+      "text": "if it contains List<Data> each item in that list should be signed.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "user",
+      "status": "open",
+      "parent_id": "870bac762a",
+      "ts": "2026-05-27T17:01:58",
+      "drifted": false
+    },
+    {
+      "id": "658bd147c6",
+      "line": 17,
+      "text": "Good, confirms the rule. So sign-if-missing applies uniformly: nested-in-Value, items-in-List<Data>, items-in-nested-List<Data>, etc. — whatever the Data-converter walks, it sign-checks. The unit of attestation is the Data node, regardless of how it sits in the tree.\n\nHolding off on plan/stage edits per your other message. One thing I found while looking at the signing module that's worth flagging now (since it affects how strong the 'chain' actually is): the current canonicalization in modules/crypto/code/Default.cs:19-20 hashes JsonSerializer.Serialize(value) with default options. Default options respect [JsonIgnore] on Signature → the outer signature does NOT bind the inner Datas' signatures. It binds the inner Value/Name/Type (via JSON of the inner Data object) but the inner signature field is omitted from the hash because [JsonIgnore].\n\nWhat that means in practice: Bob receives D2 signed by Alice. D2.value contains D1's bytes. If Bob (or a man-in-the-middle) swaps D1's signature for a different signature inside D2's value, D2's outer signature still verifies — because the hash never covered the inner signature in the first place. The chain works as long as nobody tampers, but it isn't *cryptographically* tight.\n\nThis is a separate concern from the design pivot we just settled — the architectural decision (sign-each-Data-via-converter) stands either way. But making the chain tight would require canonicalizing over Value-including-Signature, which is a hash-format change. Likely a follow-up branch, not this one. Flagging it so it isn't lost.",
+      "anchor": "Once that's accepted, three follow-on simplifications fall out: ISerializer narrows from `object?` to `Data`, the two `application/plang` serializers collapse into one, signing moves from the serializer to the channel.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "ce1c268af7",
+      "ts": "2026-05-27T17:07:07",
+      "drifted": false
     },
     {
       "id": "21c1db1c1e",
@@ -60,7 +83,7 @@
       "text": "Good push — I wasn't being explicit about the general shape. Added a 'Transforms are a pattern, not a registry' section to the Cross-cutting decisions: Compress is one instance of (Data → bytes → Data{type=marker, value=byte[]}). The family is Compress / Encrypt / Sign / future Brotli-Zstd-etc. There's no separate registration system: the verb is a method on Data, the wire marker is a Type value, algorithm differentiation rides on the +variant slot ('archived+gzip', 'archived+brotli'). Decoding mirrors. Type's own .Compressible / .Encryptable properties (already there for Compressible) gate whether a transform applies.\n\nIt does come naturally in the sense you suspected: repackaging a Data into a new Data with bytes inside. The smell of double-wrap (Data{archived, Data{gzip, byte[]}}) was hiding the uniformity — flattening (Stage 3) makes all transforms look the same on the wire.",
       "anchor": "4. **`Compress()` double-wraps.** Current code builds `Data{archived, Data{gzip, byte[]}}`. The inner gzip Data is redundant — `archived.Value` can be a `byte[]` directly. \"Data all the way down\" is a property of *byte layers* (decompress reveals another serialized Data), not JSON object nesting.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "21c1db1c1e",
       "ts": "2026-05-27T16:52:02",
       "drifted": false
@@ -82,7 +105,7 @@
       "text": "Right — base64 is JSON-specific. Fixed the wording: the bytes get decoded per the wire format's convention (base64 in JSON because no binary literal; raw bytes in protobuf/CBOR). The point I was reaching for — that nesting is byte-layer, not JSON-object-layer — survives, just no longer tied to base64.",
       "anchor": "The compressed bytes — when decoded per the wire format's convention (base64 in JSON because JSON has no binary literal; raw bytes in protobuf/CBOR) and gunzipped — *are themselves* a serialized Data with name \"user\". The base64 isn't intrinsic to the shape; it's the JSON serializer's choice for representing `byte[]`. Nesting happens through byte-decoding layers, not JSON object nesting. Each Data on the wire is flat.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "438cfa362a",
       "ts": "2026-05-27T16:51:43",
       "drifted": false
@@ -104,10 +127,55 @@
       "text": "You're right — that link points into my memory directory, which isn't in the repo so you can't see it. Removed the link and inlined the principle in one extra sentence (\"A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.\") which is the load-bearing bit anyway.",
       "anchor": "**Data is opaque to its consumers.** Every layer — Variables, action handlers, Compress, Channel, ISerializer — handles Data as an opaque unit. Only the encoder at the leaf walks `[Out]` properties. Nothing peeks at Type or Value to decide behaviour. A consumer that needs to branch on what's inside has stopped being a consumer and started being an encoder — push the work down to the leaf.",
       "author": "architect",
-      "status": "open",
+      "status": "resolved",
       "parent_id": "daee6add42",
       "ts": "2026-05-27T16:51:51",
       "drifted": false
+    }
+  ],
+  "plan/wire-shape.md": [
+    {
+      "id": "e62a3bbfad",
+      "line": 7,
+      "text": "I think we need also to include Properties in this, but maybe in a problemtic way :) lets say I have llm request, the default value is just the content that the llm is generating, this allows for nice code\n\n```plang\n- llm %system%, %user%, write to %output%\n- write out %output% / this is llm text response\n```\n\nbut I want to be able to see the cost, so in the c# code we add those to the properties of the data that is return, I was thinking of flattening the object, I would add property cost: 100\n\n\n\n{\nname:\"response\"\ntype:\"string\",\nvalue:\"llm response\",\ncost: 100\n}\n\nthis is if we flatten, it should not affect the object it self because if the object is complex like user in the example below, that is all in the value : { complex object }\n\nany thing that is not value, type, signature is a Property on the Data, but if the Data is some Data<SomeClass> and that class contains Cost then it would use that property that is strict instead of filling the Properties property on Data class. What do you think?",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-27T16:55:02",
+      "drifted": false
+    },
+    {
+      "id": "db4b171f6c",
+      "line": 7,
+      "text": "I like this and want to walk it through to make sure I have it right.\n\nThe two-track rule you're proposing:\n\n1. Data<T> path (strict): T's properties live structurally inside Value. Cost becomes value.cost. Wire shape is { name, type=\"llmresponse\", value: { text: \"...\", cost: 100 }, signature }.\n\n2. Data + Properties path (untyped): Properties dictionary flattens to top-level fields next to name/type/value/signature. Wire is { name, type=\"string\", value=\"llm text\", cost: 100, signature }.\n\nThe ergonomics goal: in PLang you write `%response%` and get the LLM text directly (Value renders), and `%response.cost%` navigates to the cost field. With path 2, %response.cost% reads Properties[\"cost\"]; with path 1, %response.cost% reads Value.Cost. The dev-facing surface is uniform; the underlying storage differs.\n\nThat works and is a real ergonomic win. Three things I want to think through before we commit:\n\n(a) Reserved-key collision. \"name\", \"type\", \"value\", \"signature\" are top-level reserved on the wire. Properties can't have keys with those names — needs to be a rule (compile-time check on attribute-decorated Property fields, runtime guard on dictionary inserts). Easy to enforce.\n\n(b) Round-trip ambiguity at the boundary. When Charlie receives JSON { name, type, value, cost, signature, foo: \"x\" }, how does the deserializer decide that `cost` and `foo` are Properties vs. unknown wire fields? The rule \"anything not in {name,type,value,signature} is Properties\" makes the parser forgiving — receivers can carry arbitrary extra metadata without choking. That's probably good; it also means PLang's wire shape is forward-compatible to new top-level fields naturally.\n\n(c) [Out] semantics shift. Today Properties is [JsonIgnore]. The proposal makes Properties flatten via [Out] (or similar). What's the discipline for which Property entries cross the wire? All by default, with an opt-out marker? Only [Out]-marked entries? The today-rule is \"none\"; you're proposing \"all unless filtered\" or \"opt-in via [Out]\" — needs to be one or the other.\n\nHolding the plan edits per your other message. If you confirm (a)/(b)/(c) — reserved-key rule, all-extra-fields-are-Properties on receive, and which opt-in/opt-out for [Out] — I'll update plan.md (Cross-cutting decisions: Properties flatten to wire) and wire-shape.md (add a llm-response example showing the flat-cost shape).",
+      "anchor": "The simplest case: a Data named \"user\" with an object value, signed by the channel on its way out.",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "e62a3bbfad",
+      "ts": "2026-05-27T17:07:25",
+      "drifted": false
+    },
+    {
+      "id": "66b524fc8c",
+      "line": 9,
+      "text": "I think the type would just be \"json\" or \"object\" not \"user\", the type only comes from the strictly typed Data<T>,",
+      "anchor": "```json",
+      "author": "user",
+      "status": "open",
+      "parent_id": null,
+      "ts": "2026-05-27T16:57:24",
+      "drifted": false
+    },
+    {
+      "id": "87bc4cfe1a",
+      "line": 9,
+      "text": "Right — that example is wrong. The type field is the strict type-name, sourced from Data<T>. When the Data is untyped (constructed as `new data.@this(\"user\", someAnonymousObject)`), there's no schema name to put there.\n\nWhat goes in `type` for the untyped case? Looking at TypeMapping, candidates are \"object\", \"json\", or maybe \"dict\" depending on what the value's CLR shape is. I'd lean toward \"object\" for an anonymous bag (matches the JSON `{...}` shape) and \"dict\" only if the value is literally `Dictionary<,>`. Whatever the convention, it should be the runtime's natural type-name for that value shape — not the variable's name.\n\nThe two real cases:\n- Untyped: `new data.@this(\"user\", new { firstName=\"Ingi\", ... })` → wire { name: \"user\", type: \"object\", value: {...} }\n- Typed: `new data.@this<User>(\"user\", userInstance)` → wire { name: \"user\", type: \"user\", value: {...} }\n\nThe \"user\" in name is the variable binding; the \"user\" in type is the schema. Different things; only the typed path populates the latter with a meaningful schema name.\n\nHolding the wire-shape.md edit per your other message. When you greenlight, I'll fix the plain-Data example to show `type: \"object\"` and add a sibling example showing the Data<User> typed case with `type: \"user\"` — so the distinction is visible side-by-side.",
+      "anchor": "```json",
+      "author": "architect",
+      "status": "open",
+      "parent_id": "66b524fc8c",
+      "ts": "2026-05-27T17:07:37"
     }
   ]
 }
