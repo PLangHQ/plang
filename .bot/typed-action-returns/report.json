@@ -389,6 +389,100 @@
         "health": "green",
         "notes": "Both tester v1 critical false-greens (FileRead BuildWarning + Data<object> runtime double-wrap) cleanly fixed and mutation-tested. Minor-coverage tests assert behavior, not just success. Suites: 3136/3136 C# + 221/221 PLang. No new findings."
       }
+    },
+    {
+      "id": "a002c700-ac12-4ce2-8f0c-2a3b727780e3",
+      "bot": "security",
+      "timestamp_start": "2026-05-27T15:22:35.938662+00:00",
+      "timestamp_end": "2026-05-27T15:25:29.963200+00:00",
+      "intent": "Security review of typed-action-returns branch",
+      "before": {
+        "assumptions": "Branch passed codeanalyzer v3 and tester v2.",
+        "risk": "Serializer Data<T> wrapping must preserve [Sensitive] and signing inflow. HTTP size cap consolidation could regress slow-loris guard. Build() runs handler code at compile-time. Channel(name) no-op fallback could mask audit writes."
+      },
+      "plan": ".bot/typed-action-returns/security/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "scripts/semgrep-scan.sh"
+          ],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "Ran semgrep \u2014 15 findings, matches baseline (no regressions)"
+        },
+        {
+          "paths": [
+            "PLang/app/channels/serializers/serializer/Json.cs",
+            "PLang/app/channels/serializers/serializer/Text.cs",
+            "PLang/app/channels/serializers/serializer/plang/Data.cs",
+            "PLang/app/channels/serializers/serializer/plang/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Verified Data<T>-wrapped serializer flow preserves signing inflow via _transportInOptions and keeps STJ catch list exhaustive for parse failures"
+        },
+        {
+          "paths": [
+            "PLang/app/modules/http/code/Default.cs",
+            "PLang/app/modules/http/HttpBuildHelpers.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "HTTP size cap + slow-loris consolidation: prior duplicate-impl concern now closed (one owner)"
+        },
+        {
+          "paths": [
+            "PLang/app/modules/IClass.cs",
+            "PLang.Generators/Emission/Action/this.cs",
+            "PLang/app/modules/file/read.cs",
+            "PLang/app/modules/llm/query.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Build() at validate respects AuthGate, swallows denials silently \u2014 no info disclosure"
+        },
+        {
+          "paths": [
+            "PLang/app/channels/this.cs",
+            "PLang/app/channels/channel/noop/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "F1: Channel(name) silent-drop fallback is forward-risk for any future audit-style channel"
+        },
+        {
+          "paths": [
+            "PLang/app/data/this.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "F2: new Data.As(string typeName) \u2014 type-confusion if typeName ever becomes caller-controlled"
+        },
+        {
+          "paths": [
+            ".bot/typed-action-returns/security-report.json",
+            ".bot/typed-action-returns/security/v1/report.md",
+            ".bot/typed-action-returns/security/v1/verdict.json",
+            ".bot/typed-action-returns/security/v1/plan.md",
+            ".bot/typed-action-returns/security/summary.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Security review artifacts"
+        }
+      ],
+      "after": {
+        "status": "pass",
+        "health": "clean \u2014 3 new low/info opens, none merge-blocking; standing fixes intact",
+        "notes": "HTTP size-cap consolidation net improvement (closes prior duplicate-impl concern). AuthGate canonicalization (purge-systemio v2) holds. Next bot: auditor."
+      }
     }
   ]
 }
